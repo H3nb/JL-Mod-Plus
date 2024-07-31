@@ -1,6 +1,7 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017 Nikita Shakarun
+ * Copyright 2021-2024 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +18,10 @@
 
 package javax.microedition.lcdui;
 
-import android.content.Context;
+import android.view.Gravity;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.LinearLayout.LayoutParams;
 
 import javax.microedition.util.ContextHolder;
 
@@ -90,8 +93,10 @@ public class TextBox extends Screen {
 
 	@Override
 	public View getScreenView() {
-		Context context = ContextHolder.getActivity();
-		return textField.getView(context, null);
+		EditText et = textField.getView(ContextHolder.getActivity(), null);
+		et.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+		et.setGravity(Gravity.TOP);
+		return et;
 	}
 
 	@Override

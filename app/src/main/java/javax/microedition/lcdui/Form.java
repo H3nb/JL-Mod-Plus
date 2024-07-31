@@ -2,7 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2018 Nikita Shakarun
- * Copyright 2020-2023 Yury Kharchenko
+ * Copyright 2020-2024 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import android.widget.ScrollView;
 
 import java.util.ArrayList;
 
+import javax.microedition.lcdui.event.SimpleEvent;
 import javax.microedition.util.ContextHolder;
 
 public class Form extends Screen {
@@ -158,10 +159,16 @@ public class Form extends Screen {
 		this.listener = listener;
 	}
 
-	public void notifyItemStateChanged(Item item) {
-		if (listener != null) {
-			listener.itemStateChanged(item);
-		}
+	void notifyItemStateChanged(Item item) {
+		Display.postEvent(new SimpleEvent() {
+			@Override
+			public void process() {
+				ItemStateListener l = listener;
+				if (l != null) {
+					l.itemStateChanged(item);
+				}
+			}
+		});
 	}
 
 	@Override

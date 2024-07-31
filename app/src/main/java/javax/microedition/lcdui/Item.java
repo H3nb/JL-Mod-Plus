@@ -1,6 +1,6 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
- * Copyright 2019-2023 Yury Kharchenko
+ * Copyright 2019-2024 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,8 +136,8 @@ public abstract class Item {
 	}
 
 	public void notifyStateChanged() {
-		if (owner instanceof Form form) {
-			form.notifyItemStateChanged(this);
+		if (owner instanceof Form) {
+			postStateChanged();
 		} else {
 			throw new IllegalStateException("Item is not owned by a Form");
 		}
@@ -204,6 +204,12 @@ public abstract class Item {
 		this.height = height == -1 ? 0 : height;
 	}
 
+	void postStateChanged() {
+		if (owner instanceof Form form) {
+			form.notifyItemStateChanged(this);
+		}
+	}
+
 	void setOwner(Screen owner) {
 		this.owner = owner;
 		ViewHandler.postEvent(new SimpleEvent() {
@@ -215,10 +221,6 @@ public abstract class Item {
 	}
 
 	Screen getOwner() {
-		if (owner == null) {
-			throw new IllegalStateException("call setOwnerForm() before calling getOwnerForm()");
-		}
-
 		return owner;
 	}
 

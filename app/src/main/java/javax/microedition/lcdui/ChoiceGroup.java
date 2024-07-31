@@ -1,7 +1,7 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2018-2021 Nikita Shakarun
- * Copyright 2019-2023 Yury Kharchenko
+ * Copyright 2019-2024 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -382,7 +382,7 @@ public class ChoiceGroup extends Item implements Choice {
 			if (choiceType == MULTIPLE) {
 				item.setSelected(!item.isSelected());
 				adapter.notifyDataSetChanged();
-				notifyStateChanged();
+				postStateChanged();
 				return;
 			}
 			if (!item.isSelected()) {
@@ -391,7 +391,7 @@ public class ChoiceGroup extends Item implements Choice {
 				}
 				item.setSelected(true);
 				adapter.notifyDataSetChanged();
-				notifyStateChanged();
+				postStateChanged();
 			}
 		}
 	}
@@ -409,7 +409,7 @@ public class ChoiceGroup extends Item implements Choice {
 					adapter.notifyDataSetChanged();
 				}
 			}
-			notifyStateChanged();
+			postStateChanged();
 		}
 
 		@Override

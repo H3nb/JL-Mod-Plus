@@ -1,6 +1,7 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2018 Nikita Shakarun
+ * Copyright 2020-2024 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,8 +141,11 @@ public class Display {
 	}
 
 	public void setCurrentItem(Item item) {
-		if (item.hasOwner()) {
-			setCurrent(item.getOwner());
+		Screen owner = item.getOwner();
+		if (owner instanceof Form) {
+			setCurrent(owner);
+		} else {
+			throw new IllegalStateException("Item is not owned by a Form");
 		}
 	}
 

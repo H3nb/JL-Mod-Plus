@@ -1,6 +1,7 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2019 Nikita Shakarun
+ * Copyright 2021-2024 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +24,7 @@ import android.text.InputFilter;
 import android.text.InputType;
 import android.text.TextWatcher;
 import android.text.method.PasswordTransformationMethod;
-import android.view.Gravity;
-import android.view.ViewGroup.LayoutParams;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 
 import androidx.appcompat.widget.AppCompatEditText;
 
@@ -193,16 +191,6 @@ class TextFieldImpl {
 					text = s.toString();
 				}
 			});
-
-			if (item != null) {
-				textview.setOnFocusChangeListener((v, hasFocus) -> {
-					if (!hasFocus) item.notifyStateChanged();
-				});
-			} else {
-				textview.setLayoutParams(new LinearLayout.LayoutParams(
-						LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
-				textview.setGravity(Gravity.TOP);
-			}
 		}
 		return textview;
 	}
