@@ -21,7 +21,7 @@ import static ru.playsoftware.j2meloader.util.Constants.PREF_EMULATOR_DIR;
 
 import android.content.SharedPreferences;
 
-import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.preference.PreferenceManager;
 
@@ -50,12 +50,8 @@ public class AppListModel extends ViewModel implements SharedPreferences.OnShare
 		appRepository.setDatabaseFile(emulatorDir + Config.APPS_DB_NAME);
 	}
 
-	MutableLiveData<List<AppItem>> getAppList() {
+	LiveData<List<AppItem>> getAppList() {
 		return appRepository.getAppList();
-	}
-
-	public MutableLiveData<Throwable> getErrors() {
-		return appRepository.getErrors();
 	}
 
 	void updateApp(AppItem item) {
@@ -93,7 +89,7 @@ public class AppListModel extends ViewModel implements SharedPreferences.OnShare
 		} else if (PREF_EMULATOR_DIR.equals(key)) {
 			String path = sp.getString(key, null);
 			if (path != null) {
-				appRepository.setDatabaseFile(path + Config.APPS_DB_NAME);
+				setEmulatorDirectory(path);
 			}
 		}
 	}

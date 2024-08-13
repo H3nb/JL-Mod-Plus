@@ -138,6 +138,14 @@
             android:theme="@style/FilePickerTheme" />
         <activity android:name=".config.ProfilesActivity" android:exported="false" />
         <activity android:name="com.nokia.mid.ui.NotificationActivity" />
+        <activity
+            android:name="ru.playsoftware.j2meloader.crashes.dialog.CrashReportDialog"
+            android:theme="@style/Theme.AppCompat.DayNight.Dialog.Alert"
+            android:excludeFromRecents="true"
+            android:finishOnTaskLaunch="true"
+            android:launchMode="singleInstance"
+            android:process=":acra" />
+
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
             android:enabled="false"

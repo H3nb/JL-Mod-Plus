@@ -24,13 +24,12 @@ android {
         versionCode = 48
         versionName = "0.87.1"
         resValue("string", "app_name", rootProject.name)
+        resValue("string", "app_center", secret.getProperty("appCenterKey", ""))
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    androidResources {
-        generateLocaleConfig = true
-    }
+    androidResources.generateLocaleConfig = true
 
     buildFeatures {
         viewBinding = true
@@ -38,14 +37,12 @@ android {
         buildConfig = true
     }
 
-    signingConfigs {
-        create("emulator") {
-            if (secret.isNotEmpty()) {
-                keyAlias = secret.getProperty("keyAlias")
-                keyPassword = secret.getProperty("keyPassword")
-                storeFile = rootProject.file(secret.getProperty("storeFile"))
-                storePassword = secret.getProperty("storePassword")
-            }
+    signingConfigs.create("emulator") {
+        if (secret.isNotEmpty()) {
+            keyAlias = secret.getProperty("keyAlias")
+            keyPassword = secret.getProperty("keyPassword")
+            storeFile = rootProject.file(secret.getProperty("storeFile"))
+            storePassword = secret.getProperty("storePassword")
         }
     }
 
@@ -62,9 +59,7 @@ android {
         }
     }
 
-    lint {
-        disable += "MissingTranslation"
-    }
+    lint.disable += "MissingTranslation"
 
     flavorDimensions += "default"
     productFlavors {
@@ -94,20 +89,14 @@ android {
         }
     }
 
-    splits {
-        abi {
-            isEnable = true
-            reset()
-            include("x86", "armeabi-v7a", "x86_64", "arm64-v8a")
-            isUniversalApk = true
-        }
+    splits.abi {
+        isEnable = true
+        reset()
+        include("x86", "armeabi-v7a", "x86_64", "arm64-v8a")
+        isUniversalApk = true
     }
 
-    externalNativeBuild {
-        ndkBuild {
-            path("src/main/cpp/Android.mk")
-        }
-    }
+    externalNativeBuild.ndkBuild.path("src/main/cpp/Android.mk")
 
     compileOptions {
         targetCompatibility = JavaVersion.VERSION_17

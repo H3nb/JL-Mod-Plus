@@ -1,5 +1,6 @@
 /*
  * Copyright 2018 Nikita Shakarun
+ * Copyright 2020-2024 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +19,7 @@ package ru.playsoftware.j2meloader.crashes;
 
 import android.content.Context;
 import android.os.Build;
+import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -35,17 +37,16 @@ import org.acra.sender.ReportSender;
 import org.json.JSONObject;
 
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.util.Constants;
 
 public class AppCenterSender implements ReportSender {
 	private static final String TAG = AppCenterSender.class.getSimpleName();
 	private static final String BASE_URL = "https://in.appcenter.ms/logs?Api-Version=1.0.0";
-	private static final String FORM_KEY = "eccaa4ce-92e9-46b2-8f40-89296b70a931";
 
 	@Override
 	public void send(@NonNull Context context, @NonNull final CrashReportData report) {
@@ -53,6 +54,12 @@ public class AppCenterSender implements ReportSender {
 		if (log == null || log.isEmpty()) {
 			return;
 		}
+		String key = context.getString(R.string.app_center);
+		if (key.isBlank()) {
+			saveToFile(context, report);
+			return;
+		}
+
 		// Force TLSv1.2 for Android 4.1-4.4
 		boolean forceTls12 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN
 				&& Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP;
@@ -63,39 +70,14 @@ public class AppCenterSender implements ReportSender {
 				response -> Log.d(TAG, "send success: " + response),
 				error -> {
 					Log.e(TAG, "Response error", error);
-					String logFile = Config.getEmulatorDir() + "/crash.txt";
-					try (FileOutputStream fos = new FileOutputStream(logFile)) {
-						JSONObject o = (JSONObject) report.get(ReportField.CUSTOM_DATA.name());
-						if (o != null) {
-							Object od = o.opt(Constants.KEY_APPCENTER_ATTACHMENT);
-							if (od != null) {
-								String midlet = (String) od;
-								fos.write(midlet.getBytes());
-							}
-						}
-						String stack = report.getString(ReportField.STACK_TRACE);
-						if (stack != null) {
-							fos.write("\n===================Error===================\n".getBytes());
-							fos.write(stack.getBytes());
-						}
-						String logcat = report.getString(ReportField.LOGCAT);
-						if (logcat != null) {
-							fos.write("\n==================More=Log=================\n".getBytes());
-							fos.write(logcat.getBytes());
-						}
-						fos.close();
-						Toast.makeText(context, "Can't send report! Saved to file:\n" + logFile, Toast.LENGTH_LONG).show();
-					} catch (IOException e) {
-						e.printStackTrace();
-						Toast.makeText(context, "Can't send report!", Toast.LENGTH_LONG).show();
-					}
+					new Thread(() -> saveToFile(context, report)).start();
 				}
 		) {
 			@Override
 			public Map<String, String> getHeaders() {
 				Map<String, String> params = new HashMap<>();
 				params.put("Content-Type", "application/json");
-				params.put("App-Secret", FORM_KEY);
+				params.put("App-Secret", key);
 				params.put("Install-ID", report.getString(ReportField.INSTALLATION_ID));
 				return params;
 			}
@@ -107,5 +89,36 @@ public class AppCenterSender implements ReportSender {
 		};
 		postRequest.setShouldCache(false);
 		queue.add(postRequest);
+	}
+
+	private static void saveToFile(@NonNull Context context, @NonNull CrashReportData report) {
+		String logFile = Config.getEmulatorDir() + "/crash.txt";
+		String msg = "Can't send report!";
+		try (FileOutputStream fos = new FileOutputStream(logFile)) {
+			JSONObject o = (JSONObject) report.get(ReportField.CUSTOM_DATA.name());
+			if (o != null) {
+				Object od = o.opt(Constants.KEY_APPCENTER_ATTACHMENT);
+				if (od != null) {
+					String midlet = (String) od;
+					fos.write(midlet.getBytes());
+				}
+			}
+			String stack = report.getString(ReportField.STACK_TRACE);
+			if (stack != null) {
+				fos.write("\n===================Error===================\n".getBytes());
+				fos.write(stack.getBytes());
+			}
+			String logcat = report.getString(ReportField.LOGCAT);
+			if (logcat != null) {
+				fos.write("\n==================More=Log=================\n".getBytes());
+				fos.write(logcat.getBytes());
+			}
+			msg += " Saved to file:\n" + logFile;
+		} catch (Exception e) {
+			Log.e(TAG, "saveToFile: failed save", e);
+		}
+		String finalMsg = msg;
+		new Handler(context.getMainLooper()).post(() ->
+				Toast.makeText(context, finalMsg, Toast.LENGTH_LONG).show());
 	}
 }

@@ -23,15 +23,17 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
+
+import org.acra.ACRA;
 
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -225,7 +227,9 @@ public class InstallerDialog extends DialogFragment {
 			binding.tvStatus.setText(getString(R.string.install_done));
 			AppItem app = installer.getExistsApp();
 			Drawable drawable = Drawable.createFromPath(app.getImagePathExt());
-			if (drawable != null) dialog.setIcon(drawable);
+			if (drawable != null) {
+				dialog.setIcon(drawable);
+			}
 			btnOk.setText(R.string.START_CMD);
 			btnOk.setOnClickListener(v -> {
 				Config.startApp(v.getContext(), app.getTitle(), app.getPathExt(), false);
@@ -245,7 +249,7 @@ public class InstallerDialog extends DialogFragment {
 				}
 				message = nd.getInfo(requireActivity());
 			}
-			case AppInstaller.STATUS_OLDEST -> message = new SpannableStringBuilder(getString(
+			case AppInstaller.STATUS_OLDER -> message = new SpannableStringBuilder(getString(
 					R.string.reinstall_older,
 					nd.getVersion(),
 					installer.getCurrentVersion()));
@@ -260,7 +264,7 @@ public class InstallerDialog extends DialogFragment {
 					dismiss();
 				});
 			}
-			case AppInstaller.STATUS_NEWEST -> message = new SpannableStringBuilder(getString(
+			case AppInstaller.STATUS_NEWER -> message = new SpannableStringBuilder(getString(
 					R.string.reinstall_newest,
 					nd.getVersion(),
 					installer.getCurrentVersion()));
@@ -284,7 +288,9 @@ public class InstallerDialog extends DialogFragment {
 			message.append('\n').append(getString(R.string.warn_install_from_net));
 		}
 		Drawable drawable = Drawable.createFromPath(installer.getIconPath());
-		if (drawable != null) dialog.setIcon(drawable);
+		if (drawable != null) {
+			dialog.setIcon(drawable);
+		}
 		dialog.setTitle(nd.getName());
 		dialog.setCancelable(false);
 		dialog.setCanceledOnTouchOutside(false);
@@ -295,12 +301,14 @@ public class InstallerDialog extends DialogFragment {
 	}
 
 	private void onError(Throwable e) {
-		e.printStackTrace();
+		Log.e("Installer", e.toString(), e);
+		ACRA.getErrorReporter().handleException(e);
 		installer.clearCache();
 		installer.deleteTemp();
-		if (!isAdded()) return;
+		if (!isAdded()) {
+			return;
+		}
 		hideProgress();
-		Toast.makeText(requireActivity(), getString(R.string.error) + ": " + e.getMessage(), Toast.LENGTH_LONG).show();
 		dismissAllowingStateLoss();
 	}
 }

@@ -19,8 +19,10 @@ package ru.playsoftware.j2meloader.appsdb;
 
 import android.util.Log;
 
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import org.acra.ACRA;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -37,10 +39,9 @@ import ru.playsoftware.j2meloader.applist.AppItem;
 import ru.playsoftware.j2meloader.util.AppUtils;
 
 public class AppRepository {
-	private final MutableLiveData<List<AppItem>> appListLiveData = new MutableLiveData<>();
-	private final MutableLiveData<Throwable> errorsLiveData = new MutableLiveData<>();
+	private final MutableLiveData<List<AppItem>> appList = new MutableLiveData<>();
 	private final CompositeDisposable compositeDisposable = new CompositeDisposable();
-	private final ErrorObserver errorObserver = new ErrorObserver(errorsLiveData);
+	private final ErrorObserver errorObserver = new ErrorObserver();
 	private final AppListSQLiteQuery query = new AppListSQLiteQuery();
 
 	private AppDatabase db;
@@ -52,8 +53,8 @@ public class AppRepository {
 		compositeDisposable.add(listConnectableFlowable
 				.firstElement()
 				.observeOn(Schedulers.io())
-				.subscribe(this::syncWithFilesystem, errorsLiveData::postValue));
-		compositeDisposable.add(listConnectableFlowable.subscribe(appListLiveData::postValue, errorsLiveData::postValue));
+				.subscribe(this::syncWithFilesystem, errorObserver::onError));
+		compositeDisposable.add(listConnectableFlowable.subscribe(appList::postValue, errorObserver::onError));
 		compositeDisposable.add(listConnectableFlowable.connect());
 	}
 
@@ -95,7 +96,7 @@ public class AppRepository {
 		if (query.setFilter(filter)) {
 			compositeDisposable.add(db.appItemDao().getAllSingle(query)
 					.subscribeOn(Schedulers.from(db.getQueryExecutor()))
-					.subscribe(appListLiveData::postValue, errorsLiveData::postValue));
+					.subscribe(appList::postValue, errorObserver::onError));
 		}
 	}
 
@@ -107,16 +108,12 @@ public class AppRepository {
 		if (query.setSort(sort)) {
 			compositeDisposable.add(db.appItemDao().getAllSingle(query)
 					.subscribeOn(Schedulers.from(db.getQueryExecutor()))
-					.subscribe(appListLiveData::postValue, errorsLiveData::postValue));
+					.subscribe(appList::postValue, errorObserver::onError));
 		}
 	}
 
-	public MutableLiveData<List<AppItem>> getAppList() {
-		return appListLiveData;
-	}
-
-	public MutableLiveData<Throwable> getErrors() {
-		return errorsLiveData;
+	public LiveData<List<AppItem>> getAppList() {
+		return appList;
 	}
 
 	public void setDatabaseFile(String file) {
@@ -158,11 +155,6 @@ public class AppRepository {
 	}
 
 	static class ErrorObserver implements CompletableObserver {
-		private final MutableLiveData<Throwable> callback;
-
-		ErrorObserver(MutableLiveData<Throwable> callback) {
-			this.callback = callback;
-		}
 
 		@Override
 		public void onSubscribe(@NotNull Disposable d) {
@@ -174,8 +166,8 @@ public class AppRepository {
 
 		@Override
 		public void onError(@NotNull Throwable e) {
-			Log.e("AppRepository", "Error occurred", e);
-			callback.postValue(e);
+			Log.e("AppRepository", e.toString(), e);
+			ACRA.getErrorReporter().handleException(e);
 		}
 	}
 }

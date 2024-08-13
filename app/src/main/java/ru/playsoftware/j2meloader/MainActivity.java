@@ -18,22 +18,15 @@
 
 package ru.playsoftware.j2meloader;
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.ViewConfiguration;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 
@@ -44,7 +37,6 @@ import ru.playsoftware.j2meloader.applist.AppsListFragment;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.util.Constants;
 import ru.playsoftware.j2meloader.util.FileUtils;
-import ru.playsoftware.j2meloader.util.LogUtils;
 import ru.playsoftware.j2meloader.util.PickDirResultContract;
 import ru.playsoftware.j2meloader.util.StoragePermissionHelper;
 import ru.woesss.j2me.installer.InstallerDialog;
@@ -58,7 +50,6 @@ public class MainActivity extends AppCompatActivity {
 			this::onPickDirResult
 	);
 
-	private SharedPreferences preferences;
 	private AppListModel appListModel;
 
 	@Override
@@ -67,7 +58,6 @@ public class MainActivity extends AppCompatActivity {
 		setContentView(R.layout.activity_main);
 		storagePermissionHelper.launch(this);
 		appListModel = new ViewModelProvider(this).get(AppListModel.class);
-		appListModel.getErrors().observe(this, this::alertDbError);
 		if (savedInstanceState == null) {
 			Intent intent = getIntent();
 			Uri uri = null;
@@ -77,11 +67,6 @@ public class MainActivity extends AppCompatActivity {
 			AppsListFragment fragment = AppsListFragment.newInstance(uri);
 			getSupportFragmentManager().beginTransaction()
 					.replace(R.id.container, fragment).commit();
-		}
-		preferences = PreferenceManager.getDefaultSharedPreferences(this);
-		if (!preferences.contains(Constants.PREF_TOOLBAR)) {
-			boolean enable = !ViewConfiguration.get(this).hasPermanentMenuKey();
-			preferences.edit().putBoolean(Constants.PREF_TOOLBAR, enable).apply();
 		}
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 	}
@@ -154,7 +139,10 @@ public class MainActivity extends AppCompatActivity {
 			alertDirCannotCreate(path);
 			return;
 		}
-		preferences.edit().putString(Constants.PREF_EMULATOR_DIR, path).apply();
+		PreferenceManager.getDefaultSharedPreferences(this)
+				.edit()
+				.putString(Constants.PREF_EMULATOR_DIR, path)
+				.apply();
 	}
 
 	@Override
@@ -164,23 +152,5 @@ public class MainActivity extends AppCompatActivity {
 		if (uri != null) {
 			InstallerDialog.newInstance(uri).show(getSupportFragmentManager(), "installer");
 		}
-	}
-
-	private void alertDbError(Throwable throwable) {
-		AlertDialog.Builder builder = new AlertDialog.Builder(this)
-				.setTitle(R.string.error)
-				.setMessage(LogUtils.getPrettyText(throwable))
-				.setPositiveButton(android.R.string.ok, null);
-		ClipboardManager cm = ContextCompat.getSystemService(this, ClipboardManager.class);
-		if (cm != null) {
-			builder.setNeutralButton(android.R.string.copy, (d, w) -> {
-				Context context = ((AlertDialog) d).getContext();
-				cm.setPrimaryClip(new ClipData(context.getString(R.string.app_name) + " stacktrace",
-						new String[]{"text/plain"},
-						new ClipData.Item(LogUtils.getStackTraceString(throwable))));
-				Toast.makeText(context, R.string.msg_text_copied_to_clipboard, Toast.LENGTH_SHORT).show();
-			});
-		}
-		builder.show();
 	}
 }

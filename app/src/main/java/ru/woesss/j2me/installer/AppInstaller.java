@@ -53,9 +53,9 @@ import ru.woesss.util.zip.ZipFile;
 
 public class AppInstaller {
 	private static final String TAG = AppInstaller.class.getSimpleName();
-	static final int STATUS_OLDEST = -1;
+	static final int STATUS_OLDER = -1;
 	static final int STATUS_EQUAL = 0;
-	static final int STATUS_NEWEST = 1;
+	static final int STATUS_NEWER = 1;
 	static final int STATUS_NEW = 2;
 	static final int STATUS_UNMATCHED = 3;
 	static final int STATUS_SUCCESS = 4;

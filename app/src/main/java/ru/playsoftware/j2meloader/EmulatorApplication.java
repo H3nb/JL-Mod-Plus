@@ -1,5 +1,6 @@
 /*
  * Copyright 2017-2018 Nikita Shakarun
+ * Copyright 2020-2024 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +17,13 @@
 
 package ru.playsoftware.j2meloader;
 
-import android.annotation.SuppressLint;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.Signature;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Build;
+import android.view.ViewConfiguration;
 
-import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.multidex.MultiDex;
@@ -33,27 +31,14 @@ import androidx.preference.PreferenceManager;
 
 import org.acra.ACRA;
 import org.acra.config.CoreConfigurationBuilder;
-import org.acra.config.DialogConfigurationBuilder;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-
+import ru.playsoftware.j2meloader.crashes.AppCenterCollector;
 import ru.playsoftware.j2meloader.util.Constants;
 import ru.playsoftware.j2meloader.util.FileUtils;
 
-public class EmulatorApplication extends Application {
-	private static final byte[] SIGNATURE_SHA = {
-			125, 47, 64, 33, 91, -86, -121, 89, 11, 24, -118, -93, 35, 53, -34, -114, -119, -60, -48, 55
-	};
-
+public class EmulatorApplication extends Application implements OnSharedPreferenceChangeListener {
 	private static EmulatorApplication instance;
 
-	@Keep
-	private final SharedPreferences.OnSharedPreferenceChangeListener themeListener = (sharedPreferences, key) -> {
-		if (Constants.PREF_THEME.equals(key)) {
-			setNightMode(sharedPreferences.getString(Constants.PREF_THEME, null));
-		}
-	};
 	public static EmulatorApplication getInstance() {
 		return instance;
 	}
@@ -67,20 +52,15 @@ public class EmulatorApplication extends Application {
 		}
 
 		ACRA.init(this, new CoreConfigurationBuilder()
-				.withBuildConfigClass(BuildConfig.class)
 				.withParallel(false)
-				.withSendReportsInDevMode(false)
-				.withPluginConfigurations(new DialogConfigurationBuilder()
-						.withTitle(getString(R.string.crash_dialog_title))
-						.withText(getString(R.string.crash_dialog_message))
-						.withPositiveButtonText(getString(R.string.report_crash))
-						.withResTheme(androidx.appcompat.R.style.Theme_AppCompat_DayNight_Dialog)
-						.withEnabled(true)
-						.build()
-				));
-		ACRA.getErrorReporter().setEnabled(isSignatureValid());
+				.withReportContent(AppCenterCollector.REPORT_FIELDS));
+
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-		sp.registerOnSharedPreferenceChangeListener(themeListener);
+		if (!sp.contains(Constants.PREF_TOOLBAR)) {
+			boolean enable = !ViewConfiguration.get(this).hasPermanentMenuKey();
+			sp.edit().putBoolean(Constants.PREF_TOOLBAR, enable).apply();
+		}
+		sp.registerOnSharedPreferenceChangeListener(this);
 		setNightMode(sp.getString(Constants.PREF_THEME, null));
 		AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
 	}
@@ -92,34 +72,6 @@ public class EmulatorApplication extends Application {
 		} else {
 			return FileUtils.getText("/proc/self/cmdline").trim();
 		}
-	}
-
-	@SuppressLint("PackageManagerGetSignatures")
-	private boolean isSignatureValid() {
-		try {
-			Signature[] signatures;
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-				PackageInfo info = getPackageManager()
-						.getPackageInfo(getPackageName(), PackageManager.GET_SIGNING_CERTIFICATES);
-				signatures = info.signingInfo.getApkContentsSigners();
-			} else {
-				PackageInfo info = getPackageManager()
-						.getPackageInfo(getPackageName(), PackageManager.GET_SIGNATURES);
-				signatures = info.signatures;
-			}
-			MessageDigest md = MessageDigest.getInstance("SHA-1");
-			for (Signature signature : signatures) {
-				md.update(signature.toByteArray());
-				if (MessageDigest.isEqual(SIGNATURE_SHA, md.digest())) {
-					return true;
-				}
-			}
-		} catch (PackageManager.NameNotFoundException e) {
-			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		}
-		return false;
 	}
 
 	void setNightMode(String theme) {
@@ -134,5 +86,12 @@ public class EmulatorApplication extends Application {
 					AppCompatDelegate.MODE_NIGHT_AUTO_TIME;
 			default -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
 		});
+	}
+
+	@Override
+	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+		if (Constants.PREF_THEME.equals(key)) {
+			setNightMode(sharedPreferences.getString(Constants.PREF_THEME, null));
+		}
 	}
 }

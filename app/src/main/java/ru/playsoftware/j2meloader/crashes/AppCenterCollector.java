@@ -1,6 +1,6 @@
 /*
  * Copyright 2020 Nikita Shakarun
- * Copyright 2021 Yury Kharchenko
+ * Copyright 2021-2024 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
  */
 
 package ru.playsoftware.j2meloader.crashes;
+
+import static org.acra.ReportField.*;
 
 import android.content.Context;
 import android.os.Build;
@@ -37,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -55,6 +58,10 @@ import ru.playsoftware.j2meloader.util.Constants;
 @AutoService(Collector.class)
 public class AppCenterCollector implements Collector {
 	public static final String APPCENTER_LOG = "APPCENTER_LOG";
+	public static final List<ReportField> REPORT_FIELDS = Arrays.asList(
+			ANDROID_VERSION, APP_VERSION_CODE, APP_VERSION_NAME, BRAND, CUSTOM_DATA, DISPLAY,
+			INSTALLATION_ID, IS_SILENT, LOGCAT, PACKAGE_NAME, PHONE_MODEL, REPORT_ID,
+			STACK_TRACE, USER_APP_START_DATE, USER_CRASH_DATE);
 
 	@Override
 	public void collect(@NonNull Context context,
@@ -74,10 +81,10 @@ public class AppCenterCollector implements Collector {
 	private String createCrashLog(CrashReportData report, ReportBuilder reportBuilder) {
 		ArrayList<AbstractLog> logs = new ArrayList<>();
 
-		ErrorLog errorLog = new ErrorLog(report.getString(ReportField.REPORT_ID));
-		errorLog.appLaunchTimestamp = report.getString(ReportField.USER_APP_START_DATE);
-		errorLog.timestamp = report.getString(ReportField.USER_CRASH_DATE);
-		errorLog.userId = report.getString(ReportField.INSTALLATION_ID);
+		ErrorLog errorLog = new ErrorLog(report.getString(REPORT_ID));
+		errorLog.appLaunchTimestamp = report.getString(USER_APP_START_DATE);
+		errorLog.timestamp = report.getString(USER_CRASH_DATE);
+		errorLog.userId = report.getString(INSTALLATION_ID);
 		Thread uncaughtExceptionThread = reportBuilder.getUncaughtExceptionThread();
 		if (uncaughtExceptionThread != null) {
 			errorLog.errorThreadId = uncaughtExceptionThread.getId();
@@ -88,16 +95,16 @@ public class AppCenterCollector implements Collector {
 		errorLog.processName = EmulatorApplication.getProcessName();
 
 		Device device = new Device();
-		device.appBuild = report.getString(ReportField.APP_VERSION_CODE);
-		device.appNamespace = report.getString(ReportField.PACKAGE_NAME);
-		device.appVersion = report.getString(ReportField.APP_VERSION_NAME);
-		device.model = report.getString(ReportField.PHONE_MODEL);
-		device.osVersion = report.getString(ReportField.ANDROID_VERSION);
+		device.appBuild = report.getString(APP_VERSION_CODE);
+		device.appNamespace = report.getString(PACKAGE_NAME);
+		device.appVersion = report.getString(APP_VERSION_NAME);
+		device.model = report.getString(PHONE_MODEL);
+		device.osVersion = report.getString(ANDROID_VERSION);
 		device.osApiLevel = Build.VERSION.SDK_INT;
-		device.oemName = report.getString(ReportField.BRAND);
+		device.oemName = report.getString(BRAND);
 		device.locale = Locale.getDefault().toString();
 		device.timeZoneOffset = TimeZone.getDefault().getOffset(System.currentTimeMillis()) / 60 / 1000;
-		JSONObject displays = (JSONObject) report.get(ReportField.DISPLAY.toString());
+		JSONObject displays = (JSONObject) report.get(DISPLAY.toString());
 		if (displays != null) {
 			JSONObject display = (JSONObject) displays.opt(Integer.toString(Display.DEFAULT_DISPLAY));
 			if (display != null) {
@@ -110,7 +117,7 @@ public class AppCenterCollector implements Collector {
 		logs.add(errorLog);
 
 		StringBuilder sb = null;
-		JSONObject o = (JSONObject) report.get(ReportField.CUSTOM_DATA.name());
+		JSONObject o = (JSONObject) report.get(CUSTOM_DATA.name());
 		if (o != null) {
 			Object od = o.opt(Constants.KEY_APPCENTER_ATTACHMENT);
 			if (od != null) {
@@ -118,7 +125,7 @@ public class AppCenterCollector implements Collector {
 			}
 		}
 
-		String logcat = report.getString(ReportField.LOGCAT);
+		String logcat = report.getString(LOGCAT);
 		if (logcat != null) {
 			if (sb == null) {
 				sb = new StringBuilder(logcat);
@@ -129,9 +136,9 @@ public class AppCenterCollector implements Collector {
 		if (sb != null) {
 			Attachment logcatAttachment = new Attachment("attachment.txt");
 			logcatAttachment.data = Base64.encodeToString(sb.toString().getBytes(), Base64.DEFAULT);
-			logcatAttachment.errorId = report.getString(ReportField.REPORT_ID);
+			logcatAttachment.errorId = report.getString(REPORT_ID);
 			logcatAttachment.device = device;
-			logcatAttachment.timestamp = report.getString(ReportField.USER_CRASH_DATE);
+			logcatAttachment.timestamp = report.getString(USER_CRASH_DATE);
 			logs.add(logcatAttachment);
 		}
 
