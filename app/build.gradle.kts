@@ -8,6 +8,10 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val secret = Properties().also { properties ->
+    rootProject.file("keystore.properties").runCatching { inputStream().use(properties::load) }
+}
+
 android {
     compileSdk = rootProject.extra["compileSdk"] as Int
     ndkVersion = rootProject.extra["ndkVersion"] as String
@@ -36,13 +40,11 @@ android {
 
     signingConfigs {
         create("emulator") {
-            rootProject.file("keystore.properties").takeIf(File::isFile)?.inputStream().use {
-                val keystoreProperties = Properties()
-                keystoreProperties.load(it)
-                keyAlias = keystoreProperties["keyAlias"] as String
-                keyPassword = keystoreProperties["keyPassword"] as String
-                storeFile = rootProject.file(keystoreProperties["storeFile"] as String)
-                storePassword = keystoreProperties["storePassword"] as String
+            if (secret.isNotEmpty()) {
+                keyAlias = secret.getProperty("keyAlias")
+                keyPassword = secret.getProperty("keyPassword")
+                storeFile = rootProject.file(secret.getProperty("storeFile"))
+                storePassword = secret.getProperty("storePassword")
             }
         }
     }
@@ -80,10 +82,10 @@ android {
             // configure midlet's port project params here, as default it read from app manifest,
             // placed to 'app/src/midlet/resources/MIDLET-META-INF/MANIFEST.MF'
             val props = getMidletManifestProperties()
-            val midletName = props?.getValue("MIDlet-Name")?.trim() ?: "Demo MIDlet"
+            val midletName = props.getValue("MIDlet-Name")?.trim() ?: "Demo MIDlet"
             val apkName = midletName.replace("[/\\\\:*?\"<>|]".toRegex(), "").replace(" ", "_")
             applicationId = "com.example.androidlet.${apkName.lowercase(Locale.getDefault())}"
-            versionName = props?.getValue("MIDlet-Version") ?: "1.0"
+            versionName = props.getValue("MIDlet-Version") ?: "1.0"
             resValue("string", "app_name", midletName)
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -124,11 +126,10 @@ android {
     }
 }
 
-fun getMidletManifestProperties(): Attributes? {
-    val mf = Manifest()
-    project.file("src/midlet/resources/MIDLET-META-INF/MANIFEST.MF")
-        .takeIf(File::isFile)?.inputStream()
-        .use(mf::read)
+fun getMidletManifestProperties(): Attributes = Manifest().let { mf ->
+    project.file("src/midlet/resources/MIDLET-META-INF/MANIFEST.MF").runCatching {
+        inputStream().use(mf::read)
+    }
     return mf.mainAttributes
 }
 
