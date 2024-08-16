@@ -25,18 +25,21 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.HurlStack;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 
 import org.acra.ReportField;
+import org.acra.config.ConfigUtils;
+import org.acra.config.CoreConfiguration;
+import org.acra.config.HttpSenderConfiguration;
+import org.acra.config.HttpSenderConfigurationBuilder;
 import org.acra.data.CrashReportData;
+import org.acra.http.DefaultHttpRequest;
+import org.acra.security.TLS;
 import org.acra.sender.ReportSender;
+import org.acra.util.Installation;
 import org.json.JSONObject;
 
 import java.io.FileOutputStream;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,10 +51,37 @@ public class AppCenterSender implements ReportSender {
 	private static final String TAG = AppCenterSender.class.getSimpleName();
 	private static final String BASE_URL = "https://in.appcenter.ms/logs?Api-Version=1.0.0";
 
+	private final CoreConfiguration coreConfiguration;
+	private final HttpSenderConfiguration httpConfig;
+
+	public AppCenterSender(CoreConfiguration coreConfiguration) {
+		this.coreConfiguration = coreConfiguration;
+		httpConfig = ConfigUtils.getPluginConfiguration(coreConfiguration, HttpSenderConfiguration.class);
+	}
+
+	@NonNull
+	public static HttpSenderConfiguration buildHttpSenderConfiguration(Context context) {
+		HttpSenderConfigurationBuilder builder = new HttpSenderConfigurationBuilder();
+		// Force TLSv1.2 for Android 4.1-4.4
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN
+				&& Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+			builder.withCertificatePath("asset://appcenter.cer");
+			builder.withTlsProtocols(TLS.V1_2);
+		}
+		Map<String, String> httpHeaders = new HashMap<>();
+		httpHeaders.put("App-Secret", context.getString(R.string.app_center));
+		httpHeaders.put("Install-ID", Installation.id(context));
+		return builder.withUri(BASE_URL)
+				.withHttpHeaders(httpHeaders)
+				.withCompress(true)
+				.withEnabled(false)
+				.build();
+	}
+
 	@Override
-	public void send(@NonNull Context context, @NonNull final CrashReportData report) {
+	public void send(@NonNull Context context, @NonNull CrashReportData report) {
 		final String log = (String) report.get(AppCenterCollector.APPCENTER_LOG);
-		if (log == null || log.isEmpty()) {
+		if (log == null || log.isBlank()) {
 			return;
 		}
 		String key = context.getString(R.string.app_center);
@@ -59,36 +89,21 @@ public class AppCenterSender implements ReportSender {
 			saveToFile(context, report);
 			return;
 		}
-
-		// Force TLSv1.2 for Android 4.1-4.4
-		boolean forceTls12 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN
-				&& Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP;
-
-		HurlStack hurlStack = new HurlStack(null, forceTls12 ? new TLSSocketFactory(context) : null);
-		RequestQueue queue = Volley.newRequestQueue(context, hurlStack);
-		StringRequest postRequest = new StringRequest(Request.Method.POST, BASE_URL,
-				response -> Log.d(TAG, "send success: " + response),
-				error -> {
-					Log.e(TAG, "Response error", error);
-					new Thread(() -> saveToFile(context, report)).start();
-				}
-		) {
-			@Override
-			public Map<String, String> getHeaders() {
-				Map<String, String> params = new HashMap<>();
-				params.put("Content-Type", "application/json");
-				params.put("App-Secret", key);
-				params.put("Install-ID", report.getString(ReportField.INSTALLATION_ID));
-				return params;
-			}
-
-			@Override
-			public byte[] getBody() {
-				return log.getBytes();
-			}
-		};
-		postRequest.setShouldCache(false);
-		queue.add(postRequest);
+		try {
+			new DefaultHttpRequest(coreConfiguration,
+					context,
+					httpConfig.getHttpMethod(),
+					coreConfiguration.getReportFormat().getMatchingHttpContentType(),
+					null,
+					null,
+					httpConfig.getConnectionTimeout(),
+					httpConfig.getSocketTimeout(),
+					httpConfig.getHttpHeaders()
+			).send(new URL(httpConfig.getUri()), log);
+		} catch (Exception e) {
+			Log.e(TAG, "send: " + e, e);
+			saveToFile(context, report);
+		}
 	}
 
 	private static void saveToFile(@NonNull Context context, @NonNull CrashReportData report) {

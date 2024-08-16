@@ -154,8 +154,7 @@ dependencies {
     //noinspection GradleDependency (next version incompatible with Android 4)
     implementation("com.google.oboe:oboe:1.7.0")
 
-    implementation("ch.acra:acra-dialog:5.11.3")
-    implementation("com.android.volley:volley:1.2.1")
+    implementation("ch.acra:acra-http:5.11.3")
     implementation("com.github.nikita36078:mobile-ffmpeg:v4.3.2-compact")
     implementation("com.github.nikita36078:pngj:2.2.3")
     implementation("com.github.woesss:filepicker:4.4.0")

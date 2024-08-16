@@ -31,11 +31,6 @@ public class AppCenterSenderFactory implements ReportSenderFactory {
 	@NonNull
 	@Override
 	public ReportSender create(@NonNull Context context, @NonNull CoreConfiguration config) {
-		return new AppCenterSender();
-	}
-
-	@Override
-	public boolean enabled(@NonNull CoreConfiguration config) {
-		return true;
+		return new AppCenterSender(config);
 	}
 }
