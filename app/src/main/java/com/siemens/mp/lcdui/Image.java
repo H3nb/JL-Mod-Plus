@@ -26,6 +26,7 @@ import java.io.OutputStream;
 import javax.microedition.io.Connector;
 
 import ru.playsoftware.j2meloader.util.PNGUtils;
+import ru.woesss.util.TextUtils;
 
 public class Image extends com.siemens.mp.ui.Image {
 
@@ -89,7 +90,7 @@ public class Image extends com.siemens.mp.ui.Image {
 			file = "a:" + file;
 		}
 		try (OutputStream stream = Connector.openOutputStream("file:///" + file)) {
-			if (file.regionMatches(true, file.length() - 4, ".jpg", 0, 4)) {
+			if (TextUtils.endsWithIgnoreCase(file, ".jpg")) {
 				img.getBitmap().compress(Bitmap.CompressFormat.JPEG, 100, stream);
 			} else {
 				img.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, stream);

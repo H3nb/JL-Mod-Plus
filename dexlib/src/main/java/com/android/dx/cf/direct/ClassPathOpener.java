@@ -28,8 +28,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 
+import ru.woesss.util.TextUtils;
 import ru.woesss.util.zip.ZipFile;
 
 /**
@@ -149,11 +149,11 @@ public class ClassPathOpener {
             }
 
             String path = file.getPath();
-            String lowerName = file.getName().toLowerCase(Locale.US);
+            String name = file.getName();
 
-            if (lowerName.endsWith(".zip") ||
-                    lowerName.endsWith(".jar") ||
-                    lowerName.endsWith(".apk")) {
+            if (TextUtils.endsWithIgnoreCase(name, ".zip") ||
+                TextUtils.endsWithIgnoreCase(name, ".jar") ||
+                TextUtils.endsWithIgnoreCase(name, ".apk")) {
                 return processArchive(file);
             }
             if (filter.accept(path)) {

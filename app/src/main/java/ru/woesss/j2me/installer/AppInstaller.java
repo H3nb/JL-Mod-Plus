@@ -49,6 +49,7 @@ import ru.playsoftware.j2meloader.util.FileUtils;
 import ru.playsoftware.j2meloader.util.IOUtils;
 import ru.playsoftware.j2meloader.util.ZipUtils;
 import ru.woesss.j2me.jar.Descriptor;
+import ru.woesss.util.TextUtils;
 import ru.woesss.util.zip.ZipFile;
 
 public class AppInstaller {
@@ -121,7 +122,7 @@ public class AppInstaller {
 
 		String name = srcFile.getName();
 
-		if (name.toLowerCase().endsWith(".jad")) {
+		if (TextUtils.endsWithIgnoreCase(name, ".jad")) {
 			newDesc = new Descriptor(srcFile, true);
 			String url = newDesc.getJarUrl();
 			if (url == null) {
@@ -136,7 +137,7 @@ public class AppInstaller {
 					return;
 				}
 			}
-		} else if (name.toLowerCase().endsWith(".kjx")) {
+		} else if (TextUtils.endsWithIgnoreCase(name, ".kjx")) {
 			// Load kjx file
 			parseKjx();
 			newDesc = new Descriptor(srcFile, true);
@@ -213,8 +214,8 @@ public class AppInstaller {
 			connection.setReadTimeout(3 * 60 * 1000);
 			connection.setConnectTimeout(15000);
 			int code = connection.getResponseCode();
-			if (code == HttpURLConnection.HTTP_MOVED_PERM
-					|| code == HttpURLConnection.HTTP_MOVED_TEMP) {
+			if (code == HttpURLConnection.HTTP_MOVED_PERM ||
+				code == HttpURLConnection.HTTP_MOVED_TEMP) {
 				String urlStr = connection.getHeaderField("Location");
 				connection.disconnect();
 				connection = (HttpURLConnection) new URL(urlStr).openConnection();
@@ -432,8 +433,8 @@ public class AppInstaller {
 			connection.setReadTimeout(3 * 60 * 1000);
 			connection.setConnectTimeout(15000);
 			int code = connection.getResponseCode();
-			if (code == HttpURLConnection.HTTP_MOVED_PERM
-					|| code == HttpURLConnection.HTTP_MOVED_TEMP) {
+			if (code == HttpURLConnection.HTTP_MOVED_PERM ||
+				code == HttpURLConnection.HTTP_MOVED_TEMP) {
 				String urlStr = connection.getHeaderField("Location");
 				connection.disconnect();
 				connection = (HttpURLConnection) new URL(urlStr).openConnection();

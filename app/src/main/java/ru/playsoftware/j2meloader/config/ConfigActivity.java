@@ -74,12 +74,14 @@ import java.util.Set;
 import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
 
+import kotlin.io.FilesKt;
 import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.config.model.Size;
 import ru.playsoftware.j2meloader.databinding.ActivityConfigBinding;
 import ru.playsoftware.j2meloader.settings.KeyMapperActivity;
 import ru.playsoftware.j2meloader.util.FileUtils;
 import ru.playsoftware.j2meloader.util.ViewUtils;
+import ru.woesss.util.TextUtils;
 import yuku.ambilwarna.AmbilWarnaDialog;
 
 public class ConfigActivity extends AppCompatActivity implements View.OnClickListener, ShaderTuneAlert.Callback {
@@ -409,10 +411,22 @@ public class ConfigActivity extends AppCompatActivity implements View.OnClickLis
 		ArrayAdapter<ShaderInfo> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, shaders);
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		binding.spShader.setAdapter(adapter);
-		File[] files = dir.listFiles((f) -> f.isFile() && f.getName().toLowerCase().endsWith(".ini"));
+		String[] files = dir.list();
 		if (files != null) {
-			for (File file : files) {
-				String text = FileUtils.getText(file.getAbsolutePath());
+			for (String fileName : files) {
+				if (!TextUtils.endsWithIgnoreCase(fileName, ".ini")) {
+					continue;
+				}
+				File file = new File(dir, fileName);
+				String text;
+				try {
+					//noinspection CharsetObjectCanBeUsed
+					text = FilesKt.readText(file, Charset.forName("UTF-8"));
+				} catch (Exception e) {
+					Log.e(TAG, "getText: " + file, e);
+					continue;
+				}
+
 				String[] split = text.split("[\\n\\r]+");
 				ShaderInfo info = null;
 				for (String line : split) {

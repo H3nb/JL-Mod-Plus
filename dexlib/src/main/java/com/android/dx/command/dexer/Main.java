@@ -54,7 +54,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -70,6 +69,8 @@ import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+
+import ru.woesss.util.TextUtils;
 
 /**
  * Main class for the class file translator.
@@ -308,7 +309,7 @@ public class Main {
 
         try {
             for (int i = 0; i < fileNames.length; i++) {
-                processOne(fileNames[i], path -> path.toLowerCase(Locale.US).endsWith(".class"));
+                processOne(fileNames[i], path -> TextUtils.endsWithIgnoreCase(path, ".class"));
             }
         } catch (StopProcessing ex) {
             /*
@@ -413,7 +414,7 @@ public class Main {
      */
     private boolean processFileBytes(String name, long crc, byte[] bytes) {
 
-        boolean isClass = name != null && name.toLowerCase(Locale.US).endsWith(".class");
+        boolean isClass = name != null && TextUtils.endsWithIgnoreCase(name, ".class");
         boolean keepResources = (outputResources != null);
 
         if (!isClass && !keepResources) {
@@ -1124,12 +1125,10 @@ public class Main {
                         outputIsDirectory = true;
                     } else if (FileUtils.hasArchiveSuffix(outName)) {
                         jarOutput = true;
-                    } else if (outName.endsWith(".dex") ||
-                               outName.equals("-")) {
+                    } else if (TextUtils.endsWithIgnoreCase(outName, ".dex") || outName.equals("-")) {
                         jarOutput = false;
                     } else {
-                        context.err.println("unknown output extension: " +
-                                outName);
+                        context.err.println("unknown output extension: " + outName);
                         throw new UsageException();
                     }
                 } else if (parser.isArg("--dump-to=")) {
