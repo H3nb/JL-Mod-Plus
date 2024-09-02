@@ -38,6 +38,8 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
+import com.siemens.mp.io.file.FileConnection;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -57,7 +59,6 @@ import java.util.Vector;
 import java.util.regex.Pattern;
 
 import javax.microedition.io.file.ConnectionClosedException;
-import javax.microedition.io.file.FileConnection;
 import javax.microedition.util.ContextHolder;
 
 public class FileSystemFileConnection implements FileConnection {

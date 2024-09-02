@@ -1,5 +1,6 @@
 /*
  * Copyright 2018 Nikita Shakarun
+ * Copyright 2024 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +17,56 @@
 
 package com.siemens.mp.lcdui;
 
+import android.graphics.Bitmap;
+
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import javax.microedition.io.Connector;
+
+import ru.playsoftware.j2meloader.util.PNGUtils;
 
 public class Image extends com.siemens.mp.ui.Image {
 
 	public static javax.microedition.lcdui.Image createImageFromFile(String filename,
 																	 boolean scaleToFullScreen)
 			throws IOException {
-		return javax.microedition.lcdui.Image.createImage(filename);
+		if (scaleToFullScreen) {
+			return createImageFromFile(filename,
+					Displayable.getVirtualWidth(),
+					Displayable.getVirtualHeight());
+		} else {
+			return createImageFromFile(filename, 0, 0);
+		}
 	}
 
 	public static javax.microedition.lcdui.Image createImageFromFile(String filename,
 																	 int ScaleToWidth,
 																	 int ScaleToHeight)
 			throws IOException {
-		return javax.microedition.lcdui.Image.createImage(filename);
+		if (filename == null) {
+			throw new IllegalArgumentException();
+		} else if (filename.startsWith("\\") || filename.startsWith("/")) {
+			filename = "a:" + filename;
+		}
+		Bitmap bitmap;
+		try (InputStream stream = Connector.openInputStream("file:///" + filename)) {
+			bitmap = PNGUtils.getFixedBitmap(stream);
+		}
+		if (bitmap == null) {
+			throw new IOException("Can't decode image");
+		}
+		if (ScaleToWidth > 0) {
+			if (ScaleToHeight <= 0) {
+				ScaleToHeight = ScaleToWidth * bitmap.getHeight() / bitmap.getWidth();
+			}
+			bitmap = Bitmap.createScaledBitmap(bitmap, ScaleToWidth, ScaleToHeight, false);
+		} else if (ScaleToHeight > 0) {
+			ScaleToWidth = ScaleToHeight * bitmap.getWidth() / bitmap.getHeight();
+			bitmap = Bitmap.createScaledBitmap(bitmap, ScaleToWidth, ScaleToHeight, false);
+		}
+		return new javax.microedition.lcdui.Image(bitmap);
 	}
 
 	public static int getPixelColor(javax.microedition.lcdui.Image image, int x, int y)
@@ -38,16 +74,31 @@ public class Image extends com.siemens.mp.ui.Image {
 		return image.getBitmap().getPixel(x, y);
 	}
 
-	public static void setPixelColor(
-			javax.microedition.lcdui.Image image, int x, int y, int color) throws IllegalArgumentException {
+	public static void setPixelColor(javax.microedition.lcdui.Image image, int x, int y, int color)
+			throws IllegalArgumentException {
 		image.getBitmap().setPixel(x, y, color);
 	}
 
 	public static void writeImageToFile(javax.microedition.lcdui.Image img, String file)
 			throws IOException {
+		if (img == null) {
+			throw new NullPointerException();
+		} else if (file == null) {
+			throw new IllegalArgumentException();
+		} else if (file.startsWith("\\") || file.startsWith("/")) {
+			file = "a:" + file;
+		}
+		try (OutputStream stream = Connector.openOutputStream("file:///" + file)) {
+			if (file.regionMatches(true, file.length() - 4, ".jpg", 0, 4)) {
+				img.getBitmap().compress(Bitmap.CompressFormat.JPEG, 100, stream);
+			} else {
+				img.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, stream);
+			}
+		}
 	}
 
-	public static void writeBmpToFile(Image image, String filename)
+	public static void writeBmpToFile(javax.microedition.lcdui.Image image, String filename)
 			throws IOException {
+		writeImageToFile(image, filename);
 	}
 }
