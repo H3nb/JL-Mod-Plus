@@ -70,6 +70,8 @@ public class FileSystemFileConnection implements FileConnection {
 			"e:/",
 			"0:/",
 			"1:/",
+			"a:/",
+			"b:/",
 			"fs/MyStuff/"
 	);
 	private static final String[] FS_ROOTS = getFileSystemRoots();
@@ -122,7 +124,7 @@ public class FileSystemFileConnection implements FileConnection {
 
 	private String getFsRoot() {
 		int idx = FC_ROOTS.indexOf(root);
-		return FS_ROOTS[idx == -1 ? 0 : idx] + DIR_SEP_STR;
+		return FS_ROOTS[idx == -1 ? 0 : idx % FS_ROOTS.length] + DIR_SEP_STR;
 	}
 
 	private static String getRoot(String path) {
