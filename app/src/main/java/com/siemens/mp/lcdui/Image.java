@@ -67,7 +67,7 @@ public class Image extends com.siemens.mp.ui.Image {
 			ScaleToWidth = ScaleToHeight * bitmap.getWidth() / bitmap.getHeight();
 			bitmap = Bitmap.createScaledBitmap(bitmap, ScaleToWidth, ScaleToHeight, false);
 		}
-		return new javax.microedition.lcdui.Image(bitmap);
+		return new javax.microedition.lcdui.Image(bitmap, false);
 	}
 
 	public static int getPixelColor(javax.microedition.lcdui.Image image, int x, int y)

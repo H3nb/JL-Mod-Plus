@@ -25,8 +25,6 @@
 package com.nokia.mid.ui;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.util.Log;
 
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Font;
@@ -70,11 +68,12 @@ public class DirectUtils {
 	 * @return the created mutable image
 	 */
 	public static Image createImage(byte[] imageData, int imageOffset, int imageLength) {
-		BitmapFactory.Options opts = new BitmapFactory.Options();
-		opts.inMutable = true;
-		Bitmap bitmap = BitmapFactory.decodeByteArray(imageData, imageOffset, imageLength, opts);
-		if (!bitmap.isMutable()) Log.w(DirectUtils.class.getName(), "createImage: bitmap not is mutable");
-		return new Image(bitmap);
+		Image image = Image.createImage(imageData, imageOffset, imageLength);
+		Bitmap bitmap = image.getBitmap();
+		if (!bitmap.isMutable()) {
+			bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+		}
+		return new Image(bitmap, true);
 	}
 
 	/**

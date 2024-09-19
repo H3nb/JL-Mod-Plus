@@ -31,15 +31,17 @@ import javax.microedition.shell.AppClassLoader;
 import ru.playsoftware.j2meloader.util.PNGUtils;
 
 public class Image {
+	private final boolean mutable;
 	private Bitmap bitmap;
 	private Graphics graphics;
 	private final Rect bounds;
 	private boolean isBlackWhiteAlpha;
 
-	public Image(Bitmap bitmap) {
+	public Image(Bitmap bitmap, boolean mutable) {
 		if (bitmap == null) {
 			throw new NullPointerException();
 		}
+		this.mutable = mutable;
 		this.bitmap = bitmap;
 		bounds = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
 	}
@@ -55,7 +57,7 @@ public class Image {
 	public static Image createImage(int width, int height, int argb) {
 		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		if (argb != 0) bitmap.eraseColor(argb);
-		return new Image(bitmap);
+		return new Image(bitmap, true);
 	}
 
 	public static Image createImage(String resname) throws IOException {
@@ -69,7 +71,7 @@ public class Image {
 		if (b == null) {
 			throw new IOException("Can't decode image: " + resname);
 		}
-		return new Image(b);
+		return new Image(b, false);
 	}
 
 	public static Image createImage(InputStream stream) throws IOException {
@@ -77,7 +79,7 @@ public class Image {
 		if (b == null) {
 			throw new IOException("Can't decode image");
 		}
-		return new Image(b);
+		return new Image(b, false);
 	}
 
 	public static Image createImage(byte[] imageData, int imageOffset, int imageLength) {
@@ -85,18 +87,19 @@ public class Image {
 		if (b == null) {
 			throw new IllegalArgumentException("Can't decode image");
 		}
-		return new Image(b);
+		return new Image(b, false);
 	}
 
 	public static Image createImage(Image image, int x, int y, int width, int height, int transform) {
 		Matrix m = transform == 0 ? null : Sprite.transformMatrix(transform, width / 2.0f, height / 2.0f);
-		return new Image(Bitmap.createBitmap(image.bitmap, x, y, width, height, m, false));
+		return new Image(Bitmap.createBitmap(image.bitmap, x, y, width, height, m, false), false);
 	}
 
 	public static Image createImage(Image source) {
-		if (source.isMutable())
-			return new Image(Bitmap.createBitmap(source.bitmap));
-		return source;
+		if (!source.isMutable()) {
+			return source;
+		}
+		return new Image(source.bitmap.copy(Bitmap.Config.ARGB_8888, false), false);
 	}
 
 	public static Image createRGBImage(int[] rgb, int width, int height, boolean processAlpha) {
@@ -108,7 +111,7 @@ public class Image {
 			}
 			rgb = tmp;
 		}
-		return new Image(Bitmap.createBitmap(rgb, width, height, Bitmap.Config.ARGB_8888));
+		return new Image(Bitmap.createBitmap(rgb, width, height, Bitmap.Config.ARGB_8888), false);
 	}
 
 	public Graphics getGraphics() {
@@ -116,7 +119,7 @@ public class Image {
 	}
 
 	public boolean isMutable() {
-		return bitmap.isMutable();
+		return mutable;
 	}
 
 	public int getWidth() {
