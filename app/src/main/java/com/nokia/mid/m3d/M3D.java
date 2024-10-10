@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Yury Kharchenko
+ *  Copyright 2023-2024 Yury Kharchenko
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,8 +16,11 @@
 
 package com.nokia.mid.m3d;
 
+import static android.opengl.GLES20.*;
+
 import android.graphics.Bitmap;
-import android.graphics.Rect;
+import android.opengl.GLES10;
+import android.opengl.Matrix;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -27,47 +30,64 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
-import javax.microedition.khronos.opengles.GL10;
-import javax.microedition.khronos.opengles.GL11;
 import javax.microedition.lcdui.Graphics;
+import javax.microedition.lcdui.Image;
+import javax.microedition.lcdui.game.Sprite;
 
 // TODO: 23.01.2023 not implemented check exceptions
 public class M3D {
-	public static final int DEPTH_TEST = GL10.GL_DEPTH_TEST;
-	public static final int CULL_FACE = GL10.GL_CULL_FACE;
-	public static final int BACK = GL10.GL_BACK;
-	public static final int PROJECTION = GL10.GL_PROJECTION;
-	public static final int TEXTURE_COORD_ARRAY = GL10.GL_TEXTURE_COORD_ARRAY;
-	public static final int MODELVIEW = GL10.GL_MODELVIEW;
-	public static final int VERTEX_ARRAY = GL10.GL_VERTEX_ARRAY;
-	public static final int TEXTURE_2D = GL10.GL_TEXTURE_2D;
+	public static final int DEPTH_TEST = GLES10.GL_DEPTH_TEST;
+	public static final int CULL_FACE = GLES10.GL_CULL_FACE;
+	public static final int BACK = GLES10.GL_BACK;
+	public static final int PROJECTION = GLES10.GL_PROJECTION;
+	public static final int TEXTURE_COORD_ARRAY = GLES10.GL_TEXTURE_COORD_ARRAY;
+	public static final int MODELVIEW = GLES10.GL_MODELVIEW;
+	public static final int VERTEX_ARRAY = GLES10.GL_VERTEX_ARRAY;
+	public static final int TEXTURE_2D = GLES10.GL_TEXTURE_2D;
 	public static final int LUMINANCE8 = 0x8040;
-	public static final int COLOR_BUFFER_BIT = GL10.GL_COLOR_BUFFER_BIT;
-	public static final int DEPTH_BUFFER_BIT = GL10.GL_DEPTH_BUFFER_BIT;
-	public static final int TRIANGLES = GL10.GL_TRIANGLES;
+	public static final int COLOR_BUFFER_BIT = GLES10.GL_COLOR_BUFFER_BIT;
+	public static final int DEPTH_BUFFER_BIT = GLES10.GL_DEPTH_BUFFER_BIT;
+	public static final int TRIANGLES = GLES10.GL_TRIANGLES;
+	private static final float X2F = 1.0f / 65536.0f;
 
 	private final EGL10 egl;
-	private final GL11 gl;
 	private final EGLContext eglContext;
 	private final EGLDisplay eglDisplay;
 	private final EGLConfig eglConfig;
-	private final Rect rect = new Rect();
+	private final float[] projectionMatrix = new float[16];
+	private final float[] modelViewMatrix = new float[16 * 2];
+	private final float[] mvpMatrix = new float[16];
 
+	private boolean matrixValid;
+	private ShaderProgram shader;
 	private EGLSurface eglWindowSurface;
-	private Bitmap imageBuffer;
+	private Image imageBuffer;
 	private ByteBuffer pixelBuffer;
 	private int width;
 	private int height;
 	private ByteBuffer vertexBuffer;
 	private ByteBuffer indexBuffer;
 	private ByteBuffer texCoordBuffer;
+	private int matrixMode = MODELVIEW;
+	private boolean isTexEnabled;
 
 	public M3D() {
+		projectionMatrix[0] = 1.0f;
+		modelViewMatrix[0] = 1.0f;
+		projectionMatrix[5] = 1.0f;
+		modelViewMatrix[5] = 1.0f;
+		projectionMatrix[10] = 1.0f;
+		modelViewMatrix[10] = 1.0f;
+		projectionMatrix[15] = 1.0f;
+		modelViewMatrix[15] = 1.0f;
 		egl = (EGL10) EGLContext.getEGL();
 		eglDisplay = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
 		egl.eglInitialize(eglDisplay, null);
 
+		int EGL_OPENGL_ES2_BIT = 0x0004;
 		int[] configAttrs = {
+				EGL10.EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+				EGL10.EGL_SURFACE_TYPE, EGL10.EGL_PBUFFER_BIT,
 				EGL10.EGL_RED_SIZE, 8,
 				EGL10.EGL_GREEN_SIZE, 8,
 				EGL10.EGL_BLUE_SIZE, 8,
@@ -80,8 +100,12 @@ public class M3D {
 		egl.eglChooseConfig(eglDisplay, configAttrs, eglConfigs, 1, null);
 		eglConfig = eglConfigs[0];
 
-		eglContext = egl.eglCreateContext(eglDisplay, eglConfig, EGL10.EGL_NO_CONTEXT, null);
-		this.gl = (GL11) eglContext.getGL();
+		int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
+		int[] attrib_list = {
+				EGL_CONTEXT_CLIENT_VERSION, 2,
+				EGL10.EGL_NONE
+		};
+		eglContext = egl.eglCreateContext(eglDisplay, eglConfig, EGL10.EGL_NO_CONTEXT, attrib_list);
 	}
 
 	public static M3D createInstance() {
@@ -93,7 +117,7 @@ public class M3D {
 		if (width != this.width || height != this.height || eglWindowSurface == null) {
 			this.width = width;
 			this.height = height;
-			imageBuffer = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+			imageBuffer = new Image(Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888), true);
 			pixelBuffer = ByteBuffer.allocateDirect(width * height * 4).order(ByteOrder.nativeOrder());
 
 			if (eglWindowSurface != null) {
@@ -108,14 +132,12 @@ public class M3D {
 					EGL10.EGL_NONE};
 			eglWindowSurface = egl.eglCreatePbufferSurface(eglDisplay, eglConfig, surface_attribs);
 		}
-	}
-
-	private void bindEglContext() {
-		egl.eglMakeCurrent(eglDisplay, eglWindowSurface, eglWindowSurface, eglContext);
-	}
-
-	private void releaseEglContext() {
-		egl.eglMakeCurrent(eglDisplay, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT);
+		if (shader == null) {
+			bindEglContext();
+			shader = new ShaderProgram();
+			glVertexAttrib2f(shader.aTexCoord, -1.0f, -1.0f);
+			releaseEglContext();
+		}
 	}
 
 	public synchronized void removeBuffers() {
@@ -130,89 +152,189 @@ public class M3D {
 
 	public synchronized void cullFace(int mode) {
 		bindEglContext();
-		// revert facing as part of workaround mirroring frame
-		gl.glCullFace(mode == GL11.GL_BACK ? GL11.GL_FRONT : mode == GL11.GL_FRONT ? GL11.GL_BACK : mode);
+		glCullFace(mode);
 		releaseEglContext();
 	}
 
 	public synchronized void viewport(int x, int y, int w, int h) {
 		bindEglContext();
-		gl.glViewport(x, y, w, h);
+		glViewport(x, y, w, h);
 		releaseEglContext();
 	}
 
 	public synchronized void clear(int mask) {
 		bindEglContext();
-		gl.glClear(mask);
+		glClear(mask);
 		releaseEglContext();
 	}
 
 	public synchronized void matrixMode(int mode) {
-		bindEglContext();
-		gl.glMatrixMode(mode);
-		releaseEglContext();
+		this.matrixMode = mode;
 	}
 
 	public synchronized void loadIdentity() {
-		bindEglContext();
-		gl.glLoadIdentity();
-		releaseEglContext();
+		float[] matrix = matrixMode == PROJECTION ? projectionMatrix : modelViewMatrix;
+		Matrix.setIdentityM(matrix, 0);
+		matrixValid = false;
 	}
 
 	public synchronized void frustumxi(int left, int right, int bottom, int top, int near, int far) {
-		bindEglContext();
-		// flip 'top' and 'bottom' as part of workaround mirroring frame
-		gl.glFrustumx(left, right, top, bottom, near, far);
-		releaseEglContext();
+		float[] matrix = matrixMode == PROJECTION ? projectionMatrix : modelViewMatrix;
+		Matrix.frustumM(matrix, 0, left * X2F, right * X2F, bottom * X2F, top * X2F, near * X2F, far * X2F);
+		matrixValid = false;
 	}
 
 	public synchronized void scalexi(int x, int y, int z) {
-		bindEglContext();
-		gl.glScalex(x, y, z);
-		releaseEglContext();
+		float[] matrix = matrixMode == PROJECTION ? projectionMatrix : modelViewMatrix;
+		Matrix.scaleM(matrix, 0, x * X2F, y * X2F, z * X2F);
+		matrixValid = false;
 	}
 
 	public synchronized void translatexi(int x, int y, int z) {
-		bindEglContext();
-		gl.glTranslatex(x, y, z);
-		releaseEglContext();
+		float[] matrix = matrixMode == PROJECTION ? projectionMatrix : modelViewMatrix;
+		Matrix.translateM(matrix, 0, x * X2F, y * X2F, z * X2F);
+		matrixValid = false;
 	}
 
 	public synchronized void rotatexi(int angle, int x, int y, int z) {
-		bindEglContext();
-		gl.glRotatex(angle, x, y, z);
-		releaseEglContext();
+		float[] matrix = matrixMode == PROJECTION ? projectionMatrix : modelViewMatrix;
+		Matrix.rotateM(matrix, 0, angle * X2F, x * X2F, y * X2F, z * X2F);
+		matrixValid = false;
 	}
 
 	public synchronized void pushMatrix() {
-		bindEglContext();
-		gl.glPushMatrix();
-		releaseEglContext();
+		float[] matrix = matrixMode == PROJECTION ? projectionMatrix : modelViewMatrix;
+		System.arraycopy(matrix, 0, matrix, 16, matrix.length - 16);
 	}
 
 	public synchronized void popMatrix() {
-		bindEglContext();
-		gl.glPopMatrix();
-		releaseEglContext();
+		float[] matrix = matrixMode == PROJECTION ? projectionMatrix : modelViewMatrix;
+		System.arraycopy(matrix, 16, matrix, 0, matrix.length - 16);
+		matrixValid = false;
 	}
 
 	public synchronized void color4ub(byte r, byte g, byte b, byte a) {
 		bindEglContext();
-		gl.glColor4ub(r, g, b, a);
+		glUniform4f(shader.uColor, normalize(r), normalize(g), normalize(b), normalize(a));
 		releaseEglContext();
 	}
 
 	public synchronized void clearColor4ub(byte r, byte g, byte b, byte a) {
 		bindEglContext();
-		gl.glClearColor((r & 0xff) / 255.0f, (g & 0xff) / 255.0f, (b & 0xff) / 255.0f, (a & 0xff) / 255.0f);
+		glClearColor(normalize(r), normalize(g), normalize(b), normalize(a));
 		releaseEglContext();
 	}
 
 	public synchronized void vertexPointerub(int size, int stride, byte[] vertices) {
-		bindEglContext();
 		vertexBuffer = getBuffer(vertexBuffer, vertices);
-		gl.glVertexPointer(size, GL10.GL_BYTE, stride, vertexBuffer);
+		bindEglContext();
+		glVertexAttribPointer(shader.aPosition, size, GL_BYTE, false, stride, vertexBuffer);
 		releaseEglContext();
+	}
+
+	public synchronized void drawElementsub(int mode, int count, byte[] indices) {
+		indexBuffer = getBuffer(indexBuffer, indices);
+		bindEglContext();
+		if (!matrixValid) {
+			Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0);
+			glUniformMatrix4fv(shader.uMatrix, 1, false, mvpMatrix, 0);
+			matrixValid = true;
+		}
+		glDrawElements(mode, count, GL_UNSIGNED_BYTE, indexBuffer);
+		releaseEglContext();
+	}
+
+	public synchronized void drawArrays(int mode, int first, int count) {
+		bindEglContext();
+		if (!matrixValid) {
+			Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0);
+			glUniformMatrix4fv(shader.uMatrix, 1, false, mvpMatrix, 0);
+			matrixValid = true;
+		}
+		glDrawArrays(mode, first, count);
+		releaseEglContext();
+	}
+
+	public synchronized void bindTexture(int target, Texture texture) {
+		bindEglContext();
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(target, texture.glId());
+		glUniform1i(shader.uTextureUnit, 0);
+		releaseEglContext();
+	}
+
+	public synchronized void texCoordPointerub(int size, int stride, byte[] uvs) {
+		texCoordBuffer = getBuffer(texCoordBuffer, uvs);
+		bindEglContext();
+		glVertexAttribPointer(shader.aTexCoord, size, GL_BYTE, false, stride, texCoordBuffer);
+		releaseEglContext();
+	}
+
+	public synchronized void enableClientState(int array) {
+		int index;
+		if (array == TEXTURE_COORD_ARRAY) {
+			if (!isTexEnabled) {
+				return;
+			}
+			index = shader.aTexCoord;
+		} else if (array == VERTEX_ARRAY) {
+			index = shader.aPosition;
+		} else {
+			throw new IllegalArgumentException();
+		}
+		bindEglContext();
+		glEnableVertexAttribArray(index);
+		releaseEglContext();
+	}
+
+	public synchronized void disableClientState(int array) {
+		int index;
+		if (array == TEXTURE_COORD_ARRAY) {
+			index = shader.aTexCoord;
+		} else if (array == VERTEX_ARRAY) {
+			index = shader.aPosition;
+		} else {
+			throw new IllegalArgumentException();
+		}
+		bindEglContext();
+		glDisableVertexAttribArray(index);
+		releaseEglContext();
+	}
+
+	public synchronized void enable(int cap) {
+		if (cap == TEXTURE_2D) {
+			isTexEnabled = true;
+			return;
+		}
+		bindEglContext();
+		glEnable(cap);
+		releaseEglContext();
+	}
+
+	public synchronized void disable(int cap) {
+		if (cap == TEXTURE_2D) {
+			isTexEnabled = false;
+			return;
+		}
+		bindEglContext();
+		glDisable(cap);
+		releaseEglContext();
+	}
+
+	public synchronized void blit(Graphics g, int x, int y, int w, int h) {
+		if (pixelBuffer == null || w <= 0 || h <= 0) {
+			return;
+		}
+		bindEglContext();
+		glFinish();
+		glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixelBuffer.rewind());
+		imageBuffer.getBitmap().copyPixelsFromBuffer(pixelBuffer.rewind());
+		g.drawRegion(imageBuffer, x, y, w, h, Sprite.TRANS_MIRROR_ROT180, x, y, 0);
+		releaseEglContext();
+	}
+
+	private void bindEglContext() {
+		egl.eglMakeCurrent(eglDisplay, eglWindowSurface, eglWindowSurface, eglContext);
 	}
 
 	private static ByteBuffer getBuffer(ByteBuffer buffer, byte[] data) {
@@ -226,67 +348,11 @@ public class M3D {
 		return buffer;
 	}
 
-	public synchronized void drawElementsub(int mode, int count, byte[] indices) {
-		bindEglContext();
-		indexBuffer = getBuffer(indexBuffer, indices);
-		gl.glDrawElements(mode, count, GL10.GL_UNSIGNED_BYTE, indexBuffer);
-		releaseEglContext();
+	private static float normalize(byte v) {
+		return (v & 0xFF) / 255.0f;
 	}
 
-	public synchronized void drawArrays(int mode, int first, int count) {
-		bindEglContext();
-		gl.glDrawArrays(mode, first, count);
-		releaseEglContext();
-	}
-
-	public synchronized void bindTexture(int target, Texture texture) {
-		bindEglContext();
-		gl.glActiveTexture(GL10.GL_TEXTURE0);
-		gl.glBindTexture(target, texture.glId(gl));
-		releaseEglContext();
-	}
-
-	public synchronized void texCoordPointerub(int size, int stride, byte[] uvs) {
-		bindEglContext();
-		texCoordBuffer = getBuffer(texCoordBuffer, uvs);
-		gl.glTexCoordPointer(size, GL10.GL_BYTE, stride, texCoordBuffer);
-		releaseEglContext();
-	}
-
-	public synchronized void enableClientState(int array) {
-		bindEglContext();
-		gl.glEnableClientState(array);
-		releaseEglContext();
-	}
-
-	public synchronized void disableClientState(int array) {
-		bindEglContext();
-		gl.glDisableClientState(array);
-		releaseEglContext();
-	}
-
-	public synchronized void enable(int cap) {
-		bindEglContext();
-		gl.glEnable(cap);
-		releaseEglContext();
-	}
-
-	public synchronized void disable(int cap) {
-		bindEglContext();
-		gl.glDisable(cap);
-		releaseEglContext();
-	}
-
-	public synchronized void blit(Graphics g, int x, int y, int w, int h) {
-		if (pixelBuffer == null || w <= 0 || h <= 0) {
-			return;
-		}
-		bindEglContext();
-		gl.glFinish();
-		gl.glReadPixels(0, 0, width, height, GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, pixelBuffer.rewind());
-		imageBuffer.copyPixelsFromBuffer(pixelBuffer.rewind());
-		rect.set(x, y, x + w, y + h);
-		g.getCanvas().drawBitmap(imageBuffer, rect, rect, null);
-		releaseEglContext();
+	private void releaseEglContext() {
+		egl.eglMakeCurrent(eglDisplay, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT);
 	}
 }

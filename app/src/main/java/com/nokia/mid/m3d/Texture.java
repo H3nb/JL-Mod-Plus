@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Yury Kharchenko
+ *  Copyright 2023-2024 Yury Kharchenko
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,40 +16,38 @@
 
 package com.nokia.mid.m3d;
 
+import static android.opengl.GLES20.*;
+
 import android.util.Log;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.IntBuffer;
 
-import javax.microedition.khronos.opengles.GL11;
 import javax.microedition.lcdui.Image;
 
 public class Texture {
 	private static final String TAG = "nokia.m3d.Texture";
-	private static int sLastId;
-	private int mTexId = -1;
+	private static int lastId;
+	private final int[] id = {-1};
 	private final int target;
 	private final int format;
-
 	private final int width;
 	private final int height;
 	private final ByteBuffer buffer;
 
 	public Texture(int target, int format, Image image) {
-		if (format != 32832) {
+		if (format != M3D.LUMINANCE8) {
 			Log.e(TAG, "Not supported texture format: " + format);
 			throw new RuntimeException("Not supported texture format: " + format);
 		}
 		this.target = target;
-		this.format = GL11.GL_LUMINANCE;
+		this.format = GL_LUMINANCE;
 		width = image.getWidth();
 		height = image.getHeight();
-		int[] imagedata = new int[width * height];
-		image.getRGB(imagedata, 0, width, 0, 0, width, height);
+		int[] pixels = new int[width * height];
+		image.getRGB(pixels, 0, width, 0, 0, width, height);
 		buffer = ByteBuffer.allocateDirect(width * height);
 		// fill texData for luminance format
-		for (int p : imagedata) {
+		for (int p : pixels) {
 			int r = p >> 16 & 0xFF;
 			int g = p >> 8 & 0xFF;
 			int b = p & 0xFF;
@@ -57,35 +55,22 @@ public class Texture {
 		}
 	}
 
-	public int glId(GL11 gl) {
-		if (!gl.glIsTexture(mTexId)) {
-			generateId(gl);
-		} else {
-			return mTexId;
+	int glId() {
+		if (glIsTexture(id[0])) {
+			return id[0];
 		}
-		loadToGL(gl);
-		return mTexId;
-	}
-
-	private void generateId(GL11 gl) {
-		final IntBuffer textureIds = ByteBuffer.allocateDirect(4).order(ByteOrder.nativeOrder()).asIntBuffer();
 		synchronized (Texture.class) {
-			while (textureIds.get(0) <= sLastId) {
-				textureIds.rewind();
-				gl.glGenTextures(1, textureIds);
+			while (id[0] <= lastId) {
+				glGenTextures(1, id, 0);
 			}
-			sLastId = textureIds.get(0);
-			mTexId = textureIds.get(0);
+			lastId = id[0];
 		}
-	}
-
-	private void loadToGL(GL11 gl) {
-		gl.glBindTexture(target, mTexId);
-
-		gl.glTexParameteri(target, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
-		gl.glTexParameteri(target, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
-		gl.glTexParameteri(target, GL11.GL_TEXTURE_WRAP_S, GL11.GL_CLAMP_TO_EDGE);
-		gl.glTexParameteri(target, GL11.GL_TEXTURE_WRAP_T, GL11.GL_CLAMP_TO_EDGE);
-		gl.glTexImage2D(target, 0, format, width, height, 0, format, GL11.GL_UNSIGNED_BYTE, buffer.rewind());
+		glBindTexture(target, id[0]);
+		glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexImage2D(target, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, buffer.rewind());
+		return id[0];
 	}
 }
