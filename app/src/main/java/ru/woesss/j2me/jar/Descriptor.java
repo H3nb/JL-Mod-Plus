@@ -312,7 +312,7 @@ public class Descriptor {
 
 	public boolean containsAllAttributes(Descriptor o) {
 		for (Map.Entry<String, String> e : o.attributes.entrySet()) {
-			if (!e.getValue().equals(o.attributes.get(e.getKey()))) {
+			if (!e.getValue().equals(attributes.get(e.getKey()))) {
 				return false;
 			}
 		}
