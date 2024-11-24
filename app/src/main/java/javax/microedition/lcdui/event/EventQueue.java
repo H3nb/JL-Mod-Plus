@@ -1,6 +1,7 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017 Nikita Shakarun
+ * Copyright 2019-2024 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +18,10 @@
 
 package javax.microedition.lcdui.event;
 
+import javax.microedition.util.ContextHolder;
 import javax.microedition.util.LinkedList;
+
+import ru.playsoftware.j2meloader.R;
 
 /**
  * The event queue. A really complicated thing.
@@ -29,6 +33,7 @@ public class EventQueue implements Runnable {
 	private final Object waiter = new Object();
 	private final Object interlock = new Object();
 	private final Object callbackLock = new Object();
+	private final ThreadLocal<Integer> loopCounter = new ThreadLocal<>();
 
 	private boolean enabled;
 	private Thread thread;
@@ -50,10 +55,6 @@ public class EventQueue implements Runnable {
 		immediate = value;
 	}
 
-	public static boolean isImmediate() {
-		return immediate;
-	}
-
 	/**
 	 * Add event to the queue.
 	 * <p>
@@ -69,11 +70,23 @@ public class EventQueue implements Runnable {
 	public void postEvent(Event event) {
 
 		if (immediate) { // the immediate processing mode is enabled
-			event.enterQueue();
-			synchronized (callbackLock) {
-				event.run(); // process event on the spot
+			Integer integer = loopCounter.get();
+			int loop = (integer != null) ? integer : 0;
+			if (loop > 10) {
+				immediate = false;
+				ContextHolder.getActivity().toast(R.string.msg_immediate_mode_disabled);
+			} else {
+				event.enterQueue();
+				synchronized (callbackLock) {
+					try {
+						loopCounter.set(loop + 1);
+						event.run(); // process event on the spot
+					} finally {
+						loopCounter.set(loop);
+					}
+				}
+				return;      // and nothing to do here
 			}
-			return;      // and nothing to do here
 		}
 
 		boolean empty;
