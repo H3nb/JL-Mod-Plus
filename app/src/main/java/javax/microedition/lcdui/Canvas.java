@@ -62,6 +62,7 @@ import javax.microedition.lcdui.commands.AbstractSoftKeysBar;
 import javax.microedition.lcdui.event.CanvasEvent;
 import javax.microedition.lcdui.event.Event;
 import javax.microedition.lcdui.event.EventFilter;
+import javax.microedition.lcdui.event.PointerEvent;
 import javax.microedition.lcdui.graphics.CanvasView;
 import javax.microedition.lcdui.graphics.CanvasWrapper;
 import javax.microedition.lcdui.graphics.GlesView;
@@ -471,8 +472,8 @@ public abstract class Canvas extends Displayable {
 	 * @param x the pointer coordinate on the real screen
 	 * @return the corresponding pointer coordinate on the virtual screen
 	 */
-	private float convertPointerX(float x) {
-		return (x - onX) * width / onWidth;
+	private int convertPointerX(float x) {
+		return (int) ((x - onX) * width / onWidth);
 	}
 
 	/**
@@ -481,8 +482,8 @@ public abstract class Canvas extends Displayable {
 	 * @param y the pointer coordinate on the real screen
 	 * @return the corresponding pointer coordinate on the virtual screen
 	 */
-	private float convertPointerY(float y) {
-		return (y - onY) * height / onHeight;
+	private int convertPointerY(float y) {
+		return (int) ((y - onY) * height / onHeight);
 	}
 
 	@SuppressLint("ClickableViewAccessibility")
@@ -689,21 +690,21 @@ public abstract class Canvas extends Displayable {
 	protected void keyReleased(int keyCode) {
 	}
 
-	public void pointerPressed(int pointer, float x, float y) {
+	public void pointerPressed(int pointer, int x, int y) {
 		if (pointer == 0) {
-			pointerPressed(Math.round(x), Math.round(y));
+			pointerPressed(x, y);
 		}
 	}
 
-	public void pointerDragged(int pointer, float x, float y) {
+	public void pointerDragged(int pointer, int x, int y) {
 		if (pointer == 0) {
-			pointerDragged(Math.round(x), Math.round(y));
+			pointerDragged(x, y);
 		}
 	}
 
-	public void pointerReleased(int pointer, float x, float y) {
+	public void pointerReleased(int pointer, int x, int y) {
 		if (pointer == 0) {
-			pointerReleased(Math.round(x), Math.round(y));
+			pointerReleased(x, y);
 		}
 	}
 
@@ -1021,7 +1022,7 @@ public abstract class Canvas extends Displayable {
 					if (overlay != null) {
 						overlay.show();
 					}
-				case MotionEvent.ACTION_POINTER_DOWN:
+				case MotionEvent.ACTION_POINTER_DOWN: {
 					int index = event.getActionIndex();
 					int id = event.getPointerId(index);
 					float x = event.getX(index);
@@ -1029,70 +1030,69 @@ public abstract class Canvas extends Displayable {
 					if (overlay != null) {
 						overlay.pointerPressed(id, x, y);
 					}
-					if (settings.touchInput && id == 0 && virtualScreen.contains(x, y)) {
-						Display.postEvent(CanvasEvent.getInstance(Canvas.this,
-								CanvasEvent.POINTER_PRESSED,
+					if (settings.touchInput && virtualScreen.contains(x, y)) {
+						PointerEvent.sendPressed(Canvas.this,
 								id,
 								convertPointerX(x),
-								convertPointerY(y)));
+								convertPointerY(y));
 					}
 					break;
-				case MotionEvent.ACTION_MOVE:
+				}
+				case MotionEvent.ACTION_MOVE: {
 					int pointerCount = event.getPointerCount();
 					int historySize = event.getHistorySize();
 					for (int h = 0; h < historySize; h++) {
 						for (int p = 0; p < pointerCount; p++) {
-							id = event.getPointerId(p);
-							x = event.getHistoricalX(p, h);
-							y = event.getHistoricalY(p, h);
+							int id = event.getPointerId(p);
+							float x = event.getHistoricalX(p, h);
+							float y = event.getHistoricalY(p, h);
 							if (overlay != null) {
 								overlay.pointerDragged(id, x, y);
 							}
-							if (settings.touchInput && id == 0 && virtualScreen.contains(x, y)) {
-								Display.postEvent(CanvasEvent.getInstance(Canvas.this,
-										CanvasEvent.POINTER_DRAGGED,
+							if (settings.touchInput) {
+								PointerEvent.sendDragged(Canvas.this,
 										id,
 										convertPointerX(x),
-										convertPointerY(y)));
+										convertPointerY(y));
 							}
 						}
 					}
 					for (int p = 0; p < pointerCount; p++) {
-						id = event.getPointerId(p);
-						x = event.getX(p);
-						y = event.getY(p);
+						int id = event.getPointerId(p);
+						float x = event.getX(p);
+						float y = event.getY(p);
 						if (overlay != null) {
 							overlay.pointerDragged(id, x, y);
 						}
-						if (settings.touchInput && id == 0 && virtualScreen.contains(x, y)) {
-							Display.postEvent(CanvasEvent.getInstance(Canvas.this,
-									CanvasEvent.POINTER_DRAGGED,
+						if (settings.touchInput) {
+							PointerEvent.sendDragged(Canvas.this,
 									id,
 									convertPointerX(x),
-									convertPointerY(y)));
+									convertPointerY(y));
 						}
 					}
 					break;
+				}
 				case MotionEvent.ACTION_UP:
 					if (overlay != null) {
 						overlay.hide();
 					}
-				case MotionEvent.ACTION_POINTER_UP:
-					index = event.getActionIndex();
-					id = event.getPointerId(index);
-					x = event.getX(index);
-					y = event.getY(index);
+				case MotionEvent.ACTION_POINTER_UP: {
+					int index = event.getActionIndex();
+					int id = event.getPointerId(index);
+					float x = event.getX(index);
+					float y = event.getY(index);
 					if (overlay != null) {
 						overlay.pointerReleased(id, x, y);
 					}
-					if (settings.touchInput && id == 0 && virtualScreen.contains(x, y)) {
-						Display.postEvent(CanvasEvent.getInstance(Canvas.this,
-								CanvasEvent.POINTER_RELEASED,
+					if (settings.touchInput) {
+						PointerEvent.sendReleased(Canvas.this,
 								id,
 								convertPointerX(x),
-								convertPointerY(y)));
+								convertPointerY(y));
 					}
 					break;
+				}
 				case MotionEvent.ACTION_CANCEL:
 					if (overlay != null) {
 						overlay.cancel();

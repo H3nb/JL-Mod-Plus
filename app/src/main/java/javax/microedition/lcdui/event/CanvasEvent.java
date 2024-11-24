@@ -1,6 +1,7 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017 Nikita Shakarun
+ * Copyright 2020-2024 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +23,7 @@ import javax.microedition.lcdui.Canvas;
 import javax.microedition.util.ArrayStack;
 
 public class CanvasEvent extends Event {
-	private static final String TAG = CanvasEvent.class.getName();
-
-	private static final ArrayStack<CanvasEvent> recycled = new ArrayStack<>();
+	private static final String TAG = "CanvasEvent";
 
 	public static final int KEY_PRESSED = 0;
 	public static final int KEY_REPEATED = 1;
@@ -36,18 +35,18 @@ public class CanvasEvent extends Event {
 	public static final int HIDE_NOTIFY = 7;
 	public static final int SIZE_CHANGED = 8;
 
-	private static final int[] enqueued = new int[9];
+	private static final ArrayStack<CanvasEvent> recycled = new ArrayStack<>();
 
 	private Canvas canvas;
 	private int eventType;
 
 	private int keyCode;
 
-	private int pointer;
-	private float x, y;
+	private int pointer, x, y;
 
-	private int width;
-	private int height;
+	private int width, height;
+
+	private CanvasEvent() {}
 
 	public static Event getInstance(Canvas canvas, int eventType) {
 		return obtain(canvas, eventType);
@@ -59,7 +58,7 @@ public class CanvasEvent extends Event {
 		return instance;
 	}
 
-	public static Event getInstance(Canvas canvas, int eventType, int pointer, float x, float y) {
+	public static Event getInstance(Canvas canvas, int eventType, int pointer, int x, int y) {
 		CanvasEvent instance = obtain(canvas, eventType);
 		instance.pointer = pointer;
 		instance.x = x;
@@ -87,77 +86,69 @@ public class CanvasEvent extends Event {
 	@Override
 	public void process() {
 		switch (eventType) {
-			case KEY_PRESSED:
+			case KEY_PRESSED -> {
 				try {
 					canvas.doKeyPressed(keyCode);
 				} catch (Exception e) {
 					Log.e(TAG, "keyPressed: ", e);
 				}
-				break;
-
-			case KEY_REPEATED:
+			}
+			case KEY_REPEATED -> {
 				try {
 					canvas.doKeyRepeated(keyCode);
 				} catch (Exception e) {
 					Log.e(TAG, "keyRepeated: ", e);
 				}
-				break;
-
-			case KEY_RELEASED:
+			}
+			case KEY_RELEASED -> {
 				try {
 					canvas.doKeyReleased(keyCode);
 				} catch (Exception e) {
 					Log.e(TAG, "keyReleased: ", e);
 				}
-				break;
-
-			case POINTER_PRESSED:
+			}
+			case POINTER_PRESSED -> {
 				try {
 					canvas.pointerPressed(pointer, x, y);
 				} catch (Exception e) {
 					Log.e(TAG, "pointerPressed: ", e);
 				}
-				break;
-
-			case POINTER_DRAGGED:
+			}
+			case POINTER_DRAGGED -> {
 				try {
 					canvas.pointerDragged(pointer, x, y);
 				} catch (Exception e) {
 					Log.e(TAG, "pointerDragged: ", e);
 				}
-				break;
-
-			case POINTER_RELEASED:
+			}
+			case POINTER_RELEASED -> {
 				try {
 					canvas.pointerReleased(pointer, x, y);
 				} catch (Exception e) {
 					Log.e(TAG, "pointerReleased: ", e);
 				}
-				break;
-
-			case SHOW_NOTIFY:
+			}
+			case SHOW_NOTIFY -> {
 				try {
 					canvas.doShowNotify();
 				} catch (Exception e) {
 					Log.e(TAG, "showNotify: ", e);
 				}
-				break;
-
-			case HIDE_NOTIFY:
+			}
+			case HIDE_NOTIFY -> {
 				try {
 					canvas.doHideNotify();
 				} catch (Exception e) {
 					Log.e(TAG, "hideNotify: ", e);
 				}
-				break;
-
-			case SIZE_CHANGED:
+			}
+			case SIZE_CHANGED -> {
 				try {
 					canvas.doSizeChanged(width, height);
 				} catch (Exception e) {
 					Log.e(TAG, "sizeChanged: ", e);
 				}
-				break;
+			}
 		}
 	}
 
@@ -169,23 +160,14 @@ public class CanvasEvent extends Event {
 
 	@Override
 	public void enterQueue() {
-		enqueued[eventType]++;
 	}
 
 	@Override
 	public void leaveQueue() {
-		enqueued[eventType]--;
 	}
 
 	@Override
 	public boolean placeableAfter(Event event) {
-		if (event instanceof CanvasEvent) {
-			switch (eventType) {
-				case KEY_REPEATED:
-				case POINTER_DRAGGED:
-					return enqueued[eventType] < 2;
-			}
-		}
 		return true;
 	}
 }
