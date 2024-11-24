@@ -17,7 +17,6 @@
 package com.mexa.opgl;
 
 import android.graphics.Bitmap;
-import android.graphics.Matrix;
 import android.opengl.GLUtils;
 
 import java.util.concurrent.Callable;
@@ -30,12 +29,11 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
-import javax.microedition.khronos.opengles.GL10;
 import javax.microedition.khronos.opengles.GL11;
 import javax.microedition.khronos.opengles.GL11Ext;
 import javax.microedition.lcdui.Graphics;
 
-import ru.woesss.j2me.micro3d.BufferUtils;
+import ru.woesss.gles.GLESUtils;
 
 public class OpglGraphics {
 	public static final int GL_ACTIVE_TEXTURE = 34016;
@@ -420,9 +418,6 @@ public class OpglGraphics {
 	private int width;
 	private int height;
 	private EGLSurface eglWindowSurface;
-	private Bitmap imageBuffer;
-	private java.nio.ByteBuffer pixelBuffer;
-	private final Matrix matrix = new Matrix();
 
 	private OpglGraphics() {
 		egl = (EGL10) EGLContext.getEGL();
@@ -448,7 +443,7 @@ public class OpglGraphics {
 		if (error != EGL10.EGL_SUCCESS) {
 			throw new RuntimeException("EGL filed: " + GLUtils.getEGLErrorString(error));
 		}
-		this.executor = Executors.newSingleThreadExecutor(r -> new Thread(r, "OpglRenderer"));
+		this.executor = Executors.newSingleThreadExecutor(r -> new Thread(r, "OpglGraphicsRenderer"));
 	}
 
 	public static OpglGraphics getInstance() {
@@ -471,8 +466,6 @@ public class OpglGraphics {
 			if (width != this.width || height != this.height || eglWindowSurface == null) {
 				this.width = width;
 				this.height = height;
-				imageBuffer = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-				pixelBuffer = BufferUtils.createByteBuffer(width * height * 4);
 
 				if (eglWindowSurface != null) {
 					egl.eglMakeCurrent(eglDisplay, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT);
@@ -497,9 +490,7 @@ public class OpglGraphics {
 			if (graphics == null || width <= 0 || height <= 0) {
 				return;
 			}
-			gl.glReadPixels(0, 0, width, height, GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, pixelBuffer.rewind());
-			imageBuffer.copyPixelsFromBuffer(pixelBuffer.rewind());
-			graphics.getCanvas().drawBitmap(imageBuffer, matrix, null);
+			GLESUtils.blit(0, 0, width, height, graphics.getBitmap());
 			graphics = null;
 		});
 	}

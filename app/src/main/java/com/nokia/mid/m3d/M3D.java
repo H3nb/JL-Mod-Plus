@@ -18,7 +18,6 @@ package com.nokia.mid.m3d;
 
 import static android.opengl.GLES20.*;
 
-import android.graphics.Bitmap;
 import android.opengl.GLES10;
 import android.opengl.Matrix;
 
@@ -31,8 +30,8 @@ import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
 import javax.microedition.lcdui.Graphics;
-import javax.microedition.lcdui.Image;
-import javax.microedition.lcdui.game.Sprite;
+
+import ru.woesss.gles.GLESUtils;
 
 // TODO: 23.01.2023 not implemented check exceptions
 public class M3D {
@@ -61,8 +60,6 @@ public class M3D {
 	private boolean matrixValid;
 	private ShaderProgram shader;
 	private EGLSurface eglWindowSurface;
-	private Image imageBuffer;
-	private ByteBuffer pixelBuffer;
 	private int width;
 	private int height;
 	private ByteBuffer vertexBuffer;
@@ -117,8 +114,6 @@ public class M3D {
 		if (width != this.width || height != this.height || eglWindowSurface == null) {
 			this.width = width;
 			this.height = height;
-			imageBuffer = new Image(Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888), true);
-			pixelBuffer = ByteBuffer.allocateDirect(width * height * 4).order(ByteOrder.nativeOrder());
 
 			if (eglWindowSurface != null) {
 				releaseEglContext();
@@ -145,8 +140,6 @@ public class M3D {
 			releaseEglContext();
 			egl.eglDestroySurface(eglDisplay, eglWindowSurface);
 			eglWindowSurface = null;
-			imageBuffer = null;
-			pixelBuffer = null;
 		}
 	}
 
@@ -322,14 +315,12 @@ public class M3D {
 	}
 
 	public synchronized void blit(Graphics g, int x, int y, int w, int h) {
-		if (pixelBuffer == null || w <= 0 || h <= 0) {
+		if (w <= 0 || h <= 0) {
 			return;
 		}
 		bindEglContext();
 		glFinish();
-		glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixelBuffer.rewind());
-		imageBuffer.getBitmap().copyPixelsFromBuffer(pixelBuffer.rewind());
-		g.drawRegion(imageBuffer, x, y, w, h, Sprite.TRANS_MIRROR_ROT180, x, y, 0);
+		GLESUtils.blit2(x, y, w, h, g.getBitmap());
 		releaseEglContext();
 	}
 
