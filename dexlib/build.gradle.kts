@@ -28,6 +28,6 @@ android {
 
 dependencies {
     implementation(fileTree("dir" to "libs", "include" to listOf("*.jar")))
-    api("net.lingala.zip4j:zip4j:2.11.5")
-    implementation("org.ow2.asm:asm:9.6")
+    api(libs.zip4j)
+    implementation(libs.asm)
 }

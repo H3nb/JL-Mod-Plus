@@ -1,11 +1,12 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Locale
 import java.util.Properties
 import java.util.jar.Attributes
 import java.util.jar.Manifest
 
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
 }
 
 val secret = Properties().also { properties ->
@@ -29,6 +30,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    @Suppress("UnstableApiUsage")
     androidResources.generateLocaleConfig = true
 
     buildFeatures {
@@ -115,6 +117,8 @@ android {
     }
 }
 
+kotlin.compilerOptions.jvmTarget.set(JvmTarget.JVM_17)
+
 fun getMidletManifestProperties(): Attributes = Manifest().let { mf ->
     project.file("src/midlet/resources/MIDLET-META-INF/MANIFEST.MF").runCatching {
         inputStream().use(mf::read)
@@ -123,48 +127,44 @@ fun getMidletManifestProperties(): Attributes = Manifest().let { mf ->
 }
 
 dependencies {
-    implementation(project(":dexlib"))
+    implementation(projects.dexlib)
 
-    val roomVersion = "2.6.1"
-    annotationProcessor("androidx.room:room-compiler:$roomVersion")
-    implementation("androidx.room:room-runtime:$roomVersion")
-    implementation("androidx.room:room-rxjava2:$roomVersion")
+    implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.arch.core.common)
+    implementation(libs.androidx.collection)
+    implementation(libs.androidx.concurrent.futures)
+    implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.coordinatorlayout)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.documentfile)
+    implementation(libs.androidx.fragment.ktx)
+    implementation(libs.androidx.lifecycle.common)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.multidex)
+    implementation(libs.androidx.preference.ktx)
+    implementation(libs.androidx.recyclerview)
+    annotationProcessor(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.rxjava2)
+    implementation(libs.androidx.transition)
 
-    annotationProcessor("com.google.auto.service:auto-service:1.1.1")
-    compileOnly("com.google.auto.service:auto-service-annotations:1.1.1")
+    annotationProcessor(libs.google.auto.service)
+    compileOnly(libs.google.auto.service.annotations)
+    implementation(libs.google.gson)
+    implementation(libs.google.material)
+    implementation(libs.google.oboe)
 
-    implementation("androidx.activity:activity-ktx:1.8.2")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("androidx.arch.core:core-common:2.2.0")
-    implementation("androidx.collection:collection-ktx:1.3.0")
-    implementation("androidx.concurrent:concurrent-futures:1.1.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("androidx.coordinatorlayout:coordinatorlayout:1.2.0")
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.documentfile:documentfile:1.0.1")
-    implementation("androidx.fragment:fragment-ktx:1.6.2")
-    implementation("androidx.lifecycle:lifecycle-common:2.6.2")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.2")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
-    implementation("androidx.multidex:multidex:2.0.1")
-    implementation("androidx.preference:preference-ktx:1.2.1")
-    implementation("androidx.recyclerview:recyclerview:1.3.2")
-    implementation("androidx.transition:transition:1.4.1")
-    implementation("com.google.android.material:material:1.11.0")
-    //noinspection GradleDependency (next version incompatible with Android 4)
-    implementation("com.google.oboe:oboe:1.7.0")
+    implementation(libs.acra.http)
+    implementation(libs.ambilwarna)
+    implementation(libs.donations)
+    implementation(libs.ffmpeg.mobile)
+    implementation(libs.filepicker)
+    implementation(libs.pngj)
+    implementation(libs.rx.android)
 
-    implementation("ch.acra:acra-http:5.11.3")
-    implementation("com.github.nikita36078:mobile-ffmpeg:v4.3.2-compact")
-    implementation("com.github.nikita36078:pngj:2.2.3")
-    implementation("com.github.woesss:filepicker:4.4.0")
-    implementation("com.github.yukuku:ambilwarna:2.0.1")
-    implementation("com.github.penn5:donations:3.6.0")
-    //noinspection GradleDependency (next version incompatible with Android 4)
-    implementation("com.google.code.gson:gson:2.9.1")
-    implementation("io.reactivex.rxjava2:rxandroid:2.1.1")
-
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
 }
