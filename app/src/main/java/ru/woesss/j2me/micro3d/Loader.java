@@ -333,6 +333,7 @@ class Loader {
 		}
 
 		int paletteOffset = BMP_FILE_HEADER_SIZE + dibHeaderSize;
+		if(rasterOffset < paletteOffset + 256 * 4) rasterOffset = paletteOffset + 256 * 4;
 
 		TextureData textureData = new TextureData(width, height);
 		ByteBuffer raster = textureData.getRaster();
