@@ -21,6 +21,9 @@
 
 package javax.microedition.m3g;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 
@@ -30,10 +33,10 @@ import javax.microedition.lcdui.Image;
  * synchronizing 2D and 3D rendering.
  */
 class Platform {
-	/**
-	 * eSWT display for ui thread access
-	 */
+
 	private static boolean libraryLoaded = false;
+	private static ExecutorService executor;
+	private static Thread m3gThread;
 
 	//------------------------------------------------------------------
 	// Package private methods
@@ -48,8 +51,16 @@ class Platform {
 		}
 
 		if (obj != null) {
-			// In this case we are in UI thread so just execute directly
-			obj.run();
+			if (Thread.currentThread() != m3gThread) {
+				try {
+					executor.submit(obj).get();
+				} catch (Throwable e) {
+					throw new RuntimeException(e);
+				}
+			} else {
+				// In this case we are in UI thread so just execute directly
+				obj.run();
+			}
 			// Check if any exceptions occured in execution
 			// and throw forward in caller thread
 			obj.checkAndThrow();
@@ -63,15 +74,20 @@ class Platform {
 	 * otherwise false
 	 */
 	static boolean uiThreadAvailable() {
-		{
-			// UI thread is available, so load native library if not already loaded
-			if (!libraryLoaded) {
-				System.loadLibrary("c++_shared");
-				System.loadLibrary("javam3g");
-				libraryLoaded = true;
-			}
+		if (executor != null) {
 			return true;
 		}
+		executor = Executors.newSingleThreadExecutor(r -> {
+			m3gThread = new Thread(r, "M3G");
+			return m3gThread;
+		});
+		// UI thread is available, so load native library if not already loaded
+		if (!libraryLoaded) {
+			System.loadLibrary("c++_shared");
+			System.loadLibrary("javam3g");
+			libraryLoaded = true;
+		}
+		return true;
 	}
 
 	/**
