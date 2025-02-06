@@ -1,7 +1,7 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2020 Nikita Shakarun
- * Copyright 2019-2024 Yury Kharchenko
+ * Copyright 2019-2025 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,7 +143,7 @@ public abstract class Canvas extends Displayable {
 	private boolean fullscreen;
 	private boolean visible;
 	private boolean sizeChangedCalled;
-	private Image offscreen;
+	private static Image offscreen;
 	private Image offscreenCopy;
 	private int onX, onY, onWidth, onHeight;
 	private long lastFrameTime = System.currentTimeMillis();
@@ -438,12 +438,10 @@ public abstract class Canvas extends Displayable {
 		virtualScreen.set(onX, onY, onX + onWidth, onY + onHeight);
 
 		synchronized (bufferLock) {
-			if (offscreen == null) {
-				offscreen = Image.createImage(width, maxHeight);
+			if (offscreenCopy == null) {
 				offscreenCopy = Image.createImage(width, maxHeight);
 			}
-			if (offscreen.getWidth() != width || offscreen.getHeight() != height) {
-				offscreen.setSize(width, height);
+			if (offscreenCopy.getWidth() != width || offscreenCopy.getHeight() != height) {
 				offscreenCopy.setSize(width, height);
 			}
 		}
@@ -459,8 +457,8 @@ public abstract class Canvas extends Displayable {
 			float gt = 1.0f - 2.0f * virtualScreen.top / displayHeight;
 			float gr = 2.0f * virtualScreen.right / displayWidth - 1.0f;
 			float gb = 1.0f - 2.0f * virtualScreen.bottom / displayHeight;
-			float th = (float) height / offscreen.getBitmap().getHeight();
-			float tw = (float) width / offscreen.getBitmap().getWidth();
+			float th = (float) height / offscreenCopy.getBitmap().getHeight();
+			float tw = (float) width / offscreenCopy.getBitmap().getWidth();
 			renderer.updateSize(gl, gt, gr, gb, th, tw);
 		}
 		repaintInternal();
@@ -883,6 +881,12 @@ public abstract class Canvas extends Displayable {
 			}
 			if (l >= r || t >= b) {
 				return;
+			}
+			if (offscreen == null) {
+				offscreen = Image.createImage(width, maxHeight);
+			}
+			if (offscreen.getWidth() != width || offscreen.getHeight() != height) {
+				offscreen.setSize(width, height);
 			}
 			Graphics g = offscreen.getSingleGraphics();
 			g.reset(l, t, r, b);
