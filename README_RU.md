@@ -1,6 +1,7 @@
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/woesss/JL-Mod?style=plastic)](https://github.com/woesss/JL-Mod/releases/latest)
 [![donate](https://img.shields.io/badge/donate-PayPal-%234D8A99?style=plastic)](https://www.paypal.me/j2meforever)  
-[Go to English](README.md)  
+
+\[ [EN](README_RU.md) | RU \]  
 
 Неофициальный форк ["J2ME Loader" (J2ME эмулятор для Android)](https://github.com/nikita36078/J2ME-Loader)
 
