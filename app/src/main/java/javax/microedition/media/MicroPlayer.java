@@ -1,7 +1,7 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2020 Nikita Shakarun
- * Copyright 2020-2024 Yury Kharchenko
+ * Copyright 2020-2025 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import java.util.concurrent.Executors;
 
 import javax.microedition.amms.control.PanControl;
 import javax.microedition.amms.control.audioeffect.EqualizerControl;
+import javax.microedition.media.control.MIDIControl;
 import javax.microedition.media.control.MetaDataControl;
 import javax.microedition.media.control.ToneControl;
 import javax.microedition.media.control.VolumeControl;
@@ -39,6 +40,7 @@ import javax.microedition.media.tone.ToneSequence;
 
 import kotlin.io.FilesKt;
 import ru.woesss.j2me.mmapi.FileCacheDataSource;
+import ru.woesss.j2me.mmapi.control.MIDIControlImpl;
 import ru.woesss.j2me.mmapi.protocol.device.DeviceMetaData;
 
 class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener,
@@ -86,6 +88,8 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 		controls.put(PanControl.class.getName(), this);
 		controls.put(MetaDataControl.class.getName(), metadata);
 		controls.put(EqualizerControl.class.getName(), new InternalEqualizer());
+		// TODO: 12.02.2025 Needs to be added only if content type is MIDI
+		controls.put(MIDIControl.class.getName(), new MIDIControlImpl(this));
 	}
 
 	@Override
