@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Yury Kharchenko
+ * Copyright 2020-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,13 @@ import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import org.acra.ACRA;
+import org.acra.ErrorReporter;
+
+import java.io.File;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -45,6 +52,8 @@ import ru.playsoftware.j2meloader.applist.AppItem;
 import ru.playsoftware.j2meloader.applist.AppListModel;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.databinding.FragmentInstallerBinding;
+import ru.playsoftware.j2meloader.util.Constants;
+import ru.playsoftware.j2meloader.util.FileUtils;
 import ru.woesss.j2me.jar.Descriptor;
 
 public class InstallerDialog extends DialogFragment {
@@ -145,8 +154,8 @@ public class InstallerDialog extends DialogFragment {
 		reinstallApp(id);
 	}
 
-	private void installApp(String path, Uri uri) {
-		installer = new AppInstaller(path, uri, appListModel);
+	private void installApp(File jar, Uri uri) {
+		installer = new AppInstaller(jar, uri, appListModel);
 		btnClose.setOnClickListener(v -> {
 			installer.deleteTemp();
 			installer.clearCache();
@@ -302,7 +311,43 @@ public class InstallerDialog extends DialogFragment {
 
 	private void onError(Throwable e) {
 		Log.e("Installer", e.toString(), e);
-		ACRA.getErrorReporter().handleException(e);
+		ErrorReporter errorReporter = ACRA.getErrorReporter();
+		Bundle args = getArguments();
+		if (args != null) {
+			String report = errorReporter.getCustomData(Constants.KEY_APPCENTER_ATTACHMENT);
+			StringBuilder sb = new StringBuilder();
+			if (report != null) {
+				sb.append(report);
+			}
+			sb.append("\n====================Installer==================\n");
+			Uri uri = args.getParcelable(ARG_URI);
+			if (uri != null) {
+				sb.append("from uri: ").append(uri).append('\n');
+			}
+			Descriptor descriptor = installer.getNewDescriptor();
+			if (descriptor != null) {
+				sb.append(Descriptor.MIDLET_NAME).append(": ").append(descriptor.getName()).append("\n");
+				sb.append(Descriptor.MIDLET_VENDOR).append(": ").append(descriptor.getVendor()).append("\n");
+				sb.append(Descriptor.MIDLET_VERSION).append(": ").append(descriptor.getVersion()).append("\n");
+			}
+			File jar = installer.getJar();
+			if (jar != null) {
+				String jarSize = Long.toString(jar.length());
+				sb.append(Descriptor.MIDLET_JAR_SIZE).append(": ").append(jarSize).append("\n");
+				try {
+					byte[] bytes = FileUtils.getBytes(jar);
+					byte[] sum = MessageDigest.getInstance("md5").digest(bytes);
+					BigInteger bi = new BigInteger(1, sum);
+					String jarHash = bi.toString(16);
+					sb.append("JAR_HASH_MD5").append(": ").append(jarHash);
+				} catch (IOException ignored) {
+				} catch (NoSuchAlgorithmException ignored) {
+				}
+			}
+			errorReporter.putCustomData(Constants.KEY_APPCENTER_ATTACHMENT, sb.toString());
+		}
+
+		errorReporter.handleException(e);
 		installer.clearCache();
 		installer.deleteTemp();
 		if (!isAdded()) {

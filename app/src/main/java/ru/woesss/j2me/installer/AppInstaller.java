@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Yury Kharchenko
+ * Copyright 2020-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,10 +76,12 @@ public class AppInstaller {
 	private AppItem currentApp;
 	private File srcFile;
 
-	AppInstaller(String path, Uri uri, AppListModel appListModel) {
+	AppInstaller(File jar, Uri uri, AppListModel appListModel) {
 		id = -1;
 		this.appListModel = appListModel;
-		if (path != null) srcFile = new File(path);
+		if (jar != null) {
+			srcFile = jar;
+		}
 		this.uri = uri;
 	}
 
@@ -255,8 +257,9 @@ public class AppInstaller {
 			throw new ConverterException("Can't create cache dir");
 		}
 		tmpDir = new File(targetDir.getParent(), ".tmp");
-		if (!tmpDir.isDirectory() && !tmpDir.mkdirs())
+		if (!tmpDir.isDirectory() && !tmpDir.mkdirs()) {
 			throw new ConverterException("Can't create directory: '" + targetDir + "'");
+		}
 		if (srcJar == null) {
 			srcJar = new File(cacheDir, "tmp.jar");
 			downloadJar();
@@ -474,8 +477,8 @@ public class AppInstaller {
 		}
 	}
 
-	public String getJar() {
-		return srcJar == null ? null : srcJar.getAbsolutePath();
+	public File getJar() {
+		return srcJar;
 	}
 
 	void clearCache() {
