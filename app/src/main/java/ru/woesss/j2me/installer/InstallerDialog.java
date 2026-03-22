@@ -241,7 +241,7 @@ public class InstallerDialog extends DialogFragment {
 			}
 			btnOk.setText(R.string.START_CMD);
 			btnOk.setOnClickListener(v -> {
-				Config.startApp(v.getContext(), app.getTitle(), app.getPathExt(), false);
+				Config.startApp(v.getContext(), app.getTitle(), app.getPathExt());
 				dismiss();
 			});
 			btnClose.setText(R.string.close);
@@ -269,7 +269,7 @@ public class InstallerDialog extends DialogFragment {
 				btnRun.setOnClickListener(v -> {
 					installer.clearCache();
 					installer.deleteTemp();
-					Config.startApp(v.getContext(), app.getTitle(), app.getPathExt(), false);
+					Config.startApp(v.getContext(), app.getTitle(), app.getPathExt());
 					dismiss();
 				});
 			}
@@ -287,7 +287,7 @@ public class InstallerDialog extends DialogFragment {
 				installer.clearCache();
 				installer.deleteTemp();
 				AppItem app = installer.getExistsApp();
-				Config.startApp(getContext(), app.getTitle(), app.getPathExt(), false);
+				Config.startApp(getContext(), app.getTitle(), app.getPathExt());
 				dismiss();
 				return;
 			}

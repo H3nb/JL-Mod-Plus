@@ -1,6 +1,6 @@
 /*
  * Copyright 2018-2019 Nikita Shakarun
- * Copyright 2020-2023 Yury Kharchenko
+ * Copyright 2020-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,21 +101,30 @@ public class Config {
 		return appDir;
 	}
 
-	public static void startApp(Context context, String name, String path, boolean showSettings) {
-		File appDir = new File(path);
-		String workDir = appDir.getParentFile().getParent();
-		File file = new File(workDir + Config.MIDLET_CONFIGS_DIR + appDir.getName());
-		if (showSettings || !file.exists()) {
-			Intent intent = new Intent(ACTION_EDIT, Uri.parse(path),
-					context, ConfigActivity.class);
-			intent.putExtra(KEY_MIDLET_NAME, name);
-			context.startActivity(intent);
-		} else {
-			Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(path),
-					context, MicroActivity.class);
-			intent.putExtra(KEY_MIDLET_NAME, name);
-			context.startActivity(intent);
+	public static void openSettings(Context context, String name, String path) {
+		Intent intent = new Intent(ACTION_EDIT, Uri.parse(path), context, ConfigActivity.class);
+		intent.putExtra(KEY_MIDLET_NAME, name);
+		context.startActivity(intent);
+	}
+
+	public static void startApp(Context context, String name, String path) {
+		int end = path.lastIndexOf(File.separatorChar);
+		int start = path.lastIndexOf(File.separatorChar, end - 1);
+		if (start > 0) {
+			String configPath = new StringBuilder(path)
+					.replace(start, end + 1, MIDLET_CONFIGS_DIR)
+					.append(MIDLET_CONFIG_FILE)
+					.toString();
+			File configFile = new File(configPath);
+			if (!configFile.exists()) {
+				openSettings(context, name, path);
+				return;
+			}
 		}
+
+		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(path), context, MicroActivity.class);
+		intent.putExtra(KEY_MIDLET_NAME, name);
+		context.startActivity(intent);
 	}
 
 	private static void initDirs(String path) {

@@ -1,7 +1,7 @@
 /*
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2020 Nikita Shakarun
- * Copyright 2019-2024 Yury Kharchenko
+ * Copyright 2019-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ import ru.playsoftware.j2meloader.util.AppUtils;
 import ru.playsoftware.j2meloader.util.LogUtils;
 import ru.woesss.j2me.installer.InstallerDialog;
 
-public class AppsListFragment extends Fragment implements MenuProvider {
+public class AppsListFragment extends Fragment implements MenuProvider, AppsListAdapter.OnItemClickListener {
 
 	private final ActivityResultLauncher<Void> openFileLauncher = registerForActivityResult(
 			new ActivityResultContract<Void, Uri>() {
@@ -221,6 +221,11 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 	}
 
 	@Override
+	public void onClick(AppItem item) {
+		Config.startApp(requireContext(), item.getTitle(), item.getPathExt());
+	}
+
+	@Override
 	public void onCreateContextMenu(@NonNull ContextMenu menu, @NonNull View v,
 									ContextMenu.ContextMenuInfo menuInfo) {
 		MenuInflater inflater = requireActivity().getMenuInflater();
@@ -244,7 +249,7 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 		} else if (itemId == R.id.action_context_rename) {
 			alertRename(appItem);
 		} else if (itemId == R.id.action_context_settings) {
-			Config.startApp(requireActivity(), appItem.getTitle(), appItem.getPathExt(), true);
+			Config.openSettings(requireActivity(), appItem.getTitle(), appItem.getPathExt());
 		} else if (itemId == R.id.action_context_reinstall) {
 			InstallerDialog.newInstance(appItem.getId()).show(getParentFragmentManager(), "installer");
 		} else if (itemId == R.id.action_context_delete) {

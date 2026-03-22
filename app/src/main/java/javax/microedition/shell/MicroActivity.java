@@ -1,7 +1,7 @@
 /*
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2021 Nikita Shakarun
- * Copyright 2019-2024 Yury Kharchenko
+ * Copyright 2019-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,7 +141,7 @@ public class MicroActivity extends AppCompatActivity {
 		}
 		microLoader = new MicroLoader(this, appPath);
 		if (!microLoader.init()) {
-			Config.startApp(this, appName, appPath, true);
+			Config.openSettings(this, appName, appPath);
 			finish();
 			return;
 		}
@@ -342,7 +342,7 @@ public class MicroActivity extends AppCompatActivity {
 				})
 				.setNeutralButton(R.string.action_settings, (d, w) -> {
 					hideSoftInput();
-					Config.startApp(this, appName, appPath, true);
+					Config.openSettings(this, appName, appPath);
 					MidletThread.destroyApp();
 				})
 				.setNegativeButton(android.R.string.cancel, null);

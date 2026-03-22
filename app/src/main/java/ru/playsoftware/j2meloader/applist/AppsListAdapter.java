@@ -1,7 +1,7 @@
 /*
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2019 Nikita Shakarun
- * Copyright 2019-2024 Yury Kharchenko
+ * Copyright 2019-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.databinding.ListRowGridJarBinding;
 import ru.playsoftware.j2meloader.databinding.ListRowJarBinding;
 
@@ -39,10 +38,10 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 	static final int LAYOUT_TYPE_LIST = 0;
 	static final int LAYOUT_TYPE_GRID = 1;
 
-	private final View.OnCreateContextMenuListener contextMenuListener;
+	private final OnItemClickListener itemClickListener;
 	private int layout = LAYOUT_TYPE_LIST;
 
-	AppsListAdapter(View.OnCreateContextMenuListener contextMenuListener) {
+	AppsListAdapter(OnItemClickListener onItemClickListener) {
 		super(new DiffUtil.ItemCallback<>() {
 			@Override
 			public boolean areItemsTheSame(@NonNull AppItem oldItem, @NonNull AppItem newItem) {
@@ -55,7 +54,7 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 						oldItem.getVersion().equals(newItem.getVersion());
 			}
 		});
-		this.contextMenuListener = contextMenuListener;
+		this.itemClickListener = onItemClickListener;
 	}
 
 	@Override
@@ -69,10 +68,10 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 		LayoutInflater inflater = LayoutInflater.from(parent.getContext());
 		if (viewType == LAYOUT_TYPE_GRID) {
 			ListRowGridJarBinding binding = ListRowGridJarBinding.inflate(inflater, parent, false);
-			return new AppViewHolder(binding, contextMenuListener);
+			return new AppViewHolder(binding, itemClickListener);
 		} else {
 			ListRowJarBinding binding = ListRowJarBinding.inflate(inflater, parent, false);
-			return new AppListViewHolder(binding, contextMenuListener);
+			return new AppListViewHolder(binding, itemClickListener);
 		}
 	}
 
@@ -89,14 +88,14 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 		private final ImageView icon;
 		private final TextView name;
 
-		AppViewHolder(ListRowGridJarBinding binding, View.OnCreateContextMenuListener contextMenuListener) {
-			this(binding.getRoot(), binding.listTitle, binding.listImage, contextMenuListener);
+		AppViewHolder(ListRowGridJarBinding binding, OnItemClickListener itemClickListener) {
+			this(binding.getRoot(), binding.listTitle, binding.listImage, itemClickListener);
 		}
 
 		AppViewHolder(View itemView,
 					  TextView listTitle,
 					  ImageView listImage,
-					  View.OnCreateContextMenuListener contextMenuListener) {
+					  OnItemClickListener itemClickListener) {
 			super(itemView);
 			icon = listImage;
 			name = listTitle;
@@ -105,10 +104,10 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 				AppsListAdapter adapter = (AppsListAdapter) getBindingAdapter();
 				if (adapter != null) {
 					AppItem item = adapter.getItem(getLayoutPosition());
-					Config.startApp(v.getContext(), item.getTitle(), item.getPathExt(), false);
+					itemClickListener.onClick(item);
 				}
 			});
-			itemView.setOnCreateContextMenuListener(contextMenuListener);
+			itemView.setOnCreateContextMenuListener(itemClickListener);
 		}
 
 		void onBind(AppItem item) {
@@ -128,8 +127,8 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 		private final TextView author;
 		private final TextView version;
 
-		AppListViewHolder(ListRowJarBinding binding, View.OnCreateContextMenuListener contextMenuListener) {
-			super(binding.getRoot(), binding.listTitle, binding.listImage, contextMenuListener);
+		AppListViewHolder(ListRowJarBinding binding, OnItemClickListener itemClickListener) {
+			super(binding.getRoot(), binding.listTitle, binding.listImage, itemClickListener);
 			author = binding.listAuthor;
 			version = binding.listVersion;
 		}
@@ -140,5 +139,9 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 			author.setText(item.getAuthor());
 			version.setText(item.getVersion());
 		}
+	}
+
+	interface OnItemClickListener extends View.OnCreateContextMenuListener {
+		void onClick(AppItem item);
 	}
 }
