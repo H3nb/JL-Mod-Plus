@@ -1,7 +1,7 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2018 Nikita Shakarun
- * Copyright 2021-2024 Yury Kharchenko
+ * Copyright 2021-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,13 +105,7 @@ public class TextField extends Item {
 
 	@Override
 	public View getItemContentView() {
-		View view = textField.getView(ContextHolder.getActivity(), this);
-		view.setOnFocusChangeListener((v, hasFocus) -> {
-			if (!hasFocus) {
-				postStateChanged();
-			}
-		});
-		return view;
+		return textField.getView(ContextHolder.getActivity(), this);
 	}
 
 	@Override

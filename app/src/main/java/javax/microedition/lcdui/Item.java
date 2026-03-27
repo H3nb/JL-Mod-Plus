@@ -1,6 +1,6 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
- * Copyright 2019-2024 Yury Kharchenko
+ * Copyright 2019-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,8 +136,8 @@ public abstract class Item {
 	}
 
 	public void notifyStateChanged() {
-		if (owner instanceof Form) {
-			postStateChanged();
+		if (owner instanceof Form form) {
+			form.notifyItemStateChanged(this);
 		} else {
 			throw new IllegalStateException("Item is not owned by a Form");
 		}

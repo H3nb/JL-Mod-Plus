@@ -1,7 +1,7 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2019 Nikita Shakarun
- * Copyright 2021-2024 Yury Kharchenko
+ * Copyright 2021-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,20 @@
 
 package javax.microedition.lcdui;
 
+import static android.text.InputType.TYPE_CLASS_NUMBER;
+import static android.text.InputType.TYPE_CLASS_PHONE;
+import static android.text.InputType.TYPE_CLASS_TEXT;
+import static android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL;
+import static android.text.InputType.TYPE_NUMBER_FLAG_SIGNED;
+import static android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES;
+import static android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS;
+import static android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS;
+import static android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS;
+import static android.text.InputType.TYPE_TEXT_VARIATION_URI;
+
 import android.content.Context;
 import android.text.Editable;
 import android.text.InputFilter;
-import android.text.InputType;
 import android.text.TextWatcher;
 import android.text.method.PasswordTransformationMethod;
 import android.widget.EditText;
@@ -40,7 +50,10 @@ class TextFieldImpl {
 	private final SimpleEvent msgSetText = new SimpleEvent() {
 		@Override
 		public void process() {
-			textview.setText(text);
+			EditText editText = textview;
+			if (editText != null) {
+				editText.setText(text);
+			}
 		}
 	};
 
@@ -95,44 +108,28 @@ class TextFieldImpl {
 		this.constraints = constraints;
 
 		if (textview != null) {
-			int inputType;
-
-			switch (constraints & TextField.CONSTRAINT_MASK) {
-				default:
-				case TextField.ANY:
-					inputType = InputType.TYPE_CLASS_TEXT;
-					break;
-				case TextField.EMAILADDR:
-					inputType = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS;
-					break;
-				case TextField.NUMERIC:
-					inputType = InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED;
-					break;
-				case TextField.PHONENUMBER:
-					inputType = InputType.TYPE_CLASS_PHONE;
-					break;
-				case TextField.URL:
-					inputType = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI;
-					break;
-				case TextField.DECIMAL:
-					inputType = InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED |
-							InputType.TYPE_NUMBER_FLAG_DECIMAL;
-					break;
-			}
+			int inputType = switch (constraints & TextField.CONSTRAINT_MASK) {
+				case TextField.EMAILADDR -> TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_EMAIL_ADDRESS;
+				case TextField.NUMERIC -> TYPE_CLASS_NUMBER | TYPE_NUMBER_FLAG_SIGNED;
+				case TextField.PHONENUMBER -> TYPE_CLASS_PHONE;
+				case TextField.URL -> TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_URI;
+				case TextField.DECIMAL -> TYPE_CLASS_NUMBER | TYPE_NUMBER_FLAG_SIGNED | TYPE_NUMBER_FLAG_DECIMAL;
+				default -> TYPE_CLASS_TEXT;
+			};
 
 
 			if ((constraints & TextField.NON_PREDICTIVE) != 0 ||
 					(constraints & TextField.SENSITIVE) != 0 ||
 					(constraints & TextField.PASSWORD) != 0) {
-				inputType |= InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS;
+				inputType |= TYPE_TEXT_FLAG_NO_SUGGESTIONS;
 			}
 
 			if ((constraints & TextField.INITIAL_CAPS_WORD) != 0) {
-				inputType |= InputType.TYPE_TEXT_FLAG_CAP_WORDS;
+				inputType |= TYPE_TEXT_FLAG_CAP_WORDS;
 			}
 
 			if ((constraints & TextField.INITIAL_CAPS_SENTENCE) != 0) {
-				inputType |= InputType.TYPE_TEXT_FLAG_CAP_SENTENCES;
+				inputType |= TYPE_TEXT_FLAG_CAP_SENTENCES;
 			}
 
 			textview.setInputType(inputType);
@@ -175,7 +172,7 @@ class TextFieldImpl {
 
 			setMaxSize(maxSize);
 			setConstraints(constraints);
-			setString(text);
+			textview.setText(text);
 
 			textview.addTextChangedListener(new TextWatcher() {
 				@Override
@@ -189,6 +186,9 @@ class TextFieldImpl {
 				@Override
 				public void afterTextChanged(Editable s) {
 					text = s.toString();
+					if (item != null) {
+						item.postStateChanged();
+					}
 				}
 			});
 		}
