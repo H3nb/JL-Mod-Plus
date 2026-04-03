@@ -1,7 +1,7 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2018 Nikita Shakarun
- * Copyright 2019-2023 Yury Kharchenko
+ * Copyright 2019-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,35 +25,49 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.DynamicDrawableSpan;
 import android.text.style.ImageSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Adapter;
 import android.widget.TextView;
 
-import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
+
+import javax.microedition.lcdui.ViewHandler;
 
 public abstract class CompoundAdapter implements Adapter {
-	final ArrayList<DataSetObserver> observers = new ArrayList<>();
-	private final ArrayList<CompoundItem> items;
+	private static final String TAG = "CompoundAdapter";
 
-	public CompoundAdapter(ArrayList<CompoundItem> items) {
+	private final Set<DataSetObserver> observers = new CopyOnWriteArraySet<>();
+	private final List<CompoundItem> items;
+	private final Runnable dataSetChangedEvent = this::notifyObservers;
+
+	public CompoundAdapter(List<CompoundItem> items) {
 		this.items = items;
 	}
 
 	@Override
 	public int getCount() {
-		return items.size();
+		synchronized (items) {
+			return items.size();
+		}
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return items.isEmpty();
+		synchronized (items) {
+			return items.isEmpty();
+		}
 	}
 
 	@Override
 	public CompoundItem getItem(int position) {
-		return items.get(position);
+		synchronized (items) {
+			return items.get(position);
+		}
 	}
 
 	@Override
@@ -85,7 +99,7 @@ public abstract class CompoundAdapter implements Adapter {
 			textview = (TextView) LayoutInflater.from(parent.getContext()).inflate(viewResourceID, parent, false);
 		}
 
-		CompoundItem item = items.get(position);
+		CompoundItem item = getItem(position);
 
 		if (item.getImage() != null) {
 			Paint.FontMetrics fm = textview.getPaint().getFontMetrics();
@@ -105,9 +119,7 @@ public abstract class CompoundAdapter implements Adapter {
 
 	@Override
 	public void registerDataSetObserver(DataSetObserver observer) {
-		if (!observers.contains(observer)) {
-			observers.add(observer);
-		}
+		observers.add(observer);
 	}
 
 	@Override
@@ -116,6 +128,18 @@ public abstract class CompoundAdapter implements Adapter {
 	}
 
 	public void notifyDataSetChanged() {
-		CompoundAdapterKt.notifyChangedSync(observers);
+		ViewHandler.postEvent(dataSetChangedEvent);
+	}
+
+	private void notifyObservers() {
+		for (DataSetObserver observer : observers) {
+			try {
+				synchronized(items) {
+					observer.onChanged();
+				}
+			} catch (Exception e) {
+				Log.e(TAG, "notifyDataSetChanged: ", e);
+			}
+		}
 	}
 }
