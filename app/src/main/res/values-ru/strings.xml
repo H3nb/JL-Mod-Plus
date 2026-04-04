@@ -157,6 +157,7 @@
     <string name="pref_theme_night">Тёмная</string>
     <string name="pref_theme_system">Следовать настройкам системы</string>
     <string name="pref_theme_title">Тема</string>
+    <string name="pref_title_emulation">Эмуляция</string>
     <string name="PREF_TOUCH_INPUT">Сенсорный ввод</string>
     <string name="PREF_UNIT_MS">мс</string>
     <string name="pref_vibration_title">Включить вибрацию</string>
@@ -214,6 +215,7 @@
     <string name="START_CMD">Пуск</string>
     <string name="SWAP_SIZES">Поменять местами</string>
     <string name="take_screenshot">Сделать скриншот</string>
+    <string name="tooltip_skip_resume_call">Фикс вылета после паузы (сворачивания, блокировки, переключения окон и т.п.)</string>
     <string name="unlimited">без ограничений</string>
     <string name="version">Версия: </string>
     <string name="warn_install_from_net">Файл будет загружен из сети Интернет</string>

@@ -998,6 +998,38 @@
             <!-- Keyboard settings -->
         </androidx.constraintlayout.widget.ConstraintLayout><!-- Input -->
 
+        <!-- Emulation -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/rootConfigEmulation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:background="?attr/bg_config_card"
+            android:padding="5dp">
+
+            <TextView
+                android:id="@+id/tvConfigEmulationTitle"
+                style="@style/ConfigTitleTextStyle"
+                android:text="@string/pref_title_emulation"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/cxSkipResumeCall"
+                style="@style/SwitchStyle"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/height_config_row"
+                android:layout_marginHorizontal="5dp"
+                android:layout_marginTop="10dp"
+                android:checked="true"
+                android:text="@string/pref_skip_resume_call"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvConfigEmulationTitle" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
         <!-- Audio -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/rootConfigAudio"

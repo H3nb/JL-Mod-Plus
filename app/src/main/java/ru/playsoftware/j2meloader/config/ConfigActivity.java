@@ -2,7 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2018-2019 Nikita Shakarun
- * Copyright 2019-2024 Yury Kharchenko
+ * Copyright 2019-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.ListPopupWindow;
+import androidx.appcompat.widget.TooltipCompat;
 import androidx.core.widget.TextViewCompat;
 import androidx.preference.PreferenceManager;
 
@@ -288,6 +289,7 @@ public class ConfigActivity extends AppCompatActivity implements View.OnClickLis
 		binding.tfVKSelFore.addTextChangedListener(new ColorTextWatcher(binding.tfVKSelFore));
 		binding.tfVKSelBack.addTextChangedListener(new ColorTextWatcher(binding.tfVKSelBack));
 		binding.tfVKOutline.addTextChangedListener(new ColorTextWatcher(binding.tfVKOutline));
+		TooltipCompat.setTooltipText(binding.cxSkipResumeCall, getString(R.string.tooltip_skip_resume_call));
 		initSoundBankSpinner();
 		initSkinSpinner();
 	}
@@ -633,6 +635,8 @@ public class ConfigActivity extends AppCompatActivity implements View.OnClickLis
 		binding.tfVKSelBack.setText(String.format("%06X", params.vkBgColorSelected));
 		binding.tfVKSelFore.setText(String.format("%06X", params.vkFgColorSelected));
 		binding.tfVKOutline.setText(String.format("%06X", params.vkOutlineColor));
+
+		binding.cxSkipResumeCall.setChecked(params.skipResumeCall);
 		setSpinnerSelection(binding.spSoundBank, params.soundBank);
 
 		String systemProperties = params.systemProperties;
@@ -745,6 +749,7 @@ public class ConfigActivity extends AppCompatActivity implements View.OnClickLis
 				params.vkOutlineColor = Integer.parseInt(binding.tfVKOutline.getText().toString(), 16);
 			} catch (Exception ignored) {
 			}
+			params.skipResumeCall = binding.cxSkipResumeCall.isChecked();
 			params.soundBank = binding.spSoundBank.getSelectedItemPosition() > 0 ? (String) binding.spSoundBank.getSelectedItem() : null;
 			params.systemProperties = getSystemProperties(binding.tfSystemProperties.getText().toString());
 

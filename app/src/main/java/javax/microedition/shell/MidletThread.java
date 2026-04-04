@@ -1,5 +1,5 @@
 /*
- *  Copyright 2020 Yury Kharchenko
+ *  Copyright 2020-2026 Yury Kharchenko
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -40,9 +40,10 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private static final int PAUSE = 2;
 	private static final int DESTROY = 3;
 	private static final int UNINITIALIZED = 0;
-	private static final int STARTED = 1;
-	private static final int PAUSED = 2;
-	private static final int DESTROYED = 3;
+	private static final int INITIALIZED = 1;
+	private static final int STARTED = 2;
+	private static final int PAUSED = 3;
+	private static final int DESTROYED = 4;
 	private static MidletThread instance;
 	private final MicroLoader microLoader;
 	private final String mainClass;
@@ -123,14 +124,19 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 				}
 				try {
 					mMidlet = microLoader.loadMIDlet(this.mainClass);
-					state = PAUSED;
+					state = INITIALIZED;
 				} catch (Throwable t) {
 					throw new RuntimeException("Init midlet failed", t);
 				}
 				break;
 			case START:
-				if (state != PAUSED) {
-					break;
+				if (state != INITIALIZED) {
+					if (state != PAUSED) {
+						break;
+					} else if (microLoader.params.skipResumeCall) {
+						state = STARTED;
+						break;
+					}
 				}
 				try {
 					state = STARTED;

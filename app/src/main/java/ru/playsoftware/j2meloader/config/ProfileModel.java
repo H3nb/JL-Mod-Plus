@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Yury Kharchenko
+ * Copyright 2020-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,6 +169,9 @@ public class ProfileModel {
 
 	@SerializedName("SystemProperties")
 	public String systemProperties;
+
+	@SerializedName("SkipResumeCall")
+	public boolean skipResumeCall;
 
 	@SuppressWarnings("unused") // Gson uses default constructor if present
 	public ProfileModel() {
