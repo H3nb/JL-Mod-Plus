@@ -18,13 +18,15 @@
 package ru.playsoftware.j2meloader.crashes;
 
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.os.Build;
 import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-
 
 import org.acra.ReportField;
 import org.acra.config.ConfigUtils;
@@ -39,7 +41,10 @@ import org.acra.util.Installation;
 import org.json.JSONObject;
 
 import java.io.FileOutputStream;
+import java.math.BigInteger;
 import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -84,8 +89,7 @@ public class AppCenterSender implements ReportSender {
 		if (log == null || log.isBlank()) {
 			return;
 		}
-		String key = context.getString(R.string.app_center);
-		if (key.isBlank()) {
+		if (sendForbidden(context)) {
 			saveToFile(context, report);
 			return;
 		}
@@ -135,5 +139,38 @@ public class AppCenterSender implements ReportSender {
 		String finalMsg = msg;
 		new Handler(context.getMainLooper()).post(() ->
 				Toast.makeText(context, finalMsg, Toast.LENGTH_LONG).show());
+	}
+
+	private boolean sendForbidden(@NonNull Context context) {
+		if (context.getString(R.string.app_center).isBlank()) {
+			return true;
+		}
+		try {
+			BigInteger fp = new BigInteger(context.getString(R.string.fingerprint), 16);
+			Signature[] signatures;
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+				PackageInfo info = context.getPackageManager()
+						.getPackageInfo(context.getPackageName(), PackageManager.GET_SIGNING_CERTIFICATES);
+				signatures = info.signingInfo.getApkContentsSigners();
+			} else {
+				PackageInfo info = context.getPackageManager()
+						.getPackageInfo(context.getPackageName(), PackageManager.GET_SIGNATURES);
+				signatures = info.signatures;
+			}
+			MessageDigest md = MessageDigest.getInstance("SHA-1");
+			for (Signature signature : signatures) {
+				md.update(signature.toByteArray());
+				if (MessageDigest.isEqual(fp.toByteArray(), md.digest())) {
+					return false;
+				}
+			}
+		} catch (PackageManager.NameNotFoundException e) {
+			Log.e(TAG, "mustSaveLocally: get package info filed", e);
+		} catch (NoSuchAlgorithmException e) {
+			Log.e(TAG, "mustSaveLocally: not support sha1!?", e);
+		} catch (NumberFormatException e) {
+			Log.e(TAG, "mustSaveLocally: invalid fingerprint", e);
+		}
+		return true;
 	}
 }
