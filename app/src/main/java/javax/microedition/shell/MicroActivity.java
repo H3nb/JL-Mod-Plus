@@ -22,6 +22,7 @@ import static android.content.pm.ActivityInfo.*;
 import static ru.playsoftware.j2meloader.util.Constants.*;
 
 import android.annotation.SuppressLint;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -56,6 +57,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.AppCompatCheckBox;
+import androidx.lifecycle.Lifecycle;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.textfield.TextInputLayout;
@@ -66,7 +68,7 @@ import org.acra.ErrorReporter;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import javax.microedition.lcdui.Canvas;
@@ -95,7 +97,6 @@ public class MicroActivity extends AppCompatActivity {
 	private static final int ORIENTATION_LANDSCAPE = 3;
 
 	private Displayable current;
-	private boolean visible;
 	private boolean actionBarEnabled;
 	private boolean statusBarEnabled;
 	private MicroLoader microLoader;
@@ -139,7 +140,7 @@ public class MicroActivity extends AppCompatActivity {
 				throw new RuntimeException("Can't access file system");
 			}
 		}
-		microLoader = new MicroLoader(this, appPath);
+		microLoader = new MicroLoader(appPath);
 		if (!microLoader.init()) {
 			Config.openSettings(this, appName, appPath);
 			finish();
@@ -193,17 +194,8 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	@Override
-	public void onResume() {
-		super.onResume();
-		visible = true;
-		MidletThread.resumeApp();
-	}
-
-	@Override
 	public void onPause() {
-		visible = false;
 		hideSoftInput();
-		MidletThread.pauseApp();
 		super.onPause();
 	}
 
@@ -235,7 +227,7 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void loadMIDlet() {
-		LinkedHashMap<String, String> midlets;
+		Map<String, String> midlets;
 		try {
 			midlets = microLoader.loadMIDletList();
 		} catch (IOException e) {
@@ -248,8 +240,7 @@ public class MicroActivity extends AppCompatActivity {
 		if (size == 0) {
 			showErrorDialog("No MIDlets found");
 		} else if (size == 1) {
-			MidletThread.create(microLoader, midletsClassArray[0]);
-			microLoader.pushToRecentApps(appName);
+			microLoader.loadMidlet(midletsClassArray[0], appName);
 		} else {
 			showMidletDialog(midletsNameArray, midletsClassArray);
 		}
@@ -268,9 +259,7 @@ public class MicroActivity extends AppCompatActivity {
 					}
 					sb.append("Begin app: ").append(names[n]).append(", ").append(clazz);
 					errorReporter.putCustomData(Constants.KEY_APPCENTER_ATTACHMENT, sb.toString());
-					MidletThread.create(microLoader, clazz);
-					MidletThread.resumeApp();
-					microLoader.pushToRecentApps(appName);
+					microLoader.loadMidlet(clazz, appName);
 				})
 				.setOnCancelListener(d -> {
 					d.dismiss();
@@ -329,22 +318,22 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	public boolean isVisible() {
-		return visible;
+		return getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED);
 	}
 
 	public void showExitConfirmation() {
 		AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
+		DialogInterface.OnClickListener onClickListener = (d, w) -> {
+			hideSoftInput();
+			if (w == DialogInterface.BUTTON_NEUTRAL) {
+				Config.openSettings(this, appName, appPath);
+			}
+			MidletThread.destroyApp();
+		};
 		alertBuilder.setTitle(R.string.CONFIRMATION_REQUIRED)
 				.setMessage(R.string.FORCE_CLOSE_CONFIRMATION)
-				.setPositiveButton(android.R.string.ok, (d, w) -> {
-					hideSoftInput();
-					MidletThread.destroyApp();
-				})
-				.setNeutralButton(R.string.action_settings, (d, w) -> {
-					hideSoftInput();
-					Config.openSettings(this, appName, appPath);
-					MidletThread.destroyApp();
-				})
+				.setPositiveButton(android.R.string.ok, onClickListener)
+				.setNeutralButton(R.string.action_settings, onClickListener)
 				.setNegativeButton(android.R.string.cancel, null);
 		alertBuilder.create().show();
 	}

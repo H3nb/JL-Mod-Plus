@@ -1,6 +1,6 @@
 /*
  * Copyright 2018-2020 Nikita Shakarun
- * Copyright 2019-2024 Yury Kharchenko
+ * Copyright 2019-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,13 +161,14 @@ public class AppUtils {
 		ShortcutManagerCompat.requestPinShortcut(context, shortcut, null);
 	}
 
-	public static void pushToRecentShortcuts(Context context, String appPath, String appName, File iconFile) {
+	public static void pushToRecentShortcuts(Context context, String appPath, String appName) {
+		File iconFile = new File(appPath, Config.MIDLET_ICON_FILE);
 		try {
 			IconCompat icon;
-			if (iconFile == null) {
-				icon = IconCompat.createWithResource(context, R.mipmap.ic_launcher);
-			} else {
+			if (iconFile.exists()) {
 				icon = IconCompat.createWithContentUri(Uri.fromFile(iconFile));
+			} else {
+				icon = IconCompat.createWithResource(context, R.mipmap.ic_launcher);
 			}
 			Intent launchIntent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(appPath),
 					context, ConfigActivity.class);

@@ -1,6 +1,6 @@
 /*
  * Copyright 2018-2021 Nikita Shakarun
- * Copyright 2019-2024 Yury Kharchenko
+ * Copyright 2019-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ package javax.microedition.shell;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Environment;
 import android.os.StrictMode;
@@ -81,15 +80,14 @@ import ru.woesss.j2me.jar.Descriptor;
 public class MicroLoader {
 	private static final String TAG = MicroLoader.class.getName();
 	private static String soundBank;
+	private final Map<String, String> midlets = new LinkedHashMap<>();
 
 	ProfileModel params;
 	private final File appDir;
-	private final Context context;
 	private final String workDir;
 	private final String appDirName;
 
-	MicroLoader(Context context, String appPath) {
-		this.context = context;
+	MicroLoader(String appPath) {
 		this.appDir = new File(appPath);
 		File converted = appDir.getParentFile();
 		if (converted == null)
@@ -119,8 +117,10 @@ public class MicroLoader {
 		return true;
 	}
 
-	LinkedHashMap<String, String> loadMIDletList() throws IOException {
-		LinkedHashMap<String, String> midlets = new LinkedHashMap<>();
+	Map<String, String> loadMIDletList() throws IOException {
+		if (!midlets.isEmpty()) {
+			return midlets;
+		}
 		String jarHash = null;
 		String jarSize = null;
 		Descriptor descriptor;
@@ -180,7 +180,7 @@ public class MicroLoader {
 			if (!dexSource.exists()) {
 				dexSource = new File(appDir, Config.MIDLET_DEX_FILE);
 			}
-			File codeCacheDir = ContextCompat.getCodeCacheDir(context);
+			File codeCacheDir = ContextCompat.getCodeCacheDir(ContextHolder.getActivity());
 			File dexOptDir = new File(codeCacheDir, Config.DEX_OPT_CACHE_DIR);
 			if (dexOptDir.exists()) {
 				FileUtils.clearDirectory(dexOptDir);
@@ -196,7 +196,7 @@ public class MicroLoader {
 				dexSource = dexCache;
 			}
 			ClassLoader loader = new AppClassLoader(dexSource.getAbsolutePath(),
-					dexOptDir.getAbsolutePath(), context.getClassLoader(), appDir);
+					dexOptDir.getAbsolutePath(), ContextHolder.getActivity().getClassLoader(), appDir);
 			Log.i(TAG, "loadMIDletList main: " + mainClass + " from dex:" + dexSource.getPath());
 			//noinspection unchecked
 			Class<MIDlet> clazz = (Class<MIDlet>) loader.loadClass(mainClass);
@@ -324,11 +324,12 @@ public class MicroLoader {
 		return soundBank;
 	}
 
-	public void pushToRecentApps(String appName) {
+	void loadMidlet(String clazz, String appName) {
+		MidletThread midletThread = new MidletThread(this, clazz);
+		midletThread.start();
 		if (!BuildConfig.FULL_EMULATOR) {
 			return;
 		}
-		File iconFile = new File(appDir, Config.MIDLET_ICON_FILE);
-		AppUtils.pushToRecentShortcuts(context, appDir.getPath(), appName, iconFile);
+		AppUtils.pushToRecentShortcuts(ContextHolder.getActivity(), appDir.getPath(), appName);
 	}
 }
