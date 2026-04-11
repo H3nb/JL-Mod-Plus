@@ -1,7 +1,7 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2018 Nikita Shakarun
- * Copyright 2020-2023 Yury Kharchenko
+ * Copyright 2020-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,6 +176,11 @@ public class Alert extends Screen implements DialogInterface.OnClickListener {
 		builder.setTitle(getTitle());
 		builder.setMessage(getString());
 		builder.setOnDismissListener(dialog -> {
+			alertDialog = null;
+			Gauge indicator = this.indicator;
+			if (indicator != null) {
+				indicator.clearItemContentView();
+			}
 			if (commands.size() == 1 && commands.get(0) == DISMISS_COMMAND && listener != null) {
 				fireCommandAction(DISMISS_COMMAND);
 			}
@@ -309,8 +314,18 @@ public class Alert extends Screen implements DialogInterface.OnClickListener {
 		this.nextDisplayable = nextDisplayable;
 	}
 
+	void close() {
+		this.nextDisplayable = null;
+		AlertDialog dialog = this.alertDialog;
+		if (dialog != null) {
+			dialog.dismiss();
+		}
+	}
+
 	private void dismiss() {
-		Display.getDisplay(null).setCurrent(nextDisplayable);
-		alertDialog = null;
+		Displayable displayable = nextDisplayable;
+		if (displayable != null) {
+			Display.getDisplay(null).setCurrent(displayable);
+		}
 	}
 }

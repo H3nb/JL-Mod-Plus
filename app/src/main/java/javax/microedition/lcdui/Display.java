@@ -1,7 +1,7 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2018 Nikita Shakarun
- * Copyright 2020-2024 Yury Kharchenko
+ * Copyright 2020-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,39 +82,46 @@ public class Display {
 	}
 
 	public void setCurrent(Displayable disp) {
+		Displayable current = this.current;
 		if (disp == current) {
 			return;
 		}
+		this.current = disp;
 		if (current instanceof Canvas) {
 			Canvas c = (Canvas) current;
 			c.setInvisible();
+		} else if (current instanceof Alert alert) {
+			if (disp instanceof Alert) {
+				throw new IllegalArgumentException();
+			}
+			alert.close();
 		}
-		if (disp instanceof Alert) {
-			Alert alert = (Alert) disp;
+		if (disp instanceof Alert alert) {
 			alert.setNextDisplayable(current);
-			showAlert(alert);
+			showAlert();
 		} else {
-			current = disp;
 			showCurrent();
 		}
 	}
 
-	public void setCurrent(final Alert alert, Displayable disp) {
+	public void setCurrent(Alert alert, Displayable disp) {
 		if (disp == null) {
 			throw new NullPointerException();
 		} else if (disp instanceof Alert) {
 			throw new IllegalArgumentException();
 		}
-		alert.setNextDisplayable(disp);
-		showAlert(alert);
+		current = alert;
+		showAlert();
 	}
 
-	private void showAlert(Alert alert) {
+	private void showAlert() {
 		ViewHandler.postEvent(() -> {
-			AlertDialog alertDialog = alert.prepareDialog();
-			alertDialog.show();
-			if (alert.finiteTimeout()) {
-				ViewHandler.postDelayed(alertDialog::dismiss, alert.getTimeout());
+			if (current instanceof Alert alert) {
+				AlertDialog alertDialog = alert.prepareDialog();
+				alertDialog.show();
+				if (alert.finiteTimeout()) {
+					ViewHandler.postDelayed(alertDialog::dismiss, alert.getTimeout());
+				}
 			}
 		});
 	}
