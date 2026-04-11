@@ -19,29 +19,18 @@
 package javax.microedition.lcdui;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.drawable.BitmapDrawable;
 import android.util.TypedValue;
 import android.view.View;
 
 import androidx.appcompat.app.AlertDialog;
 
-import java.util.Collections;
-
 import javax.microedition.lcdui.event.SimpleEvent;
 import javax.microedition.util.ContextHolder;
 
-public class Alert extends Screen implements DialogInterface.OnClickListener {
+public class Alert extends Screen {
 	public static final int FOREVER = -2;
 	public static final Command DISMISS_COMMAND = new Command("", Command.OK, 0);
-	private static final AlertCommandListener DEFAULT_LISTENER = new AlertCommandListener();
-
-	private static class AlertCommandListener implements CommandListener {
-		@Override
-		public void commandAction(Command c, Displayable d) {
-			((Alert) d).dismiss();
-		}
-	}
 
 	private String text;
 	private Image image;
@@ -52,7 +41,9 @@ public class Alert extends Screen implements DialogInterface.OnClickListener {
 
 	private Form form;
 	private Displayable nextDisplayable;
-	private int positive, negative, neutral;
+	private Command positive;
+	private Command negative;
+	private Command neutral;
 
 	private final SimpleEvent msgSetString = new SimpleEvent() {
 		@Override
@@ -72,12 +63,12 @@ public class Alert extends Screen implements DialogInterface.OnClickListener {
 	private final SimpleEvent msgCommandsChanged = new SimpleEvent() {
 		@Override
 		public void process() {
-			if (listener == DEFAULT_LISTENER) {
+			if (listener == null) {
 				alertDialog.setCancelable(true);
 				alertDialog.setCanceledOnTouchOutside(true);
 				return;
 			}
-			alertDialog.setCanceledOnTouchOutside(commands.size() == 1 && commands.get(0) == DISMISS_COMMAND);
+			alertDialog.setCanceledOnTouchOutside(commands.isEmpty());
 		}
 	};
 
@@ -86,15 +77,12 @@ public class Alert extends Screen implements DialogInterface.OnClickListener {
 	}
 
 	public Alert(String title, String text, Image image, AlertType type) {
-		super.addCommand(DISMISS_COMMAND);
 		super.setTitle(title);
 
 		this.text = text;
 		this.image = image;
 		this.type = type;
 		this.timeout = FOREVER;
-
-		setCommandListener(DEFAULT_LISTENER);
 	}
 
 	public void setType(AlertType type) {
@@ -166,7 +154,7 @@ public class Alert extends Screen implements DialogInterface.OnClickListener {
 	}
 
 	boolean finiteTimeout() {
-		return timeout > 0 && commands.size() < 2;
+		return timeout > 0 && commands.isEmpty();
 	}
 
 	AlertDialog prepareDialog() {
@@ -181,7 +169,9 @@ public class Alert extends Screen implements DialogInterface.OnClickListener {
 			if (indicator != null) {
 				indicator.clearItemContentView();
 			}
-			if (commands.size() == 1 && commands.get(0) == DISMISS_COMMAND && listener != null) {
+			if (listener == null) {
+				dismiss();
+			} else if (commands.isEmpty()) {
 				fireCommandAction(DISMISS_COMMAND);
 			}
 		});
@@ -199,83 +189,84 @@ public class Alert extends Screen implements DialogInterface.OnClickListener {
 			builder.setView(indicatorView);
 		}
 
-		Collections.sort(commands);
+		positive = null;
+		negative = null;
+		neutral = null;
 
-		positive = -1;
-		negative = -1;
-		neutral = -1;
+		for (Command command : commands) {
+			int cmdType = command.getCommandType();
 
-		for (int i = 0; i < commands.size(); i++) {
-			int cmdType = commands.get(i).getCommandType();
-
-			if (positive < 0 && cmdType == Command.OK) {
-				positive = i;
-			} else if (negative < 0 && cmdType == Command.CANCEL) {
-				negative = i;
-			} else if (neutral < 0) {
-				neutral = i;
+			if (positive == null && cmdType == Command.OK) {
+				positive = command;
+			} else if (negative == null && cmdType == Command.CANCEL) {
+				negative = command;
+			} else if (neutral == null) {
+				neutral = command;
 			}
 		}
-		for (int i = 0; i < commands.size(); i++) {
-			if (positive < 0 && negative != i && neutral != i) {
-				positive = i;
-			} else if (negative < 0 && positive != i && neutral != i) {
-				negative = i;
+		for (Command command : commands) {
+			if (positive == null && negative != command && neutral != command) {
+				positive = command;
+			} else if (negative == null && positive != command && neutral != command) {
+				negative = command;
 			}
 		}
 
-		if (positive >= 0) {
-			builder.setPositiveButton(commands.get(positive).getAndroidLabel(), this);
+		if (positive == null) {
+			positive = DISMISS_COMMAND;
+		}
+		builder.setPositiveButton(positive.getAndroidLabel(), (d, w) -> fireCommandAction(positive));
+
+		if (negative != null) {
+			builder.setNegativeButton(negative.getAndroidLabel(), (d, w) -> fireCommandAction(negative));
 		}
 
-		if (negative >= 0) {
-			builder.setNegativeButton(commands.get(negative).getAndroidLabel(), this);
-		}
-
-		if (neutral >= 0) {
-			builder.setNeutralButton(commands.get(neutral).getAndroidLabel(), this);
+		if (neutral != null) {
+			builder.setNeutralButton(neutral.getAndroidLabel(), (d, w) -> fireCommandAction(neutral));
 		}
 
 		alertDialog = builder.create();
-		if (listener == DEFAULT_LISTENER) {
+		if (listener == null) {
 			alertDialog.setCancelable(true);
 			alertDialog.setCanceledOnTouchOutside(true);
 		} else {
-			alertDialog.setCanceledOnTouchOutside(commands.size() == 1 && commands.get(0) == DISMISS_COMMAND);
+			alertDialog.setCanceledOnTouchOutside(commands.isEmpty());
 		}
 		return alertDialog;
 	}
 
 	@Override
 	public void addCommand(Command cmd) {
-		if (cmd != DISMISS_COMMAND) {
-			super.addCommand(cmd);
-			super.removeCommand(DISMISS_COMMAND);
-			if (alertDialog != null) {
-				ViewHandler.postEvent(msgCommandsChanged);
-			}
+		if (cmd == null) {
+			throw new NullPointerException();
+		} else if (cmd == DISMISS_COMMAND) {
+			return;
+		} else if (commands.contains(cmd)) {
+			return;
+		}
+		commands.add(cmd);
+		if (commands.size() == 1 && alertDialog != null) {
+			ViewHandler.postEvent(msgCommandsChanged);
 		}
 	}
 
 	@Override
 	public void removeCommand(Command cmd) {
-		if (cmd != DISMISS_COMMAND) {
-			super.removeCommand(cmd);
-			if (commands.size() == 0) {
-				if (alertDialog != null) {
-					ViewHandler.postEvent(msgCommandsChanged);
-				}
-				super.addCommand(DISMISS_COMMAND);
-			}
+		if (cmd == DISMISS_COMMAND) {
+			return;
+		}
+		commands.remove(cmd);
+		if (commands.isEmpty() && alertDialog != null) {
+			ViewHandler.postEvent(msgCommandsChanged);
 		}
 	}
 
 	@Override
 	public void setCommandListener(CommandListener listener) {
-		if (listener == null) {
-			listener = DEFAULT_LISTENER;
+		if (this.listener == listener) {
+			return;
 		}
-		super.setCommandListener(listener);
+		this.listener = listener;
 		if (alertDialog != null) {
 			ViewHandler.postEvent(msgCommandsChanged);
 		}
@@ -298,15 +289,6 @@ public class Alert extends Screen implements DialogInterface.OnClickListener {
 		if (form != null) {
 			form.clearDisplayableView();
 			form = null;
-		}
-	}
-
-	@Override
-	public void onClick(DialogInterface dialog, int which) {
-		switch (which) {
-			case DialogInterface.BUTTON_POSITIVE -> fireCommandAction(commands.get(positive));
-			case DialogInterface.BUTTON_NEGATIVE -> fireCommandAction(commands.get(negative));
-			case DialogInterface.BUTTON_NEUTRAL -> fireCommandAction(commands.get(neutral));
 		}
 	}
 
