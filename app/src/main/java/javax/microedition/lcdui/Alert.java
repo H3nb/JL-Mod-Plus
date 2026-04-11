@@ -19,6 +19,7 @@
 package javax.microedition.lcdui;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.drawable.BitmapDrawable;
 import android.util.TypedValue;
 import android.view.View;
@@ -35,11 +36,9 @@ public class Alert extends Screen {
 	private String text;
 	private Image image;
 	private AlertType type;
-	private int timeout;
+	private int timeout = FOREVER;
 	private Gauge indicator;
-	private AlertDialog alertDialog;
-
-	private Form form;
+	private AlertDialog dialog;
 	private Displayable nextDisplayable;
 	private Command positive;
 	private Command negative;
@@ -48,7 +47,7 @@ public class Alert extends Screen {
 	private final SimpleEvent msgSetString = new SimpleEvent() {
 		@Override
 		public void process() {
-			alertDialog.setMessage(text);
+			dialog.setMessage(text);
 		}
 	};
 
@@ -56,7 +55,7 @@ public class Alert extends Screen {
 		@Override
 		public void process() {
 			BitmapDrawable bitmapDrawable = new BitmapDrawable(image.getBitmap());
-			alertDialog.setIcon(bitmapDrawable);
+			dialog.setIcon(bitmapDrawable);
 		}
 	};
 
@@ -64,25 +63,23 @@ public class Alert extends Screen {
 		@Override
 		public void process() {
 			if (listener == null) {
-				alertDialog.setCancelable(true);
-				alertDialog.setCanceledOnTouchOutside(true);
+				dialog.setCancelable(true);
+				dialog.setCanceledOnTouchOutside(true);
 				return;
 			}
-			alertDialog.setCanceledOnTouchOutside(commands.isEmpty());
+			dialog.setCanceledOnTouchOutside(commands.isEmpty());
 		}
 	};
 
 	public Alert(String title) {
-		this(title, null, null, null);
+		super.setTitle(title);
 	}
 
 	public Alert(String title, String text, Image image, AlertType type) {
-		super.setTitle(title);
-
+		this(title);
 		this.text = text;
 		this.image = image;
 		this.type = type;
-		this.timeout = FOREVER;
 	}
 
 	public void setType(AlertType type) {
@@ -96,7 +93,7 @@ public class Alert extends Screen {
 	public void setString(String str) {
 		text = str;
 
-		if (alertDialog != null) {
+		if (dialog != null) {
 			ViewHandler.postEvent(msgSetString);
 		}
 	}
@@ -108,7 +105,7 @@ public class Alert extends Screen {
 	public void setImage(Image img) {
 		image = img;
 
-		if (alertDialog != null) {
+		if (dialog != null) {
 			ViewHandler.postEvent(msgSetImage);
 		}
 	}
@@ -121,7 +118,7 @@ public class Alert extends Screen {
 		if (indicator != null) {
 			if (indicator.isInteractive() ||
 					indicator.hasOwner() ||
-					indicator.commands.size() > 0 ||
+					!indicator.commands.isEmpty() ||
 					indicator.listener != null ||
 					indicator.getLabel() != null ||
 					indicator.preferredWidth != -1 ||
@@ -163,18 +160,7 @@ public class Alert extends Screen {
 
 		builder.setTitle(getTitle());
 		builder.setMessage(getString());
-		builder.setOnDismissListener(dialog -> {
-			alertDialog = null;
-			Gauge indicator = this.indicator;
-			if (indicator != null) {
-				indicator.clearItemContentView();
-			}
-			if (listener == null) {
-				dismiss();
-			} else if (commands.isEmpty()) {
-				fireCommandAction(DISMISS_COMMAND);
-			}
-		});
+		builder.setOnDismissListener(this::onDismiss);
 
 		if (image != null) {
 			builder.setIcon(new BitmapDrawable(context.getResources(), image.getBitmap()));
@@ -225,14 +211,14 @@ public class Alert extends Screen {
 			builder.setNeutralButton(neutral.getAndroidLabel(), (d, w) -> fireCommandAction(neutral));
 		}
 
-		alertDialog = builder.create();
+		dialog = builder.create();
 		if (listener == null) {
-			alertDialog.setCancelable(true);
-			alertDialog.setCanceledOnTouchOutside(true);
+			dialog.setCancelable(true);
+			dialog.setCanceledOnTouchOutside(true);
 		} else {
-			alertDialog.setCanceledOnTouchOutside(commands.isEmpty());
+			dialog.setCanceledOnTouchOutside(commands.isEmpty());
 		}
-		return alertDialog;
+		return dialog;
 	}
 
 	@Override
@@ -245,7 +231,7 @@ public class Alert extends Screen {
 			return;
 		}
 		commands.add(cmd);
-		if (commands.size() == 1 && alertDialog != null) {
+		if (commands.size() == 1 && dialog != null) {
 			ViewHandler.postEvent(msgCommandsChanged);
 		}
 	}
@@ -256,7 +242,7 @@ public class Alert extends Screen {
 			return;
 		}
 		commands.remove(cmd);
-		if (commands.isEmpty() && alertDialog != null) {
+		if (commands.isEmpty() && dialog != null) {
 			ViewHandler.postEvent(msgCommandsChanged);
 		}
 	}
@@ -267,47 +253,45 @@ public class Alert extends Screen {
 			return;
 		}
 		this.listener = listener;
-		if (alertDialog != null) {
+		if (dialog != null) {
 			ViewHandler.postEvent(msgCommandsChanged);
 		}
 	}
 
 	@Override
-	public View getScreenView() {
-		if (form == null) {
-			form = new Form(getTitle());
-
-			form.append(image);
-			form.append(text);
-		}
-
-		return form.getDisplayableView();
+	View getScreenView() {
+		throw new IllegalStateException("Alert not support this");
 	}
 
 	@Override
-	public void clearScreenView() {
-		if (form != null) {
-			form.clearDisplayableView();
-			form = null;
-		}
+	void clearScreenView() {
 	}
 
 	void setNextDisplayable(Displayable nextDisplayable) {
 		this.nextDisplayable = nextDisplayable;
 	}
 
-	void close() {
-		this.nextDisplayable = null;
-		AlertDialog dialog = this.alertDialog;
-		if (dialog != null) {
-			dialog.dismiss();
+	void onDismiss(DialogInterface dialogInterface) {
+		dialog = null;
+		Gauge indicator = this.indicator;
+		if (indicator != null) {
+			indicator.clearItemContentView();
+		}
+		if (listener == null) {
+			Displayable displayable = nextDisplayable;
+			if (displayable != null) {
+				Display.getDisplay(null).setCurrent(displayable);
+			}
+		} else if (commands.isEmpty()) {
+			fireCommandAction(DISMISS_COMMAND);
 		}
 	}
 
-	private void dismiss() {
-		Displayable displayable = nextDisplayable;
-		if (displayable != null) {
-			Display.getDisplay(null).setCurrent(displayable);
+	void close() {
+		this.nextDisplayable = null;
+		AlertDialog dialog = this.dialog;
+		if (dialog != null) {
+			dialog.dismiss();
 		}
 	}
 }

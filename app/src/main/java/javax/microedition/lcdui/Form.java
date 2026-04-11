@@ -2,7 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2018 Nikita Shakarun
- * Copyright 2020-2024 Yury Kharchenko
+ * Copyright 2020-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,7 +172,7 @@ public class Form extends Screen {
 	}
 
 	@Override
-	public View getScreenView() {
+	View getScreenView() {
 		if (scrollview == null) {
 			Context context = ContextHolder.getActivity();
 
@@ -194,7 +194,7 @@ public class Form extends Screen {
 	}
 
 	@Override
-	public void clearScreenView() {
+	void clearScreenView() {
 		scrollview = null;
 		layout = null;
 

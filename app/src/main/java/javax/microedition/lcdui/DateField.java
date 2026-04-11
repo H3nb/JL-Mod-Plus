@@ -1,5 +1,6 @@
 /*
  * Copyright 2018 Nikita Shakarun
+ * Copyright 2022-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,13 +36,13 @@ public class DateField extends Item {
 	public static final int TIME = 2;
 
 	private int mode;
-	private Calendar calendar = Calendar.getInstance();
+	private final Calendar calendar = Calendar.getInstance();
 
 	private LinearLayout layout;
 	private DatePicker datePicker;
 	private TimePicker timePicker;
 
-	private SimpleEvent msgUpdateDate = new SimpleEvent() {
+	private final SimpleEvent msgUpdateDate = new SimpleEvent() {
 		@Override
 		public void process() {
 			datePicker.updateDate(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH),
@@ -51,7 +52,7 @@ public class DateField extends Item {
 		}
 	};
 
-	private SimpleEvent msgSetVisibility = new SimpleEvent() {
+	private final SimpleEvent msgSetVisibility = new SimpleEvent() {
 		@Override
 		public void process() {
 			if (mode == DATE) {
@@ -82,8 +83,8 @@ public class DateField extends Item {
 		}
 	}
 
-	private DateChangedListener dateChangedListener = new DateChangedListener();
-	private TimeChangedListener timeChangedListener = new TimeChangedListener();
+	private final DateChangedListener dateChangedListener = new DateChangedListener();
+	private final TimeChangedListener timeChangedListener = new TimeChangedListener();
 
 	public DateField(String label, int mode) {
 		this(label, mode, TimeZone.getDefault());
@@ -118,7 +119,7 @@ public class DateField extends Item {
 	}
 
 	@Override
-	protected View getItemContentView() {
+	View getItemContentView() {
 		if (layout == null) {
 			Context context = ContextHolder.getActivity();
 
@@ -153,7 +154,7 @@ public class DateField extends Item {
 	}
 
 	@Override
-	protected void clearItemContentView() {
+	void clearItemContentView() {
 		layout = null;
 	}
 }

@@ -1,5 +1,6 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
+ * Copyright 2021-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +42,7 @@ public class Spacer extends Item {
 	}
 
 	@Override
-	public View getItemContentView() {
+	View getItemContentView() {
 		if (view == null) {
 			view = new Space(ContextHolder.getActivity());
 
@@ -53,7 +54,7 @@ public class Spacer extends Item {
 	}
 
 	@Override
-	public void clearItemContentView() {
+	void clearItemContentView() {
 		view = null;
 	}
 }

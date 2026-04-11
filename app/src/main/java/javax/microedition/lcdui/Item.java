@@ -317,9 +317,9 @@ public abstract class Item {
 	/**
 	 * Get the item content
 	 */
-	protected abstract View getItemContentView();
+	abstract View getItemContentView();
 
-	protected abstract void clearItemContentView();
+	abstract void clearItemContentView();
 
 	void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
 		menu.clear();

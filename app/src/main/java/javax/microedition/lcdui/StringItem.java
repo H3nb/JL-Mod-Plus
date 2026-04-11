@@ -1,6 +1,7 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017 Nikita Shakarun
+ * Copyright 2019-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +83,7 @@ public class StringItem extends Item {
 	}
 
 	@Override
-	public View getItemContentView() {
+	View getItemContentView() {
 		if (textview == null) {
 			Context context = ContextHolder.getActivity();
 
@@ -107,7 +108,7 @@ public class StringItem extends Item {
 	}
 
 	@Override
-	public void clearItemContentView() {
+	void clearItemContentView() {
 		textview = null;
 	}
 }

@@ -1,6 +1,6 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
- * Copyright 2021-2024 Yury Kharchenko
+ * Copyright 2021-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ public class Gauge extends Item {
 	}
 
 	@Override
-	protected View getItemContentView() {
+	View getItemContentView() {
 		if (progressBar == null) {
 			Context activity = ContextHolder.getActivity();
 			if (interactive) {
@@ -116,7 +116,7 @@ public class Gauge extends Item {
 	}
 
 	@Override
-	protected void clearItemContentView() {
+	void clearItemContentView() {
 		progressBar = null;
 	}
 

@@ -1,7 +1,7 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2018-2021 Nikita Shakarun
- * Copyright 2019-2024 Yury Kharchenko
+ * Copyright 2019-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -342,7 +342,7 @@ public class ChoiceGroup extends Item implements Choice {
 	}
 
 	@Override
-	public View getItemContentView() {
+	View getItemContentView() {
 		Context context = ContextHolder.getActivity();
 
 		switch (choiceType) {
@@ -372,7 +372,7 @@ public class ChoiceGroup extends Item implements Choice {
 	}
 
 	@Override
-	public void clearItemContentView() {
+	void clearItemContentView() {
 		view = null;
 	}
 

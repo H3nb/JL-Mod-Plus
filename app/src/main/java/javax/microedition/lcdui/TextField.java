@@ -104,12 +104,12 @@ public class TextField extends Item {
 	}
 
 	@Override
-	public View getItemContentView() {
+	View getItemContentView() {
 		return textField.getView(ContextHolder.getActivity(), this);
 	}
 
 	@Override
-	public void clearItemContentView() {
+	void clearItemContentView() {
 		textField.clearScreenView();
 	}
 }

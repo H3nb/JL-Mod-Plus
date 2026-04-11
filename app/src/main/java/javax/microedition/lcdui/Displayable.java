@@ -2,7 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2020 Nikita Shakarun
- * Copyright 2020-2023 Yriy Kharchenko
+ * Copyright 2020-2026 Yriy Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -199,20 +199,6 @@ public abstract class Displayable {
 	}
 
 	protected void sizeChanged(int w, int h) {
-	}
-
-	public boolean menuItemSelected(int id) {
-		if (listener == null) {
-			return true;
-		}
-
-		Command[] array = commands.toArray(new Command[0]);
-		for (Command cmd : array) {
-			if (cmd.hashCode() == id) {
-				Display.postEvent(CommandActionEvent.getInstance(listener, cmd, this));
-			}
-		}
-		return true;
 	}
 
 	public void doSizeChanged(int width, int height) {

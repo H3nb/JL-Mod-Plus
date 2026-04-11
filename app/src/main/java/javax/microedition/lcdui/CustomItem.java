@@ -1,5 +1,6 @@
 /*
  * Copyright 2018 Nikita Shakarun
+ * Copyright 2020-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +21,14 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.RectF;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
 import javax.microedition.util.ContextHolder;
 
 public abstract class CustomItem extends Item {
+	private static final String TAG = "lcdui.CustomItem";
 	protected static final int KEY_PRESS = 4;
 	protected static final int KEY_RELEASE = 8;
 	protected static final int KEY_REPEAT = 16;
@@ -120,7 +123,7 @@ public abstract class CustomItem extends Item {
 		try {
 			paint(graphics, width, height);
 		} catch (Throwable t) {
-			t.printStackTrace();
+			Log.e(TAG, "repaint: ", t);
 		}
 		view.postInvalidate();
 	}
@@ -171,7 +174,7 @@ public abstract class CustomItem extends Item {
 	}
 
 	@Override
-	protected View getItemContentView() {
+	View getItemContentView() {
 		if (view == null) {
 			view = new InnerView(ContextHolder.getActivity());
 			int width = getMinContentWidth();
@@ -186,7 +189,7 @@ public abstract class CustomItem extends Item {
 	}
 
 	@Override
-	protected void clearItemContentView() {
+	void clearItemContentView() {
 		view = null;
 	}
 }

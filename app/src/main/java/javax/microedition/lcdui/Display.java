@@ -81,53 +81,46 @@ public class Display {
 		return queue;
 	}
 
-	public void setCurrent(Displayable disp) {
+	public void setCurrent(Displayable displayable) {
 		Displayable current = this.current;
-		if (disp == current) {
+		if (displayable == current) {
 			return;
 		}
-		this.current = disp;
-		if (current instanceof Canvas) {
-			Canvas c = (Canvas) current;
-			c.setInvisible();
+		this.current = displayable;
+		if (current instanceof Canvas canvas) {
+			canvas.setInvisible();
 		} else if (current instanceof Alert alert) {
-			if (disp instanceof Alert) {
+			if (displayable instanceof Alert) {
 				throw new IllegalArgumentException();
 			}
 			alert.close();
 		}
-		if (disp instanceof Alert alert) {
+		if (displayable instanceof Alert alert) {
 			alert.setNextDisplayable(current);
-			showAlert();
+			ViewHandler.postEvent(this::showAlert);
 		} else {
-			showCurrent();
+			ContextHolder.getActivity().setCurrent(displayable);
 		}
 	}
 
-	public void setCurrent(Alert alert, Displayable disp) {
-		if (disp == null) {
+	public void setCurrent(Alert alert, Displayable displayable) {
+		if (displayable == null) {
 			throw new NullPointerException();
-		} else if (disp instanceof Alert) {
+		} else if (displayable instanceof Alert) {
 			throw new IllegalArgumentException();
 		}
 		current = alert;
-		showAlert();
+		ViewHandler.postEvent(this::showAlert);
 	}
 
 	private void showAlert() {
-		ViewHandler.postEvent(() -> {
-			if (current instanceof Alert alert) {
-				AlertDialog alertDialog = alert.prepareDialog();
-				alertDialog.show();
-				if (alert.finiteTimeout()) {
-					ViewHandler.postDelayed(alertDialog::dismiss, alert.getTimeout());
-				}
+		if (current instanceof Alert alert) {
+			AlertDialog alertDialog = alert.prepareDialog();
+			alertDialog.show();
+			if (alert.finiteTimeout()) {
+				ViewHandler.postDelayed(alertDialog::dismiss, alert.getTimeout());
 			}
-		});
-	}
-
-	private void showCurrent() {
-		ContextHolder.getActivity().setCurrent(current);
+		}
 	}
 
 	public Displayable getCurrent() {

@@ -1,7 +1,7 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2018 Nikita Shakarun
- * Copyright 2022-2023 Yury Kharchenko
+ * Copyright 2022-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public abstract class Screen extends Displayable {
 		clearScreenView();
 	}
 
-	public abstract View getScreenView();
+	abstract View getScreenView();
 
-	public abstract void clearScreenView();
+	abstract void clearScreenView();
 }

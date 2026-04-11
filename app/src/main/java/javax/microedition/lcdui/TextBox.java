@@ -1,7 +1,7 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017 Nikita Shakarun
- * Copyright 2021-2024 Yury Kharchenko
+ * Copyright 2021-2026 Yury Kharchenko
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ public class TextBox extends Screen {
 	}
 
 	@Override
-	public View getScreenView() {
+	View getScreenView() {
 		EditText et = textField.getView(ContextHolder.getActivity(), null);
 		et.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 		et.setGravity(Gravity.TOP);
@@ -100,7 +100,7 @@ public class TextBox extends Screen {
 	}
 
 	@Override
-	public void clearScreenView() {
+	void clearScreenView() {
 		textField.clearScreenView();
 	}
 }
