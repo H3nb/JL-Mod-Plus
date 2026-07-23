@@ -24,6 +24,8 @@
 
 package org.microemu.cldc.http;
 
+import org.microemu.cldc.SecureConnectionFailureNotifier;
+import org.microemu.cldc.SecureConnectionPolicy;
 import org.microemu.microedition.io.ConnectionImplementation;
 
 import java.io.DataInputStream;
@@ -35,6 +37,8 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import javax.microedition.io.HttpConnection;
 
@@ -44,6 +48,7 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 	protected URLConnection cnOut;
 
 	protected boolean connected = false;
+	private final Map<String, String> requestProperties = new LinkedHashMap<>();
 
 	protected static boolean allowNetworkConnection = true;
 
@@ -59,8 +64,12 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 			throw new IOException(ex.toString());
 		}
 		cn = url.openConnection();
+		cnOut = null;
+		connected = false;
+		requestProperties.clear();
+		SecureConnectionPolicy.configureIfInsecure(cn);
 		// Add encoding info to the header
-		cn.setRequestProperty("Accept-Encoding", "identity");
+		setRequestPropertyInternal(cn, "Accept-Encoding", "identity");
 		// J2ME do not follow redirects. Test this url
 		// http://www.microemu.org/test/r/
 		if (cn instanceof HttpURLConnection) {
@@ -85,6 +94,64 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 
 		cn = null;
 		cnOut = null;
+		connected = false;
+		requestProperties.clear();
+	}
+
+	protected void ensureConnected() throws IOException {
+		if (connected) {
+			return;
+		}
+		try {
+			cn.connect();
+			connected = true;
+		} catch (IOException ex) {
+			URLConnection retry = createInsecureRetryConnectionIfAllowed(cn, ex);
+			if (retry == null) {
+				throw ex;
+			}
+			cn = retry;
+			cn.connect();
+			connected = true;
+		}
+	}
+
+	protected URLConnection createInsecureRetryConnectionIfAllowed(
+			URLConnection failedConnection,
+			IOException error
+	) throws IOException {
+		if (failedConnection == null
+				|| !"https".equalsIgnoreCase(failedConnection.getURL().getProtocol())
+				|| !SecureConnectionFailureNotifier.handleTlsFailure(
+						failedConnection.getURL().getHost(),
+						error
+				)) {
+			return null;
+		}
+		URLConnection retry = copyConnection(failedConnection);
+		SecureConnectionPolicy.configureInsecure((javax.net.ssl.HttpsURLConnection) retry);
+		return retry;
+	}
+
+	private URLConnection copyConnection(URLConnection source) throws IOException {
+		URLConnection target = source.getURL().openConnection();
+		target.setAllowUserInteraction(source.getAllowUserInteraction());
+		target.setConnectTimeout(source.getConnectTimeout());
+		target.setDefaultUseCaches(source.getDefaultUseCaches());
+		target.setDoInput(source.getDoInput());
+		target.setDoOutput(source.getDoOutput());
+		target.setIfModifiedSince(source.getIfModifiedSince());
+		target.setReadTimeout(source.getReadTimeout());
+		target.setUseCaches(source.getUseCaches());
+		for (Map.Entry<String, String> property : requestProperties.entrySet()) {
+			target.setRequestProperty(property.getKey(), property.getValue());
+		}
+		if (source instanceof HttpURLConnection sourceHttp
+				&& target instanceof HttpURLConnection targetHttp) {
+			targetHttp.setInstanceFollowRedirects(sourceHttp.getInstanceFollowRedirects());
+			targetHttp.setRequestMethod(sourceHttp.getRequestMethod());
+		}
+		return target;
 	}
 
 	@Override
@@ -194,7 +261,12 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 			throw new IOException();
 		}
 
-		cn.setRequestProperty(key, value);
+		setRequestPropertyInternal(cn, key, value);
+	}
+
+	private void setRequestPropertyInternal(URLConnection connection, String key, String value) {
+		connection.setRequestProperty(key, value);
+		requestProperties.put(key, value);
 	}
 
 	@Override
@@ -202,10 +274,7 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 		if (cn == null) {
 			throw new IOException();
 		}
-		if (!connected) {
-			cn.connect();
-			connected = true;
-		}
+		ensureConnected();
 
 		if (cn instanceof HttpURLConnection) {
 			return ((HttpURLConnection) cn).getResponseCode();
@@ -219,10 +288,7 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 		if (cn == null) {
 			throw new IOException();
 		}
-		if (!connected) {
-			cn.connect();
-			connected = true;
-		}
+		ensureConnected();
 
 		if (cn instanceof HttpURLConnection) {
 			return ((HttpURLConnection) cn).getResponseMessage();
@@ -236,10 +302,7 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 		if (cn == null) {
 			throw new IOException();
 		}
-		if (!connected) {
-			cn.connect();
-			connected = true;
-		}
+		ensureConnected();
 
 		return cn.getExpiration();
 	}
@@ -249,10 +312,7 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 		if (cn == null) {
 			throw new IOException();
 		}
-		if (!connected) {
-			cn.connect();
-			connected = true;
-		}
+		ensureConnected();
 
 		return cn.getDate();
 	}
@@ -262,10 +322,7 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 		if (cn == null) {
 			throw new IOException();
 		}
-		if (!connected) {
-			cn.connect();
-			connected = true;
-		}
+		ensureConnected();
 
 		return cn.getLastModified();
 	}
@@ -275,10 +332,7 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 		if (cn == null) {
 			throw new IOException();
 		}
-		if (!connected) {
-			cn.connect();
-			connected = true;
-		}
+		ensureConnected();
 
 		return cn.getHeaderField(name);
 	}
@@ -288,10 +342,7 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 		if (cn == null) {
 			throw new IOException();
 		}
-		if (!connected) {
-			cn.connect();
-			connected = true;
-		}
+		ensureConnected();
 
 		return cn.getHeaderFieldInt(name, def);
 	}
@@ -301,10 +352,7 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 		if (cn == null) {
 			throw new IOException();
 		}
-		if (!connected) {
-			cn.connect();
-			connected = true;
-		}
+		ensureConnected();
 
 		return cn.getHeaderFieldDate(name, def);
 	}
@@ -314,10 +362,7 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 		if (cn == null) {
 			throw new IOException();
 		}
-		if (!connected) {
-			cn.connect();
-			connected = true;
-		}
+		ensureConnected();
 
 		return cn.getHeaderField(getImplIndex(n));
 	}
@@ -327,10 +372,7 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 		if (cn == null) {
 			throw new IOException();
 		}
-		if (!connected) {
-			cn.connect();
-			connected = true;
-		}
+		ensureConnected();
 
 		return cn.getHeaderFieldKey(getImplIndex(n));
 	}
@@ -353,6 +395,12 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 		try {
 			return cn.getInputStream();
 		} catch (IOException ex) {
+			URLConnection retry = createInsecureRetryConnectionIfAllowed(cn, ex);
+			if (retry != null) {
+				cn = retry;
+				connected = true;
+				return cn.getInputStream();
+			}
 			if (cn instanceof HttpURLConnection) {
 				InputStream errorStream = ((HttpURLConnection) cn).getErrorStream();
 				if (errorStream == null) throw ex;
@@ -375,16 +423,33 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 
 		connected = true;
 
+		URLConnection outputConnection = cn;
 		if (cn instanceof HttpURLConnection &&
 				((HttpURLConnection) cn).getRequestMethod().equals(HttpConnection.GET)) {
 			if (cnOut == null) {
 				cnOut = cn.getURL().openConnection();
+				SecureConnectionPolicy.configureIfInsecure(cnOut);
 				cnOut.setDoOutput(true);
 				((HttpURLConnection) cnOut).setRequestMethod(HttpConnection.POST);
+				for (Map.Entry<String, String> property : requestProperties.entrySet()) {
+					cnOut.setRequestProperty(property.getKey(), property.getValue());
+				}
 			}
-			return cnOut.getOutputStream();
-		} else {
-			return cn.getOutputStream();
+			outputConnection = cnOut;
+		}
+		try {
+			return outputConnection.getOutputStream();
+		} catch (IOException ex) {
+			URLConnection retry = createInsecureRetryConnectionIfAllowed(outputConnection, ex);
+			if (retry != null) {
+				if (outputConnection == cnOut) {
+					cnOut = retry;
+				} else {
+					cn = retry;
+				}
+				return retry.getOutputStream();
+			}
+			throw ex;
 		}
 	}
 

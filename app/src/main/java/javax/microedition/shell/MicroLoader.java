@@ -70,6 +70,7 @@ import io.github.h3nb.jlmodplus.BuildConfig;
 import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.ProfilesManager;
+import org.microemu.cldc.SecureConnectionPolicy;
 import io.github.h3nb.jlmodplus.config.ShaderInfo;
 import io.github.h3nb.jlmodplus.util.AppUtils;
 import io.github.h3nb.jlmodplus.util.Constants;
@@ -102,6 +103,7 @@ public class MicroLoader {
 		if (params == null) {
 			return false;
 		}
+		SecureConnectionPolicy.setMode(params.secureConnectionMode);
 		Display.initDisplay();
 		Graphics3D.initGraphics3D();
 		File cacheDir = ContextHolder.getCacheDir();

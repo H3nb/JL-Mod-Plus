@@ -192,7 +192,7 @@ public class ContextHolder {
 	}
 
 	public static MicroActivity getActivity() {
-		return currentActivity.get();
+		return currentActivity == null ? null : currentActivity.get();
 	}
 
 	public static boolean vibrate(int duration) {

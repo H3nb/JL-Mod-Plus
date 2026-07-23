@@ -39,6 +39,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.XmlUtils;
+import org.microemu.cldc.SecureConnectionPolicy;
 
 public class ProfilesManager {
 
@@ -73,6 +74,11 @@ public class ProfilesManager {
 		File dstKeyLayout = new File(toPath, Config.MIDLET_KEY_LAYOUT_FILE);
 		try {
 			if (config) {
+				File targetDir = new File(toPath);
+				ProfileModel existing = loadConfig(targetDir);
+				int secureConnectionMode = existing == null
+						? SecureConnectionPolicy.MODE_ANDROID
+						: existing.secureConnectionMode;
 				File source = from.getConfig();
 				if (source.exists())
 					FileUtils.copyFileUsingChannel(source, dstConfig);
@@ -82,6 +88,11 @@ public class ProfilesManager {
 						params.dir = dstConfig.getParentFile();
 						saveConfig(params);
 					}
+				}
+				ProfileModel loaded = loadConfig(targetDir);
+				if (loaded != null) {
+					loaded.secureConnectionMode = secureConnectionMode;
+					saveConfig(loaded);
 				}
 			}
 			if (keyboard) FileUtils.copyFileUsingChannel(from.getKeyLayout(), dstKeyLayout);
@@ -99,7 +110,14 @@ public class ProfilesManager {
 		File srcConfig = new File(fromPath, Config.MIDLET_CONFIG_FILE);
 		File srcKeyLayout = new File(fromPath, Config.MIDLET_KEY_LAYOUT_FILE);
 		try {
-			if (config) FileUtils.copyFileUsingChannel(srcConfig, profile.getConfig());
+			if (config) {
+				ProfileModel params = loadConfig(srcConfig.getParentFile());
+				if (params != null) {
+					params.dir = profile.getDir();
+					params.secureConnectionMode = SecureConnectionPolicy.MODE_ANDROID;
+					saveConfig(params);
+				}
+			}
 			if (keyboard) FileUtils.copyFileUsingChannel(srcKeyLayout, profile.getKeyLayout());
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();

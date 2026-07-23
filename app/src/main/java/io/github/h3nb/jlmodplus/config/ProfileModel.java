@@ -173,6 +173,9 @@ public class ProfileModel {
 	@SerializedName("SkipResumeCall")
 	public boolean skipResumeCall;
 
+	@SerializedName("SecureConnectionMode")
+	public int secureConnectionMode;
+
 	@SuppressWarnings("unused") // Gson uses default constructor if present
 	public ProfileModel() {
 		isNew = false;

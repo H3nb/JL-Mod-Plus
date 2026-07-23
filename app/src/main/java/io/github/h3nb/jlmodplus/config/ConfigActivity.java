@@ -79,6 +79,7 @@ import kotlin.io.FilesKt;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.model.Size;
 import io.github.h3nb.jlmodplus.databinding.ActivityConfigBinding;
+import org.microemu.cldc.SecureConnectionPolicy;
 import io.github.h3nb.jlmodplus.settings.KeyMapperActivity;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.ViewUtils;
@@ -103,6 +104,7 @@ public class ConfigActivity extends AppCompatActivity implements View.OnClickLis
 	private String workDir;
 	private boolean needShow;
 	private ActivityConfigBinding binding;
+	private int lastSafeSecureConnectionMode;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -166,6 +168,35 @@ public class ConfigActivity extends AppCompatActivity implements View.OnClickLis
 		loadKeyLayout();
 		binding = ActivityConfigBinding.inflate(getLayoutInflater());
 		setContentView(binding.getRoot());
+		if (isProfile) {
+			binding.rootConfigExperimental.setVisibility(View.GONE);
+		} else {
+			lastSafeSecureConnectionMode =
+					params.secureConnectionMode == SecureConnectionPolicy.MODE_INSECURE
+							? SecureConnectionPolicy.MODE_ANDROID
+							: params.secureConnectionMode;
+			binding.spSecureConnectionMode.setOnItemSelectedListener(
+					new AdapterView.OnItemSelectedListener() {
+						@Override
+						public void onItemSelected(
+								AdapterView<?> parent,
+								View view,
+								int position,
+								long id
+						) {
+							if (position == SecureConnectionPolicy.MODE_INSECURE) {
+								confirmInsecureSecureConnectionMode();
+							} else {
+								lastSafeSecureConnectionMode = position;
+							}
+						}
+
+						@Override
+						public void onNothingSelected(AdapterView<?> parent) {
+						}
+					}
+			);
+		}
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		display = getWindowManager().getDefaultDisplay();
 
@@ -398,6 +429,23 @@ public class ConfigActivity extends AppCompatActivity implements View.OnClickLis
 		ShaderInfo shader = (ShaderInfo) binding.spShader.getSelectedItem();
 		params.shader = shader;
 		ShaderTuneAlert.newInstance(shader).show(getSupportFragmentManager(), "ShaderTuning");
+	}
+
+	private void confirmInsecureSecureConnectionMode() {
+		new AlertDialog.Builder(this)
+				.setIcon(android.R.drawable.ic_dialog_alert)
+				.setTitle(R.string.secure_connection_insecure_title)
+				.setMessage(R.string.secure_connection_insecure_message)
+				.setNegativeButton(android.R.string.cancel, (dialog, which) ->
+						binding.spSecureConnectionMode.setSelection(lastSafeSecureConnectionMode)
+				)
+				.setPositiveButton(R.string.secure_connection_use_insecure, (dialog, which) ->
+						lastSafeSecureConnectionMode = SecureConnectionPolicy.MODE_INSECURE
+				)
+				.setOnCancelListener(dialog ->
+						binding.spSecureConnectionMode.setSelection(lastSafeSecureConnectionMode)
+				)
+				.show();
 	}
 
 	private void initShaderSpinner() {
@@ -637,6 +685,9 @@ public class ConfigActivity extends AppCompatActivity implements View.OnClickLis
 		binding.tfVKOutline.setText(String.format("%06X", params.vkOutlineColor));
 
 		binding.cxSkipResumeCall.setChecked(params.skipResumeCall);
+		binding.spSecureConnectionMode.setSelection(
+				Math.max(0, Math.min(params.secureConnectionMode, 2))
+		);
 		setSpinnerSelection(binding.spSoundBank, params.soundBank);
 
 		String systemProperties = params.systemProperties;
@@ -750,6 +801,9 @@ public class ConfigActivity extends AppCompatActivity implements View.OnClickLis
 			} catch (Exception ignored) {
 			}
 			params.skipResumeCall = binding.cxSkipResumeCall.isChecked();
+			params.secureConnectionMode = isProfile
+					? SecureConnectionPolicy.MODE_ANDROID
+					: binding.spSecureConnectionMode.getSelectedItemPosition();
 			params.soundBank = binding.spSoundBank.getSelectedItemPosition() > 0 ? (String) binding.spSoundBank.getSelectedItem() : null;
 			params.systemProperties = getSystemProperties(binding.tfSystemProperties.getText().toString());
 

@@ -63,4 +63,9 @@
         <item>@string/pref_screen_gravity_right</item>
         <item>@string/pref_screen_gravity_bottom</item>
     </string-array>
+    <string-array name="secure_connection_mode_entries">
+        <item>@string/secure_connection_mode_android</item>
+        <item>@string/secure_connection_mode_ask</item>
+        <item>@string/secure_connection_mode_insecure</item>
+    </string-array>
 </resources>

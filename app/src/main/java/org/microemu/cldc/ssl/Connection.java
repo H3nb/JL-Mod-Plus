@@ -26,24 +26,23 @@
 package org.microemu.cldc.ssl;
 
 import org.microemu.cldc.CertificateImpl;
+import org.microemu.cldc.SecureConnectionFailureNotifier;
+import org.microemu.cldc.SecureConnectionPolicy;
 import org.microemu.cldc.SecurityInfoImpl;
 import org.microemu.microedition.io.ConnectionImplementation;
 
 import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 
 import javax.microedition.io.SecureConnection;
 import javax.microedition.io.SecurityInfo;
-import javax.net.ssl.SSLContext;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 
 public class Connection extends org.microemu.cldc.socket.SocketConnection implements SecureConnection, ConnectionImplementation {
 
@@ -64,45 +63,65 @@ public class Connection extends org.microemu.cldc.socket.SocketConnection implem
 		int port = Integer.parseInt(name.substring(portSepIndex + 1));
 		String host = name.substring("ssl://".length(), portSepIndex);
 
-		// TODO validate certificate chains
-		TrustManager[] trustAllCerts = new TrustManager[]{
-				new X509TrustManager() {
-					@Override
-					public X509Certificate[] getAcceptedIssuers() {
-						return null;
-					}
-
-					@Override
-					public void checkClientTrusted(
-							X509Certificate[] certs, String authType) {
-					}
-
-					@Override
-					public void checkServerTrusted(
-							X509Certificate[] certs, String authType) {
-					}
+		if (SecureConnectionPolicy.getMode() == SecureConnectionPolicy.MODE_INSECURE) {
+			socket = SecureConnectionPolicy.createInsecureSocket(host, port);
+		} else {
+			try {
+				socket = createVerifiedSocket(host, port, (SSLSocketFactory) SSLSocketFactory.getDefault());
+			} catch (IOException ex) {
+				if (SecureConnectionFailureNotifier.handleTlsFailure(host, ex)) {
+					socket = SecureConnectionPolicy.createInsecureSocket(host, port);
+				} else {
+					throw ex;
 				}
-		};
-
-		try {
-			SSLContext sc = SSLContext.getInstance("SSL");
-			sc.init(null, trustAllCerts, new SecureRandom());
-			SSLSocketFactory factory = sc.getSocketFactory();
-			socket = factory.createSocket(host, port);
-		} catch (NoSuchAlgorithmException ex) {
-			throw new IOException(ex.toString());
-		} catch (KeyManagementException ex) {
-			throw new IOException(ex.toString());
+			}
 		}
 
 		return this;
+	}
+
+	static SSLSocket createVerifiedSocket(String host, int port, SSLSocketFactory factory) throws IOException {
+		return createVerifiedSocket(
+				host,
+				port,
+				factory,
+				HttpsURLConnection.getDefaultHostnameVerifier()
+		);
+	}
+
+	static SSLSocket createVerifiedSocket(
+			String host,
+			int port,
+			SSLSocketFactory factory,
+			HostnameVerifier hostnameVerifier
+	) throws IOException {
+		SSLSocket sslSocket = null;
+		try {
+			sslSocket = (SSLSocket) factory.createSocket(host, port);
+			sslSocket.startHandshake();
+			if (!hostnameVerifier.verify(host, sslSocket.getSession())) {
+				throw new SSLHandshakeException("Hostname verification failed for " + host);
+			}
+			return sslSocket;
+		} catch (IOException | RuntimeException ex) {
+			if (sslSocket != null) {
+				try {
+					sslSocket.close();
+				} catch (IOException closeError) {
+					ex.addSuppressed(closeError);
+				}
+			}
+			throw ex;
+		}
 	}
 
 	@Override
 	public void close() throws IOException {
 		// TODO fix differences between Java ME and Java SE
 
-		socket.close();
+		if (socket != null) {
+			socket.close();
+		}
 	}
 
 	@Override

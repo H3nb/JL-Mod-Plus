@@ -59,13 +59,23 @@ public class Connection extends org.microemu.cldc.http.Connection implements Htt
 			if (cn == null) {
 				throw new IOException();
 			}
-			if (!connected) {
-				cn.connect();
-				connected = true;
-			}
+			ensureConnected();
 			HttpsURLConnection https = (HttpsURLConnection) cn;
 
-			Certificate[] certs = https.getServerCertificates();
+			Certificate[] certs;
+			try {
+				certs = https.getServerCertificates();
+			} catch (IOException ex) {
+				java.net.URLConnection retry = createInsecureRetryConnectionIfAllowed(cn, ex);
+				if (retry == null) {
+					throw ex;
+				}
+				cn = retry;
+				connected = false;
+				ensureConnected();
+				https = (HttpsURLConnection) cn;
+				certs = https.getServerCertificates();
+			}
 			if (certs.length == 0) {
 				throw new IOException();
 			}

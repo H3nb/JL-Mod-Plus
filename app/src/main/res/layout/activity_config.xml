@@ -1030,6 +1030,62 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
+        <!-- Experimental -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/rootConfigExperimental"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:background="?attr/bg_config_card"
+            android:padding="5dp">
+
+            <TextView
+                android:id="@+id/tvConfigExperimentalTitle"
+                style="@style/ConfigTitleTextStyle"
+                android:text="@string/pref_title_experimental"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvSecureConnectionMode"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="5dp"
+                android:layout_marginTop="10dp"
+                android:text="@string/secure_connection_mode_title"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textColor="?attr/textColorSecondary"
+                android:textSize="15sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvConfigExperimentalTitle" />
+
+            <Spinner
+                android:id="@+id/spSecureConnectionMode"
+                style="@style/SwitchStyle"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/height_config_row"
+                android:entries="@array/secure_connection_mode_entries"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvSecureConnectionMode" />
+
+            <TextView
+                android:id="@+id/tvSecureConnectionModeSummary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="5dp"
+                android:text="@string/secure_connection_mode_summary"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textColor="?attr/textColorSecondary"
+                android:textSize="12sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/spSecureConnectionMode" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
         <!-- Audio -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/rootConfigAudio"
