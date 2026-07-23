@@ -23,8 +23,9 @@
     <string name="cmd_menu">Menu</string>
     <string name="CONFIRMATION_REQUIRED">Memerlukan konfirmasi</string>
     <string name="converting_wait">Mengkonversi JAR…</string>
-    <string name="crash_dialog_message">Apakah Anda ingin mengirim laporan kesalahan kepada pengembang?</string>
-    <string name="crash_dialog_title">Terdeteksi kegalatan</string>
+    <string name="crash_dialog_message">Laporan error tersedia.</string>
+    <string name="crash_report_instruction">Periksa detail berikut, lalu salin atau laporkan error.</string>
+    <string name="crash_dialog_title">Terjadi error</string>
     <string name="create">buat</string>
     <string name="create_apps_dir_failed">Gagal membuat folder di jalur:\n\'%1$s\'\npilih yang lain.</string>
     <string name="default_label">%1$s (bawaan)</string>
@@ -195,7 +196,12 @@
     <string name="reinstall">Aplikasi telah dipasang.\n\nApakah ingin dipasang ulang?\nSemua data akan disimpan.</string>
     <string name="reinstall_newest">Perbarui aplikasi ini ke versi %1$s?\n\nYang kini terpasang: %2$s\nSemua data akan disimpan.</string>
     <string name="reinstall_older">Timpa aplikasi ini dengan versi %1$s?\n\nYang kini terpasang: %2$s\nVersi lebih lama bisa jadi tidak berjalan lancar dengan data yang terekam.</string>
-    <string name="report_crash">Kirim</string>
+    <string name="report_crash">Laporkan</string>
+    <string name="share_error_report">Bagikan laporan</string>
+    <string name="github_issues_account_required">GitHub Issues (perlu akun)</string>
+    <string name="error_report_subject">Laporan error JL-Mod Plus</string>
+    <string name="error_report_no_share_app">Tidak ada aplikasi untuk membagikan laporan.</string>
+    <string name="error_report_no_browser">Tidak ada browser untuk membuka GitHub.</string>
     <string name="reset">Atur ulang</string>
     <string name="RESET_LAYOUT_CMD">Atur ulang letak tombol</string>
     <string name="reset_mapping">Atur ulang</string>

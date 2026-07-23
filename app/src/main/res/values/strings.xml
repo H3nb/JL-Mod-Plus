@@ -30,9 +30,8 @@
     <string name="config_virtual_screen_size">virtual screen size (original resolutions of MIDlet):</string>
     <string name="CONFIRMATION_REQUIRED">Confirmation required</string>
     <string name="converting_wait">Converting JAR…</string>
-    <!-- Kept as the default for inherited locale resources; the dialog uses the non-translatable instruction below. -->
     <string name="crash_dialog_message">An error report is available.</string>
-    <string name="crash_report_instruction" translatable="false">Copy the stack trace, then open the JL-Mod Plus GitHub repository to report this issue.</string>
+    <string name="crash_report_instruction">Review the details below, then copy or report the error.</string>
     <string name="crash_dialog_title">Error detected</string>
     <string name="create">create</string>
     <string name="create_apps_dir_failed">Failed to create a folder in the path:\n%1$s\nselect another.</string>
@@ -223,8 +222,12 @@
     <string name="reinstall">App already installed.\n\nDo you want to reinstall it?\nAll data will be saved.</string>
     <string name="reinstall_newest">Update this app to version %1$s?\n\nCurrently installed: %2$s\nAll data will be saved.</string>
     <string name="reinstall_older">Replace this app with version %1$s?\n\nCurrently installed: %2$s\nOlder version may not working correctly with recorded data.</string>
-    <string name="report_crash">Open GitHub</string>
-    <string name="open_github" translatable="false">Open GitHub</string>
+    <string name="report_crash">Report</string>
+    <string name="share_error_report">Share report</string>
+    <string name="github_issues_account_required">GitHub Issues (account required)</string>
+    <string name="error_report_subject">JL-Mod Plus error report</string>
+    <string name="error_report_no_share_app">No app can share this report.</string>
+    <string name="error_report_no_browser">No browser can open GitHub.</string>
     <string name="crash_issue_url" translatable="false">https://github.com/H3nb/JL-Mod-Plus/issues/new/choose</string>
     <string name="reset">Reset</string>
     <string name="RESET_LAYOUT_CMD">Reset keylayout</string>

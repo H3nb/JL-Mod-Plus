@@ -24,8 +24,7 @@ import static io.github.h3nb.jlmodplus.crashes.dialog.DialogInteraction.EXTRA_RE
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnClickListener;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -46,14 +45,13 @@ import androidx.core.widget.TextViewCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import org.acra.file.BulkReportDeleter;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
 import io.github.h3nb.jlmodplus.R;
 
-public final class CrashReportDialog extends AppCompatActivity implements OnClickListener {
+public final class CrashReportDialog extends AppCompatActivity {
 	private File reportFile;
 	private CrashViewModel viewModel;
 
@@ -88,14 +86,24 @@ public final class CrashReportDialog extends AppCompatActivity implements OnClic
 		AlertDialog dialog = new AlertDialog.Builder(context)
 				.setTitle(R.string.crash_dialog_title)
 				.setMessage(new SpannedString(builder))
-				.setPositiveButton(R.string.open_github, this)
-				.setNegativeButton(android.R.string.cancel, this)
-				.setNeutralButton(android.R.string.copy, this)
-				.setOnCancelListener(dialogInterface -> onClick(dialogInterface, BUTTON_NEGATIVE))
+				.setPositiveButton(R.string.report_crash, null)
+				.setNegativeButton(android.R.string.cancel, null)
+				.setNeutralButton(android.R.string.copy, null)
+				.setOnCancelListener(dialogInterface -> deleteReports())
 				.setOnDismissListener(dialogInterface -> finish())
 				.create();
 		dialog.setCanceledOnTouchOutside(false);
 		dialog.show();
+		dialog.getButton(BUTTON_POSITIVE).setOnClickListener(view -> showReportOptions(dialog));
+		dialog.getButton(BUTTON_NEGATIVE).setOnClickListener(view -> {
+			deleteReports();
+			dialog.dismiss();
+		});
+		dialog.getButton(BUTTON_NEUTRAL).setOnClickListener(view -> {
+			copyStackTrace();
+			deleteReports();
+			dialog.dismiss();
+		});
 		Drawable drawable = ContextCompat.getDrawable(this,
 				androidx.appcompat.R.drawable.abc_ic_menu_copy_mtrl_am_alpha);
 		if (drawable != null) {
@@ -107,16 +115,53 @@ public final class CrashReportDialog extends AppCompatActivity implements OnClic
 		}
 	}
 
-	@Override
-	public void onClick(@NotNull DialogInterface dialog, int which) {
-		if (which == BUTTON_POSITIVE) {
-			copyStackTrace();
-			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.crash_issue_url))));
-		}
-		if (which == BUTTON_NEUTRAL) {
-			copyStackTrace();
-		}
+	private void showReportOptions(AlertDialog reportDialog) {
+		CharSequence[] options = {
+				getString(R.string.share_error_report),
+				getString(R.string.github_issues_account_required)
+		};
+		new AlertDialog.Builder(this)
+				.setTitle(R.string.report_crash)
+				.setItems(options, (dialog, which) -> {
+					boolean opened = which == 0 ? shareReport() : openGithubIssues();
+					if (opened) {
+						deleteReports();
+						reportDialog.dismiss();
+					}
+				})
+				.setNegativeButton(android.R.string.cancel, null)
+				.show();
+	}
 
+	private boolean shareReport() {
+		Intent sendIntent = new Intent(Intent.ACTION_SEND)
+				.setType("text/plain")
+				.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.error_report_subject))
+				.putExtra(Intent.EXTRA_TEXT, viewModel.getStackTrace());
+		try {
+			startActivity(Intent.createChooser(sendIntent, getString(R.string.share_error_report)));
+			return true;
+		} catch (ActivityNotFoundException ex) {
+			Toast.makeText(this, R.string.error_report_no_share_app, Toast.LENGTH_SHORT).show();
+			return false;
+		}
+	}
+
+	private boolean openGithubIssues() {
+		copyStackTrace();
+		try {
+			startActivity(new Intent(
+					Intent.ACTION_VIEW,
+					Uri.parse(getString(R.string.crash_issue_url))
+			));
+			return true;
+		} catch (ActivityNotFoundException ex) {
+			Toast.makeText(this, R.string.error_report_no_browser, Toast.LENGTH_SHORT).show();
+			return false;
+		}
+	}
+
+	private void deleteReports() {
 		new Thread(() -> new BulkReportDeleter(CrashReportDialog.this).deleteReports(false, 0))
 				.start();
 	}
