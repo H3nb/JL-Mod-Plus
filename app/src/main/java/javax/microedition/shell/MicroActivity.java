@@ -19,7 +19,7 @@
 package javax.microedition.shell;
 
 import static android.content.pm.ActivityInfo.*;
-import static ru.playsoftware.j2meloader.util.Constants.*;
+import static io.github.h3nb.jlmodplus.util.Constants.*;
 
 import android.annotation.SuppressLint;
 import android.content.DialogInterface;
@@ -82,13 +82,13 @@ import javax.microedition.util.ContextHolder;
 
 import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
-import ru.playsoftware.j2meloader.BuildConfig;
-import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.config.Config;
-import ru.playsoftware.j2meloader.databinding.ActivityMicroBinding;
-import ru.playsoftware.j2meloader.databinding.DialogInputBinding;
-import ru.playsoftware.j2meloader.util.Constants;
-import ru.playsoftware.j2meloader.util.LogUtils;
+import io.github.h3nb.jlmodplus.BuildConfig;
+import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.config.Config;
+import io.github.h3nb.jlmodplus.databinding.ActivityMicroBinding;
+import io.github.h3nb.jlmodplus.databinding.DialogInputBinding;
+import io.github.h3nb.jlmodplus.util.Constants;
+import io.github.h3nb.jlmodplus.util.LogUtils;
 
 public class MicroActivity extends AppCompatActivity {
 	private static final int ORIENTATION_DEFAULT = 0;
@@ -252,13 +252,13 @@ public class MicroActivity extends AppCompatActivity {
 				.setItems(names, (d, n) -> {
 					String clazz = classes[n];
 					ErrorReporter errorReporter = ACRA.getErrorReporter();
-					String report = errorReporter.getCustomData(Constants.KEY_APPCENTER_ATTACHMENT);
+					String report = errorReporter.getCustomData(Constants.KEY_CRASH_ATTACHMENT);
 					StringBuilder sb = new StringBuilder();
 					if (report != null) {
 						sb.append(report).append("\n");
 					}
 					sb.append("Begin app: ").append(names[n]).append(", ").append(clazz);
-					errorReporter.putCustomData(Constants.KEY_APPCENTER_ATTACHMENT, sb.toString());
+					errorReporter.putCustomData(Constants.KEY_CRASH_ATTACHMENT, sb.toString());
 					microLoader.loadMidlet(clazz, appName);
 				})
 				.setOnCancelListener(d -> {

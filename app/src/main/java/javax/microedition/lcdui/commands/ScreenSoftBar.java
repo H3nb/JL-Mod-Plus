@@ -28,8 +28,8 @@ import java.util.List;
 import javax.microedition.lcdui.Command;
 import javax.microedition.lcdui.Screen;
 
-import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.databinding.SoftButtonBarBinding;
+import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.databinding.SoftButtonBarBinding;
 
 public class ScreenSoftBar extends AbstractSoftKeysBar {
 	private final SoftButtonBarBinding binding;

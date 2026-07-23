@@ -3,13 +3,10 @@
     <string name="_FONT_SEPARATOR" translatable="false">-</string>
     <string name="_MINUS_ONE" translatable="false">-1</string>
     <string name="about">About</string>
-    <string name="about_4pda" translatable="false">&lt;BR>4PDA: &lt;a href="http://4pda.to/forum/index.php?showtopic=824201">4pda.ru/forum/index.php?showtopic=824201&lt;/a></string>
-    <string name="about_copyright" translatable="false">\n\nCopyright 2020-2026 Yury Kharchenko</string>
-    <string name="about_crowdin" translatable="false">&lt;BR>Crowdin(translation): &lt;a href="https://crowdin.com/project/j2me-loader">crowdin.com/project/j2me-loader&lt;/a></string>
-    <string name="about_email" translatable="false">\n\nEmail: <a href="mailto:j2me.forever@gmail.com">j2me.forever@gmail.com</a>\n</string>
-    <string name="about_github" translatable="false">\nGithub: <a href="https://github.com/woesss/JL-Mod">woesss/JL-Mod</a>\n</string>
+    <string name="about_author" translatable="false">\n\nJL-Mod Plus by H3NB</string>
+    <string name="about_copyright" translatable="false">\n\nBased on JL-Mod and J2ME Loader.\nCopyright 2017-2018 Nikita Shakarun\nCopyright 2020-2026 Yury Kharchenko\nModifications Copyright 2026 H3NB</string>
+    <string name="about_github" translatable="false">\nGitHub: <a href="https://github.com/H3nb/JL-Mod-Plus">github.com/H3nb/JL-Mod-Plus</a>\n</string>
     <string name="about_message">This app allows you to launch J2ME apps and games on Android.\n</string>
-    <string name="about_xda" translatable="false">&lt;BR>XDA: &lt;a href="https://forum.xda-developers.com/android/apps-games/app-j2me-loader-t3777889">forum.xda-developers.com/android/apps-games/app-j2me-loader-t3777889&lt;/a></string>
     <string name="action_context_delete">Delete</string>
     <string name="action_context_rename">Rename</string>
     <string name="action_context_shortcut">Add shortcut</string>
@@ -33,14 +30,14 @@
     <string name="config_virtual_screen_size">virtual screen size (original resolutions of MIDlet):</string>
     <string name="CONFIRMATION_REQUIRED">Confirmation required</string>
     <string name="converting_wait">Converting JAR…</string>
-    <string name="crash_dialog_message">Do you want to send error report to the developer?</string>
+    <!-- Kept as the default for inherited locale resources; the dialog uses the non-translatable instruction below. -->
+    <string name="crash_dialog_message">An error report is available.</string>
+    <string name="crash_report_instruction" translatable="false">Copy the stack trace, then open the JL-Mod Plus GitHub repository to report this issue.</string>
     <string name="crash_dialog_title">Error detected</string>
     <string name="create">create</string>
     <string name="create_apps_dir_failed">Failed to create a folder in the path:\n%1$s\nselect another.</string>
     <string name="default_label">%1$s (default)</string>
     <string name="dismiss">Dismiss</string>
-    <string name="donate">Donate</string>
-    <string name="donation_paypal_item" translatable="false">J2ME Loader donation</string>
     <string name="edit">Edit</string>
     <string name="enter_name">Enter name</string>
     <string name="enter_new_name">Enter new name</string>
@@ -210,7 +207,9 @@
     <string name="reinstall">App already installed.\n\nDo you want to reinstall it?\nAll data will be saved.</string>
     <string name="reinstall_newest">Update this app to version %1$s?\n\nCurrently installed: %2$s\nAll data will be saved.</string>
     <string name="reinstall_older">Replace this app with version %1$s?\n\nCurrently installed: %2$s\nOlder version may not working correctly with recorded data.</string>
-    <string name="report_crash">Send</string>
+    <string name="report_crash">Open GitHub</string>
+    <string name="open_github" translatable="false">Open GitHub</string>
+    <string name="crash_issue_url" translatable="false">https://github.com/H3nb/JL-Mod-Plus/issues/new/choose</string>
     <string name="reset">Reset</string>
     <string name="RESET_LAYOUT_CMD">Reset keylayout</string>
     <string name="reset_mapping">Reset</string>

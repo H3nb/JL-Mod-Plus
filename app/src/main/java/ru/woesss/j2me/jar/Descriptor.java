@@ -29,8 +29,8 @@ import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.Map;
 
-import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.util.FileUtils;
+import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.util.FileUtils;
 
 public class Descriptor {
 	// required in JAD and Manifest

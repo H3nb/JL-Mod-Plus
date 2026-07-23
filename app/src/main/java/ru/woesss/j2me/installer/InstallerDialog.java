@@ -47,13 +47,13 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
-import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.applist.AppItem;
-import ru.playsoftware.j2meloader.applist.AppListModel;
-import ru.playsoftware.j2meloader.config.Config;
-import ru.playsoftware.j2meloader.databinding.FragmentInstallerBinding;
-import ru.playsoftware.j2meloader.util.Constants;
-import ru.playsoftware.j2meloader.util.FileUtils;
+import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.applist.AppItem;
+import io.github.h3nb.jlmodplus.applist.AppListModel;
+import io.github.h3nb.jlmodplus.config.Config;
+import io.github.h3nb.jlmodplus.databinding.FragmentInstallerBinding;
+import io.github.h3nb.jlmodplus.util.Constants;
+import io.github.h3nb.jlmodplus.util.FileUtils;
 import ru.woesss.j2me.jar.Descriptor;
 
 public class InstallerDialog extends DialogFragment {
@@ -314,7 +314,7 @@ public class InstallerDialog extends DialogFragment {
 		ErrorReporter errorReporter = ACRA.getErrorReporter();
 		Bundle args = getArguments();
 		if (args != null) {
-			String report = errorReporter.getCustomData(Constants.KEY_APPCENTER_ATTACHMENT);
+			String report = errorReporter.getCustomData(Constants.KEY_CRASH_ATTACHMENT);
 			StringBuilder sb = new StringBuilder();
 			if (report != null) {
 				sb.append(report);
@@ -344,7 +344,7 @@ public class InstallerDialog extends DialogFragment {
 				} catch (NoSuchAlgorithmException ignored) {
 				}
 			}
-			errorReporter.putCustomData(Constants.KEY_APPCENTER_ATTACHMENT, sb.toString());
+			errorReporter.putCustomData(Constants.KEY_CRASH_ATTACHMENT, sb.toString());
 		}
 
 		errorReporter.handleException(e);

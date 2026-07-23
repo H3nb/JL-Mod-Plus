@@ -12,7 +12,6 @@
     <string name="converting_wait">Konverterer JAR…</string>
     <string name="crash_dialog_message">Vil du sende en fejlrapport til udvikleren?</string>
     <string name="crash_dialog_title">Fejl registreret</string>
-    <string name="donate">Donér</string>
     <string name="error">Fejl</string>
     <string name="exit">Afslut</string>
     <string name="external_storage_not_mounted">Denne app kræver eksternt lager</string>

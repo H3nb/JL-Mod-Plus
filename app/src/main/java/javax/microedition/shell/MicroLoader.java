@@ -66,15 +66,15 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import kotlin.io.ConstantsKt;
 import kotlin.io.FilesKt;
-import ru.playsoftware.j2meloader.BuildConfig;
-import ru.playsoftware.j2meloader.config.Config;
-import ru.playsoftware.j2meloader.config.ProfileModel;
-import ru.playsoftware.j2meloader.config.ProfilesManager;
-import ru.playsoftware.j2meloader.config.ShaderInfo;
-import ru.playsoftware.j2meloader.util.AppUtils;
-import ru.playsoftware.j2meloader.util.Constants;
-import ru.playsoftware.j2meloader.util.FileUtils;
-import ru.playsoftware.j2meloader.util.IOUtils;
+import io.github.h3nb.jlmodplus.BuildConfig;
+import io.github.h3nb.jlmodplus.config.Config;
+import io.github.h3nb.jlmodplus.config.ProfileModel;
+import io.github.h3nb.jlmodplus.config.ProfilesManager;
+import io.github.h3nb.jlmodplus.config.ShaderInfo;
+import io.github.h3nb.jlmodplus.util.AppUtils;
+import io.github.h3nb.jlmodplus.util.Constants;
+import io.github.h3nb.jlmodplus.util.FileUtils;
+import io.github.h3nb.jlmodplus.util.IOUtils;
 import ru.woesss.j2me.jar.Descriptor;
 
 public class MicroLoader {
@@ -147,7 +147,7 @@ public class MicroLoader {
 		}
 		Map<String, String> attr = descriptor.getAttrs();
 		ErrorReporter errorReporter = ACRA.getErrorReporter();
-		String report = errorReporter.getCustomData(Constants.KEY_APPCENTER_ATTACHMENT);
+		String report = errorReporter.getCustomData(Constants.KEY_CRASH_ATTACHMENT);
 		StringBuilder sb = new StringBuilder();
 		if (report != null) {
 			sb.append(report).append("\n");
@@ -159,7 +159,7 @@ public class MicroLoader {
 			sb.append(Descriptor.MIDLET_JAR_SIZE).append(": ").append(jarSize).append("\n");
 			sb.append("JAR_HASH_MD5").append(": ").append(jarHash);
 		}
-		errorReporter.putCustomData(Constants.KEY_APPCENTER_ATTACHMENT, sb.toString());
+		errorReporter.putCustomData(Constants.KEY_CRASH_ATTACHMENT, sb.toString());
 		MIDlet.initProps(attr);
 		for (int i = 1; ; i++) {
 			String v = attr.get(Descriptor.MIDLET_N + i);

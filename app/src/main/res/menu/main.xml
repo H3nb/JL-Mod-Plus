@@ -1,7 +1,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="ru.playsoftware.j2meloader.MainActivity">
+    tools:context="io.github.h3nb.jlmodplus.MainActivity">
 
     <item
         android:id="@+id/action_search"
@@ -44,19 +44,14 @@
         app:showAsAction="never"
         android:orderInCategory="6" />
     <item
-        android:id="@+id/action_donate"
-        android:title="@string/donate"
-        app:showAsAction="never"
-        android:orderInCategory="7" />
-    <item
         android:id="@+id/action_save_log"
         android:title="@string/save_log"
         app:showAsAction="never"
-        android:orderInCategory="8" />
+        android:orderInCategory="7" />
     <item
         android:id="@+id/action_exit_app"
         android:title="@string/exit"
         app:showAsAction="never"
-        android:orderInCategory="9" />
+        android:orderInCategory="8" />
 
 </menu>

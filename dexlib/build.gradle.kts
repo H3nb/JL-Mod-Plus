@@ -4,7 +4,7 @@ plugins {
 
 android {
     compileSdk = rootProject.extra["compileSdk"] as Int
-    namespace = "ru.playsoftware.j2meloader.dexlib"
+    namespace = "io.github.h3nb.jlmodplus.dexlib"
 
     defaultConfig {
         minSdk = rootProject.extra["minSdk"] as Int

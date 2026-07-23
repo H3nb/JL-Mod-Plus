@@ -37,9 +37,9 @@
 # emulator
 -keep public class org.microemu.** { public protected *; }
 # Keep the BuildConfig
--keep class ru.playsoftware.j2meloader.BuildConfig { *; }
--keep class ru.playsoftware.j2meloader.util.SparseIntArrayAdapter { *; }
--keep class ru.playsoftware.j2meloader.crashes.models.* { *; }
+-keep class io.github.h3nb.jlmodplus.BuildConfig { *; }
+-keep class io.github.h3nb.jlmodplus.util.SparseIntArrayAdapter { *; }
+-keep class io.github.h3nb.jlmodplus.crashes.models.* { *; }
 
 # dependencies
 -keep class com.arthenica.mobileffmpeg.** { *; }

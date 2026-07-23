@@ -23,7 +23,7 @@ import java.util.List;
 import javax.microedition.shell.MicroLoader;
 import javax.microedition.util.ContextHolder;
 
-import ru.playsoftware.j2meloader.R;
+import io.github.h3nb.jlmodplus.R;
 import ru.woesss.j2me.mmapi.Plugin;
 import ru.woesss.j2me.mmapi.synth.eas.LibEAS;
 import ru.woesss.j2me.mmapi.synth.tsf.LibTSF;

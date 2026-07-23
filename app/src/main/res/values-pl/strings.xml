@@ -14,7 +14,6 @@
     <string name="converting_wait">Konwertuję plik JAR…</string>
     <string name="crash_dialog_message">Czy chcesz wysłać raport o błędzie do programisty?</string>
     <string name="crash_dialog_title">Wykryto błąd</string>
-    <string name="donate">Wesprzyj</string>
     <string name="error">Błąd</string>
     <string name="exit">Wyjście</string>
     <string name="external_storage_not_mounted">Ta aplikacja wymaga dostępu do pamięci zewnętrznej</string>

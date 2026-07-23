@@ -1,5 +1,5 @@
 <?xml version= "1.0" encoding = "utf-8" ?>
-<ru.playsoftware.j2meloader.applist.AppItemLayout
+<io.github.h3nb.jlmodplus.applist.AppItemLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
@@ -66,4 +66,4 @@
         </LinearLayout>
     </LinearLayout>
 
-</ru.playsoftware.j2meloader.applist.AppItemLayout>
+</io.github.h3nb.jlmodplus.applist.AppItemLayout>

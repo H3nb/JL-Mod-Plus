@@ -21,7 +21,7 @@ package javax.microedition.lcdui.event;
 import javax.microedition.util.ContextHolder;
 import javax.microedition.util.LinkedList;
 
-import ru.playsoftware.j2meloader.R;
+import io.github.h3nb.jlmodplus.R;
 
 /**
  * The event queue. A really complicated thing.

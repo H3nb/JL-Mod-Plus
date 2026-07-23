@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.io.File
 import java.util.Locale
 import java.util.Properties
 import java.util.jar.Attributes
@@ -9,24 +10,58 @@ plugins {
     alias(libs.plugins.kotlin.android)
 }
 
-val secret = Properties().also { properties ->
-    rootProject.file("keystore.properties").runCatching { inputStream().use(properties::load) }
+val versionProperties = Properties().also { properties ->
+    rootProject.file("version.properties").inputStream().use(properties::load)
+}
+
+val appVersionName = requireNotNull(versionProperties.getProperty("VERSION_NAME")) {
+    "VERSION_NAME is missing from version.properties"
+}.trim().also { value ->
+    require(Regex("^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$").matches(value)) {
+        "VERSION_NAME must follow Semantic Versioning: $value"
+    }
+}
+val appVersionCode = requireNotNull(versionProperties.getProperty("VERSION_CODE")) {
+    "VERSION_CODE is missing from version.properties"
+}.trim().toInt().also { value ->
+    require(value in 1..2_100_000_000) { "VERSION_CODE must be between 1 and 2100000000" }
+}
+
+val signingProperties = Properties().also { properties ->
+    rootProject.file("keystore.properties").takeIf(File::isFile)?.inputStream()?.use(properties::load)
+}
+
+fun signingValue(environmentName: String, propertyName: String): String? =
+    System.getenv(environmentName)?.takeIf(String::isNotBlank)
+        ?: signingProperties.getProperty(propertyName)?.takeIf(String::isNotBlank)
+
+val signingStorePath = signingValue("ANDROID_KEYSTORE_PATH", "storeFile")
+val signingStorePassword = signingValue("ANDROID_KEYSTORE_PASSWORD", "storePassword")
+val signingKeyAlias = signingValue("ANDROID_KEY_ALIAS", "keyAlias")
+val signingKeyPassword = signingValue("ANDROID_KEY_PASSWORD", "keyPassword")
+val releaseSigningReady = listOf(
+    signingStorePath,
+    signingStorePassword,
+    signingKeyAlias,
+    signingKeyPassword
+).all { !it.isNullOrBlank() }
+
+if (System.getenv("REQUIRE_RELEASE_SIGNING") == "true" && !releaseSigningReady) {
+    throw GradleException("Release signing is required, but one or more signing values are missing.")
 }
 
 android {
     compileSdk = rootProject.extra["compileSdk"] as Int
     ndkVersion = rootProject.extra["ndkVersion"] as String
-    namespace = "ru.playsoftware.j2meloader"
+    namespace = "io.github.h3nb.jlmodplus"
 
     defaultConfig {
-        applicationId = "ru.woesss.j2meloader"
+        applicationId = "io.github.h3nb.jlmodplus"
         minSdk = rootProject.extra["minSdk"] as Int
         targetSdk = rootProject.extra["targetSdk"] as Int
-        versionCode = 48
-        versionName = "0.87.1"
-        resValue("string", "app_name", rootProject.name)
-        resValue("string", "app_center", secret.getProperty("appCenterKey", ""))
-        resValue("string", "fingerprint", secret.getProperty("fingerprint", ""))
+        versionCode = appVersionCode
+        versionName = appVersionName
+        resValue("string", "app_name", "JL-Mod Plus")
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -40,12 +75,12 @@ android {
         buildConfig = true
     }
 
-    signingConfigs.create("emulator") {
-        if (secret.isNotEmpty()) {
-            keyAlias = secret.getProperty("keyAlias")
-            keyPassword = secret.getProperty("keyPassword")
-            storeFile = rootProject.file(secret.getProperty("storeFile"))
-            storePassword = secret.getProperty("storePassword")
+    val releaseSigning = signingConfigs.create("release") {
+        if (releaseSigningReady) {
+            keyAlias = signingKeyAlias
+            keyPassword = signingKeyPassword
+            storeFile = rootProject.file(requireNotNull(signingStorePath))
+            storePassword = signingStorePassword
         }
     }
 
@@ -53,6 +88,9 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            if (releaseSigningReady) {
+                signingConfig = releaseSigning
+            }
         }
         debug {
             applicationIdSuffix = ".debug"
@@ -62,14 +100,15 @@ android {
         }
     }
 
-    lint.disable += "MissingTranslation"
+    lint {
+        disable += "MissingTranslation"
+    }
 
     flavorDimensions += "default"
     productFlavors {
         create("emulator") { // variant dimension for create emulator
             buildConfigField("boolean", "FULL_EMULATOR", "true")
-            signingConfig = signingConfigs.getByName("emulator")
-            versionNameSuffix = System.getenv("VERSION_SUFFIX")
+            versionNameSuffix = System.getenv("VERSION_SUFFIX")?.takeIf(String::isNotBlank)
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -95,8 +134,8 @@ android {
     splits.abi {
         isEnable = true
         reset()
-        include("x86", "armeabi-v7a", "x86_64", "arm64-v8a")
-        isUniversalApk = true
+        include("arm64-v8a")
+        isUniversalApk = false
     }
 
     externalNativeBuild.ndkBuild.path("src/main/cpp/Android.mk")
@@ -108,7 +147,7 @@ android {
 
     applicationVariants.configureEach {
         if (buildType.name == "debug" && flavorName == "emulator") {
-            resValue("string", "app_name", "JL-Debug")
+            resValue("string", "app_name", "JL-Mod Plus Debug")
         }
         outputs.configureEach {
             if (this is com.android.build.gradle.internal.api.BaseVariantOutputImpl) {
@@ -157,9 +196,12 @@ dependencies {
     implementation(libs.google.material)
     implementation(libs.google.oboe)
 
-    implementation(libs.acra.http)
+    implementation(libs.acra.core) {
+        // ACRA only needs AutoService's generated metadata at runtime. Keeping
+        // the annotation processor on the runtime classpath breaks R8.
+        exclude(group = "com.google.auto.service", module = "auto-service")
+    }
     implementation(libs.ambilwarna)
-    implementation(libs.donations)
     implementation(libs.ffmpeg.mobile)
     implementation(libs.filepicker)
     implementation(libs.pngj)

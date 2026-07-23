@@ -29,7 +29,6 @@
     <string name="create_apps_dir_failed">Gagal membuat folder di jalur:\n\'%1$s\'\npilih yang lain.</string>
     <string name="default_label">%1$s (bawaan)</string>
     <string name="dismiss">Abaikan</string>
-    <string name="donate">Sumbang</string>
     <string name="edit">Ubah</string>
     <string name="enter_name">Masukkan nama</string>
     <string name="enter_new_name">Masukkan nama baru</string>
