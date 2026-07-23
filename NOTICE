@@ -1,0 +1,17 @@
+JL-Mod Plus
+Copyright 2026 H3NB
+
+This product is based on JL-Mod, Copyright 2020-2026 Yury Kharchenko,
+and includes code inherited from J2ME Loader, including work Copyright
+2017-2018 Nikita Shakarun.
+
+JL-Mod Plus modifications are identified by repository history and, where
+appropriate, notices in modified source files. Copyright in inherited and
+third-party components remains with the respective authors.
+
+The JL-Mod Plus launcher icon is an original project asset generated for H3NB
+in 2026. It is distributed under the same Apache License 2.0 as this project.
+
+The TinySoundFont Git submodule and other third-party components retain their
+own licenses and notices. See individual source files, dependency metadata,
+and distributed license information for details.

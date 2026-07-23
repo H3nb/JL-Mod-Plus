@@ -1,58 +1,96 @@
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/woesss/JL-Mod?style=plastic)](https://github.com/woesss/JL-Mod/releases/latest)
-[![donate](https://img.shields.io/badge/donate-PayPal-%234D8A99?style=plastic)](https://www.paypal.me/j2meforever)  
+# JL-Mod Plus
 
-\[ [RU](README_RU.md) | EN \]  
+[![CI](https://github.com/H3nb/JL-Mod-Plus/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/H3nb/JL-Mod-Plus/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-Unofficial fork of ["J2ME-Loader" (A J2ME emulator for Android)](https://github.com/nikita36078/J2ME-Loader) 
+JL-Mod Plus is an independent, community-maintained Android J2ME emulator fork
+by H3NB. It focuses on a stable experience on modern Android while preserving
+the broad MIDlet compatibility inherited from JL-Mod and J2ME Loader.
 
-<img src="screenshots/screen01.png" width="240"> <img src="screenshots/screen02.png" width="240"> <img src="screenshots/screen03.png" width="240">
+The project is in early development. Back up games, save data, profiles, and
+working directories before using development builds.
 
-### **!!!Attention!!!**
-**Some settings have been changed in the mod. J2ME Loader may not work correctly with games, templates and settings installed or configured by the mod and vice versa. In order not to have to reinstall-reconfigure, it is better to make a backup, copy or not specify the same working directory for the mod and J2ME Loader.**
+## Project status
 
-#### **Using shaders (image post-processing filters)**
+- Initial JL-Mod Plus version: `0.1.0` (`versionCode` 1).
+- Android application ID and namespace: `io.github.h3nb.jlmodplus`.
+- Primary product flavor: `emulator`.
+- Packaged native ABI: `arm64-v8a` only.
+- Current SDK baseline: compile SDK 36, minimum SDK 23, target SDK 34.
+- Required JDK: 17.
 
-  Supports the same shader format as [PPSSPP](https://www.ppsspp.org)
-  To use, you need to put them in the `shaders` folder in the working directory of the emulator,
-  then in the game profile, select the graphics output mode: "Hardware (OpenGL ES)" and select the desired shader.
-  Some shaders have settings - when you select one, an icon will appear next to the name, when you click on it, a window with settings will open
-  A small collection of compatible shaders can be found in this repository: https://github.com/woesss/ppsspp_shaders
+JL-Mod Plus has its own application ID and must use its own signing key. Android
+treats it as a separate application, so it can be installed beside JL-Mod or
+J2ME Loader. Preferences and private app data are not migrated automatically.
+The default shared-storage working directory is `/sdcard/JL-Mod Plus`.
 
-#### **Using sound banks for midi playback (DLS, SF2)**
+## Capabilities
 
-  Soundbank files (DLS, SF2) should be placed in the `soundbanks` folder in the working directory of the emulator.
-  Next, in the game profile settings in the `Audio` section, select the desired one.
-  SF2 support is still in beta mode - only standard midi files are supported.
-  Not all banks are supported by the synthesizers used (Sonivox, TinySoundFont).
-  If the bank or audio file is not supported, playback will automatically switch to a standard player with a standard bank.
+JL-Mod Plus retains the emulator core and major features inherited from JL-Mod,
+including JAR/JAD installation, per-game profiles, virtual controls, shaders,
+sound banks, and multiple vendor-specific J2ME APIs. Compatibility under the
+new independent package is still being validated.
 
-#### **Background image (skin)**
+## Building
 
-  The image file in any format supported by Android must be placed in the `skins` folder in the emulator's working folder.  
-  Next, in the game profile settings, select it.  
-  The position and size of the virtual screen can be adjusted using the scale and padding settings.  
-  You can also set the screen in the image: a rectangular area filled with transparent black (`#00000000`).  
-  The emulator will automatically place the game screen in this area.  
-  The reaction to the skin buttons can be made by overlaying the virtual keyboard buttons, and the keyboard itself can be made completely transparent.  
+Requirements:
 
-#### **Mascot Capsule v3 support**
-  In some games (seen in "Medal of Honor") the 3D scene may not be displayed due to the overlap with the 2D background.
-  Try adding the following line to the "System Properties" field:
-  **micro3d.v3.render.no-mix2D3D: true**
-  If it doesn't help, please report this game in [bug-report](https://github.com/woesss/JL-Mod/issues/new?assignees=&labels=bug&template=issue-template.md&title=) or in another way.
+- JDK 17;
+- Android SDK Platform 36;
+- the NDK version declared in `build.gradle.kts`;
+- the repository cloned with Git submodules.
 
-  Another one property turns on the texture filter (built into OpenGL), but this can generate distortion in the form of extra texels being captured at the edges of polygons:
-  **micro3d.v3.texture.filter: true**
-   without this setting, the quality of the textures is as close to the original as possible and looks more vintage.
+Use the included Gradle Wrapper. Normal validation is intentionally limited to
+the `emulator` flavor and ARM64 package:
 
-#### **Porting**
-  Added the ability to build an Android application from the source code of a J2ME application using the code of this project  
-  Read more in the [Wiki](https://github.com/woesss/JL-Mod/wiki/Porting-midlet-instruction)
+```shell
+./gradlew --no-daemon \
+  :app:testEmulatorDebugUnitTest \
+  :app:assembleEmulatorDebug
+```
 
-[Download APK](https://github.com/woesss/JL-Mod/releases/latest)
+The inherited `midlet` flavor remains in source for compatibility work, but it
+is not part of normal CI or release builds.
 
-#### **External links**  
-Emulation General Wiki:  
-[JL-Mod](http://emulation.gametechwiki.com/index.php/JL-Mod)  
-[Mascot Capsule 3D](http://emulation.gametechwiki.com/index.php/Mascot_Capsule_3D)  
-[Mascot Capsule 3D compatibility list](https://emulation.gametechwiki.com/index.php/Mascot_Capsule_3D_compatibility_list)  
+## Versioning and releases
+
+The public version and Android version code live in `version.properties`.
+Maintainers update both through the checked-in PowerShell helper:
+
+```powershell
+.\scripts\set-version.ps1 0.1.1
+```
+
+The helper validates Semantic Versioning and increments `VERSION_CODE` once.
+Release tags use the matching `vMAJOR.MINOR.PATCH` form, for example `v0.1.0`.
+CI rejects tags that do not match the tracked version.
+
+Unsigned debug artifacts are produced by normal CI. Signed releases are built
+only by the protected release workflow; signing keys and passwords must never
+be committed to this repository.
+
+## Reporting problems
+
+Use the [JL-Mod Plus issue tracker](https://github.com/H3nb/JL-Mod-Plus/issues)
+and include the app version, Android version, device model, affected MIDlet,
+and reproducible steps. Remove personal data from logs before attaching them.
+
+## Origins and acknowledgements
+
+JL-Mod Plus is based on [JL-Mod](https://github.com/woesss/JL-Mod), maintained
+by Yury Kharchenko, which is itself derived from
+[J2ME Loader](https://github.com/nikita36078/J2ME-Loader), created by Nikita
+Shakarun. Their work and the contributions of other upstream developers remain
+fundamental to this project.
+
+JL-Mod Plus is independently maintained and is not an official release of
+either upstream project. Product branding has been changed to avoid confusion;
+copyright and attribution for inherited work remain with the original authors.
+
+## License
+
+JL-Mod Plus is distributed under the [Apache License 2.0](LICENSE). Copyright
+in inherited source remains with its respective authors. H3NB claims copyright
+only over JL-Mod Plus modifications and original project assets. See
+[NOTICE](NOTICE), dependency metadata, submodule licenses, and individual source
+headers for additional attribution.
