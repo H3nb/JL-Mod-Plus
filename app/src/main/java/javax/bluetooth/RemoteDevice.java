@@ -1,5 +1,6 @@
 /*
  * Copyright 2018 cerg2010cerg2010
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +19,32 @@ package javax.bluetooth;
 
 import android.bluetooth.BluetoothDevice;
 
+import org.microemu.android.bluetooth.BluetoothAccess;
+
 import java.io.IOException;
+import java.util.Locale;
 
 import javax.microedition.io.Connection;
 
 public class RemoteDevice {
 	BluetoothDevice dev;
+	private final String address;
 
 	RemoteDevice(BluetoothDevice dev) {
+		if (dev == null) {
+			throw new NullPointerException("BluetoothDevice is null");
+		}
 		this.dev = dev;
+		String androidAddress = BluetoothAccess.getDeviceAddress(dev);
+		address = androidAddress == null
+				? "000000000000"
+				: androidAddress.replace(":", "").toUpperCase(Locale.ROOT);
 	}
 
 	static String javaToAndroidAddress(String addr) {
+		if (addr == null || !addr.matches("(?i)[0-9a-f]{12}")) {
+			throw new IllegalArgumentException("Bluetooth address must contain 12 hex characters");
+		}
 		StringBuilder sb = new StringBuilder(addr);
 		for (int i = 2; i < sb.length(); i += 3)
 			sb.insert(i, ':');
@@ -42,10 +57,11 @@ public class RemoteDevice {
 		}
 
 		dev = DiscoveryAgent.adapter.getRemoteDevice(javaToAndroidAddress(address));
+		this.address = address.toUpperCase(Locale.ROOT);
 	}
 
 	public String getFriendlyName(boolean alwaysAsk) throws IOException {
-		String name = dev.getName();
+		String name = BluetoothAccess.getDeviceName(dev);
 		if (name == null) {
 			name =  "";
 		}
@@ -53,7 +69,7 @@ public class RemoteDevice {
 	}
 
 	public final String getBluetoothAddress() {
-		return dev.getAddress().replace(":", "");
+		return address;
 	}
 
 	public boolean equals(Object obj) {
@@ -78,13 +94,13 @@ public class RemoteDevice {
 					(org.microemu.cldc.btspp.SPPConnectionImpl) conn;
 			if (connection.socket == null)
 				throw new IOException("socket is null");
-			return new RemoteDevice(connection.socket.getRemoteDevice());
+			return new RemoteDevice(BluetoothAccess.getRemoteDevice(connection.socket));
 		} else {
 			org.microemu.cldc.btl2cap.L2CAPConnectionImpl connection =
 					(org.microemu.cldc.btl2cap.L2CAPConnectionImpl) conn;
 			if (connection.socket == null)
 				throw new IOException("socket is null");
-			return new RemoteDevice(connection.socket.getRemoteDevice());
+			return new RemoteDevice(BluetoothAccess.getRemoteDevice(connection.socket));
 		}
 	}
 

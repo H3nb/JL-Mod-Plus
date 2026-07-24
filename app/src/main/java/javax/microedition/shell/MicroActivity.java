@@ -2,6 +2,7 @@
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2021 Nikita Shakarun
  * Copyright 2019-2026 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -639,6 +640,16 @@ public class MicroActivity extends AppCompatActivity {
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 		ContextHolder.notifyOnActivityResult(requestCode, resultCode, data);
+	}
+
+	@Override
+	public void onRequestPermissionsResult(
+			int requestCode,
+			@NonNull String[] permissions,
+			@NonNull int[] grantResults
+	) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+		ContextHolder.notifyOnRequestPermissionsResult(requestCode);
 	}
 
 	public String getAppName() {

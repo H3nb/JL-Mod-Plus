@@ -1,5 +1,6 @@
 /*
  * Copyright 2018 cerg2010cerg2010
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +27,15 @@ import android.content.IntentFilter;
 import android.os.ParcelUuid;
 import android.os.Parcelable;
 
+import androidx.core.content.ContextCompat;
+
+import org.microemu.android.bluetooth.BluetoothAccess;
+
+import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -57,6 +63,8 @@ public class DiscoveryAgent {
 		public final DiscoveryListener listener;
 		public volatile boolean stop = false;
 		public volatile boolean discovering = false;
+		public volatile boolean completed = false;
+		public Context receiverContext;
 
 		private String serviceName = null;
 		private boolean btl2cap = false;
@@ -90,7 +98,15 @@ public class DiscoveryAgent {
 			String action = intent.getAction();
 			if (BluetoothDevice.ACTION_UUID.equals(action)) {
 				BluetoothDevice d = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-				if (d.equals(dev.dev)) {
+				if (d != null && d.equals(dev.dev)) {
+					synchronized (transList) {
+						if (completed) {
+							return;
+						}
+						completed = true;
+						transList.remove(this);
+					}
+					try {
 					LinkedList<J2MEServiceRecord> records = new LinkedList<J2MEServiceRecord>();
 					UUID[] uuidExtra = null;
 					UUID SppUuid = new UUID(0x1101);
@@ -112,19 +128,20 @@ public class DiscoveryAgent {
 						if (uuidExtra[i].equals(NameUuid)) {
 							// Workaround to get service name
 							if (!btl2cap && serviceName == null) {
-								try {
-									BluetoothSocket bluetoothSocket = dev.dev.createInsecureRfcommSocketToServiceRecord(NameUuid.uuid);
+								try (BluetoothSocket bluetoothSocket =
+											 BluetoothAccess.createRfcommSocket(dev.dev, NameUuid.uuid, false)) {
 									if (!bluetoothSocket.isConnected()) {
-										bluetoothSocket.connect();
+										BluetoothAccess.connect(bluetoothSocket);
 									}
-									InputStream is = bluetoothSocket.getInputStream();
+									DataInputStream is =
+											new DataInputStream(bluetoothSocket.getInputStream());
 									byte[] resByte = new byte[256];
 									btl2cap = is.read() == 1;
-									is.read(resByte);
+									is.readFully(resByte);
 									if (attrs != null && attrs.length > 0) {
-										serviceName = new String(resByte).trim();
+										serviceName =
+												new String(resByte, StandardCharsets.UTF_8).trim();
 									}
-									bluetoothSocket.close();
 								} catch (IOException e) {
 									e.printStackTrace();
 								}
@@ -143,22 +160,37 @@ public class DiscoveryAgent {
 						}
 					}
 
-					if (records.isEmpty()) {
+					if (!stop && records.isEmpty()) {
 						if (supportsSPP) {
 							listener.servicesDiscovered(transID, new J2MEServiceRecord[]
 									{new J2MEServiceRecord(dev, new UUID(0x1101), true, false)});
 						}
-					} else {
+					} else if (!stop) {
 						J2MEServiceRecord[] casted = records.toArray(new J2MEServiceRecord[0]);
 						listener.servicesDiscovered(transID, casted);
 					}
-					listener.serviceSearchCompleted(transID, (records.isEmpty() && !supportsSPP) ? DiscoveryListener.SERVICE_SEARCH_NO_RECORDS :
-							stop ? DiscoveryListener.SERVICE_SEARCH_TERMINATED : DiscoveryListener.SERVICE_SEARCH_COMPLETED);
-					ContextHolder.getActivity().unregisterReceiver(this);
-					synchronized (transList) {
-						transList.remove(this);
+					listener.serviceSearchCompleted(
+							transID,
+							stop
+									? DiscoveryListener.SERVICE_SEARCH_TERMINATED
+									: (records.isEmpty() && !supportsSPP)
+											? DiscoveryListener.SERVICE_SEARCH_NO_RECORDS
+											: DiscoveryListener.SERVICE_SEARCH_COMPLETED
+					);
+					} finally {
+					unregister();
 					}
 				}
+			}
+		}
+
+		private void unregister() {
+			if (receiverContext == null) {
+				return;
+			}
+			try {
+				receiverContext.unregisterReceiver(this);
+			} catch (IllegalArgumentException ignored) {
 			}
 		}
 
@@ -166,21 +198,28 @@ public class DiscoveryAgent {
 
 	private LinkedList<Transaction> transList = new LinkedList<>();
 	private HashSet<BluetoothDevice> discoveredList = new HashSet<>();
+	private final Object inquiryLock = new Object();
+	private BroadcastReceiver inquiryReceiver;
+	private DiscoveryListener inquiryListener;
+	private Context inquiryContext;
 
 	DiscoveryAgent() throws BluetoothStateException {
-		adapter = BluetoothAdapter.getDefaultAdapter();
-		if (adapter == null)
-			throw new BluetoothStateException();
+		adapter = BluetoothAccess.requireAdapter();
 	}
 
 	public RemoteDevice[] retrieveDevices(int option) {
 		Set<BluetoothDevice> set;
 		if (option == CACHED) {
-			set = discoveredList;
+			synchronized (discoveredList) {
+				set = new HashSet<>(discoveredList);
+			}
 		} else if (option == PREKNOWN) {
-			set = adapter.getBondedDevices();
+			set = BluetoothAccess.getBondedDevices(adapter);
 		} else {
 			throw new IllegalArgumentException();
+		}
+		if (set.isEmpty()) {
+			return null;
 		}
 		RemoteDevice[] devices = new RemoteDevice[set.size()];
 		int i = 0;
@@ -196,7 +235,7 @@ public class DiscoveryAgent {
 			throw new IllegalArgumentException("Invalid accessCode " + accessCode);
 		}
 
-		if (adapter.isDiscovering())
+		if (BluetoothAccess.isDiscovering(adapter))
 			return false;
 
 		synchronized (transList) {
@@ -207,57 +246,113 @@ public class DiscoveryAgent {
 		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
 		filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
 
-		// MTK do not send ACTION_DISCOVERY_FINISHED
-		new Thread(new Runnable() {
-			public void run() {
-				try {
-					Thread.sleep(15000);
-					if (adapter.isDiscovering())
-						adapter.cancelDiscovery();
-				} catch (InterruptedException e) {
-				}
-			}
-		}).start();
-
-		ContextHolder.getActivity().registerReceiver(new BroadcastReceiver() {
+		Context activity = ContextHolder.getActivity();
+		if (activity == null) {
+			throw new BluetoothStateException("Bluetooth inquiry requires an active screen");
+		}
+		BroadcastReceiver receiver = new BroadcastReceiver() {
 			public void onReceive(Context context, Intent intent) {
 				String action = intent.getAction();
 				if (BluetoothDevice.ACTION_FOUND.equals(action)) {
 					BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-					if (discoveredList.add(device)) {
+					if (device == null) {
+						return;
+					}
+					boolean added;
+					synchronized (discoveredList) {
+						added = discoveredList.add(device);
+					}
+					if (added) {
 						RemoteDevice dev = new RemoteDevice(device);
 						DeviceClass cod = new DeviceClass();
 						listener.deviceDiscovered(dev, cod);
 					}
 				} else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
-					listener.inquiryCompleted(DiscoveryListener.INQUIRY_COMPLETED);
 					synchronized (transList) {
 						if (!transList.isEmpty()) {
 							for (Transaction t : transList) {
 								if (!t.discovering) {
-									// FIXME: 17.06.2020 requires API15
-									t.dev.dev.fetchUuidsWithSdp();
-									t.discovering = true;
+									try {
+										t.discovering = BluetoothAccess.fetchUuidsWithSdp(t.dev.dev);
+									} catch (BluetoothStateException e) {
+										t.stop = true;
+									}
 								}
 							}
 						}
 					}
-					ContextHolder.getActivity().unregisterReceiver(this);
+					finishInquiry(DiscoveryListener.INQUIRY_COMPLETED);
 				}
 			}
-		}, filter);
+		};
+		synchronized (inquiryLock) {
+			if (inquiryReceiver != null) {
+				return false;
+			}
+			inquiryReceiver = receiver;
+			inquiryListener = listener;
+			inquiryContext = activity;
+		}
+		try {
+			ContextCompat.registerReceiver(
+					activity,
+					receiver,
+					filter,
+					ContextCompat.RECEIVER_EXPORTED
+			);
+		} catch (RuntimeException e) {
+			clearInquiry();
+			throw new BluetoothStateException("Unable to listen for Bluetooth discovery results");
+		}
 
-		discoveredList.clear();
-		return adapter.startDiscovery();
+		synchronized (discoveredList) {
+			discoveredList.clear();
+		}
+		boolean started;
+		try {
+			started = BluetoothAccess.startDiscovery(adapter);
+		} catch (BluetoothStateException e) {
+			clearInquiry();
+			throw e;
+		}
+		if (!started) {
+			clearInquiry();
+		} else {
+			// Some MTK stacks do not send ACTION_DISCOVERY_FINISHED.
+			new Thread(() -> {
+				try {
+					Thread.sleep(15000);
+					synchronized (inquiryLock) {
+						if (inquiryReceiver != receiver) {
+							return;
+						}
+					}
+					if (BluetoothAccess.isDiscovering(adapter)) {
+						BluetoothAccess.cancelDiscovery(adapter);
+					}
+					finishInquiry(DiscoveryListener.INQUIRY_COMPLETED);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				} catch (BluetoothStateException e) {
+					finishInquiry(DiscoveryListener.INQUIRY_ERROR);
+				}
+			}, "Jsr82InquiryTimeout").start();
+		}
+		return started;
 	}
 
 	public boolean cancelInquiry(DiscoveryListener listener) {
 		if (listener == null) {
 			throw new NullPointerException("DiscoveryListener is null");
 		}
-		boolean ret = adapter.cancelDiscovery();
-		listener.inquiryCompleted(DiscoveryListener.INQUIRY_TERMINATED);
-		return ret;
+		synchronized (inquiryLock) {
+			if (inquiryReceiver == null || inquiryListener != listener) {
+				return false;
+			}
+		}
+		BluetoothAccess.cancelDiscovery(adapter);
+		finishInquiry(DiscoveryListener.INQUIRY_TERMINATED);
+		return true;
 	}
 
 	public int searchServices(int[] attrSet, UUID[] uuidSet, RemoteDevice btDev, DiscoveryListener listener)
@@ -288,36 +383,126 @@ public class DiscoveryAgent {
 			}
 		}
 
-		final Transaction curTrans = new Transaction(maxID, attrSet, uuidSet, btDev, listener);
-		transList.add(curTrans);
-		ContextHolder.getActivity().registerReceiver(curTrans, new IntentFilter(BluetoothDevice.ACTION_UUID));
-
-		if (!adapter.isDiscovering()) {
+		final Transaction curTrans;
+		synchronized (transList) {
+			curTrans = new Transaction(maxID++, attrSet, uuidSet, btDev, listener);
+			transList.add(curTrans);
+		}
+		Context activity = ContextHolder.getActivity();
+		if (activity == null) {
 			synchronized (transList) {
-				for (Transaction t : transList) {
-					if (!t.discovering) {
-						// FIXME: 17.06.2020 requires API15
-						t.dev.dev.fetchUuidsWithSdp();
-						t.discovering = true;
+				transList.remove(curTrans);
+			}
+			throw new BluetoothStateException("Bluetooth service search requires an active screen");
+		}
+		curTrans.receiverContext = activity;
+		try {
+			ContextCompat.registerReceiver(
+					activity,
+					curTrans,
+					new IntentFilter(BluetoothDevice.ACTION_UUID),
+					ContextCompat.RECEIVER_EXPORTED
+			);
+
+			if (!BluetoothAccess.isDiscovering(adapter)) {
+				synchronized (transList) {
+					for (Transaction t : transList) {
+						if (!t.discovering) {
+							t.discovering = BluetoothAccess.fetchUuidsWithSdp(t.dev.dev);
+						}
 					}
 				}
 			}
+		} catch (RuntimeException | BluetoothStateException e) {
+			synchronized (transList) {
+				transList.remove(curTrans);
+			}
+			try {
+				activity.unregisterReceiver(curTrans);
+			} catch (IllegalArgumentException ignored) {
+			}
+			if (e instanceof BluetoothStateException) {
+				throw (BluetoothStateException) e;
+			}
+			BluetoothStateException failure =
+					new BluetoothStateException("Unable to start Bluetooth service search");
+			failure.initCause(e);
+			throw failure;
 		}
-		return maxID++;
+		new Thread(() -> {
+			try {
+				Thread.sleep(30000);
+				finishServiceSearch(
+						curTrans,
+						DiscoveryListener.SERVICE_SEARCH_DEVICE_NOT_REACHABLE
+				);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+		}, "Jsr82ServiceSearchTimeout").start();
+		return curTrans.transID;
 	}
 
 	public boolean cancelServiceSearch(int transID) {
+		Transaction transaction = null;
 		synchronized (transList) {
 			ListIterator<Transaction> iter = transList.listIterator();
 			while (iter.hasNext()) {
 				Transaction trans = iter.next();
 				if (trans.transID == transID) {
-					trans.stop = true;
+					transaction = trans;
 					break;
 				}
 			}
 		}
+		return transaction != null && finishServiceSearch(
+				transaction,
+				DiscoveryListener.SERVICE_SEARCH_TERMINATED
+		);
+	}
+
+	private boolean finishServiceSearch(Transaction transaction, int completionCode) {
+		synchronized (transList) {
+			if (transaction.completed || !transList.remove(transaction)) {
+				return false;
+			}
+			transaction.stop = true;
+			transaction.completed = true;
+		}
+		transaction.unregister();
+		transaction.listener.serviceSearchCompleted(transaction.transID, completionCode);
 		return true;
+	}
+
+	private void finishInquiry(int completionCode) {
+		DiscoveryListener listener;
+		synchronized (inquiryLock) {
+			if (inquiryReceiver == null) {
+				return;
+			}
+			listener = inquiryListener;
+		}
+		clearInquiry();
+		listener.inquiryCompleted(completionCode);
+	}
+
+	private void clearInquiry() {
+		BroadcastReceiver receiver;
+		Context context;
+		synchronized (inquiryLock) {
+			receiver = inquiryReceiver;
+			context = inquiryContext;
+			inquiryReceiver = null;
+			inquiryListener = null;
+			inquiryContext = null;
+		}
+		if (receiver != null && context != null) {
+			try {
+				context.unregisterReceiver(receiver);
+			} catch (IllegalArgumentException ignored) {
+				// The receiver may already be removed as the Activity is destroyed.
+			}
+		}
 	}
 
 	// TODO

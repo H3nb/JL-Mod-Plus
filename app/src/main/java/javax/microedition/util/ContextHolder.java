@@ -2,6 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2023 Nikita Shakarun
  * Copyright 2019-2025 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +22,8 @@ package javax.microedition.util;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Looper;
+import android.os.SystemClock;
 import android.os.Vibrator;
 import android.view.Display;
 import android.view.WindowManager;
@@ -55,6 +58,10 @@ public class ContextHolder {
 	private static WeakReference<MicroActivity> currentActivity;
 	private static Vibrator vibrator;
 	private static final ArrayList<ActivityResultListener> resultListeners = new ArrayList<>();
+	private static final Object permissionMonitor = new Object();
+	private static final long PERMISSION_WAIT_TIMEOUT_MS = 60_000;
+	private static int nextPermissionRequestCode = 0x4A40;
+	private static int pendingPermissionRequestCode = -1;
 	private static boolean vibrationEnabled;
 
 	public static Context getAppContext() {
@@ -139,28 +146,73 @@ public class ContextHolder {
 	}
 
 	public static boolean requestPermission(String permission) {
-		MicroActivity context = currentActivity.get();
-		if (context == null) {
-			return false;
-		}
-		if (ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
-			ActivityCompat.requestPermissions(context, new String[]{permission}, 0);
-			return false;
-		} else {
-			return true;
-		}
+		return requestPermissions(new String[]{permission});
 	}
 
 	public static boolean requestPermissions(String[] permissions) {
-		MicroActivity context = currentActivity.get();
+		MicroActivity context = getActivity();
 		if (context == null) {
 			return false;
 		}
-		if (!hasPermissions(context, permissions)) {
-			ActivityCompat.requestPermissions(context, permissions, 0);
-			return false;
-		} else {
+		if (hasPermissions(context, permissions)) {
 			return true;
+		}
+		if (Looper.myLooper() == Looper.getMainLooper()) {
+			ActivityCompat.requestPermissions(context, permissions, nextPermissionRequestCode());
+			return false;
+		}
+
+		int requestCode;
+		synchronized (permissionMonitor) {
+			if (!waitForPendingPermissionRequest(context, permissions)) {
+				return false;
+			}
+			if (hasPermissions(context, permissions)) {
+				return true;
+			}
+			requestCode = nextPermissionRequestCode();
+			pendingPermissionRequestCode = requestCode;
+		}
+
+		context.runOnUiThread(() -> {
+			try {
+				ActivityCompat.requestPermissions(context, permissions, requestCode);
+			} catch (RuntimeException e) {
+				synchronized (permissionMonitor) {
+					if (pendingPermissionRequestCode == requestCode) {
+						pendingPermissionRequestCode = -1;
+						permissionMonitor.notifyAll();
+					}
+				}
+			}
+		});
+
+		synchronized (permissionMonitor) {
+			long deadline = SystemClock.uptimeMillis() + PERMISSION_WAIT_TIMEOUT_MS;
+			while (pendingPermissionRequestCode == requestCode) {
+				long remaining = deadline - SystemClock.uptimeMillis();
+				if (remaining <= 0) {
+					pendingPermissionRequestCode = -1;
+					break;
+				}
+				try {
+					permissionMonitor.wait(remaining);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					pendingPermissionRequestCode = -1;
+					break;
+				}
+			}
+		}
+		return hasPermissions(context, permissions);
+	}
+
+	public static void notifyOnRequestPermissionsResult(int requestCode) {
+		synchronized (permissionMonitor) {
+			if (pendingPermissionRequestCode == requestCode) {
+				pendingPermissionRequestCode = -1;
+				permissionMonitor.notifyAll();
+			}
 		}
 	}
 
@@ -173,6 +225,35 @@ public class ContextHolder {
 			}
 		}
 		return true;
+	}
+
+	private static boolean waitForPendingPermissionRequest(
+			Context context,
+			String[] permissions
+	) {
+		long deadline = SystemClock.uptimeMillis() + PERMISSION_WAIT_TIMEOUT_MS;
+		while (pendingPermissionRequestCode != -1 && !hasPermissions(context, permissions)) {
+			long remaining = deadline - SystemClock.uptimeMillis();
+			if (remaining <= 0) {
+				return false;
+			}
+			try {
+				permissionMonitor.wait(remaining);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static int nextPermissionRequestCode() {
+		synchronized (permissionMonitor) {
+			if (nextPermissionRequestCode == 0x7FFF) {
+				nextPermissionRequestCode = 0x4A40;
+			}
+			return nextPermissionRequestCode++;
+		}
 	}
 
 	public static String getAssetAsString(String fileName) {

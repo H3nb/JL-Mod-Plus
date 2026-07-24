@@ -1,6 +1,7 @@
 /*
  * Copyright 2018 Nikita Shakarun
  * Copyright 2026 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +24,14 @@ import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 
+import org.microemu.android.bluetooth.BluetoothAccess;
+import org.microemu.android.bluetooth.BluetoothPermissions;
 import org.microemu.microedition.io.ConnectionImplementation;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 import javax.bluetooth.L2CAPConnection;
 import javax.bluetooth.L2CAPConnectionNotifier;
@@ -72,49 +77,73 @@ public class Connection implements ConnectionImplementation, L2CAPConnectionNoti
 				}
 			}
 		}
-		secure = authenticate && encrypt;
+		secure = authenticate || encrypt;
 
 		String uuid = name.substring(portSepIndex + 1, argsStart);
 		connUuid = new javax.bluetooth.UUID(uuid, false);
 		java.util.UUID btUuid = connUuid.uuid;
 
-		BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-		if (adapter.isDiscovering()) {
-			adapter.cancelDiscovery();
-		}
+		BluetoothAdapter adapter = BluetoothAccess.requireAdapter();
+		BluetoothAccess.cancelDiscoveryIfPermitted(adapter);
+		/*
+		 * Android does not expose Classic BR/EDR L2CAP sockets to regular apps.
+		 * This backend therefore remains an RFCOMM compatibility tunnel for
+		 * JL-Mod peers; it is not wire-compatible with a physical JSR-82 phone.
+		 */
 		// java.util.UUID btUuid = getJavaUUID(uuid);
 		// "localhost" indicates that we are acting as server
 		if (host.equals("localhost")) {
+			BluetoothPermissions.requireAdvertisePermission();
 			// btUuid = new javax.bluetooth.UUID(0x1101).uuid;
 
 			// Android 6.0.1 bug: UUID is reversed
 			// see https://issuetracker.google.com/issues/37075233
 			UUID NameUuid = new UUID(0x1102);
-			nameServerSocket = adapter.listenUsingInsecureRfcommWithServiceRecord(srvname, NameUuid.uuid);
+			nameServerSocket = BluetoothAccess.listenUsingRfcomm(
+					adapter,
+					srvname,
+					NameUuid.uuid,
+					false
+			);
 
 			String finalSrvname = srvname;
 			// Send service name to client
 			Thread connectThread = new Thread(() -> {
-				try {
+				try (BluetoothSocket connectSocket = nameServerSocket.accept();
+					 OutputStream os = connectSocket.getOutputStream()) {
 					byte[] dstByte = new byte[256];
-					byte[] srcByte = finalSrvname.getBytes();
+					byte[] serviceName = finalSrvname.getBytes(StandardCharsets.UTF_8);
+					byte[] srcByte = Arrays.copyOf(
+							serviceName,
+							Math.min(serviceName.length, dstByte.length)
+					);
 					System.arraycopy(srcByte, 0, dstByte, 0, srcByte.length);
-					BluetoothSocket connectSocket = nameServerSocket.accept();
-					OutputStream os = connectSocket.getOutputStream();
 					os.write(1);
 					os.write(dstByte);
 					os.flush();
-					nameServerSocket.close();
 				} catch (IOException e) {
 					Log.w(TAG, "openConnection: ", e);
+				} finally {
+					try {
+						nameServerSocket.close();
+					} catch (IOException ignored) {
+					}
 				}
-			});
+			}, "Jsr82L2capTunnelServiceName");
 			connectThread.start();
-			if (secure) {
-				serverSocket = adapter.listenUsingRfcommWithServiceRecord(finalSrvname, btUuid);
-			} else {
-				serverSocket = adapter.listenUsingInsecureRfcommWithServiceRecord(finalSrvname, btUuid);
+			try {
+				serverSocket = BluetoothAccess.listenUsingRfcomm(
+						adapter,
+						finalSrvname,
+						btUuid,
+						secure
+				);
+			} catch (IOException e) {
+				nameServerSocket.close();
+				throw e;
 			}
+			// TODO(interoperability): Replace this tunnel only if a public Classic
+			// L2CAP backend can be verified against a physical JSR-82 phone.
 			return this;
 		} else {
 			StringBuilder sb = new StringBuilder(host);
@@ -124,16 +153,17 @@ public class Connection implements ConnectionImplementation, L2CAPConnectionNoti
 			String addr = sb.toString();
 
 			BluetoothDevice dev = adapter.getRemoteDevice(addr);
-			if (secure) {
-				socket = dev.createRfcommSocketToServiceRecord(btUuid);
-			} else {
-				socket = dev.createInsecureRfcommSocketToServiceRecord(btUuid);
-			}
-
+			socket = BluetoothAccess.createRfcommSocket(dev, btUuid, secure);
 			try {
-				socket.connect();
+				BluetoothAccess.connect(socket);
 			} catch (IOException e) {
-				Log.w(TAG, "openConnection: ", e);
+				try {
+					socket.close();
+				} catch (IOException closeError) {
+					e.addSuppressed(closeError);
+				}
+				socket = null;
+				throw e;
 			}
 			return new L2CAPConnectionImpl(socket);
 		}

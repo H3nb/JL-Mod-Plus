@@ -1,5 +1,6 @@
 /*
  * Copyright 2018 cerg2010cerg2010
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +17,14 @@
 
 package javax.bluetooth;
 
-import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
-import android.os.Build;
+import android.os.Looper;
+import android.os.SystemClock;
+
+import org.microemu.android.bluetooth.BluetoothAccess;
+import org.microemu.android.bluetooth.BluetoothPermissions;
 
 import java.util.Hashtable;
 
@@ -29,16 +33,24 @@ import javax.microedition.util.ActivityResultListener;
 import javax.microedition.util.ContextHolder;
 
 public class LocalDevice implements ActivityResultListener {
+	private static final int REQUEST_DISCOVERABLE = 0xB100;
+	private static final int REQUEST_ENABLE = 0xB101;
+	private static final int DISCOVERABLE_DURATION_SECONDS = 120;
+	private static final long DISCOVERABLE_REQUEST_TIMEOUT_MS = 5 * 60_000L;
 	private static LocalDevice dev;
 	private DiscoveryAgent agent;
 	private static Hashtable<String, String> properties;
-	private volatile boolean lock = false;
 	private boolean cancelled = false;
-	private Object monitor = new Object();
+	private boolean enableRequestPending = false;
+	private boolean discoverableRequestPending = false;
+	private int discoverableResultCode = Activity.RESULT_CANCELED;
+	private int acceptedDiscoverableMode = DiscoveryAgent.NOT_DISCOVERABLE;
+	private long acceptedDiscoverableUntil = 0;
+	private final Object monitor = new Object();
 
 	static {
 		properties = new Hashtable<>();
-		properties.put("bluetooth.api.version", "1.1");
+		properties.put("bluetooth.api.version", "1.1.1");
 		properties.put("bluetooth.master.switch", "true");
 		properties.put("bluetooth.sd.attr.retrievable.max", "256");
 		properties.put("bluetooth.connected.devices.max", "7");
@@ -52,38 +64,41 @@ public class LocalDevice implements ActivityResultListener {
 
 	private LocalDevice() throws BluetoothStateException {
 		agent = new DiscoveryAgent();
+		BluetoothPermissions.requireJsr82Permissions();
 		ContextHolder.addActivityResultListener(this);
-		boolean permissionsGranted;
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-			String[] permissions = {
-					Manifest.permission.BLUETOOTH_CONNECT,
-					Manifest.permission.BLUETOOTH_SCAN,
-					Manifest.permission.BLUETOOTH_ADVERTISE,
-			};
-			permissionsGranted = ContextHolder.requestPermissions(permissions);
-		} else {
-			permissionsGranted = ContextHolder.requestPermission(Manifest.permission.ACCESS_FINE_LOCATION);
-		}
-		if (!permissionsGranted) {
-			throw new BluetoothStateException();
-		}
-		if (!DiscoveryAgent.adapter.isEnabled()) {
-			Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-			ContextHolder.getActivity().startActivityForResult(enableBtIntent, 2);
+		if (!BluetoothAccess.isEnabled(DiscoveryAgent.adapter)) {
+			synchronized (monitor) {
+				enableRequestPending = true;
+			}
+			try {
+				BluetoothAccess.requestEnable(ContextHolder.getActivity(), REQUEST_ENABLE);
+			} catch (BluetoothStateException e) {
+				synchronized (monitor) {
+					enableRequestPending = false;
+				}
+				ContextHolder.removeActivityResultListener(this);
+				throw e;
+			}
 			synchronized (monitor) {
 				try {
-					monitor.wait();
+					while (enableRequestPending) {
+						monitor.wait();
+					}
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+					Thread.currentThread().interrupt();
+					ContextHolder.removeActivityResultListener(this);
+					throw new BluetoothStateException("Interrupted while enabling Bluetooth");
 				}
 			}
-			if (cancelled)
-				throw new BluetoothStateException();
+			if (cancelled || !BluetoothAccess.isEnabled(DiscoveryAgent.adapter)) {
+				ContextHolder.removeActivityResultListener(this);
+				throw new BluetoothStateException("Bluetooth was not enabled");
+			}
 			cancelled = false;
 		}
 	}
 
-	public static LocalDevice getLocalDevice() throws BluetoothStateException {
+	public static synchronized LocalDevice getLocalDevice() throws BluetoothStateException {
 		if (dev == null)
 			dev = new LocalDevice();
 		return dev;
@@ -94,7 +109,7 @@ public class LocalDevice implements ActivityResultListener {
 	}
 
 	public String getFriendlyName() {
-		return DiscoveryAgent.adapter.getName();
+		return BluetoothAccess.getAdapterName(DiscoveryAgent.adapter);
 	}
 
 	public DeviceClass getDeviceClass() {
@@ -107,58 +122,178 @@ public class LocalDevice implements ActivityResultListener {
 			throw new IllegalArgumentException("Invalid discoverable mode");
 		}
 
-		if (lock || mode == DiscoveryAgent.NOT_DISCOVERABLE)
-			return true;
+		if (mode == DiscoveryAgent.NOT_DISCOVERABLE) {
+			synchronized (monitor) {
+				clearAcceptedDiscoverableMode();
+			}
+			return getDiscoverable() == DiscoveryAgent.NOT_DISCOVERABLE;
+		}
 
-		Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-		lock = true;
-		ContextHolder.getActivity().startActivityForResult(discoverableIntent, 1);
-		return true;
+		/*
+		 * Android's public UI only supports general discoverability. It cannot
+		 * represent JSR-82 LIAC or future custom inquiry access codes.
+		 */
+		if (mode != DiscoveryAgent.GIAC) {
+			return false;
+		}
+
+		BluetoothPermissions.requireJsr82Permissions();
+		if (getDiscoverable() == mode) {
+			return true;
+		}
+		if (Looper.myLooper() == Looper.getMainLooper()) {
+			throw new BluetoothStateException(
+					"Discoverable confirmation cannot block the Android UI thread"
+			);
+		}
+
+		synchronized (monitor) {
+			waitForExistingDiscoverableRequest();
+			if (getDiscoverable() == mode) {
+				return true;
+			}
+			discoverableRequestPending = true;
+			discoverableResultCode = Activity.RESULT_CANCELED;
+		}
+		try {
+			BluetoothAccess.requestDiscoverable(
+					ContextHolder.getActivity(),
+					REQUEST_DISCOVERABLE,
+					DISCOVERABLE_DURATION_SECONDS
+			);
+		} catch (BluetoothStateException e) {
+			synchronized (monitor) {
+				discoverableRequestPending = false;
+				monitor.notifyAll();
+			}
+			throw e;
+		}
+
+		synchronized (monitor) {
+			long deadline =
+					SystemClock.uptimeMillis() + DISCOVERABLE_REQUEST_TIMEOUT_MS;
+			while (discoverableRequestPending) {
+				long remaining = deadline - SystemClock.uptimeMillis();
+				if (remaining <= 0) {
+					discoverableRequestPending = false;
+					return false;
+				}
+				try {
+					monitor.wait(remaining);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					discoverableRequestPending = false;
+					throw new BluetoothStateException(
+							"Interrupted while requesting discoverable mode"
+					);
+				}
+			}
+			return isDiscoverableResultAccepted(discoverableResultCode);
+		}
 	}
 
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (requestCode == 1) {
+		if (requestCode == REQUEST_DISCOVERABLE) {
 			synchronized (monitor) {
-				lock = false;
-
+				discoverableResultCode = resultCode;
+				if (isDiscoverableResultAccepted(resultCode)) {
+					acceptedDiscoverableMode = DiscoveryAgent.GIAC;
+					acceptedDiscoverableUntil =
+							SystemClock.elapsedRealtime() + resultCode * 1000L;
+				} else {
+					clearAcceptedDiscoverableMode();
+				}
+				discoverableRequestPending = false;
 				monitor.notifyAll();
 			}
-		} else if (requestCode == 2) {
+		} else if (requestCode == REQUEST_ENABLE) {
 			synchronized (monitor) {
 				if (resultCode != Activity.RESULT_OK)
 					cancelled = true;
+				enableRequestPending = false;
 				monitor.notifyAll();
 			}
 		}
 	}
 
 	public static boolean isPowerOn() {
-		return BluetoothAdapter.getDefaultAdapter().isEnabled();
+		BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+		if (adapter == null || !BluetoothPermissions.requestConnectPermission()) {
+			return false;
+		}
+		return BluetoothAccess.isEnabledOrFalse(adapter);
 	}
 
 	public int getDiscoverable() {
-		int scanMode = DiscoveryAgent.adapter.getScanMode();
-		switch (scanMode) {
-			case BluetoothAdapter.SCAN_MODE_CONNECTABLE:
-				return DiscoveryAgent.LIAC;
-			case BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE:
-				return DiscoveryAgent.GIAC;
-			case BluetoothAdapter.SCAN_MODE_NONE:
-			default:
-				return DiscoveryAgent.NOT_DISCOVERABLE;
+		if (!BluetoothAccess.isEnabledOrFalse(DiscoveryAgent.adapter)) {
+			synchronized (monitor) {
+				clearAcceptedDiscoverableMode();
+			}
+			return DiscoveryAgent.NOT_DISCOVERABLE;
 		}
+		int scanMode = BluetoothAccess.getScanMode(DiscoveryAgent.adapter);
+		int mappedMode = mapAndroidScanMode(scanMode);
+		if (mappedMode == DiscoveryAgent.GIAC) {
+			return mappedMode;
+		}
+		synchronized (monitor) {
+			if (acceptedDiscoverableMode != DiscoveryAgent.NOT_DISCOVERABLE
+					&& SystemClock.elapsedRealtime() < acceptedDiscoverableUntil) {
+				return acceptedDiscoverableMode;
+			}
+			clearAcceptedDiscoverableMode();
+		}
+		return mappedMode;
+	}
+
+	static int mapAndroidScanMode(int scanMode) {
+		if (scanMode == BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
+			return DiscoveryAgent.GIAC;
+		}
+		if (scanMode == BluetoothAdapter.SCAN_MODE_CONNECTABLE) {
+			/*
+			 * Android has no public LIAC scan mode. Treat its powered-on,
+			 * connectable state as LIAC so legacy MIDlets can distinguish it
+			 * from a disabled adapter before they request GIAC discoverability.
+			 */
+			return DiscoveryAgent.LIAC;
+		}
+		return DiscoveryAgent.NOT_DISCOVERABLE;
+	}
+
+	static boolean isDiscoverableResultAccepted(int resultCode) {
+		return resultCode > 0;
+	}
+
+	private void waitForExistingDiscoverableRequest() throws BluetoothStateException {
+		while (discoverableRequestPending) {
+			try {
+				monitor.wait();
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				throw new BluetoothStateException(
+						"Interrupted while waiting for discoverable mode"
+				);
+			}
+		}
+	}
+
+	private void clearAcceptedDiscoverableMode() {
+		acceptedDiscoverableMode = DiscoveryAgent.NOT_DISCOVERABLE;
+		acceptedDiscoverableUntil = 0;
 	}
 
 	public static String getProperty(String property) {
 		return properties.get(property);
 	}
 
-	private static String androidToJavaAddress(String addr) {
-		return addr.replaceAll(":", "");
-	}
-
 	public String getBluetoothAddress() {
-		return androidToJavaAddress(DiscoveryAgent.adapter.getAddress());
+		/*
+		 * Normal Android apps cannot read the real local controller MAC address.
+		 * Persisting a private, locally administered value preserves the JSR-82
+		 * contract (12 uppercase hex characters) without exposing device identity.
+		 */
+		return LocalBluetoothAddress.get(ContextHolder.getAppContext());
 	}
 
 	public ServiceRecord getRecord(Connection notifier) {
@@ -174,15 +309,30 @@ public class LocalDevice implements ActivityResultListener {
 				// probably calling this for local device, so socket isn't opened
 				return new J2MEServiceRecord(null, conn.connUuid, false, false);
 			else
-				return new J2MEServiceRecord(new RemoteDevice(conn.socket.getRemoteDevice()), conn.connUuid, false, false);
+				return new J2MEServiceRecord(
+						toRemoteDevice(conn.socket),
+						conn.connUuid,
+						false,
+						false
+				);
 		} else {
 			org.microemu.cldc.btl2cap.Connection conn = (org.microemu.cldc.btl2cap.Connection) notifier;
 			if (conn.socket == null)
 				// probably calling this for local device, so socket isn't opened
 				return new J2MEServiceRecord(null, conn.connUuid, false, true);
 			else
-				return new J2MEServiceRecord(new RemoteDevice(conn.socket.getRemoteDevice()), conn.connUuid, false, true);
+				return new J2MEServiceRecord(
+						toRemoteDevice(conn.socket),
+						conn.connUuid,
+						false,
+						true
+				);
 		}
+	}
+
+	private static RemoteDevice toRemoteDevice(android.bluetooth.BluetoothSocket socket) {
+		android.bluetooth.BluetoothDevice remote = BluetoothAccess.getRemoteDeviceOrNull(socket);
+		return remote == null ? null : new RemoteDevice(remote);
 	}
 
 	// Not supported on Android due to API limitations
