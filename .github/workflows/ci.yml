@@ -46,10 +46,9 @@ jobs:
         shell: bash
         run: echo "VERSION_SUFFIX=-dev.${GITHUB_SHA::7}" >> "$GITHUB_ENV"
 
-      # Existing lint findings need individual remediation. Preserve the report
-      # without hiding failures or blocking otherwise useful build evidence.
+      # Lint is a blocking quality gate for the emulator variant. Warnings remain
+      # visible in the uploaded report and must be triaged without broad suppression.
       - name: Run emulator debug lint
-        continue-on-error: true
         run: >-
           ./gradlew --no-daemon --stacktrace
           :app:lintEmulatorDebug

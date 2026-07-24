@@ -229,6 +229,8 @@ public class MicroLoader {
 		System.setProperty("fileconn.dir.private", dataUri + "/private");
 		System.setProperty("fileconn.dir.music", musicUri);
 		System.setProperty("user.home", primaryStoragePath);
+		System.setProperty("com.nokia.mid.ui.softnotification", "true");
+		MidletSystem.setProperty("com.nokia.mid.ui.softnotification", "true");
 	}
 
 	public int getOrientation() {

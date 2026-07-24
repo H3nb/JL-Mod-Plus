@@ -1,5 +1,6 @@
 Manifest-Version: 1.0
 MIDlet-1: Midlet Port Sample, , com.example.porting.HelloMidlet
+MIDlet-2: SoftNotification Test, , com.example.porting.SoftNotificationTestMidlet
 MIDlet-Name: Midlet Port Sample
 MIDlet-Vendor: H3NB
 MIDlet-Version: 2.0

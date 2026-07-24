@@ -21,7 +21,6 @@ android {
     }
 
     lint {
-        abortOnError = false
         targetSdk = rootProject.extra["targetSdk"] as Int
     }
 }
