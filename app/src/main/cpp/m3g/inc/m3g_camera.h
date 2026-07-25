@@ -1,4 +1,6 @@
 /*
+* Copyright 2026 H3NB
+*
 * Copyright (c) 2003 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
@@ -62,8 +64,8 @@ M3G_INLINE static M3Gbool m3gValidProjection(const Camera *camera)
 {
     if (camera->zeroViewVolume) {
         M3G_LOG1(M3G_LOG_WARNINGS,
-                 "Warning: Invalid projection for camera 0x%08X\n",
-                 (unsigned) camera);
+                 "Warning: Invalid projection for camera %p\n",
+                 (void *) camera);
         return M3G_FALSE;
     }
     return M3G_TRUE;

@@ -1,4 +1,6 @@
 /*
+* Copyright 2026 H3NB
+*
 * Copyright (c) 2003 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
@@ -649,6 +651,12 @@ M3G_API M3GVertexArray m3gCreateVertexArray(M3GInterface interface,
         case M3G_SHORT:
             array->stride = size * sizeof(M3Gshort);
             break;
+        default:
+            /* Validation above currently accepts only BYTE and SHORT. Keep
+             * future enum additions from creating an uninitialized stride. */
+            m3gFree(m3g, array);
+            m3gRaiseError(m3g, M3G_INVALID_VALUE);
+            return NULL;
         }
 
         /* Alloc and initialize all values to zero */

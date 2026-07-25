@@ -250,12 +250,12 @@ static void validateBlock(/*@reldef@*//*@temp@*//*@null@*/ const void *ptr)
             }
         }
         M3G_LOG1(M3G_LOG_FATAL_ERRORS,
-                 "Corrupted memory block 0x%08X!\n", (unsigned) ptr);
+                 "Corrupted memory block %p!\n", (void *) ptr);
         M3G_ASSERT(M3G_FALSE);
     }
     else {
         M3G_LOG1(M3G_LOG_FATAL_ERRORS,
-                 "Invalid pointer to 0x%08X!\n", (unsigned) ptr);
+                 "Invalid pointer to %p!\n", (void *) ptr);
         M3G_ASSERT(M3G_FALSE);
     }
 }
@@ -380,8 +380,8 @@ static void dumpBlocks(const HeapBlock *head)
 {
     while (head) {
         M3G_LOG4(M3G_LOG_FATAL_ERRORS,
-                 "0x%08X: %s:%d, %d bytes\n",
-                 (unsigned) PAYLOAD_BLOCK(head),
+                 "%p: %s:%d, %d bytes\n",
+                 (void *) PAYLOAD_BLOCK(head),
                  head->allocFile,
                  head->allocLine,
                  (M3Gsizei) PAYLOAD_SIZE(PAYLOAD_BLOCK(head)));
@@ -547,11 +547,11 @@ static void *m3gAlloc(Interface *m3g, M3Gsize bytes)
     
 #   if defined(M3G_DEBUG)
     M3G_LOG4(M3G_LOG_MEMORY_BLOCKS,
-             "Alloc 0x%08X, %d bytes (%s, line %d)\n",
-             (unsigned) ptr, bytes, file, line);
+             "Alloc %p, %d bytes (%s, line %d)\n",
+             (void *) ptr, bytes, file, line);
 #   else
-    M3G_LOG2(M3G_LOG_MEMORY_BLOCKS, "Alloc 0x%08X, %d bytes\n",
-             (unsigned) ptr, bytes);
+    M3G_LOG2(M3G_LOG_MEMORY_BLOCKS, "Alloc %p, %d bytes\n",
+             (void *) ptr, bytes);
 #   endif
     
     m3gUpdateMemoryPeakCounter(m3g);
@@ -633,15 +633,15 @@ static void m3gFree(Interface *m3g, void *ptr)
 #       if defined(M3G_DEBUG)
 #           if defined(M3G_DEBUG_HEAP_TRACKING)
             M3G_LOG4(M3G_LOG_MEMORY_BLOCKS,
-                     "Free 0x%08X, %d bytes (%s, line %d)\n",
-                     (unsigned) ptr, PAYLOAD_SIZE(ptr), file, line);
+                     "Free %p, %d bytes (%s, line %d)\n",
+                     (void *) ptr, PAYLOAD_SIZE(ptr), file, line);
 #           else
             M3G_LOG3(M3G_LOG_MEMORY_BLOCKS,
-                     "Free 0x%08X (%s, line %d)\n",
-                     (unsigned) ptr, file, line);
+                     "Free %p (%s, line %d)\n",
+                     (void *) ptr, file, line);
 #           endif
 #       else
-        M3G_LOG1(M3G_LOG_MEMORY_BLOCKS, "Free 0x%08X\n", (unsigned) ptr);
+        M3G_LOG1(M3G_LOG_MEMORY_BLOCKS, "Free %p\n", (void *) ptr);
 #       endif
     
         destroyBlock(ptr);
@@ -1057,8 +1057,8 @@ static void *m3gMapObject(Interface *m3g, M3GMemObject handle)
         ptr = (*m3g->func.objResolve)(handle);
         ptr = PAYLOAD_BLOCK(ptr);
 
-        M3G_LOG2(M3G_LOG_MEMORY_MAPPING, "MapObj 0x%08X -> 0x%08X\n",
-                 (unsigned) handle, (unsigned) ptr);
+        M3G_LOG2(M3G_LOG_MEMORY_MAPPING, "MapObj 0x%08X -> %p\n",
+                 (unsigned) handle, (void *) ptr);
         
         validateBlock(ptr);
         return ptr;
@@ -1625,7 +1625,7 @@ M3G_API M3GInterface m3gCreateInterface(
             M3G_LOG(M3G_LOG_FATAL_ERRORS, "Interface creation failed\n");
             return NULL;
         }
-        M3G_LOG1(M3G_LOG_INTERFACE, "New interface 0x%08X\n", (unsigned) m3g);
+        M3G_LOG1(M3G_LOG_INTERFACE, "New interface %p\n", (void *) m3g);
         
         m3g = (Interface *) PAYLOAD_BLOCK(m3g);
 #       if defined(M3G_DEBUG_HEAP_TRACKING)
@@ -1694,7 +1694,7 @@ M3G_API M3GInterface m3gCreateInterface(
         m3gInitArray(&m3g->objects);
         
         M3G_LOG1(M3G_LOG_INTERFACE,
-                 "Interface 0x%08X initialized\n", (unsigned) m3g);
+                 "Interface %p initialized\n", (void *) m3g);
         return (M3GInterface) m3g;
     }
 }
@@ -1707,7 +1707,7 @@ M3G_API void m3gDeleteInterface(M3GInterface interface)
     Interface *m3g = (Interface *)interface;
     M3G_VALIDATE_INTERFACE(m3g);
     M3G_LOG1(M3G_LOG_INTERFACE,
-             "Shutting down interface 0x%08X...\n", (unsigned) m3g);
+             "Shutting down interface %p...\n", (void *) m3g);
 
     /* Check if we still have objects lingering (this may happen when
      * Java GC deletes the interface first, for instance), and just
@@ -1767,7 +1767,7 @@ M3G_API void m3gDeleteInterface(M3GInterface interface)
     }
 
     M3G_LOG1(M3G_LOG_INTERFACE,
-             "Interface 0x%08X destroyed\n", (unsigned) m3g);
+             "Interface %p destroyed\n", (void *) m3g);
 
     /* Allow for log cleanup */
     
