@@ -1,4 +1,6 @@
 /*
+* Copyright 2026 H3NB
+*
 * Copyright (c) 2003 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
@@ -93,7 +95,8 @@ void    m3gglReleaseNativeBitmap(M3GNativeBitmap bitmap);
     
 M3Gbool m3gglGetNativeBitmapParams(M3GNativeBitmap bitmap,
                                    M3GPixelFormat *format,
-                                   M3Gint *width, M3Gint *height, M3Gint *pixels);
+                                   M3Gint *width, M3Gint *height,
+                                   void **pixels);
 M3Gbool m3gglGetNativeWindowParams(M3GNativeWindow wnd,
                                    M3GPixelFormat *format,
                                    M3Gint *width, M3Gint *height);

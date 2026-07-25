@@ -1,4 +1,6 @@
 /*
+* Copyright 2026 H3NB
+*
 * Copyright (c) 2003 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
@@ -422,9 +424,10 @@ typedef /*@abstract@*/ M3Gpointer M3GMemObject;
  * Abstracted OpenGL rendering target types
  *--------------------------------------------------------------------*/
 
-typedef /*@abstract@*/ M3Guint M3GNativeBitmap;
-typedef /*@abstract@*/ M3Guint M3GNativeWindow;
-typedef /*@abstract@*/ M3Guint M3GEGLSurface;
+/* Native Android/EGL handles may be pointers on 64-bit targets. */
+typedef /*@abstract@*/ M3Gpointer M3GNativeBitmap;
+typedef /*@abstract@*/ M3Gpointer M3GNativeWindow;
+typedef /*@abstract@*/ M3Gpointer M3GEGLSurface;
 
 /*----------------------------------------------------------------------
  * Math API

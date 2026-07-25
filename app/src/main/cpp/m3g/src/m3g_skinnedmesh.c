@@ -1,4 +1,6 @@
 /*
+* Copyright 2026 H3NB
+*
 * Copyright (c) 2003 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
@@ -487,7 +489,7 @@ static M3Gint m3gFixedPointTransform(const M3Gshort *mtx, M3Gint mtxExp,
     if (shift < 32) {
         
 #       if defined(M3G_DEBUG)
-        M3Gint iMin = (-1 << 31) + (65535 * 32768 >> shift);
+        M3Gint iMin = (-2147483647 - 1) + (65535 * 32768 >> shift);
         M3Gint iMax = (M3Gint)((1u << 31)-1) - (65535 * 32768 >> shift);
         M3G_ASSERT(m3gInRange(ox, iMin, iMax));
         M3G_ASSERT(m3gInRange(oy, iMin, iMax));
@@ -531,9 +533,9 @@ static M3Gint m3gScaleAndBiasVertex(const SkinnedMesh *mesh,
     M3Gint temp[3];
     M3Gint expo;
 
-    M3G_ASSERT(m3gInRange(vx, -1 << 15, (1 << 15) - 1));
-    M3G_ASSERT(m3gInRange(vy, -1 << 15, (1 << 15) - 1));
-    M3G_ASSERT(m3gInRange(vz, -1 << 15, (1 << 15) - 1));
+    M3G_ASSERT(m3gInRange(vx, -(1 << 15), (1 << 15) - 1));
+    M3G_ASSERT(m3gInRange(vy, -(1 << 15), (1 << 15) - 1));
+    M3G_ASSERT(m3gInRange(vz, -(1 << 15), (1 << 15) - 1));
     
     expo = m3gFixedPointTransform(mesh->scaleMatrix, mesh->scaleExp,
                                   mesh->biasVector, mesh->biasExp + upshift,
@@ -586,9 +588,9 @@ static M3Gint m3gBlendVertex(const SkinnedMesh *mesh,
     vy <<= upshift;
     vz <<= upshift;
 
-    M3G_ASSERT(m3gInRange(vx, -1 << 15, (1 << 15) - 1));
-    M3G_ASSERT(m3gInRange(vy, -1 << 15, (1 << 15) - 1));
-    M3G_ASSERT(m3gInRange(vz, -1 << 15, (1 << 15) - 1));
+    M3G_ASSERT(m3gInRange(vx, -(1 << 15), (1 << 15) - 1));
+    M3G_ASSERT(m3gInRange(vy, -(1 << 15), (1 << 15) - 1));
+    M3G_ASSERT(m3gInRange(vz, -(1 << 15), (1 << 15) - 1));
 
     /* Loop over the bones and sum the contribution from each */
     
@@ -633,9 +635,9 @@ static M3Gint m3gBlendVertex(const SkinnedMesh *mesh,
             
             if (shift < 31) {
                 
-                M3G_ASSERT(m3gInRange(temp[0], -1 << 24, (1 << 24) - 1));
-                M3G_ASSERT(m3gInRange(temp[1], -1 << 24, (1 << 24) - 1));
-                M3G_ASSERT(m3gInRange(temp[2], -1 << 24, (1 << 24) - 1));
+                M3G_ASSERT(m3gInRange(temp[0], -(1 << 24), (1 << 24) - 1));
+                M3G_ASSERT(m3gInRange(temp[1], -(1 << 24), (1 << 24) - 1));
+                M3G_ASSERT(m3gInRange(temp[2], -(1 << 24), (1 << 24) - 1));
                 
                 ox += (weight * temp[0]) >> shift;
                 oy += (weight * temp[1]) >> shift;
@@ -699,9 +701,9 @@ static void m3gBlendNormal(const SkinnedMesh *mesh,
     ny <<= upshift;
     nz <<= upshift;
     
-    M3G_ASSERT(m3gInRange(nx, -1 << 15, (1 << 15) - 1));
-    M3G_ASSERT(m3gInRange(ny, -1 << 15, (1 << 15) - 1));
-    M3G_ASSERT(m3gInRange(nz, -1 << 15, (1 << 15) - 1));
+    M3G_ASSERT(m3gInRange(nx, -(1 << 15), (1 << 15) - 1));
+    M3G_ASSERT(m3gInRange(ny, -(1 << 15), (1 << 15) - 1));
+    M3G_ASSERT(m3gInRange(nz, -(1 << 15), (1 << 15) - 1));
 
     /* Loop over the bones and sum the contribution from each */
     
@@ -746,9 +748,9 @@ static void m3gBlendNormal(const SkinnedMesh *mesh,
             
             if (shift < 31) {
                 
-                M3G_ASSERT(m3gInRange(temp[0], -1 << 24, (1 << 24) - 1));
-                M3G_ASSERT(m3gInRange(temp[1], -1 << 24, (1 << 24) - 1));
-                M3G_ASSERT(m3gInRange(temp[2], -1 << 24, (1 << 24) - 1));
+                M3G_ASSERT(m3gInRange(temp[0], -(1 << 24), (1 << 24) - 1));
+                M3G_ASSERT(m3gInRange(temp[1], -(1 << 24), (1 << 24) - 1));
+                M3G_ASSERT(m3gInRange(temp[2], -(1 << 24), (1 << 24) - 1));
                 
                 ox += (weight * temp[0]) >> shift;
                 oy += (weight * temp[1]) >> shift;
@@ -1622,7 +1624,7 @@ static M3Gint m3gSkinnedMeshGetBBox(Node *self, AABB *bbox)
             int i;
             
             for (i = 0; i < 3; ++i) {
-                mesh->bbox.min[i] = m3gMadd(scale, -1 << 15, bias[i]);
+                mesh->bbox.min[i] = m3gMadd(scale, -(1 << 15), bias[i]);
                 mesh->bbox.max[i] = m3gMadd(scale, (1 << 15) - 1, bias[i]);
             }
         }

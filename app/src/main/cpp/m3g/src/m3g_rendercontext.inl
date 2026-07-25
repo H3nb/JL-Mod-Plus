@@ -1,4 +1,6 @@
 /*
+* Copyright 2026 H3NB
+*
 * Copyright (c) 2003 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
@@ -96,9 +98,16 @@ static EGLConfig m3gQueryEGLConfig(M3Genum format,
 
 
     if (bitmapHandle) {
+#if UINTPTR_MAX > UINT32_MAX
+        /* EGLint cannot carry a native pixmap pointer on 64-bit Android.
+         * The Android backend does not implement native bitmap targets, so
+         * reject this legacy path instead of silently truncating the handle. */
+        return NULL;
+#else
         /* This attribute is matched only for pixmap targets */
         attribs[6].attrib = EGL_MATCH_NATIVE_PIXMAP;
         attribs[6].value = bitmapHandle;
+#endif
 
         /* Try to get multisampling if requested */
 
@@ -238,7 +247,8 @@ static void m3gTerminateEGL(void)
     }
 #   endif
 
-    M3G_LOG1(M3G_LOG_OBJECTS, "New GL context 0x%08X\n", (unsigned) ctx);
+    M3G_LOG1(M3G_LOG_OBJECTS, "New GL context 0x%08X\n",
+             (unsigned) (uintptr_t) ctx);
     return ctx;
 }
 */
@@ -259,7 +269,7 @@ static void m3gDeleteGLContext(EGLContext ctx)
     }
 #   endif
     M3G_LOG1(M3G_LOG_OBJECTS, "Destroyed GL context 0x%08X\n",
-             (unsigned) ctx);
+             (unsigned) (uintptr_t) ctx);
 }
 
     
@@ -272,7 +282,8 @@ static EGLSurface m3gCreateWindowSurface(M3Genum format,
                                          M3GNativeWindow wnd)
 {
     EGLSurface surf;
-    EGLConfig config = m3gQueryEGLConfig(format, bufferBits, EGL_WINDOW_BIT, NULL);
+    EGLConfig config = m3gQueryEGLConfig(format, bufferBits, EGL_WINDOW_BIT,
+                                         (M3GNativeBitmap) 0);
     
     if (!config) {
         return NULL;
@@ -292,7 +303,7 @@ static EGLSurface m3gCreateWindowSurface(M3Genum format,
 
     if (surf != EGL_NO_SURFACE) {
         M3G_LOG1(M3G_LOG_OBJECTS, "New GL window surface 0x%08X\n",
-                 (unsigned) surf);
+                 (unsigned) (uintptr_t) surf);
         return surf;
     }
     return NULL;
@@ -328,7 +339,7 @@ static EGLSurface m3gCreateBitmapSurface(M3Genum format,
     
     if (surf != EGL_NO_SURFACE) {
         M3G_LOG1(M3G_LOG_OBJECTS, "New GL pixmap surface 0x%08X\n",
-                 (unsigned) surf);
+                 (unsigned) (uintptr_t) surf);
         return surf;
     }
     return NULL;
@@ -353,7 +364,8 @@ static EGLSurface m3gCreatePBufferSurface(M3Genum format,
     attrib[3] = height;
     attrib[4] = EGL_NONE;
     
-    config = m3gQueryEGLConfig(format, bufferBits, EGL_PBUFFER_BIT, NULL);
+    config = m3gQueryEGLConfig(format, bufferBits, EGL_PBUFFER_BIT,
+                               (M3GNativeBitmap) 0);
     if (!config) {
         return NULL;
     }
@@ -370,7 +382,7 @@ static EGLSurface m3gCreatePBufferSurface(M3Genum format,
                                               
     if (surf != EGL_NO_SURFACE) {
         M3G_LOG1(M3G_LOG_OBJECTS, "New GL pbuffer surface 0x%08X\n",
-                 (unsigned) surf);
+                 (unsigned) (uintptr_t) surf);
         return surf;
     }
     return NULL;
@@ -393,7 +405,7 @@ static void m3gDeleteGLSurface(EGLSurface surface)
 #   endif
 
     M3G_LOG1(M3G_LOG_OBJECTS, "Destroyed GL surface 0x%08X\n",
-             (unsigned) surface);
+             (unsigned) (uintptr_t) surface);
 }
 
 /*!
@@ -896,7 +908,7 @@ static void m3gBlitFrameBufferPixels(RenderContext *ctx,
     glLoadIdentity();
     glOrthox(0, ctx->target.width << 16,
              0, ctx->target.height << 16,
-             -1 << 16, 1 << 16);
+             -(1 << 16), 1 << 16);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     
@@ -1458,11 +1470,13 @@ void m3gBindBitmapTarget(M3GRenderContext hCtx,
                          M3GNativeBitmap hBitmap)
 {
     M3GPixelFormat format;
-    M3Gint width, height, pixels;
+    M3Gint width, height;
+    void *pixels;
     RenderContext *ctx = (RenderContext *) hCtx;
     M3G_VALIDATE_OBJECT(ctx);
     
-    M3G_LOG1(M3G_LOG_RENDERING, "Binding bitmap 0x%08X\n", (unsigned) hBitmap);
+    M3G_LOG1(M3G_LOG_RENDERING, "Binding bitmap 0x%08X\n",
+             (unsigned) (uintptr_t) hBitmap);
     
     if (!m3gglGetNativeBitmapParams(hBitmap, &format, &width, &height, &pixels)) {
         m3gRaiseError(M3G_INTERFACE(ctx), M3G_INVALID_OBJECT);
@@ -1479,7 +1493,7 @@ void m3gBindBitmapTarget(M3GRenderContext hCtx,
 
     /* Set the bitmap target specific parameters */
     
-    ctx->target.pixels = (void*)pixels;
+    ctx->target.pixels = pixels;
 
 }
 
@@ -1496,7 +1510,8 @@ M3G_API void m3gBindEGLSurfaceTarget(M3GRenderContext context,
     Interface *m3g = M3G_INTERFACE(ctx);
     M3G_VALIDATE_OBJECT(ctx);
 
-    M3G_LOG1(M3G_LOG_RENDERING, "Binding EGL surface 0x%08X\n", (unsigned) surface);
+    M3G_LOG1(M3G_LOG_RENDERING, "Binding EGL surface 0x%08X\n",
+             (unsigned) (uintptr_t) surface);
     {
         EGLDisplay dpy = eglGetDisplay(EGL_DEFAULT_DISPLAY);
         EGLSurface surf = (EGLSurface) surface;
@@ -1549,7 +1564,7 @@ void m3gBindMemoryTarget(M3GRenderContext context,
     M3G_VALIDATE_OBJECT(ctx);
 
     M3G_LOG1(M3G_LOG_RENDERING, "Binding memory buffer 0x%08X\n",
-             (unsigned) pixels);
+             (unsigned) (uintptr_t) pixels);
     
     /* Check for bitmap specific errors */
     
@@ -1585,7 +1600,8 @@ M3G_API void m3gBindWindowTarget(M3GRenderContext hCtx,
     RenderContext *ctx = (RenderContext *) hCtx;
     M3G_VALIDATE_OBJECT(ctx);
     
-    M3G_LOG1(M3G_LOG_RENDERING, "Binding window 0x%08X\n", (unsigned) hWindow);
+    M3G_LOG1(M3G_LOG_RENDERING, "Binding window 0x%08X\n",
+             (unsigned) (uintptr_t) hWindow);
     
     if (!m3gglGetNativeWindowParams(hWindow, &format, &width, &height)) {
         m3gRaiseError(M3G_INTERFACE(ctx), M3G_INVALID_OBJECT);
@@ -1621,7 +1637,7 @@ M3G_API void m3gInvalidateBitmapTarget(M3GRenderContext hCtx,
     M3G_VALIDATE_OBJECT(ctx);
 
     M3G_LOG1(M3G_LOG_RENDERING, "Invalidating bitmap 0x%08X\n",
-             (unsigned) hBitmap);
+             (unsigned) (uintptr_t) hBitmap);
     
     m3gDeleteGLSurfaces(ctx, (M3Gbitmask) SURFACE_BITMAP, (M3Gpointer) hBitmap);
 }
@@ -1644,7 +1660,7 @@ M3G_API void m3gInvalidateWindowTarget(M3GRenderContext hCtx,
     M3G_VALIDATE_OBJECT(ctx);
 
     M3G_LOG1(M3G_LOG_RENDERING, "Invalidating window 0x%08X\n",
-             (unsigned) hWindow);
+             (unsigned) (uintptr_t) hWindow);
     
     m3gDeleteGLSurfaces(ctx, (M3Gbitmask) SURFACE_WINDOW, (M3Gpointer) hWindow);
 }
@@ -1665,7 +1681,7 @@ M3G_API void m3gInvalidateMemoryTarget(M3GRenderContext hCtx,
     M3G_VALIDATE_OBJECT(ctx);
 
     M3G_LOG1(M3G_LOG_RENDERING, "Invalidating memory target 0x%08X\n",
-             (unsigned) pixels);
+             (unsigned) (uintptr_t) pixels);
     
     m3gDeleteGLSurfaces(ctx, (M3Gbitmask) SURFACE_MEMORY, (M3Gpointer) pixels);
 }

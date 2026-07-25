@@ -1,4 +1,6 @@
 /*
+* Copyright 2026 H3NB
+*
 * Copyright (c) 2003 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
@@ -788,7 +790,7 @@ static void m3gUpdateColorMaskStatus(RenderContext *ctx,
         glMatrixMode(GL_PROJECTION);
         glOrthox(0, ctx->target.width << 16,
                  0, ctx->target.height << 16,
-                 -1 << 16, 1 << 16);
+                 -(1 << 16), 1 << 16);
         glMatrixMode(GL_MODELVIEW);
             
         /* Set up texture and vertex coordinate arrays */
@@ -911,7 +913,7 @@ static void m3gPushScreenSpace(RenderContext *ctx, M3Gbool realPixels)
     if (realPixels) {
         int w = ctx->viewport.width;
         int h = ctx->viewport.height;
-        glOrthox(0, w << 16, 0, h << 16, -1 << 16, 1 << 16);
+        glOrthox(0, w << 16, 0, h << 16, -(1 << 16), 1 << 16);
     }
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -1253,7 +1255,7 @@ M3G_API void m3gBindImageTarget(M3GRenderContext hCtx, M3GImage hImage)
     M3G_VALIDATE_OBJECT(img);
 
     M3G_LOG1(M3G_LOG_RENDERING, "Binding image target 0x%08X\n",
-             (unsigned) img);
+             (unsigned) (uintptr_t) img);
 
     /* Check for image-specific errors */
     
@@ -1681,7 +1683,8 @@ M3G_API void m3gRenderWorld(M3GRenderContext context, M3GWorld hWorld)
     RenderContext *ctx = (RenderContext*) context;
 	World *world = (World *) hWorld;
 
-    M3G_LOG1(M3G_LOG_STAGES, "Rendering World 0x%08X\n", (unsigned) world);
+    M3G_LOG1(M3G_LOG_STAGES, "Rendering World 0x%08X\n",
+             (unsigned) (uintptr_t) world);
     
     M3G_VALIDATE_OBJECT(ctx);
     M3G_VALIDATE_OBJECT(world);
@@ -1797,7 +1800,8 @@ M3G_API void m3gRenderNode(M3GRenderContext context,
     RenderContext *ctx = (RenderContext*) context;
     Node *node = (Node *) hNode;
 
-    M3G_LOG1(M3G_LOG_STAGES, "Rendering Node 0x%08X\n", (unsigned) node);
+    M3G_LOG1(M3G_LOG_STAGES, "Rendering Node 0x%08X\n",
+             (unsigned) (uintptr_t) node);
     
     M3G_VALIDATE_OBJECT(ctx);
     M3G_VALIDATE_OBJECT(node);
@@ -1890,7 +1894,7 @@ M3G_API void m3gRender(M3GRenderContext context,
     M3G_VALIDATE_OBJECT(ctx);
 
     M3G_LOG1(M3G_LOG_STAGES, "Rendering vertex buffer 0x%08X\n",
-             (unsigned) vb);
+             (unsigned) (uintptr_t) vb);
     
     /* Check validity of input */
     

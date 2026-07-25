@@ -1,4 +1,6 @@
 /*
+* Copyright 2026 H3NB
+*
 * Copyright (c) 2005 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
@@ -73,8 +75,9 @@ struct TCacheImpl
 
 static M3G_INLINE M3Gint m3gTransformableHash(const Transformable *t)
 {
-    M3Guint a = (M3Guint) t;
-    M3Guint b = (M3Guint) t;
+    uint64_t address = (uint64_t) (uintptr_t) t;
+    M3Guint a = (M3Guint) address ^ (M3Guint) (address >> 32);
+    M3Guint b = a;
     
     a += (a >> 3) + (a >> 9) + (a >> 17);
     b  = (b >> 16) | (b << 16);
@@ -84,8 +87,10 @@ static M3G_INLINE M3Gint m3gTransformableHash(const Transformable *t)
 
 static M3Gint m3gPathHash(const Node *from, const Node *to)
 {
-    M3Guint a = (M3Guint) from;
-    M3Guint b = (M3Guint) to;
+    uint64_t fromAddress = (uint64_t) (uintptr_t) from;
+    uint64_t toAddress = (uint64_t) (uintptr_t) to;
+    M3Guint a = (M3Guint) fromAddress ^ (M3Guint) (fromAddress >> 32);
+    M3Guint b = (M3Guint) toAddress ^ (M3Guint) (toAddress >> 32);
 
     a += (a >> 3) + (a >> 9) + (a >> 17);
     b  = (b >> 16) | (b << 16);

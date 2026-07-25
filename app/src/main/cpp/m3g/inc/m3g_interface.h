@@ -1,4 +1,6 @@
 /*
+* Copyright 2026 H3NB
+*
 * Copyright (c) 2003 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
@@ -139,7 +141,8 @@ static void     m3gDelChildObject(Interface *m3g, Object *obj);
 static void     m3gGetObjectsWithClassID(Interface *m3g, M3GClass classID, PointerArray* objects);
 
 #if !defined(M3G_NGL_TEXTURE_API)
-static void     m3gDeleteGLTextures(Interface *m3g, M3Gsizei n, M3Gpointer *t);
+static void     m3gDeleteGLTextures(Interface *m3g, M3Gsizei n,
+                                    const M3Guint *t);
 static void     m3gCollectGLObjects(Interface *m3g);
 #else
 #   define m3gCollectGLObjects(a)

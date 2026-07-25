@@ -1,4 +1,6 @@
 /*
+* Copyright 2026 H3NB
+*
 * Copyright (c) 2003 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
@@ -57,7 +59,10 @@ static void m3gApplyAppearanceDefaults(RenderContext *ctx)
  */
 static M3Guint m3gGenPointerHash(const void *ptr)
 {
-    M3Guint p = ((M3Guint) ptr) >> 2;
+    /* Fold the complete native pointer before reducing to the 32-bit hash
+     * used by the render queue. This keeps the hash portable on ARM64. */
+    uint64_t address = (uint64_t) (uintptr_t) ptr;
+    M3Guint p = (M3Guint) (address >> 2) ^ (M3Guint) (address >> 34);
     M3Guint key = p ^ (p >> 5) ^ (p >> 10) ^ (p >> 15) ^ (p >> 20) ^ (p >> 25);
     return key;
 }
