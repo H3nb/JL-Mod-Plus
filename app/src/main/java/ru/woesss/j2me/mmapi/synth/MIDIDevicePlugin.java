@@ -1,5 +1,6 @@
 /*
  * Copyright 2023 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +21,7 @@ import javax.microedition.media.Manager;
 import javax.microedition.media.Player;
 import javax.microedition.media.protocol.DataSource;
 
+import ru.woesss.j2me.mmapi.audio.WavFileFormat;
 import ru.woesss.j2me.mmapi.synth.eas.LibEAS;
 
 public class MIDIDevicePlugin extends SynthPlugin {
@@ -29,6 +31,16 @@ public class MIDIDevicePlugin extends SynthPlugin {
 
 	@Override
 	public Player createPlayer(DataSource dataSource) {
+		if (dataSource == null || dataSource.getLocator() == null) {
+			return null;
+		}
+		try {
+			if (WavFileFormat.isMonoImaAdpcm(new java.io.File(dataSource.getLocator()))) {
+				return super.createPlayer(dataSource);
+			}
+		} catch (java.io.IOException e) {
+			return null;
+		}
 		return null;
 	}
 

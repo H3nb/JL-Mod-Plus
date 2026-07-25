@@ -1,6 +1,7 @@
 /*
  * Copyright 2018-2021 Nikita Shakarun
  * Copyright 2019-2026 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,10 +78,12 @@ import io.github.h3nb.jlmodplus.util.Constants;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.IOUtils;
 import ru.woesss.j2me.jar.Descriptor;
+import ru.woesss.j2me.mmapi.synth.SoundBankResolver;
 
 public class MicroLoader {
 	private static final String TAG = MicroLoader.class.getName();
 	private static String soundBank;
+	private static SoundBankResolver.Format soundBankFormat;
 	private final Map<String, String> midlets = new LinkedHashMap<>();
 
 	ProfileModel params;
@@ -238,6 +241,8 @@ public class MicroLoader {
 	}
 
 	void applyConfiguration() {
+		soundBank = null;
+		soundBankFormat = null;
 		try {
 			// Apply configuration to the launching MIDlet
 			if (params.showKeyboard) {
@@ -273,9 +278,12 @@ public class MicroLoader {
 			Font.applySettings(params);
 
 			KeyMapper.setKeyMapping(params);
-			File sb = new File(workDir + Config.SOUNDBANKS_DIR + params.soundBank);
-			if (sb.exists()) {
-				soundBank = sb.getPath();
+			File soundBankDirectory = new File(workDir + Config.SOUNDBANKS_DIR);
+			SoundBankResolver.ResolvedSoundBank resolvedSoundBank =
+					SoundBankResolver.resolve(soundBankDirectory, params.soundBank);
+			if (resolvedSoundBank != null) {
+				soundBank = resolvedSoundBank.getFile().getPath();
+				soundBankFormat = resolvedSoundBank.getFormat();
 			}
 			if (params.screenBackgroundImage != null) {
 				SkinLayer.init(params);
@@ -326,6 +334,10 @@ public class MicroLoader {
 
 	public static String getSoundBank() {
 		return soundBank;
+	}
+
+	public static SoundBankResolver.Format getSoundBankFormat() {
+		return soundBankFormat;
 	}
 
 	void loadMidlet(String clazz, String appName) {

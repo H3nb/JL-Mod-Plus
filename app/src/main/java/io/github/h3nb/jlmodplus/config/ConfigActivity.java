@@ -3,6 +3,7 @@
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2018-2019 Nikita Shakarun
  * Copyright 2019-2026 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,6 +84,7 @@ import org.microemu.cldc.SecureConnectionPolicy;
 import io.github.h3nb.jlmodplus.settings.KeyMapperActivity;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.ViewUtils;
+import ru.woesss.j2me.mmapi.synth.SoundBankResolver;
 import ru.woesss.util.TextUtils;
 import yuku.ambilwarna.AmbilWarnaDialog;
 
@@ -356,7 +358,14 @@ public class ConfigActivity extends AppCompatActivity implements View.OnClickLis
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		binding.spSoundBank.setAdapter(adapter);
 		adapter.add(getString(R.string.default_label, "Android"));
-		String[] files = dir.list((d, n) -> new File(d, n).isFile());
+		String[] files = dir.list((d, n) -> {
+			try {
+				return SoundBankResolver.resolve(d, n) != null;
+			} catch (IOException e) {
+				Log.w(TAG, "Unable to inspect soundbank " + n, e);
+				return false;
+			}
+		});
 		if (files != null) {
 			Arrays.sort(files, (o1, o2) -> {
 				int res = o1.compareToIgnoreCase(o2);
