@@ -126,6 +126,29 @@ public class EmulationTimeControllerTest {
 	}
 
 	@Test
+	public void timedJoinUsesVirtualDeadlineWhileRetainingThreadLiveness() throws Exception {
+		CountDownLatch release = new CountDownLatch(1);
+		Thread target = new Thread(() -> {
+			try {
+				release.await();
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+		}, "timed-join-target");
+		target.start();
+
+		EmulationTimeController controller = new EmulationTimeController(
+				new AdvancingHostClock(100_000_000L));
+		controller.setSpeed(EmulationSpeed.X16);
+		controller.join(target, 10L);
+
+		assertTrue(target.isAlive());
+		release.countDown();
+		target.join(1_000L);
+		assertFalse(target.isAlive());
+	}
+
+	@Test
 	public void hostClockGoingBackDoesNotMoveVirtualTimeBackwards() {
 		MutableHostClock host = new MutableHostClock();
 		EmulationTimeController controller = new EmulationTimeController(host);
@@ -192,6 +215,27 @@ public class EmulationTimeControllerTest {
 
 		void setNanos(long nanos) {
 			this.nanos = nanos;
+		}
+	}
+
+	private static final class AdvancingHostClock implements HostClock {
+		private final long stepNanos;
+		private long nanos;
+
+		AdvancingHostClock(long stepNanos) {
+			this.stepNanos = stepNanos;
+		}
+
+		@Override
+		public long nanoTime() {
+			long result = nanos;
+			nanos += stepNanos;
+			return result;
+		}
+
+		@Override
+		public long currentTimeMillis() {
+			return WALL_START + nanos / 1_000_000L;
 		}
 	}
 }

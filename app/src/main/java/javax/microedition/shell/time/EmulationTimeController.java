@@ -30,6 +30,7 @@ public final class EmulationTimeController {
 	private static final String TAG = EmulationTimeController.class.getSimpleName();
 	private static final long NANOS_PER_MILLI = 1_000_000L;
 	private static final long MAX_HOST_WAIT_MILLIS = 1_000L;
+	private static final long MAX_JOIN_HOST_WAIT_MILLIS = 10L;
 	private final HostClock hostClock;
 	private final AtomicReference<SpeedSnapshot> snapshot;
 	private final AtomicLong lastVirtualNanos;
@@ -197,6 +198,67 @@ public final class EmulationTimeController {
 		sleep(millis, 0);
 	}
 
+	/**
+	 * Waits for a thread using a virtual timeout while retaining the JVM's
+	 * native join/termination notification semantics.  Short host slices are
+	 * intentional: unlike the controller monitor, a Thread's termination
+	 * notification cannot be signalled when the emulation speed changes.
+	 */
+	public void join(Thread thread, long millis) throws InterruptedException {
+		Objects.requireNonNull(thread, "thread");
+		if (millis < 0L) {
+			throw new IllegalArgumentException("timeout value is negative");
+		}
+		if (millis == 0L) {
+			thread.join();
+			return;
+		}
+		joinUntil(thread, millis);
+	}
+
+	public void join(Thread thread, long millis, int nanos) throws InterruptedException {
+		Objects.requireNonNull(thread, "thread");
+		if (millis < 0L) {
+			throw new IllegalArgumentException("timeout value is negative");
+		}
+		if (nanos < 0 || nanos > 999_999) {
+			throw new IllegalArgumentException("nanosecond timeout value out of range");
+		}
+		if (nanos > 0 && millis < Long.MAX_VALUE) {
+			millis++;
+		}
+		if (millis == 0L) {
+			thread.join();
+			return;
+		}
+		joinUntil(thread, millis);
+	}
+
+	private void joinUntil(Thread thread, long millis) throws InterruptedException {
+		if (!thread.isAlive()) {
+			return;
+		}
+		long targetNanos = saturatedAdd(
+				nanoTime(), saturatedMultiply(millis, NANOS_PER_MILLI));
+		while (thread.isAlive()) {
+			if (Thread.interrupted()) {
+				throw new InterruptedException();
+			}
+			SpeedSnapshot current = snapshot.get();
+			long nowNanos = observeVirtual(current.virtualNanosAt(hostClock.nanoTime()));
+			if (nowNanos >= targetNanos) {
+				return;
+			}
+			long virtualRemainingNanos = targetNanos - nowNanos;
+			long hostWaitNanos = current.isPaused()
+					? MAX_JOIN_HOST_WAIT_MILLIS * NANOS_PER_MILLI
+					: hostDelayNanos(virtualRemainingNanos, current.speed());
+			long hostWaitMillis = Math.max(1L, Math.min(MAX_JOIN_HOST_WAIT_MILLIS,
+					ceilDivide(hostWaitNanos, NANOS_PER_MILLI)));
+			thread.join(hostWaitMillis);
+		}
+	}
+
 	public void awaitVirtualMillis(long millis) throws InterruptedException {
 		if (millis < 0L) {
 			throw new IllegalArgumentException("millis < 0");
@@ -312,6 +374,15 @@ public final class EmulationTimeController {
 		long scaledQuotient = saturatedMultiply(quotient, denominator);
 		long scaledRemainder = (remainder * denominator + numerator - 1L) / numerator;
 		return saturatedAdd(scaledQuotient, scaledRemainder);
+	}
+
+	private static long ceilDivide(long value, long divisor) {
+		if (value <= 0L) {
+			return 0L;
+		}
+		return value >= Long.MAX_VALUE - divisor + 1L
+				? Long.MAX_VALUE
+				: (value + divisor - 1L) / divisor;
 	}
 
 	private static long toWaitMillis(long hostWaitNanos) {

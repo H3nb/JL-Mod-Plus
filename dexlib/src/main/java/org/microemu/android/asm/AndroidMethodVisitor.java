@@ -68,6 +68,12 @@ public class AndroidMethodVisitor extends MethodVisitor {
 					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/time/EmulationTime",
 							name, desc, false);
 					return;
+				} else if (opcode == INVOKEVIRTUAL && name.equals("join")
+						&& (desc.equals("(J)V") || desc.equals("(JI)V"))) {
+					String joinDescriptor = "(Ljava/lang/Thread;" + desc.substring(1);
+					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/time/EmulationTime",
+							name, joinDescriptor, false);
+					return;
 				}
 				break;
 			case "java/lang/String":
