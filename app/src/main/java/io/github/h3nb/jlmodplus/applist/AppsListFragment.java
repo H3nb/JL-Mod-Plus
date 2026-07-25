@@ -2,6 +2,7 @@
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2020 Nikita Shakarun
  * Copyright 2019-2026 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

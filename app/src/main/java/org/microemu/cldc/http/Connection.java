@@ -1,6 +1,7 @@
 /**
  * MicroEmulator
  * Copyright (C) 2001,2002 Bartek Teodorczyk <barteo@barteo.net>
+ * Copyright 2026 H3NB
  * <p>
  * It is licensed under the following two licenses as alternatives:
  * 1. GNU Lesser General Public License (the "LGPL") version 2.1 or any newer version
