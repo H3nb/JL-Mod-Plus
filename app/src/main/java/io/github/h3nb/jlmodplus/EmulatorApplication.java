@@ -36,6 +36,7 @@ import org.acra.config.CoreConfigurationBuilder;
 
 import java.util.Arrays;
 
+import io.github.h3nb.jlmodplus.settings.EmulationAudioPolicy;
 import io.github.h3nb.jlmodplus.util.Constants;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 
@@ -67,6 +68,8 @@ public class EmulatorApplication extends Application implements OnSharedPreferen
 						ReportField.STACK_TRACE)));
 
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+		EmulationAudioPolicy.setAudioSpeedEnabled(
+				sp.getBoolean(Constants.PREF_EMULATION_AUDIO_SPEED, false));
 		if (!sp.contains(Constants.PREF_TOOLBAR)) {
 			boolean enable = !ViewConfiguration.get(this).hasPermanentMenuKey();
 			sp.edit().putBoolean(Constants.PREF_TOOLBAR, enable).apply();
@@ -101,7 +104,10 @@ public class EmulatorApplication extends Application implements OnSharedPreferen
 
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-		if (Constants.PREF_THEME.equals(key)) {
+		if (Constants.PREF_EMULATION_AUDIO_SPEED.equals(key)) {
+			EmulationAudioPolicy.setAudioSpeedEnabled(
+					sharedPreferences.getBoolean(key, false));
+		} else if (Constants.PREF_THEME.equals(key)) {
 			setNightMode(sharedPreferences.getString(Constants.PREF_THEME, null));
 		}
 	}

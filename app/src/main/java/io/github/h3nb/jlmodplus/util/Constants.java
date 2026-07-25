@@ -37,6 +37,7 @@ public class Constants {
 	public static final String PREF_TOOLBAR = "pref_actionbar_switch";
 	public static final String PREF_VIBRATION = "pref_vibration_switch";
 	public static final String PREF_SCREENSHOT_SWITCH = "pref_screenshot_switch";
+	public static final String PREF_EMULATION_AUDIO_SPEED = "pref_emulation_audio_speed";
 
 	private Constants(){}
 }

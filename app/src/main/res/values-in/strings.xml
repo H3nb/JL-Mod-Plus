@@ -158,6 +158,8 @@
     <string name="pref_map_keys">Pemetaan tombol</string>
     <string name="pref_mascot_summary">Tampilkan pesan saat dipakai</string>
     <string name="pref_mascot_title">Deteksikan Mascot Capsule 3D</string>
+    <string name="pref_emulation_audio_speed_title">Terapkan kecepatan emulasi pada audio</string>
+    <string name="pref_emulation_audio_speed_summary">Eksperimental dan nonaktif secara bawaan; audio dapat gagal pada kecepatan atau perangkat tertentu</string>
     <string name="PREF_ORIENTATION">Orientasi layar</string>
     <string name="pref_orientation_auto">Otomatis</string>
     <string name="pref_orientation_default">Bawaan</string>

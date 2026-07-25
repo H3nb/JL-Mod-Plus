@@ -52,6 +52,7 @@ import ru.woesss.j2me.mmapi.control.MIDIControlImpl;
 import ru.woesss.j2me.mmapi.audio.AudioFailure;
 import ru.woesss.j2me.mmapi.audio.AudioFailureReporter;
 import ru.woesss.j2me.mmapi.protocol.device.DeviceMetaData;
+import io.github.h3nb.jlmodplus.settings.EmulationAudioPolicy;
 
 class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneControl,
 		EmulationSpeedListener {
@@ -239,6 +240,19 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 	@Override
 	public synchronized void onEmulationSpeedChanged(SpeedSnapshot snapshot) {
 		if (state != STARTED) {
+			return;
+		}
+		if (!EmulationAudioPolicy.isAudioSpeedEnabled()) {
+			// Do not pause native synthesis when the experimental option is off.
+			// This also repairs a running player if the option changed.
+			if (emulationPaused) {
+				try {
+					library.start(handle);
+					emulationPaused = false;
+				} catch (RuntimeException e) {
+					Log.w(TAG, "Can't resume native audio after audio speed policy was disabled", e);
+				}
+			}
 			return;
 		}
 		if (snapshot.isPaused()) {

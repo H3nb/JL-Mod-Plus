@@ -48,6 +48,7 @@ import ru.woesss.j2me.mmapi.audio.AudioFailure;
 import ru.woesss.j2me.mmapi.audio.AudioFailureReporter;
 import ru.woesss.j2me.mmapi.control.MIDIControlImpl;
 import ru.woesss.j2me.mmapi.protocol.device.DeviceMetaData;
+import io.github.h3nb.jlmodplus.settings.EmulationAudioPolicy;
 
 class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener,
 		MediaPlayer.OnErrorListener,
@@ -351,6 +352,24 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 			return;
 		}
 		AndroidPlayer androidPlayer = (AndroidPlayer) player;
+		if (!EmulationAudioPolicy.isAudioSpeedEnabled()) {
+			// Keep audio at its normal rate when the experimental option is off.
+			// This also restores a player if the option was disabled while it was
+			// following emulation speed.
+			androidPlayer.setPlaybackSpeed(1.0f);
+			if (state != STARTED) {
+				return;
+			}
+			if (emulationPaused) {
+				try {
+					androidPlayer.resumePlayback();
+					emulationPaused = false;
+				} catch (RuntimeException e) {
+					Log.w(TAG, "Can't resume MediaPlayer after audio speed policy was disabled", e);
+				}
+			}
+			return;
+		}
 		if (!androidPlayer.setPlaybackSpeed((float) snapshot.speed().asDouble())
 				&& !audioSpeedWarningPosted) {
 			audioSpeedWarningPosted = true;
