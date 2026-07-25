@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 import javax.microedition.io.Connector;
 import javax.microedition.media.protocol.DataSource;
@@ -49,6 +50,7 @@ public class Manager {
 	private static final String CAPTURE_AUDIO_LOCATOR = "capture://audio";
 	private static final TimeBase DEFAULT_TIMEBASE = () -> System.nanoTime() / 1000L;
 	private static final List<Plugin> PLUGINS = new ArrayList<>();
+	private static volatile TimeBase systemTimeBase = DEFAULT_TIMEBASE;
 
 	public static Player createPlayer(String locator) throws IOException, MediaException {
 		if (locator == null) {
@@ -156,7 +158,16 @@ public class Manager {
 	}
 
 	public static TimeBase getSystemTimeBase() {
-		return DEFAULT_TIMEBASE;
+		return systemTimeBase;
+	}
+
+	/**
+	 * Installs the session clock used by players that do not have an explicit
+	 * master time base.  This is an emulator extension; the default remains the
+	 * host clock until a MIDlet session installs its controller.
+	 */
+	public static void setSystemTimeBase(TimeBase timeBase) {
+		systemTimeBase = Objects.requireNonNull(timeBase, "timeBase");
 	}
 
 	public synchronized static void playTone(int note, int duration, int volume)

@@ -3,6 +3,7 @@
  * Copyright (C) 2008 Bartek Teodorczyk <barteo@barteo.net>
  * Copyright (C) 2017-2018 Nikita Shakarun
  * Copyright 2020-2022 Yury Kharchenko
+ * Copyright 2026 H3NB
  * <p>
  * It is licensed under the following two licenses as alternatives:
  * 1. GNU Lesser General Public License (the "LGPL") version 2.1 or any newer version
@@ -63,9 +64,9 @@ public class AndroidMethodVisitor extends MethodVisitor {
 				}
 				break;
 			case "java/lang/Thread":
-				if (name.equals("yield")) {
-					mv.visitLdcInsn(1L);
-					mv.visitMethodInsn(opcode, owner, "sleep", "(J)V", false);
+				if (opcode == INVOKESTATIC && name.equals("sleep")) {
+					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/time/EmulationTime",
+							name, desc, false);
 					return;
 				}
 				break;
@@ -120,7 +121,12 @@ public class AndroidMethodVisitor extends MethodVisitor {
 				}
 				break;
 			case "java/lang/System":
-				if (opcode == INVOKESTATIC && name.equals("getProperty")) {
+				if (opcode == INVOKESTATIC &&
+						(name.equals("currentTimeMillis") || name.equals("nanoTime"))) {
+					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/time/EmulationTime",
+							name, desc, false);
+					return;
+				} else if (opcode == INVOKESTATIC && name.equals("getProperty")) {
 					mv.visitMethodInsn(opcode, "javax/microedition/shell/MidletSystem", name, desc, itf);
 					return;
 				}

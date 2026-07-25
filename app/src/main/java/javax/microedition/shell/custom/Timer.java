@@ -1,4 +1,6 @@
 /*
+ * Copyright 2026 H3NB for emulator timing integration.
+ *
  *  Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
  *  this work for additional information regarding copyright ownership.
@@ -18,6 +20,8 @@
 package javax.microedition.shell.custom;
 
 import java.util.Date;
+
+import javax.microedition.shell.time.EmulationTime;
 
 /**
  * Timers schedule one-shot or recurring {@link TimerTask tasks} for execution.
@@ -202,7 +206,12 @@ public class Timer {
         public void run() {
             while (true) {
                 TimerTask task;
+                long timeToSleep = 0;
+                long waitGeneration = 0;
                 synchronized (this) {
+                    if (EmulationTime.snapshot().isStopping()) {
+                        return;
+                    }
                     // need to check cancelled inside the synchronized block
                     if (cancelled) {
                         return;
@@ -219,10 +228,9 @@ public class Timer {
                         continue;
                     }
 
-                    long currentTime = System.currentTimeMillis();
+                    long currentTime = EmulationTime.currentTimeMillis();
 
                     task = tasks.minimum();
-                    long timeToSleep;
 
                     synchronized (task.lock) {
                         if (task.cancelled) {
@@ -231,54 +239,61 @@ public class Timer {
                         }
 
                         // check the time to sleep for the first task scheduled
-                        timeToSleep = task.when - currentTime;
+                        timeToSleep = task.when > currentTime ? task.when - currentTime : 0L;
                     }
 
                     if (timeToSleep > 0) {
-                        // sleep!
-                        try {
-                            this.wait(timeToSleep);
-                        } catch (InterruptedException ignored) {
-                        }
-                        continue;
-                    }
+                        waitGeneration = EmulationTime.waitGeneration();
+                    } else {
+                        // no sleep is necessary before launching the task
 
-                    // no sleep is necessary before launching the task
-
-                    synchronized (task.lock) {
-                        int pos = 0;
-                        if (tasks.minimum().when != task.when) {
-                            pos = tasks.getTask(task);
-                        }
-                        if (task.cancelled) {
-                            tasks.delete(tasks.getTask(task));
-                            continue;
-                        }
-
-                        // set time to schedule
-                        task.setScheduledTime(task.when);
-
-                        // remove task from queue
-                        tasks.delete(pos);
-
-                        // set when the next task should be launched
-                        if (task.period >= 0) {
-                            // this is a repeating task,
-                            if (task.fixedRate) {
-                                // task is scheduled at fixed rate
-                                task.when = task.when + task.period;
-                            } else {
-                                // task is scheduled at fixed delay
-                                task.when = System.currentTimeMillis()
-                                        + task.period;
+                        synchronized (task.lock) {
+                            int pos = 0;
+                            if (tasks.minimum().when != task.when) {
+                                pos = tasks.getTask(task);
+                            }
+                            if (task.cancelled) {
+                                tasks.delete(tasks.getTask(task));
+                                continue;
                             }
 
-                            // insert this task into queue
-                            insertTask(task);
-                        } else {
-                            task.when = 0;
+                            // set time to schedule
+                            task.setScheduledTime(task.when);
+
+                            // remove task from queue
+                            tasks.delete(pos);
+
+                            // set when the next task should be launched
+                            if (task.period >= 0) {
+                                // this is a repeating task,
+                                if (task.fixedRate) {
+                                    // task is scheduled at fixed rate
+                                    task.when = task.when + task.period;
+                                } else {
+                                    // task is scheduled at fixed delay
+                                    task.when = EmulationTime.currentTimeMillis()
+                                            + task.period;
+                                }
+
+                                // insert this task into queue
+                                insertTask(task);
+                            } else {
+                                task.when = 0;
+                            }
                         }
                     }
+                }
+
+                if (timeToSleep > 0) {
+                    try {
+                        EmulationTime.awaitWallMillisOrSignal(task.when, waitGeneration);
+                    } catch (InterruptedException ignored) {
+                        Thread.interrupted();
+                    }
+                    if (EmulationTime.snapshot().isStopping()) {
+                        return;
+                    }
+                    continue;
                 }
 
                 boolean taskCompletedNormally = false;
@@ -304,6 +319,7 @@ public class Timer {
             // callers are synchronized
             tasks.insert(newTask);
             this.notify();
+            EmulationTime.signalWaiters();
         }
 
         /**
@@ -313,6 +329,7 @@ public class Timer {
             cancelled = true;
             tasks.reset();
             this.notify();
+            EmulationTime.signalWaiters();
         }
 
         public int purge() {
@@ -439,7 +456,7 @@ public class Timer {
         if (when.getTime() < 0) {
             throw new IllegalArgumentException("when < 0: " + when.getTime());
         }
-        long delay = when.getTime() - System.currentTimeMillis();
+        long delay = when.getTime() - EmulationTime.currentTimeMillis();
         scheduleImpl(task, delay < 0 ? 0 : delay, -1, false);
     }
 
@@ -505,7 +522,7 @@ public class Timer {
         if (period <= 0 || when.getTime() < 0) {
             throw new IllegalArgumentException();
         }
-        long delay = when.getTime() - System.currentTimeMillis();
+        long delay = when.getTime() - EmulationTime.currentTimeMillis();
         scheduleImpl(task, delay < 0 ? 0 : delay, period, false);
     }
 
@@ -552,7 +569,7 @@ public class Timer {
         if (period <= 0 || when.getTime() < 0) {
             throw new IllegalArgumentException();
         }
-        long delay = when.getTime() - System.currentTimeMillis();
+        long delay = when.getTime() - EmulationTime.currentTimeMillis();
         scheduleImpl(task, delay, period, true);
     }
 
@@ -565,7 +582,7 @@ public class Timer {
                 throw new IllegalStateException("Timer was canceled");
             }
 
-            long when = delay + System.currentTimeMillis();
+            long when = delay + EmulationTime.currentTimeMillis();
 
             if (when < 0) {
                 throw new IllegalArgumentException("Illegal delay to start the TimerTask: " + when);

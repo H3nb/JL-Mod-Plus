@@ -18,6 +18,7 @@
 package javax.microedition.media;
 
 import android.media.MediaPlayer;
+import android.media.PlaybackParams;
 
 import java.io.IOException;
 
@@ -27,6 +28,7 @@ public class AndroidPlayer extends MediaPlayer {
 	private float leftVolume, rightVolume;
 	private int timePos;
 	private boolean looping;
+	private float playbackSpeed = 1.0f;
 
 	public AndroidPlayer() {
 		super();
@@ -93,6 +95,28 @@ public class AndroidPlayer extends MediaPlayer {
 		super.start();
 	}
 
+	/**
+	 * Caches the requested speed before the lazy MediaPlayer is prepared and
+	 * applies it when the platform player can accept playback parameters.
+	 * Unsupported rates leave the previously applied rate intact.
+	 */
+	boolean setPlaybackSpeed(float speed) {
+		if (speed <= 0.0f) {
+			throw new IllegalArgumentException("speed must be positive");
+		}
+		playbackSpeed = speed;
+		return !loaded || applyPlaybackSpeed();
+	}
+
+	void resumePlayback() throws IllegalStateException {
+		try {
+			load();
+		} catch (IOException e) {
+			throw new IllegalStateException(e.getMessage(), e);
+		}
+		super.start();
+	}
+
 	@Override
 	public void reset() {
 		if (loaded || path != null) {
@@ -112,6 +136,9 @@ public class AndroidPlayer extends MediaPlayer {
 				super.setVolume(leftVolume, rightVolume);
 				super.setLooping(looping);
 				super.seekTo(timePos);
+				if (playbackSpeed != 1.0f && !applyPlaybackSpeed()) {
+					playbackSpeed = 1.0f;
+				}
 			} catch (IOException | RuntimeException e) {
 				loaded = false;
 				try {
@@ -125,6 +152,19 @@ public class AndroidPlayer extends MediaPlayer {
 				throw e;
 			}
 			loaded = true;
+		}
+	}
+
+	private boolean applyPlaybackSpeed() {
+		try {
+			PlaybackParams params = new PlaybackParams()
+					.setSpeed(playbackSpeed)
+					.setPitch(1.0f)
+					.setAudioFallbackMode(PlaybackParams.AUDIO_FALLBACK_MODE_DEFAULT);
+			super.setPlaybackParams(params);
+			return true;
+		} catch (IllegalArgumentException | IllegalStateException e) {
+			return false;
 		}
 	}
 }

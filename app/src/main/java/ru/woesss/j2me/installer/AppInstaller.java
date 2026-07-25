@@ -36,6 +36,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarFile;
@@ -295,6 +296,7 @@ public class AppInstaller {
 			}
 		}
 		newDesc.writeTo(new File(tmpDir, Config.MIDLET_MANIFEST_FILE));
+		writeTimingTransformVersion(tmpDir);
 		FileUtils.deleteDirectory(targetDir);
 		if (!tmpDir.renameTo(targetDir)) {
 			throw new ConverterException("Can't move '" + tmpDir + "' to '" + targetDir + "'");
@@ -328,6 +330,14 @@ public class AppInstaller {
 		clearCache();
 		deleteTemp();
 		emitter.onSuccess(STATUS_SUCCESS);
+	}
+
+	private void writeTimingTransformVersion(File directory) throws IOException {
+		File marker = new File(directory, Config.MIDLET_TIMING_VERSION_FILE);
+		try (OutputStream output = new FileOutputStream(marker)) {
+			output.write(Integer.toString(Config.MIDLET_TIMING_TRANSFORM_VERSION)
+					.getBytes(StandardCharsets.US_ASCII));
+		}
 	}
 
 	private Descriptor loadManifest(File jar) throws IOException {

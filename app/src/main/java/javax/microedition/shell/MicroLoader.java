@@ -90,6 +90,7 @@ public class MicroLoader {
 	private final File appDir;
 	private final String workDir;
 	private final String appDirName;
+	private boolean timingTransformAvailable;
 
 	MicroLoader(String appPath) {
 		this.appDir = new File(appPath);
@@ -106,6 +107,7 @@ public class MicroLoader {
 		if (params == null) {
 			return false;
 		}
+		timingTransformAvailable = hasCurrentTimingTransform();
 		SecureConnectionPolicy.setMode(params.secureConnectionMode);
 		Display.initDisplay();
 		Graphics3D.initGraphics3D();
@@ -120,6 +122,19 @@ public class MicroLoader {
 				.build();
 		StrictMode.setThreadPolicy(policy);
 		return true;
+	}
+
+	boolean hasTimingTransform() {
+		return timingTransformAvailable;
+	}
+
+	private boolean hasCurrentTimingTransform() {
+		File marker = new File(appDir, Config.MIDLET_TIMING_VERSION_FILE);
+		if (!marker.isFile()) {
+			return false;
+		}
+		String version = FileUtils.getText(marker.getPath()).trim();
+		return Integer.toString(Config.MIDLET_TIMING_TRANSFORM_VERSION).equals(version);
 	}
 
 	Map<String, String> loadMIDletList() throws IOException {
