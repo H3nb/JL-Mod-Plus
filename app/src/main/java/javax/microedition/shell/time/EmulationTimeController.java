@@ -31,6 +31,7 @@ public final class EmulationTimeController {
 	private static final long NANOS_PER_MILLI = 1_000_000L;
 	private static final long MAX_HOST_WAIT_MILLIS = 1_000L;
 	private static final long MAX_JOIN_HOST_WAIT_MILLIS = 10L;
+	private static final long MAX_MONITOR_WAIT_HOST_MILLIS = 10L;
 	private final HostClock hostClock;
 	private final AtomicReference<SpeedSnapshot> snapshot;
 	private final AtomicLong lastVirtualNanos;
@@ -232,6 +233,78 @@ public final class EmulationTimeController {
 			return;
 		}
 		joinUntil(thread, millis);
+	}
+
+	/**
+	 * Waits on a caller-owned intrinsic monitor using a virtual timeout.
+	 *
+	 * <p>The monitor is deliberately not synchronized by this method.  The
+	 * transformed MIDlet call must already own it, just like
+	 * {@link Object#wait(long)} does.  Keeping the actual wait on the JVM
+	 * monitor preserves notify, interruption, and monitor reacquisition
+	 * semantics; short host slices only allow speed and pause changes to be
+	 * observed without a second notification channel.</p>
+	 */
+	public void waitOn(Object monitor, long millis) throws InterruptedException {
+		waitOn(monitor, millis, 0);
+	}
+
+	/**
+	 * Variant of {@link #waitOn(Object, long)} with nanosecond precision using
+	 * the same rounding rules as {@link Object#wait(long, int)}.
+	 */
+	public void waitOn(Object monitor, long millis, int nanos) throws InterruptedException {
+		Objects.requireNonNull(monitor, "monitor");
+		if (millis < 0L) {
+			throw new IllegalArgumentException("timeout value is negative");
+		}
+		if (nanos < 0 || nanos > 999_999) {
+			throw new IllegalArgumentException("nanosecond timeout value out of range");
+		}
+		if (nanos > 0 && millis < Long.MAX_VALUE) {
+			millis++;
+		}
+		if (millis == 0L) {
+			monitor.wait();
+			return;
+		}
+
+		long targetNanos = saturatedAdd(
+				nanoTime(), saturatedMultiply(millis, NANOS_PER_MILLI));
+		while (true) {
+			SpeedSnapshot current = snapshot.get();
+			long nowNanos = observeVirtual(current.virtualNanosAt(hostClock.nanoTime()));
+			if (nowNanos >= targetNanos) {
+				return;
+			}
+
+			long virtualRemainingNanos = targetNanos - nowNanos;
+			long hostWaitNanos = current.isPaused()
+					? MAX_MONITOR_WAIT_HOST_MILLIS * NANOS_PER_MILLI
+					: hostDelayNanos(virtualRemainingNanos, current.speed());
+			long hostWaitMillis = Math.max(1L, Math.min(MAX_MONITOR_WAIT_HOST_MILLIS,
+					ceilDivide(hostWaitNanos, NANOS_PER_MILLI)));
+			long startedHostNanos = System.nanoTime();
+			monitor.wait(hostWaitMillis);
+			long elapsedHostNanos = System.nanoTime() - startedHostNanos;
+			SpeedSnapshot afterWait = snapshot.get();
+			long afterWaitNanos = observeVirtual(
+					afterWait.virtualNanosAt(hostClock.nanoTime()));
+			if (afterWaitNanos >= targetNanos) {
+				return;
+			}
+
+			/*
+			 * A return materially before the requested host slice means that the
+			 * monitor was notified (or woke spuriously).  Returning is the native
+			 * Object.wait contract; a timeout wake continues polling the virtual
+			 * deadline instead.
+			 */
+			long requestedHostNanos = hostWaitMillis * NANOS_PER_MILLI;
+			if (elapsedHostNanos < requestedHostNanos) {
+				return;
+			}
+		}
 	}
 
 	private void joinUntil(Thread thread, long millis) throws InterruptedException {

@@ -76,6 +76,15 @@ public class AndroidMethodVisitor extends MethodVisitor {
 					return;
 				}
 				break;
+			case "java/lang/Object":
+				if (opcode == INVOKEVIRTUAL && name.equals("wait")
+						&& (desc.equals("(J)V") || desc.equals("(JI)V"))) {
+					String waitDescriptor = "(Ljava/lang/Object;" + desc.substring(1);
+					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/time/EmulationTime",
+							"waitOn", waitDescriptor, false);
+					return;
+				}
+				break;
 			case "java/lang/String":
 				if (name.equals("<init>") && desc.startsWith("([B") && !desc.endsWith("Ljava/lang/String;)V")) {
 					injectGetPropertyEncoding();

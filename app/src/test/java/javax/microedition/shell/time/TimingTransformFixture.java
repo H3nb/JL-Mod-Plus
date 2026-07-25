@@ -28,4 +28,17 @@ public final class TimingTransformFixture {
 			throws InterruptedException {
 		thread.join(millis, nanos);
 	}
+
+	public static void waitMillis(Object monitor, long millis) throws InterruptedException {
+		monitor.wait(millis);
+	}
+
+	public static void waitMillisNanos(Object monitor, long millis, int nanos)
+			throws InterruptedException {
+		monitor.wait(millis, nanos);
+	}
+
+	public static void waitIndefinitely(Object monitor) throws InterruptedException {
+		monitor.wait();
+	}
 }

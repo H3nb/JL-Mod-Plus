@@ -21,9 +21,12 @@ import org.junit.Test;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -149,6 +152,107 @@ public class EmulationTimeControllerTest {
 	}
 
 	@Test
+	public void timedMonitorWaitUsesVirtualDeadline() throws Exception {
+		EmulationTimeController controller = new EmulationTimeController();
+		controller.setSpeed(EmulationSpeed.X16);
+		Object monitor = new Object();
+
+		long started = System.nanoTime();
+		synchronized (monitor) {
+			controller.waitOn(monitor, 1_000L);
+		}
+		long elapsedNanos = System.nanoTime() - started;
+
+		assertTrue("timed monitor wait was not virtualized", elapsedNanos < 800_000_000L);
+	}
+
+	@Test
+	public void timedMonitorWaitRetainsNativeNotification() throws Exception {
+		EmulationTimeController controller = new EmulationTimeController();
+		Object monitor = new Object();
+		CountDownLatch entered = new CountDownLatch(1);
+		AtomicBoolean returned = new AtomicBoolean();
+		AtomicReference<Throwable> failure = new AtomicReference<>();
+		Thread waiter = new Thread(() -> {
+			synchronized (monitor) {
+				entered.countDown();
+				try {
+					controller.waitOn(monitor, 5_000L);
+					returned.set(true);
+				} catch (Throwable throwable) {
+					failure.set(throwable);
+				}
+			}
+		}, "timed-monitor-notify-waiter");
+		waiter.start();
+		try {
+			assertTrue(entered.await(1L, TimeUnit.SECONDS));
+			waitForTimedWaiting(waiter);
+			synchronized (monitor) {
+				monitor.notify();
+			}
+			waiter.join(1_000L);
+
+			assertFalse(waiter.isAlive());
+			assertTrue(returned.get());
+			assertNull(failure.get());
+		} finally {
+			if (waiter.isAlive()) {
+				waiter.interrupt();
+				waiter.join(1_000L);
+			}
+		}
+	}
+
+	@Test
+	public void timedMonitorWaitRetainsNativeInterruption() throws Exception {
+		EmulationTimeController controller = new EmulationTimeController();
+		Object monitor = new Object();
+		CountDownLatch entered = new CountDownLatch(1);
+		AtomicBoolean interrupted = new AtomicBoolean();
+		AtomicReference<Throwable> failure = new AtomicReference<>();
+		Thread waiter = new Thread(() -> {
+			synchronized (monitor) {
+				entered.countDown();
+				try {
+					controller.waitOn(monitor, 5_000L);
+				} catch (InterruptedException expected) {
+					interrupted.set(true);
+				} catch (Throwable throwable) {
+					failure.set(throwable);
+				}
+			}
+		}, "timed-monitor-interrupt-waiter");
+		waiter.start();
+		try {
+			assertTrue(entered.await(1L, TimeUnit.SECONDS));
+			waitForTimedWaiting(waiter);
+			waiter.interrupt();
+			waiter.join(1_000L);
+
+			assertFalse(waiter.isAlive());
+			assertTrue(interrupted.get());
+			assertNull(failure.get());
+		} finally {
+			if (waiter.isAlive()) {
+				waiter.interrupt();
+				waiter.join(1_000L);
+			}
+		}
+	}
+
+	@Test
+	public void timedMonitorWaitRequiresOwnedMonitor() throws Exception {
+		EmulationTimeController controller = new EmulationTimeController();
+		try {
+			controller.waitOn(new Object(), 1L);
+			fail("wait without monitor ownership returned");
+		} catch (IllegalMonitorStateException expected) {
+			// Native Object.wait semantics are retained.
+		}
+	}
+
+	@Test
 	public void hostClockGoingBackDoesNotMoveVirtualTimeBackwards() {
 		MutableHostClock host = new MutableHostClock();
 		EmulationTimeController controller = new EmulationTimeController(host);
@@ -194,6 +298,15 @@ public class EmulationTimeControllerTest {
 
 		assertFalse(waiter.isAlive());
 		assertTrue(wokeBySignal.get());
+	}
+
+	private static void waitForTimedWaiting(Thread thread) throws InterruptedException {
+		long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(1L);
+		while (thread.isAlive() && thread.getState() != Thread.State.TIMED_WAITING
+				&& System.nanoTime() < deadline) {
+			Thread.yield();
+		}
+		assertEquals(Thread.State.TIMED_WAITING, thread.getState());
 	}
 
 	private static final class MutableHostClock implements HostClock {

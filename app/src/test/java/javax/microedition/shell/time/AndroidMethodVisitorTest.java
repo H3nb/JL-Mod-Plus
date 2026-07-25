@@ -27,8 +27,12 @@ import javax.microedition.shell.time.TimingTransformFixture;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class AndroidMethodVisitorTest {
@@ -40,6 +44,55 @@ public class AndroidMethodVisitorTest {
 	@Test
 	public void instrumentedTimedJoinNanosUsesVirtualTimeout() throws Exception {
 		assertVirtualJoin("joinMillisNanos", true);
+	}
+
+	@Test
+	public void instrumentedTimedWaitUsesVirtualTimeout() throws Exception {
+		assertVirtualWait("waitMillis", false);
+	}
+
+	@Test
+	public void instrumentedTimedWaitNanosUsesVirtualTimeout() throws Exception {
+		assertVirtualWait("waitMillisNanos", true);
+	}
+
+	@Test
+	public void instrumentedUntimedWaitRetainsNativeNotification() throws Exception {
+		Class<?> transformed = loadTransformedFixture();
+		Method method = transformed.getMethod("waitIndefinitely", Object.class);
+		Object monitor = new Object();
+		CountDownLatch entered = new CountDownLatch(1);
+		AtomicBoolean returned = new AtomicBoolean();
+		AtomicReference<Throwable> failure = new AtomicReference<>();
+		Thread waiter = new Thread(() -> {
+			synchronized (monitor) {
+				entered.countDown();
+				try {
+					invoke(method, new Object[]{monitor});
+					returned.set(true);
+				} catch (Throwable throwable) {
+					failure.set(throwable);
+				}
+			}
+		}, "instrumented-untimed-waiter");
+		waiter.start();
+		try {
+			assertTrue(entered.await(1L, TimeUnit.SECONDS));
+			waitForWaiting(waiter);
+			synchronized (monitor) {
+				monitor.notify();
+			}
+			waiter.join(1_000L);
+
+			assertFalse(waiter.isAlive());
+			assertTrue(returned.get());
+			assertNull(failure.get());
+		} finally {
+			if (waiter.isAlive()) {
+				waiter.interrupt();
+				waiter.join(1_000L);
+			}
+		}
 	}
 
 	private static void assertVirtualJoin(String methodName, boolean nanos) throws Exception {
@@ -75,6 +128,29 @@ public class AndroidMethodVisitorTest {
 		assertFalse(target.isAlive());
 	}
 
+	private static void assertVirtualWait(String methodName, boolean nanos) throws Exception {
+		Class<?> transformed = loadTransformedFixture();
+		Method method = nanos
+				? transformed.getMethod(methodName, Object.class, long.class, int.class)
+				: transformed.getMethod(methodName, Object.class, long.class);
+		Object monitor = new Object();
+
+		try {
+			EmulationTime.setSpeed(EmulationSpeed.X16);
+			long started = System.nanoTime();
+			synchronized (monitor) {
+				invoke(method, nanos
+						? new Object[]{monitor, 1_000L, 1}
+						: new Object[]{monitor, 1_000L});
+			}
+			long elapsedNanos = System.nanoTime() - started;
+
+			assertTrue("timed wait was not virtualized", elapsedNanos < 800_000_000L);
+		} finally {
+			EmulationTime.setSpeed(EmulationSpeed.X1);
+		}
+	}
+
 	private static Class<?> loadTransformedFixture() throws Exception {
 		String resource = TimingTransformFixture.class.getName().replace('.', '/') + ".class";
 		byte[] original;
@@ -104,6 +180,15 @@ public class AndroidMethodVisitorTest {
 			}
 			throw e;
 		}
+	}
+
+	private static void waitForWaiting(Thread thread) throws InterruptedException {
+		long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(1L);
+		while (thread.isAlive() && thread.getState() != Thread.State.WAITING
+				&& System.nanoTime() < deadline) {
+			Thread.yield();
+		}
+		assertTrue(thread.getState() == Thread.State.WAITING);
 	}
 
 	private static final class FixtureClassLoader extends ClassLoader {

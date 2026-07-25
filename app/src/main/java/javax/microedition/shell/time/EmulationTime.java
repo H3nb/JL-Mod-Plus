@@ -82,6 +82,15 @@ public final class EmulationTime {
 		controller.join(thread, millis, nanos);
 	}
 
+	public static void waitOn(Object monitor, long millis) throws InterruptedException {
+		controller.waitOn(monitor, millis);
+	}
+
+	public static void waitOn(Object monitor, long millis, int nanos)
+			throws InterruptedException {
+		controller.waitOn(monitor, millis, nanos);
+	}
+
 	public static void awaitVirtualMillis(long millis) throws InterruptedException {
 		controller.awaitVirtualMillis(millis);
 	}
