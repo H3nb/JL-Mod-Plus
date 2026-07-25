@@ -223,6 +223,7 @@ dependencies {
     implementation(libs.rx.android)
 
     testImplementation(libs.junit)
+    testImplementation(libs.asm)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }
