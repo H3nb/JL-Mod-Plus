@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# Modifications Copyright 2026 H3NB.
 
 LOCAL_PATH := $(call my-dir)
 
@@ -87,7 +88,7 @@ LOCAL_CFLAGS += \
 	-Wno-unused-parameter \
 	-Werror \
 	-D_CHORUS_ENABLED \
-#	-D_WAVE_PARSER \
+	-D_WAVE_PARSER \
 	-D_IMA_DECODER # (needed for IMA-ADPCM wave files)
 
 LOCAL_C_INCLUDES := \

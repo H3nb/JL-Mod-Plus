@@ -1,5 +1,6 @@
 /*
  * Copyright 2023-2024 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,9 +58,7 @@ public class LibTSF implements Library {
 	@Override
 	public native void setDataSource(long handle, byte[] data);
 	@Override
-	public int writeMIDI(long handle, byte[] data, int offset, int length) {
-		return 0;
-	}
+	public native int writeMIDI(long handle, byte[] data, int offset, int length);
 
 	@Override
 	public boolean hasToneControl() {

@@ -1,5 +1,6 @@
 /*
  * Copyright 2023-2025 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,7 +145,7 @@ public class MIDIControlImpl implements MIDIControl {
 	@Override
 	public int longMidiEvent(byte[] data, int offset, int length) {
 		checkRealized();
-		if (data == null || offset < 0 || offset + length > data.length || length < 0) {
+		if (data == null || offset < 0 || length < 0 || offset > data.length - length) {
 			throw new IllegalArgumentException("longMidiEvent parameter out of range");
 		}
 		if (library == null) {

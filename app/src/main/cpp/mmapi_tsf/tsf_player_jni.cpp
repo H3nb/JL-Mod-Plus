@@ -1,6 +1,19 @@
+// Copyright 2023 Yury Kharchenko
+// Copyright 2026 H3NB
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 //
 // Created by woesss on 29.07.2023.
-//
 
 #include <jni.h>
 #include "tsf_player.h"
@@ -138,6 +151,27 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_setDataSource
     if (result != 0) {
         env->ThrowNew(env->FindClass("javax/microedition/media/MediaException"), "Unsupported file type");
     }
+}
+
+JNIEXPORT jint JNICALL Java_ru_woesss_j2me_mmapi_synth_tsf_LibTSF_writeMIDI
+(JNIEnv *env, jobject /*thiz*/, jlong handle, jbyteArray data, jint offset, jint length) {
+    if (data == nullptr || offset < 0 || length < 0) {
+        env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"),
+                      "MIDI data range is invalid");
+        return 0;
+    }
+    jsize arrayLength = env->GetArrayLength(data);
+    if (offset > arrayLength || length > arrayLength - offset) {
+        env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"),
+                      "MIDI data range is invalid");
+        return 0;
+    }
+    auto *player = reinterpret_cast<mmapi::tiny::Player *>(handle);
+    if (player == nullptr) {
+        return 0;
+    }
+    util::JByteArrayPtr ptr(env, data, offset, length);
+    return player->writeMIDI(reinterpret_cast<const uint8_t *>(ptr.buffer), ptr.length);
 }
 
 #ifdef __cplusplus

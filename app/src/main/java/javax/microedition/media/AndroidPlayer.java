@@ -1,5 +1,6 @@
 /*
  * Copyright 2020 Nikita Shakarun
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,29 +84,45 @@ public class AndroidPlayer extends MediaPlayer {
 
 	@Override
 	public void start() throws IllegalStateException {
-		load();
+		try {
+			load();
+		} catch (IOException e) {
+			throw new IllegalStateException(e.getMessage(), e);
+		}
 		timePos = 0;
 		super.start();
 	}
 
 	@Override
 	public void reset() {
-		if (loaded) {
+		if (loaded || path != null) {
 			super.reset();
 			loaded = false;
 		}
 	}
 
-	private void load() {
+	private void load() throws IOException {
 		if (!loaded) {
+			if (path == null || path.isEmpty()) {
+				throw new IOException("Audio data source is empty");
+			}
 			try {
 				super.setDataSource(path);
 				super.prepare();
 				super.setVolume(leftVolume, rightVolume);
 				super.setLooping(looping);
 				super.seekTo(timePos);
-			} catch (IOException e) {
-				e.printStackTrace();
+			} catch (IOException | RuntimeException e) {
+				loaded = false;
+				try {
+					super.reset();
+				} catch (RuntimeException ignored) {
+					// MediaPlayer may already be in its error state.
+				}
+				if (e instanceof IOException ioException) {
+					throw ioException;
+				}
+				throw e;
 			}
 			loaded = true;
 		}

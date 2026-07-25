@@ -2,6 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2020 Nikita Shakarun
  * Copyright 2023 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +21,6 @@ package javax.microedition.media;
 
 import android.util.Log;
 
-import com.arthenica.mobileffmpeg.Config;
-import com.arthenica.mobileffmpeg.FFmpeg;
-import com.arthenica.mobileffmpeg.FFprobe;
-import com.arthenica.mobileffmpeg.MediaInformation;
-import com.arthenica.mobileffmpeg.StreamInformation;
-
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
@@ -43,48 +37,25 @@ class InternalDataSource extends FileCacheDataSource {
 		Log.d(TAG, "Starting media pipe: " + name);
 
 		try (RandomAccessFile raf = new RandomAccessFile(mediaFile, "rw")) {
-			int length = stream.available();
-			if (length >= 0) {
-				raf.setLength(length);
-				Log.d(TAG, "Changing file size to " + length + " bytes: " + name);
-			}
+			raf.setLength(0);
 			byte[] buf = new byte[4096];
 			int read;
 			while ((read = stream.read(buf)) != -1) {
-				raf.write(buf, 0, read);
+				if (read == 0) {
+					int value = stream.read();
+					if (value == -1) {
+						break;
+					}
+					raf.write(value);
+				} else {
+					raf.write(buf, 0, read);
+				}
 			}
+			Log.d(TAG, "Cached " + raf.getFilePointer() + " bytes: " + name);
 		} catch (IOException e) {
 			Log.d(TAG, "Media pipe failure: " + e);
 			throw e;
 		}
 		Log.d(TAG, "Media pipe closed: " + name);
-
-		convert();
-	}
-
-	private void convert() {
-		try {
-			String path = mediaFile.getPath();
-			MediaInformation mediaInformation = FFprobe.getMediaInformation(path);
-			if (mediaInformation != null) {
-				StreamInformation streamInformation = mediaInformation.getStreams().get(0);
-				if (streamInformation.getCodec().contains("adpcm")) {
-					File pcmU8 = createCacheFile(null, ".wav");
-					String cmd = "-i " + path + " -acodec pcm_u8 -ar 16000 -y " + pcmU8.getPath();
-					int rc = FFmpeg.execute(cmd);
-					if (rc == Config.RETURN_CODE_SUCCESS) {
-						Log.i(TAG, "FFmpeg command execution completed successfully.");
-						if (!mediaFile.delete()) {
-							Log.w(TAG, "convert: error delete file=" + mediaFile);
-						}
-						mediaFile = pcmU8;
-					} else {
-						Log.w(TAG, "FFmpeg command execution failed with RETURN_CODE=" + rc);
-					}
-				}
-			}
-		} catch (Throwable t) {
-			Log.e(TAG, "FFmpeg error", t);
-		}
 	}
 }
