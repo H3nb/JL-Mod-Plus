@@ -1,4 +1,6 @@
 /*
+* Copyright 2026 H3NB
+*
 * Copyright (c) 2005-2006 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
@@ -38,15 +40,12 @@ M3gGlobals* getM3gGlobals()
 
 #else
 
-static M3gGlobals* sGlobals = 0;
-
 M3gGlobals* getM3gGlobals()
 {
-    if (sGlobals == 0)
-    {
-        sGlobals = new M3gGlobals();
-    }
-    return sGlobals;
+    /* Function-local statics are initialized once by the C++ runtime, so the
+     * process-wide M3G state cannot race during the first JNI call. */
+    static M3gGlobals globals;
+    return &globals;
 }
 #endif
 
@@ -59,12 +58,17 @@ M3gGlobals* getM3gGlobals()
 // -----------------------------------------------------------------------------
 /*static*/ CSynchronization* CSynchronization::InstanceL()
 {
-    static M3gGlobals* globals = getM3gGlobals();
+    static pthread_mutex_t initGuard = PTHREAD_MUTEX_INITIALIZER;
+    M3gGlobals* globals = getM3gGlobals();
+
+    pthread_mutex_lock(&initGuard);
     if (!globals->mSync)
     {
         globals->mSync = CSynchronization::NewL();
     }
-    return globals->mSync;
+    CSynchronization* sync = globals->mSync;
+    pthread_mutex_unlock(&initGuard);
+    return sync;
 }
 
 // -----------------------------------------------------------------------------
@@ -84,10 +88,9 @@ M3gGlobals* getM3gGlobals()
 // -----------------------------------------------------------------------------
 void CSynchronization::ConstructL()
 {
-    //iGuard.CreateLocal();
-#ifdef DO_SOMETHING
+    /* M3G keeps mutable global error/object state, so every JNI entry point
+     * must serialize access on Android as well as on the original devices. */
     pthread_mutex_init(&iGuard, NULL);
-#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -102,7 +105,7 @@ CSynchronization::CSynchronization() : iErrorCode(0)
 // -----------------------------------------------------------------------------
 CSynchronization::~CSynchronization()
 {
-    //iGuard.Close();
+    pthread_mutex_destroy(&iGuard);
 }
 
 // -----------------------------------------------------------------------------
@@ -110,10 +113,7 @@ CSynchronization::~CSynchronization()
 // -----------------------------------------------------------------------------
 void CSynchronization::Lock()
 {
-    //iGuard.Wait();
-#ifdef DO_SOMETHING
     pthread_mutex_lock(&iGuard);
-#endif
     iErrorCode = 0;
 }
 
@@ -123,10 +123,7 @@ void CSynchronization::Lock()
 void CSynchronization::Unlock()
 {
     iErrorCode = 0;
-    //iGuard.Signal();
-#ifdef DO_SOMETHING
     pthread_mutex_unlock(&iGuard);
-#endif
 }
 
 // -----------------------------------------------------------------------------
