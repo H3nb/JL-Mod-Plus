@@ -2,6 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2020 Nikita Shakarun
  * Copyright 2021-2023 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +27,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import javax.microedition.io.Connector;
 import javax.microedition.media.protocol.DataSource;
@@ -34,6 +36,8 @@ import javax.microedition.media.tone.ToneManager;
 import javax.microedition.util.ContextHolder;
 
 import ru.woesss.j2me.mmapi.Plugin;
+import ru.woesss.j2me.mmapi.audio.AudioFailure;
+import ru.woesss.j2me.mmapi.audio.AudioFailureReporter;
 import ru.woesss.j2me.mmapi.synth.SynthPluginFactory;
 
 public class Manager {
@@ -76,17 +80,27 @@ public class Manager {
 			throw new IllegalArgumentException();
 		}
 		String type = source.getContentType();
-		String[] supportedTypes = getSupportedContentTypes(null);
-		if (type != null && Arrays.asList(supportedTypes).contains(type.toLowerCase())) {
-			source.connect();
-			SourceStream[] sourceStreams = source.getStreams();
-			if (sourceStreams == null || sourceStreams.length == 0) {
-				throw new MediaException();
+		if (isAudioSource(type)) {
+			String locator = source.getLocator();
+			try {
+				source.connect();
+				SourceStream[] sourceStreams = source.getStreams();
+				if (sourceStreams == null || sourceStreams.length == 0) {
+					throw new MediaException("Audio source has no streams");
+				}
+				SourceStream sourceStream = sourceStreams[0];
+				InputStream stream = new InternalSourceStream(sourceStream);
+				InternalDataSource datasource = new InternalDataSource(stream, type);
+				Player pluginPlayer = createPluginPlayer(datasource);
+				return pluginPlayer == null ? new MicroPlayer(datasource) : pluginPlayer;
+			} catch (IOException | MediaException | RuntimeException e) {
+				AudioFailureReporter.report(locator, type, "MMAPI source", AudioFailure.Phase.CREATE,
+						e instanceof MediaException && "Audio source has no streams".equals(e.getMessage())
+								? "NO_SOURCE_STREAM" : "SOURCE_CREATE_FAILED", e);
+				throw e;
+			} finally {
+				source.disconnect();
 			}
-			SourceStream sourceStream = sourceStreams[0];
-			InputStream stream = new InternalSourceStream(sourceStream);
-			InternalDataSource datasource = new InternalDataSource(stream, type);
-			return new MicroPlayer(datasource);
 		} else {
 			return new BasePlayer();
 		}
@@ -97,19 +111,38 @@ public class Manager {
 		if (stream == null) {
 			throw new IllegalArgumentException();
 		}
-		InternalDataSource datasource = new InternalDataSource(stream, type);
+		InternalDataSource datasource;
+		try {
+			datasource = new InternalDataSource(stream, type);
+		} catch (IOException | RuntimeException e) {
+			AudioFailureReporter.report(null, type, "MMAPI stream", AudioFailure.Phase.CREATE,
+					"STREAM_CACHE_FAILED", e);
+			throw e;
+		}
+		Player pluginPlayer = createPluginPlayer(datasource);
+		if (pluginPlayer != null) {
+			return pluginPlayer;
+		}
+		if (isAudioSource(type)) {
+			return new MicroPlayer(datasource);
+		} else {
+			datasource.disconnect();
+			return new BasePlayer();
+		}
+	}
+
+	private static Player createPluginPlayer(DataSource datasource) {
 		for (Plugin plugin : PLUGINS) {
 			Player player = plugin.createPlayer(datasource);
 			if (player != null) {
 				return player;
 			}
 		}
-		String[] supportedTypes = getSupportedContentTypes(null);
-		if (type != null && Arrays.asList(supportedTypes).contains(type.toLowerCase())) {
-			return new MicroPlayer(datasource);
-		} else {
-			return new BasePlayer();
-		}
+		return null;
+	}
+
+	private static boolean isAudioSource(String type) {
+		return type == null || type.toLowerCase(Locale.ROOT).startsWith("audio/");
 	}
 
 	public static String[] getSupportedContentTypes(String str) {

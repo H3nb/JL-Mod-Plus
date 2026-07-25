@@ -1,5 +1,6 @@
 /*
  * Copyright 2023-2025 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +46,8 @@ import javax.microedition.media.protocol.DataSource;
 import javax.microedition.media.tone.ToneSequence;
 
 import ru.woesss.j2me.mmapi.control.MIDIControlImpl;
+import ru.woesss.j2me.mmapi.audio.AudioFailure;
+import ru.woesss.j2me.mmapi.audio.AudioFailureReporter;
 import ru.woesss.j2me.mmapi.protocol.device.DeviceMetaData;
 
 class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneControl {
@@ -86,7 +89,12 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 		checkClosed();
 
 		if (state == UNREALIZED) {
-			library.realize(handle);
+			try {
+				library.realize(handle);
+			} catch (Throwable e) {
+				reportFailure(AudioFailure.Phase.REALIZE, "NATIVE_REALIZE_FAILED", e);
+				rethrow(e);
+			}
 			if (controls == null) {
 				controls = new HashMap<>();
 				if (TONE_DEVICE_LOCATOR.equals(dataSource.getLocator())) {
@@ -116,7 +124,12 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 			} catch (Exception e) {
 				Log.w(TAG, "prefetch: update metadata failed", e);
 			}
-			library.prefetch(handle);
+			try {
+				library.prefetch(handle);
+			} catch (Throwable e) {
+				reportFailure(AudioFailure.Phase.PREFETCH, "NATIVE_PREFETCH_FAILED", e);
+				rethrow(e);
+			}
 			state = PREFETCHED;
 		}
 	}
@@ -126,7 +139,13 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 		prefetch();
 
 		if (state == PREFETCHED) {
-			library.start(handle);
+			try {
+				library.start(handle);
+			} catch (Throwable e) {
+				reportFailure(AudioFailure.Phase.START, "NATIVE_START_FAILED", e);
+				state = PREFETCHED;
+				rethrow(e);
+			}
 
 			state = STARTED;
 			postEvent(PlayerListener.STARTED, getMediaTime());
@@ -332,7 +351,12 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 				state = PREFETCHED;
 			}
 			case 3 -> { // error
-				postEvent(PlayerListener.ERROR, null);
+				String code = "NATIVE_RUNTIME_ERROR_" + time;
+				AudioFailure failure = AudioFailure.createWithDetail(dataSource.getLocator(),
+						dataSource.getContentType(), backendName(), AudioFailure.Phase.RUNTIME,
+						code, "Native result code: " + time);
+				AudioFailureReporter.report(failure);
+				postEvent(PlayerListener.ERROR, failure.getCode());
 				state = PREFETCHED;
 			}
 		}
@@ -356,6 +380,28 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 		if (state < REALIZED) {
 			throw new IllegalStateException("call realize() before using the player");
 		}
+	}
+
+	private void reportFailure(AudioFailure.Phase phase, String code, Throwable error) {
+		AudioFailureReporter.report(dataSource.getLocator(), dataSource.getContentType(),
+				backendName(), phase, code, error);
+	}
+
+	private String backendName() {
+		return library.getClass().getSimpleName();
+	}
+
+	private static void rethrow(Throwable error) throws MediaException {
+		if (error instanceof MediaException mediaException) {
+			throw mediaException;
+		}
+		if (error instanceof RuntimeException runtimeException) {
+			throw runtimeException;
+		}
+		if (error instanceof Error fatalError) {
+			throw fatalError;
+		}
+		throw new MediaException(error.getMessage());
 	}
 
 	@Override

@@ -33,7 +33,7 @@
         tools:targetApi="s" />
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
 
-    <uses-sdk tools:overrideLibrary="com.arthenica.mobileffmpeg, com.google.oboe" />
+    <uses-sdk tools:overrideLibrary="com.google.oboe" />
 
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
     <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
@@ -156,6 +156,11 @@
             android:finishOnTaskLaunch="true"
             android:launchMode="singleInstance"
             android:process=":acra" />
+        <activity
+            android:name="io.github.h3nb.jlmodplus.crashes.dialog.AudioFailureReportActivity"
+            android:theme="@style/Theme.AppCompat.DayNight.Dialog.Alert"
+            android:excludeFromRecents="true"
+            android:exported="false" />
 
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"

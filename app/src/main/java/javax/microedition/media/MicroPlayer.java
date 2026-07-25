@@ -2,6 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2020 Nikita Shakarun
  * Copyright 2020-2025 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,10 +41,13 @@ import javax.microedition.media.tone.ToneSequence;
 
 import kotlin.io.FilesKt;
 import ru.woesss.j2me.mmapi.FileCacheDataSource;
+import ru.woesss.j2me.mmapi.audio.AudioFailure;
+import ru.woesss.j2me.mmapi.audio.AudioFailureReporter;
 import ru.woesss.j2me.mmapi.control.MIDIControlImpl;
 import ru.woesss.j2me.mmapi.protocol.device.DeviceMetaData;
 
 class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener,
+		MediaPlayer.OnErrorListener,
 		VolumeControl, PanControl, ToneControl {
 	private static final String TAG = MicroPlayer.class.getSimpleName();
 
@@ -65,6 +69,7 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	private boolean mute = false;
 	private int level = 100;
 	private int pan;
+	private boolean errorEventPosted;
 
 	public MicroPlayer(String locator) throws IOException {
 		if (!Manager.TONE_DEVICE_LOCATOR.equals(locator)) {
@@ -84,6 +89,7 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 
 	private void init() {
 		player.setOnCompletionListener(this);
+		player.setOnErrorListener(this);
 		controls.put(VolumeControl.class.getName(), this);
 		controls.put(PanControl.class.getName(), this);
 		controls.put(MetaDataControl.class.getName(), metadata);
@@ -143,9 +149,22 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 		}
 
 		if (state == STARTED && loopCount != -1) {
-			player.start();
-			postEvent(PlayerListener.STARTED, getMediaTime());
+			try {
+				player.start();
+				postEvent(PlayerListener.STARTED, getMediaTime());
+			} catch (RuntimeException e) {
+				state = PREFETCHED;
+				reportFailure(AudioFailure.Phase.START, "MEDIA_PLAYER_RESTART_FAILED", e);
+			}
 		}
+	}
+
+	@Override
+	public synchronized boolean onError(MediaPlayer mp, int what, int extra) {
+		state = state == CLOSED ? CLOSED : PREFETCHED;
+		reportFailure(AudioFailure.Phase.RUNTIME,
+				"MEDIA_PLAYER_ERROR_" + what + "_" + extra, null);
+		return true;
 	}
 
 	@Override
@@ -156,7 +175,11 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 			try {
 				source.connect();
 				player.setDataSource(source.getLocator());
-			} catch (IOException e) {
+			} catch (IOException | RuntimeException e) {
+				reportFailure(AudioFailure.Phase.REALIZE, "MEDIA_SOURCE_FAILED", e);
+				if (e instanceof RuntimeException runtimeException) {
+					throw runtimeException;
+				}
 				throw new MediaException(e.getMessage());
 			}
 
@@ -183,10 +206,16 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 		prefetch();
 
 		if (state == PREFETCHED) {
-			player.start();
-
-			state = STARTED;
-			postEvent(PlayerListener.STARTED, getMediaTime());
+			try {
+				player.start();
+				state = STARTED;
+				errorEventPosted = false;
+				postEvent(PlayerListener.STARTED, getMediaTime());
+			} catch (RuntimeException e) {
+				state = PREFETCHED;
+				reportFailure(AudioFailure.Phase.START, "MEDIA_PLAYER_START_FAILED", e);
+				throw new MediaException(e.getMessage());
+			}
 		}
 	}
 
@@ -240,6 +269,16 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 
 		if (state == UNREALIZED) {
 			throw new IllegalStateException("call realize() before using the player");
+		}
+	}
+
+	private void reportFailure(AudioFailure.Phase phase, String code, Throwable error) {
+		AudioFailure failure = AudioFailure.create(source.getLocator(), source.getContentType(),
+				"Android MediaPlayer", phase, code, error);
+		AudioFailureReporter.report(failure);
+		if (!errorEventPosted) {
+			errorEventPosted = true;
+			postEvent(PlayerListener.ERROR, failure.getCode());
 		}
 	}
 

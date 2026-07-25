@@ -1,4 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright 2026 H3NB
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
 <resources>
     <string name="_FONT_SEPARATOR" translatable="false">-</string>
     <string name="_MINUS_ONE" translatable="false">-1</string>
@@ -33,6 +48,15 @@
     <string name="crash_dialog_message">An error report is available.</string>
     <string name="crash_report_instruction">Review the details below, then copy or report the error.</string>
     <string name="crash_dialog_title">Error detected</string>
+    <string name="audio_failure_notification_channel">Audio failures</string>
+    <string name="audio_failure_notification_channel_description">Notifications about audio that could not be played.</string>
+    <string name="audio_failure_notification_title">Audio playback failed</string>
+    <string name="audio_failure_notification_text">Audio could not be played. Tap to view the report.</string>
+    <string name="audio_failure_toast">Audio could not be played. A report is available.</string>
+    <string name="audio_failure_report_title">Audio failure report</string>
+    <string name="audio_failure_report_instruction">Review the details, then copy or share the report. The report is not sent automatically.</string>
+    <string name="audio_failure_report_subject">JL-Mod Plus audio failure report</string>
+    <string name="audio_failure_report_unavailable">The audio report is no longer available.</string>
     <string name="create">create</string>
     <string name="create_apps_dir_failed">Failed to create a folder in the path:\n%1$s\nselect another.</string>
     <string name="default_label">%1$s (default)</string>
