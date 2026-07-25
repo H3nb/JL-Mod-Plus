@@ -419,16 +419,11 @@ public class MicroActivity extends AppCompatActivity {
 			menu.setGroupVisible(R.id.action_group_canvas, true);
 			boolean timingAvailable = microLoader != null && microLoader.hasTimingTransform();
 			menu.findItem(R.id.action_emulation_speed).setVisible(timingAvailable);
-			menu.findItem(R.id.action_emulation_pause).setVisible(timingAvailable);
 			EmulationTimeController controller = MidletThread.getEmulationTimeController();
 			if (timingAvailable && controller != null) {
 				SpeedSnapshot snapshot = controller.snapshot();
 				MenuItem speedItem = menu.findItem(R.id.action_emulation_speed);
-				MenuItem pauseItem = menu.findItem(R.id.action_emulation_pause);
 				speedItem.setTitle(getString(R.string.emulation_speed) + ": " + snapshot.speed());
-				pauseItem.setTitle(snapshot.isPaused()
-						? R.string.emulation_resume : R.string.emulation_pause);
-				pauseItem.setChecked(snapshot.isPaused());
 			}
 			VirtualKeyboard vk = ContextHolder.getVk();
 			if (vk != null) {
@@ -467,8 +462,6 @@ public class MicroActivity extends AppCompatActivity {
 			showLimitFpsDialog();
 		} else if (id == R.id.action_emulation_speed) {
 			showEmulationSpeedDialog();
-		} else if (id == R.id.action_emulation_pause) {
-			toggleEmulationPause();
 		} else if (ContextHolder.getVk() != null) {
 			// Handled only when virtual keyboard is enabled
 			handleVkOptions(id);
@@ -668,19 +661,6 @@ public class MicroActivity extends AppCompatActivity {
 				})
 				.setNegativeButton(android.R.string.cancel, null)
 				.show();
-	}
-
-	private void toggleEmulationPause() {
-		EmulationTimeController controller = MidletThread.getEmulationTimeController();
-		if (controller == null) {
-			return;
-		}
-		if (controller.snapshot().isPaused()) {
-			controller.resume();
-		} else {
-			controller.pause();
-		}
-		invalidateOptionsMenu();
 	}
 
 	@Override

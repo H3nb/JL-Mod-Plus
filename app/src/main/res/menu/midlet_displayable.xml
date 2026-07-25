@@ -29,12 +29,6 @@
             android:title="@string/emulation_speed" />
 
         <item
-            android:id="@+id/action_emulation_pause"
-            android:title="@string/emulation_pause"
-            android:checkable="true"
-            android:checked="false" />
-
-        <item
             android:id="@+id/action_submenu_vk"
             android:title="@string/PREF_VIRTUAL_KEYBOARD_OPTIONS">
             <menu>
