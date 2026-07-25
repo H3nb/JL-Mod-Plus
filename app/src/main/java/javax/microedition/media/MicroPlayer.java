@@ -38,6 +38,9 @@ import javax.microedition.media.control.VolumeControl;
 import javax.microedition.media.protocol.DataSource;
 import javax.microedition.media.tone.MidiToneConstants;
 import javax.microedition.media.tone.ToneSequence;
+import javax.microedition.shell.time.EmulationTime;
+import javax.microedition.shell.time.EmulationSpeedListener;
+import javax.microedition.shell.time.SpeedSnapshot;
 
 import kotlin.io.FilesKt;
 import ru.woesss.j2me.mmapi.FileCacheDataSource;
@@ -48,7 +51,7 @@ import ru.woesss.j2me.mmapi.protocol.device.DeviceMetaData;
 
 class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener,
 		MediaPlayer.OnErrorListener,
-		VolumeControl, PanControl, ToneControl {
+		VolumeControl, PanControl, ToneControl, EmulationSpeedListener {
 	private static final String TAG = MicroPlayer.class.getSimpleName();
 
 	protected final HashMap<String, Control> controls = new HashMap<>();
@@ -70,6 +73,8 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	private int level = 100;
 	private int pan;
 	private boolean errorEventPosted;
+	private boolean emulationPaused;
+	private boolean audioSpeedWarningPosted;
 
 	public MicroPlayer(String locator) throws IOException {
 		if (!Manager.TONE_DEVICE_LOCATOR.equals(locator)) {
@@ -96,6 +101,7 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 		controls.put(EqualizerControl.class.getName(), new InternalEqualizer());
 		// TODO: 12.02.2025 Needs to be added only if content type is MIDI
 		controls.put(MIDIControl.class.getName(), new MIDIControlImpl(this));
+		EmulationTime.controller().addListener(this);
 	}
 
 	@Override
@@ -210,6 +216,7 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 				player.start();
 				state = STARTED;
 				errorEventPosted = false;
+				onEmulationSpeedChanged(EmulationTime.snapshot());
 				postEvent(PlayerListener.STARTED, getMediaTime());
 			} catch (RuntimeException e) {
 				state = PREFETCHED;
@@ -224,6 +231,7 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 		checkClosed();
 		if (state == STARTED) {
 			player.pause();
+			emulationPaused = false;
 
 			state = PREFETCHED;
 			postEvent(PlayerListener.STOPPED, getMediaTime());
@@ -249,6 +257,7 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	@Override
 	public synchronized void close() {
 		if (state != CLOSED) {
+			EmulationTime.controller().removeListener(this);
 			player.release();
 		}
 
@@ -334,6 +343,39 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	@Override
 	public int getState() {
 		return state;
+	}
+
+	@Override
+	public synchronized void onEmulationSpeedChanged(SpeedSnapshot snapshot) {
+		if (state == CLOSED) {
+			return;
+		}
+		AndroidPlayer androidPlayer = (AndroidPlayer) player;
+		if (!androidPlayer.setPlaybackSpeed((float) snapshot.speed().asDouble())
+				&& !audioSpeedWarningPosted) {
+			audioSpeedWarningPosted = true;
+			Log.w(TAG, "MediaPlayer rejected emulation audio speed " + snapshot.speed());
+		}
+		if (state != STARTED) {
+			return;
+		}
+		if (snapshot.isPaused()) {
+			if (!emulationPaused) {
+				try {
+					player.pause();
+					emulationPaused = true;
+				} catch (RuntimeException e) {
+					Log.w(TAG, "Can't pause MediaPlayer for emulation pause", e);
+				}
+			}
+		} else if (emulationPaused) {
+			try {
+				androidPlayer.resumePlayback();
+				emulationPaused = false;
+			} catch (RuntimeException e) {
+				Log.w(TAG, "Can't resume MediaPlayer after emulation pause", e);
+			}
+		}
 	}
 
 	@Override

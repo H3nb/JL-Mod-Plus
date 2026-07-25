@@ -27,6 +27,8 @@ import javax.microedition.lcdui.Displayable;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 import javax.microedition.util.ContextHolder;
+import javax.microedition.shell.time.EmulationTime;
+import javax.microedition.shell.time.EmulationTimeController;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.Lifecycle;
@@ -50,6 +52,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private static MidletThread instance;
 	private final MicroLoader microLoader;
 	private final String mainClass;
+	private final EmulationTimeController emulationTimeController;
 	private final LifecycleEventObserver activityLifecycleObserver = this::onActivityStateChanged;
 	private MIDlet midlet;
 	private Handler handler;
@@ -59,13 +62,20 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		super("MidletMain");
 		this.microLoader = microLoader;
 		this.mainClass = mainClass;
+		this.emulationTimeController = new EmulationTimeController();
+		EmulationTime.install(emulationTimeController);
 		instance = this;
+	}
+
+	public static EmulationTimeController getEmulationTimeController() {
+		return instance == null ? null : instance.emulationTimeController;
 	}
 
 	public static void notifyDestroyed() {
 		Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
 		if (instance != null) {
 			instance.state = DESTROYED;
+			instance.emulationTimeController.stop();
 		}
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity != null) {

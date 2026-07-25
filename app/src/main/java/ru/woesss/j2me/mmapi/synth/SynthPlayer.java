@@ -44,13 +44,17 @@ import javax.microedition.media.control.ToneControl;
 import javax.microedition.media.control.VolumeControl;
 import javax.microedition.media.protocol.DataSource;
 import javax.microedition.media.tone.ToneSequence;
+import javax.microedition.shell.time.EmulationTime;
+import javax.microedition.shell.time.EmulationSpeedListener;
+import javax.microedition.shell.time.SpeedSnapshot;
 
 import ru.woesss.j2me.mmapi.control.MIDIControlImpl;
 import ru.woesss.j2me.mmapi.audio.AudioFailure;
 import ru.woesss.j2me.mmapi.audio.AudioFailureReporter;
 import ru.woesss.j2me.mmapi.protocol.device.DeviceMetaData;
 
-class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneControl {
+class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneControl,
+		EmulationSpeedListener {
 	private static final String TAG = SynthPlayer.class.getSimpleName();
 
 	private final ExecutorService callbackExecutor = Executors.newSingleThreadExecutor(r -> {
@@ -70,6 +74,7 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 	private int volume = 100;
 	private boolean mute;
 	private int pan;
+	private boolean emulationPaused;
 
 	SynthPlayer(Library library, DataSource dataSource) {
 		String locator = dataSource.getLocator();
@@ -82,6 +87,7 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 		this.dataSource = dataSource;
 		handle = library.createPlayer(locator);
 		library.setListener(handle, this);
+		EmulationTime.controller().addListener(this);
 	}
 
 	@Override
@@ -148,6 +154,7 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 			}
 
 			state = STARTED;
+			onEmulationSpeedChanged(EmulationTime.snapshot());
 			postEvent(PlayerListener.STARTED, getMediaTime());
 		}
 	}
@@ -157,6 +164,7 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 		checkClosed();
 		if (state == STARTED) {
 			library.pause(handle);
+			emulationPaused = false;
 
 			state = PREFETCHED;
 			postEvent(PlayerListener.STOPPED, getMediaTime());
@@ -180,6 +188,7 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 	@Override
 	public void close() {
 		if (state != CLOSED) {
+			EmulationTime.controller().removeListener(this);
 			state = CLOSED;
 			library.close(handle);
 		}
@@ -225,6 +234,30 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 	@Override
 	public int getState() {
 		return state;
+	}
+
+	@Override
+	public synchronized void onEmulationSpeedChanged(SpeedSnapshot snapshot) {
+		if (state != STARTED) {
+			return;
+		}
+		if (snapshot.isPaused()) {
+			if (!emulationPaused) {
+				try {
+					library.pause(handle);
+					emulationPaused = true;
+				} catch (RuntimeException e) {
+					Log.w(TAG, "Can't pause native audio for emulation pause", e);
+				}
+			}
+		} else if (emulationPaused) {
+			try {
+				library.start(handle);
+				emulationPaused = false;
+			} catch (RuntimeException e) {
+				Log.w(TAG, "Can't resume native audio after emulation pause", e);
+			}
+		}
 	}
 
 	@Override
