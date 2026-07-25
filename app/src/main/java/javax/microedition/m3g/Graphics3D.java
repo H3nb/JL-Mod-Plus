@@ -1,4 +1,6 @@
 /*
+ * Copyright 2026 H3NB
+ *
  * Copyright (c) 2003 Nokia Corporation and/or its subsidiary(-ies).
  * All rights reserved.
  * This component and the accompanying materials are made available
@@ -156,6 +158,8 @@ public class Graphics3D {
 					clipH > Defs.MAX_VIEWPORT_HEIGHT) {
 				throw new IllegalArgumentException();
 			}
+			offsetX = finalG.getTranslateX();
+			offsetY = finalG.getTranslateY();
 
 			buffer = finalG.getBitmap();
 			final int width = buffer.getWidth();

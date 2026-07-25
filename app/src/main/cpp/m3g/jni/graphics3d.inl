@@ -1,4 +1,6 @@
 /*
+* Copyright 2026 H3NB
+*
 * Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
@@ -20,8 +22,6 @@
 
 #define  LOG_TAG    "M3G"
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
-
-void* pixels_ptr;
 
 /*
  * Must be executed in UI thread
@@ -119,13 +119,15 @@ JNIEXPORT jboolean JNICALL Java_javax_microedition_m3g_Graphics3D__1bindGraphics
                             M3G_COLOR_BUFFER_BIT|M3G_DEPTH_BUFFER_BIT :
                             M3G_COLOR_BUFFER_BIT) && m3gSetRenderHints((M3GRenderContext)aCtx, aHintBits))
     {
-        int ret = AndroidBitmap_lockPixels(aEnv, bitmap, &pixels_ptr);
+        void *pixels = NULL;
+        int ret = AndroidBitmap_lockPixels(aEnv, bitmap, &pixels);
         if (ret < 0) {
             LOGE("AndroidBitmap_lockPixels() failed ! error=%d", ret);
             M3G_RAISE_EXCEPTION(aEnv, "java/lang/IllegalStateException")
+            M3G_DO_UNLOCK(aEnv)
             return isImageTarget;
         }
-	    m3gBindMemoryTarget((M3GRenderContext)aCtx, pixels_ptr, aWidth, aHeight, M3G_RGB8_32, (M3Guint)(aWidth * 4), 0);
+	    m3gBindMemoryTarget((M3GRenderContext)aCtx, pixels, aWidth, aHeight, M3G_RGB8_32, (M3Guint)(aWidth * 4), 0);
 	    //glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
         m3gSetClipRect((M3GRenderContext)aCtx, aClipX, aClipY, aClipW, aClipH);
@@ -214,7 +216,6 @@ JNIEXPORT void JNICALL Java_javax_microedition_m3g_Graphics3D__1releaseGraphics
     // Release used target surface
 
     int ret = AndroidBitmap_unlockPixels(aEnv, bitmap);
-    pixels_ptr = NULL;
     if (ret < 0) {
         LOGE("AndroidBitmap_unlockPixels() failed ! error=%d", ret);
         M3G_RAISE_EXCEPTION(aEnv, "java/lang/IllegalStateException");
