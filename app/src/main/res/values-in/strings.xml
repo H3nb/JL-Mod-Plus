@@ -254,6 +254,15 @@
         <item>Menurun</item>
         <item>Rentang</item>
     </string-array>
+    <string name="rms_editor">Cadangan RMS</string>
+    <string name="rms_editor_title">Cadangan RMS (offline)</string>
+    <string name="rms_snapshot_create">Buat snapshot</string>
+    <string name="rms_snapshot_restore">Pulihkan yang dipilih</string>
+    <string name="rms_snapshot_restore_confirm">Ganti save RMS saat ini dengan “%1$s”? Snapshot yang dipilih akan diverifikasi sebelum data saat ini diganti.</string>
+    <string name="rms_snapshot_before_restore">Cadangan otomatis sebelum pemulihan</string>
+    <string name="rms_snapshot_empty">Belum ada snapshot RMS.</string>
+    <string name="rms_snapshot_done">Operasi snapshot RMS selesai.</string>
+    <string name="rms_snapshot_failed">Operasi snapshot RMS gagal: %1$s</string>
     <string name="PREF_ORIENTATION">Orientasi layar</string>
     <string name="pref_orientation_auto">Otomatis</string>
     <string name="pref_orientation_default">Bawaan</string>

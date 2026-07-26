@@ -71,7 +71,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
+
+import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
@@ -85,6 +91,7 @@ import io.github.h3nb.jlmodplus.settings.KeyMapperActivity;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.ViewUtils;
 import ru.woesss.j2me.mmapi.synth.SoundBankResolver;
+import ru.woesss.j2me.rms.RmsSnapshotManager;
 import ru.woesss.util.TextUtils;
 import yuku.ambilwarna.AmbilWarnaDialog;
 
@@ -107,6 +114,7 @@ public class ConfigActivity extends AppCompatActivity implements View.OnClickLis
 	private boolean needShow;
 	private ActivityConfigBinding binding;
 	private int lastSafeSecureConnectionMode;
+	private Disposable rmsOperation;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -850,6 +858,7 @@ public class ConfigActivity extends AppCompatActivity implements View.OnClickLis
 		if (isProfile) {
 			menu.findItem(R.id.action_start).setVisible(false);
 			menu.findItem(R.id.action_clear_data).setVisible(false);
+			menu.findItem(R.id.action_rms_editor).setVisible(false);
 		}
 		return true;
 	}
@@ -861,6 +870,8 @@ public class ConfigActivity extends AppCompatActivity implements View.OnClickLis
 			startMIDlet();
 		} else if (itemId == R.id.action_clear_data) {
 			showClearDataDialog();
+		} else if (itemId == R.id.action_rms_editor) {
+			showRmsEditorDialog();
 		} else if (itemId == R.id.action_reset_settings) {
 			params = new ProfileModel(configDir);
 			loadParams(false);
@@ -890,6 +901,89 @@ public class ConfigActivity extends AppCompatActivity implements View.OnClickLis
 				.setPositiveButton(android.R.string.ok, (d, w) -> FileUtils.clearDirectory(dataDir))
 				.setNegativeButton(android.R.string.cancel, null);
 		builder.show();
+	}
+
+	private void showRmsEditorDialog() {
+		File snapshotRoot = new File(Config.getRmsSnapshotsDir(), dataDir.getName());
+		List<RmsSnapshotManager.Snapshot> snapshots;
+		try {
+			snapshots = RmsSnapshotManager.list(snapshotRoot);
+		} catch (IOException e) {
+			Toast.makeText(this, getString(R.string.rms_snapshot_failed, e.getMessage()), Toast.LENGTH_LONG).show();
+			return;
+		}
+		final List<RmsSnapshotManager.Snapshot> available = snapshots;
+		String[] labels = new String[Math.max(1, available.size())];
+		if (available.isEmpty()) {
+			labels[0] = getString(R.string.rms_snapshot_empty);
+		} else {
+			for (int i = 0; i < available.size(); i++) {
+				RmsSnapshotManager.Snapshot snapshot = available.get(i);
+				labels[i] = snapshot.label + " (" + snapshot.file.getName() + ")";
+			}
+		}
+		int[] selected = {-1};
+		AlertDialog dialog = new AlertDialog.Builder(this)
+				.setTitle(R.string.rms_editor_title)
+				.setSingleChoiceItems(labels, -1, (d, which) -> selected[0] = which)
+				.setPositiveButton(R.string.rms_snapshot_create,
+						(d, which) -> createRmsSnapshot(snapshotRoot))
+				.setNeutralButton(R.string.rms_snapshot_restore,
+						(d, which) -> {
+							if (selected[0] >= 0 && selected[0] < available.size()) {
+								confirmRmsRestore(available.get(selected[0]));
+							}
+						})
+				.setNegativeButton(android.R.string.cancel, null)
+				.create();
+		dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
+				.setEnabled(!available.isEmpty()));
+		dialog.show();
+	}
+
+	private void confirmRmsRestore(RmsSnapshotManager.Snapshot snapshot) {
+		new AlertDialog.Builder(this)
+				.setTitle(R.string.rms_snapshot_restore)
+				.setMessage(getString(R.string.rms_snapshot_restore_confirm, snapshot.label))
+				.setPositiveButton(R.string.rms_snapshot_restore,
+						(dialog, which) -> restoreRmsSnapshot(snapshot))
+				.setNegativeButton(android.R.string.cancel, null)
+				.show();
+	}
+
+	private void createRmsSnapshot(File snapshotRoot) {
+		startRmsOperation(Single.fromCallable(() -> {
+			RmsSnapshotManager.create(dataDir, snapshotRoot, Long.toString(System.currentTimeMillis()));
+			return true;
+		}));
+	}
+
+	private void restoreRmsSnapshot(RmsSnapshotManager.Snapshot snapshot) {
+		File snapshotRoot = new File(Config.getRmsSnapshotsDir(), dataDir.getName());
+		String backupLabel = getString(R.string.rms_snapshot_before_restore);
+		startRmsOperation(Single.fromCallable(() -> {
+			RmsSnapshotManager.restoreWithBackup(
+					snapshot, dataDir, snapshotRoot, backupLabel);
+			return true;
+		}));
+	}
+
+	private void startRmsOperation(Single<Boolean> operation) {
+		if (rmsOperation != null) rmsOperation.dispose();
+		rmsOperation = operation.subscribeOn(Schedulers.io())
+				.observeOn(AndroidSchedulers.mainThread())
+				.subscribe(ignored -> Toast.makeText(this, R.string.rms_snapshot_done,
+						Toast.LENGTH_SHORT).show(), error -> Toast.makeText(this,
+						getString(R.string.rms_snapshot_failed, error.getMessage()), Toast.LENGTH_LONG).show());
+	}
+
+	@Override
+	protected void onDestroy() {
+		if (rmsOperation != null) {
+			rmsOperation.dispose();
+			rmsOperation = null;
+		}
+		super.onDestroy();
 	}
 
 	private void startMIDlet() {

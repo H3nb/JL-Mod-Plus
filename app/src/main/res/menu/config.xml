@@ -10,6 +10,10 @@
         android:title="@string/CLEAR_DATA_CMD"
         app:showAsAction="never" />
     <item
+        android:id="@+id/action_rms_editor"
+        android:title="@string/rms_editor"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/action_reset_settings"
         android:title="@string/RESET_SETTINGS_CMD"
         app:showAsAction="never" />

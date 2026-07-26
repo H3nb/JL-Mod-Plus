@@ -272,6 +272,15 @@
         <item>Decreased</item>
         <item>Range</item>
     </string-array>
+    <string name="rms_editor">RMS backups</string>
+    <string name="rms_editor_title">RMS backups (offline)</string>
+    <string name="rms_snapshot_create">Create snapshot</string>
+    <string name="rms_snapshot_restore">Restore selected</string>
+    <string name="rms_snapshot_restore_confirm">Replace the current RMS save with “%1$s”? The selected snapshot is verified before the current data is replaced.</string>
+    <string name="rms_snapshot_before_restore">Automatic backup before restore</string>
+    <string name="rms_snapshot_empty">No RMS snapshots exist yet.</string>
+    <string name="rms_snapshot_done">RMS snapshot operation completed.</string>
+    <string name="rms_snapshot_failed">RMS snapshot operation failed: %1$s</string>
     <string name="PREF_ORIENTATION">Screen orientation</string>
     <string name="pref_orientation_auto">Auto</string>
     <string name="pref_orientation_default">Default</string>

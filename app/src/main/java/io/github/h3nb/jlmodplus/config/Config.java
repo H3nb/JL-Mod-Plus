@@ -58,6 +58,7 @@ public class Config {
 	public static final String MIDLET_MANIFEST_FILE = MIDLET_DEX_FILE + ".conf";
 	public static final String MIDLET_RES_DIR = "/res";
 	public static final String MIDLET_RES_FILE = "/res.jar";
+	public static final String MIDLET_RMS_SNAPSHOT_DIR = "/rms-snapshots/";
 	public static final String SCREENSHOTS_DIR;
 	public static final String SHADERS_DIR = "/shaders/";
 	public static final String SKINS_DIR = "/skins/";
@@ -68,6 +69,7 @@ public class Config {
 	private static String configsDir;
 	private static String profilesDir;
 	private static String appDir;
+	private static String rmsSnapshotsDir;
 
 	@Keep
 	private static final SharedPreferences.OnSharedPreferenceChangeListener sPrefListener =
@@ -109,6 +111,10 @@ public class Config {
 		return appDir;
 	}
 
+	public static String getRmsSnapshotsDir() {
+		return rmsSnapshotsDir;
+	}
+
 	public static void openSettings(Context context, String name, String path) {
 		Intent intent = new Intent(ACTION_EDIT, Uri.parse(path), context, ConfigActivity.class);
 		intent.putExtra(KEY_MIDLET_NAME, name);
@@ -141,5 +147,6 @@ public class Config {
 		configsDir = emulatorDir + MIDLET_CONFIGS_DIR;
 		profilesDir = emulatorDir + "/templates/";
 		appDir = emulatorDir + "/converted/";
+		rmsSnapshotsDir = emulatorDir + MIDLET_RMS_SNAPSHOT_DIR;
 	}
 }
