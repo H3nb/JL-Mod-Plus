@@ -17,6 +17,7 @@
 [versions]
 agp = "8.13.2"
 kotlin = "2.2.10"
+androidx-compose-bom = "2026.06.00"
 
 acra = "5.11.3"
 ambilwarna = "2.0.1"
@@ -67,6 +68,14 @@ androidx-fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref
 androidx-lifecycle-common = { module = "androidx.lifecycle:lifecycle-common", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-livedata-ktx = { module = "androidx.lifecycle:lifecycle-livedata-ktx", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "androidx-lifecycle" }
+androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "androidx-lifecycle" }
+androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "androidx-compose-bom" }
+androidx-compose-foundation = { module = "androidx.compose.foundation:foundation" }
+androidx-compose-material3 = { module = "androidx.compose.material3:material3" }
+androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
+androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+androidx-compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
+androidx-compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 androidx-multidex = { module = "androidx.multidex:multidex", version.ref = "androidx-multidex" }
 androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "androidx-preference" }
 androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "androidx-recyclerview" }
@@ -91,3 +100,4 @@ zip4j = { module = "net.lingala.zip4j:zip4j", version.ref = "zip4j" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

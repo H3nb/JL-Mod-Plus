@@ -24,6 +24,7 @@ import java.util.jar.Manifest
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.compose.compiler)
 }
 
 val versionProperties = Properties().also { properties ->
@@ -91,6 +92,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        compose = true
         prefab = true
         buildConfig = true
     }
@@ -202,6 +204,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.common)
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.multidex)
     implementation(libs.androidx.preference.ktx)
     implementation(libs.androidx.recyclerview)
@@ -209,6 +212,16 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.rxjava2)
     implementation(libs.androidx.transition)
+
+    val composeBom = platform(libs.androidx.compose.bom)
+    implementation(composeBom)
+    androidTestImplementation(composeBom)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     annotationProcessor(libs.google.auto.service)
     compileOnly(libs.google.auto.service.annotations)

@@ -84,6 +84,8 @@ import javax.microedition.lcdui.skin.SkinLayer;
 import javax.microedition.shell.time.EmulationSpeed;
 import javax.microedition.shell.time.EmulationTimeController;
 import javax.microedition.shell.time.SpeedSnapshot;
+import javax.microedition.shell.memory.MemoryEditorRuntime;
+import javax.microedition.shell.memory.ui.MemoryEditorDialogFragment;
 import javax.microedition.util.ContextHolder;
 
 import io.reactivex.Single;
@@ -307,6 +309,7 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void loadMIDlet() {
+		MemoryEditorRuntime.clear();
 		Map<String, String> midlets;
 		try {
 			midlets = microLoader.loadMIDletList();
@@ -495,6 +498,7 @@ public class MicroActivity extends AppCompatActivity {
 			menu.setGroupVisible(R.id.action_group_canvas, true);
 			boolean timingAvailable = microLoader != null && microLoader.hasTimingTransform();
 			menu.findItem(R.id.action_emulation_speed).setVisible(timingAvailable);
+			menu.findItem(R.id.action_memory_editor).setVisible(timingAvailable);
 			EmulationTimeController controller = MidletThread.getEmulationTimeController();
 			if (timingAvailable && controller != null) {
 				SpeedSnapshot snapshot = controller.snapshot();
@@ -538,6 +542,8 @@ public class MicroActivity extends AppCompatActivity {
 			showLimitFpsDialog();
 		} else if (id == R.id.action_emulation_speed) {
 			showEmulationSpeedDialog();
+		} else if (id == R.id.action_memory_editor) {
+			showMemoryEditorDialog();
 		} else if (ContextHolder.getVk() != null) {
 			// Handled only when virtual keyboard is enabled
 			handleVkOptions(id);
@@ -753,6 +759,10 @@ public class MicroActivity extends AppCompatActivity {
 				})
 				.setNegativeButton(android.R.string.cancel, null)
 				.show();
+	}
+
+	private void showMemoryEditorDialog() {
+		MemoryEditorDialogFragment.show(getSupportFragmentManager());
 	}
 
 	@Override
