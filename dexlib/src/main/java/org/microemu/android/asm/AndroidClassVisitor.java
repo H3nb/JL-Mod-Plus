@@ -1,4 +1,6 @@
 /**
+ * Copyright 2026 H3NB
+ *
  * MicroEmulator
  * Copyright (C) 2008 Bartek Teodorczyk <barteo@barteo.net>
  * Copyright (C) 2017-2018 Nikita Shakarun
@@ -42,11 +44,16 @@ public class AndroidClassVisitor extends ClassVisitor {
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
 		desc = desc.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
-		return new AndroidMethodVisitor(super.visitMethod(access, name, desc, signature, exceptions));
+		MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
+		return new MemoryEditorMethodVisitor(access, name, desc,
+				new AndroidMethodVisitor(methodVisitor), className);
 	}
+
+	private String className;
 
 	@Override
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+		className = name;
 		superName = superName.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
 		super.visit(version, access, name, signature, superName, interfaces);
 	}

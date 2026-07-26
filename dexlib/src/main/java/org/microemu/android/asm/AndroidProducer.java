@@ -1,4 +1,6 @@
 /**
+ * Copyright 2026 H3NB
+ *
  * MicroEmulator
  * Copyright (C) 2008 Bartek Teodorczyk <barteo@barteo.net>
  * Copyright (C) 2017-2018 Nikita Shakarun
@@ -34,6 +36,8 @@ import org.objectweb.asm.ClassWriter;
 
 import java.io.DataInputStream;
 import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -59,7 +63,7 @@ public class AndroidProducer {
 	}
 
 	private static byte[] patchClass(byte[] classData, int patch) {
-		try (DataInputStream dis = new DataInputStream(AndroidProducer.class.getResourceAsStream("/assets/dexer/patches.bin"))) {
+		try (DataInputStream dis = new DataInputStream(openPatches())) {
 			dis.skipBytes(patch);
 			int len = dis.readUnsignedShort();
 			int newSize = dis.readShort() + classData.length;
@@ -74,7 +78,7 @@ public class AndroidProducer {
 
 	public static Map<Integer, Integer> initPatchFixes() {
 		Map<Integer, Integer> map = new HashMap<>();
-		try (DataInputStream dis = new DataInputStream(AndroidProducer.class.getResourceAsStream("/assets/dexer/patches.bin"))) {
+		try (DataInputStream dis = new DataInputStream(openPatches())) {
 			int pos = 0;
 			//noinspection InfiniteLoopStatement
 			while (true) {
@@ -90,5 +94,18 @@ public class AndroidProducer {
 			throw new RuntimeException(e);
 		}
 		return map;
+	}
+
+	private static InputStream openPatches() throws IOException {
+		InputStream stream = AndroidProducer.class.getResourceAsStream(
+				"/assets/dexer/patches.bin");
+		if (stream == null) {
+			// JVM unit tests expose src/main/assets as a resource root.
+			stream = AndroidProducer.class.getResourceAsStream("/dexer/patches.bin");
+		}
+		if (stream == null) {
+			throw new IOException("Missing dexer patch resource");
+		}
+		return stream;
 	}
 }

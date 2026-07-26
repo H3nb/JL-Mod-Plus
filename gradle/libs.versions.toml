@@ -75,6 +75,7 @@ androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "
 androidx-room-rxjava2 = { module = "androidx.room:room-rxjava2", version.ref = "androidx-room" }
 androidx-transition = { module = "androidx.transition:transition", version.ref = "androidx-transition" }
 asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
+asm-commons = { module = "org.ow2.asm:asm-commons", version.ref = "asm" }
 filepicker = { module = "com.github.woesss:filepicker", version.ref = "filepicker" }
 google-auto-service = { module = "com.google.auto.service:auto-service", version.ref = "google-auto-service" }
 google-auto-service-annotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "google-auto-service" }

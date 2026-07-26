@@ -71,6 +71,10 @@ android {
     ndkVersion = rootProject.extra["ndkVersion"] as String
     namespace = "io.github.h3nb.jlmodplus"
 
+    sourceSets.getByName("test").resources.srcDir(
+        project(":dexlib").projectDir.resolve("src/main/assets")
+    )
+
     defaultConfig {
         applicationId = "io.github.h3nb.jlmodplus"
         minSdk = rootProject.extra["minSdk"] as Int
