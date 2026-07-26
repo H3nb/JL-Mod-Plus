@@ -722,12 +722,28 @@ public class MicroActivity extends AppCompatActivity {
 		if (controller == null) {
 			return;
 		}
-		EmulationSpeed[] speeds = EmulationSpeed.values();
+		boolean extremeSpeedsEnabled = PreferenceManager
+				.getDefaultSharedPreferences(getApplicationContext())
+				.getBoolean(PREF_EMULATION_EXTREME_SPEEDS, false);
+		if (!extremeSpeedsEnabled && controller.snapshot().speed().isExperimental()) {
+			controller.setSpeed(EmulationSpeed.X16);
+		}
+		List<EmulationSpeed> availableSpeeds = new ArrayList<>();
+		for (EmulationSpeed speed : EmulationSpeed.values()) {
+			if (!speed.isExperimental() || extremeSpeedsEnabled) {
+				availableSpeeds.add(speed);
+			}
+		}
+		EmulationSpeed[] speeds = availableSpeeds.toArray(new EmulationSpeed[0]);
 		String[] labels = new String[speeds.length];
+		int checked = 0;
+		EmulationSpeed selected = controller.snapshot().speed();
 		for (int i = 0; i < speeds.length; i++) {
 			labels[i] = speeds[i].toString();
+			if (speeds[i] == selected) {
+				checked = i;
+			}
 		}
-		int checked = controller.snapshot().speed().ordinal();
 		new AlertDialog.Builder(this)
 				.setTitle(R.string.emulation_speed_dialog_title)
 				.setSingleChoiceItems(labels, checked, (dialog, which) -> {

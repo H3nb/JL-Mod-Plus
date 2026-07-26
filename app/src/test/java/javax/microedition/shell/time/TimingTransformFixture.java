@@ -16,6 +16,11 @@
 
 package javax.microedition.shell.time;
 
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
+
 public final class TimingTransformFixture {
 	private TimingTransformFixture() {
 	}
@@ -40,5 +45,33 @@ public final class TimingTransformFixture {
 
 	public static void waitIndefinitely(Object monitor) throws InterruptedException {
 		monitor.wait();
+	}
+
+	public static void notifyOne(Object monitor) {
+		monitor.notify();
+	}
+
+	public static void notifyAllWaiters(Object monitor) {
+		monitor.notifyAll();
+	}
+
+	public static long newDateTime() {
+		return new Date().getTime();
+	}
+
+	public static long calendarTime() {
+		return Calendar.getInstance().getTimeInMillis();
+	}
+
+	public static long calendarTimeWithZone(TimeZone zone) {
+		return Calendar.getInstance(zone).getTimeInMillis();
+	}
+
+	public static long calendarTimeWithLocale(Locale locale) {
+		return Calendar.getInstance(locale).getTimeInMillis();
+	}
+
+	public static long calendarTimeWithZoneAndLocale(TimeZone zone, Locale locale) {
+		return Calendar.getInstance(zone, locale).getTimeInMillis();
 	}
 }

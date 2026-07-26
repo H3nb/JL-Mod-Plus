@@ -18,7 +18,10 @@ package javax.microedition.shell.time;
 
 import android.util.Log;
 
+import java.util.ArrayDeque;
+import java.util.IdentityHashMap;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -32,6 +35,7 @@ public final class EmulationTimeController {
 	private static final long MAX_HOST_WAIT_MILLIS = 1_000L;
 	private static final long MAX_JOIN_HOST_WAIT_MILLIS = 10L;
 	private static final long MAX_MONITOR_WAIT_HOST_MILLIS = 10L;
+	private static final long MONITOR_WAKE_TOLERANCE_NANOS = 1_000_000L;
 	private final HostClock hostClock;
 	private final AtomicReference<SpeedSnapshot> snapshot;
 	private final AtomicLong lastVirtualNanos;
@@ -39,7 +43,17 @@ public final class EmulationTimeController {
 	private final Object waitMonitor = new Object();
 	private final CopyOnWriteArrayList<EmulationSpeedListener> listeners =
 			new CopyOnWriteArrayList<>();
+	private final Object monitorRegistryLock = new Object();
+	private final IdentityHashMap<Object, MonitorState> monitorRegistry =
+			new IdentityHashMap<>();
+	private final AtomicBoolean monitorFallbackReported = new AtomicBoolean();
+	private volatile boolean timedWaitEnabled = true;
+	private volatile MonitorFallbackListener monitorFallbackListener;
 	private long waitGeneration;
+
+	public interface MonitorFallbackListener {
+		void onMonitorFallback(String reason);
+	}
 
 	public EmulationTimeController() {
 		this(HostClock.SYSTEM);
@@ -57,6 +71,32 @@ public final class EmulationTimeController {
 
 	public SpeedSnapshot snapshot() {
 		return snapshot.get();
+	}
+
+	/**
+	 * Returns whether transformed monitor operations use the virtual monitor
+	 * bridge.
+	 */
+	public boolean isTimedWaitEnabled() {
+		return timedWaitEnabled;
+	}
+
+	/**
+	 * Selects the monitor compatibility mode for the current MIDlet session.
+	 *
+	 * <p>The native mode is a deliberate per-MIDlet escape hatch for games whose
+	 * private monitor protocol is incompatible with tracked virtual waits. It
+	 * delegates all monitor operations to the JVM's native implementation.
+	 */
+	public void setTimedWaitEnabled(boolean enabled) {
+		timedWaitEnabled = enabled;
+		if (enabled) {
+			monitorFallbackReported.set(false);
+		}
+	}
+
+	public void setMonitorFallbackListener(MonitorFallbackListener listener) {
+		monitorFallbackListener = listener;
 	}
 
 	public void addListener(EmulationSpeedListener listener) {
@@ -154,6 +194,9 @@ public final class EmulationTimeController {
 			snapshot.set(updated);
 		}
 		signalWaiters();
+		synchronized (monitorRegistryLock) {
+			monitorRegistry.clear();
+		}
 		notifyListeners(updated);
 		return updated;
 	}
@@ -238,12 +281,11 @@ public final class EmulationTimeController {
 	/**
 	 * Waits on a caller-owned intrinsic monitor using a virtual timeout.
 	 *
-	 * <p>The monitor is deliberately not synchronized by this method.  The
-	 * transformed MIDlet call must already own it, just like
-	 * {@link Object#wait(long)} does.  Keeping the actual wait on the JVM
-	 * monitor preserves notify, interruption, and monitor reacquisition
-	 * semantics; short host slices only allow speed and pause changes to be
-	 * observed without a second notification channel.</p>
+	 * <p>The transformed MIDlet call must already own the monitor, just like
+	 * {@link Object#wait(long)}. The actual blocking and monitor reacquisition
+	 * remain JVM operations. The identity registry only distinguishes logical
+	 * notifications from timeout slices and selects exactly one logical waiter
+	 * for {@code notify()}.</p>
 	 */
 	public void waitOn(Object monitor, long millis) throws InterruptedException {
 		waitOn(monitor, millis, 0);
@@ -261,49 +303,217 @@ public final class EmulationTimeController {
 		if (nanos < 0 || nanos > 999_999) {
 			throw new IllegalArgumentException("nanosecond timeout value out of range");
 		}
-		if (nanos > 0 && millis < Long.MAX_VALUE) {
-			millis++;
-		}
-		if (millis == 0L) {
-			monitor.wait();
+		if (!timedWaitEnabled) {
+			if (nanos == 0) {
+				monitor.wait(millis);
+			} else {
+				monitor.wait(millis, nanos);
+			}
 			return;
 		}
+		if (!Thread.holdsLock(monitor)) {
+			throw new IllegalMonitorStateException();
+		}
 
-		long targetNanos = saturatedAdd(
-				nanoTime(), saturatedMultiply(millis, NANOS_PER_MILLI));
-		while (true) {
-			SpeedSnapshot current = snapshot.get();
-			long nowNanos = observeVirtual(current.virtualNanosAt(hostClock.nanoTime()));
-			if (nowNanos >= targetNanos) {
+		MonitorWaitNode waitNode = registerMonitorWaiter(monitor);
+		try {
+			if (millis == 0L && nanos == 0) {
+				waitIndefinitelyOnMonitor(monitor, waitNode);
 				return;
 			}
-
-			long virtualRemainingNanos = targetNanos - nowNanos;
-			long hostWaitNanos = current.isPaused()
-					? MAX_MONITOR_WAIT_HOST_MILLIS * NANOS_PER_MILLI
-					: hostDelayNanos(virtualRemainingNanos, current.speed());
-			long hostWaitMillis = Math.max(1L, Math.min(MAX_MONITOR_WAIT_HOST_MILLIS,
-					ceilDivide(hostWaitNanos, NANOS_PER_MILLI)));
-			long startedHostNanos = System.nanoTime();
-			monitor.wait(hostWaitMillis);
-			long elapsedHostNanos = System.nanoTime() - startedHostNanos;
-			SpeedSnapshot afterWait = snapshot.get();
-			long afterWaitNanos = observeVirtual(
-					afterWait.virtualNanosAt(hostClock.nanoTime()));
-			if (afterWaitNanos >= targetNanos) {
-				return;
+			if (nanos > 0 && millis < Long.MAX_VALUE) {
+				millis++;
 			}
 
-			/*
-			 * A return materially before the requested host slice means that the
-			 * monitor was notified (or woke spuriously).  Returning is the native
-			 * Object.wait contract; a timeout wake continues polling the virtual
-			 * deadline instead.
-			 */
-			long requestedHostNanos = hostWaitMillis * NANOS_PER_MILLI;
-			if (elapsedHostNanos < requestedHostNanos) {
+			long targetNanos = saturatedAdd(
+					nanoTime(), saturatedMultiply(millis, NANOS_PER_MILLI));
+			while (true) {
+				if (waitNode.notified) {
+					return;
+				}
+				SpeedSnapshot current = snapshot.get();
+				long nowNanos = observeVirtual(current.virtualNanosAt(hostClock.nanoTime()));
+				if (nowNanos >= targetNanos) {
+					return;
+				}
+				if (!timedWaitEnabled) {
+					return;
+				}
+
+				long virtualRemainingNanos = targetNanos - nowNanos;
+				long hostWaitNanos = current.isPaused()
+						? MAX_MONITOR_WAIT_HOST_MILLIS * NANOS_PER_MILLI
+						: hostDelayNanos(virtualRemainingNanos, current.speed());
+				long hostWaitMillis = Math.max(1L, Math.min(MAX_MONITOR_WAIT_HOST_MILLIS,
+						ceilDivide(hostWaitNanos, NANOS_PER_MILLI)));
+				long signalGeneration = monitorSignalGeneration(waitNode.state);
+				long startedHostNanos = System.nanoTime();
+				monitor.wait(hostWaitMillis);
+				long elapsedHostNanos = System.nanoTime() - startedHostNanos;
+				if (waitNode.notified) {
+					return;
+				}
+				if (monitorSignalGeneration(waitNode.state) != signalGeneration) {
+					continue;
+				}
+
+				SpeedSnapshot afterWait = snapshot.get();
+				long afterWaitNanos = observeVirtual(
+						afterWait.virtualNanosAt(hostClock.nanoTime()));
+				if (afterWaitNanos >= targetNanos) {
+					return;
+				}
+
+				long requestedHostNanos = hostWaitMillis * NANOS_PER_MILLI;
+				if (elapsedHostNanos + MONITOR_WAKE_TOLERANCE_NANOS
+						< requestedHostNanos) {
+					activateNativeMonitorFallback("untracked timed monitor notification");
+					return;
+				}
+			}
+		} finally {
+			unregisterMonitorWaiter(monitor, waitNode);
+		}
+	}
+
+	public void notifyMonitor(Object monitor) {
+		Objects.requireNonNull(monitor, "monitor");
+		if (!Thread.holdsLock(monitor)) {
+			throw new IllegalMonitorStateException();
+		}
+		if (!timedWaitEnabled) {
+			monitor.notify();
+			return;
+		}
+		boolean selected = false;
+		synchronized (monitorRegistryLock) {
+			MonitorState state = monitorRegistry.get(monitor);
+			if (state != null) {
+				for (MonitorWaitNode waiter : state.waiters) {
+					if (!waiter.notified) {
+						waiter.notified = true;
+						state.signalGeneration++;
+						selected = true;
+						break;
+					}
+				}
+			}
+		}
+		if (selected) {
+			monitor.notifyAll();
+		} else {
+			monitor.notify();
+		}
+	}
+
+	public void notifyAllMonitors(Object monitor) {
+		Objects.requireNonNull(monitor, "monitor");
+		if (!Thread.holdsLock(monitor)) {
+			throw new IllegalMonitorStateException();
+		}
+		if (!timedWaitEnabled) {
+			monitor.notifyAll();
+			return;
+		}
+		synchronized (monitorRegistryLock) {
+			MonitorState state = monitorRegistry.get(monitor);
+			if (state != null) {
+				state.signalGeneration++;
+				for (MonitorWaitNode waiter : state.waiters) {
+					waiter.notified = true;
+				}
+			}
+		}
+		monitor.notifyAll();
+	}
+
+	int monitorRegistrySize() {
+		synchronized (monitorRegistryLock) {
+			return monitorRegistry.size();
+		}
+	}
+
+	private void waitIndefinitelyOnMonitor(Object monitor, MonitorWaitNode waitNode)
+			throws InterruptedException {
+		while (!waitNode.notified) {
+			if (!timedWaitEnabled) {
+				monitor.wait();
 				return;
 			}
+			long signalGeneration = monitorSignalGeneration(waitNode.state);
+			monitor.wait();
+			if (waitNode.notified) {
+				return;
+			}
+			if (!timedWaitEnabled) {
+				return;
+			}
+			if (monitorSignalGeneration(waitNode.state) != signalGeneration) {
+				continue;
+			}
+			activateNativeMonitorFallback("untracked untimed monitor notification");
+			return;
+		}
+	}
+
+	private MonitorWaitNode registerMonitorWaiter(Object monitor) {
+		synchronized (monitorRegistryLock) {
+			MonitorState state = monitorRegistry.get(monitor);
+			if (state == null) {
+				state = new MonitorState();
+				monitorRegistry.put(monitor, state);
+			}
+			MonitorWaitNode waiter = new MonitorWaitNode(state);
+			state.waiters.addLast(waiter);
+			return waiter;
+		}
+	}
+
+	private void unregisterMonitorWaiter(Object monitor, MonitorWaitNode waiter) {
+		synchronized (monitorRegistryLock) {
+			MonitorState state = monitorRegistry.get(monitor);
+			if (state == null) {
+				return;
+			}
+			state.waiters.remove(waiter);
+			if (state.waiters.isEmpty()) {
+				monitorRegistry.remove(monitor);
+			}
+		}
+	}
+
+	private long monitorSignalGeneration(MonitorState state) {
+		synchronized (monitorRegistryLock) {
+			return state.signalGeneration;
+		}
+	}
+
+	private void activateNativeMonitorFallback(String reason) {
+		timedWaitEnabled = false;
+		if (!monitorFallbackReported.compareAndSet(false, true)) {
+			return;
+		}
+		MonitorFallbackListener listener = monitorFallbackListener;
+		if (listener != null) {
+			try {
+				listener.onMonitorFallback(reason);
+			} catch (RuntimeException e) {
+				Log.w(TAG, "Monitor fallback listener failed", e);
+			}
+		}
+	}
+
+	private static final class MonitorState {
+		final ArrayDeque<MonitorWaitNode> waiters = new ArrayDeque<>();
+		long signalGeneration;
+	}
+
+	private static final class MonitorWaitNode {
+		final MonitorState state;
+		volatile boolean notified;
+
+		MonitorWaitNode(MonitorState state) {
+			this.state = state;
 		}
 	}
 

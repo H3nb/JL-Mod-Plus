@@ -65,5 +65,10 @@
             app:defaultValue="false"
             android:title="@string/pref_emulation_audio_speed_title"
             android:summary="@string/pref_emulation_audio_speed_summary" />
+        <SwitchPreferenceCompat
+            android:key="pref_emulation_extreme_speeds"
+            app:defaultValue="false"
+            android:title="@string/pref_emulation_extreme_speeds_title"
+            android:summary="@string/pref_emulation_extreme_speeds_summary" />
     </PreferenceCategory>
 </androidx.preference.PreferenceScreen>

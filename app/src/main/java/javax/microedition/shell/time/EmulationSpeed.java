@@ -27,16 +27,24 @@ public enum EmulationSpeed {
 	X2(2, 1, "2×"),
 	X4(4, 1, "4×"),
 	X8(8, 1, "8×"),
-	X16(16, 1, "16×");
+	X16(16, 1, "16×"),
+	X32(32, 1, "32×", true),
+	MAX(128, 1, "Max", true);
 
 	private final int numerator;
 	private final int denominator;
 	private final String label;
+	private final boolean experimental;
 
 	EmulationSpeed(int numerator, int denominator, String label) {
+		this(numerator, denominator, label, false);
+	}
+
+	EmulationSpeed(int numerator, int denominator, String label, boolean experimental) {
 		this.numerator = numerator;
 		this.denominator = denominator;
 		this.label = label;
+		this.experimental = experimental;
 	}
 
 	public int numerator() {
@@ -49,6 +57,14 @@ public enum EmulationSpeed {
 
 	public double asDouble() {
 		return (double) numerator / denominator;
+	}
+
+	/**
+	 * Returns whether this stop is hidden unless the global extreme-speed
+	 * experiment is enabled.
+	 */
+	public boolean isExperimental() {
+		return experimental;
 	}
 
 	@Override

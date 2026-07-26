@@ -29,6 +29,12 @@ import javax.microedition.media.Manager;
  * game code.</p>
  */
 public final class EmulationTime {
+	/**
+	 * Legacy system-property key for the per-MIDlet monitor compatibility mode.
+	 * The original name is retained so existing profiles remain compatible.
+	 */
+	public static final String TIMED_WAIT_PROPERTY = "jlmodplus.timing.timed_wait";
+
 	private static volatile EmulationTimeController controller = newController();
 
 	private EmulationTime() {
@@ -89,6 +95,14 @@ public final class EmulationTime {
 	public static void waitOn(Object monitor, long millis, int nanos)
 			throws InterruptedException {
 		controller.waitOn(monitor, millis, nanos);
+	}
+
+	public static boolean isTimedWaitEnabled() {
+		return controller.isTimedWaitEnabled();
+	}
+
+	public static void setTimedWaitEnabled(boolean enabled) {
+		controller.setTimedWaitEnabled(enabled);
 	}
 
 	public static void awaitVirtualMillis(long millis) throws InterruptedException {

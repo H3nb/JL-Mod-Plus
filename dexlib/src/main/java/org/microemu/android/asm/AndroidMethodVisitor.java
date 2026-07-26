@@ -77,12 +77,28 @@ public class AndroidMethodVisitor extends MethodVisitor {
 				}
 				break;
 			case "java/lang/Object":
-				if (opcode == INVOKEVIRTUAL && name.equals("wait")
-						&& (desc.equals("(J)V") || desc.equals("(JI)V"))) {
-					String waitDescriptor = "(Ljava/lang/Object;" + desc.substring(1);
-					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/time/EmulationTime",
-							"waitOn", waitDescriptor, false);
-					return;
+				if (opcode == INVOKEVIRTUAL) {
+					if (name.equals("wait")
+							&& (desc.equals("()V") || desc.equals("(J)V")
+							|| desc.equals("(JI)V"))) {
+						String waitDescriptor = "(Ljava/lang/Object;" + desc.substring(1);
+						mv.visitMethodInsn(INVOKESTATIC,
+								"javax/microedition/shell/time/EmulationMonitor",
+								"waitOn", waitDescriptor, false);
+						return;
+					}
+					if (name.equals("notify") && desc.equals("()V")) {
+						mv.visitMethodInsn(INVOKESTATIC,
+								"javax/microedition/shell/time/EmulationMonitor",
+								"notifyOne", "(Ljava/lang/Object;)V", false);
+						return;
+					}
+					if (name.equals("notifyAll") && desc.equals("()V")) {
+						mv.visitMethodInsn(INVOKESTATIC,
+								"javax/microedition/shell/time/EmulationMonitor",
+								"notifyAllOn", "(Ljava/lang/Object;)V", false);
+						return;
+					}
 				}
 				break;
 			case "java/lang/String":
@@ -146,6 +162,30 @@ public class AndroidMethodVisitor extends MethodVisitor {
 					return;
 				}
 				break;
+			case "java/util/Date":
+				if (opcode == INVOKESPECIAL && name.equals("<init>") && desc.equals("()V")) {
+					/*
+					 * A no-argument Date constructor reads the host wall clock inside
+					 * java.util.Date.  Keep the allocation and constructor invocation
+					 * intact, but supply the emulation wall time explicitly.  This is
+					 * stack-safe for both ordinary Date instances and Date subclasses:
+					 * NEW/DUP leave the uninitialized object on the stack while the
+					 * long argument is appended immediately before invokespecial.
+					 */
+					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/time/EmulationTime",
+							"currentTimeMillis", "()J", false);
+					mv.visitMethodInsn(INVOKESPECIAL, owner, name, "(J)V", itf);
+					return;
+				}
+				break;
+			case "java/util/Calendar":
+				if (opcode == INVOKESTATIC && name.equals("getInstance")
+						&& isCalendarFactoryDescriptor(desc)) {
+					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/time/EmulationDateTime",
+							name, desc, false);
+					return;
+				}
+				break;
 			case "java/util/Timer":
 				owner = "javax/microedition/shell/custom/Timer";
 				break;
@@ -161,6 +201,13 @@ public class AndroidMethodVisitor extends MethodVisitor {
 		mv.visitLdcInsn("microedition.encoding");
 		mv.visitMethodInsn(INVOKESTATIC, "java/lang/System", "getProperty",
 				"(Ljava/lang/String;)Ljava/lang/String;", false);
+	}
+
+	private static boolean isCalendarFactoryDescriptor(String desc) {
+		return desc.equals("()Ljava/util/Calendar;")
+				|| desc.equals("(Ljava/util/TimeZone;)Ljava/util/Calendar;")
+				|| desc.equals("(Ljava/util/Locale;)Ljava/util/Calendar;")
+				|| desc.equals("(Ljava/util/TimeZone;Ljava/util/Locale;)Ljava/util/Calendar;");
 	}
 
 	@Override

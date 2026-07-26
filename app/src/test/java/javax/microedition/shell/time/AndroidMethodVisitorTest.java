@@ -26,11 +26,14 @@ import javax.microedition.shell.time.TimingTransformFixture;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Locale;
+import java.util.TimeZone;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -59,7 +62,8 @@ public class AndroidMethodVisitorTest {
 	@Test
 	public void instrumentedUntimedWaitRetainsNativeNotification() throws Exception {
 		Class<?> transformed = loadTransformedFixture();
-		Method method = transformed.getMethod("waitIndefinitely", Object.class);
+		Method waitMethod = transformed.getMethod("waitIndefinitely", Object.class);
+		Method notifyMethod = transformed.getMethod("notifyOne", Object.class);
 		Object monitor = new Object();
 		CountDownLatch entered = new CountDownLatch(1);
 		AtomicBoolean returned = new AtomicBoolean();
@@ -68,7 +72,7 @@ public class AndroidMethodVisitorTest {
 			synchronized (monitor) {
 				entered.countDown();
 				try {
-					invoke(method, new Object[]{monitor});
+					invoke(waitMethod, new Object[]{monitor});
 					returned.set(true);
 				} catch (Throwable throwable) {
 					failure.set(throwable);
@@ -77,10 +81,11 @@ public class AndroidMethodVisitorTest {
 		}, "instrumented-untimed-waiter");
 		waiter.start();
 		try {
+			EmulationTime.setTimedWaitEnabled(true);
 			assertTrue(entered.await(1L, TimeUnit.SECONDS));
 			waitForWaiting(waiter);
 			synchronized (monitor) {
-				monitor.notify();
+				invoke(notifyMethod, new Object[]{monitor});
 			}
 			waiter.join(1_000L);
 
@@ -92,6 +97,99 @@ public class AndroidMethodVisitorTest {
 				waiter.interrupt();
 				waiter.join(1_000L);
 			}
+			EmulationTime.setTimedWaitEnabled(true);
+		}
+	}
+
+	@Test
+	public void instrumentedNotifyWakesExactlyOneLogicalWaiter() throws Exception {
+		Class<?> transformed = loadTransformedFixture();
+		Method waitMethod = transformed.getMethod("waitIndefinitely", Object.class);
+		Method notifyMethod = transformed.getMethod("notifyOne", Object.class);
+		Method notifyAllMethod = transformed.getMethod("notifyAllWaiters", Object.class);
+		Object monitor = new Object();
+		CountDownLatch entered = new CountDownLatch(2);
+		CountDownLatch returned = new CountDownLatch(2);
+		AtomicReference<Throwable> failure = new AtomicReference<>();
+		Runnable waitTask = () -> {
+			synchronized (monitor) {
+				entered.countDown();
+				try {
+					invoke(waitMethod, new Object[]{monitor});
+					returned.countDown();
+				} catch (Throwable throwable) {
+					failure.compareAndSet(null, throwable);
+				}
+			}
+		};
+		Thread first = new Thread(waitTask, "instrumented-monitor-waiter-1");
+		Thread second = new Thread(waitTask, "instrumented-monitor-waiter-2");
+		EmulationTime.setTimedWaitEnabled(true);
+		first.start();
+		second.start();
+		try {
+			assertTrue(entered.await(1L, TimeUnit.SECONDS));
+			waitForWaiting(first);
+			waitForWaiting(second);
+			synchronized (monitor) {
+				invoke(notifyMethod, new Object[]{monitor});
+			}
+			long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(1L);
+			while (returned.getCount() == 2L && System.nanoTime() < deadline) {
+				Thread.yield();
+			}
+			assertEquals(1L, returned.getCount());
+
+			synchronized (monitor) {
+				invoke(notifyAllMethod, new Object[]{monitor});
+			}
+			assertTrue(returned.await(1L, TimeUnit.SECONDS));
+			first.join(1_000L);
+			second.join(1_000L);
+			assertFalse(first.isAlive());
+			assertFalse(second.isAlive());
+			assertNull(failure.get());
+		} finally {
+			first.interrupt();
+			second.interrupt();
+			first.join(1_000L);
+			second.join(1_000L);
+			EmulationTime.setTimedWaitEnabled(true);
+		}
+	}
+
+	@Test
+	public void instrumentedDateAndCalendarUseVirtualWallTime() throws Exception {
+		Class<?> transformed = loadTransformedFixture();
+		Method dateMethod = transformed.getMethod("newDateTime");
+		Method calendarMethod = transformed.getMethod("calendarTime");
+		Method calendarZoneMethod = transformed.getMethod("calendarTimeWithZone", TimeZone.class);
+		Method calendarLocaleMethod = transformed.getMethod("calendarTimeWithLocale", Locale.class);
+		Method calendarZoneLocaleMethod = transformed.getMethod("calendarTimeWithZoneAndLocale",
+				TimeZone.class, Locale.class);
+		try {
+			EmulationTime.setSpeed(EmulationSpeed.X16);
+			long dateBefore = (Long) dateMethod.invoke(null);
+			Thread.sleep(120L);
+			long dateAfter = (Long) dateMethod.invoke(null);
+			assertTrue("Date constructor still follows host wall time",
+					dateAfter - dateBefore >= 500L);
+
+			EmulationTime.setSpeed(EmulationSpeed.X1);
+			long calendarMillis = (Long) calendarMethod.invoke(null);
+			long calendarZoneMillis = (Long) calendarZoneMethod.invoke(null, TimeZone.getDefault());
+			long calendarLocaleMillis = (Long) calendarLocaleMethod.invoke(null, Locale.getDefault());
+			long calendarZoneLocaleMillis = (Long) calendarZoneLocaleMethod.invoke(null,
+					TimeZone.getDefault(), Locale.getDefault());
+			long virtualMillis = EmulationTime.currentTimeMillis();
+
+			assertTrue("Calendar factory was not executable after transformation",
+					Math.abs(calendarMillis - virtualMillis) <= 1_000L);
+			assertTrue(Math.abs(calendarZoneMillis - virtualMillis) <= 1_000L);
+			assertTrue(Math.abs(calendarLocaleMillis - virtualMillis) <= 1_000L);
+			assertTrue(Math.abs(calendarZoneLocaleMillis - virtualMillis) <= 1_000L);
+		} finally {
+			EmulationTime.setSpeed(EmulationSpeed.X1);
 		}
 	}
 

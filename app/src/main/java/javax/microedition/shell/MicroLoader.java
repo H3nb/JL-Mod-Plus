@@ -42,6 +42,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -49,6 +50,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Display;
@@ -60,6 +62,7 @@ import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 import javax.microedition.lcdui.skin.SkinLayer;
 import javax.microedition.m3g.Graphics3D;
 import javax.microedition.midlet.MIDlet;
+import javax.microedition.shell.time.EmulationTime;
 import javax.microedition.util.ContextHolder;
 
 import io.reactivex.SingleObserver;
@@ -92,6 +95,9 @@ public class MicroLoader {
 	private final String workDir;
 	private final String appDirName;
 	private boolean timingTransformAvailable;
+	private boolean timedWaitEnabled = true;
+	private boolean timedWaitOverridePresent;
+	private final AtomicBoolean monitorFallbackPersistenceStarted = new AtomicBoolean();
 
 	MicroLoader(String appPath) {
 		this.appDir = new File(appPath);
@@ -282,6 +288,8 @@ public class MicroLoader {
 	void applyConfiguration() {
 		soundBank = null;
 		soundBankFormat = null;
+		timedWaitEnabled = true;
+		timedWaitOverridePresent = false;
 		try {
 			// Apply configuration to the launching MIDlet
 			if (params.showKeyboard) {
@@ -297,6 +305,10 @@ public class MicroLoader {
 				if (prop.length == 2) {
 					System.setProperty(prop[0], prop[1]);
 					MidletSystem.setProperty(prop[0], prop[1]);
+					if (EmulationTime.TIMED_WAIT_PROPERTY.equals(prop[0].trim())) {
+						timedWaitOverridePresent = true;
+						timedWaitEnabled = !"false".equalsIgnoreCase(prop[1].trim());
+					}
 				}
 			}
 			try {
@@ -380,11 +392,47 @@ public class MicroLoader {
 	}
 
 	void loadMidlet(String clazz, String appName) {
-		MidletThread midletThread = new MidletThread(this, clazz);
+		MidletThread midletThread = new MidletThread(this, clazz, isMonitorBridgeEnabled());
 		midletThread.start();
 		if (!BuildConfig.FULL_EMULATOR) {
 			return;
 		}
 		AppUtils.pushToRecentShortcuts(ContextHolder.getActivity(), appDir.getPath(), appName);
+	}
+
+	private boolean isMonitorBridgeEnabled() {
+		if (!timedWaitEnabled) {
+			return false;
+		}
+		if (timedWaitOverridePresent) {
+			return true;
+		}
+		return !new File(appDir, Config.MIDLET_MONITOR_FALLBACK_FILE).isFile();
+	}
+
+	void recordMonitorFallback(String reason) {
+		if (!BuildConfig.FULL_EMULATOR
+				|| !monitorFallbackPersistenceStarted.compareAndSet(false, true)) {
+			return;
+		}
+		Thread writer = new Thread(() -> {
+			File marker = new File(appDir, Config.MIDLET_MONITOR_FALLBACK_FILE);
+			String safeReason = reason == null ? "unspecified"
+					: reason.replace('\r', ' ').replace('\n', ' ');
+			if (safeReason.length() > 160) {
+				safeReason = safeReason.substring(0, 160);
+			}
+			String report = "JL-Mod Plus monitor compatibility fallback\n"
+					+ safeReason + '\n';
+			try (FileOutputStream output = new FileOutputStream(marker, false)) {
+				output.write(report.getBytes(StandardCharsets.UTF_8));
+				output.getFD().sync();
+			} catch (IOException e) {
+				Log.w(TAG, "Unable to persist monitor compatibility fallback", e);
+				monitorFallbackPersistenceStarted.set(false);
+			}
+		}, "MonitorFallbackWriter");
+		writer.setDaemon(true);
+		writer.start();
 	}
 }

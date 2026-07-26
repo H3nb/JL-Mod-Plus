@@ -164,15 +164,18 @@ public class EmulationTimeControllerTest {
 		long elapsedNanos = System.nanoTime() - started;
 
 		assertTrue("timed monitor wait was not virtualized", elapsedNanos < 800_000_000L);
+		assertEquals(0, controller.monitorRegistrySize());
 	}
 
 	@Test
-	public void timedMonitorWaitRetainsNativeNotification() throws Exception {
+	public void untrackedNativeNotificationActivatesCompatibilityFallback() throws Exception {
 		EmulationTimeController controller = new EmulationTimeController();
 		Object monitor = new Object();
 		CountDownLatch entered = new CountDownLatch(1);
+		CountDownLatch fallbackReported = new CountDownLatch(1);
 		AtomicBoolean returned = new AtomicBoolean();
 		AtomicReference<Throwable> failure = new AtomicReference<>();
+		controller.setMonitorFallbackListener(reason -> fallbackReported.countDown());
 		Thread waiter = new Thread(() -> {
 			synchronized (monitor) {
 				entered.countDown();
@@ -195,12 +198,78 @@ public class EmulationTimeControllerTest {
 
 			assertFalse(waiter.isAlive());
 			assertTrue(returned.get());
+			assertTrue(fallbackReported.await(1L, TimeUnit.SECONDS));
+			assertFalse(controller.isTimedWaitEnabled());
+			assertEquals(0, controller.monitorRegistrySize());
 			assertNull(failure.get());
 		} finally {
 			if (waiter.isAlive()) {
 				waiter.interrupt();
 				waiter.join(1_000L);
 			}
+		}
+	}
+
+	@Test
+	public void extremeSpeedStopsAreExplicitAndBounded() {
+		assertFalse(EmulationSpeed.X16.isExperimental());
+		assertTrue(EmulationSpeed.X32.isExperimental());
+		assertTrue(EmulationSpeed.MAX.isExperimental());
+		assertEquals(32, EmulationSpeed.X32.numerator());
+		assertEquals(128, EmulationSpeed.MAX.numerator());
+	}
+
+	@Test
+	public void logicalNotifyWakesExactlyOneWaiterAndNotifyAllWakesTheRest()
+			throws Exception {
+		EmulationTimeController controller = new EmulationTimeController();
+		Object monitor = new Object();
+		CountDownLatch entered = new CountDownLatch(2);
+		CountDownLatch returned = new CountDownLatch(2);
+		AtomicReference<Throwable> failure = new AtomicReference<>();
+		Runnable waitTask = () -> {
+			synchronized (monitor) {
+				entered.countDown();
+				try {
+					controller.waitOn(monitor, 0L);
+					returned.countDown();
+				} catch (Throwable throwable) {
+					failure.compareAndSet(null, throwable);
+				}
+			}
+		};
+		Thread first = new Thread(waitTask, "logical-monitor-waiter-1");
+		Thread second = new Thread(waitTask, "logical-monitor-waiter-2");
+		first.start();
+		second.start();
+		try {
+			assertTrue(entered.await(1L, TimeUnit.SECONDS));
+			waitForWaiting(first);
+			waitForWaiting(second);
+			synchronized (monitor) {
+				controller.notifyMonitor(monitor);
+			}
+			long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(1L);
+			while (returned.getCount() == 2L && System.nanoTime() < deadline) {
+				Thread.yield();
+			}
+			assertEquals(1L, returned.getCount());
+
+			synchronized (monitor) {
+				controller.notifyAllMonitors(monitor);
+			}
+			assertTrue(returned.await(1L, TimeUnit.SECONDS));
+			first.join(1_000L);
+			second.join(1_000L);
+			assertFalse(first.isAlive());
+			assertFalse(second.isAlive());
+			assertEquals(0, controller.monitorRegistrySize());
+			assertNull(failure.get());
+		} finally {
+			first.interrupt();
+			second.interrupt();
+			first.join(1_000L);
+			second.join(1_000L);
 		}
 	}
 
@@ -232,6 +301,7 @@ public class EmulationTimeControllerTest {
 
 			assertFalse(waiter.isAlive());
 			assertTrue(interrupted.get());
+			assertEquals(0, controller.monitorRegistrySize());
 			assertNull(failure.get());
 		} finally {
 			if (waiter.isAlive()) {
@@ -250,6 +320,24 @@ public class EmulationTimeControllerTest {
 		} catch (IllegalMonitorStateException expected) {
 			// Native Object.wait semantics are retained.
 		}
+	}
+
+	@Test
+	public void timedMonitorWaitCanUseNativeCompatibilityMode() throws Exception {
+		EmulationTimeController controller = new EmulationTimeController();
+		controller.pause();
+		controller.setTimedWaitEnabled(false);
+		Object monitor = new Object();
+
+		long started = System.nanoTime();
+		synchronized (monitor) {
+			controller.waitOn(monitor, 50L);
+		}
+		long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started);
+
+		assertFalse(controller.isTimedWaitEnabled());
+		assertTrue("native compatibility wait did not use host timeout",
+				elapsedMillis >= 25L && elapsedMillis < 1_000L);
 	}
 
 	@Test
@@ -307,6 +395,15 @@ public class EmulationTimeControllerTest {
 			Thread.yield();
 		}
 		assertEquals(Thread.State.TIMED_WAITING, thread.getState());
+	}
+
+	private static void waitForWaiting(Thread thread) throws InterruptedException {
+		long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(1L);
+		while (thread.isAlive() && thread.getState() != Thread.State.WAITING
+				&& System.nanoTime() < deadline) {
+			Thread.yield();
+		}
+		assertEquals(Thread.State.WAITING, thread.getState());
 	}
 
 	private static final class MutableHostClock implements HostClock {

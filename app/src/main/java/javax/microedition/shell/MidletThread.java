@@ -1,5 +1,6 @@
 /*
  *  Copyright 2020-2026 Yury Kharchenko
+ *  Copyright 2026 H3NB
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -58,12 +59,15 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private Handler handler;
 	private int state;
 
-	MidletThread(MicroLoader microLoader, String mainClass) {
+	MidletThread(MicroLoader microLoader, String mainClass, boolean timedWaitEnabled) {
 		super("MidletMain");
 		this.microLoader = microLoader;
 		this.mainClass = mainClass;
 		this.emulationTimeController = new EmulationTimeController();
 		EmulationTime.install(emulationTimeController);
+		emulationTimeController.setTimedWaitEnabled(timedWaitEnabled);
+		emulationTimeController.setMonitorFallbackListener(
+				microLoader::recordMonitorFallback);
 		instance = this;
 	}
 

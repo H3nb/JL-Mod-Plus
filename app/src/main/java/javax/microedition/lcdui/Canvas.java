@@ -76,6 +76,7 @@ import javax.microedition.lcdui.overlay.Overlay;
 import javax.microedition.lcdui.overlay.OverlayView;
 import javax.microedition.lcdui.skin.SkinLayer;
 import javax.microedition.shell.MicroActivity;
+import javax.microedition.shell.time.EmulationTime;
 import javax.microedition.util.ContextHolder;
 
 import io.reactivex.Single;
@@ -164,7 +165,7 @@ public abstract class Canvas extends Displayable {
 		if (settings.graphicsMode == 1) {
 			renderer = new GLRenderer();
 		}
-		if (parallelRedraw) {
+		if (parallelRedraw || settings.graphicsMode == 0 || settings.graphicsMode == 3) {
 			uiHandler = new Handler(Looper.getMainLooper(), msg -> repaintScreen());
 		}
 		displayWidth = ContextHolder.getDisplayWidth();
@@ -617,7 +618,7 @@ public abstract class Canvas extends Displayable {
 	}
 
 	private void limitFps() {
-		if (fpsLimit <= 0) return;
+		if (fpsLimit <= 0 || isPresentationDecoupled()) return;
 		try {
 			long millis = (1000 / fpsLimit) - (System.currentTimeMillis() - lastFrameTime);
 			if (millis > 0) Thread.sleep(millis);
@@ -654,7 +655,9 @@ public abstract class Canvas extends Displayable {
 			if (fpsCounter != null) {
 				fpsCounter.increment();
 			}
-			if (parallelRedraw) uiHandler.removeMessages(0);
+			if (uiHandler != null && (parallelRedraw || isPresentationDecoupled())) {
+				uiHandler.removeMessages(0);
+			}
 		} catch (Exception e) {
 			Log.w(TAG, "repaintScreen: " + e);
 		}
@@ -1185,11 +1188,22 @@ public abstract class Canvas extends Displayable {
 			if (innerView != null) {
 				innerView.postInvalidate();
 			}
-		} else if (!parallelRedraw) {
+		} else if (!parallelRedraw && !isPresentationDecoupled()) {
 			repaintScreen();
-		} else if (!uiHandler.hasMessages(0)) {
+		} else if (uiHandler != null && !uiHandler.hasMessages(0)) {
 			uiHandler.sendEmptyMessage(0);
 		}
+	}
+
+	/**
+	 * At accelerated speeds, presentation must not become an accidental guest
+	 * thread throttle. The event queue still coalesces repaint requests, while
+	 * this method moves the actual SurfaceCanvas work to the main-thread handler
+	 * for the legacy non-GL renderers.
+	 */
+	private static boolean isPresentationDecoupled() {
+		var speed = EmulationTime.snapshot().speed();
+		return speed.numerator() > speed.denominator();
 	}
 
 	private class SoftBar extends AbstractSoftKeysBar implements Layer {
