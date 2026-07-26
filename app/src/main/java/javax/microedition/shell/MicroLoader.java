@@ -78,6 +78,7 @@ import io.github.h3nb.jlmodplus.util.Constants;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.IOUtils;
 import ru.woesss.j2me.jar.Descriptor;
+import ru.woesss.j2me.installer.TimingDexMigrator;
 import ru.woesss.j2me.mmapi.synth.SoundBankResolver;
 
 public class MicroLoader {
@@ -102,6 +103,9 @@ public class MicroLoader {
 	}
 
 	public boolean init() {
+		if (BuildConfig.FULL_EMULATOR) {
+			TimingDexMigrator.recoverInterruptedMigration(appDir);
+		}
 		File config = new File(workDir + Config.MIDLET_CONFIGS_DIR + appDirName);
 		this.params = ProfilesManager.loadConfig(config);
 		if (params == null) {
@@ -126,6 +130,19 @@ public class MicroLoader {
 
 	boolean hasTimingTransform() {
 		return timingTransformAvailable;
+	}
+
+	boolean needsTimingMigration() {
+		return BuildConfig.FULL_EMULATOR && TimingDexMigrator.needsMigration(appDir);
+	}
+
+	void migrateTimingDex() throws IOException {
+		TimingDexMigrator.migrate(appDir);
+		timingTransformAvailable = hasCurrentTimingTransform();
+	}
+
+	void refreshTimingTransformState() {
+		timingTransformAvailable = hasCurrentTimingTransform();
 	}
 
 	private boolean hasCurrentTimingTransform() {
@@ -196,6 +213,7 @@ public class MicroLoader {
 	MIDlet loadMIDlet(String mainClass) throws ClassNotFoundException, InstantiationException,
 			IllegalAccessException, NoSuchMethodException, InvocationTargetException, IOException {
 		if (BuildConfig.FULL_EMULATOR) {
+			boolean launchCompleted = false;
 			File dexSource = new File(appDir, Config.MIDLET_DEX_ARCH);
 			if (!dexSource.exists()) {
 				dexSource = new File(appDir, Config.MIDLET_DEX_FILE);
@@ -215,14 +233,20 @@ public class MicroLoader {
 				}
 				dexSource = dexCache;
 			}
-			ClassLoader loader = new AppClassLoader(dexSource.getAbsolutePath(),
-					dexOptDir.getAbsolutePath(), ContextHolder.getActivity().getClassLoader(), appDir);
-			Log.i(TAG, "loadMIDletList main: " + mainClass + " from dex:" + dexSource.getPath());
-			//noinspection unchecked
-			Class<MIDlet> clazz = (Class<MIDlet>) loader.loadClass(mainClass);
-			Constructor<MIDlet> init = clazz.getDeclaredConstructor();
-			init.setAccessible(true);
-			return init.newInstance();
+			try {
+				ClassLoader loader = new AppClassLoader(dexSource.getAbsolutePath(),
+						dexOptDir.getAbsolutePath(), ContextHolder.getActivity().getClassLoader(), appDir);
+				Log.i(TAG, "loadMIDletList main: " + mainClass + " from dex:" + dexSource.getPath());
+				//noinspection unchecked
+				Class<MIDlet> clazz = (Class<MIDlet>) loader.loadClass(mainClass);
+				Constructor<MIDlet> init = clazz.getDeclaredConstructor();
+				init.setAccessible(true);
+				MIDlet midlet = init.newInstance();
+				launchCompleted = true;
+				return midlet;
+			} finally {
+				TimingDexMigrator.completeLaunch(appDir, launchCompleted);
+			}
 		} else {
 			AppClassLoader.setDataDir(appDir);
 			//noinspection unchecked

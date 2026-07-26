@@ -176,6 +176,14 @@
     <string name="pref_mascot_title">Detect Mascot Capsule 3D</string>
     <string name="pref_emulation_audio_speed_title">Apply emulation speed to audio</string>
     <string name="pref_emulation_audio_speed_summary">Experimental and disabled by default; audio may fail at some speeds or devices</string>
+    <string name="pref_emulation_extreme_speeds_title">Enable 32× and Max emulation speeds</string>
+    <string name="pref_emulation_extreme_speeds_summary">Experimental and disabled by default; Max targets 128× virtual time, while actual speed is limited by hardware and the game</string>
+    <string name="timing_migration_title">Update game compatibility</string>
+    <string name="timing_migration_message">This game was converted by an older JL-Mod Plus version. Rebuild its executable cache before launching? Game saves, settings, and the original JAR will not be changed.</string>
+    <string name="timing_migration_rebuild">Rebuild</string>
+    <string name="timing_migration_progress">Rebuilding the game executable…</string>
+    <string name="timing_migration_failed">The game could not be rebuilt. The previous executable has been restored.</string>
+    <string name="timing_migration_continue">Continue without speedhack</string>
     <string name="PREF_ORIENTATION">Screen orientation</string>
     <string name="pref_orientation_auto">Auto</string>
     <string name="pref_orientation_default">Default</string>

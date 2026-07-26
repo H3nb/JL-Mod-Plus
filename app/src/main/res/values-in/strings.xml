@@ -158,6 +158,14 @@
     <string name="pref_mascot_title">Deteksikan Mascot Capsule 3D</string>
     <string name="pref_emulation_audio_speed_title">Terapkan kecepatan emulasi pada audio</string>
     <string name="pref_emulation_audio_speed_summary">Eksperimental dan nonaktif secara bawaan; audio dapat gagal pada kecepatan atau perangkat tertentu</string>
+    <string name="pref_emulation_extreme_speeds_title">Aktifkan kecepatan emulasi 32× dan Maks</string>
+    <string name="pref_emulation_extreme_speeds_summary">Eksperimental dan nonaktif secara bawaan; Maks menargetkan waktu virtual 128×, sedangkan kecepatan nyata dibatasi perangkat dan game</string>
+    <string name="timing_migration_title">Perbarui kompatibilitas game</string>
+    <string name="timing_migration_message">Game ini dikonversi oleh versi JL-Mod Plus yang lebih lama. Buat ulang cache executable sebelum masuk? Save game, pengaturan, dan JAR asli tidak akan diubah.</string>
+    <string name="timing_migration_rebuild">Buat ulang</string>
+    <string name="timing_migration_progress">Sedang membuat ulang executable game…</string>
+    <string name="timing_migration_failed">Game tidak berhasil dibuat ulang. Executable sebelumnya telah dipulihkan.</string>
+    <string name="timing_migration_continue">Lanjut tanpa speedhack</string>
     <string name="PREF_ORIENTATION">Orientasi layar</string>
     <string name="pref_orientation_auto">Otomatis</string>
     <string name="pref_orientation_default">Bawaan</string>

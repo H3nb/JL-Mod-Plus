@@ -68,7 +68,9 @@ import org.acra.ErrorReporter;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -84,8 +86,11 @@ import javax.microedition.shell.time.EmulationTimeController;
 import javax.microedition.shell.time.SpeedSnapshot;
 import javax.microedition.util.ContextHolder;
 
+import io.reactivex.Single;
 import io.reactivex.SingleObserver;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 import io.github.h3nb.jlmodplus.BuildConfig;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.Config;
@@ -109,6 +114,7 @@ public class MicroActivity extends AppCompatActivity {
 	private int menuKey;
 	private String appPath;
 	private ActivityMicroBinding binding;
+	private Disposable timingMigrationDisposable;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -185,7 +191,77 @@ public class MicroActivity extends AppCompatActivity {
 				// Intentionally overridden by empty due to support for back-key remapping.
 			}
 		});
-		loadMIDlet();
+		startOrMigrateTimingDex();
+	}
+
+	private void startOrMigrateTimingDex() {
+		if (!microLoader.needsTimingMigration()) {
+			loadMIDlet();
+			return;
+		}
+		new AlertDialog.Builder(this)
+				.setIcon(android.R.drawable.ic_dialog_info)
+				.setTitle(R.string.timing_migration_title)
+				.setMessage(R.string.timing_migration_message)
+				.setPositiveButton(R.string.timing_migration_rebuild,
+						(dialog, which) -> rebuildTimingDex())
+				.setNegativeButton(android.R.string.cancel, (dialog, which) -> finish())
+				.setOnCancelListener(dialog -> finish())
+				.show();
+	}
+
+	private void rebuildTimingDex() {
+		AlertDialog progress = new AlertDialog.Builder(this)
+				.setTitle(R.string.timing_migration_title)
+				.setMessage(R.string.timing_migration_progress)
+				.setCancelable(false)
+				.create();
+		progress.show();
+		timingMigrationDisposable = Single.fromCallable(() -> {
+					microLoader.migrateTimingDex();
+					return true;
+				})
+				.subscribeOn(Schedulers.io())
+				.observeOn(AndroidSchedulers.mainThread())
+				.subscribe(ignored -> {
+					progress.dismiss();
+					if (!isFinishing() && !isDestroyed()) {
+						loadMIDlet();
+					}
+				}, error -> {
+					progress.dismiss();
+					microLoader.refreshTimingTransformState();
+					if (!isFinishing() && !isDestroyed()) {
+						showTimingMigrationFailure(error);
+					}
+				});
+	}
+
+	private void showTimingMigrationFailure(Throwable error) {
+		String detail = error.getMessage();
+		String message = getString(R.string.timing_migration_failed);
+		if (!TextUtils.isEmpty(detail)) {
+			message += "\n\n" + detail;
+		}
+		new AlertDialog.Builder(this)
+				.setIcon(android.R.drawable.ic_dialog_alert)
+				.setTitle(R.string.error)
+				.setMessage(message)
+				.setPositiveButton(R.string.retry, (dialog, which) -> rebuildTimingDex())
+				.setNeutralButton(R.string.timing_migration_continue,
+						(dialog, which) -> loadMIDlet())
+				.setNegativeButton(android.R.string.cancel, (dialog, which) -> finish())
+				.setOnCancelListener(dialog -> finish())
+				.show();
+	}
+
+	@Override
+	protected void onDestroy() {
+		if (timingMigrationDisposable != null) {
+			timingMigrationDisposable.dispose();
+			timingMigrationDisposable = null;
+		}
+		super.onDestroy();
 	}
 
 	public void lockNightMode() {
