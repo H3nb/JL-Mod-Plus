@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2007 The Android Open Source Project
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,6 +144,9 @@ public class Main {
     /** number of errors during processing */
     private AtomicInteger errors = new AtomicInteger(0);
 
+    /** first detailed failure, retained for callers which cannot see stderr */
+    private volatile Throwable firstFailure;
+
     /** {@code non-null;} parsed command-line arguments */
     private Arguments args;
 
@@ -189,10 +193,11 @@ public class Main {
         Arguments arguments = new Arguments(context);
         arguments.parse(argArray);
 
-        int result = new Main(context).runDx(arguments);
+        Main dexer = new Main(context);
+        int result = dexer.runDx(arguments);
 
         if (result != 0) {
-            throw new IOException();
+            throw dexer.createFailure(result);
         }
     }
 
@@ -209,6 +214,7 @@ public class Main {
 
         // Reset the error count to start fresh.
         errors.set(0);
+        firstFailure = null;
 
         args = arguments;
         args.makeOptionsObjects();
@@ -330,16 +336,19 @@ public class Main {
                 } catch(ExecutionException ex) {
                     // Catch any previously uncaught exceptions from
                     // class translation and adding to dex.
+                    Throwable cause = ex.getCause() == null ? ex : ex.getCause();
+                    recordFailure(cause);
                     int count = errors.incrementAndGet();
-                    if (count < 10) {
+                    if (count <= 10) {
                         if (args.debug) {
                             context.err.println("Uncaught translation error:");
-                            ex.getCause().printStackTrace(context.err);
+                            cause.printStackTrace(context.err);
                         } else {
-                            context.err.println("Uncaught translation error: " + ex.getCause());
+                            context.err.println("Uncaught translation error: " + cause);
                         }
-                    } else {
-                        throw new InterruptedException("Too many errors");
+                    } else if (count == 11) {
+                        context.err.println(
+                                "Additional translation errors are omitted from this log.");
                     }
                 }
             }
@@ -347,6 +356,7 @@ public class Main {
         } catch (InterruptedException ie) {
             classTranslatorPool.shutdownNow();
             classDefItemConsumer.shutdownNow();
+            Thread.currentThread().interrupt();
             throw new RuntimeException("Translation has been interrupted", ie);
         } catch (Exception e) {
             classTranslatorPool.shutdownNow();
@@ -473,9 +483,9 @@ public class Main {
             // handled in FileBytesConsumer
             throw ex;
         } catch(IllegalArgumentException e) {
-            e.printStackTrace();
+            throw new IllegalArgumentException("Failed to instrument class " + name, e);
         } catch(Exception ex) {
-            throw new RuntimeException("Exception parsing classes", ex);
+            throw new RuntimeException("Failed to process class " + name, ex);
         }
 
         return true;
@@ -496,6 +506,8 @@ public class Main {
             return CfTranslator.translate(context, cf, bytes, args.cfOptions,
                     args.dexOptions, outputDex);
         } catch (ParseException ex) {
+            recordFailure(new RuntimeException(
+                    "Failed to translate class " + cf.getFilePath(), ex));
             context.err.println("\ntrouble processing:");
             if (args.debug) {
                 ex.printStackTrace(context.err);
@@ -1275,6 +1287,7 @@ public class Main {
 
         @Override
         public void onException(Exception ex) {
+            recordFailure(ex);
             if (ex instanceof StopProcessing) {
                 throw (StopProcessing) ex;
             } else if (ex instanceof SimException) {
@@ -1400,9 +1413,11 @@ public class Main {
      */
     private class ClassDefItemConsumer implements Callable<Boolean> {
 
+        String name;
         Future<ClassDefItem> futureClazz;
 
         private ClassDefItemConsumer(String name, Future<ClassDefItem> futureClazz) {
+            this.name = name;
             this.futureClazz = futureClazz;
         }
 
@@ -1420,8 +1435,61 @@ public class Main {
                 // These, as well as any exceptions from addClassToDex,
                 // are handled and reported in processAllFiles().
                 Throwable t = ex.getCause();
-                throw (t instanceof Exception) ? (Exception) t : ex;
+                throw new RuntimeException("Failed to translate class " + name,
+                        t == null ? ex : t);
             }
         }
+    }
+
+    private void recordFailure(Throwable failure) {
+        if (failure == null || firstFailure != null) {
+            return;
+        }
+        synchronized (this) {
+            if (firstFailure == null) {
+                firstFailure = failure;
+            }
+        }
+    }
+
+    private IOException createFailure(int result) {
+        StringBuilder message = new StringBuilder("DEX conversion failed");
+        int count = errors.get();
+        if (count > 0) {
+            message.append(" with ").append(count)
+                    .append(count == 1 ? " class error" : " class errors");
+        } else {
+            message.append(" (result ").append(result).append(')');
+        }
+        if (firstFailure != null) {
+            message.append(". First failure: ").append(diagnostic(firstFailure));
+            return new IOException(message.toString(), firstFailure);
+        }
+        return new IOException(message.toString());
+    }
+
+    private static String diagnostic(Throwable failure) {
+        Throwable current = failure;
+        Throwable deepestWithMessage = failure;
+        for (int depth = 0; current != null && depth < 16; depth++) {
+            if (current.getMessage() != null && !current.getMessage().trim().isEmpty()) {
+                deepestWithMessage = current;
+            }
+            current = current.getCause();
+        }
+        String firstMessage = failure.getMessage();
+        String deepestMessage = deepestWithMessage.getMessage();
+        StringBuilder result = new StringBuilder();
+        if (firstMessage != null && !firstMessage.trim().isEmpty()) {
+            result.append(firstMessage);
+        } else {
+            result.append(failure.getClass().getSimpleName());
+        }
+        if (deepestWithMessage != failure && deepestMessage != null
+                && !deepestMessage.trim().isEmpty()) {
+            result.append(" -> ").append(deepestWithMessage.getClass().getSimpleName())
+                    .append(": ").append(deepestMessage);
+        }
+        return result.toString();
     }
 }

@@ -36,102 +36,121 @@ public class TimingDexMigratorTest {
 	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
 	@Test
-	public void currentVersionMarkerSkipsMigration() throws Exception {
+	public void currentVersionConfSkipsMigration() throws Exception {
 		File appDir = temporaryFolder.newFolder("current-version");
+		Files.write(new File(appDir, "converted.zip").toPath(), new byte[]{1});
+		writeManifest(appDir, Config.MIDLET_DEX_VERSION);
 
-		assertTrue(TimingDexMigrator.needsMigration(appDir));
-		write(new File(appDir, "converted.timing.version"),
-				Integer.toString(Config.MIDLET_TIMING_TRANSFORM_VERSION));
 		assertFalse(TimingDexMigrator.needsMigration(appDir));
-		write(new File(appDir, "converted.timing.version"), "3");
+		writeManifest(appDir, Config.MIDLET_DEX_VERSION - 1);
 		assertTrue(TimingDexMigrator.needsMigration(appDir));
+		writeManifest(appDir, Config.MIDLET_DEX_VERSION + 1);
+		assertFalse(TimingDexMigrator.needsMigration(appDir));
 	}
 
 	@Test
-	public void interruptedMigrationRestoresArchiveAndPreviousVersion()
-			throws Exception {
-		File appDir = temporaryFolder.newFolder("restore-version");
-		byte[] previousArchive = "old executable".getBytes(StandardCharsets.US_ASCII);
-		Files.write(new File(appDir, "converted.zip").toPath(),
-				"new executable".getBytes(StandardCharsets.US_ASCII));
-		Files.write(new File(appDir, ".converted.timing.backup").toPath(),
-				previousArchive);
-		String currentVersion =
-				Integer.toString(Config.MIDLET_TIMING_TRANSFORM_VERSION);
-		write(new File(appDir, "converted.timing.version"), currentVersion);
-		write(new File(appDir, ".converted.timing.version.backup"), "3");
+	public void currentLegacyDexAlsoSkipsMigration() throws Exception {
+		File appDir = temporaryFolder.newFolder("current-legacy-dex");
+		Files.write(new File(appDir, "converted.dex").toPath(), new byte[]{1});
+		writeManifest(appDir, Config.MIDLET_DEX_VERSION);
+
+		assertFalse(TimingDexMigrator.needsMigration(appDir));
+	}
+
+	@Test
+	public void interruptedMigrationRestoresArchiveAndPreviousConf() throws Exception {
+		File appDir = temporaryFolder.newFolder("restore-conf");
+		Files.write(new File(appDir, "converted.zip").toPath(), "new".getBytes(StandardCharsets.US_ASCII));
+		Files.write(new File(appDir, ".converted.timing.backup").toPath(), "old".getBytes(StandardCharsets.US_ASCII));
+		writeManifest(appDir, Config.MIDLET_DEX_VERSION);
+		writeManifest(new File(appDir, ".converted.dex.conf.backup"), Config.MIDLET_DEX_VERSION - 1);
 		write(new File(appDir, ".converted.timing.pending"), "converted.zip");
 
 		TimingDexMigrator.recoverInterruptedMigration(appDir);
 
-		assertArrayEquals(previousArchive,
-				Files.readAllBytes(new File(appDir, "converted.zip").toPath()));
-		assertEquals("3",
-				read(new File(appDir, "converted.timing.version")));
+		assertEquals("old", read(new File(appDir, "converted.zip")));
+		assertEquals(Integer.toString(Config.MIDLET_DEX_VERSION - 1), readVersion(appDir));
 		assertFalse(new File(appDir, ".converted.timing.pending").exists());
 	}
 
 	@Test
-	public void interruptedMigrationRestoresAbsenceOfPreviousVersion()
-			throws Exception {
-		File appDir = temporaryFolder.newFolder("restore-no-version");
-		byte[] previousArchive = "old executable".getBytes(StandardCharsets.US_ASCII);
-		Files.write(new File(appDir, "converted.zip").toPath(),
-				"new executable".getBytes(StandardCharsets.US_ASCII));
-		Files.write(new File(appDir, ".converted.timing.backup").toPath(),
-				previousArchive);
-		write(new File(appDir, "converted.timing.version"), "4");
-		write(new File(appDir, ".converted.timing.version.absent"), "");
-		write(new File(appDir, ".converted.timing.pending"), "converted.zip");
-
-		TimingDexMigrator.recoverInterruptedMigration(appDir);
-
-		assertArrayEquals(previousArchive,
-				Files.readAllBytes(new File(appDir, "converted.zip").toPath()));
-		assertFalse(new File(appDir, "converted.timing.version").exists());
-		assertFalse(new File(appDir, ".converted.timing.version.absent").exists());
-	}
-
-	@Test
-	public void recoveryDoesNotDeleteMarkerBeforeItsBackupWasCreated()
-			throws Exception {
-		File appDir = temporaryFolder.newFolder("restore-before-version-backup");
-		byte[] previousArchive = "old executable".getBytes(StandardCharsets.US_ASCII);
-		Files.write(new File(appDir, ".converted.timing.backup").toPath(),
-				previousArchive);
-		write(new File(appDir, "converted.timing.version"), "3");
-		write(new File(appDir, ".converted.timing.pending"), "converted.zip");
-
-		TimingDexMigrator.recoverInterruptedMigration(appDir);
-
-		assertArrayEquals(previousArchive,
-				Files.readAllBytes(new File(appDir, "converted.zip").toPath()));
-		assertEquals("3",
-				read(new File(appDir, "converted.timing.version")));
-	}
-
-	@Test
-	public void successfulLaunchCommitsActivatedArchiveAndDeletesRecoveryFiles()
-			throws Exception {
+	public void successfulLaunchCommitsActivatedArchiveAndDeletesRecoveryFiles() throws Exception {
 		File appDir = temporaryFolder.newFolder("commit-launch");
-		String currentVersion =
-				Integer.toString(Config.MIDLET_TIMING_TRANSFORM_VERSION);
-		byte[] activatedArchive = "new executable".getBytes(StandardCharsets.US_ASCII);
-		Files.write(new File(appDir, "converted.zip").toPath(), activatedArchive);
-		Files.write(new File(appDir, ".converted.timing.backup").toPath(),
-				"old executable".getBytes(StandardCharsets.US_ASCII));
-		write(new File(appDir, "converted.timing.version"), currentVersion);
-		write(new File(appDir, ".converted.timing.version.backup"), "3");
+		Files.write(new File(appDir, "converted.zip").toPath(), "new".getBytes(StandardCharsets.US_ASCII));
+		Files.write(new File(appDir, ".converted.timing.backup").toPath(), "old".getBytes(StandardCharsets.US_ASCII));
+		writeManifest(appDir, Config.MIDLET_DEX_VERSION);
+		writeManifest(new File(appDir, ".converted.dex.conf.backup"), Config.MIDLET_DEX_VERSION - 1);
 		write(new File(appDir, ".converted.timing.pending"), "converted.zip");
+		Files.write(new File(appDir, "res.jar").toPath(), new byte[]{2});
+		Files.write(new File(appDir, "res.jad").toPath(), new byte[]{3});
+		Files.write(new File(appDir, "icon.png").toPath(), new byte[]{4});
+		File staleDirectory = new File(appDir, "res");
+		assertTrue(staleDirectory.mkdirs());
+		Files.write(new File(staleDirectory, "old.bin").toPath(), new byte[]{5});
+		Files.write(new File(appDir, "converted.dex").toPath(), new byte[]{6});
 
 		TimingDexMigrator.completeLaunch(appDir, true);
 
-		assertArrayEquals(activatedArchive,
-				Files.readAllBytes(new File(appDir, "converted.zip").toPath()));
-		assertEquals(currentVersion, read(new File(appDir, "converted.timing.version")));
+		assertEquals("new", read(new File(appDir, "converted.zip")));
+		assertEquals(Integer.toString(Config.MIDLET_DEX_VERSION), readVersion(appDir));
 		assertFalse(new File(appDir, ".converted.timing.backup").exists());
-		assertFalse(new File(appDir, ".converted.timing.version.backup").exists());
+		assertFalse(new File(appDir, ".converted.dex.conf.backup").exists());
 		assertFalse(new File(appDir, ".converted.timing.pending").exists());
+		assertFalse(new File(appDir, Config.MIDLET_TIMING_VERSION_FILE).exists());
+		assertTrue(new File(appDir, "res.jar").isFile());
+		assertTrue(new File(appDir, "res.jad").isFile());
+		assertTrue(new File(appDir, "icon.png").isFile());
+		assertFalse(staleDirectory.exists());
+		assertFalse(new File(appDir, "converted.dex").exists());
+	}
+
+	@Test
+	public void recoveryDoesNotDeleteArchiveBeforeBackupMetadataIsReady() throws Exception {
+		File appDir = temporaryFolder.newFolder("restore-before-conf-backup");
+		Files.write(new File(appDir, ".converted.timing.backup").toPath(), "old".getBytes(StandardCharsets.US_ASCII));
+		writeManifest(appDir, Config.MIDLET_DEX_VERSION);
+		write(new File(appDir, ".converted.timing.pending"), "converted.zip");
+
+		TimingDexMigrator.recoverInterruptedMigration(appDir);
+
+		assertEquals("old", read(new File(appDir, "converted.zip")));
+		assertEquals(Integer.toString(Config.MIDLET_DEX_VERSION), readVersion(appDir));
+	}
+
+	@Test
+	public void failedFirstConversionRemovesUncommittedArchive() throws Exception {
+		File appDir = temporaryFolder.newFolder("failed-first-conversion");
+		Files.write(new File(appDir, "converted.zip").toPath(),
+				"new".getBytes(StandardCharsets.US_ASCII));
+		writeManifest(appDir, Config.MIDLET_DEX_VERSION);
+		write(new File(appDir, ".converted.timing.pending"), "");
+
+		TimingDexMigrator.recoverInterruptedMigration(appDir);
+
+		assertFalse(new File(appDir, "converted.zip").exists());
+		assertFalse(new File(appDir, ".converted.timing.pending").exists());
+	}
+
+	private static void writeManifest(File directory, int version) throws Exception {
+		File file = directory.isDirectory()
+				? new File(directory, Config.MIDLET_MANIFEST_FILE)
+				: directory;
+		file.getParentFile().mkdirs();
+		String text = "MIDlet-Name: Test\r\n"
+				+ "MIDlet-Vendor: Test\r\n"
+				+ "MIDlet-Version: 1\r\n"
+				+ "MIDlet-1: Test,,example.Main\r\n"
+				+ Config.MIDLET_DEX_VERSION_ATTRIBUTE + ": " + version + "\r\n";
+		Files.write(file.toPath(), text.getBytes(StandardCharsets.US_ASCII));
+	}
+
+	private static String readVersion(File directory) throws Exception {
+		String text = read(new File(directory, Config.MIDLET_MANIFEST_FILE));
+		String prefix = Config.MIDLET_DEX_VERSION_ATTRIBUTE + ": ";
+		for (String line : text.split("\\r?\\n")) {
+			if (line.startsWith(prefix)) return line.substring(prefix.length()).trim();
+		}
+		return null;
 	}
 
 	private static void write(File file, String value) throws Exception {

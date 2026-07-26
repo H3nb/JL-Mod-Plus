@@ -158,6 +158,22 @@ public class Descriptor {
 		return attributes;
 	}
 
+	/** Sets an internal or standard descriptor attribute before it is written. */
+	public void setAttribute(String name, String value) {
+		if (name == null || name.isEmpty() || value == null) {
+			throw new IllegalArgumentException("Descriptor attribute must have a name and value");
+		}
+		attributes.put(name, value);
+	}
+
+	public String getAttribute(String name) {
+		return attributes.get(name);
+	}
+
+	public void removeAttribute(String name) {
+		attributes.remove(name);
+	}
+
 	private void parse(String source) {
 		String[] lines = source.split("[\\n\\r]+");
 		for (int i = lines.length - 1; i > 0; i--) {

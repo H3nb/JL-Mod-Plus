@@ -45,11 +45,12 @@ import ru.woesss.j2me.jar.Descriptor;
 public final class TimingDexMigrator {
 	private static final String TAG = TimingDexMigrator.class.getSimpleName();
 	private static final String TEMP_ARCHIVE = ".converted.timing.tmp.zip";
-	private static final String TEMP_VERSION = ".converted.timing.tmp.version";
+	private static final String TEMP_MANIFEST = ".converted.dex.tmp.conf";
 	private static final String BACKUP_ARCHIVE = ".converted.timing.backup";
-	private static final String BACKUP_VERSION = ".converted.timing.version.backup";
-	private static final String BACKUP_VERSION_ABSENT =
-			".converted.timing.version.absent";
+	private static final String BACKUP_MANIFEST = ".converted.dex.conf.backup";
+	private static final String BACKUP_MANIFEST_ABSENT = ".converted.dex.conf.absent";
+	private static final String LEGACY_BACKUP_VERSION = ".converted.timing.version.backup";
+	private static final String LEGACY_BACKUP_VERSION_ABSENT = ".converted.timing.version.absent";
 	private static final String PENDING_MIGRATION = ".converted.timing.pending";
 	private static final String PENDING_MIGRATION_TEMP = ".converted.timing.pending.tmp";
 	private static final Object MIGRATION_LOCK = new Object();
@@ -58,12 +59,18 @@ public final class TimingDexMigrator {
 	}
 
 	public static boolean needsMigration(File appDir) {
-		File marker = child(appDir, Config.MIDLET_TIMING_VERSION_FILE);
-		if (!marker.isFile()) {
+		File archive = findActiveArchive(appDir);
+		File manifest = child(appDir, Config.MIDLET_MANIFEST_FILE);
+		if (!archive.isFile() || !manifest.isFile()) {
 			return true;
 		}
-		String version = FileUtils.getText(marker.getPath()).trim();
-		return !Integer.toString(Config.MIDLET_TIMING_TRANSFORM_VERSION).equals(version);
+		try {
+			Descriptor descriptor = new Descriptor(manifest, false);
+			String value = descriptor.getAttribute(Config.MIDLET_DEX_VERSION_ATTRIBUTE);
+			return value == null || Integer.parseInt(value) < Config.MIDLET_DEX_VERSION;
+		} catch (IOException | NumberFormatException e) {
+			return true;
+		}
 	}
 
 	public static void recoverInterruptedMigration(File appDir) {
@@ -92,16 +99,13 @@ public final class TimingDexMigrator {
 			if (!manifest.isFile()) {
 				throw new IOException("MIDlet manifest is missing");
 			}
-			if (activeArchive == null) {
-				throw new IOException("Previous MIDlet executable is missing");
-			}
 
 			File tempArchive = new File(appDir, TEMP_ARCHIVE);
-			File tempVersion = new File(appDir, TEMP_VERSION);
+			File tempManifest = new File(appDir, TEMP_MANIFEST);
 			File pending = new File(appDir, PENDING_MIGRATION);
 			File pendingTemp = new File(appDir, PENDING_MIGRATION_TEMP);
 			deleteRequired(tempArchive);
-			deleteRequired(tempVersion);
+			deleteRequired(tempManifest);
 			deleteRequired(pendingTemp);
 
 			try {
@@ -112,27 +116,32 @@ public final class TimingDexMigrator {
 				});
 			} catch (Throwable e) {
 				deleteQuietly(tempArchive);
-				throw new IOException("MIDlet conversion failed", e);
+				String detail = e.getMessage();
+				throw new IOException(detail == null || detail.trim().isEmpty()
+						? "MIDlet conversion failed"
+						: "MIDlet conversion failed: " + detail, e);
 			}
 
 			try {
-				validateArchive(tempArchive, manifest);
-				writeAscii(tempVersion,
-						Integer.toString(Config.MIDLET_TIMING_TRANSFORM_VERSION));
-				writeAscii(pendingTemp, activeArchive.getName());
+				Descriptor rebuiltManifest = new Descriptor(manifest, false);
+				rebuiltManifest.setAttribute(Config.MIDLET_DEX_VERSION_ATTRIBUTE,
+						Integer.toString(Config.MIDLET_DEX_VERSION));
+				rebuiltManifest.writeTo(tempManifest);
+				validateArchive(tempArchive, tempManifest);
+				writeAscii(pendingTemp, activeArchive == null ? "" : activeArchive.getName());
 				if (!pendingTemp.renameTo(pending)) {
 					throw new IOException("Unable to prepare migration recovery metadata");
 				}
 			} catch (IOException e) {
 				deleteQuietly(tempArchive);
-				deleteQuietly(tempVersion);
+				deleteQuietly(tempManifest);
 				deleteQuietly(pending);
 				deleteQuietly(pendingTemp);
 				throw e;
 			}
 
 			try {
-				activate(appDir, activeArchive, tempArchive, tempVersion);
+				activate(appDir, activeArchive, tempArchive, tempManifest);
 				deleteQuietly(child(appDir, Config.MIDLET_MONITOR_FALLBACK_FILE));
 			} catch (IOException e) {
 				rollbackPendingMigration(appDir);
@@ -149,13 +158,22 @@ public final class TimingDexMigrator {
 		synchronized (MIGRATION_LOCK) {
 			try {
 				if (successful) {
-					deleteRequired(new File(appDir, BACKUP_ARCHIVE));
-					deleteRequired(new File(appDir, BACKUP_VERSION));
-					deleteRequired(new File(appDir, BACKUP_VERSION_ABSENT));
+					boolean migrationPending = new File(appDir, PENDING_MIGRATION).isFile();
+					// Removing the pending marker is the commit point. Backups
+					// must remain recoverable until that marker is gone.
 					deleteRequired(new File(appDir, PENDING_MIGRATION));
 					deleteRequired(new File(appDir, PENDING_MIGRATION_TEMP));
+					deleteQuietly(new File(appDir, BACKUP_ARCHIVE));
+					deleteQuietly(new File(appDir, BACKUP_MANIFEST));
+					deleteQuietly(new File(appDir, BACKUP_MANIFEST_ABSENT));
 					deleteQuietly(new File(appDir, TEMP_ARCHIVE));
-					deleteQuietly(new File(appDir, TEMP_VERSION));
+					deleteQuietly(new File(appDir, TEMP_MANIFEST));
+					deleteQuietly(child(appDir, Config.MIDLET_TIMING_VERSION_FILE));
+					deleteQuietly(new File(appDir, LEGACY_BACKUP_VERSION));
+					deleteQuietly(new File(appDir, LEGACY_BACKUP_VERSION_ABSENT));
+					if (migrationPending) {
+						pruneRebuiltDirectory(appDir);
+					}
 				} else {
 					rollbackPendingMigration(appDir);
 				}
@@ -168,42 +186,42 @@ public final class TimingDexMigrator {
 	}
 
 	private static void activate(File appDir, File activeArchive, File tempArchive,
-			File tempVersion) throws IOException {
+			File tempManifest) throws IOException {
 		File backupArchive = new File(appDir, BACKUP_ARCHIVE);
-		File marker = child(appDir, Config.MIDLET_TIMING_VERSION_FILE);
-		File backupVersion = new File(appDir, BACKUP_VERSION);
-		File backupVersionAbsent = new File(appDir, BACKUP_VERSION_ABSENT);
+		File manifest = child(appDir, Config.MIDLET_MANIFEST_FILE);
+		File backupManifest = new File(appDir, BACKUP_MANIFEST);
+		File backupManifestAbsent = new File(appDir, BACKUP_MANIFEST_ABSENT);
 		File newArchive = child(appDir, Config.MIDLET_DEX_ARCH);
 
 		requireAbsent(backupArchive);
-		requireAbsent(backupVersion);
-		requireAbsent(backupVersionAbsent);
-		if (!activeArchive.renameTo(backupArchive)) {
+		requireAbsent(backupManifest);
+		requireAbsent(backupManifestAbsent);
+		if (activeArchive != null && !activeArchive.renameTo(backupArchive)) {
 			throw new IOException("Unable to preserve previous MIDlet executable");
 		}
-		if (marker.isFile()) {
-			if (!marker.renameTo(backupVersion)) {
+		if (manifest.isFile()) {
+			if (!manifest.renameTo(backupManifest)) {
 				restoreArchive(activeArchive, backupArchive);
-				throw new IOException("Unable to preserve previous timing marker");
+				throw new IOException("Unable to preserve previous DEX manifest");
 			}
 		} else {
 			try {
-				writeAscii(backupVersionAbsent, "");
+				writeAscii(backupManifestAbsent, "");
 			} catch (IOException e) {
 				restoreArchive(activeArchive, backupArchive);
 				throw e;
 			}
 		}
 		if (!tempArchive.renameTo(newArchive)) {
-			restoreVersion(marker, backupVersion, backupVersionAbsent);
+			restoreManifest(manifest, backupManifest, backupManifestAbsent);
 			restoreArchive(activeArchive, backupArchive);
 			throw new IOException("Unable to activate rebuilt MIDlet executable");
 		}
-		if (!tempVersion.renameTo(marker)) {
+		if (!tempManifest.renameTo(manifest)) {
 			deleteQuietly(newArchive);
-			restoreVersion(marker, backupVersion, backupVersionAbsent);
+			restoreManifest(manifest, backupManifest, backupManifestAbsent);
 			restoreArchive(activeArchive, backupArchive);
-			throw new IOException("Unable to activate rebuilt timing marker");
+			throw new IOException("Unable to activate rebuilt DEX manifest");
 		}
 	}
 
@@ -248,34 +266,37 @@ public final class TimingDexMigrator {
 		File pending = new File(appDir, PENDING_MIGRATION);
 		if (!pending.isFile()) {
 			deleteQuietly(new File(appDir, TEMP_ARCHIVE));
-			deleteQuietly(new File(appDir, TEMP_VERSION));
+			deleteQuietly(new File(appDir, TEMP_MANIFEST));
 			deleteQuietly(new File(appDir, PENDING_MIGRATION_TEMP));
 			return;
 		}
 
 		String originalName = FileUtils.getText(pending.getPath()).trim();
-		if (originalName.isEmpty() || originalName.contains("/")
+		if (originalName.contains("/")
 				|| originalName.contains("\\")) {
 			throw new IOException("Invalid timing migration recovery metadata");
 		}
 
 		File backupArchive = new File(appDir, BACKUP_ARCHIVE);
 		File currentArchive = child(appDir, Config.MIDLET_DEX_ARCH);
-		File originalArchive = new File(appDir, originalName);
 		if (backupArchive.isFile()) {
 			deleteRequired(currentArchive);
-			if (!backupArchive.renameTo(originalArchive)) {
+			if (originalName.isEmpty() || !backupArchive.renameTo(new File(appDir, originalName))) {
 				throw new IOException("Unable to restore previous MIDlet executable");
 			}
+		} else if (originalName.isEmpty()) {
+			deleteRequired(currentArchive);
 		}
-		File marker = child(appDir, Config.MIDLET_TIMING_VERSION_FILE);
-		File backupVersion = new File(appDir, BACKUP_VERSION);
-		File backupVersionAbsent = new File(appDir, BACKUP_VERSION_ABSENT);
-		restoreVersion(marker, backupVersion, backupVersionAbsent);
+		File manifest = child(appDir, Config.MIDLET_MANIFEST_FILE);
+		File backupManifest = new File(appDir, BACKUP_MANIFEST);
+		File backupManifestAbsent = new File(appDir, BACKUP_MANIFEST_ABSENT);
+		restoreManifest(manifest, backupManifest, backupManifestAbsent);
 		deleteRequired(pending);
 		deleteQuietly(new File(appDir, TEMP_ARCHIVE));
-		deleteQuietly(new File(appDir, TEMP_VERSION));
+		deleteQuietly(new File(appDir, TEMP_MANIFEST));
 		deleteQuietly(new File(appDir, PENDING_MIGRATION_TEMP));
+		deleteQuietly(new File(appDir, LEGACY_BACKUP_VERSION));
+		deleteQuietly(new File(appDir, LEGACY_BACKUP_VERSION_ABSENT));
 	}
 
 	private static File findActiveArchive(File appDir) {
@@ -302,15 +323,15 @@ public final class TimingDexMigrator {
 		}
 	}
 
-	private static void restoreVersion(File marker, File backup, File absent)
-			throws IOException {
+	private static void restoreManifest(File manifest, File backup, File absent)
+				throws IOException {
 		if (backup.isFile()) {
-			deleteRequired(marker);
-			if (!backup.renameTo(marker)) {
-				throw new IOException("Unable to restore previous timing marker");
+			deleteRequired(manifest);
+			if (!backup.renameTo(manifest)) {
+				throw new IOException("Unable to restore previous DEX manifest");
 			}
 		} else if (absent.isFile()) {
-			deleteRequired(marker);
+			deleteRequired(manifest);
 		}
 		deleteRequired(absent);
 	}
@@ -325,6 +346,44 @@ public final class TimingDexMigrator {
 	private static void deleteRequired(File file) throws IOException {
 		if (file.exists() && !file.delete()) {
 			throw new IOException("Unable to remove stale migration file: " + file.getName());
+		}
+	}
+
+	private static void pruneRebuiltDirectory(File appDir) throws IOException {
+		File[] files = appDir.listFiles();
+		if (files == null) {
+			throw new IOException("Unable to inspect rebuilt MIDlet directory");
+		}
+		String root = appDir.getCanonicalPath() + File.separator;
+		for (File file : files) {
+			String name = file.getName();
+			if (name.equals(child(appDir, Config.MIDLET_RES_FILE).getName())
+					|| name.equals(child(appDir, Config.MIDLET_RES_JAD_FILE).getName())
+					|| name.equals(child(appDir, Config.MIDLET_ICON_FILE).getName())
+					|| name.equals(child(appDir, Config.MIDLET_DEX_ARCH).getName())
+					|| name.equals(child(appDir, Config.MIDLET_MANIFEST_FILE).getName())) {
+				continue;
+			}
+			deleteTreeRequired(file, root);
+		}
+	}
+
+	private static void deleteTreeRequired(File file, String root) throws IOException {
+		String path = file.getCanonicalPath();
+		if (!path.startsWith(root)) {
+			throw new IOException("Refusing to remove a path outside the MIDlet directory");
+		}
+		if (file.isDirectory()) {
+			File[] children = file.listFiles();
+			if (children == null) {
+				throw new IOException("Unable to inspect stale MIDlet directory");
+			}
+			for (File child : children) {
+				deleteTreeRequired(child, root);
+			}
+		}
+		if (file.exists() && !file.delete()) {
+			throw new IOException("Unable to remove stale MIDlet file: " + file.getName());
 		}
 	}
 

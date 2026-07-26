@@ -36,7 +36,6 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarFile;
@@ -74,6 +73,7 @@ public class AppInstaller {
 	private String appDirName;
 	private File targetDir;
 	private File srcJar;
+	private File srcJad;
 	private File tmpDir;
 	private AppItem currentApp;
 	private File srcFile;
@@ -109,6 +109,8 @@ public class AppInstaller {
 		if (id != -1) {
 			currentApp = appListModel.getApp(id);
 			srcJar = new File(currentApp.getPathExt(), Config.MIDLET_RES_FILE);
+			File existingJad = new File(currentApp.getPathExt(), Config.MIDLET_RES_JAD_FILE);
+			srcJad = existingJad.isFile() ? existingJad : null;
 			newDesc = new Descriptor(new File(currentApp.getPathExt(), Config.MIDLET_MANIFEST_FILE), false);
 			appDirName = currentApp.getPath();
 			targetDir = new File(Config.getAppDir(), appDirName);
@@ -127,6 +129,7 @@ public class AppInstaller {
 		String name = srcFile.getName();
 
 		if (TextUtils.endsWithIgnoreCase(name, ".jad")) {
+			srcJad = srcFile;
 			newDesc = new Descriptor(srcFile, true);
 			String url = newDesc.getJarUrl();
 			if (url == null) {
@@ -144,6 +147,8 @@ public class AppInstaller {
 		} else if (TextUtils.endsWithIgnoreCase(name, ".kjx")) {
 			// Load kjx file
 			parseKjx();
+			// parseKjx replaces srcFile with the embedded JAD, not the KJX container.
+			srcJad = srcFile;
 			newDesc = new Descriptor(srcFile, true);
 		} else {
 			srcJar = srcFile;
@@ -276,14 +281,22 @@ public class AppInstaller {
 					"--output=" + tmpDir + Config.MIDLET_DEX_ARCH,
 					srcJar.getAbsolutePath()});
 		} catch (Throwable e) {
-			throw new ConverterException("Dexing error", e);
+			String detail = e.getMessage();
+			throw new ConverterException(detail == null || detail.trim().isEmpty()
+					? "Dexing error"
+					: "Dexing error: " + detail, e);
 		}
 		if (manifest != null) {
 			manifest.merge(newDesc);
 			newDesc = manifest;
 		}
+		newDesc.setAttribute(Config.MIDLET_DEX_VERSION_ATTRIBUTE,
+				Integer.toString(Config.MIDLET_DEX_VERSION));
 		File resJar = new File(tmpDir, Config.MIDLET_RES_FILE);
 		FileUtils.copyFileUsingChannel(srcJar, resJar);
+		if (srcJad != null && srcJad.isFile()) {
+			FileUtils.copyFileUsingChannel(srcJad, new File(tmpDir, Config.MIDLET_RES_JAD_FILE));
+		}
 		String icon = newDesc.getIcon();
 		File iconFile = new File(tmpDir, Config.MIDLET_ICON_FILE);
 		if (icon != null) {
@@ -296,7 +309,6 @@ public class AppInstaller {
 			}
 		}
 		newDesc.writeTo(new File(tmpDir, Config.MIDLET_MANIFEST_FILE));
-		writeTimingTransformVersion(tmpDir);
 		FileUtils.deleteDirectory(targetDir);
 		if (!tmpDir.renameTo(targetDir)) {
 			throw new ConverterException("Can't move '" + tmpDir + "' to '" + targetDir + "'");
@@ -330,14 +342,6 @@ public class AppInstaller {
 		clearCache();
 		deleteTemp();
 		emitter.onSuccess(STATUS_SUCCESS);
-	}
-
-	private void writeTimingTransformVersion(File directory) throws IOException {
-		File marker = new File(directory, Config.MIDLET_TIMING_VERSION_FILE);
-		try (OutputStream output = new FileOutputStream(marker)) {
-			output.write(Integer.toString(Config.MIDLET_TIMING_TRANSFORM_VERSION)
-					.getBytes(StandardCharsets.US_ASCII));
-		}
 	}
 
 	private Descriptor loadManifest(File jar) throws IOException {

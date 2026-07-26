@@ -152,12 +152,17 @@ public class MicroLoader {
 	}
 
 	private boolean hasCurrentTimingTransform() {
-		File marker = new File(appDir, Config.MIDLET_TIMING_VERSION_FILE);
-		if (!marker.isFile()) {
+		File manifest = new File(appDir, Config.MIDLET_MANIFEST_FILE);
+		if (!manifest.isFile()) {
 			return false;
 		}
-		String version = FileUtils.getText(marker.getPath()).trim();
-		return Integer.toString(Config.MIDLET_TIMING_TRANSFORM_VERSION).equals(version);
+		try {
+			Descriptor descriptor = new Descriptor(manifest, false);
+			String value = descriptor.getAttribute(Config.MIDLET_DEX_VERSION_ATTRIBUTE);
+			return value != null && Integer.parseInt(value) >= Config.MIDLET_DEX_VERSION;
+		} catch (IOException | NumberFormatException e) {
+			return false;
+		}
 	}
 
 	Map<String, String> loadMIDletList() throws IOException {
@@ -188,7 +193,9 @@ public class MicroLoader {
 				descriptor = new Descriptor(text, false);
 			}
 		}
-		Map<String, String> attr = descriptor.getAttrs();
+		Map<String, String> attr = new LinkedHashMap<>(descriptor.getAttrs());
+		// This is an emulator-side build marker, not a MIDlet application property.
+		attr.remove(Config.MIDLET_DEX_VERSION_ATTRIBUTE);
 		ErrorReporter errorReporter = ACRA.getErrorReporter();
 		String report = errorReporter.getCustomData(Constants.KEY_CRASH_ATTACHMENT);
 		StringBuilder sb = new StringBuilder();
