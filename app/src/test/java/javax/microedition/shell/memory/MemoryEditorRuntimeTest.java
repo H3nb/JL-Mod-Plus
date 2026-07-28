@@ -20,6 +20,8 @@ import org.junit.After;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -125,6 +127,92 @@ public class MemoryEditorRuntimeTest {
 		assertTrue(MemoryEditorRuntime.undo());
 		assertEquals(8, fixture.value);
 		assertFalse(MemoryEditorRuntime.undo());
+	}
+
+	@Test
+	public void gameGenerationSearchSessionAndOperationIdsHaveSeparateLifecycles() {
+		long generation = MemoryEditorRuntime.beginGame();
+		long firstSession = MemoryEditorRuntime.begin(
+				MemoryEditorRuntime.ValueKind.INT,
+				MemoryEditorRuntime.SearchMode.UNKNOWN, null, null);
+		Fixture fixture = new Fixture();
+		MemoryEditorBridge.onReadInt(fixture, Fixture.class, "valueI", SITE, -1, 7);
+
+		MemoryEditorRuntime.OperationResult edit =
+				MemoryEditorRuntime.editCandidates(firstSession, null, "8");
+		assertEquals(MemoryEditorRuntime.OperationStatus.SUCCESS, edit.status);
+		assertEquals(firstSession, edit.searchSessionId);
+		assertTrue(edit.operationId > 0);
+
+		MemoryEditorRuntime.resetSearch();
+		assertEquals(generation, MemoryEditorRuntime.snapshot().gameGeneration);
+		assertEquals(0, MemoryEditorRuntime.snapshot().searchSessionId);
+
+		long secondSession = MemoryEditorRuntime.begin(
+				MemoryEditorRuntime.ValueKind.INT,
+				MemoryEditorRuntime.SearchMode.UNKNOWN, null, null);
+		assertTrue(secondSession > firstSession);
+		MemoryEditorRuntime.endGame();
+		assertTrue(MemoryEditorRuntime.snapshot().gameGeneration > generation);
+		assertEquals(0, MemoryEditorRuntime.snapshot().searchSessionId);
+	}
+
+	@Test
+	public void oldSessionOperationsAreRejectedWithoutChangingTheNewSearch() {
+		long oldSession = MemoryEditorRuntime.begin(
+				MemoryEditorRuntime.ValueKind.INT,
+				MemoryEditorRuntime.SearchMode.UNKNOWN, null, null);
+		long currentSession = MemoryEditorRuntime.begin(
+				MemoryEditorRuntime.ValueKind.INT,
+				MemoryEditorRuntime.SearchMode.UNKNOWN, null, null);
+		Fixture fixture = new Fixture();
+		MemoryEditorBridge.onReadInt(fixture, Fixture.class, "valueI", SITE, -1, 7);
+
+		MemoryEditorRuntime.OperationResult stale =
+				MemoryEditorRuntime.editCandidates(oldSession, null, "99");
+
+		assertEquals(MemoryEditorRuntime.OperationStatus.STALE_SESSION, stale.status);
+		assertEquals(7, fixture.value);
+		assertEquals(currentSession, MemoryEditorRuntime.snapshot().searchSessionId);
+		assertEquals(1, MemoryEditorRuntime.snapshot().candidates);
+	}
+
+	@Test
+	public void snapshotReportsBoundedCandidateMemoryAndStructuredErrors() {
+		int[] values = {1, 2, 3};
+		MemoryEditorRuntime.begin(MemoryEditorRuntime.ValueKind.INT,
+				MemoryEditorRuntime.SearchMode.UNKNOWN, null, null);
+		for (int index = 0; index < values.length; index++) {
+			MemoryEditorBridge.onReadInt(values, null, "#array", SITE, index, values[index]);
+		}
+
+		MemoryEditorRuntime.Snapshot snapshot = MemoryEditorRuntime.snapshot();
+		assertTrue(snapshot.candidateBytes > 0);
+		assertTrue(snapshot.candidateBytes <= snapshot.candidateByteBudget);
+
+		try {
+			MemoryEditorRuntime.refine(MemoryEditorRuntime.SearchMode.EXACT, "", null);
+			fail("Expected a structured invalid-value error");
+		} catch (MemoryEditorRuntime.MemoryEditorException error) {
+			assertEquals(MemoryEditorRuntime.ErrorCode.INVALID_VALUE, error.code);
+		}
+	}
+
+	@Test
+	public void candidateByteBudgetStopsCollectionWithPartialResults() {
+		int[] values = new int[45_000];
+		MemoryEditorRuntime.begin(MemoryEditorRuntime.ValueKind.INT,
+				MemoryEditorRuntime.SearchMode.UNKNOWN, null, null);
+		for (int index = 0; index < values.length; index++) {
+			MemoryEditorBridge.onReadInt(values, null, "#array", SITE, index, index);
+		}
+
+		MemoryEditorRuntime.Snapshot snapshot = MemoryEditorRuntime.snapshot();
+		assertTrue(snapshot.limitReached);
+		assertFalse(snapshot.collecting);
+		assertTrue(snapshot.candidates < values.length);
+		assertTrue(snapshot.candidateBytes <= snapshot.candidateByteBudget);
+		assertFalse(MemoryEditorBridge.isKindActive(1));
 	}
 
 	@Test
@@ -314,13 +402,85 @@ public class MemoryEditorRuntimeTest {
 				StaticFixture.value);
 
 		MemoryEditorRuntime.Snapshot snapshot = MemoryEditorRuntime.snapshot();
-		assertEquals(2, snapshot.intObservations);
+		assertEquals(0, snapshot.intObservations);
 		assertEquals(1, snapshot.longObservations);
-		assertEquals(2, snapshot.arrayObservations);
+		assertEquals(0, snapshot.arrayObservations);
 		assertEquals(1, snapshot.fieldObservations);
-		assertEquals(2, snapshot.readObservations);
-		assertEquals(1, snapshot.writeObservations);
+		assertEquals(1, snapshot.readObservations);
+		assertEquals(0, snapshot.writeObservations);
 		assertEquals(1, snapshot.candidates);
+	}
+
+	@Test
+	public void hookGateTracksCollectingResultsFreezeAndSessionLifecycle() {
+		StaticFixture.value = 12L;
+		assertFalse(MemoryEditorBridge.isKindActive(1));
+		assertFalse(MemoryEditorBridge.isKindActive(2));
+
+		long sessionId = MemoryEditorRuntime.begin(MemoryEditorRuntime.ValueKind.LONG,
+				MemoryEditorRuntime.SearchMode.UNKNOWN, null, null);
+		assertFalse(MemoryEditorBridge.isKindActive(1));
+		assertTrue(MemoryEditorBridge.isKindActive(2));
+		MemoryEditorBridge.onReadLong(null, StaticFixture.class, "valueJ", SITE, -2,
+				StaticFixture.value);
+
+		assertFalse(MemoryEditorRuntime.finishCollection(sessionId + 1));
+		assertTrue(MemoryEditorBridge.isKindActive(2));
+		assertTrue(MemoryEditorRuntime.finishCollection(sessionId));
+		assertFalse(MemoryEditorBridge.isKindActive(2));
+
+		assertTrue(MemoryEditorRuntime.resumeCollection(sessionId));
+		assertTrue(MemoryEditorBridge.isKindActive(2));
+		MemoryEditorRuntime.finishCollection();
+		assertEquals(1, MemoryEditorRuntime.freezeAll("44"));
+		assertTrue(MemoryEditorBridge.isKindActive(2));
+
+		MemoryEditorRuntime.clearFreeze();
+		assertFalse(MemoryEditorBridge.isKindActive(2));
+		MemoryEditorRuntime.resetSearch();
+		assertFalse(MemoryEditorBridge.isKindActive(2));
+	}
+
+	@Test
+	public void sessionChurnDoesNotRecurseOrDeadlockResultReaders() throws Exception {
+		CountDownLatch start = new CountDownLatch(1);
+		AtomicReference<Throwable> failure = new AtomicReference<>();
+		Thread writer = new Thread(() -> {
+			await(start, failure);
+			for (int iteration = 0; iteration < 2_000 && failure.get() == null; iteration++) {
+				try {
+					MemoryEditorRuntime.begin(MemoryEditorRuntime.ValueKind.INT,
+							MemoryEditorRuntime.SearchMode.UNKNOWN, null, null);
+					MemoryEditorRuntime.resetSearch();
+				} catch (Throwable error) {
+					failure.compareAndSet(null, error);
+				}
+			}
+		}, "memory-editor-session-writer");
+		Thread reader = new Thread(() -> {
+			await(start, failure);
+			for (int iteration = 0; iteration < 2_000 && failure.get() == null; iteration++) {
+				try {
+					MemoryEditorRuntime.snapshot();
+					MemoryEditorRuntime.results(0, 1);
+					MemoryEditorRuntime.savedResults(0, 1);
+				} catch (Throwable error) {
+					failure.compareAndSet(null, error);
+				}
+			}
+		}, "memory-editor-session-reader");
+
+		writer.start();
+		reader.start();
+		start.countDown();
+		writer.join(10_000);
+		reader.join(10_000);
+
+		assertFalse("Session writer deadlocked", writer.isAlive());
+		assertFalse("Result reader deadlocked", reader.isAlive());
+		if (failure.get() != null) {
+			throw new AssertionError("Concurrent session access failed", failure.get());
+		}
 	}
 
 	@Test
@@ -340,6 +500,27 @@ public class MemoryEditorRuntimeTest {
 		MemoryEditorRuntime.Snapshot snapshot = MemoryEditorRuntime.snapshot();
 		assertFalse(snapshot.collecting);
 		assertEquals(1, snapshot.candidates);
+	}
+
+	@Test
+	public void collectionCanResumeWithoutDiscardingExistingCandidates() {
+		Fixture first = new Fixture();
+		Fixture second = new Fixture();
+		long sessionId = MemoryEditorRuntime.begin(MemoryEditorRuntime.ValueKind.INT,
+				MemoryEditorRuntime.SearchMode.UNKNOWN, null, null);
+		MemoryEditorBridge.onReadInt(first, Fixture.class, "valueI", SITE, -1, 7);
+		MemoryEditorRuntime.finishCollection();
+
+		assertTrue(MemoryEditorRuntime.resumeCollection(sessionId));
+		assertTrue(MemoryEditorRuntime.snapshot().collecting);
+		MemoryEditorBridge.onReadInt(second, Fixture.class, "valueI", SITE, -1, 8);
+		MemoryEditorRuntime.finishCollection();
+
+		assertEquals(2, MemoryEditorRuntime.snapshot().candidates);
+		assertFalse(MemoryEditorRuntime.resumeCollection(sessionId + 1));
+		MemoryEditorRuntime.refine(sessionId,
+				MemoryEditorRuntime.SearchMode.CHANGED, null, null);
+		assertFalse(MemoryEditorRuntime.resumeCollection(sessionId));
 	}
 
 	@Test
@@ -403,6 +584,15 @@ public class MemoryEditorRuntimeTest {
 			fail("Expected invalid search criteria");
 		} catch (IllegalArgumentException expected) {
 			// Expected.
+		}
+	}
+
+	private static void await(CountDownLatch latch, AtomicReference<Throwable> failure) {
+		try {
+			latch.await();
+		} catch (InterruptedException error) {
+			Thread.currentThread().interrupt();
+			failure.compareAndSet(null, error);
 		}
 	}
 

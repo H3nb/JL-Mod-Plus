@@ -17,6 +17,7 @@
 package javax.microedition.shell.memory.ui
 
 import android.app.Dialog
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -48,9 +49,14 @@ class MemoryEditorDialogFragment : DialogFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val enabled = PreferenceManager.getDefaultSharedPreferences(requireContext())
-            .getBoolean(PREF_PAUSE, false)
-        viewModel.setPauseEnabled(enabled)
+        val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        viewModel.setPauseEnabled(preferences.getBoolean(PREF_PAUSE, false))
+        viewModel.setLayoutTransparency(
+            preferences.getInt(
+                PREF_LAYOUT_TRANSPARENCY,
+                DEFAULT_LAYOUT_TRANSPARENCY,
+            ).toFloat() / 100f,
+        )
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
@@ -64,6 +70,7 @@ class MemoryEditorDialogFragment : DialogFragment() {
         savedInstanceState: Bundle?,
     ): View = ComposeView(requireContext()).apply {
         id = View.generateViewId()
+        setBackgroundColor(Color.TRANSPARENT)
         setViewCompositionStrategy(
             ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed,
         )
@@ -81,8 +88,11 @@ class MemoryEditorDialogFragment : DialogFragment() {
                             dismissAllowingStateLoss()
                         }
                     },
-                    finishCollection = viewModel::finishCollection,
-                    refresh = viewModel::refreshResults,
+                    continueCollection = {
+                        viewModel.continueCollection {
+                            dismissAllowingStateLoss()
+                        }
+                    },
                     refine = viewModel::refine,
                     toggleSelection = viewModel::toggleSelection,
                     clearSelection = viewModel::clearSelection,
@@ -95,8 +105,10 @@ class MemoryEditorDialogFragment : DialogFragment() {
                     loadMore = viewModel::loadMore,
                     undo = viewModel::undo,
                     reset = viewModel::reset,
+                    cancelOperation = viewModel::cancelOperation,
                     clearMessage = viewModel::clearMessage,
                     setPauseEnabled = ::setPauseEnabled,
+                    setLayoutTransparency = ::setLayoutTransparency,
                     setPeeking = ::setPeeking,
                 )
             }
@@ -121,14 +133,12 @@ class MemoryEditorDialogFragment : DialogFragment() {
     override fun onStart() {
         super.onStart()
         applyPause(viewModel.state.value.pauseEnabled)
+        viewModel.loadExistingSession()
         dialog?.window?.apply {
             setBackgroundDrawableResource(android.R.color.transparent)
-            setDimAmount(0.55f)
+            setDimAmount(dimAmount(viewModel.state.value.layoutTransparency))
             addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-            setSoftInputMode(
-                WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE or
-                    WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN,
-            )
+            setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
             setLayout(
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.MATCH_PARENT,
@@ -163,16 +173,33 @@ class MemoryEditorDialogFragment : DialogFragment() {
         }
     }
 
+    private fun setLayoutTransparency(transparency: Float) {
+        val percent = (transparency.coerceIn(0f, MAX_LAYOUT_TRANSPARENCY) * 100).toInt()
+        PreferenceManager.getDefaultSharedPreferences(requireContext())
+            .edit { putInt(PREF_LAYOUT_TRANSPARENCY, percent) }
+        viewModel.setLayoutTransparency(percent.toFloat() / 100f)
+        dialog?.window?.setDimAmount(dimAmount(percent.toFloat() / 100f))
+    }
+
     private fun setPeeking(enabled: Boolean) {
-        dialog?.window?.setDimAmount(if (enabled) 0.05f else 0.55f)
+        dialog?.window?.setDimAmount(
+            if (enabled) 0f else dimAmount(viewModel.state.value.layoutTransparency),
+        )
         if (enabled) {
             dialog?.window?.decorView?.let { SoftwareKeyboardControllerCompat(it).hide() }
         }
     }
 
+    private fun dimAmount(layoutTransparency: Float): Float =
+        DEFAULT_DIM_AMOUNT * (1f - layoutTransparency.coerceIn(0f, MAX_LAYOUT_TRANSPARENCY))
+
     companion object {
         private const val TAG = "memory-editor"
         private const val PREF_PAUSE = "memory_editor_pause"
+        private const val PREF_LAYOUT_TRANSPARENCY = "memory_editor_layout_transparency"
+        private const val DEFAULT_LAYOUT_TRANSPARENCY = 0
+        private const val MAX_LAYOUT_TRANSPARENCY = 0.8f
+        private const val DEFAULT_DIM_AMOUNT = 0.55f
 
         @JvmStatic
         fun show(fragmentManager: FragmentManager) {

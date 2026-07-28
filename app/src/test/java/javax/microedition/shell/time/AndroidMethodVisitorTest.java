@@ -259,7 +259,8 @@ public class AndroidMethodVisitorTest {
 			original = input.readAllBytes();
 		}
 		ClassReader reader = new ClassReader(original);
-		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+		ClassWriter writer = new ClassWriter(
+				ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
 		reader.accept(new AndroidClassVisitor(writer), ClassReader.SKIP_DEBUG);
 		byte[] transformed = writer.toByteArray();
 		return new FixtureClassLoader().define(transformed);

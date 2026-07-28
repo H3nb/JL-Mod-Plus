@@ -18,18 +18,23 @@ package javax.microedition.shell.memory.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
+import org.junit.Assert.assertEquals
 import javax.microedition.shell.memory.MemoryEditorRuntime
 
 class MemoryEditorScreenTest {
@@ -55,7 +60,7 @@ class MemoryEditorScreenTest {
     }
 
     @Test
-    fun comparisonSearchShowsOneValueAndFocusedInputDock() {
+    fun comparisonSearchOpensAValueDialogWithPermanentKeypad() {
         composeRule.setContent {
             MemoryEditorTheme {
                 MemoryEditorScreen(
@@ -70,7 +75,56 @@ class MemoryEditorScreenTest {
 
         composeRule.onNodeWithTag("memory_value").performClick()
         composeRule.onNodeWithTag("memory_maximum").assertDoesNotExist()
-        composeRule.onNodeWithTag("memory_input_dock").assertExists()
+        composeRule.onNodeWithTag("memory_input_dialog_value").assertExists()
+        composeRule.onAllNodesWithTag("memory_input_dialog_value").assertCountEquals(1)
+        composeRule.onNodeWithTag("memory_numeric_keypad").assertExists()
+        composeRule.onNodeWithText("HEX").assertDoesNotExist()
+    }
+
+    @Test
+    fun preparingSearchUsesPopupWithoutShowingTheOldCollectionScreen() {
+        composeRule.setContent {
+            MemoryEditorTheme {
+                MemoryEditorScreen(
+                    state = MemoryEditorUiState(
+                        phase = MemoryEditorPhase.COLLECTING,
+                        preparingSearch = true,
+                    ),
+                    actions = MemoryEditorActions(),
+                    onClose = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("memory_preparing_search").assertExists()
+        composeRule.onNodeWithTag("memory_finish").assertDoesNotExist()
+    }
+
+    @Test
+    fun finishedInitialSearchCanContinueCollectingFromResults() {
+        var continued = false
+        composeRule.setContent {
+            MemoryEditorTheme {
+                MemoryEditorScreen(
+                    state = MemoryEditorUiState(
+                        phase = MemoryEditorPhase.RESULTS,
+                        snapshot = MemoryEditorSnapshot(
+                            searchSessionId = 7,
+                            kind = MemoryEditorRuntime.ValueKind.INT,
+                            mode = MemoryEditorRuntime.SearchMode.UNKNOWN,
+                            collecting = false,
+                        ),
+                    ),
+                    actions = MemoryEditorActions(
+                        continueCollection = { continued = true },
+                    ),
+                    onClose = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("memory_continue_collection").performClick()
+        composeRule.runOnIdle { assertEquals(true, continued) }
     }
 
     @Test
@@ -199,5 +253,68 @@ class MemoryEditorScreenTest {
 
         composeRule.onNodeWithTag("memory_tab_settings").performClick()
         composeRule.onNodeWithTag("memory_pause").assertIsOff()
+        composeRule.onNodeWithTag("memory_layout_transparency").assertExists()
+    }
+
+    @Test
+    fun holdToViewGameReportsPressAndRelease() {
+        val events = mutableListOf<Boolean>()
+        composeRule.setContent {
+            MemoryEditorTheme {
+                MemoryEditorScreen(
+                    state = MemoryEditorUiState(layoutTransparency = 0.4f),
+                    actions = MemoryEditorActions(setPeeking = events::add),
+                    onClose = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("memory_peek").performTouchInput {
+            down(center)
+            advanceEventTime(400)
+            up()
+        }
+
+        composeRule.runOnIdle {
+            assertEquals(listOf(true, false), events)
+        }
+    }
+
+    @Test
+    fun landscapeInputDialogKeepsItsInternalKeypadVisible() {
+        composeRule.setContent {
+            Box(Modifier.requiredSize(760.dp, 420.dp)) {
+                MemoryEditorTheme {
+                    MemoryEditorScreen(
+                        state = MemoryEditorUiState(
+                            initialMode = MemoryEditorRuntime.SearchMode.EXACT,
+                        ),
+                        actions = MemoryEditorActions(),
+                        onClose = {},
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithTag("memory_value").performClick()
+        composeRule.onNodeWithTag("memory_input_dialog_value").assertExists()
+        composeRule.onNodeWithTag("memory_numeric_keypad").assertExists()
+    }
+
+    @Test
+    fun searchAndResultsUseOneTab() {
+        composeRule.setContent {
+            MemoryEditorTheme {
+                MemoryEditorScreen(
+                    state = MemoryEditorUiState(phase = MemoryEditorPhase.RESULTS),
+                    actions = MemoryEditorActions(),
+                    onClose = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("memory_tab_search").assertExists()
+        composeRule.onNodeWithTag("memory_tab_results").assertDoesNotExist()
+        composeRule.onNodeWithTag("memory_results").assertExists()
     }
 }

@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
 
@@ -45,10 +46,36 @@ public final class MemoryEditorRuntime {
 		INCREASED, DECREASED, RANGE
 	}
 
+	public enum OperationStatus {
+		SUCCESS, PARTIAL, CANCELLED, STALE_SESSION, NO_SESSION
+	}
+
+	public enum ErrorCode {
+		INVALID_KIND, INVALID_MODE, INVALID_VALUE, INVALID_RANGE, INVALID_RESULT_PAGE
+	}
+
+	public static final class MemoryEditorException extends IllegalArgumentException {
+		public final ErrorCode code;
+
+		private MemoryEditorException(ErrorCode code, String message) {
+			super(message);
+			this.code = code;
+		}
+
+		private MemoryEditorException(ErrorCode code, String message, Throwable cause) {
+			super(message, cause);
+			this.code = code;
+		}
+	}
+
 	public static final class Snapshot {
+		public final long gameGeneration;
+		public final long searchSessionId;
 		public final int candidates;
 		public final int frozen;
 		public final int saved;
+		public final long candidateBytes;
+		public final long candidateByteBudget;
 		public final ValueKind kind;
 		public final SearchMode mode;
 		public final boolean limitReached;
@@ -63,14 +90,20 @@ public final class MemoryEditorRuntime {
 		public final long readObservations;
 		public final long writeObservations;
 
-		private Snapshot(int candidates, int frozen, int saved, ValueKind kind, SearchMode mode,
+		private Snapshot(long gameGeneration, long searchSessionId,
+				int candidates, int frozen, int saved, long candidateBytes,
+				long candidateByteBudget, ValueKind kind, SearchMode mode,
 				boolean limitReached, boolean collecting, boolean undoAvailable,
 				long intObservations, long longObservations, long floatObservations,
 				long doubleObservations, long fieldObservations, long arrayObservations,
 				long readObservations, long writeObservations) {
+			this.gameGeneration = gameGeneration;
+			this.searchSessionId = searchSessionId;
 			this.candidates = candidates;
 			this.frozen = frozen;
 			this.saved = saved;
+			this.candidateBytes = candidateBytes;
+			this.candidateByteBudget = candidateByteBudget;
 			this.kind = kind;
 			this.mode = mode;
 			this.limitReached = limitReached;
@@ -128,40 +161,108 @@ public final class MemoryEditorRuntime {
 
 	/** Detailed result for edit/freeze operations over selected candidates. */
 	public static final class OperationResult {
+		public final long searchSessionId;
+		public final long operationId;
+		public final OperationStatus status;
 		public final int requested;
 		public final int succeeded;
 		public final int failed;
 
-		private OperationResult(int requested, int succeeded) {
+		private OperationResult(long searchSessionId, long operationId,
+				OperationStatus status, int requested, int succeeded) {
+			this.searchSessionId = searchSessionId;
+			this.operationId = operationId;
+			this.status = status;
 			this.requested = requested;
 			this.succeeded = succeeded;
 			this.failed = requested - succeeded;
 		}
 	}
 
+	public static final class OperationProgress {
+		public final long searchSessionId;
+		public final long operationId;
+		public final int completed;
+		public final int total;
+		public final boolean cancellable;
+
+		private OperationProgress(long searchSessionId, long operationId,
+				int completed, int total, boolean cancellable) {
+			this.searchSessionId = searchSessionId;
+			this.operationId = operationId;
+			this.completed = completed;
+			this.total = total;
+			this.cancellable = cancellable;
+		}
+	}
+
 	private static final int MAX_CANDIDATES = 50_000;
+	private static final long MAX_CANDIDATE_BYTES = 8L * 1024L * 1024L;
+	private static final int MAX_SESSION_READ_RETRIES = 3;
 	private static final int INSTANCE_FIELD_INDEX = -1;
 	private static final int STATIC_FIELD_INDEX = -2;
 	private static final String ARRAY_MEMBER = "#array";
-	private static final Object LOCK = new Object();
+	private static final Object SESSION_LOCK = new Object();
+	private static final AtomicLong NEXT_GAME_GENERATION = new AtomicLong(1);
+	private static final AtomicLong NEXT_SEARCH_SESSION_ID = new AtomicLong(1);
+	private static final AtomicLong NEXT_OPERATION_ID = new AtomicLong(1);
+	private static volatile long gameGeneration = 1;
 	private static volatile Session session;
 
 	private MemoryEditorRuntime() {
 	}
 
-	public static void begin(ValueKind kind, SearchMode mode, String first, String second) {
+	private static OperationResult noSessionResult() {
+		return new OperationResult(0, 0, OperationStatus.NO_SESSION, 0, 0);
+	}
+
+	private static OperationResult staleSessionResult(long expectedSessionId) {
+		return new OperationResult(expectedSessionId, 0,
+				OperationStatus.STALE_SESSION, 0, 0);
+	}
+
+	private static Snapshot emptySnapshot() {
+		return new Snapshot(gameGeneration, 0, 0, 0, 0, 0,
+				MAX_CANDIDATE_BYTES, null, null, false, false, false,
+				0, 0, 0, 0, 0, 0, 0, 0);
+	}
+
+	private static int kindMask(ValueKind kind) {
+		return 1 << kind.ordinal();
+	}
+
+	/** Caller must hold {@code active.lock}. */
+	private static void updateActiveKindsLocked(Session active) {
+		synchronized (SESSION_LOCK) {
+			if (active != session || active.closed) {
+				return;
+			}
+			MemoryEditorBridge.setActiveKinds(
+					active.collecting || !active.frozen.isEmpty()
+							? kindMask(active.kind) : 0);
+		}
+	}
+
+	public static long begin(ValueKind kind, SearchMode mode, String first, String second) {
 		if (kind == null || mode == null) {
-			throw new IllegalArgumentException("Search kind and mode are required");
+			throw new MemoryEditorException(
+					kind == null ? ErrorCode.INVALID_KIND : ErrorCode.INVALID_MODE,
+					"Search kind and mode are required");
 		}
 		if (mode != SearchMode.EXACT && mode != SearchMode.NOT_EQUAL
 				&& mode != SearchMode.LESS_THAN && mode != SearchMode.GREATER_THAN
 				&& mode != SearchMode.UNKNOWN && mode != SearchMode.RANGE) {
-			throw new IllegalArgumentException(
+			throw new MemoryEditorException(ErrorCode.INVALID_MODE,
 					"Initial search mode is not supported");
 		}
 		Criteria criteria = parseCriteria(kind, mode, first, second);
-		synchronized (LOCK) {
-			session = new Session(kind, mode, criteria.lower, criteria.upper);
+		synchronized (SESSION_LOCK) {
+			closeSession(session);
+			long sessionId = NEXT_SEARCH_SESSION_ID.getAndIncrement();
+			session = new Session(gameGeneration, sessionId, kind, mode,
+					criteria.lower, criteria.upper);
+			MemoryEditorBridge.setActiveKinds(kindMask(kind));
+			return sessionId;
 		}
 	}
 
@@ -170,44 +271,129 @@ public final class MemoryEditorRuntime {
 	 * the baseline for refinement.
 	 */
 	public static void finishCollection() {
-		synchronized (LOCK) {
-			if (session != null) {
-				session.collecting = false;
+		Session active = session;
+		finishCollection(active == null ? 0 : active.searchSessionId);
+	}
+
+	public static boolean finishCollection(long expectedSessionId) {
+		Session active = session;
+		if (active == null || active.searchSessionId != expectedSessionId) {
+			return false;
+		}
+		synchronized (active.lock) {
+			if (active != session || active.closed) {
+				return false;
 			}
+			active.collecting = false;
+			updateActiveKindsLocked(active);
+			return true;
 		}
 	}
 
-	public static void refine(SearchMode mode, String first, String second) {
-		if (mode == null) {
-			throw new IllegalArgumentException("Search mode is required");
+	/**
+	 * Resumes accepting new locations for the current initial-search criteria.
+	 * Existing candidates and their baselines are retained.
+	 */
+	public static boolean resumeCollection(long expectedSessionId) {
+		Session active = session;
+		if (active == null || active.searchSessionId != expectedSessionId) {
+			return false;
 		}
-		synchronized (LOCK) {
-			if (session == null) {
-				return;
+		synchronized (active.lock) {
+			if (active != session || active.closed || active.limitReached
+					|| !active.supportsCollection()) {
+				return false;
 			}
-			Criteria criteria = parseCriteria(session.kind, mode, first, second);
-			session.refine(mode, criteria.lower, criteria.upper);
+			active.collecting = true;
+			updateActiveKindsLocked(active);
+			return true;
+		}
+	}
+
+	public static OperationResult refine(SearchMode mode, String first, String second) {
+		Session active = session;
+		return refine(active == null ? 0 : active.searchSessionId, mode, first, second);
+	}
+
+	public static OperationResult refine(long expectedSessionId,
+			SearchMode mode, String first, String second) {
+		if (mode == null) {
+			throw new MemoryEditorException(ErrorCode.INVALID_MODE, "Search mode is required");
+		}
+		Session active = session;
+		if (active == null) {
+			return noSessionResult();
+		}
+		if (active.searchSessionId != expectedSessionId) {
+			return staleSessionResult(expectedSessionId);
+		}
+		Criteria criteria = parseCriteria(active.kind, mode, first, second);
+		synchronized (active.lock) {
+			if (active != session || active.closed) {
+				return staleSessionResult(expectedSessionId);
+			}
+			int requested = active.size();
+			long operationId = active.startOperation(requested);
+			OperationStatus status = active.refine(mode, criteria.lower, criteria.upper);
+			int succeeded = status == OperationStatus.SUCCESS ? requested : 0;
+			active.finishOperation(operationId);
+			updateActiveKindsLocked(active);
+			return new OperationResult(active.searchSessionId, operationId, status,
+					requested, succeeded);
 		}
 	}
 
 	public static Snapshot snapshot() {
-		synchronized (LOCK) {
-			if (session == null) {
-				return new Snapshot(0, 0, 0, null, null, false, false, false,
-						0, 0, 0, 0, 0, 0, 0, 0);
+		for (int attempt = 0; attempt < MAX_SESSION_READ_RETRIES; attempt++) {
+			Session active = session;
+			if (active == null) {
+				return emptySnapshot();
 			}
-			session.purgeCollected();
-			return new Snapshot(session.size(), session.frozen.size(), session.saved.size(),
-					session.kind,
-					session.mode, session.limitReached, session.collecting,
-					!session.undo.isEmpty(),
-					session.observations.get(ValueKind.INT.ordinal()),
-					session.observations.get(ValueKind.LONG.ordinal()),
-					session.observations.get(ValueKind.FLOAT.ordinal()),
-					session.observations.get(ValueKind.DOUBLE.ordinal()),
-					session.fieldObservations.get(), session.arrayObservations.get(),
-					session.readObservations.get(), session.writeObservations.get());
+			synchronized (active.lock) {
+				if (active != session || active.closed) {
+					continue;
+				}
+				active.purgeCollected();
+				updateActiveKindsLocked(active);
+				return new Snapshot(active.gameGeneration, active.searchSessionId,
+						active.size(), active.frozen.size(), active.saved.size(),
+						active.candidateBytes, MAX_CANDIDATE_BYTES,
+						active.kind,
+						active.mode, active.limitReached, active.collecting,
+						!active.undo.isEmpty(),
+						active.observations.get(ValueKind.INT.ordinal()),
+						active.observations.get(ValueKind.LONG.ordinal()),
+						active.observations.get(ValueKind.FLOAT.ordinal()),
+						active.observations.get(ValueKind.DOUBLE.ordinal()),
+						active.fieldObservations.get(), active.arrayObservations.get(),
+						active.readObservations.get(), active.writeObservations.get());
+			}
 		}
+		return emptySnapshot();
+	}
+
+	public static OperationProgress operationProgress() {
+		Session active = session;
+		if (active == null) {
+			return new OperationProgress(0, 0, 0, 0, false);
+		}
+		long operationId = active.activeOperationId.get();
+		return new OperationProgress(
+				active.searchSessionId,
+				operationId,
+				(int) Math.min(Integer.MAX_VALUE, active.operationCompleted.get()),
+				(int) Math.min(Integer.MAX_VALUE, active.operationTotal.get()),
+				operationId != 0);
+	}
+
+	public static boolean cancelOperation(long expectedSessionId, long operationId) {
+		Session active = session;
+		if (active == null || active.searchSessionId != expectedSessionId
+				|| active.activeOperationId.get() != operationId) {
+			return false;
+		}
+		active.cancelRequested.set(true);
+		return true;
 	}
 
 	public static int editAll(String text) {
@@ -215,31 +401,54 @@ public final class MemoryEditorRuntime {
 	}
 
 	public static OperationResult editCandidates(long[] candidateIds, String text) {
-		synchronized (LOCK) {
-			if (session == null) {
-				return new OperationResult(0, 0);
+		Session active = session;
+		return editCandidates(active == null ? 0 : active.searchSessionId, candidateIds, text);
+	}
+
+	public static OperationResult editCandidates(long expectedSessionId,
+			long[] candidateIds, String text) {
+		Session active = session;
+		if (active == null) {
+			return noSessionResult();
+		}
+		if (active.searchSessionId != expectedSessionId) {
+			return staleSessionResult(expectedSessionId);
+		}
+		Value value = parse(active.kind, text);
+		synchronized (active.lock) {
+			if (active != session || active.closed) {
+				return staleSessionResult(expectedSessionId);
 			}
-			Value value = parse(session.kind, text);
-			session.collecting = false;
+			active.collecting = false;
 			List<Undo> batch = new ArrayList<>();
 			int changed = 0;
-			List<Candidate> selected = session.select(candidateIds);
+			List<Candidate> selected = active.select(candidateIds);
+			long operationId = active.startOperation(selected.size());
 			for (Candidate candidate : selected) {
+				if (active.operationStatus() != OperationStatus.SUCCESS) {
+					break;
+				}
 				Value oldValue = candidate.read();
 				if (oldValue == null || !candidate.apply(value)) {
+					active.advanceOperation();
 					continue;
 				}
-				Value oldFrozen = session.frozen.get(candidate);
+				Value oldFrozen = active.frozen.get(candidate);
 				batch.add(new Undo(candidate, oldValue, oldFrozen,
-						session.saved.contains(candidate)));
+						active.saved.contains(candidate)));
 				if (oldFrozen != null) {
-					session.frozen.put(candidate, value);
+					active.frozen.put(candidate, value);
 				}
 				candidate.baseline = value;
 				changed++;
+				active.advanceOperation();
 			}
-			session.addUndoBatch(batch);
-			return new OperationResult(selected.size(), changed);
+			active.addUndoBatch(batch);
+			OperationStatus status = active.operationStatus();
+			active.finishOperation(operationId);
+			updateActiveKindsLocked(active);
+			return new OperationResult(active.searchSessionId, operationId, status,
+					selected.size(), changed);
 		}
 	}
 
@@ -248,115 +457,211 @@ public final class MemoryEditorRuntime {
 	}
 
 	public static OperationResult freezeCandidates(long[] candidateIds, String text) {
-		synchronized (LOCK) {
-			if (session == null) {
-				return new OperationResult(0, 0);
+		Session active = session;
+		return freezeCandidates(active == null ? 0 : active.searchSessionId,
+				candidateIds, text);
+	}
+
+	public static OperationResult freezeCandidates(long expectedSessionId,
+			long[] candidateIds, String text) {
+		Session active = session;
+		if (active == null) {
+			return noSessionResult();
+		}
+		if (active.searchSessionId != expectedSessionId) {
+			return staleSessionResult(expectedSessionId);
+		}
+		Value value = parse(active.kind, text);
+		synchronized (active.lock) {
+			if (active != session || active.closed) {
+				return staleSessionResult(expectedSessionId);
 			}
-			Value value = parse(session.kind, text);
-			session.collecting = false;
+			active.collecting = false;
 			int changed = 0;
 			List<Undo> batch = new ArrayList<>();
-			List<Candidate> selected = session.select(candidateIds);
+			List<Candidate> selected = active.select(candidateIds);
+			long operationId = active.startOperation(selected.size());
 			for (Candidate candidate : selected) {
+				if (active.operationStatus() != OperationStatus.SUCCESS) {
+					break;
+				}
 				Value oldValue = candidate.read();
 				if (oldValue == null) {
+					active.advanceOperation();
 					continue;
 				}
-				Value oldFrozen = session.frozen.get(candidate);
-				boolean oldSaved = session.saved.contains(candidate);
+				Value oldFrozen = active.frozen.get(candidate);
+				boolean oldSaved = active.saved.contains(candidate);
 				if (candidate.apply(value)) {
 					batch.add(new Undo(candidate, oldValue, oldFrozen, oldSaved));
-					session.frozen.put(candidate, value);
-					session.saved.add(candidate);
+					active.frozen.put(candidate, value);
+					active.saved.add(candidate);
 					candidate.baseline = value;
 					changed++;
 				}
+				active.advanceOperation();
 			}
-			session.addUndoBatch(batch);
-			return new OperationResult(selected.size(), changed);
+			active.addUndoBatch(batch);
+			OperationStatus status = active.operationStatus();
+			active.finishOperation(operationId);
+			updateActiveKindsLocked(active);
+			return new OperationResult(active.searchSessionId, operationId, status,
+					selected.size(), changed);
 		}
 	}
 
 	public static List<CandidateView> results(int offset, int limit) {
 		if (offset < 0) {
-			throw new IllegalArgumentException("Result offset must not be negative");
+			throw new MemoryEditorException(ErrorCode.INVALID_RESULT_PAGE,
+					"Result offset must not be negative");
 		}
 		if (limit < 1 || limit > 500) {
-			throw new IllegalArgumentException("Result limit must be between 1 and 500");
+			throw new MemoryEditorException(ErrorCode.INVALID_RESULT_PAGE,
+					"Result limit must be between 1 and 500");
 		}
-		synchronized (LOCK) {
-			if (session == null) {
+		for (int attempt = 0; attempt < MAX_SESSION_READ_RETRIES; attempt++) {
+			Session active = session;
+			if (active == null) {
 				return new ArrayList<>();
 			}
-			return session.results(offset, limit);
+			synchronized (active.lock) {
+				if (active != session || active.closed) {
+					continue;
+				}
+				List<CandidateView> result = active.results(offset, limit);
+				updateActiveKindsLocked(active);
+				return result;
+			}
 		}
+		return new ArrayList<>();
 	}
 
 	public static List<CandidateView> savedResults(int offset, int limit) {
 		if (offset < 0) {
-			throw new IllegalArgumentException("Result offset must not be negative");
+			throw new MemoryEditorException(ErrorCode.INVALID_RESULT_PAGE,
+					"Result offset must not be negative");
 		}
 		if (limit < 1 || limit > 500) {
-			throw new IllegalArgumentException("Result limit must be between 1 and 500");
+			throw new MemoryEditorException(ErrorCode.INVALID_RESULT_PAGE,
+					"Result limit must be between 1 and 500");
 		}
-		synchronized (LOCK) {
-			if (session == null) {
+		for (int attempt = 0; attempt < MAX_SESSION_READ_RETRIES; attempt++) {
+			Session active = session;
+			if (active == null) {
 				return new ArrayList<>();
 			}
-			return session.savedResults(offset, limit);
+			synchronized (active.lock) {
+				if (active != session || active.closed) {
+					continue;
+				}
+				List<CandidateView> result = active.savedResults(offset, limit);
+				updateActiveKindsLocked(active);
+				return result;
+			}
 		}
+		return new ArrayList<>();
 	}
 
 	public static OperationResult clearFreeze(long[] candidateIds) {
-		synchronized (LOCK) {
-			if (session == null) {
-				return new OperationResult(0, 0);
+		Session active = session;
+		return clearFreeze(active == null ? 0 : active.searchSessionId, candidateIds);
+	}
+
+	public static OperationResult clearFreeze(long expectedSessionId, long[] candidateIds) {
+		Session active = session;
+		if (active == null) {
+			return noSessionResult();
+		}
+		if (active.searchSessionId != expectedSessionId) {
+			return staleSessionResult(expectedSessionId);
+		}
+		synchronized (active.lock) {
+			if (active != session || active.closed) {
+				return staleSessionResult(expectedSessionId);
 			}
-			List<Candidate> selected = session.select(candidateIds);
+			List<Candidate> selected = active.select(candidateIds);
+			long operationId = active.startOperation(selected.size());
 			int changed = 0;
 			for (Candidate candidate : selected) {
-				if (session.frozen.remove(candidate) != null) {
+				if (active.operationStatus() != OperationStatus.SUCCESS) {
+					break;
+				}
+				if (active.frozen.remove(candidate) != null) {
 					changed++;
 				}
+				active.advanceOperation();
 			}
-			return new OperationResult(selected.size(), changed);
+			OperationStatus status = active.operationStatus();
+			active.finishOperation(operationId);
+			updateActiveKindsLocked(active);
+			return new OperationResult(active.searchSessionId, operationId,
+					status, selected.size(), changed);
 		}
 	}
 
 	public static OperationResult deleteSaved(long[] candidateIds) {
-		synchronized (LOCK) {
-			if (session == null) {
-				return new OperationResult(0, 0);
+		Session active = session;
+		return deleteSaved(active == null ? 0 : active.searchSessionId, candidateIds);
+	}
+
+	public static OperationResult deleteSaved(long expectedSessionId, long[] candidateIds) {
+		Session active = session;
+		if (active == null) {
+			return noSessionResult();
+		}
+		if (active.searchSessionId != expectedSessionId) {
+			return staleSessionResult(expectedSessionId);
+		}
+		synchronized (active.lock) {
+			if (active != session || active.closed) {
+				return staleSessionResult(expectedSessionId);
 			}
-			List<Candidate> selected = session.select(candidateIds);
+			List<Candidate> selected = active.select(candidateIds);
+			long operationId = active.startOperation(selected.size());
 			int changed = 0;
 			for (Candidate candidate : selected) {
-				session.frozen.remove(candidate);
-				if (session.saved.remove(candidate)) {
+				if (active.operationStatus() != OperationStatus.SUCCESS) {
+					break;
+				}
+				active.frozen.remove(candidate);
+				if (active.saved.remove(candidate)) {
 					changed++;
-					if (!session.candidates.contains(candidate)) {
-						session.remove(candidate);
+					if (!active.candidates.contains(candidate)) {
+						active.remove(candidate);
 					}
 				}
+				active.advanceOperation();
 			}
-			return new OperationResult(selected.size(), changed);
+			OperationStatus status = active.operationStatus();
+			active.finishOperation(operationId);
+			updateActiveKindsLocked(active);
+			return new OperationResult(active.searchSessionId, operationId,
+					status, selected.size(), changed);
 		}
 	}
 
 	public static void clearFreeze() {
-		synchronized (LOCK) {
-			if (session != null) {
-				session.frozen.clear();
+		Session active = session;
+		if (active != null) {
+			synchronized (active.lock) {
+				if (active == session && !active.closed) {
+					active.frozen.clear();
+					updateActiveKindsLocked(active);
+				}
 			}
 		}
 	}
 
 	public static boolean undo() {
-		synchronized (LOCK) {
-			if (session == null || session.undo.isEmpty()) {
+		Session active = session;
+		if (active == null) {
+			return false;
+		}
+		synchronized (active.lock) {
+			if (active != session || active.closed || active.undo.isEmpty()) {
 				return false;
 			}
-			List<Undo> batch = session.undo.removeLast();
+			List<Undo> batch = active.undo.removeLast();
 			boolean restored = true;
 			for (int i = batch.size() - 1; i >= 0; i--) {
 				Undo undo = batch.get(i);
@@ -366,23 +671,54 @@ public final class MemoryEditorRuntime {
 					restored = false;
 				}
 				if (undo.oldFrozen == null) {
-					session.frozen.remove(undo.candidate);
+					active.frozen.remove(undo.candidate);
 				} else {
-					session.frozen.put(undo.candidate, undo.oldFrozen);
+					active.frozen.put(undo.candidate, undo.oldFrozen);
 				}
 				if (undo.oldSaved) {
-					session.saved.add(undo.candidate);
+					active.saved.add(undo.candidate);
 				} else {
-					session.saved.remove(undo.candidate);
+					active.saved.remove(undo.candidate);
 				}
 			}
+			updateActiveKindsLocked(active);
 			return restored;
 		}
 	}
 
-	public static void clear() {
-		synchronized (LOCK) {
+	public static void resetSearch() {
+		synchronized (SESSION_LOCK) {
+			closeSession(session);
 			session = null;
+		}
+	}
+
+	public static void clear() {
+		resetSearch();
+	}
+
+	public static long beginGame() {
+		synchronized (SESSION_LOCK) {
+			closeSession(session);
+			session = null;
+			gameGeneration = NEXT_GAME_GENERATION.incrementAndGet();
+			return gameGeneration;
+		}
+	}
+
+	public static void endGame() {
+		synchronized (SESSION_LOCK) {
+			closeSession(session);
+			session = null;
+			gameGeneration = NEXT_GAME_GENERATION.incrementAndGet();
+		}
+	}
+
+	private static void closeSession(Session current) {
+		MemoryEditorBridge.setActiveKinds(0);
+		if (current != null) {
+			current.closed = true;
+			current.cancelRequested.set(true);
 		}
 	}
 
@@ -436,11 +772,16 @@ public final class MemoryEditorRuntime {
 
 	private static long observeBits(ValueKind kind, boolean write, Object target,
 			Class<?> owner, String member, long site, int index, long bits) {
+		if (!MemoryEditorBridge.isKindActive(kind.ordinal() + 1)) {
+			return bits;
+		}
 		Session active = session;
 		if (active == null) {
 			return bits;
 		}
-		active.noteObservation(kind, ARRAY_MEMBER.equals(member), write);
+		if (active.collecting) {
+			active.noteObservation(kind, ARRAY_MEMBER.equals(member), write);
+		}
 		if (active.kind != kind) {
 			return bits;
 		}
@@ -455,17 +796,21 @@ public final class MemoryEditorRuntime {
 				|| index < 0 || index >= Array.getLength(target))) {
 			return bits;
 		}
-		synchronized (LOCK) {
-			active = session;
-			if (active == null || active.kind != kind) {
+		synchronized (active.lock) {
+			if (active != session || active.closed || active.kind != kind) {
 				return bits;
 			}
 			active.purgeCollected();
+			if (!active.collecting && active.frozen.isEmpty()) {
+				updateActiveKindsLocked(active);
+				return bits;
+			}
 			Candidate candidate = active.find(target, owner, member, index);
 			if (candidate == null && active.collecting && active.acceptInitial(value)) {
 				candidate = active.add(target, owner, member, site, index, value);
 			}
 			if (candidate == null) {
+				updateActiveKindsLocked(active);
 				return bits;
 			}
 			Value frozen = active.frozen.get(candidate);
@@ -485,10 +830,11 @@ public final class MemoryEditorRuntime {
 		if (mode == SearchMode.RANGE) {
 			upper = parse(kind, second);
 			if (lower.isNaN() || upper.isNaN()) {
-				throw new IllegalArgumentException("NaN cannot be used as a range boundary");
+				throw new MemoryEditorException(ErrorCode.INVALID_RANGE,
+						"NaN cannot be used as a range boundary");
 			}
 			if (lower.compareTo(upper) > 0) {
-				throw new IllegalArgumentException(
+				throw new MemoryEditorException(ErrorCode.INVALID_RANGE,
 						"Range minimum must not be greater than maximum");
 			}
 		}
@@ -497,7 +843,7 @@ public final class MemoryEditorRuntime {
 
 	private static Value parse(ValueKind kind, String text) {
 		if (text == null || text.trim().isEmpty()) {
-			throw new IllegalArgumentException("Value is required");
+			throw new MemoryEditorException(ErrorCode.INVALID_VALUE, "Value is required");
 		}
 		String value = text.trim();
 		try {
@@ -508,7 +854,7 @@ public final class MemoryEditorRuntime {
 				case DOUBLE -> Value.ofDouble(Double.parseDouble(value));
 			};
 		} catch (NumberFormatException e) {
-			throw new IllegalArgumentException(
+			throw new MemoryEditorException(ErrorCode.INVALID_VALUE,
 					"Invalid " + kind.name().toLowerCase(Locale.ROOT) + " value", e);
 		}
 	}
@@ -517,6 +863,10 @@ public final class MemoryEditorRuntime {
 		int result = 31 * System.identityHashCode(target) + System.identityHashCode(owner);
 		result = 31 * result + member.hashCode();
 		return 31 * result + index;
+	}
+
+	private static long estimatedCandidateBytes(String member) {
+		return 192L + (long) member.length() * 2L;
 	}
 
 	private static final class Criteria {
@@ -530,6 +880,9 @@ public final class MemoryEditorRuntime {
 	}
 
 	private static final class Session {
+		private final Object lock = new Object();
+		private final long gameGeneration;
+		private final long searchSessionId;
 		private final ValueKind kind;
 		private SearchMode mode;
 		private Value lower;
@@ -547,15 +900,54 @@ public final class MemoryEditorRuntime {
 		private final AtomicLong arrayObservations = new AtomicLong();
 		private final AtomicLong readObservations = new AtomicLong();
 		private final AtomicLong writeObservations = new AtomicLong();
+		private final AtomicLong activeOperationId = new AtomicLong();
+		private final AtomicLong operationCompleted = new AtomicLong();
+		private final AtomicLong operationTotal = new AtomicLong();
+		private final AtomicBoolean cancelRequested = new AtomicBoolean();
 		private boolean limitReached;
-		private boolean collecting = true;
+		private volatile boolean collecting = true;
+		private volatile boolean closed;
 		private long nextCandidateId = 1;
+		private long candidateBytes;
 
-		private Session(ValueKind kind, SearchMode mode, Value lower, Value upper) {
+		private Session(long gameGeneration, long searchSessionId, ValueKind kind,
+				SearchMode mode, Value lower, Value upper) {
+			this.gameGeneration = gameGeneration;
+			this.searchSessionId = searchSessionId;
 			this.kind = kind;
 			this.mode = mode;
 			this.lower = lower;
 			this.upper = upper;
+		}
+
+		private long startOperation(int total) {
+			long operationId = NEXT_OPERATION_ID.getAndIncrement();
+			cancelRequested.set(false);
+			operationCompleted.set(0);
+			operationTotal.set(total);
+			activeOperationId.set(operationId);
+			return operationId;
+		}
+
+		private void advanceOperation() {
+			operationCompleted.incrementAndGet();
+		}
+
+		private OperationStatus operationStatus() {
+			if (closed) {
+				return OperationStatus.STALE_SESSION;
+			}
+			if (cancelRequested.get()) {
+				return OperationStatus.CANCELLED;
+			}
+			return OperationStatus.SUCCESS;
+		}
+
+		private void finishOperation(long operationId) {
+			activeOperationId.compareAndSet(operationId, 0);
+			operationCompleted.set(0);
+			operationTotal.set(0);
+			cancelRequested.set(false);
 		}
 
 		private void noteObservation(ValueKind observedKind, boolean array, boolean write) {
@@ -580,13 +972,16 @@ public final class MemoryEditorRuntime {
 
 		private Candidate add(Object target, Class<?> owner, String member, long site,
 				int index, Value value) {
-			if (candidates.size() >= MAX_CANDIDATES) {
+			long estimatedBytes = estimatedCandidateBytes(member);
+			if (candidates.size() >= MAX_CANDIDATES
+					|| candidateBytes + estimatedBytes > MAX_CANDIDATE_BYTES) {
 				limitReached = true;
 				collecting = false;
 				return null;
 			}
 			Candidate candidate = new Candidate(nextCandidateId++, target, owner, member,
 					site, index, value, collectedTargets);
+			candidateBytes += estimatedBytes;
 			candidates.add(candidate);
 			candidatesById.put(candidate.id, candidate);
 			List<Candidate> bucket = candidateBuckets.get(candidate.locationHash);
@@ -611,26 +1006,45 @@ public final class MemoryEditorRuntime {
 			};
 		}
 
-		private void refine(SearchMode nextMode, Value nextLower, Value nextUpper) {
+		private boolean supportsCollection() {
+			return switch (mode) {
+				case EXACT, NOT_EQUAL, LESS_THAN, GREATER_THAN, UNKNOWN, RANGE -> true;
+				case CHANGED, UNCHANGED, INCREASED, DECREASED -> false;
+			};
+		}
+
+		private OperationStatus refine(SearchMode nextMode, Value nextLower, Value nextUpper) {
 			purgeCollected();
-			List<Candidate> retained = new ArrayList<>(candidates.size());
-			for (Candidate candidate : new ArrayList<>(candidates)) {
+			List<Candidate> original = new ArrayList<>(candidates);
+			List<Candidate> retained = new ArrayList<>(original.size());
+			List<Value> retainedValues = new ArrayList<>(original.size());
+			for (Candidate candidate : original) {
+				OperationStatus status = operationStatus();
+				if (status != OperationStatus.SUCCESS) {
+					return status;
+				}
 				Value current = candidate.read();
 				if (current != null && matches(nextMode, candidate.baseline, current,
 						nextLower, nextUpper)) {
-					candidate.baseline = current;
 					retained.add(candidate);
-				} else {
+					retainedValues.add(current);
+				}
+				advanceOperation();
+			}
+			Set<Candidate> retainedSet = new LinkedHashSet<>(retained);
+			for (Candidate candidate : original) {
+				if (!retainedSet.contains(candidate)) {
 					removeFromResults(candidate);
 				}
 			}
-			// Preserve deterministic observation order after removals.
-			candidates.clear();
-			candidates.addAll(retained);
+			for (int i = 0; i < retained.size(); i++) {
+				retained.get(i).baseline = retainedValues.get(i);
+			}
 			mode = nextMode;
 			lower = nextLower;
 			upper = nextUpper;
 			collecting = false;
+			return OperationStatus.SUCCESS;
 		}
 
 		private boolean matches(SearchMode nextMode, Value previous, Value current,
@@ -740,8 +1154,12 @@ public final class MemoryEditorRuntime {
 		}
 
 		private void remove(Candidate candidate) {
+			boolean tracked = candidatesById.remove(candidate.id) != null;
 			candidates.remove(candidate);
-			candidatesById.remove(candidate.id);
+			if (tracked) {
+				candidateBytes = Math.max(0,
+						candidateBytes - estimatedCandidateBytes(candidate.member));
+			}
 			List<Candidate> bucket = candidateBuckets.get(candidate.locationHash);
 			if (bucket != null) {
 				bucket.remove(candidate);

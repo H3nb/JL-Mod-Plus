@@ -16,6 +16,7 @@
 
 package org.microemu.android.asm;
 
+import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.AdviceAdapter;
@@ -71,6 +72,9 @@ final class MemoryEditorMethodVisitor extends AdviceAdapter {
 		int kind = primitiveKind(descriptor);
 		long site = site(owner + "." + name + descriptor);
 		if (opcode == GETSTATIC || opcode == GETFIELD) {
+			Label inactive = new Label();
+			Label done = new Label();
+			emitActiveGate(kind, inactive);
 			int target = -1;
 			if (opcode == GETFIELD) {
 				// Retain one copy for candidate identity while the original
@@ -91,9 +95,16 @@ final class MemoryEditorMethodVisitor extends AdviceAdapter {
 			push(opcode == GETSTATIC ? -2 : -1);
 			loadLocal(value);
 			invokeBridge(true, kind);
+			goTo(done);
+			mark(inactive);
+			super.visitFieldInsn(opcode, owner, name, descriptor);
+			mark(done);
 			return;
 		}
 		if (opcode == PUTSTATIC || opcode == PUTFIELD) {
+			Label inactive = new Label();
+			Label done = new Label();
+			emitActiveGate(kind, inactive);
 			int value = valueLocal(kind);
 			storeLocal(value);
 			int target = -1;
@@ -112,6 +123,10 @@ final class MemoryEditorMethodVisitor extends AdviceAdapter {
 			loadLocal(value);
 			invokeBridge(false, kind);
 			super.visitFieldInsn(opcode, owner, name, descriptor);
+			goTo(done);
+			mark(inactive);
+			super.visitFieldInsn(opcode, owner, name, descriptor);
+			mark(done);
 			return;
 		}
 		super.visitFieldInsn(opcode, owner, name, descriptor);
@@ -126,6 +141,9 @@ final class MemoryEditorMethodVisitor extends AdviceAdapter {
 		}
 		boolean read = opcode == IALOAD || opcode == LALOAD || opcode == FALOAD
 				|| opcode == DALOAD || opcode == BALOAD || opcode == CALOAD || opcode == SALOAD;
+		Label inactive = new Label();
+		Label done = new Label();
+		emitActiveGate(kind, inactive);
 		if (read) {
 			// Keep a copy solely for candidate identity. The original array load
 			// still executes first, preserving its null and bounds exceptions.
@@ -164,6 +182,17 @@ final class MemoryEditorMethodVisitor extends AdviceAdapter {
 			invokeBridge(false, kind);
 			super.visitInsn(opcode);
 		}
+		goTo(done);
+		mark(inactive);
+		super.visitInsn(opcode);
+		mark(done);
+	}
+
+	private void emitActiveGate(int kind, Label inactive) {
+		getStatic(BRIDGE, "ACTIVE_KINDS", Type.INT_TYPE);
+		push(1 << (kind - 1));
+		math(AND, Type.INT_TYPE);
+		ifZCmp(EQ, inactive);
 	}
 
 	private void invokeBridge(boolean read, int kind) {

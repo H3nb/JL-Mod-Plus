@@ -18,47 +18,36 @@ package javax.microedition.shell.memory.ui
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.colorResource
-import androidx.compose.foundation.isSystemInDarkTheme
-import io.github.h3nb.jlmodplus.R
+
+private val MidnightGraphiteScheme = darkColorScheme(
+    primary = Color(0xFF3A9BFF),
+    onPrimary = Color(0xFF001B30),
+    primaryContainer = Color(0xFF123B63),
+    onPrimaryContainer = Color(0xFFD4EAFF),
+    secondary = Color(0xFF70B9FF),
+    onSecondary = Color(0xFF002A47),
+    secondaryContainer = Color(0xFF17324B),
+    onSecondaryContainer = Color(0xFFD2E8FF),
+    tertiary = Color(0xFF22D3EE),
+    onTertiary = Color(0xFF002E35),
+    background = Color(0xFF080B10),
+    onBackground = Color(0xFFE8EDF5),
+    surface = Color(0xFF111720),
+    onSurface = Color(0xFFE8EDF5),
+    surfaceVariant = Color(0xFF1A2330),
+    onSurfaceVariant = Color(0xFFAFBAC9),
+    outline = Color(0xFF44546A),
+    outlineVariant = Color(0xFF263344),
+    error = Color(0xFFFF6680),
+    onError = Color(0xFF3D0010),
+)
 
 @Composable
 internal fun MemoryEditorTheme(content: @Composable () -> Unit) {
-    val primary = colorResource(R.color.accent)
-    val background = colorResource(R.color.background)
-    val surface = colorResource(R.color.config_card)
-    val onSurface = colorResource(R.color.text_primary)
-    val secondaryText = colorResource(R.color.text_secondary)
-    val scheme = if (isSystemInDarkTheme()) {
-        darkColorScheme(
-            primary = primary,
-            onPrimary = Color.White,
-            background = background,
-            onBackground = onSurface,
-            surface = surface,
-            onSurface = onSurface,
-            surfaceVariant = colorResource(R.color.primary),
-            onSurfaceVariant = secondaryText,
-            outline = secondaryText.copy(alpha = 0.7f),
-        )
-    } else {
-        lightColorScheme(
-            primary = primary,
-            onPrimary = Color.White,
-            background = background,
-            onBackground = onSurface,
-            surface = surface,
-            onSurface = onSurface,
-            surfaceVariant = colorResource(R.color.primary).copy(alpha = 0.08f),
-            onSurfaceVariant = secondaryText,
-            outline = secondaryText.copy(alpha = 0.7f),
-        )
-    }
     MaterialTheme(
-        colorScheme = scheme,
+        colorScheme = MidnightGraphiteScheme,
         content = content,
     )
 }

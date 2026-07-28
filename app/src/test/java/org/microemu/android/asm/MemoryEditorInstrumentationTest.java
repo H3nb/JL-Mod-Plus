@@ -126,11 +126,21 @@ public class MemoryEditorInstrumentationTest {
 	public void allPrimitiveHookFamiliesAreEmitted() {
 		byte[] transformed = transform(createTarget());
 		Set<String> hooks = new HashSet<>();
+		Set<String> bridgeFields = new HashSet<>();
 		new ClassReader(transformed).accept(new ClassVisitor(Opcodes.ASM9) {
 			@Override
 			public MethodVisitor visitMethod(int access, String name, String descriptor,
 					String signature, String[] exceptions) {
 				return new MethodVisitor(Opcodes.ASM9) {
+					@Override
+					public void visitFieldInsn(int opcode, String owner, String name,
+							String descriptor) {
+						if (owner.equals(
+								"javax/microedition/shell/memory/MemoryEditorBridge")) {
+							bridgeFields.add(name);
+						}
+					}
+
 					@Override
 					public void visitMethodInsn(int opcode, String owner, String name,
 							String descriptor, boolean isInterface) {
@@ -151,6 +161,7 @@ public class MemoryEditorInstrumentationTest {
 		assertTrue(hooks.contains("onWriteFloat"));
 		assertTrue(hooks.contains("onReadDouble"));
 		assertTrue(hooks.contains("onWriteDouble"));
+		assertTrue(bridgeFields.contains("ACTIVE_KINDS"));
 	}
 
 	@Test
@@ -212,7 +223,8 @@ public class MemoryEditorInstrumentationTest {
 	}
 
 	private static byte[] transform(byte[] original) {
-		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+		ClassWriter writer = new ClassWriter(
+				ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
 		new ClassReader(original).accept(new AndroidClassVisitor(writer), 0);
 		return writer.toByteArray();
 	}

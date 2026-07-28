@@ -226,13 +226,14 @@
     <string name="memory_editor_type_float">Decimal (float)</string>
     <string name="memory_editor_type_double">High-precision decimal (double)</string>
     <string name="memory_editor_minimum">Minimum</string>
-    <string name="memory_editor_start_and_play">Start collecting and return to game</string>
-    <string name="memory_editor_collecting_title">Collecting a baseline</string>
-    <string name="memory_editor_collecting_help">Continue playing so the game reads or writes the value. Reopen this editor, then finish the baseline before refining.</string>
-    <string name="memory_editor_finish_baseline">Finish baseline</string>
+    <string name="memory_editor_start_and_play">Start search</string>
+    <string name="memory_editor_preparing_title">Preparing search…</string>
+    <string name="memory_editor_preparing_help">The editor will close so the game can collect matching values.</string>
+    <string name="memory_editor_continue_collection">Continue collecting</string>
     <string name="memory_editor_return_to_game">Return to game</string>
     <string name="memory_editor_observed">Hooks observed: %1$d selected type, %2$d total</string>
     <string name="memory_editor_observed_paths">Fields %1$d · arrays %2$d · reads %3$d · writes %4$d</string>
+    <string name="memory_editor_candidate_budget">Candidate budget: %1$d / %2$d KiB</string>
     <string name="memory_editor_no_hooks">No transformed game value has reached the editor yet. Play longer; if this remains zero, reconversion or hook compatibility may need checking.</string>
     <string name="memory_editor_wrong_type">The game is producing values, but not the selected type. Try another value type.</string>
     <string name="memory_editor_results_title">Search results</string>
@@ -241,7 +242,6 @@
     <string name="memory_editor_empty_results">No candidates match yet.</string>
     <string name="memory_editor_refine_title">Refine results</string>
     <string name="memory_editor_refine_help">Change the value in the game, then compare again.</string>
-    <string name="memory_editor_refresh">Refresh</string>
     <string name="memory_editor_select_loaded">Select loaded</string>
     <string name="memory_editor_clear_selection">Clear selection</string>
     <string name="memory_editor_selected">%1$d selected</string>
@@ -259,14 +259,18 @@
     <string name="memory_editor_reset_confirm_title">Reset the search?</string>
     <string name="memory_editor_reset_confirm_body">Candidates, selection, freezes, and edit history for this session will be cleared.</string>
     <string name="memory_editor_operation_result">%1$d of %2$d locations updated</string>
+    <string name="memory_editor_operation_cancelled">Operation cancelled. Completed changes can be undone.</string>
+    <string name="memory_editor_stale_session">The game or search session changed. Old results were ignored.</string>
     <string name="memory_editor_undo_success">The last change was restored.</string>
     <string name="memory_editor_undo_empty">There is no change to restore.</string>
     <string name="memory_editor_tab_search">Search</string>
-    <string name="memory_editor_tab_results">Results</string>
     <string name="memory_editor_tab_saved">Saved</string>
     <string name="memory_editor_tab_settings">Settings</string>
     <string name="memory_editor_peek">View game</string>
     <string name="memory_editor_done">Done</string>
+    <string name="memory_editor_input_title">Enter a value</string>
+    <string name="memory_editor_input_help">Use the keypad below. The Android keyboard will not open.</string>
+    <string name="memory_editor_input_type">Type: %1$s</string>
     <string name="memory_editor_saved_title">Saved values</string>
     <string name="memory_editor_saved_help">Frozen values are saved automatically.</string>
     <string name="memory_editor_saved_empty">No saved values.</string>
@@ -274,6 +278,8 @@
     <string name="memory_editor_settings_title">Settings</string>
     <string name="memory_editor_pause">Pause game while editor is open</string>
     <string name="memory_editor_pause_help">Off by default.</string>
+    <string name="memory_editor_layout_transparency">Editor transparency</string>
+    <string name="memory_editor_layout_transparency_help">Controls the transparency of the entire Memory Editor. View game always hides it fully while held.</string>
     <string-array name="memory_editor_types">
         <item>Integer (boolean/byte/char/short/int)</item>
         <item>Long</item>

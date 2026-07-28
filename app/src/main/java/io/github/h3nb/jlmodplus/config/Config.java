@@ -48,7 +48,7 @@ public class Config {
 	public static final String MIDLET_DEX_FILE = "/converted.dex";
 	/** The single version gate for every generated DEX feature. */
 	public static final String MIDLET_DEX_VERSION_ATTRIBUTE = "JL-Mod-Plus-Dex-Version";
-	public static final int MIDLET_DEX_VERSION = 6;
+	public static final int MIDLET_DEX_VERSION = 7;
 	public static final String MIDLET_RES_JAD_FILE = "/res.jad";
 	public static final String MIDLET_TIMING_VERSION_FILE = "/converted.timing.version";
 	public static final int MIDLET_TIMING_TRANSFORM_VERSION = 4;

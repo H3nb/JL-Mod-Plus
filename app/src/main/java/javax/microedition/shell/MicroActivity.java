@@ -264,7 +264,7 @@ public class MicroActivity extends AppCompatActivity {
 			timingMigrationDisposable = null;
 		}
 		if (isFinishing()) {
-			MemoryEditorRuntime.clear();
+			MemoryEditorRuntime.endGame();
 		}
 		super.onDestroy();
 	}
@@ -312,7 +312,7 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void loadMIDlet() {
-		MemoryEditorRuntime.clear();
+		MemoryEditorRuntime.beginGame();
 		Map<String, String> midlets;
 		try {
 			midlets = microLoader.loadMIDletList();

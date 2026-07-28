@@ -21,6 +21,8 @@ import androidx.lifecycle.viewModelScope
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.microedition.shell.memory.MemoryEditorRuntime
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,6 +37,7 @@ internal enum class MemoryEditorPhase {
 }
 
 internal enum class OperationKind {
+    REFINE,
     EDIT,
     FREEZE,
     UNFREEZE,
@@ -46,12 +49,17 @@ internal data class OperationSummary(
     val kind: OperationKind,
     val requested: Int,
     val succeeded: Int,
+    val status: MemoryEditorRuntime.OperationStatus = MemoryEditorRuntime.OperationStatus.SUCCESS,
 )
 
 internal data class MemoryEditorSnapshot(
+    val gameGeneration: Long = 0,
+    val searchSessionId: Long = 0,
     val candidates: Int = 0,
     val frozen: Int = 0,
     val saved: Int = 0,
+    val candidateBytes: Long = 0,
+    val candidateByteBudget: Long = 0,
     val kind: MemoryEditorRuntime.ValueKind? = null,
     val mode: MemoryEditorRuntime.SearchMode? = null,
     val limitReached: Boolean = false,
@@ -66,6 +74,18 @@ internal data class MemoryEditorSnapshot(
     val readObservations: Long = 0,
     val writeObservations: Long = 0,
 ) {
+    val canContinueCollection: Boolean
+        get() = !collecting && !limitReached && when (mode) {
+            MemoryEditorRuntime.SearchMode.EXACT,
+            MemoryEditorRuntime.SearchMode.NOT_EQUAL,
+            MemoryEditorRuntime.SearchMode.LESS_THAN,
+            MemoryEditorRuntime.SearchMode.GREATER_THAN,
+            MemoryEditorRuntime.SearchMode.UNKNOWN,
+            MemoryEditorRuntime.SearchMode.RANGE,
+            -> true
+            else -> false
+        }
+
     val selectedObservations: Long
         get() = when (kind) {
             MemoryEditorRuntime.ValueKind.INT -> intObservations
@@ -89,6 +109,16 @@ internal data class MemoryCandidate(
     val editable: Boolean,
 )
 
+internal data class MemoryOperationProgress(
+    val searchSessionId: Long,
+    val operationId: Long,
+    val completed: Int,
+    val total: Int,
+) {
+    val fraction: Float
+        get() = if (total == 0) 0f else completed.toFloat() / total.toFloat()
+}
+
 internal data class MemoryEditorUiState(
     val phase: MemoryEditorPhase = MemoryEditorPhase.SETUP,
     val snapshot: MemoryEditorSnapshot = MemoryEditorSnapshot(),
@@ -105,10 +135,14 @@ internal data class MemoryEditorUiState(
     val error: String? = null,
     val operation: OperationSummary? = null,
     val pauseEnabled: Boolean = false,
+    val layoutTransparency: Float = 0f,
+    val progress: MemoryOperationProgress? = null,
+    val preparingSearch: Boolean = false,
 )
 
 internal class MemoryEditorViewModel : ViewModel() {
     private val operationRunning = AtomicBoolean()
+    private val existingSessionLoadStarted = AtomicBoolean()
     private val _state = MutableStateFlow(stateFromRuntime())
     val state: StateFlow<MemoryEditorUiState> = _state.asStateFlow()
 
@@ -136,7 +170,13 @@ internal class MemoryEditorViewModel : ViewModel() {
         _state.update { it.copy(pauseEnabled = enabled) }
     }
 
-    fun startSearch(onStarted: () -> Unit) {
+    fun setLayoutTransparency(transparency: Float) {
+        _state.update {
+            it.copy(layoutTransparency = transparency.coerceIn(0f, MAX_LAYOUT_TRANSPARENCY))
+        }
+    }
+
+    fun startSearch(onPrepared: () -> Unit) {
         val current = _state.value
         runCatching {
             MemoryEditorRuntime.begin(
@@ -149,43 +189,69 @@ internal class MemoryEditorViewModel : ViewModel() {
             _state.value = stateFromRuntime(
                 previous = current,
                 phase = MemoryEditorPhase.COLLECTING,
-            )
-            onStarted()
+            ).copy(preparingSearch = true)
+            viewModelScope.launch {
+                delay(SEARCH_PREPARATION_DELAY_MS)
+                _state.update { it.copy(preparingSearch = false) }
+                onPrepared()
+            }
         }.onFailure(::showError)
     }
 
-    fun finishCollection() {
-        MemoryEditorRuntime.finishCollection()
-        _state.value = stateFromRuntime(
-            previous = _state.value,
-            phase = MemoryEditorPhase.RESULTS,
-        )
-    }
-
-    fun refreshResults() {
+    fun loadExistingSession() {
+        val current = _state.value
+        val sessionId = current.snapshot.searchSessionId
+        if (sessionId == 0L || current.preparingSearch ||
+            !existingSessionLoadStarted.compareAndSet(false, true)
+        ) {
+            return
+        }
         runOperation(operation = {
+            if (current.phase == MemoryEditorPhase.COLLECTING) {
+                MemoryEditorRuntime.finishCollection(sessionId)
+            }
             LoadedResults(
                 snapshot = MemoryEditorRuntime.snapshot(),
                 candidates = MemoryEditorRuntime.results(0, PAGE_SIZE),
                 savedCandidates = MemoryEditorRuntime.savedResults(0, PAGE_SIZE),
             )
         }, onSuccess = { loaded ->
-            _state.update { current ->
-                current.copy(
+            if (loaded.snapshot.searchSessionId != sessionId) {
+                existingSessionLoadStarted.set(false)
+                return@runOperation
+            }
+            _state.update {
+                it.copy(
                     phase = phaseOf(loaded.snapshot),
                     snapshot = loaded.snapshot.toUi(),
-                    kind = loaded.snapshot.kind ?: current.kind,
-                    candidates = loaded.candidates.map { it.toUi() },
-                    savedCandidates = loaded.savedCandidates.map { it.toUi() },
-                    selectedIds = current.selectedIds.intersect(
-                        loaded.candidates.mapTo(mutableSetOf()) { it.id },
-                    ),
+                    candidates = loaded.candidates.map { candidate -> candidate.toUi() },
+                    savedCandidates = loaded.savedCandidates.map { candidate -> candidate.toUi() },
+                    selectedIds = emptySet(),
                     hasMore = loaded.candidates.size < loaded.snapshot.candidates,
                     busy = false,
                     error = null,
                 )
             }
+        }, onFailure = { error ->
+            existingSessionLoadStarted.set(false)
+            showError(error)
         })
+    }
+
+    fun continueCollection(onStarted: () -> Unit) {
+        val current = _state.value
+        if (!current.snapshot.canContinueCollection) {
+            return
+        }
+        if (MemoryEditorRuntime.resumeCollection(current.snapshot.searchSessionId)) {
+            _state.value = stateFromRuntime(
+                previous = current,
+                phase = MemoryEditorPhase.COLLECTING,
+            )
+            onStarted()
+        } else {
+            showError(IllegalStateException("Search session can no longer collect values"))
+        }
     }
 
     fun loadMore() {
@@ -215,7 +281,8 @@ internal class MemoryEditorViewModel : ViewModel() {
     fun refine() {
         val current = _state.value
         runOperation(operation = {
-            MemoryEditorRuntime.refine(
+            val result = MemoryEditorRuntime.refine(
+                current.snapshot.searchSessionId,
                 current.refineMode,
                 current.firstValue,
                 current.secondValue,
@@ -224,6 +291,7 @@ internal class MemoryEditorViewModel : ViewModel() {
                 snapshot = MemoryEditorRuntime.snapshot(),
                 candidates = MemoryEditorRuntime.results(0, PAGE_SIZE),
                 savedCandidates = MemoryEditorRuntime.savedResults(0, PAGE_SIZE),
+                operation = result,
             )
         }, onSuccess = { loaded ->
             _state.update {
@@ -236,7 +304,11 @@ internal class MemoryEditorViewModel : ViewModel() {
                     hasMore = loaded.candidates.size < loaded.snapshot.candidates,
                     busy = false,
                     error = null,
-                    operation = null,
+                    operation = loaded.operation
+                        ?.takeIf { result ->
+                            result.status != MemoryEditorRuntime.OperationStatus.SUCCESS
+                        }
+                        ?.toSummary(OperationKind.REFINE),
                 )
             }
         })
@@ -265,33 +337,38 @@ internal class MemoryEditorViewModel : ViewModel() {
     }
 
     fun editSelected(replacement: String) {
-        selectedOperation(OperationKind.EDIT) { ids ->
-            MemoryEditorRuntime.editCandidates(ids, replacement)
+        selectedOperation(OperationKind.EDIT) { sessionId, ids ->
+            MemoryEditorRuntime.editCandidates(sessionId, ids, replacement)
         }
     }
 
     fun freezeSelected(replacement: String) {
-        selectedOperation(OperationKind.FREEZE) { ids ->
-            MemoryEditorRuntime.freezeCandidates(ids, replacement)
+        selectedOperation(OperationKind.FREEZE) { sessionId, ids ->
+            MemoryEditorRuntime.freezeCandidates(sessionId, ids, replacement)
         }
     }
 
     fun unfreezeSelected() {
-        selectedOperation(OperationKind.UNFREEZE) { ids ->
-            MemoryEditorRuntime.clearFreeze(ids)
+        selectedOperation(OperationKind.UNFREEZE) { sessionId, ids ->
+            MemoryEditorRuntime.clearFreeze(sessionId, ids)
         }
     }
 
     fun unfreezeSavedSelected() {
-        selectedSavedOperation(OperationKind.UNFREEZE) { ids ->
-            MemoryEditorRuntime.clearFreeze(ids)
+        selectedSavedOperation(OperationKind.UNFREEZE) { sessionId, ids ->
+            MemoryEditorRuntime.clearFreeze(sessionId, ids)
         }
     }
 
     fun deleteSavedSelected() {
-        selectedSavedOperation(OperationKind.DELETE_SAVED) { ids ->
-            MemoryEditorRuntime.deleteSaved(ids)
+        selectedSavedOperation(OperationKind.DELETE_SAVED) { sessionId, ids ->
+            MemoryEditorRuntime.deleteSaved(sessionId, ids)
         }
+    }
+
+    fun cancelOperation() {
+        val progress = _state.value.progress ?: return
+        MemoryEditorRuntime.cancelOperation(progress.searchSessionId, progress.operationId)
     }
 
     fun undo() {
@@ -324,8 +401,11 @@ internal class MemoryEditorViewModel : ViewModel() {
     }
 
     fun reset() {
-        MemoryEditorRuntime.clear()
-        _state.value = MemoryEditorUiState(pauseEnabled = _state.value.pauseEnabled)
+        MemoryEditorRuntime.resetSearch()
+        _state.value = MemoryEditorUiState(
+            pauseEnabled = _state.value.pauseEnabled,
+            layoutTransparency = _state.value.layoutTransparency,
+        )
     }
 
     fun clearMessage() {
@@ -334,7 +414,7 @@ internal class MemoryEditorViewModel : ViewModel() {
 
     private fun selectedOperation(
         kind: OperationKind,
-        operation: (LongArray) -> MemoryEditorRuntime.OperationResult,
+        operation: (Long, LongArray) -> MemoryEditorRuntime.OperationResult,
     ) {
         val ids = _state.value.selectedIds.toLongArray()
         if (ids.isEmpty()) {
@@ -345,7 +425,7 @@ internal class MemoryEditorViewModel : ViewModel() {
 
     private fun selectedSavedOperation(
         kind: OperationKind,
-        operation: (LongArray) -> MemoryEditorRuntime.OperationResult,
+        operation: (Long, LongArray) -> MemoryEditorRuntime.OperationResult,
     ) {
         val savedIds = _state.value.savedCandidates.mapTo(mutableSetOf()) { it.id }
         val ids = _state.value.selectedIds.intersect(savedIds).toLongArray()
@@ -358,10 +438,11 @@ internal class MemoryEditorViewModel : ViewModel() {
     private fun runSelectedOperation(
         kind: OperationKind,
         ids: LongArray,
-        operation: (LongArray) -> MemoryEditorRuntime.OperationResult,
+        operation: (Long, LongArray) -> MemoryEditorRuntime.OperationResult,
     ) {
+        val sessionId = _state.value.snapshot.searchSessionId
         runOperation(operation = {
-            val result = operation(ids)
+            val result = operation(sessionId, ids)
             val snapshot = MemoryEditorRuntime.snapshot()
             val candidates = MemoryEditorRuntime.results(0, PAGE_SIZE)
             val savedCandidates = MemoryEditorRuntime.savedResults(0, PAGE_SIZE)
@@ -383,6 +464,7 @@ internal class MemoryEditorViewModel : ViewModel() {
                         kind = kind,
                         requested = payload.result.requested,
                         succeeded = payload.result.succeeded,
+                        status = payload.result.status,
                     ),
                 )
             }
@@ -392,18 +474,43 @@ internal class MemoryEditorViewModel : ViewModel() {
     private fun <T> runOperation(
         operation: suspend () -> T,
         onSuccess: (T) -> Unit,
+        onFailure: (Throwable) -> Unit = ::showError,
     ) {
         if (!operationRunning.compareAndSet(false, true)) {
             return
         }
         _state.update { it.copy(busy = true, error = null, operation = null) }
         viewModelScope.launch {
-            runCatching {
-                withContext(Dispatchers.Default) { operation() }
-            }.onSuccess(onSuccess)
-                .onFailure(::showError)
-            operationRunning.set(false)
-            _state.update { it.copy(busy = false) }
+            val progressPoller = launch {
+                while (operationRunning.get()) {
+                    val progress = MemoryEditorRuntime.operationProgress()
+                    _state.update {
+                        it.copy(
+                            progress = progress.takeIf { current -> current.cancellable }?.let {
+                                current ->
+                                MemoryOperationProgress(
+                                    searchSessionId = current.searchSessionId,
+                                    operationId = current.operationId,
+                                    completed = current.completed,
+                                    total = current.total,
+                                )
+                            },
+                        )
+                    }
+                    delay(PROGRESS_POLL_INTERVAL_MS)
+                }
+            }
+            try {
+                onSuccess(withContext(Dispatchers.Default) { operation() })
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Throwable) {
+                onFailure(error)
+            } finally {
+                operationRunning.set(false)
+                progressPoller.cancel()
+                _state.update { it.copy(busy = false, progress = null) }
+            }
         }
     }
 
@@ -420,6 +527,7 @@ internal class MemoryEditorViewModel : ViewModel() {
         val snapshot: MemoryEditorRuntime.Snapshot,
         val candidates: List<MemoryEditorRuntime.CandidateView>,
         val savedCandidates: List<MemoryEditorRuntime.CandidateView>,
+        val operation: MemoryEditorRuntime.OperationResult? = null,
     )
 
     private data class OperationPayload(
@@ -438,6 +546,9 @@ internal class MemoryEditorViewModel : ViewModel() {
 
     private companion object {
         const val PAGE_SIZE = 200
+        const val PROGRESS_POLL_INTERVAL_MS = 100L
+        const val SEARCH_PREPARATION_DELAY_MS = 450L
+        const val MAX_LAYOUT_TRANSPARENCY = 0.8f
 
         fun stateFromRuntime(
             previous: MemoryEditorUiState? = null,
@@ -445,12 +556,6 @@ internal class MemoryEditorViewModel : ViewModel() {
         ): MemoryEditorUiState {
             val snapshot = MemoryEditorRuntime.snapshot()
             val actualPhase = phase ?: phaseOf(snapshot)
-            val candidates = if (actualPhase == MemoryEditorPhase.RESULTS) {
-                MemoryEditorRuntime.results(0, PAGE_SIZE)
-            } else {
-                emptyList()
-            }
-            val savedCandidates = MemoryEditorRuntime.savedResults(0, PAGE_SIZE)
             return MemoryEditorUiState(
                 phase = actualPhase,
                 snapshot = snapshot.toUi(),
@@ -470,13 +575,12 @@ internal class MemoryEditorViewModel : ViewModel() {
                 refineMode = previous?.refineMode ?: MemoryEditorRuntime.SearchMode.EXACT,
                 firstValue = previous?.firstValue.orEmpty(),
                 secondValue = previous?.secondValue.orEmpty(),
-                candidates = candidates.map { it.toUi() },
-                savedCandidates = savedCandidates.map { it.toUi() },
-                selectedIds = previous?.selectedIds.orEmpty().intersect(
-                    candidates.mapTo(mutableSetOf()) { it.id },
-                ),
-                hasMore = candidates.size < snapshot.candidates,
+                candidates = emptyList(),
+                savedCandidates = emptyList(),
+                selectedIds = emptySet(),
+                hasMore = snapshot.candidates > 0,
                 pauseEnabled = previous?.pauseEnabled ?: false,
+                layoutTransparency = previous?.layoutTransparency ?: 0f,
             )
         }
 
@@ -487,9 +591,13 @@ internal class MemoryEditorViewModel : ViewModel() {
         }
 
         fun MemoryEditorRuntime.Snapshot.toUi() = MemoryEditorSnapshot(
+            gameGeneration = gameGeneration,
+            searchSessionId = searchSessionId,
             candidates = candidates,
             frozen = frozen,
             saved = saved,
+            candidateBytes = candidateBytes,
+            candidateByteBudget = candidateByteBudget,
             kind = kind,
             mode = mode,
             limitReached = limitReached,
@@ -513,6 +621,13 @@ internal class MemoryEditorViewModel : ViewModel() {
             frozen = frozen,
             saved = saved,
             editable = editable,
+        )
+
+        fun MemoryEditorRuntime.OperationResult.toSummary(kind: OperationKind) = OperationSummary(
+            kind = kind,
+            requested = requested,
+            succeeded = succeeded,
+            status = status,
         )
     }
 }
