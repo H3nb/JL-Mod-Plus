@@ -16,12 +16,18 @@
 
 package javax.microedition.shell.memory.ui
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
 import javax.microedition.shell.memory.MemoryEditorRuntime
@@ -46,6 +52,25 @@ class MemoryEditorScreenTest {
 
         composeRule.onNodeWithTag("memory_value").assertExists()
         composeRule.onNodeWithTag("memory_maximum").assertDoesNotExist()
+    }
+
+    @Test
+    fun comparisonSearchShowsOneValueAndFocusedInputDock() {
+        composeRule.setContent {
+            MemoryEditorTheme {
+                MemoryEditorScreen(
+                    state = MemoryEditorUiState(
+                        initialMode = MemoryEditorRuntime.SearchMode.LESS_THAN,
+                    ),
+                    actions = MemoryEditorActions(),
+                    onClose = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("memory_value").performClick()
+        composeRule.onNodeWithTag("memory_maximum").assertDoesNotExist()
+        composeRule.onNodeWithTag("memory_input_dock").assertExists()
     }
 
     @Test
@@ -83,5 +108,96 @@ class MemoryEditorScreenTest {
         composeRule.onNodeWithTag("memory_edit_selected").assertIsNotEnabled()
         composeRule.onNodeWithTag("memory_candidate_7").performClick()
         composeRule.onNodeWithTag("memory_edit_selected").assertIsEnabled()
+    }
+
+    @Test
+    fun resultsScrollIncludesActionToolbarInACompactWindow() {
+        composeRule.setContent {
+            Box(Modifier.requiredSize(760.dp, 420.dp)) {
+                MemoryEditorTheme {
+                    MemoryEditorScreen(
+                        state = MemoryEditorUiState(
+                            phase = MemoryEditorPhase.RESULTS,
+                            snapshot = MemoryEditorSnapshot(
+                                candidates = 1,
+                                kind = MemoryEditorRuntime.ValueKind.INT,
+                            ),
+                            candidates = listOf(
+                                MemoryCandidate(
+                                    id = 7,
+                                    value = "750",
+                                    storageType = "int",
+                                    location = "game.Player.coins",
+                                    frozen = false,
+                                    editable = true,
+                                ),
+                            ),
+                            selectedIds = setOf(7),
+                        ),
+                        actions = MemoryEditorActions(),
+                        onClose = {},
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithTag("memory_results").performScrollToIndex(4)
+        composeRule.onNodeWithTag("memory_edit_selected").assertIsEnabled()
+    }
+
+    @Test
+    fun savedTabSupportsSelectingAndDeletingAnUnfrozenWatch() {
+        val selected = mutableStateOf(false)
+        composeRule.setContent {
+            MemoryEditorTheme {
+                MemoryEditorScreen(
+                    state = MemoryEditorUiState(
+                        phase = MemoryEditorPhase.RESULTS,
+                        snapshot = MemoryEditorSnapshot(
+                            candidates = 1,
+                            saved = 1,
+                            kind = MemoryEditorRuntime.ValueKind.INT,
+                        ),
+                        savedCandidates = listOf(
+                            MemoryCandidate(
+                                id = 9,
+                                value = "750",
+                                storageType = "int",
+                                location = "game.Player.coins",
+                                frozen = false,
+                                saved = true,
+                                editable = true,
+                            ),
+                        ),
+                        selectedIds = if (selected.value) setOf(9) else emptySet(),
+                    ),
+                    actions = MemoryEditorActions(
+                        toggleSelection = { selected.value = true },
+                    ),
+                    onClose = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("memory_tab_saved").performClick()
+        composeRule.onNodeWithTag("memory_delete_saved").assertIsNotEnabled()
+        composeRule.onNodeWithTag("memory_candidate_9").performClick()
+        composeRule.onNodeWithTag("memory_delete_saved").assertIsEnabled()
+    }
+
+    @Test
+    fun pauseIsOffByDefaultInSettings() {
+        composeRule.setContent {
+            MemoryEditorTheme {
+                MemoryEditorScreen(
+                    state = MemoryEditorUiState(),
+                    actions = MemoryEditorActions(),
+                    onClose = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("memory_tab_settings").performClick()
+        composeRule.onNodeWithTag("memory_pause").assertIsOff()
     }
 }

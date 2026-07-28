@@ -114,6 +114,20 @@ public class MemoryEditorRuntimeTest {
 	}
 
 	@Test
+	public void undoKeepsOnlyTheMostRecentEdit() {
+		Fixture fixture = new Fixture();
+		MemoryEditorRuntime.begin(MemoryEditorRuntime.ValueKind.INT,
+				MemoryEditorRuntime.SearchMode.UNKNOWN, null, null);
+		MemoryEditorBridge.onReadInt(fixture, Fixture.class, "valueI", SITE, -1, 7);
+
+		assertEquals(1, MemoryEditorRuntime.editAll("8"));
+		assertEquals(1, MemoryEditorRuntime.editAll("9"));
+		assertTrue(MemoryEditorRuntime.undo());
+		assertEquals(8, fixture.value);
+		assertFalse(MemoryEditorRuntime.undo());
+	}
+
+	@Test
 	public void byteAndBooleanArraysCanBeEditedThroughIntSearch() {
 		byte[] bytes = {1};
 		boolean[] booleans = {false};
@@ -241,6 +255,55 @@ public class MemoryEditorRuntimeTest {
 	}
 
 	@Test
+	public void freezeSavesUnfreezeKeepsAndDeleteRemovesTheCandidate() {
+		Fixture fixture = new Fixture();
+		MemoryEditorRuntime.begin(MemoryEditorRuntime.ValueKind.INT,
+				MemoryEditorRuntime.SearchMode.UNKNOWN, null, null);
+		MemoryEditorBridge.onReadInt(fixture, Fixture.class, "valueI", SITE, -1, 7);
+
+		assertEquals(1, MemoryEditorRuntime.freezeAll("12"));
+		MemoryEditorRuntime.CandidateView saved =
+				MemoryEditorRuntime.savedResults(0, 200).get(0);
+		assertTrue(saved.frozen);
+		assertTrue(saved.saved);
+		assertEquals(1, MemoryEditorRuntime.snapshot().saved);
+
+		assertEquals(1, MemoryEditorRuntime.clearFreeze(new long[]{saved.id}).succeeded);
+		assertFalse(MemoryEditorRuntime.savedResults(0, 200).get(0).frozen);
+		assertEquals(1, MemoryEditorRuntime.snapshot().saved);
+
+		assertEquals(1, MemoryEditorRuntime.deleteSaved(new long[]{saved.id}).succeeded);
+		assertEquals(0, MemoryEditorRuntime.snapshot().saved);
+		assertEquals(0, MemoryEditorRuntime.snapshot().frozen);
+		assertTrue(MemoryEditorRuntime.savedResults(0, 200).isEmpty());
+	}
+
+	@Test
+	public void savedCandidateSurvivesRefineAndUndoFreezeRestoresPreviousState() {
+		int[] values = {3, 4};
+		MemoryEditorRuntime.begin(MemoryEditorRuntime.ValueKind.INT,
+				MemoryEditorRuntime.SearchMode.UNKNOWN, null, null);
+		MemoryEditorBridge.onReadInt(values, null, "#array", SITE, 0, values[0]);
+		MemoryEditorBridge.onReadInt(values, null, "#array", SITE, 1, values[1]);
+
+		long firstId = MemoryEditorRuntime.results(0, 200).get(0).id;
+		assertEquals(1,
+				MemoryEditorRuntime.freezeCandidates(new long[]{firstId}, "9").succeeded);
+		assertTrue(MemoryEditorRuntime.undo());
+		assertEquals(3, values[0]);
+		assertEquals(0, MemoryEditorRuntime.snapshot().saved);
+		assertEquals(0, MemoryEditorRuntime.snapshot().frozen);
+
+		assertEquals(1,
+				MemoryEditorRuntime.freezeCandidates(new long[]{firstId}, "9").succeeded);
+		MemoryEditorRuntime.refine(MemoryEditorRuntime.SearchMode.EXACT, "4", null);
+		assertEquals(1, MemoryEditorRuntime.snapshot().candidates);
+		assertEquals(1, MemoryEditorRuntime.snapshot().saved);
+		assertEquals(1, MemoryEditorRuntime.snapshot().frozen);
+		assertEquals(firstId, MemoryEditorRuntime.savedResults(0, 200).get(0).id);
+	}
+
+	@Test
 	public void snapshotDiagnosesObservedTypesAndAccessPaths() {
 		int[] values = {3};
 		MemoryEditorRuntime.begin(MemoryEditorRuntime.ValueKind.LONG,
@@ -261,7 +324,7 @@ public class MemoryEditorRuntimeTest {
 	}
 
 	@Test
-	public void finishingCollectionPreventsNewCandidatesAndRelationalInitialModeIsRejected() {
+	public void finishingCollectionPreventsNewCandidatesAndChangeInitialModeIsRejected() {
 		Fixture first = new Fixture();
 		Fixture second = new Fixture();
 		assertInvalid(() -> MemoryEditorRuntime.begin(
@@ -277,6 +340,30 @@ public class MemoryEditorRuntimeTest {
 		MemoryEditorRuntime.Snapshot snapshot = MemoryEditorRuntime.snapshot();
 		assertFalse(snapshot.collecting);
 		assertEquals(1, snapshot.candidates);
+	}
+
+	@Test
+	public void comparisonModesUseStrictNumericBoundariesForInitialAndRefineSearches() {
+		int[] values = {3, 4, 5};
+		MemoryEditorRuntime.begin(MemoryEditorRuntime.ValueKind.INT,
+				MemoryEditorRuntime.SearchMode.LESS_THAN, "5", null);
+		for (int index = 0; index < values.length; index++) {
+			MemoryEditorBridge.onReadInt(values, null, "#array", SITE, index, values[index]);
+		}
+		assertEquals(2, MemoryEditorRuntime.snapshot().candidates);
+
+		MemoryEditorRuntime.refine(MemoryEditorRuntime.SearchMode.NOT_EQUAL, "3", null);
+		assertEquals(1, MemoryEditorRuntime.snapshot().candidates);
+		assertEquals("4", MemoryEditorRuntime.results(0, 200).get(0).value);
+
+		MemoryEditorRuntime.clear();
+		MemoryEditorRuntime.begin(MemoryEditorRuntime.ValueKind.INT,
+				MemoryEditorRuntime.SearchMode.GREATER_THAN, "4", null);
+		for (int index = 0; index < values.length; index++) {
+			MemoryEditorBridge.onReadInt(values, null, "#array", SITE, index, values[index]);
+		}
+		assertEquals(1, MemoryEditorRuntime.snapshot().candidates);
+		assertEquals("5", MemoryEditorRuntime.results(0, 200).get(0).value);
 	}
 
 	@Test

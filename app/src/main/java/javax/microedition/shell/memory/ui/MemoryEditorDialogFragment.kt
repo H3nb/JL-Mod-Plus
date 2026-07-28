@@ -36,10 +36,22 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
+import androidx.core.content.edit
 import androidx.fragment.app.viewModels
+import androidx.core.view.SoftwareKeyboardControllerCompat
+import androidx.preference.PreferenceManager
+import javax.microedition.shell.MidletThread
 
 class MemoryEditorDialogFragment : DialogFragment() {
     private val viewModel by viewModels<MemoryEditorViewModel>()
+    private var pausedByEditor = false
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val enabled = PreferenceManager.getDefaultSharedPreferences(requireContext())
+            .getBoolean(PREF_PAUSE, false)
+        viewModel.setPauseEnabled(enabled)
+    }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
         Dialog(requireContext()).apply {
@@ -73,14 +85,19 @@ class MemoryEditorDialogFragment : DialogFragment() {
                     refresh = viewModel::refreshResults,
                     refine = viewModel::refine,
                     toggleSelection = viewModel::toggleSelection,
+                    clearSelection = viewModel::clearSelection,
                     toggleAllLoaded = viewModel::toggleAllLoaded,
                     editSelected = viewModel::editSelected,
                     freezeSelected = viewModel::freezeSelected,
                     unfreezeSelected = viewModel::unfreezeSelected,
+                    unfreezeSavedSelected = viewModel::unfreezeSavedSelected,
+                    deleteSavedSelected = viewModel::deleteSavedSelected,
                     loadMore = viewModel::loadMore,
                     undo = viewModel::undo,
                     reset = viewModel::reset,
                     clearMessage = viewModel::clearMessage,
+                    setPauseEnabled = ::setPauseEnabled,
+                    setPeeking = ::setPeeking,
                 )
             }
             MemoryEditorTheme {
@@ -103,10 +120,15 @@ class MemoryEditorDialogFragment : DialogFragment() {
 
     override fun onStart() {
         super.onStart()
+        applyPause(viewModel.state.value.pauseEnabled)
         dialog?.window?.apply {
             setBackgroundDrawableResource(android.R.color.transparent)
             setDimAmount(0.55f)
             addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE or
+                    WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN,
+            )
             setLayout(
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.MATCH_PARENT,
@@ -114,8 +136,43 @@ class MemoryEditorDialogFragment : DialogFragment() {
         }
     }
 
+    override fun onStop() {
+        setPeeking(false)
+        if (pausedByEditor) {
+            MidletThread.getEmulationTimeController()?.resume()
+            pausedByEditor = false
+        }
+        super.onStop()
+    }
+
+    private fun setPauseEnabled(enabled: Boolean) {
+        PreferenceManager.getDefaultSharedPreferences(requireContext())
+            .edit { putBoolean(PREF_PAUSE, enabled) }
+        viewModel.setPauseEnabled(enabled)
+        applyPause(enabled)
+    }
+
+    private fun applyPause(enabled: Boolean) {
+        val controller = MidletThread.getEmulationTimeController() ?: return
+        if (enabled && !controller.snapshot().isPaused) {
+            controller.pause()
+            pausedByEditor = true
+        } else if (!enabled && pausedByEditor) {
+            controller.resume()
+            pausedByEditor = false
+        }
+    }
+
+    private fun setPeeking(enabled: Boolean) {
+        dialog?.window?.setDimAmount(if (enabled) 0.05f else 0.55f)
+        if (enabled) {
+            dialog?.window?.decorView?.let { SoftwareKeyboardControllerCompat(it).hide() }
+        }
+    }
+
     companion object {
         private const val TAG = "memory-editor"
+        private const val PREF_PAUSE = "memory_editor_pause"
 
         @JvmStatic
         fun show(fragmentManager: FragmentManager) {

@@ -185,7 +185,7 @@
     <string name="timing_migration_failed">The game could not be rebuilt. The previous executable has been restored.</string>
     <string name="timing_migration_continue">Continue without the latest hooks</string>
     <string name="memory_editor">Memory editor</string>
-    <string name="memory_editor_title">Memory editor (logical values)</string>
+    <string name="memory_editor_title">Memory Editor</string>
     <string name="memory_editor_description">Search values observed by the converted game. This is not an arbitrary Android RAM scanner.</string>
     <string name="memory_editor_type">Value type</string>
     <string name="memory_editor_mode">Search mode</string>
@@ -196,7 +196,7 @@
     <string name="memory_editor_edit">Edit all candidates</string>
     <string name="memory_editor_freeze">Freeze all candidates</string>
     <string name="memory_editor_unfreeze">Clear freeze</string>
-    <string name="memory_editor_undo">Undo last edit</string>
+    <string name="memory_editor_undo">Undo last change</string>
     <string name="memory_editor_reset">Reset search</string>
     <string name="memory_editor_close">Close</string>
     <string name="memory_editor_no_session">Start a search first.</string>
@@ -209,11 +209,14 @@
     <string name="memory_editor_busy">A memory-editor operation is still running.</string>
     <string name="memory_editor_preview_badge">Experimental preview</string>
     <string name="memory_editor_setup_title">New value search</string>
-    <string name="memory_editor_setup_help">Choose how the value is stored, then start collecting while you play. Search only covers logical primitive fields and arrays reached by converted game code.</string>
+    <string name="memory_editor_setup_help">Choose a type, comparison, and value.</string>
     <string name="memory_editor_initial_mode">Initial search</string>
-    <string name="memory_editor_mode_exact">Exact value</string>
-    <string name="memory_editor_mode_unknown">Unknown value</string>
-    <string name="memory_editor_mode_range">Value range</string>
+    <string name="memory_editor_mode_exact">Exact (=)</string>
+    <string name="memory_editor_mode_not_equal">Not equal (≠)</string>
+    <string name="memory_editor_mode_less_than">Less than (&lt;)</string>
+    <string name="memory_editor_mode_greater_than">Greater than (&gt;)</string>
+    <string name="memory_editor_mode_unknown">Unknown</string>
+    <string name="memory_editor_mode_range">Between</string>
     <string name="memory_editor_mode_changed">Changed</string>
     <string name="memory_editor_mode_unchanged">Unchanged</string>
     <string name="memory_editor_mode_increased">Increased</string>
@@ -236,7 +239,8 @@
     <string name="memory_editor_results_summary">%1$d candidates · %2$d frozen</string>
     <string name="memory_editor_limit_warning">The 50,000-candidate safety limit was reached. Refine before editing.</string>
     <string name="memory_editor_empty_results">No candidates match yet.</string>
-    <string name="memory_editor_refine_help">Change the value in the game, reopen this editor, then narrow the existing candidates.</string>
+    <string name="memory_editor_refine_title">Refine results</string>
+    <string name="memory_editor_refine_help">Change the value in the game, then compare again.</string>
     <string name="memory_editor_refresh">Refresh</string>
     <string name="memory_editor_select_loaded">Select loaded</string>
     <string name="memory_editor_clear_selection">Clear selection</string>
@@ -255,8 +259,21 @@
     <string name="memory_editor_reset_confirm_title">Reset the search?</string>
     <string name="memory_editor_reset_confirm_body">Candidates, selection, freezes, and edit history for this session will be cleared.</string>
     <string name="memory_editor_operation_result">%1$d of %2$d locations updated</string>
-    <string name="memory_editor_undo_success">The last edit was restored.</string>
-    <string name="memory_editor_undo_empty">There is no edit to restore.</string>
+    <string name="memory_editor_undo_success">The last change was restored.</string>
+    <string name="memory_editor_undo_empty">There is no change to restore.</string>
+    <string name="memory_editor_tab_search">Search</string>
+    <string name="memory_editor_tab_results">Results</string>
+    <string name="memory_editor_tab_saved">Saved</string>
+    <string name="memory_editor_tab_settings">Settings</string>
+    <string name="memory_editor_peek">View game</string>
+    <string name="memory_editor_done">Done</string>
+    <string name="memory_editor_saved_title">Saved values</string>
+    <string name="memory_editor_saved_help">Frozen values are saved automatically.</string>
+    <string name="memory_editor_saved_empty">No saved values.</string>
+    <string name="memory_editor_delete">Delete</string>
+    <string name="memory_editor_settings_title">Settings</string>
+    <string name="memory_editor_pause">Pause game while editor is open</string>
+    <string name="memory_editor_pause_help">Off by default.</string>
     <string-array name="memory_editor_types">
         <item>Integer (boolean/byte/char/short/int)</item>
         <item>Long</item>

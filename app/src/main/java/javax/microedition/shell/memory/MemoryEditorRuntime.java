@@ -41,12 +41,14 @@ public final class MemoryEditorRuntime {
 	public enum ValueKind { INT, LONG, FLOAT, DOUBLE }
 
 	public enum SearchMode {
-		EXACT, UNKNOWN, CHANGED, UNCHANGED, INCREASED, DECREASED, RANGE
+		EXACT, NOT_EQUAL, LESS_THAN, GREATER_THAN, UNKNOWN, CHANGED, UNCHANGED,
+		INCREASED, DECREASED, RANGE
 	}
 
 	public static final class Snapshot {
 		public final int candidates;
 		public final int frozen;
+		public final int saved;
 		public final ValueKind kind;
 		public final SearchMode mode;
 		public final boolean limitReached;
@@ -61,13 +63,14 @@ public final class MemoryEditorRuntime {
 		public final long readObservations;
 		public final long writeObservations;
 
-		private Snapshot(int candidates, int frozen, ValueKind kind, SearchMode mode,
+		private Snapshot(int candidates, int frozen, int saved, ValueKind kind, SearchMode mode,
 				boolean limitReached, boolean collecting, boolean undoAvailable,
 				long intObservations, long longObservations, long floatObservations,
 				long doubleObservations, long fieldObservations, long arrayObservations,
 				long readObservations, long writeObservations) {
 			this.candidates = candidates;
 			this.frozen = frozen;
+			this.saved = saved;
 			this.kind = kind;
 			this.mode = mode;
 			this.limitReached = limitReached;
@@ -108,15 +111,17 @@ public final class MemoryEditorRuntime {
 		public final String storageType;
 		public final String location;
 		public final boolean frozen;
+		public final boolean saved;
 		public final boolean editable;
 
 		private CandidateView(long id, String value, String storageType, String location,
-				boolean frozen, boolean editable) {
+				boolean frozen, boolean saved, boolean editable) {
 			this.id = id;
 			this.value = value;
 			this.storageType = storageType;
 			this.location = location;
 			this.frozen = frozen;
+			this.saved = saved;
 			this.editable = editable;
 		}
 	}
@@ -135,7 +140,6 @@ public final class MemoryEditorRuntime {
 	}
 
 	private static final int MAX_CANDIDATES = 50_000;
-	private static final int MAX_UNDO_BATCHES = 3;
 	private static final int INSTANCE_FIELD_INDEX = -1;
 	private static final int STATIC_FIELD_INDEX = -2;
 	private static final String ARRAY_MEMBER = "#array";
@@ -149,10 +153,11 @@ public final class MemoryEditorRuntime {
 		if (kind == null || mode == null) {
 			throw new IllegalArgumentException("Search kind and mode are required");
 		}
-		if (mode != SearchMode.EXACT && mode != SearchMode.UNKNOWN
-				&& mode != SearchMode.RANGE) {
+		if (mode != SearchMode.EXACT && mode != SearchMode.NOT_EQUAL
+				&& mode != SearchMode.LESS_THAN && mode != SearchMode.GREATER_THAN
+				&& mode != SearchMode.UNKNOWN && mode != SearchMode.RANGE) {
 			throw new IllegalArgumentException(
-					"Initial search supports only exact, unknown, or range");
+					"Initial search mode is not supported");
 		}
 		Criteria criteria = parseCriteria(kind, mode, first, second);
 		synchronized (LOCK) {
@@ -188,11 +193,12 @@ public final class MemoryEditorRuntime {
 	public static Snapshot snapshot() {
 		synchronized (LOCK) {
 			if (session == null) {
-				return new Snapshot(0, 0, null, null, false, false, false,
+				return new Snapshot(0, 0, 0, null, null, false, false, false,
 						0, 0, 0, 0, 0, 0, 0, 0);
 			}
 			session.purgeCollected();
-			return new Snapshot(session.size(), session.frozen.size(), session.kind,
+			return new Snapshot(session.size(), session.frozen.size(), session.saved.size(),
+					session.kind,
 					session.mode, session.limitReached, session.collecting,
 					!session.undo.isEmpty(),
 					session.observations.get(ValueKind.INT.ordinal()),
@@ -224,7 +230,8 @@ public final class MemoryEditorRuntime {
 					continue;
 				}
 				Value oldFrozen = session.frozen.get(candidate);
-				batch.add(new Undo(candidate, oldValue, oldFrozen));
+				batch.add(new Undo(candidate, oldValue, oldFrozen,
+						session.saved.contains(candidate)));
 				if (oldFrozen != null) {
 					session.frozen.put(candidate, value);
 				}
@@ -248,14 +255,24 @@ public final class MemoryEditorRuntime {
 			Value value = parse(session.kind, text);
 			session.collecting = false;
 			int changed = 0;
+			List<Undo> batch = new ArrayList<>();
 			List<Candidate> selected = session.select(candidateIds);
 			for (Candidate candidate : selected) {
+				Value oldValue = candidate.read();
+				if (oldValue == null) {
+					continue;
+				}
+				Value oldFrozen = session.frozen.get(candidate);
+				boolean oldSaved = session.saved.contains(candidate);
 				if (candidate.apply(value)) {
+					batch.add(new Undo(candidate, oldValue, oldFrozen, oldSaved));
 					session.frozen.put(candidate, value);
+					session.saved.add(candidate);
 					candidate.baseline = value;
 					changed++;
 				}
 			}
+			session.addUndoBatch(batch);
 			return new OperationResult(selected.size(), changed);
 		}
 	}
@@ -275,6 +292,21 @@ public final class MemoryEditorRuntime {
 		}
 	}
 
+	public static List<CandidateView> savedResults(int offset, int limit) {
+		if (offset < 0) {
+			throw new IllegalArgumentException("Result offset must not be negative");
+		}
+		if (limit < 1 || limit > 500) {
+			throw new IllegalArgumentException("Result limit must be between 1 and 500");
+		}
+		synchronized (LOCK) {
+			if (session == null) {
+				return new ArrayList<>();
+			}
+			return session.savedResults(offset, limit);
+		}
+	}
+
 	public static OperationResult clearFreeze(long[] candidateIds) {
 		synchronized (LOCK) {
 			if (session == null) {
@@ -285,6 +317,26 @@ public final class MemoryEditorRuntime {
 			for (Candidate candidate : selected) {
 				if (session.frozen.remove(candidate) != null) {
 					changed++;
+				}
+			}
+			return new OperationResult(selected.size(), changed);
+		}
+	}
+
+	public static OperationResult deleteSaved(long[] candidateIds) {
+		synchronized (LOCK) {
+			if (session == null) {
+				return new OperationResult(0, 0);
+			}
+			List<Candidate> selected = session.select(candidateIds);
+			int changed = 0;
+			for (Candidate candidate : selected) {
+				session.frozen.remove(candidate);
+				if (session.saved.remove(candidate)) {
+					changed++;
+					if (!session.candidates.contains(candidate)) {
+						session.remove(candidate);
+					}
 				}
 			}
 			return new OperationResult(selected.size(), changed);
@@ -317,6 +369,11 @@ public final class MemoryEditorRuntime {
 					session.frozen.remove(undo.candidate);
 				} else {
 					session.frozen.put(undo.candidate, undo.oldFrozen);
+				}
+				if (undo.oldSaved) {
+					session.saved.add(undo.candidate);
+				} else {
+					session.saved.remove(undo.candidate);
 				}
 			}
 			return restored;
@@ -420,7 +477,9 @@ public final class MemoryEditorRuntime {
 			String first, String second) {
 		Value lower = null;
 		Value upper = null;
-		if (mode == SearchMode.EXACT || mode == SearchMode.RANGE) {
+		if (mode == SearchMode.EXACT || mode == SearchMode.NOT_EQUAL
+				|| mode == SearchMode.LESS_THAN || mode == SearchMode.GREATER_THAN
+				|| mode == SearchMode.RANGE) {
 			lower = parse(kind, first);
 		}
 		if (mode == SearchMode.RANGE) {
@@ -479,6 +538,7 @@ public final class MemoryEditorRuntime {
 		private final Map<Integer, List<Candidate>> candidateBuckets = new HashMap<>();
 		private final Map<Long, Candidate> candidatesById = new HashMap<>();
 		private final Map<Candidate, Value> frozen = new HashMap<>();
+		private final Set<Candidate> saved = new LinkedHashSet<>();
 		private final ArrayDeque<List<Undo>> undo = new ArrayDeque<>();
 		private final ReferenceQueue<Object> collectedTargets = new ReferenceQueue<>();
 		private final AtomicLongArray observations =
@@ -542,6 +602,9 @@ public final class MemoryEditorRuntime {
 			return switch (mode) {
 				case UNKNOWN -> true;
 				case EXACT -> value.equals(lower);
+				case NOT_EQUAL -> !value.equals(lower);
+				case LESS_THAN -> value.compareTo(lower) < 0;
+				case GREATER_THAN -> value.compareTo(lower) > 0;
 				case RANGE -> value.compareTo(lower) >= 0 && value.compareTo(upper) <= 0;
 				case CHANGED, UNCHANGED, INCREASED, DECREASED ->
 						throw new IllegalStateException("Relational mode cannot collect a baseline");
@@ -558,7 +621,7 @@ public final class MemoryEditorRuntime {
 					candidate.baseline = current;
 					retained.add(candidate);
 				} else {
-					remove(candidate);
+					removeFromResults(candidate);
 				}
 			}
 			// Preserve deterministic observation order after removals.
@@ -575,6 +638,9 @@ public final class MemoryEditorRuntime {
 			return switch (nextMode) {
 				case UNKNOWN -> true;
 				case EXACT -> current.equals(nextLower);
+				case NOT_EQUAL -> !current.equals(nextLower);
+				case LESS_THAN -> current.compareTo(nextLower) < 0;
+				case GREATER_THAN -> current.compareTo(nextLower) > 0;
 				case RANGE -> current.compareTo(nextLower) >= 0
 						&& current.compareTo(nextUpper) <= 0;
 				case CHANGED -> !current.equals(previous);
@@ -622,7 +688,27 @@ public final class MemoryEditorRuntime {
 				}
 				Value current = candidate.read();
 				if (current != null) {
-					result.add(candidate.toView(current, frozen.containsKey(candidate)));
+					result.add(candidate.toView(current, frozen.containsKey(candidate),
+							saved.contains(candidate)));
+				}
+				if (result.size() == limit) {
+					break;
+				}
+			}
+			return result;
+		}
+
+		private List<CandidateView> savedResults(int offset, int limit) {
+			purgeCollected();
+			List<CandidateView> result = new ArrayList<>(Math.min(limit, saved.size()));
+			int position = 0;
+			for (Candidate candidate : saved) {
+				if (position++ < offset) {
+					continue;
+				}
+				Value current = candidate.read();
+				if (current != null) {
+					result.add(candidate.toView(current, frozen.containsKey(candidate), true));
 				}
 				if (result.size() == limit) {
 					break;
@@ -632,19 +718,24 @@ public final class MemoryEditorRuntime {
 		}
 
 		private void addUndoBatch(List<Undo> batch) {
+			undo.clear();
 			if (batch.isEmpty()) {
 				return;
 			}
 			undo.addLast(batch);
-			while (undo.size() > MAX_UNDO_BATCHES) {
-				undo.removeFirst();
-			}
 		}
 
 		private void purgeCollected() {
 			TargetReference reference;
 			while ((reference = (TargetReference) collectedTargets.poll()) != null) {
 				remove(reference.candidate);
+			}
+		}
+
+		private void removeFromResults(Candidate candidate) {
+			candidates.remove(candidate);
+			if (!saved.contains(candidate)) {
+				remove(candidate);
 			}
 		}
 
@@ -659,6 +750,7 @@ public final class MemoryEditorRuntime {
 				}
 			}
 			frozen.remove(candidate);
+			saved.remove(candidate);
 			Iterator<List<Undo>> batches = undo.iterator();
 			while (batches.hasNext()) {
 				List<Undo> batch = batches.next();
@@ -767,11 +859,11 @@ public final class MemoryEditorRuntime {
 			return type == int.class;
 		}
 
-		private CandidateView toView(Value current, boolean frozen) {
+		private CandidateView toView(Value current, boolean frozen, boolean saved) {
 			Object object = liveTarget();
 			Class<?> type = storageClass(object);
 			return new CandidateView(id, current.toDisplayString(), storageTypeName(type),
-					locationName(object), frozen, isEditable(type));
+					locationName(object), frozen, saved, isEditable(type));
 		}
 
 		private Class<?> storageClass(Object object) {
@@ -812,11 +904,14 @@ public final class MemoryEditorRuntime {
 		private final Candidate candidate;
 		private final Value oldValue;
 		private final Value oldFrozen;
+		private final boolean oldSaved;
 
-		private Undo(Candidate candidate, Value oldValue, Value oldFrozen) {
+		private Undo(Candidate candidate, Value oldValue, Value oldFrozen,
+				boolean oldSaved) {
 			this.candidate = candidate;
 			this.oldValue = oldValue;
 			this.oldFrozen = oldFrozen;
+			this.oldSaved = oldSaved;
 		}
 	}
 

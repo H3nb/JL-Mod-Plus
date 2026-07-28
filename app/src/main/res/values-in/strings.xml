@@ -167,7 +167,7 @@
     <string name="timing_migration_failed">Game tidak berhasil dibuat ulang. Executable sebelumnya telah dipulihkan.</string>
     <string name="timing_migration_continue">Lanjut tanpa hook terbaru</string>
     <string name="memory_editor">Memory editor</string>
-    <string name="memory_editor_title">Memory editor (nilai logis)</string>
+    <string name="memory_editor_title">Memory Editor</string>
     <string name="memory_editor_description">Cari nilai yang diamati dari game hasil konversi. Ini bukan pemindai RAM Android sembarang.</string>
     <string name="memory_editor_type">Jenis nilai</string>
     <string name="memory_editor_mode">Mode pencarian</string>
@@ -178,7 +178,7 @@
     <string name="memory_editor_edit">Edit semua kandidat</string>
     <string name="memory_editor_freeze">Bekukan semua kandidat</string>
     <string name="memory_editor_unfreeze">Hapus pembekuan</string>
-    <string name="memory_editor_undo">Batalkan edit terakhir</string>
+    <string name="memory_editor_undo">Urungkan perubahan</string>
     <string name="memory_editor_reset">Reset pencarian</string>
     <string name="memory_editor_close">Tutup</string>
     <string name="memory_editor_no_session">Mulai pencarian terlebih dahulu.</string>
@@ -191,11 +191,14 @@
     <string name="memory_editor_busy">Operasi memory editor masih berjalan.</string>
     <string name="memory_editor_preview_badge">Pratinjau eksperimental</string>
     <string name="memory_editor_setup_title">Pencarian nilai baru</string>
-    <string name="memory_editor_setup_help">Pilih cara nilai disimpan, lalu mulai mengumpulkan sambil bermain. Pencarian hanya mencakup field dan array primitif logis yang dilewati kode game hasil konversi.</string>
+    <string name="memory_editor_setup_help">Pilih tipe, perbandingan, dan nilai.</string>
     <string name="memory_editor_initial_mode">Pencarian awal</string>
-    <string name="memory_editor_mode_exact">Nilai tepat</string>
-    <string name="memory_editor_mode_unknown">Nilai tidak diketahui</string>
-    <string name="memory_editor_mode_range">Rentang nilai</string>
+    <string name="memory_editor_mode_exact">Tepat (=)</string>
+    <string name="memory_editor_mode_not_equal">Tidak sama (≠)</string>
+    <string name="memory_editor_mode_less_than">Kurang dari (&lt;)</string>
+    <string name="memory_editor_mode_greater_than">Lebih dari (&gt;)</string>
+    <string name="memory_editor_mode_unknown">Belum diketahui</string>
+    <string name="memory_editor_mode_range">Di antara</string>
     <string name="memory_editor_mode_changed">Berubah</string>
     <string name="memory_editor_mode_unchanged">Tidak berubah</string>
     <string name="memory_editor_mode_increased">Meningkat</string>
@@ -218,7 +221,8 @@
     <string name="memory_editor_results_summary">%1$d kandidat · %2$d dibekukan</string>
     <string name="memory_editor_limit_warning">Batas aman 50.000 kandidat tercapai. Persempit sebelum mengedit.</string>
     <string name="memory_editor_empty_results">Belum ada kandidat yang cocok.</string>
-    <string name="memory_editor_refine_help">Ubah nilainya di game, buka kembali editor ini, lalu persempit kandidat yang sudah ada.</string>
+    <string name="memory_editor_refine_title">Persempit hasil</string>
+    <string name="memory_editor_refine_help">Ubah nilai di game, lalu bandingkan lagi.</string>
     <string name="memory_editor_refresh">Segarkan</string>
     <string name="memory_editor_select_loaded">Pilih yang dimuat</string>
     <string name="memory_editor_clear_selection">Hapus pilihan</string>
@@ -237,8 +241,21 @@
     <string name="memory_editor_reset_confirm_title">Reset pencarian?</string>
     <string name="memory_editor_reset_confirm_body">Kandidat, pilihan, pembekuan, dan riwayat edit sesi ini akan dihapus.</string>
     <string name="memory_editor_operation_result">%1$d dari %2$d lokasi diperbarui</string>
-    <string name="memory_editor_undo_success">Edit terakhir berhasil dipulihkan.</string>
-    <string name="memory_editor_undo_empty">Tidak ada edit yang dapat dipulihkan.</string>
+    <string name="memory_editor_undo_success">Perubahan terakhir dipulihkan.</string>
+    <string name="memory_editor_undo_empty">Tidak ada perubahan yang dapat dipulihkan.</string>
+    <string name="memory_editor_tab_search">Cari</string>
+    <string name="memory_editor_tab_results">Hasil</string>
+    <string name="memory_editor_tab_saved">Tersimpan</string>
+    <string name="memory_editor_tab_settings">Setelan</string>
+    <string name="memory_editor_peek">Lihat game</string>
+    <string name="memory_editor_done">Selesai</string>
+    <string name="memory_editor_saved_title">Nilai tersimpan</string>
+    <string name="memory_editor_saved_help">Nilai yang dibekukan otomatis tersimpan.</string>
+    <string name="memory_editor_saved_empty">Belum ada nilai tersimpan.</string>
+    <string name="memory_editor_delete">Hapus</string>
+    <string name="memory_editor_settings_title">Setelan</string>
+    <string name="memory_editor_pause">Jeda game saat editor dibuka</string>
+    <string name="memory_editor_pause_help">Nonaktif secara default.</string>
     <string-array name="memory_editor_types">
         <item>Integer (boolean/byte/char/short/int)</item>
         <item>Long</item>

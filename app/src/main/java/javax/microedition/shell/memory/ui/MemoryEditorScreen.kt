@@ -17,6 +17,7 @@
 package javax.microedition.shell.memory.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,11 +26,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -46,10 +49,13 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -57,9 +63,16 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -70,6 +83,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
+import kotlinx.coroutines.launch
 import javax.microedition.shell.memory.MemoryEditorRuntime
 
 internal data class MemoryEditorActions(
@@ -83,15 +97,24 @@ internal data class MemoryEditorActions(
     val refresh: () -> Unit = {},
     val refine: () -> Unit = {},
     val toggleSelection: (Long) -> Unit = {},
+    val clearSelection: () -> Unit = {},
     val toggleAllLoaded: () -> Unit = {},
     val editSelected: (String) -> Unit = {},
     val freezeSelected: (String) -> Unit = {},
     val unfreezeSelected: () -> Unit = {},
+    val unfreezeSavedSelected: () -> Unit = {},
+    val deleteSavedSelected: () -> Unit = {},
     val loadMore: () -> Unit = {},
     val undo: () -> Unit = {},
     val reset: () -> Unit = {},
     val clearMessage: () -> Unit = {},
+    val setPauseEnabled: (Boolean) -> Unit = {},
+    val setPeeking: (Boolean) -> Unit = {},
 )
+
+private enum class EditorTab { SEARCH, RESULTS, SAVED, SETTINGS }
+
+private enum class ActiveInput { FIRST, SECOND }
 
 @Composable
 internal fun MemoryEditorScreen(
@@ -100,6 +123,14 @@ internal fun MemoryEditorScreen(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var selectedTab by rememberSaveable {
+        mutableStateOf(
+            if (state.phase == MemoryEditorPhase.RESULTS) EditorTab.RESULTS
+            else EditorTab.SEARCH,
+        )
+    }
+    var activeInput by remember { mutableStateOf<ActiveInput?>(null) }
+    var peeking by remember { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
     val operationMessage = state.operation?.let {
         if (it.kind == OperationKind.UNDO) {
@@ -125,20 +156,58 @@ internal fun MemoryEditorScreen(
             actions.clearMessage()
         }
     }
+    LaunchedEffect(state.phase) {
+        if (state.phase == MemoryEditorPhase.RESULTS) {
+            selectedTab = EditorTab.RESULTS
+        }
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(snackbar) },
+        bottomBar = {
+            if (activeInput != null && !peeking) {
+                InputDock(
+                    label = stringResource(
+                        if (activeInput == ActiveInput.SECOND) {
+                            R.string.memory_editor_second_value
+                        } else if (
+                            (state.phase == MemoryEditorPhase.SETUP &&
+                                state.initialMode == MemoryEditorRuntime.SearchMode.RANGE) ||
+                            (state.phase == MemoryEditorPhase.RESULTS &&
+                                state.refineMode == MemoryEditorRuntime.SearchMode.RANGE)
+                        ) {
+                            R.string.memory_editor_minimum
+                        } else {
+                            R.string.memory_editor_value
+                        },
+                    ),
+                    value = if (activeInput == ActiveInput.SECOND) {
+                        state.secondValue
+                    } else {
+                        state.firstValue
+                    },
+                    onDone = { activeInput = null },
+                )
+            }
+        },
     ) { contentPadding ->
         Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(contentPadding),
+                .padding(contentPadding)
+                .graphicsLayer(alpha = if (peeking) 0.12f else 1f),
             shape = RoundedCornerShape(20.dp),
             tonalElevation = 6.dp,
         ) {
             Column(Modifier.fillMaxSize()) {
-                EditorHeader(onClose)
+                EditorHeader(
+                    onClose = onClose,
+                    onPeekChanged = { enabled ->
+                        peeking = enabled
+                        actions.setPeeking(enabled)
+                    },
+                )
                 HorizontalDivider()
                 if (state.busy) {
                     LinearProgressIndicator(
@@ -147,10 +216,51 @@ internal fun MemoryEditorScreen(
                             .testTag("memory_busy"),
                     )
                 }
-                when (state.phase) {
-                    MemoryEditorPhase.SETUP -> SetupContent(state, actions)
-                    MemoryEditorPhase.COLLECTING -> CollectingContent(state, actions, onClose)
-                    MemoryEditorPhase.RESULTS -> ResultsContent(state, actions, onClose)
+                MemoryEditorTabs(
+                    selected = selectedTab,
+                    onSelected = {
+                        selectedTab = it
+                        activeInput = null
+                        actions.clearSelection()
+                    },
+                )
+                when (selectedTab) {
+                    EditorTab.SEARCH -> when (state.phase) {
+                        MemoryEditorPhase.SETUP -> SetupContent(
+                            state = state,
+                            actions = actions,
+                            onInputFocused = { activeInput = it },
+                            modifier = Modifier.weight(1f),
+                        )
+                        MemoryEditorPhase.COLLECTING -> CollectingContent(
+                            state = state,
+                            actions = actions,
+                            onClose = onClose,
+                            modifier = Modifier.weight(1f),
+                        )
+                        MemoryEditorPhase.RESULTS -> RefineContent(
+                            state = state,
+                            actions = actions,
+                            onInputFocused = { activeInput = it },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    EditorTab.RESULTS -> ResultsContent(
+                        state = state,
+                        actions = actions,
+                        onClose = onClose,
+                        modifier = Modifier.weight(1f),
+                    )
+                    EditorTab.SAVED -> SavedContent(
+                        state = state,
+                        actions = actions,
+                        modifier = Modifier.weight(1f),
+                    )
+                    EditorTab.SETTINGS -> SettingsContent(
+                        state = state,
+                        actions = actions,
+                        modifier = Modifier.weight(1f),
+                    )
                 }
             }
         }
@@ -158,7 +268,10 @@ internal fun MemoryEditorScreen(
 }
 
 @Composable
-private fun EditorHeader(onClose: () -> Unit) {
+private fun EditorHeader(
+    onClose: () -> Unit,
+    onPeekChanged: (Boolean) -> Unit,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -177,6 +290,25 @@ private fun EditorHeader(onClose: () -> Unit) {
                 color = MaterialTheme.colorScheme.primary,
             )
         }
+        OutlinedButton(
+            onClick = {},
+            modifier = Modifier
+                .testTag("memory_peek")
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onPress = {
+                            onPeekChanged(true)
+                            try {
+                                tryAwaitRelease()
+                            } finally {
+                                onPeekChanged(false)
+                            }
+                        },
+                    )
+                },
+        ) {
+            Text(stringResource(R.string.memory_editor_peek))
+        }
         TextButton(onClick = onClose) {
             Text(stringResource(R.string.memory_editor_close))
         }
@@ -184,10 +316,86 @@ private fun EditorHeader(onClose: () -> Unit) {
 }
 
 @Composable
-private fun SetupContent(state: MemoryEditorUiState, actions: MemoryEditorActions) {
-    Column(
+private fun MemoryEditorTabs(
+    selected: EditorTab,
+    onSelected: (EditorTab) -> Unit,
+) {
+    PrimaryTabRow(selectedTabIndex = selected.ordinal) {
+        EditorTab.values().forEach { tab ->
+            Tab(
+                selected = selected == tab,
+                onClick = { onSelected(tab) },
+                text = {
+                    Text(
+                        stringResource(
+                            when (tab) {
+                                EditorTab.SEARCH -> R.string.memory_editor_tab_search
+                                EditorTab.RESULTS -> R.string.memory_editor_tab_results
+                                EditorTab.SAVED -> R.string.memory_editor_tab_saved
+                                EditorTab.SETTINGS -> R.string.memory_editor_tab_settings
+                            },
+                        ),
+                    )
+                },
+                modifier = Modifier.testTag("memory_tab_${tab.name.lowercase()}"),
+            )
+        }
+    }
+}
+
+@Composable
+private fun InputDock(
+    label: String,
+    value: String,
+    onDone: () -> Unit,
+) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    Surface(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
+            .imePadding()
+            .testTag("memory_input_dock"),
+        tonalElevation = 8.dp,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(label, style = MaterialTheme.typography.labelMedium)
+                Text(
+                    text = value.ifEmpty { "—" },
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Button(
+                onClick = {
+                    keyboardController?.hide()
+                    focusManager.clearFocus()
+                    onDone()
+                },
+            ) {
+                Text(stringResource(R.string.memory_editor_done))
+            }
+        }
+    }
+}
+
+@Composable
+private fun SetupContent(
+    state: MemoryEditorUiState,
+    actions: MemoryEditorActions,
+    onInputFocused: (ActiveInput?) -> Unit,
+    modifier: Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .imePadding()
             .verticalScroll(rememberScrollState())
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -223,6 +431,7 @@ private fun SetupContent(state: MemoryEditorUiState, actions: MemoryEditorAction
             second = state.secondValue,
             onFirstChanged = actions.setFirstValue,
             onSecondChanged = actions.setSecondValue,
+            onInputFocused = onInputFocused,
         )
         Button(
             onClick = actions.startSearch,
@@ -237,14 +446,39 @@ private fun SetupContent(state: MemoryEditorUiState, actions: MemoryEditorAction
 }
 
 @Composable
+private fun RefineContent(
+    state: MemoryEditorUiState,
+    actions: MemoryEditorActions,
+    onInputFocused: (ActiveInput?) -> Unit,
+    modifier: Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .imePadding()
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.memory_editor_refine_title),
+            style = MaterialTheme.typography.titleMedium,
+        )
+        RefinePanel(state, actions, onInputFocused)
+    }
+}
+
+@Composable
 private fun CollectingContent(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
     onClose: () -> Unit,
+    modifier: Modifier,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = modifier
+            .fillMaxWidth()
+            .imePadding()
             .verticalScroll(rememberScrollState())
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -293,88 +527,88 @@ private fun ResultsContent(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
     onClose: () -> Unit,
+    modifier: Modifier,
 ) {
     var replacementAction by remember { mutableStateOf<OperationKind?>(null) }
     var showResetConfirmation by remember { mutableStateOf(false) }
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+    LazyColumn(
+        modifier = modifier
+            .fillMaxWidth()
+            .imePadding()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .testTag("memory_results"),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.memory_editor_results_title),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Text(
-                    text = stringResource(
-                        R.string.memory_editor_results_summary,
-                        state.snapshot.candidates,
-                        state.snapshot.frozen,
-                    ),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            OutlinedButton(onClick = onClose) {
-                Text(stringResource(R.string.memory_editor_return_to_game))
+        item(key = "results_header") {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.memory_editor_results_title),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Text(
+                        text = stringResource(
+                            R.string.memory_editor_results_summary,
+                            state.snapshot.candidates,
+                            state.snapshot.frozen,
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+                OutlinedButton(onClick = onClose) {
+                    Text(stringResource(R.string.memory_editor_return_to_game))
+                }
             }
         }
         if (state.snapshot.limitReached) {
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = stringResource(R.string.memory_editor_limit_warning),
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-            )
+            item(key = "limit_warning") {
+                Text(
+                    text = stringResource(R.string.memory_editor_limit_warning),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
         }
-        Spacer(Modifier.height(10.dp))
-        RefinePanel(state, actions)
-        Spacer(Modifier.height(10.dp))
-        SelectionToolbar(state, actions)
-        Spacer(Modifier.height(6.dp))
+        item(key = "selection_toolbar") {
+            SelectionToolbar(state, actions)
+        }
         if (state.candidates.isEmpty()) {
-            EmptyResults(state.snapshot)
+            item(key = "empty_results") {
+                EmptyResults(state.snapshot)
+            }
         } else {
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .testTag("memory_results"),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                items(state.candidates, key = { it.id }) { candidate ->
-                    CandidateRow(
-                        candidate = candidate,
-                        selected = candidate.id in state.selectedIds,
-                        onToggle = { actions.toggleSelection(candidate.id) },
-                    )
-                }
-                if (state.hasMore) {
-                    item(key = "load_more") {
-                        OutlinedButton(
-                            onClick = actions.loadMore,
-                            enabled = !state.busy,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(stringResource(R.string.memory_editor_load_more))
-                        }
+            items(state.candidates, key = { it.id }) { candidate ->
+                CandidateRow(
+                    candidate = candidate,
+                    selected = candidate.id in state.selectedIds,
+                    onToggle = { actions.toggleSelection(candidate.id) },
+                )
+            }
+            if (state.hasMore) {
+                item(key = "load_more") {
+                    OutlinedButton(
+                        onClick = actions.loadMore,
+                        enabled = !state.busy,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.memory_editor_load_more))
                     }
                 }
             }
         }
-        Spacer(Modifier.height(8.dp))
-        ActionToolbar(
-            state = state,
-            onEdit = { replacementAction = OperationKind.EDIT },
-            onFreeze = { replacementAction = OperationKind.FREEZE },
-            onUnfreeze = actions.unfreezeSelected,
-            onUndo = actions.undo,
-            onReset = { showResetConfirmation = true },
-        )
+        item(key = "action_toolbar") {
+            ActionToolbar(
+                state = state,
+                onEdit = { replacementAction = OperationKind.EDIT },
+                onFreeze = { replacementAction = OperationKind.FREEZE },
+                onUnfreeze = actions.unfreezeSelected,
+                onUndo = actions.undo,
+                onReset = { showResetConfirmation = true },
+            )
+        }
     }
     replacementAction?.let { action ->
         ReplacementDialog(
@@ -413,7 +647,11 @@ private fun ResultsContent(
 }
 
 @Composable
-private fun RefinePanel(state: MemoryEditorUiState, actions: MemoryEditorActions) {
+private fun RefinePanel(
+    state: MemoryEditorUiState,
+    actions: MemoryEditorActions,
+    onInputFocused: (ActiveInput?) -> Unit,
+) {
     Card(Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(12.dp),
@@ -438,6 +676,7 @@ private fun RefinePanel(state: MemoryEditorUiState, actions: MemoryEditorActions
                 second = state.secondValue,
                 onFirstChanged = actions.setFirstValue,
                 onSecondChanged = actions.setSecondValue,
+                onInputFocused = onInputFocused,
             )
             Button(
                 onClick = actions.refine,
@@ -446,6 +685,115 @@ private fun RefinePanel(state: MemoryEditorUiState, actions: MemoryEditorActions
             ) {
                 Text(stringResource(R.string.memory_editor_refine))
             }
+        }
+    }
+}
+
+@Composable
+private fun SavedContent(
+    state: MemoryEditorUiState,
+    actions: MemoryEditorActions,
+    modifier: Modifier,
+) {
+    val savedIds = state.savedCandidates.mapTo(mutableSetOf()) { it.id }
+    val selectedSaved = state.selectedIds.intersect(savedIds)
+    LazyColumn(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .testTag("memory_saved"),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        item {
+            Text(
+                text = stringResource(R.string.memory_editor_saved_title),
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Text(
+                text = stringResource(R.string.memory_editor_saved_help),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (state.savedCandidates.isEmpty()) {
+            item {
+                Text(
+                    text = stringResource(R.string.memory_editor_saved_empty),
+                    modifier = Modifier.padding(vertical = 24.dp),
+                )
+            }
+        } else {
+            items(state.savedCandidates, key = { "saved_${it.id}" }) { candidate ->
+                CandidateRow(
+                    candidate = candidate,
+                    selected = candidate.id in state.selectedIds,
+                    onToggle = { actions.toggleSelection(candidate.id) },
+                )
+            }
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    OutlinedButton(
+                        onClick = actions.unfreezeSavedSelected,
+                        enabled = selectedSaved.any { id ->
+                            state.savedCandidates.any { it.id == id && it.frozen }
+                        } && !state.busy,
+                    ) {
+                        Text(stringResource(R.string.memory_editor_unfreeze))
+                    }
+                    Button(
+                        onClick = actions.deleteSavedSelected,
+                        enabled = selectedSaved.isNotEmpty() && !state.busy,
+                        modifier = Modifier.testTag("memory_delete_saved"),
+                    ) {
+                        Text(stringResource(R.string.memory_editor_delete))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsContent(
+    state: MemoryEditorUiState,
+    actions: MemoryEditorActions,
+    modifier: Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.memory_editor_settings_title),
+            style = MaterialTheme.typography.titleMedium,
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { actions.setPauseEnabled(!state.pauseEnabled) },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.memory_editor_pause))
+                Text(
+                    text = stringResource(R.string.memory_editor_pause_help),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(
+                checked = state.pauseEnabled,
+                onCheckedChange = actions.setPauseEnabled,
+                modifier = Modifier.testTag("memory_pause"),
+            )
         }
     }
 }
@@ -660,13 +1008,21 @@ private fun SearchValueFields(
     second: String,
     onFirstChanged: (String) -> Unit,
     onSecondChanged: (String) -> Unit,
+    onInputFocused: (ActiveInput?) -> Unit,
 ) {
-    if (mode == MemoryEditorRuntime.SearchMode.EXACT) {
+    if (mode == MemoryEditorRuntime.SearchMode.EXACT ||
+        mode == MemoryEditorRuntime.SearchMode.NOT_EQUAL ||
+        mode == MemoryEditorRuntime.SearchMode.LESS_THAN ||
+        mode == MemoryEditorRuntime.SearchMode.GREATER_THAN
+    ) {
         ValueField(
             value = first,
             label = stringResource(R.string.memory_editor_value),
             onValueChanged = onFirstChanged,
             testTag = "memory_value",
+            onFocusChanged = {
+                onInputFocused(if (it) ActiveInput.FIRST else null)
+            },
         )
     } else if (mode == MemoryEditorRuntime.SearchMode.RANGE) {
         ValueField(
@@ -674,12 +1030,18 @@ private fun SearchValueFields(
             label = stringResource(R.string.memory_editor_minimum),
             onValueChanged = onFirstChanged,
             testTag = "memory_minimum",
+            onFocusChanged = {
+                onInputFocused(if (it) ActiveInput.FIRST else null)
+            },
         )
         ValueField(
             value = second,
             label = stringResource(R.string.memory_editor_second_value),
             onValueChanged = onSecondChanged,
             testTag = "memory_maximum",
+            onFocusChanged = {
+                onInputFocused(if (it) ActiveInput.SECOND else null)
+            },
         )
     }
 }
@@ -690,7 +1052,10 @@ private fun ValueField(
     label: String,
     onValueChanged: (String) -> Unit,
     testTag: String,
+    onFocusChanged: (Boolean) -> Unit = {},
 ) {
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    val coroutineScope = rememberCoroutineScope()
     OutlinedTextField(
         value = value,
         onValueChange = onValueChanged,
@@ -699,6 +1064,15 @@ private fun ValueField(
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
         modifier = Modifier
             .fillMaxWidth()
+            .bringIntoViewRequester(bringIntoViewRequester)
+            .onFocusChanged { focusState ->
+                onFocusChanged(focusState.isFocused)
+                if (focusState.isFocused) {
+                    coroutineScope.launch {
+                        bringIntoViewRequester.bringIntoView()
+                    }
+                }
+            }
             .testTag(testTag),
     )
 }
@@ -710,6 +1084,7 @@ private fun ReplacementDialog(
     onConfirm: (String) -> Unit,
 ) {
     var replacement by remember { mutableStateOf("") }
+    var inputFocused by remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -724,12 +1099,26 @@ private fun ReplacementDialog(
             )
         },
         text = {
-            ValueField(
-                value = replacement,
-                label = stringResource(R.string.memory_editor_replacement),
-                onValueChanged = { replacement = it },
-                testTag = "memory_replacement",
-            )
+            Column(
+                modifier = Modifier
+                    .imePadding()
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                ValueField(
+                    value = replacement,
+                    label = stringResource(R.string.memory_editor_replacement),
+                    onValueChanged = { replacement = it },
+                    testTag = "memory_replacement",
+                    onFocusChanged = { inputFocused = it },
+                )
+                if (inputFocused) {
+                    InputDock(
+                        label = stringResource(R.string.memory_editor_replacement),
+                        value = replacement,
+                        onDone = { inputFocused = false },
+                    )
+                }
+            }
         },
         confirmButton = {
             Button(
@@ -814,6 +1203,9 @@ private fun kindLabel(kind: MemoryEditorRuntime.ValueKind): String = stringResou
 private fun modeLabel(mode: MemoryEditorRuntime.SearchMode): String = stringResource(
     when (mode) {
         MemoryEditorRuntime.SearchMode.EXACT -> R.string.memory_editor_mode_exact
+        MemoryEditorRuntime.SearchMode.NOT_EQUAL -> R.string.memory_editor_mode_not_equal
+        MemoryEditorRuntime.SearchMode.LESS_THAN -> R.string.memory_editor_mode_less_than
+        MemoryEditorRuntime.SearchMode.GREATER_THAN -> R.string.memory_editor_mode_greater_than
         MemoryEditorRuntime.SearchMode.UNKNOWN -> R.string.memory_editor_mode_unknown
         MemoryEditorRuntime.SearchMode.CHANGED -> R.string.memory_editor_mode_changed
         MemoryEditorRuntime.SearchMode.UNCHANGED -> R.string.memory_editor_mode_unchanged
@@ -825,12 +1217,18 @@ private fun modeLabel(mode: MemoryEditorRuntime.SearchMode): String = stringReso
 
 private val INITIAL_MODES = listOf(
     MemoryEditorRuntime.SearchMode.EXACT,
+    MemoryEditorRuntime.SearchMode.NOT_EQUAL,
+    MemoryEditorRuntime.SearchMode.LESS_THAN,
+    MemoryEditorRuntime.SearchMode.GREATER_THAN,
     MemoryEditorRuntime.SearchMode.UNKNOWN,
     MemoryEditorRuntime.SearchMode.RANGE,
 )
 
 private val REFINE_MODES = listOf(
     MemoryEditorRuntime.SearchMode.EXACT,
+    MemoryEditorRuntime.SearchMode.NOT_EQUAL,
+    MemoryEditorRuntime.SearchMode.LESS_THAN,
+    MemoryEditorRuntime.SearchMode.GREATER_THAN,
     MemoryEditorRuntime.SearchMode.RANGE,
     MemoryEditorRuntime.SearchMode.CHANGED,
     MemoryEditorRuntime.SearchMode.UNCHANGED,

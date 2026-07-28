@@ -263,6 +263,9 @@ public class MicroActivity extends AppCompatActivity {
 			timingMigrationDisposable.dispose();
 			timingMigrationDisposable = null;
 		}
+		if (isFinishing()) {
+			MemoryEditorRuntime.clear();
+		}
 		super.onDestroy();
 	}
 
