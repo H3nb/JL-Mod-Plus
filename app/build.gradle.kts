@@ -116,8 +116,6 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             isJniDebuggable = true
-            multiDexEnabled = true
-            multiDexKeepProguard = file("multidex-config.pro")
         }
     }
 
@@ -192,25 +190,18 @@ dependencies {
 
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.arch.core.common)
     implementation(libs.androidx.collection)
-    implementation(libs.androidx.concurrent.futures)
-    implementation(libs.androidx.constraintlayout)
-    implementation(libs.androidx.coordinatorlayout)
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.documentfile)
     implementation(libs.androidx.fragment.ktx)
-    implementation(libs.androidx.lifecycle.common)
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
-    implementation(libs.androidx.multidex)
     implementation(libs.androidx.preference.ktx)
     implementation(libs.androidx.recyclerview)
+    implementation(libs.kotlinx.coroutines.android)
     annotationProcessor(libs.androidx.room.compiler)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.rxjava2)
-    implementation(libs.androidx.transition)
 
     val composeBom = platform(libs.androidx.compose.bom)
     implementation(composeBom)
@@ -225,7 +216,6 @@ dependencies {
     annotationProcessor(libs.google.auto.service)
     compileOnly(libs.google.auto.service.annotations)
     implementation(libs.google.gson)
-    implementation(libs.google.material)
     implementation(libs.google.oboe)
 
     implementation(libs.acra.core) {
