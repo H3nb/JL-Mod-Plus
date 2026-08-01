@@ -60,6 +60,47 @@ class MemoryEditorScreenTest {
     }
 
     @Test
+    fun compactHeaderKeepsNeutralStatusAndAccessibleCloseAction() {
+        var closed = false
+        composeRule.setContent {
+            MemoryEditorTheme {
+                MemoryEditorScreen(
+                    state = MemoryEditorUiState(),
+                    actions = MemoryEditorActions(),
+                    onClose = { closed = true },
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("memory_experimental_badge").assertExists()
+        composeRule.onNodeWithTag("memory_close").performClick()
+        composeRule.runOnIdle { assertEquals(true, closed) }
+    }
+
+    @Test
+    fun autoIsSelectedByDefaultWhileManualTypesRemainAvailable() {
+        var selected: MemoryEditorRuntime.SearchType? = null
+        composeRule.setContent {
+            MemoryEditorTheme {
+                MemoryEditorScreen(
+                    state = MemoryEditorUiState(),
+                    actions = MemoryEditorActions(setKind = { selected = it }),
+                    onClose = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Auto (numeric types)").assertExists()
+        composeRule.onNodeWithTag("memory_type").performClick()
+        composeRule.onNodeWithText("Integer (int)").assertExists()
+        composeRule.onNodeWithText("High-precision decimal (double)").assertExists()
+        composeRule.onNodeWithText("Integer (int)").performClick()
+        composeRule.runOnIdle {
+            assertEquals(MemoryEditorRuntime.SearchType.INT, selected)
+        }
+    }
+
+    @Test
     fun comparisonSearchOpensAValueDialogWithPermanentKeypad() {
         composeRule.setContent {
             MemoryEditorTheme {
@@ -101,6 +142,25 @@ class MemoryEditorScreenTest {
     }
 
     @Test
+    fun collectingPhaseShowsStatusInsteadOfBlankContent() {
+        var closed = false
+        composeRule.setContent {
+            MemoryEditorTheme {
+                MemoryEditorScreen(
+                    state = MemoryEditorUiState(phase = MemoryEditorPhase.COLLECTING),
+                    actions = MemoryEditorActions(),
+                    onClose = { closed = true },
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("memory_collecting_status").assertExists()
+        composeRule.onNodeWithText("Collecting while the game runs").assertExists()
+        composeRule.onNodeWithText("Return to game").performClick()
+        composeRule.runOnIdle { assertEquals(true, closed) }
+    }
+
+    @Test
     fun finishedInitialSearchCanContinueCollectingFromResults() {
         var continued = false
         composeRule.setContent {
@@ -110,7 +170,7 @@ class MemoryEditorScreenTest {
                         phase = MemoryEditorPhase.RESULTS,
                         snapshot = MemoryEditorSnapshot(
                             searchSessionId = 7,
-                            kind = MemoryEditorRuntime.ValueKind.INT,
+                            searchType = MemoryEditorRuntime.SearchType.INT,
                             mode = MemoryEditorRuntime.SearchMode.UNKNOWN,
                             collecting = false,
                         ),
@@ -137,7 +197,7 @@ class MemoryEditorScreenTest {
                         phase = MemoryEditorPhase.RESULTS,
                         snapshot = MemoryEditorSnapshot(
                             candidates = 1,
-                            kind = MemoryEditorRuntime.ValueKind.INT,
+                            searchType = MemoryEditorRuntime.SearchType.INT,
                         ),
                         candidates = listOf(
                             MemoryCandidate(
@@ -174,7 +234,7 @@ class MemoryEditorScreenTest {
                             phase = MemoryEditorPhase.RESULTS,
                             snapshot = MemoryEditorSnapshot(
                                 candidates = 1,
-                                kind = MemoryEditorRuntime.ValueKind.INT,
+                                searchType = MemoryEditorRuntime.SearchType.INT,
                             ),
                             candidates = listOf(
                                 MemoryCandidate(
@@ -210,7 +270,7 @@ class MemoryEditorScreenTest {
                         snapshot = MemoryEditorSnapshot(
                             candidates = 1,
                             saved = 1,
-                            kind = MemoryEditorRuntime.ValueKind.INT,
+                            searchType = MemoryEditorRuntime.SearchType.INT,
                         ),
                         savedCandidates = listOf(
                             MemoryCandidate(
@@ -271,12 +331,60 @@ class MemoryEditorScreenTest {
 
         composeRule.onNodeWithTag("memory_peek").performTouchInput {
             down(center)
-            advanceEventTime(400)
+            advanceEventTime(600)
             up()
         }
 
         composeRule.runOnIdle {
             assertEquals(listOf(true, false), events)
+        }
+    }
+
+    @Test
+    fun peekActivatesBeforeThePlatformDefaultLongPressDelay() {
+        val events = mutableListOf<Boolean>()
+        composeRule.setContent {
+            MemoryEditorTheme {
+                MemoryEditorScreen(
+                    state = MemoryEditorUiState(),
+                    actions = MemoryEditorActions(setPeeking = events::add),
+                    onClose = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("memory_peek").performTouchInput {
+            down(center)
+            advanceEventTime(350)
+            up()
+        }
+
+        composeRule.runOnIdle {
+            assertEquals(listOf(true, false), events)
+        }
+    }
+
+    @Test
+    fun shortTapDoesNotActivateGamePeek() {
+        val events = mutableListOf<Boolean>()
+        composeRule.setContent {
+            MemoryEditorTheme {
+                MemoryEditorScreen(
+                    state = MemoryEditorUiState(),
+                    actions = MemoryEditorActions(setPeeking = events::add),
+                    onClose = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("memory_peek").performTouchInput {
+            down(center)
+            advanceEventTime(150)
+            up()
+        }
+
+        composeRule.runOnIdle {
+            assertEquals(emptyList<Boolean>(), events)
         }
     }
 

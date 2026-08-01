@@ -61,6 +61,7 @@ internal data class MemoryEditorSnapshot(
     val candidateBytes: Long = 0,
     val candidateByteBudget: Long = 0,
     val kind: MemoryEditorRuntime.ValueKind? = null,
+    val searchType: MemoryEditorRuntime.SearchType? = null,
     val mode: MemoryEditorRuntime.SearchMode? = null,
     val limitReached: Boolean = false,
     val collecting: Boolean = false,
@@ -87,7 +88,9 @@ internal data class MemoryEditorSnapshot(
         }
 
     val selectedObservations: Long
-        get() = when (kind) {
+        get() = if (searchType == MemoryEditorRuntime.SearchType.AUTO) {
+            totalObservations
+        } else when (kind) {
             MemoryEditorRuntime.ValueKind.INT -> intObservations
             MemoryEditorRuntime.ValueKind.LONG -> longObservations
             MemoryEditorRuntime.ValueKind.FLOAT -> floatObservations
@@ -107,6 +110,8 @@ internal data class MemoryCandidate(
     val frozen: Boolean,
     val saved: Boolean = false,
     val editable: Boolean,
+    val status: MemoryEditorRuntime.CandidateStatus =
+        MemoryEditorRuntime.CandidateStatus.ACTIVE,
 )
 
 internal data class MemoryOperationProgress(
@@ -122,7 +127,7 @@ internal data class MemoryOperationProgress(
 internal data class MemoryEditorUiState(
     val phase: MemoryEditorPhase = MemoryEditorPhase.SETUP,
     val snapshot: MemoryEditorSnapshot = MemoryEditorSnapshot(),
-    val kind: MemoryEditorRuntime.ValueKind = MemoryEditorRuntime.ValueKind.INT,
+    val kind: MemoryEditorRuntime.SearchType = MemoryEditorRuntime.SearchType.AUTO,
     val initialMode: MemoryEditorRuntime.SearchMode = MemoryEditorRuntime.SearchMode.EXACT,
     val refineMode: MemoryEditorRuntime.SearchMode = MemoryEditorRuntime.SearchMode.EXACT,
     val firstValue: String = "",
@@ -146,7 +151,7 @@ internal class MemoryEditorViewModel : ViewModel() {
     private val _state = MutableStateFlow(stateFromRuntime())
     val state: StateFlow<MemoryEditorUiState> = _state.asStateFlow()
 
-    fun setKind(kind: MemoryEditorRuntime.ValueKind) {
+    fun setKind(kind: MemoryEditorRuntime.SearchType) {
         _state.update { it.copy(kind = kind, error = null) }
     }
 
@@ -186,6 +191,7 @@ internal class MemoryEditorViewModel : ViewModel() {
                 current.secondValue,
             )
         }.onSuccess {
+            existingSessionLoadStarted.set(false)
             _state.value = stateFromRuntime(
                 previous = current,
                 phase = MemoryEditorPhase.COLLECTING,
@@ -402,6 +408,7 @@ internal class MemoryEditorViewModel : ViewModel() {
 
     fun reset() {
         MemoryEditorRuntime.resetSearch()
+        existingSessionLoadStarted.set(false)
         _state.value = MemoryEditorUiState(
             pauseEnabled = _state.value.pauseEnabled,
             layoutTransparency = _state.value.layoutTransparency,
@@ -559,8 +566,8 @@ internal class MemoryEditorViewModel : ViewModel() {
             return MemoryEditorUiState(
                 phase = actualPhase,
                 snapshot = snapshot.toUi(),
-                kind = snapshot.kind ?: previous?.kind ?: MemoryEditorRuntime.ValueKind.INT,
-                initialMode = if (snapshot.kind == null) {
+                kind = snapshot.searchType ?: previous?.kind ?: MemoryEditorRuntime.SearchType.AUTO,
+                initialMode = if (snapshot.searchType == null) {
                     previous?.initialMode ?: MemoryEditorRuntime.SearchMode.EXACT
                 } else {
                     snapshot.mode.takeIf {
@@ -585,7 +592,7 @@ internal class MemoryEditorViewModel : ViewModel() {
         }
 
         fun phaseOf(snapshot: MemoryEditorRuntime.Snapshot): MemoryEditorPhase = when {
-            snapshot.kind == null -> MemoryEditorPhase.SETUP
+            snapshot.searchSessionId == 0L -> MemoryEditorPhase.SETUP
             snapshot.collecting -> MemoryEditorPhase.COLLECTING
             else -> MemoryEditorPhase.RESULTS
         }
@@ -599,6 +606,7 @@ internal class MemoryEditorViewModel : ViewModel() {
             candidateBytes = candidateBytes,
             candidateByteBudget = candidateByteBudget,
             kind = kind,
+            searchType = searchType,
             mode = mode,
             limitReached = limitReached,
             collecting = collecting,
@@ -621,6 +629,7 @@ internal class MemoryEditorViewModel : ViewModel() {
             frozen = frozen,
             saved = saved,
             editable = editable,
+            status = status,
         )
 
         fun MemoryEditorRuntime.OperationResult.toSummary(kind: OperationKind) = OperationSummary(

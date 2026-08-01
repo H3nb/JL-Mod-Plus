@@ -39,6 +39,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
@@ -47,6 +48,8 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -62,6 +65,8 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -76,7 +81,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalViewConfiguration
+import androidx.compose.ui.platform.ViewConfiguration
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -86,11 +95,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.findViewTreeLifecycleOwner
 import io.github.h3nb.jlmodplus.R
 import javax.microedition.shell.memory.MemoryEditorRuntime
 
 internal data class MemoryEditorActions(
-    val setKind: (MemoryEditorRuntime.ValueKind) -> Unit = {},
+    val setKind: (MemoryEditorRuntime.SearchType) -> Unit = {},
     val setInitialMode: (MemoryEditorRuntime.SearchMode) -> Unit = {},
     val setRefineMode: (MemoryEditorRuntime.SearchMode) -> Unit = {},
     val setFirstValue: (String) -> Unit = {},
@@ -120,6 +130,8 @@ private enum class EditorTab { SEARCH, SAVED, SETTINGS }
 
 private enum class ActiveInput { FIRST, SECOND }
 
+private const val PEEK_LONG_PRESS_TIMEOUT_MS = 300L
+
 @Composable
 internal fun MemoryEditorScreen(
     state: MemoryEditorUiState,
@@ -131,6 +143,7 @@ internal fun MemoryEditorScreen(
     var activeInput by remember { mutableStateOf<ActiveInput?>(null) }
     var peeking by remember { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
+    val lifecycleOwner = LocalView.current.findViewTreeLifecycleOwner()
     val operationMessage = state.operation?.let {
         if (it.status == MemoryEditorRuntime.OperationStatus.CANCELLED) {
             stringResource(R.string.memory_editor_operation_cancelled)
@@ -139,6 +152,8 @@ internal fun MemoryEditorScreen(
             it.status == MemoryEditorRuntime.OperationStatus.NO_SESSION
         ) {
             stringResource(R.string.memory_editor_stale_session)
+        } else if (it.status == MemoryEditorRuntime.OperationStatus.BUSY) {
+            stringResource(R.string.memory_editor_operation_busy)
         } else if (it.kind == OperationKind.UNDO) {
             stringResource(
                 if (it.succeeded == 1) {
@@ -162,7 +177,30 @@ internal fun MemoryEditorScreen(
             actions.clearMessage()
         }
     }
+    DisposableEffect(lifecycleOwner) {
+        if (lifecycleOwner == null) {
+            onDispose { }
+        } else {
+            val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+                if (event == androidx.lifecycle.Lifecycle.Event.ON_STOP ||
+                    event == androidx.lifecycle.Lifecycle.Event.ON_DESTROY
+                ) {
+                    activeInput = null
+                    peeking = false
+                    actions.setPeeking(false)
+                }
+            }
+            lifecycleOwner.lifecycle.addObserver(observer)
+            onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+        }
+    }
     val onPeekChanged: (Boolean) -> Unit = { enabled ->
+        if (enabled) {
+            // A separate input Dialog is not a child of this Compose layer;
+            // close it before the editor becomes transparent so it cannot
+            // leave an opaque surface over the game.
+            activeInput = null
+        }
         peeking = enabled
         actions.setPeeking(enabled)
     }
@@ -237,7 +275,10 @@ internal fun MemoryEditorScreen(
                                     onInputRequested = { activeInput = it },
                                     modifier = Modifier.weight(1f),
                                 )
-                                MemoryEditorPhase.COLLECTING -> Box(Modifier.weight(1f))
+                                MemoryEditorPhase.COLLECTING -> CollectingContent(
+                                    onClose = onClose,
+                                    modifier = Modifier.weight(1f),
+                                )
                                 MemoryEditorPhase.RESULTS -> ResultsContent(
                                     state = state,
                                     actions = actions,
@@ -265,7 +306,7 @@ internal fun MemoryEditorScreen(
             onPeekChanged = onPeekChanged,
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(top = 8.dp, end = 76.dp),
+                .padding(top = 14.dp, end = 56.dp),
         )
         activeInput?.let { input ->
             val isRange = if (state.phase == MemoryEditorPhase.RESULTS) {
@@ -301,7 +342,7 @@ internal fun MemoryEditorScreen(
                 },
             )
         }
-        if (state.preparingSearch) {
+        if (state.preparingSearch && !peeking) {
             AlertDialog(
                 onDismissRequest = {},
                 modifier = Modifier.testTag("memory_preparing_search"),
@@ -325,23 +366,44 @@ private fun EditorHeader(onClose: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 20.dp, end = 8.dp, top = 10.dp, bottom = 10.dp),
+            .heightIn(min = 68.dp)
+            .padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(Modifier.weight(1f)) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
             Text(
                 text = stringResource(R.string.memory_editor_title),
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
-            Text(
-                text = stringResource(R.string.memory_editor_preview_badge),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
+            Surface(
+                modifier = Modifier.testTag("memory_experimental_badge"),
+                shape = RoundedCornerShape(50),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ) {
+                Text(
+                    text = stringResource(R.string.memory_editor_preview_badge),
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    maxLines = 1,
+                )
+            }
         }
-        TextButton(onClick = onClose) {
-            Text(stringResource(R.string.memory_editor_close))
+        IconButton(
+            onClick = onClose,
+            modifier = Modifier.testTag("memory_close"),
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_memory_editor_close_24),
+                contentDescription = stringResource(R.string.memory_editor_close),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -353,33 +415,66 @@ private fun PeekButton(
 ) {
     val haptic = LocalHapticFeedback.current
     val currentOnPeekChanged by rememberUpdatedState(onPeekChanged)
-    Surface(
-        modifier = modifier
-            .testTag("memory_peek")
-            .semantics { contentDescription = "Tahan untuk melihat game" }
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onPress = {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        currentOnPeekChanged(true)
-                        try {
-                            tryAwaitRelease()
-                        } finally {
-                            currentOnPeekChanged(false)
-                        }
-                    },
+    val description = stringResource(R.string.memory_editor_peek_content_description)
+    val baseViewConfiguration = LocalViewConfiguration.current
+    val peekViewConfiguration = remember(baseViewConfiguration) {
+        object : ViewConfiguration {
+            override val longPressTimeoutMillis: Long = PEEK_LONG_PRESS_TIMEOUT_MS
+            override val doubleTapTimeoutMillis: Long = baseViewConfiguration.doubleTapTimeoutMillis
+            override val doubleTapMinTimeMillis: Long = baseViewConfiguration.doubleTapMinTimeMillis
+            override val touchSlop: Float = baseViewConfiguration.touchSlop
+        }
+    }
+    CompositionLocalProvider(LocalViewConfiguration provides peekViewConfiguration) {
+        Box(
+            modifier = modifier
+                .width(48.dp)
+                .height(48.dp)
+                .testTag("memory_peek")
+                .semantics {
+                    contentDescription = description
+                }
+                .pointerInput(Unit) {
+                    var peekActive = false
+                    detectTapGestures(
+                        onLongPress = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            peekActive = true
+                            currentOnPeekChanged(true)
+                        },
+                        onPress = {
+                            try {
+                                tryAwaitRelease()
+                            } finally {
+                                if (peekActive) {
+                                    currentOnPeekChanged(false)
+                                    peekActive = false
+                                }
+                            }
+                        },
+                    )
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            Surface(
+                modifier = Modifier
+                    .width(32.dp)
+                    .height(32.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.primary,
+                tonalElevation = 1.dp,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_memory_editor_peek_24),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .padding(7.dp)
+                        .fillMaxSize(),
                 )
-            },
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.primaryContainer,
-        shadowElevation = 4.dp,
-    ) {
-        Text(
-            text = stringResource(R.string.memory_editor_peek),
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-        )
+            }
+        }
     }
 }
 
@@ -413,14 +508,16 @@ private fun MemoryEditorTabs(
 @Composable
 private fun NumericKeypad(
     value: String,
-    kind: MemoryEditorRuntime.ValueKind,
+    kind: MemoryEditorRuntime.SearchType,
     cursorPosition: Int,
     onValueChanged: (String) -> Unit,
     onCursorChanged: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val supportsFraction = kind == MemoryEditorRuntime.ValueKind.FLOAT ||
-        kind == MemoryEditorRuntime.ValueKind.DOUBLE
+    val supportsFraction = kind == MemoryEditorRuntime.SearchType.AUTO ||
+        kind == MemoryEditorRuntime.SearchType.FLOAT ||
+        kind == MemoryEditorRuntime.SearchType.DOUBLE
+    val booleanInput = kind == MemoryEditorRuntime.SearchType.BOOLEAN
     val cursor = cursorPosition.coerceIn(0, value.length)
     val insert: (String) -> Unit = { text ->
         if (value.length + text.length <= MAX_INPUT_LENGTH) {
@@ -428,12 +525,19 @@ private fun NumericKeypad(
             onCursorChanged(cursor + text.length)
         }
     }
-    val rows = listOf(
-        listOf("7", "8", "9", "←", "⌫"),
-        listOf("4", "5", "6", "→", "CLR"),
-        listOf("1", "2", "3", "-", if (supportsFraction) "." else ""),
-        listOf("0", if (supportsFraction) "E" else "", "", "", ""),
-    )
+    val rows = if (booleanInput) {
+        listOf(
+            listOf("TRUE", "FALSE", "", "", ""),
+            listOf("CLR", "", "", "", ""),
+        )
+    } else {
+        listOf(
+            listOf("7", "8", "9", "←", "⌫"),
+            listOf("4", "5", "6", "→", "CLR"),
+            listOf("1", "2", "3", "-", if (supportsFraction) "." else ""),
+            listOf("0", if (supportsFraction) "E" else "", "", "", ""),
+        )
+    }
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -496,6 +600,11 @@ private fun NumericKeypad(
                                         if ("E" !in value) {
                                             insert(key)
                                         }
+                                    }
+                                    "TRUE", "FALSE" -> {
+                                        val next = key.lowercase()
+                                        onValueChanged(next)
+                                        onCursorChanged(next.length)
                                     }
                                     "" -> Unit
                                     else -> insert(key)
@@ -561,11 +670,18 @@ private fun SetupContent(
         EnumSelector(
             label = stringResource(R.string.memory_editor_type),
             selected = state.kind,
-            options = MemoryEditorRuntime.ValueKind.values().toList(),
+            options = MemoryEditorRuntime.SearchType.values().toList(),
             labelOf = ::kindLabel,
             onSelect = actions.setKind,
             testTag = "memory_type",
         )
+        if (state.kind == MemoryEditorRuntime.SearchType.AUTO) {
+            Text(
+                text = stringResource(R.string.memory_editor_auto_help),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         EnumSelector(
             label = stringResource(R.string.memory_editor_initial_mode),
             selected = state.initialMode,
@@ -588,6 +704,38 @@ private fun SetupContent(
                 .testTag("memory_start"),
         ) {
             Text(stringResource(R.string.memory_editor_start_and_play))
+        }
+    }
+}
+
+@Composable
+private fun CollectingContent(
+    onClose: () -> Unit,
+    modifier: Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(24.dp)
+            .testTag("memory_collecting_status"),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        LinearProgressIndicator(Modifier.fillMaxWidth())
+        Text(
+            text = stringResource(R.string.memory_editor_collecting_title),
+            style = MaterialTheme.typography.titleMedium,
+        )
+        Text(
+            text = stringResource(R.string.memory_editor_collecting_help),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        OutlinedButton(
+            onClick = onClose,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(R.string.memory_editor_return_to_game))
         }
     }
 }
@@ -906,6 +1054,11 @@ private fun SettingsContent(
                 modifier = Modifier.testTag("memory_layout_transparency"),
             )
         }
+        Text(
+            text = stringResource(R.string.memory_editor_peek_help),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -991,7 +1144,19 @@ private fun CandidateRow(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            if (candidate.frozen) {
+            if (candidate.status == MemoryEditorRuntime.CandidateStatus.READ_FAILED) {
+                Text(
+                    text = stringResource(R.string.memory_editor_candidate_read_failed),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            } else if (candidate.status == MemoryEditorRuntime.CandidateStatus.WRITE_FAILED) {
+                Text(
+                    text = stringResource(R.string.memory_editor_candidate_write_failed),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            } else if (candidate.frozen) {
                 AssistChip(
                     onClick = {},
                     label = { Text(stringResource(R.string.memory_editor_frozen)) },
@@ -1186,7 +1351,7 @@ private fun ValueField(
 @Composable
 private fun ReplacementDialog(
     action: OperationKind,
-    kind: MemoryEditorRuntime.ValueKind,
+    kind: MemoryEditorRuntime.SearchType,
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit,
 ) {
@@ -1218,7 +1383,7 @@ private fun NumericInputDialog(
     title: String,
     label: String,
     initialValue: String,
-    kind: MemoryEditorRuntime.ValueKind,
+    kind: MemoryEditorRuntime.SearchType,
     confirmLabel: String,
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit,
@@ -1302,7 +1467,7 @@ private fun InputDialogDetails(
     title: String,
     label: String,
     value: String,
-    kind: MemoryEditorRuntime.ValueKind,
+    kind: MemoryEditorRuntime.SearchType,
     confirmLabel: String,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
@@ -1401,12 +1566,17 @@ private fun <T> EnumSelector(
 }
 
 @Composable
-private fun kindLabel(kind: MemoryEditorRuntime.ValueKind): String = stringResource(
+private fun kindLabel(kind: MemoryEditorRuntime.SearchType): String = stringResource(
     when (kind) {
-        MemoryEditorRuntime.ValueKind.INT -> R.string.memory_editor_type_int
-        MemoryEditorRuntime.ValueKind.LONG -> R.string.memory_editor_type_long
-        MemoryEditorRuntime.ValueKind.FLOAT -> R.string.memory_editor_type_float
-        MemoryEditorRuntime.ValueKind.DOUBLE -> R.string.memory_editor_type_double
+        MemoryEditorRuntime.SearchType.AUTO -> R.string.memory_editor_type_auto
+        MemoryEditorRuntime.SearchType.BOOLEAN -> R.string.memory_editor_type_boolean
+        MemoryEditorRuntime.SearchType.BYTE -> R.string.memory_editor_type_byte
+        MemoryEditorRuntime.SearchType.CHAR -> R.string.memory_editor_type_char
+        MemoryEditorRuntime.SearchType.SHORT -> R.string.memory_editor_type_short
+        MemoryEditorRuntime.SearchType.INT -> R.string.memory_editor_type_int
+        MemoryEditorRuntime.SearchType.LONG -> R.string.memory_editor_type_long
+        MemoryEditorRuntime.SearchType.FLOAT -> R.string.memory_editor_type_float
+        MemoryEditorRuntime.SearchType.DOUBLE -> R.string.memory_editor_type_double
     },
 )
 
@@ -1657,7 +1827,7 @@ internal fun MemoryEditorKeypadPreview() {
             title = "Edit selected",
             label = "Replacement",
             initialValue = "750",
-            kind = MemoryEditorRuntime.ValueKind.INT,
+            kind = MemoryEditorRuntime.SearchType.INT,
             confirmLabel = "Apply edit",
             onDismiss = {},
             onConfirm = {},
@@ -1671,7 +1841,7 @@ internal fun MemoryEditorReplacementPreview() {
     MemoryEditorTheme {
         ReplacementDialog(
             action = OperationKind.FREEZE,
-            kind = MemoryEditorRuntime.ValueKind.FLOAT,
+            kind = MemoryEditorRuntime.SearchType.FLOAT,
             onDismiss = {},
             onConfirm = {},
         )

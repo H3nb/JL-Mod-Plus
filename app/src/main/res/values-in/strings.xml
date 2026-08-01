@@ -203,19 +203,27 @@
     <string name="memory_editor_mode_unchanged">Tidak berubah</string>
     <string name="memory_editor_mode_increased">Meningkat</string>
     <string name="memory_editor_mode_decreased">Menurun</string>
-    <string name="memory_editor_type_int">Keluarga integer (boolean, byte, char, short, int)</string>
+    <string name="memory_editor_type_auto">Otomatis (tipe numerik)</string>
+    <string name="memory_editor_type_boolean">Boolean</string>
+    <string name="memory_editor_type_byte">Byte</string>
+    <string name="memory_editor_type_char">Karakter (char)</string>
+    <string name="memory_editor_type_short">Integer pendek (short)</string>
+    <string name="memory_editor_type_int">Integer (int)</string>
     <string name="memory_editor_type_long">Integer panjang (long)</string>
     <string name="memory_editor_type_float">Desimal (float)</string>
     <string name="memory_editor_type_double">Desimal presisi tinggi (double)</string>
+    <string name="memory_editor_auto_help">Memeriksa byte, short, int, long, float, dan double. Boolean serta char tidak disertakan.</string>
     <string name="memory_editor_minimum">Minimum</string>
     <string name="memory_editor_start_and_play">Mulai pencarian</string>
     <string name="memory_editor_preparing_title">Menyiapkan pencarian…</string>
     <string name="memory_editor_preparing_help">Editor akan ditutup agar game dapat mengumpulkan nilai yang cocok.</string>
     <string name="memory_editor_continue_collection">Lanjutkan pengumpulan</string>
     <string name="memory_editor_return_to_game">Kembali ke game</string>
+    <string name="memory_editor_collecting_title">Mengumpulkan saat game berjalan</string>
+    <string name="memory_editor_collecting_help">Game sedang berjalan. Buka kembali Memory Editor untuk menyelesaikan pengumpulan dan melihat hasil.</string>
     <string name="memory_editor_observed">Hook teramati: %1$d tipe terpilih, %2$d total</string>
     <string name="memory_editor_observed_paths">Field %1$d · array %2$d · baca %3$d · tulis %4$d</string>
-    <string name="memory_editor_candidate_budget">Budget kandidat: %1$d / %2$d KiB</string>
+    <string name="memory_editor_candidate_budget">Estimasi penyimpanan kandidat: %1$d / %2$d KiB</string>
     <string name="memory_editor_no_hooks">Belum ada nilai game hasil transformasi yang mencapai editor. Bermainlah lebih lama; bila tetap nol, konversi ulang atau kompatibilitas hook perlu diperiksa.</string>
     <string name="memory_editor_wrong_type">Game menghasilkan nilai, tetapi bukan tipe yang dipilih. Coba jenis nilai lain.</string>
     <string name="memory_editor_results_title">Hasil pencarian</string>
@@ -235,6 +243,8 @@
     <string name="memory_editor_storage_type">Penyimpanan: %1$s</string>
     <string name="memory_editor_frozen">Dibekukan</string>
     <string name="memory_editor_read_only">Hanya baca</string>
+    <string name="memory_editor_candidate_read_failed">Gagal membaca</string>
+    <string name="memory_editor_candidate_write_failed">Gagal menulis</string>
     <string name="memory_editor_replacement">Nilai pengganti</string>
     <string name="memory_editor_apply_edit">Terapkan edit</string>
     <string name="memory_editor_apply_freeze">Terapkan pembekuan</string>
@@ -243,12 +253,13 @@
     <string name="memory_editor_operation_result">%1$d dari %2$d lokasi diperbarui</string>
     <string name="memory_editor_operation_cancelled">Operasi dibatalkan. Perubahan yang sudah selesai dapat diurungkan.</string>
     <string name="memory_editor_stale_session">Game atau sesi pencarian berubah. Hasil lama diabaikan.</string>
+    <string name="memory_editor_operation_busy">Operasi Memory Editor lain masih berjalan.</string>
     <string name="memory_editor_undo_success">Perubahan terakhir dipulihkan.</string>
     <string name="memory_editor_undo_empty">Tidak ada perubahan yang dapat dipulihkan.</string>
     <string name="memory_editor_tab_search">Cari</string>
     <string name="memory_editor_tab_saved">Tersimpan</string>
     <string name="memory_editor_tab_settings">Setelan</string>
-    <string name="memory_editor_peek">Lihat game</string>
+    <string name="memory_editor_peek_content_description">Tahan untuk melihat game</string>
     <string name="memory_editor_done">Selesai</string>
     <string name="memory_editor_input_title">Masukkan nilai</string>
     <string name="memory_editor_input_help">Gunakan keypad di bawah. Keyboard Android tidak akan dibuka.</string>
@@ -262,6 +273,7 @@
     <string name="memory_editor_pause_help">Nonaktif secara default.</string>
     <string name="memory_editor_layout_transparency">Transparansi editor</string>
     <string name="memory_editor_layout_transparency_help">Mengatur transparansi seluruh Memory Editor. Lihat game selalu menyembunyikannya sepenuhnya saat ditahan.</string>
+    <string name="memory_editor_peek_help">Tahan ikon di sudut untuk melihat game sebentar. Sentuhan tidak pernah diteruskan ke game.</string>
     <string-array name="memory_editor_types">
         <item>Integer (boolean/byte/char/short/int)</item>
         <item>Long</item>

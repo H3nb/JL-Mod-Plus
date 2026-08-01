@@ -243,6 +243,19 @@ public class MemoryEditorRuntimeTest {
 	}
 
 	@Test
+	public void relationalFloatingBoundariesRejectNonFiniteValues() {
+		assertInvalid(() -> MemoryEditorRuntime.begin(
+				MemoryEditorRuntime.SearchType.FLOAT,
+				MemoryEditorRuntime.SearchMode.LESS_THAN, "Infinity", null));
+		assertInvalid(() -> MemoryEditorRuntime.begin(
+				MemoryEditorRuntime.SearchType.DOUBLE,
+				MemoryEditorRuntime.SearchMode.GREATER_THAN, "NaN", null));
+		assertInvalid(() -> MemoryEditorRuntime.begin(
+				MemoryEditorRuntime.SearchType.FLOAT,
+				MemoryEditorRuntime.SearchMode.RANGE, "0", "Infinity"));
+	}
+
+	@Test
 	public void refineDoesNotAdmitNewLocationsIntoTheExistingResultSet() {
 		Fixture first = new Fixture();
 		Fixture second = new Fixture();
@@ -578,6 +591,151 @@ public class MemoryEditorRuntimeTest {
 				doubles, null, "#array", SITE, 0, 4.0d), 0.0d);
 	}
 
+	@Test
+	public void manualSearchTypeFiltersTheSharedIntBridgeLane() {
+		TypedFixture fixture = new TypedFixture();
+		MemoryEditorRuntime.begin(MemoryEditorRuntime.SearchType.BYTE,
+				MemoryEditorRuntime.SearchMode.UNKNOWN, null, null);
+
+		MemoryEditorBridge.onReadInt(fixture, TypedFixture.class, "byteValueB", SITE, -1,
+				fixture.byteValue);
+		MemoryEditorBridge.onReadInt(fixture, TypedFixture.class, "shortValueS", SITE, -1,
+				fixture.shortValue);
+		MemoryEditorBridge.onReadInt(fixture, TypedFixture.class, "intValueI", SITE, -1,
+				fixture.intValue);
+		MemoryEditorBridge.onReadInt(fixture, TypedFixture.class, "booleanValueZ", SITE, -1,
+				fixture.booleanValue ? 1 : 0);
+
+		assertEquals(1, MemoryEditorRuntime.snapshot().candidates);
+		assertEquals("byte", MemoryEditorRuntime.results(0, 20).get(0).storageType);
+	}
+
+	@Test
+	public void narrowManualTypesRejectOverflowInsteadOfSilentlyNarrowing() {
+		assertInvalid(() -> MemoryEditorRuntime.begin(
+				MemoryEditorRuntime.SearchType.BYTE,
+				MemoryEditorRuntime.SearchMode.EXACT, "128", null));
+
+		byte[] values = {7};
+		MemoryEditorRuntime.begin(MemoryEditorRuntime.SearchType.BYTE,
+				MemoryEditorRuntime.SearchMode.UNKNOWN, null, null);
+		MemoryEditorBridge.onReadInt(values, null, "#array", SITE, 0, values[0]);
+		assertInvalid(() -> MemoryEditorRuntime.editAll("128"));
+		assertEquals(7, values[0]);
+	}
+
+	@Test
+	public void booleanSearchAcceptsTextAndNumericRepresentations() {
+		TypedFixture fixture = new TypedFixture();
+		MemoryEditorRuntime.begin(MemoryEditorRuntime.SearchType.BOOLEAN,
+				MemoryEditorRuntime.SearchMode.EXACT, "true", null);
+		MemoryEditorBridge.onReadInt(fixture, TypedFixture.class, "booleanValueZ", SITE,
+				-1, 1);
+		assertEquals(1, MemoryEditorRuntime.snapshot().candidates);
+		assertEquals(1, MemoryEditorRuntime.editAll("false"));
+		assertFalse(fixture.booleanValue);
+	}
+
+	@Test
+	public void finalStorageIsReportedAsReadOnlyAfterWriteAttempt() {
+		FinalFixture fixture = new FinalFixture();
+		MemoryEditorRuntime.begin(MemoryEditorRuntime.ValueKind.INT,
+				MemoryEditorRuntime.SearchMode.UNKNOWN, null, null);
+		MemoryEditorBridge.onReadInt(fixture, FinalFixture.class, "valueI", SITE, -1,
+				fixture.value);
+		MemoryEditorRuntime.CandidateView candidate =
+				MemoryEditorRuntime.results(0, 1).get(0);
+		assertFalse(candidate.editable);
+		assertEquals(MemoryEditorRuntime.CandidateStatus.READ_ONLY,
+				candidate.status);
+		assertEquals(0, MemoryEditorRuntime.editAll("8"));
+		assertEquals(MemoryEditorRuntime.CandidateStatus.READ_ONLY,
+				MemoryEditorRuntime.results(0, 1).get(0).status);
+	}
+
+	@Test
+	public void autoSearchUsesAllNumericLanesButExcludesBooleanAndChar() {
+		TypedFixture fixture = new TypedFixture();
+		MemoryEditorRuntime.begin(MemoryEditorRuntime.SearchType.AUTO,
+				MemoryEditorRuntime.SearchMode.EXACT, "7", null);
+
+		MemoryEditorBridge.onReadInt(fixture, TypedFixture.class, "byteValueB", SITE, -1,
+				fixture.byteValue);
+		MemoryEditorBridge.onReadInt(fixture, TypedFixture.class, "shortValueS", SITE, -1,
+				fixture.shortValue);
+		MemoryEditorBridge.onReadInt(fixture, TypedFixture.class, "intValueI", SITE, -1,
+				fixture.intValue);
+		MemoryEditorBridge.onReadInt(fixture, TypedFixture.class, "booleanValueZ", SITE, -1,
+				fixture.booleanValue ? 1 : 0);
+		MemoryEditorBridge.onReadInt(fixture, TypedFixture.class, "charValueC", SITE, -1,
+				fixture.charValue);
+		MemoryEditorBridge.onReadLong(fixture, TypedFixture.class, "longValueJ", SITE, -1,
+				fixture.longValue);
+		MemoryEditorBridge.onReadFloat(fixture, TypedFixture.class, "floatValueF", SITE, -1,
+				fixture.floatValue);
+		MemoryEditorBridge.onReadDouble(fixture, TypedFixture.class, "doubleValueD", SITE, -1,
+				fixture.doubleValue);
+
+		assertEquals(6, MemoryEditorRuntime.snapshot().candidates);
+		assertEquals(6, MemoryEditorRuntime.editAll("8"));
+		assertEquals(8, fixture.byteValue);
+		assertEquals(8, fixture.shortValue);
+		assertEquals(8, fixture.intValue);
+		assertEquals(8L, fixture.longValue);
+		assertEquals(8.0f, fixture.floatValue, 0.0f);
+		assertEquals(8.0d, fixture.doubleValue, 0.0d);
+		assertEquals(1, fixture.booleanValue ? 1 : 0);
+		assertEquals('7', fixture.charValue);
+	}
+
+	@Test
+	public void autoReservesCapacityForAStorageLaneThatArrivesLater() {
+		int[] values = new int[40_000];
+		byte[] lateByte = {0};
+		MemoryEditorRuntime.begin(MemoryEditorRuntime.SearchType.AUTO,
+				MemoryEditorRuntime.SearchMode.EXACT, "0", null);
+		for (int index = 0; index < values.length; index++) {
+			MemoryEditorBridge.onReadInt(values, null, "#array", SITE, index, 0);
+		}
+		MemoryEditorBridge.onReadInt(lateByte, null, "#array", SITE, 0, 0);
+
+		MemoryEditorRuntime.Snapshot snapshot = MemoryEditorRuntime.snapshot();
+		assertTrue(snapshot.candidates < values.length + 1);
+		List<MemoryEditorRuntime.CandidateView> last = MemoryEditorRuntime.results(
+				snapshot.candidates - 1, 1);
+		assertEquals(1, last.size());
+		assertEquals("byte", last.get(0).storageType);
+	}
+
+	@Test
+	public void autoAcceptsIntegralDecimalForIntegerLanesAndEditsThem() {
+		TypedFixture fixture = new TypedFixture();
+		MemoryEditorRuntime.begin(MemoryEditorRuntime.SearchType.AUTO,
+				MemoryEditorRuntime.SearchMode.EXACT, "7.0", null);
+
+		MemoryEditorBridge.onReadInt(fixture, TypedFixture.class, "byteValueB", SITE, -1,
+				fixture.byteValue);
+		MemoryEditorBridge.onReadInt(fixture, TypedFixture.class, "shortValueS", SITE, -1,
+				fixture.shortValue);
+		MemoryEditorBridge.onReadInt(fixture, TypedFixture.class, "intValueI", SITE, -1,
+				fixture.intValue);
+		MemoryEditorBridge.onReadLong(fixture, TypedFixture.class, "longValueJ", SITE, -1,
+				fixture.longValue);
+		MemoryEditorBridge.onReadFloat(fixture, TypedFixture.class, "floatValueF", SITE, -1,
+				fixture.floatValue);
+		MemoryEditorBridge.onReadDouble(fixture, TypedFixture.class, "doubleValueD", SITE, -1,
+				fixture.doubleValue);
+
+		assertEquals(6, MemoryEditorRuntime.snapshot().candidates);
+		assertEquals(6, MemoryEditorRuntime.editAll("8.0"));
+		assertEquals(8, fixture.byteValue);
+		assertEquals(8, fixture.shortValue);
+		assertEquals(8, fixture.intValue);
+		assertEquals(8L, fixture.longValue);
+		assertEquals(8.0f, fixture.floatValue, 0.0f);
+		assertEquals(8.0d, fixture.doubleValue, 0.0d);
+	}
+
 	private static void assertInvalid(Runnable action) {
 		try {
 			action.run();
@@ -602,5 +760,20 @@ public class MemoryEditorRuntimeTest {
 
 	private static final class StaticFixture {
 		private static long value;
+	}
+
+	private static final class TypedFixture {
+		private boolean booleanValue = true;
+		private byte byteValue = 7;
+		private char charValue = '7';
+		private short shortValue = 7;
+		private int intValue = 7;
+		private long longValue = 7L;
+		private float floatValue = 7.0f;
+		private double doubleValue = 7.0d;
+	}
+
+	private static final class FinalFixture {
+		private final int value = 7;
 	}
 }

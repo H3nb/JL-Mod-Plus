@@ -21,8 +21,12 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -41,13 +45,22 @@ import java.util.concurrent.atomic.AtomicLongArray;
 public final class MemoryEditorRuntime {
 	public enum ValueKind { INT, LONG, FLOAT, DOUBLE }
 
+	/** User-facing storage choice. ValueKind remains the bridge lane ABI. */
+	public enum SearchType {
+		AUTO, BOOLEAN, BYTE, CHAR, SHORT, INT, LONG, FLOAT, DOUBLE
+	}
+
 	public enum SearchMode {
 		EXACT, NOT_EQUAL, LESS_THAN, GREATER_THAN, UNKNOWN, CHANGED, UNCHANGED,
 		INCREASED, DECREASED, RANGE
 	}
 
 	public enum OperationStatus {
-		SUCCESS, PARTIAL, CANCELLED, STALE_SESSION, NO_SESSION
+		SUCCESS, PARTIAL, CANCELLED, STALE_SESSION, NO_SESSION, BUSY
+	}
+
+	public enum CandidateStatus {
+		ACTIVE, READ_FAILED, WRITE_FAILED, READ_ONLY, COLLECTED
 	}
 
 	public enum ErrorCode {
@@ -77,6 +90,7 @@ public final class MemoryEditorRuntime {
 		public final long candidateBytes;
 		public final long candidateByteBudget;
 		public final ValueKind kind;
+		public final SearchType searchType;
 		public final SearchMode mode;
 		public final boolean limitReached;
 		public final boolean collecting;
@@ -92,7 +106,8 @@ public final class MemoryEditorRuntime {
 
 		private Snapshot(long gameGeneration, long searchSessionId,
 				int candidates, int frozen, int saved, long candidateBytes,
-				long candidateByteBudget, ValueKind kind, SearchMode mode,
+				long candidateByteBudget, ValueKind kind, SearchType searchType,
+				SearchMode mode,
 				boolean limitReached, boolean collecting, boolean undoAvailable,
 				long intObservations, long longObservations, long floatObservations,
 				long doubleObservations, long fieldObservations, long arrayObservations,
@@ -105,6 +120,7 @@ public final class MemoryEditorRuntime {
 			this.candidateBytes = candidateBytes;
 			this.candidateByteBudget = candidateByteBudget;
 			this.kind = kind;
+			this.searchType = searchType;
 			this.mode = mode;
 			this.limitReached = limitReached;
 			this.collecting = collecting;
@@ -120,6 +136,9 @@ public final class MemoryEditorRuntime {
 		}
 
 		public long selectedObservations() {
+			if (searchType == SearchType.AUTO) {
+				return totalObservations();
+			}
 			if (kind == null) {
 				return 0;
 			}
@@ -146,9 +165,10 @@ public final class MemoryEditorRuntime {
 		public final boolean frozen;
 		public final boolean saved;
 		public final boolean editable;
+		public final CandidateStatus status;
 
 		private CandidateView(long id, String value, String storageType, String location,
-				boolean frozen, boolean saved, boolean editable) {
+				boolean frozen, boolean saved, boolean editable, CandidateStatus status) {
 			this.id = id;
 			this.value = value;
 			this.storageType = storageType;
@@ -156,6 +176,7 @@ public final class MemoryEditorRuntime {
 			this.frozen = frozen;
 			this.saved = saved;
 			this.editable = editable;
+			this.status = status;
 		}
 	}
 
@@ -198,11 +219,15 @@ public final class MemoryEditorRuntime {
 
 	private static final int MAX_CANDIDATES = 50_000;
 	private static final long MAX_CANDIDATE_BYTES = 8L * 1024L * 1024L;
+	private static final int AUTO_MIN_LANE_CANDIDATES = 256;
 	private static final int MAX_SESSION_READ_RETRIES = 3;
 	private static final int INSTANCE_FIELD_INDEX = -1;
 	private static final int STATIC_FIELD_INDEX = -2;
 	private static final String ARRAY_MEMBER = "#array";
 	private static final Object SESSION_LOCK = new Object();
+	private static final EnumSet<SearchType> AUTO_LANES = EnumSet.of(
+			SearchType.BYTE, SearchType.SHORT, SearchType.INT, SearchType.LONG,
+			SearchType.FLOAT, SearchType.DOUBLE);
 	private static final AtomicLong NEXT_GAME_GENERATION = new AtomicLong(1);
 	private static final AtomicLong NEXT_SEARCH_SESSION_ID = new AtomicLong(1);
 	private static final AtomicLong NEXT_OPERATION_ID = new AtomicLong(1);
@@ -221,9 +246,14 @@ public final class MemoryEditorRuntime {
 				OperationStatus.STALE_SESSION, 0, 0);
 	}
 
+	private static OperationResult busyResult(long expectedSessionId) {
+		return new OperationResult(expectedSessionId, 0,
+				OperationStatus.BUSY, 0, 0);
+	}
+
 	private static Snapshot emptySnapshot() {
 		return new Snapshot(gameGeneration, 0, 0, 0, 0, 0,
-				MAX_CANDIDATE_BYTES, null, null, false, false, false,
+				MAX_CANDIDATE_BYTES, null, null, null, false, false, false,
 				0, 0, 0, 0, 0, 0, 0, 0);
 	}
 
@@ -231,16 +261,39 @@ public final class MemoryEditorRuntime {
 		return 1 << kind.ordinal();
 	}
 
-	/** Caller must hold {@code active.lock}. */
-	private static void updateActiveKindsLocked(Session active) {
-		synchronized (SESSION_LOCK) {
-			if (active != session || active.closed) {
-				return;
-			}
-			MemoryEditorBridge.setActiveKinds(
-					active.collecting || !active.frozen.isEmpty()
-							? kindMask(active.kind) : 0);
+	private static int kindMask(EnumSet<ValueKind> kinds) {
+		int mask = 0;
+		for (ValueKind kind : kinds) {
+			mask |= kindMask(kind);
 		}
+		return mask;
+	}
+
+	private static ValueKind laneFor(SearchType type) {
+		return switch (type) {
+			case BOOLEAN, BYTE, CHAR, SHORT, INT -> ValueKind.INT;
+			case LONG -> ValueKind.LONG;
+			case FLOAT -> ValueKind.FLOAT;
+			case DOUBLE -> ValueKind.DOUBLE;
+			case AUTO -> null;
+		};
+	}
+
+	private static EnumSet<ValueKind> activeKindsFor(SearchType type) {
+		if (type == SearchType.AUTO) {
+			return EnumSet.allOf(ValueKind.class);
+		}
+		return EnumSet.of(laneFor(type));
+	}
+
+	/** Caller must hold {@code active.lock}; no global lock is taken on the hook path. */
+	private static void updateActiveKindsLocked(Session active) {
+		if (active != session || active.closed) {
+			return;
+		}
+		MemoryEditorBridge.setActiveKinds(
+				active.collecting || !active.frozen.isEmpty()
+						? kindMask(active.activeKinds) : 0);
 	}
 
 	public static long begin(ValueKind kind, SearchMode mode, String first, String second) {
@@ -249,6 +302,30 @@ public final class MemoryEditorRuntime {
 					kind == null ? ErrorCode.INVALID_KIND : ErrorCode.INVALID_MODE,
 					"Search kind and mode are required");
 		}
+		return beginLegacy(kind, mode, first, second);
+	}
+
+	public static long begin(SearchType type, SearchMode mode, String first, String second) {
+		if (type == null || mode == null) {
+			throw new MemoryEditorException(
+					type == null ? ErrorCode.INVALID_KIND : ErrorCode.INVALID_MODE,
+					"Search type and mode are required");
+		}
+		validateInitialMode(mode);
+		EnumMap<ValueKind, Criteria> criteria = parseCriteria(type, mode, first, second);
+		EnumSet<ValueKind> activeKinds = activeKindsFor(type);
+		synchronized (SESSION_LOCK) {
+			closeSession(session);
+			long sessionId = NEXT_SEARCH_SESSION_ID.getAndIncrement();
+			session = new Session(gameGeneration, sessionId, laneFor(type), type,
+					activeKinds, criteria, mode);
+			MemoryEditorBridge.setActiveKinds(kindMask(activeKinds));
+			return sessionId;
+		}
+	}
+
+	private static long beginLegacy(ValueKind kind, SearchMode mode,
+			String first, String second) {
 		if (mode != SearchMode.EXACT && mode != SearchMode.NOT_EQUAL
 				&& mode != SearchMode.LESS_THAN && mode != SearchMode.GREATER_THAN
 				&& mode != SearchMode.UNKNOWN && mode != SearchMode.RANGE) {
@@ -256,13 +333,24 @@ public final class MemoryEditorRuntime {
 					"Initial search mode is not supported");
 		}
 		Criteria criteria = parseCriteria(kind, mode, first, second);
+		EnumMap<ValueKind, Criteria> criteriaByKind = new EnumMap<>(ValueKind.class);
+		criteriaByKind.put(kind, criteria);
 		synchronized (SESSION_LOCK) {
 			closeSession(session);
 			long sessionId = NEXT_SEARCH_SESSION_ID.getAndIncrement();
-			session = new Session(gameGeneration, sessionId, kind, mode,
-					criteria.lower, criteria.upper);
+			session = new Session(gameGeneration, sessionId, kind, null,
+					EnumSet.of(kind), criteriaByKind, mode);
 			MemoryEditorBridge.setActiveKinds(kindMask(kind));
 			return sessionId;
+		}
+	}
+
+	private static void validateInitialMode(SearchMode mode) {
+		if (mode != SearchMode.EXACT && mode != SearchMode.NOT_EQUAL
+				&& mode != SearchMode.LESS_THAN && mode != SearchMode.GREATER_THAN
+				&& mode != SearchMode.UNKNOWN && mode != SearchMode.RANGE) {
+			throw new MemoryEditorException(ErrorCode.INVALID_MODE,
+					"Initial search mode is not supported");
 		}
 	}
 
@@ -327,19 +415,37 @@ public final class MemoryEditorRuntime {
 		if (active.searchSessionId != expectedSessionId) {
 			return staleSessionResult(expectedSessionId);
 		}
-		Criteria criteria = parseCriteria(active.kind, mode, first, second);
+		EnumMap<ValueKind, Criteria> criteria = parseCriteriaForSession(
+				active, mode, first, second);
+		List<Candidate> original;
+		long operationId;
 		synchronized (active.lock) {
 			if (active != session || active.closed) {
 				return staleSessionResult(expectedSessionId);
 			}
-			int requested = active.size();
-			long operationId = active.startOperation(requested);
-			OperationStatus status = active.refine(mode, criteria.lower, criteria.upper);
-			int succeeded = status == OperationStatus.SUCCESS ? requested : 0;
+			original = active.allCandidates();
+			operationId = active.startOperation(original.size());
+			if (operationId == 0) {
+				return busyResult(expectedSessionId);
+			}
+			active.collecting = false;
+			updateActiveKindsLocked(active);
+		}
+		RefineWork work = active.refineOutsideLock(mode, criteria, original);
+		synchronized (active.lock) {
+			if (active != session || active.closed) {
+				active.finishOperation(operationId);
+				return staleSessionResult(expectedSessionId);
+			}
+			if (work.status == OperationStatus.SUCCESS) {
+				active.commitRefine(mode, criteria, original, work.retained,
+						work.retainedValues);
+			}
 			active.finishOperation(operationId);
 			updateActiveKindsLocked(active);
-			return new OperationResult(active.searchSessionId, operationId, status,
-					requested, succeeded);
+			int succeeded = work.status == OperationStatus.SUCCESS ? original.size() : 0;
+			return new OperationResult(active.searchSessionId, operationId,
+				work.status, original.size(), succeeded);
 		}
 	}
 
@@ -358,7 +464,7 @@ public final class MemoryEditorRuntime {
 				return new Snapshot(active.gameGeneration, active.searchSessionId,
 						active.size(), active.frozen.size(), active.saved.size(),
 						active.candidateBytes, MAX_CANDIDATE_BYTES,
-						active.kind,
+						active.kind, active.searchType,
 						active.mode, active.limitReached, active.collecting,
 						!active.undo.isEmpty(),
 						active.observations.get(ValueKind.INT.ordinal()),
@@ -414,37 +520,75 @@ public final class MemoryEditorRuntime {
 		if (active.searchSessionId != expectedSessionId) {
 			return staleSessionResult(expectedSessionId);
 		}
-		Value value = parse(active.kind, text);
+		Value value = active.searchType == SearchType.AUTO
+				? null
+				: active.searchType == null
+						? parse(active.kind, text)
+						: parse(active.searchType, active.kind, text);
+		List<Candidate> selected;
+		long operationId;
 		synchronized (active.lock) {
 			if (active != session || active.closed) {
 				return staleSessionResult(expectedSessionId);
 			}
+			selected = active.select(candidateIds);
+			operationId = active.startOperation(selected.size());
+			if (operationId == 0) {
+				return busyResult(expectedSessionId);
+			}
 			active.collecting = false;
-			List<Undo> batch = new ArrayList<>();
-			int changed = 0;
-			List<Candidate> selected = active.select(candidateIds);
-			long operationId = active.startOperation(selected.size());
-			for (Candidate candidate : selected) {
-				if (active.operationStatus() != OperationStatus.SUCCESS) {
+			updateActiveKindsLocked(active);
+		}
+		List<Undo> batch = new ArrayList<>();
+		int changed = 0;
+		for (Candidate candidate : selected) {
+			if (active.operationStatus() != OperationStatus.SUCCESS) {
+				break;
+			}
+			Value candidateValue;
+			try {
+				candidateValue = value == null
+						? parseForCandidate(active.searchType, candidate, text) : value;
+			} catch (MemoryEditorException invalidForLane) {
+				active.advanceOperation();
+				continue;
+			}
+			Value oldValue = candidate.read();
+			if (oldValue == null) {
+				active.advanceOperation();
+				continue;
+			}
+			synchronized (active.lock) {
+				if (active != session || active.closed
+						|| active.operationStatus() != OperationStatus.SUCCESS
+						|| !active.isTracked(candidate)) {
 					break;
 				}
-				Value oldValue = candidate.read();
-				if (oldValue == null || !candidate.apply(value)) {
+				Value oldFrozen = active.frozen.get(candidate);
+				if (!candidate.apply(candidateValue)) {
 					active.advanceOperation();
 					continue;
 				}
-				Value oldFrozen = active.frozen.get(candidate);
 				batch.add(new Undo(candidate, oldValue, oldFrozen,
 						active.saved.contains(candidate)));
 				if (oldFrozen != null) {
-					active.frozen.put(candidate, value);
+					active.frozen.put(candidate, candidateValue);
 				}
-				candidate.baseline = value;
+				candidate.baseline = candidateValue;
 				changed++;
 				active.advanceOperation();
 			}
+		}
+		synchronized (active.lock) {
+			if (active != session || active.closed) {
+				active.finishOperation(operationId);
+				return staleSessionResult(expectedSessionId);
+			}
 			active.addUndoBatch(batch);
 			OperationStatus status = active.operationStatus();
+			if (status == OperationStatus.SUCCESS && changed < selected.size()) {
+				status = OperationStatus.PARTIAL;
+			}
 			active.finishOperation(operationId);
 			updateActiveKindsLocked(active);
 			return new OperationResult(active.searchSessionId, operationId, status,
@@ -471,38 +615,72 @@ public final class MemoryEditorRuntime {
 		if (active.searchSessionId != expectedSessionId) {
 			return staleSessionResult(expectedSessionId);
 		}
-		Value value = parse(active.kind, text);
+		Value value = active.searchType == SearchType.AUTO
+				? null
+				: active.searchType == null
+						? parse(active.kind, text)
+						: parse(active.searchType, active.kind, text);
+		List<Candidate> selected;
+		long operationId;
 		synchronized (active.lock) {
 			if (active != session || active.closed) {
 				return staleSessionResult(expectedSessionId);
 			}
+			selected = active.select(candidateIds);
+			operationId = active.startOperation(selected.size());
+			if (operationId == 0) {
+				return busyResult(expectedSessionId);
+			}
 			active.collecting = false;
-			int changed = 0;
-			List<Undo> batch = new ArrayList<>();
-			List<Candidate> selected = active.select(candidateIds);
-			long operationId = active.startOperation(selected.size());
-			for (Candidate candidate : selected) {
-				if (active.operationStatus() != OperationStatus.SUCCESS) {
+			updateActiveKindsLocked(active);
+		}
+		int changed = 0;
+		List<Undo> batch = new ArrayList<>();
+		for (Candidate candidate : selected) {
+			if (active.operationStatus() != OperationStatus.SUCCESS) {
+				break;
+			}
+			Value candidateValue;
+			try {
+				candidateValue = value == null
+						? parseForCandidate(active.searchType, candidate, text) : value;
+			} catch (MemoryEditorException invalidForLane) {
+				active.advanceOperation();
+				continue;
+			}
+			Value oldValue = candidate.read();
+			if (oldValue == null) {
+				active.advanceOperation();
+				continue;
+			}
+			synchronized (active.lock) {
+				if (active != session || active.closed
+						|| active.operationStatus() != OperationStatus.SUCCESS
+						|| !active.isTracked(candidate)) {
 					break;
-				}
-				Value oldValue = candidate.read();
-				if (oldValue == null) {
-					active.advanceOperation();
-					continue;
 				}
 				Value oldFrozen = active.frozen.get(candidate);
 				boolean oldSaved = active.saved.contains(candidate);
-				if (candidate.apply(value)) {
+				if (candidate.apply(candidateValue)) {
 					batch.add(new Undo(candidate, oldValue, oldFrozen, oldSaved));
-					active.frozen.put(candidate, value);
+					active.frozen.put(candidate, candidateValue);
 					active.saved.add(candidate);
-					candidate.baseline = value;
+					candidate.baseline = candidateValue;
 					changed++;
 				}
 				active.advanceOperation();
 			}
+		}
+		synchronized (active.lock) {
+			if (active != session || active.closed) {
+				active.finishOperation(operationId);
+				return staleSessionResult(expectedSessionId);
+			}
 			active.addUndoBatch(batch);
 			OperationStatus status = active.operationStatus();
+			if (status == OperationStatus.SUCCESS && changed < selected.size()) {
+				status = OperationStatus.PARTIAL;
+			}
 			active.finishOperation(operationId);
 			updateActiveKindsLocked(active);
 			return new OperationResult(active.searchSessionId, operationId, status,
@@ -524,11 +702,18 @@ public final class MemoryEditorRuntime {
 			if (active == null) {
 				return new ArrayList<>();
 			}
+			List<CandidatePage> page;
 			synchronized (active.lock) {
 				if (active != session || active.closed) {
 					continue;
 				}
-				List<CandidateView> result = active.results(offset, limit);
+				page = active.candidatePage(offset, limit, false);
+			}
+			List<CandidateView> result = materializePage(page);
+			synchronized (active.lock) {
+				if (active != session || active.closed) {
+					continue;
+				}
 				updateActiveKindsLocked(active);
 				return result;
 			}
@@ -550,16 +735,34 @@ public final class MemoryEditorRuntime {
 			if (active == null) {
 				return new ArrayList<>();
 			}
+			List<CandidatePage> page;
 			synchronized (active.lock) {
 				if (active != session || active.closed) {
 					continue;
 				}
-				List<CandidateView> result = active.savedResults(offset, limit);
+				page = active.candidatePage(offset, limit, true);
+			}
+			List<CandidateView> result = materializePage(page);
+			synchronized (active.lock) {
+				if (active != session || active.closed) {
+					continue;
+				}
 				updateActiveKindsLocked(active);
 				return result;
 			}
 		}
 		return new ArrayList<>();
+	}
+
+	private static List<CandidateView> materializePage(List<CandidatePage> page) {
+		List<CandidateView> result = new ArrayList<>(page.size());
+		for (CandidatePage item : page) {
+			Value current = item.candidate.read();
+			if (current != null || item.candidate.status != CandidateStatus.COLLECTED) {
+				result.add(item.candidate.toView(current, item.frozen, item.saved));
+			}
+		}
+		return result;
 	}
 
 	public static OperationResult clearFreeze(long[] candidateIds) {
@@ -581,6 +784,9 @@ public final class MemoryEditorRuntime {
 			}
 			List<Candidate> selected = active.select(candidateIds);
 			long operationId = active.startOperation(selected.size());
+			if (operationId == 0) {
+				return busyResult(expectedSessionId);
+			}
 			int changed = 0;
 			for (Candidate candidate : selected) {
 				if (active.operationStatus() != OperationStatus.SUCCESS) {
@@ -591,7 +797,11 @@ public final class MemoryEditorRuntime {
 				}
 				active.advanceOperation();
 			}
+			active.pruneUndo();
 			OperationStatus status = active.operationStatus();
+			if (status == OperationStatus.SUCCESS && changed < selected.size()) {
+				status = OperationStatus.PARTIAL;
+			}
 			active.finishOperation(operationId);
 			updateActiveKindsLocked(active);
 			return new OperationResult(active.searchSessionId, operationId,
@@ -618,6 +828,9 @@ public final class MemoryEditorRuntime {
 			}
 			List<Candidate> selected = active.select(candidateIds);
 			long operationId = active.startOperation(selected.size());
+			if (operationId == 0) {
+				return busyResult(expectedSessionId);
+			}
 			int changed = 0;
 			for (Candidate candidate : selected) {
 				if (active.operationStatus() != OperationStatus.SUCCESS) {
@@ -632,7 +845,11 @@ public final class MemoryEditorRuntime {
 				}
 				active.advanceOperation();
 			}
+			active.pruneUndo();
 			OperationStatus status = active.operationStatus();
+			if (status == OperationStatus.SUCCESS && changed < selected.size()) {
+				status = OperationStatus.PARTIAL;
+			}
 			active.finishOperation(operationId);
 			updateActiveKindsLocked(active);
 			return new OperationResult(active.searchSessionId, operationId,
@@ -657,14 +874,27 @@ public final class MemoryEditorRuntime {
 		if (active == null) {
 			return false;
 		}
+		List<Undo> batch;
 		synchronized (active.lock) {
 			if (active != session || active.closed || active.undo.isEmpty()) {
 				return false;
 			}
-			List<Undo> batch = active.undo.removeLast();
-			boolean restored = true;
-			for (int i = batch.size() - 1; i >= 0; i--) {
-				Undo undo = batch.get(i);
+			batch = active.undo.removeLast();
+			active.undoByCandidate.clear();
+		}
+		boolean restored = true;
+		for (int i = batch.size() - 1; i >= 0; i--) {
+			Undo undo = batch.get(i);
+			synchronized (active.lock) {
+				if (active != session || active.closed) {
+					return false;
+				}
+				if (!active.isTracked(undo.candidate)) {
+					// A candidate may have been collected or removed after the edit.
+					// Restore the rest of the one-shot batch instead of losing it.
+					restored = false;
+					continue;
+				}
 				if (undo.candidate.apply(undo.oldValue)) {
 					undo.candidate.baseline = undo.oldValue;
 				} else {
@@ -681,9 +911,13 @@ public final class MemoryEditorRuntime {
 					active.saved.remove(undo.candidate);
 				}
 			}
-			updateActiveKindsLocked(active);
-			return restored;
 		}
+		synchronized (active.lock) {
+			if (active == session && !active.closed) {
+				updateActiveKindsLocked(active);
+			}
+		}
+		return restored;
 	}
 
 	public static void resetSearch() {
@@ -717,8 +951,17 @@ public final class MemoryEditorRuntime {
 	private static void closeSession(Session current) {
 		MemoryEditorBridge.setActiveKinds(0);
 		if (current != null) {
-			current.closed = true;
-			current.cancelRequested.set(true);
+			/*
+			 * Teardown and candidate work use the same lock. This prevents a
+			 * reset/new MIDlet from completing while an in-flight edit or hook is
+			 * still mutating the old session. updateActiveKindsLocked deliberately
+			 * does not acquire SESSION_LOCK, so the lock order remains unidirectional.
+			 */
+			synchronized (current.lock) {
+				current.closed = true;
+				current.cancelRequested.set(true);
+				current.clearStateLocked();
+			}
 		}
 	}
 
@@ -782,7 +1025,7 @@ public final class MemoryEditorRuntime {
 		if (active.collecting) {
 			active.noteObservation(kind, ARRAY_MEMBER.equals(member), write);
 		}
-		if (active.kind != kind) {
+		if (!active.activeKinds.contains(kind)) {
 			return bits;
 		}
 		Value value = new Value(kind, bits);
@@ -797,20 +1040,25 @@ public final class MemoryEditorRuntime {
 			return bits;
 		}
 		synchronized (active.lock) {
-			if (active != session || active.closed || active.kind != kind) {
+			if (active != session || active.closed || !active.activeKinds.contains(kind)) {
 				return bits;
 			}
 			active.purgeCollected();
 			if (!active.collecting && active.frozen.isEmpty()) {
-				updateActiveKindsLocked(active);
 				return bits;
 			}
 			Candidate candidate = active.find(target, owner, member, index);
-			if (candidate == null && active.collecting && active.acceptInitial(value)) {
+			if (candidate == null && active.collecting
+					&& active.acceptInitial(target, owner, member, index, kind, value)) {
 				candidate = active.add(target, owner, member, site, index, value);
 			}
 			if (candidate == null) {
-				updateActiveKindsLocked(active);
+				// A failed match is the normal hot path while collecting. Do not
+				// reacquire SESSION_LOCK for every observed value; only publish the
+				// gate transition when the candidate budget stopped collection.
+				if (active.limitReached) {
+					updateActiveKindsLocked(active);
+				}
 				return bits;
 			}
 			Value frozen = active.frozen.get(candidate);
@@ -829,6 +1077,8 @@ public final class MemoryEditorRuntime {
 		}
 		if (mode == SearchMode.RANGE) {
 			upper = parse(kind, second);
+			validateFiniteBoundary(lower, mode);
+			validateFiniteBoundary(upper, mode);
 			if (lower.isNaN() || upper.isNaN()) {
 				throw new MemoryEditorException(ErrorCode.INVALID_RANGE,
 						"NaN cannot be used as a range boundary");
@@ -837,8 +1087,213 @@ public final class MemoryEditorRuntime {
 				throw new MemoryEditorException(ErrorCode.INVALID_RANGE,
 						"Range minimum must not be greater than maximum");
 			}
+		} else if (mode == SearchMode.LESS_THAN || mode == SearchMode.GREATER_THAN) {
+			validateFiniteBoundary(lower, mode);
 		}
 		return new Criteria(lower, upper);
+	}
+
+	private static EnumMap<ValueKind, Criteria> parseCriteria(SearchType type,
+			SearchMode mode, String first, String second) {
+		EnumMap<ValueKind, Criteria> result = new EnumMap<>(ValueKind.class);
+		if (type == SearchType.AUTO) {
+			for (ValueKind kind : ValueKind.values()) {
+				try {
+					result.put(kind, parseAutoCriteria(kind, mode, first, second));
+				} catch (MemoryEditorException ignored) {
+					// A value may be valid for one numeric lane but overflow another.
+				}
+			}
+			if (result.isEmpty()) {
+				throw new MemoryEditorException(ErrorCode.INVALID_VALUE,
+						"Value is not valid for any automatic numeric type");
+			}
+			return result;
+		}
+		ValueKind kind = laneFor(type);
+		result.put(kind, parseCriteria(type, kind, mode, first, second));
+		return result;
+	}
+
+	private static Criteria parseAutoCriteria(ValueKind kind, SearchMode mode,
+			String first, String second) {
+		Value lower = null;
+		Value upper = null;
+		if (mode == SearchMode.EXACT || mode == SearchMode.NOT_EQUAL
+				|| mode == SearchMode.LESS_THAN || mode == SearchMode.GREATER_THAN
+				|| mode == SearchMode.RANGE) {
+			lower = parseAutoValue(kind, first);
+		}
+		if (mode == SearchMode.RANGE) {
+			upper = parseAutoValue(kind, second);
+			validateFiniteBoundary(lower, mode);
+			validateFiniteBoundary(upper, mode);
+			if (lower.compareTo(upper) > 0) {
+				throw new MemoryEditorException(ErrorCode.INVALID_RANGE,
+						"Range minimum must not be greater than maximum");
+			}
+		} else if (mode == SearchMode.LESS_THAN || mode == SearchMode.GREATER_THAN) {
+			validateFiniteBoundary(lower, mode);
+		}
+		return new Criteria(lower, upper);
+	}
+
+	/**
+	 * Auto accepts an integral decimal representation such as {@code 7.0} for
+	 * integer storage lanes, while manual integer types remain strict.
+	 */
+	private static Value parseAutoValue(ValueKind kind, String text) {
+		try {
+			return parse(kind, text);
+		} catch (MemoryEditorException strictFailure) {
+			if (kind != ValueKind.INT && kind != ValueKind.LONG) {
+				throw strictFailure;
+			}
+			if (text == null || text.trim().isEmpty()) {
+				throw strictFailure;
+			}
+			try {
+				BigInteger integral = new BigDecimal(text.trim()).toBigIntegerExact();
+				if (kind == ValueKind.INT) {
+					return Value.ofInt(integral.intValueExact());
+				}
+				return Value.ofLong(integral.longValueExact());
+			} catch (NumberFormatException | ArithmeticException ignored) {
+				throw strictFailure;
+			}
+		}
+	}
+
+	private static Criteria parseCriteria(SearchType type, ValueKind kind,
+			SearchMode mode, String first, String second) {
+		Value lower = null;
+		Value upper = null;
+		if (mode == SearchMode.EXACT || mode == SearchMode.NOT_EQUAL
+				|| mode == SearchMode.LESS_THAN || mode == SearchMode.GREATER_THAN
+				|| mode == SearchMode.RANGE) {
+			lower = type == SearchType.BOOLEAN
+					? parseBoolean(first) : parse(type, kind, first);
+		}
+		if (mode == SearchMode.RANGE) {
+			upper = type == SearchType.BOOLEAN
+					? parseBoolean(second) : parse(type, kind, second);
+			validateFiniteBoundary(lower, mode);
+			validateFiniteBoundary(upper, mode);
+			if (lower.isNaN() || upper.isNaN()) {
+				throw new MemoryEditorException(ErrorCode.INVALID_RANGE,
+						"NaN cannot be used as a range boundary");
+			}
+			if (lower.compareTo(upper) > 0) {
+				throw new MemoryEditorException(ErrorCode.INVALID_RANGE,
+						"Range minimum must not be greater than maximum");
+			}
+		} else if (mode == SearchMode.LESS_THAN || mode == SearchMode.GREATER_THAN) {
+			validateFiniteBoundary(lower, mode);
+		}
+		return new Criteria(lower, upper);
+	}
+
+	private static void validateFiniteBoundary(Value value, SearchMode mode) {
+		if (value != null && (value.isNaN() || value.isInfinite())) {
+			ErrorCode code = mode == SearchMode.RANGE
+					? ErrorCode.INVALID_RANGE : ErrorCode.INVALID_VALUE;
+			throw new MemoryEditorException(code,
+					"Non-finite values are not valid for this comparison");
+		}
+	}
+
+	private static Value parseBoolean(String text) {
+		if (text == null || text.trim().isEmpty()) {
+			throw new MemoryEditorException(ErrorCode.INVALID_VALUE,
+					"Boolean value is required");
+		}
+		return switch (text.trim().toLowerCase(Locale.ROOT)) {
+			case "true", "1" -> Value.ofInt(1);
+			case "false", "0" -> Value.ofInt(0);
+			default -> throw new MemoryEditorException(ErrorCode.INVALID_VALUE,
+					"Boolean value must be true, false, 1, or 0");
+		};
+	}
+
+	private static Value parse(SearchType type, ValueKind kind, String text) {
+		if (type == SearchType.BOOLEAN) {
+			return parseBoolean(text);
+		}
+		String value = text == null ? null : text.trim();
+		if (value == null || value.isEmpty()) {
+			throw new MemoryEditorException(ErrorCode.INVALID_VALUE, "Value is required");
+		}
+		try {
+			return switch (type) {
+				case BYTE -> boundedInt(value, Byte.MIN_VALUE, Byte.MAX_VALUE, "byte");
+				case SHORT -> boundedInt(value, Short.MIN_VALUE, Short.MAX_VALUE, "short");
+				case CHAR -> boundedInt(value, Character.MIN_VALUE, Character.MAX_VALUE, "char");
+				case INT -> Value.ofInt(Integer.decode(value));
+				case LONG -> Value.ofLong(Long.decode(value));
+				case FLOAT -> Value.ofFloat(Float.parseFloat(value));
+				case DOUBLE -> Value.ofDouble(Double.parseDouble(value));
+				case AUTO -> parse(kind, value);
+				case BOOLEAN -> throw new AssertionError("Boolean is handled above");
+			};
+		} catch (NumberFormatException e) {
+			throw new MemoryEditorException(ErrorCode.INVALID_VALUE,
+					"Invalid " + type.name().toLowerCase(Locale.ROOT) + " value", e);
+		}
+	}
+
+	private static Value boundedInt(String text, int minimum, int maximum,
+			String typeName) {
+		int parsed = Integer.decode(text);
+		if (parsed < minimum || parsed > maximum) {
+			throw new MemoryEditorException(ErrorCode.INVALID_VALUE,
+					"Value is outside the " + typeName + " range");
+		}
+		return Value.ofInt(parsed);
+	}
+
+	private static Value parseForCandidate(SearchType searchType,
+			Candidate candidate, String text) {
+		if (searchType == SearchType.AUTO && candidate.autoLane != null) {
+			return parseAutoLane(candidate.autoLane, candidate.baseline.kind, text);
+		}
+		return searchType == null
+				? parse(candidate.baseline.kind, text)
+				: parse(searchType, candidate.baseline.kind, text);
+	}
+
+	private static Value parseAutoLane(SearchType lane, ValueKind kind, String text) {
+		if (lane == SearchType.BYTE || lane == SearchType.SHORT
+				|| lane == SearchType.INT || lane == SearchType.LONG) {
+			Value integer = parseAutoValue(kind, text);
+			long value = integer.asLong();
+			return switch (lane) {
+				case BYTE -> boundedLong(value, Byte.MIN_VALUE, Byte.MAX_VALUE, "byte");
+				case SHORT -> boundedLong(value, Short.MIN_VALUE, Short.MAX_VALUE, "short");
+				case INT -> boundedLong(value, Integer.MIN_VALUE, Integer.MAX_VALUE, "int");
+				case LONG -> Value.ofLong(value);
+				default -> throw new AssertionError("Not an integer Auto lane");
+			};
+		}
+		return parse(lane, kind, text);
+	}
+
+	private static Value boundedLong(long value, long minimum, long maximum,
+			String typeName) {
+		if (value < minimum || value > maximum) {
+			throw new MemoryEditorException(ErrorCode.INVALID_VALUE,
+					"Value is outside the " + typeName + " range");
+		}
+		return Value.ofInt((int) value);
+	}
+
+	private static EnumMap<ValueKind, Criteria> parseCriteriaForSession(Session active,
+			SearchMode mode, String first, String second) {
+		if (active.searchType == null) {
+			EnumMap<ValueKind, Criteria> result = new EnumMap<>(ValueKind.class);
+			result.put(active.kind, parseCriteria(active.kind, mode, first, second));
+			return result;
+		}
+		return parseCriteria(active.searchType, mode, first, second);
 	}
 
 	private static Value parse(ValueKind kind, String text) {
@@ -884,15 +1339,19 @@ public final class MemoryEditorRuntime {
 		private final long gameGeneration;
 		private final long searchSessionId;
 		private final ValueKind kind;
+		private final SearchType searchType;
+		private final EnumSet<ValueKind> activeKinds;
+		private final EnumMap<ValueKind, Criteria> criteria;
 		private SearchMode mode;
-		private Value lower;
-		private Value upper;
 		private final Set<Candidate> candidates = new LinkedHashSet<>();
 		private final Map<Integer, List<Candidate>> candidateBuckets = new HashMap<>();
 		private final Map<Long, Candidate> candidatesById = new HashMap<>();
 		private final Map<Candidate, Value> frozen = new HashMap<>();
 		private final Set<Candidate> saved = new LinkedHashSet<>();
+		private final EnumMap<SearchType, Integer> autoLaneCandidates =
+				new EnumMap<>(SearchType.class);
 		private final ArrayDeque<List<Undo>> undo = new ArrayDeque<>();
+		private final Map<Candidate, Undo> undoByCandidate = new HashMap<>();
 		private final ReferenceQueue<Object> collectedTargets = new ReferenceQueue<>();
 		private final AtomicLongArray observations =
 				new AtomicLongArray(ValueKind.values().length);
@@ -911,16 +1370,21 @@ public final class MemoryEditorRuntime {
 		private long candidateBytes;
 
 		private Session(long gameGeneration, long searchSessionId, ValueKind kind,
-				SearchMode mode, Value lower, Value upper) {
+				SearchType searchType, EnumSet<ValueKind> activeKinds,
+				EnumMap<ValueKind, Criteria> criteria, SearchMode mode) {
 			this.gameGeneration = gameGeneration;
 			this.searchSessionId = searchSessionId;
 			this.kind = kind;
+			this.searchType = searchType;
+			this.activeKinds = EnumSet.copyOf(activeKinds);
+			this.criteria = new EnumMap<>(criteria);
 			this.mode = mode;
-			this.lower = lower;
-			this.upper = upper;
 		}
 
 		private long startOperation(int total) {
+			if (activeOperationId.get() != 0) {
+				return 0;
+			}
 			long operationId = NEXT_OPERATION_ID.getAndIncrement();
 			cancelRequested.set(false);
 			operationCompleted.set(0);
@@ -950,6 +1414,24 @@ public final class MemoryEditorRuntime {
 			cancelRequested.set(false);
 		}
 
+		/** Caller must hold {@code lock}. */
+		private void clearStateLocked() {
+			candidates.clear();
+			candidateBuckets.clear();
+			candidatesById.clear();
+			frozen.clear();
+			saved.clear();
+			undo.clear();
+			undoByCandidate.clear();
+			autoLaneCandidates.clear();
+			candidateBytes = 0;
+			limitReached = false;
+			collecting = false;
+			activeOperationId.set(0);
+			operationCompleted.set(0);
+			operationTotal.set(0);
+		}
+
 		private void noteObservation(ValueKind observedKind, boolean array, boolean write) {
 			observations.incrementAndGet(observedKind.ordinal());
 			(array ? arrayObservations : fieldObservations).incrementAndGet();
@@ -973,6 +1455,12 @@ public final class MemoryEditorRuntime {
 		private Candidate add(Object target, Class<?> owner, String member, long site,
 				int index, Value value) {
 			long estimatedBytes = estimatedCandidateBytes(member);
+			SearchType autoLane = searchType == SearchType.AUTO
+					? autoLaneFor(target, owner, member, index) : null;
+			if (searchType == SearchType.AUTO && autoLane != null
+					&& !canAdmitAutoLane(autoLane, estimatedBytes)) {
+				return null;
+			}
 			if (candidates.size() >= MAX_CANDIDATES
 					|| candidateBytes + estimatedBytes > MAX_CANDIDATE_BYTES) {
 				limitReached = true;
@@ -980,7 +1468,7 @@ public final class MemoryEditorRuntime {
 				return null;
 			}
 			Candidate candidate = new Candidate(nextCandidateId++, target, owner, member,
-					site, index, value, collectedTargets);
+					site, index, value, autoLane, collectedTargets);
 			candidateBytes += estimatedBytes;
 			candidates.add(candidate);
 			candidatesById.put(candidate.id, candidate);
@@ -990,20 +1478,96 @@ public final class MemoryEditorRuntime {
 				candidateBuckets.put(candidate.locationHash, bucket);
 			}
 			bucket.add(candidate);
+			if (autoLane != null) {
+				autoLaneCandidates.merge(autoLane, 1, Integer::sum);
+			}
 			return candidate;
 		}
 
-		private boolean acceptInitial(Value value) {
+		private boolean canAdmitAutoLane(SearchType lane, long estimatedBytes) {
+			long remainingByBytes = Math.max(0, MAX_CANDIDATE_BYTES - candidateBytes)
+					/ Math.max(1L, estimatedBytes);
+			int remaining = (int) Math.min(
+					Math.min((long) MAX_CANDIDATES - candidates.size(), remainingByBytes),
+					Integer.MAX_VALUE);
+			int reservedForOtherLanes = 0;
+			for (SearchType other : AUTO_LANES) {
+				if (other == lane) {
+					continue;
+				}
+				int count = autoLaneCandidates.getOrDefault(other, 0);
+				reservedForOtherLanes += Math.max(0,
+						AUTO_MIN_LANE_CANDIDATES - count);
+			}
+			if (remaining > reservedForOtherLanes) {
+				return true;
+			}
+			return autoLaneCandidates.getOrDefault(lane, 0)
+					< AUTO_MIN_LANE_CANDIDATES;
+		}
+
+		private SearchType autoLaneFor(Object target, Class<?> owner,
+				String member, int index) {
+			Class<?> storage = storageClass(target, owner, member, index);
+			if (storage == byte.class) return SearchType.BYTE;
+			if (storage == short.class) return SearchType.SHORT;
+			if (storage == int.class) return SearchType.INT;
+			if (storage == long.class) return SearchType.LONG;
+			if (storage == float.class) return SearchType.FLOAT;
+			if (storage == double.class) return SearchType.DOUBLE;
+			return null;
+		}
+
+		private boolean acceptInitial(Object target, Class<?> owner, String member,
+				int index, ValueKind observedKind, Value value) {
+			if (!activeKinds.contains(observedKind)
+					|| !acceptsStorage(target, owner, member, index, observedKind)) {
+				return false;
+			}
+			Criteria initial = criteria.get(observedKind);
+			if (initial == null) {
+				return false;
+			}
 			return switch (mode) {
 				case UNKNOWN -> true;
-				case EXACT -> value.equals(lower);
-				case NOT_EQUAL -> !value.equals(lower);
-				case LESS_THAN -> value.compareTo(lower) < 0;
-				case GREATER_THAN -> value.compareTo(lower) > 0;
-				case RANGE -> value.compareTo(lower) >= 0 && value.compareTo(upper) <= 0;
+				case EXACT -> value.equals(initial.lower);
+				case NOT_EQUAL -> !value.equals(initial.lower);
+				case LESS_THAN -> value.compareTo(initial.lower) < 0;
+				case GREATER_THAN -> value.compareTo(initial.lower) > 0;
+				case RANGE -> value.compareTo(initial.lower) >= 0
+						&& value.compareTo(initial.upper) <= 0;
 				case CHANGED, UNCHANGED, INCREASED, DECREASED ->
 						throw new IllegalStateException("Relational mode cannot collect a baseline");
 			};
+		}
+
+		private boolean acceptsStorage(Object target, Class<?> owner, String member,
+				int index, ValueKind observedKind) {
+			if (searchType == null) {
+				return true;
+			}
+			Class<?> storage = storageClass(target, owner, member, index);
+			return switch (searchType) {
+				case BOOLEAN -> storage == boolean.class;
+				case BYTE -> storage == byte.class;
+				case CHAR -> storage == char.class;
+				case SHORT -> storage == short.class;
+				case INT -> storage == int.class;
+				case LONG -> storage == long.class;
+				case FLOAT -> storage == float.class;
+				case DOUBLE -> storage == double.class;
+				case AUTO -> storage != null
+						&& storage != boolean.class && storage != char.class;
+			};
+		}
+
+		private Class<?> storageClass(Object target, Class<?> owner, String member, int index) {
+			if (ARRAY_MEMBER.equals(member)) {
+				return target == null || !target.getClass().isArray()
+						? null : target.getClass().getComponentType();
+			}
+			Field field = findField(owner, member);
+			return field == null ? null : field.getType();
 		}
 
 		private boolean supportsCollection() {
@@ -1013,50 +1577,58 @@ public final class MemoryEditorRuntime {
 			};
 		}
 
-		private OperationStatus refine(SearchMode nextMode, Value nextLower, Value nextUpper) {
-			purgeCollected();
-			List<Candidate> original = new ArrayList<>(candidates);
+		private RefineWork refineOutsideLock(SearchMode nextMode,
+				EnumMap<ValueKind, Criteria> nextCriteria,
+				List<Candidate> original) {
 			List<Candidate> retained = new ArrayList<>(original.size());
 			List<Value> retainedValues = new ArrayList<>(original.size());
 			for (Candidate candidate : original) {
 				OperationStatus status = operationStatus();
 				if (status != OperationStatus.SUCCESS) {
-					return status;
+					return new RefineWork(status, retained, retainedValues);
 				}
 				Value current = candidate.read();
-				if (current != null && matches(nextMode, candidate.baseline, current,
-						nextLower, nextUpper)) {
+				Criteria criteriaForCandidate = nextCriteria.get(candidate.baseline.kind);
+				if (current != null && criteriaForCandidate != null
+						&& matches(nextMode, candidate.baseline, current,
+						criteriaForCandidate)) {
 					retained.add(candidate);
 					retainedValues.add(current);
 				}
 				advanceOperation();
 			}
+			return new RefineWork(OperationStatus.SUCCESS, retained, retainedValues);
+		}
+
+		private void commitRefine(SearchMode nextMode,
+				EnumMap<ValueKind, Criteria> nextCriteria,
+				List<Candidate> original, List<Candidate> retained,
+				List<Value> retainedValues) {
 			Set<Candidate> retainedSet = new LinkedHashSet<>(retained);
 			for (Candidate candidate : original) {
 				if (!retainedSet.contains(candidate)) {
 					removeFromResults(candidate);
 				}
 			}
+			pruneUndo();
 			for (int i = 0; i < retained.size(); i++) {
 				retained.get(i).baseline = retainedValues.get(i);
 			}
 			mode = nextMode;
-			lower = nextLower;
-			upper = nextUpper;
-			collecting = false;
-			return OperationStatus.SUCCESS;
+			criteria.clear();
+			criteria.putAll(nextCriteria);
 		}
 
 		private boolean matches(SearchMode nextMode, Value previous, Value current,
-				Value nextLower, Value nextUpper) {
+				Criteria nextCriteria) {
 			return switch (nextMode) {
 				case UNKNOWN -> true;
-				case EXACT -> current.equals(nextLower);
-				case NOT_EQUAL -> !current.equals(nextLower);
-				case LESS_THAN -> current.compareTo(nextLower) < 0;
-				case GREATER_THAN -> current.compareTo(nextLower) > 0;
-				case RANGE -> current.compareTo(nextLower) >= 0
-						&& current.compareTo(nextUpper) <= 0;
+				case EXACT -> current.equals(nextCriteria.lower);
+				case NOT_EQUAL -> !current.equals(nextCriteria.lower);
+				case LESS_THAN -> current.compareTo(nextCriteria.lower) < 0;
+				case GREATER_THAN -> current.compareTo(nextCriteria.lower) > 0;
+				case RANGE -> current.compareTo(nextCriteria.lower) >= 0
+						&& current.compareTo(nextCriteria.upper) <= 0;
 				case CHANGED -> !current.equals(previous);
 				case UNCHANGED -> current.equals(previous);
 				case INCREASED -> current.compareTo(previous) > 0;
@@ -1092,38 +1664,27 @@ public final class MemoryEditorRuntime {
 			return selected;
 		}
 
-		private List<CandidateView> results(int offset, int limit) {
-			purgeCollected();
-			List<CandidateView> result = new ArrayList<>(Math.min(limit, candidates.size()));
-			int position = 0;
-			for (Candidate candidate : candidates) {
-				if (position++ < offset) {
-					continue;
-				}
-				Value current = candidate.read();
-				if (current != null) {
-					result.add(candidate.toView(current, frozen.containsKey(candidate),
-							saved.contains(candidate)));
-				}
-				if (result.size() == limit) {
-					break;
-				}
-			}
-			return result;
+		private boolean isTracked(Candidate candidate) {
+			return candidatesById.get(candidate.id) == candidate;
 		}
 
-		private List<CandidateView> savedResults(int offset, int limit) {
+		/**
+		 * Copies only candidate identity and flags while holding the session lock.
+		 * Reflection is deliberately performed after the lock is released so a
+		 * result page cannot pause a game thread that is entering a hook.
+		 */
+		private List<CandidatePage> candidatePage(int offset, int limit,
+				boolean savedOnly) {
 			purgeCollected();
-			List<CandidateView> result = new ArrayList<>(Math.min(limit, saved.size()));
+			Set<Candidate> source = savedOnly ? saved : candidates;
+			List<CandidatePage> result = new ArrayList<>(Math.min(limit, source.size()));
 			int position = 0;
-			for (Candidate candidate : saved) {
+			for (Candidate candidate : source) {
 				if (position++ < offset) {
 					continue;
 				}
-				Value current = candidate.read();
-				if (current != null) {
-					result.add(candidate.toView(current, frozen.containsKey(candidate), true));
-				}
+				result.add(new CandidatePage(candidate, frozen.containsKey(candidate),
+						savedOnly || saved.contains(candidate)));
 				if (result.size() == limit) {
 					break;
 				}
@@ -1133,16 +1694,32 @@ public final class MemoryEditorRuntime {
 
 		private void addUndoBatch(List<Undo> batch) {
 			undo.clear();
+			undoByCandidate.clear();
 			if (batch.isEmpty()) {
 				return;
 			}
 			undo.addLast(batch);
+			for (Undo item : batch) {
+				undoByCandidate.put(item.candidate, item);
+			}
 		}
 
 		private void purgeCollected() {
 			TargetReference reference;
 			while ((reference = (TargetReference) collectedTargets.poll()) != null) {
 				remove(reference.candidate);
+			}
+			pruneUndo();
+		}
+
+		private void pruneUndo() {
+			Iterator<List<Undo>> batches = undo.iterator();
+			while (batches.hasNext()) {
+				List<Undo> batch = batches.next();
+				batch.removeIf(item -> undoByCandidate.get(item.candidate) != item);
+				if (batch.isEmpty()) {
+					batches.remove();
+				}
 			}
 		}
 
@@ -1159,6 +1736,10 @@ public final class MemoryEditorRuntime {
 			if (tracked) {
 				candidateBytes = Math.max(0,
 						candidateBytes - estimatedCandidateBytes(candidate.member));
+				if (candidate.autoLane != null) {
+					autoLaneCandidates.computeIfPresent(candidate.autoLane,
+							(key, count) -> count > 1 ? count - 1 : null);
+				}
 			}
 			List<Candidate> bucket = candidateBuckets.get(candidate.locationHash);
 			if (bucket != null) {
@@ -1169,19 +1750,32 @@ public final class MemoryEditorRuntime {
 			}
 			frozen.remove(candidate);
 			saved.remove(candidate);
-			Iterator<List<Undo>> batches = undo.iterator();
-			while (batches.hasNext()) {
-				List<Undo> batch = batches.next();
-				Iterator<Undo> items = batch.iterator();
-				while (items.hasNext()) {
-					if (items.next().candidate == candidate) {
-						items.remove();
-					}
-				}
-				if (batch.isEmpty()) {
-					batches.remove();
-				}
-			}
+			undoByCandidate.remove(candidate);
+		}
+	}
+
+	private static final class CandidatePage {
+		private final Candidate candidate;
+		private final boolean frozen;
+		private final boolean saved;
+
+		private CandidatePage(Candidate candidate, boolean frozen, boolean saved) {
+			this.candidate = candidate;
+			this.frozen = frozen;
+			this.saved = saved;
+		}
+	}
+
+	private static final class RefineWork {
+		private final OperationStatus status;
+		private final List<Candidate> retained;
+		private final List<Value> retainedValues;
+
+		private RefineWork(OperationStatus status, List<Candidate> retained,
+				List<Value> retainedValues) {
+			this.status = status;
+			this.retained = retained;
+			this.retainedValues = retainedValues;
 		}
 	}
 
@@ -1190,18 +1784,22 @@ public final class MemoryEditorRuntime {
 		private final TargetReference target;
 		private final Class<?> owner;
 		private final String member;
+		private final SearchType autoLane;
 		@SuppressWarnings("unused")
 		private final long firstSite;
 		private final int index;
 		private final int locationHash;
 		private final Field field;
+		private volatile CandidateStatus status = CandidateStatus.ACTIVE;
 		private Value baseline;
 
 		private Candidate(long id, Object target, Class<?> owner, String member, long site,
-				int index, Value value, ReferenceQueue<Object> collectedTargets) {
+				int index, Value value, SearchType autoLane,
+				ReferenceQueue<Object> collectedTargets) {
 			this.id = id;
 			this.owner = owner;
 			this.member = member;
+			this.autoLane = autoLane;
 			this.firstSite = site;
 			this.index = index;
 			this.locationHash = locationHash(target, owner, member, index);
@@ -1231,13 +1829,22 @@ public final class MemoryEditorRuntime {
 		private Value read() {
 			Object object = liveTarget();
 			if (target != null && object == null) {
+				status = CandidateStatus.COLLECTED;
 				return null;
 			}
 			try {
-				return field == null
+				Value result = field == null
 						? readArray(object, index, baseline.kind)
 						: readField(field, object, baseline.kind);
+				if (result == null) {
+					status = CandidateStatus.READ_FAILED;
+				} else if (status != CandidateStatus.WRITE_FAILED
+						&& status != CandidateStatus.READ_ONLY) {
+					status = CandidateStatus.ACTIVE;
+				}
+				return result;
 			} catch (ReflectiveOperationException | RuntimeException ignored) {
+				status = CandidateStatus.READ_FAILED;
 				return null;
 			}
 		}
@@ -1245,16 +1852,22 @@ public final class MemoryEditorRuntime {
 		private boolean apply(Value value) {
 			Object object = liveTarget();
 			if (target != null && object == null) {
+				status = CandidateStatus.COLLECTED;
 				return false;
 			}
 			if (!accepts(value, object)) {
+				status = field != null && Modifier.isFinal(field.getModifiers())
+						? CandidateStatus.READ_ONLY : CandidateStatus.WRITE_FAILED;
 				return false;
 			}
 			try {
-				return field == null
+				boolean applied = field == null
 						? setArray(object, index, value)
 						: setField(field, object, value);
+				status = applied ? CandidateStatus.ACTIVE : CandidateStatus.WRITE_FAILED;
+				return applied;
 			} catch (ReflectiveOperationException | RuntimeException ignored) {
+				status = CandidateStatus.WRITE_FAILED;
 				return false;
 			}
 		}
@@ -1280,8 +1893,11 @@ public final class MemoryEditorRuntime {
 		private CandidateView toView(Value current, boolean frozen, boolean saved) {
 			Object object = liveTarget();
 			Class<?> type = storageClass(object);
-			return new CandidateView(id, current.toDisplayString(), storageTypeName(type),
-					locationName(object), frozen, saved, isEditable(type));
+			boolean editable = isEditable(type);
+			CandidateStatus viewStatus = editable ? status : CandidateStatus.READ_ONLY;
+			return new CandidateView(id, current == null ? "?" : current.toDisplayString(),
+					storageTypeName(type), locationName(object), frozen, saved, editable,
+					viewStatus);
 		}
 
 		private Class<?> storageClass(Object object) {
@@ -1496,6 +2112,10 @@ public final class MemoryEditorRuntime {
 		private boolean isNaN() {
 			return kind == ValueKind.FLOAT ? Float.isNaN(asFloat())
 					: kind == ValueKind.DOUBLE && Double.isNaN(asDouble());
+		}
+		private boolean isInfinite() {
+			return kind == ValueKind.FLOAT ? Float.isInfinite(asFloat())
+					: kind == ValueKind.DOUBLE && Double.isInfinite(asDouble());
 		}
 
 		private int compareTo(Value other) {

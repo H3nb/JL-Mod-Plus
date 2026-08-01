@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/google/material-design-icons",
+  "license": "Apache-2.0",
+  "icons": {
+    "ic_memory_editor_close_24": {
+      "symbol": "close",
+      "style": "Outlined",
+      "sourceRevision": "50f0603134ce7b70b2d71b686cc13e8b57ccb74c",
+      "sourcePath": "symbols/android/close/materialsymbolsoutlined/close_24px.xml",
+      "sourceUrl": "https://raw.githubusercontent.com/google/material-design-icons/50f0603134ce7b70b2d71b686cc13e8b57ccb74c/symbols/android/close/materialsymbolsoutlined/close_24px.xml",
+      "sha256": "31644025d94b5a5637d75660ebdcb93c398f2620bfc12f7a7a9362965e271288",
+      "destination": "app/src/main/res/drawable/ic_memory_editor_close_24.xml"
+    },
+    "ic_memory_editor_peek_24": {
+      "symbol": "open_in_full",
+      "style": "Outlined",
+      "sourceRevision": "50f0603134ce7b70b2d71b686cc13e8b57ccb74c",
+      "sourcePath": "symbols/android/open_in_full/materialsymbolsoutlined/open_in_full_24px.xml",
+      "sourceUrl": "https://raw.githubusercontent.com/google/material-design-icons/50f0603134ce7b70b2d71b686cc13e8b57ccb74c/symbols/android/open_in_full/materialsymbolsoutlined/open_in_full_24px.xml",
+      "sha256": "e4db4b82f9357c1c53ff08e50f3aba47b7ea1700af773a24dd26349ea85be252",
+      "destination": "app/src/main/res/drawable/ic_memory_editor_peek_24.xml"
+    }
+  }
+}

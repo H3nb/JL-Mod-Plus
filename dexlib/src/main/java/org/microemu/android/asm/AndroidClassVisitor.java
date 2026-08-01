@@ -36,17 +36,27 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 public class AndroidClassVisitor extends ClassVisitor {
+	private final boolean memoryEditorEnabled;
 
 	AndroidClassVisitor(ClassVisitor cv) {
+		this(cv, true);
+	}
+
+	AndroidClassVisitor(ClassVisitor cv, boolean memoryEditorEnabled) {
 		super(Opcodes.ASM9, cv);
+		this.memoryEditorEnabled = memoryEditorEnabled;
 	}
 
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
 		desc = desc.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
 		MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
+		MethodVisitor compatibilityVisitor = new AndroidMethodVisitor(methodVisitor);
+		if (!memoryEditorEnabled) {
+			return compatibilityVisitor;
+		}
 		return new MemoryEditorMethodVisitor(access, name, desc,
-				new AndroidMethodVisitor(methodVisitor), className);
+				compatibilityVisitor, className);
 	}
 
 	private String className;

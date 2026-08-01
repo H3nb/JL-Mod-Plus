@@ -475,7 +475,14 @@ public class Main {
 
         try {
             // modify byte-code with ASM-java
-            bytes = AndroidProducer.instrument(bytes, name, crc);
+            AndroidProducer.InstrumentationResult instrumentation =
+                    AndroidProducer.instrumentWithReport(bytes, name, crc);
+            bytes = instrumentation.bytes;
+            if (!instrumentation.memoryEditorApplied) {
+                context.err.println("Memory Editor coverage partial for " + name
+                        + " (" + instrumentation.memoryEditorSkipReason
+                        + "; compatibility transforms retained)");
+            }
 
             new DirectClassFileConsumer(name, bytes, null).call(
                     new ClassParserTask(name, bytes).call());

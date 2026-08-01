@@ -18,6 +18,7 @@ package javax.microedition.shell.memory.ui
 
 import android.app.Dialog
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -136,7 +137,8 @@ class MemoryEditorDialogFragment : DialogFragment() {
         applyPause(viewModel.state.value.pauseEnabled)
         viewModel.loadExistingSession()
         dialog?.window?.apply {
-            setBackgroundDrawableResource(android.R.color.transparent)
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            decorView.setBackgroundColor(Color.TRANSPARENT)
             setDimAmount(dimAmount(viewModel.state.value.layoutTransparency))
             addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
