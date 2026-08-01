@@ -1,5 +1,6 @@
 /*
  * Copyright 2022-2023 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +19,8 @@ package javax.microedition.lcdui.commands;
 
 import android.content.Context;
 import android.os.Build;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.widget.PopupWindow;
 
 import java.util.ArrayList;
@@ -37,7 +36,7 @@ public abstract class AbstractSoftKeysBar {
 	protected final Displayable target;
 	protected final List<Command> commands = new ArrayList<>();
 	private PopupWindow popup;
-	private ArrayAdapter<Command> adapter;
+	private SoftMenuComposeView menuView;
 
 	protected AbstractSoftKeysBar(Displayable target) {
 		this.target = target;
@@ -51,21 +50,23 @@ public abstract class AbstractSoftKeysBar {
 	protected PopupWindow prepareMenu(int skip) {
 		if (popup == null) {
 			Context context = ContextHolder.getActivity();
+			menuView = new SoftMenuComposeView(context, command -> {
+				target.fireCommandAction(command);
+				if (popup != null) {
+					popup.dismiss();
+				}
+			});
 			popup = new PopupWindow(context, null, androidx.appcompat.R.attr.actionOverflowMenuStyle);
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 				popup.setExitTransition(null);
 			}
 			popup.setOutsideTouchable(true);
 			popup.setFocusable(true);
-			ListView lv = new ListView(context);
-			popup.setContentView(lv);
-			adapter = new ArrayAdapter<>(context, android.R.layout.simple_list_item_1);
-			adapter.setNotifyOnChange(true);
-			lv.setAdapter(adapter);
-			lv.setOnItemClickListener(this::onMenuItemClick);
-			popup.setOnDismissListener(() -> adapter.clear());
+			popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+			popup.setContentView(menuView);
+			popup.setOnDismissListener(menuView::clearCommands);
 		}
-		adapter.addAll(skip == 0 ? commands : commands.subList(skip, commands.size()));
+		menuView.setCommands(skip == 0 ? commands : commands.subList(skip, commands.size()));
 		return popup;
 	}
 
@@ -75,11 +76,5 @@ public abstract class AbstractSoftKeysBar {
 		if (popup != null && popup.isShowing()) {
 			popup.dismiss();
 		}
-	}
-
-	private void onMenuItemClick(AdapterView<?> parent, View view, int position, long id) {
-		Command cmd = (Command) parent.getItemAtPosition(position);
-		target.fireCommandAction(cmd);
-		popup.dismiss();
 	}
 }

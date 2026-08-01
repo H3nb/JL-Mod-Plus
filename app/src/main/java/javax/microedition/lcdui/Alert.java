@@ -2,6 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2018 Nikita Shakarun
  * Copyright 2020-2026 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +21,8 @@ package javax.microedition.lcdui;
 
 import android.content.Context;
 import android.content.DialogInterface;
-import android.graphics.drawable.BitmapDrawable;
-import android.util.TypedValue;
+import android.app.Dialog;
 import android.view.View;
-
-import androidx.appcompat.app.AlertDialog;
 
 import javax.microedition.lcdui.event.SimpleEvent;
 import javax.microedition.util.ContextHolder;
@@ -38,7 +36,8 @@ public class Alert extends Screen {
 	private AlertType type;
 	private int timeout = FOREVER;
 	private Gauge indicator;
-	private AlertDialog dialog;
+	private Dialog dialog;
+	private AlertComposeDialog composeDialog;
 	private Displayable nextDisplayable;
 	private Command positive;
 	private Command negative;
@@ -47,15 +46,14 @@ public class Alert extends Screen {
 	private final SimpleEvent msgSetString = new SimpleEvent() {
 		@Override
 		public void process() {
-			dialog.setMessage(text);
+			composeDialog.setMessage(text);
 		}
 	};
 
 	private final SimpleEvent msgSetImage = new SimpleEvent() {
 		@Override
 		public void process() {
-			BitmapDrawable bitmapDrawable = new BitmapDrawable(image.getBitmap());
-			dialog.setIcon(bitmapDrawable);
+			composeDialog.setImage(image == null ? null : image.getBitmap());
 		}
 	};
 
@@ -63,11 +61,10 @@ public class Alert extends Screen {
 		@Override
 		public void process() {
 			if (listener == null) {
-				dialog.setCancelable(true);
-				dialog.setCanceledOnTouchOutside(true);
+				composeDialog.setDismissBehavior(true, true);
 				return;
 			}
-			dialog.setCanceledOnTouchOutside(commands.isEmpty());
+			composeDialog.setDismissBehavior(false, commands.isEmpty());
 		}
 	};
 
@@ -154,27 +151,8 @@ public class Alert extends Screen {
 		return timeout > 0 && commands.isEmpty();
 	}
 
-	AlertDialog prepareDialog() {
+	Dialog prepareDialog() {
 		Context context = ContextHolder.getActivity();
-		AlertDialog.Builder builder = new AlertDialog.Builder(context);
-
-		builder.setTitle(getTitle());
-		builder.setMessage(getString());
-		builder.setOnDismissListener(this::onDismiss);
-
-		if (image != null) {
-			builder.setIcon(new BitmapDrawable(context.getResources(), image.getBitmap()));
-		}
-
-		if (indicator != null) {
-			View indicatorView = indicator.getItemContentView();
-			TypedValue typedValue = new TypedValue();
-			context.getTheme().resolveAttribute(androidx.appcompat.R.attr.dialogPreferredPadding, typedValue, true);
-			int p = (int) typedValue.getDimension(context.getResources().getDisplayMetrics());
-			indicatorView.setPadding(p, 0, p, 0);
-			builder.setView(indicatorView);
-		}
-
 		positive = null;
 		negative = null;
 		neutral = null;
@@ -201,22 +179,24 @@ public class Alert extends Screen {
 		if (positive == null) {
 			positive = DISMISS_COMMAND;
 		}
-		builder.setPositiveButton(positive.getAndroidLabel(), (d, w) -> fireCommandAction(positive));
-
-		if (negative != null) {
-			builder.setNegativeButton(negative.getAndroidLabel(), (d, w) -> fireCommandAction(negative));
-		}
-
-		if (neutral != null) {
-			builder.setNeutralButton(neutral.getAndroidLabel(), (d, w) -> fireCommandAction(neutral));
-		}
-
-		dialog = builder.create();
+		View indicatorView = indicator == null ? null : indicator.getItemContentView();
+		composeDialog = new AlertComposeDialog(
+				context,
+				getTitle(),
+				getString(),
+				image == null ? null : image.getBitmap(),
+				indicatorView,
+				positive,
+				negative,
+				neutral,
+				command -> fireCommandAction(command),
+				() -> onDismiss(dialog)
+		);
+		dialog = composeDialog.getDialog();
 		if (listener == null) {
-			dialog.setCancelable(true);
-			dialog.setCanceledOnTouchOutside(true);
+			composeDialog.setDismissBehavior(true, true);
 		} else {
-			dialog.setCanceledOnTouchOutside(commands.isEmpty());
+			composeDialog.setDismissBehavior(false, commands.isEmpty());
 		}
 		return dialog;
 	}
@@ -273,6 +253,7 @@ public class Alert extends Screen {
 
 	void onDismiss(DialogInterface dialogInterface) {
 		dialog = null;
+		composeDialog = null;
 		Gauge indicator = this.indicator;
 		if (indicator != null) {
 			indicator.clearItemContentView();
@@ -289,7 +270,7 @@ public class Alert extends Screen {
 
 	void close() {
 		this.nextDisplayable = null;
-		AlertDialog dialog = this.dialog;
+		Dialog dialog = this.dialog;
 		if (dialog != null) {
 			dialog.dismiss();
 		}

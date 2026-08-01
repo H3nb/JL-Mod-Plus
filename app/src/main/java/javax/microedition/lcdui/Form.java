@@ -3,6 +3,7 @@
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2018 Nikita Shakarun
  * Copyright 2020-2026 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,26 +20,18 @@
 
 package javax.microedition.lcdui;
 
-import android.content.Context;
-import android.util.TypedValue;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
 
 import java.util.ArrayList;
 
 import javax.microedition.lcdui.event.SimpleEvent;
-import javax.microedition.util.ContextHolder;
 
 public class Form extends Screen {
-	private static final float BORDER_PADDING = 7;
-
 	private final ArrayList<Item> items = new ArrayList<>();
 	private ItemStateListener listener;
 
-	private ScrollView scrollview;
-	private LinearLayout layout;
+	private J2meFormComposeView view;
 
 	public Form(String title) {
 		setTitle(title);
@@ -88,12 +81,7 @@ public class Form extends Screen {
 
 		items.add(item);
 		item.setOwner(this);
-		ViewHandler.postEvent(() -> {
-			LinearLayout layout = this.layout;
-			if (layout != null) {
-				layout.addView(item.getItemView());
-			}
-		});
+		notifyFormView();
 		return items.size() - 1;
 	}
 
@@ -104,12 +92,7 @@ public class Form extends Screen {
 
 		items.add(index, item);
 		item.setOwner(this);
-		ViewHandler.postEvent(() -> {
-			LinearLayout layout = this.layout;
-			if (layout != null) {
-				layout.addView(item.getItemView(), index);
-			}
-		});
+		notifyFormView();
 	}
 
 	public void set(int index, Item item) {
@@ -119,25 +102,12 @@ public class Form extends Screen {
 
 		items.set(index, item).setOwner(null);
 		item.setOwner(this);
-		ViewHandler.postEvent(() -> {
-			LinearLayout layout = this.layout;
-			if (layout != null) {
-				View v = item.getItemView();
-				layout.removeViewAt(index);
-				layout.addView(v, index);
-			}
-		});
+		notifyFormView();
 	}
 
 	public void delete(int index) {
 		items.remove(index).setOwner(null);
-
-		ViewHandler.postEvent(() -> {
-			LinearLayout layout = this.layout;
-			if (layout != null) {
-				layout.removeViewAt(index);
-			}
-		});
+		notifyFormView();
 	}
 
 	public void deleteAll() {
@@ -146,13 +116,7 @@ public class Form extends Screen {
 		}
 
 		items.clear();
-
-		ViewHandler.postEvent(() -> {
-			LinearLayout layout = this.layout;
-			if (layout != null) {
-				layout.removeAllViews();
-			}
-		});
+		notifyFormView();
 	}
 
 	public void setItemStateListener(ItemStateListener listener) {
@@ -173,35 +137,37 @@ public class Form extends Screen {
 
 	@Override
 	View getScreenView() {
-		if (scrollview == null) {
-			Context context = ContextHolder.getActivity();
-
-			layout = new LinearLayout(context);
-			layout.setOrientation(LinearLayout.VERTICAL);
-
-			int padding = Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, BORDER_PADDING, context.getResources().getDisplayMetrics()));
-			layout.setPadding(padding, padding, padding, padding);
-
-			scrollview = new ScrollView(context);
-			scrollview.addView(layout);
-
-			for (Item item : items) {
-				layout.addView(item.getItemView());
-			}
+		if (view == null) {
+			view = new J2meFormComposeView(javax.microedition.util.ContextHolder.getActivity());
+			setFormItems(view);
 		}
 
-		return scrollview;
+		return view;
 	}
 
 	@Override
 	void clearScreenView() {
-		scrollview = null;
-		layout = null;
+		view = null;
 
 		Item[] array = items.toArray(new Item[0]);
 		for (Item item : array) {
 			item.clearItemView();
 		}
+	}
+
+	private void notifyFormView() {
+		J2meFormComposeView currentView = view;
+		if (currentView == null) {
+			return;
+		}
+		ViewHandler.postEvent(() -> setFormItems(currentView));
+	}
+
+	private void setFormItems(J2meFormComposeView currentView) {
+		if (view != currentView) {
+			return;
+		}
+		currentView.setItems(new ArrayList<>(items));
 	}
 
 	public void contextMenuItemSelected(MenuItem menuitem) {

@@ -1,6 +1,7 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2019-2026 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +20,8 @@ package javax.microedition.lcdui;
 
 import android.content.Context;
 import android.view.ContextMenu;
-import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup.LayoutParams;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-
-import androidx.appcompat.widget.AppCompatTextView;
 
 import java.util.ArrayList;
 
@@ -67,9 +62,8 @@ public abstract class Item {
 	private int layoutMode = LAYOUT_DEFAULT;
 	private String label;
 	private Screen owner;
-	private LinearLayout layout;
+	private J2meItemComposeView layout;
 	private View contentView;
-	private TextView labelView;
 	private Command defaultCommand;
 
 	private final SimpleEvent msgSetContextMenuListener = new SimpleEvent() {
@@ -79,10 +73,11 @@ public abstract class Item {
 				return;
 			}
 			if (listener != null) {
-				labelView.setOnCreateContextMenuListener(Item.this::onCreateContextMenu);
+				layout.setOnCreateContextMenuListener(Item.this::onCreateContextMenu);
 				contentView.setOnCreateContextMenuListener(Item.this::onCreateContextMenu);
+				layout.setLongClickable(true);
 			} else {
-				labelView.setLongClickable(false);
+				layout.setLongClickable(false);
 				contentView.setLongClickable(false);
 			}
 		}
@@ -91,12 +86,11 @@ public abstract class Item {
 	private final SimpleEvent msgSetLabel = new SimpleEvent() {
 		@Override
 		public void process() {
-			if (labelView == null) {
+			if (layout == null) {
 				return;
 			}
 			String text = label;
-			labelView.setText(text);
-			labelView.setVisibility(text == null ? View.GONE : View.VISIBLE);
+			layout.setLabel(text);
 		}
 	};
 
@@ -229,28 +223,16 @@ public abstract class Item {
 	}
 
 	/**
-	 * Get the whole item
+	 * Get the whole item.
 	 *
-	 * @return LinearLayout with a label in the first row and some content in the second row
+	 * @return Compose-backed item wrapper with a temporary AndroidView content bridge
 	 */
 	View getItemView() {
 		if (layout == null) {
 			Context context = ContextHolder.getActivity();
-
-			layout = new LinearLayout(context);
-			layout.setOrientation(LinearLayout.VERTICAL);
-
-			labelView = new AppCompatTextView(context);
-			labelView.setTextAppearance(context, android.R.style.TextAppearance_Medium);
-			labelView.setText(label);
-
-			layout.addView(labelView, getLayoutParams());
-			if (label == null) {
-				labelView.setVisibility(View.GONE);
-			}
-
 			contentView = getItemContentView();
-			layout.addView(contentView, getLayoutParams());
+			layout = new J2meItemComposeView(context);
+			layout.setItemContent(label, contentView, layoutMode, this instanceof ImageItem);
 
 			msgSetContextMenuListener.run();
 		}
@@ -258,57 +240,8 @@ public abstract class Item {
 		return layout;
 	}
 
-	private LinearLayout.LayoutParams getLayoutParams() {
-		int hwrap = LayoutParams.MATCH_PARENT;
-		int vwrap = LayoutParams.WRAP_CONTENT;
-		int gravity = Gravity.LEFT;
-
-		if (this instanceof ImageItem) {
-			hwrap = LayoutParams.WRAP_CONTENT;
-		}
-
-		if ((layoutMode & LAYOUT_SHRINK) != 0) {
-			hwrap = LayoutParams.WRAP_CONTENT;
-		} else if ((layoutMode & LAYOUT_EXPAND) != 0) {
-			hwrap = LayoutParams.MATCH_PARENT;
-		}
-
-		if ((layoutMode & LAYOUT_VSHRINK) != 0) {
-			vwrap = LayoutParams.WRAP_CONTENT;
-		} else if ((layoutMode & LAYOUT_VEXPAND) != 0) {
-			vwrap = LayoutParams.MATCH_PARENT;
-		}
-
-		int horizontal = layoutMode & HORIZONTAL_GRAVITY_MASK;
-		if (horizontal == LAYOUT_CENTER) {
-			gravity = Gravity.CENTER_HORIZONTAL;
-		} else if (horizontal == LAYOUT_RIGHT) {
-			gravity = Gravity.RIGHT;
-			hwrap = LayoutParams.WRAP_CONTENT;
-		} else if (horizontal == LAYOUT_LEFT) {
-			gravity = Gravity.LEFT;
-			hwrap = LayoutParams.WRAP_CONTENT;
-		}
-
-		int vertical = layoutMode & VERTICAL_GRAVITY_MASK;
-		if (vertical == LAYOUT_VCENTER) {
-			gravity |= Gravity.CENTER_VERTICAL;
-		} else if (vertical == LAYOUT_BOTTOM) {
-			gravity |= Gravity.BOTTOM;
-			vwrap = LayoutParams.WRAP_CONTENT;
-		} else if (vertical == LAYOUT_TOP) {
-			gravity |= Gravity.TOP;
-			vwrap = LayoutParams.WRAP_CONTENT;
-		}
-
-		LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(hwrap, vwrap);
-		layoutParams.gravity = gravity;
-		return layoutParams;
-	}
-
 	void clearItemView() {
 		layout = null;
-		labelView = null;
 		contentView = null;
 
 		clearItemContentView();

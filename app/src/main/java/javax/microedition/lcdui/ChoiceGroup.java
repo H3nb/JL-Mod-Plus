@@ -2,6 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2018-2021 Nikita Shakarun
  * Copyright 2019-2026 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,36 +21,26 @@ package javax.microedition.lcdui;
 
 import android.content.Context;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ListAdapter;
-import android.widget.SpinnerAdapter;
-
-import androidx.appcompat.widget.AppCompatSpinner;
 
 import java.util.ArrayList;
 
 import javax.microedition.lcdui.event.SimpleEvent;
-import javax.microedition.lcdui.list.ChoiceGroupView;
-import javax.microedition.lcdui.list.CompoundAdapter;
 import javax.microedition.lcdui.list.CompoundItem;
-import javax.microedition.lcdui.list.CompoundListAdapter;
-import javax.microedition.lcdui.list.CompoundSpinnerAdapter;
 import javax.microedition.util.ContextHolder;
 
 public class ChoiceGroup extends Item implements Choice {
-	private final CompoundAdapter adapter;
 	private final int choiceType;
 	private final ArrayList<CompoundItem> items = new ArrayList<>();
 
-	private AdapterView<?> view;
+	private J2meChoiceGroupComposeView view;
 	private int fitPolicy;
 
 	private final SimpleEvent msgSetSelection = new SimpleEvent() {
 		@Override
 		public void process() {
-			AdapterView<?> v = view;
+			J2meChoiceGroupComposeView v = view;
 			if (v != null) {
-				v.setSelection(getSelectedIndex());
+				v.requestSelection(getSelectedIndex());
 			}
 		}
 	};
@@ -58,10 +49,7 @@ public class ChoiceGroup extends Item implements Choice {
 		switch (choiceType) {
 			case EXCLUSIVE:
 			case MULTIPLE:
-				adapter = new CompoundListAdapter(choiceType, items);
-				break;
 			case POPUP:
-				adapter = new CompoundSpinnerAdapter(items);
 				break;
 			default:
 				throw new IllegalArgumentException("choice type " + choiceType + " is not supported");
@@ -100,10 +88,10 @@ public class ChoiceGroup extends Item implements Choice {
 		}
 
 		int index;
-		synchronized (items) {
+		 synchronized (items) {
 			index = items.size();
 			items.add(new CompoundItem(stringPart, imagePart, index == 0 && choiceType != MULTIPLE));
-			adapter.notifyDataSetChanged();
+			notifyChoiceView();
 		}
 		if (index == 0 && choiceType == POPUP && view != null) {
 			ViewHandler.postEvent(msgSetSelection);
@@ -121,7 +109,7 @@ public class ChoiceGroup extends Item implements Choice {
 				throw new IndexOutOfBoundsException("elementNum = " + elementNum + ", but size = " + size);
 			}
 			items.remove(elementNum);
-			adapter.notifyDataSetChanged();
+			notifyChoiceView();
 		}
 		if (size == 1 && choiceType == POPUP && view != null) {
 			ViewHandler.postEvent(msgSetSelection);
@@ -130,9 +118,9 @@ public class ChoiceGroup extends Item implements Choice {
 
 	@Override
 	public void deleteAll() {
-		synchronized (items) {
+		 synchronized (items) {
 			items.clear();
-			adapter.notifyDataSetChanged();
+			notifyChoiceView();
 		}
 		if (choiceType == POPUP && view != null) {
 			ViewHandler.postEvent(msgSetSelection);
@@ -219,7 +207,7 @@ public class ChoiceGroup extends Item implements Choice {
 
 			boolean select = size == 0 && choiceType != MULTIPLE;
 			items.add(elementNum, new CompoundItem(stringPart, imagePart, select));
-			adapter.notifyDataSetChanged();
+			notifyChoiceView();
 		}
 		if (size == 0 && choiceType == POPUP && view != null) {
 			ViewHandler.postEvent(msgSetSelection);
@@ -248,7 +236,7 @@ public class ChoiceGroup extends Item implements Choice {
 			}
 
 			items.get(elementNum).set(stringPart, imagePart);
-			adapter.notifyDataSetChanged();
+			notifyChoiceView();
 		}
 	}
 
@@ -268,7 +256,7 @@ public class ChoiceGroup extends Item implements Choice {
 				for (int i = 0; i < size; i++) {
 					items.get(i).setSelected(selectedArray[i]);
 				}
-				adapter.notifyDataSetChanged();
+				notifyChoiceView();
 				return;
 			}
 
@@ -298,7 +286,7 @@ public class ChoiceGroup extends Item implements Choice {
 				}
 			}
 			items.get(elementNum).setSelected(selected);
-			adapter.notifyDataSetChanged();
+			notifyChoiceView();
 		}
 		if (choiceType == POPUP && view != null) {
 			ViewHandler.postEvent(msgSetSelection);
@@ -313,7 +301,7 @@ public class ChoiceGroup extends Item implements Choice {
 				throw new IndexOutOfBoundsException(msg);
 			}
 			items.get(elementNum).setFont(font);
-			adapter.notifyDataSetChanged();
+			notifyChoiceView();
 		}
 	}
 
@@ -344,31 +332,14 @@ public class ChoiceGroup extends Item implements Choice {
 	@Override
 	View getItemContentView() {
 		Context context = ContextHolder.getActivity();
-
-		switch (choiceType) {
-			case EXCLUSIVE, MULTIPLE -> {
-				if (view == null) {
-					ChoiceGroupView list = new ChoiceGroupView(context);
-					view = list;
-					list.setAdapter((ListAdapter) adapter);
-
-					list.setOnItemClickListener(this::onItemClick);
-				}
-				return view;
+		if (view == null) {
+			view = new J2meChoiceGroupComposeView(context, choiceType, this::onItemClick);
+			setChoiceViewItems(view);
+			if (choiceType == POPUP) {
+				msgSetSelection.run();
 			}
-			case POPUP -> {
-				if (view == null) {
-					AppCompatSpinner spinner = new AppCompatSpinner(context);
-					view = spinner;
-					spinner.setAdapter((SpinnerAdapter) adapter);
-
-					msgSetSelection.run();
-					view.setOnItemSelectedListener(new ItemSelectedListener());
-				}
-				return view;
-			}
-			default -> throw new InternalError();
 		}
+		return view;
 	}
 
 	@Override
@@ -376,43 +347,45 @@ public class ChoiceGroup extends Item implements Choice {
 		view = null;
 	}
 
-	void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+	private void notifyChoiceView() {
+		J2meChoiceGroupComposeView currentView = view;
+		if (currentView == null) {
+			return;
+		}
+		ViewHandler.postEvent(() -> setChoiceViewItems(currentView));
+	}
+
+	private void setChoiceViewItems(J2meChoiceGroupComposeView currentView) {
+		if (view != currentView) {
+			return;
+		}
+		ArrayList<CompoundItem> snapshot;
+		synchronized (items) {
+			snapshot = new ArrayList<>(items);
+		}
+		currentView.setItems(snapshot);
+	}
+
+	private void onItemClick(int position) {
+		boolean changed = false;
 		synchronized (items) {
 			CompoundItem item = items.get(position);
 			if (choiceType == MULTIPLE) {
 				item.setSelected(!item.isSelected());
-				adapter.notifyDataSetChanged();
-				postStateChanged();
-				return;
-			}
-			if (!item.isSelected()) {
+				changed = true;
+			} else if (!item.isSelected()) {
 				for (CompoundItem it : items) {
 					it.setSelected(false);
 				}
 				item.setSelected(true);
-				adapter.notifyDataSetChanged();
-				postStateChanged();
+				changed = true;
 			}
 		}
-	}
-
-	private class ItemSelectedListener implements AdapterView.OnItemSelectedListener {
-		@Override
-		public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-			synchronized (items) {
-				CompoundItem item = items.get(position);
-				if (!item.isSelected()) {
-					for (CompoundItem it : items) {
-						it.setSelected(false);
-					}
-					item.setSelected(true);
-					adapter.notifyDataSetChanged();
-				}
-			}
+		if (changed) {
+			notifyChoiceView();
+		}
+		if (changed || choiceType == POPUP) {
 			postStateChanged();
 		}
-
-		@Override
-		public void onNothingSelected(AdapterView<?> parent) {}
 	}
 }

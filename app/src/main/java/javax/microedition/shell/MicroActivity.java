@@ -23,7 +23,6 @@ import static android.content.pm.ActivityInfo.*;
 import static io.github.h3nb.jlmodplus.util.Constants.*;
 
 import android.annotation.SuppressLint;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -33,35 +32,25 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.text.Editable;
-import android.text.InputType;
 import android.text.TextUtils;
-import android.text.method.DigitsKeyListener;
 import android.util.TypedValue;
 import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.Surface;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.appcompat.widget.AppCompatCheckBox;
 import androidx.lifecycle.Lifecycle;
 import androidx.preference.PreferenceManager;
 
-import com.google.android.material.textfield.TextInputLayout;
 
 import org.acra.ACRA;
 import org.acra.ErrorReporter;
@@ -72,7 +61,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Displayable;
@@ -96,8 +84,7 @@ import io.reactivex.schedulers.Schedulers;
 import io.github.h3nb.jlmodplus.BuildConfig;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.Config;
-import io.github.h3nb.jlmodplus.databinding.ActivityMicroBinding;
-import io.github.h3nb.jlmodplus.databinding.DialogInputBinding;
+import io.github.h3nb.jlmodplus.ui.ComposeDialogHost;
 import io.github.h3nb.jlmodplus.util.Constants;
 import io.github.h3nb.jlmodplus.util.LogUtils;
 
@@ -115,7 +102,7 @@ public class MicroActivity extends AppCompatActivity {
 	private InputMethodManager inputMethodManager;
 	private int menuKey;
 	private String appPath;
-	private ActivityMicroBinding binding;
+	private MicroActivityHost binding;
 	private Disposable timingMigrationDisposable;
 
 	@Override
@@ -123,9 +110,8 @@ public class MicroActivity extends AppCompatActivity {
 		lockNightMode();
 		super.onCreate(savedInstanceState);
 		ContextHolder.setCurrentActivity(this);
-		binding = ActivityMicroBinding.inflate(getLayoutInflater());
-		setContentView(binding.getRoot());
-		setSupportActionBar(binding.toolbar);
+		binding = new MicroActivityHost(this, this::onToolbarAction);
+		setContentView(binding);
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		actionBarEnabled = sp.getBoolean(PREF_TOOLBAR, false);
@@ -201,24 +187,34 @@ public class MicroActivity extends AppCompatActivity {
 			loadMIDlet();
 			return;
 		}
-		new AlertDialog.Builder(this)
-				.setIcon(android.R.drawable.ic_dialog_info)
-				.setTitle(R.string.timing_migration_title)
-				.setMessage(R.string.timing_migration_message)
-				.setPositiveButton(R.string.timing_migration_rebuild,
-						(dialog, which) -> rebuildTimingDex())
-				.setNegativeButton(android.R.string.cancel, (dialog, which) -> finish())
-				.setOnCancelListener(dialog -> finish())
-				.show();
+		ComposeDialogHost.showMessage(
+				this,
+				getString(R.string.timing_migration_title),
+				getString(R.string.timing_migration_message),
+				getString(R.string.timing_migration_rebuild),
+				getString(android.R.string.cancel),
+				null,
+				true,
+				this::rebuildTimingDex,
+				this::finish,
+				null,
+				this::finish
+		);
 	}
 
 	private void rebuildTimingDex() {
-		AlertDialog progress = new AlertDialog.Builder(this)
-				.setTitle(R.string.timing_migration_title)
-				.setMessage(R.string.timing_migration_progress)
-				.setCancelable(false)
-				.create();
-		progress.show();
+		android.app.Dialog progress = ComposeDialogHost.showMessage(
+				this,
+				getString(R.string.timing_migration_title),
+				getString(R.string.timing_migration_progress),
+				null,
+				null,
+				null,
+				false,
+				null,
+				null,
+				null
+		);
 		timingMigrationDisposable = Single.fromCallable(() -> {
 					microLoader.migrateTimingDex();
 					return true;
@@ -245,16 +241,19 @@ public class MicroActivity extends AppCompatActivity {
 		if (!TextUtils.isEmpty(detail)) {
 			message += "\n\n" + detail;
 		}
-		new AlertDialog.Builder(this)
-				.setIcon(android.R.drawable.ic_dialog_alert)
-				.setTitle(R.string.error)
-				.setMessage(message)
-				.setPositiveButton(R.string.retry, (dialog, which) -> rebuildTimingDex())
-				.setNeutralButton(R.string.timing_migration_continue,
-						(dialog, which) -> loadMIDlet())
-				.setNegativeButton(android.R.string.cancel, (dialog, which) -> finish())
-				.setOnCancelListener(dialog -> finish())
-				.show();
+		ComposeDialogHost.showMessage(
+				this,
+				getString(R.string.error),
+				message,
+				getString(R.string.retry),
+				getString(android.R.string.cancel),
+				getString(R.string.timing_migration_continue),
+				true,
+				this::rebuildTimingDex,
+				this::finish,
+				this::loadMIDlet,
+				this::finish
+		);
 	}
 
 	@Override
@@ -333,9 +332,14 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void showMidletDialog(String[] names, final String[] classes) {
-		AlertDialog.Builder builder = new AlertDialog.Builder(this)
-				.setTitle(R.string.select_dialog_title)
-				.setItems(names, (d, n) -> {
+		ComposeDialogHost.showChoice(
+				this,
+				getString(R.string.select_dialog_title),
+				names,
+				-1,
+				null,
+				true,
+				n -> {
 					String clazz = classes[n];
 					ErrorReporter errorReporter = ACRA.getErrorReporter();
 					String report = errorReporter.getCustomData(Constants.KEY_CRASH_ATTACHMENT);
@@ -346,22 +350,25 @@ public class MicroActivity extends AppCompatActivity {
 					sb.append("Begin app: ").append(names[n]).append(", ").append(clazz);
 					errorReporter.putCustomData(Constants.KEY_CRASH_ATTACHMENT, sb.toString());
 					microLoader.loadMidlet(clazz, appName);
-				})
-				.setOnCancelListener(d -> {
-					d.dismiss();
-					MidletThread.notifyDestroyed();
-				});
-		builder.show();
+				},
+				() -> MidletThread.notifyDestroyed()
+		);
 	}
 
 	void showErrorDialog(String message) {
-		AlertDialog.Builder builder = new AlertDialog.Builder(this)
-				.setIcon(android.R.drawable.ic_dialog_alert)
-				.setTitle(R.string.error)
-				.setMessage(message)
-				.setPositiveButton(android.R.string.ok, (d, w) -> MidletThread.notifyDestroyed());
-		builder.setOnCancelListener(dialogInterface -> MidletThread.notifyDestroyed());
-		builder.show();
+		ComposeDialogHost.showMessage(
+				this,
+				getString(R.string.error),
+				message,
+				getString(android.R.string.ok),
+				null,
+				null,
+				true,
+				() -> MidletThread.notifyDestroyed(),
+				null,
+				null,
+				() -> MidletThread.notifyDestroyed()
+		);
 	}
 
 	private float getToolBarHeight() {
@@ -408,20 +415,27 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	public void showExitConfirmation() {
-		AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
-		DialogInterface.OnClickListener onClickListener = (d, w) -> {
+		Runnable exit = () -> {
 			hideSoftInput();
-			if (w == DialogInterface.BUTTON_NEUTRAL) {
-				Config.openSettings(this, appName, appPath);
-			}
 			MidletThread.destroyApp();
 		};
-		alertBuilder.setTitle(R.string.CONFIRMATION_REQUIRED)
-				.setMessage(R.string.FORCE_CLOSE_CONFIRMATION)
-				.setPositiveButton(android.R.string.ok, onClickListener)
-				.setNeutralButton(R.string.action_settings, onClickListener)
-				.setNegativeButton(android.R.string.cancel, null);
-		alertBuilder.create().show();
+		ComposeDialogHost.showMessage(
+				this,
+				getString(R.string.CONFIRMATION_REQUIRED),
+				getString(R.string.FORCE_CLOSE_CONFIRMATION),
+				getString(android.R.string.ok),
+				getString(android.R.string.cancel),
+				getString(R.string.action_settings),
+				true,
+				exit,
+				null,
+				() -> {
+					hideSoftInput();
+					Config.openSettings(this, appName, appPath);
+					MidletThread.destroyApp();
+				},
+				null
+		);
 	}
 
 	@Override
@@ -448,7 +462,7 @@ public class MicroActivity extends AppCompatActivity {
 				Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && current instanceof Canvas) {
 			showSystemUI();
 		}
-		super.openOptionsMenu();
+		binding.toolbar.showMenu();
 	}
 
 	@Override
@@ -478,63 +492,20 @@ public class MicroActivity extends AppCompatActivity {
 		return super.onKeyUp(keyCode, event);
 	}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.midlet_displayable, menu);
-		if (actionBarEnabled) {
-			menu.findItem(R.id.action_ime_keyboard).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-			menu.findItem(R.id.action_take_screenshot).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-		}
-		if (inputMethodManager == null) {
-			menu.findItem(R.id.action_ime_keyboard).setVisible(false);
-		}
-		if (ContextHolder.getVk() == null) {
-			menu.findItem(R.id.action_submenu_vk).setVisible(false);
-		}
-		return true;
-	}
-
-	@Override
-	public boolean onPrepareOptionsMenu(Menu menu) {
-		if (current instanceof Canvas) {
-			menu.setGroupVisible(R.id.action_group_canvas, true);
-			boolean timingAvailable = microLoader != null && microLoader.hasTimingTransform();
-			menu.findItem(R.id.action_emulation_speed).setVisible(timingAvailable);
-			menu.findItem(R.id.action_memory_editor).setVisible(timingAvailable);
-			EmulationTimeController controller = MidletThread.getEmulationTimeController();
-			if (timingAvailable && controller != null) {
-				SpeedSnapshot snapshot = controller.snapshot();
-				MenuItem speedItem = menu.findItem(R.id.action_emulation_speed);
-				speedItem.setTitle(getString(R.string.emulation_speed) + ": " + snapshot.speed());
-			}
-			VirtualKeyboard vk = ContextHolder.getVk();
-			if (vk != null) {
-				boolean visible = vk.getLayoutEditMode() != VirtualKeyboard.LAYOUT_EOF;
-				menu.findItem(R.id.action_layout_edit_finish).setVisible(visible);
-			}
-		} else {
-			menu.setGroupVisible(R.id.action_group_canvas, false);
-		}
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-		int id = item.getItemId();
+	private void onToolbarAction(int id) {
 		if (id == R.id.action_exit_midlet) {
 			showExitConfirmation();
 		} else if (id == R.id.action_save_log) {
 			saveLog();
 		} else if (id == R.id.action_lock_orientation) {
-			if (item.isChecked()) {
+			if (binding.toolbar.isOrientationLocked()) {
+				// The Compose toolbar owns the checked state. A checked item means
+				// the emulator is currently locked and should be restored now.
 				VirtualKeyboard vk = ContextHolder.getVk();
 				int orientation = vk != null && vk.isPhone() ? ORIENTATION_PORTRAIT : microLoader.getOrientation();
 				setOrientation(orientation);
-				item.setChecked(false);
 			} else {
 				lockOrientation();
-				item.setChecked(true);
 			}
 		} else if (id == R.id.action_ime_keyboard) {
 			inputMethodManager.toggleSoftInputFromWindow(binding.displayableContainer.getWindowToken(),
@@ -551,7 +522,6 @@ public class MicroActivity extends AppCompatActivity {
 			// Handled only when virtual keyboard is enabled
 			handleVkOptions(id);
 		}
-		return true;
 	}
 
 	private void lockOrientation() {
@@ -642,88 +612,105 @@ public class MicroActivity extends AppCompatActivity {
 		final VirtualKeyboard vk = ContextHolder.getVk();
 		boolean[] states = vk.getKeysVisibility();
 		boolean[] changed = states.clone();
-		new AlertDialog.Builder(this)
-				.setTitle(R.string.hide_buttons)
-				.setMultiChoiceItems(vk.getKeyNames(), changed, (dialog, which, isChecked) -> {})
-				.setPositiveButton(android.R.string.ok, (dialog, which) -> {
-					if (!Arrays.equals(states, changed)) {
-						vk.setKeysVisibility(changed);
+		ComposeDialogHost.showMultiChoice(
+				this,
+				getString(R.string.hide_buttons),
+				vk.getKeyNames(),
+				changed,
+				getString(android.R.string.ok),
+				null,
+				true,
+				selected -> {
+					if (!Arrays.equals(states, selected)) {
+						vk.setKeysVisibility(selected);
 						showSaveVkAlert(true);
 					}
-				}).show();
+				}
+		);
 	}
 
 	private void showSaveVkAlert(boolean keepScreenPreferred) {
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setTitle(R.string.CONFIRMATION_REQUIRED);
-		builder.setMessage(R.string.pref_vk_save_alert);
-		builder.setNegativeButton(android.R.string.no, null);
-		AlertDialog dialog = builder.create();
-
 		final VirtualKeyboard vk = ContextHolder.getVk();
 		if (vk.isPhone()) {
-			AppCompatCheckBox cb = new AppCompatCheckBox(this);
-			cb.setText(R.string.opt_save_screen_params);
-			cb.setChecked(keepScreenPreferred);
-
-			TypedValue out = new TypedValue();
-			getTheme().resolveAttribute(androidx.appcompat.R.attr.dialogPreferredPadding, out, true);
-			int paddingH = getResources().getDimensionPixelOffset(out.resourceId);
-			int paddingT = getResources().getDimensionPixelOffset(androidx.appcompat.R.dimen.abc_dialog_padding_top_material);
-			dialog.setView(cb, paddingH, paddingT, paddingH, 0);
-
-			dialog.setButton(dialog.BUTTON_POSITIVE, getText(android.R.string.yes), (d, w) -> {
-				if (cb.isChecked()) {
-					vk.saveScreenParams();
-				}
-				vk.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
-			});
+			ComposeDialogHost.showCheckboxMessage(
+					this,
+					getString(R.string.CONFIRMATION_REQUIRED),
+					getString(R.string.pref_vk_save_alert),
+					getString(R.string.opt_save_screen_params),
+					keepScreenPreferred,
+					getString(android.R.string.yes),
+					getString(android.R.string.no),
+					true,
+					checked -> {
+						if (checked) {
+							vk.saveScreenParams();
+						}
+						vk.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+					}
+			);
 		} else {
-			dialog.setButton(dialog.BUTTON_POSITIVE, getText(android.R.string.yes), (d, w) ->
-					ContextHolder.getVk().onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+			ComposeDialogHost.showMessage(
+					this,
+					getString(R.string.CONFIRMATION_REQUIRED),
+					getString(R.string.pref_vk_save_alert),
+					getString(android.R.string.yes),
+					getString(android.R.string.no),
+					null,
+					true,
+					() -> ContextHolder.getVk().onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM),
+					null,
+					null
+			);
 		}
-		dialog.show();
 	}
 
 	private void showSetLayoutDialog() {
 		final VirtualKeyboard vk = ContextHolder.getVk();
-		AlertDialog.Builder builder = new AlertDialog.Builder(this)
-				.setTitle(R.string.layout_switch)
-				.setSingleChoiceItems(R.array.PREF_VK_TYPE_ENTRIES, vk.getLayout(), null)
-				.setPositiveButton(android.R.string.ok, (d, w) -> {
-					vk.setLayout(((AlertDialog) d).getListView().getCheckedItemPosition());
+		ComposeDialogHost.showChoiceActions(
+				this,
+				getString(R.string.layout_switch),
+				getResources().getStringArray(R.array.PREF_VK_TYPE_ENTRIES),
+				vk.getLayout(),
+				getString(android.R.string.ok),
+				null,
+				getString(android.R.string.cancel),
+				true,
+				false,
+				index -> {
+					vk.setLayout(index);
 					if (vk.isPhone()) {
 						setOrientation(ORIENTATION_PORTRAIT);
 					} else {
 						setOrientation(microLoader.getOrientation());
 					}
-				});
-		builder.show();
+				},
+				null,
+				null
+		);
 	}
 
 	private void showLimitFpsDialog() {
-		TextInputLayout inputLayout = DialogInputBinding.inflate(getLayoutInflater()).getRoot();
-		EditText editText = Objects.requireNonNull(inputLayout.getEditText());
-		editText.setHint(R.string.unlimited);
-		editText.setInputType(InputType.TYPE_CLASS_NUMBER);
-		editText.setKeyListener(DigitsKeyListener.getInstance("0123456789"));
-		editText.setMaxLines(1);
-		editText.setSingleLine(true);
-		new AlertDialog.Builder(this)
-				.setTitle(R.string.PREF_LIMIT_FPS)
-				.setView(inputLayout)
-				.setPositiveButton(android.R.string.ok, (d, w) -> {
-					Editable text = editText.getText();
+		ComposeDialogHost.showTextInputActions(
+				this,
+				getString(R.string.PREF_LIMIT_FPS),
+				getString(R.string.unlimited),
+				"",
+				true,
+				getString(android.R.string.ok),
+				getString(R.string.reset),
+				getString(android.R.string.cancel),
+				true,
+				text -> {
 					int fps = 0;
 					try {
-						fps = TextUtils.isEmpty(text) ? 0 : Integer.parseInt(text.toString().trim());
+						fps = TextUtils.isEmpty(text) ? 0 : Integer.parseInt(text.trim());
 					} catch (NumberFormatException ignored) {
 					}
 					Canvas.setLimitFps(fps);
-				})
-				.setNegativeButton(android.R.string.cancel, null)
-				.setNeutralButton(R.string.reset, ((d, which) -> Canvas.setLimitFps(-1)))
-				.show();
+					return true;
+				},
+				() -> Canvas.setLimitFps(-1)
+		);
 	}
 
 	private void showEmulationSpeedDialog() {
@@ -753,15 +740,18 @@ public class MicroActivity extends AppCompatActivity {
 				checked = i;
 			}
 		}
-		new AlertDialog.Builder(this)
-				.setTitle(R.string.emulation_speed_dialog_title)
-				.setSingleChoiceItems(labels, checked, (dialog, which) -> {
+		ComposeDialogHost.showChoice(
+				this,
+				getString(R.string.emulation_speed_dialog_title),
+				labels,
+				checked,
+				getString(android.R.string.cancel),
+				true,
+				which -> {
 					controller.setSpeed(speeds[which]);
-					invalidateOptionsMenu();
-					dialog.dismiss();
-				})
-				.setNegativeButton(android.R.string.cancel, null)
-				.show();
+					refreshToolbarState(current);
+				}
+		);
 	}
 
 	private void showMemoryEditorDialog() {
@@ -800,6 +790,36 @@ public class MicroActivity extends AppCompatActivity {
 		runOnUiThread(() -> Toast.makeText(this, message, Toast.LENGTH_LONG).show());
 	}
 
+	private void refreshToolbarState(Displayable displayable) {
+		if (displayable == null) {
+			binding.toolbar.setToolbarState("", false, false, false, false, false, "", false);
+			return;
+		}
+		boolean canvas = displayable instanceof Canvas;
+		boolean toolbarVisible = !canvas || actionBarEnabled;
+		boolean timingAvailable = canvas && microLoader != null && microLoader.hasTimingTransform();
+		VirtualKeyboard vk = ContextHolder.getVk();
+		String speedLabel = "";
+		if (timingAvailable) {
+			EmulationTimeController controller = MidletThread.getEmulationTimeController();
+			if (controller != null) {
+				SpeedSnapshot snapshot = controller.snapshot();
+				speedLabel = getString(R.string.emulation_speed) + ": " + snapshot.speed();
+			}
+		}
+		String title = displayable.getTitle();
+		binding.toolbar.setToolbarState(
+				title == null ? appName : title,
+				toolbarVisible,
+				canvas,
+				inputMethodManager != null,
+				vk != null,
+				timingAvailable,
+				speedLabel,
+				vk != null && vk.getLayoutEditMode() != VirtualKeyboard.LAYOUT_EOF
+		);
+	}
+
 	private class SetCurrentEvent extends SimpleEvent {
 		private final Displayable current;
 		private final Displayable next;
@@ -811,32 +831,24 @@ public class MicroActivity extends AppCompatActivity {
 
 		@Override
 		public void process() {
-			closeOptionsMenu();
+			binding.toolbar.dismissMenu();
 			if (current != null) {
 				current.clearDisplayableView();
 			}
 			binding.displayableContainer.removeAllViews();
-			ActionBar actionBar = Objects.requireNonNull(getSupportActionBar());
 			LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) binding.toolbar.getLayoutParams();
 			int toolbarHeight = 0;
 			if (next instanceof Canvas) {
 				hideSystemUI();
-				if (!actionBarEnabled) {
-					actionBar.hide();
-				} else {
-					final String title = next.getTitle();
-					actionBar.setTitle(title == null ? appName : title);
+				if (actionBarEnabled) {
 					toolbarHeight = (int) (getToolBarHeight() / 1.5);
-					layoutParams.height = toolbarHeight;
 				}
 			} else {
 				showSystemUI();
-				actionBar.show();
-				final String title = next != null ? next.getTitle() : null;
-				actionBar.setTitle(title == null ? appName : title);
 				toolbarHeight = (int) getToolBarHeight();
-				layoutParams.height = toolbarHeight;
 			}
+			layoutParams.height = toolbarHeight;
+			refreshToolbarState(next);
 			binding.overlay.setLocation(0, toolbarHeight);
 			binding.toolbar.setLayoutParams(layoutParams);
 			if (next != null) {

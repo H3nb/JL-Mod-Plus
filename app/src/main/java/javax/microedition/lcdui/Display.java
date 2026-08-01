@@ -2,6 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2018 Nikita Shakarun
  * Copyright 2020-2026 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +19,7 @@
 
 package javax.microedition.lcdui;
 
-import androidx.appcompat.app.AlertDialog;
+import android.app.Dialog;
 
 import javax.microedition.lcdui.event.Event;
 import javax.microedition.lcdui.event.EventQueue;
@@ -115,7 +116,7 @@ public class Display {
 
 	private void showAlert() {
 		if (current instanceof Alert alert) {
-			AlertDialog alertDialog = alert.prepareDialog();
+			Dialog alertDialog = alert.prepareDialog();
 			alertDialog.show();
 			if (alert.finiteTimeout()) {
 				ViewHandler.postDelayed(alertDialog::dismiss, alert.getTimeout());

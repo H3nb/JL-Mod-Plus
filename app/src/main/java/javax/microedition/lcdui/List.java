@@ -2,6 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2019 Nikita Shakarun
  * Copyright 2019-2026 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,34 +21,30 @@ package javax.microedition.lcdui;
 
 import android.content.Context;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ListView;
 
 import java.util.ArrayList;
 
 import javax.microedition.lcdui.commands.ScreenSoftBar;
 import javax.microedition.lcdui.event.SimpleEvent;
 import javax.microedition.lcdui.list.CompoundItem;
-import javax.microedition.lcdui.list.CompoundListAdapter;
 import javax.microedition.util.ContextHolder;
 
 public class List extends Screen implements Choice {
 	public static final Command SELECT_COMMAND = new Command("", Command.SCREEN, 0);
 
-	private final CompoundListAdapter adapter;
 	private final int listType;
 	private final ArrayList<CompoundItem> items = new ArrayList<>();
 
-	private ListView view;
+	private J2meListComposeView view;
 	private int fitPolicy;
 	private Command selectCommand = SELECT_COMMAND;
 
 	private final SimpleEvent msgSetSelection = new SimpleEvent() {
 		@Override
 		public void process() {
-			AdapterView<?> v = view;
+			J2meListComposeView v = view;
 			if (v != null) {
-				v.setSelection(getSelectedIndex());
+				v.requestSelection(getSelectedIndex());
 			}
 		}
 	};
@@ -57,7 +54,6 @@ public class List extends Screen implements Choice {
 			throw new IllegalArgumentException("list type " + listType + " is not supported");
 		}
 		this.listType = listType;
-		adapter = new CompoundListAdapter(listType, items);
 		setTitle(title);
 	}
 
@@ -105,7 +101,7 @@ public class List extends Screen implements Choice {
 		synchronized (items) {
 			index = items.size();
 			items.add(new CompoundItem(stringPart, imagePart, index == 0 && listType != MULTIPLE));
-			adapter.notifyDataSetChanged();
+			notifyListView();
 		}
 		if (index == 0 && listType == IMPLICIT && view != null) {
 			ViewHandler.postEvent(msgSetSelection);
@@ -123,7 +119,7 @@ public class List extends Screen implements Choice {
 				throw new IndexOutOfBoundsException("elementNum = " + elementNum + ", but size = " + size);
 			}
 			items.remove(elementNum);
-			adapter.notifyDataSetChanged();
+			notifyListView();
 		}
 		if (size == 1 && listType == IMPLICIT && view != null) {
 			ViewHandler.postEvent(msgSetSelection);
@@ -134,7 +130,7 @@ public class List extends Screen implements Choice {
 	public void deleteAll() {
 		synchronized (items) {
 			items.clear();
-			adapter.notifyDataSetChanged();
+			notifyListView();
 		}
 		if (listType == IMPLICIT && view != null) {
 			ViewHandler.postEvent(msgSetSelection);
@@ -221,7 +217,7 @@ public class List extends Screen implements Choice {
 
 			boolean select = size == 0 && listType != MULTIPLE;
 			items.add(elementNum, new CompoundItem(stringPart, imagePart, select));
-			adapter.notifyDataSetChanged();
+			notifyListView();
 		}
 		if (size == 0 && listType == IMPLICIT && view != null) {
 			ViewHandler.postEvent(msgSetSelection);
@@ -250,7 +246,7 @@ public class List extends Screen implements Choice {
 			}
 
 			items.get(elementNum).set(stringPart, imagePart);
-			adapter.notifyDataSetChanged();
+			notifyListView();
 		}
 	}
 
@@ -270,7 +266,7 @@ public class List extends Screen implements Choice {
 				for (int i = 0; i < size; i++) {
 					items.get(i).setSelected(selectedArray[i]);
 				}
-				adapter.notifyDataSetChanged();
+				notifyListView();
 				return;
 			}
 
@@ -300,7 +296,7 @@ public class List extends Screen implements Choice {
 				}
 			}
 			items.get(elementNum).setSelected(selected);
-			adapter.notifyDataSetChanged();
+			notifyListView();
 		}
 		if (listType == IMPLICIT && view != null) {
 			ViewHandler.postEvent(msgSetSelection);
@@ -315,7 +311,7 @@ public class List extends Screen implements Choice {
 				throw new IndexOutOfBoundsException(msg);
 			}
 			items.get(elementNum).setFont(font);
-			adapter.notifyDataSetChanged();
+			notifyListView();
 		}
 	}
 
@@ -347,16 +343,17 @@ public class List extends Screen implements Choice {
 	View getScreenView() {
 		if (view == null) {
 			Context context = ContextHolder.getActivity();
-			view = new ListView(context);
-			view.setAdapter(adapter);
-
+			view = new J2meListComposeView(
+					context,
+					listType,
+					this::onItemClick,
+					this::onItemFocused,
+					this::onItemLongClick
+			);
+			setViewItems(view);
 			if (listType == IMPLICIT) {
 				msgSetSelection.run();
-				view.setOnItemLongClickListener(this::onItemLongClick);
-				view.setOnItemSelectedListener(new ItemSelectedListener());
 			}
-
-			view.setOnItemClickListener(this::onItemClick);
 		}
 
 		return view;
@@ -367,12 +364,31 @@ public class List extends Screen implements Choice {
 		view = null;
 	}
 
-	void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+	private void notifyListView() {
+		J2meListComposeView currentView = view;
+		if (currentView == null) {
+			return;
+		}
+		ViewHandler.postEvent(() -> setViewItems(currentView));
+	}
+
+	private void setViewItems(J2meListComposeView currentView) {
+		if (view != currentView) {
+			return;
+		}
+		ArrayList<CompoundItem> snapshot;
+		synchronized (items) {
+			snapshot = new ArrayList<>(items);
+		}
+		currentView.setItems(snapshot);
+	}
+
+	private void onItemClick(int position) {
 		synchronized (items) {
 			CompoundItem item = items.get(position);
 			if (listType == MULTIPLE) {
 				item.setSelected(!item.isSelected());
-				adapter.notifyDataSetChanged();
+				notifyListView();
 				return;
 			}
 			if (!item.isSelected()) {
@@ -380,7 +396,7 @@ public class List extends Screen implements Choice {
 					it.setSelected(false);
 				}
 				item.setSelected(true);
-				adapter.notifyDataSetChanged();
+				notifyListView();
 			}
 		}
 		if (listType == IMPLICIT) {
@@ -388,7 +404,7 @@ public class List extends Screen implements Choice {
 		}
 	}
 
-	boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+	private boolean onItemLongClick(int position) {
 		synchronized (items) {
 			CompoundItem item = items.get(position);
 			if (!item.isSelected()) {
@@ -396,7 +412,7 @@ public class List extends Screen implements Choice {
 					it.setSelected(false);
 				}
 				item.setSelected(true);
-				adapter.notifyDataSetChanged();
+				notifyListView();
 			}
 		}
 		if (listener != null && commands.size() > 3) {
@@ -410,22 +426,19 @@ public class List extends Screen implements Choice {
 		return true;
 	}
 
-	private class ItemSelectedListener implements AdapterView.OnItemSelectedListener {
-		@Override
-		public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-			synchronized (items) {
-				CompoundItem item = items.get(position);
-				if (!item.isSelected()) {
-					for (CompoundItem it : items) {
-						it.setSelected(false);
-					}
-					item.setSelected(true);
-					adapter.notifyDataSetChanged();
+	private void onItemFocused(int position) {
+		if (listType != IMPLICIT) {
+			return;
+		}
+		synchronized (items) {
+			CompoundItem item = items.get(position);
+			if (!item.isSelected()) {
+				for (CompoundItem it : items) {
+					it.setSelected(false);
 				}
+				item.setSelected(true);
+				notifyListView();
 			}
 		}
-
-		@Override
-		public void onNothingSelected(AdapterView<?> parent) {}
 	}
 }

@@ -18,7 +18,6 @@
 package javax.microedition.lcdui.commands;
 
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.PopupWindow;
@@ -29,29 +28,22 @@ import java.util.List;
 import javax.microedition.lcdui.Command;
 import javax.microedition.lcdui.Screen;
 
-import io.github.h3nb.jlmodplus.R;
-import io.github.h3nb.jlmodplus.databinding.SoftButtonBarBinding;
-
 public class ScreenSoftBar extends AbstractSoftKeysBar {
-	private final SoftButtonBarBinding binding;
+	private final ScreenSoftBarComposeView composeView;
 
 	public ScreenSoftBar(Screen target, ViewGroup root, List<Command> commands) {
 		super(target);
-		binding = SoftButtonBarBinding.inflate(LayoutInflater.from(root.getContext()), root, true);
-		binding.softLeft.setOnClickListener(this::onClick);
-		binding.softMiddle.setOnClickListener(this::onClick);
-		binding.softRight.setOnClickListener(this::onClick);
+		composeView = new ScreenSoftBarComposeView(root.getContext(), command -> {
+			if (command == null) {
+				showMenu();
+			} else {
+				target.fireCommandAction(command);
+			}
+		});
+		root.addView(composeView, new ViewGroup.LayoutParams(
+				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 		Collections.sort(commands);
 		onCommandsChanged(commands);
-	}
-
-	private void onClick(View button) {
-		Object tag = button.getTag();
-		if (tag == null) {
-			showMenu();
-		} else {
-			target.fireCommandAction((Command) tag);
-		}
 	}
 
 	@Override
@@ -59,81 +51,13 @@ public class ScreenSoftBar extends AbstractSoftKeysBar {
 		List<Command> commands = this.commands;
 		commands.clear();
 		commands.addAll(list);
-		int size = commands.size();
-		if (size == 0) {
-			binding.softLeft.setTag(null);
-			binding.softMiddle.setTag(null);
-			binding.softRight.setTag(null);
-			binding.softLeft.setText("");
-			binding.softMiddle.setText("");
-			binding.softRight.setText("");
-			binding.softBar.setVisibility(View.GONE);
-			return;
-		}
-		switch (size) {
-			case 1:
-				Command c = commands.get(0);
-				binding.softLeft.setText(c.getAndroidLabel());
-				binding.softLeft.setTag(c);
-
-				binding.softMiddle.setVisibility(View.INVISIBLE);
-				binding.softMiddle.setText("");
-				binding.softMiddle.setTag(null);
-
-				binding.softRight.setVisibility(View.INVISIBLE);
-				binding.softRight.setText("");
-				binding.softRight.setTag(null);
-				break;
-			case 2:
-				c = commands.get(0);
-				binding.softLeft.setText(c.getAndroidLabel());
-				binding.softLeft.setTag(c);
-
-				binding.softMiddle.setVisibility(View.INVISIBLE);
-				binding.softMiddle.setText("");
-				binding.softMiddle.setTag(null);
-
-				binding.softRight.setVisibility(View.VISIBLE);
-				c = commands.get(1);
-				binding.softRight.setText(c.getAndroidLabel());
-				binding.softRight.setTag(c);
-				break;
-			case 3:
-				c = commands.get(0);
-				binding.softLeft.setText(c.getAndroidLabel());
-				binding.softLeft.setTag(c);
-
-				binding.softMiddle.setVisibility(View.VISIBLE);
-				c = commands.get(1);
-				binding.softMiddle.setText(c.getAndroidLabel());
-				binding.softMiddle.setTag(c);
-
-				binding.softRight.setVisibility(View.VISIBLE);
-				c = commands.get(2);
-				binding.softRight.setText(c.getAndroidLabel());
-				binding.softRight.setTag(c);
-				break;
-			default:
-				c = commands.get(0);
-				binding.softLeft.setText(c.getAndroidLabel());
-				binding.softLeft.setTag(c);
-
-				binding.softMiddle.setVisibility(View.VISIBLE);
-				c = commands.get(1);
-				binding.softMiddle.setText(c.getAndroidLabel());
-				binding.softMiddle.setTag(c);
-
-				binding.softRight.setVisibility(View.VISIBLE);
-				binding.softRight.setText(R.string.cmd_menu);
-				binding.softRight.setTag(null);
-		}
-		binding.softBar.setVisibility(View.VISIBLE);
+		composeView.setCommands(commands);
 	}
 
 	public void showMenu() {
 		PopupWindow popup = prepareMenu(2);
-		int y = binding.softRight.getHeight();
-		View rootView = binding.softRight.getRootView();
+		int y = composeView.getHeight();
+		View rootView = composeView.getRootView();
 		popup.setWidth(Math.min(rootView.getWidth(), rootView.getHeight()) / 2);
 		popup.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
 		popup.showAtLocation(rootView, Gravity.RIGHT | Gravity.BOTTOM, 0, y);
