@@ -20,17 +20,16 @@ package ru.woesss.j2me.installer;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.graphics.drawable.Drawable;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
+import androidx.activity.ComponentDialog;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -52,7 +51,6 @@ import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.applist.AppItem;
 import io.github.h3nb.jlmodplus.applist.AppListModel;
 import io.github.h3nb.jlmodplus.config.Config;
-import io.github.h3nb.jlmodplus.databinding.FragmentInstallerBinding;
 import io.github.h3nb.jlmodplus.util.Constants;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import ru.woesss.j2me.jar.Descriptor;
@@ -62,13 +60,10 @@ public class InstallerDialog extends DialogFragment {
 	private static final String ARG_ID = "InstallerDialog.id";
 	private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
-	private FragmentInstallerBinding binding;
-	private Button btnOk;
-	private Button btnClose;
-	private Button btnRun;
+	private InstallerComposeView composeView;
 	private AppListModel appListModel;
 	private AppInstaller installer;
-	private AlertDialog dialog;
+	private Dialog dialog;
 
 	/**
 	 * @param uri original uri from intent.
@@ -109,24 +104,29 @@ public class InstallerDialog extends DialogFragment {
 	@NonNull
 	@Override
 	public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
-		binding = FragmentInstallerBinding.inflate(getLayoutInflater());
-		dialog = new AlertDialog.Builder(requireActivity(), getTheme())
-				.setIcon(R.mipmap.ic_launcher)
-				.setView(binding.getRoot())
-				.setTitle("MIDlet installer")
-				.setMessage("")
-				.setCancelable(false)
-				.setPositiveButton(R.string.install, null)
-				.setNegativeButton(android.R.string.cancel, null)
-				.setNeutralButton(R.string.START_CMD, null)
-				.create();
+		composeView = new InstallerComposeView(requireContext());
+		dialog = new ComponentDialog(requireActivity());
+		dialog.setContentView(composeView.getComposeView());
+		dialog.setCancelable(false);
+		dialog.setCanceledOnTouchOutside(false);
+		if (dialog.getWindow() != null) {
+			dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+		}
+		dialog.setOnShowListener(ignored -> {
+			if (dialog.getWindow() != null) {
+				dialog.getWindow().setLayout(
+						android.view.WindowManager.LayoutParams.MATCH_PARENT,
+						android.view.WindowManager.LayoutParams.WRAP_CONTENT
+				);
+			}
+		});
 		return dialog;
 	}
 
 	@Override
 	public void onDismiss(@NonNull DialogInterface dialog) {
 		super.onDismiss(dialog);
-		binding = null;
+		composeView = null;
 	}
 
 	@Override
@@ -141,9 +141,6 @@ public class InstallerDialog extends DialogFragment {
 		if (installer != null) {
 			return;
 		}
-		btnOk = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
-		btnClose = dialog.getButton(DialogInterface.BUTTON_NEGATIVE);
-		btnRun = dialog.getButton(DialogInterface.BUTTON_NEUTRAL);
 		hideButtons();
 		Bundle args = requireArguments();
 		Uri uri = args.getParcelable(ARG_URI);
@@ -157,7 +154,7 @@ public class InstallerDialog extends DialogFragment {
 
 	private void installApp(File jar, Uri uri) {
 		installer = new AppInstaller(jar, uri, appListModel);
-		btnClose.setOnClickListener(v -> {
+		composeView.setNegativeButton(getString(android.R.string.cancel), () -> {
 			installer.deleteTemp();
 			installer.clearCache();
 			dismiss();
@@ -171,7 +168,7 @@ public class InstallerDialog extends DialogFragment {
 
 	private void reinstallApp(int id) {
 		installer = new AppInstaller(id, appListModel);
-		btnClose.setOnClickListener(v -> {
+		composeView.setNegativeButton(getString(android.R.string.cancel), () -> {
 			installer.deleteTemp();
 			installer.clearCache();
 			dismiss();
@@ -184,31 +181,27 @@ public class InstallerDialog extends DialogFragment {
 	}
 
 	private void hideProgress() {
-		binding.progress.setVisibility(View.GONE);
-		binding.tvStatus.setVisibility(View.GONE);
+		composeView.setProgressVisible(false);
+		composeView.setStatusText("");
 	}
 
 	private void showProgress() {
-		binding.progress.setVisibility(View.VISIBLE);
-		binding.tvStatus.setVisibility(View.VISIBLE);
+		composeView.setProgressVisible(true);
 	}
 
 	private void hideButtons() {
-		btnOk.setVisibility(View.GONE);
-		btnClose.setVisibility(View.GONE);
-		btnRun.setVisibility(View.GONE);
+		composeView.clearButtons();
 	}
 
 	private void showButtons() {
-		btnOk.setVisibility(View.VISIBLE);
-		btnClose.setVisibility(View.VISIBLE);
+		// Compose renders every button whose state has been configured.
 	}
 
 	private void convert() {
 		Descriptor nd = installer.getNewDescriptor();
 		SpannableStringBuilder info = nd.getInfo(requireActivity());
-		dialog.setMessage(info);
-		binding.tvStatus.setText(R.string.converting_wait);
+		composeView.setMessage(info);
+		composeView.setStatusText(getString(R.string.converting_wait));
 		showProgress();
 		hideButtons();
 		Disposable disposable = Single.create(installer::install)
@@ -218,13 +211,12 @@ public class InstallerDialog extends DialogFragment {
 		compositeDisposable.add(disposable);
 	}
 
-	private void alertConfirm(SpannableStringBuilder message,
-							  View.OnClickListener positive) {
+	private void alertConfirm(SpannableStringBuilder message, Runnable positive) {
 		hideProgress();
 		dialog.setCancelable(false);
 		dialog.setCanceledOnTouchOutside(false);
-		dialog.setMessage(message);
-		btnOk.setOnClickListener(positive);
+		composeView.setMessage(message);
+		composeView.setPositiveButton(getString(R.string.install), positive);
 		showButtons();
 	}
 
@@ -233,24 +225,21 @@ public class InstallerDialog extends DialogFragment {
 			return;
 		}
 		if (status == AppInstaller.STATUS_SUCCESS) {
-			binding.progress.setVisibility(View.GONE);
-			binding.tvStatus.setText(getString(R.string.install_done));
+			composeView.setProgressVisible(false);
+			composeView.setStatusText(getString(R.string.install_done));
 			AppItem app = installer.getExistsApp();
-			Drawable drawable = Drawable.createFromPath(app.getImagePathExt());
-			if (drawable != null) {
-				dialog.setIcon(drawable);
-			}
-			btnOk.setText(R.string.START_CMD);
-			btnOk.setOnClickListener(v -> {
-				Config.startApp(v.getContext(), app.getTitle(), app.getPathExt());
+			composeView.setPositiveButton(getString(R.string.START_CMD), () -> {
+				Config.startApp(requireContext(), app.getTitle(), app.getPathExt());
 				dismiss();
 			});
-			btnClose.setText(R.string.close);
+			composeView.setNegativeButton(getString(R.string.close), () -> dismiss());
+			composeView.setNeutralButton(null, null);
 			showButtons();
 			return;
 		}
 		Descriptor nd = installer.getNewDescriptor();
 		SpannableStringBuilder message;
+		composeView.setNeutralButton(null, null);
 		switch (status) {
 			case AppInstaller.STATUS_NEW -> {
 				if (installer.getJar() != null) {
@@ -266,11 +255,10 @@ public class InstallerDialog extends DialogFragment {
 			case AppInstaller.STATUS_EQUAL -> {
 				message = new SpannableStringBuilder(getString(R.string.reinstall));
 				AppItem app = installer.getExistsApp();
-				btnRun.setVisibility(View.VISIBLE);
-				btnRun.setOnClickListener(v -> {
+				composeView.setNeutralButton(getString(R.string.START_CMD), () -> {
 					installer.clearCache();
 					installer.deleteTemp();
-					Config.startApp(v.getContext(), app.getTitle(), app.getPathExt());
+					Config.startApp(requireContext(), app.getTitle(), app.getPathExt());
 					dismiss();
 				});
 			}
@@ -281,7 +269,7 @@ public class InstallerDialog extends DialogFragment {
 			case AppInstaller.STATUS_UNMATCHED -> {
 				SpannableStringBuilder info = installer.getManifest().getInfo(requireActivity());
 				info.append(getString(R.string.install_jar_non_matched_jad));
-				alertConfirm(info, v -> installApp(installer.getJar(), null));
+				alertConfirm(info, () -> installApp(installer.getJar(), null));
 				return;
 			}
 			case AppInstaller.STATUS_SAME -> {
@@ -297,15 +285,16 @@ public class InstallerDialog extends DialogFragment {
 		if (installer.getJar() == null) {
 			message.append('\n').append(getString(R.string.warn_install_from_net));
 		}
-		Drawable drawable = Drawable.createFromPath(installer.getIconPath());
-		if (drawable != null) {
-			dialog.setIcon(drawable);
-		}
-		dialog.setTitle(nd.getName());
+		composeView.setTitle(nd.getName());
 		dialog.setCancelable(false);
 		dialog.setCanceledOnTouchOutside(false);
-		dialog.setMessage(message);
-		btnOk.setOnClickListener(v -> convert());
+		composeView.setMessage(message);
+		composeView.setPositiveButton(getString(R.string.install), this::convert);
+		composeView.setNegativeButton(getString(android.R.string.cancel), () -> {
+			installer.deleteTemp();
+			installer.clearCache();
+			dismiss();
+		});
 		hideProgress();
 		showButtons();
 	}

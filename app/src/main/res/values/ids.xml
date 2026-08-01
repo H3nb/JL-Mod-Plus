@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright 2026 H3NB
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<resources>
+    <item name="container" type="id" />
+    <item name="overlay" type="id" />
+    <item name="action_start" type="id" />
+    <item name="action_clear_data" type="id" />
+    <item name="action_rms_editor" type="id" />
+    <item name="action_reset_settings" type="id" />
+    <item name="action_reset_layout" type="id" />
+    <item name="action_load_profile" type="id" />
+    <item name="action_save_profile" type="id" />
+    <item name="add" type="id" />
+    <item name="action_search" type="id" />
+    <item name="action_view" type="id" />
+    <item name="action_sort" type="id" />
+    <item name="action_about" type="id" />
+    <item name="action_settings" type="id" />
+    <item name="action_profiles" type="id" />
+    <item name="action_help" type="id" />
+    <item name="action_save_log" type="id" />
+    <item name="action_exit_app" type="id" />
+    <item name="action_context_shortcut" type="id" />
+    <item name="action_context_rename" type="id" />
+    <item name="action_context_settings" type="id" />
+    <item name="action_context_reinstall" type="id" />
+    <item name="action_context_delete" type="id" />
+    <item name="action_context_default" type="id" />
+    <item name="action_context_edit" type="id" />
+    <item name="action_reset_mapping" type="id" />
+    <item name="action_exit_midlet" type="id" />
+    <item name="action_lock_orientation" type="id" />
+    <item name="action_group_canvas" type="id" />
+    <item name="action_ime_keyboard" type="id" />
+    <item name="action_take_screenshot" type="id" />
+    <item name="action_limit_fps" type="id" />
+    <item name="action_emulation_speed" type="id" />
+    <item name="action_memory_editor" type="id" />
+    <item name="action_submenu_vk" type="id" />
+    <item name="action_layout_edit_mode" type="id" />
+    <item name="action_layout_scale_mode" type="id" />
+    <item name="action_layout_edit_finish" type="id" />
+    <item name="action_layout_switch" type="id" />
+    <item name="action_hide_buttons" type="id" />
+</resources>

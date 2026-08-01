@@ -25,7 +25,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
-import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
@@ -100,15 +100,18 @@ public class FilteredFilePickerFragment extends AbstractFilePickerFragment<File>
 	@NonNull
 	@Override
 	public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-		LayoutInflater li = getLayoutInflater();
 		return switch (viewType) {
 			case LogicHandler.VIEWTYPE_HEADER ->
-					new HeaderViewHolder(li.inflate(R.layout.listitem_dir, parent, false));
+					new HeaderViewHolder(createItemView(parent, false));
 			case LogicHandler.VIEWTYPE_CHECKABLE ->
-					new CheckableViewHolder(li.inflate(R.layout.listitem_checkable, parent, false));
+					new CheckableViewHolder(createItemView(parent, true));
 			//case LogicHandler.VIEWTYPE_DIR,
-			default -> new DirViewHolder(li.inflate(R.layout.listitem_dir, parent, false));
+			default -> new DirViewHolder(createItemView(parent, false));
 		};
+	}
+
+	private static View createItemView(@NonNull ViewGroup parent, boolean checkable) {
+		return FilePickerItemComposeFactory.createItemView(parent, checkable);
 	}
 
 	@Override

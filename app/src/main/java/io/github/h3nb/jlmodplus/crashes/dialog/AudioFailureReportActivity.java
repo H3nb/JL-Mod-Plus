@@ -20,16 +20,17 @@ import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
+import android.app.Dialog;
 import android.os.Bundle;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.IOException;
 
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.ui.ComposeDialogHost;
 import ru.woesss.j2me.mmapi.audio.AudioFailureReportStore;
 
 /** Displays an audio report and lets the user copy or share it explicitly. */
@@ -53,14 +54,19 @@ public final class AudioFailureReportActivity extends AppCompatActivity {
 	}
 
 	private void showReportDialog() {
-		new AlertDialog.Builder(this)
-				.setTitle(R.string.audio_failure_report_title)
-				.setMessage(report + "\n\n" + getString(R.string.audio_failure_report_instruction))
-				.setPositiveButton(R.string.share_error_report, (dialog, which) -> shareReport())
-				.setNeutralButton(android.R.string.copy, (dialog, which) -> copyReport())
-				.setNegativeButton(android.R.string.cancel, null)
-				.setOnDismissListener(dialog -> finish())
-				.show();
+		Dialog dialog = ComposeDialogHost.showMessage(
+				this,
+				getString(R.string.audio_failure_report_title),
+				report + "\n\n" + getString(R.string.audio_failure_report_instruction),
+				getString(R.string.share_error_report),
+				getString(android.R.string.cancel),
+				getString(android.R.string.copy),
+				true,
+				this::shareReport,
+				null,
+				this::copyReport
+		);
+		dialog.setOnDismissListener(ignored -> finish());
 	}
 
 	private void copyReport() {

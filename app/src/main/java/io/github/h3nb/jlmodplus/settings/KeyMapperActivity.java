@@ -19,47 +19,35 @@
 package io.github.h3nb.jlmodplus.settings;
 
 import android.content.Intent;
-import android.graphics.Rect;
 import android.os.Bundle;
 import android.util.SparseIntArray;
 import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.MotionEvent;
-import android.view.View;
-import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.gson.GsonBuilder;
 
 import java.io.File;
 
-import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.keyboard.KeyMapper;
 
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.ui.ComposeDialogHost;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.ProfilesManager;
-import io.github.h3nb.jlmodplus.databinding.ActivityKeymapperBinding;
 import io.github.h3nb.jlmodplus.util.SparseIntArrayAdapter;
 
-public class KeyMapperActivity extends AppCompatActivity implements View.OnClickListener {
+public class KeyMapperActivity extends AppCompatActivity implements KeyMapperComposeView.Callback {
 	private static final String KEY_SAVE = "KEY_MAP_SAVE";
 	private final SparseIntArray defaultKeyMap = KeyMapper.getDefaultKeyMap();
-	private final SparseIntArray idToCanvasKey = new SparseIntArray();
-	private final Rect popupRect = new Rect();
 	private SparseIntArray androidToMIDP;
 	private ProfileModel params;
 	private int canvasKey;
-	private ActivityKeymapperBinding binding;
+	private KeyMapperComposeView composeView;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -71,39 +59,13 @@ public class KeyMapperActivity extends AppCompatActivity implements View.OnClick
 			finish();
 			return;
 		}
-		binding = ActivityKeymapperBinding.inflate(getLayoutInflater());
-		setContentView(binding.getRoot());
-		ActionBar actionBar = getSupportActionBar();
-		if (actionBar != null) {
-			actionBar.setDisplayHomeAsUpEnabled(true);
-			actionBar.setTitle(R.string.pref_map_keys);
+		composeView = new KeyMapperComposeView(this, this);
+		setContentView(composeView);
+		if (getSupportActionBar() != null) {
+			getSupportActionBar().hide();
 		}
 		params = ProfilesManager.loadConfig(new File(path));
 
-		setupButton(binding.virtualKeyLeftSoft, Canvas.KEY_SOFT_LEFT);
-		setupButton(binding.virtualKeyRightSoft, Canvas.KEY_SOFT_RIGHT);
-		setupButton(binding.virtualKeyD, Canvas.KEY_SEND);
-		setupButton(binding.virtualKeyC, Canvas.KEY_END);
-		setupButton(binding.virtualKeyLeft, Canvas.KEY_LEFT);
-		setupButton(binding.virtualKeyRight, Canvas.KEY_RIGHT);
-		setupButton(binding.virtualKeyUp, Canvas.KEY_UP);
-		setupButton(binding.virtualKeyDown, Canvas.KEY_DOWN);
-		setupButton(binding.virtualKeyF, Canvas.KEY_FIRE);
-		setupButton(binding.virtualKey1, Canvas.KEY_NUM1);
-		setupButton(binding.virtualKey2, Canvas.KEY_NUM2);
-		setupButton(binding.virtualKey3, Canvas.KEY_NUM3);
-		setupButton(binding.virtualKey4, Canvas.KEY_NUM4);
-		setupButton(binding.virtualKey5, Canvas.KEY_NUM5);
-		setupButton(binding.virtualKey6, Canvas.KEY_NUM6);
-		setupButton(binding.virtualKey7, Canvas.KEY_NUM7);
-		setupButton(binding.virtualKey8, Canvas.KEY_NUM8);
-		setupButton(binding.virtualKey9, Canvas.KEY_NUM9);
-		setupButton(binding.virtualKey0, Canvas.KEY_NUM0);
-		setupButton(binding.virtualKeyStar, Canvas.KEY_STAR);
-		setupButton(binding.virtualKeyPound, Canvas.KEY_POUND);
-		setupButton(binding.virtualKeyA, KeyMapper.SE_KEY_SPECIAL_GAMING_A);
-		setupButton(binding.virtualKeyB, KeyMapper.SE_KEY_SPECIAL_GAMING_B);
-		setupButton(binding.virtualKeyMenu, KeyMapper.KEY_OPTIONS_MENU);
 		if (savedInstanceState == null) {
 			SparseIntArray keyMap = params.keyMappings;
 			androidToMIDP = keyMap == null ? defaultKeyMap.clone() : keyMap.clone();
@@ -151,14 +113,8 @@ public class KeyMapperActivity extends AppCompatActivity implements View.OnClick
 		super.onSaveInstanceState(outState);
 	}
 
-	private void setupButton(Button button, int index) {
-		idToCanvasKey.put(button.getId(), index);
-		button.setOnClickListener(this);
-	}
-
 	@Override
-	public void onClick(View v) {
-		int canvasKey = idToCanvasKey.get(v.getId());
+	public void onKeyClick(int canvasKey) {
 		showMappingDialog(canvasKey);
 	}
 
@@ -172,8 +128,7 @@ public class KeyMapperActivity extends AppCompatActivity implements View.OnClick
 		} else {
 			keyName = KeyEvent.keyCodeToString(androidToMIDP.keyAt(idx));
 		}
-		binding.keyMapperPopupMsg.setText(getString(R.string.mapping_dialog_message, keyName));
-		binding.keyMapperLayer.setVisibility(View.VISIBLE);
+		composeView.showMappingDialog(getString(R.string.mapping_dialog_message, keyName));
 	}
 
 	private void deleteDuplicates(int value) {
@@ -186,21 +141,13 @@ public class KeyMapperActivity extends AppCompatActivity implements View.OnClick
 	}
 
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.keymapper, menu);
-		return super.onCreateOptionsMenu(menu);
+	public void onBack() {
+		getOnBackPressedDispatcher().onBackPressed();
 	}
 
 	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		int itemId = item.getItemId();
-		if (itemId == android.R.id.home) {
-			getOnBackPressedDispatcher().onBackPressed();
-		} else if (itemId == R.id.action_reset_mapping) {
-			androidToMIDP = defaultKeyMap.clone();
-		}
-		return super.onOptionsItemSelected(item);
+	public void onResetMapping() {
+		androidToMIDP = defaultKeyMap.clone();
 	}
 
 	private void save() {
@@ -216,15 +163,21 @@ public class KeyMapperActivity extends AppCompatActivity implements View.OnClick
 	}
 
 	private void alertMenuKey() {
-		new AlertDialog.Builder(this)
-				.setTitle(R.string.warning)
-				.setMessage(R.string.alert_map_menu)
-				.setNegativeButton(R.string.save, (d, w) -> {
+		ComposeDialogHost.showMessage(
+				this,
+				getString(R.string.warning),
+				getString(R.string.alert_map_menu),
+				getString(R.string.CANCEL_CMD),
+				getString(R.string.save),
+				null,
+				true,
+				null,
+				() -> {
 					save();
 					finish();
-				})
-				.setPositiveButton(R.string.CANCEL_CMD, null)
-				.show();
+				},
+				null
+		);
 	}
 
 	private boolean equalMaps(SparseIntArray map1, SparseIntArray map2) {
@@ -245,7 +198,7 @@ public class KeyMapperActivity extends AppCompatActivity implements View.OnClick
 
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent event) {
-		if (binding.keyMapperLayer.getVisibility() == View.VISIBLE
+		if (composeView.isMappingDialogVisible()
 				&& event.getAction() == KeyEvent.ACTION_DOWN) {
 			int keyCode = event.getKeyCode();
 			switch (keyCode) {
@@ -256,22 +209,11 @@ public class KeyMapperActivity extends AppCompatActivity implements View.OnClick
 				default:
 					deleteDuplicates(canvasKey);
 					androidToMIDP.put(keyCode, canvasKey);
-					binding.keyMapperLayer.setVisibility(View.GONE);
+					composeView.hideMappingDialog();
 					return true;
 			}
 		}
 		return super.dispatchKeyEvent(event);
 	}
 
-	@Override
-	public boolean dispatchTouchEvent(MotionEvent event) {
-		if (binding.keyMapperLayer.getVisibility() == View.VISIBLE && event.getAction() == MotionEvent.ACTION_DOWN) {
-			binding.keyMapperPopup.getGlobalVisibleRect(popupRect);
-			if (!popupRect.contains(((int) event.getX()), ((int) event.getY()))) {
-				binding.keyMapperLayer.setVisibility(View.GONE);
-			}
-			return true;
-		}
-		return super.dispatchTouchEvent(event);
-	}
 }

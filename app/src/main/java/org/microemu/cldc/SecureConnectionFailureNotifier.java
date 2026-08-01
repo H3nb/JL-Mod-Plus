@@ -21,8 +21,6 @@ import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
-
 import java.security.cert.CertificateException;
 import java.util.HashSet;
 import java.util.Set;
@@ -35,6 +33,7 @@ import javax.microedition.util.ContextHolder;
 import javax.net.ssl.SSLException;
 
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.ui.ComposeDialogHost;
 
 public final class SecureConnectionFailureNotifier {
 	private static final String TAG = SecureConnectionFailureNotifier.class.getName();
@@ -103,29 +102,34 @@ public final class SecureConnectionFailureNotifier {
 		CountDownLatch decisionLatch = new CountDownLatch(1);
 		activity.runOnUiThread(() -> {
 			try {
-				new AlertDialog.Builder(activity)
-						.setIcon(android.R.drawable.ic_dialog_alert)
-						.setTitle(R.string.secure_connection_ask_title)
-						.setMessage(message)
-						.setNegativeButton(android.R.string.cancel, (dialog, which) -> {
-							decisionRecorded.set(true);
-							decisionLatch.countDown();
-						})
-						.setPositiveButton(R.string.secure_connection_continue_once, (dialog, which) -> {
+				android.app.Dialog dialog = ComposeDialogHost.showMessage(
+						activity,
+						activity.getString(R.string.secure_connection_ask_title),
+						message,
+						activity.getString(R.string.secure_connection_continue_once),
+						activity.getString(android.R.string.cancel),
+						null,
+						true,
+						() -> {
 							continueInsecurely.set(true);
 							decisionRecorded.set(true);
 							decisionLatch.countDown();
-						})
-						.setOnCancelListener(dialog -> {
+						},
+						() -> {
 							decisionRecorded.set(true);
 							decisionLatch.countDown();
-						})
-						.setOnDismissListener(dialog -> {
-							if (decisionRecorded.compareAndSet(false, true)) {
-								decisionLatch.countDown();
-							}
-						})
-						.show();
+						},
+						null,
+						() -> {
+							decisionRecorded.set(true);
+							decisionLatch.countDown();
+						}
+				);
+				dialog.setOnDismissListener(ignored -> {
+					if (decisionRecorded.compareAndSet(false, true)) {
+						decisionLatch.countDown();
+					}
+				});
 			} catch (RuntimeException ex) {
 				Log.w(TAG, "Unable to show secure connection decision dialog", ex);
 				if (decisionRecorded.compareAndSet(false, true)) {
@@ -167,13 +171,20 @@ public final class SecureConnectionFailureNotifier {
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
 			try {
-				new AlertDialog.Builder(activity)
-						.setIcon(android.R.drawable.ic_dialog_alert)
-						.setTitle(R.string.secure_connection_blocked_title)
-						.setMessage(message)
-						.setPositiveButton(android.R.string.ok, null)
-						.setOnDismissListener(dialog -> notificationActive.set(false))
-						.show();
+				android.app.Dialog dialog = ComposeDialogHost.showMessage(
+						activity,
+						activity.getString(R.string.secure_connection_blocked_title),
+						message,
+						activity.getString(android.R.string.ok),
+						null,
+						null,
+						true,
+						null,
+						null,
+						null,
+						() -> notificationActive.set(false)
+				);
+				dialog.setOnDismissListener(ignored -> notificationActive.set(false));
 				return;
 			} catch (RuntimeException ex) {
 				Log.w(TAG, "Unable to show secure connection dialog", ex);

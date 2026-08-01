@@ -24,6 +24,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
+import androidx.activity.ComponentDialog
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -60,7 +61,7 @@ class MemoryEditorDialogFragment : DialogFragment() {
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
-        Dialog(requireContext()).apply {
+        ComponentDialog(requireContext()).apply {
             requestWindowFeature(Window.FEATURE_NO_TITLE)
         }
 

@@ -91,7 +91,6 @@ android {
     androidResources.generateLocaleConfig = true
 
     buildFeatures {
-        viewBinding = true
         compose = true
         prefab = true
         buildConfig = true

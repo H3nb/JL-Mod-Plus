@@ -18,33 +18,60 @@
 package io.github.h3nb.jlmodplus.settings;
 
 import android.os.Bundle;
-import android.view.MenuItem;
+import android.content.Intent;
+import android.net.Uri;
 
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
-import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.config.ProfilesActivity;
+import io.github.h3nb.jlmodplus.util.FileUtils;
+import io.github.h3nb.jlmodplus.util.PickDirResultContract;
+
+import java.io.File;
 
 public class SettingsActivity extends AppCompatActivity {
+	private SettingsComposeView composeView;
+	private final ActivityResultLauncher<String> openDirLauncher = registerForActivityResult(
+			new PickDirResultContract(),
+			this::onPickDirResult);
 
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_settings);
-		ActionBar actionBar = getSupportActionBar();
-		if (actionBar != null) {
-			actionBar.setDisplayHomeAsUpEnabled(true);
+		composeView = new SettingsComposeView(this, new SettingsComposeView.Callback() {
+			@Override
+			public void onBack() {
+				finish();
+			}
+
+			@Override
+			public void onProfiles() {
+				startActivity(new Intent(SettingsActivity.this, ProfilesActivity.class));
+			}
+
+			@Override
+			public void onChooseDirectory() {
+				openDirLauncher.launch(null);
+			}
+		});
+		setContentView(composeView);
+		if (getSupportActionBar() != null) {
+			getSupportActionBar().hide();
 		}
-		setTitle(R.string.action_settings);
 	}
 
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		if (item.getItemId() == android.R.id.home) {
-			finish();
-			return true;
+	private void onPickDirResult(Uri uri) {
+		if (uri == null || uri.getPath() == null) {
+			return;
 		}
-		return super.onOptionsItemSelected(item);
+		File file = new File(uri.getPath());
+		String path = file.getAbsolutePath();
+		if (!FileUtils.initWorkDir(file)) {
+			composeView.showDirectoryError(path);
+			return;
+		}
+		composeView.setDirectory(path);
 	}
 }

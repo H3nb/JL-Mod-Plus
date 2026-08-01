@@ -1451,8 +1451,26 @@ private val REFINE_MODES = listOf(
 
 @Preview(name = "Memory editor setup", showBackground = true, widthDp = 420, heightDp = 760)
 @Composable
-private fun SetupPreview() {
+internal fun MemoryEditorSetupPreview() {
     MemoryEditorTheme {
+        MemoryEditorScreen(
+            state = MemoryEditorUiState(),
+            actions = MemoryEditorActions(),
+            onClose = {},
+        )
+    }
+}
+
+@Preview(
+    name = "Memory editor setup dark",
+    showBackground = true,
+    widthDp = 420,
+    heightDp = 760,
+    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES,
+)
+@Composable
+internal fun MemoryEditorSetupDarkPreview() {
+    MemoryEditorTheme(darkTheme = true) {
         MemoryEditorScreen(
             state = MemoryEditorUiState(),
             actions = MemoryEditorActions(),
@@ -1463,7 +1481,7 @@ private fun SetupPreview() {
 
 @Preview(name = "Memory editor collecting", showBackground = true, widthDp = 420, heightDp = 760)
 @Composable
-private fun CollectingPreview() {
+internal fun MemoryEditorCollectingPreview() {
     MemoryEditorTheme {
         MemoryEditorScreen(
             state = MemoryEditorUiState(
@@ -1487,7 +1505,7 @@ private fun CollectingPreview() {
 
 @Preview(name = "Memory editor results", showBackground = true, widthDp = 420, heightDp = 760)
 @Composable
-private fun ResultsPreview() {
+internal fun MemoryEditorResultsPreview() {
     MemoryEditorTheme {
         MemoryEditorScreen(
             state = MemoryEditorUiState(
@@ -1520,6 +1538,142 @@ private fun ResultsPreview() {
             ),
             actions = MemoryEditorActions(),
             onClose = {},
+        )
+    }
+}
+
+@Preview(
+    name = "Memory editor results dark",
+    showBackground = true,
+    widthDp = 420,
+    heightDp = 760,
+    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES,
+)
+@Composable
+internal fun MemoryEditorResultsDarkPreview() {
+    MemoryEditorTheme(darkTheme = true) {
+        MemoryEditorScreen(
+            state = MemoryEditorUiState(
+                phase = MemoryEditorPhase.RESULTS,
+                snapshot = MemoryEditorSnapshot(
+                    kind = MemoryEditorRuntime.ValueKind.INT,
+                    candidates = 2,
+                    frozen = 1,
+                    intObservations = 500,
+                ),
+                candidates = listOf(
+                    MemoryCandidate(
+                        id = 1,
+                        value = "750",
+                        storageType = "int",
+                        location = "game.Player.coins",
+                        frozen = true,
+                        editable = true,
+                    ),
+                    MemoryCandidate(
+                        id = 2,
+                        value = "12",
+                        storageType = "short",
+                        location = "short[][4]",
+                        frozen = false,
+                        editable = true,
+                    ),
+                ),
+                selectedIds = setOf(1),
+            ),
+            actions = MemoryEditorActions(),
+            onClose = {},
+        )
+    }
+}
+
+@Preview(name = "Memory editor saved", showBackground = true, widthDp = 420, heightDp = 760)
+@Composable
+internal fun MemoryEditorSavedPreview() {
+    MemoryEditorTheme {
+        Surface {
+            SavedContent(
+                state = MemoryEditorUiState(
+                    snapshot = MemoryEditorSnapshot(
+                        candidates = 2,
+                        frozen = 1,
+                        saved = 2,
+                    ),
+                    savedCandidates = listOf(
+                        MemoryCandidate(
+                            id = 10,
+                            value = "750",
+                            storageType = "int",
+                            location = "game.Player.coins",
+                            frozen = true,
+                            saved = true,
+                            editable = true,
+                        ),
+                        MemoryCandidate(
+                            id = 11,
+                            value = "12",
+                            storageType = "short",
+                            location = "short[][4]",
+                            frozen = false,
+                            saved = true,
+                            editable = true,
+                        ),
+                    ),
+                    selectedIds = setOf(10),
+                ),
+                actions = MemoryEditorActions(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp),
+            )
+        }
+    }
+}
+
+@Preview(name = "Memory editor settings", showBackground = true, widthDp = 420, heightDp = 760)
+@Composable
+internal fun MemoryEditorSettingsPreview() {
+    MemoryEditorTheme {
+        Surface {
+            SettingsContent(
+                state = MemoryEditorUiState(
+                    pauseEnabled = true,
+                    layoutTransparency = 0.25f,
+                ),
+                actions = MemoryEditorActions(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp),
+            )
+        }
+    }
+}
+
+@Preview(name = "Memory editor keypad", showBackground = true, widthDp = 760, heightDp = 420)
+@Composable
+internal fun MemoryEditorKeypadPreview() {
+    MemoryEditorTheme {
+        NumericInputDialog(
+            title = "Edit selected",
+            label = "Replacement",
+            initialValue = "750",
+            kind = MemoryEditorRuntime.ValueKind.INT,
+            confirmLabel = "Apply edit",
+            onDismiss = {},
+            onConfirm = {},
+        )
+    }
+}
+
+@Preview(name = "Memory editor replacement", showBackground = true, widthDp = 420, heightDp = 760)
+@Composable
+internal fun MemoryEditorReplacementPreview() {
+    MemoryEditorTheme {
+        ReplacementDialog(
+            action = OperationKind.FREEZE,
+            kind = MemoryEditorRuntime.ValueKind.FLOAT,
+            onDismiss = {},
+            onConfirm = {},
         )
     }
 }

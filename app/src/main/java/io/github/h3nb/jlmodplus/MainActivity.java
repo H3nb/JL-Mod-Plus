@@ -23,11 +23,12 @@ import android.content.Intent;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.widget.FrameLayout;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 
@@ -40,6 +41,7 @@ import io.github.h3nb.jlmodplus.util.Constants;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.PickDirResultContract;
 import io.github.h3nb.jlmodplus.util.StoragePermissionHelper;
+import io.github.h3nb.jlmodplus.ui.ComposeDialogHost;
 import ru.woesss.j2me.installer.InstallerDialog;
 
 public class MainActivity extends AppCompatActivity {
@@ -56,10 +58,16 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+		FrameLayout fragmentContainer = new FrameLayout(this);
+		fragmentContainer.setId(R.id.container);
+		setContentView(fragmentContainer);
+		if (getSupportActionBar() != null) {
+			getSupportActionBar().hide();
+		}
 		storagePermissionHelper.launch(this);
 		appListModel = new ViewModelProvider(this).get(AppListModel.class);
-		if (savedInstanceState == null) {
+		if (savedInstanceState == null
+				|| getSupportFragmentManager().findFragmentById(R.id.container) == null) {
 			Intent intent = getIntent();
 			Uri uri = null;
 			if ((intent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0) {
@@ -67,9 +75,20 @@ public class MainActivity extends AppCompatActivity {
 			}
 			AppsListFragment fragment = AppsListFragment.newInstance(uri);
 			getSupportFragmentManager().beginTransaction()
-					.replace(R.id.container, fragment).commit();
+					.replace(R.id.container, fragment).commitNow();
 		}
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
+	}
+
+	@Override
+	protected void onPostResume() {
+		super.onPostResume();
+		Fragment home = getSupportFragmentManager().findFragmentById(R.id.container);
+		if (home == null || home.getView() == null) {
+			getSupportFragmentManager().beginTransaction()
+					.replace(R.id.container, AppsListFragment.newInstance(null))
+					.commitNow();
+		}
 	}
 
 	private void checkAndCreateDirs() {
@@ -89,13 +108,18 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void alertDirCannotCreate(String emulatorDir) {
-		new AlertDialog.Builder(this)
-				.setTitle(R.string.error)
-				.setCancelable(false)
-				.setMessage(getString(R.string.create_apps_dir_failed, emulatorDir))
-				.setNegativeButton(R.string.exit, (d, w) -> finish())
-				.setPositiveButton(R.string.choose, (d, w) -> openDirLauncher.launch(null))
-				.show();
+		ComposeDialogHost.showMessage(
+				this,
+				getString(R.string.error),
+				getString(R.string.create_apps_dir_failed, emulatorDir),
+				getString(R.string.choose),
+				getString(R.string.exit),
+				null,
+				false,
+				() -> openDirLauncher.launch(null),
+				this::finish,
+				null
+		);
 	}
 
 	void onPermissionResult(boolean granted) {
@@ -103,13 +127,18 @@ public class MainActivity extends AppCompatActivity {
 			checkAndCreateDirs();
 			return;
 		}
-		new AlertDialog.Builder(this)
-				.setTitle(android.R.string.dialog_alert_title)
-				.setCancelable(false)
-				.setMessage(R.string.permission_request_failed)
-				.setNegativeButton(R.string.retry, (d, w) -> storagePermissionHelper.launch(this))
-				.setPositiveButton(R.string.exit, (d, w) -> finish())
-				.show();
+		ComposeDialogHost.showMessage(
+				this,
+				getString(android.R.string.dialog_alert_title),
+				getString(R.string.permission_request_failed),
+				getString(R.string.exit),
+				getString(R.string.retry),
+				null,
+				false,
+				this::finish,
+				() -> storagePermissionHelper.launch(this),
+				null
+		);
 	}
 
 	private void onPickDirResult(Uri uri) {
@@ -124,14 +153,18 @@ public class MainActivity extends AppCompatActivity {
 	private void alertCreateDir() {
 		String emulatorDir = Config.getEmulatorDir();
 		String msg = getString(R.string.alert_msg_workdir_not_exists, emulatorDir);
-		new AlertDialog.Builder(this)
-				.setTitle(android.R.string.dialog_alert_title)
-				.setCancelable(false)
-				.setMessage(msg)
-				.setPositiveButton(R.string.create, (d, w) -> applyWorkDir(new File(emulatorDir)))
-				.setNeutralButton(R.string.change, (d, w) -> openDirLauncher.launch(emulatorDir))
-				.setNegativeButton(R.string.exit, (d, w) -> finish())
-				.show();
+		ComposeDialogHost.showMessage(
+				this,
+				getString(android.R.string.dialog_alert_title),
+				msg,
+				getString(R.string.create),
+				getString(R.string.exit),
+				getString(R.string.change),
+				false,
+				() -> applyWorkDir(new File(emulatorDir)),
+				this::finish,
+				() -> openDirLauncher.launch(emulatorDir)
+		);
 	}
 
 	private void applyWorkDir(File file) {

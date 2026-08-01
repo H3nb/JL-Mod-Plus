@@ -17,31 +17,18 @@
 
 package io.github.h3nb.jlmodplus.crashes.dialog;
 
-import static android.content.DialogInterface.BUTTON_NEGATIVE;
-import static android.content.DialogInterface.BUTTON_NEUTRAL;
-import static android.content.DialogInterface.BUTTON_POSITIVE;
 import static io.github.h3nb.jlmodplus.crashes.dialog.DialogInteraction.EXTRA_REPORT_FILE;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.SpannedString;
-import android.text.style.TypefaceSpan;
-import android.widget.Button;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.core.content.ContextCompat;
-import androidx.core.graphics.drawable.DrawableCompat;
-import androidx.core.widget.TextViewCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import org.acra.file.BulkReportDeleter;
@@ -50,10 +37,12 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.ui.ComposeDialogHost;
 
 public final class CrashReportDialog extends AppCompatActivity {
 	private File reportFile;
 	private CrashViewModel viewModel;
+	private android.app.Dialog reportDialog;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -76,61 +65,52 @@ public final class CrashReportDialog extends AppCompatActivity {
 	}
 
 	private void buildAndShowDialog(String stackTrace) {
-		SpannableStringBuilder builder = new SpannableStringBuilder(stackTrace);
-		TypefaceSpan span = new TypefaceSpan("monospace");
-		builder.setSpan(span, 0, builder.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-		builder.append("\n\n");
-		builder.append(getString(R.string.crash_report_instruction));
-
-		ContextThemeWrapper context = new ContextThemeWrapper(this, R.style.AppTheme);
-		AlertDialog dialog = new AlertDialog.Builder(context)
-				.setTitle(R.string.crash_dialog_title)
-				.setMessage(new SpannedString(builder))
-				.setPositiveButton(R.string.report_crash, null)
-				.setNegativeButton(android.R.string.cancel, null)
-				.setNeutralButton(android.R.string.copy, null)
-				.setOnCancelListener(dialogInterface -> deleteReports())
-				.setOnDismissListener(dialogInterface -> finish())
-				.create();
-		dialog.setCanceledOnTouchOutside(false);
-		dialog.show();
-		dialog.getButton(BUTTON_POSITIVE).setOnClickListener(view -> showReportOptions(dialog));
-		dialog.getButton(BUTTON_NEGATIVE).setOnClickListener(view -> {
-			deleteReports();
-			dialog.dismiss();
-		});
-		dialog.getButton(BUTTON_NEUTRAL).setOnClickListener(view -> {
-			copyStackTrace();
-			deleteReports();
-			dialog.dismiss();
-		});
-		Drawable drawable = ContextCompat.getDrawable(this,
-				androidx.appcompat.R.drawable.abc_ic_menu_copy_mtrl_am_alpha);
-		if (drawable != null) {
-			Button button = dialog.getButton(BUTTON_NEUTRAL);
-			DrawableCompat.setTint(drawable, ContextCompat.getColor(this, R.color.accent));
-			TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(button,
-					drawable, null, null, null);
-			button.setText(null);
-		}
+		String message = stackTrace + "\n\n" + getString(R.string.crash_report_instruction);
+		reportDialog = ComposeDialogHost.showMessage(
+				this,
+				getString(R.string.crash_dialog_title),
+				message,
+				getString(R.string.report_crash),
+				getString(android.R.string.cancel),
+				getString(android.R.string.copy),
+				true,
+				() -> showReportOptions(reportDialog),
+				() -> {
+					deleteReports();
+					reportDialog.dismiss();
+				},
+				() -> {
+					copyStackTrace();
+					deleteReports();
+					reportDialog.dismiss();
+				},
+				this::deleteReports,
+				false
+		);
+		reportDialog.setCanceledOnTouchOutside(false);
+		reportDialog.setOnDismissListener(dialog -> finish());
 	}
 
-	private void showReportOptions(AlertDialog reportDialog) {
-		CharSequence[] options = {
+	private void showReportOptions(android.app.Dialog reportDialog) {
+		String[] options = {
 				getString(R.string.share_error_report),
 				getString(R.string.github_issues_account_required)
 		};
-		new AlertDialog.Builder(this)
-				.setTitle(R.string.report_crash)
-				.setItems(options, (dialog, which) -> {
+		ComposeDialogHost.showChoice(
+				this,
+				getString(R.string.report_crash),
+				options,
+				-1,
+				getString(android.R.string.cancel),
+				true,
+				which -> {
 					boolean opened = which == 0 ? shareReport() : openGithubIssues();
 					if (opened) {
 						deleteReports();
 						reportDialog.dismiss();
 					}
-				})
-				.setNegativeButton(android.R.string.cancel, null)
-				.show();
+				}
+		);
 	}
 
 	private boolean shareReport() {

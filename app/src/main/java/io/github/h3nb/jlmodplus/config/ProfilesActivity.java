@@ -27,29 +27,26 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.ContextMenu;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.AdapterView;
+import android.view.Gravity;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContract;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
 
+import java.io.File;
 import java.util.ArrayList;
-import java.util.Objects;
 
 import io.github.h3nb.jlmodplus.R;
-import io.github.h3nb.jlmodplus.databinding.ActivityProfilesBinding;
+import io.github.h3nb.jlmodplus.ui.ComposeDialogHost;
 
-public class ProfilesActivity extends AppCompatActivity implements EditNameAlert.Callback, AdapterView.OnItemClickListener {
-	private ProfilesAdapter adapter;
+public class ProfilesActivity extends AppCompatActivity implements ProfilesComposeView.Callback {
+	private ProfilesComposeView composeView;
+	private ArrayList<Profile> profiles;
+	private Profile defaultProfile;
 	private SharedPreferences preferences;
 	private final ActivityResultLauncher<String> editProfileLauncher = registerForActivityResult(
 			new ActivityResultContract<String, String>() {
@@ -70,114 +67,103 @@ public class ProfilesActivity extends AppCompatActivity implements EditNameAlert
 			},
 			name -> {
 				if (name != null) {
-					adapter.addItem(new Profile(name));
+					composeView.addProfile(new Profile(name));
 				}
 			});
 
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		ActivityProfilesBinding binding = ActivityProfilesBinding.inflate(getLayoutInflater());
-		setContentView(binding.getRoot());
-		ActionBar actionBar = getSupportActionBar();
-		if (actionBar != null) {
-			actionBar.setDisplayHomeAsUpEnabled(true);
+		composeView = new ProfilesComposeView(this, this);
+		setContentView(composeView);
+		if (getSupportActionBar() != null) {
+			getSupportActionBar().hide();
 		}
 		setTitle(R.string.profiles);
 
 		preferences = PreferenceManager.getDefaultSharedPreferences(this);
-		ArrayList<Profile> profiles = ProfilesManager.getProfiles();
-		binding.list.setEmptyView(binding.empty);
-		registerForContextMenu(binding.list);
-		adapter = new ProfilesAdapter(getLayoutInflater(), profiles);
-		binding.list.setAdapter(adapter);
+		profiles = ProfilesManager.getProfiles();
 		final String def = preferences.getString(PREF_DEFAULT_PROFILE, null);
 		if (def != null) {
 			for (int i = profiles.size() - 1; i >= 0; i--) {
 				Profile profile = profiles.get(i);
 				if (profile.getName().equals(def)) {
-					adapter.setDefault(profile);
+					defaultProfile = profile;
 					break;
 				}
 			}
 		}
-		binding.list.setOnItemClickListener(this);
+		composeView.setProfiles(profiles, defaultProfile == null ? null : defaultProfile.getName());
 	}
 
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.activity_profiles, menu);
-		return super.onCreateOptionsMenu(menu);
+	public void onBack() {
+		finish();
 	}
 
 	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		int itemId = item.getItemId();
-		if (itemId == android.R.id.home) {
-			finish();
-			return true;
-		} else if (itemId == R.id.add) {
-			EditNameAlert.newInstance(getString(R.string.enter_name), null, -1)
-					.show(getSupportFragmentManager(), "alert_create_profile");
-			return true;
-		}
-		return super.onOptionsItemSelected(item);
+	public void onAdd() {
+		showProfileNameDialog(getString(R.string.enter_name), null, -1);
 	}
 
 	@Override
-	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.profile, menu);
-		AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
-		final Profile profile = adapter.getItem(info.position);
-		if (!profile.hasConfig() && !profile.hasOldConfig()) {
-			menu.findItem(R.id.action_context_default).setVisible(false);
-			menu.findItem(R.id.action_context_edit).setVisible(false);
-		}
-	}
-
-	@Override
-	public boolean onContextItemSelected(MenuItem item) {
-		AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-		int index = Objects.requireNonNull(info).position;
-		final Profile profile = adapter.getItem(index);
-		int itemId = item.getItemId();
+	public void onProfileAction(Profile profile, int itemId) {
 		if (itemId == R.id.action_context_default) {
 			preferences.edit().putString(PREF_DEFAULT_PROFILE, profile.getName()).apply();
-			adapter.setDefault(profile);
-			return true;
+			defaultProfile = profile;
+			composeView.setDefault(profile);
 		} else if (itemId == R.id.action_context_edit) {
 			final Intent intent = new Intent(ACTION_EDIT_PROFILE,
 					Uri.parse(profile.getName()),
 					getApplicationContext(), ConfigActivity.class);
 			startActivity(intent);
-			return true;
 		} else if (itemId == R.id.action_context_rename) {
-			EditNameAlert.newInstance(getString(R.string.enter_new_name), profile.getName(), index)
-					.show(getSupportFragmentManager(), "alert_rename_profile");
+			showProfileNameDialog(
+					getString(R.string.enter_new_name),
+					profile.getName(),
+					profiles.indexOf(profile)
+			);
 		} else if (itemId == R.id.action_context_delete) {
 			profile.delete();
-			adapter.removeItem(index);
-		}
-		return super.onContextItemSelected(item);
-	}
-
-	@Override
-	public void onNameChanged(int id, String newName) {
-		if (id == -1) {
-			editProfileLauncher.launch(newName);
-			return;
-		}
-		Profile profile = adapter.getItem(id);
-		profile.renameTo(newName);
-		adapter.notifyDataSetChanged();
-		if (adapter.getDefault() == profile) {
-			preferences.edit().putString(PREF_DEFAULT_PROFILE, newName).apply();
+			composeView.removeProfile(profile);
 		}
 	}
 
-	@Override
-	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-		parent.showContextMenuForChild(view);
+	private void showProfileNameDialog(String title, String initialName, int id) {
+		ComposeDialogHost.showTextInput(
+				this,
+				title,
+				getString(R.string.enter_name),
+				initialName == null ? "" : initialName,
+				getString(android.R.string.ok),
+				getString(android.R.string.cancel),
+				false,
+				value -> {
+					String newName = value.trim();
+					if (newName.isEmpty()) {
+						Toast.makeText(this, R.string.error_name, Toast.LENGTH_SHORT).show();
+						return false;
+					}
+					if (newName.equals(initialName)
+							|| new File(Config.getProfilesDir(), newName).exists()) {
+						Toast toast = Toast.makeText(this, R.string.not_saved_exists, Toast.LENGTH_SHORT);
+						toast.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.TOP, 0, 50);
+						toast.show();
+						return false;
+					}
+					if (id == -1) {
+						editProfileLauncher.launch(newName);
+					} else {
+						Profile profile = profiles.get(id);
+						profile.renameTo(newName);
+						composeView.refresh();
+						if (defaultProfile == profile) {
+							preferences.edit().putString(PREF_DEFAULT_PROFILE, newName).apply();
+							composeView.setDefault(profile);
+						}
+					}
+					return true;
+				}
+		);
 	}
 }
