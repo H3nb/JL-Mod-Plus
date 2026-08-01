@@ -17,7 +17,7 @@ working directories before using development builds.
 - Primary product flavor: `emulator`.
 - Packaged native ABI: `arm64-v8a` only.
 - Current SDK baseline: compile SDK 36, minimum SDK 23, target SDK 34.
-- Required JDK: 17.
+- Required JDK: 21 (build runtime; Java/Kotlin bytecode targets remain 17).
 
 JL-Mod Plus has its own application ID and must use its own signing key. Android
 treats it as a separate application, so it can be installed beside JL-Mod or
@@ -35,7 +35,7 @@ new independent package is still being validated.
 
 Requirements:
 
-- JDK 17;
+- JDK 21;
 - Android SDK Platform 36;
 - the NDK version declared in `build.gradle.kts`;
 - the repository cloned with Git submodules.

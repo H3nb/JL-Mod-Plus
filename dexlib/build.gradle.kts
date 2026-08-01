@@ -29,6 +29,11 @@ android {
 
     buildFeatures.buildConfig = true
 
+    compileOptions {
+        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_17
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
