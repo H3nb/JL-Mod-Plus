@@ -1155,13 +1155,29 @@ public final class MemoryEditorRuntime {
 			try {
 				BigInteger integral = new BigDecimal(text.trim()).toBigIntegerExact();
 				if (kind == ValueKind.INT) {
-					return Value.ofInt(integral.intValueExact());
+					return Value.ofInt(exactIntValue(integral));
 				}
-				return Value.ofLong(integral.longValueExact());
+				return Value.ofLong(exactLongValue(integral));
 			} catch (NumberFormatException | ArithmeticException ignored) {
 				throw strictFailure;
 			}
 		}
+	}
+
+	private static int exactIntValue(BigInteger value) {
+		if (value.compareTo(BigInteger.valueOf(Integer.MIN_VALUE)) < 0
+				|| value.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0) {
+			throw new ArithmeticException("Integer overflow");
+		}
+		return value.intValue();
+	}
+
+	private static long exactLongValue(BigInteger value) {
+		if (value.compareTo(BigInteger.valueOf(Long.MIN_VALUE)) < 0
+				|| value.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
+			throw new ArithmeticException("Long overflow");
+		}
+		return value.longValue();
 	}
 
 	private static Criteria parseCriteria(SearchType type, ValueKind kind,
@@ -1479,7 +1495,8 @@ public final class MemoryEditorRuntime {
 			}
 			bucket.add(candidate);
 			if (autoLane != null) {
-				autoLaneCandidates.merge(autoLane, 1, Integer::sum);
+				Integer count = autoLaneCandidates.get(autoLane);
+				autoLaneCandidates.put(autoLane, count == null ? 1 : count + 1);
 			}
 			return candidate;
 		}
@@ -1495,15 +1512,20 @@ public final class MemoryEditorRuntime {
 				if (other == lane) {
 					continue;
 				}
-				int count = autoLaneCandidates.getOrDefault(other, 0);
+				int count = autoLaneCount(other);
 				reservedForOtherLanes += Math.max(0,
 						AUTO_MIN_LANE_CANDIDATES - count);
 			}
 			if (remaining > reservedForOtherLanes) {
 				return true;
 			}
-			return autoLaneCandidates.getOrDefault(lane, 0)
+			return autoLaneCount(lane)
 					< AUTO_MIN_LANE_CANDIDATES;
+		}
+
+		private int autoLaneCount(SearchType lane) {
+			Integer count = autoLaneCandidates.get(lane);
+			return count == null ? 0 : count;
 		}
 
 		private SearchType autoLaneFor(Object target, Class<?> owner,
@@ -1716,7 +1738,13 @@ public final class MemoryEditorRuntime {
 			Iterator<List<Undo>> batches = undo.iterator();
 			while (batches.hasNext()) {
 				List<Undo> batch = batches.next();
-				batch.removeIf(item -> undoByCandidate.get(item.candidate) != item);
+				Iterator<Undo> items = batch.iterator();
+				while (items.hasNext()) {
+					Undo item = items.next();
+					if (undoByCandidate.get(item.candidate) != item) {
+						items.remove();
+					}
+				}
 				if (batch.isEmpty()) {
 					batches.remove();
 				}
@@ -1737,8 +1765,12 @@ public final class MemoryEditorRuntime {
 				candidateBytes = Math.max(0,
 						candidateBytes - estimatedCandidateBytes(candidate.member));
 				if (candidate.autoLane != null) {
-					autoLaneCandidates.computeIfPresent(candidate.autoLane,
-							(key, count) -> count > 1 ? count - 1 : null);
+					Integer count = autoLaneCandidates.get(candidate.autoLane);
+					if (count == null || count <= 1) {
+						autoLaneCandidates.remove(candidate.autoLane);
+					} else {
+						autoLaneCandidates.put(candidate.autoLane, count - 1);
+					}
 				}
 			}
 			List<Candidate> bucket = candidateBuckets.get(candidate.locationHash);
