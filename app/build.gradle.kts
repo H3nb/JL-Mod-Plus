@@ -223,7 +223,6 @@ dependencies {
         // the annotation processor on the runtime classpath breaks R8.
         exclude(group = "com.google.auto.service", module = "auto-service")
     }
-    implementation(libs.filepicker)
     implementation(libs.pngj)
     implementation(libs.rx.android)
 

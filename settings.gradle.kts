@@ -34,7 +34,6 @@ dependencyResolutionManagement {
                 }
             }
             filter {
-                includeGroup("com.github.woesss")
                 includeGroup("com.github.nikita36078")
             }
         }

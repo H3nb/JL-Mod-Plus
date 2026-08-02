@@ -64,8 +64,8 @@ public class MainActivity extends AppCompatActivity {
 		if (getSupportActionBar() != null) {
 			getSupportActionBar().hide();
 		}
-		storagePermissionHelper.launch(this);
 		appListModel = new ViewModelProvider(this).get(AppListModel.class);
+		storagePermissionHelper.launch(this);
 		if (savedInstanceState == null
 				|| getSupportFragmentManager().findFragmentById(R.id.container) == null) {
 			Intent intent = getIntent();

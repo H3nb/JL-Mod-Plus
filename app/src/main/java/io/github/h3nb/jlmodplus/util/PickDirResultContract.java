@@ -26,9 +26,8 @@ import androidx.activity.result.contract.ActivityResultContract;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.nononsenseapps.filepicker.FilePickerActivity;
-
 import io.github.h3nb.jlmodplus.config.Config;
+import io.github.h3nb.jlmodplus.filepicker.FilePickerContract;
 import io.github.h3nb.jlmodplus.filepicker.FilteredFilePickerActivity;
 
 public class PickDirResultContract extends ActivityResultContract<String, Uri> {
@@ -36,12 +35,12 @@ public class PickDirResultContract extends ActivityResultContract<String, Uri> {
 	@Override
 	public Intent createIntent(@NonNull Context context, String input) {
 		Intent i = new Intent(context, FilteredFilePickerActivity.class);
-		i.putExtra(FilePickerActivity.EXTRA_ALLOW_MULTIPLE, false);
-		i.putExtra(FilePickerActivity.EXTRA_SINGLE_CLICK, false);
-		i.putExtra(FilePickerActivity.EXTRA_ALLOW_CREATE_DIR, true);
-		i.putExtra(FilePickerActivity.EXTRA_MODE, FilePickerActivity.MODE_DIR);
+		i.putExtra(FilePickerContract.EXTRA_ALLOW_MULTIPLE, false);
+		i.putExtra(FilePickerContract.EXTRA_SINGLE_CLICK, false);
+		i.putExtra(FilePickerContract.EXTRA_ALLOW_CREATE_DIR, true);
+		i.putExtra(FilePickerContract.EXTRA_MODE, FilePickerContract.MODE_DIR);
 		String startPath = input == null ? Config.getEmulatorDir() : input;
-		i.putExtra(FilePickerActivity.EXTRA_START_PATH, startPath);
+		i.putExtra(FilePickerContract.EXTRA_START_PATH, startPath);
 		return i;
 	}
 

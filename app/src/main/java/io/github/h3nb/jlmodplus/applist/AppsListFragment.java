@@ -46,8 +46,6 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 
-import com.nononsenseapps.filepicker.FilePickerActivity;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -56,6 +54,7 @@ import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.config.ProfilesActivity;
 import io.github.h3nb.jlmodplus.filepicker.FilteredFilePickerActivity;
+import io.github.h3nb.jlmodplus.filepicker.FilePickerContract;
 import io.github.h3nb.jlmodplus.info.InfoDialogHost;
 import io.github.h3nb.jlmodplus.settings.SettingsActivity;
 import io.github.h3nb.jlmodplus.util.AppUtils;
@@ -71,10 +70,10 @@ public class AppsListFragment extends Fragment implements AppsListComposeControl
 				@Override
 				public Intent createIntent(@NonNull Context context, Void input) {
 					Intent i = new Intent(context, FilteredFilePickerActivity.class);
-					i.putExtra(FilePickerActivity.EXTRA_ALLOW_MULTIPLE, false);
-					i.putExtra(FilePickerActivity.EXTRA_SINGLE_CLICK, true);
-					i.putExtra(FilePickerActivity.EXTRA_ALLOW_CREATE_DIR, false);
-					i.putExtra(FilePickerActivity.EXTRA_MODE, FilePickerActivity.MODE_FILE);
+					i.putExtra(FilePickerContract.EXTRA_ALLOW_MULTIPLE, false);
+					i.putExtra(FilePickerContract.EXTRA_SINGLE_CLICK, true);
+					i.putExtra(FilePickerContract.EXTRA_ALLOW_CREATE_DIR, false);
+					i.putExtra(FilePickerContract.EXTRA_MODE, FilePickerContract.MODE_FILE);
 					String path = preferences.getString(PREF_LAST_PATH, null);
 					if (path == null) {
 						File dir = Environment.getExternalStorageDirectory();
@@ -82,7 +81,7 @@ public class AppsListFragment extends Fragment implements AppsListComposeControl
 							path = dir.getAbsolutePath();
 						}
 					}
-					i.putExtra(FilePickerActivity.EXTRA_START_PATH, path);
+					i.putExtra(FilePickerContract.EXTRA_START_PATH, path);
 					return i;
 				}
 

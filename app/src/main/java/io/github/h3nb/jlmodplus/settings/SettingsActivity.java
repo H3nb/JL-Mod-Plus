@@ -17,6 +17,8 @@
 
 package io.github.h3nb.jlmodplus.settings;
 
+import static io.github.h3nb.jlmodplus.util.Constants.PREF_EMULATOR_DIR;
+
 import android.os.Bundle;
 import android.content.Intent;
 import android.net.Uri;
@@ -24,6 +26,7 @@ import android.net.Uri;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.preference.PreferenceManager;
 
 import io.github.h3nb.jlmodplus.config.ProfilesActivity;
 import io.github.h3nb.jlmodplus.util.FileUtils;
@@ -72,6 +75,10 @@ public class SettingsActivity extends AppCompatActivity {
 			composeView.showDirectoryError(path);
 			return;
 		}
+		PreferenceManager.getDefaultSharedPreferences(this)
+				.edit()
+				.putString(PREF_EMULATOR_DIR, path)
+				.apply();
 		composeView.setDirectory(path);
 	}
 }

@@ -19,7 +19,6 @@ package io.github.h3nb.jlmodplus.filepicker
 import android.content.Context
 import android.content.res.Configuration
 import android.util.AttributeSet
-import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.compose.foundation.Canvas
@@ -50,165 +49,108 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.appcompat.widget.AppCompatCheckBox
-import androidx.appcompat.widget.AppCompatTextView
 import io.github.h3nb.jlmodplus.ui.AppComposeTheme
 
-object FilePickerItemComposeFactory {
-    @JvmStatic
-    fun createItemView(parent: ViewGroup, checkable: Boolean): View {
-        val context = parent.context
-        val root = ComposeItemRoot(context)
-        var checkboxProxy: BoundCheckBox? = null
-        val controller = FilePickerItemComposeController(
-            onClick = {
-                root.performClick()
-                Unit
-            },
-            onLongClick = root::performLongClick,
-            onCheckboxClick = {
-                checkboxProxy?.performClick()
-            },
-        )
-        root.controller = controller
+/** A standalone file-picker row; it no longer mirrors a third-party view tree. */
+class FilePickerItemView @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null,
+) : FrameLayout(context, attrs) {
+    fun interface OnCheckedChangeListener {
+        fun onCheckedChanged(view: FilePickerItemView, checked: Boolean)
+    }
 
-        val composeView = ComposeView(context).apply {
-            setViewCompositionStrategy(
-                ViewCompositionStrategy.DisposeOnDetachedFromWindowOrReleasedFromPool,
-            )
-            setContent {
-                AppComposeTheme {
-                    FilePickerItemContent(
-                        title = controller.title,
-                        isDirectory = controller.isDirectory,
-                        checkable = controller.checkboxVisible,
-                        checked = controller.checked,
-                        enabled = controller.enabled,
-                        onClick = controller.onClick,
-                        onLongClick = controller.onLongClick,
-                        onCheckboxClick = controller.onCheckboxClick,
-                    )
+    private val controller = FilePickerItemComposeController(
+        onClick = { performClick() },
+        onLongClick = { performLongClick() },
+        onCheckboxClick = { checked ->
+            checkedChangeListener?.onCheckedChanged(this, checked)
+        },
+    )
+    private var controllerReady = false
+    private var checkedChangeListener: OnCheckedChangeListener? = null
+
+    init {
+        isClickable = true
+        isFocusable = true
+        contentDescription = controller.title
+        addView(
+            ComposeView(context).apply {
+                setViewCompositionStrategy(
+                    ViewCompositionStrategy.DisposeOnDetachedFromWindowOrReleasedFromPool,
+                )
+                setContent {
+                    AppComposeTheme {
+                        FilePickerItemContent(
+                            title = controller.title,
+                            isDirectory = controller.isDirectory,
+                            checkable = controller.checkboxVisible,
+                            checked = controller.checked,
+                            enabled = controller.enabled,
+                            onClick = controller.onClick,
+                            onLongClick = controller.onLongClick,
+                            onCheckboxClick = controller::updateCheckedFromUser,
+                        )
+                    }
                 }
-            }
-        }
-        root.addView(
-            composeView,
+            },
             FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT,
             ),
         )
-
-        val iconProxy = BoundIconView(context).apply {
-            id = com.nononsenseapps.filepicker.R.id.item_icon
-            visibility = View.GONE
-            onDirectoryChanged = controller::updateDirectory
-        }
-        root.addView(iconProxy, hiddenLayoutParams())
-
-        val textProxy = BoundTextView(context).apply {
-            id = android.R.id.text1
-            onTextChanged = controller::updateTitle
-            visibility = View.GONE
-        }
-        root.addView(textProxy, hiddenLayoutParams())
-
-        if (checkable) {
-            val proxy = BoundCheckBox(context).apply {
-                id = com.nononsenseapps.filepicker.R.id.checkbox
-                visibility = View.GONE
-                onCheckedChanged = controller::updateChecked
-                onVisibilityChanged = controller::updateCheckboxVisible
-            }
-            checkboxProxy = proxy
-            root.addView(proxy, hiddenLayoutParams())
-        }
-        return root
+        controllerReady = true
     }
 
-    private fun hiddenLayoutParams() = FrameLayout.LayoutParams(1, 1)
+    fun bind(
+        title: String,
+        isDirectory: Boolean,
+        checkable: Boolean,
+        checked: Boolean,
+        enabled: Boolean,
+    ) {
+        controller.title = title
+        controller.isDirectory = isDirectory
+        controller.checkboxVisible = checkable
+        controller.checked = checked
+        this.isEnabled = enabled
+        contentDescription = title
+    }
+
+    fun setOnCheckedChangeListener(listener: OnCheckedChangeListener?) {
+        checkedChangeListener = listener
+    }
+
+    override fun setEnabled(enabled: Boolean) {
+        super.setEnabled(enabled)
+        if (controllerReady) {
+            controller.enabled = enabled
+        }
+    }
+}
+
+object FilePickerItemComposeFactory {
+    @JvmStatic
+    fun createItemView(parent: ViewGroup, checkable: Boolean): FilePickerItemView =
+        FilePickerItemView(parent.context).apply {
+            bind("", isDirectory = true, checkable = checkable, checked = false, enabled = true)
+        }
 }
 
 private class FilePickerItemComposeController(
     val onClick: () -> Unit,
     val onLongClick: () -> Boolean,
-    val onCheckboxClick: () -> Unit,
+    private val onCheckboxClick: (Boolean) -> Unit,
 ) {
     var title by mutableStateOf("")
-        private set
     var isDirectory by mutableStateOf(true)
-        private set
     var checkboxVisible by mutableStateOf(false)
-        private set
     var checked by mutableStateOf(false)
-        private set
     var enabled by mutableStateOf(true)
-        private set
 
-    fun updateTitle(value: String) {
-        title = value
-    }
-
-    fun updateDirectory(value: Boolean) {
-        isDirectory = value
-    }
-
-    fun updateCheckboxVisible(value: Boolean) {
-        checkboxVisible = value
-    }
-
-    fun updateChecked(value: Boolean) {
+    fun updateCheckedFromUser(value: Boolean) {
         checked = value
-    }
-
-    fun updateEnabled(value: Boolean) {
-        enabled = value
-    }
-}
-
-private class ComposeItemRoot @JvmOverloads constructor(
-    context: Context,
-    attrs: AttributeSet? = null,
-) : FrameLayout(context, attrs) {
-    var controller: FilePickerItemComposeController? = null
-
-    override fun setEnabled(enabled: Boolean) {
-        super.setEnabled(enabled)
-        controller?.updateEnabled(enabled)
-    }
-}
-
-private class BoundTextView(context: Context) : AppCompatTextView(context) {
-    var onTextChanged: ((String) -> Unit)? = null
-
-    override fun setText(text: CharSequence?, type: BufferType?) {
-        super.setText(text, type)
-        onTextChanged?.invoke(text?.toString().orEmpty())
-    }
-}
-
-private class BoundIconView(context: Context) : View(context) {
-    var onDirectoryChanged: ((Boolean) -> Unit)? = null
-
-    override fun setVisibility(visibility: Int) {
-        onDirectoryChanged?.invoke(visibility == VISIBLE)
-        super.setVisibility(GONE)
-    }
-}
-
-private class BoundCheckBox(context: Context) : AppCompatCheckBox(context) {
-    var onCheckedChanged: ((Boolean) -> Unit)? = null
-    var onVisibilityChanged: ((Boolean) -> Unit)? = null
-
-    override fun setChecked(checked: Boolean) {
-        super.setChecked(checked)
-        onCheckedChanged?.invoke(checked)
-    }
-
-    override fun setVisibility(visibility: Int) {
-        onVisibilityChanged?.invoke(visibility == VISIBLE)
-        super.setVisibility(GONE)
+        onCheckboxClick(value)
     }
 }
 
@@ -222,7 +164,7 @@ private fun FilePickerItemContent(
     enabled: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Boolean,
-    onCheckboxClick: () -> Unit,
+    onCheckboxClick: (Boolean) -> Unit,
 ) {
     val contentColor = MaterialTheme.colorScheme.onSurface.copy(
         alpha = if (enabled) 1f else 0.38f,
@@ -260,7 +202,7 @@ private fun FilePickerItemContent(
                 text = title,
                 modifier = Modifier.weight(1f),
                 color = contentColor,
-                fontSize = 16.sp,
+                style = MaterialTheme.typography.bodyLarge,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -268,7 +210,7 @@ private fun FilePickerItemContent(
                 Checkbox(
                     checked = checked,
                     enabled = enabled,
-                    onCheckedChange = { onCheckboxClick() },
+                    onCheckedChange = onCheckboxClick,
                 )
             }
         }

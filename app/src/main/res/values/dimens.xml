@@ -2,4 +2,6 @@
 <resources>
     <dimen name="height_config_row">48dp</dimen>
     <dimen name="_22sp">22sp</dimen>
+    <dimen name="file_picker_toolbar_height">56dp</dimen>
+    <dimen name="file_picker_dialog_padding">16dp</dimen>
 </resources>
