@@ -99,6 +99,7 @@ class MicroActivityToolbarView(
         imeAvailable: Boolean,
         virtualKeyboardAvailable: Boolean,
         timingAvailable: Boolean,
+        memoryEditorAvailable: Boolean,
         speedLabel: String,
         layoutEditFinishVisible: Boolean,
     ) {
@@ -109,6 +110,7 @@ class MicroActivityToolbarView(
             imeAvailable = imeAvailable,
             virtualKeyboardAvailable = virtualKeyboardAvailable,
             timingAvailable = timingAvailable,
+            memoryEditorAvailable = memoryEditorAvailable,
             speedLabel = speedLabel,
             layoutEditFinishVisible = layoutEditFinishVisible,
         )
@@ -145,6 +147,7 @@ private data class MicroToolbarState(
     val imeAvailable: Boolean = false,
     val virtualKeyboardAvailable: Boolean = false,
     val timingAvailable: Boolean = false,
+    val memoryEditorAvailable: Boolean = false,
     val speedLabel: String = "",
     val layoutEditFinishVisible: Boolean = false,
 )
@@ -301,6 +304,8 @@ private fun MicroActivityOverflowMenu(
                     actionId = R.id.action_emulation_speed,
                     onAction = onAction,
                 )
+            }
+            if (state.memoryEditorAvailable) {
                 MicroMenuItem(R.string.memory_editor, R.id.action_memory_editor, onAction)
             }
             if (state.virtualKeyboardAvailable) {

@@ -48,8 +48,11 @@ public class Config {
 	public static final String MIDLET_DEX_FILE = "/converted.dex";
 	/** The single version gate for every generated DEX feature. */
 	public static final String MIDLET_DEX_VERSION_ATTRIBUTE = "JL-Mod-Plus-Dex-Version";
-	// Version 8: production conversion no longer injects Memory Editor hooks.
+	// Version 8 is intentionally retained while diagnostic reinstall modes are
+	// compared without triggering automatic migration prompts.
 	public static final int MIDLET_DEX_VERSION = 8;
+	/** Records the independently selected timing/Memory Editor conversion mode. */
+	public static final String MIDLET_TRANSFORM_MODE_ATTRIBUTE = "JL-Mod-Plus-Transform-Mode";
 	public static final String MIDLET_RES_JAD_FILE = "/res.jad";
 	public static final String MIDLET_TIMING_VERSION_FILE = "/converted.timing.version";
 	public static final int MIDLET_TIMING_TRANSFORM_VERSION = 4;

@@ -179,9 +179,17 @@ public class Main {
     private OutputStreamWriter humanOutWriter = null;
 
     private final DxContext context;
+    private final boolean speedhackEnabled;
+    private final boolean memoryEditorEnabled;
 
     public Main(DxContext context) {
+        this(context, true, false);
+    }
+
+    public Main(DxContext context, boolean speedhackEnabled, boolean memoryEditorEnabled) {
         this.context = context;
+        this.speedhackEnabled = speedhackEnabled;
+        this.memoryEditorEnabled = memoryEditorEnabled;
     }
 
     /**
@@ -189,11 +197,17 @@ public class Main {
      * @param argArray the command line arguments
      */
     public static void main(String[] argArray) throws IOException {
+        main(argArray, true, false);
+    }
+
+    /** Runs conversion with independently selectable timing and Memory Editor layers. */
+    public static void main(String[] argArray, boolean speedhackEnabled,
+            boolean memoryEditorEnabled) throws IOException {
         DxContext context = new DxContext();
         Arguments arguments = new Arguments(context);
         arguments.parse(argArray);
 
-        Main dexer = new Main(context);
+        Main dexer = new Main(context, speedhackEnabled, memoryEditorEnabled);
         int result = dexer.runDx(arguments);
 
         if (result != 0) {
@@ -475,19 +489,16 @@ public class Main {
 
         try {
             /*
-             * MEMORY EDITOR IS INTENTIONALLY DISABLED FOR PRODUCTION DEX.
-             *
-             * The previous visitor injected a gate/bridge around every
-             * primitive field and primitive-array access in transformed game
-             * methods. That broad per-access surface is being investigated as
-             * a cause of lag, stuck screens, and game-specific instability;
-             * it also has no semantic render/audio exclusion. Keep the old
-             * visitor and tests available through AndroidProducer, but do not
-             * re-enable it here until a safer runtime design has passed A/B
-             * testing. Config.MIDLET_DEX_VERSION is bumped with this change so
-             * existing converted archives are rebuilt instead of reused.
+             * The installer supplies independent timing and Memory Editor
+             * switches for diagnostic reinstall modes. The default conversion
+             * remains speedhack-only for compatibility; the broad per-access
+             * Memory Editor visitor is selected only when the user explicitly
+             * chooses a Memory Editor mode. This keeps the four-way A/B test
+             * attributable without changing Config.MIDLET_DEX_VERSION or
+             * triggering an automatic migration prompt.
              */
-            bytes = AndroidProducer.compatibilityOnly(bytes, name, crc);
+            bytes = AndroidProducer.convert(bytes, name, crc,
+                    speedhackEnabled, memoryEditorEnabled);
 
             new DirectClassFileConsumer(name, bytes, null).call(
                     new ClassParserTask(name, bytes).call());

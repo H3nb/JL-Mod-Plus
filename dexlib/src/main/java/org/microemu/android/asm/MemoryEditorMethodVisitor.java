@@ -25,11 +25,11 @@ import org.objectweb.asm.commons.Method;
 /**
  * Legacy/experimental bytecode visitor for Memory Editor observation points.
  *
- * <p>Production DEX conversion currently does not select this visitor. It is
- * retained for focused tests and controlled experiments while the broad
- * per-access hook surface is investigated for game-specific lag, stuck screens,
- * and instability. A future re-enable requires an explicit safety review and
- * A/B evidence; do not remove this note when changing the conversion guard.</p>
+ * <p>The default production conversion does not select this visitor. It is
+ * retained for focused tests and explicit diagnostic reinstall modes while the
+ * broad per-access hook surface is investigated for game-specific lag, stuck
+ * screens, and instability. Keep the mode guard and this safety note in sync
+ * when changing the conversion pipeline.</p>
  *
  * <p>When selected, it adds observation points to primitive fields and
  * primitive array elements. It deliberately does not touch reference values or

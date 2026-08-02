@@ -364,6 +364,11 @@
     <string name="reinstall">Aplikasi telah dipasang.\n\nApakah ingin dipasang ulang?\nSemua data akan disimpan.</string>
     <string name="reinstall_newest">Perbarui aplikasi ini ke versi %1$s?\n\nYang kini terpasang: %2$s\nSemua data akan disimpan.</string>
     <string name="reinstall_older">Timpa aplikasi ini dengan versi %1$s?\n\nYang kini terpasang: %2$s\nVersi lebih lama bisa jadi tidak berjalan lancar dengan data yang terekam.</string>
+    <string name="conversion_mode_title">Mode Konversi</string>
+    <string name="conversion_mode_normal">Normal</string>
+    <string name="conversion_mode_speedhack">Speedhack</string>
+    <string name="conversion_mode_memory_editor">Memory Editor</string>
+    <string name="conversion_mode_speedhack_memory_editor">Speedhack + Memory Editor</string>
     <string name="report_crash">Laporkan</string>
     <string name="share_error_report">Bagikan laporan</string>
     <string name="github_issues_account_required">GitHub Issues (perlu akun)</string>

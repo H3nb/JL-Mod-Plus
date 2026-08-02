@@ -36,22 +36,30 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 public class AndroidClassVisitor extends ClassVisitor {
+	private final boolean speedhackEnabled;
 	private final boolean memoryEditorEnabled;
 
 	AndroidClassVisitor(ClassVisitor cv) {
-		this(cv, true);
+		this(cv, true, true);
 	}
 
 	AndroidClassVisitor(ClassVisitor cv, boolean memoryEditorEnabled) {
+		this(cv, true, memoryEditorEnabled);
+	}
+
+	AndroidClassVisitor(ClassVisitor cv, boolean speedhackEnabled, boolean memoryEditorEnabled) {
 		super(Opcodes.ASM9, cv);
+		this.speedhackEnabled = speedhackEnabled;
 		this.memoryEditorEnabled = memoryEditorEnabled;
 	}
 
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-		desc = desc.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
+		if (speedhackEnabled) {
+			desc = desc.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
+		}
 		MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
-		MethodVisitor compatibilityVisitor = new AndroidMethodVisitor(methodVisitor);
+		MethodVisitor compatibilityVisitor = new AndroidMethodVisitor(methodVisitor, speedhackEnabled);
 		if (!memoryEditorEnabled) {
 			return compatibilityVisitor;
 		}
@@ -64,13 +72,17 @@ public class AndroidClassVisitor extends ClassVisitor {
 	@Override
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
 		className = name;
-		superName = superName.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
+		if (speedhackEnabled) {
+			superName = superName.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
+		}
 		super.visit(version, access, name, signature, superName, interfaces);
 	}
 
 	@Override
 	public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-		descriptor = descriptor.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
+		if (speedhackEnabled) {
+			descriptor = descriptor.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
+		}
 		return super.visitField(access, name, descriptor, signature, value);
 	}
 }

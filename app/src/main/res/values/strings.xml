@@ -409,6 +409,11 @@
     <string name="reinstall">App already installed.\n\nDo you want to reinstall it?\nAll data will be saved.</string>
     <string name="reinstall_newest">Update this app to version %1$s?\n\nCurrently installed: %2$s\nAll data will be saved.</string>
     <string name="reinstall_older">Replace this app with version %1$s?\n\nCurrently installed: %2$s\nOlder version may not working correctly with recorded data.</string>
+    <string name="conversion_mode_title">Conversion Mode</string>
+    <string name="conversion_mode_normal">Normal</string>
+    <string name="conversion_mode_speedhack">Speedhack</string>
+    <string name="conversion_mode_memory_editor">Memory Editor</string>
+    <string name="conversion_mode_speedhack_memory_editor">Speedhack + Memory Editor</string>
     <string name="report_crash">Report</string>
     <string name="share_error_report">Share report</string>
     <string name="github_issues_account_required">GitHub Issues (account required)</string>

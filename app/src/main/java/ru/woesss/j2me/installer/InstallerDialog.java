@@ -54,6 +54,7 @@ import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.applist.AppItem;
 import io.github.h3nb.jlmodplus.applist.AppListModel;
 import io.github.h3nb.jlmodplus.config.Config;
+import io.github.h3nb.jlmodplus.ui.ComposeDialogHost;
 import io.github.h3nb.jlmodplus.util.Constants;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import ru.woesss.j2me.jar.Descriptor;
@@ -270,6 +271,34 @@ public class InstallerDialog extends DialogFragment {
 		startInstallerOperation(installer::install);
 	}
 
+	private void chooseTransformMode() {
+		String[] labels = {
+				getString(R.string.conversion_mode_normal),
+				getString(R.string.conversion_mode_speedhack),
+				getString(R.string.conversion_mode_memory_editor),
+				getString(R.string.conversion_mode_speedhack_memory_editor)
+		};
+		ComposeDialogHost.showChoiceActions(
+				requireContext(),
+				getString(R.string.conversion_mode_title),
+				labels,
+				DexTransformMode.SPEEDHACK.ordinal(),
+				getString(R.string.install),
+				null,
+				getString(android.R.string.cancel),
+				true,
+				false,
+				index -> {
+					if (index >= 0 && index < DexTransformMode.values().length) {
+						installer.setTransformMode(DexTransformMode.values()[index]);
+						convert();
+					}
+				},
+				null,
+				null
+		);
+	}
+
 	private void alertConfirm(SpannableStringBuilder message, Runnable positive) {
 		hideProgress();
 		dialog.setCancelable(false);
@@ -302,7 +331,7 @@ public class InstallerDialog extends DialogFragment {
 		switch (status) {
 			case AppInstaller.STATUS_NEW -> {
 				if (installer.getJar() != null) {
-					convert();
+					chooseTransformMode();
 					return;
 				}
 				message = nd.getInfo(requireActivity());
@@ -348,7 +377,7 @@ public class InstallerDialog extends DialogFragment {
 		dialog.setCancelable(false);
 		dialog.setCanceledOnTouchOutside(false);
 		composeView.setMessage(message);
-		composeView.setPositiveButton(getString(R.string.install), this::convert);
+		composeView.setPositiveButton(getString(R.string.install), this::chooseTransformMode);
 		composeView.setNegativeButton(getString(android.R.string.cancel), () -> {
 			cancelAndDismiss();
 		});

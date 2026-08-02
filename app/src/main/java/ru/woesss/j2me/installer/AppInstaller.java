@@ -80,6 +80,7 @@ public class AppInstaller {
 	private File tmpDir;
 	private AppItem currentApp;
 	private File srcFile;
+	private DexTransformMode transformMode = DexTransformMode.SPEEDHACK;
 
 	AppInstaller(File jar, Uri uri, AppListModel appListModel) {
 		id = -1;
@@ -105,6 +106,10 @@ public class AppInstaller {
 
 	Descriptor getManifest() {
 		return manifest;
+	}
+
+	void setTransformMode(DexTransformMode mode) {
+		transformMode = mode == null ? DexTransformMode.SPEEDHACK : mode;
 	}
 
 	/** Load and check app info from source */
@@ -282,7 +287,8 @@ public class AppInstaller {
 		try {
 			Main.main(new String[]{"--no-optimize",
 					"--output=" + tmpDir + Config.MIDLET_DEX_ARCH,
-					srcJar.getAbsolutePath()});
+					srcJar.getAbsolutePath()},
+					transformMode.speedhackEnabled, transformMode.memoryEditorEnabled);
 		} catch (Throwable e) {
 			String detail = e.getMessage();
 			throw new ConverterException(detail == null || detail.trim().isEmpty()
@@ -295,6 +301,8 @@ public class AppInstaller {
 		}
 		newDesc.setAttribute(Config.MIDLET_DEX_VERSION_ATTRIBUTE,
 				Integer.toString(Config.MIDLET_DEX_VERSION));
+		newDesc.setAttribute(Config.MIDLET_TRANSFORM_MODE_ATTRIBUTE,
+				transformMode.manifestValue);
 		File resJar = new File(tmpDir, Config.MIDLET_RES_FILE);
 		FileUtils.copyFileUsingChannel(srcJar, resJar);
 		if (srcJad != null && srcJad.isFile()) {

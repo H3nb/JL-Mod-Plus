@@ -104,6 +104,8 @@ public class MicroLoader {
 	private final String workDir;
 	private final String appDirName;
 	private boolean timingTransformAvailable;
+	private boolean speedhackTransformAvailable = true;
+	private boolean memoryEditorTransformAvailable;
 	private boolean timedWaitEnabled = true;
 	private boolean timedWaitOverridePresent;
 	private final AtomicBoolean monitorFallbackPersistenceStarted = new AtomicBoolean();
@@ -127,6 +129,7 @@ public class MicroLoader {
 			return false;
 		}
 		timingTransformAvailable = hasCurrentTimingTransform();
+		readTransformMode();
 		SecureConnectionPolicy.setMode(params.secureConnectionMode);
 		Display.initDisplay();
 		Graphics3D.initGraphics3D();
@@ -144,7 +147,11 @@ public class MicroLoader {
 	}
 
 	boolean hasTimingTransform() {
-		return timingTransformAvailable;
+		return timingTransformAvailable && speedhackTransformAvailable;
+	}
+
+	boolean hasMemoryEditorTransform() {
+		return timingTransformAvailable && memoryEditorTransformAvailable;
 	}
 
 	boolean needsTimingMigration() {
@@ -158,6 +165,31 @@ public class MicroLoader {
 
 	void refreshTimingTransformState() {
 		timingTransformAvailable = hasCurrentTimingTransform();
+		readTransformMode();
+	}
+
+	private void readTransformMode() {
+		// Archives from before the diagnostic mode marker used speedhack timing
+		// transforms and did not inject Memory Editor hooks.
+		speedhackTransformAvailable = true;
+		memoryEditorTransformAvailable = false;
+		if (!BuildConfig.FULL_EMULATOR) {
+			return;
+		}
+		File manifest = new File(appDir, Config.MIDLET_MANIFEST_FILE);
+		if (!manifest.isFile()) {
+			return;
+		}
+		try {
+			Descriptor descriptor = new Descriptor(manifest, false);
+			ru.woesss.j2me.installer.DexTransformMode mode =
+					ru.woesss.j2me.installer.DexTransformMode.fromManifestValue(
+							descriptor.getAttribute(Config.MIDLET_TRANSFORM_MODE_ATTRIBUTE));
+			speedhackTransformAvailable = mode.speedhackEnabled;
+			memoryEditorTransformAvailable = mode.memoryEditorEnabled;
+		} catch (IOException e) {
+			Log.w(TAG, "Unable to read converted transform mode", e);
+		}
 	}
 
 	private boolean hasCurrentTimingTransform() {
@@ -205,6 +237,7 @@ public class MicroLoader {
 		Map<String, String> attr = new LinkedHashMap<>(descriptor.getAttrs());
 		// This is an emulator-side build marker, not a MIDlet application property.
 		attr.remove(Config.MIDLET_DEX_VERSION_ATTRIBUTE);
+		attr.remove(Config.MIDLET_TRANSFORM_MODE_ATTRIBUTE);
 		ErrorReporter errorReporter = ACRA.getErrorReporter();
 		String report = errorReporter.getCustomData(Constants.KEY_CRASH_ATTACHMENT);
 		StringBuilder sb = new StringBuilder();

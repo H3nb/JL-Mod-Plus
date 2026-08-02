@@ -831,12 +831,14 @@ public class MicroActivity extends AppCompatActivity {
 
 	private void refreshToolbarState(Displayable displayable) {
 		if (displayable == null) {
-			binding.toolbar.setToolbarState("", false, false, false, false, false, "", false);
+			binding.toolbar.setToolbarState("", false, false, false, false, false, false, "", false);
 			return;
 		}
 		boolean canvas = displayable instanceof Canvas;
 		boolean toolbarVisible = !canvas || actionBarEnabled;
 		boolean timingAvailable = canvas && microLoader != null && microLoader.hasTimingTransform();
+		boolean memoryEditorAvailable = canvas && microLoader != null
+				&& microLoader.hasMemoryEditorTransform();
 		VirtualKeyboard vk = ContextHolder.getVk();
 		String speedLabel = "";
 		if (timingAvailable) {
@@ -854,6 +856,7 @@ public class MicroActivity extends AppCompatActivity {
 				inputMethodManager != null,
 				vk != null,
 				timingAvailable,
+				memoryEditorAvailable,
 				speedLabel,
 				vk != null && vk.getLayoutEditMode() != VirtualKeyboard.LAYOUT_EOF
 		);

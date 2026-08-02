@@ -38,10 +38,16 @@ import java.util.ArrayList;
 
 public class AndroidMethodVisitor extends MethodVisitor {
 	static boolean USE_PANIC_LOGGING = false;
+	private final boolean speedhackEnabled;
 	private final ArrayList<Label> exceptionHandlers = new ArrayList<>();
 
 	public AndroidMethodVisitor(MethodVisitor methodVisitor) {
+		this(methodVisitor, true);
+	}
+
+	public AndroidMethodVisitor(MethodVisitor methodVisitor, boolean speedhackEnabled) {
 		super(ASM9, methodVisitor);
+		this.speedhackEnabled = speedhackEnabled;
 	}
 
 	@Override
@@ -55,7 +61,7 @@ public class AndroidMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-		switch (owner) {
+			switch (owner) {
 			case "java/lang/Class":
 				if (name.equals("getResourceAsStream")) {
 					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/util/ContextHolder",
@@ -64,11 +70,11 @@ public class AndroidMethodVisitor extends MethodVisitor {
 				}
 				break;
 			case "java/lang/Thread":
-				if (opcode == INVOKESTATIC && name.equals("sleep")) {
+				if (speedhackEnabled && opcode == INVOKESTATIC && name.equals("sleep")) {
 					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/time/EmulationTime",
 							name, desc, false);
 					return;
-				} else if (opcode == INVOKEVIRTUAL && name.equals("join")
+				} else if (speedhackEnabled && opcode == INVOKEVIRTUAL && name.equals("join")
 						&& (desc.equals("(J)V") || desc.equals("(JI)V"))) {
 					String joinDescriptor = "(Ljava/lang/Thread;" + desc.substring(1);
 					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/time/EmulationTime",
@@ -77,7 +83,7 @@ public class AndroidMethodVisitor extends MethodVisitor {
 				}
 				break;
 			case "java/lang/Object":
-				if (opcode == INVOKEVIRTUAL) {
+				if (speedhackEnabled && opcode == INVOKEVIRTUAL) {
 					if (name.equals("wait")
 							&& (desc.equals("()V") || desc.equals("(J)V")
 							|| desc.equals("(JI)V"))) {
@@ -152,7 +158,7 @@ public class AndroidMethodVisitor extends MethodVisitor {
 				}
 				break;
 			case "java/lang/System":
-				if (opcode == INVOKESTATIC &&
+				if (speedhackEnabled && opcode == INVOKESTATIC &&
 						(name.equals("currentTimeMillis") || name.equals("nanoTime"))) {
 					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/time/EmulationTime",
 							name, desc, false);
@@ -163,7 +169,7 @@ public class AndroidMethodVisitor extends MethodVisitor {
 				}
 				break;
 			case "java/util/Date":
-				if (opcode == INVOKESPECIAL && name.equals("<init>") && desc.equals("()V")) {
+				if (speedhackEnabled && opcode == INVOKESPECIAL && name.equals("<init>") && desc.equals("()V")) {
 					/*
 					 * A no-argument Date constructor reads the host wall clock inside
 					 * java.util.Date.  Keep the allocation and constructor invocation
@@ -179,7 +185,7 @@ public class AndroidMethodVisitor extends MethodVisitor {
 				}
 				break;
 			case "java/util/Calendar":
-				if (opcode == INVOKESTATIC && name.equals("getInstance")
+				if (speedhackEnabled && opcode == INVOKESTATIC && name.equals("getInstance")
 						&& isCalendarFactoryDescriptor(desc)) {
 					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/time/EmulationDateTime",
 							name, desc, false);
@@ -187,13 +193,19 @@ public class AndroidMethodVisitor extends MethodVisitor {
 				}
 				break;
 			case "java/util/Timer":
-				owner = "javax/microedition/shell/custom/Timer";
+				if (speedhackEnabled) {
+					owner = "javax/microedition/shell/custom/Timer";
+				}
 				break;
 			case "java/util/TimerTask":
-				owner = "javax/microedition/shell/custom/TimerTask";
+				if (speedhackEnabled) {
+					owner = "javax/microedition/shell/custom/TimerTask";
+				}
 				break;
 		}
-		desc = desc.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
+		if (speedhackEnabled) {
+			desc = desc.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
+		}
 		mv.visitMethodInsn(opcode, owner, name, desc, itf);
 	}
 
@@ -220,20 +232,26 @@ public class AndroidMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitTypeInsn(int opcode, String type) {
-		type = type.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
+		if (speedhackEnabled) {
+			type = type.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
+		}
 		super.visitTypeInsn(opcode, type);
 	}
 
 	@Override
 	public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
-		descriptor = descriptor.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
-		owner = owner.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
+		if (speedhackEnabled) {
+			descriptor = descriptor.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
+			owner = owner.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
+		}
 		super.visitFieldInsn(opcode, owner, name, descriptor);
 	}
 
 	@Override
 	public void visitMultiANewArrayInsn(String descriptor, int numDimensions) {
-		descriptor = descriptor.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
+		if (speedhackEnabled) {
+			descriptor = descriptor.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
+		}
 		super.visitMultiANewArrayInsn(descriptor, numDimensions);
 	}
 }

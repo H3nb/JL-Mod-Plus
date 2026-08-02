@@ -177,6 +177,38 @@ public class MemoryEditorInstrumentationTest {
 	}
 
 	@Test
+	public void conversionModesToggleSpeedhackAndMemoryEditorIndependently() {
+		byte[] normal = AndroidProducer.convert(
+				createTarget(), CLASS_NAME + ".class", 0L, false, false);
+		byte[] speedhack = AndroidProducer.convert(
+				createTarget(), CLASS_NAME + ".class", 0L, true, false);
+		byte[] memoryEditor = AndroidProducer.convert(
+				createTarget(), CLASS_NAME + ".class", 0L, false, true);
+		byte[] both = AndroidProducer.convert(
+				createTarget(), CLASS_NAME + ".class", 0L, true, true);
+
+		assertFalse(containsMethodCall(normal,
+				"javax/microedition/shell/time/EmulationTime", "sleep"));
+		assertFalse(containsMethodCall(normal,
+				"javax/microedition/shell/memory/MemoryEditorBridge", "onReadInt"));
+
+		assertTrue(containsMethodCall(speedhack,
+				"javax/microedition/shell/time/EmulationTime", "sleep"));
+		assertFalse(containsMethodCall(speedhack,
+				"javax/microedition/shell/memory/MemoryEditorBridge", "onReadInt"));
+
+		assertFalse(containsMethodCall(memoryEditor,
+				"javax/microedition/shell/time/EmulationTime", "sleep"));
+		assertTrue(containsMethodCall(memoryEditor,
+				"javax/microedition/shell/memory/MemoryEditorBridge", "onReadInt"));
+
+		assertTrue(containsMethodCall(both,
+				"javax/microedition/shell/time/EmulationTime", "sleep"));
+		assertTrue(containsMethodCall(both,
+				"javax/microedition/shell/memory/MemoryEditorBridge", "onReadInt"));
+	}
+
+	@Test
 	public void transformedPrimitiveAccessesCompleteTheRealDxPipeline() throws Exception {
 		File input = temporaryFolder.newFile("game.jar");
 		try (JarOutputStream jar = new JarOutputStream(new FileOutputStream(input))) {
@@ -293,6 +325,7 @@ public class MemoryEditorInstrumentationTest {
 		addInstanceFieldMethod(writer, "write", "(I)V", Opcodes.PUTFIELD, Opcodes.RETURN);
 		addStaticFieldMethod(writer, "readStatic", "()J", Opcodes.GETSTATIC, Opcodes.LRETURN);
 		addStaticFieldMethod(writer, "writeStatic", "(J)V", Opcodes.PUTSTATIC, Opcodes.RETURN);
+		addTimingMethod(writer);
 
 		addArrayMethods(writer, "Byte", "[B", Opcodes.BALOAD, Opcodes.BASTORE,
 				Opcodes.IRETURN, Opcodes.ILOAD);
@@ -337,6 +370,18 @@ public class MemoryEditorInstrumentationTest {
 		large.visitEnd();
 		writer.visitEnd();
 		return writer.toByteArray();
+	}
+
+	private static void addTimingMethod(ClassWriter writer) {
+		MethodVisitor method = writer.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+				"sleep", "(J)V", null, new String[]{"java/lang/InterruptedException"});
+		method.visitCode();
+		method.visitVarInsn(Opcodes.LLOAD, 0);
+		method.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Thread", "sleep",
+				"(J)V", false);
+		method.visitInsn(Opcodes.RETURN);
+		method.visitMaxs(0, 0);
+		method.visitEnd();
 	}
 
 	private static byte[] createDupX1Target() {

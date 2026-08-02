@@ -70,17 +70,28 @@ public class AndroidProducer {
 	/**
 	 * Converts one class with the Android compatibility transforms only.
 	 *
-	 * <p>Production DEX conversion deliberately uses this path while the
-	 * bytecode Memory Editor is disabled. The optional instrumentation visitor
-	 * remains available through {@link #instrumentWithReport(byte[], String,
-	 * long)} for focused tests and controlled experiments.</p>
+	 * <p>The default production conversion uses this compatibility-only path;
+	 * the optional instrumentation visitor is selected only by the explicit
+	 * diagnostic Memory Editor mode. The report-based entry point remains
+	 * available for focused tests and controlled experiments.</p>
 	 */
 	public static byte[] compatibilityOnly(byte[] classData, String classFileName,
 			long crc) throws IllegalArgumentException {
-		// See the production-conversion guard in dexer.Main. This preserves the
-		// Android/timing compatibility transforms while intentionally omitting the
-		// broad Memory Editor per-access hooks during the safety investigation.
-		return instrumentWithMode(classData, classFileName, crc, false).bytes;
+		// Keep this compatibility-only helper deterministic for callers that do not
+		// opt into a diagnostic Memory Editor conversion mode.
+		return convert(classData, classFileName, crc, true, false);
+	}
+
+	/**
+	 * Converts one class with independently selectable timing and Memory Editor
+	 * layers. This is the production entry point used by diagnostic reinstall
+	 * modes; the DEX marker intentionally remains owned by the app installer.
+	 */
+	public static byte[] convert(byte[] classData, String classFileName, long crc,
+			boolean speedhackEnabled, boolean memoryEditorEnabled)
+			throws IllegalArgumentException {
+		return instrumentWithMode(classData, classFileName, crc,
+				speedhackEnabled, memoryEditorEnabled).bytes;
 	}
 
 	/**
@@ -93,11 +104,12 @@ public class AndroidProducer {
 	 */
 	public static InstrumentationResult instrumentWithReport(byte[] classData,
 			String classFileName, long crc) throws IllegalArgumentException {
-		return instrumentWithMode(classData, classFileName, crc, true);
+		return instrumentWithMode(classData, classFileName, crc, true, true);
 	}
 
 	private static InstrumentationResult instrumentWithMode(byte[] classData,
-			String classFileName, long crc, boolean memoryEditorEnabled)
+			String classFileName, long crc, boolean speedhackEnabled,
+			boolean memoryEditorEnabled)
 			throws IllegalArgumentException {
 		Integer patch = patches.get((int) crc);
 		if (patch != null) {
@@ -108,12 +120,12 @@ public class AndroidProducer {
 			throw new IllegalArgumentException("Class name does not match path");
 		}
 		if (!memoryEditorEnabled) {
-			return new InstrumentationResult(transform(classData, false), false,
+			return new InstrumentationResult(transform(classData, speedhackEnabled, false), false,
 					"DISABLED_FOR_PRODUCTION_CONVERSION");
 		}
 		if (exceedsMemoryEditorPreflight(classData)) {
 			try {
-				return new InstrumentationResult(transform(classData, false), false,
+				return new InstrumentationResult(transform(classData, speedhackEnabled, false), false,
 						"METHOD_TOO_LARGE_PRECHECK");
 			} catch (RuntimeException compatibilityFailure) {
 				throw new IllegalArgumentException(
@@ -123,10 +135,10 @@ public class AndroidProducer {
 		}
 
 		try {
-			return new InstrumentationResult(transform(classData, true), true, null);
+			return new InstrumentationResult(transform(classData, speedhackEnabled, true), true, null);
 		} catch (RuntimeException memoryEditorFailure) {
 			try {
-				byte[] compatibilityOnly = transform(classData, false);
+				byte[] compatibilityOnly = transform(classData, speedhackEnabled, false);
 				return new InstrumentationResult(compatibilityOnly, false,
 						classifyFailure(memoryEditorFailure));
 			} catch (RuntimeException compatibilityFailure) {
@@ -139,10 +151,11 @@ public class AndroidProducer {
 		}
 	}
 
-	private static byte[] transform(byte[] classData, boolean memoryEditorEnabled) {
+	private static byte[] transform(byte[] classData, boolean speedhackEnabled,
+			boolean memoryEditorEnabled) {
 		ClassReader cr = new ClassReader(classData);
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-		ClassVisitor cv = new AndroidClassVisitor(cw, memoryEditorEnabled);
+		ClassVisitor cv = new AndroidClassVisitor(cw, speedhackEnabled, memoryEditorEnabled);
 		cr.accept(cv, ClassReader.SKIP_DEBUG);
 		return cw.toByteArray();
 	}
