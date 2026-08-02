@@ -35,6 +35,24 @@ jobs:
           distribution: temurin
           java-version: "21"
 
+      # Keep installable emulatorDebug artifacts on the same signing identity
+      # as local debug builds. The keystore is supplied through GitHub Secrets;
+      # never commit or print the private key. Fork PRs may not receive secrets,
+      # so those validation builds safely fall back to the runner's throwaway
+      # debug key and are not expected to update a local installation.
+      - name: Restore shared debug keystore
+        shell: bash
+        env:
+          ANDROID_DEBUG_KEYSTORE_BASE64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$ANDROID_DEBUG_KEYSTORE_BASE64" ]; then
+            echo "::warning::ANDROID_DEBUG_KEYSTORE_BASE64 is unavailable; using the runner debug keystore."
+            exit 0
+          fi
+          mkdir -p "$HOME/.android"
+          printf '%s' "$ANDROID_DEBUG_KEYSTORE_BASE64" | base64 --decode > "$HOME/.android/debug.keystore"
+          chmod 600 "$HOME/.android/debug.keystore"
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
         with:
