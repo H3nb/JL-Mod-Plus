@@ -23,10 +23,10 @@ plugins {
 }
 
 tasks.register<Delete>("clean") {
-    delete(rootProject.properties["buildDir"])
+    delete(layout.buildDirectory)
 }
 
-val compileSdk by extra(36)
-val minSdk by extra(23)
-val targetSdk by extra(34)
-val ndkVersion by extra("29.0.14206865")
+extra.set("compileSdk", 36)
+extra.set("minSdk", 23)
+extra.set("targetSdk", 34)
+extra.set("ndkVersion", "29.0.14206865")
