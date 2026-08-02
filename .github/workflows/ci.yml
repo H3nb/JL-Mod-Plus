@@ -17,8 +17,75 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Validate emulator ARM64 debug
+  quality:
+    name: Quality and emulator debug lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      - name: Add development version suffix
+        shell: bash
+        run: echo "VERSION_SUFFIX=-dev.${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+
+      # Lint is a blocking quality gate for the emulator variant. Warnings remain
+      # visible in the uploaded report and must be triaged without broad suppression.
+      - name: Run emulator debug lint
+        run: >-
+          ./gradlew --no-daemon --stacktrace --console=plain --non-interactive
+          --warning-mode=all
+          --configuration-cache --configuration-cache-problems=fail
+          :app:lintEmulatorDebug
+
+      - name: Upload lint report
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: jl-mod-plus-lint-${{ github.run_number }}
+          # Keep human-readable reports until Code Scanning permissions and
+          # fork-PR behavior are reviewed; do not publish SARIF yet.
+          path: |
+            app/build/reports/lint-results-emulatorDebug.html
+            app/build/reports/lint-results-emulatorDebug.xml
+            app/build/reports/lint-results-emulatorDebug.txt
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload Gradle diagnostic reports
+        if: failure()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: jl-mod-plus-quality-diagnostics-${{ github.run_number }}
+          path: |
+            build/reports/problems/**
+            build/reports/dependency-verification/**
+            build/reports/configuration-cache/**
+            app/build/reports/problems/**
+            app/build/reports/configuration-cache/**
+          if-no-files-found: warn
+          retention-days: 7
+
+  unit-assemble:
+    name: Emulator debug tests and ARM64 assembly
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -56,7 +123,6 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
         with:
-          cache-provider: basic
           cache-read-only: ${{ github.event_name == 'pull_request' }}
 
       - name: Make Gradle wrapper executable
@@ -66,32 +132,9 @@ jobs:
         shell: bash
         run: echo "VERSION_SUFFIX=-dev.${GITHUB_SHA::7}" >> "$GITHUB_ENV"
 
-      # Lint is a blocking quality gate for the emulator variant. Warnings remain
-      # visible in the uploaded report and must be triaged without broad suppression.
-      - name: Run emulator debug lint
-        run: >-
-          ./gradlew --no-daemon --stacktrace
-          --warning-mode=all
-          --configuration-cache --configuration-cache-problems=fail
-          :app:lintEmulatorDebug
-
-      - name: Upload lint report
-        if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: jl-mod-plus-lint-${{ github.run_number }}
-          # Keep human-readable reports until Code Scanning permissions and
-          # fork-PR behavior are reviewed; do not publish SARIF yet.
-          path: |
-            app/build/reports/lint-results-emulatorDebug.html
-            app/build/reports/lint-results-emulatorDebug.xml
-            app/build/reports/lint-results-emulatorDebug.txt
-          if-no-files-found: warn
-          retention-days: 7
-
       - name: Test and assemble emulator debug
         run: >-
-          ./gradlew --no-daemon --stacktrace
+          ./gradlew --no-daemon --stacktrace --console=plain --non-interactive
           --warning-mode=all
           --build-cache
           --configuration-cache --configuration-cache-problems=fail
@@ -106,6 +149,17 @@ jobs:
           abis="$(unzip -Z1 "$apk" | awk -F/ '/^lib\/[^/]+\// {print $2}' | sort -u)"
           test "$abis" = "arm64-v8a"
           printf 'Verified APK: %s\nABI: %s\n' "$apk" "$abis"
+
+      - name: Upload unit-test reports
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: jl-mod-plus-unit-tests-${{ github.run_number }}
+          path: |
+            app/build/test-results/testEmulatorDebugUnitTest/**
+            app/build/reports/tests/testEmulatorDebugUnitTest/**
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Upload Gradle diagnostic reports
         if: failure()
