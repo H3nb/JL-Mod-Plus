@@ -50,6 +50,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import io.reactivex.Single;
@@ -70,7 +71,6 @@ import io.github.h3nb.jlmodplus.util.FileUtils;
 import ru.woesss.j2me.mmapi.synth.SoundBankResolver;
 import ru.woesss.j2me.rms.RmsSnapshotManager;
 import ru.woesss.util.TextUtils;
-import yuku.ambilwarna.AmbilWarnaDialog;
 
 public class ConfigActivity extends AppCompatActivity implements ConfigComposeView.Callback {
 	private static final String TAG = ConfigActivity.class.getSimpleName();
@@ -1077,17 +1077,6 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
 	}
 
 	private void showColorPicker(String field) {
-		AmbilWarnaDialog.OnAmbilWarnaListener colorListener = new AmbilWarnaDialog.OnAmbilWarnaListener() {
-			@Override
-			public void onOk(AmbilWarnaDialog dialog, int color) {
-				composeView.setColorText(field, String.format("%06X", color & 0xFFFFFF));
-			}
-
-			@Override
-			public void onCancel(AmbilWarnaDialog dialog) {
-			}
-		};
-
 		int color;
 		try {
 			String value = switch (field) {
@@ -1103,7 +1092,16 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
 		} catch (NumberFormatException ignored) {
 			color = 0;
 		}
-		new AmbilWarnaDialog(this, color | 0xFF000000, colorListener).show();
+		ConfigComposeDialogHost.showColorPicker(
+				this,
+				color | 0xFF000000,
+				getString(android.R.string.ok),
+				getString(android.R.string.cancel),
+				selectedColor -> composeView.setColorText(
+						field,
+						String.format(Locale.ROOT, "%06X", selectedColor & 0xFFFFFF)
+				)
+		);
 	}
 
 	private void addResolutionToPresets() {

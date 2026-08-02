@@ -147,6 +147,26 @@ object ConfigComposeDialogHost {
         )
     }
 
+    @JvmStatic
+    fun showColorPicker(
+        context: Context,
+        initialColor: Int,
+        positiveLabel: String,
+        negativeLabel: String,
+        onConfirmed: ConfigColorPickerAction,
+    ): Dialog = createDialog(context, cancelable = true) { dialog ->
+        ColorPickerDialogContent(
+            initialColor = initialColor,
+            positiveLabel = positiveLabel,
+            negativeLabel = negativeLabel,
+            onConfirmed = { color ->
+                onConfirmed.onConfirmed(color)
+                dialog.dismiss()
+            },
+            onDismiss = dialog::cancel,
+        )
+    }
+
     private fun createDialog(
         context: Context,
         cancelable: Boolean,
@@ -201,6 +221,10 @@ fun interface ConfigSaveProfileAction {
 
 fun interface ConfigLoadProfileAction {
     fun onConfirmed(index: Int, configChecked: Boolean, keyboardChecked: Boolean)
+}
+
+fun interface ConfigColorPickerAction {
+    fun onConfirmed(color: Int)
 }
 
 private data class ShaderSliderSpec(
