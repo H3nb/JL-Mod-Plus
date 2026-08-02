@@ -17,7 +17,6 @@
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
     repositories {
-        mavenLocal()
         gradlePluginPortal()
         google()
         mavenCentral()
@@ -26,10 +25,19 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        mavenLocal()
         google()
         mavenCentral()
-        maven("https://jitpack.io")
+        exclusiveContent {
+            forRepository {
+                maven {
+                    url = uri("https://jitpack.io")
+                }
+            }
+            filter {
+                includeGroup("com.github.woesss")
+                includeGroup("com.github.nikita36078")
+            }
+        }
     }
 }
 rootProject.name = "JL-Mod-Plus"
