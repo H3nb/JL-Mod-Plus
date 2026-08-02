@@ -474,15 +474,20 @@ public class Main {
         }
 
         try {
-            // modify byte-code with ASM-java
-            AndroidProducer.InstrumentationResult instrumentation =
-                    AndroidProducer.instrumentWithReport(bytes, name, crc);
-            bytes = instrumentation.bytes;
-            if (!instrumentation.memoryEditorApplied) {
-                context.err.println("Memory Editor coverage partial for " + name
-                        + " (" + instrumentation.memoryEditorSkipReason
-                        + "; compatibility transforms retained)");
-            }
+            /*
+             * MEMORY EDITOR IS INTENTIONALLY DISABLED FOR PRODUCTION DEX.
+             *
+             * The previous visitor injected a gate/bridge around every
+             * primitive field and primitive-array access in transformed game
+             * methods. That broad per-access surface is being investigated as
+             * a cause of lag, stuck screens, and game-specific instability;
+             * it also has no semantic render/audio exclusion. Keep the old
+             * visitor and tests available through AndroidProducer, but do not
+             * re-enable it here until a safer runtime design has passed A/B
+             * testing. Config.MIDLET_DEX_VERSION is bumped with this change so
+             * existing converted archives are rebuilt instead of reused.
+             */
+            bytes = AndroidProducer.compatibilityOnly(bytes, name, crc);
 
             new DirectClassFileConsumer(name, bytes, null).call(
                     new ClassParserTask(name, bytes).call());

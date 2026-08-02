@@ -166,6 +166,17 @@ public class MemoryEditorInstrumentationTest {
 	}
 
 	@Test
+	public void productionCompatibilityOnlyPathSkipsMemoryEditorHooks() {
+		byte[] transformed = AndroidProducer.compatibilityOnly(
+				createTarget(), CLASS_NAME + ".class", 0L);
+
+		assertFalse(containsMethodCall(transformed,
+				"javax/microedition/shell/memory/MemoryEditorBridge", "onReadInt"));
+		assertFalse(containsMethodCall(transformed,
+				"javax/microedition/shell/memory/MemoryEditorBridge", "onWriteInt"));
+	}
+
+	@Test
 	public void transformedPrimitiveAccessesCompleteTheRealDxPipeline() throws Exception {
 		File input = temporaryFolder.newFile("game.jar");
 		try (JarOutputStream jar = new JarOutputStream(new FileOutputStream(input))) {

@@ -68,6 +68,22 @@ public class AndroidProducer {
 	}
 
 	/**
+	 * Converts one class with the Android compatibility transforms only.
+	 *
+	 * <p>Production DEX conversion deliberately uses this path while the
+	 * bytecode Memory Editor is disabled. The optional instrumentation visitor
+	 * remains available through {@link #instrumentWithReport(byte[], String,
+	 * long)} for focused tests and controlled experiments.</p>
+	 */
+	public static byte[] compatibilityOnly(byte[] classData, String classFileName,
+			long crc) throws IllegalArgumentException {
+		// See the production-conversion guard in dexer.Main. This preserves the
+		// Android/timing compatibility transforms while intentionally omitting the
+		// broad Memory Editor per-access hooks during the safety investigation.
+		return instrumentWithMode(classData, classFileName, crc, false).bytes;
+	}
+
+	/**
 	 * Instruments one class and falls back to the compatibility-only pipeline
 	 * when the optional Memory Editor visitor cannot safely transform it.
 	 *
@@ -77,6 +93,12 @@ public class AndroidProducer {
 	 */
 	public static InstrumentationResult instrumentWithReport(byte[] classData,
 			String classFileName, long crc) throws IllegalArgumentException {
+		return instrumentWithMode(classData, classFileName, crc, true);
+	}
+
+	private static InstrumentationResult instrumentWithMode(byte[] classData,
+			String classFileName, long crc, boolean memoryEditorEnabled)
+			throws IllegalArgumentException {
 		Integer patch = patches.get((int) crc);
 		if (patch != null) {
 			classData = patchClass(classData, patch);
@@ -84,6 +106,10 @@ public class AndroidProducer {
 		ClassReader cr = new ClassReader(classData);
 		if (!cr.getClassName().equals(classFileName.substring(0, classFileName.length() - 6))) {
 			throw new IllegalArgumentException("Class name does not match path");
+		}
+		if (!memoryEditorEnabled) {
+			return new InstrumentationResult(transform(classData, false), false,
+					"DISABLED_FOR_PRODUCTION_CONVERSION");
 		}
 		if (exceedsMemoryEditorPreflight(classData)) {
 			try {

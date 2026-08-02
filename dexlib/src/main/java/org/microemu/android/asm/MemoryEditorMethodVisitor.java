@@ -23,10 +23,18 @@ import org.objectweb.asm.commons.AdviceAdapter;
 import org.objectweb.asm.commons.Method;
 
 /**
- * Adds low-overhead observation points to primitive fields and primitive array
- * elements. It deliberately does not touch reference values or platform
- * classes: the runtime editor works with logical values exposed by the
- * transformed MIDlet, not arbitrary Android process memory.
+ * Legacy/experimental bytecode visitor for Memory Editor observation points.
+ *
+ * <p>Production DEX conversion currently does not select this visitor. It is
+ * retained for focused tests and controlled experiments while the broad
+ * per-access hook surface is investigated for game-specific lag, stuck screens,
+ * and instability. A future re-enable requires an explicit safety review and
+ * A/B evidence; do not remove this note when changing the conversion guard.</p>
+ *
+ * <p>When selected, it adds observation points to primitive fields and
+ * primitive array elements. It deliberately does not touch reference values or
+ * platform classes: the runtime editor works with logical values exposed by
+ * the transformed MIDlet, not arbitrary Android process memory.</p>
  */
 final class MemoryEditorMethodVisitor extends AdviceAdapter {
 	private static final Type BRIDGE = Type.getObjectType(
