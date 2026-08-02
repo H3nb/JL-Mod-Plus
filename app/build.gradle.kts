@@ -277,6 +277,8 @@ dependencies {
     implementation(libs.androidx.recyclerview)
     implementation(libs.kotlinx.coroutines.android)
     kapt(libs.androidx.room.compiler)
+    // Room's javac processor reads Kotlin 2.4 metadata; keep the matching
+    // reader on the kapt classpath even though it is not a processor itself.
     kapt(libs.kotlin.metadata.jvm)
     implementation(libs.androidx.room.runtime)
 

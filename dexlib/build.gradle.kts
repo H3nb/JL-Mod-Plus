@@ -21,6 +21,7 @@ plugins {
 }
 
 android {
+    enableKotlin = false
     compileSdk = rootProject.extra["compileSdk"] as Int
     namespace = "io.github.h3nb.jlmodplus.dexlib"
 
