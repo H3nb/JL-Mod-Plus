@@ -15,21 +15,21 @@
  * limitations under the License.
  */
 
-package io.github.h3nb.jlmodplus.appsdb;
+package io.github.h3nb.jlmodplus.appsdb
 
-import androidx.room.Database;
-import androidx.room.Room;
-import androidx.room.RoomDatabase;
+import androidx.room.Database
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import io.github.h3nb.jlmodplus.EmulatorApplication
+import io.github.h3nb.jlmodplus.applist.AppItem
 
-import io.github.h3nb.jlmodplus.EmulatorApplication;
-import io.github.h3nb.jlmodplus.applist.AppItem;
+@Database(entities = [AppItem::class], version = 1, exportSchema = false)
+abstract class AppDatabase : RoomDatabase() {
+    abstract fun appItemDao(): AppItemDao
 
-@Database(entities = {AppItem.class}, version = 1, exportSchema = false)
-public abstract class AppDatabase extends RoomDatabase {
-
-	public abstract AppItemDao appItemDao();
-
-	static synchronized AppDatabase open(String path) {
-		return Room.databaseBuilder(EmulatorApplication.getInstance(), AppDatabase.class, path).build();
-	}
+    companion object {
+        @JvmStatic
+        fun open(path: String): AppDatabase =
+            Room.databaseBuilder(EmulatorApplication.getInstance(), AppDatabase::class.java, path).build()
+    }
 }

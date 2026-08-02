@@ -55,7 +55,10 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -79,8 +82,6 @@ import javax.microedition.shell.MicroActivity;
 import javax.microedition.shell.time.EmulationTime;
 import javax.microedition.util.ContextHolder;
 
-import io.reactivex.Single;
-import io.reactivex.schedulers.Schedulers;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 
@@ -274,26 +275,41 @@ public abstract class Canvas extends Displayable {
 		}
 	}
 
-	public Single<Bitmap> getScreenshot() {
+	public interface ScreenshotCallback {
+		void onSuccess(@NonNull Bitmap bitmap);
+
+		void onError(@NonNull Throwable error);
+	}
+
+	public void getScreenshot(@NonNull Executor executor, @NonNull ScreenshotCallback callback) {
 		if (renderer != null && !screenshotRawMode) {
-			return renderer.takeScreenShot();
+			renderer.takeScreenShot(executor, callback);
+			return;
 		}
-		return Single.create(emitter -> {
-			Bitmap bitmap;
-			if (screenshotRawMode) {
-				synchronized (bufferLock) {
-					bitmap = Bitmap.createBitmap(offscreenCopy.getBitmap(), 0, 0,
-							offscreenCopy.getWidth(), offscreenCopy.getHeight());
+		try {
+			executor.execute(() -> {
+				try {
+					Bitmap bitmap;
+					if (screenshotRawMode) {
+						synchronized (bufferLock) {
+							bitmap = Bitmap.createBitmap(offscreenCopy.getBitmap(), 0, 0,
+									offscreenCopy.getWidth(), offscreenCopy.getHeight());
+						}
+					} else {
+						bitmap = Bitmap.createBitmap(onWidth, onHeight, Bitmap.Config.ARGB_8888);
+						canvasWrapper.bind(new android.graphics.Canvas(bitmap));
+						synchronized (bufferLock) {
+							canvasWrapper.drawImage(offscreenCopy, new RectF(0, 0, onWidth, onHeight));
+						}
+					}
+					callback.onSuccess(bitmap);
+				} catch (Throwable error) {
+					callback.onError(error);
 				}
-			} else {
-				bitmap = Bitmap.createBitmap(onWidth, onHeight, Bitmap.Config.ARGB_8888);
-				canvasWrapper.bind(new android.graphics.Canvas(bitmap));
-				synchronized (bufferLock) {
-					canvasWrapper.drawImage(offscreenCopy, new RectF(0, 0, onWidth, onHeight));
-				}
-			}
-			emitter.onSuccess(bitmap);
-		});
+			});
+		} catch (RejectedExecutionException error) {
+			callback.onError(error);
+		}
 	}
 
 	private boolean checkSizeChanged() {
@@ -832,33 +848,76 @@ public abstract class Canvas extends Displayable {
 			mView.onResume();
 		}
 
-		private Single<Bitmap> takeScreenShot() {
-			return Single.<int[]>create(emitter -> {
+		private void takeScreenShot(@NonNull Executor executor, @NonNull ScreenshotCallback callback) {
+			AtomicBoolean completed = new AtomicBoolean();
+			Runnable timeout = () -> {
+				if (completed.compareAndSet(false, true)) {
+					callback.onError(new TimeoutException("Timed out waiting for GL screenshot"));
+				}
+			};
+			new Handler(Looper.getMainLooper()).postDelayed(timeout, 3_000L);
+			try {
+				executor.execute(() -> {
+					try {
 						IntBuffer buf = IntBuffer.allocate(onWidth * onHeight);
 						mView.requestRender();
 						mView.queueEvent(() -> {
 							try {
-								glReadPixels(displayWidth - onWidth - onX, displayHeight - onHeight - onY, onWidth, onHeight, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+								glReadPixels(displayWidth - onWidth - onX, displayHeight - onHeight - onY,
+										onWidth, onHeight, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 								int error = glGetError();
 								if (error != GL_NO_ERROR) {
-									emitter.onError(new RuntimeException(GLU.gluErrorString(error)));
-								} else {
-									emitter.onSuccess(buf.array());
+									if (completed.compareAndSet(false, true)) {
+										callback.onError(new RuntimeException(GLU.gluErrorString(error)));
+									}
+									return;
 								}
-							} catch (Throwable e) {
-								emitter.onError(e);
+								try {
+									executor.execute(() -> {
+										if (completed.get()) {
+											return;
+										}
+										try {
+											int[] pixels = buf.array();
+											for (int i = 0, len = pixels.length; i < len; i++) {
+												int p = pixels[i];
+												pixels[i] = (p & 0xff00ff00) | ((p & 0xff0000) >> 16)
+														| ((p & 0xff) << 16);
+											}
+											Bitmap bitmap = Bitmap.createBitmap(pixels,
+													onWidth * (onHeight - 1), -onWidth, onWidth, onHeight,
+													Bitmap.Config.ARGB_8888);
+											if (completed.compareAndSet(false, true)) {
+												callback.onSuccess(bitmap);
+											}
+										} catch (Throwable conversionError) {
+											if (completed.compareAndSet(false, true)) {
+												callback.onError(conversionError);
+											}
+										}
+									});
+								} catch (RejectedExecutionException rejected) {
+									if (completed.compareAndSet(false, true)) {
+										callback.onError(rejected);
+									}
+								}
+							} catch (Throwable error) {
+								if (completed.compareAndSet(false, true)) {
+									callback.onError(error);
+								}
 							}
 						});
-					}).timeout(3, TimeUnit.SECONDS)
-					.subscribeOn(Schedulers.computation())
-					.observeOn(Schedulers.computation())
-					.map(pixels -> {
-						for (int i = 0, len = pixels.length; i < len; i++) {
-							int p = pixels[i];
-							pixels[i] = (p & 0xff00ff00) | ((p & 0xff0000) >> 16) | ((p & 0xff) << 16);
+					} catch (Throwable error) {
+						if (completed.compareAndSet(false, true)) {
+							callback.onError(error);
 						}
-						return Bitmap.createBitmap(pixels, onWidth * (onHeight - 1), -onWidth, onWidth, onHeight, Bitmap.Config.ARGB_8888);
-					});
+					}
+				});
+			} catch (RejectedExecutionException error) {
+				if (completed.compareAndSet(false, true)) {
+					callback.onError(error);
+				}
+			}
 		}
 	}
 

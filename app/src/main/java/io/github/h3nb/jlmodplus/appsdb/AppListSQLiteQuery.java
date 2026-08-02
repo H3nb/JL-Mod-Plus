@@ -53,6 +53,13 @@ class AppListSQLiteQuery implements SupportSQLiteQuery {
 		updateQuery();
 	}
 
+	private AppListSQLiteQuery(String[] orderTerms, int sortVariant, String filter) {
+		this.orderTerms = orderTerms;
+		this.sortVariant = sortVariant;
+		this.filter = filter;
+		updateQuery();
+	}
+
 	@NonNull
 	@Override
 	public String getSql() {
@@ -95,5 +102,15 @@ class AppListSQLiteQuery implements SupportSQLiteQuery {
 
 	String getFilter() {
 		return filter;
+	}
+
+	/**
+	 * Returns an immutable-at-call-site query snapshot for asynchronous work.
+	 * Room may bind a raw query after the caller has returned, so reusing the
+	 * mutable query object would allow a later filter/sort change to alter an
+	 * already scheduled operation.
+	 */
+	AppListSQLiteQuery copy() {
+		return new AppListSQLiteQuery(orderTerms, sortVariant, filter);
 	}
 }

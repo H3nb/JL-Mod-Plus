@@ -52,11 +52,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-
-import io.reactivex.Single;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
@@ -91,7 +92,17 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
 	private boolean needShow;
 	private ConfigComposeView composeView;
 	private int lastSafeSecureConnectionMode;
-	private Disposable rmsOperation;
+    private final ThreadPoolExecutor rmsExecutor = new ThreadPoolExecutor(
+            1,
+            1,
+            0L,
+            TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(1),
+            Executors.defaultThreadFactory(),
+            new ThreadPoolExecutor.AbortPolicy()
+    );
+    private Future<?> rmsOperation;
+    private int rmsOperationGeneration;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -910,37 +921,68 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
 	}
 
 	private void createRmsSnapshot(File snapshotRoot) {
-		startRmsOperation(Single.fromCallable(() -> {
+		startRmsOperation(() -> {
 			RmsSnapshotManager.create(dataDir, snapshotRoot, Long.toString(System.currentTimeMillis()));
-			return true;
-		}));
+		});
 	}
 
 	private void restoreRmsSnapshot(RmsSnapshotManager.Snapshot snapshot) {
 		File snapshotRoot = new File(Config.getRmsSnapshotsDir(), dataDir.getName());
 		String backupLabel = getString(R.string.rms_snapshot_before_restore);
-		startRmsOperation(Single.fromCallable(() -> {
+		startRmsOperation(() -> {
 			RmsSnapshotManager.restoreWithBackup(
 					snapshot, dataDir, snapshotRoot, backupLabel);
-			return true;
-		}));
+		});
 	}
 
-	private void startRmsOperation(Single<Boolean> operation) {
-		if (rmsOperation != null) rmsOperation.dispose();
-		rmsOperation = operation.subscribeOn(Schedulers.io())
-				.observeOn(AndroidSchedulers.mainThread())
-				.subscribe(ignored -> Toast.makeText(this, R.string.rms_snapshot_done,
-						Toast.LENGTH_SHORT).show(), error -> Toast.makeText(this,
-						getString(R.string.rms_snapshot_failed, error.getMessage()), Toast.LENGTH_LONG).show());
+	@FunctionalInterface
+	private interface RmsOperation {
+		void run() throws Exception;
+	}
+
+	private void startRmsOperation(RmsOperation operation) {
+		if (rmsOperation != null) {
+			rmsOperation.cancel(true);
+		}
+		int generation = ++rmsOperationGeneration;
+        try {
+            rmsOperation = rmsExecutor.submit(() -> {
+                try {
+                    operation.run();
+                    runOnUiThread(() -> {
+                        if (generation != rmsOperationGeneration || isFinishing() || isDestroyed()) {
+                            return;
+                        }
+                        Toast.makeText(this, R.string.rms_snapshot_done, Toast.LENGTH_SHORT).show();
+                    });
+                } catch (Throwable error) {
+                    runOnUiThread(() -> {
+                        if (generation != rmsOperationGeneration || isFinishing() || isDestroyed()) {
+                            return;
+                        }
+                        Toast.makeText(this,
+                                getString(R.string.rms_snapshot_failed, error.getMessage()),
+                                Toast.LENGTH_LONG).show();
+                    });
+                }
+            });
+        } catch (RejectedExecutionException error) {
+            Toast.makeText(this,
+                    getString(R.string.rms_snapshot_failed, error.getMessage()),
+                    Toast.LENGTH_LONG).show();
+        }
 	}
 
 	@Override
 	protected void onDestroy() {
-		if (rmsOperation != null) {
-			rmsOperation.dispose();
-			rmsOperation = null;
-		}
+        if (rmsOperation != null) {
+            ++rmsOperationGeneration;
+            rmsOperation.cancel(true);
+            rmsExecutor.getQueue().remove(rmsOperation);
+            rmsExecutor.purge();
+            rmsOperation = null;
+        }
+		rmsExecutor.shutdownNow();
 		super.onDestroy();
 	}
 

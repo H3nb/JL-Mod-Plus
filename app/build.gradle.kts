@@ -24,6 +24,7 @@ import java.util.jar.Manifest
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("org.jetbrains.kotlin.kapt")
     alias(libs.plugins.compose.compiler)
 }
 
@@ -199,9 +200,8 @@ dependencies {
     implementation(libs.androidx.preference.ktx)
     implementation(libs.androidx.recyclerview)
     implementation(libs.kotlinx.coroutines.android)
-    annotationProcessor(libs.androidx.room.compiler)
+    kapt(libs.androidx.room.compiler)
     implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.rxjava2)
 
     val composeBom = platform(libs.androidx.compose.bom)
     implementation(composeBom)
@@ -213,7 +213,7 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-    annotationProcessor(libs.google.auto.service)
+    kapt(libs.google.auto.service)
     compileOnly(libs.google.auto.service.annotations)
     implementation(libs.google.gson)
     implementation(libs.google.oboe)
@@ -224,7 +224,6 @@ dependencies {
         exclude(group = "com.google.auto.service", module = "auto-service")
     }
     implementation(libs.pngj)
-    implementation(libs.rx.android)
 
     testImplementation(libs.junit)
     testImplementation(libs.asm)

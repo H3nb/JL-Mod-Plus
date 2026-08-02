@@ -61,6 +61,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Displayable;
@@ -76,11 +82,6 @@ import javax.microedition.shell.memory.MemoryEditorRuntime;
 import javax.microedition.shell.memory.ui.MemoryEditorDialogFragment;
 import javax.microedition.util.ContextHolder;
 
-import io.reactivex.Single;
-import io.reactivex.SingleObserver;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
 import io.github.h3nb.jlmodplus.BuildConfig;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.Config;
@@ -103,7 +104,18 @@ public class MicroActivity extends AppCompatActivity {
 	private int menuKey;
 	private String appPath;
 	private MicroActivityHost binding;
-	private Disposable timingMigrationDisposable;
+	private final ThreadPoolExecutor timingMigrationExecutor = new ThreadPoolExecutor(
+			1,
+			1,
+			0L,
+			TimeUnit.MILLISECONDS,
+			new ArrayBlockingQueue<>(1),
+			Executors.defaultThreadFactory(),
+			new ThreadPoolExecutor.AbortPolicy()
+	);
+	private Future<?> timingMigrationOperation;
+	private volatile long timingMigrationGeneration;
+	private volatile long screenshotGeneration;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -213,26 +225,38 @@ public class MicroActivity extends AppCompatActivity {
 				false,
 				null,
 				null,
-				null
+			null
 		);
-		timingMigrationDisposable = Single.fromCallable(() -> {
+		if (timingMigrationOperation != null) {
+			timingMigrationOperation.cancel(true);
+		}
+		long generation = ++timingMigrationGeneration;
+		try {
+			timingMigrationOperation = timingMigrationExecutor.submit(() -> {
+				try {
 					microLoader.migrateTimingDex();
-					return true;
-				})
-				.subscribeOn(Schedulers.io())
-				.observeOn(AndroidSchedulers.mainThread())
-				.subscribe(ignored -> {
-					progress.dismiss();
-					if (!isFinishing() && !isDestroyed()) {
+					runOnUiThread(() -> {
+						if (generation != timingMigrationGeneration || isFinishing() || isDestroyed()) {
+							return;
+						}
+						progress.dismiss();
 						loadMIDlet();
-					}
-				}, error -> {
-					progress.dismiss();
-					microLoader.refreshTimingTransformState();
-					if (!isFinishing() && !isDestroyed()) {
+					});
+				} catch (Throwable error) {
+					runOnUiThread(() -> {
+						if (generation != timingMigrationGeneration || isFinishing() || isDestroyed()) {
+							return;
+						}
+						progress.dismiss();
+						microLoader.refreshTimingTransformState();
 						showTimingMigrationFailure(error);
-					}
-				});
+					});
+				}
+			});
+		} catch (RejectedExecutionException error) {
+			progress.dismiss();
+			showTimingMigrationFailure(error);
+		}
 	}
 
 	private void showTimingMigrationFailure(Throwable error) {
@@ -258,9 +282,17 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	protected void onDestroy() {
-		if (timingMigrationDisposable != null) {
-			timingMigrationDisposable.dispose();
-			timingMigrationDisposable = null;
+		++timingMigrationGeneration;
+		if (timingMigrationOperation != null) {
+			timingMigrationOperation.cancel(true);
+			timingMigrationExecutor.getQueue().remove(timingMigrationOperation);
+			timingMigrationExecutor.purge();
+			timingMigrationOperation = null;
+		}
+		timingMigrationExecutor.shutdownNow();
+		++screenshotGeneration;
+		if (microLoader != null) {
+			microLoader.close();
 		}
 		if (isFinishing()) {
 			MemoryEditorRuntime.endGame();
@@ -576,24 +608,31 @@ public class MicroActivity extends AppCompatActivity {
 		}
 	}
 
-	@SuppressLint("CheckResult")
 	private void takeScreenshot() {
-		microLoader.takeScreenshot(current, new SingleObserver<>() {
+		long generation = ++screenshotGeneration;
+		microLoader.takeScreenshot(current, new MicroLoader.ScreenshotCallback() {
 			@Override
-			public void onSubscribe(@NonNull Disposable d) {
+			public void onSuccess(String path) {
+				runOnUiThread(() -> {
+					if (generation != screenshotGeneration || isFinishing() || isDestroyed()) {
+						return;
+					}
+					Toast.makeText(MicroActivity.this, getString(R.string.screenshot_saved)
+							+ " " + path, Toast.LENGTH_LONG).show();
+					MediaScannerConnection.scanFile(MicroActivity.this,
+							new String[]{path}, null, null);
+				});
 			}
 
 			@Override
-			public void onSuccess(@NonNull String s) {
-				Toast.makeText(MicroActivity.this, getString(R.string.screenshot_saved)
-						+ " " + s, Toast.LENGTH_LONG).show();
-				MediaScannerConnection.scanFile(MicroActivity.this, new String[]{s}, null, null);
-			}
-
-			@Override
-			public void onError(@NonNull Throwable e) {
-				e.printStackTrace();
-				Toast.makeText(MicroActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+			public void onError(Throwable error) {
+				runOnUiThread(() -> {
+					if (generation != screenshotGeneration || isFinishing() || isDestroyed()) {
+						return;
+					}
+					error.printStackTrace();
+					Toast.makeText(MicroActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+				});
 			}
 		});
 	}

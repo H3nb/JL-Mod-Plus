@@ -40,7 +40,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarFile;
 
-import io.reactivex.SingleEmitter;
 import io.github.h3nb.jlmodplus.EmulatorApplication;
 import io.github.h3nb.jlmodplus.applist.AppItem;
 import io.github.h3nb.jlmodplus.applist.AppListModel;
@@ -54,6 +53,10 @@ import ru.woesss.util.TextUtils;
 import ru.woesss.util.zip.ZipFile;
 
 public class AppInstaller {
+	interface StatusCallback {
+		void onStatus(int status);
+	}
+
 	private static final String TAG = AppInstaller.class.getSimpleName();
 	static final int STATUS_OLDER = -1;
 	static final int STATUS_EQUAL = 0;
@@ -105,7 +108,7 @@ public class AppInstaller {
 	}
 
 	/** Load and check app info from source */
-	void loadInfo(SingleEmitter<Integer> emitter) throws IOException, ConverterException {
+	void loadInfo(StatusCallback callback) throws IOException, ConverterException {
 		if (id != -1) {
 			currentApp = appListModel.getApp(id);
 			srcJar = new File(currentApp.getPathExt(), Config.MIDLET_RES_FILE);
@@ -114,7 +117,7 @@ public class AppInstaller {
 			newDesc = new Descriptor(new File(currentApp.getPathExt(), Config.MIDLET_MANIFEST_FILE), false);
 			appDirName = currentApp.getPath();
 			targetDir = new File(Config.getAppDir(), appDirName);
-			emitter.onSuccess(STATUS_EQUAL);
+			callback.onStatus(STATUS_EQUAL);
 			return;
 		}
 		boolean isLocal;
@@ -140,7 +143,7 @@ public class AppInstaller {
 			String host = uri.getHost();
 			if (isLocal && scheme == null && host == null) {
 				if (!checkJarFile(srcFile)) {
-					emitter.onSuccess(STATUS_UNMATCHED);
+					callback.onStatus(STATUS_UNMATCHED);
 					return;
 				}
 			}
@@ -155,7 +158,7 @@ public class AppInstaller {
 			newDesc = loadManifest(srcFile);
 		}
 		int result = checkDescriptor();
-		emitter.onSuccess(result);
+		callback.onStatus(result);
 	}
 
 	private void parseKjx() throws ConverterException {
@@ -259,7 +262,7 @@ public class AppInstaller {
 	}
 
 	/** Install app */
-	void install(SingleEmitter<Integer> emitter) throws ConverterException, IOException {
+	void install(StatusCallback callback) throws ConverterException, IOException {
 		if (!cacheDir.exists() && !cacheDir.mkdirs()) {
 			throw new ConverterException("Can't create cache dir");
 		}
@@ -272,7 +275,7 @@ public class AppInstaller {
 			downloadJar();
 			manifest = loadManifest(srcJar);
 			if (!manifest.equals(newDesc)) {
-				emitter.onSuccess(STATUS_UNMATCHED);
+				callback.onStatus(STATUS_UNMATCHED);
 				return;
 			}
 		}
@@ -341,7 +344,7 @@ public class AppInstaller {
 		appListModel.addApp(app);
 		clearCache();
 		deleteTemp();
-		emitter.onSuccess(STATUS_SUCCESS);
+		callback.onStatus(STATUS_SUCCESS);
 	}
 
 	private Descriptor loadManifest(File jar) throws IOException {

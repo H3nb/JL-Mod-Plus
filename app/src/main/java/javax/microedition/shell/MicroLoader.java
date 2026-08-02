@@ -28,6 +28,7 @@ import android.util.Log;
 import android.util.SparseIntArray;
 import android.view.KeyEvent;
 
+import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
 import org.acra.ACRA;
@@ -50,6 +51,9 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.microedition.lcdui.Canvas;
@@ -65,9 +69,6 @@ import javax.microedition.midlet.MIDlet;
 import javax.microedition.shell.time.EmulationTime;
 import javax.microedition.util.ContextHolder;
 
-import io.reactivex.SingleObserver;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.schedulers.Schedulers;
 import kotlin.io.ConstantsKt;
 import kotlin.io.FilesKt;
 import io.github.h3nb.jlmodplus.BuildConfig;
@@ -86,9 +87,17 @@ import ru.woesss.j2me.mmapi.synth.SoundBankResolver;
 
 public class MicroLoader {
 	private static final String TAG = MicroLoader.class.getName();
+
+	interface ScreenshotCallback {
+		void onSuccess(String path);
+
+		void onError(Throwable error);
+	}
+
 	private static String soundBank;
 	private static SoundBankResolver.Format soundBankFormat;
 	private final Map<String, String> midlets = new LinkedHashMap<>();
+	private final ExecutorService screenshotExecutor = Executors.newSingleThreadExecutor();
 
 	ProfileModel params;
 	private final File appDir;
@@ -351,31 +360,50 @@ public class MicroLoader {
 		}
 	}
 
-	void takeScreenshot(Object target, SingleObserver<String> observer) {
+	void takeScreenshot(Object target, ScreenshotCallback observer) {
 		if (!(target instanceof Canvas canvas)) {
 			return;
 		}
-		canvas.getScreenshot()
-				.subscribeOn(Schedulers.computation())
-				.observeOn(Schedulers.io())
-				.map(bitmap -> {
-					Calendar calendar = Calendar.getInstance();
-					Date now = calendar.getTime();
-					//noinspection SpellCheckingInspection
-					SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US);
-					String fileName = "Screenshot_" + simpleDateFormat.format(now) + ".png";
-					File screenshotDir = new File(Config.SCREENSHOTS_DIR);
-					File screenshotFile = new File(screenshotDir, fileName);
-					if (!screenshotDir.exists() && !screenshotDir.mkdirs()) {
-						throw new IOException("Can't create directory: " + screenshotDir);
-					}
-					try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(screenshotFile))) {
-						bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
-					}
-					return screenshotFile.getAbsolutePath();
-				})
-				.observeOn(AndroidSchedulers.mainThread())
-				.subscribe(observer);
+		canvas.getScreenshot(screenshotExecutor, new Canvas.ScreenshotCallback() {
+			@Override
+			public void onSuccess(@NonNull Bitmap bitmap) {
+				try {
+					screenshotExecutor.execute(() -> {
+						try {
+							Calendar calendar = Calendar.getInstance();
+							Date now = calendar.getTime();
+							//noinspection SpellCheckingInspection
+							SimpleDateFormat simpleDateFormat =
+									new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US);
+							String fileName = "Screenshot_" + simpleDateFormat.format(now) + ".png";
+							File screenshotDir = new File(Config.SCREENSHOTS_DIR);
+							File screenshotFile = new File(screenshotDir, fileName);
+							if (!screenshotDir.exists() && !screenshotDir.mkdirs()) {
+								throw new IOException("Can't create directory: " + screenshotDir);
+							}
+							try (BufferedOutputStream out = new BufferedOutputStream(
+									new FileOutputStream(screenshotFile))) {
+								bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+							}
+							observer.onSuccess(screenshotFile.getAbsolutePath());
+						} catch (Throwable error) {
+							observer.onError(error);
+						}
+					});
+				} catch (RejectedExecutionException error) {
+					observer.onError(error);
+				}
+			}
+
+			@Override
+			public void onError(@NonNull Throwable error) {
+				observer.onError(error);
+			}
+		});
+	}
+
+	void close() {
+		screenshotExecutor.shutdownNow();
 	}
 
 	public int getMenuKeyCode() {

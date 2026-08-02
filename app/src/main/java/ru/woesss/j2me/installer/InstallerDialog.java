@@ -24,6 +24,8 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.SpannableStringBuilder;
 import android.util.Log;
 
@@ -41,12 +43,13 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
-import io.reactivex.Single;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.applist.AppItem;
 import io.github.h3nb.jlmodplus.applist.AppListModel;
@@ -58,7 +61,18 @@ import ru.woesss.j2me.jar.Descriptor;
 public class InstallerDialog extends DialogFragment {
 	private static final String ARG_URI = "InstallerDialog.uri";
 	private static final String ARG_ID = "InstallerDialog.id";
-	private final CompositeDisposable compositeDisposable = new CompositeDisposable();
+	private final ThreadPoolExecutor operationExecutor = new ThreadPoolExecutor(
+			1,
+			1,
+			0L,
+			TimeUnit.MILLISECONDS,
+			new ArrayBlockingQueue<>(1),
+			Executors.defaultThreadFactory(),
+			new ThreadPoolExecutor.AbortPolicy()
+	);
+	private final Handler mainHandler = new Handler(Looper.getMainLooper());
+	private Future<?> operation;
+	private volatile long operationGeneration;
 
 	private InstallerComposeView composeView;
 	private AppListModel appListModel;
@@ -131,7 +145,12 @@ public class InstallerDialog extends DialogFragment {
 
 	@Override
 	public void onDestroy() {
-		compositeDisposable.dispose();
+		cancelInstallerOperation();
+		operationExecutor.shutdownNow();
+		if (installer != null) {
+			installer.deleteTemp();
+			installer.clearCache();
+		}
 		super.onDestroy();
 	}
 
@@ -154,30 +173,74 @@ public class InstallerDialog extends DialogFragment {
 
 	private void installApp(File jar, Uri uri) {
 		installer = new AppInstaller(jar, uri, appListModel);
-		composeView.setNegativeButton(getString(android.R.string.cancel), () -> {
-			installer.deleteTemp();
-			installer.clearCache();
-			dismiss();
-		});
-		Disposable disposable = Single.create(installer::loadInfo)
-				.subscribeOn(Schedulers.computation())
-				.observeOn(AndroidSchedulers.mainThread())
-				.subscribe(this::onProgress, this::onError);
-		compositeDisposable.add(disposable);
+		composeView.setNegativeButton(getString(android.R.string.cancel), this::cancelAndDismiss);
+		startInstallerOperation(installer::loadInfo);
 	}
 
 	private void reinstallApp(int id) {
 		installer = new AppInstaller(id, appListModel);
-		composeView.setNegativeButton(getString(android.R.string.cancel), () -> {
-			installer.deleteTemp();
-			installer.clearCache();
-			dismiss();
+		composeView.setNegativeButton(getString(android.R.string.cancel), this::cancelAndDismiss);
+		startInstallerOperation(installer::loadInfo);
+	}
+
+	@FunctionalInterface
+	private interface InstallerOperation {
+		void run(AppInstaller.StatusCallback callback) throws Exception;
+	}
+
+	private void startInstallerOperation(InstallerOperation installerOperation) {
+		cancelInstallerOperation();
+		long generation = ++operationGeneration;
+		try {
+			operation = operationExecutor.submit(() -> {
+				try {
+					installerOperation.run(status -> postStatus(generation, status));
+				} catch (Throwable error) {
+					postError(generation, error);
+				}
+			});
+		} catch (RejectedExecutionException error) {
+			postError(generation, error);
+		}
+	}
+
+	private void postStatus(long generation, int status) {
+		if (generation != operationGeneration) {
+			return;
+		}
+		mainHandler.post(() -> {
+			if (generation == operationGeneration && isAdded()) {
+				onProgress(status);
+			}
 		});
-		Disposable disposable = Single.create(installer::loadInfo)
-				.subscribeOn(Schedulers.computation())
-				.observeOn(AndroidSchedulers.mainThread())
-				.subscribe(this::onProgress, this::onError);
-		compositeDisposable.add(disposable);
+	}
+
+	private void postError(long generation, Throwable error) {
+		if (generation != operationGeneration) {
+			return;
+		}
+		mainHandler.post(() -> {
+			if (generation == operationGeneration) {
+				onError(error);
+			}
+		});
+	}
+
+	private void cancelInstallerOperation() {
+		++operationGeneration;
+		if (operation != null) {
+			operation.cancel(true);
+			operationExecutor.getQueue().remove(operation);
+			operationExecutor.purge();
+			operation = null;
+		}
+	}
+
+	private void cancelAndDismiss() {
+		cancelInstallerOperation();
+		installer.deleteTemp();
+		installer.clearCache();
+		dismiss();
 	}
 
 	private void hideProgress() {
@@ -204,11 +267,7 @@ public class InstallerDialog extends DialogFragment {
 		composeView.setStatusText(getString(R.string.converting_wait));
 		showProgress();
 		hideButtons();
-		Disposable disposable = Single.create(installer::install)
-				.subscribeOn(Schedulers.computation())
-				.observeOn(AndroidSchedulers.mainThread())
-				.subscribe(this::onProgress, this::onError);
-		compositeDisposable.add(disposable);
+		startInstallerOperation(installer::install);
 	}
 
 	private void alertConfirm(SpannableStringBuilder message, Runnable positive) {
@@ -291,9 +350,7 @@ public class InstallerDialog extends DialogFragment {
 		composeView.setMessage(message);
 		composeView.setPositiveButton(getString(R.string.install), this::convert);
 		composeView.setNegativeButton(getString(android.R.string.cancel), () -> {
-			installer.deleteTemp();
-			installer.clearCache();
-			dismiss();
+			cancelAndDismiss();
 		});
 		hideProgress();
 		showButtons();

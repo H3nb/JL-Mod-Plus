@@ -38,7 +38,6 @@ google-oboe = "1.10.0"
 junit = "4.13.2"
 kotlinx-coroutines = "1.9.0"
 pngj = "2.2.3"
-rx-android = "2.1.1"
 zip4j = "2.11.5"
 
 [libraries]
@@ -64,7 +63,6 @@ androidx-preference-ktx = { module = "androidx.preference:preference-ktx", versi
 androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "androidx-recyclerview" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "androidx-room" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "androidx-room" }
-androidx-room-rxjava2 = { module = "androidx.room:room-rxjava2", version.ref = "androidx-room" }
 asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
 asm-commons = { module = "org.ow2.asm:asm-commons", version.ref = "asm" }
 google-auto-service = { module = "com.google.auto.service:auto-service", version.ref = "google-auto-service" }
@@ -74,7 +72,6 @@ google-oboe = { module = "com.google.oboe:oboe", version.ref = "google-oboe" }
 junit = { module = "junit:junit", version.ref = "junit" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
 pngj = { module = "com.github.nikita36078:pngj", version.ref = "pngj" }
-rx-android = { module = "io.reactivex.rxjava2:rxandroid", version.ref = "rx-android" }
 zip4j = { module = "net.lingala.zip4j:zip4j", version.ref = "zip4j" }
 
 [plugins]
