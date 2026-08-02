@@ -493,9 +493,8 @@ public class Main {
              * switches for diagnostic reinstall modes. The default conversion
              * remains speedhack-only for compatibility; the broad per-access
              * Memory Editor visitor is selected only when the user explicitly
-             * chooses a Memory Editor mode. This keeps the four-way A/B test
-             * attributable without changing Config.MIDLET_DEX_VERSION or
-             * triggering an automatic migration prompt.
+             * chooses a Memory Editor mode. The installer owns the DEX version
+             * gate and the per-archive mode marker independently.
              */
             bytes = AndroidProducer.convert(bytes, name, crc,
                     speedhackEnabled, memoryEditorEnabled);

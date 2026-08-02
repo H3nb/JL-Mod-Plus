@@ -79,7 +79,7 @@ public class AndroidProducer {
 			long crc) throws IllegalArgumentException {
 		// Keep this compatibility-only helper deterministic for callers that do not
 		// opt into a diagnostic Memory Editor conversion mode.
-		return convert(classData, classFileName, crc, true, false);
+		return convert(classData, classFileName, crc, false, false);
 	}
 
 	/**

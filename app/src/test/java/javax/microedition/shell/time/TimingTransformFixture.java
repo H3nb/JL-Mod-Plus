@@ -34,6 +34,15 @@ public final class TimingTransformFixture {
 		thread.join(millis, nanos);
 	}
 
+	public static void yieldOnce() {
+		Thread.yield();
+	}
+
+	public static void useTimer() {
+		java.util.Timer timer = new java.util.Timer(true);
+		timer.cancel();
+	}
+
 	public static void waitMillis(Object monitor, long millis) throws InterruptedException {
 		monitor.wait(millis);
 	}

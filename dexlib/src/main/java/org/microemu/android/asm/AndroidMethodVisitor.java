@@ -70,6 +70,26 @@ public class AndroidMethodVisitor extends MethodVisitor {
 				}
 				break;
 			case "java/lang/Thread":
+				/*
+				 * Legacy JL-Mod compatibility rule.  A number of J2ME game loops use
+				 * Thread.yield() as their frame-pacing point.  Android is allowed to
+				 * treat yield as a scheduler hint, so it may return immediately and
+				 * starve the repaint/event path.  Preserve the original 1 ms pause in
+				 * every conversion mode; only the implementation of that pause follows
+				 * virtual time when speedhack is enabled.
+				 */
+				if (opcode == INVOKESTATIC && name.equals("yield") && desc.equals("()V")) {
+					mv.visitLdcInsn(1L);
+					if (speedhackEnabled) {
+						mv.visitMethodInsn(INVOKESTATIC,
+								"javax/microedition/shell/time/EmulationTime",
+								"sleep", "(J)V", false);
+					} else {
+						mv.visitMethodInsn(INVOKESTATIC, "java/lang/Thread",
+								"sleep", "(J)V", false);
+					}
+					return;
+				}
 				if (speedhackEnabled && opcode == INVOKESTATIC && name.equals("sleep")) {
 					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/time/EmulationTime",
 							name, desc, false);
@@ -193,19 +213,13 @@ public class AndroidMethodVisitor extends MethodVisitor {
 				}
 				break;
 			case "java/util/Timer":
-				if (speedhackEnabled) {
-					owner = "javax/microedition/shell/custom/Timer";
-				}
+				owner = "javax/microedition/shell/custom/Timer";
 				break;
 			case "java/util/TimerTask":
-				if (speedhackEnabled) {
-					owner = "javax/microedition/shell/custom/TimerTask";
-				}
+				owner = "javax/microedition/shell/custom/TimerTask";
 				break;
 		}
-		if (speedhackEnabled) {
-			desc = desc.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
-		}
+		desc = desc.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
 		mv.visitMethodInsn(opcode, owner, name, desc, itf);
 	}
 
@@ -232,26 +246,20 @@ public class AndroidMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitTypeInsn(int opcode, String type) {
-		if (speedhackEnabled) {
-			type = type.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
-		}
+		type = type.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
 		super.visitTypeInsn(opcode, type);
 	}
 
 	@Override
 	public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
-		if (speedhackEnabled) {
-			descriptor = descriptor.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
-			owner = owner.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
-		}
+		descriptor = descriptor.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
+		owner = owner.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
 		super.visitFieldInsn(opcode, owner, name, descriptor);
 	}
 
 	@Override
 	public void visitMultiANewArrayInsn(String descriptor, int numDimensions) {
-		if (speedhackEnabled) {
-			descriptor = descriptor.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
-		}
+		descriptor = descriptor.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
 		super.visitMultiANewArrayInsn(descriptor, numDimensions);
 	}
 }

@@ -189,20 +189,26 @@ public class MemoryEditorInstrumentationTest {
 
 		assertFalse(containsMethodCall(normal,
 				"javax/microedition/shell/time/EmulationTime", "sleep"));
+		assertTrue(containsMethodCallInMethod(normal, "yieldOnce", "java/lang/Thread", "sleep"));
 		assertFalse(containsMethodCall(normal,
 				"javax/microedition/shell/memory/MemoryEditorBridge", "onReadInt"));
 
 		assertTrue(containsMethodCall(speedhack,
+				"javax/microedition/shell/time/EmulationTime", "sleep"));
+		assertTrue(containsMethodCallInMethod(speedhack, "yieldOnce",
 				"javax/microedition/shell/time/EmulationTime", "sleep"));
 		assertFalse(containsMethodCall(speedhack,
 				"javax/microedition/shell/memory/MemoryEditorBridge", "onReadInt"));
 
 		assertFalse(containsMethodCall(memoryEditor,
 				"javax/microedition/shell/time/EmulationTime", "sleep"));
+		assertTrue(containsMethodCallInMethod(memoryEditor, "yieldOnce", "java/lang/Thread", "sleep"));
 		assertTrue(containsMethodCall(memoryEditor,
 				"javax/microedition/shell/memory/MemoryEditorBridge", "onReadInt"));
 
 		assertTrue(containsMethodCall(both,
+				"javax/microedition/shell/time/EmulationTime", "sleep"));
+		assertTrue(containsMethodCallInMethod(both, "yieldOnce",
 				"javax/microedition/shell/time/EmulationTime", "sleep"));
 		assertTrue(containsMethodCall(both,
 				"javax/microedition/shell/memory/MemoryEditorBridge", "onReadInt"));
@@ -326,6 +332,7 @@ public class MemoryEditorInstrumentationTest {
 		addStaticFieldMethod(writer, "readStatic", "()J", Opcodes.GETSTATIC, Opcodes.LRETURN);
 		addStaticFieldMethod(writer, "writeStatic", "(J)V", Opcodes.PUTSTATIC, Opcodes.RETURN);
 		addTimingMethod(writer);
+		addYieldMethod(writer);
 
 		addArrayMethods(writer, "Byte", "[B", Opcodes.BALOAD, Opcodes.BASTORE,
 				Opcodes.IRETURN, Opcodes.ILOAD);
@@ -384,6 +391,17 @@ public class MemoryEditorInstrumentationTest {
 		method.visitEnd();
 	}
 
+	private static void addYieldMethod(ClassWriter writer) {
+		MethodVisitor method = writer.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+				"yieldOnce", "()V", null, null);
+		method.visitCode();
+		method.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Thread", "yield",
+				"()V", false);
+		method.visitInsn(Opcodes.RETURN);
+		method.visitMaxs(0, 0);
+		method.visitEnd();
+	}
+
 	private static byte[] createDupX1Target() {
 		String name = "game/DupX1Target";
 		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
@@ -418,6 +436,28 @@ public class MemoryEditorInstrumentationTest {
 					public void visitMethodInsn(int opcode, String calledOwner,
 							String calledName, String calledDescriptor, boolean isInterface) {
 						if (owner.equals(calledOwner) && name.equals(calledName)) {
+							found[0] = true;
+						}
+					}
+				};
+			}
+		}, 0);
+		return found[0];
+	}
+
+	private static boolean containsMethodCallInMethod(byte[] bytes, String methodName,
+			String owner, String calledName) {
+		final boolean[] found = {false};
+		new ClassReader(bytes).accept(new ClassVisitor(Opcodes.ASM9) {
+			@Override
+			public MethodVisitor visitMethod(int access, String currentMethod,
+					String descriptor, String signature, String[] exceptions) {
+				final boolean selectedMethod = methodName.equals(currentMethod);
+				return new MethodVisitor(Opcodes.ASM9) {
+					@Override
+					public void visitMethodInsn(int opcode, String calledOwner,
+							String name, String calledDescriptor, boolean isInterface) {
+						if (selectedMethod && owner.equals(calledOwner) && calledName.equals(name)) {
 							found[0] = true;
 						}
 					}

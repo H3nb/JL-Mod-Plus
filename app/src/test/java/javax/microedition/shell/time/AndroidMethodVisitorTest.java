@@ -40,6 +40,38 @@ import static org.junit.Assert.assertTrue;
 
 public class AndroidMethodVisitorTest {
 	@Test
+	public void normalModePacesLegacyYieldWithNativeSleep() throws Exception {
+		byte[] transformed = transformFixture(false, false);
+
+		assertTrue(hasMethodCall(transformed, "yieldOnce", "java/lang/Thread",
+				"sleep", "(J)V"));
+		assertFalse(hasMethodCall(transformed, "yieldOnce",
+				"javax/microedition/shell/time/EmulationTime", "sleep", "(J)V"));
+	}
+
+	@Test
+	public void speedhackModePacesLegacyYieldWithVirtualSleep() throws Exception {
+		byte[] transformed = transformFixture(true, false);
+
+		assertTrue(hasMethodCall(transformed, "yieldOnce",
+				"javax/microedition/shell/time/EmulationTime", "sleep", "(J)V"));
+		assertFalse(hasMethodCall(transformed, "yieldOnce", "java/lang/Thread",
+				"yield", "()V"));
+	}
+
+	@Test
+	public void timerCompatibilityRewriteRemainsActiveWithoutSpeedhack() throws Exception {
+		byte[] transformed = transformFixture(false, false);
+
+		assertTrue(hasTypeInstruction(transformed, "useTimer",
+				"javax/microedition/shell/custom/Timer"));
+		assertTrue(hasMethodCall(transformed, "useTimer",
+				"javax/microedition/shell/custom/Timer", "cancel", "()V"));
+		assertFalse(hasMethodCall(transformed, "useTimer", "java/util/Timer",
+				"cancel", "()V"));
+	}
+
+	@Test
 	public void instrumentedTimedJoinUsesVirtualTimeout() throws Exception {
 		assertVirtualJoin("joinMillis", false);
 	}
@@ -250,6 +282,11 @@ public class AndroidMethodVisitorTest {
 	}
 
 	private static Class<?> loadTransformedFixture() throws Exception {
+		return new FixtureClassLoader().define(transformFixture(true, true));
+	}
+
+	private static byte[] transformFixture(boolean speedhackEnabled, boolean memoryEditorEnabled)
+			throws Exception {
 		String resource = TimingTransformFixture.class.getName().replace('.', '/') + ".class";
 		byte[] original;
 		try (var input = TimingTransformFixture.class.getClassLoader().getResourceAsStream(resource)) {
@@ -259,11 +296,54 @@ public class AndroidMethodVisitorTest {
 			original = input.readAllBytes();
 		}
 		ClassReader reader = new ClassReader(original);
-		ClassWriter writer = new ClassWriter(
-				ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-		reader.accept(new AndroidClassVisitor(writer), ClassReader.SKIP_DEBUG);
-		byte[] transformed = writer.toByteArray();
-		return new FixtureClassLoader().define(transformed);
+		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+		reader.accept(new AndroidClassVisitor(writer, speedhackEnabled, memoryEditorEnabled),
+				ClassReader.SKIP_DEBUG);
+		return writer.toByteArray();
+	}
+
+	private static boolean hasMethodCall(byte[] bytes, String methodName, String owner,
+			String calledName, String descriptor) {
+		final boolean[] found = {false};
+		new ClassReader(bytes).accept(new org.objectweb.asm.ClassVisitor(org.objectweb.asm.Opcodes.ASM9) {
+			@Override
+			public org.objectweb.asm.MethodVisitor visitMethod(int access, String name,
+					String desc, String signature, String[] exceptions) {
+				final boolean selectedMethod = methodName.equals(name);
+				org.objectweb.asm.MethodVisitor visitor = new org.objectweb.asm.MethodVisitor(
+						org.objectweb.asm.Opcodes.ASM9) {
+					@Override
+					public void visitMethodInsn(int opcode, String calledOwner,
+							String name, String calledDescriptor, boolean isInterface) {
+						if (selectedMethod && owner.equals(calledOwner)
+								&& calledName.equals(name) && descriptor.equals(calledDescriptor)) {
+							found[0] = true;
+						}
+					}
+				};
+				return visitor;
+			}
+		}, 0);
+		return found[0];
+	}
+
+	private static boolean hasTypeInstruction(byte[] bytes, String methodName, String type) {
+		final boolean[] found = {false};
+		new ClassReader(bytes).accept(new org.objectweb.asm.ClassVisitor(org.objectweb.asm.Opcodes.ASM9) {
+			@Override
+			public org.objectweb.asm.MethodVisitor visitMethod(int access, String name,
+					String desc, String signature, String[] exceptions) {
+				return new org.objectweb.asm.MethodVisitor(org.objectweb.asm.Opcodes.ASM9) {
+					@Override
+					public void visitTypeInsn(int opcode, String actualType) {
+						if (methodName.equals(name) && type.equals(actualType)) {
+							found[0] = true;
+						}
+					}
+				};
+			}
+		}, 0);
+		return found[0];
 	}
 
 	private static void invoke(Method method, Object[] arguments) throws Exception {

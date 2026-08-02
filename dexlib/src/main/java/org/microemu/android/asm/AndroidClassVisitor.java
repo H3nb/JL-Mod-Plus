@@ -55,9 +55,7 @@ public class AndroidClassVisitor extends ClassVisitor {
 
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-		if (speedhackEnabled) {
-			desc = desc.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
-		}
+		desc = desc.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
 		MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
 		MethodVisitor compatibilityVisitor = new AndroidMethodVisitor(methodVisitor, speedhackEnabled);
 		if (!memoryEditorEnabled) {
@@ -72,17 +70,13 @@ public class AndroidClassVisitor extends ClassVisitor {
 	@Override
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
 		className = name;
-		if (speedhackEnabled) {
-			superName = superName.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
-		}
+		superName = superName.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
 		super.visit(version, access, name, signature, superName, interfaces);
 	}
 
 	@Override
 	public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-		if (speedhackEnabled) {
-			descriptor = descriptor.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
-		}
+		descriptor = descriptor.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
 		return super.visitField(access, name, descriptor, signature, value);
 	}
 }

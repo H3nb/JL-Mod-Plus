@@ -48,9 +48,9 @@ public class Config {
 	public static final String MIDLET_DEX_FILE = "/converted.dex";
 	/** The single version gate for every generated DEX feature. */
 	public static final String MIDLET_DEX_VERSION_ATTRIBUTE = "JL-Mod-Plus-Dex-Version";
-	// Version 8 is intentionally retained while diagnostic reinstall modes are
-	// compared without triggering automatic migration prompts.
-	public static final int MIDLET_DEX_VERSION = 8;
+	// Version 9 reapplies the JL-Mod compatibility baseline, including the
+	// Thread.yield() frame-pacing workaround, to existing converted archives.
+	public static final int MIDLET_DEX_VERSION = 9;
 	/** Records the independently selected timing/Memory Editor conversion mode. */
 	public static final String MIDLET_TRANSFORM_MODE_ATTRIBUTE = "JL-Mod-Plus-Transform-Mode";
 	public static final String MIDLET_RES_JAD_FILE = "/res.jad";
