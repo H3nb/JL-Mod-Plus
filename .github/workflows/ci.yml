@@ -53,6 +53,8 @@ jobs:
       - name: Run emulator debug lint
         run: >-
           ./gradlew --no-daemon --stacktrace
+          --warning-mode=all
+          --configuration-cache --configuration-cache-problems=fail
           :app:lintEmulatorDebug
 
       - name: Upload lint report
@@ -60,13 +62,21 @@ jobs:
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: jl-mod-plus-lint-${{ github.run_number }}
-          path: app/build/reports/lint-results-emulatorDebug.*
+          # Keep human-readable reports until Code Scanning permissions and
+          # fork-PR behavior are reviewed; do not publish SARIF yet.
+          path: |
+            app/build/reports/lint-results-emulatorDebug.html
+            app/build/reports/lint-results-emulatorDebug.xml
+            app/build/reports/lint-results-emulatorDebug.txt
           if-no-files-found: warn
           retention-days: 7
 
       - name: Test and assemble emulator debug
         run: >-
           ./gradlew --no-daemon --stacktrace
+          --warning-mode=all
+          --build-cache
+          --configuration-cache --configuration-cache-problems=fail
           :app:testEmulatorDebugUnitTest
           :app:assembleEmulatorDebug
 
@@ -78,6 +88,20 @@ jobs:
           abis="$(unzip -Z1 "$apk" | awk -F/ '/^lib\/[^/]+\// {print $2}' | sort -u)"
           test "$abis" = "arm64-v8a"
           printf 'Verified APK: %s\nABI: %s\n' "$apk" "$abis"
+
+      - name: Upload Gradle diagnostic reports
+        if: failure()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: jl-mod-plus-gradle-diagnostics-${{ github.run_number }}
+          path: |
+            build/reports/problems/**
+            build/reports/dependency-verification/**
+            build/reports/configuration-cache/**
+            app/build/reports/problems/**
+            app/build/reports/configuration-cache/**
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Upload emulator debug APK
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0

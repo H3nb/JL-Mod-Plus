@@ -175,6 +175,8 @@ android {
     }
 
     lint {
+        // Locale directories are intentionally partial; Android falls back to
+        // the default resources for untranslated strings at runtime.
         disable += "MissingTranslation"
     }
 
