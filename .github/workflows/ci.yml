@@ -73,7 +73,7 @@ jobs:
       - name: Verify packaged ABI
         shell: bash
         run: |
-          apk="$(find app/build/outputs/apk/emulator/debug -type f -name '*.apk' -print -quit)"
+          apk="$(find app/build/outputs/renamed_apks/emulatorDebug -type f -name '*.apk' -print -quit)"
           test -n "$apk"
           abis="$(unzip -Z1 "$apk" | awk -F/ '/^lib\/[^/]+\// {print $2}' | sort -u)"
           test "$abis" = "arm64-v8a"
@@ -83,7 +83,7 @@ jobs:
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: jl-mod-plus-${{ github.run_number }}-arm64-v8a-debug
-          path: app/build/outputs/apk/emulator/debug/*.apk
+          path: app/build/outputs/renamed_apks/emulatorDebug/*.apk
           if-no-files-found: error
           retention-days: 7
 

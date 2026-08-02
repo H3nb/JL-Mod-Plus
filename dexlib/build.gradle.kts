@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import com.android.build.api.variant.BuildConfigField
+
 plugins {
     id("com.android.library")
 }
@@ -24,7 +26,6 @@ android {
 
     defaultConfig {
         minSdk = rootProject.extra["minSdk"] as Int
-        buildConfigField("int", "VERSION_CODE", "1")
     }
 
     buildFeatures.buildConfig = true
@@ -37,12 +38,25 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 
     lint {
         targetSdk = rootProject.extra["targetSdk"] as Int
+    }
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.buildConfigFields?.put(
+            "VERSION_CODE",
+            BuildConfigField(
+                type = "int",
+                value = "1",
+                comment = "JL-Mod Plus dexlib version code"
+            )
+        )
     }
 }
 
