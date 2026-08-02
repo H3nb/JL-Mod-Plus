@@ -37,6 +37,7 @@ public final class EmulationTimeController {
 	private static final long MAX_MONITOR_WAIT_HOST_MILLIS = 10L;
 	private static final long MONITOR_WAKE_TOLERANCE_NANOS = 1_000_000L;
 	private final HostClock hostClock;
+	private final HostClock monitorWaitClock;
 	private final AtomicReference<SpeedSnapshot> snapshot;
 	private final AtomicLong lastVirtualNanos;
 	private final AtomicLong lastWallMillis;
@@ -56,11 +57,20 @@ public final class EmulationTimeController {
 	}
 
 	public EmulationTimeController() {
-		this(HostClock.SYSTEM);
+		this(HostClock.SYSTEM, HostClock.SYSTEM);
 	}
 
 	EmulationTimeController(HostClock hostClock) {
+		this(hostClock, HostClock.SYSTEM);
+	}
+
+	/**
+	 * Package-private clock injection keeps monitor-wake tests deterministic
+	 * without changing the production clock or monitor contract.
+	 */
+	EmulationTimeController(HostClock hostClock, HostClock monitorWaitClock) {
 		this.hostClock = Objects.requireNonNull(hostClock, "hostClock");
+		this.monitorWaitClock = Objects.requireNonNull(monitorWaitClock, "monitorWaitClock");
 		long hostNanos = hostClock.nanoTime();
 		long wallMillis = hostClock.currentTimeMillis();
 		snapshot = new AtomicReference<>(new SpeedSnapshot(
@@ -347,9 +357,9 @@ public final class EmulationTimeController {
 				long hostWaitMillis = Math.max(1L, Math.min(MAX_MONITOR_WAIT_HOST_MILLIS,
 						ceilDivide(hostWaitNanos, NANOS_PER_MILLI)));
 				long signalGeneration = monitorSignalGeneration(waitNode.state);
-				long startedHostNanos = System.nanoTime();
+				long startedHostNanos = monitorWaitClock.nanoTime();
 				monitor.wait(hostWaitMillis);
-				long elapsedHostNanos = System.nanoTime() - startedHostNanos;
+				long elapsedHostNanos = monitorWaitClock.nanoTime() - startedHostNanos;
 				if (waitNode.notified) {
 					return;
 				}

@@ -169,7 +169,8 @@ public class EmulationTimeControllerTest {
 
 	@Test
 	public void untrackedNativeNotificationActivatesCompatibilityFallback() throws Exception {
-		EmulationTimeController controller = new EmulationTimeController();
+		EmulationTimeController controller = new EmulationTimeController(
+				HostClock.SYSTEM, new ImmediateMonitorWakeClock());
 		Object monitor = new Object();
 		CountDownLatch entered = new CountDownLatch(1);
 		CountDownLatch fallbackReported = new CountDownLatch(1);
@@ -446,6 +447,24 @@ public class EmulationTimeControllerTest {
 		@Override
 		public long currentTimeMillis() {
 			return WALL_START + nanos / 1_000_000L;
+		}
+	}
+
+	private static final class ImmediateMonitorWakeClock implements HostClock {
+		private boolean firstSample = true;
+
+		@Override
+		public synchronized long nanoTime() {
+			if (firstSample) {
+				firstSample = false;
+				return 0L;
+			}
+			return 1L;
+		}
+
+		@Override
+		public long currentTimeMillis() {
+			return WALL_START;
 		}
 	}
 }
