@@ -34,6 +34,65 @@ import java.util.Properties
 import java.util.jar.Attributes
 import java.util.jar.Manifest
 
+abstract class MidletApplicationIdSegmentTest : DefaultTask() {
+    @TaskAction
+    fun test() {
+        val cases = mapOf(
+            "ICE" to "ice",
+            "123 Game" to "m_123_game",
+            "A..B" to "a_b",
+            "Midlet Port Sample" to "midlet_port_sample",
+            "日本語" to "midlet",
+            "!!!" to "midlet",
+            "" to "midlet",
+            "__" to "midlet",
+            "9lives" to "m_9lives"
+        )
+        cases.forEach { (input, expected) ->
+            val actual = sanitize(input)
+            check(actual == expected) {
+                "Unexpected applicationId segment for '$input': expected '$expected', got '$actual'"
+            }
+            check(SEGMENT_PATTERN.matches(actual)) {
+                "ApplicationId segment is not Android-valid for '$input': $actual"
+            }
+        }
+
+        val previousLocale = Locale.getDefault()
+        try {
+            Locale.setDefault(Locale.Builder().setLanguage("tr").setRegion("TR").build())
+            check(sanitize("ICE") == "ice") {
+                "ApplicationId sanitization must not depend on the default locale"
+            }
+        } finally {
+            Locale.setDefault(previousLocale)
+        }
+    }
+
+    companion object {
+        private val SEGMENT_PATTERN = Regex("[a-z][a-z0-9_]*")
+
+        @JvmStatic
+        fun sanitize(value: String): String {
+            val sanitized = value.lowercase(Locale.ROOT)
+                .replace(Regex("[^a-z0-9_]"), "_")
+                .replace(Regex("_+"), "_")
+                .trim('_')
+                .ifEmpty { "midlet" }
+
+            val segment = if (sanitized.first() in 'a'..'z') {
+                sanitized
+            } else {
+                "m_$sanitized"
+            }
+            require(SEGMENT_PATTERN.matches(segment)) {
+                "Invalid generated applicationId segment: $segment"
+            }
+            return segment
+        }
+    }
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.legacy.kapt)
@@ -110,12 +169,13 @@ val signingStorePath = signingValue("ANDROID_KEYSTORE_PATH", "storeFile")
 val signingStorePassword = signingValue("ANDROID_KEYSTORE_PASSWORD", "storePassword")
 val signingKeyAlias = signingValue("ANDROID_KEY_ALIAS", "keyAlias")
 val signingKeyPassword = signingValue("ANDROID_KEY_PASSWORD", "keyPassword")
+val releaseSigningDisabled = System.getenv("DISABLE_RELEASE_SIGNING") == "true"
 val releaseSigningReady = listOf(
     signingStorePath,
     signingStorePassword,
     signingKeyAlias,
     signingKeyPassword
-).all { !it.isNullOrBlank() }
+).all { !it.isNullOrBlank() } && !releaseSigningDisabled
 
 if (System.getenv("REQUIRE_RELEASE_SIGNING") == "true" && !releaseSigningReady) {
     throw GradleException("Release signing is required, but one or more signing values are missing.")
@@ -194,8 +254,7 @@ android {
             // placed to 'app/src/midlet/resources/MIDLET-META-INF/MANIFEST.MF'
             val props = getMidletManifestProperties()
             val midletName = props.getValue("MIDlet-Name")?.trim() ?: "Demo MIDlet"
-            val apkName = midletName.replace("[/\\\\:*?\"<>|]".toRegex(), "").replace(" ", "_")
-            applicationId = "com.example.androidlet.${apkName.lowercase(Locale.getDefault())}"
+            applicationId = "com.example.androidlet.${MidletApplicationIdSegmentTest.sanitize(midletName)}"
             versionName = props.getValue("MIDlet-Version") ?: "1.0"
             resValue("string", "app_name", midletName)
             proguardFiles(
@@ -262,6 +321,11 @@ fun getMidletManifestProperties(): Attributes = Manifest().let { mf ->
         inputStream().use(mf::read)
     }
     return mf.mainAttributes
+}
+
+tasks.register<MidletApplicationIdSegmentTest>("testMidletApplicationIdSegment") {
+    group = "verification"
+    description = "Tests deterministic and Android-valid Midlet application ID segments."
 }
 
 dependencies {

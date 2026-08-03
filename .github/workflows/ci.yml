@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   quality:
-    name: Quality and emulator debug lint
+    name: Quality, Midlet ID, and emulator debug lint
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -47,13 +47,14 @@ jobs:
         shell: bash
         run: echo "VERSION_SUFFIX=-dev.${GITHUB_SHA::7}" >> "$GITHUB_ENV"
 
-      # Lint is a blocking quality gate for the emulator variant. Warnings remain
+      # Build-script edge cases and lint are blocking quality gates. Warnings remain
       # visible in the uploaded report and must be triaged without broad suppression.
-      - name: Run emulator debug lint
+      - name: Test Midlet ID and run emulator debug lint
         run: >-
           ./gradlew --no-daemon --stacktrace --console=plain --non-interactive
           --warning-mode=all
           --configuration-cache --configuration-cache-problems=fail
+          :app:testMidletApplicationIdSegment
           :app:lintEmulatorDebug
 
       - name: Upload lint report

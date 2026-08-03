@@ -22,6 +22,8 @@ jobs:
     environment: release
     permissions:
       contents: write
+      id-token: write
+      attestations: write
 
     steps:
       - name: Check out tagged sources
@@ -78,18 +80,54 @@ jobs:
           :app:testEmulatorDebugUnitTest
           :app:assembleEmulatorRelease
 
-      - name: Verify signature and packaged ABI
+      - name: Verify signer, manifest, packaged ABI, and R8 mapping
+        id: verify-release
         shell: bash
         run: |
+          set -euo pipefail
+
           apk="$(find app/build/outputs/apk/emulator/release -type f -name '*.apk' -print -quit)"
           test -n "$apk"
           apksigner="$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
           test -x "$apksigner"
-          "$apksigner" verify --verbose "$apk"
+          cert_info="$("$apksigner" verify --verbose --print-certs "$apk" 2>&1)"
+
+          expected_fingerprint="$(grep -v '^[[:space:]]*#' scripts/release-signing-cert-sha256.txt | tr -d '[:space:]:-' | tr '[:lower:]' '[:upper:]')"
+          actual_fingerprint="$(printf '%s\n' "$cert_info" | sed -n 's/.*certificate SHA-256 digest: //p' | head -n 1 | tr -d '[:space:]:-' | tr '[:lower:]' '[:upper:]')"
+          [[ "$expected_fingerprint" =~ ^[0-9A-F]{64}$ ]]
+          [[ "$actual_fingerprint" =~ ^[0-9A-F]{64}$ ]]
+          if [[ "$actual_fingerprint" != "$expected_fingerprint" ]]; then
+            echo "Release signer fingerprint does not match scripts/release-signing-cert-sha256.txt" >&2
+            echo "Expected: $expected_fingerprint" >&2
+            echo "Actual:   $actual_fingerprint" >&2
+            exit 1
+          fi
+
+          aapt2="$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name aapt2 | sort -V | tail -n 1)"
+          test -x "$aapt2"
+          badging="$("$aapt2" dump badging "$apk")"
+          version_name="$(sed -n 's/^VERSION_NAME=//p' version.properties)"
+          version_code="$(sed -n 's/^VERSION_CODE=//p' version.properties)"
+          grep -F "package: name='io.github.h3nb.jlmodplus' versionCode='$version_code' versionName='$version_name'" <<<"$badging"
+          grep -F "sdkVersion:'23'" <<<"$badging"
+          grep -F "targetSdkVersion:'34'" <<<"$badging"
+          if grep -q "application-debuggable" <<<"$badging"; then
+            echo "Release artifact must not be debuggable" >&2
+            exit 1
+          fi
+
+          mapping="app/build/outputs/mapping/emulatorRelease/mapping.txt"
+          test -s "$mapping"
           abis="$(unzip -Z1 "$apk" | awk -F/ '/^lib\/[^/]+\// {print $2}' | sort -u)"
           test "$abis" = "arm64-v8a"
           sha256sum "$apk" > "$apk.sha256"
-          printf 'Verified APK: %s\nABI: %s\n' "$apk" "$abis"
+          printf 'Verified APK: %s\nSigner SHA-256: %s\nABI: %s\nMapping: %s\n' "$apk" "$actual_fingerprint" "$abis" "$mapping"
+          printf 'apk=%s\n' "$apk" >> "$GITHUB_OUTPUT"
+
+      - name: Attest signed APK provenance
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        with:
+          subject-path: ${{ steps.verify-release.outputs.apk }}
 
       - name: Upload signed workflow artifact
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0

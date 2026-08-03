@@ -1,0 +1,3 @@
+# Public SHA-256 fingerprint of the release signing certificate.
+# Keep this value synchronized with the release environment's keystore.
+EF2A3717AA707953E317219B404E76EF27648651E3EEB6F251FE2E60C150C008
