@@ -45,6 +45,7 @@ import com.android.dx.rop.type.Type;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * A decoder for the dex debug info state machine format.
@@ -183,7 +184,7 @@ public class DebugInfoDecoder {
         }
 
         public String toString() {
-            return String.format("[%x %s v%d %04x %04x %04x]",
+            return String.format(Locale.ROOT, "[%x %s v%d %04x %04x %04x]",
                     address, isStart ? "start" : "end", reg,
                     nameIndex, typeIndex, signatureIndex);
         }

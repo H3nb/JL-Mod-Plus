@@ -20,9 +20,9 @@ import android.app.Dialog
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.view.View
 import androidx.activity.ComponentDialog
+import androidx.core.graphics.drawable.toDrawable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -101,7 +101,7 @@ class AlertComposeDialog(
             }
         }
         dialog.setContentView(composeView)
-        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
         dialog.setOnDismissListener { dismissCallback.onDismiss() }
     }
 

@@ -36,7 +36,6 @@ import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MenuItem;
-import android.view.Surface;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
@@ -325,8 +324,7 @@ public class MicroActivity extends AppCompatActivity {
 	@Override
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
-		if (hasFocus && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT &&
-				current instanceof Canvas) {
+		if (hasFocus && current instanceof Canvas) {
 			hideSystemUI();
 		}
 	}
@@ -412,25 +410,16 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void hideSystemUI() {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-			int flags = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
-			if (!statusBarEnabled) {
-				flags |= View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-						| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_FULLSCREEN;
-			}
-			getWindow().getDecorView().setSystemUiVisibility(flags);
-		} else if (!statusBarEnabled) {
-			getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-					WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		int flags = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+		if (!statusBarEnabled) {
+			flags |= View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+					| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_FULLSCREEN;
 		}
+		getWindow().getDecorView().setSystemUiVisibility(flags);
 	}
 
 	private void showSystemUI() {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-			getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
-		} else {
-			getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		}
+		getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
 	}
 
 	public void setCurrent(Displayable displayable) {
@@ -490,8 +479,7 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	public void openOptionsMenu() {
-		if (!actionBarEnabled &&
-				Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && current instanceof Canvas) {
+		if (!actionBarEnabled && current instanceof Canvas) {
 			showSystemUI();
 		}
 		binding.toolbar.showMenu();
@@ -557,36 +545,7 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void lockOrientation() {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-			setRequestedOrientation(SCREEN_ORIENTATION_LOCKED);
-			return;
-		}
-		Configuration configuration = getResources().getConfiguration();
-		int rotation = getWindowManager().getDefaultDisplay().getRotation();
-
-		// Search for the natural position of the device
-		if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE &&
-				(rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_180) ||
-				configuration.orientation == Configuration.ORIENTATION_PORTRAIT &&
-						(rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270)) {
-			// Natural position is Landscape
-			setRequestedOrientation(switch (rotation) {
-				case Surface.ROTATION_0 -> SCREEN_ORIENTATION_LANDSCAPE;
-				case Surface.ROTATION_90 -> SCREEN_ORIENTATION_REVERSE_PORTRAIT;
-				case Surface.ROTATION_180 -> SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
-				case Surface.ROTATION_270 -> SCREEN_ORIENTATION_PORTRAIT;
-				default -> SCREEN_ORIENTATION_UNSPECIFIED;
-			});
-		} else {
-			// Natural position is Portrait
-			setRequestedOrientation(switch (rotation) {
-				case Surface.ROTATION_0 -> SCREEN_ORIENTATION_PORTRAIT;
-				case Surface.ROTATION_90 -> SCREEN_ORIENTATION_LANDSCAPE;
-				case Surface.ROTATION_180 -> SCREEN_ORIENTATION_REVERSE_PORTRAIT;
-				case Surface.ROTATION_270 -> SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
-				default -> SCREEN_ORIENTATION_UNSPECIFIED;
-			});
-		}
+		setRequestedOrientation(SCREEN_ORIENTATION_LOCKED);
 	}
 
 	private void handleVkOptions(int id) {

@@ -55,6 +55,7 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Locale;
 import java.util.Vector;
 import java.util.regex.Pattern;
 
@@ -337,7 +338,8 @@ public class FileSystemFileConnection implements FileConnection {
 		if (files == null) {
 			return list.elements();
 		}
-		Arrays.sort(files, (f1, f2) -> f1.getName().toLowerCase().compareTo(f2.getName().toLowerCase()));
+		Arrays.sort(files, (f1, f2) -> f1.getName().toLowerCase(Locale.ROOT)
+				.compareTo(f2.getName().toLowerCase(Locale.ROOT)));
 		int dirsLen = 0;
 		for (File child : files) {
 			if (!includeHidden && child.isHidden()) {

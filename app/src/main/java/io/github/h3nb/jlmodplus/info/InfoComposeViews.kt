@@ -19,7 +19,6 @@ package io.github.h3nb.jlmodplus.info
 import android.app.Dialog
 import android.content.Context
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.text.Spanned
 import android.text.style.RelativeSizeSpan
 import android.text.style.StyleSpan
@@ -28,6 +27,7 @@ import android.text.style.UnderlineSpan
 import android.graphics.Typeface
 import android.view.WindowManager
 import androidx.activity.ComponentDialog
+import androidx.core.graphics.drawable.toDrawable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -252,7 +252,7 @@ private fun createInfoDialog(context: Context, content: @Composable (Dialog) -> 
     dialog.setCancelable(true)
     dialog.setCanceledOnTouchOutside(true)
     dialog.window?.apply {
-        setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
         addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
         setDimAmount(0.55f)
     }

@@ -62,7 +62,7 @@ public abstract class TimerTask implements Runnable {
         }
     }
 
-    /*
+    /**
      * Is TimerTask scheduled into any timer?
      *
      * @return {@code true} if the timer task is scheduled, {@code false}

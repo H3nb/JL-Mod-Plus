@@ -16,6 +16,8 @@
 
 package javax.bluetooth;
 
+import java.util.Locale;
+
 // wrapper around Java UUID
 public class UUID {
 	public java.util.UUID uuid;
@@ -63,7 +65,8 @@ public class UUID {
 	}
 
 	public String toString() {
-		return uuid.toString().replaceAll("-", "").toUpperCase().replaceFirst("^0+(?!$)", "");
+		return uuid.toString().replaceAll("-", "").toUpperCase(Locale.ROOT)
+				.replaceFirst("^0+(?!$)", "");
 	}
 
 	public boolean equals(Object value) {

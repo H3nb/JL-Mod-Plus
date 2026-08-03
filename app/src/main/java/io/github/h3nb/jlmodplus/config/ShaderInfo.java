@@ -20,6 +20,8 @@ package io.github.h3nb.jlmodplus.config;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.util.Locale;
+
 import androidx.annotation.NonNull;
 
 import com.google.gson.annotations.SerializedName;
@@ -219,7 +221,7 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		if (this.name == null) {
 			return oName == null ? 0 : 1;
 		} else if (oName == null) return -1;
-		return name.toLowerCase().compareTo(oName.toLowerCase());
+		return name.toLowerCase(Locale.ROOT).compareTo(oName.toLowerCase(Locale.ROOT));
 	}
 
 	@Override

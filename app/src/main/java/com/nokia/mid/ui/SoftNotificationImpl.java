@@ -18,7 +18,6 @@
 package com.nokia.mid.ui;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -33,6 +32,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.IconCompat;
+import androidx.annotation.RequiresApi;
 
 import java.util.Hashtable;
 import java.util.Locale;
@@ -133,10 +133,10 @@ public class SoftNotificationImpl extends SoftNotification {
 			NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId);
 			builder.setContentTitle(appName);
 			if (text != null) builder.setContentText(text);
-			if (groupText != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+			if (groupText != null) {
 				builder.setGroup(groupText);
 			}
-			if (bitmap != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			if (bitmap != null) {
 				builder.setSmallIcon(IconCompat.createWithBitmap(bitmap));
 			} else {
 				builder.setSmallIcon(R.mipmap.ic_launcher);
@@ -144,8 +144,7 @@ public class SoftNotificationImpl extends SoftNotification {
 			builder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
 			builder.setAutoCancel(true);
 
-			@SuppressLint("InlinedApi")
-			int pendingIntentFlags = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) ? PendingIntent.FLAG_IMMUTABLE : 0;
+			int pendingIntentFlags = PendingIntent.FLAG_IMMUTABLE;
 			if (softAction1 != null) {
 				Intent selectIntent = new Intent(context, NotificationActivity.class);
 				selectIntent.setAction("select");
@@ -184,6 +183,7 @@ public class SoftNotificationImpl extends SoftNotification {
 		}
 	}
 
+	@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 	private static boolean requestNotificationPermission() throws SoftNotificationException {
 		try {
 			return ContextHolder.requestPermission(Manifest.permission.POST_NOTIFICATIONS);

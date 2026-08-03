@@ -29,6 +29,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -44,7 +45,7 @@ import io.github.h3nb.jlmodplus.ui.AppComposeTheme
 class J2meItemComposeView(context: Context) : FrameLayout(context) {
     private var labelState by mutableStateOf<String?>(null)
     private var contentState by mutableStateOf<View?>(null)
-    private var layoutModeState by mutableStateOf(Item.LAYOUT_DEFAULT)
+    private var layoutModeState by mutableIntStateOf(Item.LAYOUT_DEFAULT)
     private var imageItemState by mutableStateOf(false)
 
     init {

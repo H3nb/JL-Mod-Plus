@@ -18,6 +18,7 @@
 package io.github.h3nb.jlmodplus.config;
 
 import java.io.File;
+import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -69,7 +70,7 @@ public class Profile implements Comparable<Profile> {
 
 	@Override
 	public int compareTo(@NonNull Profile o) {
-		return name.toLowerCase().compareTo(o.name.toLowerCase());
+		return name.toLowerCase(Locale.ROOT).compareTo(o.name.toLowerCase(Locale.ROOT));
 	}
 
 	boolean hasConfig() {

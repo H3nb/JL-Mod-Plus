@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Locale;
 
 public class MMFConverter {
 	static final byte FORMAT_TYPE_HANDY_PHONE = 0x00;
@@ -54,7 +55,7 @@ public class MMFConverter {
 
 		@Override
 		void output(DataOutputStream dos, int currentTime) throws IOException {
-			System.out.println(String.format("timestamp: %d, NOP", timestamp));
+			System.out.println(String.format(Locale.ROOT, "timestamp: %d, NOP", timestamp));
 		}
 	}
 
@@ -67,7 +68,7 @@ public class MMFConverter {
 		void output(DataOutputStream dos, int currentTime) throws IOException {
 			writeVariableLengthValue(timestamp - currentTime, dos);
 			dos.write(new byte[]{(byte) 0xFF, 0x2F, 0x00});
-			System.out.println(String.format("timestamp: %d, EOS", timestamp));
+			System.out.println(String.format(Locale.ROOT, "timestamp: %d, EOS", timestamp));
 		}
 	}
 

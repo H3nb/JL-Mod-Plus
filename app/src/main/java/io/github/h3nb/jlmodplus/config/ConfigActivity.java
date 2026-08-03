@@ -982,9 +982,9 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
             rmsExecutor.purge();
             rmsOperation = null;
         }
-		rmsExecutor.shutdownNow();
-		super.onDestroy();
-	}
+        rmsExecutor.shutdownNow();
+        super.onDestroy();
+    }
 
 	private void startMIDlet() {
 		if (needShow && configDir != null) {

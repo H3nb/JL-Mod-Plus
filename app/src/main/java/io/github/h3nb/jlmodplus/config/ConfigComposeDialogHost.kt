@@ -19,9 +19,9 @@ package io.github.h3nb.jlmodplus.config
 import android.app.Dialog
 import android.content.Context
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.view.WindowManager
 import androidx.activity.ComponentDialog
+import androidx.core.graphics.drawable.toDrawable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -196,7 +197,7 @@ object ConfigComposeDialogHost {
         dialog.setCancelable(cancelable)
         dialog.setCanceledOnTouchOutside(cancelable)
         dialog.window?.apply {
-            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
             addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             setDimAmount(0.55f)
         }
@@ -387,7 +388,7 @@ private fun LoadProfileDialogContent(
     negativeLabel: String,
     onConfirmed: ConfigLoadProfileAction,
 ) {
-    var selectedIndex by remember { mutableStateOf(defaultIndex.takeIf { it in profileNames.indices } ?: -1) }
+    var selectedIndex by remember { mutableIntStateOf(defaultIndex.takeIf { it in profileNames.indices } ?: -1) }
     var configChecked by remember { mutableStateOf(true) }
     var keyboardChecked by remember { mutableStateOf(true) }
     var configEnabled by remember { mutableStateOf(true) }

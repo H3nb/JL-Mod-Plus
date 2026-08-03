@@ -18,7 +18,6 @@
 package javax.microedition.lcdui.commands;
 
 import android.content.Context;
-import android.os.Build;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.widget.PopupWindow;
@@ -57,9 +56,7 @@ public abstract class AbstractSoftKeysBar {
 				}
 			});
 			popup = new PopupWindow(context, null, androidx.appcompat.R.attr.actionOverflowMenuStyle);
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-				popup.setExitTransition(null);
-			}
+			popup.setExitTransition(null);
 			popup.setOutsideTouchable(true);
 			popup.setFocusable(true);
 			popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));

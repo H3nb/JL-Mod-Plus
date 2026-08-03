@@ -19,9 +19,9 @@ package io.github.h3nb.jlmodplus.ui
 import android.app.Dialog
 import android.content.Context
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.view.WindowManager
 import androidx.activity.ComponentDialog
+import androidx.core.graphics.drawable.toDrawable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,6 +41,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -99,7 +100,7 @@ object ComposeDialogHost {
         dialog.setCanceledOnTouchOutside(cancelable)
         dialog.setOnCancelListener { onCanceled?.run() }
         dialog.window?.apply {
-            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
             addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             setDimAmount(0.55f)
         }
@@ -148,7 +149,7 @@ object ComposeDialogHost {
         dialog.setCanceledOnTouchOutside(cancelable)
         dialog.setOnCancelListener { onCanceled?.run() }
         dialog.window?.apply {
-            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
             addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             setDimAmount(0.55f)
         }
@@ -207,7 +208,7 @@ object ComposeDialogHost {
         dialog.setCanceledOnTouchOutside(cancelable)
         dialog.setOnCancelListener { onCanceled?.run() }
         dialog.window?.apply {
-            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
             addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             setDimAmount(0.55f)
         }
@@ -258,7 +259,7 @@ object ComposeDialogHost {
         dialog.setCanceledOnTouchOutside(cancelable)
         dialog.setOnCancelListener { onCanceled?.run() }
         dialog.window?.apply {
-            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
             addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             setDimAmount(0.55f)
         }
@@ -311,7 +312,7 @@ object ComposeDialogHost {
         dialog.setCanceledOnTouchOutside(cancelable)
         dialog.setOnCancelListener { onCanceled?.run() }
         dialog.window?.apply {
-            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
             addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             setDimAmount(0.55f)
         }
@@ -359,7 +360,7 @@ object ComposeDialogHost {
         dialog.setCancelable(cancelable)
         dialog.setCanceledOnTouchOutside(cancelable)
         dialog.window?.apply {
-            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
             addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             setDimAmount(0.55f)
         }
@@ -416,7 +417,7 @@ object ComposeDialogHost {
         dialog.setCanceledOnTouchOutside(cancelable)
         dialog.setOnCancelListener { onCanceled?.run() }
         dialog.window?.apply {
-            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
             addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             setDimAmount(0.55f)
         }
@@ -664,7 +665,7 @@ private fun ChoiceActionsDialogContent(
     neutralAction: ComposeChoiceButtonAction?,
     negativeAction: Runnable?,
 ) {
-    var selected by remember(selectedIndex) { mutableStateOf(selectedIndex) }
+    var selected by remember(selectedIndex) { mutableIntStateOf(selectedIndex) }
     Surface(
         modifier = Modifier
             .fillMaxWidth()

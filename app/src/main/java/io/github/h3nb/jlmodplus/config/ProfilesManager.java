@@ -17,7 +17,6 @@
 
 package io.github.h3nb.jlmodplus.config;
 
-import android.os.Build;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -159,7 +158,7 @@ public class ProfilesManager {
 		switch (params.version) {
 			case 0:
 				if (params.hwAcceleration) {
-					params.graphicsMode = Build.VERSION.SDK_INT < Build.VERSION_CODES.M ? 2 : 3;
+					params.graphicsMode = 3;
 				}
 				updateSystemProperties(params);
 			case 1:

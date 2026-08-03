@@ -52,7 +52,7 @@ public final class BluetoothPermissions {
 	}
 
 	public static boolean requestConnectPermission() {
-		if (hasConnectPermission() || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+		if (hasConnectPermission()) {
 			return true;
 		}
 		return ContextHolder.requestPermission(Manifest.permission.BLUETOOTH_CONNECT);

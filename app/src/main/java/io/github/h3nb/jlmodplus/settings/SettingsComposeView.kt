@@ -23,6 +23,7 @@ import android.content.res.Configuration
 import android.content.res.XmlResourceParser
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.edit
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -195,7 +196,7 @@ class SettingsComposeView(
 
     private fun setTheme(value: String) {
         themeValue = value
-        preferences.edit().putString(PREF_THEME, value).apply()
+        preferences.edit { putString(PREF_THEME, value) }
     }
 
     private fun setLanguage(value: String) {
@@ -216,7 +217,7 @@ class SettingsComposeView(
             "pref_emulation_audio_speed" -> audioSpeed = value
             "pref_emulation_extreme_speeds" -> extremeSpeeds = value
         }
-        preferences.edit().putBoolean(key, value).apply()
+        preferences.edit { putBoolean(key, value) }
     }
 
     private fun currentLanguageValue(): String {

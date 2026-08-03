@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Locale;
 
 /**
  * An encoder for the dex debug info state machine format. The format
@@ -823,7 +824,7 @@ public final class DebugInfoEncoder {
 
         if (annotateTo != null || debugPrint != null) {
             annotate(1,
-                    String.format("%04x: line %d", address, line));
+                    String.format(Locale.ROOT, "%04x: line %d", address, line));
         }
     }
 
@@ -866,7 +867,7 @@ public final class DebugInfoEncoder {
 
         if (annotateTo != null || debugPrint != null) {
             annotate(output.getCursor() - mark,
-                    String.format("line = %d", line));
+                    String.format(Locale.ROOT, "line = %d", line));
         }
 
         if (DEBUG) {

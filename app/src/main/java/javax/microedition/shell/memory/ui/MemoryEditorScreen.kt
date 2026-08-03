@@ -69,6 +69,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -1389,7 +1390,7 @@ private fun NumericInputDialog(
     onConfirm: (String) -> Unit,
 ) {
     var draft by remember(initialValue) { mutableStateOf(initialValue) }
-    var cursorPosition by remember(initialValue) { mutableStateOf(initialValue.length) }
+    var cursorPosition by remember(initialValue) { mutableIntStateOf(initialValue.length) }
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
