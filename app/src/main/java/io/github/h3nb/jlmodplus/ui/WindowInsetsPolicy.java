@@ -75,6 +75,7 @@ public final class WindowInsetsPolicy {
 		final int topInitialTop = topBar.getPaddingTop();
 		final int topInitialRight = topBar.getPaddingRight();
 		final int topInitialBottom = topBar.getPaddingBottom();
+		final int topInitialHeight = topBar.getLayoutParams().height;
 		final int bottomInitialLeft = bottomBar.getPaddingLeft();
 		final int bottomInitialTop = bottomBar.getPaddingTop();
 		final int bottomInitialRight = bottomBar.getPaddingRight();
@@ -101,6 +102,14 @@ public final class WindowInsetsPolicy {
 					bottomInitialRight + insets.right,
 					bottomInitialBottom + insets.bottom
 			);
+			if (topInitialHeight >= 0) {
+				ViewGroup.LayoutParams layoutParams = topBar.getLayoutParams();
+				int desiredHeight = topInitialHeight + insets.top;
+				if (layoutParams.height != desiredHeight) {
+					layoutParams.height = desiredHeight;
+					topBar.setLayoutParams(layoutParams);
+				}
+			}
 			return WindowInsetsCompat.CONSUMED;
 		});
 		ViewCompat.requestApplyInsets(root);
