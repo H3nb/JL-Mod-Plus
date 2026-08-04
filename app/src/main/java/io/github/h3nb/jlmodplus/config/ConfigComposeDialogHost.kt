@@ -216,7 +216,8 @@ object ConfigComposeDialogHost {
 
 private fun Dialog.prepareForIme() {
     window?.setSoftInputMode(
-        WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN,
+        WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN or
+            WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE,
     )
 }
 
