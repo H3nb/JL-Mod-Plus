@@ -42,6 +42,7 @@ import java.util.ArrayList;
 
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.ui.ComposeDialogHost;
+import io.github.h3nb.jlmodplus.ui.WindowInsetsPolicy;
 
 public class ProfilesActivity extends AppCompatActivity implements ProfilesComposeView.Callback {
 	private ProfilesComposeView composeView;
@@ -74,6 +75,7 @@ public class ProfilesActivity extends AppCompatActivity implements ProfilesCompo
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		WindowInsetsPolicy.enableEdgeToEdge(getWindow());
 		composeView = new ProfilesComposeView(this, this);
 		setContentView(composeView);
 		if (getSupportActionBar() != null) {

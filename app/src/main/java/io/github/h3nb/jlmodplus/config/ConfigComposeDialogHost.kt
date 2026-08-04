@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
@@ -207,9 +208,16 @@ object ConfigComposeDialogHost {
                 WindowManager.LayoutParams.WRAP_CONTENT,
             )
         }
+        dialog.prepareForIme()
         dialog.show()
         return dialog
     }
+}
+
+private fun Dialog.prepareForIme() {
+    window?.setSoftInputMode(
+        WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN,
+    )
 }
 
 fun interface ConfigShaderValuesAction {
@@ -349,7 +357,12 @@ private fun SaveProfileDialogContent(
     var configChecked by remember { mutableStateOf(true) }
     var keyboardChecked by remember { mutableStateOf(true) }
     var defaultChecked by remember { mutableStateOf(false) }
-    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .imePadding(),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
         Text(text = title, style = MaterialTheme.typography.headlineSmall)
         OutlinedTextField(
             value = name,

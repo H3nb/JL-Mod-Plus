@@ -37,8 +37,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
@@ -61,6 +63,8 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -71,6 +75,7 @@ import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.config.Config
 import io.github.h3nb.jlmodplus.ui.AppComposeTheme
 import io.github.h3nb.jlmodplus.util.Constants.PREF_EMULATOR_DIR
+import io.github.h3nb.jlmodplus.util.Constants.PREF_EXPAND_TO_CUTOUT
 import io.github.h3nb.jlmodplus.util.Constants.PREF_KEEP_SCREEN
 import io.github.h3nb.jlmodplus.util.Constants.PREF_SCREENSHOT_SWITCH
 import io.github.h3nb.jlmodplus.util.Constants.PREF_STATUSBAR
@@ -123,6 +128,11 @@ class SettingsComposeView(
     private var actionBarEnabled by mutableStateOf(
         preferences.getBoolean(PREF_TOOLBAR, false),
     )
+    private var expandToCutout by mutableStateOf(
+        // Preserve the current fullscreen game behavior for existing users;
+        // users with a notch or curved display can opt out in Settings.
+        preferences.getBoolean(PREF_EXPAND_TO_CUTOUT, true),
+    )
     private var statusBarEnabled by mutableStateOf(
         preferences.getBoolean(PREF_STATUSBAR, false),
     )
@@ -160,6 +170,7 @@ class SettingsComposeView(
                             switches = listOf(
                                 SettingsSwitchState(PREF_TOOLBAR, R.string.pref_enable_actionbar_title, R.string.pref_enable_actionbar_summary, R.drawable.ic_setting_enable_action_bar, actionBarEnabled),
                                 SettingsSwitchState(PREF_STATUSBAR, R.string.pref_enable_statusbar_title, R.string.pref_enable_actionbar_summary, R.drawable.ic_setting_enable_statusbar, statusBarEnabled),
+                                SettingsSwitchState(PREF_EXPAND_TO_CUTOUT, R.string.pref_expand_to_cutout_title, R.string.pref_expand_to_cutout_summary, null, expandToCutout),
                                 SettingsSwitchState(PREF_KEEP_SCREEN, R.string.pref_wakelock_title, icon = R.drawable.ic_setting_keep_screen_on, defaultValue = keepScreenOnEnabled),
                                 SettingsSwitchState(PREF_SCREENSHOT_SWITCH, R.string.pref_screenshot_title, R.string.pref_screenshot_summary, R.drawable.ic_setting_screenshot, rawScreenshot),
                                 SettingsSwitchState(PREF_VIBRATION, R.string.pref_vibration_title, icon = R.drawable.ic_setting_enable_vibration, defaultValue = vibrationEnabled),
@@ -210,6 +221,7 @@ class SettingsComposeView(
         when (key) {
             PREF_TOOLBAR -> actionBarEnabled = value
             PREF_STATUSBAR -> statusBarEnabled = value
+            PREF_EXPAND_TO_CUTOUT -> expandToCutout = value
             PREF_KEEP_SCREEN -> keepScreenOnEnabled = value
             PREF_SCREENSHOT_SWITCH -> rawScreenshot = value
             PREF_VIBRATION -> vibrationEnabled = value
@@ -250,11 +262,16 @@ private fun SettingsContent(
     var languageDialogVisible by androidx.compose.runtime.remember { mutableStateOf(false) }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding(),
+        ) {
             SettingsTopBar(onBack)
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 24.dp),
+                contentPadding = PaddingValues(bottom = 8.dp),
             ) {
                 item {
                     SettingsChoiceRow(
@@ -354,6 +371,7 @@ private fun SettingsContent(
 
 @Composable
 private fun SettingsTopBar(onBack: () -> Unit) {
+    val backDescription = stringResource(R.string.back)
     Surface(
         modifier = Modifier.fillMaxWidth().height(56.dp),
         color = MaterialTheme.colorScheme.secondary,
@@ -361,7 +379,12 @@ private fun SettingsTopBar(onBack: () -> Unit) {
         shadowElevation = 4.dp,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            androidx.compose.material3.IconButton(onClick = onBack) {
+            androidx.compose.material3.IconButton(
+                modifier = Modifier.semantics {
+                    contentDescription = backDescription
+                },
+                onClick = onBack,
+            ) {
                 BackGlyph(MaterialTheme.colorScheme.onSecondary)
             }
             Text(
@@ -588,6 +611,7 @@ private fun SettingsPreview(darkTheme: Boolean) {
             switches = listOf(
                 SettingsSwitchState(PREF_TOOLBAR, R.string.pref_enable_actionbar_title, R.string.pref_enable_actionbar_summary, R.drawable.ic_setting_enable_action_bar, false),
                 SettingsSwitchState(PREF_STATUSBAR, R.string.pref_enable_statusbar_title, R.string.pref_enable_actionbar_summary, R.drawable.ic_setting_enable_statusbar, false),
+                SettingsSwitchState(PREF_EXPAND_TO_CUTOUT, R.string.pref_expand_to_cutout_title, R.string.pref_expand_to_cutout_summary, null, true),
                 SettingsSwitchState(PREF_KEEP_SCREEN, R.string.pref_wakelock_title, icon = R.drawable.ic_setting_keep_screen_on, defaultValue = false),
                 SettingsSwitchState(PREF_SCREENSHOT_SWITCH, R.string.pref_screenshot_title, R.string.pref_screenshot_summary, R.drawable.ic_setting_screenshot, false),
                 SettingsSwitchState(PREF_VIBRATION, R.string.pref_vibration_title, icon = R.drawable.ic_setting_enable_vibration, defaultValue = true),

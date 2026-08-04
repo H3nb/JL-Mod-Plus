@@ -20,6 +20,7 @@ import android.content.Context
 import android.widget.FrameLayout
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
@@ -87,11 +88,18 @@ private fun SoftBarContent(commands: List<Command>, onCommand: (Command?) -> Uni
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 labels.forEachIndexed { index, command ->
-                    Button(
-                        onClick = { onCommand(command) },
-                        modifier = Modifier.weight(1f).padding(horizontal = 1.dp),
-                    ) {
-                        Text(command?.androidLabel ?: if (index == 2) stringResource(R.string.cmd_menu) else "")
+                    val isMenuSlot = command == null && index == 2
+                    if (command != null || isMenuSlot) {
+                        Button(
+                            onClick = { onCommand(command) },
+                            modifier = Modifier.weight(1f).padding(horizontal = 1.dp),
+                        ) {
+                            Text(command?.androidLabel ?: stringResource(R.string.cmd_menu))
+                        }
+                    } else {
+                        Spacer(
+                            modifier = Modifier.weight(1f).padding(horizontal = 1.dp),
+                        )
                     }
                 }
             }

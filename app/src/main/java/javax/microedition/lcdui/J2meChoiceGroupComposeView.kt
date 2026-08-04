@@ -198,6 +198,14 @@ private fun J2mePopupChoice(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                selected?.image?.let { bitmap ->
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = null,
+                        modifier = Modifier.sizeIn(maxWidth = 48.dp, maxHeight = 48.dp),
+                        contentScale = ContentScale.Fit,
+                    )
+                }
                 Text(
                     text = selected?.text.orEmpty(),
                     modifier = Modifier.weight(1f),
@@ -222,13 +230,31 @@ private fun J2mePopupChoice(
             onDismissRequest = { expanded = false },
         ) {
             items.forEachIndexed { index, item ->
-                DropdownMenuItem(
-                    text = { Text(item.text) },
-                    onClick = {
-                        expanded = false
-                        onItemClick(index)
-                    },
-                )
+                if (item.image == null) {
+                    DropdownMenuItem(
+                        text = { Text(item.text) },
+                        onClick = {
+                            expanded = false
+                            onItemClick(index)
+                        },
+                    )
+                } else {
+                    DropdownMenuItem(
+                        text = { Text(item.text) },
+                        leadingIcon = {
+                            Image(
+                                bitmap = item.image.asImageBitmap(),
+                                contentDescription = null,
+                                modifier = Modifier.sizeIn(maxWidth = 48.dp, maxHeight = 48.dp),
+                                contentScale = ContentScale.Fit,
+                            )
+                        },
+                        onClick = {
+                            expanded = false
+                            onItemClick(index)
+                        },
+                    )
+                }
             }
         }
     }

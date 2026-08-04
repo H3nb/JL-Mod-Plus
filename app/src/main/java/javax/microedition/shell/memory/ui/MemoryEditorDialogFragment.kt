@@ -37,11 +37,15 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.DialogFragment
+import androidx.core.graphics.Insets
 import androidx.core.graphics.drawable.toDrawable
 import androidx.fragment.app.FragmentManager
 import androidx.core.content.edit
 import androidx.fragment.app.viewModels
 import androidx.core.view.SoftwareKeyboardControllerCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.preference.PreferenceManager
 import javax.microedition.shell.MidletThread
 
@@ -76,6 +80,22 @@ class MemoryEditorDialogFragment : DialogFragment() {
         setViewCompositionStrategy(
             ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed,
         )
+        ViewCompat.setOnApplyWindowInsetsListener(this) { view, insets ->
+            val ownedInsetTypes = WindowInsetsCompat.Type.systemBars() or
+                WindowInsetsCompat.Type.displayCutout() or
+                WindowInsetsCompat.Type.captionBar() or
+                WindowInsetsCompat.Type.systemGestures() or
+                WindowInsetsCompat.Type.mandatorySystemGestures() or
+                WindowInsetsCompat.Type.tappableElement()
+            val systemInsets = insets.getInsets(
+                ownedInsetTypes,
+            )
+            view.setPadding(systemInsets.left, systemInsets.top, systemInsets.right, systemInsets.bottom)
+            WindowInsetsCompat.Builder(insets)
+                .setInsets(ownedInsetTypes, Insets.of(0, 0, 0, 0))
+                .build()
+        }
+        ViewCompat.requestApplyInsets(this)
         setContent {
             val state by viewModel.state.collectAsState()
             val actions = remember(viewModel) {
@@ -137,6 +157,7 @@ class MemoryEditorDialogFragment : DialogFragment() {
         applyPause(viewModel.state.value.pauseEnabled)
         viewModel.loadExistingSession()
         dialog?.window?.apply {
+            WindowCompat.enableEdgeToEdge(this)
             setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
             decorView.setBackgroundColor(Color.TRANSPARENT)
             setDimAmount(dimAmount(viewModel.state.value.layoutTransparency))
@@ -147,6 +168,7 @@ class MemoryEditorDialogFragment : DialogFragment() {
                 WindowManager.LayoutParams.MATCH_PARENT,
             )
         }
+        view?.let { ViewCompat.requestApplyInsets(it) }
     }
 
     override fun onStop() {

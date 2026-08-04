@@ -37,8 +37,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -78,6 +80,8 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
@@ -117,6 +121,10 @@ class AppsListComposeController(
         fun onToolbarAction(actionId: Int)
     }
 
+    fun interface SearchStateListener {
+        fun onSearchStateChanged(expanded: Boolean, query: String)
+    }
+
     private val root = FrameLayout(context)
     private val composeView = ComposeView(context)
     private var itemsState by mutableStateOf<List<AppItem>>(emptyList())
@@ -124,6 +132,7 @@ class AppsListComposeController(
     private var layoutState by mutableIntStateOf(LAYOUT_TYPE_GRID)
     private var searchExpandedState by mutableStateOf(false)
     private var searchQueryState by mutableStateOf("")
+    private var searchStateListener: SearchStateListener? = null
     private val shortcutSupported = androidx.core.content.pm.ShortcutManagerCompat
         .isRequestPinShortcutSupported(context)
 
@@ -143,8 +152,14 @@ class AppsListComposeController(
                     onContextAction = callback::onContextAction,
                     searchExpanded = searchExpandedState,
                     searchQuery = searchQueryState,
-                    onSearchExpandedChanged = { searchExpandedState = it },
-                    onSearchQueryChanged = { searchQueryState = it },
+                    onSearchExpandedChanged = {
+                        searchExpandedState = it
+                        notifySearchStateChanged()
+                    },
+                    onSearchQueryChanged = {
+                        searchQueryState = it
+                        notifySearchStateChanged()
+                    },
                     onSearchQueryDebounced = callback::onSearchQueryChanged,
                     onLayoutToggle = {
                         callback.onLayoutChanged(toggleLayout())
@@ -175,6 +190,25 @@ class AppsListComposeController(
 
     fun getLayoutType(): Int = layoutState
 
+    fun isSearchExpanded(): Boolean = searchExpandedState
+
+    fun getSearchQuery(): String = searchQueryState
+
+    fun setSearchStateListener(listener: SearchStateListener) {
+        searchStateListener = listener
+        notifySearchStateChanged()
+    }
+
+    fun restoreSearchState(expanded: Boolean, query: String) {
+        searchExpandedState = expanded
+        searchQueryState = query
+        notifySearchStateChanged()
+    }
+
+    private fun notifySearchStateChanged() {
+        searchStateListener?.onSearchStateChanged(searchExpandedState, searchQueryState)
+    }
+
     fun toggleLayout(): Int {
         layoutState = if (layoutState == LAYOUT_TYPE_GRID) {
             LAYOUT_TYPE_LIST
@@ -190,6 +224,7 @@ class AppsListComposeController(
         }
         searchQueryState = ""
         searchExpandedState = false
+        notifySearchStateChanged()
         return true
     }
 }
@@ -229,10 +264,19 @@ private fun AppsListContent(
         onSearchQueryDebounced(searchQuery)
     }
     Surface(
+        // This screen is the sole inset owner for MainActivity. Keeping the
+        // root edge-to-edge lets the navigation inset follow gesture and
+        // three-button navigation without adding a second View-level bottom
+        // padding before the FAB/list spacing is applied.
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding(),
+        ) {
             HomeToolbar(
                 layoutType = layoutType,
                 searchExpanded = searchExpanded,
@@ -253,7 +297,7 @@ private fun AppsListContent(
                 } else if (layoutType == AppsListComposeController.LAYOUT_TYPE_GRID) {
                     LazyVerticalGrid(
                         columns = GridCells.Adaptive(minSize = 112.dp),
-                        contentPadding = PaddingValues(start = 4.dp, end = 4.dp, bottom = 88.dp),
+                        contentPadding = PaddingValues(start = 4.dp, end = 4.dp, bottom = 72.dp),
                         modifier = Modifier.fillMaxSize(),
                     ) {
                         items(
@@ -275,7 +319,7 @@ private fun AppsListContent(
                     }
                 } else {
                     LazyColumn(
-                        contentPadding = PaddingValues(bottom = 88.dp),
+                        contentPadding = PaddingValues(bottom = 72.dp),
                         modifier = Modifier.fillMaxSize(),
                     ) {
                         items(
@@ -322,6 +366,8 @@ private fun HomeToolbar(
 ) {
     var overflowExpanded by remember { mutableStateOf(false) }
     val contentColor = MaterialTheme.colorScheme.onSecondary
+    val searchDescription = stringResource(R.string.search)
+    val moreDescription = stringResource(R.string.more)
     Surface(
         modifier = Modifier.fillMaxWidth().height(56.dp),
         color = MaterialTheme.colorScheme.secondary,
@@ -352,7 +398,12 @@ private fun HomeToolbar(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                IconButton(onClick = { onSearchExpandedChanged(true) }) {
+                IconButton(
+                    modifier = Modifier.semantics {
+                        contentDescription = searchDescription
+                    },
+                    onClick = { onSearchExpandedChanged(true) },
+                ) {
                     SearchGlyph(contentColor)
                 }
                 IconButton(onClick = onLayoutToggle) {
@@ -376,7 +427,12 @@ private fun HomeToolbar(
                     )
                 }
                 Box {
-                    IconButton(onClick = { overflowExpanded = true }) {
+                    IconButton(
+                        modifier = Modifier.semantics {
+                            contentDescription = moreDescription
+                        },
+                        onClick = { overflowExpanded = true },
+                    ) {
                         MoreGlyph(contentColor)
                     }
                     HomeOverflowMenu(
@@ -403,6 +459,8 @@ private fun SearchToolbar(
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
+    val searchDescription = stringResource(R.string.search)
+    val closeDescription = stringResource(R.string.close)
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
         keyboardController?.show()
@@ -418,7 +476,10 @@ private fun SearchToolbar(
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = 12.dp)
-                .focusRequester(focusRequester),
+                .focusRequester(focusRequester)
+                .semantics {
+                    contentDescription = searchDescription
+                },
             textStyle = TextStyle(color = contentColor, fontSize = 18.sp),
             cursorBrush = SolidColor(contentColor),
             singleLine = true,
@@ -430,7 +491,12 @@ private fun SearchToolbar(
                 },
             ),
         )
-        IconButton(onClick = onClose) {
+        IconButton(
+            modifier = Modifier.semantics {
+                contentDescription = closeDescription
+            },
+            onClick = onClose,
+        ) {
             CloseGlyph(contentColor)
         }
     }

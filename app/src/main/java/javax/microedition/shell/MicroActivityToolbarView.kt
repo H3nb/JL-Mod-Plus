@@ -40,6 +40,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -129,6 +131,8 @@ class MicroActivityToolbarView(
         virtualKeyboardMenuExpanded = false
     }
 
+    fun isMenuExpanded(): Boolean = menuExpanded || virtualKeyboardMenuExpanded
+
     fun isOrientationLocked(): Boolean = orientationLocked
 
     private fun dispatchAction(actionId: Int) {
@@ -162,6 +166,7 @@ private fun MicroActivityToolbarContent(
     onVirtualKeyboardMenuExpandedChanged: (Boolean) -> Unit,
     onAction: (Int) -> Unit,
 ) {
+    val moreDescription = stringResource(R.string.more)
     Box(modifier = Modifier.fillMaxSize()) {
         if (state.visible) {
             Surface(
@@ -203,7 +208,12 @@ private fun MicroActivityToolbarContent(
                         }
                     }
                     Box {
-                        IconButton(onClick = { onMenuExpandedChanged(true) }) {
+                        IconButton(
+                            modifier = Modifier.semantics {
+                                contentDescription = moreDescription
+                            },
+                            onClick = { onMenuExpandedChanged(true) },
+                        ) {
                             MicroMoreGlyph(MaterialTheme.colorScheme.onSecondary)
                         }
                         MicroActivityOverflowMenu(

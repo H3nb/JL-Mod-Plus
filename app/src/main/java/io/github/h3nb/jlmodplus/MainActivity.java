@@ -42,6 +42,7 @@ import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.PickDirResultContract;
 import io.github.h3nb.jlmodplus.util.StoragePermissionHelper;
 import io.github.h3nb.jlmodplus.ui.ComposeDialogHost;
+import io.github.h3nb.jlmodplus.ui.WindowInsetsPolicy;
 import ru.woesss.j2me.installer.InstallerDialog;
 
 public class MainActivity extends AppCompatActivity {
@@ -58,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		WindowInsetsPolicy.enableEdgeToEdge(getWindow());
 		FrameLayout fragmentContainer = new FrameLayout(this);
 		fragmentContainer.setId(R.id.container);
 		setContentView(fragmentContainer);

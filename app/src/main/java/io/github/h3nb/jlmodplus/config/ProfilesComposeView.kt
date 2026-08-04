@@ -25,8 +25,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
@@ -44,6 +46,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -125,7 +129,12 @@ private fun ProfilesContent(
         mutableStateOf(initialMenuProfile)
     }
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding(),
+        ) {
             ProfilesTopBar(onBack = onBack, onAdd = onAdd)
             Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
                 if (profiles.isEmpty()) {
@@ -178,12 +187,19 @@ private fun ProfilesContent(
 
 @Composable
 private fun ProfilesTopBar(onBack: () -> Unit, onAdd: () -> Unit) {
+    val backDescription = stringResource(R.string.back)
+    val addDescription = stringResource(R.string.add)
     Surface(color = MaterialTheme.colorScheme.surfaceVariant) {
         androidx.compose.foundation.layout.Row(
             modifier = Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            TextButton(onClick = onBack) {
+            TextButton(
+                modifier = Modifier.semantics {
+                    contentDescription = backDescription
+                },
+                onClick = onBack,
+            ) {
                 Text("←", fontSize = 32.sp, lineHeight = 32.sp)
             }
             Text(
@@ -191,7 +207,12 @@ private fun ProfilesTopBar(onBack: () -> Unit, onAdd: () -> Unit) {
                 modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.titleLarge,
             )
-            TextButton(onClick = onAdd) {
+            TextButton(
+                modifier = Modifier.semantics {
+                    contentDescription = addDescription
+                },
+                onClick = onAdd,
+            ) {
                 Text("+", fontSize = 30.sp, lineHeight = 30.sp)
             }
         }

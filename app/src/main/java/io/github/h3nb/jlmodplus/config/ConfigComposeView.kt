@@ -32,8 +32,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -71,6 +74,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -391,13 +396,17 @@ class ConfigComposeView(
         callback: Callback,
     ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding(),
         ) {
             ConfigTopBar(state.toolbarTitleState, showExperimental, callback)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
+                    .imePadding()
                     .verticalScroll(rememberScrollState()),
             ) {
                 ScreenSection(state, callback)
@@ -415,6 +424,8 @@ class ConfigComposeView(
     @Composable
     private fun ConfigTopBar(title: String, showExperimental: Boolean, callback: Callback) {
         var menuExpanded by remember { mutableStateOf(false) }
+        val backDescription = stringResource(R.string.back)
+        val moreDescription = stringResource(R.string.more)
         Surface(
             modifier = Modifier.fillMaxWidth().height(56.dp),
             color = MaterialTheme.colorScheme.secondary,
@@ -422,7 +433,12 @@ class ConfigComposeView(
             shadowElevation = 4.dp,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = callback::onBack) {
+                IconButton(
+                    modifier = Modifier.semantics {
+                        contentDescription = backDescription
+                    },
+                    onClick = callback::onBack,
+                ) {
                     ConfigBackGlyph(MaterialTheme.colorScheme.onSecondary)
                 }
                 Text(
@@ -443,7 +459,12 @@ class ConfigComposeView(
                     }
                 }
                 Box {
-                    IconButton(onClick = { menuExpanded = true }) {
+                    IconButton(
+                        modifier = Modifier.semantics {
+                            contentDescription = moreDescription
+                        },
+                        onClick = { menuExpanded = true },
+                    ) {
                         ConfigMoreGlyph(MaterialTheme.colorScheme.onSecondary)
                     }
                     DropdownMenu(

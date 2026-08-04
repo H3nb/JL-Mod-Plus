@@ -52,6 +52,11 @@ public class CanvasView extends SurfaceView {
 	}
 
 	@Override
+	public boolean onCheckIsTextEditor() {
+		return true;
+	}
+
+	@Override
 	public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
 		if (mPublicInputConnection == null) {
 			mPublicInputConnection = new DelKeyWorkaround(this, false);

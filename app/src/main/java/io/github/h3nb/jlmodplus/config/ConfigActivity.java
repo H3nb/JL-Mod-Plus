@@ -68,6 +68,7 @@ import io.github.h3nb.jlmodplus.config.model.Size;
 import org.microemu.cldc.SecureConnectionPolicy;
 import io.github.h3nb.jlmodplus.settings.KeyMapperActivity;
 import io.github.h3nb.jlmodplus.ui.ComposeDialogHost;
+import io.github.h3nb.jlmodplus.ui.WindowInsetsPolicy;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import ru.woesss.j2me.mmapi.synth.SoundBankResolver;
 import ru.woesss.j2me.rms.RmsSnapshotManager;
@@ -107,6 +108,7 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		WindowInsetsPolicy.enableEdgeToEdge(getWindow());
 		Intent intent = getIntent();
 		String action = intent.getAction();
 		isProfile = ACTION_EDIT_PROFILE.equals(action);

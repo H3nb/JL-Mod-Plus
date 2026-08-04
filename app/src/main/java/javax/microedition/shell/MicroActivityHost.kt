@@ -19,6 +19,7 @@ package javax.microedition.shell
 import android.content.Context
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import androidx.core.graphics.Insets
 import io.github.h3nb.jlmodplus.R
 import javax.microedition.lcdui.overlay.OverlayView
 
@@ -32,12 +33,13 @@ class MicroActivityHost(
     val displayableContainer: FrameLayout = FrameLayout(context)
     @JvmField
     val overlay: OverlayView = OverlayView(context, null)
+    @JvmField
+    val virtualDisplay: LinearLayout = LinearLayout(context).apply {
+        orientation = LinearLayout.VERTICAL
+    }
 
     init {
         overlay.id = R.id.overlay
-        val virtualDisplay = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-        }
         toolbar.layoutParams = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -51,5 +53,10 @@ class MicroActivityHost(
         virtualDisplay.addView(displayableContainer)
         addView(virtualDisplay, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
         addView(overlay, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+    }
+
+    /** Applies safe insets only to the non-overlay host surface. */
+    fun setContentInsets(insets: Insets) {
+        virtualDisplay.setPadding(insets.left, insets.top, insets.right, insets.bottom)
     }
 }

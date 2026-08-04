@@ -64,6 +64,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.ui.WindowInsetsPolicy;
 import io.github.h3nb.jlmodplus.util.StoragePermissionHelper;
 
 /** App-owned browser for the File-based picker contract used by JL-Mod Plus. */
@@ -101,6 +102,7 @@ public class FilteredFilePickerActivity extends AppCompatActivity {
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		WindowInsetsPolicy.enableEdgeToEdge(getWindow());
 
 		Intent intent = getIntent();
 		allowMultiple = intent.getBooleanExtra(EXTRA_ALLOW_MULTIPLE, false);
@@ -231,6 +233,7 @@ public class FilteredFilePickerActivity extends AppCompatActivity {
 				ViewGroup.LayoutParams.WRAP_CONTENT));
 
 		setContentView(root);
+		WindowInsetsPolicy.installChromeInsetsPadding(root, toolbar, actions);
 		updateChrome();
 	}
 

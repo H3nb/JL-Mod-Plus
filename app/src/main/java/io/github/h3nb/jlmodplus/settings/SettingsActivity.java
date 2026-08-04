@@ -31,6 +31,7 @@ import androidx.preference.PreferenceManager;
 import io.github.h3nb.jlmodplus.config.ProfilesActivity;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.PickDirResultContract;
+import io.github.h3nb.jlmodplus.ui.WindowInsetsPolicy;
 
 import java.io.File;
 
@@ -43,6 +44,7 @@ public class SettingsActivity extends AppCompatActivity {
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		WindowInsetsPolicy.enableEdgeToEdge(getWindow());
 		composeView = new SettingsComposeView(this, new SettingsComposeView.Callback() {
 			@Override
 			public void onBack() {

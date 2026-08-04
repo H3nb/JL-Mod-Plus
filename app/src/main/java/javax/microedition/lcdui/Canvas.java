@@ -533,6 +533,17 @@ public abstract class Canvas extends Displayable {
 		return layout;
 	}
 
+	/**
+	 * Returns the native surface that owns the Canvas input connection.
+	 * MicroActivity uses this view when it explicitly requests the system IME.
+	 */
+	public View getInputMethodTarget() {
+		if (innerView == null) {
+			getDisplayableView();
+		}
+		return innerView;
+	}
+
 	@Override
 	public void clearDisplayableView() {
 		super.clearDisplayableView();

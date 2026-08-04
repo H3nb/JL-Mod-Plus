@@ -47,6 +47,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.lifecycle.Lifecycle;
 import androidx.preference.PreferenceManager;
 
@@ -103,6 +108,11 @@ public class MicroActivity extends AppCompatActivity {
 	private int menuKey;
 	private String appPath;
 	private MicroActivityHost binding;
+	private WindowInsetsControllerCompat windowInsetsController;
+	private Insets windowInsets = Insets.of(0, 0, 0, 0);
+	private Insets displayCutoutInsets = Insets.of(0, 0, 0, 0);
+	private boolean expandToCutout = true;
+	private OnBackPressedCallback systemBackCallback;
 	private final ThreadPoolExecutor timingMigrationExecutor = new ThreadPoolExecutor(
 			1,
 			1,
@@ -120,12 +130,32 @@ public class MicroActivity extends AppCompatActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		lockNightMode();
 		super.onCreate(savedInstanceState);
+		// The emulator host has a separate geometry policy from standard app
+		// screens. Its Canvas and overlay intentionally use the available window
+		// rather than blanket safe-area padding.
+		WindowCompat.enableEdgeToEdge(getWindow());
+		windowInsetsController = WindowCompat.getInsetsController(
+				getWindow(), getWindow().getDecorView());
+		updateSystemBarAppearance();
 		ContextHolder.setCurrentActivity(this);
 		binding = new MicroActivityHost(this, this::onToolbarAction);
 		setContentView(binding);
+		ViewCompat.setOnApplyWindowInsetsListener(binding, (view, insets) -> {
+			displayCutoutInsets = insets.getInsets(WindowInsetsCompat.Type.displayCutout());
+			windowInsets = insets.getInsets(
+					WindowInsetsCompat.Type.systemBars()
+							| WindowInsetsCompat.Type.displayCutout()
+							| WindowInsetsCompat.Type.captionBar()
+							| WindowInsetsCompat.Type.ime()
+			);
+			applyWindowGeometry();
+			return insets;
+		});
+		ViewCompat.requestApplyInsets(binding);
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		actionBarEnabled = sp.getBoolean(PREF_TOOLBAR, false);
+		expandToCutout = sp.getBoolean(PREF_EXPAND_TO_CUTOUT, true);
 		statusBarEnabled = sp.getBoolean(PREF_STATUSBAR, false);
 		if (sp.getBoolean(PREF_KEEP_SCREEN, false)) {
 			getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -159,18 +189,8 @@ public class MicroActivity extends AppCompatActivity {
 		SkinLayer skinLayer = SkinLayer.getInstance();
 		if (skinLayer != null) {
 			binding.overlay.addLayer(skinLayer);
-			if (!statusBarEnabled && !actionBarEnabled) {
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-					WindowManager.LayoutParams attributes = getWindow().getAttributes();
-					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-						attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
-					} else {
-						attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-					}
-					getWindow().setAttributes(attributes);
-				}
-			}
 		}
+		applyDisplayCutoutMode();
 		VirtualKeyboard vk = ContextHolder.getVk();
 		int orientation = microLoader.getOrientation();
 		if (vk != null) {
@@ -184,13 +204,60 @@ public class MicroActivity extends AppCompatActivity {
 		menuKey = microLoader.getMenuKeyCode();
 		inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
 
-		getOnBackPressedDispatcher().addCallback(new OnBackPressedCallback(true) {
+		systemBackCallback = new OnBackPressedCallback(false) {
 			@Override
 			public void handleOnBackPressed() {
-				// Intentionally overridden by empty due to support for back-key remapping.
+				if (binding.toolbar.isMenuExpanded()) {
+					binding.toolbar.dismissMenu();
+					if (current instanceof Canvas && !actionBarEnabled) {
+						hideSystemUI();
+					}
+					return;
+				}
+				// System Back has its own contract. On Android 16 for a target-36
+				// app, the platform may no longer dispatch KEYCODE_BACK; this
+				// callback preserves the same J2ME menu behavior in that case.
+				// The legacy physical KEYCODE_BACK path below remains independently
+				// testable on platform/target combinations that still deliver it.
+				openOptionsMenu();
 			}
-		});
+		};
+		getOnBackPressedDispatcher().addCallback(this, systemBackCallback);
 		startOrMigrateTimingDex();
+	}
+
+	@Override
+	public void onConfigurationChanged(@NonNull Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
+		// MicroActivity handles uiMode in-place, so refresh icon contrast when
+		// the app theme changes without recreating this Activity.
+		updateSystemBarAppearance();
+		applyWindowGeometry();
+	}
+
+	private void updateSystemBarAppearance() {
+		if (windowInsetsController == null) {
+			return;
+		}
+		boolean darkTheme = (getResources().getConfiguration().uiMode
+				& Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+		windowInsetsController.setAppearanceLightStatusBars(!darkTheme);
+		windowInsetsController.setAppearanceLightNavigationBars(!darkTheme);
+	}
+
+	private void applyDisplayCutoutMode() {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+			return;
+		}
+		WindowManager.LayoutParams attributes = getWindow().getAttributes();
+		if (expandToCutout) {
+			attributes.layoutInDisplayCutoutMode = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+					? WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+					: WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+		} else {
+			attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
+		}
+		getWindow().setAttributes(attributes);
 	}
 
 	private void startOrMigrateTimingDex() {
@@ -314,6 +381,23 @@ public class MicroActivity extends AppCompatActivity {
 		super.onPause();
 	}
 
+	@Override
+	public void onResume() {
+		super.onResume();
+		if (binding == null) {
+			return;
+		}
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
+				getApplicationContext());
+		boolean configuredExpandToCutout = preferences.getBoolean(PREF_EXPAND_TO_CUTOUT, true);
+		if (configuredExpandToCutout != expandToCutout) {
+			expandToCutout = configuredExpandToCutout;
+			applyDisplayCutoutMode();
+			ViewCompat.requestApplyInsets(binding);
+			applyWindowGeometry();
+		}
+	}
+
 	private void hideSoftInput() {
 		if (inputMethodManager != null) {
 			IBinder windowToken = binding.displayableContainer.getWindowToken();
@@ -410,16 +494,49 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void hideSystemUI() {
-		int flags = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
-		if (!statusBarEnabled) {
-			flags |= View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-					| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_FULLSCREEN;
+		if (windowInsetsController == null) {
+			return;
 		}
-		getWindow().getDecorView().setSystemUiVisibility(flags);
+		windowInsetsController.setSystemBarsBehavior(
+				WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+		);
+		windowInsetsController.hide(WindowInsetsCompat.Type.navigationBars());
+		if (statusBarEnabled) {
+			windowInsetsController.show(WindowInsetsCompat.Type.statusBars());
+		} else {
+			windowInsetsController.hide(WindowInsetsCompat.Type.statusBars());
+		}
+		applyWindowGeometry();
 	}
 
 	private void showSystemUI() {
-		getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+		if (windowInsetsController == null) {
+			return;
+		}
+		windowInsetsController.show(WindowInsetsCompat.Type.systemBars());
+		applyWindowGeometry();
+	}
+
+	private void applyWindowGeometry() {
+		if (binding == null) {
+			return;
+		}
+		boolean canvas = current instanceof Canvas;
+		boolean statusBarInsetRequired = !canvas || statusBarEnabled;
+		Insets canvasCutoutInsets = canvas && !expandToCutout
+				? displayCutoutInsets
+				: Insets.of(0, 0, 0, 0);
+		Insets contentInsets = Insets.of(
+				statusBarInsetRequired ? windowInsets.left : canvasCutoutInsets.left,
+				statusBarInsetRequired ? windowInsets.top : canvasCutoutInsets.top,
+				statusBarInsetRequired ? windowInsets.right : canvasCutoutInsets.right,
+				!canvas ? windowInsets.bottom : canvasCutoutInsets.bottom
+		);
+		binding.setContentInsets(contentInsets);
+		int toolbarHeight = binding.toolbar.getLayoutParams() instanceof LinearLayout.LayoutParams
+				? ((LinearLayout.LayoutParams) binding.toolbar.getLayoutParams()).height
+				: 0;
+		binding.overlay.setLocation(contentInsets.left, contentInsets.top + Math.max(toolbarHeight, 0));
 	}
 
 	public void setCurrent(Displayable displayable) {
@@ -528,8 +645,7 @@ public class MicroActivity extends AppCompatActivity {
 				lockOrientation();
 			}
 		} else if (id == R.id.action_ime_keyboard) {
-			inputMethodManager.toggleSoftInputFromWindow(binding.displayableContainer.getWindowToken(),
-					InputMethodManager.SHOW_FORCED, 0);
+			showSoftInput();
 		} else if (id == R.id.action_take_screenshot) {
 			takeScreenshot();
 		} else if (id == R.id.action_limit_fps) {
@@ -542,6 +658,23 @@ public class MicroActivity extends AppCompatActivity {
 			// Handled only when virtual keyboard is enabled
 			handleVkOptions(id);
 		}
+	}
+
+	private void showSoftInput() {
+		if (binding == null || !(current instanceof Canvas)) {
+			return;
+		}
+		View target = ((Canvas) current).getInputMethodTarget();
+		if (target == null || !target.requestFocus()) {
+			return;
+		}
+		target.post(() -> {
+			if (isFinishing() || isDestroyed() || !target.isAttachedToWindow()) {
+				return;
+			}
+			WindowCompat.getInsetsController(getWindow(), target)
+					.show(WindowInsetsCompat.Type.ime());
+		});
 	}
 
 	private void lockOrientation() {
@@ -850,8 +983,11 @@ public class MicroActivity extends AppCompatActivity {
 			}
 			layoutParams.height = toolbarHeight;
 			refreshToolbarState(next);
-			binding.overlay.setLocation(0, toolbarHeight);
 			binding.toolbar.setLayoutParams(layoutParams);
+			if (systemBackCallback != null) {
+				systemBackCallback.setEnabled(next != null);
+			}
+			applyWindowGeometry();
 			if (next != null) {
 				binding.displayableContainer.addView(next.getDisplayableView());
 			}

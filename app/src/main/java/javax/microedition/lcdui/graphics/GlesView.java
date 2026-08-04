@@ -46,6 +46,11 @@ public class GlesView extends GLSurfaceView {
 	}
 
 	@Override
+	public boolean onCheckIsTextEditor() {
+		return true;
+	}
+
+	@Override
 	public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
 		if (mPublicInputConnection == null) {
 			mPublicInputConnection = new DelKeyWorkaround(this, false);

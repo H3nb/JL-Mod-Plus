@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -370,6 +371,7 @@ object ComposeDialogHost {
                 WindowManager.LayoutParams.WRAP_CONTENT,
             )
         }
+        dialog.prepareForIme()
         dialog.show()
         return dialog
     }
@@ -427,9 +429,16 @@ object ComposeDialogHost {
                 WindowManager.LayoutParams.WRAP_CONTENT,
             )
         }
+        dialog.prepareForIme()
         dialog.show()
         return dialog
     }
+}
+
+private fun Dialog.prepareForIme() {
+    window?.setSoftInputMode(
+        WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN,
+    )
 }
 
 fun interface ComposeChoiceAction {
@@ -609,6 +618,7 @@ private fun TextInputDialogContent(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
+            .imePadding()
             .padding(horizontal = 24.dp, vertical = 20.dp),
         shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.surface,
@@ -915,6 +925,7 @@ private fun TextInputActionsDialogContent(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
+            .imePadding()
             .padding(horizontal = 24.dp, vertical = 20.dp),
         shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.surface,

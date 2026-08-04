@@ -63,6 +63,8 @@ import io.github.h3nb.jlmodplus.ui.ComposeDialogHost;
 import ru.woesss.j2me.installer.InstallerDialog;
 
 public class AppsListFragment extends Fragment implements AppsListComposeController.Callback {
+	private static final String STATE_SEARCH_EXPANDED = "apps_list_search_expanded";
+	private static final String STATE_SEARCH_QUERY = "apps_list_search_query";
 
 	private final ActivityResultLauncher<Void> openFileLauncher = registerForActivityResult(
 			new ActivityResultContract<Void, Uri>() {
@@ -98,6 +100,8 @@ public class AppsListFragment extends Fragment implements AppsListComposeControl
 	private SharedPreferences preferences;
 	private AppListModel appListViewModel;
 	private AppsListComposeController composeController;
+	private boolean searchExpandedState;
+	private String searchQueryState = "";
 
 	public static AppsListFragment newInstance(Uri data) {
 		AppsListFragment fragment = new AppsListFragment();
@@ -128,24 +132,36 @@ public class AppsListFragment extends Fragment implements AppsListComposeControl
 		appListViewModel = new ViewModelProvider(activity).get(AppListModel.class);
 		composeController = new AppsListComposeController(requireContext(), this);
 		composeController.setLayout(preferences.getInt(PREF_APPS_VIEW, AppsListComposeController.LAYOUT_TYPE_GRID));
+		if (savedInstanceState != null) {
+			searchExpandedState = savedInstanceState.getBoolean(STATE_SEARCH_EXPANDED, false);
+			searchQueryState = savedInstanceState.getString(STATE_SEARCH_QUERY, "");
+			composeController.restoreSearchState(searchExpandedState, searchQueryState);
+		}
 		return composeController.getRootView();
 	}
 
 	@Override
 	public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+		OnBackPressedCallback searchBackCallback = new OnBackPressedCallback(false) {
+			@Override
+			public void handleOnBackPressed() {
+				if (composeController == null || !composeController.collapseSearch()) {
+					setEnabled(false);
+				}
+			}
+		};
 		requireActivity().getOnBackPressedDispatcher().addCallback(
 				getViewLifecycleOwner(),
-				new OnBackPressedCallback(true) {
-					@Override
-					public void handleOnBackPressed() {
-						if (composeController != null && composeController.collapseSearch()) {
-							return;
-						}
-						setEnabled(false);
-						requireActivity().getOnBackPressedDispatcher().onBackPressed();
-						setEnabled(true);
+				searchBackCallback);
+		if (composeController != null) {
+			composeController.setSearchStateListener(
+					(expanded, query) -> {
+						searchExpandedState = expanded;
+						searchQueryState = query;
+						searchBackCallback.setEnabled(expanded);
 					}
-				});
+			);
+		}
 		appListViewModel.getAppList().observe(getViewLifecycleOwner(), this::onDbUpdated);
 		List<AppItem> currentItems = appListViewModel.getAppList().getValue();
 		if (currentItems != null) {
@@ -155,8 +171,23 @@ public class AppsListFragment extends Fragment implements AppsListComposeControl
 
 	@Override
 	public void onDestroyView() {
+		if (composeController != null) {
+			searchExpandedState = composeController.isSearchExpanded();
+			searchQueryState = composeController.getSearchQuery();
+		}
 		composeController = null;
 		super.onDestroyView();
+	}
+
+	@Override
+	public void onSaveInstanceState(@NonNull Bundle outState) {
+		if (composeController != null) {
+			searchExpandedState = composeController.isSearchExpanded();
+			searchQueryState = composeController.getSearchQuery();
+		}
+		outState.putBoolean(STATE_SEARCH_EXPANDED, searchExpandedState);
+		outState.putString(STATE_SEARCH_QUERY, searchQueryState);
+		super.onSaveInstanceState(outState);
 	}
 
 	private void alertRename(AppItem item) {

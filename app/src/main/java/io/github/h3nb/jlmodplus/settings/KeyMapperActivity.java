@@ -39,6 +39,7 @@ import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.ui.ComposeDialogHost;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.config.ProfilesManager;
+import io.github.h3nb.jlmodplus.ui.WindowInsetsPolicy;
 import io.github.h3nb.jlmodplus.util.SparseIntArrayAdapter;
 
 public class KeyMapperActivity extends AppCompatActivity implements KeyMapperComposeView.Callback {
@@ -48,10 +49,13 @@ public class KeyMapperActivity extends AppCompatActivity implements KeyMapperCom
 	private ProfileModel params;
 	private int canvasKey;
 	private KeyMapperComposeView composeView;
+	private OnBackPressedCallback menuWarningCallback;
+	private OnBackPressedCallback mappingDialogBackCallback;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		WindowInsetsPolicy.enableEdgeToEdge(getWindow());
 		Intent intent = getIntent();
 		String path = intent.getDataString();
 		if (path == null) {
@@ -83,17 +87,23 @@ public class KeyMapperActivity extends AppCompatActivity implements KeyMapperCom
 						.fromJson(save, SparseIntArray.class);
 			}
 		}
-		getOnBackPressedDispatcher().addCallback(new OnBackPressedCallback(true) {
+		menuWarningCallback = new OnBackPressedCallback(false) {
 			@Override
 			public void handleOnBackPressed() {
-				if (androidToMIDP.indexOfValue(KeyMapper.KEY_OPTIONS_MENU) < 0) {
-					alertMenuKey();
-					return;
-				}
-				save();
-				finish();
+				alertMenuKey();
 			}
-		});
+		};
+		getOnBackPressedDispatcher().addCallback(this, menuWarningCallback);
+		mappingDialogBackCallback = new OnBackPressedCallback(false) {
+			@Override
+			public void handleOnBackPressed() {
+				composeView.hideMappingDialog();
+			}
+		};
+		// Add this after the menu-warning callback so the transient mapping
+		// surface has priority while it is visible.
+		getOnBackPressedDispatcher().addCallback(this, mappingDialogBackCallback);
+		updateMenuWarningCallback();
 	}
 
 	@Override
@@ -138,6 +148,7 @@ public class KeyMapperActivity extends AppCompatActivity implements KeyMapperCom
 				androidToMIDP.removeAt(i);
 			}
 		}
+		updateMenuWarningCallback();
 	}
 
 	@Override
@@ -148,6 +159,30 @@ public class KeyMapperActivity extends AppCompatActivity implements KeyMapperCom
 	@Override
 	public void onResetMapping() {
 		androidToMIDP = defaultKeyMap.clone();
+		updateMenuWarningCallback();
+	}
+
+	@Override
+	public void onMappingDialogVisibilityChanged(boolean visible) {
+		if (mappingDialogBackCallback != null) {
+			mappingDialogBackCallback.setEnabled(visible);
+		}
+	}
+
+	private void updateMenuWarningCallback() {
+		if (menuWarningCallback != null && androidToMIDP != null) {
+			menuWarningCallback.setEnabled(
+					androidToMIDP.indexOfValue(KeyMapper.KEY_OPTIONS_MENU) < 0
+			);
+		}
+	}
+
+	@Override
+	public void finish() {
+		if (androidToMIDP != null && params != null) {
+			save();
+		}
+		super.finish();
 	}
 
 	private void save() {
@@ -209,6 +244,7 @@ public class KeyMapperActivity extends AppCompatActivity implements KeyMapperCom
 				default:
 					deleteDuplicates(canvasKey);
 					androidToMIDP.put(keyCode, canvasKey);
+					updateMenuWarningCallback();
 					composeView.hideMappingDialog();
 					return true;
 			}
