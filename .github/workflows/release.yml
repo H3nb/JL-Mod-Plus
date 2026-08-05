@@ -110,7 +110,7 @@ jobs:
           version_code="$(sed -n 's/^VERSION_CODE=//p' version.properties)"
           grep -F "package: name='io.github.h3nb.jlmodplus' versionCode='$version_code' versionName='$version_name'" <<<"$badging"
           grep -F "minSdkVersion:'23'" <<<"$badging"
-          grep -F "targetSdkVersion:'34'" <<<"$badging"
+          grep -F "targetSdkVersion:'36'" <<<"$badging"
           if grep -q "application-debuggable" <<<"$badging"; then
             echo "Release artifact must not be debuggable" >&2
             exit 1
