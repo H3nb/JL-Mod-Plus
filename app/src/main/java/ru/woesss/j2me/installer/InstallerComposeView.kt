@@ -16,36 +16,43 @@
 
 package ru.woesss.j2me.installer
 
-import android.content.Context
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.AppComposeTheme
 
-class InstallerComposeView(context: Context) {
-    private val composeView = ComposeView(context)
+class InstallerUiState(context: android.content.Context) {
     private var titleState by mutableStateOf(context.getString(R.string.app_name))
     private var messageState by mutableStateOf("")
     private var progressVisibleState by mutableStateOf(true)
@@ -56,30 +63,11 @@ class InstallerComposeView(context: Context) {
     private var positiveActionState by mutableStateOf<Runnable?>(null)
     private var negativeActionState by mutableStateOf<Runnable?>(null)
     private var neutralActionState by mutableStateOf<Runnable?>(null)
-
-    init {
-        composeView.setViewCompositionStrategy(
-            ViewCompositionStrategy.DisposeOnDetachedFromWindowOrReleasedFromPool,
-        )
-        composeView.setContent {
-            AppComposeTheme {
-                InstallerContent(
-                    title = titleState,
-                    message = messageState,
-                    progressVisible = progressVisibleState,
-                    statusText = statusTextState,
-                    positiveLabel = positiveLabelState,
-                    negativeLabel = negativeLabelState,
-                    neutralLabel = neutralLabelState,
-                    positiveAction = positiveActionState,
-                    negativeAction = negativeActionState,
-                    neutralAction = neutralActionState,
-                )
-            }
-        }
-    }
-
-    fun getComposeView(): ComposeView = composeView
+    private var modeLabelsState by mutableStateOf<List<String>?>(null)
+    private var modeSelectedState by mutableIntStateOf(0)
+    private var modePositiveLabelState by mutableStateOf("")
+    private var modeNegativeLabelState by mutableStateOf("")
+    private var modeActionState by mutableStateOf<InstallerModeAction?>(null)
 
     fun setTitle(title: CharSequence) {
         titleState = title.toString()
@@ -117,6 +105,68 @@ class InstallerComposeView(context: Context) {
     fun setStatusText(text: CharSequence) {
         statusTextState = text.toString()
     }
+
+    fun showTransformModeDialog(
+        labels: Array<String>,
+        selectedIndex: Int,
+        positiveLabel: String,
+        negativeLabel: String,
+        action: InstallerModeAction,
+    ) {
+        modeLabelsState = labels.toList()
+        modeSelectedState = selectedIndex
+        modePositiveLabelState = positiveLabel
+        modeNegativeLabelState = negativeLabel
+        modeActionState = action
+    }
+
+    fun hideTransformModeDialog() {
+        modeLabelsState = null
+        modeActionState = null
+    }
+
+    @Composable
+    fun Render() {
+        AppComposeTheme {
+            InstallerContent(
+                title = titleState,
+                message = messageState,
+                progressVisible = progressVisibleState,
+                statusText = statusTextState,
+                positiveLabel = positiveLabelState,
+                negativeLabel = negativeLabelState,
+                neutralLabel = neutralLabelState,
+                positiveAction = positiveActionState,
+                negativeAction = negativeActionState,
+                neutralAction = neutralActionState,
+            )
+            modeLabelsState?.let { labels ->
+                InstallerModeDialog(
+                    labels = labels,
+                    selectedIndex = modeSelectedState,
+                    positiveLabel = modePositiveLabelState,
+                    negativeLabel = modeNegativeLabelState,
+                    onDismiss = ::hideTransformModeDialog,
+                    onConfirm = { index ->
+                        val action = modeActionState
+                        hideTransformModeDialog()
+                        action?.onSelected(index)
+                    },
+                )
+            }
+        }
+    }
+}
+
+object InstallerComposeHost {
+    @JvmStatic
+    fun install(activity: ComponentActivity, state: InstallerUiState) {
+        activity.setContent { state.Render() }
+    }
+}
+
+fun interface InstallerModeAction {
+    fun onSelected(index: Int)
 }
 
 @Composable
@@ -137,38 +187,23 @@ private fun InstallerContent(
         color = MaterialTheme.colorScheme.background,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
+            Text(text = title, style = MaterialTheme.typography.headlineSmall)
             if (message.isNotEmpty()) {
                 Text(
                     text = message,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 280.dp)
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 280.dp)
                         .verticalScroll(rememberScrollState()),
-                    color = MaterialTheme.colorScheme.onBackground,
                 )
             }
             if (progressVisible) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
-            Text(
-                text = statusText,
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.onBackground,
-            )
+            Text(text = statusText, modifier = Modifier.fillMaxWidth())
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.End,
             ) {
                 positiveLabel?.let { label ->
@@ -183,6 +218,44 @@ private fun InstallerContent(
             }
         }
     }
+}
+
+@Composable
+private fun InstallerModeDialog(
+    labels: List<String>,
+    selectedIndex: Int,
+    positiveLabel: String,
+    negativeLabel: String,
+    onDismiss: () -> Unit,
+    onConfirm: (Int) -> Unit,
+) {
+    var selected by remember { mutableIntStateOf(selectedIndex) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(dismissOnClickOutside = true),
+        title = { Text(stringResource(R.string.conversion_mode_title)) },
+        text = {
+            LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
+                items(labels.size) { index ->
+                    val label = labels[index]
+                    Row(
+                        modifier = Modifier.fillMaxWidth().clickable { selected = index }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = selected == index, onClick = { selected = index })
+                        Text(label, modifier = Modifier.padding(start = 8.dp))
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(selected) }) { Text(positiveLabel) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(negativeLabel) }
+        },
+    )
 }
 
 @Preview(name = "Installer loading", showBackground = true, widthDp = 420, heightDp = 120)
@@ -204,60 +277,10 @@ internal fun InstallerLoadingPreview() {
     }
 }
 
-@Preview(
-    name = "Installer loading dark",
-    showBackground = true,
-    widthDp = 420,
-    heightDp = 120,
-    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES,
-)
-@Composable
-internal fun InstallerLoadingDarkPreview() {
-    AppComposeTheme(darkTheme = true) {
-        InstallerContent(
-            title = "MIDlet installer",
-            message = "",
-            progressVisible = true,
-            statusText = stringResource(R.string.loading_info),
-            positiveLabel = null,
-            negativeLabel = null,
-            neutralLabel = null,
-            positiveAction = null,
-            negativeAction = null,
-            neutralAction = null,
-        )
-    }
-}
-
 @Preview(name = "Installer complete", showBackground = true, widthDp = 420, heightDp = 120)
 @Composable
 internal fun InstallerCompletePreview() {
     AppComposeTheme {
-        InstallerContent(
-            title = "MIDlet installer",
-            message = "",
-            progressVisible = false,
-            statusText = stringResource(R.string.install_done),
-            positiveLabel = null,
-            negativeLabel = null,
-            neutralLabel = null,
-            positiveAction = null,
-            negativeAction = null,
-            neutralAction = null,
-        )
-    }
-}
-
-@Preview(
-    name = "Installer complete dark",
-    showBackground = true,
-    widthDp = 420,
-    heightDp = 120,
-    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES,
-)
-@Composable
-internal fun InstallerCompleteDarkPreview() {
-    AppComposeTheme(darkTheme = true) {
         InstallerContent(
             title = "MIDlet installer",
             message = "",

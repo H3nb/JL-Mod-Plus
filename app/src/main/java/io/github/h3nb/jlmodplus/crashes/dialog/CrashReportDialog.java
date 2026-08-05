@@ -37,12 +37,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 import io.github.h3nb.jlmodplus.R;
-import io.github.h3nb.jlmodplus.ui.ComposeDialogHost;
-
 public final class CrashReportDialog extends AppCompatActivity {
 	private File reportFile;
 	private CrashViewModel viewModel;
-	private android.app.Dialog reportDialog;
+	private final ReportComposeState composeState = new ReportComposeState();
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -53,6 +51,34 @@ public final class CrashReportDialog extends AppCompatActivity {
 			finish();
 			return;
 		}
+		ReportComposeHost.install(this, composeState, new ReportComposeCallbacks() {
+			@Override
+			public void onPrimaryAction() {
+				showReportOptions();
+			}
+
+			@Override
+			public void onCopyAction() {
+				copyStackTrace();
+				deleteReports();
+				finish();
+			}
+
+			@Override
+			public void onCancelAction() {
+				deleteReports();
+				finish();
+			}
+
+			@Override
+			public void onChoice(int which) {
+				boolean opened = which == 0 ? shareReport() : openGithubIssues();
+				if (opened) {
+					deleteReports();
+					finish();
+				}
+			}
+		});
 
 		viewModel = new ViewModelProvider(this).get(CrashViewModel.class);
 		viewModel.loadStackTrace(reportFile).observe(this, stackTrace -> {
@@ -66,51 +92,21 @@ public final class CrashReportDialog extends AppCompatActivity {
 
 	private void buildAndShowDialog(String stackTrace) {
 		String message = stackTrace + "\n\n" + getString(R.string.crash_report_instruction);
-		reportDialog = ComposeDialogHost.showMessage(
-				this,
+		composeState.setReport(
 				getString(R.string.crash_dialog_title),
 				message,
 				getString(R.string.report_crash),
-				getString(android.R.string.cancel),
 				getString(android.R.string.copy),
-				true,
-				() -> showReportOptions(reportDialog),
-				() -> {
-					deleteReports();
-					reportDialog.dismiss();
-				},
-				() -> {
-					copyStackTrace();
-					deleteReports();
-					reportDialog.dismiss();
-				},
-				this::deleteReports,
-				false
+				getString(android.R.string.cancel)
 		);
-		reportDialog.setCanceledOnTouchOutside(false);
-		reportDialog.setOnDismissListener(dialog -> finish());
 	}
 
-	private void showReportOptions(android.app.Dialog reportDialog) {
+private void showReportOptions() {
 		String[] options = {
 				getString(R.string.share_error_report),
 				getString(R.string.github_issues_account_required)
 		};
-		ComposeDialogHost.showChoice(
-				this,
-				getString(R.string.report_crash),
-				options,
-				-1,
-				getString(android.R.string.cancel),
-				true,
-				which -> {
-					boolean opened = which == 0 ? shareReport() : openGithubIssues();
-					if (opened) {
-						deleteReports();
-						reportDialog.dismiss();
-					}
-				}
-		);
+		composeState.showChoices(getString(R.string.report_crash), options);
 	}
 
 	private boolean shareReport() {

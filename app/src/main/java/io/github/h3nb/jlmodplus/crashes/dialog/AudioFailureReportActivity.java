@@ -20,7 +20,6 @@ import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
-import android.app.Dialog;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -30,7 +29,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.io.IOException;
 
 import io.github.h3nb.jlmodplus.R;
-import io.github.h3nb.jlmodplus.ui.ComposeDialogHost;
 import ru.woesss.j2me.mmapi.audio.AudioFailureReportStore;
 
 /** Displays an audio report and lets the user copy or share it explicitly. */
@@ -38,6 +36,7 @@ public final class AudioFailureReportActivity extends AppCompatActivity {
 	public static final String EXTRA_REPORT_ID = "audio_report_id";
 
 	private String report;
+	private final ReportComposeState composeState = new ReportComposeState();
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -50,23 +49,40 @@ public final class AudioFailureReportActivity extends AppCompatActivity {
 			finish();
 			return;
 		}
+		ReportComposeHost.install(this, composeState, new ReportComposeCallbacks() {
+			@Override
+			public void onPrimaryAction() {
+				shareReport();
+				finish();
+			}
+
+			@Override
+			public void onCopyAction() {
+				copyReport();
+				finish();
+			}
+
+			@Override
+			public void onCancelAction() {
+				finish();
+			}
+
+			@Override
+			public void onChoice(int index) {
+				finish();
+			}
+		});
 		showReportDialog();
 	}
 
 	private void showReportDialog() {
-		Dialog dialog = ComposeDialogHost.showMessage(
-				this,
+		composeState.setReport(
 				getString(R.string.audio_failure_report_title),
 				report + "\n\n" + getString(R.string.audio_failure_report_instruction),
 				getString(R.string.share_error_report),
-				getString(android.R.string.cancel),
 				getString(android.R.string.copy),
-				true,
-				this::shareReport,
-				null,
-				this::copyReport
+				getString(android.R.string.cancel)
 		);
-		dialog.setOnDismissListener(ignored -> finish());
 	}
 
 	private void copyReport() {

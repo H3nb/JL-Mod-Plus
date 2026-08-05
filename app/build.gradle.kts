@@ -332,6 +332,7 @@ dependencies {
     implementation(projects.dexlib)
 
     implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.core)

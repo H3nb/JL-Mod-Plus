@@ -16,12 +16,7 @@
 
 package io.github.h3nb.jlmodplus.config
 
-import android.app.Dialog
 import android.content.Context
-import android.graphics.Color
-import android.view.WindowManager
-import androidx.activity.ComponentDialog
-import androidx.core.graphics.drawable.toDrawable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -31,18 +26,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -51,15 +48,197 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import io.github.h3nb.jlmodplus.ui.AppComposeTheme
 import kotlin.math.roundToInt
 
-/** Compose dialog bridges for config flows that are still entered from Java. */
-object ConfigComposeDialogHost {
-    @JvmStatic
+/**
+ * State bridge for Java-owned Config callbacks. The Activity owns this state,
+ * while the dialog surfaces remain part of the Activity's Compose tree.
+ */
+class ConfigDialogState {
+    private sealed interface DialogState {
+        data class Message(
+            val title: String,
+            val message: String,
+            val positiveLabel: String?,
+            val negativeLabel: String?,
+            val neutralLabel: String?,
+            val cancelable: Boolean,
+            val positiveAction: Runnable?,
+            val negativeAction: Runnable?,
+            val neutralAction: Runnable?,
+            val onCanceled: Runnable?,
+            val dismissOnAction: Boolean,
+        ) : DialogState
+
+        data class Choice(
+            val title: String,
+            val entries: Array<String>,
+            val selectedIndex: Int,
+            val cancelLabel: String?,
+            val cancelable: Boolean,
+            val onSelected: ComposeChoiceAction,
+            val onCanceled: Runnable?,
+        ) : DialogState
+
+        data class ChoiceActions(
+            val title: String,
+            val entries: Array<String>,
+            val selectedIndex: Int,
+            val positiveLabel: String?,
+            val neutralLabel: String?,
+            val negativeLabel: String?,
+            val cancelable: Boolean,
+            val neutralRequiresSelection: Boolean,
+            val positiveAction: ComposeChoiceButtonAction?,
+            val neutralAction: ComposeChoiceButtonAction?,
+            val negativeAction: Runnable?,
+            val onCanceled: Runnable?,
+        ) : DialogState
+
+        data class ShaderTuning(
+            val title: String,
+            val names: Array<String>,
+            val minimums: FloatArray,
+            val maximums: FloatArray,
+            val steps: FloatArray,
+            val defaults: FloatArray,
+            val initialValues: FloatArray,
+            val positiveLabel: String,
+            val negativeLabel: String,
+            val resetLabel: String,
+            val cancelable: Boolean,
+            val onConfirmed: ConfigShaderValuesAction,
+        ) : DialogState
+
+        data class SaveProfile(
+            val title: String,
+            val inputLabel: String,
+            val initialName: String,
+            val configLabel: String,
+            val keyboardLabel: String,
+            val defaultLabel: String,
+            val positiveLabel: String,
+            val negativeLabel: String,
+            val cancelable: Boolean,
+            val onConfirmed: ConfigSaveProfileAction,
+        ) : DialogState
+
+        data class LoadProfile(
+            val title: String,
+            val profileNames: Array<String>,
+            val hasConfig: BooleanArray,
+            val hasKeyboard: BooleanArray,
+            val defaultIndex: Int,
+            val configLabel: String,
+            val keyboardLabel: String,
+            val positiveLabel: String,
+            val negativeLabel: String,
+            val cancelable: Boolean,
+            val onConfirmed: ConfigLoadProfileAction,
+        ) : DialogState
+
+        data class ColorPicker(
+            val initialColor: Int,
+            val positiveLabel: String,
+            val negativeLabel: String,
+            val onConfirmed: ConfigColorPickerAction,
+        ) : DialogState
+    }
+
+    private var dialogState by mutableStateOf<DialogState?>(null)
+
+    @Suppress("UNUSED_PARAMETER")
+    @JvmOverloads
+    fun showMessage(
+        context: Context,
+        title: String,
+        message: String,
+        positiveLabel: String?,
+        negativeLabel: String?,
+        neutralLabel: String?,
+        cancelable: Boolean,
+        positiveAction: Runnable?,
+        negativeAction: Runnable?,
+        neutralAction: Runnable?,
+        onCanceled: Runnable? = null,
+        dismissOnAction: Boolean = true,
+    ) {
+        dialogState = DialogState.Message(
+            title,
+            message,
+            positiveLabel,
+            negativeLabel,
+            neutralLabel,
+            cancelable,
+            positiveAction,
+            negativeAction,
+            neutralAction,
+            onCanceled,
+            dismissOnAction,
+        )
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    @JvmOverloads
+    fun showChoice(
+        context: Context,
+        title: String,
+        entries: Array<String>,
+        selectedIndex: Int,
+        cancelLabel: String?,
+        cancelable: Boolean,
+        onSelected: ComposeChoiceAction,
+        onCanceled: Runnable? = null,
+    ) {
+        dialogState = DialogState.Choice(
+            title,
+            entries.copyOf(),
+            selectedIndex,
+            cancelLabel,
+            cancelable,
+            onSelected,
+            onCanceled,
+        )
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    @JvmOverloads
+    fun showChoiceActions(
+        context: Context,
+        title: String,
+        entries: Array<String>,
+        selectedIndex: Int,
+        positiveLabel: String?,
+        neutralLabel: String?,
+        negativeLabel: String?,
+        cancelable: Boolean,
+        neutralRequiresSelection: Boolean,
+        positiveAction: ComposeChoiceButtonAction?,
+        neutralAction: ComposeChoiceButtonAction?,
+        negativeAction: Runnable?,
+        onCanceled: Runnable? = null,
+    ) {
+        dialogState = DialogState.ChoiceActions(
+            title,
+            entries.copyOf(),
+            selectedIndex,
+            positiveLabel,
+            neutralLabel,
+            negativeLabel,
+            cancelable,
+            neutralRequiresSelection,
+            positiveAction,
+            neutralAction,
+            negativeAction,
+            onCanceled,
+        )
+    }
+
+    @Suppress("UNUSED_PARAMETER")
     fun showShaderTuning(
         context: Context,
         title: String,
@@ -74,24 +253,24 @@ object ConfigComposeDialogHost {
         resetLabel: String,
         cancelable: Boolean,
         onConfirmed: ConfigShaderValuesAction,
-    ): Dialog = createDialog(context, cancelable) { dialog ->
-        ShaderTuningDialogContent(
-            dialog = dialog,
-            title = title,
-            names = names,
-            minimums = minimums,
-            maximums = maximums,
-            steps = steps,
-            defaults = defaults,
-            initialValues = initialValues,
-            positiveLabel = positiveLabel,
-            negativeLabel = negativeLabel,
-            resetLabel = resetLabel,
-            onConfirmed = onConfirmed,
+    ) {
+        dialogState = DialogState.ShaderTuning(
+            title,
+            names.copyOf(),
+            minimums.copyOf(),
+            maximums.copyOf(),
+            steps.copyOf(),
+            defaults.copyOf(),
+            initialValues.copyOf(),
+            positiveLabel,
+            negativeLabel,
+            resetLabel,
+            cancelable,
+            onConfirmed,
         )
     }
 
-    @JvmStatic
+    @Suppress("UNUSED_PARAMETER")
     fun showSaveProfile(
         context: Context,
         title: String,
@@ -104,22 +283,22 @@ object ConfigComposeDialogHost {
         negativeLabel: String,
         cancelable: Boolean,
         onConfirmed: ConfigSaveProfileAction,
-    ): Dialog = createDialog(context, cancelable) { dialog ->
-        SaveProfileDialogContent(
-            dialog = dialog,
-            title = title,
-            inputLabel = inputLabel,
-            initialName = initialName,
-            configLabel = configLabel,
-            keyboardLabel = keyboardLabel,
-            defaultLabel = defaultLabel,
-            positiveLabel = positiveLabel,
-            negativeLabel = negativeLabel,
-            onConfirmed = onConfirmed,
+    ) {
+        dialogState = DialogState.SaveProfile(
+            title,
+            inputLabel,
+            initialName,
+            configLabel,
+            keyboardLabel,
+            defaultLabel,
+            positiveLabel,
+            negativeLabel,
+            cancelable,
+            onConfirmed,
         )
     }
 
-    @JvmStatic
+    @Suppress("UNUSED_PARAMETER")
     fun showLoadProfile(
         context: Context,
         title: String,
@@ -133,92 +312,453 @@ object ConfigComposeDialogHost {
         negativeLabel: String,
         cancelable: Boolean,
         onConfirmed: ConfigLoadProfileAction,
-    ): Dialog = createDialog(context, cancelable) { dialog ->
-        LoadProfileDialogContent(
-            dialog = dialog,
-            title = title,
-            profileNames = profileNames,
-            hasConfig = hasConfig,
-            hasKeyboard = hasKeyboard,
-            defaultIndex = defaultIndex,
-            configLabel = configLabel,
-            keyboardLabel = keyboardLabel,
-            positiveLabel = positiveLabel,
-            negativeLabel = negativeLabel,
-            onConfirmed = onConfirmed,
+    ) {
+        dialogState = DialogState.LoadProfile(
+            title,
+            profileNames.copyOf(),
+            hasConfig.copyOf(),
+            hasKeyboard.copyOf(),
+            defaultIndex,
+            configLabel,
+            keyboardLabel,
+            positiveLabel,
+            negativeLabel,
+            cancelable,
+            onConfirmed,
         )
     }
 
-    @JvmStatic
+    @Suppress("UNUSED_PARAMETER")
     fun showColorPicker(
         context: Context,
         initialColor: Int,
         positiveLabel: String,
         negativeLabel: String,
         onConfirmed: ConfigColorPickerAction,
-    ): Dialog = createDialog(context, cancelable = true) { dialog ->
-        ColorPickerDialogContent(
-            initialColor = initialColor,
-            positiveLabel = positiveLabel,
-            negativeLabel = negativeLabel,
-            onConfirmed = { color ->
-                onConfirmed.onConfirmed(color)
-                dialog.dismiss()
+    ) {
+        dialogState = DialogState.ColorPicker(initialColor, positiveLabel, negativeLabel, onConfirmed)
+    }
+
+    fun dismiss() {
+        dialogState = null
+    }
+
+    @Composable
+    internal fun Render() {
+        AppComposeTheme {
+            when (val current = dialogState) {
+                null -> Unit
+                is DialogState.Message -> MessageDialog(this, current)
+                is DialogState.Choice -> ChoiceDialog(this, current)
+                is DialogState.ChoiceActions -> ChoiceActionsDialog(this, current)
+                is DialogState.ShaderTuning -> ShaderTuningDialog(this, current)
+                is DialogState.SaveProfile -> SaveProfileDialog(this, current)
+                is DialogState.LoadProfile -> LoadProfileDialog(this, current)
+                is DialogState.ColorPicker -> ColorPickerDialog(this, current)
+            }
+        }
+    }
+
+    @Composable
+    private fun MessageDialog(owner: ConfigDialogState, dialog: DialogState.Message) {
+        AlertDialog(
+            onDismissRequest = {
+                dialog.onCanceled?.run()
+                owner.dismiss()
             },
-            onDismiss = dialog::cancel,
+            properties = DialogProperties(
+                dismissOnBackPress = dialog.cancelable,
+                dismissOnClickOutside = dialog.cancelable,
+            ),
+            title = { Text(dialog.title) },
+            text = {
+                Text(
+                    text = dialog.message,
+                    modifier = Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()),
+                )
+            },
+            confirmButton = {
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    dialog.positiveLabel?.let { label ->
+                        TextButton(onClick = {
+                            dialog.positiveAction?.run()
+                            if (dialog.dismissOnAction) owner.dismiss()
+                        }) { Text(label) }
+                    }
+                    dialog.neutralLabel?.let { label ->
+                        TextButton(onClick = {
+                            dialog.neutralAction?.run()
+                            if (dialog.dismissOnAction) owner.dismiss()
+                        }) { Text(label) }
+                    }
+                    dialog.negativeLabel?.let { label ->
+                        TextButton(onClick = {
+                            dialog.negativeAction?.run()
+                            if (dialog.dismissOnAction) owner.dismiss()
+                        }) { Text(label) }
+                    }
+                }
+            },
         )
     }
 
-    private fun createDialog(
-        context: Context,
-        cancelable: Boolean,
-        content: @Composable (Dialog) -> Unit,
-    ): Dialog {
-        val dialog = ComponentDialog(context)
-        val composeView = ComposeView(context).apply {
-            setViewCompositionStrategy(
-                ViewCompositionStrategy.DisposeOnDetachedFromWindowOrReleasedFromPool,
-            )
-            setContent {
-                AppComposeTheme {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 20.dp),
-                        shape = MaterialTheme.shapes.extraLarge,
-                        color = MaterialTheme.colorScheme.surface,
-                        tonalElevation = 6.dp,
-                    ) {
-                        content(dialog)
+    @Composable
+    private fun ChoiceDialog(owner: ConfigDialogState, dialog: DialogState.Choice) {
+        AlertDialog(
+            onDismissRequest = {
+                dialog.onCanceled?.run()
+                owner.dismiss()
+            },
+            properties = DialogProperties(
+                dismissOnBackPress = dialog.cancelable,
+                dismissOnClickOutside = dialog.cancelable,
+            ),
+            title = { Text(dialog.title) },
+            text = {
+                LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
+                    items(dialog.entries.toList()) { entry ->
+                        val index = dialog.entries.indexOf(entry)
+                        Row(
+                            modifier = Modifier.fillMaxWidth().clickable {
+                                owner.dismiss()
+                                dialog.onSelected.onSelected(index)
+                            }.padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(
+                                selected = index == dialog.selectedIndex,
+                                onClick = {
+                                    owner.dismiss()
+                                    dialog.onSelected.onSelected(index)
+                                },
+                            )
+                            Text(entry, modifier = Modifier.padding(start = 8.dp))
+                        }
                     }
+                }
+            },
+            confirmButton = {
+                dialog.cancelLabel?.let { label ->
+                    TextButton(onClick = owner::dismiss) { Text(label) }
+                }
+            },
+        )
+    }
+
+    @Composable
+    private fun ChoiceActionsDialog(owner: ConfigDialogState, dialog: DialogState.ChoiceActions) {
+        var selected by remember(dialog) { mutableIntStateOf(dialog.selectedIndex) }
+        AlertDialog(
+            onDismissRequest = {
+                dialog.onCanceled?.run()
+                owner.dismiss()
+            },
+            properties = DialogProperties(
+                dismissOnBackPress = dialog.cancelable,
+                dismissOnClickOutside = dialog.cancelable,
+            ),
+            title = { Text(dialog.title) },
+            text = {
+                LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
+                    items(dialog.entries.toList()) { entry ->
+                        val index = dialog.entries.indexOf(entry)
+                        Row(
+                            modifier = Modifier.fillMaxWidth().clickable { selected = index }
+                                .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(selected = selected == index, onClick = { selected = index })
+                            Text(entry, modifier = Modifier.padding(start = 8.dp))
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    dialog.positiveLabel?.let { label ->
+                        TextButton(
+                            enabled = dialog.positiveAction != null,
+                            onClick = {
+                                owner.dismiss()
+                                dialog.positiveAction?.onAction(selected)
+                            },
+                        ) { Text(label) }
+                    }
+                    dialog.neutralLabel?.let { label ->
+                        TextButton(
+                            enabled = dialog.neutralAction != null
+                                && (!dialog.neutralRequiresSelection || selected >= 0),
+                            onClick = {
+                                owner.dismiss()
+                                dialog.neutralAction?.onAction(selected)
+                            },
+                        ) { Text(label) }
+                    }
+                    dialog.negativeLabel?.let { label ->
+                        TextButton(onClick = {
+                            owner.dismiss()
+                            dialog.negativeAction?.run()
+                        }) { Text(label) }
+                    }
+                }
+            },
+        )
+    }
+
+    @Composable
+    private fun ShaderTuningDialog(owner: ConfigDialogState, dialog: DialogState.ShaderTuning) {
+        val specs = remember(dialog.names, dialog.minimums, dialog.maximums, dialog.steps) {
+            dialog.names.indices.mapNotNull { index ->
+                val name = dialog.names.getOrNull(index).orEmpty()
+                if (name.isBlank()) {
+                    null
+                } else {
+                    val min = dialog.minimums.getOrNull(index) ?: 0f
+                    val max = dialog.maximums.getOrNull(index) ?: min
+                    val step = (dialog.steps.getOrNull(index) ?: 0f)
+                        .takeIf { it > 0f } ?: ((max - min) / 100f)
+                    ShaderSliderSpec(
+                        index,
+                        name,
+                        min,
+                        max,
+                        step.coerceAtLeast(Float.MIN_VALUE),
+                    )
                 }
             }
         }
-        dialog.setContentView(composeView)
-        dialog.setCancelable(cancelable)
-        dialog.setCanceledOnTouchOutside(cancelable)
-        dialog.window?.apply {
-            setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
-            addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-            setDimAmount(0.55f)
+        var values by remember(dialog) { mutableStateOf(dialog.initialValues.copyOf()) }
+        Dialog(
+            onDismissRequest = owner::dismiss,
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                dismissOnBackPress = dialog.cancelable,
+                dismissOnClickOutside = dialog.cancelable,
+            ),
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxWidth().padding(24.dp),
+                shape = MaterialTheme.shapes.extraLarge,
+                tonalElevation = 6.dp,
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(dialog.title, style = MaterialTheme.typography.headlineSmall)
+                    specs.forEach { spec ->
+                        val progress = ((values.getOrNull(spec.index) ?: spec.min) - spec.min)
+                            .div(spec.step).roundToInt().coerceIn(0, spec.maxProgress)
+                        Text("${spec.name}: ${spec.min + progress * spec.step}")
+                        Slider(
+                            value = progress.toFloat(),
+                            onValueChange = { raw ->
+                                values = values.copyOf().also { copy ->
+                                    copy[spec.index] = spec.min + raw.roundToInt()
+                                        .coerceIn(0, spec.maxProgress) * spec.step
+                                }
+                            },
+                            valueRange = 0f..spec.maxProgress.toFloat(),
+                            steps = (spec.maxProgress - 1).coerceAtLeast(0),
+                        )
+                    }
+                    DialogActions(
+                        positiveLabel = dialog.positiveLabel,
+                        negativeLabel = dialog.negativeLabel,
+                        onNegative = owner::dismiss,
+                        onPositive = {
+                            dialog.onConfirmed.onConfirmed(values.copyOf())
+                            owner.dismiss()
+                        },
+                        extraAction = { values = dialog.defaults.copyOf() },
+                        extraLabel = dialog.resetLabel,
+                    )
+                }
+            }
         }
-        dialog.setOnShowListener {
-            dialog.window?.setLayout(
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
-            )
+    }
+
+    @Composable
+    private fun SaveProfileDialog(owner: ConfigDialogState, dialog: DialogState.SaveProfile) {
+        var name by remember(dialog) { mutableStateOf(dialog.initialName) }
+        var configChecked by remember(dialog) { mutableStateOf(true) }
+        var keyboardChecked by remember(dialog) { mutableStateOf(true) }
+        var defaultChecked by remember(dialog) { mutableStateOf(false) }
+        AlertDialog(
+            onDismissRequest = owner::dismiss,
+            properties = DialogProperties(
+                dismissOnBackPress = dialog.cancelable,
+                dismissOnClickOutside = dialog.cancelable,
+            ),
+            title = { Text(dialog.title) },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth().imePadding(),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it.filter { char -> char !in "/\\:*?\"<>|" } },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = { Text(dialog.inputLabel) },
+                    )
+                    ConfigCheckboxRow(configChecked, dialog.configLabel) { configChecked = it }
+                    ConfigCheckboxRow(keyboardChecked, dialog.keyboardLabel) { keyboardChecked = it }
+                    ConfigCheckboxRow(defaultChecked, dialog.defaultLabel) { defaultChecked = it }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (dialog.onConfirmed.onConfirmed(name, configChecked, keyboardChecked, defaultChecked)) {
+                        owner.dismiss()
+                    }
+                }) { Text(dialog.positiveLabel) }
+            },
+            dismissButton = {
+                TextButton(onClick = owner::dismiss) { Text(dialog.negativeLabel) }
+            },
+        )
+    }
+
+    @Composable
+    private fun LoadProfileDialog(owner: ConfigDialogState, dialog: DialogState.LoadProfile) {
+        var selectedIndex by remember(dialog) {
+            mutableIntStateOf(dialog.defaultIndex.takeIf { it in dialog.profileNames.indices } ?: -1)
         }
-        dialog.prepareForIme()
-        dialog.show()
-        return dialog
+        var configChecked by remember(dialog) { mutableStateOf(true) }
+        var keyboardChecked by remember(dialog) { mutableStateOf(true) }
+        var configEnabled by remember(dialog) { mutableStateOf(true) }
+        var keyboardEnabled by remember(dialog) { mutableStateOf(true) }
+
+        fun selectProfile(index: Int) {
+            selectedIndex = index
+            val config = dialog.hasConfig.getOrNull(index) == true
+            val keyboard = dialog.hasKeyboard.getOrNull(index) == true
+            configEnabled = config && keyboard
+            keyboardEnabled = config && keyboard
+            configChecked = config
+            keyboardChecked = keyboard
+        }
+
+        AlertDialog(
+            onDismissRequest = owner::dismiss,
+            properties = DialogProperties(
+                dismissOnBackPress = dialog.cancelable,
+                dismissOnClickOutside = dialog.cancelable,
+            ),
+            title = { Text(dialog.title) },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    LazyColumn(modifier = Modifier.heightIn(min = 48.dp, max = 320.dp)) {
+                        items(dialog.profileNames.toList()) { name ->
+                            val index = dialog.profileNames.indexOf(name)
+                            Row(
+                                modifier = Modifier.fillMaxWidth().clickable { selectProfile(index) }
+                                    .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                RadioButton(selected = selectedIndex == index, onClick = { selectProfile(index) })
+                                Text(name, modifier = Modifier.padding(start = 8.dp))
+                            }
+                        }
+                    }
+                    HorizontalDivider()
+                    ConfigCheckboxRow(configChecked, dialog.configLabel, configEnabled) { configChecked = it }
+                    ConfigCheckboxRow(keyboardChecked, dialog.keyboardLabel, keyboardEnabled) { keyboardChecked = it }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    dialog.onConfirmed.onConfirmed(selectedIndex, configChecked, keyboardChecked)
+                    owner.dismiss()
+                }) { Text(dialog.positiveLabel) }
+            },
+            dismissButton = {
+                TextButton(onClick = owner::dismiss) { Text(dialog.negativeLabel) }
+            },
+        )
+    }
+
+    @Composable
+    private fun ColorPickerDialog(owner: ConfigDialogState, dialog: DialogState.ColorPicker) {
+        Dialog(
+            onDismissRequest = owner::dismiss,
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                shape = MaterialTheme.shapes.extraLarge,
+                tonalElevation = 6.dp,
+            ) {
+                ColorPickerDialogContent(
+                    initialColor = dialog.initialColor,
+                    positiveLabel = dialog.positiveLabel,
+                    negativeLabel = dialog.negativeLabel,
+                    onConfirmed = { color ->
+                        dialog.onConfirmed.onConfirmed(color)
+                        owner.dismiss()
+                    },
+                    onDismiss = owner::dismiss,
+                )
+            }
+        }
     }
 }
 
-private fun Dialog.prepareForIme() {
-    window?.setSoftInputMode(
-        WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN or
-            WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE,
-    )
+private data class ShaderSliderSpec(
+    val index: Int,
+    val name: String,
+    val min: Float,
+    val max: Float,
+    val step: Float,
+) {
+    val maxProgress: Int = ((max - min) / step).toInt().coerceAtLeast(0)
+}
+
+@Composable
+private fun ConfigCheckboxRow(
+    checked: Boolean,
+    label: String,
+    enabled: Boolean = true,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Checkbox(checked = checked, enabled = enabled, onCheckedChange = onCheckedChange)
+        Text(
+            text = label,
+            color = if (enabled) MaterialTheme.colorScheme.onSurface
+            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+        )
+    }
+}
+
+@Composable
+private fun DialogActions(
+    positiveLabel: String,
+    negativeLabel: String,
+    onNegative: () -> Unit,
+    onPositive: () -> Unit,
+    extraAction: (() -> Unit)? = null,
+    extraLabel: String? = null,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.End,
+    ) {
+        if (extraAction != null && extraLabel != null) {
+            TextButton(onClick = extraAction) { Text(extraLabel) }
+        }
+        TextButton(onClick = onNegative) { Text(negativeLabel) }
+        TextButton(onClick = onPositive) { Text(positiveLabel) }
+    }
 }
 
 fun interface ConfigShaderValuesAction {
@@ -237,254 +777,10 @@ fun interface ConfigColorPickerAction {
     fun onConfirmed(color: Int)
 }
 
-private data class ShaderSliderSpec(
-    val index: Int,
-    val name: String,
-    val min: Float,
-    val max: Float,
-    val step: Float,
-    val maxProgress: Int,
-)
-
-private fun shaderSpecs(
-    names: Array<String>,
-    minimums: FloatArray,
-    maximums: FloatArray,
-    steps: FloatArray,
-): List<ShaderSliderSpec> = names.indices.mapNotNull { index ->
-    val name = names.getOrNull(index).orEmpty()
-    if (name.isBlank()) {
-        null
-    } else {
-        val min = minimums.getOrNull(index) ?: 0f
-        val max = maximums.getOrNull(index) ?: min
-        val step = steps.getOrNull(index)?.takeIf { it > 0f } ?: ((max - min) / 100f)
-        ShaderSliderSpec(
-            index = index,
-            name = name,
-            min = min,
-            max = max,
-            step = step.coerceAtLeast(Float.MIN_VALUE),
-            maxProgress = ((max - min) / step.coerceAtLeast(Float.MIN_VALUE)).toInt().coerceAtLeast(0),
-        )
-    }
+fun interface ComposeChoiceAction {
+    fun onSelected(index: Int)
 }
 
-@Composable
-private fun ShaderTuningDialogContent(
-    dialog: Dialog,
-    title: String,
-    names: Array<String>,
-    minimums: FloatArray,
-    maximums: FloatArray,
-    steps: FloatArray,
-    defaults: FloatArray,
-    initialValues: FloatArray,
-    positiveLabel: String,
-    negativeLabel: String,
-    resetLabel: String,
-    onConfirmed: ConfigShaderValuesAction,
-) {
-    val specs = remember(names, minimums, maximums, steps) {
-        shaderSpecs(names, minimums, maximums, steps)
-    }
-    var values by remember { mutableStateOf(initialValues.copyOf()) }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(text = title, style = MaterialTheme.typography.headlineSmall)
-        specs.forEach { spec ->
-            val progress = ((values.getOrNull(spec.index) ?: spec.min) - spec.min)
-                .div(spec.step)
-                .roundToInt()
-                .coerceIn(0, spec.maxProgress)
-            Text(
-                text = "${spec.name}: ${spec.min + progress * spec.step}",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Slider(
-                value = progress.toFloat(),
-                onValueChange = { rawProgress ->
-                    val copy = values.copyOf()
-                    copy[spec.index] = spec.min + rawProgress.roundToInt()
-                        .coerceIn(0, spec.maxProgress) * spec.step
-                    values = copy
-                },
-                valueRange = 0f..spec.maxProgress.toFloat(),
-                steps = (spec.maxProgress - 1).coerceAtLeast(0),
-            )
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.End,
-        ) {
-            TextButton(onClick = {
-                values = defaults.copyOf()
-            }) {
-                Text(resetLabel)
-            }
-            TextButton(onClick = { dialog.dismiss() }) {
-                Text(negativeLabel)
-            }
-            TextButton(onClick = {
-                onConfirmed.onConfirmed(values.copyOf())
-                dialog.dismiss()
-            }) {
-                Text(positiveLabel)
-            }
-        }
-    }
-}
-
-@Composable
-private fun SaveProfileDialogContent(
-    dialog: Dialog,
-    title: String,
-    inputLabel: String,
-    initialName: String,
-    configLabel: String,
-    keyboardLabel: String,
-    defaultLabel: String,
-    positiveLabel: String,
-    negativeLabel: String,
-    onConfirmed: ConfigSaveProfileAction,
-) {
-    var name by remember { mutableStateOf(initialName) }
-    var configChecked by remember { mutableStateOf(true) }
-    var keyboardChecked by remember { mutableStateOf(true) }
-    var defaultChecked by remember { mutableStateOf(false) }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .imePadding(),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text(text = title, style = MaterialTheme.typography.headlineSmall)
-        OutlinedTextField(
-            value = name,
-            onValueChange = { name = it.filter { char -> char !in "/\\:*?\"<>|" } },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            label = { Text(inputLabel) },
-        )
-        ConfigCheckboxRow(configChecked, configLabel) { configChecked = it }
-        ConfigCheckboxRow(keyboardChecked, keyboardLabel) { keyboardChecked = it }
-        ConfigCheckboxRow(defaultChecked, defaultLabel) { defaultChecked = it }
-        DialogActions(
-            positiveLabel = positiveLabel,
-            negativeLabel = negativeLabel,
-            onNegative = { dialog.dismiss() },
-            onPositive = {
-                if (onConfirmed.onConfirmed(name, configChecked, keyboardChecked, defaultChecked)) {
-                    dialog.dismiss()
-                }
-            },
-        )
-    }
-}
-
-@Composable
-private fun LoadProfileDialogContent(
-    dialog: Dialog,
-    title: String,
-    profileNames: Array<String>,
-    hasConfig: BooleanArray,
-    hasKeyboard: BooleanArray,
-    defaultIndex: Int,
-    configLabel: String,
-    keyboardLabel: String,
-    positiveLabel: String,
-    negativeLabel: String,
-    onConfirmed: ConfigLoadProfileAction,
-) {
-    var selectedIndex by remember { mutableIntStateOf(defaultIndex.takeIf { it in profileNames.indices } ?: -1) }
-    var configChecked by remember { mutableStateOf(true) }
-    var keyboardChecked by remember { mutableStateOf(true) }
-    var configEnabled by remember { mutableStateOf(true) }
-    var keyboardEnabled by remember { mutableStateOf(true) }
-
-    fun selectProfile(index: Int) {
-        selectedIndex = index
-        val config = hasConfig.getOrNull(index) == true
-        val keyboard = hasKeyboard.getOrNull(index) == true
-        configEnabled = config && keyboard
-        keyboardEnabled = config && keyboard
-        configChecked = config
-        keyboardChecked = keyboard
-    }
-
-    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(text = title, style = MaterialTheme.typography.headlineSmall)
-        LazyColumn(modifier = Modifier.heightIn(min = 48.dp, max = 320.dp)) {
-            items(profileNames.size) { index ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { selectProfile(index) }
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    RadioButton(
-                        selected = selectedIndex == index,
-                        onClick = { selectProfile(index) },
-                    )
-                    Text(profileNames[index], modifier = Modifier.padding(start = 8.dp))
-                }
-            }
-        }
-        HorizontalDivider()
-        ConfigCheckboxRow(configChecked, configLabel, configEnabled) { configChecked = it }
-        ConfigCheckboxRow(keyboardChecked, keyboardLabel, keyboardEnabled) { keyboardChecked = it }
-        DialogActions(
-            positiveLabel = positiveLabel,
-            negativeLabel = negativeLabel,
-            onNegative = { dialog.dismiss() },
-            onPositive = {
-                onConfirmed.onConfirmed(selectedIndex, configChecked, keyboardChecked)
-                dialog.dismiss()
-            },
-        )
-    }
-}
-
-@Composable
-private fun ConfigCheckboxRow(
-    checked: Boolean,
-    label: String,
-    enabled: Boolean = true,
-    onCheckedChange: (Boolean) -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Checkbox(checked = checked, enabled = enabled, onCheckedChange = onCheckedChange)
-        Text(
-            text = label,
-            color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-        )
-    }
-}
-
-@Composable
-private fun DialogActions(
-    positiveLabel: String,
-    negativeLabel: String,
-    onNegative: () -> Unit,
-    onPositive: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.End,
-    ) {
-        TextButton(onClick = onNegative) { Text(negativeLabel) }
-        TextButton(onClick = onPositive) { Text(positiveLabel) }
-    }
+fun interface ComposeChoiceButtonAction {
+    fun onAction(index: Int)
 }

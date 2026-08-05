@@ -16,18 +16,12 @@
 
 package io.github.h3nb.jlmodplus.info
 
-import android.app.Dialog
-import android.content.Context
-import android.graphics.Color
 import android.text.Spanned
 import android.text.style.RelativeSizeSpan
 import android.text.style.StyleSpan
 import android.text.style.URLSpan
 import android.text.style.UnderlineSpan
 import android.graphics.Typeface
-import android.view.WindowManager
-import androidx.activity.ComponentDialog
-import androidx.core.graphics.drawable.toDrawable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,6 +31,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -44,9 +39,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -171,99 +164,62 @@ private fun LicensesContent(licensesHtml: String) {
     InfoBody(message, Modifier.infoBodyModifier(maxHeight = 520))
 }
 
-/** Compose dialog host for the information screens; Java only supplies navigation callbacks. */
-object InfoDialogHost {
-    @JvmStatic
-    fun showAbout(context: Context, onLicenses: Runnable?, onMore: Runnable?): Dialog =
-        createInfoDialog(context) { dialog ->
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-            ) {
-                Text(
-                    text = context.getString(R.string.app_name),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                AboutContent(io.github.h3nb.jlmodplus.BuildConfig.VERSION_NAME)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.End,
-                ) {
-                    TextButton(onClick = {
-                        onLicenses?.run()
-                        dialog.dismiss()
-                    }) {
-                        Text(context.getString(R.string.licenses))
-                    }
-                    TextButton(onClick = {
-                        onMore?.run()
-                        dialog.dismiss()
-                    }) {
-                        Text(context.getString(R.string.more))
-                    }
-                }
-            }
-        }
-
-    @JvmStatic
-    fun showHelp(context: Context): Dialog =
-        createInfoDialog(context) { dialog ->
-            InfoDialogTitle(context.getString(R.string.help))
-            HelpContent()
-        }
-
-    @JvmStatic
-    fun showMore(context: Context): Dialog =
-        createInfoDialog(context) { dialog ->
-            InfoDialogTitle(context.getString(R.string.app_name))
-            MoreInfoContent()
-        }
-
-    @JvmStatic
-    fun showLicenses(context: Context): Dialog =
-        createInfoDialog(context) { dialog ->
-            InfoDialogTitle(context.getString(R.string.licenses))
-            LicensesContent(ContextHolder.getAssetAsString("licenses.html"))
-        }
+internal sealed interface InfoDialogState {
+    data object About : InfoDialogState
+    data object Help : InfoDialogState
+    data object More : InfoDialogState
+    data object Licenses : InfoDialogState
 }
 
-private fun createInfoDialog(context: Context, content: @Composable (Dialog) -> Unit): Dialog {
-    val dialog = ComponentDialog(context)
-    val composeView = ComposeView(context).apply {
-        setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindowOrReleasedFromPool)
-        setContent {
-            AppComposeTheme {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 20.dp),
-                    shape = MaterialTheme.shapes.extraLarge,
-                    color = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 6.dp,
-                ) {
-                    content(dialog)
-                }
-            }
-        }
-    }
-    dialog.setContentView(composeView)
-    dialog.setCancelable(true)
-    dialog.setCanceledOnTouchOutside(true)
-    dialog.window?.apply {
-        setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
-        addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-        setDimAmount(0.55f)
-    }
-    dialog.setOnShowListener {
-        dialog.window?.setLayout(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
+@Composable
+internal fun InfoDialogs(
+    state: InfoDialogState?,
+    onDismiss: () -> Unit,
+    onLicenses: () -> Unit,
+    onMore: () -> Unit,
+) {
+    when (state) {
+        InfoDialogState.About -> AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(stringResource(R.string.app_name)) },
+            text = { AboutContent(io.github.h3nb.jlmodplus.BuildConfig.VERSION_NAME) },
+            confirmButton = {
+                TextButton(onClick = onMore) { Text(stringResource(R.string.more)) }
+            },
+            dismissButton = {
+                TextButton(onClick = onLicenses) { Text(stringResource(R.string.licenses)) }
+            },
         )
+
+        InfoDialogState.Help -> AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { InfoDialogTitle(stringResource(R.string.help)) },
+            text = { HelpContent() },
+            confirmButton = {
+                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
+            },
+        )
+
+        InfoDialogState.More -> AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { InfoDialogTitle(stringResource(R.string.app_name)) },
+            text = { MoreInfoContent() },
+            confirmButton = {
+                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
+            },
+        )
+
+        InfoDialogState.Licenses -> AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { InfoDialogTitle(stringResource(R.string.licenses)) },
+            text = { LicensesContent(ContextHolder.getAssetAsString("licenses.html")) },
+            confirmButton = {
+                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.ok)) }
+            },
+        )
+
+        null -> Unit
     }
-    dialog.show()
-    return dialog
 }
 
 @Composable

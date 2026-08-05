@@ -21,7 +21,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.content.res.XmlResourceParser
-import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.edit
 import androidx.compose.foundation.Canvas
@@ -59,8 +58,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -85,12 +82,12 @@ import io.github.h3nb.jlmodplus.util.Constants.PREF_VIBRATION
 import io.github.h3nb.jlmodplus.util.XmlUtils
 import java.util.Locale
 
-private data class SettingsChoice(
+internal data class SettingsChoice(
     val value: String,
     val label: String,
 )
 
-private data class SettingsSwitchState(
+internal data class SettingsSwitchState(
     val key: String,
     val title: Int,
     val summary: Int? = null,
@@ -98,103 +95,52 @@ private data class SettingsSwitchState(
     val defaultValue: Boolean,
 )
 
-@SuppressLint("ViewConstructor")
-class SettingsComposeView(
-    context: Context,
-    private val callback: Callback,
-) : FrameLayout(context) {
-    interface Callback {
-        fun onBack()
-        fun onProfiles()
-        fun onChooseDirectory()
-    }
-
+internal class SettingsUiState(context: Context) {
     private val preferences: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-    private val themeChoices = context.resources.getStringArray(R.array.pref_theme_values)
+    internal val themeChoices = context.resources.getStringArray(R.array.pref_theme_values)
         .zip(context.resources.getStringArray(R.array.pref_theme_entries))
         .map { (value, label) -> SettingsChoice(value, label) }
-    private val languageChoices = loadLanguageChoices(context)
+    internal val languageChoices = loadLanguageChoices(context)
 
-    private var themeValue by mutableStateOf(
+    internal var themeValue by mutableStateOf(
         preferences.getString(PREF_THEME, context.getString(R.string.pref_theme_default))
             ?: context.getString(R.string.pref_theme_default),
     )
-    private var languageValue by mutableStateOf(currentLanguageValue())
-    private var directoryValue by mutableStateOf(
+    internal var languageValue by mutableStateOf(currentLanguageValue())
+    internal var directoryValue by mutableStateOf(
         preferences.getString(PREF_EMULATOR_DIR, Config.getEmulatorDir()) ?: Config.getEmulatorDir(),
     )
-    private var directoryErrorPath by mutableStateOf<String?>(null)
+    internal var directoryErrorPath by mutableStateOf<String?>(null)
 
-    private var actionBarEnabled by mutableStateOf(
+    internal var actionBarEnabled by mutableStateOf(
         preferences.getBoolean(PREF_TOOLBAR, false),
     )
-    private var expandToCutout by mutableStateOf(
+    internal var expandToCutout by mutableStateOf(
         // Preserve the current fullscreen game behavior for existing users;
         // users with a notch or curved display can opt out in Settings.
         preferences.getBoolean(PREF_EXPAND_TO_CUTOUT, true),
     )
-    private var statusBarEnabled by mutableStateOf(
+    internal var statusBarEnabled by mutableStateOf(
         preferences.getBoolean(PREF_STATUSBAR, false),
     )
-    private var keepScreenOnEnabled by mutableStateOf(
+    internal var keepScreenOnEnabled by mutableStateOf(
         preferences.getBoolean(PREF_KEEP_SCREEN, false),
     )
-    private var rawScreenshot by mutableStateOf(
+    internal var rawScreenshot by mutableStateOf(
         preferences.getBoolean(PREF_SCREENSHOT_SWITCH, false),
     )
-    private var vibrationEnabled by mutableStateOf(
+    internal var vibrationEnabled by mutableStateOf(
         preferences.getBoolean(PREF_VIBRATION, true),
     )
-    private var mascotMessage by mutableStateOf(
+    internal var mascotMessage by mutableStateOf(
         preferences.getBoolean("micro3d_using_message", false),
     )
-    private var audioSpeed by mutableStateOf(
+    internal var audioSpeed by mutableStateOf(
         preferences.getBoolean("pref_emulation_audio_speed", false),
     )
-    private var extremeSpeeds by mutableStateOf(
+    internal var extremeSpeeds by mutableStateOf(
         preferences.getBoolean("pref_emulation_extreme_speeds", false),
     )
-
-    init {
-        addView(
-            ComposeView(context).apply {
-                setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-                setContent {
-                    AppComposeTheme {
-                        SettingsContent(
-                            themeChoices = themeChoices,
-                            selectedTheme = themeValue,
-                            languageChoices = languageChoices,
-                            selectedLanguage = languageValue,
-                            directory = directoryValue,
-                            switches = listOf(
-                                SettingsSwitchState(PREF_TOOLBAR, R.string.pref_enable_actionbar_title, R.string.pref_enable_actionbar_summary, R.drawable.ic_setting_enable_action_bar, actionBarEnabled),
-                                SettingsSwitchState(PREF_STATUSBAR, R.string.pref_enable_statusbar_title, R.string.pref_enable_actionbar_summary, R.drawable.ic_setting_enable_statusbar, statusBarEnabled),
-                                SettingsSwitchState(PREF_EXPAND_TO_CUTOUT, R.string.pref_expand_to_cutout_title, R.string.pref_expand_to_cutout_summary, null, expandToCutout),
-                                SettingsSwitchState(PREF_KEEP_SCREEN, R.string.pref_wakelock_title, icon = R.drawable.ic_setting_keep_screen_on, defaultValue = keepScreenOnEnabled),
-                                SettingsSwitchState(PREF_SCREENSHOT_SWITCH, R.string.pref_screenshot_title, R.string.pref_screenshot_summary, R.drawable.ic_setting_screenshot, rawScreenshot),
-                                SettingsSwitchState(PREF_VIBRATION, R.string.pref_vibration_title, icon = R.drawable.ic_setting_enable_vibration, defaultValue = vibrationEnabled),
-                            ),
-                            experimentalSwitches = listOf(
-                                SettingsSwitchState("micro3d_using_message", R.string.pref_mascot_title, R.string.pref_mascot_summary, R.drawable.ic_setting_message, mascotMessage),
-                                SettingsSwitchState("pref_emulation_audio_speed", R.string.pref_emulation_audio_speed_title, R.string.pref_emulation_audio_speed_summary, null, audioSpeed),
-                                SettingsSwitchState("pref_emulation_extreme_speeds", R.string.pref_emulation_extreme_speeds_title, R.string.pref_emulation_extreme_speeds_summary, null, extremeSpeeds),
-                            ),
-                            directoryErrorPath = directoryErrorPath,
-                            onBack = callback::onBack,
-                            onThemeSelected = ::setTheme,
-                            onLanguageSelected = ::setLanguage,
-                            onSwitchChanged = ::setSwitch,
-                            onProfiles = callback::onProfiles,
-                            onChooseDirectory = callback::onChooseDirectory,
-                            onDismissDirectoryError = { directoryErrorPath = null },
-                        )
-                    }
-                }
-            },
-            LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT),
-        )
-    }
 
     fun setDirectory(path: String) {
         directoryValue = path
@@ -205,19 +151,19 @@ class SettingsComposeView(
         directoryErrorPath = path
     }
 
-    private fun setTheme(value: String) {
+    internal fun setTheme(value: String) {
         themeValue = value
         preferences.edit { putString(PREF_THEME, value) }
     }
 
-    private fun setLanguage(value: String) {
+    internal fun setLanguage(value: String) {
         languageValue = value
         AppCompatDelegate.setApplicationLocales(
             androidx.core.os.LocaleListCompat.forLanguageTags(value),
         )
     }
 
-    private fun setSwitch(key: String, value: Boolean) {
+    internal fun setSwitch(key: String, value: Boolean) {
         when (key) {
             PREF_TOOLBAR -> actionBarEnabled = value
             PREF_STATUSBAR -> statusBarEnabled = value
@@ -237,6 +183,45 @@ class SettingsComposeView(
         return languageChoices.firstOrNull {
             it.value == locale.toLanguageTag() || it.value == locale.language
         }?.value ?: ""
+    }
+}
+
+@Composable
+internal fun SettingsScreen(
+    state: SettingsUiState,
+    onBack: () -> Unit,
+    onProfiles: () -> Unit,
+    onChooseDirectory: () -> Unit,
+) {
+    AppComposeTheme {
+        SettingsContent(
+            themeChoices = state.themeChoices,
+            selectedTheme = state.themeValue,
+            languageChoices = state.languageChoices,
+            selectedLanguage = state.languageValue,
+            directory = state.directoryValue,
+            switches = listOf(
+                SettingsSwitchState(PREF_TOOLBAR, R.string.pref_enable_actionbar_title, R.string.pref_enable_actionbar_summary, R.drawable.ic_setting_enable_action_bar, state.actionBarEnabled),
+                SettingsSwitchState(PREF_STATUSBAR, R.string.pref_enable_statusbar_title, R.string.pref_enable_actionbar_summary, R.drawable.ic_setting_enable_statusbar, state.statusBarEnabled),
+                SettingsSwitchState(PREF_EXPAND_TO_CUTOUT, R.string.pref_expand_to_cutout_title, R.string.pref_expand_to_cutout_summary, null, state.expandToCutout),
+                SettingsSwitchState(PREF_KEEP_SCREEN, R.string.pref_wakelock_title, icon = R.drawable.ic_setting_keep_screen_on, defaultValue = state.keepScreenOnEnabled),
+                SettingsSwitchState(PREF_SCREENSHOT_SWITCH, R.string.pref_screenshot_title, R.string.pref_screenshot_summary, R.drawable.ic_setting_screenshot, state.rawScreenshot),
+                SettingsSwitchState(PREF_VIBRATION, R.string.pref_vibration_title, icon = R.drawable.ic_setting_enable_vibration, defaultValue = state.vibrationEnabled),
+            ),
+            experimentalSwitches = listOf(
+                SettingsSwitchState("micro3d_using_message", R.string.pref_mascot_title, R.string.pref_mascot_summary, R.drawable.ic_setting_message, state.mascotMessage),
+                SettingsSwitchState("pref_emulation_audio_speed", R.string.pref_emulation_audio_speed_title, R.string.pref_emulation_audio_speed_summary, null, state.audioSpeed),
+                SettingsSwitchState("pref_emulation_extreme_speeds", R.string.pref_emulation_extreme_speeds_title, R.string.pref_emulation_extreme_speeds_summary, null, state.extremeSpeeds),
+            ),
+            directoryErrorPath = state.directoryErrorPath,
+            onBack = onBack,
+            onThemeSelected = state::setTheme,
+            onLanguageSelected = state::setLanguage,
+            onSwitchChanged = state::setSwitch,
+            onProfiles = onProfiles,
+            onChooseDirectory = onChooseDirectory,
+            onDismissDirectoryError = { state.directoryErrorPath = null },
+        )
     }
 }
 

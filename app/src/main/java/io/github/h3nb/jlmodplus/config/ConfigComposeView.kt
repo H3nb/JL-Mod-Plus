@@ -16,10 +16,8 @@
 
 package io.github.h3nb.jlmodplus.config
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
-import android.widget.FrameLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
@@ -69,10 +67,8 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -86,13 +82,11 @@ import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.AppComposeTheme
 import kotlin.math.roundToInt
 
-/** Compose replacement for activity_config.xml. Java keeps the persistence and platform contracts. */
-@SuppressLint("ViewConstructor")
-class ConfigComposeView(
+/** Compose state for the configuration screen. Java keeps persistence and platform contracts. */
+class ConfigUiState(
     context: Context,
-    private val callback: Callback,
     private val showExperimental: Boolean,
-) : FrameLayout(context) {
+) {
     interface Callback {
         fun onScreenPresets()
         fun onSwapSizes()
@@ -169,24 +163,6 @@ class ConfigComposeView(
     private val layoutOptions = context.resources.getStringArray(R.array.PREF_LAYOUT_ENTRIES).toList()
     private val buttonShapeOptions = context.resources.getStringArray(R.array.pref_button_shape_entries).toList()
     private val secureConnectionOptions = context.resources.getStringArray(R.array.secure_connection_mode_entries).toList()
-
-    init {
-        addView(
-            ComposeView(context).apply {
-                setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-                setContent {
-                    AppComposeTheme {
-                        ConfigContent(
-                            state = this@ConfigComposeView,
-                            showExperimental = showExperimental,
-                            callback = callback,
-                        )
-                    }
-                }
-            },
-            LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT),
-        )
-    }
 
     fun getScreenWidthText(): String = screenWidthState
     fun setScreenWidthText(value: String) { screenWidthState = value }
@@ -391,7 +367,7 @@ class ConfigComposeView(
 
     @Composable
     private fun ConfigContent(
-        state: ConfigComposeView,
+        state: ConfigUiState,
         showExperimental: Boolean,
         callback: Callback,
     ) {
@@ -518,7 +494,7 @@ class ConfigComposeView(
     }
 
     @Composable
-    private fun ScreenSection(state: ConfigComposeView, callback: Callback) {
+    private fun ScreenSection(state: ConfigUiState, callback: Callback) {
         ConfigCard(R.string.PREF_SCREEN_OPTIONS) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                 IconButton(onClick = callback::onScreenPresets) {
@@ -573,7 +549,7 @@ class ConfigComposeView(
     }
 
     @Composable
-    private fun FontSection(state: ConfigComposeView, callback: Callback) {
+    private fun FontSection(state: ConfigUiState, callback: Callback) {
         ConfigCard(R.string.PREF_FONT_OPTIONS) {
             Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                 ConfigTextField(state.textValue(TextFieldId.FONT_SMALL), { state.updateText(TextFieldId.FONT_SMALL, it) }, R.string.PREF_FONT_SMALL, Modifier.weight(1f), numeric = true)
@@ -589,7 +565,7 @@ class ConfigComposeView(
     }
 
     @Composable
-    private fun InputSection(state: ConfigComposeView, callback: Callback) {
+    private fun InputSection(state: ConfigUiState, callback: Callback) {
         ConfigCard(R.string.pref_input_devices_title) {
             ConfigSwitch(R.string.PREF_TOUCH_INPUT, state.touchInputState) { state.touchInputState = it }
             ConfigChoiceRow(R.string.PREF_LAYOUT, state.layoutOptions, state.layoutSelectionState) { state.layoutSelectionState = it }
@@ -621,14 +597,14 @@ class ConfigComposeView(
     }
 
     @Composable
-    private fun EmulationSection(state: ConfigComposeView) {
+    private fun EmulationSection(state: ConfigUiState) {
         ConfigCard(R.string.pref_title_emulation) {
             ConfigSwitch(R.string.pref_skip_resume_call, state.skipResumeState) { state.skipResumeState = it }
         }
     }
 
     @Composable
-    private fun ExperimentalSection(state: ConfigComposeView, callback: Callback) {
+    private fun ExperimentalSection(state: ConfigUiState, callback: Callback) {
         ConfigCard(R.string.pref_title_experimental) {
             ConfigChoiceRow(R.string.secure_connection_mode_title, state.secureConnectionOptions, state.secureConnectionSelectionState) {
                 state.secureConnectionSelectionState = it
@@ -639,14 +615,14 @@ class ConfigComposeView(
     }
 
     @Composable
-    private fun AudioSection(state: ConfigComposeView) {
+    private fun AudioSection(state: ConfigUiState) {
         ConfigCard(R.string.pref_audio_title) {
             ConfigChoiceRow(R.string.pref_soundbank_title, state.soundBankOptionsState, state.soundBankSelectionState) { state.soundBankSelectionState = it }
         }
     }
 
     @Composable
-    private fun SystemSection(state: ConfigComposeView, callback: Callback) {
+    private fun SystemSection(state: ConfigUiState, callback: Callback) {
         ConfigCard(R.string.PREF_SYS_PROPS) {
             ConfigActionButton(onClick = callback::onEncoding, modifier = Modifier.padding(4.dp)) { Text(stringResource(R.string.pref_encoding_title)) }
             ConfigTextField(
@@ -697,7 +673,7 @@ class ConfigComposeView(
     }
 
     @Composable
-    private fun ConfigLabeledTextField(labelRes: Int, value: String, onValueChange: (String) -> Unit, hintRes: Int, state: ConfigComposeView, numeric: Boolean) {
+    private fun ConfigLabeledTextField(labelRes: Int, value: String, onValueChange: (String) -> Unit, hintRes: Int, state: ConfigUiState, numeric: Boolean) {
         Row(modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(labelRes), modifier = Modifier.weight(0.42f), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 15.sp)
             ConfigTextField(value, onValueChange, hintRes, Modifier.weight(0.58f), state = state, numeric = numeric)
@@ -705,7 +681,7 @@ class ConfigComposeView(
     }
 
     @Composable
-    private fun ConfigColorRow(labelRes: Int, value: String, field: String, state: ConfigComposeView, callback: Callback) {
+    private fun ConfigColorRow(labelRes: Int, value: String, field: String, state: ConfigUiState, callback: Callback) {
         Row(modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
             ConfigActionButton(onClick = { callback.onColorPicker(field) }, modifier = Modifier.weight(0.42f).padding(horizontal = 4.dp, vertical = 2.dp)) { Text(stringResource(labelRes)) }
             Row(modifier = Modifier.weight(0.58f), verticalAlignment = Alignment.CenterVertically) {
@@ -764,7 +740,7 @@ class ConfigComposeView(
         hintRes: Int,
         modifier: Modifier = Modifier,
         onFocusLost: (() -> Unit)? = null,
-        state: ConfigComposeView? = null,
+        state: ConfigUiState? = null,
         hex: Boolean = false,
         numeric: Boolean = false,
         singleLine: Boolean = true,
@@ -807,7 +783,15 @@ class ConfigComposeView(
     }
 
     @Composable
-    internal fun RenderPreview() {
+    internal fun Render(callback: Callback, dialogState: ConfigDialogState? = null) {
+        AppComposeTheme {
+            ConfigContent(this@ConfigUiState, showExperimental, callback)
+            dialogState?.Render()
+        }
+    }
+
+    @Composable
+    internal fun RenderPreview(callback: Callback) {
         ConfigContent(this, showExperimental, callback)
     }
 }
@@ -828,7 +812,7 @@ internal fun ConfigScreenDarkPreview() {
 private fun ConfigScreenPreviewContent(darkTheme: Boolean) {
     val context = LocalContext.current
     val callback = remember {
-        object : ConfigComposeView.Callback {
+         object : ConfigUiState.Callback {
             override fun onScreenPresets() = Unit
             override fun onSwapSizes() = Unit
             override fun onAddResolution() = Unit
@@ -858,7 +842,7 @@ private fun ConfigScreenPreviewContent(darkTheme: Boolean) {
         }
     }
         val view = remember(context) {
-            ConfigComposeView(context, callback, true).apply {
+            ConfigUiState(context, true).apply {
             setToolbarTitle("Configuration")
             setScreenWidthText("240")
             setScreenHeightText("320")
@@ -891,6 +875,6 @@ private fun ConfigScreenPreviewContent(darkTheme: Boolean) {
         }
     }
     AppComposeTheme(darkTheme = darkTheme) {
-        view.RenderPreview()
+        view.RenderPreview(callback)
     }
 }

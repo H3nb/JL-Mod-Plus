@@ -58,6 +58,7 @@
         tools:ignore="RtlEnabled">
         <activity
             android:name=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"
             android:launchMode="singleTask"
             android:windowSoftInputMode="stateHidden|adjustResize"
@@ -131,6 +132,7 @@
         <activity
             android:name=".config.ConfigActivity"
             android:exported="true"
+            android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity
             android:name="javax.microedition.shell.MicroActivity"
@@ -140,8 +142,15 @@
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode"
             android:process=":midlet" />
         <activity
+            android:name="javax.microedition.shell.memory.ui.MemoryEditorActivity"
+            android:theme="@style/Theme.AppCompat.DayNight.Dialog.Alert"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
+        <activity
             android:name=".settings.SettingsActivity"
             android:exported="true"
+            android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="stateHidden|adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
@@ -152,6 +161,7 @@
         <activity
             android:name=".settings.KeyMapperActivity"
             android:exported="false"
+            android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity
             android:name=".filepicker.FilteredFilePickerActivity"
@@ -161,6 +171,7 @@
         <activity
             android:name=".config.ProfilesActivity"
             android:exported="false"
+            android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity android:name="com.nokia.mid.ui.NotificationActivity" />
         <activity
@@ -175,6 +186,12 @@
             android:theme="@style/Theme.AppCompat.DayNight.Dialog.Alert"
             android:excludeFromRecents="true"
             android:exported="false" />
+        <activity
+            android:name="ru.woesss.j2me.installer.InstallerActivity"
+            android:theme="@style/Theme.AppCompat.DayNight.Dialog.Alert"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
 
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"

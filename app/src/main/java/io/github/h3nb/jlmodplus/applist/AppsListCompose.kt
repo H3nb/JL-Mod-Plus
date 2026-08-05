@@ -16,13 +16,10 @@
 
 package io.github.h3nb.jlmodplus.applist
 
-import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.LruCache
-import android.view.View
-import android.widget.FrameLayout
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
@@ -73,12 +70,10 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -103,81 +98,17 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 
-class AppsListComposeController(
-    context: Context,
-    private val callback: Callback,
-) {
+internal class AppsListUiState {
     companion object {
         const val LAYOUT_TYPE_LIST = 0
         const val LAYOUT_TYPE_GRID = 1
     }
 
-    interface Callback {
-        fun onAppClick(item: AppItem)
-        fun onAddClick()
-        fun onContextAction(item: AppItem, actionId: Int)
-        fun onSearchQueryChanged(query: String)
-        fun onLayoutChanged(layoutType: Int)
-        fun onToolbarAction(actionId: Int)
-    }
-
-    fun interface SearchStateListener {
-        fun onSearchStateChanged(expanded: Boolean, query: String)
-    }
-
-    private val root = FrameLayout(context)
-    private val composeView = ComposeView(context)
-    private var itemsState by mutableStateOf<List<AppItem>>(emptyList())
-    private var emptyMessageState by mutableStateOf("")
-    private var layoutState by mutableIntStateOf(LAYOUT_TYPE_GRID)
-    private var searchExpandedState by mutableStateOf(false)
-    private var searchQueryState by mutableStateOf("")
-    private var searchStateListener: SearchStateListener? = null
-    private val shortcutSupported = androidx.core.content.pm.ShortcutManagerCompat
-        .isRequestPinShortcutSupported(context)
-
-    init {
-        composeView.setViewCompositionStrategy(
-            ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed,
-        )
-        composeView.setContent {
-            AppComposeTheme {
-                AppsListContent(
-                    items = itemsState,
-                    emptyMessage = emptyMessageState,
-                    layoutType = layoutState,
-                    shortcutSupported = shortcutSupported,
-                    onAddClick = callback::onAddClick,
-                    onAppClick = callback::onAppClick,
-                    onContextAction = callback::onContextAction,
-                    searchExpanded = searchExpandedState,
-                    searchQuery = searchQueryState,
-                    onSearchExpandedChanged = {
-                        searchExpandedState = it
-                        notifySearchStateChanged()
-                    },
-                    onSearchQueryChanged = {
-                        searchQueryState = it
-                        notifySearchStateChanged()
-                    },
-                    onSearchQueryDebounced = callback::onSearchQueryChanged,
-                    onLayoutToggle = {
-                        callback.onLayoutChanged(toggleLayout())
-                    },
-                    onToolbarAction = callback::onToolbarAction,
-                )
-            }
-        }
-        root.addView(
-            composeView,
-            FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT,
-            ),
-        )
-    }
-
-    fun getRootView(): View = root
+    internal var itemsState by mutableStateOf<List<AppItem>>(emptyList())
+    internal var emptyMessageState by mutableStateOf("")
+    internal var layoutState by mutableIntStateOf(LAYOUT_TYPE_GRID)
+    internal var searchExpandedState by mutableStateOf(false)
+    internal var searchQueryState by mutableStateOf("")
 
     fun setItems(items: List<AppItem>, emptyMessage: String) {
         itemsState = items.toList()
@@ -188,25 +119,9 @@ class AppsListComposeController(
         layoutState = layoutType
     }
 
-    fun getLayoutType(): Int = layoutState
-
-    fun isSearchExpanded(): Boolean = searchExpandedState
-
-    fun getSearchQuery(): String = searchQueryState
-
-    fun setSearchStateListener(listener: SearchStateListener) {
-        searchStateListener = listener
-        notifySearchStateChanged()
-    }
-
     fun restoreSearchState(expanded: Boolean, query: String) {
         searchExpandedState = expanded
         searchQueryState = query
-        notifySearchStateChanged()
-    }
-
-    private fun notifySearchStateChanged() {
-        searchStateListener?.onSearchStateChanged(searchExpandedState, searchQueryState)
     }
 
     fun toggleLayout(): Int {
@@ -224,9 +139,37 @@ class AppsListComposeController(
         }
         searchQueryState = ""
         searchExpandedState = false
-        notifySearchStateChanged()
         return true
     }
+}
+
+@Composable
+internal fun AppsListScreen(
+    state: AppsListUiState,
+    shortcutSupported: Boolean,
+    onAddClick: () -> Unit,
+    onAppClick: (AppItem) -> Unit,
+    onContextAction: (AppItem, Int) -> Unit,
+    onSearchQueryDebounced: (String) -> Unit,
+    onLayoutChanged: (Int) -> Unit,
+    onToolbarAction: (Int) -> Unit,
+) {
+    AppsListContent(
+        items = state.itemsState,
+        emptyMessage = state.emptyMessageState,
+        layoutType = state.layoutState,
+        shortcutSupported = shortcutSupported,
+        onAddClick = onAddClick,
+        onAppClick = onAppClick,
+        onContextAction = onContextAction,
+        searchExpanded = state.searchExpandedState,
+        searchQuery = state.searchQueryState,
+        onSearchExpandedChanged = { state.searchExpandedState = it },
+        onSearchQueryChanged = { state.searchQueryState = it },
+        onSearchQueryDebounced = onSearchQueryDebounced,
+        onLayoutToggle = { onLayoutChanged(state.toggleLayout()) },
+        onToolbarAction = onToolbarAction,
+    )
 }
 
 private val appIconCache = object : LruCache<String, Bitmap>(8 * 1024) {
@@ -294,7 +237,7 @@ private fun AppsListContent(
                         color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 18.sp,
                     )
-                } else if (layoutType == AppsListComposeController.LAYOUT_TYPE_GRID) {
+                } else if (layoutType == AppsListUiState.LAYOUT_TYPE_GRID) {
                     LazyVerticalGrid(
                         columns = GridCells.Adaptive(minSize = 112.dp),
                         contentPadding = PaddingValues(start = 4.dp, end = 4.dp, bottom = 72.dp),
@@ -409,7 +352,7 @@ private fun HomeToolbar(
                 IconButton(onClick = onLayoutToggle) {
                     Icon(
                         painter = painterResource(
-                            if (layoutType == AppsListComposeController.LAYOUT_TYPE_LIST) {
+                            if (layoutType == AppsListUiState.LAYOUT_TYPE_LIST) {
                                 R.drawable.ic_action_apps_view_grid
                             } else {
                                 R.drawable.ic_action_apps_view_list
@@ -833,32 +776,32 @@ private fun previewApps(): List<AppItem> = listOf(
 @Preview(name = "Apps grid", showBackground = true, widthDp = 420, heightDp = 760)
 @Composable
 internal fun AppsListGridPreview() {
-    AppsListPreviewContent(AppsListComposeController.LAYOUT_TYPE_GRID, darkTheme = false)
+    AppsListPreviewContent(AppsListUiState.LAYOUT_TYPE_GRID, darkTheme = false)
 }
 
 @Preview(name = "Apps list", showBackground = true, widthDp = 420, heightDp = 760)
 @Composable
 internal fun AppsListListPreview() {
-    AppsListPreviewContent(AppsListComposeController.LAYOUT_TYPE_LIST, darkTheme = false)
+    AppsListPreviewContent(AppsListUiState.LAYOUT_TYPE_LIST, darkTheme = false)
 }
 
 @Preview(name = "Apps grid dark", showBackground = true, widthDp = 420, heightDp = 760, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 internal fun AppsListGridDarkPreview() {
-    AppsListPreviewContent(AppsListComposeController.LAYOUT_TYPE_GRID, darkTheme = true)
+    AppsListPreviewContent(AppsListUiState.LAYOUT_TYPE_GRID, darkTheme = true)
 }
 
 @Preview(name = "Apps list dark", showBackground = true, widthDp = 420, heightDp = 760, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 internal fun AppsListListDarkPreview() {
-    AppsListPreviewContent(AppsListComposeController.LAYOUT_TYPE_LIST, darkTheme = true)
+    AppsListPreviewContent(AppsListUiState.LAYOUT_TYPE_LIST, darkTheme = true)
 }
 
 @Preview(name = "Apps search", showBackground = true, widthDp = 420, heightDp = 760)
 @Composable
 internal fun AppsListSearchPreview() {
     AppsListPreviewContent(
-        AppsListComposeController.LAYOUT_TYPE_GRID,
+        AppsListUiState.LAYOUT_TYPE_GRID,
         darkTheme = false,
         searchExpanded = true,
         searchQuery = "Asphalt",
@@ -869,7 +812,7 @@ internal fun AppsListSearchPreview() {
 @Composable
 internal fun AppsListSearchDarkPreview() {
     AppsListPreviewContent(
-        AppsListComposeController.LAYOUT_TYPE_GRID,
+        AppsListUiState.LAYOUT_TYPE_GRID,
         darkTheme = true,
         searchExpanded = true,
         searchQuery = "Asphalt",
@@ -880,7 +823,7 @@ internal fun AppsListSearchDarkPreview() {
 @Composable
 internal fun AppsListOverflowPreview() {
     AppsListPreviewContent(
-        AppsListComposeController.LAYOUT_TYPE_GRID,
+        AppsListUiState.LAYOUT_TYPE_GRID,
         darkTheme = false,
         overflowExpanded = true,
     )
@@ -890,7 +833,7 @@ internal fun AppsListOverflowPreview() {
 @Composable
 internal fun AppsListOverflowDarkPreview() {
     AppsListPreviewContent(
-        AppsListComposeController.LAYOUT_TYPE_GRID,
+        AppsListUiState.LAYOUT_TYPE_GRID,
         darkTheme = true,
         overflowExpanded = true,
     )
@@ -944,7 +887,7 @@ internal fun AppsListEmptyPreview() {
         AppsListContent(
             items = emptyList(),
             emptyMessage = stringResource(R.string.no_data_for_display),
-            layoutType = AppsListComposeController.LAYOUT_TYPE_GRID,
+            layoutType = AppsListUiState.LAYOUT_TYPE_GRID,
             shortcutSupported = true,
             onAddClick = {},
             onAppClick = {},
@@ -968,7 +911,7 @@ internal fun AppsListEmptyDarkPreview() {
         AppsListContent(
             items = emptyList(),
             emptyMessage = stringResource(R.string.no_data_for_display),
-            layoutType = AppsListComposeController.LAYOUT_TYPE_GRID,
+            layoutType = AppsListUiState.LAYOUT_TYPE_GRID,
             shortcutSupported = true,
             onAddClick = {},
             onAppClick = {},

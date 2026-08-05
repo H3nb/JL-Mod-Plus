@@ -67,14 +67,13 @@ import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.model.Size;
 import org.microemu.cldc.SecureConnectionPolicy;
 import io.github.h3nb.jlmodplus.settings.KeyMapperActivity;
-import io.github.h3nb.jlmodplus.ui.ComposeDialogHost;
 import io.github.h3nb.jlmodplus.ui.WindowInsetsPolicy;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import ru.woesss.j2me.mmapi.synth.SoundBankResolver;
 import ru.woesss.j2me.rms.RmsSnapshotManager;
 import ru.woesss.util.TextUtils;
 
-public class ConfigActivity extends AppCompatActivity implements ConfigComposeView.Callback {
+public class ConfigActivity extends AppCompatActivity implements ConfigUiState.Callback {
 	private static final String TAG = ConfigActivity.class.getSimpleName();
 
 	private final ArrayList<Size> screenPresets = new ArrayList<>();
@@ -91,7 +90,8 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
 	private ArrayList<ShaderInfo> shaders;
 	private String workDir;
 	private boolean needShow;
-	private ConfigComposeView composeView;
+	private ConfigUiState composeView;
+	private final ConfigDialogState dialogState = new ConfigDialogState();
 	private int lastSafeSecureConnectionMode;
     private final ThreadPoolExecutor rmsExecutor = new ThreadPoolExecutor(
             1,
@@ -144,7 +144,7 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
 						}
 					}
 				}
-				ComposeDialogHost.showMessage(
+				dialogState.showMessage(
 						this,
 						getString(R.string.error),
 						getString(R.string.err_missing_app, storageName),
@@ -172,8 +172,8 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
 			return;
 		}
 		loadKeyLayout();
-		composeView = new ConfigComposeView(this, this, !isProfile);
-		setContentView(composeView);
+		composeView = new ConfigUiState(this, !isProfile);
+		ConfigComposeHost.install(this, composeView, this, dialogState);
 		composeView.setToolbarTitle(getTitle().toString());
 		if (!isProfile) {
 			lastSafeSecureConnectionMode =
@@ -183,9 +183,6 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
 			composeView.setSecureConnectionSelection(
 					Math.max(0, Math.min(params.secureConnectionMode, 2))
 			);
-		}
-		if (getSupportActionBar() != null) {
-			getSupportActionBar().hide();
 		}
 		display = getWindowManager().getDefaultDisplay();
 
@@ -279,7 +276,7 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
 			}
 		}
 		float[] initialValues = shader.values == null ? defaults : shader.values;
-		ConfigComposeDialogHost.showShaderTuning(
+		dialogState.showShaderTuning(
 				this,
 				getString(R.string.shader_tuning),
 				names,
@@ -299,7 +296,7 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
 	private void confirmInsecureSecureConnectionMode() {
 		Runnable restoreSafeMode = () ->
 				composeView.setSecureConnectionSelection(lastSafeSecureConnectionMode);
-		ComposeDialogHost.showMessage(
+		dialogState.showMessage(
 				this,
 				getString(R.string.secure_connection_insecure_title),
 				getString(R.string.secure_connection_insecure_message),
@@ -379,7 +376,7 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
 
 	private void showCharsetPicker() {
 		String[] charsets = Charset.availableCharsets().keySet().toArray(new String[0]);
-		ComposeDialogHost.showChoice(
+		dialogState.showChoice(
 				this,
 				getString(R.string.pref_encoding_title),
 				charsets,
@@ -753,7 +750,7 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
 				defaultIndex = i;
 			}
 		}
-		ConfigComposeDialogHost.showLoadProfile(
+		dialogState.showLoadProfile(
 				this,
 				getString(R.string.load_profile),
 				names,
@@ -787,8 +784,7 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
 	}
 
 	private void showSaveProfileDialog() {
-		final android.app.Dialog[] dialogHolder = new android.app.Dialog[1];
-		dialogHolder[0] = ConfigComposeDialogHost.showSaveProfile(
+		dialogState.showSaveProfile(
 				this,
 				getString(R.string.save_profile),
 				getString(R.string.enter_name),
@@ -807,7 +803,7 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
 					}
 					File config = new File(Config.getProfilesDir(), name + Config.MIDLET_CONFIG_FILE);
 					if (config.exists()) {
-						ComposeDialogHost.showMessage(
+						dialogState.showMessage(
 								this,
 								getString(R.string.save_profile),
 								getString(R.string.alert_rewrite_profile, name),
@@ -816,9 +812,8 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
 								null,
 								true,
 								() -> {
-									if (saveProfile(name, configChecked, keyboardChecked, defaultChecked)
-											&& dialogHolder[0] != null) {
-										dialogHolder[0].dismiss();
+									if (saveProfile(name, configChecked, keyboardChecked, defaultChecked)) {
+										dialogState.dismiss();
 									}
 								},
 								null,
@@ -854,7 +849,7 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
 	}
 
 	private void showClearDataDialog() {
-		ComposeDialogHost.showMessage(
+		dialogState.showMessage(
 				this,
 				getString(android.R.string.dialog_alert_title),
 				getString(R.string.message_clear_data),
@@ -887,7 +882,7 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
 				labels[i] = snapshot.label + " (" + snapshot.file.getName() + ")";
 			}
 		}
-		ComposeDialogHost.showChoiceActions(
+		dialogState.showChoiceActions(
 				this,
 				getString(R.string.rms_editor_title),
 				labels,
@@ -908,7 +903,7 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
 	}
 
 	private void confirmRmsRestore(RmsSnapshotManager.Snapshot snapshot) {
-		ComposeDialogHost.showMessage(
+		dialogState.showMessage(
 				this,
 				getString(R.string.rms_snapshot_restore),
 				getString(R.string.rms_snapshot_restore_confirm, snapshot.label),
@@ -1084,7 +1079,7 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
 	}
 
 	private void showFontPresets() {
-		ComposeDialogHost.showChoice(
+		dialogState.showChoice(
 				this,
 				getString(R.string.SIZE_PRESETS),
 				fontPresetTitles.toArray(new String[0]),
@@ -1105,7 +1100,7 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
 		for (int i = 0; i < screenPresets.size(); i++) {
 			items[i] = screenPresets.get(i).toString();
 		}
-		ComposeDialogHost.showChoice(
+		dialogState.showChoice(
 				this,
 				getString(R.string.SIZE_PRESETS),
 				items,
@@ -1124,19 +1119,19 @@ public class ConfigActivity extends AppCompatActivity implements ConfigComposeVi
 		int color;
 		try {
 			String value = switch (field) {
-				case ConfigComposeView.COLOR_SCREEN_BACKGROUND -> composeView.getScreenBackgroundText();
-				case ConfigComposeView.COLOR_VK_BACK -> composeView.getVkBackText();
-				case ConfigComposeView.COLOR_VK_FORE -> composeView.getVkForeText();
-				case ConfigComposeView.COLOR_VK_SELECTED_BACK -> composeView.getVkSelectedBackText();
-				case ConfigComposeView.COLOR_VK_SELECTED_FORE -> composeView.getVkSelectedForeText();
-				case ConfigComposeView.COLOR_VK_OUTLINE -> composeView.getVkOutlineText();
+				case ConfigUiState.COLOR_SCREEN_BACKGROUND -> composeView.getScreenBackgroundText();
+				case ConfigUiState.COLOR_VK_BACK -> composeView.getVkBackText();
+				case ConfigUiState.COLOR_VK_FORE -> composeView.getVkForeText();
+				case ConfigUiState.COLOR_VK_SELECTED_BACK -> composeView.getVkSelectedBackText();
+				case ConfigUiState.COLOR_VK_SELECTED_FORE -> composeView.getVkSelectedForeText();
+				case ConfigUiState.COLOR_VK_OUTLINE -> composeView.getVkOutlineText();
 				default -> "";
 			};
 			color = Integer.parseInt(value.trim(), 16);
 		} catch (NumberFormatException ignored) {
 			color = 0;
 		}
-		ConfigComposeDialogHost.showColorPicker(
+		dialogState.showColorPicker(
 				this,
 				color | 0xFF000000,
 				getString(android.R.string.ok),

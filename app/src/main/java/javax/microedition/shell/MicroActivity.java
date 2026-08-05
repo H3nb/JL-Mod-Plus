@@ -41,7 +41,6 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
@@ -85,13 +84,12 @@ import javax.microedition.shell.time.EmulationSpeed;
 import javax.microedition.shell.time.EmulationTimeController;
 import javax.microedition.shell.time.SpeedSnapshot;
 import javax.microedition.shell.memory.MemoryEditorRuntime;
-import javax.microedition.shell.memory.ui.MemoryEditorDialogFragment;
+import javax.microedition.shell.memory.ui.MemoryEditorActivity;
 import javax.microedition.util.ContextHolder;
 
 import io.github.h3nb.jlmodplus.BuildConfig;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.Config;
-import io.github.h3nb.jlmodplus.ui.ComposeDialogHost;
 import io.github.h3nb.jlmodplus.util.Constants;
 import io.github.h3nb.jlmodplus.util.LogUtils;
 
@@ -110,6 +108,7 @@ public class MicroActivity extends AppCompatActivity {
 	private int menuKey;
 	private String appPath;
 	private MicroActivityHost binding;
+	private final MicroActivityDialogState dialogState = new MicroActivityDialogState();
 	private WindowInsetsControllerCompat windowInsetsController;
 	private Insets windowInsets = Insets.of(0, 0, 0, 0);
 	private Insets displayCutoutInsets = Insets.of(0, 0, 0, 0);
@@ -141,7 +140,6 @@ public class MicroActivity extends AppCompatActivity {
 		updateSystemBarAppearance();
 		ContextHolder.setCurrentActivity(this);
 		binding = new MicroActivityHost(this, this::onToolbarAction);
-		setContentView(binding);
 		ViewCompat.setOnApplyWindowInsetsListener(binding, (view, insets) -> {
 			displayCutoutInsets = insets.getInsets(WindowInsetsCompat.Type.displayCutout());
 			windowInsets = insets.getInsets(
@@ -153,6 +151,7 @@ public class MicroActivity extends AppCompatActivity {
 			applyWindowGeometry();
 			return insets;
 		});
+		MicroActivityComposeHost.install(this, binding, dialogState);
 		ViewCompat.requestApplyInsets(binding);
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
@@ -267,7 +266,7 @@ public class MicroActivity extends AppCompatActivity {
 			loadMIDlet();
 			return;
 		}
-		ComposeDialogHost.showMessage(
+		dialogState.showMessage(
 				this,
 				getString(R.string.timing_migration_title),
 				getString(R.string.timing_migration_message),
@@ -283,7 +282,7 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void rebuildTimingDex() {
-		android.app.Dialog progress = ComposeDialogHost.showMessage(
+		MicroDialogHandle progress = dialogState.showMessage(
 				this,
 				getString(R.string.timing_migration_title),
 				getString(R.string.timing_migration_progress),
@@ -333,7 +332,7 @@ public class MicroActivity extends AppCompatActivity {
 		if (!TextUtils.isEmpty(detail)) {
 			message += "\n\n" + detail;
 		}
-		ComposeDialogHost.showMessage(
+		dialogState.showMessage(
 				this,
 				getString(R.string.error),
 				message,
@@ -448,7 +447,7 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void showMidletDialog(String[] names, final String[] classes) {
-		ComposeDialogHost.showChoice(
+		dialogState.showChoice(
 				this,
 				getString(R.string.select_dialog_title),
 				names,
@@ -472,7 +471,7 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	void showErrorDialog(String message) {
-		ComposeDialogHost.showMessage(
+		dialogState.showMessage(
 				this,
 				getString(R.string.error),
 				message,
@@ -484,6 +483,34 @@ public class MicroActivity extends AppCompatActivity {
 				null,
 				null,
 				() -> MidletThread.notifyDestroyed()
+		);
+	}
+
+	/** Runtime-facing message dialog rendered by the Activity's Compose root. */
+	public MicroDialogHandle showRuntimeMessage(
+			String title,
+			String message,
+			String positiveLabel,
+			String negativeLabel,
+			String neutralLabel,
+			boolean cancelable,
+			Runnable positiveAction,
+			Runnable negativeAction,
+			Runnable neutralAction,
+			Runnable onCanceled
+	) {
+		return dialogState.showMessage(
+				this,
+				title,
+				message,
+				positiveLabel,
+				negativeLabel,
+				neutralLabel,
+				cancelable,
+				positiveAction,
+				negativeAction,
+				neutralAction,
+				onCanceled
 		);
 	}
 
@@ -535,10 +562,7 @@ public class MicroActivity extends AppCompatActivity {
 				!canvas ? windowInsets.bottom : canvasCutoutInsets.bottom
 		);
 		binding.setContentInsets(contentInsets);
-		int toolbarHeight = binding.toolbar.getLayoutParams() instanceof LinearLayout.LayoutParams
-				? ((LinearLayout.LayoutParams) binding.toolbar.getLayoutParams()).height
-				: 0;
-		binding.overlay.setLocation(contentInsets.left, contentInsets.top + Math.max(toolbarHeight, 0));
+		binding.overlay.setLocation(contentInsets.left, contentInsets.top);
 	}
 
 	public void setCurrent(Displayable displayable) {
@@ -608,7 +632,7 @@ public class MicroActivity extends AppCompatActivity {
 			hideSoftInput();
 			MidletThread.destroyApp();
 		};
-		ComposeDialogHost.showMessage(
+		dialogState.showMessage(
 				this,
 				getString(R.string.CONFIRMATION_REQUIRED),
 				getString(R.string.FORCE_CLOSE_CONFIRMATION),
@@ -794,7 +818,7 @@ public class MicroActivity extends AppCompatActivity {
 		final VirtualKeyboard vk = ContextHolder.getVk();
 		boolean[] states = vk.getKeysVisibility();
 		boolean[] changed = states.clone();
-		ComposeDialogHost.showMultiChoice(
+		dialogState.showMultiChoice(
 				this,
 				getString(R.string.hide_buttons),
 				vk.getKeyNames(),
@@ -814,7 +838,7 @@ public class MicroActivity extends AppCompatActivity {
 	private void showSaveVkAlert(boolean keepScreenPreferred) {
 		final VirtualKeyboard vk = ContextHolder.getVk();
 		if (vk.isPhone()) {
-			ComposeDialogHost.showCheckboxMessage(
+			dialogState.showCheckboxMessage(
 					this,
 					getString(R.string.CONFIRMATION_REQUIRED),
 					getString(R.string.pref_vk_save_alert),
@@ -831,7 +855,7 @@ public class MicroActivity extends AppCompatActivity {
 					}
 			);
 		} else {
-			ComposeDialogHost.showMessage(
+			dialogState.showMessage(
 					this,
 					getString(R.string.CONFIRMATION_REQUIRED),
 					getString(R.string.pref_vk_save_alert),
@@ -848,7 +872,7 @@ public class MicroActivity extends AppCompatActivity {
 
 	private void showSetLayoutDialog() {
 		final VirtualKeyboard vk = ContextHolder.getVk();
-		ComposeDialogHost.showChoiceActions(
+		dialogState.showChoiceActions(
 				this,
 				getString(R.string.layout_switch),
 				getResources().getStringArray(R.array.PREF_VK_TYPE_ENTRIES),
@@ -872,7 +896,7 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void showLimitFpsDialog() {
-		ComposeDialogHost.showTextInputActions(
+		dialogState.showTextInputActions(
 				this,
 				getString(R.string.PREF_LIMIT_FPS),
 				getString(R.string.unlimited),
@@ -922,7 +946,7 @@ public class MicroActivity extends AppCompatActivity {
 				checked = i;
 			}
 		}
-		ComposeDialogHost.showChoice(
+		dialogState.showChoice(
 				this,
 				getString(R.string.emulation_speed_dialog_title),
 				labels,
@@ -937,7 +961,7 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void showMemoryEditorDialog() {
-		MemoryEditorDialogFragment.show(getSupportFragmentManager());
+		startActivity(new android.content.Intent(this, MemoryEditorActivity.class));
 	}
 
 	@Override
@@ -1021,7 +1045,6 @@ public class MicroActivity extends AppCompatActivity {
 				current.clearDisplayableView();
 			}
 			binding.displayableContainer.removeAllViews();
-			LinearLayout.LayoutParams layoutParams = (LinearLayout.LayoutParams) binding.toolbar.getLayoutParams();
 			int toolbarHeight = 0;
 			if (next instanceof Canvas) {
 				hideSystemUI();
@@ -1032,9 +1055,8 @@ public class MicroActivity extends AppCompatActivity {
 				showSystemUI();
 				toolbarHeight = (int) getToolBarHeight();
 			}
-			layoutParams.height = toolbarHeight;
+			binding.toolbar.setToolbarHeight(toolbarHeight);
 			refreshToolbarState(next);
-			binding.toolbar.setLayoutParams(layoutParams);
 			if (systemBackCallback != null) {
 				systemBackCallback.setEnabled(next != null);
 			}

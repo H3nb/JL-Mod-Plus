@@ -16,8 +16,6 @@
 
 package io.github.h3nb.jlmodplus.config
 
-import android.content.Context
-import android.widget.FrameLayout
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
@@ -32,10 +30,12 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -43,8 +43,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -54,38 +52,9 @@ import androidx.compose.ui.unit.sp
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.AppComposeTheme
 
-class ProfilesComposeView(
-    context: Context,
-    private val callback: Callback,
-) : FrameLayout(context) {
-    interface Callback {
-        fun onBack()
-        fun onAdd()
-        fun onProfileAction(profile: Profile, actionId: Int)
-    }
-
-    private var profilesState by mutableStateOf<List<Profile>>(emptyList())
-    private var defaultNameState by mutableStateOf<String?>(null)
-
-    init {
-        addView(
-            ComposeView(context).apply {
-                setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-                setContent {
-                    AppComposeTheme {
-                        ProfilesContent(
-                            profiles = profilesState,
-                            defaultName = defaultNameState,
-                            onBack = callback::onBack,
-                            onAdd = callback::onAdd,
-                            onAction = callback::onProfileAction,
-                        )
-                    }
-                }
-            },
-            LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT),
-        )
-    }
+internal class ProfilesUiState {
+    internal var profilesState by mutableStateOf<List<Profile>>(emptyList())
+    internal var defaultNameState by mutableStateOf<String?>(null)
 
     fun setProfiles(profiles: List<Profile>, defaultName: String?) {
         profilesState = profiles.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
@@ -110,6 +79,59 @@ class ProfilesComposeView(
     }
 
     fun isDefault(profile: Profile): Boolean = defaultNameState == profile.name
+}
+
+internal data class ProfileNameDialogState(
+    val titleRes: Int,
+    val initialName: String,
+    val profileIndex: Int,
+)
+
+@Composable
+internal fun ProfilesScreen(
+    state: ProfilesUiState,
+    nameDialog: ProfileNameDialogState?,
+    nameValue: String,
+    onNameValueChange: (String) -> Unit,
+    onNameConfirm: () -> Unit,
+    onNameDismiss: () -> Unit,
+    onBack: () -> Unit,
+    onAdd: () -> Unit,
+    onAction: (Profile, Int) -> Unit,
+) {
+    AppComposeTheme {
+        ProfilesContent(
+            profiles = state.profilesState,
+            defaultName = state.defaultNameState,
+            onBack = onBack,
+            onAdd = onAdd,
+            onAction = onAction,
+        )
+        if (nameDialog != null) {
+            AlertDialog(
+                onDismissRequest = onNameDismiss,
+                title = { Text(stringResource(nameDialog.titleRes)) },
+                text = {
+                    TextField(
+                        value = nameValue,
+                        onValueChange = onNameValueChange,
+                        label = { Text(stringResource(R.string.enter_name)) },
+                        singleLine = true,
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = onNameConfirm) {
+                        Text(stringResource(android.R.string.ok))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = onNameDismiss) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                },
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)

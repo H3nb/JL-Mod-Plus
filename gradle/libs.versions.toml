@@ -45,6 +45,7 @@ zip4j = "2.11.5"
 [libraries]
 acra-core = { module = "ch.acra:acra-core", version.ref = "acra" }
 androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "androidx-activity" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidx-appcompat" }
 androidx-collection = { module = "androidx.collection:collection-ktx", version.ref = "androidx-collection" }
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }

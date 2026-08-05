@@ -33,7 +33,7 @@ import javax.microedition.util.ContextHolder;
 import javax.net.ssl.SSLException;
 
 import io.github.h3nb.jlmodplus.R;
-import io.github.h3nb.jlmodplus.ui.ComposeDialogHost;
+import javax.microedition.shell.MicroDialogHandle;
 
 public final class SecureConnectionFailureNotifier {
 	private static final String TAG = SecureConnectionFailureNotifier.class.getName();
@@ -102,8 +102,7 @@ public final class SecureConnectionFailureNotifier {
 		CountDownLatch decisionLatch = new CountDownLatch(1);
 		activity.runOnUiThread(() -> {
 			try {
-				android.app.Dialog dialog = ComposeDialogHost.showMessage(
-						activity,
+				MicroDialogHandle dialog = activity.showRuntimeMessage(
 						activity.getString(R.string.secure_connection_ask_title),
 						message,
 						activity.getString(R.string.secure_connection_continue_once),
@@ -125,11 +124,6 @@ public final class SecureConnectionFailureNotifier {
 							decisionLatch.countDown();
 						}
 				);
-				dialog.setOnDismissListener(ignored -> {
-					if (decisionRecorded.compareAndSet(false, true)) {
-						decisionLatch.countDown();
-					}
-				});
 			} catch (RuntimeException ex) {
 				Log.w(TAG, "Unable to show secure connection decision dialog", ex);
 				if (decisionRecorded.compareAndSet(false, true)) {
@@ -171,20 +165,18 @@ public final class SecureConnectionFailureNotifier {
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
 			try {
-				android.app.Dialog dialog = ComposeDialogHost.showMessage(
-						activity,
+				activity.showRuntimeMessage(
 						activity.getString(R.string.secure_connection_blocked_title),
 						message,
 						activity.getString(android.R.string.ok),
 						null,
 						null,
 						true,
-						null,
+						() -> notificationActive.set(false),
 						null,
 						null,
 						() -> notificationActive.set(false)
 				);
-				dialog.setOnDismissListener(ignored -> notificationActive.set(false));
 				return;
 			} catch (RuntimeException ex) {
 				Log.w(TAG, "Unable to show secure connection dialog", ex);

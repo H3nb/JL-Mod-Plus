@@ -16,10 +16,6 @@
 
 package io.github.h3nb.jlmodplus.settings
 
-import android.content.Context
-import android.widget.FrameLayout
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -34,19 +30,17 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -59,53 +53,46 @@ import io.github.h3nb.jlmodplus.ui.AppComposeTheme
 import javax.microedition.lcdui.Canvas
 import javax.microedition.lcdui.keyboard.KeyMapper
 
-class KeyMapperComposeView(
-    context: Context,
-    private val callback: Callback,
-) : FrameLayout(context) {
-    interface Callback {
-        fun onBack()
-        fun onResetMapping()
-        fun onKeyClick(canvasKey: Int)
-        fun onMappingDialogVisibilityChanged(visible: Boolean)
-    }
-
-    private var mappingVisible by mutableStateOf(false)
-    private var mappingMessage by mutableStateOf("")
-
-    init {
-        addView(
-            ComposeView(context).apply {
-                setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-                setContent {
-                    AppComposeTheme {
-                        KeyMapperContent(
-                            mappingVisible = mappingVisible,
-                            mappingMessage = mappingMessage,
-                            onBack = callback::onBack,
-                            onResetMapping = callback::onResetMapping,
-                            onKeyClick = callback::onKeyClick,
-                            onDismissMapping = ::hideMappingDialog,
-                        )
-                    }
-                }
-            },
-            LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT),
-        )
-    }
+internal class KeyMapperUiState {
+    internal var mappingVisible by mutableStateOf(false)
+    internal var mappingMessage by mutableStateOf("")
+    internal var menuWarningVisible by mutableStateOf(false)
 
     fun showMappingDialog(message: String) {
         mappingMessage = message
         mappingVisible = true
-        callback.onMappingDialogVisibilityChanged(true)
     }
 
     fun hideMappingDialog() {
         mappingVisible = false
-        callback.onMappingDialogVisibilityChanged(false)
     }
 
     fun isMappingDialogVisible(): Boolean = mappingVisible
+}
+
+@Composable
+internal fun KeyMapperScreen(
+    state: KeyMapperUiState,
+    onBack: () -> Unit,
+    onResetMapping: () -> Unit,
+    onKeyClick: (Int) -> Unit,
+    onDismissMapping: () -> Unit,
+    onDismissMenuWarning: () -> Unit,
+    onConfirmMenuWarning: () -> Unit,
+) {
+    AppComposeTheme {
+        KeyMapperContent(
+            mappingVisible = state.mappingVisible,
+            mappingMessage = state.mappingMessage,
+            menuWarningVisible = state.menuWarningVisible,
+            onBack = onBack,
+            onResetMapping = onResetMapping,
+            onKeyClick = onKeyClick,
+            onDismissMapping = onDismissMapping,
+            onDismissMenuWarning = onDismissMenuWarning,
+            onConfirmMenuWarning = onConfirmMenuWarning,
+        )
+    }
 }
 
 private data class MappingButton(val label: Int, val key: Int)
@@ -157,10 +144,13 @@ private val mappingRows = listOf(
 private fun KeyMapperContent(
     mappingVisible: Boolean,
     mappingMessage: String,
+    menuWarningVisible: Boolean,
     onBack: () -> Unit,
     onResetMapping: () -> Unit,
     onKeyClick: (Int) -> Unit,
     onDismissMapping: () -> Unit,
+    onDismissMenuWarning: () -> Unit,
+    onConfirmMenuWarning: () -> Unit,
 ) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -200,26 +190,33 @@ private fun KeyMapperContent(
             }
         }
         if (mappingVisible) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.56f))
-                    .clickable(onClick = onDismissMapping),
-                contentAlignment = Alignment.Center,
-            ) {
-                Surface(
-                    modifier = Modifier.clickable(enabled = true, onClick = {}),
-                    color = MaterialTheme.colorScheme.background,
-                ) {
-                    Column(modifier = Modifier.padding(10.dp)) {
-                        Text(
-                            text = stringResource(R.string.mapping_dialog_title),
-                            style = MaterialTheme.typography.titleLarge,
-                        )
-                        Text(text = mappingMessage, modifier = Modifier.padding(top = 8.dp))
+            AlertDialog(
+                onDismissRequest = onDismissMapping,
+                title = { Text(stringResource(R.string.mapping_dialog_title)) },
+                text = { Text(mappingMessage) },
+                confirmButton = {
+                    TextButton(onClick = onDismissMapping) {
+                        Text(stringResource(android.R.string.cancel))
                     }
-                }
-            }
+                },
+            )
+        }
+        if (menuWarningVisible) {
+            AlertDialog(
+                onDismissRequest = onDismissMenuWarning,
+                title = { Text(stringResource(R.string.warning)) },
+                text = { Text(stringResource(R.string.alert_map_menu)) },
+                dismissButton = {
+                    TextButton(onClick = onDismissMenuWarning) {
+                        Text(stringResource(R.string.CANCEL_CMD))
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = onConfirmMenuWarning) {
+                        Text(stringResource(R.string.save))
+                    }
+                },
+            )
         }
     }
 }
@@ -259,13 +256,16 @@ internal fun KeyMapperPreview() {
         KeyMapperContent(
             mappingVisible = false,
             mappingMessage = "",
+            menuWarningVisible = false,
             onBack = {},
             onResetMapping = {},
             onKeyClick = {},
             onDismissMapping = {},
-                )
-            }
-        }
+            onDismissMenuWarning = {},
+            onConfirmMenuWarning = {},
+        )
+    }
+}
 
 @Preview(
     name = "Key mapper dark",
@@ -280,10 +280,13 @@ internal fun KeyMapperDarkPreview() {
         KeyMapperContent(
             mappingVisible = false,
             mappingMessage = "",
+            menuWarningVisible = false,
             onBack = {},
             onResetMapping = {},
             onKeyClick = {},
             onDismissMapping = {},
+            onDismissMenuWarning = {},
+            onConfirmMenuWarning = {},
         )
     }
 }
@@ -298,10 +301,13 @@ internal fun KeyMapperDialogPreview() {
                 R.string.mapping_dialog_message,
                 stringResource(R.string.virtual_key_up),
             ),
+            menuWarningVisible = false,
             onBack = {},
             onResetMapping = {},
             onKeyClick = {},
             onDismissMapping = {},
+            onDismissMenuWarning = {},
+            onConfirmMenuWarning = {},
         )
     }
 }
@@ -322,10 +328,13 @@ internal fun KeyMapperDialogDarkPreview() {
                 R.string.mapping_dialog_message,
                 stringResource(R.string.virtual_key_up),
             ),
+            menuWarningVisible = false,
             onBack = {},
             onResetMapping = {},
             onKeyClick = {},
             onDismissMapping = {},
+            onDismissMenuWarning = {},
+            onConfirmMenuWarning = {},
         )
     }
 }

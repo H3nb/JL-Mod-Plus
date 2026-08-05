@@ -28,7 +28,6 @@ import static io.github.h3nb.jlmodplus.filepicker.FilePickerContract.MODE_FILE;
 import static io.github.h3nb.jlmodplus.filepicker.FilePickerContract.MODE_FILE_AND_DIR;
 import static io.github.h3nb.jlmodplus.filepicker.FilePickerContract.MODE_NEW_FILE;
 
-import android.app.AlertDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
@@ -36,23 +35,13 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
-import android.view.Gravity;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.File;
 import java.util.ArrayDeque;
@@ -64,7 +53,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import io.github.h3nb.jlmodplus.R;
-import io.github.h3nb.jlmodplus.ui.WindowInsetsPolicy;
 import io.github.h3nb.jlmodplus.util.StoragePermissionHelper;
 
 /** App-owned browser for the File-based picker contract used by JL-Mod Plus. */
@@ -92,17 +80,12 @@ public class FilteredFilePickerActivity extends AppCompatActivity {
 	private long lastBackPressed;
 	private Toast closeToast;
 
-	private Toolbar toolbar;
-	private RecyclerView recyclerView;
-	private TextView statusView;
-	private Button chooseButton;
-	private PickerAdapter adapter;
+	private final FilePickerUiState composeState = new FilePickerUiState();
 	private StoragePermissionHelper storagePermissionHelper;
 
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		WindowInsetsPolicy.enableEdgeToEdge(getWindow());
 
 		Intent intent = getIntent();
 		allowMultiple = intent.getBooleanExtra(EXTRA_ALLOW_MULTIPLE, false);
@@ -121,7 +104,54 @@ public class FilteredFilePickerActivity extends AppCompatActivity {
 		restoreState(savedInstanceState);
 
 		storagePermissionHelper = new StoragePermissionHelper(this, this::onPermissionResult);
-		buildContentView();
+		composeState.configure(allowMultiple, allowCreateDir);
+		FilePickerComposeHost.install(this, composeState, new FilePickerCallbacks() {
+			@Override
+			public void onNavigateUp() {
+				navigateUp();
+			}
+
+			@Override
+			public void onEntryClick(@NonNull File file) {
+				FilteredFilePickerActivity.this.onEntryClick(file);
+			}
+
+			@Override
+			public boolean onEntryLongClick(@NonNull File file) {
+				if (allowMultiple && FilePickerModel.isSelectable(file, mode, allowExistingFile)
+						&& !file.isDirectory()) {
+					toggleSelection(file, !selectedItems.containsKey(
+							FilePickerModel.canonicalFile(file).getPath()));
+					return true;
+				}
+				return false;
+			}
+
+			@Override
+			public void onToggleSelection(@NonNull File file, boolean checked) {
+				toggleSelection(file, checked);
+			}
+
+			@Override
+			public void onCancel() {
+				cancelPicker();
+			}
+
+			@Override
+			public void onChoose() {
+				chooseCurrentSelection();
+			}
+
+			@Override
+			public void onCreateDirectory() {
+				showCreateFolderDialog();
+			}
+
+			@Override
+			public void onCreateDirectoryConfirmed(@NonNull String name) {
+				createFolder(name);
+			}
+		});
 		getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
 			@Override
 			public void handleOnBackPressed() {
@@ -175,84 +205,9 @@ public class FilteredFilePickerActivity extends AppCompatActivity {
 		}
 	}
 
-	private void buildContentView() {
-		LinearLayout root = new LinearLayout(this);
-		root.setOrientation(LinearLayout.VERTICAL);
-
-		toolbar = new Toolbar(this);
-		toolbar.setTitleTextAppearance(this, androidx.appcompat.R.style.TextAppearance_AppCompat_Widget_ActionBar_Title);
-		root.addView(toolbar, new LinearLayout.LayoutParams(
-				ViewGroup.LayoutParams.MATCH_PARENT,
-				getResources().getDimensionPixelSize(R.dimen.file_picker_toolbar_height)));
-		setSupportActionBar(toolbar);
-		toolbar.setNavigationOnClickListener(view -> navigateUp());
-
-		FrameLayoutHolder content = new FrameLayoutHolder(this);
-		recyclerView = new RecyclerView(this);
-		recyclerView.setLayoutManager(new LinearLayoutManager(this));
-		recyclerView.setFocusable(true);
-		adapter = new PickerAdapter();
-		recyclerView.setAdapter(adapter);
-		content.addView(recyclerView, new android.widget.FrameLayout.LayoutParams(
-				ViewGroup.LayoutParams.MATCH_PARENT,
-				ViewGroup.LayoutParams.MATCH_PARENT));
-		root.addView(content, new LinearLayout.LayoutParams(
-				ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
-
-		statusView = new TextView(this);
-		statusView.setGravity(Gravity.CENTER_VERTICAL);
-		statusView.setPadding(16, 4, 16, 4);
-		root.addView(statusView, new LinearLayout.LayoutParams(
-				ViewGroup.LayoutParams.MATCH_PARENT,
-				ViewGroup.LayoutParams.WRAP_CONTENT));
-
-		LinearLayout actions = new LinearLayout(this);
-		actions.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
-		Button cancelButton = new Button(this);
-		cancelButton.setText(android.R.string.cancel);
-		cancelButton.setAllCaps(false);
-		cancelButton.setOnClickListener(view -> cancelPicker());
-		actions.addView(cancelButton, new LinearLayout.LayoutParams(
-				ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-		if (allowCreateDir) {
-			Button newFolderButton = new Button(this);
-			newFolderButton.setText(R.string.file_picker_new_folder);
-			newFolderButton.setAllCaps(false);
-			newFolderButton.setOnClickListener(view -> showCreateFolderDialog());
-			actions.addView(newFolderButton, new LinearLayout.LayoutParams(
-					ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-		}
-		chooseButton = new Button(this);
-		chooseButton.setText(R.string.choose);
-		chooseButton.setAllCaps(false);
-		chooseButton.setOnClickListener(view -> chooseCurrentSelection());
-		actions.addView(chooseButton, new LinearLayout.LayoutParams(
-				ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-		root.addView(actions, new LinearLayout.LayoutParams(
-				ViewGroup.LayoutParams.MATCH_PARENT,
-				ViewGroup.LayoutParams.WRAP_CONTENT));
-
-		setContentView(root);
-		WindowInsetsPolicy.installChromeInsetsPadding(root, toolbar, actions);
-		updateChrome();
-	}
-
 	private void updateChrome() {
-		if (toolbar == null) {
-			return;
-		}
-		toolbar.setTitle(currentPath == null ? "" : currentPath.getPath());
 		boolean canGoUp = currentPath != null && !FilePickerModel.isSamePath(currentPath, rootPath);
-		if (canGoUp) {
-			toolbar.setNavigationIcon(android.R.drawable.ic_menu_revert);
-		} else {
-			toolbar.setNavigationIcon((android.graphics.drawable.Drawable) null);
-		}
-		toolbar.setNavigationContentDescription(canGoUp
-				? R.string.file_picker_up : R.string.file_picker_cancel_navigation);
-		if (chooseButton != null) {
-			chooseButton.setEnabled(canChooseCurrentPath());
-		}
+		composeState.setChrome(currentPath, canGoUp, canChooseCurrentPath());
 	}
 
 	private boolean canChooseCurrentPath() {
@@ -276,7 +231,7 @@ public class FilteredFilePickerActivity extends AppCompatActivity {
 
 		final File path = currentPath;
 		final int generation = ++loadGeneration;
-		statusView.setText(R.string.file_picker_loading);
+		composeState.setLoading();
 		updateChrome();
 		loaderExecutor.execute(() -> {
 			LoadResult result = loadEntries(path);
@@ -285,14 +240,12 @@ public class FilteredFilePickerActivity extends AppCompatActivity {
 						|| !FilePickerModel.isSamePath(path, currentPath)) {
 					return;
 				}
-				adapter.submitList(result.entries);
-				if (result.inaccessible) {
-					statusView.setText(R.string.file_picker_unreadable);
-				} else if (result.entries.isEmpty()) {
-					statusView.setText(R.string.file_picker_empty);
-				} else {
-					statusView.setText("");
-				}
+				composeState.setEntries(result.entries,
+						result.inaccessible
+								? getString(R.string.file_picker_unreadable)
+								: result.entries.isEmpty()
+										? getString(R.string.file_picker_empty) : "");
+				composeState.setSelectedPaths(selectedItems.keySet());
 				updateChrome();
 			});
 		});
@@ -431,7 +384,7 @@ public class FilteredFilePickerActivity extends AppCompatActivity {
 		} else {
 			selectedItems.remove(key);
 		}
-		adapter.notifyDataSetChanged();
+		composeState.setSelectedPaths(selectedItems.keySet());
 		updateChrome();
 	}
 
@@ -483,49 +436,31 @@ public class FilteredFilePickerActivity extends AppCompatActivity {
 			requestPermission(currentPath, false, true);
 			return;
 		}
-		EditText input = new EditText(this);
-		input.setSingleLine(true);
-		input.setHint(R.string.file_picker_folder_name_hint);
-		int padding = getResources().getDimensionPixelSize(R.dimen.file_picker_dialog_padding);
-		input.setPadding(padding, padding, padding, padding);
-		AlertDialog dialog = new AlertDialog.Builder(this)
-				.setTitle(R.string.file_picker_create_folder_title)
-				.setView(input)
-				.setNegativeButton(android.R.string.cancel, null)
-				.setPositiveButton(R.string.file_picker_create, null)
-				.create();
-		dialog.setOnShowListener(ignored -> {
-			dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setAllCaps(false);
-			dialog.getButton(AlertDialog.BUTTON_POSITIVE).setAllCaps(false);
-			dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-				.setOnClickListener(view -> createFolder(input, dialog));
-		});
-		dialog.show();
+		composeState.showCreateFolderDialog();
 	}
 
-	private void createFolder(@NonNull EditText input, @NonNull AlertDialog dialog) {
-		String name = input.getText().toString();
+	private void createFolder(@NonNull String name) {
 		if (!FilePickerModel.isValidDirectoryName(name)) {
-			input.setError(getString(R.string.file_picker_invalid_folder_name));
+			composeState.setCreateFolderError(getString(R.string.file_picker_invalid_folder_name));
 			return;
 		}
 		File folder = new File(currentPath, name);
 		if (folder.exists()) {
-			input.setError(getString(R.string.file_picker_folder_exists));
+			composeState.setCreateFolderError(getString(R.string.file_picker_folder_exists));
 			return;
 		}
 		try {
 			if (!folder.mkdir()) {
-				input.setError(getString(folder.exists()
+				composeState.setCreateFolderError(getString(folder.exists()
 						? R.string.file_picker_folder_exists
 						: R.string.file_picker_create_folder_error));
 				return;
 			}
 		} catch (SecurityException exception) {
-			input.setError(getString(R.string.file_picker_create_folder_error));
+			composeState.setCreateFolderError(getString(R.string.file_picker_create_folder_error));
 			return;
 		}
-		dialog.dismiss();
+		composeState.hideCreateFolderDialog();
 		navigateTo(folder);
 	}
 
@@ -586,70 +521,6 @@ public class FilteredFilePickerActivity extends AppCompatActivity {
 		super.onDestroy();
 	}
 
-	private final class PickerAdapter extends RecyclerView.Adapter<PickerAdapter.RowHolder> {
-		private final List<File> entries = new ArrayList<>();
-
-		@NonNull
-		@Override
-		public RowHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-			return new RowHolder(FilePickerItemComposeFactory.createItemView(parent, allowMultiple));
-		}
-
-		@Override
-		public void onBindViewHolder(@NonNull RowHolder holder, int position) {
-			if (hasParentRow() && position == 0) {
-				holder.itemView.bind("..", true, false, false, true);
-				holder.itemView.setOnCheckedChangeListener(null);
-				holder.itemView.setOnClickListener(view -> navigateUp());
-				holder.itemView.setOnLongClickListener(null);
-				return;
-			}
-			File file = entries.get(toEntryIndex(position));
-			boolean selectable = FilePickerModel.isSelectable(file, mode, allowExistingFile);
-			boolean checked = selectedItems.containsKey(FilePickerModel.canonicalFile(file).getPath());
-			boolean enabled = file.isDirectory() || (selectable && file.canRead());
-			boolean checkable = allowMultiple && !file.isDirectory() && selectable;
-			holder.itemView.bind(file.getName(), file.isDirectory(), checkable, checked, enabled);
-			holder.itemView.setOnClickListener(view -> onEntryClick(file));
-			holder.itemView.setOnLongClickListener(view -> {
-				if (allowMultiple && selectable && !file.isDirectory()) {
-					toggleSelection(file, !selectedItems.containsKey(FilePickerModel.canonicalFile(file).getPath()));
-					return true;
-				}
-				return false;
-			});
-			holder.itemView.setOnCheckedChangeListener((view, value) -> toggleSelection(file, value));
-		}
-
-		@Override
-		public int getItemCount() {
-			return entries.size() + (hasParentRow() ? 1 : 0);
-		}
-
-		void submitList(@NonNull List<File> newEntries) {
-			entries.clear();
-			entries.addAll(newEntries);
-			notifyDataSetChanged();
-		}
-
-		private boolean hasParentRow() {
-			return currentPath != null && !FilePickerModel.isSamePath(currentPath, rootPath);
-		}
-
-		private int toEntryIndex(int adapterPosition) {
-			return adapterPosition - (hasParentRow() ? 1 : 0);
-		}
-
-		final class RowHolder extends RecyclerView.ViewHolder {
-			final FilePickerItemView itemView;
-
-			RowHolder(FilePickerItemView itemView) {
-				super(itemView);
-				this.itemView = itemView;
-			}
-		}
-	}
-
 	private static final class LoadResult {
 		final List<File> entries;
 		final boolean inaccessible;
@@ -657,13 +528,6 @@ public class FilteredFilePickerActivity extends AppCompatActivity {
 		LoadResult(@NonNull List<File> entries, boolean inaccessible) {
 			this.entries = entries;
 			this.inaccessible = inaccessible;
-		}
-	}
-
-	/** Small named subclass keeps the activity layout readable without XML. */
-	private static final class FrameLayoutHolder extends android.widget.FrameLayout {
-		FrameLayoutHolder(@NonNull android.content.Context context) {
-			super(context);
 		}
 	}
 }

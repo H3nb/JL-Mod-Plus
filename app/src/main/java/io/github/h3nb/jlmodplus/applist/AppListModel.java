@@ -51,19 +51,19 @@ public class AppListModel extends ViewModel implements SharedPreferences.OnShare
 		appRepository.setDatabaseFile(emulatorDir + Config.APPS_DB_NAME);
 	}
 
-	LiveData<List<AppItem>> getAppList() {
+	public LiveData<List<AppItem>> getAppList() {
 		return appRepository.getAppList();
 	}
 
-	void updateApp(AppItem item) {
+	public void updateApp(AppItem item) {
 		appRepository.update(item);
 	}
 
-	void deleteApp(AppItem item) {
+	public void deleteApp(AppItem item) {
 		appRepository.delete(item);
 	}
 
-	void setAppListFilter(String filter) {
+	public void setAppListFilter(String filter) {
 		appRepository.setFilter(filter);
 	}
 

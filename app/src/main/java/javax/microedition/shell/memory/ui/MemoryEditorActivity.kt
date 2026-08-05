@@ -16,15 +16,15 @@
 
 package javax.microedition.shell.memory.ui
 
-import android.app.Dialog
 import android.graphics.Color
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.view.Window
-import android.view.WindowManager
-import androidx.activity.ComponentDialog
+import androidx.activity.compose.setContent
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.edit
+import androidx.core.graphics.drawable.toDrawable
+import androidx.core.view.SoftwareKeyboardControllerCompat
+import androidx.core.view.WindowCompat
+import androidx.preference.PreferenceManager
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -33,69 +33,23 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.unit.dp
-import androidx.fragment.app.DialogFragment
-import androidx.core.graphics.Insets
-import androidx.core.graphics.drawable.toDrawable
-import androidx.fragment.app.FragmentManager
-import androidx.core.content.edit
-import androidx.fragment.app.viewModels
-import androidx.core.view.SoftwareKeyboardControllerCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.preference.PreferenceManager
+import androidx.lifecycle.ViewModelProvider
 import javax.microedition.shell.MidletThread
 
-class MemoryEditorDialogFragment : DialogFragment() {
-    private val viewModel by viewModels<MemoryEditorViewModel>()
+class MemoryEditorActivity : AppCompatActivity() {
+    private lateinit var viewModel: MemoryEditorViewModel
     private var pausedByEditor = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        viewModel = ViewModelProvider(this)[MemoryEditorViewModel::class.java]
+        val preferences = PreferenceManager.getDefaultSharedPreferences(this)
         viewModel.setPauseEnabled(preferences.getBoolean(PREF_PAUSE, false))
         viewModel.setLayoutTransparency(
-            preferences.getInt(
-                PREF_LAYOUT_TRANSPARENCY,
-                DEFAULT_LAYOUT_TRANSPARENCY,
-            ).toFloat() / 100f,
+            preferences.getInt(PREF_LAYOUT_TRANSPARENCY, DEFAULT_LAYOUT_TRANSPARENCY).toFloat() / 100f,
         )
-    }
-
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
-        ComponentDialog(requireContext()).apply {
-            requestWindowFeature(Window.FEATURE_NO_TITLE)
-        }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View = ComposeView(requireContext()).apply {
-        id = View.generateViewId()
-        setBackgroundColor(Color.TRANSPARENT)
-        setViewCompositionStrategy(
-            ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed,
-        )
-        ViewCompat.setOnApplyWindowInsetsListener(this) { view, insets ->
-            val ownedInsetTypes = WindowInsetsCompat.Type.systemBars() or
-                WindowInsetsCompat.Type.displayCutout() or
-                WindowInsetsCompat.Type.captionBar() or
-                WindowInsetsCompat.Type.systemGestures() or
-                WindowInsetsCompat.Type.mandatorySystemGestures() or
-                WindowInsetsCompat.Type.tappableElement()
-            val systemInsets = insets.getInsets(
-                ownedInsetTypes,
-            )
-            view.setPadding(systemInsets.left, systemInsets.top, systemInsets.right, systemInsets.bottom)
-            WindowInsetsCompat.Builder(insets)
-                .setInsets(ownedInsetTypes, Insets.of(0, 0, 0, 0))
-                .build()
-        }
-        ViewCompat.requestApplyInsets(this)
+        WindowCompat.enableEdgeToEdge(window)
         setContent {
             val state by viewModel.state.collectAsState()
             val actions = remember(viewModel) {
@@ -105,16 +59,8 @@ class MemoryEditorDialogFragment : DialogFragment() {
                     setRefineMode = viewModel::setRefineMode,
                     setFirstValue = viewModel::setFirstValue,
                     setSecondValue = viewModel::setSecondValue,
-                    startSearch = {
-                        viewModel.startSearch {
-                            dismissAllowingStateLoss()
-                        }
-                    },
-                    continueCollection = {
-                        viewModel.continueCollection {
-                            dismissAllowingStateLoss()
-                        }
-                    },
+                    startSearch = { viewModel.startSearch { finish() } },
+                    continueCollection = { viewModel.continueCollection { finish() } },
                     refine = viewModel::refine,
                     toggleSelection = viewModel::toggleSelection,
                     clearSelection = viewModel::clearSelection,
@@ -136,15 +82,13 @@ class MemoryEditorDialogFragment : DialogFragment() {
             }
             MemoryEditorTheme {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(12.dp),
+                    modifier = Modifier.fillMaxSize().padding(12.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     MemoryEditorScreen(
                         state = state,
                         actions = actions,
-                        onClose = { dismissAllowingStateLoss() },
+                        onClose = ::finish,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -156,19 +100,11 @@ class MemoryEditorDialogFragment : DialogFragment() {
         super.onStart()
         applyPause(viewModel.state.value.pauseEnabled)
         viewModel.loadExistingSession()
-        dialog?.window?.apply {
-            WindowCompat.enableEdgeToEdge(this)
-            setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
-            decorView.setBackgroundColor(Color.TRANSPARENT)
-            setDimAmount(dimAmount(viewModel.state.value.layoutTransparency))
-            addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-            setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
-            setLayout(
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.MATCH_PARENT,
-            )
-        }
-        view?.let { ViewCompat.requestApplyInsets(it) }
+        window.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
+        window.decorView.setBackgroundColor(Color.TRANSPARENT)
+        window.setDimAmount(dimAmount(viewModel.state.value.layoutTransparency))
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+        window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
     }
 
     override fun onStop() {
@@ -181,8 +117,7 @@ class MemoryEditorDialogFragment : DialogFragment() {
     }
 
     private fun setPauseEnabled(enabled: Boolean) {
-        PreferenceManager.getDefaultSharedPreferences(requireContext())
-            .edit { putBoolean(PREF_PAUSE, enabled) }
+        PreferenceManager.getDefaultSharedPreferences(this).edit { putBoolean(PREF_PAUSE, enabled) }
         viewModel.setPauseEnabled(enabled)
         applyPause(enabled)
     }
@@ -200,18 +135,17 @@ class MemoryEditorDialogFragment : DialogFragment() {
 
     private fun setLayoutTransparency(transparency: Float) {
         val percent = (transparency.coerceIn(0f, MAX_LAYOUT_TRANSPARENCY) * 100).toInt()
-        PreferenceManager.getDefaultSharedPreferences(requireContext())
-            .edit { putInt(PREF_LAYOUT_TRANSPARENCY, percent) }
+        PreferenceManager.getDefaultSharedPreferences(this).edit {
+            putInt(PREF_LAYOUT_TRANSPARENCY, percent)
+        }
         viewModel.setLayoutTransparency(percent.toFloat() / 100f)
-        dialog?.window?.setDimAmount(dimAmount(percent.toFloat() / 100f))
+        window.setDimAmount(dimAmount(percent.toFloat() / 100f))
     }
 
     private fun setPeeking(enabled: Boolean) {
-        dialog?.window?.setDimAmount(
-            if (enabled) 0f else dimAmount(viewModel.state.value.layoutTransparency),
-        )
+        window.setDimAmount(if (enabled) 0f else dimAmount(viewModel.state.value.layoutTransparency))
         if (enabled) {
-            dialog?.window?.decorView?.let { SoftwareKeyboardControllerCompat(it).hide() }
+            SoftwareKeyboardControllerCompat(window.decorView).hide()
         }
     }
 
@@ -219,18 +153,10 @@ class MemoryEditorDialogFragment : DialogFragment() {
         DEFAULT_DIM_AMOUNT * (1f - layoutTransparency.coerceIn(0f, MAX_LAYOUT_TRANSPARENCY))
 
     companion object {
-        private const val TAG = "memory-editor"
         private const val PREF_PAUSE = "memory_editor_pause"
         private const val PREF_LAYOUT_TRANSPARENCY = "memory_editor_layout_transparency"
         private const val DEFAULT_LAYOUT_TRANSPARENCY = 0
         private const val MAX_LAYOUT_TRANSPARENCY = 0.8f
         private const val DEFAULT_DIM_AMOUNT = 0.55f
-
-        @JvmStatic
-        fun show(fragmentManager: FragmentManager) {
-            if (fragmentManager.findFragmentByTag(TAG) == null) {
-                MemoryEditorDialogFragment().show(fragmentManager, TAG)
-            }
-        }
     }
 }
