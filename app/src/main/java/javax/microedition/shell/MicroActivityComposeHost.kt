@@ -16,57 +16,47 @@
 
 package javax.microedition.shell
 
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
+import android.view.View
+import android.widget.FrameLayout
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import io.github.h3nb.jlmodplus.ui.AppComposeTheme
 
-/** Compose root for the emulator chrome plus the allowed Android render boundary. */
+/**
+ * Host Compose renderer for emulator dialogs. The emulator surface itself stays
+ * a native Android view hierarchy; Compose is used only for the dialog overlay.
+ */
 object MicroActivityComposeHost {
     @JvmStatic
-    fun install(
-        activity: ComponentActivity,
+    fun installDialogs(
         host: MicroActivityHost,
         dialogState: MicroActivityDialogState,
     ) {
-        activity.setContent {
-            AppComposeTheme {
-                MicroActivityContent(host, dialogState)
+        val composeView = ComposeView(host.context).apply {
+            id = android.view.View.generateViewId()
+            setViewCompositionStrategy(
+                ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed,
+            )
+            setContent {
+                AppComposeTheme {
+                    SideEffect {
+                        visibility = if (dialogState.isDialogVisible) {
+                            View.VISIBLE
+                        } else {
+                            View.GONE
+                        }
+                    }
+                    dialogState.Render()
+                }
             }
         }
-    }
-}
-
-@Composable
-private fun MicroActivityContent(
-    host: MicroActivityHost,
-    dialogState: MicroActivityDialogState,
-) {
-    val density = LocalDensity.current
-    val toolbarHeight = with(density) {
-        host.toolbar.getToolbarHeight().coerceAtLeast(1).toDp()
-    }
-    Column(modifier = Modifier.fillMaxSize()) {
-        host.toolbar.Render(
-            modifier = if (host.toolbar.getToolbarHeight() > 0) {
-                Modifier.fillMaxWidth().height(toolbarHeight)
-            } else {
-                Modifier.size(1.dp)
-            },
+        host.addView(
+            composeView,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT,
+            ),
         )
-        AndroidView(
-            factory = { host },
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-        )
-        dialogState.Render()
     }
 }

@@ -16,35 +16,49 @@
 
 package javax.microedition.shell
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.widget.FrameLayout
+import android.widget.LinearLayout
 import androidx.core.graphics.Insets
 import io.github.h3nb.jlmodplus.R
 import javax.microedition.lcdui.overlay.OverlayView
 
+@SuppressLint("ViewConstructor")
 class MicroActivityHost(
     context: Context,
     actionCallback: MicroActivityToolbarView.ActionCallback,
 ) : FrameLayout(context) {
     @JvmField
-    val toolbar: MicroActivityToolbarView = MicroActivityToolbarView(actionCallback)
+    val toolbar: MicroActivityToolbarView = MicroActivityToolbarView(context, actionCallback)
     @JvmField
     val displayableContainer: FrameLayout = FrameLayout(context)
     @JvmField
     val overlay: OverlayView = OverlayView(context, null)
+    @JvmField
+    val virtualDisplay: LinearLayout = LinearLayout(context).apply {
+        orientation = LinearLayout.VERTICAL
+    }
 
     init {
         overlay.id = R.id.overlay
-        displayableContainer.layoutParams = LayoutParams(
-            LayoutParams.MATCH_PARENT,
-            LayoutParams.MATCH_PARENT,
+        toolbar.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
         )
-        addView(displayableContainer, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+        virtualDisplay.addView(toolbar)
+        displayableContainer.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            0,
+            1f,
+        )
+        virtualDisplay.addView(displayableContainer)
+        addView(virtualDisplay, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
         addView(overlay, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
     }
 
-    /** Applies safe insets only to the non-overlay host surface. */
+    /** Applies safe insets to the native emulator surface and its toolbar. */
     fun setContentInsets(insets: Insets) {
-        displayableContainer.setPadding(insets.left, insets.top, insets.right, insets.bottom)
+        virtualDisplay.setPadding(insets.left, insets.top, insets.right, insets.bottom)
     }
 }

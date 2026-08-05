@@ -41,6 +41,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
@@ -151,7 +152,8 @@ public class MicroActivity extends AppCompatActivity {
 			applyWindowGeometry();
 			return insets;
 		});
-		MicroActivityComposeHost.install(this, binding, dialogState);
+		setContentView(binding);
+		MicroActivityComposeHost.installDialogs(binding, dialogState);
 		ViewCompat.requestApplyInsets(binding);
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
@@ -559,10 +561,16 @@ public class MicroActivity extends AppCompatActivity {
 				statusBarInsetRequired ? windowInsets.left : canvasCutoutInsets.left,
 				statusBarInsetRequired ? windowInsets.top : canvasCutoutInsets.top,
 				statusBarInsetRequired ? windowInsets.right : canvasCutoutInsets.right,
-				!canvas ? windowInsets.bottom : canvasCutoutInsets.bottom
+!canvas ? windowInsets.bottom : canvasCutoutInsets.bottom
 		);
 		binding.setContentInsets(contentInsets);
-		binding.overlay.setLocation(contentInsets.left, contentInsets.top);
+		int toolbarHeight = binding.toolbar.getLayoutParams() instanceof LinearLayout.LayoutParams
+				? ((LinearLayout.LayoutParams) binding.toolbar.getLayoutParams()).height
+				: 0;
+		binding.overlay.setLocation(
+				contentInsets.left,
+				contentInsets.top + Math.max(toolbarHeight, 0)
+		);
 	}
 
 	public void setCurrent(Displayable displayable) {

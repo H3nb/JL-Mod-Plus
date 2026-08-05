@@ -16,6 +16,12 @@
 
 package javax.microedition.shell
 
+import android.annotation.SuppressLint
+import android.content.Context
+import android.widget.FrameLayout
+import android.widget.LinearLayout
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -51,9 +57,11 @@ import io.github.h3nb.jlmodplus.ui.AppComposeTheme
 import kotlin.math.min
 
 /** Compose-backed toolbar and overflow menu for the emulator Activity. */
+@SuppressLint("ViewConstructor")
 class MicroActivityToolbarView(
+    context: Context,
     private val actionCallback: ActionCallback,
-) {
+) : FrameLayout(context) {
     fun interface ActionCallback {
         fun onAction(actionId: Int)
     }
@@ -63,30 +71,36 @@ class MicroActivityToolbarView(
     private var virtualKeyboardMenuExpanded by mutableStateOf(false)
     private var orientationLocked by mutableStateOf(false)
 
-    private var toolbarHeightPx by mutableStateOf(0)
-
-    fun setToolbarHeight(heightPx: Int) {
-        toolbarHeightPx = heightPx.coerceAtLeast(0)
+    private val composeView: ComposeView = ComposeView(context).apply {
+        setViewCompositionStrategy(
+            ViewCompositionStrategy.DisposeOnDetachedFromWindowOrReleasedFromPool,
+        )
+        setContent {
+            AppComposeTheme {
+                MicroActivityToolbarContent(
+                    state = toolbarState,
+                    menuExpanded = menuExpanded,
+                    virtualKeyboardMenuExpanded = virtualKeyboardMenuExpanded,
+                    orientationLocked = orientationLocked,
+                    onMenuExpandedChanged = { menuExpanded = it },
+                    onVirtualKeyboardMenuExpandedChanged = {
+                        virtualKeyboardMenuExpanded = it
+                    },
+                    onAction = ::dispatchAction,
+                )
+            }
+        }
     }
 
-    fun getToolbarHeight(): Int = toolbarHeightPx
+    init {
+        addView(
+            composeView,
+            LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT),
+        )
+    }
 
-    @Composable
-    fun Render(modifier: Modifier = Modifier) {
-        AppComposeTheme {
-            MicroActivityToolbarContent(
-                modifier = modifier,
-                state = toolbarState,
-                menuExpanded = menuExpanded,
-                virtualKeyboardMenuExpanded = virtualKeyboardMenuExpanded,
-                orientationLocked = orientationLocked,
-                onMenuExpandedChanged = { menuExpanded = it },
-                onVirtualKeyboardMenuExpandedChanged = {
-                    virtualKeyboardMenuExpanded = it
-                },
-                onAction = ::dispatchAction,
-            )
-        }
+    fun setToolbarHeight(heightPx: Int) {
+        (layoutParams as? LinearLayout.LayoutParams)?.height = heightPx.coerceAtLeast(0)
     }
 
     fun setToolbarState(
@@ -153,7 +167,6 @@ private data class MicroToolbarState(
 
 @Composable
 private fun MicroActivityToolbarContent(
-    modifier: Modifier = Modifier,
     state: MicroToolbarState,
     menuExpanded: Boolean,
     virtualKeyboardMenuExpanded: Boolean,
@@ -163,7 +176,7 @@ private fun MicroActivityToolbarContent(
     onAction: (Int) -> Unit,
 ) {
     val moreDescription = stringResource(R.string.more)
-    Box(modifier = modifier) {
+    Box(modifier = Modifier.fillMaxSize()) {
         if (state.visible) {
             Surface(
                 modifier = Modifier.fillMaxSize(),

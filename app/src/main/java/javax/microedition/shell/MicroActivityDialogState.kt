@@ -135,6 +135,9 @@ class MicroActivityDialogState {
 
     private var dialogState by mutableStateOf<DialogState?>(null)
 
+    val isDialogVisible: Boolean
+        get() = dialogState != null
+
     @Suppress("UNUSED_PARAMETER")
     @JvmOverloads
     fun showMessage(
