@@ -37,8 +37,10 @@ import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -546,6 +548,55 @@ public class MicroActivity extends AppCompatActivity {
 
 	public Displayable getCurrent() {
 		return current;
+	}
+
+	/**
+	 * Updates the host overlay used by JSR-135 USE_DIRECT_VIDEO. The request is
+	 * posted so the active Canvas view is already the bottom sibling when the
+	 * camera preview is inserted above it.
+	 */
+	public void updateDirectVideoView(Canvas owner, View view, int left, int top,
+			int width, int height, boolean visible) {
+		if (binding == null || owner == null || view == null) {
+			return;
+		}
+		binding.displayableContainer.post(() -> {
+			FrameLayout container = binding.displayableContainer;
+			if (current != owner) {
+				if (view.getParent() == container) {
+					container.removeView(view);
+				}
+				return;
+			}
+			if (view.getParent() != container) {
+				if (view.getParent() instanceof ViewGroup) {
+					((ViewGroup) view.getParent()).removeView(view);
+				}
+				container.addView(view);
+			}
+			FrameLayout.LayoutParams params = view.getLayoutParams() instanceof FrameLayout.LayoutParams
+					? (FrameLayout.LayoutParams) view.getLayoutParams()
+					: new FrameLayout.LayoutParams(width, height);
+			params.width = width;
+			params.height = height;
+			params.leftMargin = left;
+			params.topMargin = top;
+			view.setLayoutParams(params);
+			view.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+			view.bringToFront();
+		});
+	}
+
+	/** Removes a JSR-135 direct-video view from the displayable host. */
+	public void removeDirectVideoView(View view) {
+		if (binding == null || view == null) {
+			return;
+		}
+		binding.displayableContainer.post(() -> {
+			if (view.getParent() == binding.displayableContainer) {
+				binding.displayableContainer.removeView(view);
+			}
+		});
 	}
 
 	public boolean isVisible() {

@@ -9,6 +9,8 @@ import androidx.annotation.Keep;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.microedition.media.camera.VirtualCameraCapabilities;
+
 /** {@link java.lang.System} Delegate for Midlet */
 @Keep
 public final class MidletSystem {
@@ -23,6 +25,7 @@ public final class MidletSystem {
 
     public static String getProperty(String key) {
         String value = PROPERTY.get(key);
+        if (TextUtils.isEmpty(value)) value = VirtualCameraCapabilities.systemProperty(key);
         if (TextUtils.isEmpty(value)) value = System.getProperty(key);
         Log.d(TAG, "System.getProperty: " + key + "=" + value);
         return value;
@@ -30,6 +33,7 @@ public final class MidletSystem {
 
     public static String getProperty(String key, String def) {
         String value = PROPERTY.get(key);
+        if (TextUtils.isEmpty(value)) value = VirtualCameraCapabilities.systemProperty(key);
         if (TextUtils.isEmpty(value)) value = System.getProperty(key, def);
         Log.d(TAG, "System.getProperty: " + key + "=" + value);
         return value;

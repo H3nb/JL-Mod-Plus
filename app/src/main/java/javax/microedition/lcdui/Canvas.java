@@ -153,6 +153,12 @@ public abstract class Canvas extends Displayable {
 	private Handler uiHandler;
 	private Overlay overlay;
 	private FpsCounter fpsCounter;
+	private View directVideoView;
+	private int directVideoX;
+	private int directVideoY;
+	private int directVideoWidth;
+	private int directVideoHeight;
+	private boolean directVideoVisible = true;
 	private boolean skipLeftSoft;
 	private boolean skipRightSoft;
 
@@ -469,6 +475,7 @@ public abstract class Canvas extends Displayable {
 		if (skinLayer != null && !skinLayer.hasDisplayFrame()) {
 			skinLayer.resize(virtualScreen, 0, 0, displayWidth, displayHeight);
 		}
+		updateDirectVideoView();
 
 		if (settings.graphicsMode == 1) {
 			float gl = 2.0f * virtualScreen.left / displayWidth - 1.0f;
@@ -529,8 +536,71 @@ public abstract class Canvas extends Displayable {
 			innerView.setFocusableInTouchMode(true);
 			layout.addView(innerView);
 			innerView.requestFocus();
+			updateDirectVideoView();
 		}
 		return layout;
+	}
+
+	/** Internal host bridge for JSR-135 USE_DIRECT_VIDEO. */
+	public void attachDirectVideoView(Object view) {
+		if (!(view instanceof View)) {
+			throw new IllegalArgumentException("direct video requires an Android View");
+		}
+		View nativeView = (View) view;
+		if (directVideoView != null && directVideoView != nativeView) {
+			MicroActivity activity = ContextHolder.getActivity();
+			if (activity != null) {
+				activity.removeDirectVideoView(directVideoView);
+			}
+		}
+		directVideoView = nativeView;
+		updateDirectVideoView();
+	}
+
+	/** Internal host bridge for JSR-135 display geometry. */
+	public void setDirectVideoViewBounds(int x, int y, int width, int height) {
+		if (width <= 0 || height <= 0) {
+			throw new IllegalArgumentException("direct video dimensions must be positive");
+		}
+		directVideoX = x;
+		directVideoY = y;
+		directVideoWidth = width;
+		directVideoHeight = height;
+		updateDirectVideoView();
+	}
+
+	/** Internal host bridge for JSR-135 visibility. */
+	public void setDirectVideoViewVisible(boolean visible) {
+		directVideoVisible = visible;
+		updateDirectVideoView();
+	}
+
+	/** Internal host bridge for JSR-135 control disposal. */
+	public void detachDirectVideoView(Object view) {
+		if (!(view instanceof View) || directVideoView != view) {
+			return;
+		}
+		MicroActivity activity = ContextHolder.getActivity();
+		if (activity != null) {
+			activity.removeDirectVideoView((View) view);
+		}
+		directVideoView = null;
+	}
+
+	private void updateDirectVideoView() {
+		View view = directVideoView;
+		MicroActivity activity = ContextHolder.getActivity();
+		if (view == null || activity == null || directVideoWidth <= 0 || directVideoHeight <= 0) {
+			return;
+		}
+		int left = onX + Math.round(directVideoX * (float) onWidth / Math.max(width, 1));
+		int top = onY + Math.round(directVideoY * (float) onHeight / Math.max(height, 1));
+		int right = onX + Math.round((directVideoX + directVideoWidth)
+				* (float) onWidth / Math.max(width, 1));
+		int bottom = onY + Math.round((directVideoY + directVideoHeight)
+				* (float) onHeight / Math.max(height, 1));
+		activity.updateDirectVideoView(this, view, Math.max(0, left), Math.max(0, top),
+				Math.max(1, right - left), Math.max(1, bottom - top), directVideoVisible);
 	}
 
 	/**
@@ -546,6 +616,12 @@ public abstract class Canvas extends Displayable {
 
 	@Override
 	public void clearDisplayableView() {
+		if (directVideoView != null) {
+			MicroActivity activity = ContextHolder.getActivity();
+			if (activity != null) {
+				activity.removeDirectVideoView(directVideoView);
+			}
+		}
 		super.clearDisplayableView();
 		layout = null;
 		innerView = null;

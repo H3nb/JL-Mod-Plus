@@ -35,6 +35,8 @@ import javax.microedition.media.protocol.DataSource;
 import javax.microedition.media.protocol.SourceStream;
 import javax.microedition.media.tone.ToneManager;
 import javax.microedition.util.ContextHolder;
+import javax.microedition.media.camera.CaptureLocatorParser;
+import javax.microedition.media.camera.CaptureRequest;
 
 import ru.woesss.j2me.mmapi.Plugin;
 import ru.woesss.j2me.mmapi.audio.AudioFailure;
@@ -47,7 +49,7 @@ public class Manager {
 
 	private static final String RESOURCE_LOCATOR = "resource://";
 	private static final String FILE_LOCATOR = "file://";
-	private static final String CAPTURE_AUDIO_LOCATOR = "capture://audio";
+	private static final String CAPTURE_LOCATOR_PREFIX = "capture://";
 	private static final TimeBase DEFAULT_TIMEBASE = () -> System.nanoTime() / 1000L;
 	private static final List<Plugin> PLUGINS = new ArrayList<>();
 	private static volatile TimeBase systemTimeBase = DEFAULT_TIMEBASE;
@@ -69,9 +71,19 @@ public class Manager {
 			String extension = locator.substring(locator.lastIndexOf('.') + 1);
 			String type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
 			return createPlayer(stream, type);
-		} else if (locator.startsWith(CAPTURE_AUDIO_LOCATOR) &&
-				ContextHolder.requestPermission(Manifest.permission.RECORD_AUDIO)) {
-			return new RecordPlayer();
+		} else if (locator.startsWith(CAPTURE_LOCATOR_PREFIX)) {
+			String device = CaptureLocatorParser.deviceOf(locator);
+			if ("video".equals(device)) {
+				return new CameraPlayer(locator);
+			} else if ("audio".equals(device)) {
+				if (!ContextHolder.requestPermission(Manifest.permission.RECORD_AUDIO)) {
+					throw new SecurityException("Microphone permission was denied");
+				}
+				return new RecordPlayer();
+			} else if ("audio_video".equals(device)) {
+				return new CameraPlayer(locator);
+			}
+			throw new MediaException("Unsupported capture device: " + device);
 		} else {
 			return new BasePlayer();
 		}
@@ -148,13 +160,22 @@ public class Manager {
 	}
 
 	public static String[] getSupportedContentTypes(String str) {
-		return new String[]{"audio/wav", "audio/x-wav", "audio/midi", "audio/x-midi",
+		String[] audioTypes = new String[]{"audio/wav", "audio/x-wav", "audio/midi", "audio/x-midi",
 				"audio/mpeg", "audio/aac", "audio/amr", "audio/amr-wb", "audio/mp3",
 				"audio/mp4", "audio/mmf", "audio/x-tone-seq"};
+		if ("capture".equals(str)) {
+			return new String[]{CaptureRequest.CONTENT_TYPE};
+		}
+		if (str == null) {
+			String[] all = Arrays.copyOf(audioTypes, audioTypes.length + 1);
+			all[audioTypes.length] = CaptureRequest.CONTENT_TYPE;
+			return all;
+		}
+		return audioTypes;
 	}
 
 	public static String[] getSupportedProtocols(String str) {
-		return new String[]{"device", "file", "http", "resource"};
+		return new String[]{"device", "file", "http", "resource", "capture"};
 	}
 
 	public static TimeBase getSystemTimeBase() {
