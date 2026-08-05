@@ -90,6 +90,7 @@ public class InstallerActivity extends AppCompatActivity {
 			return;
 		}
 		appListModel = new ViewModelProvider(this).get(AppListModel.class);
+		appListModel.setEmulatorDirectory(Config.getEmulatorDir());
 		composeState = new InstallerUiState(this);
 		InstallerComposeHost.install(this, composeState);
 	}

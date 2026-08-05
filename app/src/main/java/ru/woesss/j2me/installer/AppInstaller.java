@@ -116,6 +116,9 @@ public class AppInstaller {
 	void loadInfo(StatusCallback callback) throws IOException, ConverterException {
 		if (id != -1) {
 			currentApp = appListModel.getApp(id);
+			if (currentApp == null) {
+				throw new ConverterException("Installed MIDlet not found: id=" + id);
+			}
 			srcJar = new File(currentApp.getPathExt(), Config.MIDLET_RES_FILE);
 			File existingJad = new File(currentApp.getPathExt(), Config.MIDLET_RES_JAD_FILE);
 			srcJad = existingJad.isFile() ? existingJad : null;
