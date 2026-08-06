@@ -157,14 +157,24 @@ private fun J2meListContent(
     val focusRequesters = remember(itemKeys) {
         itemKeys.associateWith { FocusRequester() }
     }
-    LaunchedEffect(selectionRequest.target, selectionRequest.generation, items.size) {
+    var consumedSelectionGeneration by remember { mutableStateOf(0L) }
+    LaunchedEffect(selectionRequest.generation) {
+        if (selectionRequest.generation <= consumedSelectionGeneration) {
+            return@LaunchedEffect
+        }
+        consumedSelectionGeneration = selectionRequest.generation
         val target = selectionRequest.target ?: return@LaunchedEffect
         val index = items.indexOfFirst { it.id == target }
-        if (index >= 0) {
-            listState.scrollToItem(index)
-            snapshotFlow {
-                listState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }
-            }.first { it != null }
+        if (index < 0) {
+            return@LaunchedEffect
+        }
+        listState.scrollToItem(index)
+        snapshotFlow {
+            listState.layoutInfo.visibleItemsInfo.any { it.key == target }
+        }.first { visible ->
+            visible || items.none { it.id == target }
+        }
+        if (items.any { it.id == target }) {
             focusRequesters[target]?.requestFocus()
         }
     }
