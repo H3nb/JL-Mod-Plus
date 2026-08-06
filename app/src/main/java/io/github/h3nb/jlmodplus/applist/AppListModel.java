@@ -48,7 +48,11 @@ public class AppListModel extends ViewModel implements SharedPreferences.OnShare
 	}
 
 	public void setEmulatorDirectory(String emulatorDir) {
-		appRepository.setDatabaseFile(emulatorDir + Config.APPS_DB_NAME);
+		setEmulatorDirectory(emulatorDir, true);
+	}
+
+	public void setEmulatorDirectory(String emulatorDir, boolean refreshApplications) {
+		appRepository.setDatabaseFile(emulatorDir + Config.APPS_DB_NAME, refreshApplications);
 	}
 
 	public LiveData<List<AppItem>> getAppList() {

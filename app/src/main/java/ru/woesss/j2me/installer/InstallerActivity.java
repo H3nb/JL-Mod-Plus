@@ -90,7 +90,10 @@ public class InstallerActivity extends AppCompatActivity {
 			return;
 		}
 		appListModel = new ViewModelProvider(this).get(AppListModel.class);
-		appListModel.setEmulatorDirectory(Config.getEmulatorDir());
+		// Open the database without the initial filesystem scan: the installer
+		// snapshots the current row and converts/commits inside its own single
+		// executor, so a concurrent scan could drop or rewrite rows mid-flight.
+		appListModel.setEmulatorDirectory(Config.getEmulatorDir(), false);
 		composeState = new InstallerUiState(this);
 		InstallerComposeHost.install(this, composeState);
 	}

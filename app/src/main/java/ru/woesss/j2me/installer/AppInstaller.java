@@ -115,7 +115,7 @@ public class AppInstaller {
 	/** Load and check app info from source */
 	void loadInfo(StatusCallback callback) throws IOException, ConverterException {
 		if (id != -1) {
-			currentApp = appListModel.getApp(id);
+			currentApp = snapshotAppItem(appListModel.getApp(id));
 			if (currentApp == null) {
 				throw new ConverterException("Installed MIDlet not found: id=" + id);
 			}
@@ -392,7 +392,7 @@ public class AppInstaller {
 		// Remove invalid characters from app path
 		String name = newDesc.getName();
 		String vendor = newDesc.getVendor();
-		currentApp = appListModel.getApp(name, vendor);
+		currentApp = snapshotAppItem(appListModel.getApp(name, vendor));
 		if (currentApp == null) {
 			generatePathName(name.replaceAll(FileUtils.ILLEGAL_FILENAME_CHARS, "").trim());
 			return STATUS_NEW;
@@ -427,6 +427,20 @@ public class AppInstaller {
 			}
 		}
 		return STATUS_EQUAL;
+	}
+
+	/**
+	 * Copies the current row into a detached AppItem so later reinstall steps
+	 * cannot observe a row that was replaced or deleted in the database.
+	 */
+	private AppItem snapshotAppItem(AppItem app) {
+		if (app == null) {
+			return null;
+		}
+		AppItem snapshot = new AppItem(app.getPath(), app.getTitle(), app.getAuthor(), app.getVersion());
+		snapshot.setId(app.getId());
+		snapshot.setImagePath(app.getImagePath());
+		return snapshot;
 	}
 
 	private void generatePathName(String name) {

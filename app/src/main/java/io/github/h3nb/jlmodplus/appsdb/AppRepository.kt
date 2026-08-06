@@ -52,7 +52,7 @@ class AppRepository {
     private var initialSyncJob: Job? = null
     private var query = AppListSQLiteQuery()
 
-    fun setDatabaseFile(file: String) {
+    fun setDatabaseFile(file: String, refreshApplications: Boolean = true) {
         val currentDatabase = database
         if (currentDatabase != null) {
             if (file == currentDatabase.openHelper.readableDatabase.path) {
@@ -60,25 +60,27 @@ class AppRepository {
             }
             close()
         }
-        initDatabase(file)
+        initDatabase(file, refreshApplications)
     }
 
-    private fun initDatabase(file: String) {
+    private fun initDatabase(file: String, refreshApplications: Boolean) {
         val openedDatabase = AppDatabase.open(file)
         database = openedDatabase
         scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-        val currentScope = checkNotNull(scope)
-        val initialQuery = query.copy()
-        initialSyncJob = currentScope.launch {
-            try {
-                openedDatabase.appItemDao().getAll(initialQuery)
-                    .first()
-                    .let { syncWithFilesystem(openedDatabase, it) }
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (error: Throwable) {
-                reportError(error)
+        if (refreshApplications) {
+            val currentScope = checkNotNull(scope)
+            val initialQuery = query.copy()
+            initialSyncJob = currentScope.launch {
+                try {
+                    openedDatabase.appItemDao().getAll(initialQuery)
+                        .first()
+                        .let { syncWithFilesystem(openedDatabase, it) }
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Throwable) {
+                    reportError(error)
+                }
             }
         }
         restartObservation(openedDatabase)
