@@ -32,4 +32,15 @@ object ConfigComposeHost {
             state.Render(callback, dialogState)
         }
     }
+
+    /** Installs only the dialog renderer, used when the app path is invalid. */
+    @JvmStatic
+    fun installDialogOnly(
+        activity: ComponentActivity,
+        dialogState: ConfigDialogState,
+    ) {
+        activity.setContent {
+            dialogState.Render()
+        }
+    }
 }

@@ -131,6 +131,10 @@ public class ConfigActivity extends AppCompatActivity implements ConfigUiState.C
 			if (!appDir.isDirectory() || convertedDir == null
 					|| (workDir = convertedDir.getParent()) == null) {
 				needShow = false;
+				Log.w(TAG, "Invalid app path: " + path
+						+ ", appDir=" + appDir
+						+ ", convertedDir=" + convertedDir
+						+ ", workDir=" + workDir);
 				String storageName = "";
 				if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
 					StorageManager sm = (StorageManager) getSystemService(STORAGE_SERVICE);
@@ -144,6 +148,7 @@ public class ConfigActivity extends AppCompatActivity implements ConfigUiState.C
 						}
 					}
 				}
+				ConfigComposeHost.installDialogOnly(this, dialogState);
 				dialogState.showMessage(
 						this,
 						getString(R.string.error),
@@ -424,7 +429,7 @@ public class ConfigActivity extends AppCompatActivity implements ConfigUiState.C
 
 	@Override
 	public void onPause() {
-		if (needShow && configDir != null) {
+		if (needShow && composeView != null && params != null && configDir != null) {
 			saveParams();
 		}
 		super.onPause();
@@ -433,7 +438,7 @@ public class ConfigActivity extends AppCompatActivity implements ConfigUiState.C
 	@Override
 	protected void onResume() {
 		super.onResume();
-		if (needShow) {
+		if (needShow && composeView != null) {
 			loadParams(true);
 		}
 	}
@@ -441,7 +446,9 @@ public class ConfigActivity extends AppCompatActivity implements ConfigUiState.C
 	@Override
 	public void onConfigurationChanged(@NonNull Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
-		fillScreenSizePresets(display.getWidth(), display.getHeight());
+		if (display != null) {
+			fillScreenSizePresets(display.getWidth(), display.getHeight());
+		}
 	}
 
 	private void fillScreenSizePresets(int w, int h) {
