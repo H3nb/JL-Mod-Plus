@@ -54,7 +54,15 @@ public class ScreenSoftBar extends AbstractSoftKeysBar {
 		composeView.setCommands(commands);
 	}
 
+	static boolean shouldShowMenu(int commandCount) {
+		return commandCount > 3;
+	}
+
 	public void showMenu() {
+		if (!shouldShowMenu(commands.size())) {
+			return;
+		}
+
 		PopupWindow popup = prepareMenu(2);
 		int y = composeView.getHeight();
 		View rootView = composeView.getRootView();

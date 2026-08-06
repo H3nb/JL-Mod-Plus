@@ -46,6 +46,10 @@ public abstract class AbstractSoftKeysBar {
 		ViewHandler.postEvent(() -> onCommandsChanged(list));
 	}
 
+	protected static int effectiveSkip(int skip, int commandCount) {
+		return Math.min(Math.max(skip, 0), commandCount);
+	}
+
 	protected PopupWindow prepareMenu(int skip) {
 		if (popup == null) {
 			Context context = ContextHolder.getActivity();
@@ -63,7 +67,11 @@ public abstract class AbstractSoftKeysBar {
 			popup.setContentView(menuView);
 			popup.setOnDismissListener(menuView::clearCommands);
 		}
-		menuView.setCommands(skip == 0 ? commands : commands.subList(skip, commands.size()));
+		int safeSkip = effectiveSkip(skip, commands.size());
+		menuView.setCommands(
+				safeSkip == 0
+						? new ArrayList<>(commands)
+						: new ArrayList<>(commands.subList(safeSkip, commands.size())));
 		return popup;
 	}
 

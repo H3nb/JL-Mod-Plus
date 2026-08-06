@@ -70,15 +70,26 @@ class ScreenSoftBarComposeView(
     }
 }
 
+internal sealed interface SoftBarSlot {
+    data class Item(val command: Command) : SoftBarSlot
+    data object Menu : SoftBarSlot
+    data object Empty : SoftBarSlot
+}
+
+internal fun buildSoftBarSlots(commands: List<Command>): List<SoftBarSlot> {
+    return when {
+        commands.isEmpty() -> emptyList()
+        commands.size == 1 -> listOf(SoftBarSlot.Item(commands[0]), SoftBarSlot.Empty, SoftBarSlot.Empty)
+        commands.size == 2 -> listOf(SoftBarSlot.Item(commands[0]), SoftBarSlot.Empty, SoftBarSlot.Item(commands[1]))
+        commands.size == 3 -> commands.map { SoftBarSlot.Item(it) }
+        else -> listOf(SoftBarSlot.Item(commands[0]), SoftBarSlot.Item(commands[1]), SoftBarSlot.Menu)
+    }
+}
+
 @Composable
 private fun SoftBarContent(commands: List<Command>, onCommand: (Command?) -> Unit) {
-    if (commands.isNotEmpty()) {
-        val labels = when {
-            commands.size == 1 -> listOf(commands[0], null, null)
-            commands.size == 2 -> listOf(commands[0], null, commands[1])
-            commands.size == 3 -> listOf(commands[0], commands[1], commands[2])
-            else -> listOf(commands[0], commands[1], null)
-        }
+    val slots = buildSoftBarSlots(commands)
+    if (slots.isNotEmpty()) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
             color = MaterialTheme.colorScheme.surfaceVariant,
@@ -87,19 +98,22 @@ private fun SoftBarContent(commands: List<Command>, onCommand: (Command?) -> Uni
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                labels.forEachIndexed { index, command ->
-                    val isMenuSlot = command == null && index == 2
-                    if (command != null || isMenuSlot) {
-                        Button(
-                            onClick = { onCommand(command) },
-                            modifier = Modifier.weight(1f).padding(horizontal = 1.dp),
+                slots.forEach { slot ->
+                    val buttonModifier = Modifier.weight(1f).padding(horizontal = 1.dp)
+                    when (slot) {
+                        is SoftBarSlot.Item -> Button(
+                            onClick = { onCommand(slot.command) },
+                            modifier = buttonModifier,
                         ) {
-                            Text(command?.androidLabel ?: stringResource(R.string.cmd_menu))
+                            Text(slot.command.androidLabel)
                         }
-                    } else {
-                        Spacer(
-                            modifier = Modifier.weight(1f).padding(horizontal = 1.dp),
-                        )
+                        SoftBarSlot.Menu -> Button(
+                            onClick = { onCommand(null) },
+                            modifier = buttonModifier,
+                        ) {
+                            Text(stringResource(R.string.cmd_menu))
+                        }
+                        SoftBarSlot.Empty -> Spacer(modifier = buttonModifier)
                     }
                 }
             }
