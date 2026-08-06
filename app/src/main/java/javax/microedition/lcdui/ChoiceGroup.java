@@ -369,6 +369,9 @@ public class ChoiceGroup extends Item implements Choice {
 	private void onItemClick(int position) {
 		boolean changed = false;
 		synchronized (items) {
+			if (position < 0 || position >= items.size()) {
+				return;
+			}
 			CompoundItem item = items.get(position);
 			if (choiceType == MULTIPLE) {
 				item.setSelected(!item.isSelected());
