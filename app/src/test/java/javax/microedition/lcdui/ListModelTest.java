@@ -176,11 +176,20 @@ public class ListModelTest {
 	}
 
 	@Test
-	public void deleteSelectedItemDropsSelectionWithoutFixup() {
+	public void deleteSelectedItemDropsSelectionState() {
 		List list = implicitList("A", "B", "C");
 		list.setSelectedIndex(1, true);
 		list.delete(1);
-		assertEquals("baseline quirk: delete does not re-select a neighbor", -1, list.getSelectedIndex());
+		assertEquals(-1, list.getSelectedIndex());
+	}
+
+	@Test
+	public void multipleDeleteDoesNotAutoSelectRemaining() {
+		List list = multipleList("A", "B", "C");
+		list.setSelectedIndex(1, true);
+		list.delete(1);
+		assertEquals(-1, list.getSelectedIndex());
+		assertFalse(list.isSelected(1));
 	}
 
 	@Test
@@ -240,21 +249,24 @@ public class ListModelTest {
 	public void staleClickCallbackIsIgnored() throws Exception {
 		List list = implicitList("A", "B", "C");
 		list.setSelectedIndex(2, true);
+		long removedId = getItemUiId(list, 2);
 		list.delete(2);
-		Method method = List.class.getDeclaredMethod("onItemClick", int.class);
+		int selectionAfterDelete = list.getSelectedIndex();
+		Method method = List.class.getDeclaredMethod("onItemClick", long.class);
 		method.setAccessible(true);
-		method.invoke(list, 2);
-		assertEquals("stale click must not throw or change state", -1, list.getSelectedIndex());
+		method.invoke(list, removedId);
+		assertEquals("stale click must not throw or change state", selectionAfterDelete, list.getSelectedIndex());
 		assertEquals(2, list.size());
 	}
 
 	@Test
 	public void staleLongClickCallbackIsIgnored() throws Exception {
 		List list = implicitList("A", "B");
+		long removedId = getItemUiId(list, 0);
 		list.deleteAll();
-		Method method = List.class.getDeclaredMethod("onItemLongClick", int.class);
+		Method method = List.class.getDeclaredMethod("onItemLongClick", long.class);
 		method.setAccessible(true);
-		Object result = method.invoke(list, 0);
+		Object result = method.invoke(list, removedId);
 		assertEquals(Boolean.FALSE, result);
 		assertEquals(0, list.size());
 	}
@@ -263,24 +275,51 @@ public class ListModelTest {
 	public void staleFocusCallbackIsIgnored() throws Exception {
 		List list = implicitList("A", "B", "C");
 		list.setSelectedIndex(1, true);
+		long removedId = getItemUiId(list, 1);
 		list.delete(1);
-		Method method = List.class.getDeclaredMethod("onItemFocused", int.class);
+		int selectionAfterDelete = list.getSelectedIndex();
+		Method method = List.class.getDeclaredMethod("onItemFocused", long.class);
 		method.setAccessible(true);
-		method.invoke(list, 2);
-		assertEquals("stale focus must not select an out-of-range item", -1, list.getSelectedIndex());
+		method.invoke(list, removedId);
+		assertEquals("stale focus must not select a removed item", selectionAfterDelete, list.getSelectedIndex());
 	}
 
 	@Test
 	public void focusCallbackSelectsNewItemForImplicitOnly() throws Exception {
 		List implicit = implicitList("A", "B", "C");
-		Method method = List.class.getDeclaredMethod("onItemFocused", int.class);
+		Method method = List.class.getDeclaredMethod("onItemFocused", long.class);
 		method.setAccessible(true);
-		method.invoke(implicit, 2);
+		method.invoke(implicit, getItemUiId(implicit, 2));
 		assertEquals(2, implicit.getSelectedIndex());
 
 		List exclusive = exclusiveList("A", "B", "C");
-		method.invoke(exclusive, 2);
+		method.invoke(exclusive, getItemUiId(exclusive, 2));
 		assertEquals("focus must not drive EXCLUSIVE selection", 0, exclusive.getSelectedIndex());
+	}
+
+	@Test
+	public void staleCallbackWithValidIndexRoutesToCorrectItem() throws Exception {
+		List list = implicitList("A", "B", "C");
+		list.setSelectedIndex(2, true);
+		// Capture the uiId of the item currently at index 2.
+		long itemId = getItemUiId(list, 2);
+		// Remove item at index 0; the captured item now sits at index 1.
+		list.delete(0);
+		// A stale index-based callback would route index 2 to "C" and select the wrong item.
+		Method method = List.class.getDeclaredMethod("onItemClick", long.class);
+		method.setAccessible(true);
+		method.invoke(list, itemId);
+		assertEquals("callback must resolve by identity, not stale index", 1, list.getSelectedIndex());
+		assertEquals("C", list.getString(1));
+	}
+
+	private static long getItemUiId(List list, int index) throws Exception {
+		java.lang.reflect.Field itemsField = List.class.getDeclaredField("items");
+		itemsField.setAccessible(true);
+		@SuppressWarnings("unchecked")
+		java.util.List<javax.microedition.lcdui.list.CompoundItem> items =
+				(java.util.List<javax.microedition.lcdui.list.CompoundItem>) itemsField.get(list);
+		return items.get(index).getUiId();
 	}
 
 	@Test

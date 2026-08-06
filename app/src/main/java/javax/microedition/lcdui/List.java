@@ -383,9 +383,10 @@ public class List extends Screen implements Choice {
 		currentView.setItems(snapshot);
 	}
 
-	private void onItemClick(int position) {
+	private void onItemClick(long itemId) {
 		synchronized (items) {
-			if (position < 0 || position >= items.size()) {
+			int position = findItemIndexById(itemId);
+			if (position < 0) {
 				return;
 			}
 			CompoundItem item = items.get(position);
@@ -407,9 +408,10 @@ public class List extends Screen implements Choice {
 		}
 	}
 
-	private boolean onItemLongClick(int position) {
+	private boolean onItemLongClick(long itemId) {
 		synchronized (items) {
-			if (position < 0 || position >= items.size()) {
+			int position = findItemIndexById(itemId);
+			if (position < 0) {
 				return false;
 			}
 			CompoundItem item = items.get(position);
@@ -432,12 +434,13 @@ public class List extends Screen implements Choice {
 		return true;
 	}
 
-	private void onItemFocused(int position) {
+	private void onItemFocused(long itemId) {
 		if (listType != IMPLICIT) {
 			return;
 		}
 		synchronized (items) {
-			if (position < 0 || position >= items.size()) {
+			int position = findItemIndexById(itemId);
+			if (position < 0) {
 				return;
 			}
 			CompoundItem item = items.get(position);
@@ -449,5 +452,14 @@ public class List extends Screen implements Choice {
 				notifyListView();
 			}
 		}
+	}
+
+	private int findItemIndexById(long itemId) {
+		for (int i = 0; i < items.size(); i++) {
+			if (items.get(i).getUiId() == itemId) {
+				return i;
+			}
+		}
+		return -1;
 	}
 }

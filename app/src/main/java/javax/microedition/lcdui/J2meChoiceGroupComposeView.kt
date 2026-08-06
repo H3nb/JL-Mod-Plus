@@ -60,7 +60,7 @@ class J2meChoiceGroupComposeView(
     private val onItemClick: ItemCallback,
 ) : FrameLayout(context) {
     fun interface ItemCallback {
-        fun onItemClick(position: Int)
+        fun onItemClick(itemId: Long)
     }
 
     private val composeView = ComposeView(context)
@@ -87,9 +87,9 @@ class J2meChoiceGroupComposeView(
     }
 
     fun setItems(items: java.util.List<CompoundItem>) {
-        itemState = items.mapIndexed { index, item ->
+        itemState = items.map { item ->
             J2meChoiceItemState(
-                id = (System.identityHashCode(item).toLong() shl 32) xor index.toLong(),
+                id = item.getUiId(),
                 text = item.string,
                 image = item.image?.bitmap,
                 selected = item.isSelected,
@@ -113,7 +113,7 @@ private data class J2meChoiceItemState(
 private fun J2meChoiceGroupContent(
     choiceType: Int,
     items: kotlin.collections.List<J2meChoiceItemState>,
-    onItemClick: (Int) -> Unit,
+    onItemClick: (Long) -> Unit,
 ) {
     if (choiceType == Choice.POPUP) {
         J2mePopupChoice(items, onItemClick)
@@ -133,7 +133,7 @@ private fun J2meChoiceGroupContent(
                     J2meChoiceRow(
                         item = item,
                         choiceType = choiceType,
-                        onClick = { onItemClick(index) },
+                        onClick = { onItemClick(item.id) },
                     )
                 }
             }
@@ -179,7 +179,7 @@ private fun J2meChoiceRow(
 @Composable
 private fun J2mePopupChoice(
     items: kotlin.collections.List<J2meChoiceItemState>,
-    onItemClick: (Int) -> Unit,
+    onItemClick: (Long) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     val selectedIndex = items.indexOfFirst { it.selected }
@@ -229,13 +229,13 @@ private fun J2mePopupChoice(
             expanded = expanded,
             onDismissRequest = { expanded = false },
         ) {
-            items.forEachIndexed { index, item ->
+            items.forEach { item ->
                 if (item.image == null) {
                     DropdownMenuItem(
                         text = { Text(item.text) },
                         onClick = {
                             expanded = false
-                            onItemClick(index)
+                            onItemClick(item.id)
                         },
                     )
                 } else {
@@ -251,7 +251,7 @@ private fun J2mePopupChoice(
                         },
                         onClick = {
                             expanded = false
-                            onItemClick(index)
+                            onItemClick(item.id)
                         },
                     )
                 }

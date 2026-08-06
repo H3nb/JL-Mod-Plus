@@ -67,15 +67,15 @@ class J2meListComposeView(
     private val onItemLongClick: ItemLongClickCallback,
 ) : FrameLayout(context) {
     fun interface ItemClickCallback {
-        fun onItemClick(position: Int)
+        fun onItemClick(itemId: Long)
     }
 
     fun interface ItemFocusCallback {
-        fun onItemFocused(position: Int)
+        fun onItemFocused(itemId: Long)
     }
 
     fun interface ItemLongClickCallback {
-        fun onItemLongClick(position: Int): Boolean
+        fun onItemLongClick(itemId: Long): Boolean
     }
 
     private val composeView = ComposeView(context)
@@ -106,9 +106,9 @@ class J2meListComposeView(
     }
 
     fun setItems(items: java.util.List<CompoundItem>) {
-        itemState = items.mapIndexed { index, item ->
+        itemState = items.map { item ->
             J2meListItemState(
-                id = System.identityHashCode(item).toLong(),
+                id = item.getUiId(),
                 text = item.string,
                 image = item.image?.bitmap,
                 selected = item.isSelected,
@@ -127,7 +127,8 @@ class J2meListComposeView(
 
 /**
  * A selection request carrying the stable identity of the item and a generation
- * token, so the same item is reprocessed after structural list changes.
+ * token. Each generation is consumed exactly once by the renderer; ordinary
+ * structural list changes must not re-run an already processed request.
  */
 private data class SelectionRequest(
     val target: Long?,
@@ -147,14 +148,14 @@ private fun J2meListContent(
     listType: Int,
     items: kotlin.collections.List<J2meListItemState>,
     selectionRequest: SelectionRequest,
-    onItemClick: (Int) -> Unit,
-    onItemFocused: (Int) -> Unit,
-    onItemLongClick: (Int) -> Boolean,
+    onItemClick: (Long) -> Unit,
+    onItemFocused: (Long) -> Unit,
+    onItemLongClick: (Long) -> Boolean,
 ) {
     val listState = rememberLazyListState()
     val itemKeys = items.map { it.id }
     val focusRequesters = remember(itemKeys) {
-        List(itemKeys.size) { FocusRequester() }
+        itemKeys.associateWith { FocusRequester() }
     }
     LaunchedEffect(selectionRequest.target, selectionRequest.generation, items.size) {
         val target = selectionRequest.target ?: return@LaunchedEffect
@@ -164,7 +165,7 @@ private fun J2meListContent(
             snapshotFlow {
                 listState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }
             }.first { it != null }
-            focusRequesters[index].requestFocus()
+            focusRequesters[target]?.requestFocus()
         }
     }
     Surface(color = MaterialTheme.colorScheme.background) {
@@ -179,15 +180,15 @@ private fun J2meListContent(
                 J2meListRow(
                     item = item,
                     listType = listType,
-                    focusRequester = focusRequesters[index],
-                    onClick = { onItemClick(index) },
+                    focusRequester = focusRequesters.getValue(item.id),
+                    onClick = { onItemClick(item.id) },
                     onFocus = if (listType == Choice.IMPLICIT) {
-                        { onItemFocused(index) }
+                        { onItemFocused(item.id) }
                     } else {
                         null
                     },
                     onLongClick = if (listType == Choice.IMPLICIT) {
-                        { onItemLongClick(index); Unit }
+                        { onItemLongClick(item.id); Unit }
                     } else {
                         null
                     },

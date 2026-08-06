@@ -2,6 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2018 Nikita Shakarun
  * Copyright 2019-2023 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +23,15 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Image;
 
 public class CompoundItem {
+	private static final AtomicLong NEXT_UI_ID = new AtomicLong();
+
+	private final long uiId = NEXT_UI_ID.incrementAndGet();
 	private String stringPart;
 	private Image imagePart;
 	private Drawable imageDrawable;
@@ -44,6 +50,11 @@ public class CompoundItem {
 
 	public String getString() {
 		return stringPart;
+	}
+
+	/** Stable identity for UI routing; unique for the lifetime of this item. */
+	public long getUiId() {
+		return uiId;
 	}
 
 	public Image getImage() {

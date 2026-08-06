@@ -366,10 +366,11 @@ public class ChoiceGroup extends Item implements Choice {
 		currentView.setItems(snapshot);
 	}
 
-	private void onItemClick(int position) {
+	private void onItemClick(long itemId) {
 		boolean changed = false;
 		synchronized (items) {
-			if (position < 0 || position >= items.size()) {
+			int position = findItemIndexById(itemId);
+			if (position < 0) {
 				return;
 			}
 			CompoundItem item = items.get(position);
@@ -390,5 +391,14 @@ public class ChoiceGroup extends Item implements Choice {
 		if (changed || choiceType == POPUP) {
 			postStateChanged();
 		}
+	}
+
+	private int findItemIndexById(long itemId) {
+		for (int i = 0; i < items.size(); i++) {
+			if (items.get(i).getUiId() == itemId) {
+				return i;
+			}
+		}
+		return -1;
 	}
 }

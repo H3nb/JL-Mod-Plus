@@ -134,12 +134,20 @@ public class ChoiceGroupModelTest {
 	}
 
 	@Test
-	public void deleteSelectedItemDropsSelectionWithoutFixup() {
+	public void deleteSelectedItemDropsSelectionState() {
 		ChoiceGroup popup = popup("A", "B", "C");
 		popup.setSelectedIndex(1, true);
 		popup.delete(1);
-		assertEquals("baseline quirk: delete does not re-select a neighbor", -1, popup.getSelectedIndex());
-		assertEquals(2, popup.size());
+		assertEquals(-1, popup.getSelectedIndex());
+	}
+
+	@Test
+	public void multipleDeleteDoesNotAutoSelectRemaining() {
+		ChoiceGroup multiple = multiple("A", "B", "C");
+		multiple.setSelectedIndex(1, true);
+		multiple.delete(1);
+		assertEquals(-1, multiple.getSelectedIndex());
+		assertFalse(multiple.isSelected(1));
 	}
 
 	@Test
@@ -224,20 +232,20 @@ public class ChoiceGroupModelTest {
 	public void popupClickOnAlreadySelectedItemKeepsSelection() throws Exception {
 		ChoiceGroup popup = popup("A", "B", "C");
 		popup.setSelectedIndex(0, true);
-		Method method = ChoiceGroup.class.getDeclaredMethod("onItemClick", int.class);
+		Method method = ChoiceGroup.class.getDeclaredMethod("onItemClick", long.class);
 		method.setAccessible(true);
-		method.invoke(popup, 0);
+		method.invoke(popup, getItemUiId(popup, 0));
 		assertEquals("POPUP click on the selected item must not deselect", 0, popup.getSelectedIndex());
 	}
 
 	@Test
 	public void exclusiveClickOnAlreadySelectedItemKeepsSelection() throws Exception {
 		ChoiceGroup exclusive = exclusive("A", "B", "C");
-		Method method = ChoiceGroup.class.getDeclaredMethod("onItemClick", int.class);
+		Method method = ChoiceGroup.class.getDeclaredMethod("onItemClick", long.class);
 		method.setAccessible(true);
-		method.invoke(exclusive, 0);
+		method.invoke(exclusive, getItemUiId(exclusive, 0));
 		assertEquals(0, exclusive.getSelectedIndex());
-		method.invoke(exclusive, 1);
+		method.invoke(exclusive, getItemUiId(exclusive, 1));
 		assertEquals(1, exclusive.getSelectedIndex());
 	}
 
@@ -245,12 +253,36 @@ public class ChoiceGroupModelTest {
 	public void staleClickOutOfBoundsIsIgnored() throws Exception {
 		ChoiceGroup popup = popup("A", "B", "C");
 		popup.setSelectedIndex(2, true);
+		long removedId = getItemUiId(popup, 2);
 		popup.delete(2);
-		Method method = ChoiceGroup.class.getDeclaredMethod("onItemClick", int.class);
+		int selectionAfterDelete = popup.getSelectedIndex();
+		Method method = ChoiceGroup.class.getDeclaredMethod("onItemClick", long.class);
 		method.setAccessible(true);
-		method.invoke(popup, 2);
-		assertEquals("stale click must not throw or change state", -1, popup.getSelectedIndex());
+		method.invoke(popup, removedId);
+		assertEquals("stale click must not throw or change state", selectionAfterDelete, popup.getSelectedIndex());
 		assertEquals(2, popup.size());
+	}
+
+	@Test
+	public void staleClickWithValidIndexRoutesToCorrectItem() throws Exception {
+		ChoiceGroup popup = popup("A", "B", "C");
+		popup.setSelectedIndex(2, true);
+		long itemId = getItemUiId(popup, 2);
+		popup.delete(0);
+		Method method = ChoiceGroup.class.getDeclaredMethod("onItemClick", long.class);
+		method.setAccessible(true);
+		method.invoke(popup, itemId);
+		assertEquals("callback must resolve by identity, not stale index", 1, popup.getSelectedIndex());
+		assertEquals("C", popup.getString(1));
+	}
+
+	private static long getItemUiId(ChoiceGroup group, int index) throws Exception {
+		java.lang.reflect.Field itemsField = ChoiceGroup.class.getDeclaredField("items");
+		itemsField.setAccessible(true);
+		@SuppressWarnings("unchecked")
+		java.util.List<javax.microedition.lcdui.list.CompoundItem> items =
+				(java.util.List<javax.microedition.lcdui.list.CompoundItem>) itemsField.get(group);
+		return items.get(index).getUiId();
 	}
 
 	@Test
