@@ -29,7 +29,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
@@ -419,8 +419,7 @@ class ConfigDialogState {
             title = { Text(dialog.title) },
             text = {
                 LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
-                    items(dialog.entries.toList()) { entry ->
-                        val index = dialog.entries.indexOf(entry)
+                    itemsIndexed(dialog.entries.toList()) { index, entry ->
                         Row(
                             modifier = Modifier.fillMaxWidth().clickable {
                                 owner.dismiss()
@@ -463,8 +462,7 @@ class ConfigDialogState {
             title = { Text(dialog.title) },
             text = {
                 LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
-                    items(dialog.entries.toList()) { entry ->
-                        val index = dialog.entries.indexOf(entry)
+                    itemsIndexed(dialog.entries.toList()) { index, entry ->
                         Row(
                             modifier = Modifier.fillMaxWidth().clickable { selected = index }
                                 .padding(vertical = 4.dp),
@@ -658,8 +656,7 @@ class ConfigDialogState {
             text = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     LazyColumn(modifier = Modifier.heightIn(min = 48.dp, max = 320.dp)) {
-                        items(dialog.profileNames.toList()) { name ->
-                            val index = dialog.profileNames.indexOf(name)
+                        itemsIndexed(dialog.profileNames.toList()) { index, name ->
                             Row(
                                 modifier = Modifier.fillMaxWidth().clickable { selectProfile(index) }
                                     .padding(vertical = 4.dp),
