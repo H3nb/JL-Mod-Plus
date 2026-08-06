@@ -36,6 +36,7 @@ public abstract class AbstractSoftKeysBar {
 	protected final List<Command> commands = new ArrayList<>();
 	private PopupWindow popup;
 	private SoftMenuComposeView menuView;
+	private Context popupContext;
 
 	protected AbstractSoftKeysBar(Displayable target) {
 		this.target = target;
@@ -51,11 +52,14 @@ public abstract class AbstractSoftKeysBar {
 	}
 
 	protected PopupWindow prepareMenu(int skip) {
+		Context context = ContextHolder.getActivity();
+		if (context == null) {
+			return null;
+		}
+		if (popup != null && popupContext != context) {
+			releaseMenu();
+		}
 		if (popup == null) {
-			Context context = ContextHolder.getActivity();
-			if (context == null) {
-				return null;
-			}
 			menuView = new SoftMenuComposeView(context, command -> {
 				target.fireCommandAction(command);
 				if (popup != null) {
@@ -69,6 +73,7 @@ public abstract class AbstractSoftKeysBar {
 			popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 			popup.setContentView(menuView);
 			popup.setOnDismissListener(menuView::clearCommands);
+			popupContext = context;
 		}
 		int safeSkip = effectiveSkip(skip, commands.size());
 		menuView.setCommands(
@@ -84,5 +89,23 @@ public abstract class AbstractSoftKeysBar {
 		if (popup != null && popup.isShowing()) {
 			popup.dismiss();
 		}
+	}
+
+	/**
+	 * Detaches and drops the popup for permanent teardown. A popup built for a
+	 * previous Activity keeps a stale Compose owner and window token; drop it
+	 * when the soft keys bar is cleared or the owning Activity changes.
+	 */
+	public void releaseMenu() {
+		if (popup != null) {
+			popup.setOnDismissListener(null);
+			if (popup.isShowing()) {
+				popup.dismiss();
+			}
+			popup.setContentView(null);
+			popup = null;
+		}
+		menuView = null;
+		popupContext = null;
 	}
 }

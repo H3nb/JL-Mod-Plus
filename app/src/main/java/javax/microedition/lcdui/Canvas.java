@@ -624,7 +624,7 @@ public abstract class Canvas extends Displayable {
 		}
 		super.clearDisplayableView();
 		if (softBar != null) {
-			softBar.closeMenu();
+			softBar.releaseMenu();
 		}
 		layout = null;
 		innerView = null;
@@ -1356,13 +1356,45 @@ public abstract class Canvas extends Displayable {
 	}
 
 	/**
-	 * A fullscreen Canvas with exactly two commands and a command listener
-	 * dispatches the virtual soft keys directly to the individual commands
-	 * instead of opening the overflow popup. The commands stay distinct by
-	 * object and order even when their labels are identical.
+	 * Resolution of a virtual soft key press on the layer beneath the LCDUI
+	 * command model. A fullscreen Canvas with exactly two commands and a
+	 * command listener dispatches directly to the individual commands instead
+	 * of opening the overflow popup; the commands stay distinct by object and
+	 * order even when their labels are identical.
 	 */
-	static boolean isDirectTwoCommandDispatch(int size, boolean fullscreen, boolean hasListener) {
-		return fullscreen && size == 2 && hasListener;
+	enum SoftKeyAction {
+		RAW_KEY, CONSUME, FIRST_COMMAND, SECOND_COMMAND, OPEN_MENU
+	}
+
+	static SoftKeyAction resolveSoftKeyAction(int size, boolean fullscreen, boolean hasListener, boolean rightSoft) {
+		if (size == 0) {
+			return SoftKeyAction.RAW_KEY;
+		}
+		if (fullscreen) {
+			if (rightSoft) {
+				if (!hasListener) {
+					return SoftKeyAction.RAW_KEY;
+				}
+				return size == 2 ? SoftKeyAction.SECOND_COMMAND : SoftKeyAction.OPEN_MENU;
+			}
+			if (size == 1) {
+				return SoftKeyAction.RAW_KEY;
+			}
+			if (size == 2 && hasListener) {
+				return SoftKeyAction.FIRST_COMMAND;
+			}
+			return hasListener ? SoftKeyAction.OPEN_MENU : SoftKeyAction.CONSUME;
+		}
+		if (!rightSoft) {
+			return SoftKeyAction.FIRST_COMMAND;
+		}
+		if (size == 1) {
+			return SoftKeyAction.RAW_KEY;
+		}
+		if (size == 2) {
+			return hasListener ? SoftKeyAction.SECOND_COMMAND : SoftKeyAction.CONSUME;
+		}
+		return SoftKeyAction.OPEN_MENU;
 	}
 
 	private class SoftBar extends AbstractSoftKeysBar implements Layer {
@@ -1428,54 +1460,33 @@ public abstract class Canvas extends Displayable {
 		}
 
 		private boolean fireLeftSoft() {
-			int size = commands.size();
-			if (size == 0) {
-				return false;
-			}
-			if (fullscreen) {
-				if (size == 1) {
-					return false;
-				}
-				if (isDirectTwoCommandDispatch(size, true, listener != null)) {
+			switch (resolveSoftKeyAction(commands.size(), fullscreen, listener != null, false)) {
+				case FIRST_COMMAND:
 					fireCommandAction(commands.get(0));
 					return true;
-				}
-				if (listener != null) {
+				case OPEN_MENU:
 					showPopup();
-				}
-				return true;
+					return true;
+				case CONSUME:
+					return true;
+				default:
+					return false;
 			}
-			fireCommandAction(commands.get(0));
-			return true;
 		}
 
 		private boolean fireRightSoft() {
-			int size = commands.size();
-			if (size == 0) {
-				return false;
-			}
-			if (fullscreen && listener == null) {
-				return false;
-			}
-			if (fullscreen) {
-				if (isDirectTwoCommandDispatch(size, true, listener != null)) {
+			switch (resolveSoftKeyAction(commands.size(), fullscreen, listener != null, true)) {
+				case SECOND_COMMAND:
 					fireCommandAction(commands.get(1));
 					return true;
-				}
-				showPopup();
-				return true;
+				case OPEN_MENU:
+					showPopup();
+					return true;
+				case CONSUME:
+					return true;
+				default:
+					return false;
 			}
-			if (size > 2) {
-				showPopup();
-				return true;
-			}
-			if (size == 1) {
-				return false;
-			}
-			if (listener != null) {
-				fireCommandAction(commands.get(1));
-			}
-			return true;
 		}
 
 		@Override

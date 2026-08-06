@@ -16,43 +16,87 @@
 
 package javax.microedition.lcdui;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static javax.microedition.lcdui.Canvas.SoftKeyAction.CONSUME;
+import static javax.microedition.lcdui.Canvas.SoftKeyAction.FIRST_COMMAND;
+import static javax.microedition.lcdui.Canvas.SoftKeyAction.OPEN_MENU;
+import static javax.microedition.lcdui.Canvas.SoftKeyAction.RAW_KEY;
+import static javax.microedition.lcdui.Canvas.SoftKeyAction.SECOND_COMMAND;
+import static javax.microedition.lcdui.Canvas.resolveSoftKeyAction;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import org.junit.Test;
 
 /**
- * JVM characterization of the fullscreen soft key dispatch decision.
- * The private Canvas.SoftBar paths themselves need a device; this covers
- * the pure predicate that routes the L/R virtual keys.
+ * JVM characterization of the virtual soft key dispatch decision.
+ * The private Canvas.SoftBar show/fire paths themselves need a device;
+ * this covers the pure resolver that routes the L/R virtual keys.
  */
 public class CanvasSoftBarDispatchTest {
 	@Test
-	public void twoCommandsFullscreenWithListenerDispatchDirectly() {
-		assertTrue(Canvas.isDirectTwoCommandDispatch(2, true, true));
+	public void zeroCommandsAlwaysFallThrough() {
+		assertEquals(RAW_KEY, resolveSoftKeyAction(0, true, true, false));
+		assertEquals(RAW_KEY, resolveSoftKeyAction(0, true, false, false));
+		assertEquals(RAW_KEY, resolveSoftKeyAction(0, false, true, true));
+		assertEquals(RAW_KEY, resolveSoftKeyAction(0, false, false, true));
 	}
 
 	@Test
-	public void singleCommandFullscreenNeverDispatchesDirectly() {
-		assertFalse(Canvas.isDirectTwoCommandDispatch(1, true, true));
-		assertFalse(Canvas.isDirectTwoCommandDispatch(1, true, false));
+	public void fullscreenTwoCommandsWithListenerDispatchDistinctCommands() {
+		assertEquals(FIRST_COMMAND, resolveSoftKeyAction(2, true, true, false));
+		assertEquals(SECOND_COMMAND, resolveSoftKeyAction(2, true, true, true));
+		assertNotEquals(FIRST_COMMAND, SECOND_COMMAND);
 	}
 
 	@Test
-	public void overflowCommandsFullscreenUsePopup() {
-		assertFalse(Canvas.isDirectTwoCommandDispatch(3, true, true));
-		assertFalse(Canvas.isDirectTwoCommandDispatch(4, true, true));
-		assertFalse(Canvas.isDirectTwoCommandDispatch(5, true, true));
+	public void fullscreenTwoCommandsWithoutListenerStayRaw() {
+		assertEquals(CONSUME, resolveSoftKeyAction(2, true, false, false));
+		assertEquals(RAW_KEY, resolveSoftKeyAction(2, true, false, true));
 	}
 
 	@Test
-	public void nonFullscreenKeepsLegacyPath() {
-		assertFalse(Canvas.isDirectTwoCommandDispatch(2, false, true));
-		assertFalse(Canvas.isDirectTwoCommandDispatch(2, false, false));
+	public void fullscreenSingleCommandNeverDispatches() {
+		assertEquals(RAW_KEY, resolveSoftKeyAction(1, true, true, false));
+		assertEquals(OPEN_MENU, resolveSoftKeyAction(1, true, true, true));
+		assertEquals(RAW_KEY, resolveSoftKeyAction(1, true, false, false));
+		assertEquals(RAW_KEY, resolveSoftKeyAction(1, true, false, true));
 	}
 
 	@Test
-	public void twoCommandsFullscreenWithoutListenerNeverDispatches() {
-		assertFalse(Canvas.isDirectTwoCommandDispatch(2, true, false));
+	public void fullscreenOverflowWithListenerUsesPopup() {
+		assertEquals(OPEN_MENU, resolveSoftKeyAction(3, true, true, false));
+		assertEquals(OPEN_MENU, resolveSoftKeyAction(4, true, true, true));
+		assertEquals(OPEN_MENU, resolveSoftKeyAction(5, true, true, true));
+	}
+
+	@Test
+	public void fullscreenOverflowWithoutListenerConsumesLeftOnly() {
+		assertEquals(CONSUME, resolveSoftKeyAction(3, true, false, false));
+		assertEquals(RAW_KEY, resolveSoftKeyAction(3, true, false, true));
+	}
+
+	@Test
+	public void nonFullscreenLeftAlwaysFiresFirstCommand() {
+		assertEquals(FIRST_COMMAND, resolveSoftKeyAction(1, false, true, false));
+		assertEquals(FIRST_COMMAND, resolveSoftKeyAction(2, false, false, false));
+		assertEquals(FIRST_COMMAND, resolveSoftKeyAction(5, false, true, false));
+	}
+
+	@Test
+	public void nonFullscreenRightSingleCommandStaysRaw() {
+		assertEquals(RAW_KEY, resolveSoftKeyAction(1, false, true, true));
+		assertEquals(RAW_KEY, resolveSoftKeyAction(1, false, false, true));
+	}
+
+	@Test
+	public void nonFullscreenRightTwoCommandsDispatchOrConsume() {
+		assertEquals(SECOND_COMMAND, resolveSoftKeyAction(2, false, true, true));
+		assertEquals(CONSUME, resolveSoftKeyAction(2, false, false, true));
+	}
+
+	@Test
+	public void nonFullscreenRightOverflowUsesPopup() {
+		assertEquals(OPEN_MENU, resolveSoftKeyAction(3, false, true, true));
+		assertEquals(OPEN_MENU, resolveSoftKeyAction(3, false, false, true));
 	}
 }
