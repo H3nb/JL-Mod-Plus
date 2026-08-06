@@ -53,6 +53,9 @@ public abstract class AbstractSoftKeysBar {
 	protected PopupWindow prepareMenu(int skip) {
 		if (popup == null) {
 			Context context = ContextHolder.getActivity();
+			if (context == null) {
+				return null;
+			}
 			menuView = new SoftMenuComposeView(context, command -> {
 				target.fireCommandAction(command);
 				if (popup != null) {

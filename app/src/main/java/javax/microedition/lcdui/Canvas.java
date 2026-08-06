@@ -623,6 +623,9 @@ public abstract class Canvas extends Displayable {
 			}
 		}
 		super.clearDisplayableView();
+		if (softBar != null) {
+			softBar.closeMenu();
+		}
 		layout = null;
 		innerView = null;
 	}
@@ -1352,6 +1355,16 @@ public abstract class Canvas extends Displayable {
 		return speed.numerator() > speed.denominator();
 	}
 
+	/**
+	 * A fullscreen Canvas with exactly two commands and a command listener
+	 * dispatches the virtual soft keys directly to the individual commands
+	 * instead of opening the overflow popup. The commands stay distinct by
+	 * object and order even when their labels are identical.
+	 */
+	static boolean isDirectTwoCommandDispatch(int size, boolean fullscreen, boolean hasListener) {
+		return fullscreen && size == 2 && hasListener;
+	}
+
 	private class SoftBar extends AbstractSoftKeysBar implements Layer {
 		private final OverlayView overlayView;
 		private final float padding;
@@ -1375,8 +1388,14 @@ public abstract class Canvas extends Displayable {
 
 		private void showPopup() {
 			PopupWindow popup = prepareMenu(fullscreen ? 0 : 1);
+			if (popup == null || popup.isShowing()) {
+				return;
+			}
 			popup.setWidth(Math.min(displayWidth, displayHeight) / 2);
 			popup.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
+			if (!overlayView.isAttachedToWindow()) {
+				return;
+			}
 			int x = (int) (displayWidth - bounds.right);
 			int y = (int) (displayHeight - bounds.top);
 			popup.showAtLocation(overlayView, Gravity.RIGHT | Gravity.BOTTOM, x, y);
@@ -1417,6 +1436,10 @@ public abstract class Canvas extends Displayable {
 				if (size == 1) {
 					return false;
 				}
+				if (isDirectTwoCommandDispatch(size, true, listener != null)) {
+					fireCommandAction(commands.get(0));
+					return true;
+				}
 				if (listener != null) {
 					showPopup();
 				}
@@ -1434,7 +1457,15 @@ public abstract class Canvas extends Displayable {
 			if (fullscreen && listener == null) {
 				return false;
 			}
-			if (fullscreen || size > 2) {
+			if (fullscreen) {
+				if (isDirectTwoCommandDispatch(size, true, listener != null)) {
+					fireCommandAction(commands.get(1));
+					return true;
+				}
+				showPopup();
+				return true;
+			}
+			if (size > 2) {
 				showPopup();
 				return true;
 			}

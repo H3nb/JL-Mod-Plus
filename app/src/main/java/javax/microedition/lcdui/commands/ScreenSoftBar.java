@@ -64,8 +64,14 @@ public class ScreenSoftBar extends AbstractSoftKeysBar {
 		}
 
 		PopupWindow popup = prepareMenu(2);
+		if (popup == null || popup.isShowing()) {
+			return;
+		}
 		int y = composeView.getHeight();
 		View rootView = composeView.getRootView();
+		if (!rootView.isAttachedToWindow()) {
+			return;
+		}
 		popup.setWidth(Math.min(rootView.getWidth(), rootView.getHeight()) / 2);
 		popup.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
 		popup.showAtLocation(rootView, Gravity.RIGHT | Gravity.BOTTOM, 0, y);
