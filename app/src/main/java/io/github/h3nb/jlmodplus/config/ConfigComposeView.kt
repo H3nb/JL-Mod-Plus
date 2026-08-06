@@ -41,6 +41,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -728,10 +729,7 @@ class ConfigUiState(
             onClick = onClick,
             modifier = modifier,
             shape = RoundedCornerShape(3.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = colorResource(R.color.btn_bg_normal),
-                contentColor = Color.White,
-            ),
+            colors = ConfigActionButtonDefaults.colors(),
             content = content,
         )
     }
@@ -797,6 +795,15 @@ class ConfigUiState(
     internal fun RenderPreview(callback: Callback) {
         ConfigContent(this, showExperimental, callback)
     }
+}
+
+/** Component-level color ownership for [ConfigActionButton]. */
+private object ConfigActionButtonDefaults {
+    @Composable
+    fun colors(): ButtonColors = ButtonDefaults.buttonColors(
+        containerColor = colorResource(R.color.btn_bg_normal),
+        contentColor = Color.White,
+    )
 }
 
 @Preview(name = "Config screen", showBackground = true, widthDp = 420, heightDp = 760)
