@@ -708,7 +708,10 @@ class ConfigUiState(
             ) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text(options.getOrNull(selected).orEmpty(), maxLines = 1)
-                    Text("▾")
+                    Icon(
+                        painter = painterResource(R.drawable.ic_expand_more_24),
+                        contentDescription = null,
+                    )
                 }
             }
             DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {

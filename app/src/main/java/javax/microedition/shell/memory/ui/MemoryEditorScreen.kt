@@ -1546,7 +1546,10 @@ private fun <T> EnumSelector(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text("▾")
+                Icon(
+                    painter = painterResource(R.drawable.ic_expand_more_24),
+                    contentDescription = null,
+                )
             }
             DropdownMenu(
                 expanded = expanded,
