@@ -240,6 +240,14 @@ android {
         disable += "MissingTranslation"
     }
 
+    testOptions {
+        unitTests {
+            // LCDUI model unit tests construct Font/Paint through CompoundItem;
+            // symbolic Android methods must return defaults instead of throwing.
+            isReturnDefaultValues = true
+        }
+    }
+
     flavorDimensions += "default"
     productFlavors {
         create("emulator") { // variant dimension for create emulator

@@ -38,12 +38,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -53,6 +56,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.ui.AppComposeTheme
 import javax.microedition.lcdui.list.CompoundItem
+import kotlinx.coroutines.flow.first
 
 /** Compose-backed rendering for one J2ME List displayable. */
 class J2meListComposeView(
@@ -76,7 +80,7 @@ class J2meListComposeView(
 
     private val composeView = ComposeView(context)
     private var itemState by mutableStateOf<kotlin.collections.List<J2meListItemState>>(emptyList())
-    private var selectionRequest by mutableIntStateOf(-1)
+    private var selectionRequest by mutableStateOf(SelectionRequest(-1, 0))
 
     init {
         composeView.id = generateViewId()
@@ -104,7 +108,7 @@ class J2meListComposeView(
     fun setItems(items: java.util.List<CompoundItem>) {
         itemState = items.mapIndexed { index, item ->
             J2meListItemState(
-                id = (System.identityHashCode(item).toLong() shl 32) xor index.toLong(),
+                id = System.identityHashCode(item).toLong(),
                 text = item.string,
                 image = item.image?.bitmap,
                 selected = item.isSelected,
@@ -113,9 +117,22 @@ class J2meListComposeView(
     }
 
     fun requestSelection(index: Int) {
-        selectionRequest = index
+        val target = itemState.getOrNull(index)?.id
+        selectionRequest = SelectionRequest(
+            target = target,
+            generation = selectionRequest.generation + 1,
+        )
     }
 }
+
+/**
+ * A selection request carrying the stable identity of the item and a generation
+ * token, so the same item is reprocessed after structural list changes.
+ */
+private data class SelectionRequest(
+    val target: Long?,
+    val generation: Long,
+)
 
 private data class J2meListItemState(
     val id: Long,
@@ -129,15 +146,25 @@ private data class J2meListItemState(
 private fun J2meListContent(
     listType: Int,
     items: kotlin.collections.List<J2meListItemState>,
-    selectionRequest: Int,
+    selectionRequest: SelectionRequest,
     onItemClick: (Int) -> Unit,
     onItemFocused: (Int) -> Unit,
     onItemLongClick: (Int) -> Boolean,
 ) {
     val listState = rememberLazyListState()
-    LaunchedEffect(selectionRequest, items.size) {
-        if (selectionRequest in items.indices) {
-            listState.scrollToItem(selectionRequest)
+    val itemKeys = items.map { it.id }
+    val focusRequesters = remember(itemKeys) {
+        List(itemKeys.size) { FocusRequester() }
+    }
+    LaunchedEffect(selectionRequest.target, selectionRequest.generation, items.size) {
+        val target = selectionRequest.target ?: return@LaunchedEffect
+        val index = items.indexOfFirst { it.id == target }
+        if (index >= 0) {
+            listState.scrollToItem(index)
+            snapshotFlow {
+                listState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }
+            }.first { it != null }
+            focusRequesters[index].requestFocus()
         }
     }
     Surface(color = MaterialTheme.colorScheme.background) {
@@ -152,6 +179,7 @@ private fun J2meListContent(
                 J2meListRow(
                     item = item,
                     listType = listType,
+                    focusRequester = focusRequesters[index],
                     onClick = { onItemClick(index) },
                     onFocus = if (listType == Choice.IMPLICIT) {
                         { onItemFocused(index) }
@@ -174,6 +202,7 @@ private fun J2meListContent(
 private fun J2meListRow(
     item: J2meListItemState,
     listType: Int,
+    focusRequester: FocusRequester,
     onClick: () -> Unit,
     onFocus: (() -> Unit)?,
     onLongClick: (() -> Unit)?,
@@ -186,6 +215,7 @@ private fun J2meListRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .focusRequester(focusRequester)
             .clip(MaterialTheme.shapes.small)
             .background(selectedBackground)
             .onFocusChanged { state ->
@@ -254,7 +284,7 @@ private fun J2meListPreviewSurface() {
     J2meListContent(
         listType = Choice.IMPLICIT,
         items = items,
-        selectionRequest = -1,
+        selectionRequest = SelectionRequest(null, 0),
         onItemClick = {},
         onItemFocused = {},
         onItemLongClick = { false },

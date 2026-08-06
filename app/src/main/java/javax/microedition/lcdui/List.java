@@ -385,6 +385,9 @@ public class List extends Screen implements Choice {
 
 	private void onItemClick(int position) {
 		synchronized (items) {
+			if (position < 0 || position >= items.size()) {
+				return;
+			}
 			CompoundItem item = items.get(position);
 			if (listType == MULTIPLE) {
 				item.setSelected(!item.isSelected());
@@ -406,6 +409,9 @@ public class List extends Screen implements Choice {
 
 	private boolean onItemLongClick(int position) {
 		synchronized (items) {
+			if (position < 0 || position >= items.size()) {
+				return false;
+			}
 			CompoundItem item = items.get(position);
 			if (!item.isSelected()) {
 				for (CompoundItem it : items) {
@@ -431,6 +437,9 @@ public class List extends Screen implements Choice {
 			return;
 		}
 		synchronized (items) {
+			if (position < 0 || position >= items.size()) {
+				return;
+			}
 			CompoundItem item = items.get(position);
 			if (!item.isSelected()) {
 				for (CompoundItem it : items) {
