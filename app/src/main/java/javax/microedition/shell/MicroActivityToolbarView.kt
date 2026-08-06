@@ -22,6 +22,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.core.view.updateLayoutParams
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -100,7 +101,11 @@ class MicroActivityToolbarView(
     }
 
     fun setToolbarHeight(heightPx: Int) {
-        (layoutParams as? LinearLayout.LayoutParams)?.height = heightPx.coerceAtLeast(0)
+        // Replace the layout params through the core-ktx helper so the parent
+        // is guaranteed to run a layout pass after the height change.
+        updateLayoutParams<LinearLayout.LayoutParams> {
+            height = heightPx.coerceAtLeast(0)
+        }
     }
 
     fun setToolbarState(
