@@ -108,7 +108,12 @@ public class ChoiceGroup extends Item implements Choice {
 			if (elementNum < 0 || elementNum >= size) {
 				throw new IndexOutOfBoundsException("elementNum = " + elementNum + ", but size = " + size);
 			}
+			boolean removedSelected = items.get(elementNum).isSelected();
 			items.remove(elementNum);
+			if (removedSelected && choiceType != MULTIPLE && !items.isEmpty()) {
+				int replacement = Math.min(elementNum, items.size() - 1);
+				items.get(replacement).setSelected(true);
+			}
 			notifyChoiceView();
 		}
 		if (size == 1 && choiceType == POPUP && view != null) {

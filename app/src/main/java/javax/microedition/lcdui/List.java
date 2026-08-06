@@ -118,7 +118,12 @@ public class List extends Screen implements Choice {
 			if (elementNum < 0 || elementNum >= size) {
 				throw new IndexOutOfBoundsException("elementNum = " + elementNum + ", but size = " + size);
 			}
+			boolean removedSelected = items.get(elementNum).isSelected();
 			items.remove(elementNum);
+			if (removedSelected && listType != MULTIPLE && !items.isEmpty()) {
+				int replacement = Math.min(elementNum, items.size() - 1);
+				items.get(replacement).setSelected(true);
+			}
 			notifyListView();
 		}
 		if (size == 1 && listType == IMPLICIT && view != null) {

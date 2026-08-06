@@ -176,11 +176,16 @@ public class ListModelTest {
 	}
 
 	@Test
-	public void deleteSelectedItemDropsSelectionState() {
+	public void deleteSelectedItemSelectsNearestRemainingItem() {
 		List list = implicitList("A", "B", "C");
 		list.setSelectedIndex(1, true);
 		list.delete(1);
-		assertEquals(-1, list.getSelectedIndex());
+		assertEquals("delete must re-select min(removed, new size - 1)", 1, list.getSelectedIndex());
+		assertEquals("C", list.getString(1));
+
+		list = implicitList("A");
+		list.delete(0);
+		assertEquals("delete last item clears selection", -1, list.getSelectedIndex());
 	}
 
 	@Test

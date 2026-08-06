@@ -134,11 +134,16 @@ public class ChoiceGroupModelTest {
 	}
 
 	@Test
-	public void deleteSelectedItemDropsSelectionState() {
+	public void deleteSelectedItemSelectsNearestRemainingItem() {
 		ChoiceGroup popup = popup("A", "B", "C");
 		popup.setSelectedIndex(1, true);
 		popup.delete(1);
-		assertEquals(-1, popup.getSelectedIndex());
+		assertEquals("delete must re-select min(removed, new size - 1)", 1, popup.getSelectedIndex());
+		assertEquals("C", popup.getString(1));
+
+		popup = popup("A");
+		popup.delete(0);
+		assertEquals("delete last item clears selection", -1, popup.getSelectedIndex());
 	}
 
 	@Test
