@@ -92,6 +92,9 @@ public final class CaptureLocatorParser {
 			}
 		}
 
+		if (CaptureRequest.DEFAULT_RECORDING_ENCODING.equals(encoding) && explicitDimensions) {
+			throw new MediaException("Explicit video recording dimensions are not supported");
+		}
 		if (!CameraRuntimeConfig.acceptsDimensions(width, height)) {
 			throw new MediaException("Requested camera source is outside the virtual limits");
 		}
