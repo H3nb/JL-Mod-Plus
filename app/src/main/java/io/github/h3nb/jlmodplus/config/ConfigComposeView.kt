@@ -139,6 +139,7 @@ class ConfigUiState(
     private var vkFeedbackState by mutableStateOf(false)
     private var vkForceOpacityState by mutableStateOf(false)
     private var skipResumeState by mutableStateOf(false)
+    private var cameraOverrideState by mutableStateOf(false)
 
     private var skinOptionsState by mutableStateOf(emptyList<String>())
     private var soundBankOptionsState by mutableStateOf(emptyList<String>())
@@ -154,6 +155,10 @@ class ConfigUiState(
     private var secureConnectionSelectionState by mutableIntStateOf(0)
     private var soundBankSelectionState by mutableIntStateOf(0)
     private var vkAlphaState by mutableIntStateOf(0)
+    private var cameraDeviceSelectionState by mutableIntStateOf(0)
+    private var cameraDefaultSnapshotSelectionState by mutableIntStateOf(1)
+    private var cameraMaxSnapshotSelectionState by mutableIntStateOf(3)
+    private var cameraJpegQualitySelectionState by mutableIntStateOf(1)
     private var shaderTuningAvailableState by mutableStateOf(false)
     private var aspectRatioState by mutableFloatStateOf(0f)
 
@@ -164,6 +169,31 @@ class ConfigUiState(
     private val layoutOptions = context.resources.getStringArray(R.array.PREF_LAYOUT_ENTRIES).toList()
     private val buttonShapeOptions = context.resources.getStringArray(R.array.pref_button_shape_entries).toList()
     private val secureConnectionOptions = context.resources.getStringArray(R.array.secure_connection_mode_entries).toList()
+    private val cameraDeviceOptions = listOf(
+        context.getString(R.string.camera_inherit_global),
+        context.getString(R.string.camera_default_device_auto),
+        context.getString(R.string.camera_default_device_rear),
+        context.getString(R.string.camera_default_device_front),
+    )
+    private val cameraDefaultSnapshotSizes = listOf(
+        320 to 240,
+        640 to 480,
+        480 to 640,
+        1280 to 960,
+        960 to 1280,
+    )
+    private val cameraDefaultSnapshotOptions = cameraDefaultSnapshotSizes.map { "${it.first}×${it.second}" }
+    private val cameraMaxSnapshotSizes = listOf(
+        640 to 480,
+        1280 to 960,
+        1600 to 1200,
+        2048 to 1536,
+    )
+    private val cameraMaxSnapshotOptions = cameraMaxSnapshotSizes.map {
+        if (it.first == 2048 && it.second == 1536) "2048×1536 / 1536×2048" else "${it.first}×${it.second}"
+    }
+    private val cameraJpegQualities = listOf(80, 90, 100)
+    private val cameraJpegQualityOptions = cameraJpegQualities.map(Int::toString)
 
     fun getScreenWidthText(): String = screenWidthState
     fun setScreenWidthText(value: String) { screenWidthState = value }
@@ -223,6 +253,8 @@ class ConfigUiState(
     fun setVkForceOpacityChecked(value: Boolean) { vkForceOpacityState = value }
     fun isSkipResumeChecked(): Boolean = skipResumeState
     fun setSkipResumeChecked(value: Boolean) { skipResumeState = value }
+    fun isCameraOverrideChecked(): Boolean = cameraOverrideState
+    fun setCameraOverrideChecked(value: Boolean) { cameraOverrideState = value }
 
     fun getSkinSelection(): Int = skinSelectionState
     fun setSkinSelection(value: Int) { skinSelectionState = value.coerceIn(0, (skinOptionsState.size - 1).coerceAtLeast(0)) }
@@ -257,6 +289,23 @@ class ConfigUiState(
     fun getSoundBankSelectionIndex(): Int = soundBankSelectionState
     fun getVkAlphaProgress(): Int = vkAlphaState
     fun setVkAlphaProgress(value: Int) { vkAlphaState = value.coerceIn(0, 255) }
+
+    fun getCameraDeviceSelection(): Int = cameraDeviceSelectionState
+    fun setCameraDeviceSelection(value: Int) { cameraDeviceSelectionState = value.coerceIn(0, cameraDeviceOptions.lastIndex) }
+    fun getCameraDefaultSnapshotWidth(): Int = cameraDefaultSnapshotSizes[cameraDefaultSnapshotSelectionState].first
+    fun getCameraDefaultSnapshotHeight(): Int = cameraDefaultSnapshotSizes[cameraDefaultSnapshotSelectionState].second
+    fun setCameraDefaultSnapshot(width: Int, height: Int) {
+        cameraDefaultSnapshotSelectionState = cameraDefaultSnapshotSizes.indexOf(width to height).takeIf { it >= 0 } ?: 1
+    }
+    fun getCameraMaximumSnapshotWidth(): Int = cameraMaxSnapshotSizes[cameraMaxSnapshotSelectionState].first
+    fun getCameraMaximumSnapshotHeight(): Int = cameraMaxSnapshotSizes[cameraMaxSnapshotSelectionState].second
+    fun setCameraMaximumSnapshot(width: Int, height: Int) {
+        cameraMaxSnapshotSelectionState = cameraMaxSnapshotSizes.indexOf(width to height).takeIf { it >= 0 } ?: 3
+    }
+    fun getCameraJpegQuality(): Int = cameraJpegQualities[cameraJpegQualitySelectionState]
+    fun setCameraJpegQuality(value: Int) {
+        cameraJpegQualitySelectionState = cameraJpegQualities.indexOf(value).takeIf { it >= 0 } ?: 1
+    }
 
     fun swapSizes() {
         val width = screenWidthState
@@ -392,6 +441,7 @@ class ConfigUiState(
                 EmulationSection(state)
                 if (showExperimental) ExperimentalSection(state, callback)
                 AudioSection(state)
+                CameraSection(state)
                 SystemSection(state, callback)
                 Spacer(Modifier.height(8.dp))
             }
@@ -619,6 +669,19 @@ class ConfigUiState(
     private fun AudioSection(state: ConfigUiState) {
         ConfigCard(R.string.pref_audio_title) {
             ConfigChoiceRow(R.string.pref_soundbank_title, state.soundBankOptionsState, state.soundBankSelectionState) { state.soundBankSelectionState = it }
+        }
+    }
+
+    @Composable
+    private fun CameraSection(state: ConfigUiState) {
+        ConfigCard(R.string.camera_settings_category) {
+            ConfigSwitch(R.string.camera_override_title, state.cameraOverrideState) { state.cameraOverrideState = it }
+            if (state.cameraOverrideState) {
+                ConfigChoiceRow(R.string.camera_default_device_title, state.cameraDeviceOptions, state.cameraDeviceSelectionState) { state.cameraDeviceSelectionState = it }
+                ConfigChoiceRow(R.string.camera_default_snapshot_title, state.cameraDefaultSnapshotOptions, state.cameraDefaultSnapshotSelectionState) { state.cameraDefaultSnapshotSelectionState = it }
+                ConfigChoiceRow(R.string.camera_max_snapshot_title, state.cameraMaxSnapshotOptions, state.cameraMaxSnapshotSelectionState) { state.cameraMaxSnapshotSelectionState = it }
+                ConfigChoiceRow(R.string.camera_jpeg_quality_title, state.cameraJpegQualityOptions, state.cameraJpegQualitySelectionState) { state.cameraJpegQualitySelectionState = it }
+            }
         }
     }
 
@@ -882,6 +945,11 @@ private fun ConfigScreenPreviewContent(darkTheme: Boolean) {
             setFontInSpChecked(false)
             setVkAlphaProgress(64)
             setSecureConnectionSelection(0)
+            setCameraOverrideChecked(true)
+            setCameraDeviceSelection(1)
+            setCameraDefaultSnapshot(640, 480)
+            setCameraMaximumSnapshot(2048, 1536)
+            setCameraJpegQuality(90)
         }
     }
     AppComposeTheme(darkTheme = darkTheme) {

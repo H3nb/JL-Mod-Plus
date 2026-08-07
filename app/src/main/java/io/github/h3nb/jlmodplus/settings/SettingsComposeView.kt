@@ -21,6 +21,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.content.res.XmlResourceParser
+import androidx.activity.compose.BackHandler
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.edit
 import androidx.compose.foundation.Canvas
@@ -71,6 +72,10 @@ import androidx.preference.PreferenceManager
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.config.Config
 import io.github.h3nb.jlmodplus.ui.AppComposeTheme
+import io.github.h3nb.jlmodplus.util.Constants.PREF_CAMERA_DEFAULT_DEVICE
+import io.github.h3nb.jlmodplus.util.Constants.PREF_CAMERA_DEFAULT_SNAPSHOT
+import io.github.h3nb.jlmodplus.util.Constants.PREF_CAMERA_JPEG_QUALITY
+import io.github.h3nb.jlmodplus.util.Constants.PREF_CAMERA_MAX_SNAPSHOT
 import io.github.h3nb.jlmodplus.util.Constants.PREF_EMULATOR_DIR
 import io.github.h3nb.jlmodplus.util.Constants.PREF_EXPAND_TO_CUTOUT
 import io.github.h3nb.jlmodplus.util.Constants.PREF_KEEP_SCREEN
@@ -101,6 +106,29 @@ internal class SettingsUiState(context: Context) {
         .zip(context.resources.getStringArray(R.array.pref_theme_entries))
         .map { (value, label) -> SettingsChoice(value, label) }
     internal val languageChoices = loadLanguageChoices(context)
+    internal val cameraDeviceChoices = listOf(
+        SettingsChoice("auto", context.getString(R.string.camera_default_device_auto)),
+        SettingsChoice("rear", context.getString(R.string.camera_default_device_rear)),
+        SettingsChoice("front", context.getString(R.string.camera_default_device_front)),
+    )
+    internal val cameraDefaultSnapshotChoices = listOf(
+        SettingsChoice("320x240", "320×240"),
+        SettingsChoice("640x480", "640×480"),
+        SettingsChoice("480x640", "480×640"),
+        SettingsChoice("1280x960", "1280×960"),
+        SettingsChoice("960x1280", "960×1280"),
+    )
+    internal val cameraMaxSnapshotChoices = listOf(
+        SettingsChoice("640x480", "640×480"),
+        SettingsChoice("1280x960", "1280×960"),
+        SettingsChoice("1600x1200", "1600×1200"),
+        SettingsChoice("2048x1536", "2048×1536 / 1536×2048"),
+    )
+    internal val cameraJpegQualityChoices = listOf(
+        SettingsChoice("80", "80"),
+        SettingsChoice("90", "90"),
+        SettingsChoice("100", "100"),
+    )
 
     internal var themeValue by mutableStateOf(
         preferences.getString(PREF_THEME, context.getString(R.string.pref_theme_default))
@@ -112,35 +140,28 @@ internal class SettingsUiState(context: Context) {
     )
     internal var directoryErrorPath by mutableStateOf<String?>(null)
 
-    internal var actionBarEnabled by mutableStateOf(
-        preferences.getBoolean(PREF_TOOLBAR, false),
+    internal var cameraDeviceValue by mutableStateOf(
+        preferences.getString(PREF_CAMERA_DEFAULT_DEVICE, "auto") ?: "auto",
     )
-    internal var expandToCutout by mutableStateOf(
-        // Preserve the current fullscreen game behavior for existing users;
-        // users with a notch or curved display can opt out in Settings.
-        preferences.getBoolean(PREF_EXPAND_TO_CUTOUT, true),
+    internal var cameraDefaultSnapshotValue by mutableStateOf(
+        preferences.getString(PREF_CAMERA_DEFAULT_SNAPSHOT, "640x480") ?: "640x480",
     )
-    internal var statusBarEnabled by mutableStateOf(
-        preferences.getBoolean(PREF_STATUSBAR, false),
+    internal var cameraMaxSnapshotValue by mutableStateOf(
+        preferences.getString(PREF_CAMERA_MAX_SNAPSHOT, "2048x1536") ?: "2048x1536",
     )
-    internal var keepScreenOnEnabled by mutableStateOf(
-        preferences.getBoolean(PREF_KEEP_SCREEN, false),
+    internal var cameraJpegQualityValue by mutableStateOf(
+        preferences.getInt(PREF_CAMERA_JPEG_QUALITY, 90).toString(),
     )
-    internal var rawScreenshot by mutableStateOf(
-        preferences.getBoolean(PREF_SCREENSHOT_SWITCH, false),
-    )
-    internal var vibrationEnabled by mutableStateOf(
-        preferences.getBoolean(PREF_VIBRATION, true),
-    )
-    internal var mascotMessage by mutableStateOf(
-        preferences.getBoolean("micro3d_using_message", false),
-    )
-    internal var audioSpeed by mutableStateOf(
-        preferences.getBoolean("pref_emulation_audio_speed", false),
-    )
-    internal var extremeSpeeds by mutableStateOf(
-        preferences.getBoolean("pref_emulation_extreme_speeds", false),
-    )
+
+    internal var actionBarEnabled by mutableStateOf(preferences.getBoolean(PREF_TOOLBAR, false))
+    internal var expandToCutout by mutableStateOf(preferences.getBoolean(PREF_EXPAND_TO_CUTOUT, true))
+    internal var statusBarEnabled by mutableStateOf(preferences.getBoolean(PREF_STATUSBAR, false))
+    internal var keepScreenOnEnabled by mutableStateOf(preferences.getBoolean(PREF_KEEP_SCREEN, false))
+    internal var rawScreenshot by mutableStateOf(preferences.getBoolean(PREF_SCREENSHOT_SWITCH, false))
+    internal var vibrationEnabled by mutableStateOf(preferences.getBoolean(PREF_VIBRATION, true))
+    internal var mascotMessage by mutableStateOf(preferences.getBoolean("micro3d_using_message", false))
+    internal var audioSpeed by mutableStateOf(preferences.getBoolean("pref_emulation_audio_speed", false))
+    internal var extremeSpeeds by mutableStateOf(preferences.getBoolean("pref_emulation_extreme_speeds", false))
 
     fun setDirectory(path: String) {
         directoryValue = path
@@ -161,6 +182,26 @@ internal class SettingsUiState(context: Context) {
         AppCompatDelegate.setApplicationLocales(
             androidx.core.os.LocaleListCompat.forLanguageTags(value),
         )
+    }
+
+    internal fun setCameraDevice(value: String) {
+        cameraDeviceValue = value
+        preferences.edit { putString(PREF_CAMERA_DEFAULT_DEVICE, value) }
+    }
+
+    internal fun setCameraDefaultSnapshot(value: String) {
+        cameraDefaultSnapshotValue = value
+        preferences.edit { putString(PREF_CAMERA_DEFAULT_SNAPSHOT, value) }
+    }
+
+    internal fun setCameraMaxSnapshot(value: String) {
+        cameraMaxSnapshotValue = value
+        preferences.edit { putString(PREF_CAMERA_MAX_SNAPSHOT, value) }
+    }
+
+    internal fun setCameraJpegQuality(value: String) {
+        cameraJpegQualityValue = value
+        preferences.edit { putInt(PREF_CAMERA_JPEG_QUALITY, value.toIntOrNull() ?: 90) }
     }
 
     internal fun setSwitch(key: String, value: Boolean) {
@@ -199,6 +240,14 @@ internal fun SettingsScreen(
             selectedTheme = state.themeValue,
             languageChoices = state.languageChoices,
             selectedLanguage = state.languageValue,
+            cameraDeviceChoices = state.cameraDeviceChoices,
+            selectedCameraDevice = state.cameraDeviceValue,
+            cameraDefaultSnapshotChoices = state.cameraDefaultSnapshotChoices,
+            selectedCameraDefaultSnapshot = state.cameraDefaultSnapshotValue,
+            cameraMaxSnapshotChoices = state.cameraMaxSnapshotChoices,
+            selectedCameraMaxSnapshot = state.cameraMaxSnapshotValue,
+            cameraJpegQualityChoices = state.cameraJpegQualityChoices,
+            selectedCameraJpegQuality = state.cameraJpegQualityValue,
             directory = state.directoryValue,
             switches = listOf(
                 SettingsSwitchState(PREF_TOOLBAR, R.string.pref_enable_actionbar_title, R.string.pref_enable_actionbar_summary, R.drawable.ic_setting_enable_action_bar, state.actionBarEnabled),
@@ -217,6 +266,10 @@ internal fun SettingsScreen(
             onBack = onBack,
             onThemeSelected = state::setTheme,
             onLanguageSelected = state::setLanguage,
+            onCameraDeviceSelected = state::setCameraDevice,
+            onCameraDefaultSnapshotSelected = state::setCameraDefaultSnapshot,
+            onCameraMaxSnapshotSelected = state::setCameraMaxSnapshot,
+            onCameraJpegQualitySelected = state::setCameraJpegQuality,
             onSwitchChanged = state::setSwitch,
             onProfiles = onProfiles,
             onChooseDirectory = onChooseDirectory,
@@ -231,6 +284,14 @@ private fun SettingsContent(
     selectedTheme: String,
     languageChoices: List<SettingsChoice>,
     selectedLanguage: String,
+    cameraDeviceChoices: List<SettingsChoice>,
+    selectedCameraDevice: String,
+    cameraDefaultSnapshotChoices: List<SettingsChoice>,
+    selectedCameraDefaultSnapshot: String,
+    cameraMaxSnapshotChoices: List<SettingsChoice>,
+    selectedCameraMaxSnapshot: String,
+    cameraJpegQualityChoices: List<SettingsChoice>,
+    selectedCameraJpegQuality: String,
     directory: String,
     switches: List<SettingsSwitchState>,
     experimentalSwitches: List<SettingsSwitchState>,
@@ -238,6 +299,10 @@ private fun SettingsContent(
     onBack: () -> Unit,
     onThemeSelected: (String) -> Unit,
     onLanguageSelected: (String) -> Unit,
+    onCameraDeviceSelected: (String) -> Unit,
+    onCameraDefaultSnapshotSelected: (String) -> Unit,
+    onCameraMaxSnapshotSelected: (String) -> Unit,
+    onCameraJpegQualitySelected: (String) -> Unit,
     onSwitchChanged: (String, Boolean) -> Unit,
     onProfiles: () -> Unit,
     onChooseDirectory: () -> Unit,
@@ -245,6 +310,22 @@ private fun SettingsContent(
 ) {
     var themeDialogVisible by androidx.compose.runtime.remember { mutableStateOf(false) }
     var languageDialogVisible by androidx.compose.runtime.remember { mutableStateOf(false) }
+    var cameraSettingsVisible by androidx.compose.runtime.remember { mutableStateOf(false) }
+    var cameraDeviceDialogVisible by androidx.compose.runtime.remember { mutableStateOf(false) }
+    var cameraDefaultDialogVisible by androidx.compose.runtime.remember { mutableStateOf(false) }
+    var cameraMaxDialogVisible by androidx.compose.runtime.remember { mutableStateOf(false) }
+    var cameraQualityDialogVisible by androidx.compose.runtime.remember { mutableStateOf(false) }
+
+    BackHandler(enabled = cameraSettingsVisible) {
+        cameraSettingsVisible = false
+    }
+
+    val selectedCameraLabel = cameraDeviceChoices.firstOrNull { it.value == selectedCameraDevice }?.label.orEmpty()
+    val selectedSnapshotLabel = cameraDefaultSnapshotChoices
+        .firstOrNull { it.value == selectedCameraDefaultSnapshot }?.label.orEmpty()
+    val cameraSummary = listOf(selectedCameraLabel, selectedSnapshotLabel)
+        .filter { it.isNotEmpty() }
+        .joinToString(" · ")
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
@@ -253,50 +334,101 @@ private fun SettingsContent(
                 .statusBarsPadding()
                 .navigationBarsPadding(),
         ) {
-            SettingsTopBar(onBack)
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 8.dp),
-            ) {
-                item {
-                    SettingsChoiceRow(
-                        icon = R.drawable.ic_setting_theme,
-                        title = stringResource(R.string.pref_theme_title),
-                        summary = themeChoices.firstOrNull { it.value == selectedTheme }?.label.orEmpty(),
-                        onClick = { themeDialogVisible = true },
-                    )
-                    SettingsChoiceRow(
-                        icon = R.drawable.ic_setting_translate,
-                        title = stringResource(R.string.pref_language),
-                        summary = languageChoices.firstOrNull { it.value == selectedLanguage }?.label.orEmpty(),
-                        onClick = { languageDialogVisible = true },
-                    )
+            SettingsTopBar(
+                title = stringResource(
+                    if (cameraSettingsVisible) R.string.camera_settings_category else R.string.action_settings,
+                ),
+                onBack = if (cameraSettingsVisible) {
+                    { cameraSettingsVisible = false }
+                } else {
+                    onBack
+                },
+            )
+            if (cameraSettingsVisible) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 8.dp),
+                ) {
+                    item {
+                        SettingsChoiceRow(
+                            icon = R.drawable.ic_setting_screenshot,
+                            title = stringResource(R.string.camera_default_device_title),
+                            summary = selectedCameraLabel,
+                            onClick = { cameraDeviceDialogVisible = true },
+                        )
+                        SettingsChoiceRow(
+                            icon = R.drawable.ic_setting_screenshot,
+                            title = stringResource(R.string.camera_default_snapshot_title),
+                            summary = selectedSnapshotLabel,
+                            onClick = { cameraDefaultDialogVisible = true },
+                        )
+                        SettingsChoiceRow(
+                            icon = R.drawable.ic_setting_screenshot,
+                            title = stringResource(R.string.camera_max_snapshot_title),
+                            summary = cameraMaxSnapshotChoices
+                                .firstOrNull { it.value == selectedCameraMaxSnapshot }?.label.orEmpty(),
+                            onClick = { cameraMaxDialogVisible = true },
+                        )
+                        SettingsChoiceRow(
+                            icon = R.drawable.ic_setting_screenshot,
+                            title = stringResource(R.string.camera_jpeg_quality_title),
+                            summary = cameraJpegQualityChoices
+                                .firstOrNull { it.value == selectedCameraJpegQuality }?.label.orEmpty(),
+                            onClick = { cameraQualityDialogVisible = true },
+                        )
+                    }
                 }
-                items(switches, key = { it.key }) { state ->
-                    SettingsSwitchRow(state, onSwitchChanged)
-                }
-                item {
-                    SettingsChoiceRow(
-                        icon = R.drawable.ic_setting_default,
-                        title = stringResource(R.string.profiles),
-                        summary = stringResource(R.string.pref_default_settings),
-                        onClick = onProfiles,
-                    )
-                    SettingsChoiceRow(
-                        icon = R.drawable.ic_setting_folder,
-                        title = stringResource(R.string.pref_emulator_dir),
-                        summary = directory,
-                        onClick = onChooseDirectory,
-                    )
-                    Text(
-                        text = stringResource(R.string.pref_category_experimental),
-                        modifier = Modifier.padding(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 8.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.titleSmall,
-                    )
-                }
-                items(experimentalSwitches, key = { it.key }) { state ->
-                    SettingsSwitchRow(state, onSwitchChanged)
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 8.dp),
+                ) {
+                    item {
+                        SettingsChoiceRow(
+                            icon = R.drawable.ic_setting_theme,
+                            title = stringResource(R.string.pref_theme_title),
+                            summary = themeChoices.firstOrNull { it.value == selectedTheme }?.label.orEmpty(),
+                            onClick = { themeDialogVisible = true },
+                        )
+                        SettingsChoiceRow(
+                            icon = R.drawable.ic_setting_translate,
+                            title = stringResource(R.string.pref_language),
+                            summary = languageChoices.firstOrNull { it.value == selectedLanguage }?.label.orEmpty(),
+                            onClick = { languageDialogVisible = true },
+                        )
+                        SettingsChoiceRow(
+                            icon = R.drawable.ic_setting_screenshot,
+                            title = stringResource(R.string.camera_settings_category),
+                            summary = cameraSummary,
+                            onClick = { cameraSettingsVisible = true },
+                        )
+                    }
+                    items(switches, key = { it.key }) { state ->
+                        SettingsSwitchRow(state, onSwitchChanged)
+                    }
+                    item {
+                        SettingsChoiceRow(
+                            icon = R.drawable.ic_setting_default,
+                            title = stringResource(R.string.profiles),
+                            summary = stringResource(R.string.pref_default_settings),
+                            onClick = onProfiles,
+                        )
+                        SettingsChoiceRow(
+                            icon = R.drawable.ic_setting_folder,
+                            title = stringResource(R.string.pref_emulator_dir),
+                            summary = directory,
+                            onClick = onChooseDirectory,
+                        )
+                        Text(
+                            text = stringResource(R.string.pref_category_experimental),
+                            modifier = Modifier.padding(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 8.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                    }
+                    items(experimentalSwitches, key = { it.key }) { state ->
+                        SettingsSwitchRow(state, onSwitchChanged)
+                    }
                 }
             }
         }
@@ -307,10 +439,7 @@ private fun SettingsContent(
             title = stringResource(R.string.pref_theme_title),
             choices = themeChoices,
             selected = selectedTheme,
-            onSelected = {
-                onThemeSelected(it)
-                themeDialogVisible = false
-            },
+            onSelected = { onThemeSelected(it); themeDialogVisible = false },
             onDismiss = { themeDialogVisible = false },
         )
     }
@@ -319,34 +448,59 @@ private fun SettingsContent(
             title = stringResource(R.string.pref_language),
             choices = languageChoices,
             selected = selectedLanguage,
-            onSelected = {
-                onLanguageSelected(it)
-                languageDialogVisible = false
-            },
+            onSelected = { onLanguageSelected(it); languageDialogVisible = false },
             onDismiss = { languageDialogVisible = false },
+        )
+    }
+    if (cameraDeviceDialogVisible) {
+        SettingsChoiceDialog(
+            title = stringResource(R.string.camera_default_device_title),
+            choices = cameraDeviceChoices,
+            selected = selectedCameraDevice,
+            onSelected = { onCameraDeviceSelected(it); cameraDeviceDialogVisible = false },
+            onDismiss = { cameraDeviceDialogVisible = false },
+        )
+    }
+    if (cameraDefaultDialogVisible) {
+        SettingsChoiceDialog(
+            title = stringResource(R.string.camera_default_snapshot_title),
+            choices = cameraDefaultSnapshotChoices,
+            selected = selectedCameraDefaultSnapshot,
+            onSelected = { onCameraDefaultSnapshotSelected(it); cameraDefaultDialogVisible = false },
+            onDismiss = { cameraDefaultDialogVisible = false },
+        )
+    }
+    if (cameraMaxDialogVisible) {
+        SettingsChoiceDialog(
+            title = stringResource(R.string.camera_max_snapshot_title),
+            choices = cameraMaxSnapshotChoices,
+            selected = selectedCameraMaxSnapshot,
+            onSelected = { onCameraMaxSnapshotSelected(it); cameraMaxDialogVisible = false },
+            onDismiss = { cameraMaxDialogVisible = false },
+        )
+    }
+    if (cameraQualityDialogVisible) {
+        SettingsChoiceDialog(
+            title = stringResource(R.string.camera_jpeg_quality_title),
+            choices = cameraJpegQualityChoices,
+            selected = selectedCameraJpegQuality,
+            onSelected = { onCameraJpegQualitySelected(it); cameraQualityDialogVisible = false },
+            onDismiss = { cameraQualityDialogVisible = false },
         )
     }
     if (directoryErrorPath != null) {
         AlertDialog(
             onDismissRequest = onDismissDirectoryError,
-            properties = DialogProperties(
-                dismissOnBackPress = false,
-                dismissOnClickOutside = false,
-            ),
+            properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
             title = { Text(stringResource(R.string.error)) },
-            text = {
-                Text(stringResource(R.string.create_apps_dir_failed, directoryErrorPath))
-            },
+            text = { Text(stringResource(R.string.create_apps_dir_failed, directoryErrorPath)) },
             dismissButton = {
                 TextButton(onClick = onDismissDirectoryError) {
                     Text(stringResource(android.R.string.cancel))
                 }
             },
             confirmButton = {
-                TextButton(onClick = {
-                    onDismissDirectoryError()
-                    onChooseDirectory()
-                }) {
+                TextButton(onClick = { onDismissDirectoryError(); onChooseDirectory() }) {
                     Text(stringResource(R.string.choose))
                 }
             },
@@ -355,7 +509,7 @@ private fun SettingsContent(
 }
 
 @Composable
-private fun SettingsTopBar(onBack: () -> Unit) {
+private fun SettingsTopBar(title: String, onBack: () -> Unit) {
     val backDescription = stringResource(R.string.back)
     Surface(
         modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -365,15 +519,13 @@ private fun SettingsTopBar(onBack: () -> Unit) {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             androidx.compose.material3.IconButton(
-                modifier = Modifier.semantics {
-                    contentDescription = backDescription
-                },
+                modifier = Modifier.semantics { contentDescription = backDescription },
                 onClick = onBack,
             ) {
                 BackGlyph(MaterialTheme.colorScheme.onSecondary)
             }
             Text(
-                text = stringResource(R.string.action_settings),
+                text = title,
                 color = MaterialTheme.colorScheme.onSecondary,
                 fontSize = 20.sp,
                 maxLines = 1,
@@ -384,12 +536,7 @@ private fun SettingsTopBar(onBack: () -> Unit) {
 }
 
 @Composable
-private fun SettingsChoiceRow(
-    icon: Int,
-    title: String,
-    summary: String,
-    onClick: () -> Unit,
-) {
+private fun SettingsChoiceRow(icon: Int, title: String, summary: String, onClick: () -> Unit) {
     SettingsRow(onClick = onClick) {
         Icon(
             painter = painterResource(icon),
@@ -397,9 +544,7 @@ private fun SettingsChoiceRow(
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(24.dp),
         )
-        Column(
-            modifier = Modifier.weight(1f).padding(start = 16.dp),
-        ) {
+        Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
             Text(text = title, color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp)
             if (summary.isNotEmpty()) {
                 Text(
@@ -416,10 +561,7 @@ private fun SettingsChoiceRow(
 }
 
 @Composable
-private fun SettingsSwitchRow(
-    state: SettingsSwitchState,
-    onSwitchChanged: (String, Boolean) -> Unit,
-) {
+private fun SettingsSwitchRow(state: SettingsSwitchState, onSwitchChanged: (String, Boolean) -> Unit) {
     SettingsRow(onClick = { onSwitchChanged(state.key, !state.defaultValue) }) {
         if (state.icon != null) {
             Icon(
@@ -452,26 +594,14 @@ private fun SettingsSwitchRow(
 }
 
 @Composable
-private fun SettingsRow(
-    onClick: () -> Unit,
-    content: @Composable RowScope.() -> Unit,
-) {
+private fun SettingsRow(onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
             .padding(horizontal = 20.dp, vertical = 10.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            content = content,
-        )
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, content = content)
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp)
-                .height(1.dp)
+            modifier = Modifier.fillMaxWidth().padding(top = 10.dp).height(1.dp)
                 .background(MaterialTheme.colorScheme.outlineVariant),
         )
     }
@@ -495,10 +625,7 @@ private fun SettingsChoiceDialog(
                         modifier = Modifier.fillMaxWidth().clickable { onSelected(choice.value) },
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        RadioButton(
-                            selected = choice.value == selected,
-                            onClick = { onSelected(choice.value) },
-                        )
+                        RadioButton(selected = choice.value == selected, onClick = { onSelected(choice.value) })
                         Text(
                             text = choice.label,
                             modifier = Modifier.padding(start = 8.dp),
@@ -509,9 +636,7 @@ private fun SettingsChoiceDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(android.R.string.cancel))
-            }
+            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
         },
     )
 }
@@ -537,11 +662,7 @@ private fun ChoiceChevron(color: Color) {
 @SuppressLint("DiscouragedApi")
 private fun loadLanguageChoices(context: Context): List<SettingsChoice> {
     val tags = mutableListOf("")
-    val resourceId = context.resources.getIdentifier(
-        "_generated_res_locale_config",
-        "xml",
-        context.packageName,
-    )
+    val resourceId = context.resources.getIdentifier("_generated_res_locale_config", "xml", context.packageName)
     if (resourceId != 0) {
         val parser: XmlResourceParser = context.resources.getXml(resourceId)
         try {
@@ -564,15 +685,11 @@ private fun loadLanguageChoices(context: Context): List<SettingsChoice> {
 
 @Preview(name = "Settings light", showBackground = true, widthDp = 420, heightDp = 760)
 @Composable
-internal fun SettingsLightPreview() {
-    SettingsPreview(darkTheme = false)
-}
+internal fun SettingsLightPreview() { SettingsPreview(darkTheme = false) }
 
 @Preview(name = "Settings dark", showBackground = true, widthDp = 420, heightDp = 760, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-internal fun SettingsDarkPreview() {
-    SettingsPreview(darkTheme = true)
-}
+internal fun SettingsDarkPreview() { SettingsPreview(darkTheme = true) }
 
 @Composable
 private fun SettingsPreview(darkTheme: Boolean) {
@@ -586,12 +703,28 @@ private fun SettingsPreview(darkTheme: Boolean) {
         SettingsChoice("en", "English"),
         SettingsChoice("id", "Indonesia"),
     )
+    val cameraDevices = listOf(
+        SettingsChoice("auto", stringResource(R.string.camera_default_device_auto)),
+        SettingsChoice("rear", stringResource(R.string.camera_default_device_rear)),
+        SettingsChoice("front", stringResource(R.string.camera_default_device_front)),
+    )
+    val defaultSnapshots = listOf(SettingsChoice("640x480", "640×480"))
+    val maxSnapshots = listOf(SettingsChoice("2048x1536", "2048×1536 / 1536×2048"))
+    val qualities = listOf(SettingsChoice("90", "90"))
     AppComposeTheme(darkTheme = darkTheme) {
         SettingsContent(
             themeChoices = themeChoices,
             selectedTheme = "dark",
             languageChoices = languages,
             selectedLanguage = "",
+            cameraDeviceChoices = cameraDevices,
+            selectedCameraDevice = "auto",
+            cameraDefaultSnapshotChoices = defaultSnapshots,
+            selectedCameraDefaultSnapshot = "640x480",
+            cameraMaxSnapshotChoices = maxSnapshots,
+            selectedCameraMaxSnapshot = "2048x1536",
+            cameraJpegQualityChoices = qualities,
+            selectedCameraJpegQuality = "90",
             directory = "/sdcard/JL-Mod Plus",
             switches = listOf(
                 SettingsSwitchState(PREF_TOOLBAR, R.string.pref_enable_actionbar_title, R.string.pref_enable_actionbar_summary, R.drawable.ic_setting_enable_action_bar, false),
@@ -608,6 +741,10 @@ private fun SettingsPreview(darkTheme: Boolean) {
             onBack = {},
             onThemeSelected = {},
             onLanguageSelected = {},
+            onCameraDeviceSelected = {},
+            onCameraDefaultSnapshotSelected = {},
+            onCameraMaxSnapshotSelected = {},
+            onCameraJpegQualitySelected = {},
             onSwitchChanged = { _, _ -> },
             onProfiles = {},
             onChooseDirectory = {},

@@ -65,6 +65,10 @@ public final class SnapshotPipeline {
 				throw new MediaException("Camera JPEG could not be decoded");
 			}
 
+			// CameraX defines the saved JPEG's EXIF transform as the rotation/flip required
+			// to match ImageCapture's target rotation. Normalize that transform first.
+			// Snapshot dimensions control only the later crop/scale and must never decide
+			// whether orientation metadata is applied.
 			oriented = applyOrientation(source, readOrientation(file));
 			cropped = cropToAspect(oriented, request.getWidth(), request.getHeight());
 			output = Bitmap.createScaledBitmap(cropped, request.getWidth(), request.getHeight(), true);

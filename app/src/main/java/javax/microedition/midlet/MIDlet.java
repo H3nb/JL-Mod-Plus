@@ -3,6 +3,7 @@
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2018 Nikita Shakarun
  * Copyright 2020-2026 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +32,7 @@ import java.util.Map;
 import javax.microedition.io.ConnectionNotFoundException;
 import javax.microedition.io.Connector;
 import javax.microedition.lcdui.Display;
+import javax.microedition.media.camera.MidletMediaPermissionGate;
 import javax.microedition.shell.MidletThread;
 import javax.microedition.util.ContextHolder;
 
@@ -110,6 +112,9 @@ public abstract class MIDlet {
 	}
 
 	public final int checkPermission(String permission) {
+		if (MidletMediaPermissionGate.SNAPSHOT_PERMISSION.equals(permission)) {
+			return MidletMediaPermissionGate.checkSnapshotPermission();
+		}
 		return 1;
 	}
 

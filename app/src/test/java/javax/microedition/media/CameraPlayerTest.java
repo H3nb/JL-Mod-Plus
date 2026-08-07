@@ -18,68 +18,45 @@ package javax.microedition.media;
 
 import org.junit.Test;
 
-import javax.microedition.amms.control.ImageFormatControl;
-import javax.microedition.amms.control.camera.CameraControl;
-import javax.microedition.amms.control.camera.ExposureControl;
-import javax.microedition.amms.control.camera.FlashControl;
-import javax.microedition.amms.control.camera.FocusControl;
-import javax.microedition.amms.control.camera.SnapshotControl;
-import javax.microedition.amms.control.camera.ZoomControl;
 import javax.microedition.media.control.VideoControl;
-import javax.microedition.media.control.RecordControl;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThrows;
 
 public class CameraPlayerTest {
 	@Test
-	public void constructionAndRealizationDoNotNeedAndroidCameraAccess() throws Exception {
+	public void realizationExposesOnlyStableJsr135VideoControl() throws Exception {
 		CameraPlayer player = new CameraPlayer("capture://video");
 		try {
 			assertEquals(Player.UNREALIZED, player.getState());
 			player.realize();
 			assertEquals(Player.REALIZED, player.getState());
-			assertNotNull(player.getControl(VideoControl.class.getName()));
-			assertTrue(player.getControl("VideoControl") instanceof VideoControl);
+
+			Control shortName = player.getControl("VideoControl");
+			Control fullName = player.getControl(VideoControl.class.getName());
+			assertNotNull(shortName);
+			assertSame(shortName, fullName);
+			assertEquals(1, player.getControls().length);
+			assertSame(shortName, player.getControls()[0]);
+
+			assertNull(player.getControl("RecordControl"));
+			assertNull(player.getControl("CameraControl"));
+			assertNull(player.getControl("SnapshotControl"));
+			assertThrows(IllegalArgumentException.class, () -> player.getControl(null));
 		} finally {
 			player.close();
 		}
 	}
 
 	@Test
-	public void combinedCaptureExposesRecordingControlWithoutOpeningCamera() throws Exception {
-		CameraPlayer player = new CameraPlayer("capture://audio_video");
+	public void realizeDoesNotOpenAndroidCamera() throws Exception {
+		CameraPlayer player = new CameraPlayer("capture://devcam1");
 		try {
 			player.realize();
-			assertTrue(player.getControl("RecordControl") instanceof RecordControl);
-			assertEquals("video/mp4", ((RecordControl) player.getControl("RecordControl"))
-					.getContentType());
-		} finally {
-			player.close();
-		}
-	}
-
-	@Test
-	public void realizationExposesCameraControlContractsWithoutOpeningHardware() throws Exception {
-		CameraPlayer player = new CameraPlayer("capture://video");
-		try {
-			player.realize();
-			assertTrue(player.getControl("CameraControl") instanceof CameraControl);
-			assertTrue(player.getControl("SnapshotControl") instanceof SnapshotControl);
-			assertTrue(player.getControl("FocusControl") instanceof FocusControl);
-			assertTrue(player.getControl("ExposureControl") instanceof ExposureControl);
-			assertTrue(player.getControl("FlashControl") instanceof FlashControl);
-			assertTrue(player.getControl("ZoomControl") instanceof ZoomControl);
-			assertTrue(player.getControl("ImageFormatControl") instanceof ImageFormatControl);
-
-			CameraControl camera = (CameraControl) player.getControl("CameraControl");
-			camera.setStillResolution(0);
-			assertEquals(0, camera.getStillResolution());
-			ImageFormatControl imageFormat =
-					(ImageFormatControl) player.getControl("ImageFormatControl");
-			assertEquals(75, imageFormat.setParameter("quality", 75));
-			assertEquals(75, imageFormat.getIntParameterValue("quality"));
+			assertEquals(Player.REALIZED, player.getState());
 		} finally {
 			player.close();
 		}

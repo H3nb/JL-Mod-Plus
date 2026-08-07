@@ -41,6 +41,10 @@ public class Constants {
 	public static final String PREF_EMULATION_AUDIO_SPEED = "pref_emulation_audio_speed";
 	public static final String PREF_EMULATION_EXTREME_SPEEDS =
 			"pref_emulation_extreme_speeds";
+	public static final String PREF_CAMERA_DEFAULT_DEVICE = "pref_camera_default_device";
+	public static final String PREF_CAMERA_DEFAULT_SNAPSHOT = "pref_camera_default_snapshot";
+	public static final String PREF_CAMERA_MAX_SNAPSHOT = "pref_camera_max_snapshot";
+	public static final String PREF_CAMERA_JPEG_QUALITY = "pref_camera_jpeg_quality";
 
 	private Constants(){}
 }

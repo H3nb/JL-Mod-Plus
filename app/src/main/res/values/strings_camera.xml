@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="camera_permission_title">Camera access</string>
+    <string name="camera_permission_message">Allow this MIDlet to capture a camera snapshot?</string>
+    <string name="camera_permission_allow_once">Allow once</string>
+    <string name="camera_permission_always_allow">Always allow</string>
+    <string name="camera_permission_deny">Deny</string>
+
+    <string name="camera_settings_category">Camera</string>
+    <string name="camera_override_title">Use custom camera settings</string>
+    <string name="camera_inherit_global">Use global default</string>
+    <string name="camera_default_device_title">Default camera</string>
+    <string name="camera_default_device_auto">Automatic — rear preferred</string>
+    <string name="camera_default_device_rear">Rear camera</string>
+    <string name="camera_default_device_front">Front camera</string>
+    <string name="camera_default_snapshot_title">Default snapshot resolution</string>
+    <string name="camera_max_snapshot_title">Maximum snapshot resolution</string>
+    <string name="camera_jpeg_quality_title">JPEG quality</string>
+</resources>

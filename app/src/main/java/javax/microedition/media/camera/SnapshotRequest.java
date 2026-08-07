@@ -38,6 +38,10 @@ public final class SnapshotRequest {
 		this.quality = quality;
 	}
 
+	static SnapshotRequest defaultRequest(int quality) {
+		return new SnapshotRequest(0, 0, true, quality);
+	}
+
 	public int getWidth() {
 		return width;
 	}

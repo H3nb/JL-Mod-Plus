@@ -20,15 +20,10 @@ import android.content.pm.PackageManager;
 
 import javax.microedition.util.ContextHolder;
 
-/** Virtual camera capabilities exposed to the converted MIDlet. */
+/** Runtime-owned multimedia capabilities exposed to converted MIDlets. */
 public final class VirtualCameraCapabilities {
 	public static final String VIDEO_ENCODING = "encoding=jpeg";
 	public static final String AUDIO_ENCODING = "encoding=amr-wb";
-	public static final String SNAPSHOT_ENCODINGS =
-					"encoding=jpeg&width=480&height=640 "
-					+ "encoding=jpeg&width=240&height=320 "
-					+ "encoding=jpeg&width=960&height=1280 "
-					+ "encoding=jpeg&width=1536&height=2048";
 
 	private VirtualCameraCapabilities() {
 	}
@@ -51,10 +46,20 @@ public final class VirtualCameraCapabilities {
 		}
 	}
 
-	/**
-	 * Returns the camera-related Java ME system properties handled by the
-	 * emulator, or {@code null} for unrelated keys.
-	 */
+	/** True for properties that must reflect the current emulator capability. */
+	public static boolean isManagedProperty(String key) {
+		if (key == null) {
+			return false;
+		}
+		return switch (key) {
+			case "supports.video.capture", "supports.audio.capture", "supports.recording",
+					"audio.encoding", "audio.encodings", "video.encoding", "video.encodings",
+					"video.snapshot.encoding", "video.snapshot.encodings" -> true;
+			default -> false;
+		};
+	}
+
+	/** Returns emulator-owned Java ME multimedia properties, or null for unrelated keys. */
 	public static String systemProperty(String key) {
 		if (key == null) {
 			return null;
@@ -62,13 +67,14 @@ public final class VirtualCameraCapabilities {
 		return switch (key) {
 			case "supports.video.capture" -> Boolean.toString(hasCameraFeature());
 			case "supports.audio.capture" -> Boolean.toString(hasMicrophoneFeature());
-			case "supports.recording" -> Boolean.toString(hasCameraFeature() || hasMicrophoneFeature());
+			// Camera recording is gated; the existing audio RecordPlayer remains available.
+			case "supports.recording" -> Boolean.toString(hasMicrophoneFeature());
 			case "audio.encoding", "audio.encodings" ->
 					hasMicrophoneFeature() ? AUDIO_ENCODING : null;
 			case "video.encoding", "video.encodings" ->
 					hasCameraFeature() ? VIDEO_ENCODING : null;
 			case "video.snapshot.encoding", "video.snapshot.encodings" ->
-					hasCameraFeature() ? SNAPSHOT_ENCODINGS : null;
+					hasCameraFeature() ? CameraConfiguration.snapshotEncodings() : null;
 			default -> null;
 		};
 	}

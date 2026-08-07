@@ -21,6 +21,7 @@ import org.junit.Test;
 import javax.microedition.media.MediaException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -30,10 +31,22 @@ public class CaptureLocatorParserTest {
 		CaptureRequest request = CaptureLocatorParser.parse("capture://video");
 
 		assertEquals("capture://video", request.getLocator());
-		assertEquals("video", request.getDevice());
+		assertEquals(CaptureRequest.DEVICE_VIDEO, request.getDevice());
+		assertEquals(LogicalCameraDevice.DEFAULT, request.getLogicalCameraDevice());
 		assertEquals("jpeg", request.getEncoding());
-		assertEquals(480, request.getWidth());
-		assertEquals(640, request.getHeight());
+		assertEquals(640, request.getWidth());
+		assertEquals(480, request.getHeight());
+		assertFalse(request.hasExplicitDimensions());
+	}
+
+	@Test
+	public void mapsNamedAndCompatibilityDevices() throws Exception {
+		assertEquals(LogicalCameraDevice.REAR,
+				CaptureLocatorParser.parse("capture://devcam0").getLogicalCameraDevice());
+		assertEquals(LogicalCameraDevice.FRONT,
+				CaptureLocatorParser.parse("capture://devcam1").getLogicalCameraDevice());
+		assertEquals(LogicalCameraDevice.DEFAULT,
+				CaptureLocatorParser.parse("capture://image").getLogicalCameraDevice());
 	}
 
 	@Test
@@ -43,6 +56,7 @@ public class CaptureLocatorParserTest {
 
 		assertEquals(1280, request.getWidth());
 		assertEquals(960, request.getHeight());
+		assertTrue(request.hasExplicitDimensions());
 	}
 
 	@Test
@@ -67,10 +81,12 @@ public class CaptureLocatorParserTest {
 	public void rejectsUnsupportedEncodingAndDevice() {
 		assertThrows(MediaException.class, () ->
 				CaptureLocatorParser.parse("capture://video?encoding=gray8"));
+		assertThrows(MediaException.class, () ->
+				CaptureLocatorParser.parse("capture://devcam9"));
 	}
 
 	@Test
-	public void parsesCombinedAudioVideoLocator() throws Exception {
+	public void parsesCombinedAudioVideoLocatorForManagerGating() throws Exception {
 		CaptureRequest request = CaptureLocatorParser.parse("capture://audio_video");
 
 		assertEquals(CaptureRequest.DEVICE_AUDIO_VIDEO, request.getDevice());

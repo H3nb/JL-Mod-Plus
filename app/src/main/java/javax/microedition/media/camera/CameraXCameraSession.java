@@ -16,35 +16,18 @@
 
 package javax.microedition.media.camera;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
 import android.os.Looper;
-import android.util.Range;
 import android.util.Rational;
 import android.util.Size;
 
-import androidx.camera.core.Camera;
-import androidx.camera.core.CameraInfo;
-import androidx.camera.core.ExposureState;
 import androidx.camera.core.CameraSelector;
-import androidx.camera.core.FocusMeteringAction;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
-import androidx.camera.core.MeteringPointFactory;
 import androidx.camera.core.Preview;
-import androidx.camera.core.SurfaceOrientedMeteringPointFactory;
+import androidx.camera.core.UseCaseGroup;
+import androidx.camera.core.ViewPort;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
-import androidx.camera.video.FileOutputOptions;
-import androidx.camera.video.FallbackStrategy;
-import androidx.camera.video.PendingRecording;
-import androidx.camera.video.Quality;
-import androidx.camera.video.QualitySelector;
-import androidx.camera.video.Recorder;
-import androidx.camera.video.Recording;
-import androidx.camera.video.VideoCapture;
-import androidx.camera.video.VideoRecordEvent;
-import androidx.core.content.ContextCompat;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -62,9 +45,8 @@ import javax.microedition.media.MediaException;
 import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
 
-/** CameraX adapter for preview and JPEG image capture. */
-public final class CameraXCameraSession implements CameraSession, CameraRecordingSession,
-		CameraHardwareSession {
+/** CameraX backend for JSR-135 preview and JPEG still capture. */
+public final class CameraXCameraSession implements CameraSession {
 	private static final long OPERATION_TIMEOUT_MS = 20_000L;
 
 	private final CaptureRequest request;
@@ -77,22 +59,13 @@ public final class CameraXCameraSession implements CameraSession, CameraRecordin
 
 	private volatile PreviewView previewView;
 	private ProcessCameraProvider cameraProvider;
-	private Camera camera;
 	private Preview preview;
 	private ImageCapture imageCapture;
-	private VideoCapture<Recorder> videoCapture;
-	private Recorder recorder;
-	private Recording recording;
 	private boolean prepared;
 	private boolean started;
 	private boolean bound;
 	private boolean previewBound;
-	private boolean recordingBound;
 	private FileCaptureResult activeCapture;
-	private FileRecordingResult activeRecording;
-	private int flashMode = javax.microedition.amms.control.camera.FlashControl.OFF;
-	private int focus = javax.microedition.amms.control.camera.FocusControl.AUTO;
-	private boolean macro;
 
 	public CameraXCameraSession(CaptureRequest request) {
 		this.request = request;
@@ -111,12 +84,12 @@ public final class CameraXCameraSession implements CameraSession, CameraRecordin
 					ProcessCameraProvider.getInstance(activity);
 			ProcessCameraProvider provider = providerFuture.get(
 					OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+			selectCamera(provider);
 			ImageCapture capture = new ImageCapture.Builder()
 					.setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
-					.setJpegQuality(90)
-					// Keep the physical capture portrait so orientation normalization does not
-					// discard the portrait field of view before the J2ME resize/crop step.
-					.setTargetResolution(new Size(CaptureRequest.PHYSICAL_CAPTURE_WIDTH,
+					.setJpegQuality(CameraRuntimeConfig.jpegQuality())
+					.setTargetResolution(new Size(
+							CaptureRequest.PHYSICAL_CAPTURE_WIDTH,
 							CaptureRequest.PHYSICAL_CAPTURE_HEIGHT))
 					.build();
 			Preview cameraPreview = new Preview.Builder()
@@ -197,9 +170,6 @@ public final class CameraXCameraSession implements CameraSession, CameraRecordin
 
 	@Override
 	public void stop() throws MediaException {
-		if (isRecording()) {
-			stopRecording();
-		}
 		final MicroActivity activity;
 		synchronized (this) {
 			if (!started) {
@@ -224,9 +194,6 @@ public final class CameraXCameraSession implements CameraSession, CameraRecordin
 			if (!started || imageCapture == null) {
 				throw new MediaException("Camera Player is not started");
 			}
-			if (recording != null) {
-				throw new MediaException("Camera snapshot is unavailable while recording");
-			}
 			if (!captureInProgress.compareAndSet(false, true)) {
 				throw new MediaException("Another camera snapshot is already in progress");
 			}
@@ -238,7 +205,8 @@ public final class CameraXCameraSession implements CameraSession, CameraRecordin
 		try {
 			File captureFile = File.createTempFile("jlmod-camera-", ".jpg", ContextHolder.getCacheDir());
 			output = captureFile;
-			ImageCapture.OutputFileOptions options = new ImageCapture.OutputFileOptions.Builder(captureFile).build();
+			ImageCapture.OutputFileOptions options =
+					new ImageCapture.OutputFileOptions.Builder(captureFile).build();
 			capture.takePicture(options, callbackExecutor, new ImageCapture.OnImageSavedCallback() {
 				@Override
 				public void onImageSaved(ImageCapture.OutputFileResults outputFileResults) {
@@ -279,339 +247,6 @@ public final class CameraXCameraSession implements CameraSession, CameraRecordin
 	}
 
 	@Override
-	public void startRecording(File outputFile, boolean withAudio, long fileSizeLimit)
-			throws MediaException {
-		startRecording(outputFile, withAudio, fileSizeLimit,
-				request.getWidth(), request.getHeight());
-	}
-
-	@Override
-	public void startRecording(File outputFile, boolean withAudio, long fileSizeLimit,
-			int width, int height)
-				throws MediaException {
-		if (outputFile == null) {
-			throw new IllegalArgumentException("recording output must not be null");
-		}
-		final MicroActivity activity;
-		synchronized (this) {
-			if (!started || cameraProvider == null) {
-				throw new MediaException("Camera Player is not started");
-			}
-			if (recording != null) {
-				return;
-			}
-			activity = requireActivity();
-		}
-		if (withAudio && ContextCompat.checkSelfPermission(
-				activity, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-			throw new SecurityException("Microphone permission was revoked");
-		}
-		onMainThread(activity, () -> {
-			synchronized (CameraXCameraSession.this) {
-				if (!started || cameraProvider == null) {
-					throw new IllegalStateException("Camera session is not started");
-				}
-				if (recording != null) {
-					return null;
-				}
-				if (bound) {
-					unbindUseCases();
-				}
-				Quality quality = recordingQuality(width, height);
-				Recorder newRecorder = new Recorder.Builder()
-						.setQualitySelector(QualitySelector.from(
-								quality,
-								FallbackStrategy.lowerQualityOrHigherThan(quality)))
-						.build();
-				VideoCapture<Recorder> newVideoCapture = VideoCapture.withOutput(newRecorder);
-				bindRecordingUseCases(activity, newRecorder, newVideoCapture);
-
-				FileOutputOptions.Builder outputBuilder = new FileOutputOptions.Builder(outputFile);
-				if (fileSizeLimit < Long.MAX_VALUE) {
-					outputBuilder.setFileSizeLimit(fileSizeLimit);
-				}
-				PendingRecording pending = newRecorder.prepareRecording(
-						activity, outputBuilder.build());
-				if (withAudio) {
-					pending = pending.withAudioEnabled();
-				}
-				FileRecordingResult result = new FileRecordingResult();
-				activeRecording = result;
-				try {
-					recording = pending.start(callbackExecutor, event -> {
-						if (event instanceof VideoRecordEvent.Finalize) {
-							result.complete((VideoRecordEvent.Finalize) event);
-						}
-					});
-				} catch (RuntimeException e) {
-					activeRecording = null;
-					unbindUseCases();
-					bindUseCases(activity);
-					throw e;
-				}
-				return null;
-			}
-		});
-	}
-
-	@Override
-	public void stopRecording() throws MediaException {
-		final MicroActivity activity;
-		final Recording currentRecording;
-		final FileRecordingResult result;
-		synchronized (this) {
-			currentRecording = recording;
-			result = activeRecording;
-			if (currentRecording == null || result == null) {
-				return;
-			}
-			activity = requireActivity();
-		}
-		onMainThread(activity, () -> {
-			currentRecording.stop();
-			return null;
-		});
-		VideoRecordEvent.Finalize finalized;
-		try {
-			finalized = result.get(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			throw new MediaException("Video recording stop was interrupted");
-		} catch (TimeoutException e) {
-			throw new MediaException("Video recording did not finalize");
-		} catch (ExecutionException e) {
-			throw new MediaException("Video recording failed to finalize");
-		}
-		onMainThread(activity, () -> {
-			synchronized (CameraXCameraSession.this) {
-				if (recording == currentRecording) {
-					unbindUseCases();
-					recording = null;
-					activeRecording = null;
-					recordingBound = false;
-					if (started) {
-						bindUseCases(activity);
-					}
-				}
-			}
-			return null;
-		});
-		if (finalized.hasError()) {
-			throw new MediaException("Video recording failed: " + finalized.getError());
-		}
-	}
-
-	@Override
-	public synchronized boolean isRecording() {
-		return recording != null;
-	}
-
-	@Override
-	public synchronized int getCameraRotation() throws MediaException {
-		int degrees = requireCameraInfo().getSensorRotationDegrees();
-		return switch (degrees) {
-			case 90 -> javax.microedition.amms.control.camera.CameraControl.ROTATE_RIGHT;
-			case 270 -> javax.microedition.amms.control.camera.CameraControl.ROTATE_LEFT;
-			case 0, 180 -> javax.microedition.amms.control.camera.CameraControl.ROTATE_NONE;
-			default -> javax.microedition.amms.control.camera.CameraControl.UNKNOWN;
-		};
-	}
-
-	@Override
-	public synchronized boolean hasFlashUnit() throws MediaException {
-		return requireCameraInfo().hasFlashUnit();
-	}
-
-	@Override
-	public synchronized int getFlashMode() {
-		return flashMode;
-	}
-
-	@Override
-	public void setFlashMode(int mode) throws MediaException {
-		if (mode != javax.microedition.amms.control.camera.FlashControl.OFF
-				&& mode != javax.microedition.amms.control.camera.FlashControl.AUTO
-				&& mode != javax.microedition.amms.control.camera.FlashControl.FORCE) {
-			throw new IllegalArgumentException("unsupported flash mode: " + mode);
-		}
-		final MicroActivity activity = requireActivity();
-		onMainThread(activity, () -> {
-			synchronized (CameraXCameraSession.this) {
-				if (!requireCameraInfo().hasFlashUnit()
-						&& mode != javax.microedition.amms.control.camera.FlashControl.OFF) {
-					throw new IllegalStateException("camera has no flash unit");
-				}
-				if (imageCapture == null) {
-					throw new IllegalStateException("image capture is unavailable");
-				}
-				imageCapture.setFlashMode(toImageCaptureFlashMode(mode));
-				flashMode = mode;
-			}
-			return null;
-		});
-	}
-
-	@Override
-	public synchronized boolean isAutoFocusSupported() throws MediaException {
-		if (camera == null) {
-			throw new MediaException("Camera is not bound");
-		}
-		return true;
-	}
-
-	@Override
-	public int setFocus(int distance) throws MediaException {
-		if (distance != javax.microedition.amms.control.camera.FocusControl.AUTO
-				&& distance != javax.microedition.amms.control.camera.FocusControl.AUTO_LOCK) {
-			throw new MediaException("Manual focus is not supported by the CameraX backend");
-		}
-		final MicroActivity activity = requireActivity();
-		FocusMeteringAction action = onMainThread(activity,
-				() -> createCenterFocusAction(distance ==
-						javax.microedition.amms.control.camera.FocusControl.AUTO_LOCK));
-		try {
-			androidx.camera.core.FocusMeteringResult result = camera.getCameraControl()
-					.startFocusAndMetering(action).get(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-			if (result == null || !result.isFocusSuccessful()) {
-				throw new MediaException("Camera autofocus did not succeed");
-			}
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			throw new MediaException("Camera autofocus was interrupted");
-		} catch (TimeoutException e) {
-			throw new MediaException("Camera autofocus timed out");
-		} catch (ExecutionException e) {
-			throw new MediaException("Camera autofocus failed: " + e.getMessage());
-		}
-		synchronized (this) {
-			focus = distance;
-		}
-		return distance;
-	}
-
-	@Override
-	public synchronized int getFocus() {
-		return focus;
-	}
-
-	@Override
-	public synchronized boolean isMacroSupported() {
-		return false;
-	}
-
-	@Override
-	public synchronized void setMacro(boolean enable) throws MediaException {
-		if (enable) {
-			throw new MediaException("Macro focus is not supported by the CameraX backend");
-		}
-		macro = false;
-	}
-
-	@Override
-	public synchronized boolean getMacro() {
-		return macro;
-	}
-
-	@Override
-	public synchronized int[] getSupportedExposureCompensations() throws MediaException {
-		ExposureState state = requireCameraInfo().getExposureState();
-		return exposureValues(state);
-	}
-
-	@Override
-	public synchronized int getExposureCompensation() throws MediaException {
-		ExposureState state = requireCameraInfo().getExposureState();
-		if (!state.isExposureCompensationSupported()) {
-			return 0;
-		}
-		return exposureValue(state, state.getExposureCompensationIndex());
-	}
-
-	@Override
-	public void setExposureCompensation(int value) throws MediaException {
-		final CameraInfo info;
-		synchronized (this) {
-			info = requireCameraInfo();
-		}
-		ExposureState state = info.getExposureState();
-		int[] supported = exposureValues(state);
-		int selectedIndex = -1;
-		for (int i = 0; i < supported.length; i++) {
-			if (supported[i] == value) {
-				selectedIndex = exposureIndexAt(state, i);
-				break;
-			}
-		}
-		if (selectedIndex == -1) {
-			throw new MediaException("Unsupported exposure compensation: " + value);
-		}
-		try {
-			camera.getCameraControl().setExposureCompensationIndex(selectedIndex)
-					.get(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			throw new MediaException("Exposure compensation was interrupted");
-		} catch (TimeoutException e) {
-			throw new MediaException("Exposure compensation timed out");
-		} catch (ExecutionException e) {
-			throw new MediaException("Exposure compensation failed: " + e.getMessage());
-		}
-	}
-
-	@Override
-	public synchronized int getDigitalZoom() throws MediaException {
-		androidx.camera.core.ZoomState state = requireZoomState();
-		return Math.round(state.getZoomRatio() * 100f);
-	}
-
-	@Override
-	public synchronized int getMaxDigitalZoom() throws MediaException {
-		return Math.round(requireZoomState().getMaxZoomRatio() * 100f);
-	}
-
-	@Override
-	public synchronized int getDigitalZoomLevels() throws MediaException {
-		androidx.camera.core.ZoomState state = requireZoomState();
-		return Math.max(1, Math.round((state.getMaxZoomRatio() - state.getMinZoomRatio()) * 10f) + 1);
-	}
-
-	@Override
-	public int setDigitalZoom(int level) throws MediaException {
-		final CameraInfo info;
-		final androidx.camera.core.ZoomState state;
-		synchronized (this) {
-			info = requireCameraInfo();
-			state = requireZoomState();
-		}
-		int current = Math.round(state.getZoomRatio() * 100f);
-		int max = Math.round(state.getMaxZoomRatio() * 100f);
-		int step = Math.max(1, Math.round((max - 100) / (float)
-				Math.max(1, getDigitalZoomLevels() - 1)));
-		if (level == javax.microedition.amms.control.camera.ZoomControl.NEXT) {
-			level = Math.min(max, current + step);
-		} else if (level == javax.microedition.amms.control.camera.ZoomControl.PREVIOUS) {
-			level = Math.max(100, current - step);
-		}
-		if (level < 100 || level > max) {
-			throw new IllegalArgumentException("unsupported digital zoom: " + level);
-		}
-		float ratio = Math.max(state.getMinZoomRatio(),
-				Math.min(state.getMaxZoomRatio(), level / 100f));
-		try {
-			camera.getCameraControl().setZoomRatio(ratio)
-					.get(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			throw new MediaException("Digital zoom was interrupted");
-		} catch (TimeoutException e) {
-			throw new MediaException("Digital zoom timed out");
-		} catch (ExecutionException e) {
-			throw new MediaException("Digital zoom failed: " + e.getMessage());
-		}
-		return Math.round(ratio * 100f);
-	}
-
-	@Override
 	public void release() {
 		FileCaptureResult pending;
 		synchronized (this) {
@@ -622,24 +257,18 @@ public final class CameraXCameraSession implements CameraSession, CameraRecordin
 			pending.completeExceptionally(new IOException("Camera snapshot was cancelled"));
 		}
 		try {
-			if (isRecording()) {
-				stopRecording();
-			}
 			stop();
 		} catch (MediaException ignored) {
 			// Activity destruction can invalidate the UI executor; release is best effort.
 		}
 		synchronized (this) {
-			camera = null;
 			cameraProvider = null;
 			imageCapture = null;
 			preview = null;
-			videoCapture = null;
-			recorder = null;
-			recording = null;
-			activeRecording = null;
 			prepared = false;
 			started = false;
+			bound = false;
+			previewBound = false;
 		}
 		callbackExecutor.shutdownNow();
 	}
@@ -660,7 +289,7 @@ public final class CameraXCameraSession implements CameraSession, CameraRecordin
 				return null;
 			});
 		} catch (MediaException ignored) {
-			// The Player remains recoverable; CameraX will report a later availability error.
+			// The Player remains recoverable; a later operation reports availability.
 		}
 	}
 
@@ -669,145 +298,84 @@ public final class CameraXCameraSession implements CameraSession, CameraRecordin
 			return;
 		}
 		PreviewView view = previewView;
-		CameraSelector selector = selectCamera();
+		CameraSelector selector = selectCamera(cameraProvider);
 		if (view != null) {
+			int targetRotation = view.getDisplay() != null
+					? view.getDisplay().getRotation() : preview.getTargetRotation();
+			preview.setTargetRotation(targetRotation);
+			imageCapture.setTargetRotation(targetRotation);
 			preview.setSurfaceProvider(view.getSurfaceProvider());
-			camera = cameraProvider.bindToLifecycle(activity, selector,
-					preview, imageCapture);
+
+			ViewPort viewPort = view.getViewPort(targetRotation);
+			if (viewPort == null) {
+				int width = view.getWidth() > 0 ? view.getWidth()
+						: Math.max(1, view.getMinimumWidth());
+				int height = view.getHeight() > 0 ? view.getHeight()
+						: Math.max(1, view.getMinimumHeight());
+				if (width <= 1 || height <= 1) {
+					width = Math.max(1, request.getWidth());
+					height = Math.max(1, request.getHeight());
+				}
+				viewPort = new ViewPort.Builder(new Rational(width, height), targetRotation).build();
+			}
+
+			UseCaseGroup useCaseGroup = new UseCaseGroup.Builder()
+					.addUseCase(preview)
+					.addUseCase(imageCapture)
+					.setViewPort(viewPort)
+					.build();
+			cameraProvider.bindToLifecycle(activity, selector, useCaseGroup);
 			previewBound = true;
 		} else {
-			camera = cameraProvider.bindToLifecycle(activity, selector,
-					imageCapture);
+			cameraProvider.bindToLifecycle(activity, selector, imageCapture);
 			previewBound = false;
 		}
 		bound = true;
-		recordingBound = false;
 	}
 
-	private void bindRecordingUseCases(MicroActivity activity, Recorder newRecorder,
-			VideoCapture<Recorder> newVideoCapture) {
-		PreviewView view = previewView;
-		CameraSelector selector = selectCamera();
-		if (view != null) {
-			preview.setSurfaceProvider(view.getSurfaceProvider());
-			camera = cameraProvider.bindToLifecycle(activity, selector, preview, newVideoCapture);
-			previewBound = true;
-		} else {
-			camera = cameraProvider.bindToLifecycle(activity, selector, newVideoCapture);
-			previewBound = false;
-		}
-		recorder = newRecorder;
-		videoCapture = newVideoCapture;
-		bound = true;
-		recordingBound = true;
-	}
-
-	private static Quality recordingQuality(int width, int height) {
-		int longestSide = Math.max(width, height);
-		if (longestSide > 1280) {
-			return Quality.FHD;
-		}
-		if (longestSide > 720) {
-			return Quality.HD;
-		}
-		return Quality.SD;
-	}
-
-	private CameraSelector selectCamera() {
+	private CameraSelector selectCamera(ProcessCameraProvider provider) {
 		try {
-			if (cameraProvider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)) {
-				return CameraSelector.DEFAULT_BACK_CAMERA;
-			}
-			if (cameraProvider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA)) {
-				return CameraSelector.DEFAULT_FRONT_CAMERA;
-			}
+			LogicalCameraDevice requested = request.getLogicalCameraDevice() == LogicalCameraDevice.DEFAULT
+					? CameraRuntimeConfig.defaultDevice() : request.getLogicalCameraDevice();
+			return switch (requested) {
+				case REAR -> requireCamera(provider, CameraSelector.DEFAULT_BACK_CAMERA, "rear");
+				case FRONT -> requireCamera(provider, CameraSelector.DEFAULT_FRONT_CAMERA, "front");
+				case DEFAULT -> {
+					if (provider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)) {
+						yield CameraSelector.DEFAULT_BACK_CAMERA;
+					}
+					if (provider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA)) {
+						yield CameraSelector.DEFAULT_FRONT_CAMERA;
+					}
+					throw new IllegalStateException("No usable camera is available");
+				}
+			};
+		} catch (IllegalStateException e) {
+			throw e;
 		} catch (Exception e) {
 			throw new IllegalStateException("Camera availability could not be queried", e);
 		}
-		throw new IllegalStateException("No usable camera is available");
+	}
+
+	private static CameraSelector requireCamera(ProcessCameraProvider provider,
+			CameraSelector selector, String name) throws Exception {
+		if (!provider.hasCamera(selector)) {
+			throw new IllegalStateException("Requested " + name + " camera is unavailable");
+		}
+		return selector;
 	}
 
 	private void unbindUseCases() {
 		if (!bound || cameraProvider == null) {
 			return;
 		}
-		if (recordingBound) {
-			if (previewBound) {
-				cameraProvider.unbind(preview, videoCapture);
-			} else {
-				cameraProvider.unbind(videoCapture);
-			}
-		} else if (previewBound) {
+		if (previewBound) {
 			cameraProvider.unbind(preview, imageCapture);
 		} else {
 			cameraProvider.unbind(imageCapture);
 		}
 		previewBound = false;
-		recordingBound = false;
 		bound = false;
-		camera = null;
-	}
-
-	private synchronized CameraInfo requireCameraInfo() throws MediaException {
-		if (camera == null) {
-			throw new MediaException("Camera is not bound");
-		}
-		return camera.getCameraInfo();
-	}
-
-	private synchronized androidx.camera.core.ZoomState requireZoomState() throws MediaException {
-		androidx.lifecycle.LiveData<androidx.camera.core.ZoomState> liveData =
-				requireCameraInfo().getZoomState();
-		androidx.camera.core.ZoomState state = liveData == null ? null : liveData.getValue();
-		if (state == null) {
-			throw new MediaException("Camera zoom state is unavailable");
-		}
-		return state;
-	}
-
-	private static int[] exposureValues(ExposureState state) {
-		if (!state.isExposureCompensationSupported()) {
-			return new int[]{0};
-		}
-		Range<Integer> range = state.getExposureCompensationRange();
-		int count = range.getUpper() - range.getLower() + 1;
-		int[] values = new int[count];
-		for (int i = 0; i < count; i++) {
-			values[i] = exposureValue(state, range.getLower() + i);
-		}
-		return values;
-	}
-
-	private static int exposureValue(ExposureState state, int index) {
-		Rational step = state.getExposureCompensationStep();
-		return Math.round(index * step.floatValue() * 100f);
-	}
-
-	private static int exposureIndexAt(ExposureState state, int ordinal) {
-		return state.getExposureCompensationRange().getLower() + ordinal;
-	}
-
-	private synchronized FocusMeteringAction createCenterFocusAction(boolean lock) {
-		MeteringPointFactory factory = previewView == null
-				? new SurfaceOrientedMeteringPointFactory(1f, 1f)
-				: previewView.getMeteringPointFactory();
-		FocusMeteringAction.Builder builder = new FocusMeteringAction.Builder(
-				factory.createPoint(0.5f, 0.5f), FocusMeteringAction.FLAG_AF);
-		if (lock) {
-			builder.disableAutoCancel();
-		} else {
-			builder.setAutoCancelDuration(3, TimeUnit.SECONDS);
-		}
-		return builder.build();
-	}
-
-	private static int toImageCaptureFlashMode(int mode) {
-		return switch (mode) {
-			case javax.microedition.amms.control.camera.FlashControl.OFF -> ImageCapture.FLASH_MODE_OFF;
-			case javax.microedition.amms.control.camera.FlashControl.AUTO -> ImageCapture.FLASH_MODE_AUTO;
-			case javax.microedition.amms.control.camera.FlashControl.FORCE -> ImageCapture.FLASH_MODE_ON;
-			default -> throw new IllegalArgumentException("unsupported flash mode: " + mode);
-		};
 	}
 
 	private static MicroActivity requireActivity() throws MediaException {
@@ -818,8 +386,8 @@ public final class CameraXCameraSession implements CameraSession, CameraRecordin
 		return activity;
 	}
 
-	private static <T> T onMainThread(MicroActivity activity, java.util.concurrent.Callable<T> action)
-			throws MediaException {
+	private static <T> T onMainThread(MicroActivity activity,
+			java.util.concurrent.Callable<T> action) throws MediaException {
 		if (Looper.myLooper() == Looper.getMainLooper()) {
 			try {
 				return action.call();
@@ -856,18 +424,6 @@ public final class CameraXCameraSession implements CameraSession, CameraRecordin
 
 		void completeExceptionally(Throwable error) {
 			setException(error);
-		}
-	}
-
-	/** API-23-compatible one-shot recording finalization result. */
-	private static final class FileRecordingResult
-				extends FutureTask<VideoRecordEvent.Finalize> {
-		FileRecordingResult() {
-			super(() -> null);
-		}
-
-		void complete(VideoRecordEvent.Finalize event) {
-			set(event);
 		}
 	}
 }

@@ -32,7 +32,12 @@ import javax.microedition.util.ContextHolder;
 import io.github.h3nb.jlmodplus.util.SparseIntArrayAdapter;
 
 public class ProfileModel {
-	public static final int VERSION = 3;
+	public static final int VERSION = 4;
+	public static final int CAMERA_DEVICE_INHERIT = -1;
+	public static final int CAMERA_DEVICE_AUTO = 0;
+	public static final int CAMERA_DEVICE_REAR = 1;
+	public static final int CAMERA_DEVICE_FRONT = 2;
+
 	/** True if this is a new profile (not yet saved to file) */
 	public final transient boolean isNew;
 
@@ -177,6 +182,27 @@ public class ProfileModel {
 	@SerializedName("SecureConnectionMode")
 	public int secureConnectionMode;
 
+	@SerializedName("CameraOverrideEnabled")
+	public boolean cameraOverrideEnabled;
+
+	@SerializedName("CameraDefaultDevice")
+	public int cameraDefaultDevice;
+
+	@SerializedName("CameraDefaultSnapshotWidth")
+	public int cameraDefaultSnapshotWidth;
+
+	@SerializedName("CameraDefaultSnapshotHeight")
+	public int cameraDefaultSnapshotHeight;
+
+	@SerializedName("CameraMaximumSnapshotWidth")
+	public int cameraMaximumSnapshotWidth;
+
+	@SerializedName("CameraMaximumSnapshotHeight")
+	public int cameraMaximumSnapshotHeight;
+
+	@SerializedName("CameraJpegQuality")
+	public int cameraJpegQuality;
+
 	@SuppressWarnings("unused") // Gson uses default constructor if present
 	public ProfileModel() {
 		isNew = false;
@@ -213,5 +239,13 @@ public class ProfileModel {
 		vkFgColorSelected = 0xFFFFFF;
 		vkOutlineColor = 0xFFFFFF;
 		systemProperties = ContextHolder.getAssetAsString("defaults/system.props");
+
+		cameraOverrideEnabled = false;
+		cameraDefaultDevice = CAMERA_DEVICE_INHERIT;
+		cameraDefaultSnapshotWidth = 640;
+		cameraDefaultSnapshotHeight = 480;
+		cameraMaximumSnapshotWidth = 2048;
+		cameraMaximumSnapshotHeight = 1536;
+		cameraJpegQuality = 90;
 	}
 }
