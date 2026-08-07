@@ -155,6 +155,45 @@ jobs:
           test "$abis" = "arm64-v8a"
           printf 'Verified APK: %s\nABI: %s\n' "$apk" "$abis"
 
+      - name: Verify MIDlet process isolation
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="$(find app/build/outputs/renamed_apks/emulatorDebug -type f -name '*.apk' -print -quit)"
+          test -n "$apk"
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+          apkanalyzer="$(find "$sdk_root/cmdline-tools" -type f -name apkanalyzer -print -quit)"
+          test -x "$apkanalyzer"
+          manifest="$RUNNER_TEMP/emulator-debug-manifest.xml"
+          "$apkanalyzer" manifest print "$apk" > "$manifest"
+          python3 - "$manifest" <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+
+          android = "{http://schemas.android.com/apk/res/android}"
+          root = ET.parse(sys.argv[1]).getroot()
+          application = root.find("application")
+          if application is None:
+              raise SystemExit("APK manifest has no <application>")
+
+          target = "javax.microedition.shell.MicroActivity"
+          activity = next(
+              (item for item in application.findall("activity")
+               if item.get(android + "name") == target),
+              None,
+          )
+          if activity is None:
+              raise SystemExit(f"{target} is missing from APK manifest")
+
+          process = activity.get(android + "process")
+          expected = "io.github.h3nb.jlmodplus.debug:midlet"
+          if process != expected:
+              raise SystemExit(
+                  f"MIDlet process isolation lost: expected {expected!r}, got {process!r}"
+              )
+          print(f"Verified {target} process: {process}")
+          PY
+
       - name: Verify ACRA report interaction packaging
         shell: bash
         run: |
