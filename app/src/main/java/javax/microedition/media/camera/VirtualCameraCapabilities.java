@@ -67,8 +67,8 @@ public final class VirtualCameraCapabilities {
 		return switch (key) {
 			case "supports.video.capture" -> Boolean.toString(hasCameraFeature());
 			case "supports.audio.capture" -> Boolean.toString(hasMicrophoneFeature());
-			// Camera recording is gated; the existing audio RecordPlayer remains available.
-			case "supports.recording" -> Boolean.toString(hasMicrophoneFeature());
+			case "supports.recording" ->
+					Boolean.toString(hasMicrophoneFeature() || hasCameraFeature());
 			case "audio.encoding", "audio.encodings" ->
 					hasMicrophoneFeature() ? AUDIO_ENCODING : null;
 			case "video.encoding", "video.encodings" ->
