@@ -178,9 +178,9 @@ class ConfigUiState(
     private val cameraDefaultSnapshotSizes = listOf(
         320 to 240,
         640 to 480,
-        480 to 640,
         1280 to 960,
-        960 to 1280,
+        1600 to 1200,
+        2048 to 1536,
     )
     private val cameraDefaultSnapshotOptions = cameraDefaultSnapshotSizes.map { "${it.first}×${it.second}" }
     private val cameraMaxSnapshotSizes = listOf(
@@ -189,9 +189,7 @@ class ConfigUiState(
         1600 to 1200,
         2048 to 1536,
     )
-    private val cameraMaxSnapshotOptions = cameraMaxSnapshotSizes.map {
-        if (it.first == 2048 && it.second == 1536) "2048×1536 / 1536×2048" else "${it.first}×${it.second}"
-    }
+    private val cameraMaxSnapshotOptions = cameraMaxSnapshotSizes.map { "${it.first}×${it.second}" }
     private val cameraJpegQualities = listOf(80, 90, 100)
     private val cameraJpegQualityOptions = cameraJpegQualities.map(Int::toString)
 
@@ -295,12 +293,14 @@ class ConfigUiState(
     fun getCameraDefaultSnapshotWidth(): Int = cameraDefaultSnapshotSizes[cameraDefaultSnapshotSelectionState].first
     fun getCameraDefaultSnapshotHeight(): Int = cameraDefaultSnapshotSizes[cameraDefaultSnapshotSelectionState].second
     fun setCameraDefaultSnapshot(width: Int, height: Int) {
-        cameraDefaultSnapshotSelectionState = cameraDefaultSnapshotSizes.indexOf(width to height).takeIf { it >= 0 } ?: 1
+        val sizeClass = if (width >= height) width to height else height to width
+        cameraDefaultSnapshotSelectionState = cameraDefaultSnapshotSizes.indexOf(sizeClass).takeIf { it >= 0 } ?: 1
     }
     fun getCameraMaximumSnapshotWidth(): Int = cameraMaxSnapshotSizes[cameraMaxSnapshotSelectionState].first
     fun getCameraMaximumSnapshotHeight(): Int = cameraMaxSnapshotSizes[cameraMaxSnapshotSelectionState].second
     fun setCameraMaximumSnapshot(width: Int, height: Int) {
-        cameraMaxSnapshotSelectionState = cameraMaxSnapshotSizes.indexOf(width to height).takeIf { it >= 0 } ?: 3
+        val sizeClass = if (width >= height) width to height else height to width
+        cameraMaxSnapshotSelectionState = cameraMaxSnapshotSizes.indexOf(sizeClass).takeIf { it >= 0 } ?: 3
     }
     fun getCameraJpegQuality(): Int = cameraJpegQualities[cameraJpegQualitySelectionState]
     fun setCameraJpegQuality(value: Int) {
@@ -679,6 +679,12 @@ class ConfigUiState(
             if (state.cameraOverrideState) {
                 ConfigChoiceRow(R.string.camera_default_device_title, state.cameraDeviceOptions, state.cameraDeviceSelectionState) { state.cameraDeviceSelectionState = it }
                 ConfigChoiceRow(R.string.camera_default_snapshot_title, state.cameraDefaultSnapshotOptions, state.cameraDefaultSnapshotSelectionState) { state.cameraDefaultSnapshotSelectionState = it }
+                Text(
+                    stringResource(R.string.camera_snapshot_auto_orientation_summary),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(horizontal = 5.dp),
+                )
                 ConfigChoiceRow(R.string.camera_max_snapshot_title, state.cameraMaxSnapshotOptions, state.cameraMaxSnapshotSelectionState) { state.cameraMaxSnapshotSelectionState = it }
                 ConfigChoiceRow(R.string.camera_jpeg_quality_title, state.cameraJpegQualityOptions, state.cameraJpegQualitySelectionState) { state.cameraJpegQualitySelectionState = it }
             }
@@ -914,8 +920,8 @@ private fun ConfigScreenPreviewContent(darkTheme: Boolean) {
             set("SettingStep1 = 0.05")
         }
     }
-        val view = remember(context) {
-            ConfigUiState(context, true).apply {
+    val view = remember(context) {
+        ConfigUiState(context, true).apply {
             setToolbarTitle("Configuration")
             setScreenWidthText("240")
             setScreenHeightText("320")
