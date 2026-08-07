@@ -115,6 +115,9 @@ public abstract class MIDlet {
 		if (MidletMediaPermissionGate.SNAPSHOT_PERMISSION.equals(permission)) {
 			return MidletMediaPermissionGate.checkSnapshotPermission();
 		}
+		if (MidletMediaPermissionGate.RECORD_PERMISSION.equals(permission)) {
+			return MidletMediaPermissionGate.checkRecordPermission();
+		}
 		return 1;
 	}
 
