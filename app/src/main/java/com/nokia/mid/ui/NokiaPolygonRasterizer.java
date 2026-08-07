@@ -96,7 +96,8 @@ final class NokiaPolygonRasterizer {
 
 				if ((y1 <= scanY && y2 > scanY) || (y2 <= scanY && y1 > scanY)) {
 					intersections[count++] = x1
-							+ (scanY - y1) * (double) (x2 - x1) / (double) (y2 - y1);
+							+ (scanY - y1) * ((double) x2 - (double) x1)
+							/ ((double) y2 - (double) y1);
 				}
 				previous = current;
 			}
