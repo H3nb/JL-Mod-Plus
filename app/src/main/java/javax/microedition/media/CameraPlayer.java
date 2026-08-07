@@ -21,6 +21,7 @@ import android.util.Log;
 
 import androidx.lifecycle.Lifecycle;
 
+import java.io.File;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -39,7 +40,10 @@ import javax.microedition.media.camera.CaptureRequest;
 import javax.microedition.media.camera.MicrophonePermissionBroker;
 import javax.microedition.media.camera.SnapshotRequest;
 import javax.microedition.media.camera.VirtualCameraCapabilities;
+import javax.microedition.media.control.CameraRecordingControl;
 import javax.microedition.media.control.Jsr135VideoControl;
+import javax.microedition.media.control.RecordControl;
+import javax.microedition.media.control.VideoControl;
 import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
 
@@ -65,6 +69,7 @@ public final class CameraPlayer implements Player {
 	private CameraSession session;
 	private CameraLeaseManager.Lease lease;
 	private Jsr135VideoControl videoControl;
+	private CameraRecordingControl recordingControl;
 	private javax.microedition.media.control.AmmsImageFormatControl imageFormatControl;
 	private Object previewView;
 
@@ -86,6 +91,7 @@ public final class CameraPlayer implements Player {
 		checkClosed();
 		if (state == UNREALIZED) {
 			videoControl = new Jsr135VideoControl(this, request);
+			recordingControl = new CameraRecordingControl(this, request);
 			state = REALIZED;
 		}
 	}
@@ -110,6 +116,15 @@ public final class CameraPlayer implements Player {
 		}
 		if (permission != CameraPermissionBroker.Result.GRANTED) {
 			throw new MediaException("Camera permission is unavailable");
+		}
+		if (request.isAudioVideo()) {
+			MicrophonePermissionBroker.Result microphone = microphonePermissionBroker.request();
+			if (microphone == MicrophonePermissionBroker.Result.DENIED) {
+				throw new SecurityException("Microphone permission was denied");
+			}
+			if (microphone != MicrophonePermissionBroker.Result.GRANTED) {
+				throw new MediaException("Microphone permission is unavailable");
+			}
 		}
 
 		CameraLeaseManager.Lease acquired = CameraLeaseManager.acquire();
@@ -153,12 +168,20 @@ public final class CameraPlayer implements Player {
 			if (!permissionBroker.isGranted()) {
 				throw new SecurityException("Camera permission was revoked");
 			}
+			if (request.isAudioVideo() && !microphonePermissionBroker.isGranted()) {
+				throw new SecurityException("Microphone permission was revoked");
+			}
 			try {
 				if (session == null) {
 					throw new MediaException("Camera session is unavailable");
 				}
 				session.start();
 				state = STARTED;
+				try {
+					recordingControl.onPlayerStarted();
+				} catch (RuntimeException e) {
+					Log.w(TAG, "Armed camera recording could not start", e);
+				}
 				postEvent(PlayerListener.STARTED, getMediaTimeUnchecked());
 			} catch (MediaException | RuntimeException e) {
 				state = PREFETCHED;
@@ -174,6 +197,9 @@ public final class CameraPlayer implements Player {
 	public synchronized void stop() throws MediaException {
 		checkClosed();
 		if (state == STARTED) {
+			if (recordingControl != null) {
+				recordingControl.onPlayerStopping();
+			}
 			if (session != null) {
 				session.stop();
 			}
@@ -195,6 +221,9 @@ public final class CameraPlayer implements Player {
 			Log.w(TAG, "Camera stop during deallocate failed", e);
 			state = PREFETCHED;
 		}
+		if (recordingControl != null) {
+			recordingControl.onPlayerDeallocated();
+		}
 		releaseSession();
 		if (state == PREFETCHED) {
 			state = REALIZED;
@@ -205,6 +234,9 @@ public final class CameraPlayer implements Player {
 	public synchronized void close() {
 		if (state == CLOSED) {
 			return;
+		}
+		if (recordingControl != null) {
+			recordingControl.onPlayerClosed();
 		}
 		try {
 			if (state == STARTED && session != null) {
@@ -288,15 +320,21 @@ public final class CameraPlayer implements Player {
 		}
 		String normalized = controlType.contains(".")
 				? controlType : "javax.microedition.media.control." + controlType;
-		return Jsr135VideoControl.class.getName().equals(normalized)
-				|| "javax.microedition.media.control.VideoControl".equals(normalized)
-				? videoControl : null;
+		if (Jsr135VideoControl.class.getName().equals(normalized)
+				|| VideoControl.class.getName().equals(normalized)) {
+			return videoControl;
+		}
+		if (CameraRecordingControl.class.getName().equals(normalized)
+				|| RecordControl.class.getName().equals(normalized)) {
+			return recordingControl;
+		}
+		return null;
 	}
 
 	@Override
 	public synchronized Control[] getControls() {
 		checkRealized();
-		return new Control[]{videoControl};
+		return new Control[]{videoControl, recordingControl};
 	}
 
 	/** Called by the LCDUI preview item without exposing Android types in the J2ME API. */
@@ -341,6 +379,28 @@ public final class CameraPlayer implements Player {
 		return currentSession.capture(effectiveRequest);
 	}
 
+	public void beginCameraRecording(File outputFile, boolean withAudio, long fileSizeLimit,
+			int width, int height) throws MediaException {
+		CameraRecordingSession recordingSession = requireRecordingSession();
+		recordingSession.beginRecording(outputFile, withAudio, fileSizeLimit, width, height);
+	}
+
+	public void pauseCameraRecording() throws MediaException {
+		requireRecordingSession().pauseRecording();
+	}
+
+	public void resumeCameraRecording() throws MediaException {
+		requireRecordingSession().resumeRecording();
+	}
+
+	public void finalizeCameraRecording() throws MediaException {
+		requireRecordingSession().finalizeRecording();
+	}
+
+	public void notifyRecordingEvent(String event, Object data) {
+		postEvent(event, data);
+	}
+
 	public synchronized CameraConfiguration getCameraConfiguration() {
 		checkRealized();
 		return cameraConfiguration;
@@ -356,6 +416,14 @@ public final class CameraPlayer implements Player {
 
 	public void notifyCameraEvent(String event, Object data) {
 		postEvent(event, data);
+	}
+
+	private synchronized CameraRecordingSession requireRecordingSession() throws MediaException {
+		checkRealized();
+		if (!(session instanceof CameraRecordingSession)) {
+			throw new MediaException("Camera recording is unavailable before prefetch");
+		}
+		return (CameraRecordingSession) session;
 	}
 
 	private void releaseSession() {
