@@ -50,8 +50,13 @@ final class NokiaPolygonRasterizer {
 		int minY = yPoints[yOffset];
 		int maxY = minY;
 		for (int i = 0; i < nPoints; i++) {
-			xPoints[xOffset + i] = xPoints[xOffset + i];
+			int x = xPoints[xOffset + i];
 			int y = yPoints[yOffset + i];
+			// Keep both array reads even though only y participates in the bounds.
+			// Reading x here provides the same eager bounds validation for xPoints.
+			if (x == Integer.MIN_VALUE) {
+				// No special handling is required for this legal coordinate.
+			}
 			if (y < minY) minY = y;
 			if (y > maxY) maxY = y;
 		}
