@@ -211,11 +211,16 @@ public final class CameraRuntimeConfig {
 		int[] defaultSize = canonicalSize(
 				validDimension(value.defaultWidth) ? value.defaultWidth : DEFAULT_WIDTH,
 				validDimension(value.defaultHeight) ? value.defaultHeight : DEFAULT_HEIGHT);
-		State sanitized = new State(value.device, defaultSize[0], defaultSize[1],
+		State candidate = new State(value.device, defaultSize[0], defaultSize[1],
 				maximum[0], maximum[1], quality);
-		return accepts(sanitized, defaultSize[0], defaultSize[1]) ? sanitized
-				: new State(value.device, DEFAULT_WIDTH, DEFAULT_HEIGHT,
-						maximum[0], maximum[1], quality);
+		if (accepts(candidate, defaultSize[0], defaultSize[1])) {
+			return candidate;
+		}
+		// A virtual device cannot advertise a default capture larger than its own
+		// maximum. When the user lowers the maximum, make that size class the new
+		// default rather than keeping an impossible VGA-or-larger fallback.
+		return new State(value.device, maximum[0], maximum[1],
+				maximum[0], maximum[1], quality);
 	}
 
 	private static boolean accepts(State state, int width, int height) {
