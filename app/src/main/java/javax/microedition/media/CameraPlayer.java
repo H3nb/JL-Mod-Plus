@@ -66,12 +66,12 @@ public final class CameraPlayer implements Player {
 
 	private volatile int state = UNREALIZED;
 	private TimeBase timeBase;
-	private CameraSession session;
+	private volatile CameraSession session;
 	private CameraLeaseManager.Lease lease;
 	private Jsr135VideoControl videoControl;
 	private CameraRecordingControl recordingControl;
 	private javax.microedition.media.control.AmmsImageFormatControl imageFormatControl;
-	private Object previewView;
+	private volatile Object previewView;
 
 	public CameraPlayer(String locator) throws MediaException {
 		this(CaptureLocatorParser.parse(locator), CameraXCameraSession::new,
@@ -337,21 +337,28 @@ public final class CameraPlayer implements Player {
 		return new Control[]{videoControl, recordingControl};
 	}
 
-	/** Called by the LCDUI preview item without exposing Android types in the J2ME API. */
-	public synchronized void attachPreview(Object view) {
+	/**
+	 * Called by the LCDUI preview item without exposing Android types in the J2ME API.
+	 * This path must stay lock-free: lifecycle methods may hold the Player monitor
+	 * while waiting for CameraX work on the Android main thread, and preview views
+	 * are attached from that main thread.
+	 */
+	public void attachPreview(Object view) {
 		previewView = view;
-		if (session != null) {
-			session.attachPreview(view);
+		CameraSession currentSession = session;
+		if (currentSession != null) {
+			currentSession.attachPreview(view);
 		}
 	}
 
 	/** Called by the LCDUI preview item when its host view is discarded. */
-	public synchronized void detachPreview(Object view) {
+	public void detachPreview(Object view) {
 		if (previewView == view) {
 			previewView = null;
 		}
-		if (session != null) {
-			session.detachPreview(view);
+		CameraSession currentSession = session;
+		if (currentSession != null) {
+			currentSession.detachPreview(view);
 		}
 	}
 
