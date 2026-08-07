@@ -20,6 +20,7 @@ import org.junit.Test;
 
 import java.lang.reflect.Method;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 /** Keeps the backend boundary aligned with MMAPI standby/resume semantics. */
@@ -37,5 +38,11 @@ public class CameraRecordingContractTest {
 		assertNotNull(pause);
 		assertNotNull(resume);
 		assertNotNull(finalize);
+	}
+
+	@Test
+	public void videoEncodingsAdvertiseTheRecordControlContainer() {
+		assertEquals("encoding=video/mp4", VirtualCameraCapabilities.VIDEO_ENCODING);
+		assertEquals("video/mp4", CaptureRequest.DEFAULT_RECORDING_ENCODING);
 	}
 }
