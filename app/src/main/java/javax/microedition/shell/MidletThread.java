@@ -23,6 +23,10 @@ import android.os.Message;
 import android.os.Process;
 import android.util.Log;
 
+import org.acra.ACRA;
+
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.midlet.MIDlet;
@@ -40,6 +44,9 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private static final String TAG = MidletThread.class.getName();
 	private static final UncaughtExceptionHandler uncaughtExceptionHandler = (t, e) ->
 			Log.e(TAG, "Error in thread: \"" + t + "\" after destroy app called", e);
+	private static final AtomicBoolean fatalErrorHandling = new AtomicBoolean();
+	private static final UncaughtExceptionHandler midletUncaughtExceptionHandler =
+			MidletThread::handleFatalMidletError;
 
 	private static final int INIT = 0;
 	private static final int START = 1;
@@ -121,6 +128,10 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 
 	@Override
 	public void start() {
+		// The :midlet process is a disposable runtime boundary. Report fatal MIDlet
+		// failures through ACRA without letting Android classify the whole package as
+		// an uncaught app crash, then terminate only this process in the handler.
+		Thread.setDefaultUncaughtExceptionHandler(midletUncaughtExceptionHandler);
 		super.start();
 		handler = new Handler(getLooper(), this);
 		ContextHolder.getActivity().getLifecycle().addObserver(activityLifecycleObserver);
@@ -192,6 +203,39 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 				break;
 		}
 		return true;
+	}
+
+	private static void handleFatalMidletError(Thread thread, Throwable error) {
+		if (!fatalErrorHandling.compareAndSet(false, true)) {
+			Log.e(TAG, "Additional fatal error while terminating MIDlet process", error);
+			Process.killProcess(Process.myPid());
+			return;
+		}
+
+		// Prevent cleanup failures from recursively entering the crash reporter.
+		Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
+		Log.e(TAG, "Fatal error in MIDlet session thread: \"" + thread.getName() + "\"", error);
+
+		MidletThread current = instance;
+		if (current != null) {
+			current.state = DESTROYED;
+			current.emulationTimeController.stop();
+		}
+
+		try {
+			// ACRA 5.x treats this as a handled report. Explicitly keep
+			// endApplication=false so ACRA does not finish/kill the runtime as an
+			// Android application crash; the disposable :midlet process is ended below.
+			ACRA.getErrorReporter().handleException(error, false);
+		} catch (Throwable reportError) {
+			Log.e(TAG, "Unable to create MIDlet crash report", reportError);
+		}
+
+		MicroActivity activity = ContextHolder.getActivity();
+		if (activity != null) {
+			activity.finish();
+		}
+		Process.killProcess(Process.myPid());
 	}
 
 	private void onActivityStateChanged(LifecycleOwner lifecycleOwner, Lifecycle.Event event) {
