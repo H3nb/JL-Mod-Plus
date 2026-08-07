@@ -23,42 +23,65 @@ import java.util.Arrays;
 /**
  * Rasterizes Nokia DirectGraphics polygons onto the integer J2ME pixel grid.
  *
- * Android/Skia treats a polygon as continuous vector geometry. Old Nokia
- * implementations rasterized integer-coordinate primitives directly to pixels,
- * including the polygon boundary. The distinction is visible for translucent
- * polygons that meet at integer boundaries, where vector edge coverage can
- * otherwise leave a one-pixel seam.
+ * The implementation deliberately keeps the proven integer-coverage behavior,
+ * but emits horizontal spans instead of one Path rectangle per boundary pixel.
+ * This keeps Nokia-compatible edge coverage while leaving the expensive final
+ * fill and alpha compositing to Android/Skia in a single draw operation.
  */
 final class NokiaPolygonRasterizer {
+	private double[] intersections = new double[8];
 
-	private NokiaPolygonRasterizer() {
-	}
-
-	static void buildPath(Path output,
-						  int[] xPoints, int xOffset,
-						  int[] yPoints, int yOffset,
-						  int nPoints) {
+	void buildPath(Path output,
+				   int[] xPoints, int xOffset,
+				   int[] yPoints, int yOffset,
+				   int nPoints,
+				   int clipLeft, int clipTop,
+				   int clipRight, int clipBottom) {
 		output.reset();
 		output.setFillType(Path.FillType.WINDING);
 
-		if (nPoints < 3) {
+		if (nPoints < 3 || clipLeft >= clipRight || clipTop >= clipBottom) {
 			return;
 		}
 
+		int minX = xPoints[xOffset];
+		int maxX = minX;
 		int minY = yPoints[yOffset];
 		int maxY = minY;
 		for (int i = 1; i < nPoints; i++) {
+			int x = xPoints[xOffset + i];
 			int y = yPoints[yOffset + i];
+			if (x < minX) minX = x;
+			if (x > maxX) maxX = x;
 			if (y < minY) minY = y;
 			if (y > maxY) maxY = y;
 		}
 
-		double[] intersections = new double[nPoints];
+		// Filled Nokia boundary pixels are inclusive at maxX/maxY, hence the
+		// +1 on the right/bottom side of this conservative visibility check.
+		if ((long) maxX + 1L <= clipLeft || minX >= clipRight
+				|| (long) maxY + 1L <= clipTop || minY >= clipBottom) {
+			return;
+		}
 
-		// Fill the geometric interior using an even-odd scanline rule. Pixel
-		// centers are sampled at (x + 0.5, y + 0.5), matching the J2ME grid where
-		// integer coordinates describe boundaries between filled pixel cells.
-		for (int y = minY; y < maxY; y++) {
+		// Rectangles are common in J2ME effects. They can use the same inclusive
+		// Nokia pixel coverage with a single Path rectangle and no scanline work.
+		if (isAxisAlignedRectangle(xPoints, xOffset, yPoints, yOffset, nPoints,
+				minX, maxX, minY, maxY)) {
+			addClippedRect(output, minX, minY,
+					(long) maxX + 1L, (long) maxY + 1L,
+					clipLeft, clipTop, clipRight, clipBottom);
+			return;
+		}
+
+		ensureIntersectionCapacity(nPoints);
+
+		// Fill the geometric interior using the Nokia even-odd rule. Pixel
+		// centers are sampled at (x + 0.5, y + 0.5). Each covered scanline is
+		// represented by one horizontal span per inside interval.
+		int firstY = Math.max(minY, clipTop);
+		int lastYExclusive = Math.min(maxY, clipBottom);
+		for (int y = firstY; y < lastYExclusive; y++) {
 			double scanY = y + 0.5d;
 			int count = 0;
 
@@ -83,25 +106,87 @@ final class NokiaPolygonRasterizer {
 			for (int i = 0; i + 1 < count; i += 2) {
 				int left = (int) Math.ceil(intersections[i] - 0.5d);
 				int rightExclusive = (int) Math.ceil(intersections[i + 1] - 0.5d);
-				if (rightExclusive > left) {
-					output.addRect(left, y, rightExclusive, y + 1, Path.Direction.CW);
-				}
+				addClippedRect(output, left, y, rightExclusive, (long) y + 1L,
+						clipLeft, clipTop, clipRight, clipBottom);
 			}
 		}
 
-		// Nokia integer primitives include the polygon's line segments in the
-		// filled result. Union a one-pixel Bresenham boundary into the same Path,
-		// so boundary pixels are blended only once for this fill operation.
+		// Include Nokia's one-pixel polygon boundary. Horizontal and vertical
+		// edges collapse to one rectangle; general Bresenham edges are compressed
+		// into one horizontal run for each touched row instead of one rectangle
+		// per pixel. Because all spans are subpaths of a single WINDING Path,
+		// overlapping interior/boundary coverage is alpha-blended only once.
 		int previous = nPoints - 1;
 		for (int current = 0; current < nPoints; current++) {
-			addLine(output,
+			addLineRuns(output,
 					xPoints[xOffset + previous], yPoints[yOffset + previous],
-					xPoints[xOffset + current], yPoints[yOffset + current]);
+					xPoints[xOffset + current], yPoints[yOffset + current],
+					clipLeft, clipTop, clipRight, clipBottom);
 			previous = current;
 		}
 	}
 
-	private static void addLine(Path output, int x0, int y0, int x1, int y1) {
+	private void ensureIntersectionCapacity(int required) {
+		if (intersections.length >= required) {
+			return;
+		}
+		int size = intersections.length;
+		while (size < required) {
+			size <<= 1;
+		}
+		intersections = new double[size];
+	}
+
+	private static boolean isAxisAlignedRectangle(int[] xPoints, int xOffset,
+											  int[] yPoints, int yOffset,
+											  int nPoints,
+											  int minX, int maxX,
+											  int minY, int maxY) {
+		if (nPoints != 4 || minX == maxX || minY == maxY) {
+			return false;
+		}
+		for (int i = 0; i < 4; i++) {
+			int next = (i + 1) & 3;
+			int x1 = xPoints[xOffset + i];
+			int y1 = yPoints[yOffset + i];
+			int x2 = xPoints[xOffset + next];
+			int y2 = yPoints[yOffset + next];
+			if (x1 != x2 && y1 != y2) {
+				return false;
+			}
+			if ((x1 != minX && x1 != maxX) || (y1 != minY && y1 != maxY)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static void addLineRuns(Path output,
+								int x0, int y0, int x1, int y1,
+								int clipLeft, int clipTop,
+								int clipRight, int clipBottom) {
+		int edgeMinX = Math.min(x0, x1);
+		int edgeMaxX = Math.max(x0, x1);
+		int edgeMinY = Math.min(y0, y1);
+		int edgeMaxY = Math.max(y0, y1);
+		if ((long) edgeMaxX + 1L <= clipLeft || edgeMinX >= clipRight
+				|| (long) edgeMaxY + 1L <= clipTop || edgeMinY >= clipBottom) {
+			return;
+		}
+
+		if (y0 == y1) {
+			addClippedRect(output, edgeMinX, y0,
+					(long) edgeMaxX + 1L, (long) y0 + 1L,
+					clipLeft, clipTop, clipRight, clipBottom);
+			return;
+		}
+		if (x0 == x1) {
+			addClippedRect(output, x0, edgeMinY,
+					(long) x0 + 1L, (long) edgeMaxY + 1L,
+					clipLeft, clipTop, clipRight, clipBottom);
+			return;
+		}
+
 		long dx = Math.abs((long) x1 - x0);
 		long sx = x0 < x1 ? 1L : -1L;
 		long dy = -Math.abs((long) y1 - y0);
@@ -110,12 +195,17 @@ final class NokiaPolygonRasterizer {
 		long x = x0;
 		long y = y0;
 
+		long runY = y;
+		long runMinX = x;
+		long runMaxX = x;
+
 		while (true) {
-			output.addRect((float) x, (float) y, (float) x + 1.0f, (float) y + 1.0f,
-					Path.Direction.CW);
 			if (x == x1 && y == y1) {
+				flushRun(output, runMinX, runMaxX, runY,
+						clipLeft, clipTop, clipRight, clipBottom);
 				break;
 			}
+
 			long twiceError = error << 1;
 			if (twiceError >= dy) {
 				error += dy;
@@ -125,6 +215,41 @@ final class NokiaPolygonRasterizer {
 				error += dx;
 				y += sy;
 			}
+
+			if (y == runY) {
+				if (x < runMinX) runMinX = x;
+				if (x > runMaxX) runMaxX = x;
+			} else {
+				flushRun(output, runMinX, runMaxX, runY,
+						clipLeft, clipTop, clipRight, clipBottom);
+				runY = y;
+				runMinX = x;
+				runMaxX = x;
+			}
 		}
+	}
+
+	private static void flushRun(Path output,
+							 long minX, long maxX, long y,
+							 int clipLeft, int clipTop,
+							 int clipRight, int clipBottom) {
+		addClippedRect(output, minX, y, maxX + 1L, y + 1L,
+				clipLeft, clipTop, clipRight, clipBottom);
+	}
+
+	private static void addClippedRect(Path output,
+							   long left, long top,
+							   long right, long bottom,
+							   int clipLeft, int clipTop,
+							   int clipRight, int clipBottom) {
+		long clippedLeft = Math.max(left, (long) clipLeft);
+		long clippedTop = Math.max(top, (long) clipTop);
+		long clippedRight = Math.min(right, (long) clipRight);
+		long clippedBottom = Math.min(bottom, (long) clipBottom);
+		if (clippedRight <= clippedLeft || clippedBottom <= clippedTop) {
+			return;
+		}
+		output.addRect((float) clippedLeft, (float) clippedTop,
+				(float) clippedRight, (float) clippedBottom, Path.Direction.CW);
 	}
 }
