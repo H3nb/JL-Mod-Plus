@@ -54,7 +54,7 @@ public class DirectUtils {
 	 * @return the DirectGraphics object based on Graphics
 	 */
 	public static DirectGraphics getDirectGraphics(Graphics g) {
-		return new DirectGraphicsImp(g);
+		return new NokiaDirectGraphicsImp(g);
 	}
 
 	/**
