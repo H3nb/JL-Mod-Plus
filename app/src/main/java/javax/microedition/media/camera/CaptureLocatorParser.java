@@ -72,14 +72,7 @@ public final class CaptureLocatorParser {
 					throw new IllegalArgumentException("duplicate or empty capture parameter: " + key);
 				}
 				switch (normalizedKey) {
-					case "encoding" -> {
-						String expected = audioVideo
-								? CaptureRequest.DEFAULT_RECORDING_ENCODING : CaptureRequest.DEFAULT_ENCODING;
-						if (!expected.equalsIgnoreCase(value)) {
-							throw new MediaException("Unsupported capture encoding: " + value);
-						}
-						encoding = expected;
-					}
+					case "encoding" -> encoding = normalizeEncoding(device, value);
 					case "width" -> requestedWidth = parsePositive(value, "width");
 					case "height" -> requestedHeight = parsePositive(value, "height");
 					case "fps" -> {
@@ -99,7 +92,7 @@ public final class CaptureLocatorParser {
 			}
 		}
 
-		if (!audioVideo && !CameraRuntimeConfig.acceptsDimensions(width, height)) {
+		if (!CameraRuntimeConfig.acceptsDimensions(width, height)) {
 			throw new MediaException("Requested camera source is outside the virtual limits");
 		}
 		return new CaptureRequest(locator, device, logicalCamera, encoding, width, height,
@@ -116,6 +109,30 @@ public final class CaptureLocatorParser {
 		String device = queryIndex < 0 ? remainder : remainder.substring(0, queryIndex);
 		validateDevice(device);
 		return device;
+	}
+
+	private static String normalizeEncoding(String device, String value) throws MediaException {
+		if (CaptureRequest.DEVICE_AUDIO_VIDEO.equals(device)) {
+			if (CaptureRequest.DEFAULT_RECORDING_ENCODING.equalsIgnoreCase(value)
+					|| "mp4".equalsIgnoreCase(value)) {
+				return CaptureRequest.DEFAULT_RECORDING_ENCODING;
+			}
+			throw new MediaException("Unsupported capture encoding: " + value);
+		}
+		if (CaptureRequest.DEVICE_IMAGE.equals(device)) {
+			if (CaptureRequest.DEFAULT_ENCODING.equalsIgnoreCase(value)) {
+				return CaptureRequest.DEFAULT_ENCODING;
+			}
+			throw new MediaException("Unsupported capture encoding: " + value);
+		}
+		if (CaptureRequest.DEFAULT_ENCODING.equalsIgnoreCase(value)) {
+			return CaptureRequest.DEFAULT_ENCODING;
+		}
+		if (CaptureRequest.DEFAULT_RECORDING_ENCODING.equalsIgnoreCase(value)
+				|| "mp4".equalsIgnoreCase(value)) {
+			return CaptureRequest.DEFAULT_RECORDING_ENCODING;
+		}
+		throw new MediaException("Unsupported capture encoding: " + value);
 	}
 
 	private static LogicalCameraDevice resolveLogicalCamera(String device) throws MediaException {
