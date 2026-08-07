@@ -25,6 +25,8 @@ import android.util.Log;
 
 import org.acra.ACRA;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.microedition.lcdui.Canvas;
@@ -42,6 +44,7 @@ import androidx.lifecycle.LifecycleOwner;
 
 public class MidletThread extends HandlerThread implements Handler.Callback {
 	private static final String TAG = MidletThread.class.getName();
+	private static final long FATAL_ACTIVITY_FINISH_TIMEOUT_MS = 100L;
 	private static final UncaughtExceptionHandler uncaughtExceptionHandler = (t, e) ->
 			Log.e(TAG, "Error in thread: \"" + t + "\" after destroy app called", e);
 	private static final AtomicBoolean fatalErrorHandling = new AtomicBoolean();
@@ -222,14 +225,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			current.emulationTimeController.stop();
 		}
 
-		// Remove the broken MIDlet Activity from the task before ACRA performs its
-		// synchronous report collection. This immediately reveals the existing
-		// MainActivity and gives Android time to settle the task while the report is
-		// prepared, instead of leaving the user on a black MIDlet window.
-		MicroActivity activity = ContextHolder.getActivity();
-		if (activity != null) {
-			activity.finish();
-		}
+		finishMidletActivityBeforeReport();
 
 		try {
 			// ACRA 5.x treats this as a handled report. Explicitly keep
@@ -241,6 +237,35 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		}
 
 		Process.killProcess(Process.myPid());
+	}
+
+	private static void finishMidletActivityBeforeReport() {
+		MicroActivity activity = ContextHolder.getActivity();
+		if (activity == null || activity.isDestroyed()) {
+			return;
+		}
+
+		CountDownLatch destroyed = new CountDownLatch(1);
+		LifecycleEventObserver observer = (source, event) -> {
+			if (event == Lifecycle.Event.ON_DESTROY) {
+				destroyed.countDown();
+			}
+		};
+
+		activity.runOnUiThread(() -> {
+			if (activity.isDestroyed()) {
+				destroyed.countDown();
+				return;
+			}
+			activity.getLifecycle().addObserver(observer);
+			activity.finish();
+		});
+
+		try {
+			destroyed.await(FATAL_ACTIVITY_FINISH_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
 	}
 
 	private void onActivityStateChanged(LifecycleOwner lifecycleOwner, Lifecycle.Event event) {
