@@ -79,10 +79,19 @@ public final class CameraConfiguration {
 	}
 
 	public static String snapshotEncodings() {
-		StringBuilder result = new StringBuilder();
+		/*
+		 * MMAPI allows an encoding descriptor without dimensions. Put the generic
+		 * JPEG descriptor first so it truthfully represents getSnapshot(null): JPEG
+		 * is the default format, while the implementation chooses the configured
+		 * size-class orientation to match the active Java viewfinder. Exact sizes
+		 * remain advertised afterwards for MIDlets that request width/height.
+		 */
+		StringBuilder result = new StringBuilder("encoding=jpeg");
 		int defaultWidth = CameraRuntimeConfig.defaultWidth();
 		int defaultHeight = CameraRuntimeConfig.defaultHeight();
-		appendEncoding(result, defaultWidth, defaultHeight);
+		if (CameraRuntimeConfig.acceptsDimensions(defaultWidth, defaultHeight)) {
+			appendEncoding(result, defaultWidth, defaultHeight);
+		}
 		if (defaultWidth != defaultHeight
 				&& CameraRuntimeConfig.acceptsDimensions(defaultHeight, defaultWidth)) {
 			appendEncoding(result, defaultHeight, defaultWidth);
