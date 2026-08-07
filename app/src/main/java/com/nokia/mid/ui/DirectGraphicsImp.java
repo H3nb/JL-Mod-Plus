@@ -35,10 +35,10 @@ import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.game.Sprite;
 
 public class DirectGraphicsImp implements DirectGraphics {
-	private static final String TAG = DirectGraphicsImp.class.getName();
 	private final Graphics graphics;
 	private static final String KEY_FORMAT = "com.nokia.mid.ui.DirectGraphics.PIXEL_FORMAT";
-	private static final int PIXEL_FORMAT = Integer.getInteger(KEY_FORMAT, TYPE_USHORT_565_RGB);
+	private static final int PIXEL_FORMAT = resolveNativePixelFormat(
+			Integer.getInteger(KEY_FORMAT, TYPE_USHORT_565_RGB));
 
 	private static final int[][] MANIPULATION2TRANSFORM = new int[][]{
 			// rotate:                0,                        90,                        180,                        270
@@ -48,10 +48,23 @@ public class DirectGraphicsImp implements DirectGraphics {
 			{Sprite.TRANS_ROT180       , Sprite.TRANS_ROT90        , Sprite.TRANS_NONE         , Sprite.TRANS_ROT270       }, // flip both
 	};
 
-	private int alphaComponent;
-
 	public DirectGraphicsImp(Graphics g) {
 		graphics = g;
+	}
+
+	private static int resolveNativePixelFormat(int format) {
+		switch (format) {
+			case TYPE_BYTE_1_GRAY:
+			case TYPE_BYTE_1_GRAY_VERTICAL:
+			case TYPE_USHORT_4444_ARGB:
+			case TYPE_USHORT_444_RGB:
+			case TYPE_USHORT_565_RGB:
+			case TYPE_INT_888_RGB:
+			case TYPE_INT_8888_ARGB:
+				return format;
+			default:
+				return TYPE_USHORT_565_RGB;
+		}
 	}
 
 	private static int getPixel(byte[] pixels, byte[] alpha, int idx, int shift) {
@@ -67,7 +80,7 @@ public class DirectGraphicsImp implements DirectGraphics {
 		if (flip > 3) {
 			throw new IllegalArgumentException();
 		}
-		int rotation = (manipulation & 0x1FFF);
+		int rotation = manipulation & 0x1FFF;
 		int rotIdx = rotation / 90;
 		if (rotation - rotIdx * 90 != 0 || rotIdx > 3) {
 			throw new IllegalArgumentException();
@@ -76,18 +89,17 @@ public class DirectGraphicsImp implements DirectGraphics {
 	}
 
 	private static void setPixel(byte[] pixels, byte[] alpha, int idx, int shift, int color) {
-		int a = color >>> 31;
 		int r = color >> 16 & 0xff;
 		int g = color >> 8 & 0xff;
 		int b = color & 0xff;
-		int pixel = (0x4CB2 * r + 0x9691 * g + 0x1D3E * b >> 23 ^ 1) & a;
+		int pixel = (0x4CB2 * r + 0x9691 * g + 0x1D3E * b >> 23) ^ 1;
 		if (pixel == 1) {
 			pixels[idx] |= 1 << shift;
 		} else {
 			pixels[idx] &= ~(1 << shift);
 		}
 		if (alpha != null) {
-			if (a == 1) {
+			if ((color >>> 24) != 0) {
 				alpha[idx] |= 1 << shift;
 			} else {
 				alpha[idx] &= ~(1 << shift);
@@ -95,13 +107,58 @@ public class DirectGraphicsImp implements DirectGraphics {
 		}
 	}
 
+	private static void validateAnchor(int anchor) {
+		int allowed = Graphics.HCENTER | Graphics.VCENTER | Graphics.LEFT | Graphics.RIGHT
+				| Graphics.TOP | Graphics.BOTTOM;
+		if ((anchor & ~allowed) != 0) {
+			throw new IllegalArgumentException();
+		}
+		int horizontal = anchor & (Graphics.HCENTER | Graphics.LEFT | Graphics.RIGHT);
+		int vertical = anchor & (Graphics.VCENTER | Graphics.TOP | Graphics.BOTTOM);
+		if (Integer.bitCount(horizontal) > 1 || Integer.bitCount(vertical) > 1) {
+			throw new IllegalArgumentException();
+		}
+	}
+
+	private static void validateArrayBounds(int length, int offset, int scanlength, int width, int height) {
+		if (offset < 0) {
+			throw new ArrayIndexOutOfBoundsException();
+		}
+		long maxIndex = (long) offset + (long) (height - 1) * scanlength + width - 1L;
+		if (maxIndex < 0 || maxIndex >= length) {
+			throw new ArrayIndexOutOfBoundsException();
+		}
+	}
+
+	private static void validateBitArrayBounds(int length, int offset, int scanlength, int width, int height) {
+		if (offset < 0) {
+			throw new ArrayIndexOutOfBoundsException();
+		}
+		long maxBit = (long) offset + (long) (height - 1) * scanlength + width - 1L;
+		if (maxBit < 0 || maxBit >= (long) length * 8L) {
+			throw new ArrayIndexOutOfBoundsException();
+		}
+	}
+
+	private static void validateVerticalBitArrayBounds(int length, int offset, int scanlength,
+											   int width, int height) {
+		if (offset < 0) {
+			throw new ArrayIndexOutOfBoundsException();
+		}
+		long row = (long) offset / scanlength + height - 1L;
+		long column = (long) offset % scanlength + width - 1L;
+		long maxIndex = (row >> 3) * scanlength + column;
+		if (maxIndex < 0 || maxIndex >= length) {
+			throw new ArrayIndexOutOfBoundsException();
+		}
+	}
+
 	@Override
 	public void drawImage(Image img, int x, int y, int anchor, int manipulation) {
 		if (img == null) {
 			throw new NullPointerException();
-		} else if ((anchor & -64) != 0) {
-			throw new IllegalArgumentException();
 		}
+		validateAnchor(anchor);
 		int transform = getTransformation(manipulation);
 		graphics.drawRegion(img, 0, 0, img.getWidth(), img.getHeight(), transform, x, y, anchor);
 	}
@@ -132,6 +189,10 @@ public class DirectGraphicsImp implements DirectGraphics {
 
 		switch (format) {
 			case TYPE_BYTE_1_GRAY: {
+				validateBitArrayBounds(pixels.length, offset, scanlength, width, height);
+				if (transparencyMask != null) {
+					validateBitArrayBounds(transparencyMask.length, offset, scanlength, width, height);
+				}
 				int space = scanlength - width;
 				for (int yi = 0, di = 0; yi < height; yi++, offset += space) {
 					for (int xi = 0; xi < width; xi++, offset++) {
@@ -142,6 +203,10 @@ public class DirectGraphicsImp implements DirectGraphics {
 				break;
 			}
 			case TYPE_BYTE_1_GRAY_VERTICAL: {
+				validateVerticalBitArrayBounds(pixels.length, offset, scanlength, width, height);
+				if (transparencyMask != null) {
+					validateVerticalBitArrayBounds(transparencyMask.length, offset, scanlength, width, height);
+				}
 				int ods = offset / scanlength;
 				int oms = offset % scanlength;
 				int shift = ods & 7;
@@ -191,15 +256,16 @@ public class DirectGraphicsImp implements DirectGraphics {
 		}
 
 		int transform = getTransformation(manipulation);
+		validateArrayBounds(pixels.length, offset, scanlength, width, height);
 		int[] colors = new int[height * width];
-
 		int space = scanlength - width;
 		for (int yi = 0, di = 0; yi < height; yi++, offset += space) {
 			for (int xi = 0; xi < width; xi++) {
 				colors[di++] = pixels[offset++];
 			}
 		}
-		Image image = Image.createRGBImage(colors, width, height, format != TYPE_INT_888_RGB && transparency);
+		Image image = Image.createRGBImage(colors, width, height,
+				format == TYPE_INT_8888_ARGB && transparency);
 		graphics.drawRegion(image, 0, 0, width, height, transform, x, y, 0);
 	}
 
@@ -225,6 +291,7 @@ public class DirectGraphicsImp implements DirectGraphics {
 		}
 
 		int transform = getTransformation(manipulation);
+		validateArrayBounds(pixels.length, offset, scanlength, width, height);
 		int[] colors = new int[height * width];
 
 		switch (format) {
@@ -236,7 +303,7 @@ public class DirectGraphicsImp implements DirectGraphics {
 						int a = (s & 0xF000) << 12;
 						int r = (s & 0x0F00) << 8;
 						int g = (s & 0x00F0) << 4;
-						int b = (s & 0x000F);
+						int b = s & 0x000F;
 						int argb = a | r | g | b;
 						colors[di++] = argb | argb << 4;
 					}
@@ -273,7 +340,8 @@ public class DirectGraphicsImp implements DirectGraphics {
 			default:
 				throw new IllegalArgumentException("Illegal format: " + format);
 		}
-		Image image = Image.createRGBImage(colors, width, height, true);
+		Image image = Image.createRGBImage(colors, width, height,
+				format == TYPE_USHORT_4444_ARGB && transparency);
 		graphics.drawRegion(image, 0, 0, width, height, transform, x, y, 0);
 	}
 
@@ -284,8 +352,7 @@ public class DirectGraphicsImp implements DirectGraphics {
 							int yOffset,
 							int nPoints,
 							int argbColor) {
-		setARGBColor(argbColor);
-		graphics.drawPolygon(xPoints, xOffset, yPoints, yOffset, nPoints);
+		graphics.drawPolygon(xPoints, xOffset, yPoints, yOffset, nPoints, argbColor);
 	}
 
 	@Override
@@ -300,8 +367,7 @@ public class DirectGraphicsImp implements DirectGraphics {
 							int yOffset,
 							int nPoints,
 							int argbColor) {
-		setARGBColor(argbColor);
-		graphics.fillPolygon(xPoints, xOffset, yPoints, yOffset, nPoints);
+		graphics.fillPolygon(xPoints, xOffset, yPoints, yOffset, nPoints, argbColor, true);
 	}
 
 	@Override
@@ -311,7 +377,7 @@ public class DirectGraphicsImp implements DirectGraphics {
 
 	@Override
 	public int getAlphaComponent() {
-		return alphaComponent;
+		return graphics.getARGBColor() >>> 24;
 	}
 
 	@Override
@@ -341,9 +407,9 @@ public class DirectGraphicsImp implements DirectGraphics {
 
 		switch (format) {
 			case TYPE_BYTE_1_GRAY: {
-				int bits = offset + width + (height - 1) * scanlength;
-				if (bits > pixels.length << 3 || transparencyMask != null && bits > transparencyMask.length << 3) {
-					throw new ArrayIndexOutOfBoundsException();
+				validateBitArrayBounds(pixels.length, offset, scanlength, width, height);
+				if (transparencyMask != null) {
+					validateBitArrayBounds(transparencyMask.length, offset, scanlength, width, height);
 				}
 				int[] colors = new int[width * height];
 				getPixels(colors, 0, width, x, y, width, height);
@@ -356,15 +422,13 @@ public class DirectGraphicsImp implements DirectGraphics {
 				break;
 			}
 			case TYPE_BYTE_1_GRAY_VERTICAL: {
+				validateVerticalBitArrayBounds(pixels.length, offset, scanlength, width, height);
+				if (transparencyMask != null) {
+					validateVerticalBitArrayBounds(transparencyMask.length, offset, scanlength, width, height);
+				}
 				int ods = offset / scanlength;
 				int oms = offset % scanlength;
 				int shift = ods & 7;
-				int maxIndex = ((ods + height - 1) >> 3) * scanlength + oms;
-				if (maxIndex >= pixels.length) {
-					throw new ArrayIndexOutOfBoundsException();
-				} else if (transparencyMask != null && maxIndex >= transparencyMask.length) {
-					throw new ArrayIndexOutOfBoundsException();
-				}
 				int[] colors = new int[width * height];
 				getPixels(colors, 0, width, x, y, width, height);
 				for (int yi = 0, si = 0; yi < height; yi++) {
@@ -384,7 +448,6 @@ public class DirectGraphicsImp implements DirectGraphics {
 			default:
 				throw new IllegalArgumentException("Illegal format: " + format);
 		}
-
 	}
 
 	@Override
@@ -400,14 +463,15 @@ public class DirectGraphicsImp implements DirectGraphics {
 			throw new NullPointerException();
 		} else if (x < 0 || y < 0 || width < 0 || height < 0 || scanlength < width) {
 			throw new IllegalArgumentException();
-		} else if (offset < 0 || offset + width + (height - 1) > pixels.length) {
-			throw new IllegalArgumentException();
 		} else if (format != TYPE_INT_888_RGB && format != TYPE_INT_8888_ARGB) {
 			throw new IllegalArgumentException("Illegal format: " + format);
+		} else if (offset < 0) {
+			throw new ArrayIndexOutOfBoundsException();
 		} else if (width == 0 || height == 0) {
 			return;
 		}
 
+		validateArrayBounds(pixels.length, offset, scanlength, width, height);
 		getPixels(pixels, offset, scanlength, x, y, width, height);
 		if (format == TYPE_INT_888_RGB) {
 			int space = scanlength - width;
@@ -432,12 +496,25 @@ public class DirectGraphicsImp implements DirectGraphics {
 			throw new NullPointerException();
 		} else if (x < 0 || y < 0 || width < 0 || height < 0 || scanlength < width) {
 			throw new IllegalArgumentException();
-		} else if (offset < 0 || offset + width + (height - 1) > pixels.length) {
-			throw new IllegalArgumentException();
+		} else if (offset < 0) {
+			throw new ArrayIndexOutOfBoundsException();
 		} else if (width == 0 || height == 0) {
 			return;
 		}
 
+		switch (format) {
+			case TYPE_USHORT_4444_ARGB:
+			case TYPE_USHORT_444_RGB:
+			case TYPE_USHORT_565_RGB:
+				break;
+			case TYPE_USHORT_555_RGB:
+			case TYPE_USHORT_1555_ARGB:
+				throw new IllegalArgumentException("Unsupported format: " + format);
+			default:
+				throw new IllegalArgumentException("Illegal format: " + format);
+		}
+
+		validateArrayBounds(pixels.length, offset, scanlength, width, height);
 		int[] colors = new int[width * height];
 		getPixels(colors, 0, width, x, y, width, height);
 		switch (format) {
@@ -478,17 +555,11 @@ public class DirectGraphicsImp implements DirectGraphics {
 				}
 				break;
 			}
-			case TYPE_USHORT_555_RGB:
-			case TYPE_USHORT_1555_ARGB:
-				throw new IllegalArgumentException("Unsupported format: " + format);
-			default:
-				throw new IllegalArgumentException("Illegal format: " + format);
 		}
 	}
 
 	@Override
 	public void setARGBColor(int argb) {
-		alphaComponent = (argb >> 24 & 0xff);
 		graphics.setColorAlpha(argb);
 	}
 
