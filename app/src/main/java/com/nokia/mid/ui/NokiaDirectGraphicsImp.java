@@ -29,6 +29,9 @@ final class NokiaDirectGraphicsImp extends DirectGraphicsImp {
 	private final Graphics graphics;
 	private final Paint polygonPaint = new Paint();
 	private final Path polygonPath = new Path();
+	private final NokiaPolygonRasterizer polygonRasterizer = new NokiaPolygonRasterizer();
+	private final int[] triangleX = new int[3];
+	private final int[] triangleY = new int[3];
 
 	NokiaDirectGraphicsImp(Graphics graphics) {
 		super(graphics);
@@ -49,9 +52,26 @@ final class NokiaDirectGraphicsImp extends DirectGraphicsImp {
 			return;
 		}
 
-		NokiaPolygonRasterizer.buildPath(
-				polygonPath, xPoints, xOffset, yPoints, yOffset, nPoints);
+		int clipLeft = graphics.getClipX();
+		int clipTop = graphics.getClipY();
+		int clipRight = clipLeft + graphics.getClipWidth();
+		int clipBottom = clipTop + graphics.getClipHeight();
+
+		polygonRasterizer.buildPath(
+				polygonPath, xPoints, xOffset, yPoints, yOffset, nPoints,
+				clipLeft, clipTop, clipRight, clipBottom);
 		polygonPaint.setColor(argbColor);
 		graphics.getCanvas().drawPath(polygonPath, polygonPaint);
+	}
+
+	@Override
+	public void fillTriangle(int x1, int y1, int x2, int y2, int x3, int y3, int argbColor) {
+		triangleX[0] = x1;
+		triangleX[1] = x2;
+		triangleX[2] = x3;
+		triangleY[0] = y1;
+		triangleY[1] = y2;
+		triangleY[2] = y3;
+		fillPolygon(triangleX, 0, triangleY, 0, 3, argbColor);
 	}
 }
