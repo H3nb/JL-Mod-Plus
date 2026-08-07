@@ -18,6 +18,7 @@ package javax.microedition.media;
 
 import org.junit.Test;
 
+import javax.microedition.media.control.RecordControl;
 import javax.microedition.media.control.VideoControl;
 
 import static org.junit.Assert.assertEquals;
@@ -28,24 +29,42 @@ import static org.junit.Assert.assertThrows;
 
 public class CameraPlayerTest {
 	@Test
-	public void realizationExposesOnlyStableJsr135VideoControl() throws Exception {
+	public void realizationExposesStableJsr135CameraControls() throws Exception {
 		CameraPlayer player = new CameraPlayer("capture://video");
 		try {
 			assertEquals(Player.UNREALIZED, player.getState());
 			player.realize();
 			assertEquals(Player.REALIZED, player.getState());
 
-			Control shortName = player.getControl("VideoControl");
-			Control fullName = player.getControl(VideoControl.class.getName());
-			assertNotNull(shortName);
-			assertSame(shortName, fullName);
-			assertEquals(1, player.getControls().length);
-			assertSame(shortName, player.getControls()[0]);
+			Control videoShortName = player.getControl("VideoControl");
+			Control videoFullName = player.getControl(VideoControl.class.getName());
+			assertNotNull(videoShortName);
+			assertSame(videoShortName, videoFullName);
 
-			assertNull(player.getControl("RecordControl"));
+			Control recordShortName = player.getControl("RecordControl");
+			Control recordFullName = player.getControl(RecordControl.class.getName());
+			assertNotNull(recordShortName);
+			assertSame(recordShortName, recordFullName);
+
+			assertEquals(2, player.getControls().length);
+			assertSame(videoShortName, player.getControls()[0]);
+			assertSame(recordShortName, player.getControls()[1]);
+
 			assertNull(player.getControl("CameraControl"));
 			assertNull(player.getControl("SnapshotControl"));
 			assertThrows(IllegalArgumentException.class, () -> player.getControl(null));
+		} finally {
+			player.close();
+		}
+	}
+
+	@Test
+	public void audioVideoRealizationExposesRecordControlWithoutOpeningHardware() throws Exception {
+		CameraPlayer player = new CameraPlayer("capture://audio_video");
+		try {
+			player.realize();
+			assertEquals(Player.REALIZED, player.getState());
+			assertNotNull(player.getControl(RecordControl.class.getName()));
 		} finally {
 			player.close();
 		}
