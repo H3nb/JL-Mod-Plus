@@ -42,6 +42,7 @@ public final class CameraRuntimeConfig {
 	public static final String PREF_MAX_SNAPSHOT = "pref_camera_max_snapshot";
 	public static final String PREF_JPEG_QUALITY = "pref_camera_jpeg_quality";
 
+	/* Size classes are stored landscape/canonical. Orientation is resolved by VideoControl. */
 	private static final int DEFAULT_WIDTH = 640;
 	private static final int DEFAULT_HEIGHT = 480;
 	private static final int MAX_WIDTH = 2048;
@@ -159,16 +160,21 @@ public final class CameraRuntimeConfig {
 			int quality = preferences.getInt(PREF_JPEG_QUALITY, DEFAULT_QUALITY);
 			State sanitized = sanitize(new State(device, defaultSize[0], defaultSize[1],
 					maxSize[0], maxSize[1], quality));
+			SharedPreferences.Editor editor = null;
 			if (sanitized.defaultWidth != defaultSize[0] || sanitized.defaultHeight != defaultSize[1]) {
-				preferences.edit().putString(PREF_DEFAULT_SNAPSHOT,
-						sanitized.defaultWidth + "x" + sanitized.defaultHeight).apply();
+				editor = preferences.edit().putString(PREF_DEFAULT_SNAPSHOT,
+						sanitized.defaultWidth + "x" + sanitized.defaultHeight);
 			}
 			if (sanitized.maxWidth != maxSize[0] || sanitized.maxHeight != maxSize[1]) {
-				preferences.edit().putString(PREF_MAX_SNAPSHOT,
-						sanitized.maxWidth + "x" + sanitized.maxHeight).apply();
+				editor = (editor == null ? preferences.edit() : editor).putString(PREF_MAX_SNAPSHOT,
+						sanitized.maxWidth + "x" + sanitized.maxHeight);
 			}
 			if (sanitized.jpegQuality != quality) {
-				preferences.edit().putInt(PREF_JPEG_QUALITY, sanitized.jpegQuality).apply();
+				editor = (editor == null ? preferences.edit() : editor)
+						.putInt(PREF_JPEG_QUALITY, sanitized.jpegQuality);
+			}
+			if (editor != null) {
+				editor.apply();
 			}
 			return sanitized;
 		} catch (RuntimeException e) {
@@ -199,14 +205,17 @@ public final class CameraRuntimeConfig {
 
 	private static State sanitize(State value) {
 		int quality = Math.max(1, Math.min(100, value.jpegQuality));
-		int maxWidth = validDimension(value.maxWidth) ? value.maxWidth : MAX_WIDTH;
-		int maxHeight = validDimension(value.maxHeight) ? value.maxHeight : MAX_HEIGHT;
-		int defaultWidth = validDimension(value.defaultWidth) ? value.defaultWidth : DEFAULT_WIDTH;
-		int defaultHeight = validDimension(value.defaultHeight) ? value.defaultHeight : DEFAULT_HEIGHT;
-		State sanitized = new State(value.device, defaultWidth, defaultHeight,
-				maxWidth, maxHeight, quality);
-		return accepts(sanitized, defaultWidth, defaultHeight) ? sanitized
-				: new State(value.device, DEFAULT_WIDTH, DEFAULT_HEIGHT, maxWidth, maxHeight, quality);
+		int[] maximum = canonicalSize(
+				validDimension(value.maxWidth) ? value.maxWidth : MAX_WIDTH,
+				validDimension(value.maxHeight) ? value.maxHeight : MAX_HEIGHT);
+		int[] defaultSize = canonicalSize(
+				validDimension(value.defaultWidth) ? value.defaultWidth : DEFAULT_WIDTH,
+				validDimension(value.defaultHeight) ? value.defaultHeight : DEFAULT_HEIGHT);
+		State sanitized = new State(value.device, defaultSize[0], defaultSize[1],
+				maximum[0], maximum[1], quality);
+		return accepts(sanitized, defaultSize[0], defaultSize[1]) ? sanitized
+				: new State(value.device, DEFAULT_WIDTH, DEFAULT_HEIGHT,
+						maximum[0], maximum[1], quality);
 	}
 
 	private static boolean accepts(State state, int width, int height) {
@@ -215,6 +224,10 @@ public final class CameraRuntimeConfig {
 		return Math.max(width, height) <= maxAxis
 				&& Math.min(width, height) <= minAxis
 				&& (long) width * height <= (long) state.maxWidth * state.maxHeight;
+	}
+
+	private static int[] canonicalSize(int width, int height) {
+		return width >= height ? new int[]{width, height} : new int[]{height, width};
 	}
 
 	private static int[] parseSize(String text, int fallbackWidth, int fallbackHeight) {
