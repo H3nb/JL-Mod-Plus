@@ -54,6 +54,8 @@
 -keep class io.github.h3nb.jlmodplus.BuildConfig { *; }
 -keep class io.github.h3nb.jlmodplus.util.SparseIntArrayAdapter { *; }
 -keep class io.github.h3nb.jlmodplus.crashes.models.* { *; }
+# ACRA discovers this app-owned interaction through ServiceLoader.
+-keep class io.github.h3nb.jlmodplus.crashes.dialog.DialogInteraction { *; }
 
 # dependencies
 -keep public class org.acra.** { public protected *; }
