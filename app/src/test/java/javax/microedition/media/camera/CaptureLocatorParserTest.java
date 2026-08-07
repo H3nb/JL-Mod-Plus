@@ -61,12 +61,18 @@ public class CaptureLocatorParserTest {
 
 	@Test
 	public void acceptsAdvertisedMp4EncodingForVideoRecording() throws Exception {
-		CaptureRequest request = CaptureLocatorParser.parse(
-				"capture://video?encoding=video%2Fmp4&width=640&height=480");
+		CaptureRequest request = CaptureLocatorParser.parse("capture://video?encoding=video%2Fmp4");
 
 		assertEquals(CaptureRequest.DEFAULT_RECORDING_ENCODING, request.getEncoding());
-		assertEquals(640, request.getWidth());
-		assertEquals(480, request.getHeight());
+		assertFalse(request.hasExplicitDimensions());
+	}
+
+	@Test
+	public void rejectsExplicitMp4RecordingDimensionsUntilTheyCanBeExact() {
+		assertThrows(MediaException.class, () -> CaptureLocatorParser.parse(
+				"capture://video?encoding=video%2Fmp4&width=640&height=480"));
+		assertThrows(MediaException.class, () -> CaptureLocatorParser.parse(
+				"capture://audio_video?width=640&height=480"));
 	}
 
 	@Test
@@ -122,7 +128,5 @@ public class CaptureLocatorParserTest {
 				CaptureLocatorParser.parse("capture://video?fps=30"));
 		assertThrows(MediaException.class, () ->
 				CaptureLocatorParser.parse("capture://video?width=4096&height=2160"));
-		assertThrows(MediaException.class, () ->
-				CaptureLocatorParser.parse("capture://audio_video?width=4096&height=2160"));
 	}
 }
