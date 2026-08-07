@@ -155,6 +155,18 @@ jobs:
           test "$abis" = "arm64-v8a"
           printf 'Verified APK: %s\nABI: %s\n' "$apk" "$abis"
 
+      - name: Verify ACRA report interaction packaging
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="$(find app/build/outputs/renamed_apks/emulatorDebug -type f -name '*.apk' -print -quit)"
+          test -n "$apk"
+          service_path="META-INF/services/org.acra.interaction.ReportInteraction"
+          provider="io.github.h3nb.jlmodplus.crashes.dialog.DialogInteraction"
+          unzip -Z1 "$apk" | grep -Fx "$service_path"
+          unzip -p "$apk" "$service_path" | tr -d '\r' | sed 's/[[:space:]]*$//' | grep -Fx "$provider"
+          printf 'Verified ACRA ReportInteraction provider in %s\n' "$apk"
+
       - name: Upload unit-test reports
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0

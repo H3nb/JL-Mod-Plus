@@ -53,7 +53,7 @@ jobs:
           :app:lintEmulatorRelease
           :app:assembleEmulatorRelease
 
-      - name: Verify release artifact, manifest, ABI, and R8 mapping
+      - name: Verify release artifact, manifest, ABI, R8 mapping, and crash interaction
         shell: bash
         run: |
           set -euo pipefail
@@ -79,7 +79,15 @@ jobs:
 
           abis="$(unzip -Z1 "$apk" | awk -F/ '/^lib\/[^/]+\// {print $2}' | sort -u)"
           test "$abis" = "arm64-v8a"
-          printf 'Verified unsigned release artifact: %s\nABI: %s\nMapping: %s\n' "$apk" "$abis" "$mapping"
+
+          service_path="META-INF/services/org.acra.interaction.ReportInteraction"
+          provider="io.github.h3nb.jlmodplus.crashes.dialog.DialogInteraction"
+          unzip -Z1 "$apk" | grep -Fx "$service_path"
+          unzip -p "$apk" "$service_path" | tr -d '\r' | sed 's/[[:space:]]*$//' | grep -Fx "$provider"
+          grep -F "$provider ->" "$mapping"
+
+          printf 'Verified unsigned release artifact: %s\nABI: %s\nMapping: %s\nACRA interaction: %s\n' \
+            "$apk" "$abis" "$mapping" "$provider"
 
       - name: Upload release-readiness artifacts
         if: always()
