@@ -45,18 +45,10 @@ final class NokiaPolygonRasterizer {
 			return;
 		}
 
-		// Touch all requested points up front so invalid offsets fail before any
-		// drawing is submitted to the Canvas.
 		int minY = yPoints[yOffset];
 		int maxY = minY;
-		for (int i = 0; i < nPoints; i++) {
-			int x = xPoints[xOffset + i];
+		for (int i = 1; i < nPoints; i++) {
 			int y = yPoints[yOffset + i];
-			// Keep both array reads even though only y participates in the bounds.
-			// Reading x here provides the same eager bounds validation for xPoints.
-			if (x == Integer.MIN_VALUE) {
-				// No special handling is required for this legal coordinate.
-			}
 			if (y < minY) minY = y;
 			if (y > maxY) maxY = y;
 		}
