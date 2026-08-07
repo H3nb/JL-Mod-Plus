@@ -207,8 +207,13 @@ public final class Jsr135VideoControl implements VideoControl {
 	@Override
 	public synchronized byte[] getSnapshot(String imageType) throws MediaException {
 		checkInitialized();
-		MidletMediaPermissionGate.requireSnapshotPermission();
+		// Validate the MMAPI request before prompting the user for permission.
 		SnapshotRequest snapshot = SnapshotEncodingParser.parse(imageType);
+		// Feature-phone implementations such as Sony Ericsson rotated Java snapshots
+		// to match the Java viewfinder. This hint only affects an unspecified snapshot;
+		// explicit width/height requests remain literal.
+		player.getCameraConfiguration().setViewfinderSize(displayWidth, displayHeight);
+		MidletMediaPermissionGate.requireSnapshotPermission();
 		return player.takeSnapshot(snapshot);
 	}
 
