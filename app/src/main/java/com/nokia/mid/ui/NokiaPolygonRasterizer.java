@@ -64,8 +64,10 @@ final class NokiaPolygonRasterizer {
 			return;
 		}
 
-		// Rectangles are common in J2ME effects. They can use the same inclusive
-		// Nokia pixel coverage with a single Path rectangle and no scanline work.
+		// Rectangles are common in J2ME effects. Only take this fast path when
+		// the polygon consists of all four distinct bounding-box corners exactly
+		// once. Repeated or missing corners are degenerate polygons and must use
+		// the normal even-odd path instead of being expanded into a full box.
 		if (isAxisAlignedRectangle(xPoints, xOffset, yPoints, yOffset, nPoints,
 				minX, maxX, minY, maxY)) {
 			addClippedRect(output, minX, minY,
@@ -111,11 +113,11 @@ final class NokiaPolygonRasterizer {
 			}
 		}
 
-		// Include Nokia's one-pixel polygon boundary. Horizontal and vertical
-		// edges collapse to one rectangle; general Bresenham edges are compressed
-		// into one horizontal run for each touched row instead of one rectangle
-		// per pixel. Because all spans are subpaths of a single WINDING Path,
-		// overlapping interior/boundary coverage is alpha-blended only once.
+		// Include Nokia's one-pixel polygon boundary. The visible Bresenham
+		// samples are calculated directly from the major-axis step instead of
+		// walking from an off-screen endpoint. This preserves the same integer
+		// line phase for ordinary coordinates while bounding work to the clip
+		// width/height even when games submit extreme world coordinates.
 		int previous = nPoints - 1;
 		for (int current = 0; current < nPoints; current++) {
 			addLineRuns(output,
@@ -145,88 +147,160 @@ final class NokiaPolygonRasterizer {
 		if (nPoints != 4 || minX == maxX || minY == maxY) {
 			return false;
 		}
+
+		int seenCorners = 0;
 		for (int i = 0; i < 4; i++) {
 			int next = (i + 1) & 3;
 			int x1 = xPoints[xOffset + i];
 			int y1 = yPoints[yOffset + i];
 			int x2 = xPoints[xOffset + next];
 			int y2 = yPoints[yOffset + next];
+
 			if (x1 != x2 && y1 != y2) {
 				return false;
 			}
-			if ((x1 != minX && x1 != maxX) || (y1 != minY && y1 != maxY)) {
+
+			int corner;
+			if (x1 == minX && y1 == minY) {
+				corner = 1;
+			} else if (x1 == maxX && y1 == minY) {
+				corner = 2;
+			} else if (x1 == maxX && y1 == maxY) {
+				corner = 4;
+			} else if (x1 == minX && y1 == maxY) {
+				corner = 8;
+			} else {
 				return false;
 			}
+
+			if ((seenCorners & corner) != 0) {
+				return false;
+			}
+			seenCorners |= corner;
 		}
-		return true;
+		return seenCorners == 0x0F;
 	}
 
 	private static void addLineRuns(Path output,
 								int x0, int y0, int x1, int y1,
 								int clipLeft, int clipTop,
 								int clipRight, int clipBottom) {
-		int edgeMinX = Math.min(x0, x1);
-		int edgeMaxX = Math.max(x0, x1);
-		int edgeMinY = Math.min(y0, y1);
-		int edgeMaxY = Math.max(y0, y1);
-		if ((long) edgeMaxX + 1L <= clipLeft || edgeMinX >= clipRight
-				|| (long) edgeMaxY + 1L <= clipTop || edgeMinY >= clipBottom) {
+		long edgeMinX = Math.min(x0, x1);
+		long edgeMaxX = Math.max(x0, x1);
+		long edgeMinY = Math.min(y0, y1);
+		long edgeMaxY = Math.max(y0, y1);
+		if (edgeMaxX + 1L <= clipLeft || edgeMinX >= clipRight
+				|| edgeMaxY + 1L <= clipTop || edgeMinY >= clipBottom) {
 			return;
 		}
 
 		if (y0 == y1) {
 			addClippedRect(output, edgeMinX, y0,
-					(long) edgeMaxX + 1L, (long) y0 + 1L,
+					edgeMaxX + 1L, (long) y0 + 1L,
 					clipLeft, clipTop, clipRight, clipBottom);
 			return;
 		}
 		if (x0 == x1) {
 			addClippedRect(output, x0, edgeMinY,
-					(long) x0 + 1L, (long) edgeMaxY + 1L,
+					(long) x0 + 1L, edgeMaxY + 1L,
 					clipLeft, clipTop, clipRight, clipBottom);
 			return;
 		}
 
 		long dx = Math.abs((long) x1 - x0);
+		long dy = Math.abs((long) y1 - y0);
 		long sx = x0 < x1 ? 1L : -1L;
-		long dy = -Math.abs((long) y1 - y0);
 		long sy = y0 < y1 ? 1L : -1L;
-		long error = dx + dy;
-		long x = x0;
-		long y = y0;
 
-		long runY = y;
-		long runMinX = x;
-		long runMaxX = x;
-
-		while (true) {
-			if (x == x1 && y == y1) {
-				flushRun(output, runMinX, runMaxX, runY,
-						clipLeft, clipTop, clipRight, clipBottom);
-				break;
-			}
-
-			long twiceError = error << 1;
-			if (twiceError >= dy) {
-				error += dy;
-				x += sx;
-			}
-			if (twiceError <= dx) {
-				error += dx;
-				y += sy;
-			}
-
-			if (y == runY) {
-				if (x < runMinX) runMinX = x;
-				if (x > runMaxX) runMaxX = x;
+		if (dx >= dy) {
+			long from;
+			long to;
+			if (sx > 0L) {
+				from = Math.max(0L, (long) clipLeft - x0);
+				to = Math.min(dx, (long) clipRight - 1L - x0);
 			} else {
+				from = Math.max(0L, (long) x0 - ((long) clipRight - 1L));
+				to = Math.min(dx, (long) x0 - clipLeft);
+			}
+			if (from > to) {
+				return;
+			}
+
+			long runY = Long.MIN_VALUE;
+			long runMinX = 0L;
+			long runMaxX = 0L;
+			for (long step = from; step <= to; step++) {
+				long x = (long) x0 + sx * step;
+				long y = (long) y0 + sy * roundedRatio(dy, step, dx);
+				if (y < clipTop || y >= clipBottom) {
+					if (runY != Long.MIN_VALUE) {
+						flushRun(output, runMinX, runMaxX, runY,
+								clipLeft, clipTop, clipRight, clipBottom);
+						runY = Long.MIN_VALUE;
+					}
+					continue;
+				}
+				if (runY == y) {
+					if (x < runMinX) runMinX = x;
+					if (x > runMaxX) runMaxX = x;
+				} else {
+					if (runY != Long.MIN_VALUE) {
+						flushRun(output, runMinX, runMaxX, runY,
+								clipLeft, clipTop, clipRight, clipBottom);
+					}
+					runY = y;
+					runMinX = x;
+					runMaxX = x;
+				}
+			}
+			if (runY != Long.MIN_VALUE) {
 				flushRun(output, runMinX, runMaxX, runY,
 						clipLeft, clipTop, clipRight, clipBottom);
-				runY = y;
-				runMinX = x;
-				runMaxX = x;
+			}
+			return;
+		}
+
+		long from;
+		long to;
+		if (sy > 0L) {
+			from = Math.max(0L, (long) clipTop - y0);
+			to = Math.min(dy, (long) clipBottom - 1L - y0);
+		} else {
+			from = Math.max(0L, (long) y0 - ((long) clipBottom - 1L));
+			to = Math.min(dy, (long) y0 - clipTop);
+		}
+		if (from > to) {
+			return;
+		}
+
+		for (long step = from; step <= to; step++) {
+			long y = (long) y0 + sy * step;
+			long x = (long) x0 + sx * roundedRatio(dx, step, dy);
+			if (x >= clipLeft && x < clipRight) {
+				flushRun(output, x, x, y, clipLeft, clipTop, clipRight, clipBottom);
 			}
 		}
+	}
+
+	/** Returns round(numerator * step / denominator) without overflowing long for normal J2ME ranges. */
+	private static long roundedRatio(long numerator, long step, long denominator) {
+		if (numerator == 0L || step == 0L) {
+			return 0L;
+		}
+		if (step <= Long.MAX_VALUE / numerator) {
+			long product = numerator * step;
+			long quotient = product / denominator;
+			long remainder = product % denominator;
+			if (remainder * 2L >= denominator) {
+				quotient++;
+			}
+			return quotient;
+		}
+
+		// Only reachable for near-full 32-bit coordinate spans. Double retains
+		// ample precision after division for the integer pixel result and, most
+		// importantly, keeps pathological off-screen edges bounded by the clip.
+		return (long) Math.floor((double) numerator * (double) step / (double) denominator + 0.5d);
 	}
 
 	private static void flushRun(Path output,
