@@ -24,16 +24,26 @@ public final class MidletSystem {
 
 
     public static String getProperty(String key) {
-        String value = PROPERTY.get(key);
-        if (TextUtils.isEmpty(value)) value = VirtualCameraCapabilities.systemProperty(key);
+        String value;
+        if (VirtualCameraCapabilities.isManagedProperty(key)) {
+            value = VirtualCameraCapabilities.systemProperty(key);
+        } else {
+            value = PROPERTY.get(key);
+            if (TextUtils.isEmpty(value)) value = VirtualCameraCapabilities.systemProperty(key);
+        }
         if (TextUtils.isEmpty(value)) value = System.getProperty(key);
         Log.d(TAG, "System.getProperty: " + key + "=" + value);
         return value;
     }
 
     public static String getProperty(String key, String def) {
-        String value = PROPERTY.get(key);
-        if (TextUtils.isEmpty(value)) value = VirtualCameraCapabilities.systemProperty(key);
+        String value;
+        if (VirtualCameraCapabilities.isManagedProperty(key)) {
+            value = VirtualCameraCapabilities.systemProperty(key);
+        } else {
+            value = PROPERTY.get(key);
+            if (TextUtils.isEmpty(value)) value = VirtualCameraCapabilities.systemProperty(key);
+        }
         if (TextUtils.isEmpty(value)) value = System.getProperty(key, def);
         Log.d(TAG, "System.getProperty: " + key + "=" + value);
         return value;

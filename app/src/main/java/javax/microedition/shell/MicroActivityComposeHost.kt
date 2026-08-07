@@ -25,7 +25,7 @@ import io.github.h3nb.jlmodplus.ui.AppComposeTheme
 
 /**
  * Host Compose renderer for emulator dialogs. The emulator surface itself stays
- * a native Android view hierarchy; Compose is used only for the dialog overlay.
+ * a native Android view hierarchy; Compose is used only for dialog overlays.
  */
 object MicroActivityComposeHost {
     @JvmStatic
@@ -41,13 +41,16 @@ object MicroActivityComposeHost {
             setContent {
                 AppComposeTheme {
                     SideEffect {
-                        visibility = if (dialogState.isDialogVisible) {
+                        visibility = if (
+                            dialogState.isDialogVisible || MidletPermissionDialogState.isDialogVisible
+                        ) {
                             View.VISIBLE
                         } else {
                             View.GONE
                         }
                     }
                     dialogState.Render()
+                    MidletPermissionDialogState.Render()
                 }
             }
         }

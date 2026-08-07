@@ -25,7 +25,7 @@ import java.util.Set;
 
 import javax.microedition.media.MediaException;
 
-/** Strict parser for the supported subset of the MMAPI capture locator grammar. */
+/** Parser for the supported MMAPI live-capture locator subset. */
 public final class CaptureLocatorParser {
 	private static final String PREFIX = "capture://";
 
@@ -44,15 +44,14 @@ public final class CaptureLocatorParser {
 		int queryIndex = remainder.indexOf('?');
 		String device = queryIndex < 0 ? remainder : remainder.substring(0, queryIndex);
 		validateDevice(device);
-		if (!CaptureRequest.DEVICE_VIDEO.equals(device)
-				&& !CaptureRequest.DEVICE_AUDIO_VIDEO.equals(device)) {
-			throw new MediaException("Unsupported capture device: " + device);
-		}
+		LogicalCameraDevice logicalCamera = resolveLogicalCamera(device);
+		boolean audioVideo = CaptureRequest.DEVICE_AUDIO_VIDEO.equals(device);
 
-		String encoding = CaptureRequest.DEVICE_AUDIO_VIDEO.equals(device)
+		String encoding = audioVideo
 				? CaptureRequest.DEFAULT_RECORDING_ENCODING : CaptureRequest.DEFAULT_ENCODING;
-		int width = CaptureRequest.DEFAULT_WIDTH;
-		int height = CaptureRequest.DEFAULT_HEIGHT;
+		int width = CameraRuntimeConfig.defaultWidth();
+		int height = CameraRuntimeConfig.defaultHeight();
+		boolean explicitDimensions = false;
 		if (queryIndex >= 0) {
 			String query = remainder.substring(queryIndex + 1);
 			if (query.isEmpty()) {
@@ -74,7 +73,7 @@ public final class CaptureLocatorParser {
 				}
 				switch (normalizedKey) {
 					case "encoding" -> {
-						String expected = CaptureRequest.DEVICE_AUDIO_VIDEO.equals(device)
+						String expected = audioVideo
 								? CaptureRequest.DEFAULT_RECORDING_ENCODING : CaptureRequest.DEFAULT_ENCODING;
 						if (!expected.equalsIgnoreCase(value)) {
 							throw new MediaException("Unsupported capture encoding: " + value);
@@ -96,11 +95,15 @@ public final class CaptureLocatorParser {
 			if (requestedWidth != null) {
 				width = requestedWidth;
 				height = requestedHeight;
+				explicitDimensions = true;
 			}
 		}
 
-		validateDimensions(width, height);
-		return new CaptureRequest(locator, device, encoding, width, height);
+		if (!audioVideo && !CameraRuntimeConfig.acceptsDimensions(width, height)) {
+			throw new MediaException("Requested camera source is outside the virtual limits");
+		}
+		return new CaptureRequest(locator, device, logicalCamera, encoding, width, height,
+				explicitDimensions);
 	}
 
 	/** Returns the device component for Manager routing without requesting permission. */
@@ -115,11 +118,21 @@ public final class CaptureLocatorParser {
 		return device;
 	}
 
+	private static LogicalCameraDevice resolveLogicalCamera(String device) throws MediaException {
+		return switch (device) {
+			case CaptureRequest.DEVICE_VIDEO, CaptureRequest.DEVICE_IMAGE -> LogicalCameraDevice.DEFAULT;
+			case CaptureRequest.DEVICE_REAR -> LogicalCameraDevice.REAR;
+			case CaptureRequest.DEVICE_FRONT -> LogicalCameraDevice.FRONT;
+			case CaptureRequest.DEVICE_AUDIO_VIDEO -> LogicalCameraDevice.DEFAULT;
+			default -> throw new MediaException("Unsupported capture device: " + device);
+		};
+	}
+
 	private static void validateDevice(String device) {
 		if (device == null || device.isEmpty()) {
 			throw new IllegalArgumentException("capture device must not be empty");
 		}
-		if ("audio_video".equals(device)) {
+		if (CaptureRequest.DEVICE_AUDIO_VIDEO.equals(device)) {
 			return;
 		}
 		for (int i = 0; i < device.length(); i++) {
@@ -139,13 +152,6 @@ public final class CaptureLocatorParser {
 			return parsed;
 		} catch (NumberFormatException e) {
 			throw new IllegalArgumentException("invalid " + name, e);
-		}
-	}
-
-	private static void validateDimensions(int width, int height) throws MediaException {
-		if (width > CaptureRequest.MAX_WIDTH || height > CaptureRequest.MAX_HEIGHT
-				|| (long) width * height > CaptureRequest.MAX_PIXEL_COUNT) {
-			throw new MediaException("Requested camera source is outside the virtual limits");
 		}
 	}
 

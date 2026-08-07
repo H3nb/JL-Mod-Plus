@@ -184,7 +184,14 @@ public class ProfilesManager {
 					params.screenScaleType = 0;
 				}
 				params.screenGravity = 1;
-
+			case 3:
+				params.cameraOverrideEnabled = false;
+				params.cameraDefaultDevice = ProfileModel.CAMERA_DEVICE_INHERIT;
+				params.cameraDefaultSnapshotWidth = 640;
+				params.cameraDefaultSnapshotHeight = 480;
+				params.cameraMaximumSnapshotWidth = 2048;
+				params.cameraMaximumSnapshotHeight = 1536;
+				params.cameraJpegQuality = 90;
 				params.version = ProfileModel.VERSION;
 				ProfilesManager.saveConfig(params);
 				break;

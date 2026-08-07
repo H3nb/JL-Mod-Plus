@@ -23,12 +23,15 @@ import javax.microedition.lcdui.Displayable;
 import javax.microedition.media.CameraPlayer;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.camera.CaptureRequest;
+import javax.microedition.media.camera.MidletMediaPermissionGate;
 import javax.microedition.media.camera.SnapshotEncodingParser;
 import javax.microedition.media.camera.SnapshotRequest;
 import javax.microedition.util.ContextHolder;
 
-/** Concrete JSR-135 VideoControl for the implemented preview/snapshot stages. */
+/** Concrete JSR-135 VideoControl for preview and still snapshots. */
 public final class Jsr135VideoControl implements VideoControl {
+	private static final String MIDP_ITEM_CLASS = "javax.microedition.lcdui.Item";
+
 	private final CameraPlayer player;
 	private final CaptureRequest request;
 
@@ -36,12 +39,17 @@ public final class Jsr135VideoControl implements VideoControl {
 	private Canvas directCanvas;
 	private Object directPreviewView;
 	private boolean initialized;
-	private boolean visible = true;
+	private boolean visible;
+	private boolean fullScreen;
 	private int mode;
 	private int displayX;
 	private int displayY;
 	private int displayWidth;
 	private int displayHeight;
+	private int windowedX;
+	private int windowedY;
+	private int windowedWidth;
+	private int windowedHeight;
 
 	public Jsr135VideoControl(CameraPlayer player, CaptureRequest request) {
 		this.player = player;
@@ -56,10 +64,13 @@ public final class Jsr135VideoControl implements VideoControl {
 		this.mode = mode;
 		this.displayWidth = request.getWidth();
 		this.displayHeight = request.getHeight();
+		this.windowedWidth = displayWidth;
+		this.windowedHeight = displayHeight;
 		if (mode == USE_GUI_PRIMITIVE) {
-			if (arg != null) {
-				throw new IllegalArgumentException("GUI primitive mode requires a null argument");
+			if (arg != null && (!(arg instanceof String) || !MIDP_ITEM_CLASS.equals(arg))) {
+				throw new IllegalArgumentException("Unsupported GUI primitive class");
 			}
+			visible = true;
 			previewItem = new CameraPreviewItem(
 					request.getWidth(), request.getHeight(), player::attachPreview, player::detachPreview);
 		} else if (mode == USE_DIRECT_VIDEO) {
@@ -67,11 +78,14 @@ public final class Jsr135VideoControl implements VideoControl {
 				throw new IllegalArgumentException("Direct video mode requires a Canvas");
 			}
 			directCanvas = (Canvas) arg;
+			// MMAPI direct video is hidden until setVisible(true) is called.
+			visible = false;
 			directPreviewView = CameraPreviewView.create(
-					request.getWidth(), request.getHeight(), visible);
+					request.getWidth(), request.getHeight(), false);
 			directCanvas.attachDirectVideoView(directPreviewView);
 			directCanvas.setDirectVideoViewBounds(
 					displayX, displayY, displayWidth, displayHeight);
+			directCanvas.setDirectVideoViewVisible(false);
 			player.attachPreview(directPreviewView);
 		} else {
 			throw new IllegalArgumentException("Unsupported VideoControl display mode");
@@ -88,6 +102,10 @@ public final class Jsr135VideoControl implements VideoControl {
 		}
 		displayX = x;
 		displayY = y;
+		if (!fullScreen) {
+			windowedX = x;
+			windowedY = y;
+		}
 		directCanvas.setDirectVideoViewBounds(displayX, displayY, displayWidth, displayHeight);
 	}
 
@@ -97,22 +115,36 @@ public final class Jsr135VideoControl implements VideoControl {
 		if (width <= 0 || height <= 0) {
 			throw new IllegalArgumentException("display dimensions must be positive");
 		}
-		if (mode == USE_GUI_PRIMITIVE) {
-			previewItem.setPreviewSize(width, height);
-		} else {
-			directCanvas.setDirectVideoViewBounds(displayX, displayY, width, height);
+		applyDisplaySize(width, height);
+		if (!fullScreen) {
+			windowedWidth = width;
+			windowedHeight = height;
 		}
-		displayWidth = width;
-		displayHeight = height;
 	}
 
 	@Override
 	public synchronized void setDisplayFullScreen(boolean fullScreenMode) throws MediaException {
 		checkInitialized();
-		if (!fullScreenMode) {
-			setDisplaySize(request.getWidth(), request.getHeight());
+		if (fullScreenMode == fullScreen) {
 			return;
 		}
+		if (!fullScreenMode) {
+			fullScreen = false;
+			if (mode == USE_DIRECT_VIDEO) {
+				displayX = windowedX;
+				displayY = windowedY;
+				directCanvas.setDirectVideoViewBounds(
+						displayX, displayY, windowedWidth, windowedHeight);
+			}
+			applyDisplaySize(windowedWidth, windowedHeight);
+			return;
+		}
+
+		windowedX = displayX;
+		windowedY = displayY;
+		windowedWidth = displayWidth;
+		windowedHeight = displayHeight;
+		fullScreen = true;
 		int width = Displayable.getVirtualWidth();
 		int height = Displayable.getVirtualHeight();
 		if (width <= 0 || height <= 0) {
@@ -120,9 +152,11 @@ public final class Jsr135VideoControl implements VideoControl {
 			height = ContextHolder.getDisplayHeight();
 		}
 		if (mode == USE_DIRECT_VIDEO) {
-			setDisplayLocation(0, 0);
+			displayX = 0;
+			displayY = 0;
+			directCanvas.setDirectVideoViewBounds(0, 0, width, height);
 		}
-		setDisplaySize(width, height);
+		applyDisplaySize(width, height);
 	}
 
 	@Override
@@ -148,11 +182,13 @@ public final class Jsr135VideoControl implements VideoControl {
 
 	@Override
 	public synchronized int getDisplayX() {
+		checkInitialized();
 		return displayX;
 	}
 
 	@Override
 	public synchronized int getDisplayY() {
+		checkInitialized();
 		return displayY;
 	}
 
@@ -171,7 +207,13 @@ public final class Jsr135VideoControl implements VideoControl {
 	@Override
 	public synchronized byte[] getSnapshot(String imageType) throws MediaException {
 		checkInitialized();
+		// Validate the MMAPI request before prompting the user for permission.
 		SnapshotRequest snapshot = SnapshotEncodingParser.parse(imageType);
+		// Feature-phone implementations such as Sony Ericsson rotated Java snapshots
+		// to match the Java viewfinder. This hint only affects an unspecified snapshot;
+		// explicit width/height requests remain literal.
+		player.getCameraConfiguration().setViewfinderSize(displayWidth, displayHeight);
+		MidletMediaPermissionGate.requireSnapshotPermission();
 		return player.takeSnapshot(snapshot);
 	}
 
@@ -185,7 +227,7 @@ public final class Jsr135VideoControl implements VideoControl {
 			directCanvas.attachDirectVideoView(directPreviewView);
 			directCanvas.setDirectVideoViewBounds(
 					displayX, displayY, displayWidth, displayHeight);
-				directCanvas.setDirectVideoViewVisible(visible);
+			directCanvas.setDirectVideoViewVisible(visible);
 			player.attachPreview(directPreviewView);
 		}
 	}
@@ -196,6 +238,16 @@ public final class Jsr135VideoControl implements VideoControl {
 			player.detachPreview(directPreviewView);
 			directCanvas.detachDirectVideoView(directPreviewView);
 		}
+	}
+
+	private void applyDisplaySize(int width, int height) {
+		if (mode == USE_GUI_PRIMITIVE) {
+			previewItem.setPreviewSize(width, height);
+		} else {
+			directCanvas.setDirectVideoViewBounds(displayX, displayY, width, height);
+		}
+		displayWidth = width;
+		displayHeight = height;
 	}
 
 	private void checkInitialized() {

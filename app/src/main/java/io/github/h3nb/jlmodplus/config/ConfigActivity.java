@@ -565,6 +565,16 @@ public class ConfigActivity extends AppCompatActivity implements ConfigUiState.C
 		);
 		composeView.setSoundBankSelection(params.soundBank);
 
+		composeView.setCameraOverrideChecked(params.cameraOverrideEnabled);
+		composeView.setCameraDeviceSelection(
+				Math.max(0, Math.min(params.cameraDefaultDevice + 1, 3))
+		);
+		composeView.setCameraDefaultSnapshot(
+				params.cameraDefaultSnapshotWidth, params.cameraDefaultSnapshotHeight);
+		composeView.setCameraMaximumSnapshot(
+				params.cameraMaximumSnapshotWidth, params.cameraMaximumSnapshotHeight);
+		composeView.setCameraJpegQuality(params.cameraJpegQuality);
+
 		String systemProperties = params.systemProperties;
 		if (systemProperties == null) {
 			systemProperties = ContextHolder.getAssetAsString("defaults/system.props");
@@ -680,6 +690,31 @@ public class ConfigActivity extends AppCompatActivity implements ConfigUiState.C
 					? SecureConnectionPolicy.MODE_ANDROID
 					: composeView.getSecureConnectionSelection();
 			params.soundBank = composeView.getSoundBankSelectedItem();
+
+			params.cameraOverrideEnabled = composeView.isCameraOverrideChecked();
+			params.cameraDefaultDevice = composeView.getCameraDeviceSelection() - 1;
+			int cameraDefaultWidth = composeView.getCameraDefaultSnapshotWidth();
+			int cameraDefaultHeight = composeView.getCameraDefaultSnapshotHeight();
+			int cameraMaxWidth = composeView.getCameraMaximumSnapshotWidth();
+			int cameraMaxHeight = composeView.getCameraMaximumSnapshotHeight();
+			int defaultMaxAxis = Math.max(cameraDefaultWidth, cameraDefaultHeight);
+			int defaultMinAxis = Math.min(cameraDefaultWidth, cameraDefaultHeight);
+			int maximumMaxAxis = Math.max(cameraMaxWidth, cameraMaxHeight);
+			int maximumMinAxis = Math.min(cameraMaxWidth, cameraMaxHeight);
+			if (defaultMaxAxis > maximumMaxAxis
+					|| defaultMinAxis > maximumMinAxis
+					|| (long) cameraDefaultWidth * cameraDefaultHeight
+					> (long) cameraMaxWidth * cameraMaxHeight) {
+				cameraMaxWidth = cameraDefaultWidth;
+				cameraMaxHeight = cameraDefaultHeight;
+				composeView.setCameraMaximumSnapshot(cameraMaxWidth, cameraMaxHeight);
+			}
+			params.cameraDefaultSnapshotWidth = cameraDefaultWidth;
+			params.cameraDefaultSnapshotHeight = cameraDefaultHeight;
+			params.cameraMaximumSnapshotWidth = cameraMaxWidth;
+			params.cameraMaximumSnapshotHeight = cameraMaxHeight;
+			params.cameraJpegQuality = composeView.getCameraJpegQuality();
+
 			params.systemProperties = getSystemProperties(composeView.getSystemPropertiesText());
 
 			ProfilesManager.saveConfig(params);

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="camera_permission_title">Akses kamera</string>
+    <string name="camera_permission_message">Izinkan MIDlet ini mengambil snapshot kamera?</string>
+    <string name="camera_permission_allow_once">Izinkan sekali</string>
+    <string name="camera_permission_always_allow">Selalu izinkan</string>
+    <string name="camera_permission_deny">Tolak</string>
+
+    <string name="camera_settings_category">Kamera</string>
+    <string name="camera_override_title">Gunakan pengaturan kamera khusus</string>
+    <string name="camera_inherit_global">Gunakan pengaturan global</string>
+    <string name="camera_default_device_title">Kamera default</string>
+    <string name="camera_default_device_auto">Otomatis — utamakan kamera belakang</string>
+    <string name="camera_default_device_rear">Kamera belakang</string>
+    <string name="camera_default_device_front">Kamera depan</string>
+    <string name="camera_default_snapshot_title">Ukuran snapshot default</string>
+    <string name="camera_snapshot_auto_orientation_summary">Orientasi otomatis mengikuti viewfinder Java</string>
+    <string name="camera_compatibility_category">Kompatibilitas</string>
+    <string name="camera_max_snapshot_title">Ukuran snapshot maksimum</string>
+    <string name="camera_jpeg_quality_title">Kualitas JPEG</string>
+</resources>

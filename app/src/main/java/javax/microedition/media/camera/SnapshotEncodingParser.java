@@ -25,22 +25,28 @@ import java.util.Set;
 
 import javax.microedition.media.MediaException;
 
-/** Strict parser for the initial JPEG subset of VideoControl.getSnapshot(). */
+/** Parser for the supported JPEG subset of VideoControl.getSnapshot(). */
 public final class SnapshotEncodingParser {
 	private SnapshotEncodingParser() {
 	}
 
 	public static SnapshotRequest parse(String imageType) throws MediaException {
+		int defaultQuality = CameraRuntimeConfig.jpegQuality();
 		if (imageType == null) {
-			return new SnapshotRequest(CaptureRequest.DEFAULT_WIDTH, CaptureRequest.DEFAULT_HEIGHT, true);
+			return SnapshotRequest.defaultRequest(defaultQuality);
 		}
 		if (imageType.isEmpty()) {
 			throw new IllegalArgumentException("snapshot encoding must not be empty");
+		}
+		// Common vendor-compatible shorthand used by real MIDlets.
+		if ("jpeg".equalsIgnoreCase(imageType)) {
+			return SnapshotRequest.defaultRequest(defaultQuality);
 		}
 
 		String encoding = null;
 		Integer width = null;
 		Integer height = null;
+		int quality = defaultQuality;
 		Set<String> seen = new HashSet<>();
 		for (String pair : imageType.split("&", -1)) {
 			int equals = pair.indexOf('=');
@@ -62,6 +68,7 @@ public final class SnapshotEncodingParser {
 				}
 				case "width" -> width = parsePositive(value, "width");
 				case "height" -> height = parsePositive(value, "height");
+				case "quality" -> quality = parseQuality(value);
 				default -> throw new IllegalArgumentException("Unknown snapshot parameter: " + key);
 			}
 		}
@@ -71,13 +78,13 @@ public final class SnapshotEncodingParser {
 		if ((width == null) != (height == null)) {
 			throw new IllegalArgumentException("width and height must be specified together");
 		}
-		int resolvedWidth = width == null ? CaptureRequest.DEFAULT_WIDTH : width;
-		int resolvedHeight = height == null ? CaptureRequest.DEFAULT_HEIGHT : height;
-		if (resolvedWidth > CaptureRequest.MAX_WIDTH || resolvedHeight > CaptureRequest.MAX_HEIGHT
-				|| (long) resolvedWidth * resolvedHeight > CaptureRequest.MAX_PIXEL_COUNT) {
+		if (width == null) {
+			return SnapshotRequest.defaultRequest(quality);
+		}
+		if (!CameraConfiguration.isWithinVirtualLimits(width, height)) {
 			throw new MediaException("Requested snapshot is outside the virtual limits");
 		}
-		return new SnapshotRequest(resolvedWidth, resolvedHeight);
+		return new SnapshotRequest(width, height, false, quality);
 	}
 
 	private static int parsePositive(String value, String name) {
@@ -90,6 +97,14 @@ public final class SnapshotEncodingParser {
 		} catch (NumberFormatException e) {
 			throw new IllegalArgumentException("invalid " + name, e);
 		}
+	}
+
+	private static int parseQuality(String value) {
+		int quality = parsePositive(value, "quality");
+		if (quality > 100) {
+			throw new IllegalArgumentException("quality must be between 1 and 100");
+		}
+		return quality;
 	}
 
 	private static String decode(String value) {

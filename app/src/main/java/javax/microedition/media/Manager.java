@@ -73,15 +73,18 @@ public class Manager {
 			return createPlayer(stream, type);
 		} else if (locator.startsWith(CAPTURE_LOCATOR_PREFIX)) {
 			String device = CaptureLocatorParser.deviceOf(locator);
-			if ("video".equals(device)) {
+			if (CaptureRequest.DEVICE_VIDEO.equals(device)
+					|| CaptureRequest.DEVICE_IMAGE.equals(device)
+					|| CaptureRequest.DEVICE_REAR.equals(device)
+					|| CaptureRequest.DEVICE_FRONT.equals(device)) {
 				return new CameraPlayer(locator);
 			} else if ("audio".equals(device)) {
 				if (!ContextHolder.requestPermission(Manifest.permission.RECORD_AUDIO)) {
 					throw new SecurityException("Microphone permission was denied");
 				}
 				return new RecordPlayer();
-			} else if ("audio_video".equals(device)) {
-				return new CameraPlayer(locator);
+			} else if (CaptureRequest.DEVICE_AUDIO_VIDEO.equals(device)) {
+				throw new MediaException("Combined camera recording is not supported yet");
 			}
 			throw new MediaException("Unsupported capture device: " + device);
 		} else {
@@ -184,7 +187,7 @@ public class Manager {
 
 	/**
 	 * Installs the session clock used by players that do not have an explicit
-	 * master time base.  This is an emulator extension; the default remains the
+	 * master time base. This is an emulator extension; the default remains the
 	 * host clock until a MIDlet session installs its controller.
 	 */
 	public static void setSystemTimeBase(TimeBase timeBase) {
