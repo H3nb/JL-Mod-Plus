@@ -23,14 +23,15 @@ import static org.junit.Assert.assertTrue;
 
 public class CameraConfigurationTest {
 	@Test
-	public void defaultSizeClassIsVgaAndBothOrientationsAreAdvertised() throws Exception {
+	public void defaultFormatIsGenericJpegAndBothVgaOrientationsAreAdvertised() throws Exception {
 		CaptureRequest request = CaptureLocatorParser.parse("capture://video");
 		CameraConfiguration configuration = new CameraConfiguration(request);
 
 		assertEquals(640, configuration.getStillWidth());
 		assertEquals(480, configuration.getStillHeight());
 		assertTrue(CameraConfiguration.snapshotEncodings()
-				.startsWith("encoding=jpeg&width=640&height=480 "
+				.startsWith("encoding=jpeg "
+						+ "encoding=jpeg&width=640&height=480 "
 						+ "encoding=jpeg&width=480&height=640"));
 	}
 
