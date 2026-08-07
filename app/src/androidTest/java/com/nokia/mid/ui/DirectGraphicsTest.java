@@ -103,6 +103,84 @@ public class DirectGraphicsTest {
 	}
 
 	@Test
+	public void intPixelsSupportNegativeScanlength() {
+		Image image = Image.createImage(2, 2);
+		DirectGraphics direct = DirectUtils.getDirectGraphics(image.getGraphics());
+		int red = 0x00FF0000;
+		int green = 0x0000FF00;
+		int blue = 0x000000FF;
+		int yellow = 0x00FFFF00;
+		int[] source = {red, green, blue, yellow};
+
+		// Row zero starts at index 2 and row one walks backwards to index 0.
+		direct.drawPixels(source, false, 2, -2, 0, 0, 2, 2,
+				0, DirectGraphics.TYPE_INT_888_RGB);
+
+		assertEquals(0xFF0000FF, image.getBitmap().getPixel(0, 0));
+		assertEquals(0xFFFFFF00, image.getBitmap().getPixel(1, 0));
+		assertEquals(0xFFFF0000, image.getBitmap().getPixel(0, 1));
+		assertEquals(0xFF00FF00, image.getBitmap().getPixel(1, 1));
+
+		int[] roundTrip = new int[4];
+		direct.getPixels(roundTrip, 2, -2, 0, 0, 2, 2, DirectGraphics.TYPE_INT_888_RGB);
+		assertArrayEquals(source, roundTrip);
+	}
+
+	@Test
+	public void intGetPixelsSupportsOverlappingRows() {
+		Image image = Image.createImage(2, 2);
+		DirectGraphics direct = DirectUtils.getDirectGraphics(image.getGraphics());
+		int[] source = {
+				0x00112233, 0x00445566,
+				0x00778899, 0x00AABBCC
+		};
+		direct.drawPixels(source, false, 0, 2, 0, 0, 2, 2,
+				0, DirectGraphics.TYPE_INT_888_RGB);
+
+		int[] pixels = {0, 0, 0};
+		direct.getPixels(pixels, 0, 1, 0, 0, 2, 2, DirectGraphics.TYPE_INT_888_RGB);
+
+		// Index 1 belongs to the second pixel of row zero and the first pixel of
+		// row one; Nokia's documented row-order writes make row one win.
+		assertArrayEquals(new int[]{0x00112233, 0x00778899, 0x00AABBCC}, pixels);
+	}
+
+	@Test
+	public void intDrawPixelsSupportsZeroScanlength() {
+		Image image = Image.createImage(1, 2);
+		DirectGraphics direct = DirectUtils.getDirectGraphics(image.getGraphics());
+		int[] source = {0x00CC3300};
+
+		direct.drawPixels(source, false, 0, 0, 0, 0, 1, 2,
+				0, DirectGraphics.TYPE_INT_888_RGB);
+
+		assertEquals(0xFFCC3300, image.getBitmap().getPixel(0, 0));
+		assertEquals(0xFFCC3300, image.getBitmap().getPixel(0, 1));
+	}
+
+	@Test
+	public void zeroSizedDrawStillValidatesManipulationAndFormat() {
+		Image image = Image.createImage(1, 1);
+		DirectGraphics direct = DirectUtils.getDirectGraphics(image.getGraphics());
+
+		try {
+			direct.drawPixels(new int[0], false, 0, 0, 0, 0, 0, 0,
+					45, DirectGraphics.TYPE_INT_888_RGB);
+			fail("Expected invalid manipulation to be rejected");
+		} catch (IllegalArgumentException expected) {
+			// Expected.
+		}
+
+		try {
+			direct.drawPixels(new int[0], false, 0, 0, 0, 0, 0, 0,
+					0, DirectGraphics.TYPE_USHORT_565_RGB);
+			fail("Expected wrong int pixel format to be rejected");
+		} catch (IllegalArgumentException expected) {
+			// Expected.
+		}
+	}
+
+	@Test
 	public void verticalOneBitGetPixelsChecksLastColumnBeforeWriting() {
 		Image image = Image.createImage(2, 9, 0xFF000000);
 		DirectGraphics direct = DirectUtils.getDirectGraphics(image.getGraphics());
