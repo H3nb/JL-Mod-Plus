@@ -23,35 +23,71 @@ import static org.junit.Assert.assertTrue;
 
 public class CameraConfigurationTest {
 	@Test
-	public void defaultResolutionIsLandscapeVgaAndFirstAdvertisedEncodingMatches() throws Exception {
+	public void defaultSizeClassIsVgaAndBothOrientationsAreAdvertised() throws Exception {
 		CaptureRequest request = CaptureLocatorParser.parse("capture://video");
 		CameraConfiguration configuration = new CameraConfiguration(request);
 
 		assertEquals(640, configuration.getStillWidth());
 		assertEquals(480, configuration.getStillHeight());
 		assertTrue(CameraConfiguration.snapshotEncodings()
-				.startsWith("encoding=jpeg&width=640&height=480"));
+				.startsWith("encoding=jpeg&width=640&height=480 "
+						+ "encoding=jpeg&width=480&height=640"));
 	}
 
 	@Test
-	public void explicitCatalogSourceBecomesInitialVirtualResolution() throws Exception {
+	public void explicitLocatorDimensionsAffectSourceButNotDefaultStillSize() throws Exception {
 		CaptureRequest request = CaptureLocatorParser.parse(
 				"capture://video?encoding=jpeg&width=480&height=640");
 		CameraConfiguration configuration = new CameraConfiguration(request);
 
-		assertEquals(480, configuration.getStillWidth());
-		assertEquals(640, configuration.getStillHeight());
+		assertEquals(480, configuration.getVideoWidth());
+		assertEquals(640, configuration.getVideoHeight());
+		assertEquals(640, configuration.getStillWidth());
+		assertEquals(480, configuration.getStillHeight());
 	}
 
 	@Test
-	public void defaultSnapshotResolvesThroughConfigurationAndPreservesQuality() throws Exception {
-		CaptureRequest request = CaptureLocatorParser.parse("capture://video");
-		CameraConfiguration configuration = new CameraConfiguration(request);
+	public void unspecifiedSnapshotMatchesPortraitJavaViewfinder() throws Exception {
+		CameraConfiguration configuration = new CameraConfiguration(
+				CaptureLocatorParser.parse("capture://video"));
+		configuration.setViewfinderSize(240, 320);
 		SnapshotRequest resolved = configuration.resolveSnapshot(
 				SnapshotEncodingParser.parse("encoding=jpeg&quality=77"));
 
+		assertEquals(480, resolved.getWidth());
+		assertEquals(640, resolved.getHeight());
+		assertEquals(77, resolved.getQuality());
+	}
+
+	@Test
+	public void unspecifiedSnapshotMatchesLandscapeJavaViewfinder() throws Exception {
+		CameraConfiguration configuration = new CameraConfiguration(
+				CaptureLocatorParser.parse("capture://video"));
+		configuration.setViewfinderSize(320, 240);
+		SnapshotRequest resolved = configuration.resolveSnapshot(
+				SnapshotEncodingParser.parse(null));
+
 		assertEquals(640, resolved.getWidth());
 		assertEquals(480, resolved.getHeight());
-		assertEquals(77, resolved.getQuality());
+	}
+
+	@Test
+	public void explicitSnapshotDimensionsRemainLiteralInPortraitViewfinder() throws Exception {
+		CameraConfiguration configuration = new CameraConfiguration(
+				CaptureLocatorParser.parse("capture://video"));
+		configuration.setViewfinderSize(240, 320);
+		SnapshotRequest resolved = configuration.resolveSnapshot(
+				SnapshotEncodingParser.parse("encoding=jpeg&width=640&height=480"));
+
+		assertEquals(640, resolved.getWidth());
+		assertEquals(480, resolved.getHeight());
+	}
+
+	@Test
+	public void compatibleCatalogIncludesClassicSquareAndPortraitSizes() {
+		String encodings = CameraConfiguration.snapshotEncodings();
+		assertTrue(encodings.contains("width=128&height=128"));
+		assertTrue(encodings.contains("width=120&height=160"));
+		assertTrue(encodings.contains("width=240&height=320"));
 	}
 }
