@@ -133,6 +133,9 @@ jobs:
         shell: bash
         run: echo "VERSION_SUFFIX=-dev.${GITHUB_SHA::7}" >> "$GITHUB_ENV"
 
+      # Instrumentation tests require an ARM64 Android runtime because the app
+      # intentionally packages only arm64-v8a. CI still compiles their APK here
+      # so DirectGraphics regression tests cannot silently rot between device runs.
       - name: Test and assemble emulator debug
         run: >-
           ./gradlew --no-daemon --stacktrace --console=plain --non-interactive
@@ -140,6 +143,7 @@ jobs:
           --build-cache
           --configuration-cache --configuration-cache-problems=fail
           :app:testEmulatorDebugUnitTest
+          :app:assembleEmulatorDebugAndroidTest
           :app:assembleEmulatorDebug
 
       - name: Verify packaged ABI
