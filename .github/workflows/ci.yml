@@ -186,12 +186,12 @@ jobs:
               raise SystemExit(f"{target} is missing from APK manifest")
 
           process = activity.get(android + "process")
-          expected = "io.github.h3nb.jlmodplus.debug:midlet"
+          expected = ":midlet"
           if process != expected:
               raise SystemExit(
                   f"MIDlet process isolation lost: expected {expected!r}, got {process!r}"
               )
-          print(f"Verified {target} process: {process}")
+          print(f"Verified {target} process suffix: {process}")
           PY
 
       - name: Verify ACRA report interaction packaging
