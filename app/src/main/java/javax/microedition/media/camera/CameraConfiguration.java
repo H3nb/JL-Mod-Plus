@@ -18,34 +18,45 @@ package javax.microedition.media.camera;
 
 import javax.microedition.media.MediaException;
 
-/** Canonical virtual-resolution catalog shared by MMAPI camera surfaces. */
+/** Canonical Java ME-compatible virtual-resolution catalog shared by MMAPI camera surfaces. */
 public final class CameraConfiguration {
+	/*
+	 * Keep this catalog intentionally bounded to feature-phone-era Java ME sizes.
+	 * Both orientations are exposed for explicit MMAPI requests, while the default
+	 * snapshot is stored as an orientation-neutral size class and follows the
+	 * active Java viewfinder orientation.
+	 */
 	private static final int[][] RESOLUTIONS = {
-			{640, 480},
-			{320, 240},
-			{160, 120},
-			{176, 144},
-			{352, 288},
-			{240, 320},
-			{480, 640},
-			{800, 600},
-			{1024, 768},
-			{960, 1280},
-			{1280, 960},
-			{1600, 1200},
-			{1536, 2048},
-			{2048, 1536}
+			{640, 480}, {480, 640},
+			{320, 240}, {240, 320},
+			{160, 120}, {120, 160},
+			{128, 128},
+			{176, 144}, {144, 176},
+			{100, 60}, {60, 100},
+			{352, 288}, {288, 352},
+			{800, 600}, {600, 800},
+			{1024, 768}, {768, 1024},
+			{1280, 960}, {960, 1280},
+			{1600, 1200}, {1200, 1600},
+			{2048, 1536}, {1536, 2048}
 	};
 
 	private int videoResolutionIndex;
 	private int stillResolutionIndex;
+	private boolean stillResolutionExplicit;
+	private int viewfinderWidth;
+	private int viewfinderHeight;
 
 	public CameraConfiguration(CaptureRequest request) {
-		int initial = request.hasExplicitDimensions()
+		int videoInitial = request.hasExplicitDimensions()
 				? findResolution(request.getWidth(), request.getHeight())
-				: findResolution(CameraRuntimeConfig.defaultWidth(), CameraRuntimeConfig.defaultHeight());
-		videoResolutionIndex = initial >= 0 ? initial : 0;
-		stillResolutionIndex = initial >= 0 ? initial : 0;
+				: findResolution(CaptureRequest.DEFAULT_WIDTH, CaptureRequest.DEFAULT_HEIGHT);
+		int stillInitial = findResolution(
+				CameraRuntimeConfig.defaultWidth(), CameraRuntimeConfig.defaultHeight());
+		videoResolutionIndex = videoInitial >= 0 ? videoInitial : 0;
+		stillResolutionIndex = stillInitial >= 0 ? stillInitial : 0;
+		viewfinderWidth = request.getWidth();
+		viewfinderHeight = request.getHeight();
 	}
 
 	public static int[] supportedResolutions() {
@@ -69,11 +80,17 @@ public final class CameraConfiguration {
 
 	public static String snapshotEncodings() {
 		StringBuilder result = new StringBuilder();
-		appendEncoding(result, CameraRuntimeConfig.defaultWidth(), CameraRuntimeConfig.defaultHeight());
+		int defaultWidth = CameraRuntimeConfig.defaultWidth();
+		int defaultHeight = CameraRuntimeConfig.defaultHeight();
+		appendEncoding(result, defaultWidth, defaultHeight);
+		if (defaultWidth != defaultHeight
+				&& CameraRuntimeConfig.acceptsDimensions(defaultHeight, defaultWidth)) {
+			appendEncoding(result, defaultHeight, defaultWidth);
+		}
 		for (int[] resolution : RESOLUTIONS) {
 			if (!CameraRuntimeConfig.acceptsDimensions(resolution[0], resolution[1])
-					|| (resolution[0] == CameraRuntimeConfig.defaultWidth()
-					&& resolution[1] == CameraRuntimeConfig.defaultHeight())) {
+					|| sameSize(resolution[0], resolution[1], defaultWidth, defaultHeight)
+					|| sameSize(resolution[0], resolution[1], defaultHeight, defaultWidth)) {
 				continue;
 			}
 			appendEncoding(result, resolution[0], resolution[1]);
@@ -86,23 +103,22 @@ public final class CameraConfiguration {
 	}
 
 	public synchronized int getVideoResolutionIndex() {
-		return videoResolutionIndex;
+		return supportedIndexOf(RESOLUTIONS[videoResolutionIndex][0], RESOLUTIONS[videoResolutionIndex][1]);
 	}
 
 	public synchronized int getStillResolutionIndex() {
-		return stillResolutionIndex;
+		return supportedIndexOf(RESOLUTIONS[stillResolutionIndex][0], RESOLUTIONS[stillResolutionIndex][1]);
 	}
 
 	public synchronized void setVideoResolutionIndex(int index) {
-		checkIndex(index);
 		int[] resolution = supportedResolutionAt(index);
-		videoResolutionIndex = findResolution(resolution[0], resolution[1]);
+		videoResolutionIndex = requireResolution(resolution[0], resolution[1]);
 	}
 
 	public synchronized void setStillResolutionIndex(int index) {
-		checkIndex(index);
 		int[] resolution = supportedResolutionAt(index);
-		stillResolutionIndex = findResolution(resolution[0], resolution[1]);
+		stillResolutionIndex = requireResolution(resolution[0], resolution[1]);
+		stillResolutionExplicit = true;
 	}
 
 	public synchronized int getVideoWidth() {
@@ -121,14 +137,39 @@ public final class CameraConfiguration {
 		return RESOLUTIONS[stillResolutionIndex][1];
 	}
 
-	/** Applies the selected virtual still resolution only to an unspecified snapshot. */
+	/** Records the actual Java viewfinder size used to orient an unspecified snapshot. */
+	public synchronized void setViewfinderSize(int width, int height) {
+		if (width <= 0 || height <= 0) {
+			throw new IllegalArgumentException("viewfinder dimensions must be positive");
+		}
+		viewfinderWidth = width;
+		viewfinderHeight = height;
+	}
+
+	/**
+	 * Applies the selected virtual still size only to an unspecified snapshot.
+	 * Explicit MMAPI width/height requests are never rotated or rewritten.
+	 */
 	public synchronized SnapshotRequest resolveSnapshot(SnapshotRequest request) throws MediaException {
 		if (request == null) {
 			return null;
 		}
-		SnapshotRequest resolved = request.isDefaultResolution()
-				? new SnapshotRequest(getStillWidth(), getStillHeight(), false, request.getQuality())
-				: request;
+		SnapshotRequest resolved = request;
+		if (request.isDefaultResolution()) {
+			int width = getStillWidth();
+			int height = getStillHeight();
+			if (!stillResolutionExplicit && width != height) {
+				boolean viewfinderPortrait = viewfinderHeight > viewfinderWidth;
+				boolean viewfinderLandscape = viewfinderWidth > viewfinderHeight;
+				if ((viewfinderPortrait && width > height)
+						|| (viewfinderLandscape && height > width)) {
+					int swap = width;
+					width = height;
+					height = swap;
+				}
+			}
+			resolved = new SnapshotRequest(width, height, false, request.getQuality());
+		}
 		if (!CameraRuntimeConfig.acceptsDimensions(resolved.getWidth(), resolved.getHeight())) {
 			throw new MediaException("Requested snapshot is outside the configured virtual limits");
 		}
@@ -154,6 +195,24 @@ public final class CameraConfiguration {
 		return new int[]{flattened[offset], flattened[offset + 1]};
 	}
 
+	private static int supportedIndexOf(int width, int height) {
+		int[] flattened = supportedResolutions();
+		for (int i = 0; i < flattened.length; i += 2) {
+			if (flattened[i] == width && flattened[i + 1] == height) {
+				return i / 2;
+			}
+		}
+		return 0;
+	}
+
+	private static int requireResolution(int width, int height) {
+		int index = findResolution(width, height);
+		if (index < 0) {
+			throw new IllegalArgumentException("unsupported camera resolution: " + width + "x" + height);
+		}
+		return index;
+	}
+
 	private static int findResolution(int width, int height) {
 		for (int i = 0; i < RESOLUTIONS.length; i++) {
 			if (RESOLUTIONS[i][0] == width && RESOLUTIONS[i][1] == height) {
@@ -163,10 +222,7 @@ public final class CameraConfiguration {
 		return -1;
 	}
 
-	private static void checkIndex(int index) {
-		int count = supportedResolutions().length / 2;
-		if (index < 0 || index >= count) {
-			throw new IllegalArgumentException("unsupported camera resolution index: " + index);
-		}
+	private static boolean sameSize(int width, int height, int otherWidth, int otherHeight) {
+		return width == otherWidth && height == otherHeight;
 	}
 }
