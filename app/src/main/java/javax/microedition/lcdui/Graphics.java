@@ -99,20 +99,50 @@ public class Graphics implements
 
 	public void fillPolygon(int[] xPoints, int xOffset, int[] yPoints, int yOffset, int nPoints) {
 		if (nPoints > 0) {
-			Path path = computePath(xPoints, xOffset, yPoints, yOffset, nPoints);
-			canvas.drawPath(path, fillPaint);
+			Path polygon = computePath(xPoints, xOffset, yPoints, yOffset, nPoints, Path.FillType.WINDING);
+			canvas.drawPath(polygon, fillPaint);
+		}
+	}
+
+	public void fillPolygon(int[] xPoints, int xOffset, int[] yPoints, int yOffset, int nPoints,
+							int argbColor, boolean evenOdd) {
+		if (nPoints > 0) {
+			Path polygon = computePath(xPoints, xOffset, yPoints, yOffset, nPoints,
+					evenOdd ? Path.FillType.EVEN_ODD : Path.FillType.WINDING);
+			int previousColor = fillPaint.getColor();
+			fillPaint.setColor(argbColor);
+			try {
+				canvas.drawPath(polygon, fillPaint);
+			} finally {
+				fillPaint.setColor(previousColor);
+			}
 		}
 	}
 
 	public void drawPolygon(int[] xPoints, int xOffset, int[] yPoints, int yOffset, int nPoints) {
 		if (nPoints > 0) {
-			Path path = computePath(xPoints, xOffset, yPoints, yOffset, nPoints);
-			canvas.drawPath(path, drawPaint);
+			Path polygon = computePath(xPoints, xOffset, yPoints, yOffset, nPoints, Path.FillType.WINDING);
+			canvas.drawPath(polygon, drawPaint);
 		}
 	}
 
-	private Path computePath(int[] xPoints, int xOffset, int[] yPoints, int yOffset, int nPoints) {
+	public void drawPolygon(int[] xPoints, int xOffset, int[] yPoints, int yOffset, int nPoints, int argbColor) {
+		if (nPoints > 0) {
+			Path polygon = computePath(xPoints, xOffset, yPoints, yOffset, nPoints, Path.FillType.WINDING);
+			int previousColor = drawPaint.getColor();
+			drawPaint.setColor(argbColor);
+			try {
+				canvas.drawPath(polygon, drawPaint);
+			} finally {
+				drawPaint.setColor(previousColor);
+			}
+		}
+	}
+
+	private Path computePath(int[] xPoints, int xOffset, int[] yPoints, int yOffset, int nPoints,
+							 Path.FillType fillType) {
 		path.reset();
+		path.setFillType(fillType);
 		path.moveTo((float) xPoints[xOffset], (float) yPoints[yOffset]);
 		for (int i = 1; i < nPoints; i++) {
 			path.lineTo((float) xPoints[xOffset + i], (float) yPoints[yOffset + i]);
@@ -160,6 +190,10 @@ public class Graphics implements
 	}
 
 	public int getColor() {
+		return drawPaint.getColor() & 0x00FFFFFF;
+	}
+
+	public int getARGBColor() {
 		return drawPaint.getColor();
 	}
 
