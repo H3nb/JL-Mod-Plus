@@ -114,15 +114,15 @@ internal class SettingsUiState(context: Context) {
     internal val cameraDefaultSnapshotChoices = listOf(
         SettingsChoice("320x240", "320×240"),
         SettingsChoice("640x480", "640×480"),
-        SettingsChoice("480x640", "480×640"),
         SettingsChoice("1280x960", "1280×960"),
-        SettingsChoice("960x1280", "960×1280"),
+        SettingsChoice("1600x1200", "1600×1200"),
+        SettingsChoice("2048x1536", "2048×1536"),
     )
     internal val cameraMaxSnapshotChoices = listOf(
         SettingsChoice("640x480", "640×480"),
         SettingsChoice("1280x960", "1280×960"),
         SettingsChoice("1600x1200", "1600×1200"),
-        SettingsChoice("2048x1536", "2048×1536 / 1536×2048"),
+        SettingsChoice("2048x1536", "2048×1536"),
     )
     internal val cameraJpegQualityChoices = listOf(
         SettingsChoice("80", "80"),
@@ -144,10 +144,10 @@ internal class SettingsUiState(context: Context) {
         preferences.getString(PREF_CAMERA_DEFAULT_DEVICE, "auto") ?: "auto",
     )
     internal var cameraDefaultSnapshotValue by mutableStateOf(
-        preferences.getString(PREF_CAMERA_DEFAULT_SNAPSHOT, "640x480") ?: "640x480",
+        canonicalCameraSize(preferences.getString(PREF_CAMERA_DEFAULT_SNAPSHOT, "640x480") ?: "640x480"),
     )
     internal var cameraMaxSnapshotValue by mutableStateOf(
-        preferences.getString(PREF_CAMERA_MAX_SNAPSHOT, "2048x1536") ?: "2048x1536",
+        canonicalCameraSize(preferences.getString(PREF_CAMERA_MAX_SNAPSHOT, "2048x1536") ?: "2048x1536"),
     )
     internal var cameraJpegQualityValue by mutableStateOf(
         preferences.getInt(PREF_CAMERA_JPEG_QUALITY, 90).toString(),
@@ -162,6 +162,13 @@ internal class SettingsUiState(context: Context) {
     internal var mascotMessage by mutableStateOf(preferences.getBoolean("micro3d_using_message", false))
     internal var audioSpeed by mutableStateOf(preferences.getBoolean("pref_emulation_audio_speed", false))
     internal var extremeSpeeds by mutableStateOf(preferences.getBoolean("pref_emulation_extreme_speeds", false))
+
+    init {
+        preferences.edit {
+            putString(PREF_CAMERA_DEFAULT_SNAPSHOT, cameraDefaultSnapshotValue)
+            putString(PREF_CAMERA_MAX_SNAPSHOT, cameraMaxSnapshotValue)
+        }
+    }
 
     fun setDirectory(path: String) {
         directoryValue = path
@@ -190,13 +197,13 @@ internal class SettingsUiState(context: Context) {
     }
 
     internal fun setCameraDefaultSnapshot(value: String) {
-        cameraDefaultSnapshotValue = value
-        preferences.edit { putString(PREF_CAMERA_DEFAULT_SNAPSHOT, value) }
+        cameraDefaultSnapshotValue = canonicalCameraSize(value)
+        preferences.edit { putString(PREF_CAMERA_DEFAULT_SNAPSHOT, cameraDefaultSnapshotValue) }
     }
 
     internal fun setCameraMaxSnapshot(value: String) {
-        cameraMaxSnapshotValue = value
-        preferences.edit { putString(PREF_CAMERA_MAX_SNAPSHOT, value) }
+        cameraMaxSnapshotValue = canonicalCameraSize(value)
+        preferences.edit { putString(PREF_CAMERA_MAX_SNAPSHOT, cameraMaxSnapshotValue) }
     }
 
     internal fun setCameraJpegQuality(value: String) {
@@ -359,7 +366,10 @@ private fun SettingsContent(
                         SettingsChoiceRow(
                             icon = R.drawable.ic_setting_screenshot,
                             title = stringResource(R.string.camera_default_snapshot_title),
-                            summary = selectedSnapshotLabel,
+                            summary = listOf(
+                                selectedSnapshotLabel,
+                                stringResource(R.string.camera_snapshot_auto_orientation_summary),
+                            ).filter { it.isNotEmpty() }.joinToString(" · "),
                             onClick = { cameraDefaultDialogVisible = true },
                         )
                         SettingsChoiceRow(
@@ -659,6 +669,15 @@ private fun ChoiceChevron(color: Color) {
     }
 }
 
+private fun canonicalCameraSize(value: String): String {
+    val normalized = value.lowercase(Locale.ROOT).replace('×', 'x')
+    val parts = normalized.split('x', limit = 2)
+    val width = parts.getOrNull(0)?.trim()?.toIntOrNull() ?: return value
+    val height = parts.getOrNull(1)?.trim()?.toIntOrNull() ?: return value
+    return if (width >= height) "$width x $height".replace(" ", "")
+    else "$height x $width".replace(" ", "")
+}
+
 @SuppressLint("DiscouragedApi")
 private fun loadLanguageChoices(context: Context): List<SettingsChoice> {
     val tags = mutableListOf("")
@@ -709,7 +728,7 @@ private fun SettingsPreview(darkTheme: Boolean) {
         SettingsChoice("front", stringResource(R.string.camera_default_device_front)),
     )
     val defaultSnapshots = listOf(SettingsChoice("640x480", "640×480"))
-    val maxSnapshots = listOf(SettingsChoice("2048x1536", "2048×1536 / 1536×2048"))
+    val maxSnapshots = listOf(SettingsChoice("2048x1536", "2048×1536"))
     val qualities = listOf(SettingsChoice("90", "90"))
     AppComposeTheme(darkTheme = darkTheme) {
         SettingsContent(
