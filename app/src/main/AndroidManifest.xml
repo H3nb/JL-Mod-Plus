@@ -179,7 +179,6 @@
             android:theme="@style/Theme.AppCompat.DayNight.Dialog.Alert"
             android:excludeFromRecents="true"
             android:finishOnTaskLaunch="true"
-            android:launchMode="singleInstance"
             android:process=":acra" />
         <activity
             android:name="io.github.h3nb.jlmodplus.crashes.dialog.AudioFailureReportActivity"
