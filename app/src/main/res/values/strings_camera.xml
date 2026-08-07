@@ -13,7 +13,8 @@
     <string name="camera_default_device_auto">Automatic — rear preferred</string>
     <string name="camera_default_device_rear">Rear camera</string>
     <string name="camera_default_device_front">Front camera</string>
-    <string name="camera_default_snapshot_title">Default snapshot resolution</string>
-    <string name="camera_max_snapshot_title">Maximum snapshot resolution</string>
+    <string name="camera_default_snapshot_title">Default snapshot size</string>
+    <string name="camera_snapshot_auto_orientation_summary">Orientation follows the Java viewfinder</string>
+    <string name="camera_max_snapshot_title">Maximum snapshot size</string>
     <string name="camera_jpeg_quality_title">JPEG quality</string>
 </resources>
