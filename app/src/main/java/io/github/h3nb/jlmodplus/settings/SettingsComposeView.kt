@@ -112,17 +112,22 @@ internal class SettingsUiState(context: Context) {
         SettingsChoice("front", context.getString(R.string.camera_default_device_front)),
     )
     internal val cameraDefaultSnapshotChoices = listOf(
-        SettingsChoice("320x240", "320×240"),
-        SettingsChoice("640x480", "640×480"),
-        SettingsChoice("1280x960", "1280×960"),
-        SettingsChoice("1600x1200", "1600×1200"),
-        SettingsChoice("2048x1536", "2048×1536"),
+        SettingsChoice("320x240", "QVGA (320×240)"),
+        SettingsChoice("640x480", "VGA (640×480)"),
+        SettingsChoice("800x600", "SVGA (800×600)"),
+        SettingsChoice("1024x768", "XGA (1024×768)"),
+        SettingsChoice("1280x960", "1.2 MP (1280×960)"),
+        SettingsChoice("1600x1200", "2 MP (1600×1200)"),
+        SettingsChoice("2048x1536", "3 MP (2048×1536)"),
     )
     internal val cameraMaxSnapshotChoices = listOf(
-        SettingsChoice("640x480", "640×480"),
-        SettingsChoice("1280x960", "1280×960"),
-        SettingsChoice("1600x1200", "1600×1200"),
-        SettingsChoice("2048x1536", "2048×1536"),
+        SettingsChoice("320x240", "QVGA (320×240)"),
+        SettingsChoice("640x480", "VGA (640×480)"),
+        SettingsChoice("800x600", "SVGA (800×600)"),
+        SettingsChoice("1024x768", "XGA (1024×768)"),
+        SettingsChoice("1280x960", "1.2 MP (1280×960)"),
+        SettingsChoice("1600x1200", "2 MP (1600×1200)"),
+        SettingsChoice("2048x1536", "3 MP (2048×1536)"),
     )
     internal val cameraJpegQualityChoices = listOf(
         SettingsChoice("80", "80"),
@@ -371,6 +376,12 @@ private fun SettingsContent(
                                 stringResource(R.string.camera_snapshot_auto_orientation_summary),
                             ).filter { it.isNotEmpty() }.joinToString(" · "),
                             onClick = { cameraDefaultDialogVisible = true },
+                        )
+                        Text(
+                            text = stringResource(R.string.camera_compatibility_category),
+                            modifier = Modifier.padding(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 8.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.titleSmall,
                         )
                         SettingsChoiceRow(
                             icon = R.drawable.ic_setting_screenshot,
@@ -727,8 +738,8 @@ private fun SettingsPreview(darkTheme: Boolean) {
         SettingsChoice("rear", stringResource(R.string.camera_default_device_rear)),
         SettingsChoice("front", stringResource(R.string.camera_default_device_front)),
     )
-    val defaultSnapshots = listOf(SettingsChoice("640x480", "640×480"))
-    val maxSnapshots = listOf(SettingsChoice("2048x1536", "2048×1536"))
+    val defaultSnapshots = listOf(SettingsChoice("640x480", "VGA (640×480)"))
+    val maxSnapshots = listOf(SettingsChoice("2048x1536", "3 MP (2048×1536)"))
     val qualities = listOf(SettingsChoice("90", "90"))
     AppComposeTheme(darkTheme = darkTheme) {
         SettingsContent(
