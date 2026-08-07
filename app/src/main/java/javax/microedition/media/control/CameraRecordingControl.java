@@ -33,6 +33,9 @@ import javax.microedition.util.ContextHolder;
 /** JSR-135 RecordControl backed by one resumable CameraX MP4 recording. */
 public final class CameraRecordingControl implements RecordControl {
 	private static final String CONTENT_TYPE = "video/mp4";
+	private static final int DESTINATION_NONE = 0;
+	private static final int DESTINATION_STREAM = 1;
+	private static final int DESTINATION_LOCATION = 2;
 
 	private final CameraPlayer player;
 	private final boolean withAudio;
@@ -41,9 +44,11 @@ public final class CameraRecordingControl implements RecordControl {
 
 	private OutputStream destination;
 	private boolean destinationOwned;
+	private int destinationKind = DESTINATION_NONE;
 	private File recordingFile;
 	private boolean recordingRequested;
 	private boolean recordingActive;
+	private boolean recordingCycleStarted;
 
 	public CameraRecordingControl(CameraPlayer player, CaptureRequest request) {
 		this.player = player;
@@ -57,11 +62,12 @@ public final class CameraRecordingControl implements RecordControl {
 		if (stream == null) {
 			throw new IllegalArgumentException("record stream must not be null");
 		}
-		checkDestinationReplaceable();
+		checkDestinationReplaceable(DESTINATION_STREAM);
 		MidletMediaPermissionGate.requireRecordPermission();
 		closeOwnedDestination();
 		destination = stream;
 		destinationOwned = false;
+		destinationKind = DESTINATION_STREAM;
 	}
 
 	@Override
@@ -69,12 +75,13 @@ public final class CameraRecordingControl implements RecordControl {
 		if (locator == null) {
 			throw new IllegalArgumentException("record locator must not be null");
 		}
-		checkDestinationReplaceable();
+		checkDestinationReplaceable(DESTINATION_LOCATION);
 		MidletMediaPermissionGate.requireRecordPermission();
 		OutputStream newDestination = Connector.openOutputStream(locator);
 		closeOwnedDestination();
 		destination = newDestination;
 		destinationOwned = true;
+		destinationKind = DESTINATION_LOCATION;
 	}
 
 	@Override
@@ -90,6 +97,7 @@ public final class CameraRecordingControl implements RecordControl {
 		if (recordingRequested) {
 			return;
 		}
+		recordingCycleStarted = true;
 		recordingRequested = true;
 		if (player.getState() == Player.STARTED) {
 			startOrResumePhysicalRecording();
@@ -120,19 +128,22 @@ public final class CameraRecordingControl implements RecordControl {
 	@Override
 	public synchronized void commit() throws IOException {
 		if (destination == null) {
-			throw new IllegalStateException("setRecordStream or setRecordLocation first");
+			return;
 		}
 		if (recordingRequested || recordingActive) {
 			stopRecord();
 		}
-		if (recordingFile == null) {
-			throw new IllegalStateException("no camera recording is available");
-		}
 
 		IOException failure = null;
 		try {
-			player.finalizeCameraRecording();
-			copyRecordingToDestination();
+			if (recordingFile != null) {
+				player.finalizeCameraRecording();
+				copyRecordingToDestination();
+			} else {
+				// A recording may have remained in standby for its whole lifetime. The
+				// JSR-135 contract does not define this as an illegal commit.
+				destination.flush();
+			}
 		} catch (MediaException e) {
 			failure = new IOException("Camera recording could not be finalized", e);
 		} catch (IOException e) {
@@ -142,8 +153,10 @@ public final class CameraRecordingControl implements RecordControl {
 			closeOwnedDestination();
 			destination = null;
 			destinationOwned = false;
+			destinationKind = DESTINATION_NONE;
 			recordingRequested = false;
 			recordingActive = false;
+			recordingCycleStarted = false;
 		}
 		if (failure != null) {
 			throw failure;
@@ -166,12 +179,12 @@ public final class CameraRecordingControl implements RecordControl {
 		if (recordingRequested || recordingActive) {
 			stopRecord();
 		}
-		if (recordingFile == null) {
-			return;
-		}
 		try {
-			player.finalizeCameraRecording();
-			deleteRecordingFile();
+			if (recordingFile != null) {
+				player.finalizeCameraRecording();
+				deleteRecordingFile();
+			}
+			recordingCycleStarted = false;
 		} catch (MediaException e) {
 			invalidateAfterFailure();
 			throw new IOException("Camera recording could not be reset", e);
@@ -259,11 +272,13 @@ public final class CameraRecordingControl implements RecordControl {
 		}
 		recordingRequested = false;
 		recordingActive = false;
+		recordingCycleStarted = false;
 		deleteRecordingFile();
 		if (closeDestination) {
 			closeOwnedDestination();
 			destination = null;
 			destinationOwned = false;
+			destinationKind = DESTINATION_NONE;
 		}
 	}
 
@@ -272,13 +287,18 @@ public final class CameraRecordingControl implements RecordControl {
 		closeOwnedDestination();
 		destination = null;
 		destinationOwned = false;
+		destinationKind = DESTINATION_NONE;
 		recordingRequested = false;
 		recordingActive = false;
+		recordingCycleStarted = false;
 	}
 
-	private void checkDestinationReplaceable() {
-		if (recordingFile != null || recordingRequested || recordingActive) {
+	private void checkDestinationReplaceable(int requestedKind) {
+		if (recordingCycleStarted || recordingFile != null || recordingRequested || recordingActive) {
 			throw new IllegalStateException("commit or reset the current recording first");
+		}
+		if (destinationKind != DESTINATION_NONE && destinationKind != requestedKind) {
+			throw new IllegalStateException("commit before changing the record destination type");
 		}
 	}
 
