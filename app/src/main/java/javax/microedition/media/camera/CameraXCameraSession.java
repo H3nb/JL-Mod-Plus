@@ -293,7 +293,6 @@ public final class CameraXCameraSession implements CameraSession, CameraRecordin
 			throw new SecurityException("Microphone permission was revoked");
 		}
 
-		RecordingStartResult startResult = new RecordingStartResult();
 		onMainThread(activity, () -> {
 			synchronized (CameraXCameraSession.this) {
 				if (!started || cameraProvider == null) {
@@ -326,15 +325,8 @@ public final class CameraXCameraSession implements CameraSession, CameraRecordin
 				recordingPaused = false;
 				try {
 					recording = pending.start(callbackExecutor, event -> {
-						if (event instanceof VideoRecordEvent.Start) {
-							startResult.complete();
-						} else if (event instanceof VideoRecordEvent.Finalize finalized) {
+						if (event instanceof VideoRecordEvent.Finalize finalized) {
 							finalizeResult.complete(finalized);
-							if (!startResult.isDone()) {
-								startResult.completeExceptionally(new IOException(
-										"Video recording finalized before it started: "
-												+ finalized.getError()));
-							}
 						}
 					});
 				} catch (RuntimeException e) {
@@ -348,18 +340,6 @@ public final class CameraXCameraSession implements CameraSession, CameraRecordin
 				return null;
 			}
 		});
-		try {
-			startResult.get(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			throw new MediaException("Video recording start was interrupted");
-		} catch (TimeoutException e) {
-			throw new MediaException("Video recording did not start");
-		} catch (ExecutionException e) {
-			Throwable cause = e.getCause();
-			throw new MediaException("Video recording could not start: "
-					+ (cause == null ? "unknown error" : cause.getMessage()));
-		}
 	}
 
 	@Override
@@ -517,8 +497,8 @@ public final class CameraXCameraSession implements CameraSession, CameraRecordin
 						unbindUseCases();
 						bindUseCases(activity);
 					}
+					return null;
 				}
-				return null;
 			});
 		} catch (MediaException ignored) {
 			// The Player remains recoverable; a later operation reports availability.
@@ -705,20 +685,6 @@ public final class CameraXCameraSession implements CameraSession, CameraRecordin
 
 		void complete(File file) {
 			set(file);
-		}
-
-		void completeExceptionally(Throwable error) {
-			setException(error);
-		}
-	}
-
-	private static final class RecordingStartResult extends FutureTask<Void> {
-		RecordingStartResult() {
-			super(() -> null);
-		}
-
-		void complete() {
-			set(null);
 		}
 
 		void completeExceptionally(Throwable error) {
