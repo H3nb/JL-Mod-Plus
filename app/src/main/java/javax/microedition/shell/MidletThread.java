@@ -42,6 +42,8 @@ import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.LifecycleOwner;
 
+import io.github.h3nb.jlmodplus.EmulatorApplication;
+
 public class MidletThread extends HandlerThread implements Handler.Callback {
 	private static final String TAG = MidletThread.class.getName();
 	private static final long FATAL_ACTIVITY_FINISH_TIMEOUT_MS = 100L;
@@ -228,10 +230,11 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		finishMidletActivityBeforeReport();
 
 		try {
-			// ACRA 5.x treats this as a handled report. Explicitly keep
-			// endApplication=false so ACRA does not finish/kill the runtime as an
-			// Android application crash; the disposable :midlet process is ended below.
-			ACRA.getErrorReporter().handleException(error, false);
+			// Keep an explicit process marker in the visible report so physical tests
+			// can distinguish an isolated :midlet failure from a main-process crash.
+			Throwable reportedError = new RuntimeException(
+					"Fatal MIDlet error in process " + EmulatorApplication.getProcessName(), error);
+			ACRA.getErrorReporter().handleException(reportedError, false);
 		} catch (Throwable reportError) {
 			Log.e(TAG, "Unable to create MIDlet crash report", reportError);
 		}
