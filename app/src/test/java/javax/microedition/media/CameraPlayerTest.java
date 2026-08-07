@@ -18,10 +18,14 @@ package javax.microedition.media;
 
 import org.junit.Test;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+
 import javax.microedition.media.control.RecordControl;
 import javax.microedition.media.control.VideoControl;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -79,5 +83,14 @@ public class CameraPlayerTest {
 		} finally {
 			player.close();
 		}
+	}
+
+	@Test
+	public void previewCallbacksDoNotTakePlayerLifecycleMonitor() throws Exception {
+		Method attach = CameraPlayer.class.getMethod("attachPreview", Object.class);
+		Method detach = CameraPlayer.class.getMethod("detachPreview", Object.class);
+
+		assertFalse(Modifier.isSynchronized(attach.getModifiers()));
+		assertFalse(Modifier.isSynchronized(detach.getModifiers()));
 	}
 }
