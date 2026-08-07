@@ -222,6 +222,15 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			current.emulationTimeController.stop();
 		}
 
+		// Remove the broken MIDlet Activity from the task before ACRA performs its
+		// synchronous report collection. This immediately reveals the existing
+		// MainActivity and gives Android time to settle the task while the report is
+		// prepared, instead of leaving the user on a black MIDlet window.
+		MicroActivity activity = ContextHolder.getActivity();
+		if (activity != null) {
+			activity.finish();
+		}
+
 		try {
 			// ACRA 5.x treats this as a handled report. Explicitly keep
 			// endApplication=false so ACRA does not finish/kill the runtime as an
@@ -231,10 +240,6 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			Log.e(TAG, "Unable to create MIDlet crash report", reportError);
 		}
 
-		MicroActivity activity = ContextHolder.getActivity();
-		if (activity != null) {
-			activity.finish();
-		}
 		Process.killProcess(Process.myPid());
 	}
 
