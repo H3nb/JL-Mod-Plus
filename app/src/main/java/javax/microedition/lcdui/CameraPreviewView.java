@@ -19,6 +19,7 @@ package javax.microedition.lcdui;
 import android.graphics.Color;
 import android.os.Looper;
 import android.view.View;
+import android.view.ViewGroup;
 
 import androidx.camera.view.PreviewView;
 
@@ -70,6 +71,14 @@ public final class CameraPreviewView {
 			return;
 		}
 		PreviewView previewView = (PreviewView) view;
+		ViewGroup.LayoutParams layoutParams = previewView.getLayoutParams();
+		if (layoutParams == null) {
+			layoutParams = new ViewGroup.LayoutParams(width, height);
+		} else {
+			layoutParams.width = width;
+			layoutParams.height = height;
+		}
+		previewView.setLayoutParams(layoutParams);
 		previewView.setMinimumWidth(width);
 		previewView.setMinimumHeight(height);
 		previewView.requestLayout();
@@ -88,9 +97,7 @@ public final class CameraPreviewView {
 		view.setImplementationMode(PreviewView.ImplementationMode.COMPATIBLE);
 		view.setScaleType(PreviewView.ScaleType.FILL_CENTER);
 		setVisible(view, visible);
-		view.setLayoutParams(new android.view.ViewGroup.LayoutParams(
-				android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-				android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
+		view.setLayoutParams(new ViewGroup.LayoutParams(width, height));
 		setSize(view, width, height);
 		view.setClickable(false);
 		view.setFocusable(false);

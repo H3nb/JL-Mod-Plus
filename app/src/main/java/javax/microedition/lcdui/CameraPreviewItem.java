@@ -40,6 +40,10 @@ public final class CameraPreviewItem extends Item {
 		this.previewHeight = height;
 		this.onAttached = Objects.requireNonNull(onAttached, "onAttached");
 		this.onDetached = Objects.requireNonNull(onDetached, "onDetached");
+		// The GUI primitive is a fixed-size native view. Without SHRINK, the
+		// Compose LCDUI bridge expands AndroidView to the full Form width and
+		// CameraX derives a ViewPort from the wrong aspect ratio.
+		setLayout(LAYOUT_SHRINK | LAYOUT_VSHRINK);
 		setPreferredSize(width, height);
 	}
 
