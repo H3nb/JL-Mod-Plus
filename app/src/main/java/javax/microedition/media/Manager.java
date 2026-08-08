@@ -113,7 +113,7 @@ public class Manager {
 				if (!ContextHolder.requestPermission(Manifest.permission.RECORD_AUDIO)) {
 					throw new SecurityException("Microphone permission was denied");
 				}
-				return new RecordPlayer();
+				return new RecordPlayer(locator);
 			}
 			throw new MediaException("Unsupported capture device: " + device);
 		} else {
@@ -205,10 +205,7 @@ public class Manager {
 
 	public static String[] getSupportedContentTypes(String protocol) {
 		if ("capture".equals(protocol)) {
-			// Legacy capture://audio remains routable for compatibility, but its
-			// RecordPlayer lifecycle is not yet complete enough to advertise as a
-			// JSR-135 capability. Only the camera path is advertised here.
-			return new String[]{CaptureRequest.CONTENT_TYPE};
+			return new String[]{RecordPlayer.CONTENT_TYPE, CaptureRequest.CONTENT_TYPE};
 		}
 		if (protocol == null) {
 			String[] all = Arrays.copyOf(AUDIO_CONTENT_TYPES, AUDIO_CONTENT_TYPES.length + 1);
@@ -228,6 +225,11 @@ public class Manager {
 		}
 		if (CaptureRequest.CONTENT_TYPE.equalsIgnoreCase(contentType)) {
 			return new String[]{"capture"};
+		}
+		if (RecordPlayer.CONTENT_TYPE.equalsIgnoreCase(contentType)) {
+			String[] protocols = Arrays.copyOf(AUDIO_PROTOCOLS, AUDIO_PROTOCOLS.length + 1);
+			protocols[AUDIO_PROTOCOLS.length] = "capture";
+			return protocols;
 		}
 		if (isSupportedAudioContentType(contentType)) {
 			return Arrays.copyOf(AUDIO_PROTOCOLS, AUDIO_PROTOCOLS.length);
