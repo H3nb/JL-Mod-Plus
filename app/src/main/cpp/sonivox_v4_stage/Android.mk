@@ -1,19 +1,18 @@
 # Copyright 2026 H3NB
 # SPDX-License-Identifier: Apache-2.0
 #
-# Temporary compile-only staging module for the pinned SONiVOX v4.0.1 source.
-# It is deliberately separate from the active legacy `sonivox` module so the
-# engine upgrade can be validated before changing runtime routing.
+# SONiVOX v4.0.1 build profile for JL-Mod Plus. The upstream source is pinned
+# as a submodule; this ndk-build file intentionally preserves Java ME/MMAPI
+# compatibility options instead of inheriting upstream desktop defaults.
 
 LOCAL_PATH := $(call my-dir)
 SONIVOX_V4 := $(LOCAL_PATH)/../sonivox_v4
 SONIVOX_V4_HOST := $(SONIVOX_V4)/arm-wt-22k/host_src
 SONIVOX_V4_LIB := $(SONIVOX_V4)/arm-wt-22k/lib_src
-SONIVOX_V4_SRC := $(SONIVOX_V4)/arm-wt-22k/src
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := sonivox_v4_stage
+LOCAL_MODULE := sonivox_v4
 
 LOCAL_SRC_FILES := \
 	api_smoke.c \
@@ -66,17 +65,18 @@ LOCAL_CFLAGS += \
 	-Wformat
 
 LOCAL_CONLYFLAGS += -std=c11
-LOCAL_LDLIBS += -lm -llog
 
-# Keep the staging library valid on 16 KB page-size Android devices too.
-LOCAL_LDFLAGS += -Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384
+# Consumers keep the existing libsonivox/... include surface while the source
+# itself comes from the pinned v4 submodule.
+LOCAL_EXPORT_C_INCLUDES := \
+	$(LOCAL_PATH)/include \
+	$(LOCAL_PATH)/generated \
+	$(SONIVOX_V4_HOST) \
+	$(SONIVOX_V4_LIB)
+LOCAL_EXPORT_LDLIBS := -lm -llog
 
-# Don't strip debug builds so CI failures remain diagnosable.
-ifeq ($(NDK_DEBUG),1)
-	cmd-strip :=
+ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
+	LOCAL_ARM_NEON := false
 endif
 
-# A shared staging module is intentional: ndk-build will compile it even though
-# no runtime code links against it yet. It will be removed/converted once v4
-# replaces the active legacy SONiVOX library.
-include $(BUILD_SHARED_LIBRARY)
+include $(BUILD_STATIC_LIBRARY)
