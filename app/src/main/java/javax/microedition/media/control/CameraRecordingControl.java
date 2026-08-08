@@ -49,6 +49,7 @@ public final class CameraRecordingControl implements RecordControl {
 	private boolean recordingRequested;
 	private boolean recordingActive;
 	private boolean recordingCycleStarted;
+	private int recordSizeLimit = Integer.MAX_VALUE;
 
 	public CameraRecordingControl(CameraPlayer player, CaptureRequest request) {
 		this.player = player;
@@ -168,7 +169,11 @@ public final class CameraRecordingControl implements RecordControl {
 		if (size <= 0) {
 			throw new IllegalArgumentException("record size limit must be positive");
 		}
-		throw new MediaException("Camera record size limit is not supported yet");
+		if (recordingCycleStarted || recordingFile != null || recordingRequested || recordingActive) {
+			throw new MediaException("Changing the camera record size limit during a recording is not supported");
+		}
+		recordSizeLimit = size;
+		return recordSizeLimit;
 	}
 
 	@Override
@@ -227,7 +232,7 @@ public final class CameraRecordingControl implements RecordControl {
 			if (recordingFile == null) {
 				recordingFile = File.createTempFile(
 						"jlmod-camera-record-", ".mp4", ContextHolder.getCacheDir());
-				player.beginCameraRecording(recordingFile, withAudio, Long.MAX_VALUE, width, height);
+				player.beginCameraRecording(recordingFile, withAudio, recordSizeLimit, width, height);
 			} else {
 				player.resumeCameraRecording();
 			}
