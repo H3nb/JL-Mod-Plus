@@ -63,6 +63,19 @@ public class CameraPlayerTest {
 	}
 
 	@Test
+	public void stillImageAliasDoesNotExposeRecordControl() throws Exception {
+		CameraPlayer player = new CameraPlayer("capture://image");
+		try {
+			player.realize();
+			assertNotNull(player.getControl(VideoControl.class.getName()));
+			assertNull(player.getControl(RecordControl.class.getName()));
+			assertEquals(1, player.getControls().length);
+		} finally {
+			player.close();
+		}
+	}
+
+	@Test
 	public void audioVideoRealizationExposesRecordControlWithoutOpeningHardware() throws Exception {
 		CameraPlayer player = new CameraPlayer("capture://audio_video");
 		try {
