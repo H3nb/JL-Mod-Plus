@@ -46,12 +46,14 @@ public final class CaptureLocatorParser {
 		validateDevice(device);
 		LogicalCameraDevice logicalCamera = resolveLogicalCamera(device);
 		boolean image = CaptureRequest.DEVICE_IMAGE.equals(device);
+		boolean audioVideo = CaptureRequest.DEVICE_AUDIO_VIDEO.equals(device);
 
 		String encoding = image
 				? CaptureRequest.JPEG_ENCODING : CaptureRequest.VIDEO_RECORDING_CONTENT_TYPE;
 		int width = CameraRuntimeConfig.defaultWidth();
 		int height = CameraRuntimeConfig.defaultHeight();
 		boolean explicitDimensions = false;
+		boolean explicitEncoding = false;
 		if (queryIndex >= 0) {
 			String query = remainder.substring(queryIndex + 1);
 			if (query.isEmpty()) {
@@ -72,7 +74,10 @@ public final class CaptureLocatorParser {
 					throw new IllegalArgumentException("duplicate or empty capture parameter: " + key);
 				}
 				switch (normalizedKey) {
-					case "encoding" -> encoding = normalizeEncoding(device, value);
+					case "encoding" -> {
+						encoding = normalizeEncoding(device, value);
+						explicitEncoding = true;
+					}
 					case "width" -> requestedWidth = parsePositive(value, "width");
 					case "height" -> requestedHeight = parsePositive(value, "height");
 					case "fps" -> {
@@ -92,7 +97,8 @@ public final class CaptureLocatorParser {
 			}
 		}
 
-		if (CaptureRequest.VIDEO_RECORDING_CONTENT_TYPE.equals(encoding) && explicitDimensions) {
+		if (CaptureRequest.VIDEO_RECORDING_CONTENT_TYPE.equals(encoding)
+				&& explicitDimensions && (audioVideo || explicitEncoding)) {
 			throw new MediaException("Explicit video recording dimensions are not supported");
 		}
 		if (!CameraRuntimeConfig.acceptsDimensions(width, height)) {
