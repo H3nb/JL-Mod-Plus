@@ -43,6 +43,6 @@ public class CameraRecordingContractTest {
 	@Test
 	public void videoEncodingsAdvertiseTheRecordControlContainer() {
 		assertEquals("encoding=video/mp4", VirtualCameraCapabilities.VIDEO_ENCODING);
-		assertEquals("video/mp4", CaptureRequest.DEFAULT_RECORDING_ENCODING);
+		assertEquals("video/mp4", CaptureRequest.VIDEO_RECORDING_CONTENT_TYPE);
 	}
 }

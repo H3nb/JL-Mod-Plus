@@ -23,7 +23,8 @@ import javax.microedition.util.ContextHolder;
 /** Runtime-owned multimedia capabilities exposed to converted MIDlets. */
 public final class VirtualCameraCapabilities {
 	/** Recording encoding; still-image formats are exposed through video.snapshot.encodings. */
-	public static final String VIDEO_ENCODING = "encoding=video/mp4";
+	public static final String VIDEO_ENCODING =
+			"encoding=" + CaptureRequest.VIDEO_RECORDING_CONTENT_TYPE;
 	public static final String AUDIO_ENCODING = "encoding=amr-wb";
 
 	private VirtualCameraCapabilities() {
