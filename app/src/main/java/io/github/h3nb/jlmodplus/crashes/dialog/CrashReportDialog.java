@@ -19,25 +19,27 @@ package io.github.h3nb.jlmodplus.crashes.dialog;
 
 import static io.github.h3nb.jlmodplus.crashes.dialog.DialogInteraction.EXTRA_REPORT_FILE;
 
+import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
-import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
-import org.acra.file.BulkReportDeleter;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
 import io.github.h3nb.jlmodplus.R;
+
 public final class CrashReportDialog extends AppCompatActivity {
+	private static final String TAG = CrashReportDialog.class.getName();
 	private File reportFile;
 	private CrashViewModel viewModel;
 	private final ReportComposeState composeState = new ReportComposeState();
@@ -60,22 +62,20 @@ public final class CrashReportDialog extends AppCompatActivity {
 			@Override
 			public void onCopyAction() {
 				copyStackTrace();
-				deleteReports();
-				finish();
+				deleteReportAndFinish();
 			}
 
 			@Override
 			public void onCancelAction() {
-				deleteReports();
-				finish();
+				deleteReportAndFinish();
 			}
 
 			@Override
 			public void onChoice(int which) {
-				boolean opened = which == 0 ? shareReport() : openGithubIssues();
-				if (opened) {
-					deleteReports();
-					finish();
+				if (which == 0) {
+					shareReport();
+				} else {
+					openGithubIssues();
 				}
 			}
 		});
@@ -83,7 +83,7 @@ public final class CrashReportDialog extends AppCompatActivity {
 		viewModel = new ViewModelProvider(this).get(CrashViewModel.class);
 		viewModel.loadStackTrace(reportFile).observe(this, stackTrace -> {
 			if (stackTrace == null) {
-				finish();
+				deleteReportAndFinish();
 			} else {
 				buildAndShowDialog(stackTrace);
 			}
@@ -91,7 +91,7 @@ public final class CrashReportDialog extends AppCompatActivity {
 	}
 
 	private void buildAndShowDialog(String stackTrace) {
-		String message = stackTrace + "\n\n" + getString(R.string.crash_report_instruction);
+		String message = getString(R.string.crash_report_instruction) + "\n\n" + stackTrace;
 		composeState.setReport(
 				getString(R.string.crash_dialog_title),
 				message,
@@ -101,7 +101,7 @@ public final class CrashReportDialog extends AppCompatActivity {
 		);
 	}
 
-private void showReportOptions() {
+	private void showReportOptions() {
 		String[] options = {
 				getString(R.string.share_error_report),
 				getString(R.string.github_issues_account_required)
@@ -109,37 +109,38 @@ private void showReportOptions() {
 		composeState.showChoices(getString(R.string.report_crash), options);
 	}
 
-	private boolean shareReport() {
+	private void shareReport() {
 		Intent sendIntent = new Intent(Intent.ACTION_SEND)
 				.setType("text/plain")
 				.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.error_report_subject))
 				.putExtra(Intent.EXTRA_TEXT, viewModel.getStackTrace());
 		try {
 			startActivity(Intent.createChooser(sendIntent, getString(R.string.share_error_report)));
-			return true;
 		} catch (ActivityNotFoundException ex) {
 			Toast.makeText(this, R.string.error_report_no_share_app, Toast.LENGTH_SHORT).show();
-			return false;
 		}
 	}
 
-	private boolean openGithubIssues() {
-		copyStackTrace();
+	private void openGithubIssues() {
 		try {
 			startActivity(new Intent(
 					Intent.ACTION_VIEW,
 					Uri.parse(getString(R.string.crash_issue_url))
 			));
-			return true;
+			copyStackTrace();
 		} catch (ActivityNotFoundException ex) {
 			Toast.makeText(this, R.string.error_report_no_browser, Toast.LENGTH_SHORT).show();
-			return false;
 		}
 	}
 
-	private void deleteReports() {
-		new Thread(() -> new BulkReportDeleter(CrashReportDialog.this).deleteReports(false, 0))
-				.start();
+	private void deleteReportAndFinish() {
+		File file = reportFile;
+		new Thread(() -> {
+			if (file.exists() && !file.delete()) {
+				Log.w(TAG, "Failed to delete crash report: " + file);
+			}
+			runOnUiThread(this::finish);
+		}, "CrashReportDelete").start();
 	}
 
 	private void copyStackTrace() {
