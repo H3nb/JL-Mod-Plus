@@ -49,6 +49,18 @@ public final class VirtualCameraCapabilities {
 		}
 	}
 
+	public static boolean supportsVideoCapture() {
+		return hasCameraFeature();
+	}
+
+	public static boolean supportsAudioCapture() {
+		return hasMicrophoneFeature();
+	}
+
+	public static boolean supportsRecording() {
+		return supportsVideoCapture() || supportsAudioCapture();
+	}
+
 	/** True for properties that must reflect the current emulator capability. */
 	public static boolean isManagedProperty(String key) {
 		if (key == null) {
@@ -68,16 +80,15 @@ public final class VirtualCameraCapabilities {
 			return null;
 		}
 		return switch (key) {
-			case "supports.video.capture" -> Boolean.toString(hasCameraFeature());
-			case "supports.audio.capture" -> Boolean.toString(hasMicrophoneFeature());
-			case "supports.recording" ->
-					Boolean.toString(hasMicrophoneFeature() || hasCameraFeature());
+			case "supports.video.capture" -> Boolean.toString(supportsVideoCapture());
+			case "supports.audio.capture" -> Boolean.toString(supportsAudioCapture());
+			case "supports.recording" -> Boolean.toString(supportsRecording());
 			case "audio.encoding", "audio.encodings" ->
-					hasMicrophoneFeature() ? AUDIO_ENCODING : null;
+					supportsAudioCapture() ? AUDIO_ENCODING : null;
 			case "video.encoding", "video.encodings" ->
-					hasCameraFeature() ? VIDEO_ENCODING : null;
+					supportsVideoCapture() ? VIDEO_ENCODING : null;
 			case "video.snapshot.encoding", "video.snapshot.encodings" ->
-					hasCameraFeature() ? CameraConfiguration.snapshotEncodings() : null;
+					supportsVideoCapture() ? CameraConfiguration.snapshotEncodings() : null;
 			default -> null;
 		};
 	}
