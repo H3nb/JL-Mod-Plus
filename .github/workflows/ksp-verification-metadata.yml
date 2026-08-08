@@ -41,7 +41,7 @@ jobs:
         env:
           DISABLE_RELEASE_SIGNING: "true"
         run: >-
-          ./gradlew --no-daemon --stacktrace --console=plain --non-interactive
+          bash ./gradlew --no-daemon --stacktrace --console=plain --non-interactive
           --write-verification-metadata sha256
           :app:assembleEmulatorRelease
 
