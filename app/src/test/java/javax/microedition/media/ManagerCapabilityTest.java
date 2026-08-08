@@ -24,6 +24,7 @@ import javax.microedition.media.camera.CaptureRequest;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public class ManagerCapabilityTest {
@@ -57,5 +58,20 @@ public class ManagerCapabilityTest {
 	public void nullCapabilityQueriesRemainNonEmpty() {
 		assertTrue(Manager.getSupportedContentTypes(null).length > 0);
 		assertTrue(Manager.getSupportedProtocols(null).length > 0);
+	}
+
+	@Test
+	public void nullPlayerLocatorRemainsIllegalArgument() {
+		assertThrows(IllegalArgumentException.class, () -> Manager.createPlayer((String) null));
+	}
+
+	@Test
+	public void malformedCameraLocatorsUseMediaException() {
+		assertThrows(MediaException.class, () ->
+				Manager.createPlayer("capture://video?width=640"));
+		assertThrows(MediaException.class, () ->
+				Manager.createPlayer("capture://video?fps=0"));
+		assertThrows(MediaException.class, () ->
+				Manager.createPlayer("capture://?encoding=gray8"));
 	}
 }
