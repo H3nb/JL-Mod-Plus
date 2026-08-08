@@ -111,13 +111,14 @@ public class CameraRecordingControlFailureTest {
 			assertTrue(prepared.recording);
 			assertTrue(oldRecordingFile.exists());
 
+			// Once the stale backend becomes finalizable, cleanup succeeds before any
+			// new physical recording is allowed to begin. Creating the new CameraX temp
+			// file itself is intentionally left to Android/device tests.
 			prepared.failFinalizeRetryably = false;
-			control.startRecord();
+			invokeNoArg(control, "cleanupPendingRecordingBeforeStart");
 			assertEquals(3, prepared.finalizeCalls);
-			assertEquals(1, prepared.beginCalls);
+			assertEquals(0, prepared.beginCalls);
 			assertFalse(oldRecordingFile.exists());
-
-			control.reset();
 			assertFalse(prepared.recording);
 		} finally {
 			player.close();
@@ -152,6 +153,11 @@ public class CameraRecordingControlFailureTest {
 			invokeNoArg(control, "prepareDestinationReplacementAfterFailure");
 			setField(control, "destination", replacement);
 			assertThrows(IllegalStateException.class, control::startRecord);
+
+			prepared.failFinalizeRetryably = false;
+			invokeNoArg(control, "cleanupPendingRecordingBeforeStart");
+			assertFalse(oldRecordingFile.exists());
+			assertFalse(prepared.recording);
 		} finally {
 			player.close();
 			if (oldRecordingFile.exists()) {
