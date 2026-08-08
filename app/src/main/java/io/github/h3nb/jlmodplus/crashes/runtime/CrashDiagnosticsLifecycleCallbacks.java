@@ -20,15 +20,22 @@ import android.app.Activity;
 import android.app.Application;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.lifecycle.Lifecycle;
 
 import io.github.h3nb.jlmodplus.crashes.dialog.ProcessDeathReportActivity;
 
 /** Main-process lifecycle hook that surfaces a durable report at the next safe resume. */
 public final class CrashDiagnosticsLifecycleCallbacks implements Application.ActivityLifecycleCallbacks {
+    private static final long EXIT_HISTORY_GRACE_MS = 1_500L;
+
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private String lastLaunchedReportId;
+    private String pendingGraceSessionId;
 
     @Override
     public void onActivityResumed(@NonNull Activity activity) {
@@ -40,14 +47,50 @@ public final class CrashDiagnosticsLifecycleCallbacks implements Application.Act
         if (reportId == null) {
             reportId = ProcessDeathReportStore.findLatestPendingId(activity);
         }
-        if (reportId == null || reportId.equals(lastLaunchedReportId)) {
+        if (launchReport(activity, reportId)) {
             return;
+        }
+
+        scheduleExitHistoryGraceRetry(activity);
+    }
+
+    private void scheduleExitHistoryGraceRetry(Activity activity) {
+        CrashSessionStore.Session session = CrashSessionStore.read(activity);
+        if (session == null || session.sessionId.equals(pendingGraceSessionId)) {
+            return;
+        }
+
+        final String sessionId = session.sessionId;
+        pendingGraceSessionId = sessionId;
+        mainHandler.postDelayed(() -> {
+            if (!sessionId.equals(pendingGraceSessionId)) {
+                return;
+            }
+            pendingGraceSessionId = null;
+
+            if (activity.isFinishing() || activity.isDestroyed()
+                    || !activity.getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.RESUMED)) {
+                return;
+            }
+
+            String reportId = ProcessExitReconciler.reconcileMidletAfterExitHistoryGrace(activity);
+            if (reportId == null) {
+                reportId = ProcessDeathReportStore.findLatestPendingId(activity);
+            }
+            launchReport(activity, reportId);
+        }, EXIT_HISTORY_GRACE_MS);
+    }
+
+    private boolean launchReport(Activity activity, String reportId) {
+        if (reportId == null || reportId.equals(lastLaunchedReportId)) {
+            return false;
         }
 
         lastLaunchedReportId = reportId;
         Intent intent = new Intent(activity, ProcessDeathReportActivity.class)
                 .putExtra(ProcessDeathReportActivity.EXTRA_REPORT_ID, reportId);
         activity.startActivity(intent);
+        return true;
     }
 
     @Override
