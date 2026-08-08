@@ -5,6 +5,18 @@ name: Release Readiness
 on:
   push:
     branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+    paths:
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - "gradle.properties"
+      - "version.properties"
+      - "gradle/**"
+      - "app/build.gradle.kts"
+      - "app/src/**/keepRules/**"
+      - "app/src/**/AndroidManifest.xml"
+      - ".github/workflows/release-readiness.yml"
   workflow_dispatch:
   schedule:
     - cron: "17 3 * * 1"
