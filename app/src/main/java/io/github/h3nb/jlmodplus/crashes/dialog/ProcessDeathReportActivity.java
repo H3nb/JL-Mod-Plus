@@ -59,8 +59,10 @@ public final class ProcessDeathReportActivity extends AppCompatActivity {
 
             @Override
             public void onCopyAction() {
+                // Keep the persisted incident after copying. A native/ANR trace is binary and
+                // cannot be represented on the clipboard, so the user must still be able to
+                // choose Share afterwards to export that attachment.
                 copyReport();
-                deleteAndFinish();
             }
 
             @Override
