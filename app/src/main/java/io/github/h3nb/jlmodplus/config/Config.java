@@ -37,6 +37,7 @@ import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
 
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.crashes.runtime.CrashSessionStore;
 
 public class Config {
 	public static final String APPS_DB_NAME = "/J2ME-apps.db";
@@ -142,7 +143,13 @@ public class Config {
 
 		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(path), context, MicroActivity.class);
 		intent.putExtra(KEY_MIDLET_NAME, name);
-		context.startActivity(intent);
+		CrashSessionStore.startMidletSession(context, name, path);
+		try {
+			context.startActivity(intent);
+		} catch (RuntimeException error) {
+			CrashSessionStore.clearMidletSession(context);
+			throw error;
+		}
 	}
 
 	private static void initDirs(String path) {
