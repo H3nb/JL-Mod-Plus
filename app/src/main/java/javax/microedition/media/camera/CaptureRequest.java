@@ -18,16 +18,17 @@ package javax.microedition.media.camera;
 
 /** Immutable normalized request for an MMAPI live-camera locator. */
 public final class CaptureRequest {
+	/** Content type exposed by the live camera Player itself. */
 	public static final String CONTENT_TYPE = "video/preview";
 	public static final String DEVICE_VIDEO = "video";
 	public static final String DEVICE_IMAGE = "image";
 	public static final String DEVICE_REAR = "devcam0";
 	public static final String DEVICE_FRONT = "devcam1";
 	public static final String DEVICE_AUDIO_VIDEO = "audio_video";
-	/** Legacy still-camera compatibility encoding accepted on capture://video. */
-	public static final String DEFAULT_ENCODING = "jpeg";
-	/** Container produced by the CameraX RecordControl backend. */
-	public static final String DEFAULT_RECORDING_ENCODING = "video/mp4";
+	/** Still-image encoding accepted by the compatibility image locator and explicit legacy requests. */
+	public static final String JPEG_ENCODING = "jpeg";
+	/** Default recordable video content type advertised by video.encodings and RecordControl. */
+	public static final String VIDEO_RECORDING_CONTENT_TYPE = "video/mp4";
 
 	/** Conservative virtual defaults; independent of the MIDlet display size. */
 	public static final int DEFAULT_WIDTH = 640;
