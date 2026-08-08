@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,21 +18,28 @@ package javax.microedition.media;
 
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
+import javax.microedition.media.camera.CameraRecordingSession;
 import javax.microedition.media.camera.CameraSession;
 import javax.microedition.media.camera.SnapshotRequest;
 import javax.microedition.media.control.RecordControl;
 import javax.microedition.media.control.VideoControl;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 public class CameraPlayerTest {
 	@Test
@@ -78,6 +85,133 @@ public class CameraPlayerTest {
 			assertThrows(IllegalArgumentException.class, () -> control.setRecordSizeLimit(-1));
 		} finally {
 			player.close();
+		}
+	}
+
+	@Test
+	public void cameraCommitWithoutStartedRecordingThrowsIOException() throws Exception {
+		CameraPlayer player = new CameraPlayer("capture://video");
+		try {
+			player.realize();
+			RecordControl control = (RecordControl) player.getControl(RecordControl.class.getName());
+
+			assertThrows(IOException.class, control::commit);
+		} finally {
+			player.close();
+		}
+	}
+
+	@Test
+	public void cameraResumeFailureRetainsRecordingForRetry() throws Exception {
+		CameraPlayer player = new CameraPlayer("capture://video");
+		File recordingFile = File.createTempFile("camera-resume-test-", ".mp4");
+		FakeCameraSession prepared = new FakeCameraSession();
+		prepared.recording = true;
+		prepared.recordingPaused = true;
+		prepared.failResume = true;
+		try {
+			player.realize();
+			RecordControl control = (RecordControl) player.getControl(RecordControl.class.getName());
+			setField(player, "session", prepared);
+			setIntField(player, "state", Player.STARTED);
+			setField(control, "destination", new ByteArrayOutputStream());
+			setField(control, "recordingFile", recordingFile);
+			setBooleanField(control, "recordingCycleStarted", true);
+
+			assertThrows(IllegalStateException.class, control::startRecord);
+			assertTrue(recordingFile.exists());
+			assertTrue(prepared.recording);
+
+			prepared.failResume = false;
+			control.startRecord();
+			assertEquals(2, prepared.resumeCalls);
+			control.reset();
+			assertFalse(recordingFile.exists());
+			assertFalse(prepared.recording);
+		} finally {
+			player.close();
+			if (recordingFile.exists()) {
+				recordingFile.delete();
+			}
+		}
+	}
+
+	@Test
+	public void cameraCommitFinalizesEvenWhenImplicitPauseFails() throws Exception {
+		CameraPlayer player = new CameraPlayer("capture://video");
+		File recordingFile = File.createTempFile("camera-commit-test-", ".mp4");
+		byte[] expected = new byte[]{1, 2, 3, 4};
+		try (FileOutputStream output = new FileOutputStream(recordingFile)) {
+			output.write(expected);
+		}
+		ByteArrayOutputStream destination = new ByteArrayOutputStream();
+		FakeCameraSession prepared = new FakeCameraSession();
+		prepared.recording = true;
+		prepared.failPause = true;
+		try {
+			player.realize();
+			RecordControl control = (RecordControl) player.getControl(RecordControl.class.getName());
+			setField(player, "session", prepared);
+			setIntField(player, "state", Player.STARTED);
+			setField(control, "destination", destination);
+			setField(control, "recordingFile", recordingFile);
+			setBooleanField(control, "recordingRequested", true);
+			setBooleanField(control, "recordingActive", true);
+			setBooleanField(control, "recordingCycleStarted", true);
+
+			control.commit();
+
+			assertEquals(1, prepared.pauseCalls);
+			assertEquals(1, prepared.finalizeCalls);
+			assertArrayEquals(expected, destination.toByteArray());
+			assertFalse(recordingFile.exists());
+			assertFalse(prepared.recording);
+		} finally {
+			player.close();
+			if (recordingFile.exists()) {
+				recordingFile.delete();
+			}
+		}
+	}
+
+	@Test
+	public void cameraFinalizeFailureKeepsRecordingForCommitRetry() throws Exception {
+		CameraPlayer player = new CameraPlayer("capture://video");
+		File recordingFile = File.createTempFile("camera-finalize-test-", ".mp4");
+		byte[] expected = new byte[]{5, 6, 7};
+		try (FileOutputStream output = new FileOutputStream(recordingFile)) {
+			output.write(expected);
+		}
+		ByteArrayOutputStream destination = new ByteArrayOutputStream();
+		FakeCameraSession prepared = new FakeCameraSession();
+		prepared.recording = true;
+		prepared.recordingPaused = true;
+		prepared.failFinalize = true;
+		try {
+			player.realize();
+			RecordControl control = (RecordControl) player.getControl(RecordControl.class.getName());
+			setField(player, "session", prepared);
+			setIntField(player, "state", Player.STARTED);
+			setField(control, "destination", destination);
+			setField(control, "recordingFile", recordingFile);
+			setBooleanField(control, "recordingCycleStarted", true);
+
+			assertThrows(IOException.class, control::commit);
+			assertTrue(recordingFile.exists());
+			assertTrue(prepared.recording);
+			assertEquals(0, destination.size());
+
+			prepared.failFinalize = false;
+			control.commit();
+			assertEquals(2, prepared.finalizeCalls);
+			assertArrayEquals(expected, destination.toByteArray());
+			assertFalse(recordingFile.exists());
+			assertFalse(prepared.recording);
+		} finally {
+			player.close();
+			if (recordingFile.exists()) {
+				recordingFile.delete();
+			}
 		}
 	}
 
@@ -190,8 +324,34 @@ public class CameraPlayerTest {
 		assertFalse(Modifier.isSynchronized(lookup.getModifiers()));
 	}
 
-	private static final class FakeCameraSession implements CameraSession {
+	private static void setField(Object target, String name, Object value) throws Exception {
+		Field field = target.getClass().getDeclaredField(name);
+		field.setAccessible(true);
+		field.set(target, value);
+	}
+
+	private static void setIntField(Object target, String name, int value) throws Exception {
+		Field field = target.getClass().getDeclaredField(name);
+		field.setAccessible(true);
+		field.setInt(target, value);
+	}
+
+	private static void setBooleanField(Object target, String name, boolean value) throws Exception {
+		Field field = target.getClass().getDeclaredField(name);
+		field.setAccessible(true);
+		field.setBoolean(target, value);
+	}
+
+	private static final class FakeCameraSession implements CameraSession, CameraRecordingSession {
 		private boolean released;
+		private boolean recording;
+		private boolean recordingPaused;
+		private boolean failPause;
+		private boolean failResume;
+		private boolean failFinalize;
+		private int pauseCalls;
+		private int resumeCalls;
+		private int finalizeCalls;
 
 		@Override
 		public void prepare() {
@@ -219,8 +379,59 @@ public class CameraPlayerTest {
 		}
 
 		@Override
+		public void beginRecording(File outputFile, boolean withAudio, long fileSizeLimit,
+				int width, int height) {
+			recording = true;
+			recordingPaused = false;
+		}
+
+		@Override
+		public void pauseRecording() throws MediaException {
+			pauseCalls++;
+			if (failPause) {
+				throw new MediaException("pause failed");
+			}
+			if (recording) {
+				recordingPaused = true;
+			}
+		}
+
+		@Override
+		public void resumeRecording() throws MediaException {
+			resumeCalls++;
+			if (failResume) {
+				throw new MediaException("resume failed");
+			}
+			if (recording) {
+				recordingPaused = false;
+			}
+		}
+
+		@Override
+		public void finalizeRecording() throws MediaException {
+			finalizeCalls++;
+			if (failFinalize) {
+				throw new MediaException("finalize failed");
+			}
+			recording = false;
+			recordingPaused = false;
+		}
+
+		@Override
+		public boolean hasRecording() {
+			return recording;
+		}
+
+		@Override
+		public boolean isRecordingActive() {
+			return recording && !recordingPaused;
+		}
+
+		@Override
 		public void release() {
 			released = true;
+			recording = false;
+			recordingPaused = false;
 		}
 	}
 }
