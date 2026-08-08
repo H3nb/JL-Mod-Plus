@@ -27,10 +27,15 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import javax.microedition.media.control.RecordControl;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
 
 public class RecordPlayerListenerContractTest {
 	private final List<File> temporaryFiles = new ArrayList<>();
@@ -47,17 +52,23 @@ public class RecordPlayerListenerContractTest {
 		RecordPlayer player = new RecordPlayer("capture://audio", new FakeDependencies());
 		player.addPlayerListener(null);
 		assertEquals(Player.UNREALIZED, player.getState());
+		player.close();
 	}
 
 	@Test
-	public void armedRecordingEventFollowsPlayerStartedState() throws Exception {
+	public void armedRecordingEventsAreAsynchronousOrderedAndObserveStartedState() throws Exception {
 		RecordPlayer player = new RecordPlayer("capture://audio", new FakeDependencies());
 		player.realize();
-		List<String> events = new ArrayList<>();
-		List<Integer> states = new ArrayList<>();
+		Thread callerThread = Thread.currentThread();
+		List<String> events = new CopyOnWriteArrayList<>();
+		List<Integer> states = new CopyOnWriteArrayList<>();
+		List<Thread> callbackThreads = new CopyOnWriteArrayList<>();
+		CountDownLatch latch = new CountDownLatch(2);
 		player.addPlayerListener((source, event, data) -> {
 			events.add(event);
 			states.add(source.getState());
+			callbackThreads.add(Thread.currentThread());
+			latch.countDown();
 		});
 
 		RecordControl control = (RecordControl) player.getControl("RecordControl");
@@ -65,10 +76,15 @@ public class RecordPlayerListenerContractTest {
 		control.startRecord();
 		player.start();
 
+		assertTrue("Timed out waiting for asynchronous Player events",
+				latch.await(2, TimeUnit.SECONDS));
 		assertEquals(PlayerListener.STARTED, events.get(0));
 		assertEquals(Player.STARTED, (int) states.get(0));
 		assertEquals(PlayerListener.RECORD_STARTED, events.get(1));
 		assertEquals(Player.STARTED, (int) states.get(1));
+		assertNotSame(callerThread, callbackThreads.get(0));
+		assertEquals(callbackThreads.get(0), callbackThreads.get(1));
+		player.close();
 	}
 
 	private final class FakeDependencies implements RecordPlayer.Dependencies {
