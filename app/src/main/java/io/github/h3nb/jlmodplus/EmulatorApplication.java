@@ -35,6 +35,8 @@ import org.acra.config.CoreConfigurationBuilder;
 
 import java.util.Arrays;
 
+import io.github.h3nb.jlmodplus.crashes.runtime.CrashDiagnosticsLifecycleCallbacks;
+import io.github.h3nb.jlmodplus.crashes.runtime.CrashSessionStore;
 import io.github.h3nb.jlmodplus.settings.EmulationAudioPolicy;
 import io.github.h3nb.jlmodplus.util.Constants;
 import io.github.h3nb.jlmodplus.util.FileUtils;
@@ -62,6 +64,14 @@ public class EmulatorApplication extends Application implements OnSharedPreferen
 						ReportField.PACKAGE_NAME,
 						ReportField.PHONE_MODEL,
 						ReportField.STACK_TRACE)));
+
+		String processName = getProcessName();
+		String packageName = getPackageName();
+		if (processName.startsWith(packageName + ":midlet")) {
+			CrashSessionStore.markMidletProcessStarted(this);
+		} else if (processName.startsWith(packageName) && !processName.contains(":")) {
+			registerActivityLifecycleCallbacks(new CrashDiagnosticsLifecycleCallbacks());
+		}
 
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
 		EmulationAudioPolicy.setAudioSpeedEnabled(
