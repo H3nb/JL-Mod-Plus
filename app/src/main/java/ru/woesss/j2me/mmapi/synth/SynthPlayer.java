@@ -31,10 +31,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.microedition.amms.control.PanControl;
-import javax.microedition.amms.control.audioeffect.EqualizerControl;
 import javax.microedition.media.BasePlayer;
 import javax.microedition.media.Control;
-import javax.microedition.media.InternalEqualizer;
 import javax.microedition.media.InternalMetaData;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.PlayerListener;
@@ -104,14 +102,15 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 			}
 			if (controls == null) {
 				controls = new HashMap<>();
-				if (TONE_DEVICE_LOCATOR.equals(dataSource.getLocator())) {
+				boolean toneDevice = TONE_DEVICE_LOCATOR.equals(dataSource.getLocator());
+				if (toneDevice) {
 					controls.put(ToneControl.class.getName(), this);
+				} else {
+					controls.put(MIDIControl.class.getName(), new MIDIControlImpl(this, library, handle));
 				}
 				controls.put(VolumeControl.class.getName(), this);
-				controls.put(MIDIControl.class.getName(), new MIDIControlImpl(this, library, handle));
 				controls.put(PanControl.class.getName(), this);
 				controls.put(MetaDataControl.class.getName(), metadata);
-				controls.put(EqualizerControl.class.getName(), new InternalEqualizer());
 			}
 			state = REALIZED;
 		}
@@ -187,15 +186,17 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 	}
 
 	@Override
-	public void close() {
-		if (state != CLOSED) {
-			EmulationTime.controller().removeListener(this);
-			state = CLOSED;
-			library.close(handle);
+	public synchronized void close() {
+		if (state == CLOSED) {
+			return;
 		}
 
+		EmulationTime.controller().removeListener(this);
+		state = CLOSED;
+		library.close(handle);
 		dataSource.disconnect();
 		postEvent(PlayerListener.CLOSED, null);
+		callbackExecutor.shutdown();
 	}
 
 	@Override
@@ -387,7 +388,10 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 
 	/** @noinspection unused */
 	@Keep // call from native
-	private void postEvent(int type, long time) {
+	private synchronized void postEvent(int type, long time) {
+		if (state == CLOSED) {
+			return;
+		}
 		switch (type) {
 			case 1 -> { // restart
 				postEvent(PlayerListener.END_OF_MEDIA, time);
@@ -397,21 +401,21 @@ class SynthPlayer extends BasePlayer implements VolumeControl, PanControl, ToneC
 				postEvent(PlayerListener.END_OF_MEDIA, time);
 				state = PREFETCHED;
 			}
-			case 3 -> { // error
+			case 3 -> { // irrecoverable native error
 				String code = "NATIVE_RUNTIME_ERROR_" + time;
 				AudioFailure failure = AudioFailure.createWithDetail(dataSource.getLocator(),
 						dataSource.getContentType(), backendName(), AudioFailure.Phase.RUNTIME,
 						code, "Native result code: " + time);
 				AudioFailureReporter.report(failure);
 				postEvent(PlayerListener.ERROR, failure.getCode());
-				state = PREFETCHED;
+				close();
 			}
 		}
 	}
 
 	private synchronized void postEvent(String event, Object eventData) {
-		for (PlayerListener listener : listeners) {
-			// Callbacks should be async
+		for (PlayerListener listener : new ArrayList<>(listeners)) {
+			// Callbacks should be async and preserve submission order.
 			callbackExecutor.execute(() -> listener.playerUpdate(this, event, eventData));
 		}
 	}
