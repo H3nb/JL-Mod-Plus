@@ -12,18 +12,11 @@
 
 namespace mmapi {
     namespace eas {
-        EAS_DLSLIB_HANDLE Player::soundBank{nullptr};
+        std::mutex Player::soundBankMutex;
+        std::string Player::soundBankPath;
 
         Player::Player(EAS_DATA_HANDLE easHandle, BaseFile *file, EAS_HANDLE stream, const int64_t duration)
-                : BasePlayer(duration), easHandle(easHandle), media(stream), interactive(nullptr), file(file) {
-            EAS_DLSLIB_HANDLE dls = Player::soundBank;
-            if (dls == nullptr) {
-                EAS_SetParameter(easHandle, EAS_MODULE_REVERB, EAS_PARAM_REVERB_PRESET, EAS_PARAM_REVERB_CHAMBER);
-                EAS_SetParameter(easHandle, EAS_MODULE_REVERB, EAS_PARAM_REVERB_BYPASS, EAS_FALSE);
-            } else {
-                EAS_SetGlobalDLSLib(easHandle, dls);
-            }
-        }
+                : BasePlayer(duration), easHandle(easHandle), media(stream), interactive(nullptr), file(file) {}
 
         Player::Player(EAS_DATA_HANDLE easHandle) : Player(easHandle, nullptr, nullptr, -1) {}
 
@@ -31,16 +24,61 @@ namespace mmapi {
             close();
         }
 
+        int32_t Player::configureHandle(EAS_DATA_HANDLE easHandle) {
+            if (easHandle == nullptr) {
+                return EAS_ERROR_INVALID_HANDLE;
+            }
+
+            EAS_RESULT result = EAS_SetHeaderSearchFlag(easHandle, EAS_FALSE);
+            if (result != EAS_SUCCESS) {
+                return result;
+            }
+
+            std::string configuredPath;
+            {
+                std::lock_guard<std::mutex> lock(soundBankMutex);
+                configuredPath = soundBankPath;
+            }
+
+            if (configuredPath.empty()) {
+                result = EAS_SetParameter(easHandle,
+                                          EAS_MODULE_REVERB,
+                                          EAS_PARAM_REVERB_PRESET,
+                                          EAS_PARAM_REVERB_CHAMBER);
+                if (result != EAS_SUCCESS) {
+                    return result;
+                }
+                return EAS_SetParameter(easHandle,
+                                        EAS_MODULE_REVERB,
+                                        EAS_PARAM_REVERB_BYPASS,
+                                        EAS_FALSE);
+            }
+
+            IOFile soundBank(configuredPath.c_str(), "rb");
+            if (!soundBank.isOpen()) {
+                return EAS_ERROR_FILE_OPEN_FAILED;
+            }
+            return EAS_LoadDLSCollection(easHandle, nullptr, &soundBank.easFile);
+        }
+
         int32_t Player::createPlayer(const char *locator, Player **pPlayer) {
-            if (locator == nullptr) {
+            if (locator == nullptr || pPlayer == nullptr) {
                 return EAS_ERROR_INVALID_PARAMETER;
             }
-            EAS_DATA_HANDLE easHandle;
+            *pPlayer = nullptr;
+
+            EAS_DATA_HANDLE easHandle = nullptr;
             EAS_RESULT result = EAS_Init(&easHandle);
             if (result != EAS_SUCCESS) {
                 return result;
             }
-            EAS_SetHeaderSearchFlag(easHandle, false);
+
+            result = configureHandle(easHandle);
+            if (result != EAS_SUCCESS) {
+                EAS_Shutdown(easHandle);
+                return result;
+            }
+
             if (strcmp(locator, "device://tone") == 0) {
                 *pPlayer = new Player(easHandle);
                 return EAS_SUCCESS;
@@ -55,9 +93,17 @@ namespace mmapi {
                 *pPlayer = player;
                 return EAS_SUCCESS;
             }
-            BaseFile *file = new IOFile(locator, "rb");;
-            EAS_HANDLE stream;
-            int64_t duration;
+
+            BaseFile *file = new IOFile(locator, "rb");
+            auto *ioFile = static_cast<IOFile *>(file);
+            if (!ioFile->isOpen()) {
+                delete file;
+                EAS_Shutdown(easHandle);
+                return EAS_ERROR_FILE_OPEN_FAILED;
+            }
+
+            EAS_HANDLE stream = nullptr;
+            int64_t duration = -1;
             result = openSource(easHandle, file, &stream, &duration);
             if (result != EAS_SUCCESS) {
                 EAS_Shutdown(easHandle);
@@ -96,9 +142,15 @@ namespace mmapi {
         }
 
         void Player::close() {
+            if (easHandle == nullptr) {
+                return;
+            }
+
             BasePlayer::close();
             if (media != nullptr) {
                 EAS_CloseFile(easHandle, media);
+            }
+            if (file != nullptr) {
                 delete file;
             }
             if (interactive != nullptr) {
@@ -112,19 +164,39 @@ namespace mmapi {
         }
 
         int32_t Player::initSoundBank(const char *sound_bank) {
-            EAS_DATA_HANDLE easHandle;
+            if (sound_bank == nullptr || sound_bank[0] == '\0') {
+                std::lock_guard<std::mutex> lock(soundBankMutex);
+                soundBankPath.clear();
+                return EAS_SUCCESS;
+            }
+
+            EAS_DATA_HANDLE easHandle = nullptr;
             EAS_RESULT result = EAS_Init(&easHandle);
             if (result != EAS_SUCCESS) {
                 return result;
             }
-            EAS_SetHeaderSearchFlag(easHandle, false);
-            IOFile file(sound_bank, "rb");
-            result = EAS_LoadDLSCollection(easHandle, nullptr, &file.easFile);
+
+            result = EAS_SetHeaderSearchFlag(easHandle, EAS_FALSE);
             if (result == EAS_SUCCESS) {
-                EAS_GetGlobalDLSLib(easHandle, &Player::soundBank);
+                IOFile file(sound_bank, "rb");
+                if (!file.isOpen()) {
+                    result = EAS_ERROR_FILE_OPEN_FAILED;
+                } else {
+                    result = EAS_LoadDLSCollection(easHandle, nullptr, &file.easFile);
+                }
             }
-            EAS_Shutdown(easHandle);
-            return result;
+
+            EAS_RESULT shutdownResult = EAS_Shutdown(easHandle);
+            if (result == EAS_SUCCESS && shutdownResult != EAS_SUCCESS) {
+                return shutdownResult;
+            }
+            if (result != EAS_SUCCESS) {
+                return result;
+            }
+
+            std::lock_guard<std::mutex> lock(soundBankMutex);
+            soundBankPath = sound_bank;
+            return EAS_SUCCESS;
         }
 
         jint Player::writeMIDI(util::JByteArrayPtr &data) {
@@ -140,6 +212,10 @@ namespace mmapi {
         }
 
         int32_t Player::setDataSource(BaseFile *pFile) {
+            if (pFile == nullptr || easHandle == nullptr) {
+                return EAS_ERROR_INVALID_PARAMETER;
+            }
+
             EAS_HANDLE stream = nullptr;
             int32_t result = openSource(easHandle, pFile, &stream, &duration);
             if (result != EAS_SUCCESS) {
@@ -147,6 +223,8 @@ namespace mmapi {
             }
             if (media != nullptr) {
                 EAS_CloseFile(easHandle, media);
+            }
+            if (file != nullptr) {
                 delete file;
             }
             media = stream;
@@ -159,7 +237,11 @@ namespace mmapi {
                                    BaseFile *pFile,
                                    EAS_HANDLE *outStream,
                                    int64_t *outDuration) {
-            EAS_HANDLE stream;
+            if (easHandle == nullptr || pFile == nullptr || outStream == nullptr || outDuration == nullptr) {
+                return EAS_ERROR_INVALID_PARAMETER;
+            }
+
+            EAS_HANDLE stream = nullptr;
             EAS_RESULT result = EAS_OpenFile(easHandle, &pFile->easFile, &stream);
             if (result != EAS_SUCCESS) {
                 result = EAS_MMAPIToneControl(easHandle, &pFile->easFile, &stream);
@@ -181,8 +263,7 @@ namespace mmapi {
             ALOGV("EAS_checkFileType(): %s file recognized", EAS_GetFileTypeString(type));
             if (type == EAS_FILE_UNKNOWN) {
                 EAS_CloseFile(easHandle, stream);
-                result = EAS_ERROR_FILE_FORMAT;
-                return result;
+                return EAS_ERROR_FILE_FORMAT;
             }
             EAS_I32 length = -1;
             result = EAS_ParseMetaData(easHandle, stream, &length);
