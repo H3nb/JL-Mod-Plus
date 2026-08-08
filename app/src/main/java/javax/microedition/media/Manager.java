@@ -38,6 +38,7 @@ import javax.microedition.util.ContextHolder;
 import javax.microedition.media.camera.CaptureLocatorParser;
 import javax.microedition.media.camera.CaptureRequest;
 
+import io.github.h3nb.jlmodplus.crashes.runtime.CrashBreadcrumbStore;
 import ru.woesss.j2me.mmapi.Plugin;
 import ru.woesss.j2me.mmapi.audio.AudioFailure;
 import ru.woesss.j2me.mmapi.audio.AudioFailureReporter;
@@ -59,6 +60,7 @@ public class Manager {
 			throw new IllegalArgumentException();
 		}
 		if (MIDI_DEVICE_LOCATOR.equals(locator) || TONE_DEVICE_LOCATOR.equals(locator)) {
+			breadcrumb("mmapi_locator_create device=" + locator);
 			for (Plugin plugin : PLUGINS) {
 				Player player = plugin.createPlayer(locator);
 				if (player != null) {
@@ -73,6 +75,7 @@ public class Manager {
 			return createPlayer(stream, type);
 		} else if (locator.startsWith(CAPTURE_LOCATOR_PREFIX)) {
 			String device = CaptureLocatorParser.deviceOf(locator);
+			breadcrumb("mmapi_capture_create device=" + device);
 			if (CaptureRequest.DEVICE_VIDEO.equals(device)
 					|| CaptureRequest.DEVICE_IMAGE.equals(device)
 					|| CaptureRequest.DEVICE_REAR.equals(device)
@@ -96,6 +99,7 @@ public class Manager {
 			throw new IllegalArgumentException();
 		}
 		String type = source.getContentType();
+		breadcrumb("mmapi_datasource_create type=" + safeType(type));
 		if (isAudioSource(type)) {
 			String locator = source.getLocator();
 			try {
@@ -127,6 +131,7 @@ public class Manager {
 		if (stream == null) {
 			throw new IllegalArgumentException();
 		}
+		breadcrumb("mmapi_stream_create type=" + safeType(type));
 		InternalDataSource datasource;
 		try {
 			datasource = new InternalDataSource(stream, type);
@@ -140,6 +145,7 @@ public class Manager {
 			return pluginPlayer;
 		}
 		if (isAudioSource(type)) {
+			breadcrumb("mmapi_fallback_player type=" + safeType(type));
 			return new MicroPlayer(datasource);
 		} else {
 			datasource.disconnect();
@@ -148,9 +154,13 @@ public class Manager {
 	}
 
 	private static Player createPluginPlayer(DataSource datasource) {
+		String type = safeType(datasource.getContentType());
 		for (Plugin plugin : PLUGINS) {
+			String pluginName = plugin.getClass().getSimpleName();
+			breadcrumb("mmapi_plugin_try plugin=" + pluginName + " type=" + type);
 			Player player = plugin.createPlayer(datasource);
 			if (player != null) {
+				breadcrumb("mmapi_plugin_selected plugin=" + pluginName + " type=" + type);
 				return player;
 			}
 		}
@@ -159,6 +169,18 @@ public class Manager {
 
 	private static boolean isAudioSource(String type) {
 		return type == null || type.toLowerCase(Locale.ROOT).startsWith("audio/");
+	}
+
+	private static String safeType(String type) {
+		return type == null || type.isBlank() ? "unknown" : type;
+	}
+
+	private static void breadcrumb(String event) {
+		try {
+			CrashBreadcrumbStore.record(ContextHolder.getAppContext(), event);
+		} catch (RuntimeException ignored) {
+			// Crash diagnostics must not change MMAPI behavior.
+		}
 	}
 
 	public static String[] getSupportedContentTypes(String str) {
@@ -184,11 +206,7 @@ public class Manager {
 		return systemTimeBase;
 	}
 
-	/**
-	 * Installs the session clock used by players that do not have an explicit
-	 * master time base. This is an emulator extension; the default remains the
-	 * host clock until a MIDlet session installs its controller.
-	 */
+	/** Installs the session clock used by players that do not have an explicit master time base. */
 	public static void setSystemTimeBase(TimeBase timeBase) {
 		systemTimeBase = Objects.requireNonNull(timeBase, "timeBase");
 	}
