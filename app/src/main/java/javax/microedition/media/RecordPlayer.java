@@ -29,6 +29,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.microedition.io.Connector;
 import javax.microedition.media.camera.MidletMediaPermissionGate;
@@ -118,9 +121,14 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 	}
 
 	private final Map<String, Control> controls = new HashMap<>();
-	private final List<PlayerListener> listeners = new ArrayList<>();
+	private final CopyOnWriteArrayList<PlayerListener> listeners = new CopyOnWriteArrayList<>();
 	private final List<File> completedSegments = new ArrayList<>();
 	private final Dependencies dependencies;
+	private final ExecutorService callbackExecutor = Executors.newSingleThreadExecutor(r -> {
+		Thread thread = new Thread(r, "J2ME-RecordPlayerCallback");
+		thread.setDaemon(true);
+		return thread;
+	});
 
 	private int playerState = UNREALIZED;
 	private TimeBase timeBase;
@@ -233,7 +241,7 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 				startPhysicalSegment();
 				recordingStarted = true;
 			} catch (MediaException e) {
-				recordingRequested = false;
+				invalidateRecording();
 				notifyEvent(PlayerListener.RECORD_ERROR, e);
 				throw e;
 			}
@@ -297,6 +305,7 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 		playerState = CLOSED;
 		notifyEvent(PlayerListener.CLOSED, null);
 		listeners.clear();
+		callbackExecutor.shutdown();
 	}
 
 	@Override
@@ -354,9 +363,7 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 		if (listener == null) {
 			return;
 		}
-		if (!listeners.contains(listener)) {
-			listeners.add(listener);
-		}
+		listeners.addIfAbsent(listener);
 	}
 
 	@Override
@@ -411,7 +418,12 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 		checkRecordControlUsable();
 		checkDestinationReplaceable(DESTINATION_LOCATION);
 		dependencies.requireRecordPermission();
-		OutputStream replacement = dependencies.openOutputStream(locator);
+		OutputStream replacement;
+		try {
+			replacement = dependencies.openOutputStream(locator);
+		} catch (IllegalArgumentException e) {
+			throw mediaException("Invalid or unsupported record location: " + locator, e);
+		}
 		try {
 			closeOwnedDestination();
 		} catch (IOException e) {
@@ -443,9 +455,8 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 				startPhysicalSegment();
 				notifyEvent(PlayerListener.RECORD_STARTED, null);
 			} catch (MediaException e) {
-				recordingRequested = false;
+				invalidateRecording();
 				notifyEvent(PlayerListener.RECORD_ERROR, e);
-				throw new IllegalStateException("Audio recording could not start", e);
 			}
 		}
 	}
@@ -453,19 +464,22 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 	@Override
 	public synchronized void stopRecord() {
 		checkRecordControlUsable();
+		try {
+			stopRecordInternal();
+		} catch (MediaException e) {
+			invalidateRecording();
+			notifyEvent(PlayerListener.RECORD_ERROR, e);
+		}
+	}
+
+	private void stopRecordInternal() throws MediaException {
 		if (!recordingRequested && !recordingActive) {
 			return;
 		}
 		boolean wasRequested = recordingRequested;
 		recordingRequested = false;
 		if (recordingActive) {
-			try {
-				finishPhysicalSegment();
-			} catch (MediaException e) {
-				notifyEvent(PlayerListener.RECORD_ERROR, e);
-				invalidateRecording();
-				throw new IllegalStateException("Audio recording could not stop", e);
-			}
+			finishPhysicalSegment();
 		}
 		if (wasRequested) {
 			notifyEvent(PlayerListener.RECORD_STOPPED, null);
@@ -480,9 +494,10 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 		}
 		if (recordingRequested || recordingActive) {
 			try {
-				stopRecord();
-			} catch (IllegalStateException e) {
+				stopRecordInternal();
+			} catch (MediaException e) {
 				invalidateRecording();
+				notifyEvent(PlayerListener.RECORD_ERROR, e);
 				throw new IOException("Audio recording could not be stopped", e);
 			}
 		}
@@ -527,9 +542,10 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 		}
 		if (recordingRequested || recordingActive) {
 			try {
-				stopRecord();
-			} catch (IllegalStateException e) {
+				stopRecordInternal();
+			} catch (MediaException e) {
 				invalidateRecording();
+				notifyEvent(PlayerListener.RECORD_ERROR, e);
 				throw new IOException("Audio recording could not be reset", e);
 			}
 		}
@@ -763,12 +779,17 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 
 	private void notifyEvent(String event, Object data) {
 		PlayerListener[] snapshot = listeners.toArray(new PlayerListener[0]);
-		for (PlayerListener listener : snapshot) {
-			try {
-				listener.playerUpdate(this, event, data);
-			} catch (RuntimeException ignored) {
-				// A MIDlet listener must not break the media state machine.
-			}
+		if (snapshot.length == 0) {
+			return;
 		}
+		callbackExecutor.execute(() -> {
+			for (PlayerListener listener : snapshot) {
+				try {
+					listener.playerUpdate(this, event, data);
+				} catch (RuntimeException ignored) {
+					// A MIDlet listener must not break the media state machine.
+				}
+			}
+		});
 	}
 }
