@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 import javax.microedition.media.camera.CameraRecordingSession;
 import javax.microedition.media.camera.CameraSession;
@@ -98,7 +99,13 @@ public class CameraRecordingControlFailureTest {
 			assertTrue(oldRecordingFile.exists());
 			assertEquals(0, oldDestination.size());
 
-			control.setRecordStream(newDestination);
+			// With no Android MIDlet host the public setter must reach the permission
+			// gate, proving the failed recording no longer blocks it with ISE first.
+			assertThrows(SecurityException.class, () -> control.setRecordStream(newDestination));
+			// Simulate the already-tested granted-permission continuation without adding
+			// a production-only permission bypass to the JVM test environment.
+			invokeNoArg(control, "prepareDestinationReplacementAfterFailure");
+			setField(control, "destination", newDestination);
 
 			assertThrows(IllegalStateException.class, control::startRecord);
 			assertTrue(prepared.recording);
@@ -141,7 +148,9 @@ public class CameraRecordingControlFailureTest {
 			assertTrue(prepared.recording);
 			assertTrue(oldRecordingFile.exists());
 
-			control.setRecordStream(replacement);
+			assertThrows(SecurityException.class, () -> control.setRecordStream(replacement));
+			invokeNoArg(control, "prepareDestinationReplacementAfterFailure");
+			setField(control, "destination", replacement);
 			assertThrows(IllegalStateException.class, control::startRecord);
 		} finally {
 			player.close();
@@ -201,6 +210,12 @@ public class CameraRecordingControlFailureTest {
 		Field field = target.getClass().getDeclaredField(name);
 		field.setAccessible(true);
 		field.setBoolean(target, value);
+	}
+
+	private static void invokeNoArg(Object target, String name) throws Exception {
+		Method method = target.getClass().getDeclaredMethod(name);
+		method.setAccessible(true);
+		method.invoke(target);
 	}
 
 	private static final class FailingCloseOutputStream extends ByteArrayOutputStream {
