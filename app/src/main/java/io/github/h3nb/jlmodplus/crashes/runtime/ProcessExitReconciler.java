@@ -223,7 +223,10 @@ public final class ProcessExitReconciler {
     private static String getVersion(Context context) {
         try {
             PackageInfo info = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
-            return emptyFallback(info.versionName, "unknown") + " (" + info.getLongVersionCode() + ")";
+            long versionCode = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
+                    ? info.getLongVersionCode()
+                    : info.versionCode;
+            return emptyFallback(info.versionName, "unknown") + " (" + versionCode + ")";
         } catch (Exception error) {
             return "unknown";
         }
