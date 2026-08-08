@@ -34,6 +34,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 public class CameraRecordingControlFailureTest {
 	@Test
@@ -70,6 +71,89 @@ public class CameraRecordingControlFailureTest {
 			player.close();
 			if (recordingFile.exists()) {
 				recordingFile.delete();
+			}
+		}
+	}
+
+	@Test
+	public void retryableCommitFailureAllowsNewDestinationAndCleansBackendBeforeRestart() throws Exception {
+		CameraPlayer player = new CameraPlayer("capture://video");
+		File oldRecordingFile = File.createTempFile("camera-retryable-commit-", ".mp4");
+		try (FileOutputStream output = new FileOutputStream(oldRecordingFile)) {
+			output.write(new byte[]{9, 8, 7});
+		}
+		ByteArrayOutputStream oldDestination = new ByteArrayOutputStream();
+		ByteArrayOutputStream newDestination = new ByteArrayOutputStream();
+		FakeCameraSession prepared = new FakeCameraSession();
+		prepared.recording = true;
+		prepared.failFinalizeRetryably = true;
+		try {
+			player.realize();
+			RecordControl control = (RecordControl) player.getControl(RecordControl.class.getName());
+			setField(player, "session", prepared);
+			setIntField(player, "state", Player.STARTED);
+			setField(control, "destination", oldDestination);
+			setField(control, "recordingFile", oldRecordingFile);
+			setBooleanField(control, "recordingCycleStarted", true);
+
+			assertThrows(IOException.class, control::commit);
+			assertTrue(prepared.recording);
+			assertTrue(oldRecordingFile.exists());
+			assertEquals(0, oldDestination.size());
+
+			// JSR-135 explicitly requires a new destination after an invalid/I/O-failed
+			// commit. Installing it must be allowed even while CameraX cleanup is pending.
+			control.setRecordStream(newDestination);
+
+			// The stale backend still gates actual recording until it can be finalized.
+			assertThrows(IllegalStateException.class, control::startRecord);
+			assertTrue(prepared.recording);
+			assertTrue(oldRecordingFile.exists());
+
+			prepared.failFinalizeRetryably = false;
+			control.startRecord();
+			assertEquals(3, prepared.finalizeCalls);
+			assertEquals(1, prepared.beginCalls);
+			assertFalse(oldRecordingFile.exists());
+
+			control.reset();
+			assertFalse(prepared.recording);
+		} finally {
+			player.close();
+			if (oldRecordingFile.exists()) {
+				oldRecordingFile.delete();
+			}
+		}
+	}
+
+	@Test
+	public void retryableResetFailureAllowsNewDestination() throws Exception {
+		CameraPlayer player = new CameraPlayer("capture://video");
+		File oldRecordingFile = File.createTempFile("camera-retryable-reset-", ".mp4");
+		ByteArrayOutputStream replacement = new ByteArrayOutputStream();
+		FakeCameraSession prepared = new FakeCameraSession();
+		prepared.recording = true;
+		prepared.failFinalizeRetryably = true;
+		try {
+			player.realize();
+			RecordControl control = (RecordControl) player.getControl(RecordControl.class.getName());
+			setField(player, "session", prepared);
+			setField(control, "destination", new ByteArrayOutputStream());
+			setField(control, "recordingFile", oldRecordingFile);
+			setBooleanField(control, "recordingCycleStarted", true);
+
+			assertThrows(IOException.class, control::reset);
+			assertTrue(prepared.recording);
+			assertTrue(oldRecordingFile.exists());
+
+			// reset() has failed, so the old public recording is invalid and a fresh
+			// destination must be accepted immediately for the next recording cycle.
+			control.setRecordStream(replacement);
+			assertThrows(IllegalStateException.class, control::startRecord);
+		} finally {
+			player.close();
+			if (oldRecordingFile.exists()) {
+				oldRecordingFile.delete();
 			}
 		}
 	}
@@ -114,6 +198,12 @@ public class CameraRecordingControlFailureTest {
 		field.set(target, value);
 	}
 
+	private static void setIntField(Object target, String name, int value) throws Exception {
+		Field field = target.getClass().getDeclaredField(name);
+		field.setAccessible(true);
+		field.setInt(target, value);
+	}
+
 	private static void setBooleanField(Object target, String name, boolean value) throws Exception {
 		Field field = target.getClass().getDeclaredField(name);
 		field.setAccessible(true);
@@ -131,6 +221,8 @@ public class CameraRecordingControlFailureTest {
 		private boolean recording;
 		private boolean recordingPaused;
 		private boolean failFinalizeTerminally;
+		private boolean failFinalizeRetryably;
+		private int beginCalls;
 		private int finalizeCalls;
 
 		@Override
@@ -161,6 +253,7 @@ public class CameraRecordingControlFailureTest {
 		@Override
 		public void beginRecording(File outputFile, boolean withAudio, long fileSizeLimit,
 				int width, int height) {
+			beginCalls++;
 			recording = true;
 			recordingPaused = false;
 		}
@@ -186,6 +279,9 @@ public class CameraRecordingControlFailureTest {
 				recording = false;
 				recordingPaused = false;
 				throw new MediaException("terminal finalize failure");
+			}
+			if (failFinalizeRetryably) {
+				throw new MediaException("retryable finalize failure");
 			}
 			recording = false;
 			recordingPaused = false;
