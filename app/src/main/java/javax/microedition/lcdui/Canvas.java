@@ -599,8 +599,25 @@ public abstract class Canvas extends Displayable {
 				* (float) onWidth / Math.max(width, 1));
 		int bottom = onY + Math.round((directVideoY + directVideoHeight)
 				* (float) onHeight / Math.max(height, 1));
-		activity.updateDirectVideoView(this, view, Math.max(0, left), Math.max(0, top),
-				Math.max(1, right - left), Math.max(1, bottom - top), directVideoVisible);
+		int viewWidth = Math.max(1, right - left);
+		int viewHeight = Math.max(1, bottom - top);
+		int visibleLeft = Math.max(left, onX);
+		int visibleTop = Math.max(top, onY);
+		int visibleRight = Math.min(left + viewWidth, onX + onWidth);
+		int visibleBottom = Math.min(top + viewHeight, onY + onHeight);
+		Rect clipBounds;
+		if (visibleRight <= visibleLeft || visibleBottom <= visibleTop) {
+			clipBounds = new Rect(0, 0, 0, 0);
+		} else {
+			clipBounds = new Rect(
+					visibleLeft - left,
+					visibleTop - top,
+					visibleRight - left,
+					visibleBottom - top);
+		}
+		activity.updateDirectVideoView(this, view, left, top, viewWidth, viewHeight,
+				directVideoVisible && !clipBounds.isEmpty());
+		view.post(() -> view.setClipBounds(clipBounds));
 	}
 
 	/**
@@ -990,12 +1007,10 @@ public abstract class Canvas extends Displayable {
 									if (completed.compareAndSet(false, true)) {
 										callback.onError(rejected);
 									}
-								}
 							} catch (Throwable error) {
 								if (completed.compareAndSet(false, true)) {
 									callback.onError(error);
 								}
-							}
 						});
 					} catch (Throwable error) {
 						if (completed.compareAndSet(false, true)) {
