@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.microedition.media.control.RecordControl;
 
@@ -49,15 +50,16 @@ public class RecordPlayerFailureTest {
 		player.realize();
 		player.start();
 
-		List<String> events = new ArrayList<>();
+		List<String> events = new CopyOnWriteArrayList<>();
 		player.addPlayerListener((source, event, data) -> events.add(event));
 		RecordControl control = (RecordControl) player.getControl("RecordControl");
 		control.setRecordStream(new ByteArrayOutputStream());
 		control.startRecord();
 
-		assertThrows(IllegalStateException.class, control::stopRecord);
-		assertTrue(events.contains(PlayerListener.RECORD_ERROR));
+		control.stopRecord();
+		awaitEvent(events, PlayerListener.RECORD_ERROR);
 		assertThrows(IllegalStateException.class, control::startRecord);
+		player.close();
 	}
 
 	@Test
@@ -67,13 +69,25 @@ public class RecordPlayerFailureTest {
 		player.realize();
 		player.start();
 
+		List<String> events = new CopyOnWriteArrayList<>();
+		player.addPlayerListener((source, event, data) -> events.add(event));
 		RecordControl control = (RecordControl) player.getControl("RecordControl");
 		control.setRecordStream(new ByteArrayOutputStream());
 		control.startRecord();
 
 		assertThrows(MediaException.class, player::stop);
 		assertEquals(Player.PREFETCHED, player.getState());
+		awaitEvent(events, PlayerListener.RECORD_ERROR);
 		assertThrows(IllegalStateException.class, control::startRecord);
+		player.close();
+	}
+
+	private static void awaitEvent(List<String> events, String event) throws InterruptedException {
+		long deadline = System.nanoTime() + 2_000_000_000L;
+		while (!events.contains(event) && System.nanoTime() < deadline) {
+			Thread.sleep(5);
+		}
+		assertTrue("Timed out waiting for " + event + "; events=" + events, events.contains(event));
 	}
 
 	private final class FailingDependencies implements RecordPlayer.Dependencies {
