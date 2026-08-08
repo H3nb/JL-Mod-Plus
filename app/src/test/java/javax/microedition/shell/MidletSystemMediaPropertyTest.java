@@ -65,10 +65,16 @@ public class MidletSystemMediaPropertyTest {
 	@Test
 	public void managedDefaultOverloadUsesCallerDefaultOnlyWhenCapabilityIsAbsent() {
 		String key = "audio.encodings";
-		String managed = VirtualCameraCapabilities.systemProperty(key);
+		String previous = System.getProperty(key);
 		String fallback = "fallback-value";
-		assertEquals(managed == null ? fallback : managed,
-				MidletSystem.getProperty(key, fallback));
+		try {
+			System.setProperty(key, "host-value-that-must-not-leak");
+			String managed = VirtualCameraCapabilities.systemProperty(key);
+			assertEquals(managed == null ? fallback : managed,
+					MidletSystem.getProperty(key, fallback));
+		} finally {
+			restoreProperty(key, previous);
+		}
 	}
 
 	private static void restoreProperty(String key, String value) {
