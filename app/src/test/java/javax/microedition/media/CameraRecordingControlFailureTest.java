@@ -22,7 +22,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.reflect.Field;
 
 import javax.microedition.media.camera.CameraRecordingSession;
@@ -62,8 +61,6 @@ public class CameraRecordingControlFailureTest {
 			assertFalse(recordingFile.exists());
 			assertEquals(0, destination.size());
 
-			// A terminally invalid cycle was discarded. A second commit must not copy
-			// the old temporary MP4, and a new recording requires a new destination.
 			assertThrows(IOException.class, control::commit);
 			assertThrows(IllegalStateException.class, control::startRecord);
 			assertEquals(0, destination.size());
@@ -101,11 +98,8 @@ public class CameraRecordingControlFailureTest {
 			assertTrue(oldRecordingFile.exists());
 			assertEquals(0, oldDestination.size());
 
-			// JSR-135 explicitly requires a new destination after an invalid/I/O-failed
-			// commit. Installing it must be allowed even while CameraX cleanup is pending.
 			control.setRecordStream(newDestination);
 
-			// The stale backend still gates actual recording until it can be finalized.
 			assertThrows(IllegalStateException.class, control::startRecord);
 			assertTrue(prepared.recording);
 			assertTrue(oldRecordingFile.exists());
@@ -138,6 +132,7 @@ public class CameraRecordingControlFailureTest {
 			player.realize();
 			RecordControl control = (RecordControl) player.getControl(RecordControl.class.getName());
 			setField(player, "session", prepared);
+			setIntField(player, "state", Player.STARTED);
 			setField(control, "destination", new ByteArrayOutputStream());
 			setField(control, "recordingFile", oldRecordingFile);
 			setBooleanField(control, "recordingCycleStarted", true);
@@ -146,8 +141,6 @@ public class CameraRecordingControlFailureTest {
 			assertTrue(prepared.recording);
 			assertTrue(oldRecordingFile.exists());
 
-			// reset() has failed, so the old public recording is invalid and a fresh
-			// destination must be accepted immediately for the next recording cycle.
 			control.setRecordStream(replacement);
 			assertThrows(IllegalStateException.class, control::startRecord);
 		} finally {
