@@ -30,8 +30,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.microedition.amms.control.PanControl;
-import javax.microedition.amms.control.audioeffect.EqualizerControl;
-import javax.microedition.media.control.MIDIControl;
 import javax.microedition.media.control.MetaDataControl;
 import javax.microedition.media.control.ToneControl;
 import javax.microedition.media.control.VolumeControl;
@@ -46,7 +44,6 @@ import kotlin.io.FilesKt;
 import ru.woesss.j2me.mmapi.FileCacheDataSource;
 import ru.woesss.j2me.mmapi.audio.AudioFailure;
 import ru.woesss.j2me.mmapi.audio.AudioFailureReporter;
-import ru.woesss.j2me.mmapi.control.MIDIControlImpl;
 import ru.woesss.j2me.mmapi.protocol.device.DeviceMetaData;
 import io.github.h3nb.jlmodplus.settings.EmulationAudioPolicy;
 
@@ -56,7 +53,7 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	private static final String TAG = MicroPlayer.class.getSimpleName();
 
 	protected final HashMap<String, Control> controls = new HashMap<>();
-	protected final MediaPlayer player = new AndroidPlayer();
+	protected final AndroidPlayer player = new AndroidPlayer();
 	protected final DataSource source;
 	protected int state = UNREALIZED;
 
@@ -69,8 +66,10 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	private final ArrayList<PlayerListener> listeners = new ArrayList<>();
 	private final InternalMetaData metadata;
 
-	private int loopCount = 1;
-	private boolean mute = false;
+	private int configuredLoopCount = 1;
+	private int remainingLoopCount = 1;
+	private boolean restartFromBeginningOnStart;
+	private boolean mute;
 	private int level = 100;
 	private int pan;
 	private boolean errorEventPosted;
@@ -99,15 +98,17 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 		controls.put(VolumeControl.class.getName(), this);
 		controls.put(PanControl.class.getName(), this);
 		controls.put(MetaDataControl.class.getName(), metadata);
-		controls.put(EqualizerControl.class.getName(), new InternalEqualizer());
-		// TODO: 12.02.2025 Needs to be added only if content type is MIDI
-		controls.put(MIDIControl.class.getName(), new MIDIControlImpl(this));
+		// MIDI is routed to SynthPlayer. Do not expose a no-op MIDIControl or
+		// EqualizerControl on Android's compressed-audio backend.
 		EmulationTime.controller().addListener(this);
 	}
 
 	@Override
 	public Control getControl(String controlType) {
 		checkRealized();
+		if (controlType == null) {
+			throw new IllegalArgumentException();
+		}
 		if (!controlType.contains(".")) {
 			controlType = "javax.microedition.media.control." + controlType;
 		}
@@ -123,7 +124,7 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	@Override
 	public synchronized void addPlayerListener(PlayerListener playerListener) {
 		checkClosed();
-		if (!listeners.contains(playerListener) && playerListener != null) {
+		if (playerListener != null && !listeners.contains(playerListener)) {
 			listeners.add(playerListener);
 		}
 	}
@@ -135,8 +136,9 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	}
 
 	private synchronized void postEvent(String event, Object eventData) {
-		for (PlayerListener listener : listeners) {
-			// Callbacks should be async
+		for (PlayerListener listener : new ArrayList<>(listeners)) {
+			// JSR-135 listener callbacks are asynchronous. The single executor also
+			// preserves event submission order for very short media.
 			callbackExecutor.execute(() -> listener.playerUpdate(this, event, eventData));
 		}
 	}
@@ -146,31 +148,45 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 		if (state == CLOSED) {
 			return;
 		}
-		postEvent(PlayerListener.END_OF_MEDIA, getMediaTime());
 
-		if (loopCount == 1) {
+		long endTime = getMediaTime();
+		postEvent(PlayerListener.END_OF_MEDIA, endTime);
+
+		boolean repeat = remainingLoopCount == -1 || remainingLoopCount > 1;
+		if (!repeat) {
 			state = PREFETCHED;
-			player.reset();
-		} else if (loopCount > 1) {
-			loopCount--;
+			remainingLoopCount = configuredLoopCount;
+			restartFromBeginningOnStart = true;
+			return;
 		}
 
-		if (state == STARTED && loopCount != -1) {
-			try {
-				player.start();
-				postEvent(PlayerListener.STARTED, getMediaTime());
-			} catch (RuntimeException e) {
-				state = PREFETCHED;
-				reportFailure(AudioFailure.Phase.START, "MEDIA_PLAYER_RESTART_FAILED", e);
-			}
+		if (remainingLoopCount > 1) {
+			remainingLoopCount--;
+		}
+		try {
+			player.seekTo(0);
+			player.start();
+			state = STARTED;
+			restartFromBeginningOnStart = false;
+			postEvent(PlayerListener.STARTED, 0L);
+		} catch (RuntimeException e) {
+			state = PREFETCHED;
+			remainingLoopCount = configuredLoopCount;
+			restartFromBeginningOnStart = true;
+			reportFailure(AudioFailure.Phase.START, "MEDIA_PLAYER_RESTART_FAILED", e);
 		}
 	}
 
 	@Override
 	public synchronized boolean onError(MediaPlayer mp, int what, int extra) {
-		state = state == CLOSED ? CLOSED : PREFETCHED;
+		if (state == CLOSED) {
+			return true;
+		}
 		reportFailure(AudioFailure.Phase.RUNTIME,
 				"MEDIA_PLAYER_ERROR_" + what + "_" + extra, null);
+		// MediaPlayer error callbacks are irrecoverable for this Player. Release
+		// outside the platform callback after ERROR has been queued.
+		callbackExecutor.execute(this::close);
 		return true;
 	}
 
@@ -203,7 +219,16 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 		}
 
 		if (state == REALIZED) {
-			metadata.updateMetaData(source);
+			try {
+				metadata.updateMetaData(source);
+				player.prepareSource();
+			} catch (IOException | RuntimeException e) {
+				reportFailure(AudioFailure.Phase.PREFETCH, "MEDIA_PREPARE_FAILED", e);
+				if (e instanceof RuntimeException runtimeException) {
+					throw runtimeException;
+				}
+				throw new MediaException(e.getMessage());
+			}
 			state = PREFETCHED;
 		}
 	}
@@ -214,6 +239,10 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 
 		if (state == PREFETCHED) {
 			try {
+				if (restartFromBeginningOnStart) {
+					player.seekTo(0);
+					restartFromBeginningOnStart = false;
+				}
 				player.start();
 				state = STARTED;
 				errorEventPosted = false;
@@ -241,31 +270,29 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 
 	@Override
 	public synchronized void deallocate() {
-		stop();
+		checkClosed();
+		if (state == STARTED) {
+			stop();
+		}
 
 		if (state == PREFETCHED) {
 			player.reset();
-			state = UNREALIZED;
-
-			try {
-				realize();
-			} catch (MediaException e) {
-				e.printStackTrace();
-			}
+			state = REALIZED;
 		}
 	}
 
 	@Override
 	public synchronized void close() {
-		if (state != CLOSED) {
-			EmulationTime.controller().removeListener(this);
-			player.release();
+		if (state == CLOSED) {
+			return;
 		}
 
-		source.disconnect();
-
+		EmulationTime.controller().removeListener(this);
 		state = CLOSED;
+		player.release();
+		source.disconnect();
 		postEvent(PlayerListener.CLOSED, null);
+		callbackExecutor.shutdown();
 	}
 
 	private void checkClosed() {
@@ -276,8 +303,7 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 
 	private void checkRealized() {
 		checkClosed();
-
-		if (state == UNREALIZED) {
+		if (state < REALIZED) {
 			throw new IllegalStateException("call realize() before using the player");
 		}
 	}
@@ -293,52 +319,58 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	}
 
 	@Override
-	public long setMediaTime(long now) throws MediaException {
+	public synchronized long setMediaTime(long now) throws MediaException {
 		checkRealized();
-		if (state < PREFETCHED) {
-			return 0;
-		} else {
-			int time = (int) (now / 1000L);
-			if (time != player.getCurrentPosition()) {
-				player.seekTo(time);
+		if (now < 0) {
+			now = 0;
+		}
+		if (state >= PREFETCHED) {
+			long duration = getDuration();
+			if (duration >= 0 && now > duration) {
+				now = duration;
 			}
-			return getMediaTime();
 		}
+
+		long millis = now / 1000L;
+		int time = millis > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) millis;
+		player.seekTo(time);
+		restartFromBeginningOnStart = false;
+		return player.getCurrentPosition() * 1000L;
 	}
 
 	@Override
-	public long getMediaTime() {
+	public synchronized long getMediaTime() {
+		checkClosed();
+		if (state < REALIZED) {
+			return TIME_UNKNOWN;
+		}
+		return player.getCurrentPosition() * 1000L;
+	}
+
+	@Override
+	public synchronized long getDuration() {
 		checkClosed();
 		if (state < PREFETCHED) {
 			return TIME_UNKNOWN;
-		} else {
-			return player.getCurrentPosition() * 1000L;
 		}
+		return player.getDuration() * 1000L;
 	}
 
 	@Override
-	public long getDuration() {
+	public synchronized void setLoopCount(int count) {
 		checkClosed();
-		if (state < PREFETCHED) {
-			return TIME_UNKNOWN;
-		} else {
-			return player.getDuration() * 1000L;
-		}
-	}
-
-	@Override
-	public void setLoopCount(int count) {
-		checkClosed();
-		if (state == STARTED)
+		if (state == STARTED) {
 			throw new IllegalStateException("player must not be in STARTED state while using setLoopCount()");
-
-		if (count == 0) {
-			throw new IllegalArgumentException("loop count must not be 0");
+		}
+		if (count == 0 || count < -1) {
+			throw new IllegalArgumentException("loop count must be positive or -1");
 		}
 
-		player.setLooping(count == -1);
-
-		loopCount = count;
+		// Keep looping in MMAPI rather than MediaPlayer so every loop emits the
+		// END_OF_MEDIA and STARTED events required by JSR-135.
+		player.setLooping(false);
+		configuredLoopCount = count;
+		remainingLoopCount = count;
 	}
 
 	@Override
@@ -351,18 +383,17 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 		if (state == CLOSED) {
 			return;
 		}
-		AndroidPlayer androidPlayer = (AndroidPlayer) player;
 		if (!EmulationAudioPolicy.isAudioSpeedEnabled()) {
 			// Keep audio at its normal rate when the experimental option is off.
 			// This also restores a player if the option was disabled while it was
 			// following emulation speed.
-			androidPlayer.setPlaybackSpeed(1.0f);
+			player.setPlaybackSpeed(1.0f);
 			if (state != STARTED) {
 				return;
 			}
 			if (emulationPaused) {
 				try {
-					androidPlayer.resumePlayback();
+					player.resumePlayback();
 					emulationPaused = false;
 				} catch (RuntimeException e) {
 					Log.w(TAG, "Can't resume MediaPlayer after audio speed policy was disabled", e);
@@ -370,7 +401,7 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 			}
 			return;
 		}
-		if (!androidPlayer.setPlaybackSpeed((float) snapshot.speed().asDouble())
+		if (!player.setPlaybackSpeed((float) snapshot.speed().asDouble())
 				&& !audioSpeedWarningPosted) {
 			audioSpeedWarningPosted = true;
 			Log.w(TAG, "MediaPlayer rejected emulation audio speed " + snapshot.speed());
@@ -389,7 +420,7 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 			}
 		} else if (emulationPaused) {
 			try {
-				androidPlayer.resumePlayback();
+				player.resumePlayback();
 				emulationPaused = false;
 			} catch (RuntimeException e) {
 				Log.w(TAG, "Can't resume MediaPlayer after emulation pause", e);
@@ -415,7 +446,7 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 			if (pan > 0) {
 				left = volumeToGain(level * (100 - pan) / 100);
 			} else if (pan < 0) {
-				right =  volumeToGain(level * (100 + pan) / 100);
+				right = volumeToGain(level * (100 + pan) / 100);
 			}
 		}
 
@@ -433,9 +464,8 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	}
 
 	@Override
-	public void setMute(boolean mute) {
+	public synchronized void setMute(boolean mute) {
 		if (state == CLOSED) {
-			// Avoid IllegalStateException in MediaPlayer.setVolume()
 			return;
 		}
 
@@ -449,9 +479,8 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 	}
 
 	@Override
-	public int setLevel(int level) {
+	public synchronized int setLevel(int level) {
 		if (state == CLOSED) {
-			// Avoid IllegalStateException in MediaPlayer.setVolume()
 			return this.level;
 		}
 
@@ -463,7 +492,6 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 
 		this.level = level;
 		updateVolume();
-
 		return level;
 	}
 
@@ -472,20 +500,21 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 		return level;
 	}
 
-
 	// PanControl
 
 	@Override
-	public int setPan(int pan) {
+	public synchronized int setPan(int pan) {
 		if (pan < -100) {
 			pan = -100;
 		} else if (pan > 100) {
 			pan = 100;
 		}
+		if (state == CLOSED) {
+			return this.pan;
+		}
 
 		this.pan = pan;
 		updateVolume();
-
 		return pan;
 	}
 
