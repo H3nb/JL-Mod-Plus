@@ -49,7 +49,6 @@ public final class CameraRecordingControl implements RecordControl {
 	private boolean recordingRequested;
 	private boolean recordingActive;
 	private boolean recordingCycleStarted;
-	private int recordSizeLimit = Integer.MAX_VALUE;
 
 	public CameraRecordingControl(CameraPlayer player, CaptureRequest request) {
 		this.player = player;
@@ -137,13 +136,11 @@ public final class CameraRecordingControl implements RecordControl {
 
 		IOException failure = null;
 		try {
-			if (recordingFile != null) {
+			if (recordingFile == null) {
+				failure = new IOException("Camera recording was never started");
+			} else {
 				player.finalizeCameraRecording();
 				copyRecordingToDestination();
-			} else {
-				// A recording may have remained in standby for its whole lifetime. The
-				// JSR-135 contract does not define this as an illegal commit.
-				destination.flush();
 			}
 		} catch (MediaException e) {
 			failure = new IOException("Camera recording could not be finalized", e);
@@ -169,11 +166,10 @@ public final class CameraRecordingControl implements RecordControl {
 		if (size <= 0) {
 			throw new IllegalArgumentException("record size limit must be positive");
 		}
-		if (recordingCycleStarted || recordingFile != null || recordingRequested || recordingActive) {
-			throw new MediaException("Changing the camera record size limit during a recording is not supported");
-		}
-		recordSizeLimit = size;
-		return recordSizeLimit;
+		// CameraX can stop its temporary file at a byte limit, but this control
+		// cannot yet perform the implicit JSR-135 commit when that limit is reached.
+		// Report the optional feature as unsupported instead of exposing partial semantics.
+		throw new MediaException("Camera record size limit is not supported yet");
 	}
 
 	@Override
@@ -232,7 +228,7 @@ public final class CameraRecordingControl implements RecordControl {
 			if (recordingFile == null) {
 				recordingFile = File.createTempFile(
 						"jlmod-camera-record-", ".mp4", ContextHolder.getCacheDir());
-				player.beginCameraRecording(recordingFile, withAudio, recordSizeLimit, width, height);
+				player.beginCameraRecording(recordingFile, withAudio, Long.MAX_VALUE, width, height);
 			} else {
 				player.resumeCameraRecording();
 			}
@@ -255,7 +251,6 @@ public final class CameraRecordingControl implements RecordControl {
 				if (count > 0) {
 					destination.write(buffer, 0, count);
 				}
-			}
 			destination.flush();
 		}
 	}
