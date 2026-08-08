@@ -24,7 +24,9 @@ import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
@@ -99,8 +101,9 @@ public final class ProcessExitReconciler {
         }
 
         String report = buildReport(context, session, exit);
+        byte[] trace = exit == null ? null : exit.trace;
         try {
-            String reportId = ProcessDeathReportStore.save(context, session.sessionId, report);
+            String reportId = ProcessDeathReportStore.save(context, session.sessionId, report, trace);
             CrashSessionStore.clearMidletSession(context);
             return reportId;
         } catch (IOException | RuntimeException error) {
@@ -145,7 +148,7 @@ public final class ProcessExitReconciler {
             CrashSessionStore.Session session,
             ExitRecord exit
     ) {
-        StringBuilder report = new StringBuilder(2048);
+        StringBuilder report = new StringBuilder(4096);
         report.append("JL-Mod Plus Process Death Report\n\n");
         report.append("INCIDENT\n");
         report.append("Type: ").append(classify(exit)).append('\n');
@@ -167,6 +170,20 @@ public final class ProcessExitReconciler {
             report.append("Importance: ").append(exit.importance).append('\n');
             report.append("PSS: ").append(exit.pss).append(" kB\n");
             report.append("RSS: ").append(exit.rss).append(" kB\n");
+            if (exit.trace != null && exit.trace.length > 0) {
+                report.append("Trace attachment: captured ").append(exit.trace.length).append(" bytes");
+                if (hasText(exit.traceKind)) {
+                    report.append(" (").append(exit.traceKind).append(')');
+                }
+                if (exit.traceTruncated) {
+                    report.append(" [truncated at ")
+                            .append(ProcessDeathReportStore.MAX_TRACE_BYTES)
+                            .append(" bytes]");
+                }
+                report.append('\n');
+            } else {
+                report.append("Trace attachment: unavailable\n");
+            }
         }
 
         report.append("\nAPPLICATION\n");
@@ -177,11 +194,20 @@ public final class ProcessExitReconciler {
         report.append("Device: ").append(Build.MANUFACTURER).append(' ').append(Build.MODEL).append('\n');
         report.append("ABI: ").append(Build.SUPPORTED_ABIS.length == 0 ? "unknown" : Build.SUPPORTED_ABIS[0]).append('\n');
 
+        String breadcrumbs = CrashBreadcrumbStore.read(context);
+        if (hasText(breadcrumbs)) {
+            report.append("\nRECENT BREADCRUMBS\n");
+            report.append(breadcrumbs);
+            if (breadcrumbs.charAt(breadcrumbs.length() - 1) != '\n') {
+                report.append('\n');
+            }
+        }
+
         report.append("\nNOTES\n");
         if (exit != null && exit.reason == REASON_CRASH_NATIVE) {
             report.append("Android classified this as a native-code crash. Java exception handling cannot catch it.\n");
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                report.append("A native tombstone may be available from Android process-exit history.\n");
+                report.append("On Android 12+, a captured native trace attachment is an Android tombstone protobuf.\n");
             }
         } else if (exit != null && exit.reason == REASON_ANR) {
             report.append("Android classified this process as unresponsive (ANR).\n");
@@ -264,6 +290,9 @@ public final class ProcessExitReconciler {
         int importance;
         long pss;
         long rss;
+        byte[] trace;
+        boolean traceTruncated;
+        String traceKind;
     }
 
     /** All ApplicationExitInfo references live here so Android 6-10 never resolve that class. */
@@ -317,7 +346,45 @@ public final class ProcessExitReconciler {
             record.importance = best.getImportance();
             record.pss = best.getPss();
             record.rss = best.getRss();
+            captureTrace(best, record);
             return record;
+        }
+
+        private static void captureTrace(android.app.ApplicationExitInfo info, ExitRecord record) {
+            try (InputStream input = info.getTraceInputStream()) {
+                if (input == null) {
+                    return;
+                }
+                ByteArrayOutputStream output = new ByteArrayOutputStream();
+                byte[] buffer = new byte[8192];
+                int total = 0;
+                int read;
+                while ((read = input.read(buffer)) >= 0) {
+                    int remaining = ProcessDeathReportStore.MAX_TRACE_BYTES - total;
+                    if (remaining <= 0) {
+                        record.traceTruncated = true;
+                        break;
+                    }
+                    int write = Math.min(read, remaining);
+                    output.write(buffer, 0, write);
+                    total += write;
+                    if (write < read) {
+                        record.traceTruncated = true;
+                        break;
+                    }
+                }
+                record.trace = output.toByteArray();
+                if (record.reason == REASON_CRASH_NATIVE
+                        && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    record.traceKind = "Android native tombstone protobuf";
+                } else if (record.reason == REASON_ANR) {
+                    record.traceKind = "Android ANR trace";
+                } else {
+                    record.traceKind = "Android process trace";
+                }
+            } catch (IOException | RuntimeException error) {
+                Log.w(TAG, "Unable to capture process exit trace", error);
+            }
         }
     }
 }
