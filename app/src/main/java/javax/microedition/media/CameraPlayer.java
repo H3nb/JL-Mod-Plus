@@ -426,8 +426,8 @@ public final class CameraPlayer implements Player {
 		requireRecordingSession().resumeRecording();
 	}
 
-	public void finalizeCameraRecording() throws MediaException {
-		requireRecordingSession().finalizeRecording();
+	public boolean finalizeCameraRecording() throws MediaException {
+		return requireRecordingSession().finalizeRecording();
 	}
 
 	/** Returns backend recording state without taking the Player monitor. */
