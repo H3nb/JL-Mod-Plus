@@ -9,7 +9,7 @@
  * S_FILE_PARSER_INTERFACE. Do not add format-specific behavior here.
  */
 
-#include <log/log.h>
+#include <android/log.h>
 
 #include "legacy_parser_abi.h"
 #include "eas_data.h"
@@ -20,6 +20,18 @@
 #include "eas_config.h"
 #include "eas_vm_protos.h"
 #include "eas_otadata.h"
+
+/*
+ * The pinned OTA source uses Android's historical ALOGD/ALOGV convenience
+ * macros, but NDK 29's public logging headers do not provide them. Keep this
+ * compatibility local to the translation unit instead of patching upstream.
+ */
+#ifndef ALOGD
+#define ALOGD(...) __android_log_print(ANDROID_LOG_DEBUG, "Sonivox", __VA_ARGS__)
+#endif
+#ifndef ALOGV
+#define ALOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, "Sonivox", __VA_ARGS__)
+#endif
 
 #define S_FILE_PARSER_INTERFACE static JL_LEGACY_FILE_PARSER_INTERFACE
 #define EAS_STATE EAS_I32
