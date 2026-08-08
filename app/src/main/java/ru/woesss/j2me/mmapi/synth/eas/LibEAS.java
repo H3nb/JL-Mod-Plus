@@ -19,15 +19,12 @@ package ru.woesss.j2me.mmapi.synth.eas;
 
 import ru.woesss.j2me.mmapi.synth.Library;
 
+/** SONiVOX-backed synth library with soundbank configuration scoped per instance. */
 public class LibEAS implements Library {
+	private String soundBank;
 
-	/**
-	 * Explicitly select the embedded bank. The native EAS library lives for the
-	 * whole app process, so leaving this implicit could carry a custom DLS/SF2
-	 * path from a previous MIDlet session into a later built-in session.
-	 */
 	public LibEAS() {
-		loadSoundBank("");
+		soundBank = null;
 	}
 
 	public LibEAS(String soundBank) {
@@ -35,9 +32,25 @@ public class LibEAS implements Library {
 	}
 
 	@Override
-	public native void loadSoundBank(String soundBank);
+	public void loadSoundBank(String soundBank) {
+		if (soundBank == null || soundBank.isEmpty()) {
+			this.soundBank = null;
+			return;
+		}
+
+		// Validate first. If validation fails, preserve the previous selection.
+		nativeValidateSoundBank(soundBank);
+		this.soundBank = soundBank;
+	}
+
 	@Override
-	public native long createPlayer(String locator);
+	public long createPlayer(String locator) {
+		return nativeCreatePlayer(locator, soundBank);
+	}
+
+	private native void nativeValidateSoundBank(String soundBank);
+	private native long nativeCreatePlayer(String locator, String soundBank);
+
 	@Override
 	public native void finalize(long handle);
 	@Override
