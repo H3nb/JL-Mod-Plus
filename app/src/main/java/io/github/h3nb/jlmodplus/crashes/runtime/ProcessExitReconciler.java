@@ -35,6 +35,7 @@ public final class ProcessExitReconciler {
     private static final String TAG = ProcessExitReconciler.class.getSimpleName();
     private static final long EXIT_TIME_TOLERANCE_MS = 2_000L;
     private static final int MAX_EXIT_RECORDS = 32;
+    private static final String OEM_SWIPE_UP_CLEAN = "SwipeUpClean";
 
     // ApplicationExitInfo reason values are stable public API values from API 30+.
     // Keeping them as local ints avoids resolving ApplicationExitInfo on Android 6-10.
@@ -93,7 +94,7 @@ public final class ProcessExitReconciler {
                 // the durable session so the lifecycle callback can retry shortly.
                 return null;
             }
-            if (exit != null && isUserOrMaintenanceExit(exit.reason)) {
+            if (exit != null && isUserOrMaintenanceExit(exit)) {
                 CrashSessionStore.clearMidletSession(context);
                 return null;
             }
@@ -132,12 +133,18 @@ public final class ProcessExitReconciler {
         return false;
     }
 
-    private static boolean isUserOrMaintenanceExit(int reason) {
-        if (reason == REASON_USER_REQUESTED || reason == REASON_USER_STOPPED) {
+    private static boolean isUserOrMaintenanceExit(ExitRecord exit) {
+        if (exit.reason == REASON_USER_REQUESTED || exit.reason == REASON_USER_STOPPED) {
+            return true;
+        }
+        // HyperOS currently records a task dismissed from Recents as OTHER with
+        // this explicit description instead of USER_REQUESTED. Keep the match
+        // deliberately narrow so unrelated OEM REASON_OTHER exits stay visible.
+        if (exit.reason == REASON_OTHER && OEM_SWIPE_UP_CLEAN.equals(exit.description)) {
             return true;
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            return reason == REASON_PACKAGE_UPDATED || reason == REASON_PACKAGE_STATE_CHANGE;
+            return exit.reason == REASON_PACKAGE_UPDATED || exit.reason == REASON_PACKAGE_STATE_CHANGE;
         }
         return false;
     }
@@ -210,6 +217,8 @@ public final class ProcessExitReconciler {
             }
         } else if (exit != null && exit.reason == REASON_ANR) {
             report.append("Android classified this process as unresponsive (ANR).\n");
+        } else if (exit != null && exit.reason == REASON_OTHER) {
+            report.append("Android reported an OEM/system-specific termination rather than a crash or ANR.\n");
         } else if (exit == null) {
             report.append("The MIDlet session was still marked RUNNING after its process disappeared.\n");
         }
@@ -222,6 +231,7 @@ public final class ProcessExitReconciler {
             return "Unexpected process termination";
         }
         return switch (exit.reason) {
+            case REASON_UNKNOWN -> "Unknown process termination";
             case REASON_CRASH -> "Java crash";
             case REASON_CRASH_NATIVE -> "Native crash";
             case REASON_ANR -> "ANR";
@@ -229,6 +239,9 @@ public final class ProcessExitReconciler {
             case REASON_EXCESSIVE_RESOURCE_USAGE -> "System resource kill";
             case REASON_SIGNALED -> "Signal termination";
             case REASON_INITIALIZATION_FAILURE -> "Process initialization failure";
+            case REASON_DEPENDENCY_DIED -> "Dependency process died";
+            case REASON_FREEZER -> "System freezer termination";
+            case REASON_OTHER -> "Other system-reported termination";
             default -> "Unexpected process termination";
         };
     }
