@@ -25,7 +25,8 @@ public final class VirtualCameraCapabilities {
 	/** Recording encoding; still-image formats are exposed through video.snapshot.encodings. */
 	public static final String VIDEO_ENCODING =
 			"encoding=" + CaptureRequest.VIDEO_RECORDING_CONTENT_TYPE;
-	public static final String AUDIO_ENCODING = "encoding=amr-wb";
+	/** Standalone capture://audio format exposed through the MMAPI audio encoding properties. */
+	public static final String AUDIO_ENCODING = "encoding=audio/amr&rate=8000&channels=1";
 
 	private VirtualCameraCapabilities() {
 	}
