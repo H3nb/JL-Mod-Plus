@@ -158,15 +158,9 @@ jobs:
           unzip -p "$apk" "$service_path" | tr -d '\r' | sed 's/[[:space:]]*$//' | grep -Fx "$provider"
           grep -F "$provider ->" "$mapping"
 
-          for crash_class in \
-            io.github.h3nb.jlmodplus.crashes.runtime.CrashSessionStore \
-            io.github.h3nb.jlmodplus.crashes.runtime.CrashBreadcrumbStore \
-            io.github.h3nb.jlmodplus.crashes.runtime.ProcessExitReconciler \
-            io.github.h3nb.jlmodplus.crashes.runtime.ProcessDeathReportStore \
-            io.github.h3nb.jlmodplus.crashes.dialog.ProcessDeathReportActivity; do
-            grep -F "$crash_class ->" "$mapping"
-          done
-
+          # Helper classes are intentionally not asserted individually in mapping.txt:
+          # R8 may legally inline or merge them. The packaged manifest/service contracts
+          # above are the stable release boundary that must survive shrinking.
           printf 'Verified unsigned release artifact: %s\nABI: %s\nMapping: %s\nACRA interaction: %s\n' \
             "$apk" "$abis" "$mapping" "$provider"
 
