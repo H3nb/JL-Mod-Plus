@@ -37,6 +37,8 @@ public class MediaRouterTest {
 				MediaRouter.route(ContentProbe.Kind.XMF, null));
 		assertEquals(MediaRouter.Backend.SYNTH,
 				MediaRouter.route(ContentProbe.Kind.RMID, null));
+		assertEquals(MediaRouter.Backend.SYNTH,
+				MediaRouter.route(ContentProbe.Kind.UNKNOWN, "audio/x-tone-seq"));
 	}
 
 	@Test
