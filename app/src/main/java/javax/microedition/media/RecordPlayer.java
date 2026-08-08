@@ -227,9 +227,11 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 		if (playerState == UNREALIZED || playerState == REALIZED) {
 			prefetch();
 		}
+		boolean recordingStarted = false;
 		if (recordingRequested) {
 			try {
 				startPhysicalSegment();
+				recordingStarted = true;
 			} catch (MediaException e) {
 				recordingRequested = false;
 				notifyEvent(PlayerListener.RECORD_ERROR, e);
@@ -238,6 +240,9 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 		}
 		playerState = STARTED;
 		notifyEvent(PlayerListener.STARTED, Long.valueOf(0));
+		if (recordingStarted) {
+			notifyEvent(PlayerListener.RECORD_STARTED, null);
+		}
 	}
 
 	@Override
@@ -266,8 +271,8 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 		if (playerState == STARTED) {
 			try {
 				stop();
-			} catch (MediaException e) {
-				notifyEvent(PlayerListener.ERROR, e);
+			} catch (MediaException ignored) {
+				// stop() already reported RECORD_ERROR and invalidated the recording cycle.
 			}
 		}
 		if (playerState == PREFETCHED) {
@@ -347,7 +352,7 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 	public synchronized void addPlayerListener(PlayerListener listener) {
 		checkClosed();
 		if (listener == null) {
-			throw new IllegalArgumentException("listener must not be null");
+			return;
 		}
 		if (!listeners.contains(listener)) {
 			listeners.add(listener);
@@ -436,6 +441,7 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 		if (playerState == STARTED) {
 			try {
 				startPhysicalSegment();
+				notifyEvent(PlayerListener.RECORD_STARTED, null);
 			} catch (MediaException e) {
 				recordingRequested = false;
 				notifyEvent(PlayerListener.RECORD_ERROR, e);
@@ -578,7 +584,6 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 			activeSegment = segment;
 			recorder = newRecorder;
 			recordingActive = true;
-			notifyEvent(PlayerListener.RECORD_STARTED, null);
 		} catch (IOException | RuntimeException e) {
 			if (newRecorder != null) {
 				try {
