@@ -35,12 +35,13 @@ import javax.microedition.io.Connection;
 import javax.microedition.io.Connector;
 import javax.microedition.io.ContentConnection;
 import javax.microedition.io.InputConnection;
+import javax.microedition.media.camera.CaptureLocatorParser;
+import javax.microedition.media.camera.CaptureRequest;
+import javax.microedition.media.camera.VirtualCameraCapabilities;
 import javax.microedition.media.protocol.DataSource;
 import javax.microedition.media.protocol.SourceStream;
 import javax.microedition.media.tone.ToneManager;
 import javax.microedition.util.ContextHolder;
-import javax.microedition.media.camera.CaptureLocatorParser;
-import javax.microedition.media.camera.CaptureRequest;
 
 import ru.woesss.j2me.mmapi.Plugin;
 import ru.woesss.j2me.mmapi.audio.AudioFailure;
@@ -71,8 +72,6 @@ public class Manager {
 			"file", "http", "https", "resource"};
 	private static final String[] SEQUENCED_PROTOCOLS = new String[]{
 			"device", "file", "http", "https", "resource"};
-	private static final String[] ALL_PROTOCOLS = new String[]{
-			"device", "file", "http", "https", "resource", "capture"};
 
 	private static final TimeBase DEFAULT_TIMEBASE = () -> System.nanoTime() / 1000L;
 	private static volatile TimeBase systemTimeBase = DEFAULT_TIMEBASE;
@@ -139,7 +138,7 @@ public class Manager {
 				if (!ContextHolder.requestPermission(Manifest.permission.RECORD_AUDIO)) {
 					throw new SecurityException("Microphone permission was denied");
 				}
-				return new RecordPlayer();
+				return new RecordPlayer(locator);
 			}
 			throw new MediaException("Unsupported capture device: " + device);
 		}
@@ -277,7 +276,6 @@ public class Manager {
 			if (player != null) {
 				return player;
 			}
-		}
 		return null;
 	}
 
@@ -328,13 +326,21 @@ public class Manager {
 			protocol = protocol.toLowerCase(Locale.ROOT);
 		}
 		if ("capture".equals(protocol)) {
-			// capture://audio remains routable for compatibility, but RecordPlayer
-			// is not complete enough to advertise as a stable JSR-135 capability.
-			return new String[]{CaptureRequest.CONTENT_TYPE};
+			List<String> supported = new ArrayList<>(2);
+			if (VirtualCameraCapabilities.supportsAudioCapture()) {
+				supported.add(RecordPlayer.CONTENT_TYPE);
+			}
+			if (VirtualCameraCapabilities.supportsVideoCapture()) {
+				supported.add(CaptureRequest.CONTENT_TYPE);
+			}
+			return supported.toArray(new String[0]);
 		}
 		if (protocol == null) {
-			String[] all = Arrays.copyOf(AUDIO_CONTENT_TYPES, AUDIO_CONTENT_TYPES.length + 1);
-			all[AUDIO_CONTENT_TYPES.length] = CaptureRequest.CONTENT_TYPE;
+			int extra = VirtualCameraCapabilities.supportsVideoCapture() ? 1 : 0;
+			String[] all = Arrays.copyOf(AUDIO_CONTENT_TYPES, AUDIO_CONTENT_TYPES.length + extra);
+			if (extra != 0) {
+				all[AUDIO_CONTENT_TYPES.length] = CaptureRequest.CONTENT_TYPE;
+			}
 			return all;
 		}
 		if ("device".equals(protocol)) {
@@ -350,11 +356,27 @@ public class Manager {
 
 	public static String[] getSupportedProtocols(String contentType) {
 		if (contentType == null) {
-			return Arrays.copyOf(ALL_PROTOCOLS, ALL_PROTOCOLS.length);
+			int extra = VirtualCameraCapabilities.supportsVideoCapture()
+					|| VirtualCameraCapabilities.supportsAudioCapture() ? 1 : 0;
+			String[] protocols = Arrays.copyOf(SEQUENCED_PROTOCOLS, SEQUENCED_PROTOCOLS.length + extra);
+			if (extra != 0) {
+				protocols[SEQUENCED_PROTOCOLS.length] = "capture";
+			}
+			return protocols;
 		}
+
 		String normalized = normalizeMime(contentType);
 		if (CaptureRequest.CONTENT_TYPE.equalsIgnoreCase(normalized)) {
-			return new String[]{"capture"};
+			return VirtualCameraCapabilities.supportsVideoCapture()
+					? new String[]{"capture"} : new String[0];
+		}
+		if (RecordPlayer.CONTENT_TYPE.equalsIgnoreCase(normalized)) {
+			if (!VirtualCameraCapabilities.supportsAudioCapture()) {
+				return Arrays.copyOf(STREAM_PROTOCOLS, STREAM_PROTOCOLS.length);
+			}
+			String[] protocols = Arrays.copyOf(STREAM_PROTOCOLS, STREAM_PROTOCOLS.length + 1);
+			protocols[STREAM_PROTOCOLS.length] = "capture";
+			return protocols;
 		}
 		if (isDeviceContentType(normalized)) {
 			return Arrays.copyOf(SEQUENCED_PROTOCOLS, SEQUENCED_PROTOCOLS.length);
