@@ -126,6 +126,9 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			MicroActivity activity = ContextHolder.getActivity();
 			if (activity != null && !activity.isFinishing()) {
 				activity.runOnUiThread(() -> {
+					// Reveal the still-alive emulator task immediately while ACRA collects
+					// the report. Detach the normal destroy observer so it cannot kill the
+					// :midlet process before ACRA finishes the fatal-report handoff.
 					activity.getLifecycle().removeObserver(activityLifecycleObserver);
 					activity.finish();
 				});
