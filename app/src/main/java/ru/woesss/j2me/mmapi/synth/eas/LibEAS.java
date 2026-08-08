@@ -1,5 +1,6 @@
 /*
  * Copyright 2023-2024 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +21,14 @@ import ru.woesss.j2me.mmapi.synth.Library;
 
 public class LibEAS implements Library {
 
-	public LibEAS() {}
+	/**
+	 * Explicitly select the embedded bank. The native EAS library lives for the
+	 * whole app process, so leaving this implicit could carry a custom DLS/SF2
+	 * path from a previous MIDlet session into a later built-in session.
+	 */
+	public LibEAS() {
+		loadSoundBank("");
+	}
 
 	public LibEAS(String soundBank) {
 		loadSoundBank(soundBank);
