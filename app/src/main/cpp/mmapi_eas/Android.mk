@@ -36,7 +36,7 @@ LOCAL_ARM_MODE := arm
 
 LOCAL_SHARED_LIBRARIES := mmapi_common
 
-LOCAL_STATIC_LIBRARIES := sonivox
+LOCAL_STATIC_LIBRARIES := sonivox_v4
 
 ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
     LOCAL_ARM_NEON := false
