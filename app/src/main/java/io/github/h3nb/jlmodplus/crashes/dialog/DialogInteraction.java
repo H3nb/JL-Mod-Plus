@@ -38,15 +38,15 @@ public final class DialogInteraction implements ReportInteraction {
 	public boolean performInteraction(@NotNull Context context,
 									  @NotNull CoreConfiguration config,
 									  @NotNull File reportFile) {
-		// ACRA has already persisted the Java crash report at this point. Mark
-		// only the :midlet session so process-exit reconciliation does not show
-		// a second report for the same fatal Java exception.
-		CrashSessionStore.markMidletJavaCrashReported(context);
-
 		Intent intent = new Intent(context, CrashReportDialog.class);
 		intent.putExtra(EXTRA_REPORT_FILE, reportFile);
 		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		context.startActivity(intent);
+
+		// Only suppress the process-death fallback after Android accepted the ACRA
+		// dialog launch. If launching the dialog throws, the durable MIDlet session
+		// stays RUNNING and ApplicationExitInfo can still surface the Java crash.
+		CrashSessionStore.markMidletJavaCrashReported(context);
 		return false;
 	}
 }
