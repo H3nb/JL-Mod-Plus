@@ -19,8 +19,12 @@ package io.github.h3nb.jlmodplus.crashes.dialog;
 
 import android.content.Context;
 import android.content.Intent;
+
 import com.google.auto.service.AutoService;
+
 import java.io.File;
+
+import io.github.h3nb.jlmodplus.crashes.runtime.CrashSessionStore;
 
 import org.acra.config.CoreConfiguration;
 import org.acra.interaction.ReportInteraction;
@@ -34,6 +38,11 @@ public final class DialogInteraction implements ReportInteraction {
 	public boolean performInteraction(@NotNull Context context,
 									  @NotNull CoreConfiguration config,
 									  @NotNull File reportFile) {
+		// ACRA has already persisted the Java crash report at this point. Mark
+		// only the :midlet session so process-exit reconciliation does not show
+		// a second report for the same fatal Java exception.
+		CrashSessionStore.markMidletJavaCrashReported(context);
+
 		Intent intent = new Intent(context, CrashReportDialog.class);
 		intent.putExtra(EXTRA_REPORT_FILE, reportFile);
 		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
