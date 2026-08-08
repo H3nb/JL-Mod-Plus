@@ -276,6 +276,7 @@ public class Manager {
 			if (player != null) {
 				return player;
 			}
+		}
 		return null;
 	}
 
