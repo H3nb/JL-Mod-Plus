@@ -135,10 +135,13 @@ namespace mmapi {
         }
 
         void Player::deallocate() {
+            /*
+             * JSR-135 deallocate() releases scarce resources and moves the
+             * Player back to REALIZED without rewinding media time. The EAS
+             * parser/stream remains alive, so closing the Oboe output is enough;
+             * preserve both its current parser position and any pending seek.
+             */
             BasePlayer::deallocate();
-            if (file != nullptr) {
-                seekTime = 0;
-            }
         }
 
         void Player::close() {
