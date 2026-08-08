@@ -30,7 +30,9 @@ public final class DebugCrashReceiver extends BroadcastReceiver {
     public static final String ACTION_ANR =
             "io.github.h3nb.jlmodplus.debug.ANR";
 
-    private static final long ANR_HANG_MS = 60_000L;
+    // Keep the receiver blocked well past Android's long broadcast watchdog window.
+    // On a foreground MIDlet, user input should normally trigger an input-dispatch ANR sooner.
+    private static final long ANR_HANG_MS = 120_000L;
 
     @Override
     public void onReceive(Context context, Intent intent) {
