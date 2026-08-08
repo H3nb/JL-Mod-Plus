@@ -65,6 +65,21 @@ public class CaptureLocatorParserTest {
 	}
 
 	@Test
+	public void acceptsLegacyRawSourceHintsAndFrameRate() throws Exception {
+		CaptureRequest gray = CaptureLocatorParser.parse(
+				"capture://video?encoding=gray8&width=160&height=120&fps=7.5");
+		CaptureRequest rgb = CaptureLocatorParser.parse(
+				"capture://devcam0?encoding=rgb888&width=160&height=120&fps=7");
+
+		assertEquals(CaptureRequest.GRAY8_ENCODING, gray.getEncoding());
+		assertEquals(160, gray.getWidth());
+		assertEquals(120, gray.getHeight());
+		assertTrue(gray.hasExplicitDimensions());
+		assertEquals(CaptureRequest.RGB888_ENCODING, rgb.getEncoding());
+		assertEquals(LogicalCameraDevice.REAR, rgb.getLogicalCameraDevice());
+	}
+
+	@Test
 	public void implicitVideoEncodingKeepsLegacySourceDimensions() throws Exception {
 		CaptureRequest request = CaptureLocatorParser.parse(
 				"capture://video?width=640&height=480");
@@ -112,7 +127,9 @@ public class CaptureLocatorParserTest {
 	@Test
 	public void rejectsUnsupportedEncodingAndDevice() {
 		assertThrows(MediaException.class, () ->
-				CaptureLocatorParser.parse("capture://video?encoding=gray8"));
+				CaptureLocatorParser.parse("capture://video?encoding=bgr888"));
+		assertThrows(MediaException.class, () ->
+				CaptureLocatorParser.parse("capture://image?encoding=rgb888"));
 		assertThrows(MediaException.class, () ->
 				CaptureLocatorParser.parse("capture://image?encoding=video%2Fmp4"));
 		assertThrows(MediaException.class, () ->
@@ -135,13 +152,19 @@ public class CaptureLocatorParserTest {
 	}
 
 	@Test
-	public void rejectsInvalidDimensionsAndUnenforceableFps() {
+	public void rejectsInvalidDimensionsAndFrameRate() {
 		assertThrows(IllegalArgumentException.class, () ->
 				CaptureLocatorParser.parse("capture://video?width=0&height=480"));
 		assertThrows(IllegalArgumentException.class, () ->
 				CaptureLocatorParser.parse("capture://video?width=640"));
-		assertThrows(MediaException.class, () ->
-				CaptureLocatorParser.parse("capture://video?fps=30"));
+		assertThrows(IllegalArgumentException.class, () ->
+				CaptureLocatorParser.parse("capture://video?fps=0"));
+		assertThrows(IllegalArgumentException.class, () ->
+				CaptureLocatorParser.parse("capture://video?fps=.5"));
+		assertThrows(IllegalArgumentException.class, () ->
+				CaptureLocatorParser.parse("capture://video?fps=7."));
+		assertThrows(IllegalArgumentException.class, () ->
+				CaptureLocatorParser.parse("capture://video?fps=7e1"));
 		assertThrows(MediaException.class, () ->
 				CaptureLocatorParser.parse("capture://video?encoding=jpeg&width=4096&height=2160"));
 	}
