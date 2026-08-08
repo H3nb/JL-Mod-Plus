@@ -32,8 +32,13 @@ public interface CameraRecordingSession {
 	/** Resume a previously paused recording. */
 	void resumeRecording() throws MediaException;
 
-	/** Finalize the current recording and make its container readable. */
-	void finalizeRecording() throws MediaException;
+	/**
+	 * Finalize the current recording and make its container readable.
+	 *
+	 * @return true when a backend recording existed and was finalized successfully,
+	 * false when there was no backend recording to finalize
+	 */
+	boolean finalizeRecording() throws MediaException;
 
 	/** True while a recording exists, whether active or paused. */
 	boolean hasRecording();
