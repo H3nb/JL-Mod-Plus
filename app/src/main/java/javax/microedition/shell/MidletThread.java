@@ -36,6 +36,7 @@ import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.LifecycleOwner;
 
+import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.crashes.runtime.CrashBreadcrumbStore;
 import io.github.h3nb.jlmodplus.crashes.runtime.CrashSessionStore;
 
@@ -74,6 +75,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		instance = this;
 		breadcrumb("midlet_thread_created main_class=" + mainClass
 				+ " timed_wait=" + timedWaitEnabled);
+		recordEmulatorContext(microLoader, timedWaitEnabled);
 	}
 
 	public static EmulationTimeController getEmulationTimeController() {
@@ -255,6 +257,25 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			case ON_STOP -> handler.obtainMessage(PAUSE).sendToTarget();
 			case ON_DESTROY -> handler.obtainMessage(DESTROY).sendToTarget();
 		}
+	}
+
+	private static void recordEmulatorContext(MicroLoader loader, boolean timedWaitEnabled) {
+		ProfileModel params = loader.params;
+		if (params == null) {
+			return;
+		}
+		boolean customSoundBank = params.soundBank != null && !params.soundBank.trim().isEmpty();
+		breadcrumb("emulator_context"
+				+ " screen=" + params.screenWidth + "x" + params.screenHeight
+				+ " graphics_mode=" + params.graphicsMode
+				+ " hw_accel=" + params.hwAcceleration
+				+ " immediate=" + params.immediateMode
+				+ " fps_limit=" + params.fpsLimit
+				+ " timing_transform=" + loader.hasTimingTransform()
+				+ " memory_editor_transform=" + loader.hasMemoryEditorTransform()
+				+ " timed_wait=" + timedWaitEnabled
+				+ " custom_soundbank=" + customSoundBank
+				+ " camera_override=" + params.cameraOverrideEnabled);
 	}
 
 	private static void breadcrumb(String event) {
