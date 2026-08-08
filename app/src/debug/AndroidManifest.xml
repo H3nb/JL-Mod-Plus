@@ -2,6 +2,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <application tools:ignore="GoogleAppIndexingWarning,MissingApplicationIcon" />
+    <application tools:ignore="GoogleAppIndexingWarning,MissingApplicationIcon">
+        <receiver
+            android:name="io.github.h3nb.jlmodplus.crashes.debug.DebugCrashReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP"
+            android:process=":midlet">
+            <intent-filter>
+                <action android:name="io.github.h3nb.jlmodplus.debug.CRASH_JAVA" />
+                <action android:name="io.github.h3nb.jlmodplus.debug.CRASH_NATIVE" />
+                <action android:name="io.github.h3nb.jlmodplus.debug.ANR" />
+            </intent-filter>
+        </receiver>
+    </application>
 
 </manifest>
