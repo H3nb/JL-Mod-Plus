@@ -12,16 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
--keep public class org.microemu.** { public protected *; }
--keep class io.github.h3nb.jlmodplus.util.SparseIntArrayAdapter { *; }
--keep class io.github.h3nb.jlmodplus.BuildConfig { *; }
--keep class io.github.h3nb.jlmodplus.crashes.models.* { *; }
+# These types can be reached indirectly by the MIDlet runtime. Preserve names
+# and members while still allowing R8 to optimize their implementations.
+-keep,allowoptimization public class org.microemu.** { public protected *; }
+-keep,allowoptimization class io.github.h3nb.jlmodplus.util.SparseIntArrayAdapter { *; }
+-keep,allowoptimization class io.github.h3nb.jlmodplus.BuildConfig { *; }
+-keep,allowoptimization class io.github.h3nb.jlmodplus.crashes.models.* { *; }
 
-# Preserve all public MIDlets.
--keep public class * extends javax.microedition.midlet.MIDlet
+# Preserve all public MIDlet entry-point classes.
+-keep,allowoptimization public class * extends javax.microedition.midlet.MIDlet
 
 # Preserve native method names and the names of their classes.
--keepclasseswithmembernames class * {
+-keepclasseswithmembernames,allowoptimization class * {
     native <methods>;
 }
 

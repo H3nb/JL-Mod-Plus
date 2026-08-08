@@ -12,43 +12,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# J2ME APIs and vendor extensions are part of the emulator's runtime surface.
-# MIDlets may resolve these classes dynamically, so preserve their public API.
--keep public class com.j_phone.** { public protected *; }
--keep public class com.jblend.** { public protected *; }
--keep public class com.kddi.** { public protected *; }
--keep public class com.mascotcapsule.micro3d.v3.* { public protected *; }
--keep public class com.mexa.** { public protected *; }
--keep public class com.mot.iden.** { public protected *; }
--keep public class com.motorola.** { public protected *; }
--keep public class com.nokia.mid.** { public protected *; }
--keep public class com.samsung.util.** { public protected *; }
--keep public class com.siemens.mp.** { public protected *; }
--keep public class com.sonyericsson.accelerometer.** { public protected *; }
--keep public class com.sprintpcs.media.** { public protected *; }
--keep public class com.sun.midp.midlet.** { public protected *; }
--keep public class com.vodafone.** { public protected *; }
--keep public class javax.** { public protected *; }
--keep public class mmpp.media.** { public protected *; }
+# J2ME APIs and vendor extensions are a runtime ABI for arbitrary MIDlets.
+# Keep names and public/protected members stable, but allow R8 to optimize
+# their implementations because allowoptimization does not rename or remove them.
+-keep,allowoptimization public class com.j_phone.** { public protected *; }
+-keep,allowoptimization public class com.jblend.** { public protected *; }
+-keep,allowoptimization public class com.kddi.** { public protected *; }
+-keep,allowoptimization public class com.mascotcapsule.micro3d.v3.* { public protected *; }
+-keep,allowoptimization public class com.mexa.** { public protected *; }
+-keep,allowoptimization public class com.mot.iden.** { public protected *; }
+-keep,allowoptimization public class com.motorola.** { public protected *; }
+-keep,allowoptimization public class com.nokia.mid.** { public protected *; }
+-keep,allowoptimization public class com.samsung.util.** { public protected *; }
+-keep,allowoptimization public class com.siemens.mp.** { public protected *; }
+-keep,allowoptimization public class com.sonyericsson.accelerometer.** { public protected *; }
+-keep,allowoptimization public class com.sprintpcs.media.** { public protected *; }
+-keep,allowoptimization public class com.sun.midp.midlet.** { public protected *; }
+-keep,allowoptimization public class com.vodafone.** { public protected *; }
+-keep,allowoptimization public class javax.** { public protected *; }
+-keep,allowoptimization public class mmpp.media.** { public protected *; }
 
-# Emulator runtime surface.
--keep public class org.microemu.** { public protected *; }
+# Emulator runtime surface may also be resolved indirectly. Keep its ABI stable
+# while allowing method-body optimization.
+-keep,allowoptimization public class org.microemu.** { public protected *; }
 
-# App-owned types with runtime/serialization contracts.
--keep class io.github.h3nb.jlmodplus.BuildConfig { *; }
--keep class io.github.h3nb.jlmodplus.util.SparseIntArrayAdapter { *; }
--keep class io.github.h3nb.jlmodplus.crashes.models.* { *; }
+# App-owned types with runtime/serialization contracts. Their names/members stay
+# stable; implementation optimization remains safe.
+-keep,allowoptimization class io.github.h3nb.jlmodplus.BuildConfig { *; }
+-keep,allowoptimization class io.github.h3nb.jlmodplus.util.SparseIntArrayAdapter { *; }
+-keep,allowoptimization class io.github.h3nb.jlmodplus.crashes.models.* { *; }
 # ACRA discovers this app-owned interaction through ServiceLoader.
--keep class io.github.h3nb.jlmodplus.crashes.dialog.DialogInteraction { *; }
+-keep,allowoptimization class io.github.h3nb.jlmodplus.crashes.dialog.DialogInteraction { *; }
 
-# ACRA 5.13.1 ships its own consumer keep rules. Avoid a package-wide
-# org.acra keep here so R8 can still optimize ACRA code that is safe to shrink.
--keepclassmembers,allowobfuscation class * {
- @com.google.gson.annotations.SerializedName <fields>;
-}
--keepattributes Signature
--keep class com.google.gson.reflect.TypeToken { *; }
--keep class * extends com.google.gson.reflect.TypeToken
+# ACRA 5.13.1 and Gson 2.14.0 both ship consumer R8 rules. Do not duplicate
+# their broad rules locally; keeping one source of truth lets R8 optimize more.
 
 # Paths are relative to this keep-rule file under src/emulator/keepRules.
 -obfuscationdictionary ../../../dictionary.pro
