@@ -57,15 +57,28 @@ public class Manager {
 	private static final String[] ALL_PROTOCOLS = new String[]{
 			"device", "file", "http", "resource", "capture"};
 	private static final TimeBase DEFAULT_TIMEBASE = () -> System.nanoTime() / 1000L;
-	private static final List<Plugin> PLUGINS = new ArrayList<>();
 	private static volatile TimeBase systemTimeBase = DEFAULT_TIMEBASE;
+
+	private static final class PluginHolder {
+		private static final List<Plugin> PLUGINS = loadPlugins();
+
+		private static List<Plugin> loadPlugins() {
+			List<Plugin> plugins = new ArrayList<>();
+			SynthPluginFactory.loadPlugins(plugins);
+			return plugins;
+		}
+	}
+
+	private static List<Plugin> plugins() {
+		return PluginHolder.PLUGINS;
+	}
 
 	public static Player createPlayer(String locator) throws IOException, MediaException {
 		if (locator == null) {
 			throw new IllegalArgumentException();
 		}
 		if (MIDI_DEVICE_LOCATOR.equals(locator) || TONE_DEVICE_LOCATOR.equals(locator)) {
-			for (Plugin plugin : PLUGINS) {
+			for (Plugin plugin : plugins()) {
 				Player player = plugin.createPlayer(locator);
 				if (player != null) {
 					return player;
@@ -154,7 +167,7 @@ public class Manager {
 	}
 
 	private static Player createPluginPlayer(DataSource datasource) {
-		for (Plugin plugin : PLUGINS) {
+		for (Plugin plugin : plugins()) {
 			Player player = plugin.createPlayer(datasource);
 			if (player != null) {
 				return player;
@@ -224,9 +237,5 @@ public class Manager {
 	public synchronized static void playTone(int note, int duration, int volume)
 			throws MediaException {
 		ToneManager.getInstance().playTone(note, duration, volume);
-	}
-
-	static {
-		SynthPluginFactory.loadPlugins(PLUGINS);
 	}
 }
