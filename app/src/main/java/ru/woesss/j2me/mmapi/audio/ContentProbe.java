@@ -16,6 +16,11 @@
 
 package ru.woesss.j2me.mmapi.audio;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Arrays;
+
 /**
  * Small, side-effect-free probe for media formats with stable file signatures.
  *
@@ -23,6 +28,8 @@ package ru.woesss.j2me.mmapi.audio;
  * Callers may use those as hints only when the content itself is inconclusive.</p>
  */
 public final class ContentProbe {
+	private static final int PROBE_BYTES = 64;
+
 	public enum Kind {
 		MIDI,
 		XMF,
@@ -37,6 +44,34 @@ public final class ContentProbe {
 	}
 
 	private ContentProbe() {
+	}
+
+	/** Reads only a small prefix and never changes or deletes the media file. */
+	public static Kind probe(File file) throws IOException {
+		if (file == null) {
+			throw new IllegalArgumentException("file == null");
+		}
+
+		byte[] prefix = new byte[PROBE_BYTES];
+		int total = 0;
+		try (FileInputStream input = new FileInputStream(file)) {
+			while (total < prefix.length) {
+				int read = input.read(prefix, total, prefix.length - total);
+				if (read == -1) {
+					break;
+				}
+				if (read == 0) {
+					int value = input.read();
+					if (value == -1) {
+						break;
+					}
+					prefix[total++] = (byte) value;
+				} else {
+					total += read;
+				}
+			}
+		}
+		return probe(total == prefix.length ? prefix : Arrays.copyOf(prefix, total));
 	}
 
 	public static Kind probe(byte[] prefix) {
