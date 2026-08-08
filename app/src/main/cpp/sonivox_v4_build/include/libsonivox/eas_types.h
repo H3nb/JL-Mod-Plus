@@ -1,0 +1,6 @@
+#ifndef JL_MOD_SONIVOX_V4_PUBLIC_EAS_TYPES_H
+#define JL_MOD_SONIVOX_V4_PUBLIC_EAS_TYPES_H
+
+#include <eas_types.h>
+
+#endif // JL_MOD_SONIVOX_V4_PUBLIC_EAS_TYPES_H
