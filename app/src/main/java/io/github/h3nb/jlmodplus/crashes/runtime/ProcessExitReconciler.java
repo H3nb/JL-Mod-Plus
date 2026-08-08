@@ -24,7 +24,6 @@ import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
@@ -355,25 +354,12 @@ public final class ProcessExitReconciler {
                 if (input == null) {
                     return;
                 }
-                ByteArrayOutputStream output = new ByteArrayOutputStream();
-                byte[] buffer = new byte[8192];
-                int total = 0;
-                int read;
-                while ((read = input.read(buffer)) >= 0) {
-                    int remaining = ProcessDeathReportStore.MAX_TRACE_BYTES - total;
-                    if (remaining <= 0) {
-                        record.traceTruncated = true;
-                        break;
-                    }
-                    int write = Math.min(read, remaining);
-                    output.write(buffer, 0, write);
-                    total += write;
-                    if (write < read) {
-                        record.traceTruncated = true;
-                        break;
-                    }
-                }
-                record.trace = output.toByteArray();
+                BoundedInputReader.Result result = BoundedInputReader.read(
+                        input,
+                        ProcessDeathReportStore.MAX_TRACE_BYTES
+                );
+                record.trace = result.data;
+                record.traceTruncated = result.truncated;
                 if (record.reason == REASON_CRASH_NATIVE
                         && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     record.traceKind = "Android native tombstone protobuf";
