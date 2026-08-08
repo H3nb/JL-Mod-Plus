@@ -14,8 +14,10 @@ on:
       - "version.properties"
       - "gradle/**"
       - "app/build.gradle.kts"
+      - "app/dictionary.pro"
       - "app/src/**/keepRules/**"
       - "app/src/**/AndroidManifest.xml"
+      - "dexlib/build.gradle.kts"
       - ".github/workflows/release-readiness.yml"
   workflow_dispatch:
   schedule:
