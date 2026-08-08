@@ -21,9 +21,16 @@ import javax.microedition.media.Manager;
 import javax.microedition.media.Player;
 import javax.microedition.media.protocol.DataSource;
 
-import ru.woesss.j2me.mmapi.audio.WavFileFormat;
 import ru.woesss.j2me.mmapi.synth.eas.LibEAS;
 
+/**
+ * Built-in SONiVOX plugin for the live {@code device://midi} endpoint only.
+ *
+ * <p>Cached/file media is intentionally rejected here. In particular, WAV and
+ * IMA-ADPCM must be handled by an audio decoder rather than entering the EAS
+ * MIDI stream path. Sequenced-file SONiVOX routing will use an explicit path
+ * when that backend is introduced.</p>
+ */
 public class MIDIDevicePlugin extends SynthPlugin {
 	public MIDIDevicePlugin() {
 		super(new LibEAS());
@@ -31,16 +38,8 @@ public class MIDIDevicePlugin extends SynthPlugin {
 
 	@Override
 	public Player createPlayer(DataSource dataSource) {
-		if (dataSource == null || dataSource.getLocator() == null) {
-			return null;
-		}
-		try {
-			if (WavFileFormat.isMonoImaAdpcm(new java.io.File(dataSource.getLocator()))) {
-				return super.createPlayer(dataSource);
-			}
-		} catch (java.io.IOException e) {
-			return null;
-		}
+		// Keep this override: inheriting SynthPlugin#createPlayer(DataSource)
+		// would make the device plugin accept arbitrary cached media again.
 		return null;
 	}
 
