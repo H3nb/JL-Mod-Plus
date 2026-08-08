@@ -54,6 +54,8 @@ public class Manager {
 			"audio/wav", "audio/x-wav", "audio/midi", "audio/x-midi",
 			"audio/mpeg", "audio/aac", "audio/amr", "audio/amr-wb", "audio/mp3",
 			"audio/mp4", "audio/mmf", "audio/x-tone-seq"};
+	private static final String[] AUDIO_PROTOCOLS = new String[]{
+			"device", "file", "http", "resource"};
 	private static final String[] ALL_PROTOCOLS = new String[]{
 			"device", "file", "http", "resource", "capture"};
 	private static final TimeBase DEFAULT_TIMEBASE = () -> System.nanoTime() / 1000L;
@@ -203,7 +205,10 @@ public class Manager {
 
 	public static String[] getSupportedContentTypes(String protocol) {
 		if ("capture".equals(protocol)) {
-			return new String[]{RecordPlayer.CONTENT_TYPE, CaptureRequest.CONTENT_TYPE};
+			// Legacy capture://audio remains routable for compatibility, but its
+			// RecordPlayer lifecycle is not yet complete enough to advertise as a
+			// JSR-135 capability. Only the camera path is advertised here.
+			return new String[]{CaptureRequest.CONTENT_TYPE};
 		}
 		if (protocol == null) {
 			String[] all = Arrays.copyOf(AUDIO_CONTENT_TYPES, AUDIO_CONTENT_TYPES.length + 1);
@@ -225,7 +230,7 @@ public class Manager {
 			return new String[]{"capture"};
 		}
 		if (isSupportedAudioContentType(contentType)) {
-			return Arrays.copyOf(ALL_PROTOCOLS, ALL_PROTOCOLS.length);
+			return Arrays.copyOf(AUDIO_PROTOCOLS, AUDIO_PROTOCOLS.length);
 		}
 		return new String[0];
 	}
