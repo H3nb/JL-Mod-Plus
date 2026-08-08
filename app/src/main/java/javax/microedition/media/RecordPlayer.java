@@ -250,8 +250,8 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 			try {
 				finishPhysicalSegment();
 			} catch (MediaException e) {
-				recordingRequested = false;
 				notifyEvent(PlayerListener.RECORD_ERROR, e);
+				invalidateRecording();
 				playerState = PREFETCHED;
 				throw e;
 			}
@@ -457,6 +457,7 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 				finishPhysicalSegment();
 			} catch (MediaException e) {
 				notifyEvent(PlayerListener.RECORD_ERROR, e);
+				invalidateRecording();
 				throw new IllegalStateException("Audio recording could not stop", e);
 			}
 		}
@@ -532,6 +533,7 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 		recordingActive = false;
 		recordingCycleStarted = false;
 		if (!deleted) {
+			invalidateRecording();
 			throw new IOException("Audio recording could not be erased");
 		}
 	}
