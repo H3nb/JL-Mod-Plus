@@ -20,6 +20,7 @@ import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -99,6 +100,20 @@ public final class ProcessDeathReportActivity extends AppCompatActivity {
                 .setType("text/plain")
                 .putExtra(Intent.EXTRA_SUBJECT, getString(R.string.error_report_subject))
                 .putExtra(Intent.EXTRA_TEXT, report);
+
+        if (ProcessDeathReportStore.hasTrace(this, reportId)) {
+            try {
+                Uri traceUri = ProcessDeathReportStore.getTraceUri(this, reportId);
+                intent.setType("application/octet-stream")
+                        .putExtra(Intent.EXTRA_STREAM, traceUri)
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        .setClipData(ClipData.newRawUri("Android process exit trace", traceUri));
+            } catch (IOException | RuntimeException ignored) {
+                // The text report remains shareable even if the optional attachment disappeared.
+                intent.setType("text/plain");
+            }
+        }
+
         try {
             startActivity(Intent.createChooser(intent, getString(R.string.share_error_report)));
         } catch (ActivityNotFoundException error) {
