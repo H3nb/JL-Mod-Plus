@@ -2,7 +2,6 @@
 // Created by woesss on 13.08.2023.
 //
 
-#include <thread>
 #include "PlayerListener.h"
 #include "log.h"
 
@@ -34,11 +33,27 @@ namespace mmapi {
         }
         JNIEnvPtr env;
         env->CallVoidMethod(listener, method, eventType, time);
+        if (env->ExceptionCheck()) {
+            // The Java entry point is intentionally queue-only and must return
+            // promptly to the Oboe callback. Do not leave a pending exception
+            // attached to a realtime/native audio thread.
+            ALOGE("%s: Java player event enqueue failed", __func__);
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+        }
     }
 
     void PlayerListener::postEvent(PlayerListenerEvent type, int64_t time) {
-        std::thread thread(&PlayerListener::sendEvent, this, type, time);
-        thread.detach();
+        /*
+         * Preserve the order in which the native backend generates events.
+         * Java's postEvent(int,long) only enqueues work onto that Player's
+         * single callback executor, so this direct JNI handoff neither invokes
+         * MIDlet listeners nor closes audio resources on the realtime thread.
+         *
+         * The old detached-thread-per-event implementation could reorder events
+         * and could outlive this PlayerListener, creating a use-after-free race.
+         */
+        sendEvent(type, time);
     }
 
     JavaVM *JNIEnvPtr::vm = nullptr;
