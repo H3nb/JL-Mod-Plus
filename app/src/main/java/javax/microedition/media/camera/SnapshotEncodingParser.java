@@ -36,7 +36,7 @@ public final class SnapshotEncodingParser {
 			return SnapshotRequest.defaultRequest(defaultQuality);
 		}
 		if (imageType.isEmpty()) {
-			throw new IllegalArgumentException("snapshot encoding must not be empty");
+			throw new MediaException("snapshot encoding must not be empty");
 		}
 		// Common vendor-compatible shorthand used by real MIDlets.
 		if ("jpeg".equalsIgnoreCase(imageType)) {
@@ -51,13 +51,13 @@ public final class SnapshotEncodingParser {
 		for (String pair : imageType.split("&", -1)) {
 			int equals = pair.indexOf('=');
 			if (equals <= 0 || equals == pair.length() - 1) {
-				throw new IllegalArgumentException("malformed snapshot parameter");
+				throw new MediaException("malformed snapshot parameter");
 			}
 			String key = decode(pair.substring(0, equals));
 			String value = decode(pair.substring(equals + 1));
 			String normalizedKey = key.toLowerCase(Locale.ROOT);
 			if (!seen.add(normalizedKey) || key.isEmpty() || value.isEmpty()) {
-				throw new IllegalArgumentException("duplicate or empty snapshot parameter: " + key);
+				throw new MediaException("duplicate or empty snapshot parameter: " + key);
 			}
 			switch (normalizedKey) {
 				case "encoding" -> {
@@ -69,14 +69,14 @@ public final class SnapshotEncodingParser {
 				case "width" -> width = parsePositive(value, "width");
 				case "height" -> height = parsePositive(value, "height");
 				case "quality" -> quality = parseQuality(value);
-				default -> throw new IllegalArgumentException("Unknown snapshot parameter: " + key);
+				default -> throw new MediaException("Unknown snapshot parameter: " + key);
 			}
 		}
 		if (encoding == null) {
-			throw new IllegalArgumentException("snapshot encoding is required");
+			throw new MediaException("snapshot encoding is required");
 		}
 		if ((width == null) != (height == null)) {
-			throw new IllegalArgumentException("width and height must be specified together");
+			throw new MediaException("width and height must be specified together");
 		}
 		if (width == null) {
 			return SnapshotRequest.defaultRequest(quality);
@@ -87,31 +87,31 @@ public final class SnapshotEncodingParser {
 		return new SnapshotRequest(width, height, false, quality);
 	}
 
-	private static int parsePositive(String value, String name) {
+	private static int parsePositive(String value, String name) throws MediaException {
 		try {
 			int parsed = Integer.parseInt(value);
 			if (parsed <= 0) {
-				throw new IllegalArgumentException(name + " must be positive");
+				throw new MediaException(name + " must be positive");
 			}
 			return parsed;
 		} catch (NumberFormatException e) {
-			throw new IllegalArgumentException("invalid " + name, e);
+			throw new MediaException("invalid " + name);
 		}
 	}
 
-	private static int parseQuality(String value) {
+	private static int parseQuality(String value) throws MediaException {
 		int quality = parsePositive(value, "quality");
 		if (quality > 100) {
-			throw new IllegalArgumentException("quality must be between 1 and 100");
+			throw new MediaException("quality must be between 1 and 100");
 		}
 		return quality;
 	}
 
-	private static String decode(String value) {
+	private static String decode(String value) throws MediaException {
 		try {
 			return URLDecoder.decode(value, StandardCharsets.UTF_8.name());
 		} catch (UnsupportedEncodingException | IllegalArgumentException e) {
-			throw new IllegalArgumentException("invalid percent-encoding", e);
+			throw new MediaException("invalid percent-encoding");
 		}
 	}
 }
