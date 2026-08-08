@@ -23,7 +23,7 @@ import static org.junit.Assert.assertEquals;
 public class MediaRouterTest {
 	@Test
 	public void contentSignatureWinsOverConflictingMime() {
-		assertEquals(MediaRouter.Backend.PLATFORM_AUDIO,
+		assertEquals(MediaRouter.Backend.WAV,
 				MediaRouter.route(ContentProbe.Kind.WAV, "audio/midi"));
 		assertEquals(MediaRouter.Backend.SYNTH,
 				MediaRouter.route(ContentProbe.Kind.MIDI, "audio/wav"));
@@ -40,8 +40,8 @@ public class MediaRouterTest {
 	}
 
 	@Test
-	public void decodedAndPlatformFormatsBypassSynth() {
-		assertEquals(MediaRouter.Backend.PLATFORM_AUDIO,
+	public void wavUsesDedicatedDecoderAndCompressedMediaUsesPlatform() {
+		assertEquals(MediaRouter.Backend.WAV,
 				MediaRouter.route(ContentProbe.Kind.WAV, null));
 		assertEquals(MediaRouter.Backend.PLATFORM_AUDIO,
 				MediaRouter.route(ContentProbe.Kind.MP3, null));
@@ -59,7 +59,7 @@ public class MediaRouterTest {
 	public void mimeOnlyFallbackIsConservative() {
 		assertEquals(MediaRouter.Backend.SYNTH,
 				MediaRouter.route(ContentProbe.Kind.UNKNOWN, " Audio/MIDI; charset=binary "));
-		assertEquals(MediaRouter.Backend.PLATFORM_AUDIO,
+		assertEquals(MediaRouter.Backend.WAV,
 				MediaRouter.route(ContentProbe.Kind.UNKNOWN, "audio/x-wav"));
 		assertEquals(MediaRouter.Backend.UNKNOWN,
 				MediaRouter.route(ContentProbe.Kind.UNKNOWN, "audio/mmf"));
