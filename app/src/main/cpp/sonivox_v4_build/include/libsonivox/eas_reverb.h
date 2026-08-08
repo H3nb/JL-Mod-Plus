@@ -1,0 +1,6 @@
+#ifndef JL_MOD_SONIVOX_V4_PUBLIC_EAS_REVERB_H
+#define JL_MOD_SONIVOX_V4_PUBLIC_EAS_REVERB_H
+
+#include <eas_reverb.h>
+
+#endif // JL_MOD_SONIVOX_V4_PUBLIC_EAS_REVERB_H
