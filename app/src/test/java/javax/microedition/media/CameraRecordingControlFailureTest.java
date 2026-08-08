@@ -74,7 +74,7 @@ public class CameraRecordingControlFailureTest {
 	}
 
 	@Test
-	public void retryableCommitFailureAllowsNewDestinationAndCleansBackendBeforeRestart() throws Exception {
+	public void retryableCommitFailureRequiresNewDestinationBeforeAnotherRecording() throws Exception {
 		CameraPlayer player = new CameraPlayer("capture://video");
 		File oldRecordingFile = File.createTempFile("camera-retryable-commit-", ".mp4");
 		try (FileOutputStream output = new FileOutputStream(oldRecordingFile)) {
@@ -98,6 +98,7 @@ public class CameraRecordingControlFailureTest {
 			assertTrue(prepared.recording);
 			assertTrue(oldRecordingFile.exists());
 			assertEquals(0, oldDestination.size());
+			assertThrows(IllegalStateException.class, control::startRecord);
 
 			// With no Android MIDlet host the public setter must reach the permission
 			// gate, proving the failed recording no longer blocks it with ISE first.
@@ -129,7 +130,7 @@ public class CameraRecordingControlFailureTest {
 	}
 
 	@Test
-	public void retryableResetFailureAllowsNewDestination() throws Exception {
+	public void retryableResetFailureRequiresNewDestinationBeforeAnotherRecording() throws Exception {
 		CameraPlayer player = new CameraPlayer("capture://video");
 		File oldRecordingFile = File.createTempFile("camera-retryable-reset-", ".mp4");
 		ByteArrayOutputStream replacement = new ByteArrayOutputStream();
@@ -148,6 +149,7 @@ public class CameraRecordingControlFailureTest {
 			assertThrows(IOException.class, control::reset);
 			assertTrue(prepared.recording);
 			assertTrue(oldRecordingFile.exists());
+			assertThrows(IllegalStateException.class, control::startRecord);
 
 			assertThrows(SecurityException.class, () -> control.setRecordStream(replacement));
 			invokeNoArg(control, "prepareDestinationReplacementAfterFailure");
@@ -162,6 +164,75 @@ public class CameraRecordingControlFailureTest {
 			player.close();
 			if (oldRecordingFile.exists()) {
 				oldRecordingFile.delete();
+			}
+		}
+	}
+
+	@Test
+	public void successfulRetryResetStillRequiresNewDestination() throws Exception {
+		CameraPlayer player = new CameraPlayer("capture://video");
+		File recordingFile = File.createTempFile("camera-reset-retry-", ".mp4");
+		ByteArrayOutputStream replacement = new ByteArrayOutputStream();
+		FakeCameraSession prepared = new FakeCameraSession();
+		prepared.recording = true;
+		prepared.failFinalizeRetryably = true;
+		try {
+			player.realize();
+			RecordControl control = (RecordControl) player.getControl(RecordControl.class.getName());
+			setField(player, "session", prepared);
+			setIntField(player, "state", Player.STARTED);
+			setField(control, "destination", new ByteArrayOutputStream());
+			setField(control, "recordingFile", recordingFile);
+			setBooleanField(control, "recordingCycleStarted", true);
+
+			assertThrows(IOException.class, control::reset);
+			assertThrows(IllegalStateException.class, control::startRecord);
+
+			prepared.failFinalizeRetryably = false;
+			control.reset();
+			assertFalse(recordingFile.exists());
+			assertFalse(prepared.recording);
+			assertThrows(IllegalStateException.class, control::startRecord);
+
+			// The old destination remains installed after reset, but the failed-cycle
+			// contract must still allow replacing it before another startRecord().
+			assertThrows(SecurityException.class, () -> control.setRecordStream(replacement));
+		} finally {
+			player.close();
+			if (recordingFile.exists()) {
+				recordingFile.delete();
+			}
+		}
+	}
+
+	@Test
+	public void missingBackendCannotTurnStaleTempFileIntoSuccessfulCommit() throws Exception {
+		CameraPlayer player = new CameraPlayer("capture://video");
+		File recordingFile = File.createTempFile("camera-missing-backend-", ".mp4");
+		try (FileOutputStream output = new FileOutputStream(recordingFile)) {
+			output.write(new byte[]{4, 3, 2, 1});
+		}
+		ByteArrayOutputStream destination = new ByteArrayOutputStream();
+		FakeCameraSession prepared = new FakeCameraSession();
+		prepared.recording = false;
+		try {
+			player.realize();
+			RecordControl control = (RecordControl) player.getControl(RecordControl.class.getName());
+			setField(player, "session", prepared);
+			setField(control, "destination", destination);
+			setField(control, "recordingFile", recordingFile);
+			setBooleanField(control, "recordingCycleStarted", true);
+
+			IOException failure = assertThrows(IOException.class, control::commit);
+			assertEquals("Camera recording backend no longer exists", failure.getMessage());
+			assertEquals(1, prepared.finalizeCalls);
+			assertEquals(0, destination.size());
+			assertFalse(recordingFile.exists());
+			assertThrows(IOException.class, control::commit);
+		} finally {
+			player.close();
+			if (recordingFile.exists()) {
+				recordingFile.delete();
 			}
 		}
 	}
@@ -287,7 +358,7 @@ public class CameraRecordingControlFailureTest {
 		}
 
 		@Override
-		public void finalizeRecording() throws MediaException {
+		public boolean finalizeRecording() throws MediaException {
 			finalizeCalls++;
 			if (failFinalizeTerminally) {
 				recording = false;
@@ -297,8 +368,10 @@ public class CameraRecordingControlFailureTest {
 			if (failFinalizeRetryably) {
 				throw new MediaException("retryable finalize failure");
 			}
+			boolean existed = recording;
 			recording = false;
 			recordingPaused = false;
+			return existed;
 		}
 
 		@Override
