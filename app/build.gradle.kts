@@ -97,6 +97,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.legacy.kapt)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.ksp)
 }
 
 /** Copies AGP's final APKs to a stable, human-readable distribution directory. */
@@ -350,10 +351,7 @@ dependencies {
     implementation(libs.androidx.preference.ktx)
     implementation(libs.androidx.recyclerview)
     implementation(libs.kotlinx.coroutines.android)
-    kapt(libs.androidx.room.compiler)
-    // Room's javac processor reads Kotlin 2.4 metadata; keep the matching
-    // reader on the kapt classpath even though it is not a processor itself.
-    kapt(libs.kotlin.metadata.jvm)
+    ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.runtime)
 
     val composeBom = platform(libs.androidx.compose.bom)
