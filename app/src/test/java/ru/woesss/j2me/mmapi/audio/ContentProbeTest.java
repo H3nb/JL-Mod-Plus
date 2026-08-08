@@ -63,7 +63,7 @@ public class ContentProbeTest {
 
 	@Test
 	public void rejectsTruncatedAndUnrecognizedPrefixes() {
-		assertEquals(ContentProbe.Kind.UNKNOWN, ContentProbe.probe(null));
+		assertEquals(ContentProbe.Kind.UNKNOWN, ContentProbe.probe((byte[]) null));
 		assertEquals(ContentProbe.Kind.UNKNOWN, ContentProbe.probe(new byte[0]));
 		assertEquals(ContentProbe.Kind.UNKNOWN, probe("RIFFWAVE"));
 		assertEquals(ContentProbe.Kind.UNKNOWN, probe("RIFF\0\0\0\0sfbk"));
