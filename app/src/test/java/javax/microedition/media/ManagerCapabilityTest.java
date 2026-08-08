@@ -19,6 +19,7 @@ package javax.microedition.media;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.List;
 
 import javax.microedition.media.camera.CaptureRequest;
 
@@ -44,6 +45,34 @@ public class ManagerCapabilityTest {
 	}
 
 	@Test
+	public void deviceProtocolAdvertisesOnlyMidiAndToneDevices() {
+		assertArrayEquals(
+				new String[]{"audio/midi", "audio/x-midi", "audio/x-tone-seq"},
+				Manager.getSupportedContentTypes("device"));
+	}
+
+	@Test
+	public void sequencedAudioSupportsDeviceAndStreamProtocols() {
+		assertArrayEquals(
+				new String[]{"device", "file", "http", "https", "resource"},
+				Manager.getSupportedProtocols(" Audio/MIDI; charset=binary "));
+	}
+
+	@Test
+	public void decodedAudioDoesNotClaimDeviceProtocol() {
+		assertArrayEquals(
+				new String[]{"file", "http", "https", "resource"},
+				Manager.getSupportedProtocols("audio/x-wav"));
+	}
+
+	@Test
+	public void unimplementedMmfIsNotAdvertised() {
+		List<String> all = Arrays.asList(Manager.getSupportedContentTypes(null));
+		assertFalse(all.contains("audio/mmf"));
+		assertEquals(0, Manager.getSupportedProtocols("audio/mmf").length);
+	}
+
+	@Test
 	public void legacyAudioTypesAreNotAdvertisedAsCaptureCapabilities() {
 		assertFalse(Arrays.asList(Manager.getSupportedProtocols("audio/amr-wb"))
 				.contains("capture"));
@@ -56,14 +85,19 @@ public class ManagerCapabilityTest {
 	}
 
 	@Test
-	public void nullCapabilityQueriesRemainNonEmpty() {
+	public void nullCapabilityQueriesRemainNonEmptyAndIncludeHttps() {
 		assertTrue(Manager.getSupportedContentTypes(null).length > 0);
-		assertTrue(Manager.getSupportedProtocols(null).length > 0);
+		assertTrue(Arrays.asList(Manager.getSupportedProtocols(null)).contains("https"));
 	}
 
 	@Test
 	public void nullPlayerLocatorRemainsIllegalArgument() {
 		assertThrows(IllegalArgumentException.class, () -> Manager.createPlayer((String) null));
+	}
+
+	@Test
+	public void unsupportedPlayerLocatorUsesMediaExceptionInsteadOfNoOpPlayer() {
+		assertThrows(MediaException.class, () -> Manager.createPlayer("rtsp://example.invalid/audio"));
 	}
 
 	@Test
