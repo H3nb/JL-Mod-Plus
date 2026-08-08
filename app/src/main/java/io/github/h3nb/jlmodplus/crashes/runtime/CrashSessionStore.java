@@ -33,15 +33,7 @@ import java.util.UUID;
 
 import io.github.h3nb.jlmodplus.EmulatorApplication;
 
-/**
- * Persists the currently running MIDlet process session outside process memory.
- *
- * <p>The MIDlet runs in a separate Android process, so this deliberately uses
- * an app-private atomic file instead of SharedPreferences as cross-process
- * state. The store is intentionally small: only one MIDlet can be active at a
- * time. Call sites are ordered so the launcher, MIDlet process, and reconciler
- * do not intentionally write the file concurrently.</p>
- */
+/** Persists the currently running MIDlet process session outside process memory. */
 public final class CrashSessionStore {
     private static final String TAG = CrashSessionStore.class.getSimpleName();
     private static final String DIRECTORY_NAME = "crash-runtime";
@@ -56,6 +48,7 @@ public final class CrashSessionStore {
 
     /** Called by the launcher immediately before starting the :midlet Activity. */
     public static void startMidletSession(Context context, String appName, String appPath) {
+        CrashBreadcrumbStore.reset(context);
         Session session = new Session();
         session.sessionId = UUID.randomUUID().toString();
         session.state = STATE_RUNNING;
@@ -66,6 +59,9 @@ public final class CrashSessionStore {
         session.appPath = safe(appPath);
         session.exitKind = "";
         writeQuietly(context, session);
+        CrashBreadcrumbStore.record(context,
+                "launcher_session_started session=" + session.sessionId
+                        + " midlet=" + session.appName);
     }
 
     /** Called from :midlet once Android has created the actual emulator process. */
@@ -77,6 +73,8 @@ public final class CrashSessionStore {
         session.processName = EmulatorApplication.getProcessName();
         session.pid = Process.myPid();
         writeQuietly(context, session);
+        CrashBreadcrumbStore.record(context,
+                "midlet_process_started pid=" + session.pid + " process=" + session.processName);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             ActivityManager manager = context.getSystemService(ActivityManager.class);
@@ -106,6 +104,7 @@ public final class CrashSessionStore {
         session.state = STATE_EXPECTED_EXIT;
         session.exitKind = safe(exitKind);
         writeQuietly(context, session);
+        CrashBreadcrumbStore.record(context, "expected_exit kind=" + session.exitKind);
     }
 
     /** Marks a MIDlet Java crash once ACRA has persisted the report and begins interaction. */
@@ -121,6 +120,7 @@ public final class CrashSessionStore {
         session.state = STATE_JAVA_CRASH_REPORTED;
         session.exitKind = "acra_java_crash_report";
         writeQuietly(context, session);
+        CrashBreadcrumbStore.record(context, "java_crash_handed_to_acra");
     }
 
     public static Session read(Context context) {
@@ -162,7 +162,6 @@ public final class CrashSessionStore {
         try {
             write(context, session);
         } catch (IOException | RuntimeException error) {
-            // Crash diagnostics must never become a new crash source.
             Log.w(TAG, "Unable to persist MIDlet crash session", error);
         }
     }
