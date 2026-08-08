@@ -106,7 +106,7 @@ public class SynthPlayerContractTest {
 	}
 
 	@Test
-	public void controlsRequireRealizeAndMidiDeviceDoesNotExposeToneControl() throws Exception {
+	public void controlsRequireRealizeAndMidiDeviceExposesOnlyFunctionalControls() throws Exception {
 		FakeLibrary library = new FakeLibrary();
 		SynthPlayer player = newPlayer(library);
 		try {
@@ -122,6 +122,22 @@ public class SynthPlayerContractTest {
 			assertNotNull(player.getControl("VolumeControl"));
 			assertNotNull(player.getControl("MIDIControl"));
 			assertNull(player.getControl("ToneControl"));
+			assertNull(player.getControl("javax.microedition.amms.control.audioeffect.EqualizerControl"));
+		} finally {
+			player.close();
+		}
+	}
+
+	@Test
+	public void toneDeviceExposesToneControlButNotMidiControl() throws Exception {
+		FakeLibrary library = new FakeLibrary();
+		SynthPlayer player = newPlayer(library, Manager.TONE_DEVICE_LOCATOR);
+		try {
+			player.realize();
+
+			assertNotNull(player.getControl("VolumeControl"));
+			assertNotNull(player.getControl("ToneControl"));
+			assertNull(player.getControl("MIDIControl"));
 		} finally {
 			player.close();
 		}
@@ -152,29 +168,37 @@ public class SynthPlayerContractTest {
 	}
 
 	@Test
-	public void repeatedCloseDoesNotCloseNativePlayerTwice() {
+	public void repeatedCloseReleasesNativePlayerAndDataSourceOnlyOnce() {
 		FakeLibrary library = new FakeLibrary();
-		SynthPlayer player = newPlayer(library);
+		FakeDataSource dataSource = new FakeDataSource(Manager.MIDI_DEVICE_LOCATOR);
+		SynthPlayer player = new SynthPlayer(library, dataSource);
 
 		player.close();
 		player.close();
 
 		assertEquals(Player.CLOSED, player.getState());
 		assertEquals(1, library.closeCalls);
+		assertEquals(1, dataSource.disconnectCalls);
 	}
 
 	private static SynthPlayer newPlayer(FakeLibrary library) {
-		return new SynthPlayer(library, new FakeDataSource());
+		return newPlayer(library, Manager.MIDI_DEVICE_LOCATOR);
+	}
+
+	private static SynthPlayer newPlayer(FakeLibrary library, String locator) {
+		return new SynthPlayer(library, new FakeDataSource(locator));
 	}
 
 	private static final class FakeDataSource extends DataSource {
-		FakeDataSource() {
-			super(Manager.MIDI_DEVICE_LOCATOR);
+		int disconnectCalls;
+
+		FakeDataSource(String locator) {
+			super(locator);
 		}
 
 		@Override
 		public String getContentType() {
-			return "audio/midi";
+			return Manager.TONE_DEVICE_LOCATOR.equals(getLocator()) ? "audio/x-tone-seq" : "audio/midi";
 		}
 
 		@Override
@@ -183,6 +207,7 @@ public class SynthPlayerContractTest {
 
 		@Override
 		public void disconnect() {
+			disconnectCalls++;
 		}
 
 		@Override
