@@ -459,10 +459,14 @@ public final class CameraXCameraSession implements CameraSession, CameraRecordin
 		if (pending != null) {
 			pending.completeExceptionally(new IOException("Camera snapshot was cancelled"));
 		}
-		try {
-			if (hasRecording()) {
+		if (hasRecording()) {
+			try {
 				finalizeRecording();
+			} catch (MediaException ignored) {
+				// Finalization is best effort during release; camera unbind still must run.
 			}
+		}
+		try {
 			stop();
 		} catch (MediaException ignored) {
 			// Activity destruction can invalidate the UI executor; release is best effort.
