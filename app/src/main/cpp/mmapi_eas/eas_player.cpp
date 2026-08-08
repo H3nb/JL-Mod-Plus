@@ -272,20 +272,14 @@ namespace mmapi {
             if (media == nullptr && interactive == nullptr) {
                 return oboe::Result::ErrorInvalidState;
             }
-            oboe::Result result = BasePlayer::prefetch();
-            if (result != oboe::Result::OK) {
-                return result;
-            }
-            if (file == nullptr) { // interactive midi
-                BasePlayer::start();
-            }
-            return result;
+            // Prefetch acquires/configures the audio device but does not begin
+            // rendering. This keeps device://midi in PREFETCHED until Player.start().
+            return BasePlayer::prefetch();
         }
 
         oboe::Result Player::pause() {
-            if (file == nullptr) { // interactive midi
-                return oboe::Result::OK;
-            }
+            // stop() on device://midi must pause rendering just like sequenced
+            // media; MIDIControl remains available while the Player is realized.
             return BasePlayer::pause();
         }
 
@@ -298,10 +292,17 @@ namespace mmapi {
                 if (easState == EAS_STATE_STOPPED || easState == EAS_STATE_ERROR) {
                     seekTime = 0;
                     if (looping == -1 || (--loopCount) > 0) {
-                        playerListener->postEvent(RESTART, playTime);
+                        if (playerListener != nullptr) {
+                            playerListener->postEvent(RESTART, playTime);
+                        }
                     } else {
+                        // A configured finite loop count applies again the next
+                        // time start() is called after end-of-media.
+                        loopCount = looping;
                         state = PREFETCHED;
-                        playerListener->postEvent(STOP, playTime);
+                        if (playerListener != nullptr) {
+                            playerListener->postEvent(STOP, playTime);
+                        }
                         return oboe::DataCallbackResult::Stop;
                     }
                 }
@@ -323,12 +324,14 @@ namespace mmapi {
                 EAS_I32 numRendered;
                 result = EAS_Render(easHandle, stream, easConfig->mixBufferSize, &numRendered);
                 if (result != EAS_SUCCESS) {
-                    playerListener->postEvent(ERROR, result);
+                    if (playerListener != nullptr) {
+                        playerListener->postEvent(ERROR, result);
+                    }
                     ALOGE("%s: EAS_Render() returned %s, numFramesOutput = %d",
                           __func__,
                           EAS_GetErrorString(result),
                           numFramesOutput);
-                    return oboe::DataCallbackResult::Stop; // Stop processing to prevent infinite loops.
+                    return oboe::DataCallbackResult::Stop;
                 }
                 for (int j = 0; j < numRendered; ++j) {
                     *stream++ *= gainLeft;
