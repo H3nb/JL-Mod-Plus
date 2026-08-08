@@ -24,14 +24,15 @@ import javax.microedition.media.camera.CaptureRequest;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public class ManagerCapabilityTest {
 	@Test
-	public void captureProtocolAdvertisesImplementedLiveSources() {
+	public void captureProtocolAdvertisesOnlyCompletedCameraPath() {
 		assertArrayEquals(
-				new String[]{RecordPlayer.CONTENT_TYPE, CaptureRequest.CONTENT_TYPE},
+				new String[]{CaptureRequest.CONTENT_TYPE},
 				Manager.getSupportedContentTypes("capture"));
 	}
 
@@ -43,8 +44,8 @@ public class ManagerCapabilityTest {
 	}
 
 	@Test
-	public void audioCaptureContentTypeStillIncludesCaptureProtocol() {
-		assertTrue(Arrays.asList(Manager.getSupportedProtocols(RecordPlayer.CONTENT_TYPE))
+	public void legacyAudioTypesAreNotAdvertisedAsCaptureCapabilities() {
+		assertFalse(Arrays.asList(Manager.getSupportedProtocols("audio/amr-wb"))
 				.contains("capture"));
 	}
 
