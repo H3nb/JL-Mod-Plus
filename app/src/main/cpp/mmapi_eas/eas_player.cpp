@@ -200,13 +200,17 @@ namespace mmapi {
         }
 
         jint Player::writeMIDI(util::JByteArrayPtr &data) {
-            if (interactive == nullptr) {
+            if (easHandle == nullptr || interactive == nullptr) {
                 ALOGE("%s: player has no interactive MIDI stream", __func__);
                 return 0;
             }
-            EAS_RESULT result = EAS_WriteMIDIStream(easHandle, interactive, (EAS_U8 *) data.buffer, data.length);
+            EAS_RESULT result = EAS_WriteMIDIStream(easHandle,
+                                                    interactive,
+                                                    reinterpret_cast<EAS_U8 *>(data.buffer),
+                                                    data.length);
             if (result != EAS_SUCCESS) {
                 ALOGE("EAS_WriteMIDIStream return: %s", EAS_GetErrorString(result));
+                return 0;
             }
             return data.length;
         }
