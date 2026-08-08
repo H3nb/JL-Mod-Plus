@@ -31,12 +31,13 @@ import java.util.Locale;
 import java.util.Objects;
 
 import javax.microedition.io.Connector;
+import javax.microedition.media.camera.CaptureLocatorParser;
+import javax.microedition.media.camera.CaptureRequest;
+import javax.microedition.media.camera.VirtualCameraCapabilities;
 import javax.microedition.media.protocol.DataSource;
 import javax.microedition.media.protocol.SourceStream;
 import javax.microedition.media.tone.ToneManager;
 import javax.microedition.util.ContextHolder;
-import javax.microedition.media.camera.CaptureLocatorParser;
-import javax.microedition.media.camera.CaptureRequest;
 
 import ru.woesss.j2me.mmapi.Plugin;
 import ru.woesss.j2me.mmapi.audio.AudioFailure;
@@ -56,8 +57,6 @@ public class Manager {
 			"audio/mp4", "audio/mmf", "audio/x-tone-seq"};
 	private static final String[] AUDIO_PROTOCOLS = new String[]{
 			"device", "file", "http", "resource"};
-	private static final String[] ALL_PROTOCOLS = new String[]{
-			"device", "file", "http", "resource", "capture"};
 	private static final TimeBase DEFAULT_TIMEBASE = () -> System.nanoTime() / 1000L;
 	private static volatile TimeBase systemTimeBase = DEFAULT_TIMEBASE;
 
@@ -113,7 +112,7 @@ public class Manager {
 				if (!ContextHolder.requestPermission(Manifest.permission.RECORD_AUDIO)) {
 					throw new SecurityException("Microphone permission was denied");
 				}
-				return new RecordPlayer();
+				return new RecordPlayer(locator);
 			}
 			throw new MediaException("Unsupported capture device: " + device);
 		} else {
@@ -205,14 +204,21 @@ public class Manager {
 
 	public static String[] getSupportedContentTypes(String protocol) {
 		if ("capture".equals(protocol)) {
-			// Legacy capture://audio remains routable for compatibility, but its
-			// RecordPlayer lifecycle is not yet complete enough to advertise as a
-			// JSR-135 capability. Only the camera path is advertised here.
-			return new String[]{CaptureRequest.CONTENT_TYPE};
+			List<String> supported = new ArrayList<>(2);
+			if (VirtualCameraCapabilities.supportsAudioCapture()) {
+				supported.add(RecordPlayer.CONTENT_TYPE);
+			}
+			if (VirtualCameraCapabilities.supportsVideoCapture()) {
+				supported.add(CaptureRequest.CONTENT_TYPE);
+			}
+			return supported.toArray(new String[0]);
 		}
 		if (protocol == null) {
-			String[] all = Arrays.copyOf(AUDIO_CONTENT_TYPES, AUDIO_CONTENT_TYPES.length + 1);
-			all[AUDIO_CONTENT_TYPES.length] = CaptureRequest.CONTENT_TYPE;
+			int extra = VirtualCameraCapabilities.supportsVideoCapture() ? 1 : 0;
+			String[] all = Arrays.copyOf(AUDIO_CONTENT_TYPES, AUDIO_CONTENT_TYPES.length + extra);
+			if (extra != 0) {
+				all[AUDIO_CONTENT_TYPES.length] = CaptureRequest.CONTENT_TYPE;
+			}
 			return all;
 		}
 		if ("device".equals(protocol) || "file".equals(protocol)
@@ -224,10 +230,25 @@ public class Manager {
 
 	public static String[] getSupportedProtocols(String contentType) {
 		if (contentType == null) {
-			return Arrays.copyOf(ALL_PROTOCOLS, ALL_PROTOCOLS.length);
+			int extra = VirtualCameraCapabilities.supportsVideoCapture()
+					|| VirtualCameraCapabilities.supportsAudioCapture() ? 1 : 0;
+			String[] protocols = Arrays.copyOf(AUDIO_PROTOCOLS, AUDIO_PROTOCOLS.length + extra);
+			if (extra != 0) {
+				protocols[AUDIO_PROTOCOLS.length] = "capture";
+			}
+			return protocols;
 		}
 		if (CaptureRequest.CONTENT_TYPE.equalsIgnoreCase(contentType)) {
-			return new String[]{"capture"};
+			return VirtualCameraCapabilities.supportsVideoCapture()
+					? new String[]{"capture"} : new String[0];
+		}
+		if (RecordPlayer.CONTENT_TYPE.equalsIgnoreCase(contentType)) {
+			if (!VirtualCameraCapabilities.supportsAudioCapture()) {
+				return Arrays.copyOf(AUDIO_PROTOCOLS, AUDIO_PROTOCOLS.length);
+			}
+			String[] protocols = Arrays.copyOf(AUDIO_PROTOCOLS, AUDIO_PROTOCOLS.length + 1);
+			protocols[AUDIO_PROTOCOLS.length] = "capture";
+			return protocols;
 		}
 		if (isSupportedAudioContentType(contentType)) {
 			return Arrays.copyOf(AUDIO_PROTOCOLS, AUDIO_PROTOCOLS.length);

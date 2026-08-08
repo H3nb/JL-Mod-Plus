@@ -19,10 +19,11 @@ package javax.microedition.media;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.List;
 
 import javax.microedition.media.camera.CaptureRequest;
+import javax.microedition.media.camera.VirtualCameraCapabilities;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
@@ -30,21 +31,28 @@ import static org.junit.Assert.assertTrue;
 
 public class ManagerCapabilityTest {
 	@Test
-	public void captureProtocolAdvertisesOnlyCompletedCameraPath() {
-		assertArrayEquals(
-				new String[]{CaptureRequest.CONTENT_TYPE},
-				Manager.getSupportedContentTypes("capture"));
+	public void captureProtocolMatchesRuntimeHardwareCapabilities() {
+		List<String> types = Arrays.asList(Manager.getSupportedContentTypes("capture"));
+		assertEquals(VirtualCameraCapabilities.supportsAudioCapture(),
+				types.contains(RecordPlayer.CONTENT_TYPE));
+		assertEquals(VirtualCameraCapabilities.supportsVideoCapture(),
+				types.contains(CaptureRequest.CONTENT_TYPE));
 	}
 
 	@Test
-	public void liveCameraContentTypeRoutesOnlyToCaptureProtocol() {
-		assertArrayEquals(
-				new String[]{"capture"},
+	public void liveCameraContentTypeRoutesToCaptureOnlyWhenCameraExists() {
+		List<String> protocols = Arrays.asList(
 				Manager.getSupportedProtocols(CaptureRequest.CONTENT_TYPE));
+		assertEquals(VirtualCameraCapabilities.supportsVideoCapture(),
+				protocols.contains("capture"));
 	}
 
 	@Test
-	public void legacyAudioTypesAreNotAdvertisedAsCaptureCapabilities() {
+	public void amrAudioCaptureProtocolMatchesMicrophoneCapability() {
+		List<String> amrProtocols = Arrays.asList(
+				Manager.getSupportedProtocols(RecordPlayer.CONTENT_TYPE));
+		assertEquals(VirtualCameraCapabilities.supportsAudioCapture(),
+				amrProtocols.contains("capture"));
 		assertFalse(Arrays.asList(Manager.getSupportedProtocols("audio/amr-wb"))
 				.contains("capture"));
 	}
@@ -59,6 +67,14 @@ public class ManagerCapabilityTest {
 	public void nullCapabilityQueriesRemainNonEmpty() {
 		assertTrue(Manager.getSupportedContentTypes(null).length > 0);
 		assertTrue(Manager.getSupportedProtocols(null).length > 0);
+	}
+
+	@Test
+	public void nullProtocolAdvertisesCaptureOnlyWhenAnyCapturePathExists() {
+		List<String> protocols = Arrays.asList(Manager.getSupportedProtocols(null));
+		boolean expected = VirtualCameraCapabilities.supportsAudioCapture()
+				|| VirtualCameraCapabilities.supportsVideoCapture();
+		assertEquals(expected, protocols.contains("capture"));
 	}
 
 	@Test

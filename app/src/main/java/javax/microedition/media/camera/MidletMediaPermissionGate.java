@@ -66,7 +66,7 @@ public final class MidletMediaPermissionGate {
 				RECORD_PREFIX,
 				R.string.camera_record_permission_title,
 				R.string.camera_record_permission_message,
-				"MIDlet camera recording permission was denied");
+				"MIDlet media recording permission was denied");
 	}
 
 	/** MIDP checkPermission-compatible state: 1 allowed, -1 unknown/ask. */
