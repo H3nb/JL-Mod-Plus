@@ -1007,10 +1007,12 @@ public abstract class Canvas extends Displayable {
 									if (completed.compareAndSet(false, true)) {
 										callback.onError(rejected);
 									}
+								}
 							} catch (Throwable error) {
 								if (completed.compareAndSet(false, true)) {
 									callback.onError(error);
 								}
+							}
 						});
 					} catch (Throwable error) {
 						if (completed.compareAndSet(false, true)) {
