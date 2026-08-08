@@ -18,9 +18,12 @@ package javax.microedition.media;
 
 import org.junit.Test;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
+import javax.microedition.media.camera.CameraSession;
+import javax.microedition.media.camera.SnapshotRequest;
 import javax.microedition.media.control.RecordControl;
 import javax.microedition.media.control.VideoControl;
 
@@ -79,6 +82,63 @@ public class CameraPlayerTest {
 	}
 
 	@Test
+	public void liveCameraHonorsNonHardwarePlayerContracts() throws Exception {
+		CameraPlayer player = new CameraPlayer("capture://video");
+		TimeBase customTimeBase = () -> 1234L;
+		try {
+			assertThrows(IllegalStateException.class, player::getTimeBase);
+			assertThrows(IllegalStateException.class, () -> player.setTimeBase(customTimeBase));
+
+			player.realize();
+			assertSame(Manager.getSystemTimeBase(), player.getTimeBase());
+			player.setTimeBase(customTimeBase);
+			assertSame(customTimeBase, player.getTimeBase());
+			player.setTimeBase(null);
+			assertSame(Manager.getSystemTimeBase(), player.getTimeBase());
+
+			assertThrows(MediaException.class, () -> player.setMediaTime(1000L));
+			assertThrows(IllegalArgumentException.class, () -> player.setLoopCount(0));
+			assertThrows(IllegalArgumentException.class, () -> player.setLoopCount(-2));
+			player.setLoopCount(-1);
+			player.setLoopCount(1);
+
+			Field state = CameraPlayer.class.getDeclaredField("state");
+			state.setAccessible(true);
+			state.setInt(player, Player.STARTED);
+			player.start();
+			assertThrows(IllegalStateException.class, () -> player.setLoopCount(1));
+			assertThrows(IllegalStateException.class, () -> player.setTimeBase(customTimeBase));
+		} finally {
+			player.close();
+		}
+
+		assertThrows(IllegalStateException.class, () -> player.getDuration());
+		assertThrows(IllegalStateException.class, player::deallocate);
+	}
+
+	@Test
+	public void deallocateRetainsPreparedSessionForJsr135StandbyResume() throws Exception {
+		CameraPlayer player = new CameraPlayer("capture://video");
+		FakeCameraSession prepared = new FakeCameraSession();
+		Field state = CameraPlayer.class.getDeclaredField("state");
+		Field session = CameraPlayer.class.getDeclaredField("session");
+		state.setAccessible(true);
+		session.setAccessible(true);
+		try {
+			state.setInt(player, Player.PREFETCHED);
+			session.set(player, prepared);
+
+			player.deallocate();
+
+			assertEquals(Player.REALIZED, player.getState());
+			assertSame(prepared, session.get(player));
+			assertFalse(prepared.released);
+		} finally {
+			player.close();
+		}
+	}
+
+	@Test
 	public void stillImageAliasDoesNotExposeRecordControl() throws Exception {
 		CameraPlayer player = new CameraPlayer("capture://image");
 		try {
@@ -128,5 +188,39 @@ public class CameraPlayerTest {
 		Method lookup = CameraPlayer.class.getDeclaredMethod("requireRecordingSession");
 
 		assertFalse(Modifier.isSynchronized(lookup.getModifiers()));
+	}
+
+	private static final class FakeCameraSession implements CameraSession {
+		private boolean released;
+
+		@Override
+		public void prepare() {
+		}
+
+		@Override
+		public void attachPreview(Object previewView) {
+		}
+
+		@Override
+		public void detachPreview(Object previewView) {
+		}
+
+		@Override
+		public void start() {
+		}
+
+		@Override
+		public void stop() {
+		}
+
+		@Override
+		public byte[] capture(SnapshotRequest request) {
+			return new byte[0];
+		}
+
+		@Override
+		public void release() {
+			released = true;
+		}
 	}
 }
