@@ -408,13 +408,15 @@ public class CameraPlayerTest {
 		}
 
 		@Override
-		public void finalizeRecording() throws MediaException {
+		public boolean finalizeRecording() throws MediaException {
 			finalizeCalls++;
 			if (failFinalize) {
 				throw new MediaException("finalize failed");
 			}
+			boolean existed = recording;
 			recording = false;
 			recordingPaused = false;
+			return existed;
 		}
 
 		@Override
