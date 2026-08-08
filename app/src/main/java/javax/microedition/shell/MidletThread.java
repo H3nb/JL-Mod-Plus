@@ -121,6 +121,20 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 
 	@Override
 	public void start() {
+		UncaughtExceptionHandler reportHandler = Thread.getDefaultUncaughtExceptionHandler();
+		Thread.setDefaultUncaughtExceptionHandler((thread, error) -> {
+			MicroActivity activity = ContextHolder.getActivity();
+			if (activity != null && !activity.isFinishing()) {
+				activity.runOnUiThread(activity::finish);
+			}
+
+			if (reportHandler != null) {
+				reportHandler.uncaughtException(thread, error);
+			} else {
+				Log.e(TAG, "Fatal MIDlet error without an application crash handler", error);
+				Process.killProcess(Process.myPid());
+			}
+		});
 		super.start();
 		handler = new Handler(getLooper(), this);
 		ContextHolder.getActivity().getLifecycle().addObserver(activityLifecycleObserver);
