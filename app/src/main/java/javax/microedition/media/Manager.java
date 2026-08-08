@@ -22,6 +22,7 @@ package javax.microedition.media;
 import android.Manifest;
 import android.webkit.MimeTypeMap;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -41,6 +42,8 @@ import javax.microedition.media.camera.CaptureRequest;
 import ru.woesss.j2me.mmapi.Plugin;
 import ru.woesss.j2me.mmapi.audio.AudioFailure;
 import ru.woesss.j2me.mmapi.audio.AudioFailureReporter;
+import ru.woesss.j2me.mmapi.audio.ContentProbe;
+import ru.woesss.j2me.mmapi.audio.MediaRouter;
 import ru.woesss.j2me.mmapi.synth.SynthPluginFactory;
 
 public class Manager {
@@ -107,8 +110,7 @@ public class Manager {
 				SourceStream sourceStream = sourceStreams[0];
 				InputStream stream = new InternalSourceStream(sourceStream);
 				InternalDataSource datasource = new InternalDataSource(stream, type);
-				Player pluginPlayer = createPluginPlayer(datasource);
-				return pluginPlayer == null ? new MicroPlayer(datasource) : pluginPlayer;
+				return createCachedPlayer(datasource, type);
 			} catch (IOException | MediaException | RuntimeException e) {
 				AudioFailureReporter.report(locator, type, "MMAPI source", AudioFailure.Phase.CREATE,
 						e instanceof MediaException && "Audio source has no streams".equals(e.getMessage())
@@ -135,16 +137,33 @@ public class Manager {
 					"STREAM_CACHE_FAILED", e);
 			throw e;
 		}
-		Player pluginPlayer = createPluginPlayer(datasource);
-		if (pluginPlayer != null) {
-			return pluginPlayer;
+		return createCachedPlayer(datasource, type);
+	}
+
+	/**
+	 * Routes cached audio by its actual signature before consulting synth plugins.
+	 * Known platform/decoded media (especially WAV) must never reach a generic
+	 * synth plugin. Sequenced media still keeps the existing Android fallback
+	 * until the built-in SONiVOX file path is made explicit in a later phase.
+	 */
+	private static Player createCachedPlayer(InternalDataSource datasource, String type)
+			throws IOException {
+		ContentProbe.Kind kind = ContentProbe.probe(new File(datasource.getLocator()));
+		MediaRouter.Backend backend = MediaRouter.route(kind, type);
+
+		if (backend != MediaRouter.Backend.PLATFORM_AUDIO) {
+			Player pluginPlayer = createPluginPlayer(datasource);
+			if (pluginPlayer != null) {
+				return pluginPlayer;
+			}
 		}
-		if (isAudioSource(type)) {
+
+		if (backend != MediaRouter.Backend.UNKNOWN || isAudioSource(type)) {
 			return new MicroPlayer(datasource);
-		} else {
-			datasource.disconnect();
-			return new BasePlayer();
 		}
+
+		datasource.disconnect();
+		return new BasePlayer();
 	}
 
 	private static Player createPluginPlayer(DataSource datasource) {
