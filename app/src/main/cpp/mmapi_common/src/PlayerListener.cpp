@@ -8,8 +8,9 @@
 #define LOG_TAG "MMAPI"
 
 JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* /*reserved*/) {
-    JNIEnv* env;
-    if (vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6) != JNI_OK) {
+    JNIEnv* env = nullptr;
+    if (vm == nullptr
+            || vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6) != JNI_OK) {
         return JNI_ERR;
     }
     mmapi::JNIEnvPtr::vm = vm;
@@ -17,13 +18,40 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* /*reserved*/) {
 }
 
 namespace mmapi {
-    PlayerListener::PlayerListener(JNIEnv *env, jobject pListener)
-            : listener(env->NewGlobalRef(pListener)),
-              method(env->GetMethodID(env->GetObjectClass(listener), "postEvent", "(IJ)V")) {}
+    PlayerListener::PlayerListener(JNIEnv *env, jobject pListener) {
+        if (env == nullptr || pListener == nullptr) {
+            return;
+        }
+        listener = env->NewGlobalRef(pListener);
+        if (listener == nullptr || env->ExceptionCheck()) {
+            env->ExceptionClear();
+            listener = nullptr;
+            return;
+        }
+        jclass clazz = env->GetObjectClass(listener);
+        if (clazz == nullptr || env->ExceptionCheck()) {
+            env->ExceptionClear();
+            return;
+        }
+        method = env->GetMethodID(clazz, "postEvent", "(IJ)V");
+        env->DeleteLocalRef(clazz);
+        if (env->ExceptionCheck()) {
+            env->ExceptionClear();
+            method = nullptr;
+        }
+    }
 
     PlayerListener::~PlayerListener() {
+        if (listener == nullptr) {
+            return;
+        }
         JNIEnvPtr env;
+        if (!env) {
+            ALOGE("%s: unable to acquire JNIEnv for global-ref cleanup", __func__);
+            return;
+        }
         env->DeleteGlobalRef(listener);
+        listener = nullptr;
     }
 
     void PlayerListener::sendEvent(PlayerListenerEvent eventType, const int64_t time) {
@@ -32,6 +60,10 @@ namespace mmapi {
             return;
         }
         JNIEnvPtr env;
+        if (!env) {
+            ALOGE("%s: unable to acquire JNIEnv", __func__);
+            return;
+        }
         env->CallVoidMethod(listener, method, eventType, time);
         if (env->ExceptionCheck()) {
             // The Java entry point is intentionally queue-only and must return
@@ -58,25 +90,33 @@ namespace mmapi {
 
     JavaVM *JNIEnvPtr::vm = nullptr;
 
-    JNIEnvPtr::JNIEnvPtr() : env(nullptr) {
+    JNIEnvPtr::JNIEnvPtr() {
+        if (vm == nullptr) {
+            ALOGE("%s: JavaVM is not initialized", __func__);
+            return;
+        }
+
         jint res = vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6);
         if (res == JNI_OK) {
-            isJavaThread = true;
             return;
-        } else if (res != JNI_EDETACHED) {
+        }
+        if (res != JNI_EDETACHED) {
+            env = nullptr;
             ALOGE("%s: JavaVM::GetEnv() returned %d", __func__, res);
             return;
         }
+
         res = vm->AttachCurrentThread(&env, nullptr);
         if (res == JNI_OK) {
-            isJavaThread = false;
+            detachOnDestroy = true;
         } else {
+            env = nullptr;
             ALOGE("%s: JavaVM::AttachCurrentThread() returned %d", __func__, res);
         }
     }
 
     JNIEnvPtr::~JNIEnvPtr() {
-        if (isJavaThread) {
+        if (!detachOnDestroy || vm == nullptr) {
             return;
         }
         jint res = vm->DetachCurrentThread();
@@ -87,5 +127,9 @@ namespace mmapi {
 
     JNIEnv *JNIEnvPtr::operator->() const {
         return env;
+    }
+
+    JNIEnvPtr::operator bool() const {
+        return env != nullptr;
     }
 } // namespace mmapi
