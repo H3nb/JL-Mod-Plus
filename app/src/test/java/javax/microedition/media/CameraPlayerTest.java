@@ -93,4 +93,11 @@ public class CameraPlayerTest {
 		assertFalse(Modifier.isSynchronized(attach.getModifiers()));
 		assertFalse(Modifier.isSynchronized(detach.getModifiers()));
 	}
+
+	@Test
+	public void recordingSessionLookupDoesNotInvertPlayerAndRecordControlLocks() throws Exception {
+		Method lookup = CameraPlayer.class.getDeclaredMethod("requireRecordingSession");
+
+		assertFalse(Modifier.isSynchronized(lookup.getModifiers()));
+	}
 }
