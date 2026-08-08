@@ -41,8 +41,9 @@ jobs:
         run: chmod +x gradlew
 
       - name: Submit dependency graph
-        uses: gradle/actions/dependency-submission@ff9ae24c39252301b448088d2c7d9f0a2d8066dd # main at 2026-08-03
+        uses: gradle/actions/dependency-submission@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
         with:
+          cache-read-only: true
           dependency-graph: generate-and-submit
           dependency-graph-continue-on-failure: false
           additional-arguments: >-

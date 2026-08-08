@@ -222,8 +222,9 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            optimization {
+                enable = true
+            }
             if (releaseSigningReady) {
                 signingConfig = releaseSigning
             }
@@ -252,10 +253,6 @@ android {
     productFlavors {
         create("emulator") { // variant dimension for create emulator
             versionNameSuffix = System.getenv("VERSION_SUFFIX")?.takeIf(String::isNotBlank)
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
         }
         create("midlet") { // variant dimension for create android port from J2ME app source
             // configure midlet's port project params here, as default it read from app manifest,
@@ -265,10 +262,6 @@ android {
             applicationId = "com.example.androidlet.${MidletApplicationIdSegmentTest.sanitize(midletName)}"
             versionName = props.getValue("MIDlet-Version") ?: "1.0"
             resValue("string", "app_name", midletName)
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-midlet.pro"
-            )
         }
     }
 
