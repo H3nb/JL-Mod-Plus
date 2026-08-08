@@ -91,7 +91,9 @@ public final class CameraPlayer implements Player {
 		checkClosed();
 		if (state == UNREALIZED) {
 			videoControl = new Jsr135VideoControl(this, request);
-			recordingControl = new CameraRecordingControl(this, request);
+			if (!CaptureRequest.DEVICE_IMAGE.equals(request.getDevice())) {
+				recordingControl = new CameraRecordingControl(this, request);
+			}
 			state = REALIZED;
 		}
 	}
@@ -177,10 +179,12 @@ public final class CameraPlayer implements Player {
 				}
 				session.start();
 				state = STARTED;
-				try {
-					recordingControl.onPlayerStarted();
-				} catch (RuntimeException e) {
-					Log.w(TAG, "Armed camera recording could not start", e);
+				if (recordingControl != null) {
+					try {
+						recordingControl.onPlayerStarted();
+					} catch (RuntimeException e) {
+						Log.w(TAG, "Armed camera recording could not start", e);
+					}
 				}
 				postEvent(PlayerListener.STARTED, getMediaTimeUnchecked());
 			} catch (MediaException | RuntimeException e) {
@@ -334,7 +338,9 @@ public final class CameraPlayer implements Player {
 	@Override
 	public synchronized Control[] getControls() {
 		checkRealized();
-		return new Control[]{videoControl, recordingControl};
+		return recordingControl == null
+				? new Control[]{videoControl}
+				: new Control[]{videoControl, recordingControl};
 	}
 
 	/**
