@@ -251,6 +251,7 @@ public final class CameraRecordingControl implements RecordControl {
 				if (count > 0) {
 					destination.write(buffer, 0, count);
 				}
+			}
 			destination.flush();
 		}
 	}
