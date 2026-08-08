@@ -49,6 +49,7 @@ public final class CrashSessionStore {
 
     public static final String STATE_RUNNING = "RUNNING";
     public static final String STATE_EXPECTED_EXIT = "EXPECTED_EXIT";
+    public static final String STATE_JAVA_CRASH_REPORTED = "JAVA_CRASH_REPORTED";
 
     private CrashSessionStore() {
     }
@@ -104,6 +105,21 @@ public final class CrashSessionStore {
         }
         session.state = STATE_EXPECTED_EXIT;
         session.exitKind = safe(exitKind);
+        writeQuietly(context, session);
+    }
+
+    /** Marks a MIDlet Java crash once ACRA has persisted the report and begins interaction. */
+    public static void markMidletJavaCrashReported(Context context) {
+        String processName = EmulatorApplication.getProcessName();
+        if (!processName.startsWith(context.getPackageName() + ":midlet")) {
+            return;
+        }
+        Session session = read(context);
+        if (session == null || !STATE_RUNNING.equals(session.state)) {
+            return;
+        }
+        session.state = STATE_JAVA_CRASH_REPORTED;
+        session.exitKind = "acra_java_crash_report";
         writeQuietly(context, session);
     }
 
