@@ -62,8 +62,6 @@ jobs:
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: jl-mod-plus-lint-${{ github.run_number }}
-          # Keep human-readable reports until Code Scanning permissions and
-          # fork-PR behavior are reviewed; do not publish SARIF yet.
           path: |
             app/build/reports/lint-results-emulatorDebug.html
             app/build/reports/lint-results-emulatorDebug.xml
@@ -103,11 +101,6 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      # Keep installable emulatorDebug artifacts on the same signing identity
-      # as local debug builds. The keystore is supplied through GitHub Secrets;
-      # never commit or print the private key. Fork PRs may not receive secrets,
-      # so those validation builds safely fall back to the runner's throwaway
-      # debug key and are not expected to update a local installation.
       - name: Restore shared debug keystore
         shell: bash
         env:
@@ -133,9 +126,6 @@ jobs:
         shell: bash
         run: echo "VERSION_SUFFIX=-dev.${GITHUB_SHA::7}" >> "$GITHUB_ENV"
 
-      # Instrumentation tests require an ARM64 Android runtime because the app
-      # intentionally packages only arm64-v8a. CI still compiles their APK here
-      # so DirectGraphics regression tests cannot silently rot between device runs.
       - name: Test and assemble emulator debug
         run: >-
           ./gradlew --no-daemon --stacktrace --console=plain --non-interactive
@@ -155,7 +145,7 @@ jobs:
           test "$abis" = "arm64-v8a"
           printf 'Verified APK: %s\nABI: %s\n' "$apk" "$abis"
 
-      - name: Verify crash process isolation
+      - name: Verify crash observability packaging
         shell: bash
         run: |
           set -euo pipefail
@@ -176,13 +166,10 @@ jobs:
           if application is None:
               raise SystemExit("APK manifest has no <application>")
 
+          activities = {item.get(android + "name"): item for item in application.findall("activity")}
           expected_processes = {
               "javax.microedition.shell.MicroActivity": ":midlet",
               "io.github.h3nb.jlmodplus.crashes.dialog.CrashReportDialog": ":acra",
-          }
-          activities = {
-              item.get(android + "name"): item
-              for item in application.findall("activity")
           }
           for target, expected in expected_processes.items():
               activity = activities.get(target)
@@ -193,7 +180,36 @@ jobs:
                   raise SystemExit(
                       f"Process isolation lost for {target}: expected {expected!r}, got {process!r}"
                   )
-              print(f"Verified {target} process suffix: {process}")
+
+          report_activity = activities.get(
+              "io.github.h3nb.jlmodplus.crashes.dialog.ProcessDeathReportActivity"
+          )
+          if report_activity is None or report_activity.get(android + "exported") != "false":
+              raise SystemExit("ProcessDeathReportActivity must exist and remain non-exported")
+
+          receivers = {item.get(android + "name"): item for item in application.findall("receiver")}
+          injector = receivers.get("io.github.h3nb.jlmodplus.crashes.debug.DebugCrashReceiver")
+          if injector is None:
+              raise SystemExit("DebugCrashReceiver is missing from debug APK")
+          if injector.get(android + "process") != ":midlet":
+              raise SystemExit("DebugCrashReceiver must execute in :midlet")
+          if injector.get(android + "exported") != "true":
+              raise SystemExit("DebugCrashReceiver must be exported for adb acceptance tests")
+          if injector.get(android + "permission") != "android.permission.DUMP":
+              raise SystemExit("DebugCrashReceiver must remain guarded by android.permission.DUMP")
+
+          providers = {item.get(android + "name"): item for item in application.findall("provider")}
+          provider = providers.get("androidx.core.content.FileProvider")
+          if provider is None:
+              raise SystemExit("Crash trace FileProvider is missing")
+          if provider.get(android + "authorities") != "io.github.h3nb.jlmodplus.debug.crash-reports":
+              raise SystemExit("Unexpected debug crash trace FileProvider authority")
+          if provider.get(android + "exported") != "false":
+              raise SystemExit("Crash trace FileProvider must remain non-exported")
+          if provider.get(android + "grantUriPermissions") != "true":
+              raise SystemExit("Crash trace FileProvider must grant per-URI read permission")
+
+          print("Verified debug crash process isolation, injector guard, report UI, and trace provider")
           PY
 
       - name: Verify ACRA report interaction packaging

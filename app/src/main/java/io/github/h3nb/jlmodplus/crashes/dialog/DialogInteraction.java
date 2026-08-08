@@ -19,8 +19,12 @@ package io.github.h3nb.jlmodplus.crashes.dialog;
 
 import android.content.Context;
 import android.content.Intent;
+
 import com.google.auto.service.AutoService;
+
 import java.io.File;
+
+import io.github.h3nb.jlmodplus.crashes.runtime.CrashSessionStore;
 
 import org.acra.config.CoreConfiguration;
 import org.acra.interaction.ReportInteraction;
@@ -38,6 +42,11 @@ public final class DialogInteraction implements ReportInteraction {
 		intent.putExtra(EXTRA_REPORT_FILE, reportFile);
 		intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		context.startActivity(intent);
+
+		// Only suppress the process-death fallback after Android accepted the ACRA
+		// dialog launch. If launching the dialog throws, the durable MIDlet session
+		// stays RUNNING and ApplicationExitInfo can still surface the Java crash.
+		CrashSessionStore.markMidletJavaCrashReported(context);
 		return false;
 	}
 }
