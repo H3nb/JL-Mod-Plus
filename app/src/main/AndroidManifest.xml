@@ -182,6 +182,11 @@
             android:launchMode="singleInstance"
             android:process=":acra" />
         <activity
+            android:name="io.github.h3nb.jlmodplus.crashes.dialog.ProcessDeathReportActivity"
+            android:theme="@style/Theme.AppCompat.DayNight.Dialog.Alert"
+            android:excludeFromRecents="true"
+            android:exported="false" />
+        <activity
             android:name="io.github.h3nb.jlmodplus.crashes.dialog.AudioFailureReportActivity"
             android:theme="@style/Theme.AppCompat.DayNight.Dialog.Alert"
             android:excludeFromRecents="true"
