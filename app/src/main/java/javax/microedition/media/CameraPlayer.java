@@ -430,6 +430,13 @@ public final class CameraPlayer implements Player {
 		requireRecordingSession().finalizeRecording();
 	}
 
+	/** Returns backend recording state without taking the Player monitor. */
+	public boolean hasCameraRecording() {
+		CameraSession currentSession = session;
+		return currentSession instanceof CameraRecordingSession
+				&& ((CameraRecordingSession) currentSession).hasRecording();
+	}
+
 	public void notifyRecordingEvent(String event, Object data) {
 		postEvent(event, data);
 	}
