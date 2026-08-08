@@ -34,13 +34,12 @@ class CrashViewModel : ViewModel() {
 
     fun loadStackTrace(reportFile: File): LiveData<String?> {
         viewModelScope.launch(Dispatchers.IO) {
-            reportFile.runCatching {
+            val loadedStackTrace = reportFile.runCatching {
                 CrashReportPersister().load(this).getString(ReportField.STACK_TRACE)
-            }.onFailure(Throwable::printStackTrace).getOrNull()?.also {
-                stackTrace = it
-            }?.lines()?.run {
-                filter { it.startsWith("Caused by:") }.joinToString("\n", this[0] + "\n")
-            }.let(_stackTrace::postValue)
+            }.onFailure(Throwable::printStackTrace).getOrNull()
+
+            stackTrace = loadedStackTrace
+            _stackTrace.postValue(loadedStackTrace)
         }
 
         return _stackTrace
