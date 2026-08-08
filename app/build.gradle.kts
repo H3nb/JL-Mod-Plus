@@ -95,7 +95,6 @@ abstract class MidletApplicationIdSegmentTest : DefaultTask() {
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.legacy.kapt)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ksp)
 }
@@ -364,8 +363,6 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-    kapt(libs.google.auto.service)
-    compileOnly(libs.google.auto.service.annotations)
     implementation(libs.google.gson)
     implementation(libs.google.oboe)
 
