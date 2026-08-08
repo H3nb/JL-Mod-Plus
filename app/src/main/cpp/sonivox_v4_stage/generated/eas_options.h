@@ -22,6 +22,9 @@
 
 #define _XMF_PARSER
 #define _RMID_PARSER
+#define _IMELODY_PARSER
+#define _RTTTL_PARSER
+#define _OTA_PARSER
 #define MMAPI_SUPPORT
 
 #define _16_BIT_SAMPLES
@@ -33,8 +36,6 @@
 /*
  * Intentionally disabled in the first migration stage:
  * - EAS_FM_SYNTH / EAS_HYBRID_SYNTH
- * - _IMELODY_PARSER / _RTTTL_PARSER / _OTA_PARSER until their stale
- *   32-bit parser callback ABI is repaired safely for ARM64
  * - _WAVE_PARSER / _IMA_DECODER (WAV belongs to the dedicated dr_wav path)
  * - JET_INTERFACE (not required by JSR-135)
  * - _ZLIB_UNPACKER (enable only if compressed XMF compatibility needs it)
