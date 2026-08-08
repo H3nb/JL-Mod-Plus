@@ -16,6 +16,10 @@
 
 #include "eas_parser.h"
 
+/* The historical callback ABI being bridged is explicitly 32-bit. */
+_Static_assert(sizeof(EAS_I32) == 4,
+               "legacy parser bridge requires a 32-bit EAS_I32");
+
 /*
  * Exact pre-v4 callback shape used by eas_imelody.c, eas_rtttl.c and
  * eas_ota.c. All parser operations other than state/set/get already match the
