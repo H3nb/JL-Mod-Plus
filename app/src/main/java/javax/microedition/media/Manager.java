@@ -91,13 +91,22 @@ public class Manager {
 			String type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
 			return createPlayer(stream, type);
 		} else if (locator.startsWith(CAPTURE_LOCATOR_PREFIX)) {
-			String device = CaptureLocatorParser.deviceOf(locator);
+			String device;
+			try {
+				device = CaptureLocatorParser.deviceOf(locator);
+			} catch (IllegalArgumentException e) {
+				throw new MediaException("Invalid capture locator: " + e.getMessage());
+			}
 			if (CaptureRequest.DEVICE_VIDEO.equals(device)
 					|| CaptureRequest.DEVICE_IMAGE.equals(device)
 					|| CaptureRequest.DEVICE_REAR.equals(device)
 					|| CaptureRequest.DEVICE_FRONT.equals(device)
 					|| CaptureRequest.DEVICE_AUDIO_VIDEO.equals(device)) {
-				return new CameraPlayer(locator);
+				try {
+					return new CameraPlayer(locator);
+				} catch (IllegalArgumentException e) {
+					throw new MediaException("Invalid capture locator: " + e.getMessage());
+				}
 			} else if ("audio".equals(device)) {
 				if (!ContextHolder.requestPermission(Manifest.permission.RECORD_AUDIO)) {
 					throw new SecurityException("Microphone permission was denied");
