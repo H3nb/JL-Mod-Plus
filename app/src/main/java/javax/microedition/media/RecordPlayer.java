@@ -33,8 +33,6 @@ import io.github.h3nb.jlmodplus.util.IOUtils;
 
 public class RecordPlayer extends BasePlayer implements RecordControl {
 
-	static final String CONTENT_TYPE = "audio/amr-wb";
-
 	private static final int RECORD_CLOSED = 0;
 	private static final int RECORD_PREPARED = 1;
 	private static final int RECORD_STARTED = 2;
@@ -64,11 +62,6 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 	@Override
 	public Control[] getControls() {
 		return controls.values().toArray(new Control[0]);
-	}
-
-	@Override
-	public String getContentType() {
-		return CONTENT_TYPE;
 	}
 
 	@Override
