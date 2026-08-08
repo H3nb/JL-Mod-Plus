@@ -16,6 +16,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := sonivox_v4_stage
 
 LOCAL_SRC_FILES := \
+	api_smoke.c \
 	../sonivox_v4/arm-wt-22k/host_src/eas_config.c \
 	../sonivox_v4/arm-wt-22k/host_src/eas_report.c \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_chorus.c \
