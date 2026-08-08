@@ -1,0 +1,49 @@
+# Copyright 2026 H3NB
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# J2ME APIs and vendor extensions are a runtime ABI for arbitrary MIDlets.
+# Keep names and public/protected members stable, but allow R8 to optimize
+# their implementations because allowoptimization does not rename or remove them.
+-keep,allowoptimization public class com.j_phone.** { public protected *; }
+-keep,allowoptimization public class com.jblend.** { public protected *; }
+-keep,allowoptimization public class com.kddi.** { public protected *; }
+-keep,allowoptimization public class com.mascotcapsule.micro3d.v3.* { public protected *; }
+-keep,allowoptimization public class com.mexa.** { public protected *; }
+-keep,allowoptimization public class com.mot.iden.** { public protected *; }
+-keep,allowoptimization public class com.motorola.** { public protected *; }
+-keep,allowoptimization public class com.nokia.mid.** { public protected *; }
+-keep,allowoptimization public class com.samsung.util.** { public protected *; }
+-keep,allowoptimization public class com.siemens.mp.** { public protected *; }
+-keep,allowoptimization public class com.sonyericsson.accelerometer.** { public protected *; }
+-keep,allowoptimization public class com.sprintpcs.media.** { public protected *; }
+-keep,allowoptimization public class com.sun.midp.midlet.** { public protected *; }
+-keep,allowoptimization public class com.vodafone.** { public protected *; }
+-keep,allowoptimization public class javax.** { public protected *; }
+-keep,allowoptimization public class mmpp.media.** { public protected *; }
+
+# Emulator runtime surface may also be resolved indirectly. Keep its ABI stable
+# while allowing method-body optimization.
+-keep,allowoptimization public class org.microemu.** { public protected *; }
+
+# Keep only app-owned runtime contracts that have an observed indirect-access need.
+-keep,allowoptimization class io.github.h3nb.jlmodplus.util.SparseIntArrayAdapter { *; }
+# ACRA discovers this app-owned interaction through ServiceLoader.
+-keep,allowoptimization class io.github.h3nb.jlmodplus.crashes.dialog.DialogInteraction { *; }
+
+# ACRA 5.13.1 and Gson 2.14.0 both ship consumer R8 rules. Do not duplicate
+# their broad rules locally; keeping one source of truth lets R8 optimize more.
+
+# Paths are relative to this keep-rule file under src/emulator/keepRules.
+-obfuscationdictionary ../../../dictionary.pro
+-classobfuscationdictionary ../../../dictionary.pro
