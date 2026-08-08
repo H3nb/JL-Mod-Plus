@@ -72,7 +72,8 @@ public final class ProcessExitReconciler {
             return null;
         }
 
-        if (CrashSessionStore.STATE_EXPECTED_EXIT.equals(session.state)) {
+        if (CrashSessionStore.STATE_EXPECTED_EXIT.equals(session.state)
+                || CrashSessionStore.STATE_JAVA_CRASH_REPORTED.equals(session.state)) {
             CrashSessionStore.clearMidletSession(context);
             return null;
         }
