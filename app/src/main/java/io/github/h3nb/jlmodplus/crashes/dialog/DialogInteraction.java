@@ -20,8 +20,6 @@ package io.github.h3nb.jlmodplus.crashes.dialog;
 import android.content.Context;
 import android.content.Intent;
 
-import com.google.auto.service.AutoService;
-
 import java.io.File;
 
 import io.github.h3nb.jlmodplus.crashes.runtime.CrashSessionStore;
@@ -30,7 +28,6 @@ import org.acra.config.CoreConfiguration;
 import org.acra.interaction.ReportInteraction;
 import org.jetbrains.annotations.NotNull;
 
-@AutoService(ReportInteraction.class)
 public final class DialogInteraction implements ReportInteraction {
 	public static final String EXTRA_REPORT_FILE = "REPORT_FILE";
 
