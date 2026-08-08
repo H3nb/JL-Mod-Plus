@@ -7,7 +7,6 @@ package ru.woesss.j2me.mmapi.synth;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import android.content.Context;
 
@@ -20,7 +19,6 @@ import org.junit.runner.RunWith;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -185,7 +183,10 @@ public class LegacySonivoxParserInstrumentedTest {
             if (error instanceof Exception exception) {
                 throw exception;
             }
-            throw error;
+            if (error instanceof Error fatalError) {
+                throw fatalError;
+            }
+            throw new AssertionError(error);
         }
     }
 
