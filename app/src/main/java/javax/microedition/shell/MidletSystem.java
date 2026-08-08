@@ -39,7 +39,7 @@ public final class MidletSystem {
     public static String getProperty(String key, String def) {
         if (VirtualCameraCapabilities.isManagedProperty(key)) {
             String value = VirtualCameraCapabilities.systemProperty(key);
-            if (TextUtils.isEmpty(value)) value = def;
+            if (value == null || value.isEmpty()) value = def;
             Log.d(TAG, "System.getProperty: " + key + "=" + value);
             return value;
         }
