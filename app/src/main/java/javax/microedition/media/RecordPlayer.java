@@ -37,17 +37,9 @@ import javax.microedition.util.ContextHolder;
 
 import io.github.h3nb.jlmodplus.util.IOUtils;
 
-/**
- * JSR-135 live audio capture player.
- *
- * <p>The Android MediaRecorder backend writes one AMR-NB file per active capture segment. A
- * Player stop or RecordControl stop finalizes the current segment. Later restarts create another
- * segment; commit joins the AMR frames into one stream. This keeps JSR-135 standby/resume
- * semantics working on API 23 as well as newer Android versions without relying on
- * MediaRecorder.pause()/resume().</p>
- */
+/** JSR-135 live audio capture Player backed by Android AMR-NB recording. */
 public class RecordPlayer extends BasePlayer implements RecordControl {
-	private static final String CONTENT_TYPE = "audio/amr";
+	static final String CONTENT_TYPE = "audio/amr";
 	private static final byte[] AMR_HEADER = "#!AMR\n".getBytes(StandardCharsets.US_ASCII);
 	private static final int DESTINATION_NONE = 0;
 	private static final int DESTINATION_STREAM = 1;
@@ -179,7 +171,7 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 						throw new MediaException("Duplicate audio capture encoding");
 					}
 					encodingSeen = true;
-					if (!("amr".equalsIgnoreCase(value) || "audio/amr".equalsIgnoreCase(value))) {
+					if (!("amr".equalsIgnoreCase(value) || CONTENT_TYPE.equalsIgnoreCase(value))) {
 						throw new MediaException("Unsupported audio capture encoding: " + value);
 					}
 				}
@@ -291,7 +283,7 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 		try {
 			reset();
 		} catch (IOException ignored) {
-			// close() cannot report checked I/O failures; resources are still released below.
+			// close() cannot report checked I/O failures; release resources below.
 		}
 		releaseRecorder();
 		closeOwnedDestinationQuietly();
@@ -415,7 +407,16 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 		checkDestinationReplaceable(DESTINATION_LOCATION);
 		dependencies.requireRecordPermission();
 		OutputStream replacement = dependencies.openOutputStream(locator);
-		closeOwnedDestination();
+		try {
+			closeOwnedDestination();
+		} catch (IOException e) {
+			try {
+				replacement.close();
+			} catch (IOException closeFailure) {
+				e.addSuppressed(closeFailure);
+			}
+			throw e;
+		}
 		destination = replacement;
 		destinationOwned = true;
 		destinationKind = DESTINATION_LOCATION;
@@ -586,7 +587,7 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 			if (segment != null) {
 				segment.delete();
 			}
-			throw new MediaException("Audio recorder could not start", e);
+			throw mediaException("Audio recorder could not start", e);
 		}
 	}
 
@@ -599,21 +600,43 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 		recordingActive = false;
 		activeSegment = null;
 		recorder = null;
+		RuntimeException stopFailure = null;
 		try {
 			current.stop();
-			current.release();
-			validateAmrSegment(segment);
-			completedSegments.add(segment);
-		} catch (IOException | RuntimeException e) {
+		} catch (RuntimeException e) {
+			stopFailure = e;
+		} finally {
 			try {
 				current.release();
-			} catch (RuntimeException ignored) {
+			} catch (RuntimeException releaseFailure) {
+				if (stopFailure == null) {
+					stopFailure = releaseFailure;
+				} else {
+					stopFailure.addSuppressed(releaseFailure);
+				}
 			}
+		}
+		if (stopFailure != null) {
 			if (segment != null) {
 				segment.delete();
 			}
-			throw new MediaException("Audio recorder could not finalize a segment", e);
+			throw mediaException("Audio recorder could not finalize a segment", stopFailure);
 		}
+		try {
+			validateAmrSegment(segment);
+			completedSegments.add(segment);
+		} catch (IOException e) {
+			if (segment != null) {
+				segment.delete();
+			}
+			throw mediaException("Audio recorder produced invalid AMR data", e);
+		}
+	}
+
+	private static MediaException mediaException(String message, Throwable cause) {
+		MediaException exception = new MediaException(message);
+		exception.initCause(cause);
+		return exception;
 	}
 
 	private static void validateAmrSegment(File segment) throws IOException {
@@ -638,19 +661,26 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 			File segment = completedSegments.get(index);
 			try (FileInputStream input = new FileInputStream(segment)) {
 				if (index > 0) {
-					long skipped = 0;
-					while (skipped < AMR_HEADER.length) {
-						long count = input.skip(AMR_HEADER.length - skipped);
-						if (count <= 0) {
-							throw new IOException("AMR segment header is incomplete");
-						}
-						skipped += count;
-					}
+					skipExactly(input, AMR_HEADER.length);
 				}
 				IOUtils.copy(input, destination);
 			}
 		}
 		destination.flush();
+	}
+
+	private static void skipExactly(FileInputStream input, int count) throws IOException {
+		int remaining = count;
+		while (remaining > 0) {
+			long skipped = input.skip(remaining);
+			if (skipped <= 0) {
+				if (input.read() == -1) {
+					throw new IOException("AMR segment header is incomplete");
+				}
+				skipped = 1;
+			}
+			remaining -= (int) skipped;
+		}
 	}
 
 	private void finishCommittedCycle() throws IOException {
@@ -668,14 +698,7 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 		recordingRequested = false;
 		recordingActive = false;
 		recordingCycleStarted = false;
-		if (!deleteSegments()) {
-			IOException cleanup = new IOException("Temporary audio recording could not be deleted");
-			if (failure == null) {
-				failure = cleanup;
-			} else {
-				failure.addSuppressed(cleanup);
-			}
-		}
+		deleteSegments();
 		if (failure != null) {
 			throw failure;
 		}
