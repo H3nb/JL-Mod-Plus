@@ -23,8 +23,8 @@ import javax.microedition.media.Player;
 import ru.woesss.j2me.mmapi.synth.eas.LibEAS;
 
 /**
- * Built-in SONiVOX plugin for sequenced media and the live
- * {@code device://midi} endpoint.
+ * Built-in SONiVOX plugin for sequenced media plus the JSR-135 MIDI and tone
+ * device endpoints.
  *
  * <p>Manager's signature-based media router is the boundary that keeps WAV and
  * other decoded/platform media away from synth plugins. This plugin therefore
@@ -38,10 +38,10 @@ public class MIDIDevicePlugin extends SynthPlugin {
 
 	@Override
 	public Player createPlayer(String locator) {
-		if (Manager.MIDI_DEVICE_LOCATOR.equals(locator)) {
+		if (Manager.MIDI_DEVICE_LOCATOR.equals(locator)
+				|| Manager.TONE_DEVICE_LOCATOR.equals(locator)) {
 			return super.createPlayer(locator);
-		} else {
-			return null;
 		}
+		return null;
 	}
 }
