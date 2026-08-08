@@ -23,8 +23,7 @@ import java.util.Locale;
  *
  * <p>Stable content signatures always take precedence over a caller supplied
  * MIME type. MIME is only used as a fallback when the content is inconclusive.
- * UNKNOWN deliberately preserves the legacy fallback path until a format has
- * an explicitly tested backend.</p>
+ * UNKNOWN means no backend has made an explicit compatibility claim.</p>
  */
 public final class MediaRouter {
 	public enum Backend {
@@ -75,6 +74,7 @@ public final class MediaRouter {
 		switch (mime) {
 			case "audio/midi":
 			case "audio/x-midi":
+			case "audio/x-tone-seq":
 				return Backend.SYNTH;
 			case "audio/wav":
 			case "audio/x-wav":
