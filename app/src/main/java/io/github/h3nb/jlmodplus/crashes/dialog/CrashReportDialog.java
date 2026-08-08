@@ -62,14 +62,12 @@ public final class CrashReportDialog extends AppCompatActivity {
 			@Override
 			public void onCopyAction() {
 				copyStackTrace();
-				deleteReport();
-				finish();
+				deleteReportAndFinish();
 			}
 
 			@Override
 			public void onCancelAction() {
-				deleteReport();
-				finish();
+				deleteReportAndFinish();
 			}
 
 			@Override
@@ -85,8 +83,7 @@ public final class CrashReportDialog extends AppCompatActivity {
 		viewModel = new ViewModelProvider(this).get(CrashViewModel.class);
 		viewModel.loadStackTrace(reportFile).observe(this, stackTrace -> {
 			if (stackTrace == null) {
-				deleteReport();
-				finish();
+				deleteReportAndFinish();
 			} else {
 				buildAndShowDialog(stackTrace);
 			}
@@ -136,12 +133,13 @@ public final class CrashReportDialog extends AppCompatActivity {
 		}
 	}
 
-	private void deleteReport() {
+	private void deleteReportAndFinish() {
 		File file = reportFile;
 		new Thread(() -> {
 			if (file.exists() && !file.delete()) {
 				Log.w(TAG, "Failed to delete crash report: " + file);
 			}
+			runOnUiThread(this::finish);
 		}, "CrashReportDelete").start();
 	}
 
