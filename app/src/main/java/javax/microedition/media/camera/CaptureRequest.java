@@ -27,6 +27,9 @@ public final class CaptureRequest {
 	public static final String DEVICE_AUDIO_VIDEO = "audio_video";
 	/** Still-image encoding accepted by the compatibility image locator and explicit legacy requests. */
 	public static final String JPEG_ENCODING = "jpeg";
+	/** Legacy live-source hints accepted for compatibility but not advertised as recording encodings. */
+	public static final String GRAY8_ENCODING = "gray8";
+	public static final String RGB888_ENCODING = "rgb888";
 	/** Default recordable video content type advertised by video.encodings and RecordControl. */
 	public static final String VIDEO_RECORDING_CONTENT_TYPE = "video/mp4";
 
