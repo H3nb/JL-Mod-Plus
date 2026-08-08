@@ -58,11 +58,17 @@ public final class ProcessExitReconciler {
     private ProcessExitReconciler() {
     }
 
-    /**
-     * Returns the id of a newly-created report, or null if there is no
-     * unexpected MIDlet process death to report.
-     */
+    /** First-pass reconciliation. API 30+ keeps an unresolved session briefly if exit history is not ready yet. */
     public static String reconcileMidlet(Context context) {
+        return reconcileMidlet(context, false);
+    }
+
+    /** Second-pass reconciliation after a short UI-side grace period. */
+    public static String reconcileMidletAfterExitHistoryGrace(Context context) {
+        return reconcileMidlet(context, true);
+    }
+
+    private static String reconcileMidlet(Context context, boolean allowMissingExitFallback) {
         CrashSessionStore.Session session = CrashSessionStore.read(context);
         if (session == null) {
             return null;
@@ -81,6 +87,11 @@ public final class ProcessExitReconciler {
         ExitRecord exit = null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             exit = Api30Impl.findMatchingExit(context, session);
+            if (exit == null && !allowMissingExitFallback) {
+                // Activity resume can race system_server recording the exit. Keep
+                // the durable session so the lifecycle callback can retry shortly.
+                return null;
+            }
             if (exit != null && isUserOrMaintenanceExit(exit.reason)) {
                 CrashSessionStore.clearMidletSession(context);
                 return null;
