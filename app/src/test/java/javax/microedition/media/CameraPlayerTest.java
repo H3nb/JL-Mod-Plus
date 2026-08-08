@@ -63,6 +63,22 @@ public class CameraPlayerTest {
 	}
 
 	@Test
+	public void cameraRecordSizeLimitCanBeConfiguredBeforeRecording() throws Exception {
+		CameraPlayer player = new CameraPlayer("capture://video");
+		try {
+			player.realize();
+			RecordControl control = (RecordControl) player.getControl(RecordControl.class.getName());
+
+			assertEquals(1024, control.setRecordSizeLimit(1024));
+			assertEquals(Integer.MAX_VALUE, control.setRecordSizeLimit(Integer.MAX_VALUE));
+			assertThrows(IllegalArgumentException.class, () -> control.setRecordSizeLimit(0));
+			assertThrows(IllegalArgumentException.class, () -> control.setRecordSizeLimit(-1));
+		} finally {
+			player.close();
+		}
+	}
+
+	@Test
 	public void stillImageAliasDoesNotExposeRecordControl() throws Exception {
 		CameraPlayer player = new CameraPlayer("capture://image");
 		try {
