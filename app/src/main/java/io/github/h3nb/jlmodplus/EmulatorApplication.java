@@ -37,6 +37,7 @@ import java.util.Arrays;
 
 import io.github.h3nb.jlmodplus.crashes.runtime.CrashDiagnosticsLifecycleCallbacks;
 import io.github.h3nb.jlmodplus.crashes.runtime.CrashSessionStore;
+import io.github.h3nb.jlmodplus.crashes.runtime.MidletProcessLifecycleCallbacks;
 import io.github.h3nb.jlmodplus.settings.EmulationAudioPolicy;
 import io.github.h3nb.jlmodplus.util.Constants;
 import io.github.h3nb.jlmodplus.util.FileUtils;
@@ -69,6 +70,7 @@ public class EmulatorApplication extends Application implements OnSharedPreferen
 		String packageName = getPackageName();
 		if (processName.startsWith(packageName + ":midlet")) {
 			CrashSessionStore.markMidletProcessStarted(this);
+			registerActivityLifecycleCallbacks(new MidletProcessLifecycleCallbacks());
 		} else if (processName.startsWith(packageName) && !processName.contains(":")) {
 			registerActivityLifecycleCallbacks(new CrashDiagnosticsLifecycleCallbacks());
 		}
