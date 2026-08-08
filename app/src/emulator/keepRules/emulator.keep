@@ -36,11 +36,8 @@
 # while allowing method-body optimization.
 -keep,allowoptimization public class org.microemu.** { public protected *; }
 
-# App-owned types with runtime/serialization contracts. Their names/members stay
-# stable; implementation optimization remains safe.
--keep,allowoptimization class io.github.h3nb.jlmodplus.BuildConfig { *; }
+# Keep only app-owned runtime contracts that have an observed indirect-access need.
 -keep,allowoptimization class io.github.h3nb.jlmodplus.util.SparseIntArrayAdapter { *; }
--keep,allowoptimization class io.github.h3nb.jlmodplus.crashes.models.* { *; }
 # ACRA discovers this app-owned interaction through ServiceLoader.
 -keep,allowoptimization class io.github.h3nb.jlmodplus.crashes.dialog.DialogInteraction { *; }
 

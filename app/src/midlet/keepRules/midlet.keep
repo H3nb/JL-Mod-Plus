@@ -16,8 +16,6 @@
 # and members while still allowing R8 to optimize their implementations.
 -keep,allowoptimization public class org.microemu.** { public protected *; }
 -keep,allowoptimization class io.github.h3nb.jlmodplus.util.SparseIntArrayAdapter { *; }
--keep,allowoptimization class io.github.h3nb.jlmodplus.BuildConfig { *; }
--keep,allowoptimization class io.github.h3nb.jlmodplus.crashes.models.* { *; }
 
 # Preserve all public MIDlet entry-point classes.
 -keep,allowoptimization public class * extends javax.microedition.midlet.MIDlet
