@@ -14,11 +14,11 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := sonivox_v4
 
-# Upstream v4.0.1 keeps the optional iMelody/RTTTL/OTA parser sources, but
-# those files still use the old 32-bit parser callback ABI (EAS_I32 for values
-# that are EAS_IPTR in the current interface). Do not compile them on ARM64
-# until they have a pointer-width-safe compatibility patch; suppressing the
-# compiler errors would leave real pointer truncation bugs.
+# iMelody, RTTTL/RTX and Nokia OTA remain useful Java ME-era formats. Their
+# pinned v4.0.1 sources still implement the pre-v4 32-bit state/set/get parser
+# callbacks. The *_arm64_compat.c translation units include those exact
+# upstream parser algorithms behind a private legacy interface and expose only
+# pointer-width-safe EAS_STATE/EAS_IPTR adapters to the v4 parser registry.
 #
 # eas_public.c also contains two MMAPI-only calls using the obsolete printf-
 # style EAS_ReportEx signature. Compile it through a tiny compatibility
@@ -27,6 +27,9 @@ LOCAL_MODULE := sonivox_v4
 LOCAL_SRC_FILES := \
 	api_smoke.c \
 	eas_public_compat.c \
+	eas_imelody_arm64_compat.c \
+	eas_rtttl_arm64_compat.c \
+	eas_ota_arm64_compat.c \
 	../sonivox_v4/arm-wt-22k/host_src/eas_config.c \
 	../sonivox_v4/arm-wt-22k/host_src/eas_report.c \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_chorus.c \
@@ -69,7 +72,8 @@ LOCAL_CFLAGS += \
 	-Wno-unused-function \
 	-Wno-misleading-indentation \
 	-Wno-attributes \
-	-Wformat
+	-Wformat \
+	-Werror=incompatible-function-pointer-types
 
 LOCAL_CONLYFLAGS += -std=c11
 
