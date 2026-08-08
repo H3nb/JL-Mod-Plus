@@ -16,6 +16,8 @@
 
 package ru.woesss.j2me.mmapi.audio;
 
+import android.util.Log;
+
 import androidx.annotation.Keep;
 
 import java.util.ArrayList;
@@ -23,6 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 
 import javax.microedition.media.BasePlayer;
 import javax.microedition.media.Control;
@@ -38,11 +41,23 @@ import javax.microedition.media.protocol.DataSource;
  * WAV/IMA-ADPCM data cannot enter SONiVOX's interactive MIDI path.</p>
  */
 public final class WavPlayer extends BasePlayer implements VolumeControl {
+	private static final String TAG = WavPlayer.class.getSimpleName();
 	private static final String CONTENT_TYPE = "audio/x-wav";
+
+	private static final class NativeEvent {
+		final int type;
+		final long time;
+
+		NativeEvent(int type, long time) {
+			this.type = type;
+			this.time = time;
+		}
+	}
 
 	private final DataSource source;
 	private final Map<String, Control> controls = new HashMap<>();
 	private final ArrayList<PlayerListener> listeners = new ArrayList<>();
+	private final ArrayList<NativeEvent> pendingStartEvents = new ArrayList<>();
 	private final ExecutorService callbackExecutor = Executors.newSingleThreadExecutor(r -> {
 		Thread thread = new Thread(r, "MidletWavPlayerCallback");
 		thread.setDaemon(true);
@@ -54,6 +69,7 @@ public final class WavPlayer extends BasePlayer implements VolumeControl {
 	private int level = 100;
 	private boolean mute;
 	private boolean errorEventPosted;
+	private boolean starting;
 
 	static {
 		System.loadLibrary("mmapi_wav");
@@ -95,13 +111,37 @@ public final class WavPlayer extends BasePlayer implements VolumeControl {
 	}
 
 	@Override
-	public synchronized void start() throws MediaException {
+	public void start() throws MediaException {
 		prefetch();
-		if (state == PREFETCHED) {
+
+		synchronized (this) {
+			if (state != PREFETCHED) {
+				return;
+			}
+			starting = true;
+			pendingStartEvents.clear();
+		}
+
+		try {
 			nativeStart(handle);
+		} catch (MediaException | RuntimeException e) {
+			synchronized (this) {
+				starting = false;
+				pendingStartEvents.clear();
+				state = PREFETCHED;
+			}
+			throw e;
+		}
+
+		synchronized (this) {
 			state = STARTED;
 			errorEventPosted = false;
-			postEvent(PlayerListener.STARTED, getMediaTime());
+			enqueuePlayerEvent(PlayerListener.STARTED, nativeGetMediaTime(handle));
+			starting = false;
+			for (NativeEvent event : pendingStartEvents) {
+				enqueueNativeEvent(event.type, event.time);
+			}
+			pendingStartEvents.clear();
 		}
 	}
 
@@ -111,7 +151,7 @@ public final class WavPlayer extends BasePlayer implements VolumeControl {
 		if (state == STARTED) {
 			nativePause(handle);
 			state = PREFETCHED;
-			postEvent(PlayerListener.STOPPED, getMediaTime());
+			enqueuePlayerEvent(PlayerListener.STOPPED, nativeGetMediaTime(handle));
 		}
 	}
 
@@ -139,13 +179,15 @@ public final class WavPlayer extends BasePlayer implements VolumeControl {
 		}
 
 		state = CLOSED;
+		starting = false;
+		pendingStartEvents.clear();
 		long nativeHandle = handle;
 		handle = 0;
 		if (nativeHandle != 0) {
 			nativeDestroy(nativeHandle);
 		}
 		source.disconnect();
-		postEvent(PlayerListener.CLOSED, null);
+		enqueuePlayerEvent(PlayerListener.CLOSED, null);
 		callbackExecutor.shutdown();
 	}
 
@@ -173,8 +215,8 @@ public final class WavPlayer extends BasePlayer implements VolumeControl {
 		if (state == STARTED) {
 			throw new IllegalStateException("player must not be STARTED while changing loop count");
 		}
-		if (count == 0) {
-			throw new IllegalArgumentException("loop count must not be 0");
+		if (count == 0 || count < -1) {
+			throw new IllegalArgumentException("loop count must be positive or -1");
 		}
 		nativeSetRepeat(handle, count);
 	}
@@ -263,7 +305,7 @@ public final class WavPlayer extends BasePlayer implements VolumeControl {
 		float gain = mute ? 0.0f : volumeToGain(level);
 		nativeSetVolume(handle, gain, gain);
 		if (notify) {
-			postEvent(PlayerListener.VOLUME_CHANGED, this);
+			enqueuePlayerEvent(PlayerListener.VOLUME_CHANGED, this);
 		}
 	}
 
@@ -277,44 +319,91 @@ public final class WavPlayer extends BasePlayer implements VolumeControl {
 		return (float) (1 - (Math.log(100 - volume) / Math.log(100)));
 	}
 
-	/** Called by the native PlayerListener. */
+	/**
+	 * JNI entry point. Native audio callbacks only enqueue work here; user code
+	 * and native destruction run later on the Java callback executor.
+	 */
 	@SuppressWarnings("unused")
 	@Keep
-	private synchronized void postEvent(int type, long time) {
-		if (state == CLOSED) {
-			return;
+	private void postEvent(int type, long time) {
+		synchronized (this) {
+			if (state == CLOSED) {
+				return;
+			}
+			if (starting) {
+				pendingStartEvents.add(new NativeEvent(type, time));
+				return;
+			}
 		}
+		enqueueNativeEvent(type, time);
+	}
+
+	private void enqueueNativeEvent(int type, long time) {
+		enqueueCallback(() -> handleNativeEvent(type, time));
+	}
+
+	private void handleNativeEvent(int type, long time) {
+		synchronized (this) {
+			if (state == CLOSED) {
+				return;
+			}
+			if (type == 2) {
+				state = PREFETCHED;
+			}
+		}
+
 		switch (type) {
 			case 1 -> {
-				postEvent(PlayerListener.END_OF_MEDIA, time);
-				postEvent(PlayerListener.STARTED, 0L);
+				dispatchPlayerEvent(PlayerListener.END_OF_MEDIA, time);
+				dispatchPlayerEvent(PlayerListener.STARTED, 0L);
 			}
-			case 2 -> {
-				state = PREFETCHED;
-				postEvent(PlayerListener.END_OF_MEDIA, time);
-			}
+			case 2 -> dispatchPlayerEvent(PlayerListener.END_OF_MEDIA, time);
 			case 3 -> {
-				state = PREFETCHED;
-				reportRuntimeError("WAV_NATIVE_RUNTIME_ERROR_" + time, null);
+				String code = "WAV_NATIVE_RUNTIME_ERROR_" + time;
+				reportRuntimeError(code, null, false);
+				dispatchPlayerEvent(PlayerListener.ERROR, code);
+				close();
 			}
-			default -> {
-				// Ignore unknown native event codes.
-			}
+			default -> Log.w(TAG, "Ignoring unknown native WAV event " + type);
 		}
 	}
 
-	private synchronized void postEvent(String event, Object data) {
-		for (PlayerListener listener : new ArrayList<>(listeners)) {
-			callbackExecutor.execute(() -> listener.playerUpdate(this, event, data));
+	private void enqueuePlayerEvent(String event, Object data) {
+		enqueueCallback(() -> dispatchPlayerEvent(event, data));
+	}
+
+	private void enqueueCallback(Runnable callback) {
+		try {
+			callbackExecutor.execute(callback);
+		} catch (RejectedExecutionException ignored) {
+			// A callback racing with close() has no observable Player state left.
+		}
+	}
+
+	private void dispatchPlayerEvent(String event, Object data) {
+		ArrayList<PlayerListener> snapshot;
+		synchronized (this) {
+			snapshot = new ArrayList<>(listeners);
+		}
+		for (PlayerListener listener : snapshot) {
+			try {
+				listener.playerUpdate(this, event, data);
+			} catch (Throwable e) {
+				Log.e(TAG, "PlayerListener failed for event " + event, e);
+			}
 		}
 	}
 
 	private void reportRuntimeError(String code, Throwable error) {
+		reportRuntimeError(code, error, true);
+	}
+
+	private void reportRuntimeError(String code, Throwable error, boolean notify) {
 		AudioFailureReporter.report(source.getLocator(), CONTENT_TYPE, "dr_wav",
 				AudioFailure.Phase.RUNTIME, code, error);
-		if (!errorEventPosted) {
+		if (notify && !errorEventPosted) {
 			errorEventPosted = true;
-			postEvent(PlayerListener.ERROR, code);
+			enqueuePlayerEvent(PlayerListener.ERROR, code);
 		}
 	}
 
