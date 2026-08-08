@@ -14,6 +14,11 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := sonivox_v4
 
+# Upstream v4.0.1 keeps the optional iMelody/RTTTL/OTA parser sources, but
+# those files still use the old 32-bit parser callback ABI (EAS_I32 for values
+# that are EAS_IPTR in the current interface). Do not compile them on ARM64
+# until they have a pointer-width-safe compatibility patch; suppressing the
+# compiler errors would leave real pointer truncation bugs.
 LOCAL_SRC_FILES := \
 	api_smoke.c \
 	../sonivox_v4/arm-wt-22k/host_src/eas_config.c \
@@ -21,18 +26,15 @@ LOCAL_SRC_FILES := \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_chorus.c \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_dlssynth.c \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_flog.c \
-	../sonivox_v4/arm-wt-22k/lib_src/eas_imelody.c \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_math.c \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_mdls.c \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_midi.c \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_mixbuf.c \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_mixer.c \
-	../sonivox_v4/arm-wt-22k/lib_src/eas_ota.c \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_pan.c \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_pcm.c \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_public.c \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_reverb.c \
-	../sonivox_v4/arm-wt-22k/lib_src/eas_rtttl.c \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_smf.c \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_tonecontrol.c \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_voicemgt.c \
