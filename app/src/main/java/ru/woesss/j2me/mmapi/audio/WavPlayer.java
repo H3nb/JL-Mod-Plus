@@ -72,6 +72,12 @@ public final class WavPlayer extends BasePlayer implements VolumeControl {
 	private boolean starting;
 
 	static {
+		// mmapi_common owns JNI_OnLoad and records the JavaVM used by the native
+		// PlayerListener bridge. Load it explicitly before mmapi_wav: merely being
+		// a dynamic-linker dependency does not guarantee JNI_OnLoad is invoked.
+		System.loadLibrary("c++_shared");
+		System.loadLibrary("oboe");
+		System.loadLibrary("mmapi_common");
 		System.loadLibrary("mmapi_wav");
 	}
 
