@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -30,6 +31,7 @@ import io.github.h3nb.jlmodplus.crashes.dialog.ProcessDeathReportActivity;
 
 /** Main-process lifecycle hook that surfaces a durable report at the next safe resume. */
 public final class CrashDiagnosticsLifecycleCallbacks implements Application.ActivityLifecycleCallbacks {
+    private static final String TAG = CrashDiagnosticsLifecycleCallbacks.class.getSimpleName();
     private static final long EXIT_HISTORY_GRACE_MS = 1_500L;
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -86,11 +88,18 @@ public final class CrashDiagnosticsLifecycleCallbacks implements Application.Act
             return false;
         }
 
-        lastLaunchedReportId = reportId;
         Intent intent = new Intent(activity, ProcessDeathReportActivity.class)
                 .putExtra(ProcessDeathReportActivity.EXTRA_REPORT_ID, reportId);
-        activity.startActivity(intent);
-        return true;
+        try {
+            activity.startActivity(intent);
+            lastLaunchedReportId = reportId;
+            return true;
+        } catch (RuntimeException error) {
+            // The incident is already durable. Leave it pending rather than
+            // turning diagnostic UI delivery into a new application crash.
+            Log.w(TAG, "Unable to launch pending process death report", error);
+            return false;
+        }
     }
 
     @Override
