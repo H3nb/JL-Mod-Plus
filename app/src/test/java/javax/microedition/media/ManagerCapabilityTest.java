@@ -30,9 +30,9 @@ import static org.junit.Assert.assertTrue;
 
 public class ManagerCapabilityTest {
 	@Test
-	public void captureProtocolAdvertisesOnlyCompletedCameraPath() {
+	public void captureProtocolAdvertisesCompletedAudioAndCameraPaths() {
 		assertArrayEquals(
-				new String[]{CaptureRequest.CONTENT_TYPE},
+				new String[]{RecordPlayer.CONTENT_TYPE, CaptureRequest.CONTENT_TYPE},
 				Manager.getSupportedContentTypes("capture"));
 	}
 
@@ -44,7 +44,9 @@ public class ManagerCapabilityTest {
 	}
 
 	@Test
-	public void legacyAudioTypesAreNotAdvertisedAsCaptureCapabilities() {
+	public void amrAudioIsAdvertisedForCaptureButAmrWbIsNot() {
+		assertTrue(Arrays.asList(Manager.getSupportedProtocols(RecordPlayer.CONTENT_TYPE))
+				.contains("capture"));
 		assertFalse(Arrays.asList(Manager.getSupportedProtocols("audio/amr-wb"))
 				.contains("capture"));
 	}
