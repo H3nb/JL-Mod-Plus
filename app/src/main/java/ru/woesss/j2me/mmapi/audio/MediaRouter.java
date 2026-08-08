@@ -29,6 +29,7 @@ import java.util.Locale;
 public final class MediaRouter {
 	public enum Backend {
 		SYNTH,
+		WAV,
 		PLATFORM_AUDIO,
 		UNKNOWN
 	}
@@ -47,6 +48,7 @@ public final class MediaRouter {
 			case RMID:
 				return Backend.SYNTH;
 			case WAV:
+				return Backend.WAV;
 			case MP3:
 			case AAC:
 			case AMR:
@@ -76,6 +78,7 @@ public final class MediaRouter {
 				return Backend.SYNTH;
 			case "audio/wav":
 			case "audio/x-wav":
+				return Backend.WAV;
 			case "audio/mpeg":
 			case "audio/mp3":
 			case "audio/aac":
