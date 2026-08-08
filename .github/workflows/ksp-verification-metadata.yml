@@ -1,0 +1,55 @@
+# Temporary diagnostic workflow for the KAPT to KSP migration.
+# Remove this file after the generated verification metadata is committed.
+name: KSP Verification Metadata
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - "build.gradle.kts"
+      - "gradle/**"
+      - "app/build.gradle.kts"
+      - "app/src/main/**"
+      - ".github/workflows/ksp-verification-metadata.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        with:
+          cache-read-only: true
+
+      - name: Generate SHA-256 verification metadata while building release
+        env:
+          DISABLE_RELEASE_SIGNING: "true"
+        run: >-
+          ./gradlew --no-daemon --stacktrace --console=plain --non-interactive
+          --write-verification-metadata sha256
+          :app:assembleEmulatorRelease
+
+      - name: Upload generated verification metadata
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: ksp-verification-metadata-${{ github.run_number }}
+          path: gradle/verification-metadata.xml
+          if-no-files-found: error
+          retention-days: 1
