@@ -36,6 +36,8 @@ import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.LifecycleOwner;
 
+import io.github.h3nb.jlmodplus.crashes.runtime.CrashSessionStore;
+
 public class MidletThread extends HandlerThread implements Handler.Callback {
 	private static final String TAG = MidletThread.class.getName();
 	private static final UncaughtExceptionHandler uncaughtExceptionHandler = (t, e) ->
@@ -76,6 +78,10 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	}
 
 	public static void notifyDestroyed() {
+		CrashSessionStore.markExpectedMidletExit(
+				ContextHolder.getAppContext(),
+				"midlet_notify_destroyed"
+		);
 		Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
 		if (instance != null) {
 			instance.state = DESTROYED;
@@ -99,6 +105,10 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	}
 
 	static void destroyApp() {
+		CrashSessionStore.markExpectedMidletExit(
+				ContextHolder.getAppContext(),
+				"midlet_destroy_requested"
+		);
 		Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
 		new Thread(() -> {
 			try {
