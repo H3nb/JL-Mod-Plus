@@ -22,11 +22,12 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 
 /**
- * Reads the small part of a RIFF/WAVE header needed to select a decoder.
+ * Reads the small part of a RIFF/WAVE header needed for format diagnostics and
+ * regression tests.
  *
- * <p>This deliberately does not try to decode audio. Android's media stack
- * remains the default for formats it supports; the emulator uses the native
- * EAS path only for the mono, 4-bit IMA ADPCM variant supported by SONiVOX.</p>
+ * <p>Playback is handled by the dedicated dr_wav backend. This inspector is
+ * intentionally side-effect free and, in particular, never routes WAVE data
+ * into a MIDI synthesizer.</p>
  */
 public final class WavFileFormat {
 	private static final int WAVE_FORMAT_IMA_ADPCM = 0x0011;
@@ -34,10 +35,7 @@ public final class WavFileFormat {
 	private WavFileFormat() {
 	}
 
-	/**
-	 * Returns whether {@code file} is a valid WAVE file using mono 4-bit IMA
-	 * ADPCM, the exact WAVE variant supported by the EAS decoder in this app.
-	 */
+	/** Returns whether {@code file} declares mono, 4-bit IMA ADPCM WAVE audio. */
 	public static boolean isMonoImaAdpcm(File file) throws IOException {
 		if (file == null || !file.isFile()) {
 			return false;
