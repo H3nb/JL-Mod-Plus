@@ -172,7 +172,7 @@ public class Manager {
 	}
 
 	private static String safeType(String type) {
-		return type == null || type.isBlank() ? "unknown" : type;
+		return type == null || type.trim().isEmpty() ? "unknown" : type;
 	}
 
 	private static void breadcrumb(String event) {
