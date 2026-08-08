@@ -80,6 +80,40 @@ jobs:
           abis="$(unzip -Z1 "$apk" | awk -F/ '/^lib\/[^/]+\// {print $2}' | sort -u)"
           test "$abis" = "arm64-v8a"
 
+          apkanalyzer="$(find "$ANDROID_SDK_ROOT/cmdline-tools" -type f -name apkanalyzer -print -quit)"
+          test -x "$apkanalyzer"
+          manifest="$RUNNER_TEMP/emulator-release-manifest.xml"
+          "$apkanalyzer" manifest print "$apk" > "$manifest"
+          python3 - "$manifest" <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+
+          android = "{http://schemas.android.com/apk/res/android}"
+          root = ET.parse(sys.argv[1]).getroot()
+          application = root.find("application")
+          if application is None:
+              raise SystemExit("APK manifest has no <application>")
+
+          expected_processes = {
+              "javax.microedition.shell.MicroActivity": ":midlet",
+              "io.github.h3nb.jlmodplus.crashes.dialog.CrashReportDialog": ":acra",
+          }
+          activities = {
+              item.get(android + "name"): item
+              for item in application.findall("activity")
+          }
+          for target, expected in expected_processes.items():
+              activity = activities.get(target)
+              if activity is None:
+                  raise SystemExit(f"{target} is missing from APK manifest")
+              process = activity.get(android + "process")
+              if process != expected:
+                  raise SystemExit(
+                      f"Process isolation lost for {target}: expected {expected!r}, got {process!r}"
+                  )
+              print(f"Verified {target} process suffix: {process}")
+          PY
+
           service_path="META-INF/services/org.acra.interaction.ReportInteraction"
           provider="io.github.h3nb.jlmodplus.crashes.dialog.DialogInteraction"
           unzip -Z1 "$apk" | grep -Fx "$service_path"
