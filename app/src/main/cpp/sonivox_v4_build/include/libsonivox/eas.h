@@ -1,6 +1,0 @@
-#ifndef JL_MOD_SONIVOX_V4_PUBLIC_EAS_H
-#define JL_MOD_SONIVOX_V4_PUBLIC_EAS_H
-
-#include <eas.h>
-
-#endif // JL_MOD_SONIVOX_V4_PUBLIC_EAS_H
