@@ -17,6 +17,7 @@
 [versions]
 agp = "9.3.1"
 kotlin = "2.4.10"
+ksp = "2.3.10"
 androidx-compose-bom = "2026.06.00"
 androidx-camera = "1.6.1"
 androidx-exifinterface = "1.4.2"
@@ -34,7 +35,6 @@ androidx-preference = "1.2.1"
 androidx-recyclerview = "1.4.0"
 androidx-room = "2.8.4"
 asm = "9.6"
-google-auto-service = "1.1.1"
 google-gson = "2.14.0"
 google-oboe = "1.10.0"
 junit = "4.13.2"
@@ -74,11 +74,8 @@ androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref =
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "androidx-room" }
 asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
 asm-commons = { module = "org.ow2.asm:asm-commons", version.ref = "asm" }
-google-auto-service = { module = "com.google.auto.service:auto-service", version.ref = "google-auto-service" }
-google-auto-service-annotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "google-auto-service" }
 google-gson = { module = "com.google.code.gson:gson", version.ref = "google-gson" }
 google-oboe = { module = "com.google.oboe:oboe", version.ref = "google-oboe" }
-kotlin-metadata-jvm = { module = "org.jetbrains.kotlin:kotlin-metadata-jvm", version.ref = "kotlin" }
 junit = { module = "junit:junit", version.ref = "junit" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
 pngj = { module = "com.github.nikita36078:pngj", version.ref = "pngj" }
@@ -87,5 +84,5 @@ zip4j = { module = "net.lingala.zip4j:zip4j", version.ref = "zip4j" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
-legacy-kapt = { id = "com.android.legacy-kapt", version.ref = "agp" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

@@ -189,11 +189,7 @@ public final class CameraPlayer implements Player {
 				state = STARTED;
 				postEvent(PlayerListener.STARTED, getMediaTimeUnchecked());
 				if (recordingControl != null) {
-					try {
-						recordingControl.onPlayerStarted();
-					} catch (RuntimeException e) {
-						Log.w(TAG, "Armed camera recording could not start", e);
-					}
+					recordingControl.onPlayerStarted();
 				}
 			} catch (MediaException | RuntimeException e) {
 				state = PREFETCHED;
@@ -214,6 +210,9 @@ public final class CameraPlayer implements Player {
 			}
 			if (session != null) {
 				session.stop();
+			}
+			if (recordingControl != null) {
+				recordingControl.onPlayerStopped();
 			}
 			state = PREFETCHED;
 			postEvent(PlayerListener.STOPPED, getMediaTimeUnchecked());

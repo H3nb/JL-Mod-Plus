@@ -25,6 +25,10 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import javax.microedition.media.camera.CameraRecordingSession;
 import javax.microedition.media.camera.CameraSession;
@@ -102,7 +106,7 @@ public class CameraPlayerTest {
 	}
 
 	@Test
-	public void cameraResumeFailureRetainsRecordingForRetry() throws Exception {
+	public void cameraResumeFailureRetainsRecordingForRetryWithoutUncheckedException() throws Exception {
 		CameraPlayer player = new CameraPlayer("capture://video");
 		File recordingFile = File.createTempFile("camera-resume-test-", ".mp4");
 		FakeCameraSession prepared = new FakeCameraSession();
@@ -118,7 +122,7 @@ public class CameraPlayerTest {
 			setField(control, "recordingFile", recordingFile);
 			setBooleanField(control, "recordingCycleStarted", true);
 
-			assertThrows(IllegalStateException.class, control::startRecord);
+			control.startRecord();
 			assertTrue(recordingFile.exists());
 			assertTrue(prepared.recording);
 
@@ -175,12 +179,11 @@ public class CameraPlayerTest {
 	}
 
 	@Test
-	public void cameraFinalizeFailureKeepsRecordingForCommitRetry() throws Exception {
+	public void cameraFinalizeFailureInvalidatesRecordingInsteadOfAllowingCommitRetry() throws Exception {
 		CameraPlayer player = new CameraPlayer("capture://video");
 		File recordingFile = File.createTempFile("camera-finalize-test-", ".mp4");
-		byte[] expected = new byte[]{5, 6, 7};
 		try (FileOutputStream output = new FileOutputStream(recordingFile)) {
-			output.write(expected);
+			output.write(new byte[]{5, 6, 7});
 		}
 		ByteArrayOutputStream destination = new ByteArrayOutputStream();
 		FakeCameraSession prepared = new FakeCameraSession();
@@ -200,19 +203,51 @@ public class CameraPlayerTest {
 			assertTrue(recordingFile.exists());
 			assertTrue(prepared.recording);
 			assertEquals(0, destination.size());
+			assertEquals(1, prepared.finalizeCalls);
 
 			prepared.failFinalize = false;
-			control.commit();
-			assertEquals(2, prepared.finalizeCalls);
-			assertArrayEquals(expected, destination.toByteArray());
-			assertFalse(recordingFile.exists());
-			assertFalse(prepared.recording);
+			assertThrows(IOException.class, control::commit);
+			assertThrows(IllegalStateException.class, control::startRecord);
+			assertEquals(1, prepared.finalizeCalls);
+			assertEquals(0, destination.size());
 		} finally {
 			player.close();
 			if (recordingFile.exists()) {
 				recordingFile.delete();
 			}
 		}
+	}
+
+	@Test
+	public void closingActiveRecordingDeliversRecordStoppedBeforeClosed() throws Exception {
+		CameraPlayer player = new CameraPlayer("capture://video");
+		File recordingFile = File.createTempFile("camera-close-active-", ".mp4");
+		FakeCameraSession prepared = new FakeCameraSession();
+		prepared.recording = true;
+		CountDownLatch latch = new CountDownLatch(2);
+		List<String> events = new CopyOnWriteArrayList<>();
+		player.realize();
+		RecordControl control = (RecordControl) player.getControl(RecordControl.class.getName());
+		setField(player, "session", prepared);
+		setIntField(player, "state", Player.STARTED);
+		setField(control, "destination", new ByteArrayOutputStream());
+		setField(control, "recordingFile", recordingFile);
+		setBooleanField(control, "recordingRequested", true);
+		setBooleanField(control, "recordingActive", true);
+		setBooleanField(control, "recordingCycleStarted", true);
+		player.addPlayerListener((source, event, data) -> {
+			if (PlayerListener.RECORD_STOPPED.equals(event) || PlayerListener.CLOSED.equals(event)) {
+				events.add(event);
+				latch.countDown();
+			}
+		});
+
+		player.close();
+
+		assertTrue(latch.await(2, TimeUnit.SECONDS));
+		assertEquals(List.of(PlayerListener.RECORD_STOPPED, PlayerListener.CLOSED), events);
+		assertFalse(recordingFile.exists());
+		assertFalse(prepared.recording);
 	}
 
 	@Test
