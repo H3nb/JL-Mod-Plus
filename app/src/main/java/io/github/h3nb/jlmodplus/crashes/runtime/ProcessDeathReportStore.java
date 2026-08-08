@@ -17,6 +17,9 @@
 package io.github.h3nb.jlmodplus.crashes.runtime;
 
 import android.content.Context;
+import android.net.Uri;
+
+import androidx.core.content.FileProvider;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -33,30 +36,48 @@ import java.util.Arrays;
 public final class ProcessDeathReportStore {
     private static final String DIRECTORY_NAME = "crash-runtime/process-death-reports";
     private static final String FILE_SUFFIX = ".txt";
+    private static final String TRACE_SUFFIX = ".trace";
     private static final int MAX_REPORTS = 5;
     private static final int MAX_REPORT_LENGTH = 32 * 1024;
+    public static final int MAX_TRACE_BYTES = 2 * 1024 * 1024;
 
     private ProcessDeathReportStore() {
     }
 
     public static String save(Context context, String reportId, String report) throws IOException {
+        return save(context, reportId, report, null);
+    }
+
+    public static String save(Context context, String reportId, String report, byte[] trace)
+            throws IOException {
         File directory = getDirectory(context);
         if (!directory.isDirectory() && !directory.mkdirs() && !directory.isDirectory()) {
             throw new IOException("Unable to create process death report directory");
         }
         String safeId = validateId(reportId);
+        if (trace != null && trace.length > 0) {
+            writeBytesAtomically(new File(directory, safeId + TRACE_SUFFIX), trace,
+                    Math.min(trace.length, MAX_TRACE_BYTES));
+        }
+
         File target = new File(directory, safeId + FILE_SUFFIX);
         File temporary = new File(directory, safeId + FILE_SUFFIX + ".tmp");
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
                 new FileOutputStream(temporary), StandardCharsets.UTF_8))) {
             String text = report == null ? "" : report;
             writer.write(text, 0, Math.min(text.length(), MAX_REPORT_LENGTH));
+        } catch (IOException | RuntimeException error) {
+            deleteTraceFile(directory, safeId);
+            throw error;
         }
         if (target.exists() && !target.delete()) {
+            temporary.delete();
+            deleteTraceFile(directory, safeId);
             throw new IOException("Unable to replace existing process death report");
         }
         if (!temporary.renameTo(target)) {
             temporary.delete();
+            deleteTraceFile(directory, safeId);
             throw new IOException("Unable to commit process death report");
         }
         trim(directory);
@@ -64,7 +85,7 @@ public final class ProcessDeathReportStore {
     }
 
     public static String read(Context context, String reportId) throws IOException {
-        File reportFile = resolve(context, reportId);
+        File reportFile = resolve(context, reportId, FILE_SUFFIX);
         if (!reportFile.isFile()) {
             throw new IOException("Process death report not found");
         }
@@ -81,6 +102,35 @@ public final class ProcessDeathReportStore {
         return text.toString();
     }
 
+    public static boolean hasTrace(Context context, String reportId) {
+        try {
+            return resolve(context, reportId, TRACE_SUFFIX).isFile();
+        } catch (IOException error) {
+            return false;
+        }
+    }
+
+    public static long getTraceSize(Context context, String reportId) {
+        try {
+            File trace = resolve(context, reportId, TRACE_SUFFIX);
+            return trace.isFile() ? trace.length() : 0L;
+        } catch (IOException error) {
+            return 0L;
+        }
+    }
+
+    public static Uri getTraceUri(Context context, String reportId) throws IOException {
+        File trace = resolve(context, reportId, TRACE_SUFFIX);
+        if (!trace.isFile()) {
+            throw new IOException("Process death trace not found");
+        }
+        return FileProvider.getUriForFile(
+                context,
+                context.getPackageName() + ".crash-reports",
+                trace
+        );
+    }
+
     public static String findLatestPendingId(Context context) {
         File directory = getDirectory(context);
         File[] reports = directory.listFiles((dir, name) -> name.endsWith(FILE_SUFFIX));
@@ -94,17 +144,37 @@ public final class ProcessDeathReportStore {
 
     public static boolean delete(Context context, String reportId) {
         try {
-            File report = resolve(context, reportId);
-            return !report.exists() || report.delete();
+            String safeId = validateId(reportId);
+            File directory = getDirectory(context).getCanonicalFile();
+            File report = resolve(context, safeId, FILE_SUFFIX);
+            File trace = resolve(context, safeId, TRACE_SUFFIX);
+            boolean reportDeleted = !report.exists() || report.delete();
+            boolean traceDeleted = !trace.exists() || trace.delete();
+            return reportDeleted && traceDeleted;
         } catch (IOException error) {
             return false;
         }
     }
 
-    private static File resolve(Context context, String reportId) throws IOException {
+    private static void writeBytesAtomically(File target, byte[] data, int length) throws IOException {
+        File temporary = new File(target.getParentFile(), target.getName() + ".tmp");
+        try (FileOutputStream output = new FileOutputStream(temporary)) {
+            output.write(data, 0, length);
+        }
+        if (target.exists() && !target.delete()) {
+            temporary.delete();
+            throw new IOException("Unable to replace process death trace");
+        }
+        if (!temporary.renameTo(target)) {
+            temporary.delete();
+            throw new IOException("Unable to commit process death trace");
+        }
+    }
+
+    private static File resolve(Context context, String reportId, String suffix) throws IOException {
         String safeId = validateId(reportId);
         File directory = getDirectory(context).getCanonicalFile();
-        File report = new File(directory, safeId + FILE_SUFFIX).getCanonicalFile();
+        File report = new File(directory, safeId + suffix).getCanonicalFile();
         if (!report.getPath().startsWith(directory.getPath() + File.separator)) {
             throw new IOException("Invalid process death report path");
         }
@@ -129,7 +199,21 @@ public final class ProcessDeathReportStore {
         }
         Arrays.sort(reports, (left, right) -> Long.compare(right.lastModified(), left.lastModified()));
         for (int i = MAX_REPORTS; i < reports.length; i++) {
+            String name = reports[i].getName();
+            String id = name.substring(0, name.length() - FILE_SUFFIX.length());
             reports[i].delete();
+            deleteTraceFile(directory, id);
+        }
+    }
+
+    private static void deleteTraceFile(File directory, String reportId) {
+        File trace = new File(directory, reportId + TRACE_SUFFIX);
+        if (trace.exists()) {
+            trace.delete();
+        }
+        File temporary = new File(directory, reportId + TRACE_SUFFIX + ".tmp");
+        if (temporary.exists()) {
+            temporary.delete();
         }
     }
 }
