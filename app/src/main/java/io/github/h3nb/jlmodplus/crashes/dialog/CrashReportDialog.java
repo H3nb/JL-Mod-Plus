@@ -91,7 +91,7 @@ public final class CrashReportDialog extends AppCompatActivity {
 	}
 
 	private void buildAndShowDialog(String stackTrace) {
-		String message = stackTrace + "\n\n" + getString(R.string.crash_report_instruction);
+		String message = getString(R.string.crash_report_instruction) + "\n\n" + stackTrace;
 		composeState.setReport(
 				getString(R.string.crash_dialog_title),
 				message,
