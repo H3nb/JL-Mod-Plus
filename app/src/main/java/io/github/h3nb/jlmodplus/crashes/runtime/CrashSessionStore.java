@@ -39,7 +39,8 @@ import io.github.h3nb.jlmodplus.EmulatorApplication;
  * <p>The MIDlet runs in a separate Android process, so this deliberately uses
  * an app-private atomic file instead of SharedPreferences as cross-process
  * state. The store is intentionally small: only one MIDlet can be active at a
- * time.</p>
+ * time. Call sites are ordered so the launcher, MIDlet process, and reconciler
+ * do not intentionally write the file concurrently.</p>
  */
 public final class CrashSessionStore {
     private static final String TAG = CrashSessionStore.class.getSimpleName();
@@ -136,8 +137,8 @@ public final class CrashSessionStore {
 
     public static void clearMidletSession(Context context) {
         AtomicFile file = getAtomicFile(context);
-        if (file.getBaseFile().exists() && !file.delete()) {
-            Log.w(TAG, "Unable to delete MIDlet crash session");
+        if (file.getBaseFile().exists()) {
+            file.delete();
         }
     }
 
