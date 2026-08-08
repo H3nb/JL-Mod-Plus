@@ -125,7 +125,10 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		Thread.setDefaultUncaughtExceptionHandler((thread, error) -> {
 			MicroActivity activity = ContextHolder.getActivity();
 			if (activity != null && !activity.isFinishing()) {
-				activity.runOnUiThread(activity::finish);
+				activity.runOnUiThread(() -> {
+					activity.getLifecycle().removeObserver(activityLifecycleObserver);
+					activity.finish();
+				});
 			}
 
 			if (reportHandler != null) {
