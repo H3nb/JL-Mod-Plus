@@ -20,6 +20,7 @@ import android.content.Context;
 import android.os.SystemClock;
 import android.util.Log;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -91,8 +92,7 @@ public final class CrashBreadcrumbStore {
                 return "";
             }
             try (FileInputStream input = new FileInputStream(file)) {
-                byte[] bytes = input.readAllBytes();
-                return new String(bytes, StandardCharsets.UTF_8);
+                return new String(readFully(input), StandardCharsets.UTF_8);
             } catch (IOException | RuntimeException error) {
                 Log.w(TAG, "Unable to read crash breadcrumbs", error);
                 return "";
@@ -115,12 +115,22 @@ public final class CrashBreadcrumbStore {
                 }
                 remaining -= skipped;
             }
-            tail = input.readAllBytes();
+            tail = readFully(input);
         }
         try (FileOutputStream output = new FileOutputStream(file, false)) {
             output.write("[older breadcrumbs truncated]\n".getBytes(StandardCharsets.UTF_8));
             output.write(tail);
         }
+    }
+
+    private static byte[] readFully(FileInputStream input) throws IOException {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        byte[] buffer = new byte[2048];
+        int read;
+        while ((read = input.read(buffer)) >= 0) {
+            output.write(buffer, 0, read);
+        }
+        return output.toByteArray();
     }
 
     private static String sanitize(String value) {
