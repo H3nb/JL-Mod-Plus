@@ -27,6 +27,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.microedition.media.control.RecordControl;
 
@@ -80,7 +81,7 @@ public class RecordPlayerTest {
 		FakeDependencies dependencies = new FakeDependencies();
 		RecordPlayer player = realizedPlayer(dependencies);
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
-		List<String> events = new ArrayList<>();
+		List<String> events = new CopyOnWriteArrayList<>();
 		player.addPlayerListener((source, event, data) -> events.add(event));
 
 		RecordControl control = (RecordControl) player.getControl("RecordControl");
@@ -90,7 +91,7 @@ public class RecordPlayerTest {
 
 		player.start();
 		assertEquals(1, dependencies.recorders.size());
-		assertTrue(events.contains(PlayerListener.RECORD_STARTED));
+		awaitEvent(events, PlayerListener.RECORD_STARTED);
 
 		player.stop();
 		assertEquals(1, dependencies.recorders.get(0).stopCount);
@@ -102,7 +103,8 @@ public class RecordPlayerTest {
 		assertArrayEquals(
 				"#!AMR\nsegment-1segment-2".getBytes(StandardCharsets.US_ASCII),
 				output.toByteArray());
-		assertTrue(events.contains(PlayerListener.RECORD_STOPPED));
+		awaitEvent(events, PlayerListener.RECORD_STOPPED);
+		player.close();
 	}
 
 	@Test
@@ -127,6 +129,7 @@ public class RecordPlayerTest {
 		assertArrayEquals(
 				"#!AMR\nsegment-1segment-2".getBytes(StandardCharsets.US_ASCII),
 				output.toByteArray());
+		player.close();
 	}
 
 	@Test
@@ -141,6 +144,7 @@ public class RecordPlayerTest {
 				() -> control.setRecordStream(new ByteArrayOutputStream()));
 		assertThrows(IllegalStateException.class,
 				() -> control.setRecordLocation("memory://replacement"));
+		player.close();
 	}
 
 	@Test
@@ -160,6 +164,7 @@ public class RecordPlayerTest {
 		assertArrayEquals(
 				"#!AMR\nsegment-2".getBytes(StandardCharsets.US_ASCII),
 				output.toByteArray());
+		player.close();
 	}
 
 	@Test
@@ -172,6 +177,7 @@ public class RecordPlayerTest {
 
 		assertThrows(IOException.class, control::commit);
 		assertThrows(IllegalStateException.class, control::startRecord);
+		player.close();
 	}
 
 	@Test
@@ -182,6 +188,19 @@ public class RecordPlayerTest {
 
 		control.setRecordStream(new ByteArrayOutputStream());
 		assertEquals(1, dependencies.permissionChecks);
+		player.close();
+	}
+
+	@Test
+	public void invalidRecordLocationRuntimeSyntaxFailureBecomesMediaException() throws Exception {
+		FakeDependencies dependencies = new FakeDependencies();
+		dependencies.failLocationWithIllegalArgument = true;
+		RecordPlayer player = realizedPlayer(dependencies);
+		RecordControl control = (RecordControl) player.getControl("RecordControl");
+
+		assertThrows(MediaException.class,
+				() -> control.setRecordLocation("file:///AudioCaptureSmokeTest.amr"));
+		player.close();
 	}
 
 	@Test
@@ -192,16 +211,17 @@ public class RecordPlayerTest {
 
 		assertThrows(IllegalArgumentException.class, () -> control.setRecordSizeLimit(0));
 		assertThrows(MediaException.class, () -> control.setRecordSizeLimit(1024));
+		player.close();
 	}
 
 	@Test
 	public void audioLocatorAcceptsDefaultAndAmrFormsOnly() throws Exception {
-		new RecordPlayer("capture://audio", new FakeDependencies());
-		new RecordPlayer("capture://audio?encoding=amr", new FakeDependencies());
-		new RecordPlayer("capture://audio?encoding=audio/amr", new FakeDependencies());
+		new RecordPlayer("capture://audio", new FakeDependencies()).close();
+		new RecordPlayer("capture://audio?encoding=amr", new FakeDependencies()).close();
+		new RecordPlayer("capture://audio?encoding=audio/amr", new FakeDependencies()).close();
 		new RecordPlayer(
 				"capture://audio?encoding=audio/amr&rate=8000&channels=1",
-				new FakeDependencies());
+				new FakeDependencies()).close();
 
 		assertThrows(MediaException.class,
 				() -> new RecordPlayer("capture://audio?encoding=pcm", new FakeDependencies()));
@@ -216,15 +236,42 @@ public class RecordPlayerTest {
 		FakeDependencies dependencies = new FakeDependencies();
 		dependencies.failNextStart = true;
 		RecordPlayer player = realizedPlayer(dependencies);
-		List<String> events = new ArrayList<>();
+		List<String> events = new CopyOnWriteArrayList<>();
 		player.addPlayerListener((source, event, data) -> events.add(event));
 		RecordControl control = (RecordControl) player.getControl("RecordControl");
 		control.setRecordStream(new ByteArrayOutputStream());
 		control.startRecord();
 
 		assertThrows(MediaException.class, player::start);
-		assertTrue(events.contains(PlayerListener.RECORD_ERROR));
+		awaitEvent(events, PlayerListener.RECORD_ERROR);
 		assertFalse(dependencies.recorders.get(0).started);
+		assertThrows(IllegalStateException.class, control::startRecord);
+		player.close();
+	}
+
+	@Test
+	public void immediateStartRecordBackendFailureUsesRecordErrorInsteadOfUncheckedException() throws Exception {
+		FakeDependencies dependencies = new FakeDependencies();
+		RecordPlayer player = realizedPlayer(dependencies);
+		player.start();
+		List<String> events = new CopyOnWriteArrayList<>();
+		player.addPlayerListener((source, event, data) -> events.add(event));
+		RecordControl control = (RecordControl) player.getControl("RecordControl");
+		control.setRecordStream(new ByteArrayOutputStream());
+		dependencies.failNextStart = true;
+
+		control.startRecord();
+		awaitEvent(events, PlayerListener.RECORD_ERROR);
+		assertThrows(IllegalStateException.class, control::startRecord);
+		player.close();
+	}
+
+	private static void awaitEvent(List<String> events, String event) throws InterruptedException {
+		long deadline = System.nanoTime() + 2_000_000_000L;
+		while (!events.contains(event) && System.nanoTime() < deadline) {
+			Thread.sleep(5);
+		}
+		assertTrue("Timed out waiting for " + event + "; events=" + events, events.contains(event));
 	}
 
 	private RecordPlayer realizedPlayer(FakeDependencies dependencies) throws Exception {
@@ -238,6 +285,7 @@ public class RecordPlayerTest {
 		final List<FakeRecorder> recorders = new ArrayList<>();
 		int permissionChecks;
 		boolean failNextStart;
+		boolean failLocationWithIllegalArgument;
 
 		@Override
 		public RecordPlayer.RecorderBackend createRecorder() {
@@ -256,6 +304,9 @@ public class RecordPlayerTest {
 
 		@Override
 		public OutputStream openOutputStream(String locator) {
+			if (failLocationWithIllegalArgument) {
+				throw new IllegalArgumentException("synthetic invalid locator");
+			}
 			return new ByteArrayOutputStream();
 		}
 
