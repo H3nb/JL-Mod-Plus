@@ -15,7 +15,10 @@ namespace util {
 
         virtual ~JByteArrayPtr();
 
-        const jbyte *buffer;
+        // This wrapper owns a private heap copy of the Java bytes. Keep that
+        // copy mutable because SONiVOX's legacy EAS_WriteMIDIStream API accepts
+        // EAS_U8* even though JL-Mod never exposes the buffer back to Java.
+        jbyte *buffer;
         const jsize length;
     };
 }
