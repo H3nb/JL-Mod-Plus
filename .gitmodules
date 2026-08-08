@@ -1,3 +1,12 @@
-[submodule "TinySoundFont"]
-	path = app/src/main/cpp/mmapi_tsf/TinySoundFont
+[submodule "app/src/main/cpp/TinySoundFont"]
+	path = app/src/main/cpp/TinySoundFont
 	url = https://github.com/schellingb/TinySoundFont.git
+	branch = main
+
+[submodule "app/src/main/cpp/sonivox"]
+	path = app/src/main/cpp/sonivox
+	url = https://github.com/pedrolcl/sonivox.git
+
+[submodule "app/src/main/cpp/dr_libs"]
+	path = app/src/main/cpp/dr_libs
+	url = https://github.com/mackron/dr_libs.git
