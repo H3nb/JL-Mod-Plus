@@ -425,12 +425,13 @@ public final class CameraPlayer implements Player {
 		postEvent(event, data);
 	}
 
-	private synchronized CameraRecordingSession requireRecordingSession() throws MediaException {
+	private CameraRecordingSession requireRecordingSession() throws MediaException {
 		checkRealized();
-		if (!(session instanceof CameraRecordingSession)) {
+		CameraSession currentSession = session;
+		if (!(currentSession instanceof CameraRecordingSession)) {
 			throw new MediaException("Camera recording is unavailable before prefetch");
 		}
-		return (CameraRecordingSession) session;
+		return (CameraRecordingSession) currentSession;
 	}
 
 	private void releaseSession() {
