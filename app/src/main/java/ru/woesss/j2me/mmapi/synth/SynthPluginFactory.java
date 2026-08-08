@@ -38,14 +38,17 @@ public class SynthPluginFactory {
 		TSF
 	}
 
+	/** SONiVOX 4 is the primary synth for both supported custom bank formats. */
 	static Backend backendFor(SoundBankResolver.Format format) {
-		if (format == SoundBankResolver.Format.DLS) {
+		if (format == SoundBankResolver.Format.DLS || format == SoundBankResolver.Format.SF2) {
 			return Backend.EAS;
 		}
-		if (format == SoundBankResolver.Format.SF2) {
-			return Backend.TSF;
-		}
 		return Backend.BUILTIN;
+	}
+
+	/** TinySoundFont remains a temporary compatibility fallback during SF2 parity testing. */
+	static Backend fallbackBackendFor(SoundBankResolver.Format format) {
+		return format == SoundBankResolver.Format.SF2 ? Backend.TSF : null;
 	}
 
 	public static void loadPlugins(List<Plugin> plugins) {
@@ -56,24 +59,39 @@ public class SynthPluginFactory {
 			plugins.add(new MIDIDevicePlugin());
 			return;
 		}
-		// A custom SF2 backend cannot handle device://midi or the IMA WAV
-		// fallback. Keep the built-in EAS device/decoder available after it.
+
+		// Keep built-in EAS available as a safe fallback for device/sequenced
+		// playback if a selected custom bank cannot be initialized.
 		try {
 			plugins.add(new MIDIDevicePlugin());
 		} catch (Throwable e) {
 			Log.w(TAG, "create built-in MIDI plugin failed", e);
 		}
+
+		boolean customLoaded = false;
 		try {
 			if (backend == Backend.EAS) {
 				plugins.add(0, new SynthPlugin(new LibEAS(soundBank)));
-			} else if (backend == Backend.TSF) {
-				plugins.add(0, new SynthPlugin(new LibTSF(soundBank)));
+				customLoaded = true;
 			}
 		} catch (Throwable e) {
-			Log.w(TAG, "create " + format + " soundbank plugin failed", e);
+			Log.w(TAG, "create SONiVOX " + format + " soundbank plugin failed", e);
+		}
+
+		if (!customLoaded && fallbackBackendFor(format) == Backend.TSF) {
+			try {
+				plugins.add(0, new SynthPlugin(new LibTSF(soundBank)));
+				customLoaded = true;
+				Log.w(TAG, "falling back to TinySoundFont for SF2 compatibility");
+			} catch (Throwable e) {
+				Log.w(TAG, "create TinySoundFont SF2 fallback failed", e);
+			}
+		}
+
+		if (!customLoaded) {
+			ContextHolder.getActivity().toast(R.string.msg_unsupported_soundbank);
 		}
 		if (plugins.isEmpty()) {
-			ContextHolder.getActivity().toast(R.string.msg_unsupported_soundbank);
 			plugins.add(new MIDIDevicePlugin());
 		}
 	}
