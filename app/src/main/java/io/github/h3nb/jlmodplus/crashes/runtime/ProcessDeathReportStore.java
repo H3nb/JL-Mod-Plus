@@ -18,6 +18,7 @@ package io.github.h3nb.jlmodplus.crashes.runtime;
 
 import android.content.Context;
 import android.net.Uri;
+import android.util.Log;
 
 import androidx.core.content.FileProvider;
 
@@ -34,6 +35,7 @@ import java.util.Arrays;
 
 /** Small bounded store for process-death reports awaiting user review. */
 public final class ProcessDeathReportStore {
+    private static final String TAG = ProcessDeathReportStore.class.getSimpleName();
     private static final String DIRECTORY_NAME = "crash-runtime/process-death-reports";
     private static final String FILE_SUFFIX = ".txt";
     private static final String TRACE_SUFFIX = ".trace";
@@ -55,9 +57,20 @@ public final class ProcessDeathReportStore {
             throw new IOException("Unable to create process death report directory");
         }
         String safeId = validateId(reportId);
-        if (trace != null && trace.length > 0) {
-            writeBytesAtomically(new File(directory, safeId + TRACE_SUFFIX), trace,
-                    Math.min(trace.length, MAX_TRACE_BYTES));
+
+        boolean traceRequested = trace != null && trace.length > 0;
+        boolean traceSaved = false;
+        if (traceRequested) {
+            try {
+                writeBytesAtomically(new File(directory, safeId + TRACE_SUFFIX), trace,
+                        Math.min(trace.length, MAX_TRACE_BYTES));
+                traceSaved = true;
+            } catch (IOException | RuntimeException error) {
+                // The binary trace is diagnostic enrichment, never a prerequisite
+                // for preserving the human-readable incident report.
+                deleteTraceFile(directory, safeId);
+                Log.w(TAG, "Unable to persist optional process death trace", error);
+            }
         }
 
         File target = new File(directory, safeId + FILE_SUFFIX);
@@ -65,6 +78,10 @@ public final class ProcessDeathReportStore {
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
                 new FileOutputStream(temporary), StandardCharsets.UTF_8))) {
             String text = report == null ? "" : report;
+            if (traceRequested && !traceSaved) {
+                text = "TRACE STORAGE WARNING: Android supplied process-exit trace data, "
+                        + "but the optional attachment could not be persisted.\n\n" + text;
+            }
             writer.write(text, 0, Math.min(text.length(), MAX_REPORT_LENGTH));
         } catch (IOException | RuntimeException error) {
             deleteTraceFile(directory, safeId);
@@ -145,7 +162,6 @@ public final class ProcessDeathReportStore {
     public static boolean delete(Context context, String reportId) {
         try {
             String safeId = validateId(reportId);
-            File directory = getDirectory(context).getCanonicalFile();
             File report = resolve(context, safeId, FILE_SUFFIX);
             File trace = resolve(context, safeId, TRACE_SUFFIX);
             boolean reportDeleted = !report.exists() || report.delete();
