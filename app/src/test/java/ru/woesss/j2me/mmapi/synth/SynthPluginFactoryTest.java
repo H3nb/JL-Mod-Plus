@@ -19,18 +19,23 @@ package ru.woesss.j2me.mmapi.synth;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class SynthPluginFactoryTest {
 	@Test
-	public void selectsEasOnlyForDls() {
+	public void selectsEasForDlsAndSf2() {
 		assertEquals(SynthPluginFactory.Backend.EAS,
 				SynthPluginFactory.backendFor(SoundBankResolver.Format.DLS));
+		assertEquals(SynthPluginFactory.Backend.EAS,
+				SynthPluginFactory.backendFor(SoundBankResolver.Format.SF2));
 	}
 
 	@Test
-	public void selectsTsfOnlyForSf2() {
+	public void keepsTsfOnlyAsTemporarySf2Fallback() {
+		assertNull(SynthPluginFactory.fallbackBackendFor(SoundBankResolver.Format.DLS));
 		assertEquals(SynthPluginFactory.Backend.TSF,
-				SynthPluginFactory.backendFor(SoundBankResolver.Format.SF2));
+				SynthPluginFactory.fallbackBackendFor(SoundBankResolver.Format.SF2));
+		assertNull(SynthPluginFactory.fallbackBackendFor(null));
 	}
 
 	@Test
