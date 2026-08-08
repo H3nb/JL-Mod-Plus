@@ -1,5 +1,6 @@
 /*
  * Copyright 2018 Nikita Shakarun
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +17,12 @@
 
 package javax.microedition.media;
 
+/**
+ * Minimal common Player implementation used by concrete backends.
+ *
+ * <p>Concrete Players own their lifecycle, but the common TimeBase behavior can
+ * still enforce JSR-135 through the virtual {@link #getState()} method.</p>
+ */
 public class BasePlayer implements Player {
 	private TimeBase timeBase;
 
@@ -55,14 +62,20 @@ public class BasePlayer implements Player {
 
 	@Override
 	public TimeBase getTimeBase() {
-		if (timeBase == null) {
-			return Manager.getSystemTimeBase();
+		int state = getState();
+		if (state == UNREALIZED || state == CLOSED) {
+			throw new IllegalStateException("Player must be realized to query its TimeBase");
 		}
-		return timeBase;
+		return timeBase == null ? Manager.getSystemTimeBase() : timeBase;
 	}
 
 	@Override
 	public void setTimeBase(TimeBase master) throws MediaException {
+		int state = getState();
+		if (state == UNREALIZED || state == STARTED || state == CLOSED) {
+			throw new IllegalStateException("TimeBase can only be changed while REALIZED or PREFETCHED");
+		}
+		// JSR-135 uses null to restore the implementation's default TimeBase.
 		timeBase = master;
 	}
 
