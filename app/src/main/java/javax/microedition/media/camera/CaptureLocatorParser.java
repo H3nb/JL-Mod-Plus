@@ -45,10 +45,10 @@ public final class CaptureLocatorParser {
 		String device = queryIndex < 0 ? remainder : remainder.substring(0, queryIndex);
 		validateDevice(device);
 		LogicalCameraDevice logicalCamera = resolveLogicalCamera(device);
-		boolean audioVideo = CaptureRequest.DEVICE_AUDIO_VIDEO.equals(device);
+		boolean image = CaptureRequest.DEVICE_IMAGE.equals(device);
 
-		String encoding = audioVideo
-				? CaptureRequest.DEFAULT_RECORDING_ENCODING : CaptureRequest.DEFAULT_ENCODING;
+		String encoding = image
+				? CaptureRequest.JPEG_ENCODING : CaptureRequest.VIDEO_RECORDING_CONTENT_TYPE;
 		int width = CameraRuntimeConfig.defaultWidth();
 		int height = CameraRuntimeConfig.defaultHeight();
 		boolean explicitDimensions = false;
@@ -92,7 +92,7 @@ public final class CaptureLocatorParser {
 			}
 		}
 
-		if (CaptureRequest.DEFAULT_RECORDING_ENCODING.equals(encoding) && explicitDimensions) {
+		if (CaptureRequest.VIDEO_RECORDING_CONTENT_TYPE.equals(encoding) && explicitDimensions) {
 			throw new MediaException("Explicit video recording dimensions are not supported");
 		}
 		if (!CameraRuntimeConfig.acceptsDimensions(width, height)) {
@@ -116,24 +116,24 @@ public final class CaptureLocatorParser {
 
 	private static String normalizeEncoding(String device, String value) throws MediaException {
 		if (CaptureRequest.DEVICE_AUDIO_VIDEO.equals(device)) {
-			if (CaptureRequest.DEFAULT_RECORDING_ENCODING.equalsIgnoreCase(value)
+			if (CaptureRequest.VIDEO_RECORDING_CONTENT_TYPE.equalsIgnoreCase(value)
 					|| "mp4".equalsIgnoreCase(value)) {
-				return CaptureRequest.DEFAULT_RECORDING_ENCODING;
+				return CaptureRequest.VIDEO_RECORDING_CONTENT_TYPE;
 			}
 			throw new MediaException("Unsupported capture encoding: " + value);
 		}
 		if (CaptureRequest.DEVICE_IMAGE.equals(device)) {
-			if (CaptureRequest.DEFAULT_ENCODING.equalsIgnoreCase(value)) {
-				return CaptureRequest.DEFAULT_ENCODING;
+			if (CaptureRequest.JPEG_ENCODING.equalsIgnoreCase(value)) {
+				return CaptureRequest.JPEG_ENCODING;
 			}
 			throw new MediaException("Unsupported capture encoding: " + value);
 		}
-		if (CaptureRequest.DEFAULT_ENCODING.equalsIgnoreCase(value)) {
-			return CaptureRequest.DEFAULT_ENCODING;
+		if (CaptureRequest.JPEG_ENCODING.equalsIgnoreCase(value)) {
+			return CaptureRequest.JPEG_ENCODING;
 		}
-		if (CaptureRequest.DEFAULT_RECORDING_ENCODING.equalsIgnoreCase(value)
+		if (CaptureRequest.VIDEO_RECORDING_CONTENT_TYPE.equalsIgnoreCase(value)
 				|| "mp4".equalsIgnoreCase(value)) {
-			return CaptureRequest.DEFAULT_RECORDING_ENCODING;
+			return CaptureRequest.VIDEO_RECORDING_CONTENT_TYPE;
 		}
 		throw new MediaException("Unsupported capture encoding: " + value);
 	}
