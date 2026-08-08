@@ -18,6 +18,8 @@ package ru.woesss.j2me.mmapi.audio;
 
 import org.junit.Test;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.assertEquals;
@@ -33,6 +35,17 @@ public class ContentProbeTest {
 	@Test
 	public void detectsWaveBeforeAnyMimeOrExtensionHintExists() {
 		assertEquals(ContentProbe.Kind.WAV, probe("RIFF\0\0\0\0WAVEfmt "));
+	}
+
+	@Test
+	public void probesCachedFilesWithoutDependingOnTheirExtension() throws Exception {
+		File file = File.createTempFile("mmapi-content-probe", ".mid");
+		try {
+			Files.write(file.toPath(), "RIFF\0\0\0\0WAVEfmt ".getBytes(StandardCharsets.ISO_8859_1));
+			assertEquals(ContentProbe.Kind.WAV, ContentProbe.probe(file));
+		} finally {
+			Files.deleteIfExists(file.toPath());
+		}
 	}
 
 	@Test
