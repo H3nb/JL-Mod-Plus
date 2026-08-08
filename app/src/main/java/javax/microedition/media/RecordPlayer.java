@@ -23,36 +23,363 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import javax.microedition.io.Connector;
+import javax.microedition.media.camera.MidletMediaPermissionGate;
 import javax.microedition.media.control.RecordControl;
 import javax.microedition.util.ContextHolder;
 
 import io.github.h3nb.jlmodplus.util.IOUtils;
 
+/**
+ * JSR-135 live audio capture player.
+ *
+ * <p>The Android MediaRecorder backend writes one AMR-NB file per active capture segment. A
+ * Player stop or RecordControl stop finalizes the current segment. Later restarts create another
+ * segment; commit joins the AMR frames into one stream. This keeps JSR-135 standby/resume
+ * semantics working on API 23 as well as newer Android versions without relying on
+ * MediaRecorder.pause()/resume().</p>
+ */
 public class RecordPlayer extends BasePlayer implements RecordControl {
+	private static final String CONTENT_TYPE = "audio/amr";
+	private static final byte[] AMR_HEADER = "#!AMR\n".getBytes(StandardCharsets.US_ASCII);
+	private static final int DESTINATION_NONE = 0;
+	private static final int DESTINATION_STREAM = 1;
+	private static final int DESTINATION_LOCATION = 2;
 
-	private static final int RECORD_CLOSED = 0;
-	private static final int RECORD_PREPARED = 1;
-	private static final int RECORD_STARTED = 2;
-	private static final int RECORD_STOPPED = 3;
+	interface RecorderBackend {
+		void prepare(File outputFile) throws IOException;
 
-	private HashMap<String, Control> controls;
-	private MediaRecorder recorder;
-	private OutputStream stream;
-	private File outputFile;
-	private int state;
+		void start();
 
-	public RecordPlayer() {
-		recorder = new MediaRecorder();
-		state = RECORD_CLOSED;
-		controls = new HashMap<>();
+		void stop();
+
+		void release();
+	}
+
+	interface Dependencies {
+		RecorderBackend createRecorder();
+
+		File createTempFile() throws IOException;
+
+		OutputStream openOutputStream(String locator) throws IOException;
+
+		void requireRecordPermission();
+	}
+
+	private static final class AndroidRecorderBackend implements RecorderBackend {
+		private final MediaRecorder recorder = new MediaRecorder();
+
+		@Override
+		public void prepare(File outputFile) throws IOException {
+			recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+			recorder.setOutputFormat(MediaRecorder.OutputFormat.AMR_NB);
+			recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+			recorder.setAudioSamplingRate(8000);
+			recorder.setAudioChannels(1);
+			recorder.setOutputFile(outputFile.getAbsolutePath());
+			recorder.prepare();
+		}
+
+		@Override
+		public void start() {
+			recorder.start();
+		}
+
+		@Override
+		public void stop() {
+			recorder.stop();
+		}
+
+		@Override
+		public void release() {
+			recorder.release();
+		}
+	}
+
+	private static final class AndroidDependencies implements Dependencies {
+		@Override
+		public RecorderBackend createRecorder() {
+			return new AndroidRecorderBackend();
+		}
+
+		@Override
+		public File createTempFile() throws IOException {
+			return File.createTempFile("record-audio-", ".amr", ContextHolder.getCacheDir());
+		}
+
+		@Override
+		public OutputStream openOutputStream(String locator) throws IOException {
+			return Connector.openOutputStream(locator);
+		}
+
+		@Override
+		public void requireRecordPermission() {
+			MidletMediaPermissionGate.requireRecordPermission();
+		}
+	}
+
+	private final Map<String, Control> controls = new HashMap<>();
+	private final List<PlayerListener> listeners = new ArrayList<>();
+	private final List<File> completedSegments = new ArrayList<>();
+	private final Dependencies dependencies;
+
+	private int playerState = UNREALIZED;
+	private TimeBase timeBase;
+	private OutputStream destination;
+	private boolean destinationOwned;
+	private int destinationKind = DESTINATION_NONE;
+	private boolean recordingRequested;
+	private boolean recordingActive;
+	private boolean recordingCycleStarted;
+	private RecorderBackend recorder;
+	private File activeSegment;
+
+	public RecordPlayer(String locator) throws MediaException {
+		this(locator, new AndroidDependencies());
+	}
+
+	RecordPlayer(String locator, Dependencies dependencies) throws MediaException {
+		validateLocator(locator);
+		this.dependencies = dependencies;
 		controls.put(RecordControl.class.getName(), this);
 	}
 
+	private static void validateLocator(String locator) throws MediaException {
+		if (locator == null || !locator.startsWith("capture://audio")) {
+			throw new MediaException("Unsupported audio capture locator");
+		}
+		String suffix = locator.substring("capture://audio".length());
+		if (suffix.isEmpty()) {
+			return;
+		}
+		if (suffix.charAt(0) != '?' || suffix.length() == 1) {
+			throw new MediaException("Invalid audio capture locator");
+		}
+
+		boolean encodingSeen = false;
+		boolean rateSeen = false;
+		boolean channelsSeen = false;
+		for (String pair : suffix.substring(1).split("&", -1)) {
+			int equals = pair.indexOf('=');
+			if (equals <= 0 || equals == pair.length() - 1) {
+				throw new MediaException("Malformed audio capture parameter");
+			}
+			String key = pair.substring(0, equals).toLowerCase(Locale.ROOT);
+			String value = pair.substring(equals + 1);
+			switch (key) {
+				case "encoding" -> {
+					if (encodingSeen) {
+						throw new MediaException("Duplicate audio capture encoding");
+					}
+					encodingSeen = true;
+					if (!("amr".equalsIgnoreCase(value) || "audio/amr".equalsIgnoreCase(value))) {
+						throw new MediaException("Unsupported audio capture encoding: " + value);
+					}
+				}
+				case "rate" -> {
+					if (rateSeen) {
+						throw new MediaException("Duplicate audio capture rate");
+					}
+					rateSeen = true;
+					if (!"8000".equals(value)) {
+						throw new MediaException("AMR-NB capture requires rate=8000");
+					}
+				}
+				case "channels" -> {
+					if (channelsSeen) {
+						throw new MediaException("Duplicate audio capture channels");
+					}
+					channelsSeen = true;
+					if (!"1".equals(value)) {
+						throw new MediaException("AMR-NB capture requires channels=1");
+					}
+				}
+				default -> throw new MediaException("Unsupported audio capture parameter: " + key);
+			}
+		}
+	}
+
 	@Override
-	public Control getControl(String controlType) {
+	public synchronized void realize() {
+		checkClosed();
+		if (playerState == UNREALIZED) {
+			playerState = REALIZED;
+		}
+	}
+
+	@Override
+	public synchronized void prefetch() throws MediaException {
+		checkClosed();
+		if (playerState == STARTED) {
+			return;
+		}
+		if (playerState == UNREALIZED) {
+			realize();
+		}
+		playerState = PREFETCHED;
+	}
+
+	@Override
+	public synchronized void start() throws MediaException {
+		checkClosed();
+		if (playerState == STARTED) {
+			return;
+		}
+		if (playerState == UNREALIZED || playerState == REALIZED) {
+			prefetch();
+		}
+		if (recordingRequested) {
+			try {
+				startPhysicalSegment();
+			} catch (MediaException e) {
+				recordingRequested = false;
+				notifyEvent(PlayerListener.RECORD_ERROR, e);
+				throw e;
+			}
+		}
+		playerState = STARTED;
+		notifyEvent(PlayerListener.STARTED, Long.valueOf(0));
+	}
+
+	@Override
+	public synchronized void stop() throws MediaException {
+		checkClosed();
+		if (playerState != STARTED) {
+			return;
+		}
+		if (recordingActive) {
+			try {
+				finishPhysicalSegment();
+			} catch (MediaException e) {
+				recordingRequested = false;
+				notifyEvent(PlayerListener.RECORD_ERROR, e);
+				playerState = PREFETCHED;
+				throw e;
+			}
+		}
+		playerState = PREFETCHED;
+		notifyEvent(PlayerListener.STOPPED, Long.valueOf(0));
+	}
+
+	@Override
+	public synchronized void deallocate() {
+		checkClosed();
+		if (playerState == STARTED) {
+			try {
+				stop();
+			} catch (MediaException e) {
+				notifyEvent(PlayerListener.ERROR, e);
+			}
+		}
+		if (playerState == PREFETCHED) {
+			playerState = REALIZED;
+		}
+	}
+
+	@Override
+	public synchronized void close() {
+		if (playerState == CLOSED) {
+			return;
+		}
+		try {
+			reset();
+		} catch (IOException ignored) {
+			// close() cannot report checked I/O failures; resources are still released below.
+		}
+		releaseRecorder();
+		closeOwnedDestinationQuietly();
+		destination = null;
+		destinationKind = DESTINATION_NONE;
+		playerState = CLOSED;
+		notifyEvent(PlayerListener.CLOSED, null);
+		listeners.clear();
+	}
+
+	@Override
+	public synchronized long setMediaTime(long now) throws MediaException {
+		checkRealized();
+		throw new MediaException("Live audio capture media time cannot be set");
+	}
+
+	@Override
+	public synchronized long getMediaTime() {
+		checkClosed();
+		return TIME_UNKNOWN;
+	}
+
+	@Override
+	public synchronized TimeBase getTimeBase() {
+		checkRealized();
+		return timeBase == null ? Manager.getSystemTimeBase() : timeBase;
+	}
+
+	@Override
+	public synchronized void setTimeBase(TimeBase master) {
+		checkRealized();
+		if (playerState == STARTED) {
+			throw new IllegalStateException("time base cannot be changed while started");
+		}
+		timeBase = master;
+	}
+
+	@Override
+	public synchronized long getDuration() {
+		checkClosed();
+		return TIME_UNKNOWN;
+	}
+
+	@Override
+	public synchronized void setLoopCount(int count) {
+		checkClosed();
+		if (count == 0 || count < -1) {
+			throw new IllegalArgumentException("invalid loop count");
+		}
+		if (playerState == STARTED) {
+			throw new IllegalStateException("loop count cannot be changed while started");
+		}
+	}
+
+	@Override
+	public synchronized int getState() {
+		return playerState;
+	}
+
+	@Override
+	public synchronized void addPlayerListener(PlayerListener listener) {
+		checkClosed();
+		if (listener == null) {
+			throw new IllegalArgumentException("listener must not be null");
+		}
+		if (!listeners.contains(listener)) {
+			listeners.add(listener);
+		}
+	}
+
+	@Override
+	public synchronized void removePlayerListener(PlayerListener listener) {
+		checkClosed();
+		listeners.remove(listener);
+	}
+
+	@Override
+	public synchronized String getContentType() {
+		checkRealized();
+		return CONTENT_TYPE;
+	}
+
+	@Override
+	public synchronized Control getControl(String controlType) {
+		checkRealized();
+		if (controlType == null) {
+			throw new IllegalArgumentException("control type must not be null");
+		}
 		if (!controlType.contains(".")) {
 			controlType = "javax.microedition.media.control." + controlType;
 		}
@@ -60,89 +387,358 @@ public class RecordPlayer extends BasePlayer implements RecordControl {
 	}
 
 	@Override
-	public Control[] getControls() {
+	public synchronized Control[] getControls() {
+		checkRealized();
 		return controls.values().toArray(new Control[0]);
 	}
 
 	@Override
-	public void setRecordStream(OutputStream stream) {
+	public synchronized void setRecordStream(OutputStream stream) {
 		if (stream == null) {
-			throw new IllegalArgumentException();
+			throw new IllegalArgumentException("record stream must not be null");
 		}
-		if (state == RECORD_PREPARED || state == RECORD_STARTED){
-			throw new IllegalStateException();
-		}
-		this.stream = stream;
-		prepare();
+		checkRecordControlUsable();
+		checkDestinationReplaceable(DESTINATION_STREAM);
+		dependencies.requireRecordPermission();
+		closeOwnedDestinationQuietly();
+		destination = stream;
+		destinationOwned = false;
+		destinationKind = DESTINATION_STREAM;
 	}
 
 	@Override
-	public void setRecordLocation(String locator) throws IOException, MediaException {
+	public synchronized void setRecordLocation(String locator) throws IOException, MediaException {
 		if (locator == null) {
-			throw new IllegalArgumentException();
+			throw new IllegalArgumentException("record locator must not be null");
 		}
-		if (state == RECORD_PREPARED || state == RECORD_STARTED){
-			throw new IllegalStateException();
-		}
-		this.stream = Connector.openOutputStream(locator);
-		prepare();
+		checkRecordControlUsable();
+		checkDestinationReplaceable(DESTINATION_LOCATION);
+		dependencies.requireRecordPermission();
+		OutputStream replacement = dependencies.openOutputStream(locator);
+		closeOwnedDestination();
+		destination = replacement;
+		destinationOwned = true;
+		destinationKind = DESTINATION_LOCATION;
 	}
 
-	private void prepare() {
+	@Override
+	public synchronized void startRecord() {
+		checkRecordControlUsable();
+		if (destination == null) {
+			throw new IllegalStateException("setRecordStream or setRecordLocation first");
+		}
+		if (recordingRequested) {
+			return;
+		}
+		recordingCycleStarted = true;
+		recordingRequested = true;
+		if (playerState == STARTED) {
+			try {
+				startPhysicalSegment();
+			} catch (MediaException e) {
+				recordingRequested = false;
+				notifyEvent(PlayerListener.RECORD_ERROR, e);
+				throw new IllegalStateException("Audio recording could not start", e);
+			}
+		}
+	}
+
+	@Override
+	public synchronized void stopRecord() {
+		checkRecordControlUsable();
+		if (!recordingRequested && !recordingActive) {
+			return;
+		}
+		boolean wasRequested = recordingRequested;
+		recordingRequested = false;
+		if (recordingActive) {
+			try {
+				finishPhysicalSegment();
+			} catch (MediaException e) {
+				notifyEvent(PlayerListener.RECORD_ERROR, e);
+				throw new IllegalStateException("Audio recording could not stop", e);
+			}
+		}
+		if (wasRequested) {
+			notifyEvent(PlayerListener.RECORD_STOPPED, null);
+		}
+	}
+
+	@Override
+	public synchronized void commit() throws IOException {
+		checkRecordControlUsable();
+		if (destination == null) {
+			throw new IllegalStateException("setRecordStream or setRecordLocation first");
+		}
+		if (recordingRequested || recordingActive) {
+			try {
+				stopRecord();
+			} catch (IllegalStateException e) {
+				invalidateRecording();
+				throw new IOException("Audio recording could not be stopped", e);
+			}
+		}
+		if (!recordingCycleStarted || completedSegments.isEmpty()) {
+			invalidateRecording();
+			throw new IOException("Audio recording was never started");
+		}
+
+		IOException failure = null;
 		try {
-			recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-			recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-			recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
-			outputFile = File.createTempFile("record", ".3gpp", ContextHolder.getCacheDir());
-			recorder.setOutputFile(outputFile.getAbsolutePath());
-			recorder.prepare();
-			state = RECORD_PREPARED;
+			copySegmentsToDestination();
 		} catch (IOException e) {
-			e.printStackTrace();
+			failure = e;
+		}
+		try {
+			finishCommittedCycle();
+		} catch (IOException e) {
+			if (failure == null) {
+				failure = e;
+			} else {
+				failure.addSuppressed(e);
+			}
+		}
+		if (failure != null) {
+			throw failure;
 		}
 	}
 
 	@Override
-	public void startRecord() {
-		if (state != RECORD_PREPARED) {
-			throw new IllegalStateException();
+	public synchronized int setRecordSizeLimit(int size) throws MediaException {
+		checkRecordControlUsable();
+		if (size <= 0) {
+			throw new IllegalArgumentException("record size limit must be positive");
 		}
-		recorder.start();
-		state = RECORD_STARTED;
+		throw new MediaException("Audio record size limit is not supported");
 	}
 
 	@Override
-	public void stopRecord() {
-		if (state == RECORD_STARTED) {
-			recorder.stop();
-			state = RECORD_STOPPED;
+	public synchronized void reset() throws IOException {
+		if (playerState == CLOSED) {
+			return;
+		}
+		if (recordingRequested || recordingActive) {
+			try {
+				stopRecord();
+			} catch (IllegalStateException e) {
+				invalidateRecording();
+				throw new IOException("Audio recording could not be reset", e);
+			}
+		}
+		releaseRecorder();
+		boolean deleted = deleteSegments();
+		recordingRequested = false;
+		recordingActive = false;
+		recordingCycleStarted = false;
+		if (!deleted) {
+			throw new IOException("Audio recording could not be erased");
 		}
 	}
 
-	@Override
-	public void commit() throws IOException {
-		stopRecord();
-
-		if (state != RECORD_CLOSED) {
-			FileInputStream fis = new FileInputStream(outputFile);
-			IOUtils.copy(fis, stream);
-			fis.close();
-			stream.close();
-			outputFile.delete();
-			state = RECORD_CLOSED;
+	private void checkClosed() {
+		if (playerState == CLOSED) {
+			throw new IllegalStateException("Player is closed");
 		}
 	}
 
-	@Override
-	public int setRecordSizeLimit(int size) throws MediaException {
-		return 0;
+	private void checkRealized() {
+		checkClosed();
+		if (playerState == UNREALIZED) {
+			throw new IllegalStateException("Player is unrealized");
+		}
 	}
 
-	@Override
-	public void reset() throws IOException {
-		stopRecord();
+	private void checkRecordControlUsable() {
+		checkRealized();
+	}
 
-		outputFile.delete();
-		prepare();
+	private void checkDestinationReplaceable(int newKind) {
+		if (recordingCycleStarted) {
+			throw new IllegalStateException("commit or reset the current recording first");
+		}
+		if (destinationKind != DESTINATION_NONE && destinationKind != newKind) {
+			throw new IllegalStateException("record destination type cannot be changed before commit");
+		}
+	}
+
+	private void startPhysicalSegment() throws MediaException {
+		if (recordingActive) {
+			return;
+		}
+		File segment = null;
+		RecorderBackend newRecorder = null;
+		try {
+			segment = dependencies.createTempFile();
+			newRecorder = dependencies.createRecorder();
+			newRecorder.prepare(segment);
+			newRecorder.start();
+			activeSegment = segment;
+			recorder = newRecorder;
+			recordingActive = true;
+			notifyEvent(PlayerListener.RECORD_STARTED, null);
+		} catch (IOException | RuntimeException e) {
+			if (newRecorder != null) {
+				try {
+					newRecorder.release();
+				} catch (RuntimeException ignored) {
+				}
+			}
+			if (segment != null) {
+				segment.delete();
+			}
+			throw new MediaException("Audio recorder could not start", e);
+		}
+	}
+
+	private void finishPhysicalSegment() throws MediaException {
+		if (!recordingActive) {
+			return;
+		}
+		File segment = activeSegment;
+		RecorderBackend current = recorder;
+		recordingActive = false;
+		activeSegment = null;
+		recorder = null;
+		try {
+			current.stop();
+			current.release();
+			validateAmrSegment(segment);
+			completedSegments.add(segment);
+		} catch (IOException | RuntimeException e) {
+			try {
+				current.release();
+			} catch (RuntimeException ignored) {
+			}
+			if (segment != null) {
+				segment.delete();
+			}
+			throw new MediaException("Audio recorder could not finalize a segment", e);
+		}
+	}
+
+	private static void validateAmrSegment(File segment) throws IOException {
+		if (segment == null || segment.length() < AMR_HEADER.length) {
+			throw new IOException("AMR recording is empty");
+		}
+		byte[] header = new byte[AMR_HEADER.length];
+		try (FileInputStream input = new FileInputStream(segment)) {
+			if (input.read(header) != header.length) {
+				throw new IOException("AMR recording header is incomplete");
+			}
+		}
+		for (int i = 0; i < AMR_HEADER.length; i++) {
+			if (header[i] != AMR_HEADER[i]) {
+				throw new IOException("Unexpected audio recording format");
+			}
+		}
+	}
+
+	private void copySegmentsToDestination() throws IOException {
+		for (int index = 0; index < completedSegments.size(); index++) {
+			File segment = completedSegments.get(index);
+			try (FileInputStream input = new FileInputStream(segment)) {
+				if (index > 0) {
+					long skipped = 0;
+					while (skipped < AMR_HEADER.length) {
+						long count = input.skip(AMR_HEADER.length - skipped);
+						if (count <= 0) {
+							throw new IOException("AMR segment header is incomplete");
+						}
+						skipped += count;
+					}
+				}
+				IOUtils.copy(input, destination);
+			}
+		}
+		destination.flush();
+	}
+
+	private void finishCommittedCycle() throws IOException {
+		IOException failure = null;
+		if (destinationOwned && destination != null) {
+			try {
+				destination.close();
+			} catch (IOException e) {
+				failure = e;
+			}
+		}
+		destination = null;
+		destinationOwned = false;
+		destinationKind = DESTINATION_NONE;
+		recordingRequested = false;
+		recordingActive = false;
+		recordingCycleStarted = false;
+		if (!deleteSegments()) {
+			IOException cleanup = new IOException("Temporary audio recording could not be deleted");
+			if (failure == null) {
+				failure = cleanup;
+			} else {
+				failure.addSuppressed(cleanup);
+			}
+		}
+		if (failure != null) {
+			throw failure;
+		}
+	}
+
+	private void invalidateRecording() {
+		releaseRecorder();
+		deleteSegments();
+		closeOwnedDestinationQuietly();
+		destination = null;
+		destinationOwned = false;
+		destinationKind = DESTINATION_NONE;
+		recordingRequested = false;
+		recordingActive = false;
+		recordingCycleStarted = false;
+	}
+
+	private boolean deleteSegments() {
+		boolean deleted = true;
+		if (activeSegment != null) {
+			deleted &= !activeSegment.exists() || activeSegment.delete();
+			activeSegment = null;
+		}
+		for (File segment : completedSegments) {
+			deleted &= !segment.exists() || segment.delete();
+		}
+		completedSegments.clear();
+		return deleted;
+	}
+
+	private void releaseRecorder() {
+		RecorderBackend current = recorder;
+		recorder = null;
+		recordingActive = false;
+		if (current != null) {
+			try {
+				current.release();
+			} catch (RuntimeException ignored) {
+			}
+		}
+	}
+
+	private void closeOwnedDestination() throws IOException {
+		if (destinationOwned && destination != null) {
+			destination.close();
+		}
+	}
+
+	private void closeOwnedDestinationQuietly() {
+		try {
+			closeOwnedDestination();
+		} catch (IOException ignored) {
+		}
+	}
+
+	private void notifyEvent(String event, Object data) {
+		PlayerListener[] snapshot = listeners.toArray(new PlayerListener[0]);
+		for (PlayerListener listener : snapshot) {
+			try {
+				listener.playerUpdate(this, event, data);
+			} catch (RuntimeException ignored) {
+				// A MIDlet listener must not break the media state machine.
+			}
+		}
 	}
 }
