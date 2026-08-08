@@ -44,6 +44,7 @@ import ru.woesss.j2me.mmapi.audio.AudioFailure;
 import ru.woesss.j2me.mmapi.audio.AudioFailureReporter;
 import ru.woesss.j2me.mmapi.audio.ContentProbe;
 import ru.woesss.j2me.mmapi.audio.MediaRouter;
+import ru.woesss.j2me.mmapi.audio.WavPlayer;
 import ru.woesss.j2me.mmapi.synth.SynthPluginFactory;
 
 public class Manager {
@@ -172,14 +173,25 @@ public class Manager {
 
 	/**
 	 * Routes cached audio by its actual signature before consulting synth plugins.
-	 * Known platform/decoded media (especially WAV) must never reach a generic
-	 * synth plugin. Sequenced media still keeps the existing Android fallback
-	 * until the built-in SONiVOX file path is made explicit in a later phase.
+	 * WAV has a dedicated decoder and must never enter a synth backend. Known
+	 * compressed formats use the Android media stack. Unknown legacy formats keep
+	 * the existing plugin/fallback behavior until their routing is explicitly tested.
 	 */
 	private static Player createCachedPlayer(InternalDataSource datasource, String type)
-			throws IOException {
+			throws IOException, MediaException {
 		ContentProbe.Kind kind = ContentProbe.probe(new File(datasource.getLocator()));
 		MediaRouter.Backend backend = MediaRouter.route(kind, type);
+
+		if (backend == MediaRouter.Backend.WAV) {
+			try {
+				return new WavPlayer(datasource);
+			} catch (MediaException | RuntimeException e) {
+				AudioFailureReporter.report(datasource.getLocator(), type, "dr_wav",
+						AudioFailure.Phase.CREATE, "WAV_CREATE_FAILED", e);
+				datasource.disconnect();
+				throw e;
+			}
+		}
 
 		if (backend != MediaRouter.Backend.PLATFORM_AUDIO) {
 			Player pluginPlayer = createPluginPlayer(datasource);
