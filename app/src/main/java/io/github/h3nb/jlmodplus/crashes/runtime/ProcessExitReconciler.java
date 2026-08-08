@@ -150,7 +150,7 @@ public final class ProcessExitReconciler {
             report.append("Exit reason: ").append(reasonLabel(exit.reason))
                     .append(" (").append(exit.reason).append(")\n");
             report.append("Status: ").append(exit.status).append('\n');
-            if (exit.description != null && !exit.description.isBlank()) {
+            if (hasText(exit.description)) {
                 report.append("Description: ").append(exit.description).append('\n');
             }
             report.append("Importance: ").append(exit.importance).append('\n');
@@ -238,7 +238,11 @@ public final class ProcessExitReconciler {
     }
 
     private static String emptyFallback(String value, String fallback) {
-        return value == null || value.isBlank() ? fallback : value;
+        return hasText(value) ? value : fallback;
+    }
+
+    private static boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
     }
 
     private static final class ExitRecord {
