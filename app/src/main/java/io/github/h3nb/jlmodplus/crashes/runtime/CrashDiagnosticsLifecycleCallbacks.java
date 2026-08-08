@@ -25,7 +25,6 @@ import android.os.Looper;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.lifecycle.Lifecycle;
 
 import io.github.h3nb.jlmodplus.crashes.dialog.ProcessDeathReportActivity;
 
@@ -36,9 +35,11 @@ public final class CrashDiagnosticsLifecycleCallbacks implements Application.Act
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private String lastLaunchedReportId;
     private String pendingGraceSessionId;
+    private Activity resumedActivity;
 
     @Override
     public void onActivityResumed(@NonNull Activity activity) {
+        resumedActivity = activity;
         if (activity instanceof ProcessDeathReportActivity) {
             return;
         }
@@ -68,8 +69,7 @@ public final class CrashDiagnosticsLifecycleCallbacks implements Application.Act
             }
             pendingGraceSessionId = null;
 
-            if (activity.isFinishing() || activity.isDestroyed()
-                    || !activity.getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.RESUMED)) {
+            if (resumedActivity != activity || activity.isFinishing() || activity.isDestroyed()) {
                 return;
             }
 
@@ -103,6 +103,9 @@ public final class CrashDiagnosticsLifecycleCallbacks implements Application.Act
 
     @Override
     public void onActivityPaused(@NonNull Activity activity) {
+        if (resumedActivity == activity) {
+            resumedActivity = null;
+        }
     }
 
     @Override
@@ -115,6 +118,9 @@ public final class CrashDiagnosticsLifecycleCallbacks implements Application.Act
 
     @Override
     public void onActivityDestroyed(@NonNull Activity activity) {
+        if (resumedActivity == activity) {
+            resumedActivity = null;
+        }
         if (activity instanceof ProcessDeathReportActivity
                 && ProcessDeathReportStore.findLatestPendingId(activity) == null) {
             lastLaunchedReportId = null;
