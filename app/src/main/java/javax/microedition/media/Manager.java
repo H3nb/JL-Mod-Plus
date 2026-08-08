@@ -277,6 +277,7 @@ public class Manager {
 			if (player != null) {
 				return player;
 			}
+		}
 		return null;
 	}
 
@@ -305,6 +306,7 @@ public class Manager {
 			if (supported.equals(type)) {
 				return true;
 			}
+		}
 		return false;
 	}
 
@@ -317,6 +319,7 @@ public class Manager {
 			if (supported.equals(type)) {
 				return true;
 			}
+		}
 		return false;
 	}
 
