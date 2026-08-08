@@ -50,6 +50,12 @@ public class Manager {
 	private static final String RESOURCE_LOCATOR = "resource://";
 	private static final String FILE_LOCATOR = "file://";
 	private static final String CAPTURE_LOCATOR_PREFIX = "capture://";
+	private static final String[] AUDIO_CONTENT_TYPES = new String[]{
+			"audio/wav", "audio/x-wav", "audio/midi", "audio/x-midi",
+			"audio/mpeg", "audio/aac", "audio/amr", "audio/amr-wb", "audio/mp3",
+			"audio/mp4", "audio/mmf", "audio/x-tone-seq"};
+	private static final String[] ALL_PROTOCOLS = new String[]{
+			"device", "file", "http", "resource", "capture"};
 	private static final TimeBase DEFAULT_TIMEBASE = () -> System.nanoTime() / 1000L;
 	private static final List<Plugin> PLUGINS = new ArrayList<>();
 	private static volatile TimeBase systemTimeBase = DEFAULT_TIMEBASE;
@@ -161,23 +167,45 @@ public class Manager {
 		return type == null || type.toLowerCase(Locale.ROOT).startsWith("audio/");
 	}
 
-	public static String[] getSupportedContentTypes(String str) {
-		String[] audioTypes = new String[]{"audio/wav", "audio/x-wav", "audio/midi", "audio/x-midi",
-				"audio/mpeg", "audio/aac", "audio/amr", "audio/amr-wb", "audio/mp3",
-				"audio/mp4", "audio/mmf", "audio/x-tone-seq"};
-		if ("capture".equals(str)) {
-			return new String[]{CaptureRequest.CONTENT_TYPE};
+	private static boolean isSupportedAudioContentType(String type) {
+		if (type == null) {
+			return false;
 		}
-		if (str == null) {
-			String[] all = Arrays.copyOf(audioTypes, audioTypes.length + 1);
-			all[audioTypes.length] = CaptureRequest.CONTENT_TYPE;
-			return all;
+		for (String supported : AUDIO_CONTENT_TYPES) {
+			if (supported.equalsIgnoreCase(type)) {
+				return true;
+			}
 		}
-		return audioTypes;
+		return false;
 	}
 
-	public static String[] getSupportedProtocols(String str) {
-		return new String[]{"device", "file", "http", "resource", "capture"};
+	public static String[] getSupportedContentTypes(String protocol) {
+		if ("capture".equals(protocol)) {
+			return new String[]{RecordPlayer.CONTENT_TYPE, CaptureRequest.CONTENT_TYPE};
+		}
+		if (protocol == null) {
+			String[] all = Arrays.copyOf(AUDIO_CONTENT_TYPES, AUDIO_CONTENT_TYPES.length + 1);
+			all[AUDIO_CONTENT_TYPES.length] = CaptureRequest.CONTENT_TYPE;
+			return all;
+		}
+		if ("device".equals(protocol) || "file".equals(protocol)
+				|| "http".equals(protocol) || "resource".equals(protocol)) {
+			return Arrays.copyOf(AUDIO_CONTENT_TYPES, AUDIO_CONTENT_TYPES.length);
+		}
+		return new String[0];
+	}
+
+	public static String[] getSupportedProtocols(String contentType) {
+		if (contentType == null) {
+			return Arrays.copyOf(ALL_PROTOCOLS, ALL_PROTOCOLS.length);
+		}
+		if (CaptureRequest.CONTENT_TYPE.equalsIgnoreCase(contentType)) {
+			return new String[]{"capture"};
+		}
+		if (isSupportedAudioContentType(contentType)) {
+			return Arrays.copyOf(ALL_PROTOCOLS, ALL_PROTOCOLS.length);
+		}
+		return new String[0];
 	}
 
 	public static TimeBase getSystemTimeBase() {
