@@ -113,15 +113,16 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 
 	static void destroyApp() {
 		breadcrumb("midlet_destroy_requested");
-		CrashSessionStore.markExpectedMidletExit(
-				ContextHolder.getAppContext(),
-				"midlet_destroy_requested"
-		);
 		Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
 		new Thread(() -> {
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException ignored) {}
+			breadcrumb("midlet_force_destroy_timeout");
+			CrashSessionStore.markExpectedMidletExit(
+					ContextHolder.getAppContext(),
+					"midlet_force_destroy_timeout"
+			);
 			Process.killProcess(Process.myPid());
 		}, "ForceDestroyTimer").start();
 		MicroActivity activity = ContextHolder.getActivity();
