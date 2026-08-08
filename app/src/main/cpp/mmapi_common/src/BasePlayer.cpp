@@ -91,6 +91,9 @@ namespace mmapi {
             now = duration;
         }
         seekTime = now;
+        // Reflect the logical Player clock immediately; the decoder/synth will
+        // apply the pending seek on its next render callback.
+        playTime = now;
         return now;
     }
 
