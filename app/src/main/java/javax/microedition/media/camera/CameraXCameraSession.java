@@ -19,6 +19,7 @@ package javax.microedition.media.camera;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Looper;
+import android.util.Log;
 import android.util.Rational;
 import android.util.Size;
 
@@ -60,6 +61,7 @@ import javax.microedition.util.ContextHolder;
 
 /** CameraX backend for JSR-135 preview, still capture, and resumable recording. */
 public final class CameraXCameraSession implements CameraSession, CameraRecordingSession {
+	private static final String TAG = "J2ME-CameraX";
 	private static final long OPERATION_TIMEOUT_MS = 20_000L;
 
 	private final CaptureRequest request;
@@ -388,7 +390,7 @@ public final class CameraXCameraSession implements CameraSession, CameraRecordin
 	}
 
 	@Override
-	public void finalizeRecording() throws MediaException {
+	public boolean finalizeRecording() throws MediaException {
 		final MicroActivity activity;
 		final Recording current;
 		final FileRecordingResult result;
@@ -396,14 +398,19 @@ public final class CameraXCameraSession implements CameraSession, CameraRecordin
 			current = recording;
 			result = activeRecording;
 			if (current == null || result == null) {
-				return;
+				return false;
 			}
 			activity = requireActivity();
 		}
-		onMainThread(activity, () -> {
-			current.stop();
-			return null;
-		});
+
+		// A previous finalize attempt may have timed out while CameraX later delivered
+		// its Finalize event. Do not call stop() again once the result is already final.
+		if (!result.isDone()) {
+			onMainThread(activity, () -> {
+				current.stop();
+				return null;
+			});
+		}
 
 		VideoRecordEvent.Finalize finalized;
 		try {
@@ -428,7 +435,13 @@ public final class CameraXCameraSession implements CameraSession, CameraRecordin
 					videoCapture = null;
 					recorder = null;
 					if (started) {
-						bindUseCases(activity);
+						try {
+							bindUseCases(activity);
+						} catch (RuntimeException e) {
+							// Recording finalization is authoritative. A preview rebind failure
+							// must not turn a valid finalized MP4 into a failed RecordControl commit.
+							Log.w(TAG, "Camera preview could not be restored after recording", e);
+						}
 					}
 				}
 			}
@@ -437,6 +450,7 @@ public final class CameraXCameraSession implements CameraSession, CameraRecordin
 		if (finalized.hasError()) {
 			throw new MediaException("Video recording failed: " + finalized.getError());
 		}
+		return true;
 	}
 
 	@Override

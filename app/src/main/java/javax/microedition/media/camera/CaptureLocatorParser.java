@@ -80,10 +80,7 @@ public final class CaptureLocatorParser {
 					}
 					case "width" -> requestedWidth = parsePositive(value, "width");
 					case "height" -> requestedHeight = parsePositive(value, "height");
-					case "fps" -> {
-						parsePositive(value, "fps");
-						throw new MediaException("Frame-rate selection is not supported");
-					}
+					case "fps" -> parsePositiveNumber(value, "fps");
 					default -> throw new IllegalArgumentException("Unknown capture parameter: " + key);
 				}
 			}
@@ -137,6 +134,12 @@ public final class CaptureLocatorParser {
 		if (CaptureRequest.JPEG_ENCODING.equalsIgnoreCase(value)) {
 			return CaptureRequest.JPEG_ENCODING;
 		}
+		if (CaptureRequest.GRAY8_ENCODING.equalsIgnoreCase(value)) {
+			return CaptureRequest.GRAY8_ENCODING;
+		}
+		if (CaptureRequest.RGB888_ENCODING.equalsIgnoreCase(value)) {
+			return CaptureRequest.RGB888_ENCODING;
+		}
 		if (CaptureRequest.VIDEO_RECORDING_CONTENT_TYPE.equalsIgnoreCase(value)
 				|| "mp4".equalsIgnoreCase(value)) {
 			return CaptureRequest.VIDEO_RECORDING_CONTENT_TYPE;
@@ -176,6 +179,29 @@ public final class CaptureLocatorParser {
 				throw new IllegalArgumentException(name + " must be positive");
 			}
 			return parsed;
+		} catch (NumberFormatException e) {
+			throw new IllegalArgumentException("invalid " + name, e);
+		}
+	}
+
+	/** Validates the MMAPI pos_number grammar (digits with an optional fractional part). */
+	private static void parsePositiveNumber(String value, String name) {
+		int dot = -1;
+		for (int i = 0; i < value.length(); i++) {
+			char c = value.charAt(i);
+			if (c == '.') {
+				if (dot >= 0 || i == 0 || i == value.length() - 1) {
+					throw new IllegalArgumentException("invalid " + name);
+				}
+				dot = i;
+			} else if (!Character.isDigit(c)) {
+				throw new IllegalArgumentException("invalid " + name);
+			}
+		}
+		try {
+			if (Double.parseDouble(value) <= 0.0) {
+				throw new IllegalArgumentException(name + " must be positive");
+			}
 		} catch (NumberFormatException e) {
 			throw new IllegalArgumentException("invalid " + name, e);
 		}

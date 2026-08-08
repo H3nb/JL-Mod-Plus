@@ -135,6 +135,11 @@ public final class CameraPlayer implements Player {
 			if (videoControl != null) {
 				videoControl.attachDirectPreview();
 			}
+			if (session != null) {
+				lease = acquired;
+				state = PREFETCHED;
+				return;
+			}
 			prepared = sessionFactory.create(request);
 			prepared.prepare();
 			if (previewView != null) {
@@ -158,6 +163,9 @@ public final class CameraPlayer implements Player {
 	@Override
 	public synchronized void start() throws MediaException {
 		checkClosed();
+		if (state == STARTED) {
+			return;
+		}
 		requireWorkerThread();
 		requireActivityResumed();
 		if (state == UNREALIZED) {
@@ -214,7 +222,8 @@ public final class CameraPlayer implements Player {
 
 	@Override
 	public synchronized void deallocate() {
-		if (state == CLOSED) {
+		checkClosed();
+		if (state == UNREALIZED || state == REALIZED) {
 			return;
 		}
 		try {
@@ -223,15 +232,18 @@ public final class CameraPlayer implements Player {
 			}
 		} catch (MediaException e) {
 			Log.w(TAG, "Camera stop during deallocate failed", e);
-			state = PREFETCHED;
-		}
-		if (recordingControl != null) {
-			recordingControl.onPlayerDeallocated();
-		}
-		releaseSession();
-		if (state == PREFETCHED) {
+			if (recordingControl != null) {
+				recordingControl.onPlayerDeallocated();
+			}
+			releaseSession();
 			state = REALIZED;
+			return;
 		}
+		// CameraX persistent recordings survive an explicit VideoCapture unbind.
+		// stop() has already paused recording and unbound the camera use cases, so
+		// keep the prepared session for JSR-135 standby/resume and release only the lease.
+		releaseLease();
+		state = REALIZED;
 	}
 
 	@Override
@@ -258,7 +270,7 @@ public final class CameraPlayer implements Player {
 	@Override
 	public synchronized long setMediaTime(long now) throws MediaException {
 		checkRealized();
-		return getMediaTimeUnchecked();
+		throw new MediaException("Live camera media time cannot be set");
 	}
 
 	@Override
@@ -268,26 +280,34 @@ public final class CameraPlayer implements Player {
 	}
 
 	@Override
-	public long getDuration() {
+	public synchronized long getDuration() {
+		checkClosed();
 		return TIME_UNKNOWN;
 	}
 
 	@Override
 	public synchronized TimeBase getTimeBase() {
+		checkRealized();
 		return timeBase == null ? Manager.getSystemTimeBase() : timeBase;
 	}
 
 	@Override
 	public synchronized void setTimeBase(TimeBase master) throws MediaException {
-		checkClosed();
-		timeBase = Objects.requireNonNull(master, "master");
+		checkRealized();
+		if (state == STARTED) {
+			throw new IllegalStateException("time base cannot be changed while started");
+		}
+		timeBase = master;
 	}
 
 	@Override
 	public synchronized void setLoopCount(int count) {
 		checkClosed();
-		if (count == 0) {
-			throw new IllegalArgumentException("loop count must not be 0");
+		if (state == STARTED) {
+			throw new IllegalStateException("loop count cannot be changed while started");
+		}
+		if (count == 0 || count < -1) {
+			throw new IllegalArgumentException("loop count must be positive or -1");
 		}
 	}
 
@@ -406,8 +426,15 @@ public final class CameraPlayer implements Player {
 		requireRecordingSession().resumeRecording();
 	}
 
-	public void finalizeCameraRecording() throws MediaException {
-		requireRecordingSession().finalizeRecording();
+	public boolean finalizeCameraRecording() throws MediaException {
+		return requireRecordingSession().finalizeRecording();
+	}
+
+	/** Returns backend recording state without taking the Player monitor. */
+	public boolean hasCameraRecording() {
+		CameraSession currentSession = session;
+		return currentSession instanceof CameraRecordingSession
+				&& ((CameraRecordingSession) currentSession).hasRecording();
 	}
 
 	public void notifyRecordingEvent(String event, Object data) {
@@ -449,6 +476,10 @@ public final class CameraPlayer implements Player {
 		if (currentSession != null) {
 			currentSession.release();
 		}
+		releaseLease();
+	}
+
+	private void releaseLease() {
 		CameraLeaseManager.Lease currentLease = lease;
 		lease = null;
 		if (currentLease != null) {

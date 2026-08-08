@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -46,9 +46,12 @@ public final class CameraRecordingControl implements RecordControl {
 	private boolean destinationOwned;
 	private int destinationKind = DESTINATION_NONE;
 	private File recordingFile;
+	private File pendingCleanupFile;
 	private boolean recordingRequested;
 	private boolean recordingActive;
 	private boolean recordingCycleStarted;
+	/** Set after commit/reset IOException until a destination setter succeeds. */
+	private boolean destinationRequiredAfterFailure;
 
 	public CameraRecordingControl(CameraPlayer player, CaptureRequest request) {
 		this.player = player;
@@ -64,6 +67,7 @@ public final class CameraRecordingControl implements RecordControl {
 		}
 		checkDestinationReplaceable(DESTINATION_STREAM);
 		MidletMediaPermissionGate.requireRecordPermission();
+		prepareDestinationReplacementAfterFailure();
 		closeOwnedDestination();
 		destination = stream;
 		destinationOwned = false;
@@ -78,6 +82,7 @@ public final class CameraRecordingControl implements RecordControl {
 		checkDestinationReplaceable(DESTINATION_LOCATION);
 		MidletMediaPermissionGate.requireRecordPermission();
 		OutputStream newDestination = Connector.openOutputStream(locator);
+		prepareDestinationReplacementAfterFailure();
 		closeOwnedDestination();
 		destination = newDestination;
 		destinationOwned = true;
@@ -91,7 +96,7 @@ public final class CameraRecordingControl implements RecordControl {
 
 	@Override
 	public synchronized void startRecord() {
-		if (destination == null) {
+		if (destination == null || destinationRequiredAfterFailure) {
 			throw new IllegalStateException("setRecordStream or setRecordLocation first");
 		}
 		if (recordingRequested) {
@@ -127,36 +132,52 @@ public final class CameraRecordingControl implements RecordControl {
 
 	@Override
 	public synchronized void commit() throws IOException {
-		if (destination == null) {
-			return;
-		}
 		if (recordingRequested || recordingActive) {
-			stopRecord();
+			stopForFinalization();
 		}
+		if (recordingFile == null) {
+			finishRecordingCycle(true);
+			throw new IOException("Camera recording was never started");
+		}
+
+		boolean finalized;
+		try {
+			finalized = player.finalizeCameraRecording();
+		} catch (MediaException e) {
+			if (!player.hasCameraRecording()) {
+				// CameraX has already delivered a terminal Finalize event. Do not let a
+				// later commit treat its invalid temporary MP4 as a successful recording.
+				finishRecordingCycle(true);
+			} else {
+				// Keep retry-commit compatibility, but JSR-135 requires a new destination
+				// before another recording cycle may start after this IOException.
+				destinationRequiredAfterFailure = true;
+			}
+			throw new IOException("Camera recording could not be finalized", e);
+		}
+		if (!finalized) {
+			// A temp file without a matching backend outcome cannot be trusted. This
+			// also closes the race where a later commit could otherwise copy stale data.
+			finishRecordingCycle(true);
+			throw new IOException("Camera recording backend no longer exists");
+		}
+		destinationRequiredAfterFailure = false;
+		recordingActive = false;
 
 		IOException failure = null;
 		try {
-			if (recordingFile != null) {
-				player.finalizeCameraRecording();
-				copyRecordingToDestination();
-			} else {
-				// A recording may have remained in standby for its whole lifetime. The
-				// JSR-135 contract does not define this as an illegal commit.
-				destination.flush();
-			}
-		} catch (MediaException e) {
-			failure = new IOException("Camera recording could not be finalized", e);
+			copyRecordingToDestination();
 		} catch (IOException e) {
 			failure = e;
-		} finally {
-			deleteRecordingFile();
-			closeOwnedDestination();
-			destination = null;
-			destinationOwned = false;
-			destinationKind = DESTINATION_NONE;
-			recordingRequested = false;
-			recordingActive = false;
-			recordingCycleStarted = false;
+		}
+		try {
+			finishCommittedRecordingCycle();
+		} catch (IOException e) {
+			if (failure == null) {
+				failure = e;
+			} else {
+				failure.addSuppressed(e);
+			}
 		}
 		if (failure != null) {
 			throw failure;
@@ -168,6 +189,9 @@ public final class CameraRecordingControl implements RecordControl {
 		if (size <= 0) {
 			throw new IllegalArgumentException("record size limit must be positive");
 		}
+		// CameraX can stop its temporary file at a byte limit, but this control
+		// cannot yet perform the implicit JSR-135 commit when that limit is reached.
+		// Report the optional feature as unsupported instead of exposing partial semantics.
 		throw new MediaException("Camera record size limit is not supported yet");
 	}
 
@@ -177,18 +201,35 @@ public final class CameraRecordingControl implements RecordControl {
 			return;
 		}
 		if (recordingRequested || recordingActive) {
-			stopRecord();
+			stopForFinalization();
+		}
+		if (recordingFile == null) {
+			recordingCycleStarted = false;
+			// Do not clear destinationRequiredAfterFailure here. A successful retry
+			// reset does not satisfy the JSR-135 requirement to install a new destination.
+			return;
 		}
 		try {
-			if (recordingFile != null) {
-				player.finalizeCameraRecording();
-				deleteRecordingFile();
-			}
-			recordingCycleStarted = false;
+			// reset() only needs the backend recording to be gone; false means there is
+			// nothing left to finalize and the temporary file can be discarded safely.
+			player.finalizeCameraRecording();
 		} catch (MediaException e) {
-			invalidateAfterFailure();
+			if (!player.hasCameraRecording()) {
+				// A terminally invalid recording cannot be reused after reset failure.
+				finishRecordingCycle(true);
+			} else {
+				// Preserve retry-reset compatibility, but require a destination setter
+				// before any later recording cycle can start.
+				destinationRequiredAfterFailure = true;
+			}
 			throw new IOException("Camera recording could not be reset", e);
 		}
+		recordingRequested = false;
+		recordingActive = false;
+		recordingCycleStarted = false;
+		// Intentionally preserve destinationRequiredAfterFailure when this reset is
+		// a successful retry of an earlier failed commit/reset.
+		deleteRecordingFile();
 	}
 
 	/** Starts or resumes an armed recording after the Player enters STARTED. */
@@ -223,8 +264,19 @@ public final class CameraRecordingControl implements RecordControl {
 	}
 
 	private void startOrResumePhysicalRecording() {
+		boolean resuming = recordingFile != null;
+		if (!resuming && pendingCleanupFile != null) {
+			try {
+				cleanupPendingRecordingBeforeStart();
+			} catch (MediaException e) {
+				recordingActive = false;
+				recordingRequested = false;
+				player.notifyRecordingEvent(PlayerListener.RECORD_ERROR, e);
+				throw new IllegalStateException("Previous camera recording could not be cleaned up", e);
+			}
+		}
 		try {
-			if (recordingFile == null) {
+			if (!resuming) {
 				recordingFile = File.createTempFile(
 						"jlmod-camera-record-", ".mp4", ContextHolder.getCacheDir());
 				player.beginCameraRecording(recordingFile, withAudio, Long.MAX_VALUE, width, height);
@@ -234,11 +286,45 @@ public final class CameraRecordingControl implements RecordControl {
 			recordingActive = true;
 			player.notifyRecordingEvent(PlayerListener.RECORD_STARTED, null);
 		} catch (IOException | MediaException | RuntimeException e) {
-			deleteRecordingFile();
+			if (!resuming) {
+				boolean finalized = false;
+				try {
+					finalized = player.finalizeCameraRecording();
+				} catch (MediaException cleanupFailure) {
+					e.addSuppressed(cleanupFailure);
+				}
+				if (finalized || !player.hasCameraRecording()) {
+					deleteRecordingFile();
+				}
+			}
+			// On resume failure keep the existing file. The persistent CameraX
+			// recording may still be paused and can be retried or finalized later.
 			recordingActive = false;
 			recordingRequested = false;
 			player.notifyRecordingEvent(PlayerListener.RECORD_ERROR, e);
 			throw new IllegalStateException("Camera recording could not start", e);
+		}
+	}
+
+	/**
+	 * Implements the stop portion of implicit commit/reset without allowing a
+	 * CameraX pause failure to bypass finalization and leave the recording poisoned.
+	 */
+	private void stopForFinalization() {
+		boolean wasRequested = recordingRequested;
+		recordingRequested = false;
+		if (recordingActive) {
+			try {
+				player.pauseCameraRecording();
+				recordingActive = false;
+			} catch (MediaException e) {
+				player.notifyRecordingEvent(PlayerListener.RECORD_ERROR, e);
+				// finalizeCameraRecording() below remains authoritative and can stop
+				// an active CameraX recording even when pause itself failed.
+			}
+		}
+		if (wasRequested) {
+			player.notifyRecordingEvent(PlayerListener.RECORD_STOPPED, null);
 		}
 	}
 
@@ -253,6 +339,24 @@ public final class CameraRecordingControl implements RecordControl {
 			}
 			destination.flush();
 		}
+	}
+
+	private void cleanupPendingRecordingBeforeStart() throws MediaException {
+		if (pendingCleanupFile == null) {
+			return;
+		}
+		try {
+			player.finalizeCameraRecording();
+		} catch (MediaException e) {
+			if (!player.hasCameraRecording()) {
+				deletePendingCleanupFile();
+				return;
+			}
+			throw e;
+		}
+		// A false result also means the stale backend is already gone. Either way,
+		// the private temp file is no longer needed before the next recording starts.
+		deletePendingCleanupFile();
 	}
 
 	private void discardCurrentRecording(boolean closeDestination) {
@@ -270,9 +374,18 @@ public final class CameraRecordingControl implements RecordControl {
 				// Player release is the final fallback for a backend that cannot finalize.
 			}
 		}
+		if (pendingCleanupFile != null) {
+			try {
+				player.finalizeCameraRecording();
+			} catch (MediaException ignored) {
+				// Player release remains the final fallback during teardown.
+			}
+			deletePendingCleanupFile();
+		}
 		recordingRequested = false;
 		recordingActive = false;
 		recordingCycleStarted = false;
+		destinationRequiredAfterFailure = false;
 		deleteRecordingFile();
 		if (closeDestination) {
 			closeOwnedDestination();
@@ -282,18 +395,47 @@ public final class CameraRecordingControl implements RecordControl {
 		}
 	}
 
-	private void invalidateAfterFailure() {
+	private void finishRecordingCycle(boolean closeDestination) {
 		deleteRecordingFile();
-		closeOwnedDestination();
-		destination = null;
-		destinationOwned = false;
-		destinationKind = DESTINATION_NONE;
 		recordingRequested = false;
 		recordingActive = false;
 		recordingCycleStarted = false;
+		destinationRequiredAfterFailure = false;
+		if (closeDestination) {
+			closeOwnedDestination();
+			destination = null;
+			destinationOwned = false;
+			destinationKind = DESTINATION_NONE;
+		}
+	}
+
+	private void finishCommittedRecordingCycle() throws IOException {
+		deleteRecordingFile();
+		recordingRequested = false;
+		recordingActive = false;
+		recordingCycleStarted = false;
+		destinationRequiredAfterFailure = false;
+
+		IOException closeFailure = null;
+		if (destinationOwned && destination != null) {
+			try {
+				destination.close();
+			} catch (IOException e) {
+				closeFailure = new IOException("Camera recording destination could not be closed", e);
+			}
+		}
+		destination = null;
+		destinationOwned = false;
+		destinationKind = DESTINATION_NONE;
+		if (closeFailure != null) {
+			throw closeFailure;
+		}
 	}
 
 	private void checkDestinationReplaceable(int requestedKind) {
+		if (destinationRequiredAfterFailure) {
+			return;
+		}
 		if (recordingCycleStarted || recordingFile != null || recordingRequested || recordingActive) {
 			throw new IllegalStateException("commit or reset the current recording first");
 		}
@@ -302,9 +444,31 @@ public final class CameraRecordingControl implements RecordControl {
 		}
 	}
 
+	private void prepareDestinationReplacementAfterFailure() {
+		if (!destinationRequiredAfterFailure) {
+			return;
+		}
+		pendingCleanupFile = recordingFile;
+		recordingFile = null;
+		recordingRequested = false;
+		recordingActive = false;
+		recordingCycleStarted = false;
+		destinationRequiredAfterFailure = false;
+	}
+
 	private void deleteRecordingFile() {
 		File file = recordingFile;
 		recordingFile = null;
+		deleteFile(file);
+	}
+
+	private void deletePendingCleanupFile() {
+		File file = pendingCleanupFile;
+		pendingCleanupFile = null;
+		deleteFile(file);
+	}
+
+	private static void deleteFile(File file) {
 		if (file != null && file.exists() && !file.delete()) {
 			file.deleteOnExit();
 		}
@@ -317,7 +481,7 @@ public final class CameraRecordingControl implements RecordControl {
 		try {
 			destination.close();
 		} catch (IOException ignored) {
-			// Destination cleanup is best effort outside commit/reset error paths.
+			// Destination cleanup is best effort outside commit error paths.
 		}
 	}
 }
