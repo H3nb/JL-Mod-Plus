@@ -66,17 +66,24 @@ public class SnapshotEncodingParserTest {
 	}
 
 	@Test
-	public void rejectsUnsupportedAndMalformedRequests() {
+	public void invalidDescriptorsFollowVideoControlMediaExceptionContract() {
+		assertThrows(MediaException.class, () -> SnapshotEncodingParser.parse(""));
+		assertThrows(MediaException.class, () -> SnapshotEncodingParser.parse("encoding=png"));
+		assertThrows(MediaException.class, () -> SnapshotEncodingParser.parse("width=320&height=240"));
 		assertThrows(MediaException.class, () ->
-				SnapshotEncodingParser.parse("encoding=png"));
-		assertThrows(IllegalArgumentException.class, () ->
 				SnapshotEncodingParser.parse("encoding=jpeg&width=640"));
-		assertThrows(IllegalArgumentException.class, () ->
+		assertThrows(MediaException.class, () ->
 				SnapshotEncodingParser.parse("encoding=jpeg&width=640&width=320&height=480"));
-		assertThrows(IllegalArgumentException.class, () ->
+		assertThrows(MediaException.class, () ->
 				SnapshotEncodingParser.parse("encoding=jpeg&Width=640&width=320&height=480"));
-		assertThrows(IllegalArgumentException.class, () ->
+		assertThrows(MediaException.class, () ->
 				SnapshotEncodingParser.parse("encoding=jpeg&quality=101"));
+		assertThrows(MediaException.class, () ->
+				SnapshotEncodingParser.parse("encoding=jpeg&width=abc&height=240"));
+		assertThrows(MediaException.class, () ->
+				SnapshotEncodingParser.parse("encoding=jpeg&unknown=value"));
+		assertThrows(MediaException.class, () ->
+				SnapshotEncodingParser.parse("encoding=jpeg&width=%ZZ&height=240"));
 		assertThrows(MediaException.class, () ->
 				SnapshotEncodingParser.parse("encoding=jpeg&width=4096&height=2160"));
 	}
