@@ -23,11 +23,21 @@ import static org.junit.Assert.assertNull;
 
 public class SynthPluginFactoryTest {
 	@Test
-	public void selectsEasForDlsAndSf2() {
+	public void selectsEasForDlsAndSf2ByDefault() {
 		assertEquals(SynthPluginFactory.Backend.EAS,
-				SynthPluginFactory.backendFor(SoundBankResolver.Format.DLS));
+				SynthPluginFactory.backendFor(SoundBankResolver.Format.DLS, false));
 		assertEquals(SynthPluginFactory.Backend.EAS,
-				SynthPluginFactory.backendFor(SoundBankResolver.Format.SF2));
+				SynthPluginFactory.backendFor(SoundBankResolver.Format.SF2, false));
+	}
+
+	@Test
+	public void debugTsfOverrideAffectsSf2Only() {
+		assertEquals(SynthPluginFactory.Backend.TSF,
+				SynthPluginFactory.backendFor(SoundBankResolver.Format.SF2, true));
+		assertEquals(SynthPluginFactory.Backend.EAS,
+				SynthPluginFactory.backendFor(SoundBankResolver.Format.DLS, true));
+		assertEquals(SynthPluginFactory.Backend.BUILTIN,
+				SynthPluginFactory.backendFor(null, true));
 	}
 
 	@Test
@@ -40,6 +50,7 @@ public class SynthPluginFactoryTest {
 
 	@Test
 	public void missingFormatMeansBuiltInBackend() {
-		assertEquals(SynthPluginFactory.Backend.BUILTIN, SynthPluginFactory.backendFor(null));
+		assertEquals(SynthPluginFactory.Backend.BUILTIN,
+				SynthPluginFactory.backendFor(null, false));
 	}
 }
