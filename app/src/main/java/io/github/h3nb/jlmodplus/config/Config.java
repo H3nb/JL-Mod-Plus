@@ -37,7 +37,9 @@ import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
 
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.crashes.dialog.ProcessDeathReportActivity;
 import io.github.h3nb.jlmodplus.crashes.runtime.CrashSessionStore;
+import io.github.h3nb.jlmodplus.crashes.runtime.ProcessExitReconciler;
 
 public class Config {
 	public static final String APPS_DB_NAME = "/J2ME-apps.db";
@@ -127,6 +129,19 @@ public class Config {
 	}
 
 	public static void startApp(Context context, String name, String path) {
+		// A process death can happen while the launcher Activity remains resumed,
+		// so its lifecycle callback may not get another onResume before the user
+		// taps a different game. Reconcile the previous durable session before a
+		// new session can overwrite it. If an incident is found, surface that
+		// report first and leave launching the requested MIDlet to the next tap.
+		String previousReportId = ProcessExitReconciler.reconcileMidletAfterExitHistoryGrace(context);
+		if (previousReportId != null) {
+			Intent reportIntent = new Intent(context, ProcessDeathReportActivity.class)
+					.putExtra(ProcessDeathReportActivity.EXTRA_REPORT_ID, previousReportId);
+			context.startActivity(reportIntent);
+			return;
+		}
+
 		int end = path.lastIndexOf(File.separatorChar);
 		int start = path.lastIndexOf(File.separatorChar, end - 1);
 		if (start > 0) {
