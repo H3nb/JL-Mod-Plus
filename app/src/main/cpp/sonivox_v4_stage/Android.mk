@@ -19,8 +19,14 @@ LOCAL_MODULE := sonivox_v4
 # that are EAS_IPTR in the current interface). Do not compile them on ARM64
 # until they have a pointer-width-safe compatibility patch; suppressing the
 # compiler errors would leave real pointer truncation bugs.
+#
+# eas_public.c also contains two MMAPI-only calls using the obsolete printf-
+# style EAS_ReportEx signature. Compile it through a tiny compatibility
+# translation unit that redirects only those stale calls to EAS_Report while
+# keeping the pinned upstream source otherwise unchanged.
 LOCAL_SRC_FILES := \
 	api_smoke.c \
+	eas_public_compat.c \
 	../sonivox_v4/arm-wt-22k/host_src/eas_config.c \
 	../sonivox_v4/arm-wt-22k/host_src/eas_report.c \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_chorus.c \
@@ -33,7 +39,6 @@ LOCAL_SRC_FILES := \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_mixer.c \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_pan.c \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_pcm.c \
-	../sonivox_v4/arm-wt-22k/lib_src/eas_public.c \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_reverb.c \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_smf.c \
 	../sonivox_v4/arm-wt-22k/lib_src/eas_tonecontrol.c \
