@@ -12,9 +12,6 @@
 
 namespace mmapi {
     namespace eas {
-        std::mutex Player::soundBankMutex;
-        std::string Player::soundBankPath;
-
         Player::Player(EAS_DATA_HANDLE easHandle, BaseFile *file, EAS_HANDLE stream, const int64_t duration)
                 : BasePlayer(duration), easHandle(easHandle), media(stream), interactive(nullptr), file(file) {}
 
@@ -24,7 +21,7 @@ namespace mmapi {
             close();
         }
 
-        int32_t Player::configureHandle(EAS_DATA_HANDLE easHandle) {
+        int32_t Player::configureHandle(EAS_DATA_HANDLE easHandle, const char *soundBank) {
             if (easHandle == nullptr) {
                 return EAS_ERROR_INVALID_HANDLE;
             }
@@ -34,13 +31,7 @@ namespace mmapi {
                 return result;
             }
 
-            std::string configuredPath;
-            {
-                std::lock_guard<std::mutex> lock(soundBankMutex);
-                configuredPath = soundBankPath;
-            }
-
-            if (configuredPath.empty()) {
+            if (soundBank == nullptr || soundBank[0] == '\0') {
                 result = EAS_SetParameter(easHandle,
                                           EAS_MODULE_REVERB,
                                           EAS_PARAM_REVERB_PRESET,
@@ -54,14 +45,16 @@ namespace mmapi {
                                         EAS_FALSE);
             }
 
-            IOFile soundBank(configuredPath.c_str(), "rb");
-            if (!soundBank.isOpen()) {
+            IOFile bankFile(soundBank, "rb");
+            if (!bankFile.isOpen()) {
                 return EAS_ERROR_FILE_OPEN_FAILED;
             }
-            return EAS_LoadDLSCollection(easHandle, nullptr, &soundBank.easFile);
+            return EAS_LoadDLSCollection(easHandle, nullptr, &bankFile.easFile);
         }
 
-        int32_t Player::createPlayer(const char *locator, Player **pPlayer) {
+        int32_t Player::createPlayer(const char *locator,
+                                     const char *soundBank,
+                                     Player **pPlayer) {
             if (locator == nullptr || pPlayer == nullptr) {
                 return EAS_ERROR_INVALID_PARAMETER;
             }
@@ -73,7 +66,7 @@ namespace mmapi {
                 return result;
             }
 
-            result = configureHandle(easHandle);
+            result = configureHandle(easHandle, soundBank);
             if (result != EAS_SUCCESS) {
                 EAS_Shutdown(easHandle);
                 return result;
@@ -166,10 +159,8 @@ namespace mmapi {
             easHandle = nullptr;
         }
 
-        int32_t Player::initSoundBank(const char *sound_bank) {
-            if (sound_bank == nullptr || sound_bank[0] == '\0') {
-                std::lock_guard<std::mutex> lock(soundBankMutex);
-                soundBankPath.clear();
+        int32_t Player::validateSoundBank(const char *soundBank) {
+            if (soundBank == nullptr || soundBank[0] == '\0') {
                 return EAS_SUCCESS;
             }
 
@@ -181,11 +172,11 @@ namespace mmapi {
 
             result = EAS_SetHeaderSearchFlag(easHandle, EAS_FALSE);
             if (result == EAS_SUCCESS) {
-                IOFile file(sound_bank, "rb");
-                if (!file.isOpen()) {
+                IOFile bankFile(soundBank, "rb");
+                if (!bankFile.isOpen()) {
                     result = EAS_ERROR_FILE_OPEN_FAILED;
                 } else {
-                    result = EAS_LoadDLSCollection(easHandle, nullptr, &file.easFile);
+                    result = EAS_LoadDLSCollection(easHandle, nullptr, &bankFile.easFile);
                 }
             }
 
@@ -193,13 +184,7 @@ namespace mmapi {
             if (result == EAS_SUCCESS && shutdownResult != EAS_SUCCESS) {
                 return shutdownResult;
             }
-            if (result != EAS_SUCCESS) {
-                return result;
-            }
-
-            std::lock_guard<std::mutex> lock(soundBankMutex);
-            soundBankPath = sound_bank;
-            return EAS_SUCCESS;
+            return result;
         }
 
         jint Player::writeMIDI(util::JByteArrayPtr &data) {
