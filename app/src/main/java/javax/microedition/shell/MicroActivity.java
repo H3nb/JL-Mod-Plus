@@ -614,8 +614,16 @@ public class MicroActivity extends AppCompatActivity {
 			params.leftMargin = left;
 			params.topMargin = top;
 			view.setLayoutParams(params);
-			view.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+			// Canvas posts clipBounds immediately after this host update. Keep the
+			// native preview hidden until that clip has been applied so a geometry
+			// change can never expose one frame with stale clipping.
+			view.setVisibility(View.INVISIBLE);
 			view.bringToFront();
+			view.post(() -> {
+				if (view.getParent() == container && current == owner) {
+					view.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+				}
+			});
 		});
 	}
 
