@@ -24,8 +24,10 @@ public final class CaptureRequest {
 	public static final String DEVICE_REAR = "devcam0";
 	public static final String DEVICE_FRONT = "devcam1";
 	public static final String DEVICE_AUDIO_VIDEO = "audio_video";
+	/** Legacy still-camera compatibility encoding accepted on capture://video. */
 	public static final String DEFAULT_ENCODING = "jpeg";
-	public static final String DEFAULT_RECORDING_ENCODING = "mp4";
+	/** Container produced by the CameraX RecordControl backend. */
+	public static final String DEFAULT_RECORDING_ENCODING = "video/mp4";
 
 	/** Conservative virtual defaults; independent of the MIDlet display size. */
 	public static final int DEFAULT_WIDTH = 640;

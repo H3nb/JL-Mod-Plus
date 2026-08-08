@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.microedition.shell.MicroActivity;
 import javax.microedition.shell.MidletPermissionDialogState;
@@ -34,25 +36,56 @@ import javax.microedition.util.ContextHolder;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.Config;
 
-/** MIDP-facing permission gate for privacy-sensitive MMAPI snapshot capture. */
+/** MIDP-facing permission gate for privacy-sensitive MMAPI camera operations. */
 public final class MidletMediaPermissionGate {
 	public static final String SNAPSHOT_PERMISSION =
 			"javax.microedition.media.control.VideoControl.getSnapshot";
+	public static final String RECORD_PERMISSION =
+			"javax.microedition.media.control.RecordControl";
+
 	private static final String PREFS = "midlet_media_permissions";
 	private static final String SNAPSHOT_PREFIX = "snapshot:";
+	private static final String RECORD_PREFIX = "record:";
 
 	private static WeakReference<MicroActivity> sessionActivity = new WeakReference<>(null);
-	private static String sessionSnapshotGrant;
+	private static final Set<String> sessionGrants = new HashSet<>();
 
 	private MidletMediaPermissionGate() {
 	}
 
 	public static void requireSnapshotPermission() {
+		requirePermission(
+				SNAPSHOT_PREFIX,
+				R.string.camera_permission_title,
+				R.string.camera_permission_message,
+				"MIDlet camera snapshot permission was denied");
+	}
+
+	public static void requireRecordPermission() {
+		requirePermission(
+				RECORD_PREFIX,
+				R.string.camera_record_permission_title,
+				R.string.camera_record_permission_message,
+				"MIDlet camera recording permission was denied");
+	}
+
+	/** MIDP checkPermission-compatible state: 1 allowed, -1 unknown/ask. */
+	public static int checkSnapshotPermission() {
+		return checkPermission(SNAPSHOT_PREFIX);
+	}
+
+	/** MIDP checkPermission-compatible state: 1 allowed, -1 unknown/ask. */
+	public static int checkRecordPermission() {
+		return checkPermission(RECORD_PREFIX);
+	}
+
+	private static void requirePermission(String prefix, int titleRes, int messageRes,
+			String deniedMessage) {
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity == null) {
-			throw new SecurityException("MIDlet Activity is unavailable for camera permission");
+			throw new SecurityException("MIDlet Activity is unavailable for media permission");
 		}
-		String key = SNAPSHOT_PREFIX + currentMidletIdentity(activity);
+		String key = prefix + currentMidletIdentity(activity);
 		SharedPreferences preferences = activity.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
 		if (hasSessionGrant(activity, key) || preferences.getBoolean(key, false)) {
 			return;
@@ -60,8 +93,8 @@ public final class MidletMediaPermissionGate {
 
 		MidletPermissionDialogState.Result result = MidletPermissionDialogState.request(
 				activity,
-				activity.getString(R.string.camera_permission_title),
-				activity.getString(R.string.camera_permission_message),
+				activity.getString(titleRes),
+				activity.getString(messageRes),
 				activity.getString(R.string.camera_permission_allow_once),
 				activity.getString(R.string.camera_permission_always_allow),
 				activity.getString(R.string.camera_permission_deny));
@@ -74,16 +107,15 @@ public final class MidletMediaPermissionGate {
 			setSessionGrant(activity, key);
 			return;
 		}
-		throw new SecurityException("MIDlet camera snapshot permission was denied");
+		throw new SecurityException(deniedMessage);
 	}
 
-	/** MIDP checkPermission-compatible state: 1 allowed, -1 unknown/ask. */
-	public static int checkSnapshotPermission() {
+	private static int checkPermission(String prefix) {
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity == null) {
 			return -1;
 		}
-		String key = SNAPSHOT_PREFIX + currentMidletIdentity(activity);
+		String key = prefix + currentMidletIdentity(activity);
 		if (hasSessionGrant(activity, key)) {
 			return 1;
 		}
@@ -92,12 +124,21 @@ public final class MidletMediaPermissionGate {
 	}
 
 	private static synchronized boolean hasSessionGrant(MicroActivity activity, String key) {
-		return sessionActivity.get() == activity && key.equals(sessionSnapshotGrant);
+		resetSessionIfNeeded(activity);
+		return sessionGrants.contains(key);
 	}
 
 	private static synchronized void setSessionGrant(MicroActivity activity, String key) {
+		resetSessionIfNeeded(activity);
+		sessionGrants.add(key);
+	}
+
+	private static void resetSessionIfNeeded(MicroActivity activity) {
+		if (sessionActivity.get() == activity) {
+			return;
+		}
 		sessionActivity = new WeakReference<>(activity);
-		sessionSnapshotGrant = key;
+		sessionGrants.clear();
 	}
 
 	private static String currentMidletIdentity(MicroActivity activity) {

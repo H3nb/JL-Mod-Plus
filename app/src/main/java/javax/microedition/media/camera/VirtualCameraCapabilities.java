@@ -22,7 +22,8 @@ import javax.microedition.util.ContextHolder;
 
 /** Runtime-owned multimedia capabilities exposed to converted MIDlets. */
 public final class VirtualCameraCapabilities {
-	public static final String VIDEO_ENCODING = "encoding=jpeg";
+	/** Recording encoding; still-image formats are exposed through video.snapshot.encodings. */
+	public static final String VIDEO_ENCODING = "encoding=video/mp4";
 	public static final String AUDIO_ENCODING = "encoding=amr-wb";
 
 	private VirtualCameraCapabilities() {
@@ -67,8 +68,8 @@ public final class VirtualCameraCapabilities {
 		return switch (key) {
 			case "supports.video.capture" -> Boolean.toString(hasCameraFeature());
 			case "supports.audio.capture" -> Boolean.toString(hasMicrophoneFeature());
-			// Camera recording is gated; the existing audio RecordPlayer remains available.
-			case "supports.recording" -> Boolean.toString(hasMicrophoneFeature());
+			case "supports.recording" ->
+					Boolean.toString(hasMicrophoneFeature() || hasCameraFeature());
 			case "audio.encoding", "audio.encodings" ->
 					hasMicrophoneFeature() ? AUDIO_ENCODING : null;
 			case "video.encoding", "video.encodings" ->

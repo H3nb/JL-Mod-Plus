@@ -76,15 +76,14 @@ public class Manager {
 			if (CaptureRequest.DEVICE_VIDEO.equals(device)
 					|| CaptureRequest.DEVICE_IMAGE.equals(device)
 					|| CaptureRequest.DEVICE_REAR.equals(device)
-					|| CaptureRequest.DEVICE_FRONT.equals(device)) {
+					|| CaptureRequest.DEVICE_FRONT.equals(device)
+					|| CaptureRequest.DEVICE_AUDIO_VIDEO.equals(device)) {
 				return new CameraPlayer(locator);
 			} else if ("audio".equals(device)) {
 				if (!ContextHolder.requestPermission(Manifest.permission.RECORD_AUDIO)) {
 					throw new SecurityException("Microphone permission was denied");
 				}
 				return new RecordPlayer();
-			} else if (CaptureRequest.DEVICE_AUDIO_VIDEO.equals(device)) {
-				throw new MediaException("Combined camera recording is not supported yet");
 			}
 			throw new MediaException("Unsupported capture device: " + device);
 		} else {

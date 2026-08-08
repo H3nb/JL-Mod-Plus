@@ -5,6 +5,8 @@
     <string name="camera_permission_allow_once">Izinkan sekali</string>
     <string name="camera_permission_always_allow">Selalu izinkan</string>
     <string name="camera_permission_deny">Tolak</string>
+    <string name="camera_record_permission_title">Perekaman kamera</string>
+    <string name="camera_record_permission_message">Izinkan MIDlet ini merekam media kamera?</string>
 
     <string name="camera_settings_category">Kamera</string>
     <string name="camera_override_title">Gunakan pengaturan kamera khusus</string>

@@ -60,6 +60,22 @@ public class CaptureLocatorParserTest {
 	}
 
 	@Test
+	public void acceptsAdvertisedMp4EncodingForVideoRecording() throws Exception {
+		CaptureRequest request = CaptureLocatorParser.parse("capture://video?encoding=video%2Fmp4");
+
+		assertEquals(CaptureRequest.DEFAULT_RECORDING_ENCODING, request.getEncoding());
+		assertFalse(request.hasExplicitDimensions());
+	}
+
+	@Test
+	public void rejectsExplicitMp4RecordingDimensionsUntilTheyCanBeExact() {
+		assertThrows(MediaException.class, () -> CaptureLocatorParser.parse(
+				"capture://video?encoding=video%2Fmp4&width=640&height=480"));
+		assertThrows(MediaException.class, () -> CaptureLocatorParser.parse(
+				"capture://audio_video?width=640&height=480"));
+	}
+
+	@Test
 	public void decodesEncodedParameterValues() throws Exception {
 		CaptureRequest request = CaptureLocatorParser.parse(
 				"capture://video?encoding=%6A%70%65%67&width=640&height=480");
@@ -82,16 +98,24 @@ public class CaptureLocatorParserTest {
 		assertThrows(MediaException.class, () ->
 				CaptureLocatorParser.parse("capture://video?encoding=gray8"));
 		assertThrows(MediaException.class, () ->
+				CaptureLocatorParser.parse("capture://image?encoding=video%2Fmp4"));
+		assertThrows(MediaException.class, () ->
 				CaptureLocatorParser.parse("capture://devcam9"));
 	}
 
 	@Test
-	public void parsesCombinedAudioVideoLocatorForManagerGating() throws Exception {
+	public void parsesCombinedAudioVideoLocator() throws Exception {
 		CaptureRequest request = CaptureLocatorParser.parse("capture://audio_video");
 
 		assertEquals(CaptureRequest.DEVICE_AUDIO_VIDEO, request.getDevice());
 		assertEquals(CaptureRequest.DEFAULT_RECORDING_ENCODING, request.getEncoding());
 		assertTrue(request.isAudioVideo());
+	}
+
+	@Test
+	public void canonicalizesLegacyMp4AliasForAudioVideo() throws Exception {
+		CaptureRequest request = CaptureLocatorParser.parse("capture://audio_video?encoding=mp4");
+		assertEquals(CaptureRequest.DEFAULT_RECORDING_ENCODING, request.getEncoding());
 	}
 
 	@Test

@@ -20,15 +20,24 @@ import java.io.File;
 
 import javax.microedition.media.MediaException;
 
-/** Optional recording boundary layered on top of a prepared camera session. */
+/** Optional resumable recording boundary layered on top of a prepared camera session. */
 public interface CameraRecordingSession {
-	void startRecording(File outputFile, boolean withAudio, long fileSizeLimit)
-			throws MediaException;
-
-	void startRecording(File outputFile, boolean withAudio, long fileSizeLimit,
+	/** Begin a new physical recording. */
+	void beginRecording(File outputFile, boolean withAudio, long fileSizeLimit,
 			int width, int height) throws MediaException;
 
-	void stopRecording() throws MediaException;
+	/** Pause media production without finalizing the current recording. */
+	void pauseRecording() throws MediaException;
 
-	boolean isRecording();
+	/** Resume a previously paused recording. */
+	void resumeRecording() throws MediaException;
+
+	/** Finalize the current recording and make its container readable. */
+	void finalizeRecording() throws MediaException;
+
+	/** True while a recording exists, whether active or paused. */
+	boolean hasRecording();
+
+	/** True only while media is actively being written. */
+	boolean isRecordingActive();
 }

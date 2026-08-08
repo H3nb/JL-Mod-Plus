@@ -16,6 +16,8 @@
 
 package javax.microedition.media.camera;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Looper;
 import android.util.Rational;
 import android.util.Size;
@@ -27,7 +29,18 @@ import androidx.camera.core.Preview;
 import androidx.camera.core.UseCaseGroup;
 import androidx.camera.core.ViewPort;
 import androidx.camera.lifecycle.ProcessCameraProvider;
+import androidx.camera.video.ExperimentalPersistentRecording;
+import androidx.camera.video.FallbackStrategy;
+import androidx.camera.video.FileOutputOptions;
+import androidx.camera.video.PendingRecording;
+import androidx.camera.video.Quality;
+import androidx.camera.video.QualitySelector;
+import androidx.camera.video.Recorder;
+import androidx.camera.video.Recording;
+import androidx.camera.video.VideoCapture;
+import androidx.camera.video.VideoRecordEvent;
 import androidx.camera.view.PreviewView;
+import androidx.core.content.ContextCompat;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -45,8 +58,8 @@ import javax.microedition.media.MediaException;
 import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
 
-/** CameraX backend for JSR-135 preview and JPEG still capture. */
-public final class CameraXCameraSession implements CameraSession {
+/** CameraX backend for JSR-135 preview, still capture, and resumable recording. */
+public final class CameraXCameraSession implements CameraSession, CameraRecordingSession {
 	private static final long OPERATION_TIMEOUT_MS = 20_000L;
 
 	private final CaptureRequest request;
@@ -61,11 +74,17 @@ public final class CameraXCameraSession implements CameraSession {
 	private ProcessCameraProvider cameraProvider;
 	private Preview preview;
 	private ImageCapture imageCapture;
+	private VideoCapture<Recorder> videoCapture;
+	private Recorder recorder;
+	private Recording recording;
+	private boolean recordingPaused;
 	private boolean prepared;
 	private boolean started;
 	private boolean bound;
 	private boolean previewBound;
+	private boolean recordingBound;
 	private FileCaptureResult activeCapture;
+	private FileRecordingResult activeRecording;
 
 	public CameraXCameraSession(CaptureRequest request) {
 		this.request = request;
@@ -170,6 +189,9 @@ public final class CameraXCameraSession implements CameraSession {
 
 	@Override
 	public void stop() throws MediaException {
+		if (isRecordingActive()) {
+			pauseRecording();
+		}
 		final MicroActivity activity;
 		synchronized (this) {
 			if (!started) {
@@ -193,6 +215,9 @@ public final class CameraXCameraSession implements CameraSession {
 		synchronized (this) {
 			if (!started || imageCapture == null) {
 				throw new MediaException("Camera Player is not started");
+			}
+			if (recording != null) {
+				throw new MediaException("Camera snapshot is unavailable while recording");
 			}
 			if (!captureInProgress.compareAndSet(false, true)) {
 				throw new MediaException("Another camera snapshot is already in progress");
@@ -247,6 +272,184 @@ public final class CameraXCameraSession implements CameraSession {
 	}
 
 	@Override
+	@ExperimentalPersistentRecording
+	public void beginRecording(File outputFile, boolean withAudio, long fileSizeLimit,
+			int width, int height) throws MediaException {
+		if (outputFile == null) {
+			throw new IllegalArgumentException("recording output must not be null");
+		}
+		final MicroActivity activity;
+		synchronized (this) {
+			if (!started || cameraProvider == null) {
+				throw new MediaException("Camera Player is not started");
+			}
+			if (recording != null) {
+				throw new MediaException("A camera recording already exists");
+			}
+			activity = requireActivity();
+		}
+		if (withAudio && ContextCompat.checkSelfPermission(
+				activity, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+			throw new SecurityException("Microphone permission was revoked");
+		}
+
+		onMainThread(activity, () -> {
+			synchronized (CameraXCameraSession.this) {
+				if (!started || cameraProvider == null) {
+					throw new IllegalStateException("Camera session is not started");
+				}
+				unbindUseCases();
+				Quality quality = recordingQuality(width, height);
+				Recorder newRecorder = new Recorder.Builder()
+						.setQualitySelector(QualitySelector.from(
+								quality,
+								FallbackStrategy.lowerQualityOrHigherThan(quality)))
+						.build();
+				VideoCapture<Recorder> newVideoCapture = VideoCapture.withOutput(newRecorder);
+				recorder = newRecorder;
+				videoCapture = newVideoCapture;
+				bindRecordingUseCases(activity);
+
+				FileOutputOptions.Builder outputBuilder = new FileOutputOptions.Builder(outputFile);
+				if (fileSizeLimit > 0 && fileSizeLimit < Long.MAX_VALUE) {
+					outputBuilder.setFileSizeLimit(fileSizeLimit);
+				}
+				PendingRecording pending = newRecorder
+						.prepareRecording(activity, outputBuilder.build())
+						.asPersistentRecording();
+				if (withAudio) {
+					pending = pending.withAudioEnabled();
+				}
+				FileRecordingResult finalizeResult = new FileRecordingResult();
+				activeRecording = finalizeResult;
+				recordingPaused = false;
+				try {
+					recording = pending.start(callbackExecutor, event -> {
+						if (event instanceof VideoRecordEvent.Finalize finalized) {
+							finalizeResult.complete(finalized);
+						}
+					});
+				} catch (RuntimeException e) {
+					activeRecording = null;
+					recording = null;
+					recordingPaused = false;
+					unbindUseCases();
+					bindUseCases(activity);
+					throw e;
+				}
+				return null;
+			}
+		});
+	}
+
+	@Override
+	public void pauseRecording() throws MediaException {
+		final Recording current;
+		synchronized (this) {
+			current = recording;
+			if (current == null || recordingPaused) {
+				return;
+			}
+		}
+		MicroActivity activity = requireActivity();
+		onMainThread(activity, () -> {
+			current.pause();
+			return null;
+		});
+		synchronized (this) {
+			if (recording == current) {
+				recordingPaused = true;
+			}
+		}
+	}
+
+	@Override
+	public void resumeRecording() throws MediaException {
+		final Recording current;
+		synchronized (this) {
+			current = recording;
+			if (current == null || !recordingPaused) {
+				return;
+			}
+			if (!started || !recordingBound) {
+				throw new MediaException("Camera Player must be started before recording resumes");
+			}
+		}
+		MicroActivity activity = requireActivity();
+		onMainThread(activity, () -> {
+			current.resume();
+			return null;
+		});
+		synchronized (this) {
+			if (recording == current) {
+				recordingPaused = false;
+			}
+		}
+	}
+
+	@Override
+	public void finalizeRecording() throws MediaException {
+		final MicroActivity activity;
+		final Recording current;
+		final FileRecordingResult result;
+		synchronized (this) {
+			current = recording;
+			result = activeRecording;
+			if (current == null || result == null) {
+				return;
+			}
+			activity = requireActivity();
+		}
+		onMainThread(activity, () -> {
+			current.stop();
+			return null;
+		});
+
+		VideoRecordEvent.Finalize finalized;
+		try {
+			finalized = result.get(OPERATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new MediaException("Video recording finalization was interrupted");
+		} catch (TimeoutException e) {
+			throw new MediaException("Video recording did not finalize");
+		} catch (ExecutionException e) {
+			throw new MediaException("Video recording failed to finalize");
+		}
+
+		onMainThread(activity, () -> {
+			synchronized (CameraXCameraSession.this) {
+				if (recording == current) {
+					unbindUseCases();
+					recording = null;
+					activeRecording = null;
+					recordingPaused = false;
+					recordingBound = false;
+					videoCapture = null;
+					recorder = null;
+					if (started) {
+						bindUseCases(activity);
+					}
+				}
+			}
+			return null;
+		});
+		if (finalized.hasError()) {
+			throw new MediaException("Video recording failed: " + finalized.getError());
+		}
+	}
+
+	@Override
+	public synchronized boolean hasRecording() {
+		return recording != null;
+	}
+
+	@Override
+	public synchronized boolean isRecordingActive() {
+		return recording != null && !recordingPaused;
+	}
+
+	@Override
 	public void release() {
 		FileCaptureResult pending;
 		synchronized (this) {
@@ -255,6 +458,13 @@ public final class CameraXCameraSession implements CameraSession {
 		}
 		if (pending != null) {
 			pending.completeExceptionally(new IOException("Camera snapshot was cancelled"));
+		}
+		if (hasRecording()) {
+			try {
+				finalizeRecording();
+			} catch (MediaException ignored) {
+				// Finalization is best effort during release; camera unbind still must run.
+			}
 		}
 		try {
 			stop();
@@ -265,10 +475,16 @@ public final class CameraXCameraSession implements CameraSession {
 			cameraProvider = null;
 			imageCapture = null;
 			preview = null;
+			videoCapture = null;
+			recorder = null;
+			recording = null;
+			activeRecording = null;
+			recordingPaused = false;
 			prepared = false;
 			started = false;
 			bound = false;
 			previewBound = false;
+			recordingBound = false;
 		}
 		callbackExecutor.shutdownNow();
 	}
@@ -285,8 +501,8 @@ public final class CameraXCameraSession implements CameraSession {
 						unbindUseCases();
 						bindUseCases(activity);
 					}
+					return null;
 				}
-				return null;
 			});
 		} catch (MediaException ignored) {
 			// The Player remains recoverable; a later operation reports availability.
@@ -297,32 +513,22 @@ public final class CameraXCameraSession implements CameraSession {
 		if (bound) {
 			return;
 		}
+		if (recording != null && videoCapture != null) {
+			bindRecordingUseCases(activity);
+			return;
+		}
 		PreviewView view = previewView;
 		CameraSelector selector = selectCamera(cameraProvider);
 		if (view != null) {
-			int targetRotation = view.getDisplay() != null
-					? view.getDisplay().getRotation() : preview.getTargetRotation();
+			int targetRotation = targetRotation(view, preview.getTargetRotation());
 			preview.setTargetRotation(targetRotation);
 			imageCapture.setTargetRotation(targetRotation);
 			preview.setSurfaceProvider(view.getSurfaceProvider());
 
-			ViewPort viewPort = view.getViewPort(targetRotation);
-			if (viewPort == null) {
-				int width = view.getWidth() > 0 ? view.getWidth()
-						: Math.max(1, view.getMinimumWidth());
-				int height = view.getHeight() > 0 ? view.getHeight()
-						: Math.max(1, view.getMinimumHeight());
-				if (width <= 1 || height <= 1) {
-					width = Math.max(1, request.getWidth());
-					height = Math.max(1, request.getHeight());
-				}
-				viewPort = new ViewPort.Builder(new Rational(width, height), targetRotation).build();
-			}
-
 			UseCaseGroup useCaseGroup = new UseCaseGroup.Builder()
 					.addUseCase(preview)
 					.addUseCase(imageCapture)
-					.setViewPort(viewPort)
+					.setViewPort(createViewPort(view, targetRotation))
 					.build();
 			cameraProvider.bindToLifecycle(activity, selector, useCaseGroup);
 			previewBound = true;
@@ -331,6 +537,62 @@ public final class CameraXCameraSession implements CameraSession {
 			previewBound = false;
 		}
 		bound = true;
+		recordingBound = false;
+	}
+
+	private void bindRecordingUseCases(MicroActivity activity) {
+		if (videoCapture == null) {
+			throw new IllegalStateException("Video capture is unavailable");
+		}
+		PreviewView view = previewView;
+		CameraSelector selector = selectCamera(cameraProvider);
+		if (view != null) {
+			int targetRotation = targetRotation(view, preview.getTargetRotation());
+			preview.setTargetRotation(targetRotation);
+			videoCapture.setTargetRotation(targetRotation);
+			preview.setSurfaceProvider(view.getSurfaceProvider());
+			UseCaseGroup useCaseGroup = new UseCaseGroup.Builder()
+					.addUseCase(preview)
+					.addUseCase(videoCapture)
+					.setViewPort(createViewPort(view, targetRotation))
+					.build();
+			cameraProvider.bindToLifecycle(activity, selector, useCaseGroup);
+			previewBound = true;
+		} else {
+			cameraProvider.bindToLifecycle(activity, selector, videoCapture);
+			previewBound = false;
+		}
+		bound = true;
+		recordingBound = true;
+	}
+
+	private ViewPort createViewPort(PreviewView view, int targetRotation) {
+		ViewPort viewPort = view.getViewPort(targetRotation);
+		if (viewPort != null) {
+			return viewPort;
+		}
+		int width = view.getWidth() > 0 ? view.getWidth() : Math.max(1, view.getMinimumWidth());
+		int height = view.getHeight() > 0 ? view.getHeight() : Math.max(1, view.getMinimumHeight());
+		if (width <= 1 || height <= 1) {
+			width = Math.max(1, request.getWidth());
+			height = Math.max(1, request.getHeight());
+		}
+		return new ViewPort.Builder(new Rational(width, height), targetRotation).build();
+	}
+
+	private static int targetRotation(PreviewView view, int fallback) {
+		return view.getDisplay() != null ? view.getDisplay().getRotation() : fallback;
+	}
+
+	private static Quality recordingQuality(int width, int height) {
+		int longestSide = Math.max(width, height);
+		if (longestSide > 1280) {
+			return Quality.FHD;
+		}
+		if (longestSide > 720) {
+			return Quality.HD;
+		}
+		return Quality.SD;
 	}
 
 	private CameraSelector selectCamera(ProcessCameraProvider provider) {
@@ -369,12 +631,19 @@ public final class CameraXCameraSession implements CameraSession {
 		if (!bound || cameraProvider == null) {
 			return;
 		}
-		if (previewBound) {
+		if (recordingBound) {
+			if (previewBound) {
+				cameraProvider.unbind(preview, videoCapture);
+			} else {
+				cameraProvider.unbind(videoCapture);
+			}
+		} else if (previewBound) {
 			cameraProvider.unbind(preview, imageCapture);
 		} else {
 			cameraProvider.unbind(imageCapture);
 		}
 		previewBound = false;
+		recordingBound = false;
 		bound = false;
 	}
 
@@ -424,6 +693,16 @@ public final class CameraXCameraSession implements CameraSession {
 
 		void completeExceptionally(Throwable error) {
 			setException(error);
+		}
+	}
+
+	private static final class FileRecordingResult extends FutureTask<VideoRecordEvent.Finalize> {
+		FileRecordingResult() {
+			super(() -> null);
+		}
+
+		void complete(VideoRecordEvent.Finalize event) {
+			set(event);
 		}
 	}
 }
