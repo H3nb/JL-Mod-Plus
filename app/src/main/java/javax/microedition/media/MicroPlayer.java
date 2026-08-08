@@ -199,6 +199,10 @@ class MicroPlayer extends BasePlayer implements MediaPlayer.OnCompletionListener
 				source.connect();
 				player.setDataSource(source.getLocator());
 			} catch (IOException | RuntimeException e) {
+				// A failed realize must not leave the DataSource connected. Keeping
+				// the Player UNREALIZED lets a caller retry after a transient source
+				// failure without leaking file/cache resources.
+				source.disconnect();
 				reportFailure(AudioFailure.Phase.REALIZE, "MEDIA_SOURCE_FAILED", e);
 				if (e instanceof RuntimeException runtimeException) {
 					throw runtimeException;
