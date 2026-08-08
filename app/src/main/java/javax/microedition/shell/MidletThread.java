@@ -36,6 +36,10 @@ import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.LifecycleOwner;
 
+import io.github.h3nb.jlmodplus.config.ProfileModel;
+import io.github.h3nb.jlmodplus.crashes.runtime.CrashBreadcrumbStore;
+import io.github.h3nb.jlmodplus.crashes.runtime.CrashSessionStore;
+
 public class MidletThread extends HandlerThread implements Handler.Callback {
 	private static final String TAG = MidletThread.class.getName();
 	private static final UncaughtExceptionHandler uncaughtExceptionHandler = (t, e) ->
@@ -69,6 +73,9 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		emulationTimeController.setMonitorFallbackListener(
 				microLoader::recordMonitorFallback);
 		instance = this;
+		breadcrumb("midlet_thread_created main_class=" + mainClass
+				+ " timed_wait=" + timedWaitEnabled);
+		recordEmulatorContext(microLoader, timedWaitEnabled);
 	}
 
 	public static EmulationTimeController getEmulationTimeController() {
@@ -76,6 +83,11 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	}
 
 	public static void notifyDestroyed() {
+		breadcrumb("midlet_notify_destroyed");
+		CrashSessionStore.markExpectedMidletExit(
+				ContextHolder.getAppContext(),
+				"midlet_notify_destroyed"
+		);
 		Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
 		if (instance != null) {
 			instance.state = DESTROYED;
@@ -89,21 +101,30 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	}
 
 	public static void notifyPaused() {
+		breadcrumb("midlet_notify_paused");
 		instance.state = PAUSED;
 	}
 
 	public static void resumeRequest() {
 		MicroActivity activity = ContextHolder.getActivity();
-		if (instance != null && activity != null && activity.isVisible())
+		if (instance != null && activity != null && activity.isVisible()) {
+			breadcrumb("midlet_resume_requested");
 			instance.handler.obtainMessage(START).sendToTarget();
+		}
 	}
 
 	static void destroyApp() {
+		breadcrumb("midlet_destroy_requested");
 		Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
 		new Thread(() -> {
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException ignored) {}
+			breadcrumb("midlet_force_destroy_timeout");
+			CrashSessionStore.markExpectedMidletExit(
+					ContextHolder.getAppContext(),
+					"midlet_force_destroy_timeout"
+			);
 			Process.killProcess(Process.myPid());
 		}, "ForceDestroyTimer").start();
 		MicroActivity activity = ContextHolder.getActivity();
@@ -121,14 +142,14 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 
 	@Override
 	public void start() {
+		breadcrumb("midlet_thread_start");
 		UncaughtExceptionHandler reportHandler = Thread.getDefaultUncaughtExceptionHandler();
 		Thread.setDefaultUncaughtExceptionHandler((thread, error) -> {
+			breadcrumb("java_uncaught thread=" + thread.getName()
+					+ " error=" + error.getClass().getName());
 			MicroActivity activity = ContextHolder.getActivity();
 			if (activity != null && !activity.isFinishing()) {
 				activity.runOnUiThread(() -> {
-					// Reveal the still-alive emulator task immediately while ACRA collects
-					// the report. Detach the normal destroy observer so it cannot kill the
-					// :midlet process before ACRA finishes the fatal-report handoff.
 					activity.getLifecycle().removeObserver(activityLifecycleObserver);
 					activity.finish();
 				});
@@ -153,10 +174,13 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 				if (state != UNINITIALIZED) {
 					break;
 				}
+				breadcrumb("midlet_init_begin class=" + mainClass);
 				try {
 					midlet = microLoader.loadMIDlet(this.mainClass);
 					state = INITIALIZED;
+					breadcrumb("midlet_init_ok class=" + mainClass);
 				} catch (Throwable t) {
+					breadcrumb("midlet_init_failed error=" + t.getClass().getName());
 					throw new RuntimeException("Init midlet failed", t);
 				}
 				break;
@@ -166,17 +190,22 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 						break;
 					} else if (microLoader.params.skipResumeCall) {
 						state = STARTED;
+						breadcrumb("midlet_resume_skipped");
 						break;
 					}
 				}
+				breadcrumb("midlet_start_begin");
 				try {
 					state = STARTED;
 					midlet.startApp();
+					breadcrumb("midlet_start_returned");
 				} catch (MIDletStateChangeException e) {
 					state = PAUSED;
+					breadcrumb("midlet_start_deferred");
 					Log.w(TAG, "Midlet doesn't want to start!", e);
 				} catch (Throwable t) {
 					state = DESTROYED;
+					breadcrumb("midlet_start_failed error=" + t.getClass().getName());
 					throw new RuntimeException("Failed startApp", t);
 				}
 				break;
@@ -184,11 +213,14 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 				if (state != STARTED) {
 					break;
 				}
+				breadcrumb("midlet_pause_begin");
 				try {
 					midlet.pauseApp();
 					state = PAUSED;
+					breadcrumb("midlet_pause_ok");
 				} catch (Throwable t) {
 					state = DESTROYED;
+					breadcrumb("midlet_pause_failed error=" + t.getClass().getName());
 					try {
 						midlet.destroyApp(true);
 					} catch (MIDletStateChangeException ignored) {}
@@ -201,11 +233,15 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 					break;
 				}
 				state = DESTROYED;
+				breadcrumb("midlet_destroy_begin");
 				try {
 					midlet.destroyApp(true);
+					breadcrumb("midlet_destroy_returned");
 				} catch (MIDletStateChangeException e) {
+					breadcrumb("midlet_destroy_refused");
 					Log.w(TAG, "Midlet didn't want to die!", e);
 				} catch (Throwable t) {
+					breadcrumb("midlet_destroy_failed error=" + t.getClass().getName());
 					Log.e(TAG, "Filed destroyApp:", t);
 				}
 				notifyDestroyed();
@@ -220,6 +256,33 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			case ON_START -> handler.obtainMessage(START).sendToTarget();
 			case ON_STOP -> handler.obtainMessage(PAUSE).sendToTarget();
 			case ON_DESTROY -> handler.obtainMessage(DESTROY).sendToTarget();
+		}
+	}
+
+	private static void recordEmulatorContext(MicroLoader loader, boolean timedWaitEnabled) {
+		ProfileModel params = loader.params;
+		if (params == null) {
+			return;
+		}
+		boolean customSoundBank = params.soundBank != null && !params.soundBank.trim().isEmpty();
+		breadcrumb("emulator_context"
+				+ " screen=" + params.screenWidth + "x" + params.screenHeight
+				+ " graphics_mode=" + params.graphicsMode
+				+ " hw_accel=" + params.hwAcceleration
+				+ " immediate=" + params.immediateMode
+				+ " fps_limit=" + params.fpsLimit
+				+ " timing_transform=" + loader.hasTimingTransform()
+				+ " memory_editor_transform=" + loader.hasMemoryEditorTransform()
+				+ " timed_wait=" + timedWaitEnabled
+				+ " custom_soundbank=" + customSoundBank
+				+ " camera_override=" + params.cameraOverrideEnabled);
+	}
+
+	private static void breadcrumb(String event) {
+		try {
+			CrashBreadcrumbStore.record(ContextHolder.getAppContext(), event);
+		} catch (RuntimeException ignored) {
+			// Crash diagnostics must not change MIDlet lifecycle behavior.
 		}
 	}
 }

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 H3NB; licensed under Apache-2.0. -->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <files-path
+        name="process_death_reports"
+        path="crash-runtime/process-death-reports/" />
+</paths>

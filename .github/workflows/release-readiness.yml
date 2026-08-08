@@ -15,6 +15,9 @@ on:
       - "gradle/**"
       - "app/build.gradle.kts"
       - "app/dictionary.pro"
+      - "app/src/main/**"
+      - "app/src/debug/**"
+      - "app/src/test/**"
       - "app/src/**/keepRules/**"
       - "app/src/**/AndroidManifest.xml"
       - "dexlib/build.gradle.kts"
@@ -69,7 +72,7 @@ jobs:
           :app:lintEmulatorRelease
           :app:assembleEmulatorRelease
 
-      - name: Verify release artifact, manifest, ABI, R8 mapping, and crash interaction
+      - name: Verify release artifact, ABI, R8, and crash observability
         shell: bash
         run: |
           set -euo pipefail
@@ -110,13 +113,10 @@ jobs:
           if application is None:
               raise SystemExit("APK manifest has no <application>")
 
+          activities = {item.get(android + "name"): item for item in application.findall("activity")}
           expected_processes = {
               "javax.microedition.shell.MicroActivity": ":midlet",
               "io.github.h3nb.jlmodplus.crashes.dialog.CrashReportDialog": ":acra",
-          }
-          activities = {
-              item.get(android + "name"): item
-              for item in application.findall("activity")
           }
           for target, expected in expected_processes.items():
               activity = activities.get(target)
@@ -127,7 +127,29 @@ jobs:
                   raise SystemExit(
                       f"Process isolation lost for {target}: expected {expected!r}, got {process!r}"
                   )
-              print(f"Verified {target} process suffix: {process}")
+
+          report_activity = activities.get(
+              "io.github.h3nb.jlmodplus.crashes.dialog.ProcessDeathReportActivity"
+          )
+          if report_activity is None or report_activity.get(android + "exported") != "false":
+              raise SystemExit("ProcessDeathReportActivity must exist and remain non-exported")
+
+          receivers = {item.get(android + "name"): item for item in application.findall("receiver")}
+          if "io.github.h3nb.jlmodplus.crashes.debug.DebugCrashReceiver" in receivers:
+              raise SystemExit("DebugCrashReceiver leaked into release APK")
+
+          providers = {item.get(android + "name"): item for item in application.findall("provider")}
+          provider = providers.get("androidx.core.content.FileProvider")
+          if provider is None:
+              raise SystemExit("Crash trace FileProvider is missing")
+          if provider.get(android + "authorities") != "io.github.h3nb.jlmodplus.crash-reports":
+              raise SystemExit("Unexpected release crash trace FileProvider authority")
+          if provider.get(android + "exported") != "false":
+              raise SystemExit("Crash trace FileProvider must remain non-exported")
+          if provider.get(android + "grantUriPermissions") != "true":
+              raise SystemExit("Crash trace FileProvider must grant per-URI read permission")
+
+          print("Verified release crash process isolation, report UI, trace provider, and no debug injector")
           PY
 
           service_path="META-INF/services/org.acra.interaction.ReportInteraction"
@@ -136,6 +158,9 @@ jobs:
           unzip -p "$apk" "$service_path" | tr -d '\r' | sed 's/[[:space:]]*$//' | grep -Fx "$provider"
           grep -F "$provider ->" "$mapping"
 
+          # Helper classes are intentionally not asserted individually in mapping.txt:
+          # R8 may legally inline or merge them. The packaged manifest/service contracts
+          # above are the stable release boundary that must survive shrinking.
           printf 'Verified unsigned release artifact: %s\nABI: %s\nMapping: %s\nACRA interaction: %s\n' \
             "$apk" "$abis" "$mapping" "$provider"
 
