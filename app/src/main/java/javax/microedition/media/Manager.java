@@ -297,6 +297,7 @@ public class Manager {
 			if (player != null) {
 				return player;
 			}
+		}
 		return null;
 	}
 
@@ -325,6 +326,7 @@ public class Manager {
 			if (supported.equals(type)) {
 				return true;
 			}
+		}
 		return false;
 	}
 
@@ -337,6 +339,7 @@ public class Manager {
 			if (supported.equals(type)) {
 				return true;
 			}
+		}
 		return false;
 	}
 
@@ -369,6 +372,7 @@ public class Manager {
 			if (supportedProtocol.equals(protocol)) {
 				return Arrays.copyOf(AUDIO_CONTENT_TYPES, AUDIO_CONTENT_TYPES.length);
 			}
+		}
 		return new String[0];
 	}
 
