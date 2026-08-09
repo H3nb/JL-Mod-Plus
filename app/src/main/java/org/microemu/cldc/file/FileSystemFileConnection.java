@@ -3,6 +3,7 @@
  * Copyright (C) 2006-2007 Bartek Teodorczyk <barteo@barteo.net>
  * Copyright (C) 2006-2007 Vlad Skarzhevskyy
  * Copyright (C) 2020-2023 Yury Kharchenko
+ * Copyright 2026 H3NB
  * <p>
  * It is licensed under the following two licenses as alternatives:
  * 1. GNU Lesser General Public License (the "LGPL") version 2.1 or any newer version
@@ -27,6 +28,7 @@
  */
 package org.microemu.cldc.file;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
@@ -145,6 +147,7 @@ public class FileSystemFileConnection implements FileConnection {
 		return list.elements();
 	}
 
+	@SuppressLint("UsableSpace") // JSR-75 availableSize() reports estimated free bytes on the backing file system.
 	@Override
 	public long availableSize() {
 		throwClosed();

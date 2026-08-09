@@ -16,6 +16,7 @@
 
 package javax.microedition.lcdui
 
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.widget.FrameLayout
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -38,6 +39,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -59,6 +61,7 @@ import javax.microedition.lcdui.list.CompoundItem
 import kotlinx.coroutines.flow.first
 
 /** Compose-backed rendering for one J2ME List displayable. */
+@SuppressLint("ViewConstructor") // Programmatic J2ME/Compose host; no XML inflation path.
 class J2meListComposeView(
     context: android.content.Context,
     private val listType: Int,
@@ -105,7 +108,7 @@ class J2meListComposeView(
         )
     }
 
-    fun setItems(items: java.util.List<CompoundItem>) {
+    fun setItems(items: kotlin.collections.List<CompoundItem>) {
         itemState = items.map { item ->
             J2meListItemState(
                 id = item.getUiId(),
@@ -157,7 +160,7 @@ private fun J2meListContent(
     val focusRequesters = remember(itemKeys) {
         itemKeys.associateWith { FocusRequester() }
     }
-    var consumedSelectionGeneration by remember { mutableStateOf(0L) }
+    var consumedSelectionGeneration by remember { mutableLongStateOf(0L) }
     LaunchedEffect(selectionRequest.generation) {
         if (selectionRequest.generation <= consumedSelectionGeneration) {
             return@LaunchedEffect
@@ -198,7 +201,7 @@ private fun J2meListContent(
                         null
                     },
                     onLongClick = if (listType == Choice.IMPLICIT) {
-                        { onItemLongClick(item.id); Unit }
+                        { onItemLongClick(item.id) }
                     } else {
                         null
                     },

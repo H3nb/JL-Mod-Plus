@@ -17,6 +17,7 @@
 
 package javax.microedition.lcdui.commands;
 
+import android.annotation.SuppressLint;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -58,6 +59,7 @@ public class ScreenSoftBar extends AbstractSoftKeysBar {
 		return commandCount > 3;
 	}
 
+	@SuppressLint("RtlHardcoded") // Nokia FullCanvas compatibility keeps the menu on the physical right softkey side.
 	public void showMenu() {
 		if (!shouldShowMenu(commands.size())) {
 			return;

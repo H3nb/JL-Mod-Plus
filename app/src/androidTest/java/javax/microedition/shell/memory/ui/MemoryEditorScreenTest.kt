@@ -17,7 +17,9 @@
 package javax.microedition.shell.memory.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.material3.Text
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -31,7 +33,9 @@ import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.unit.dp
+import io.github.h3nb.jlmodplus.R
 import org.junit.Rule
 import org.junit.Test
 import org.junit.Assert.assertEquals
@@ -424,5 +428,122 @@ class MemoryEditorScreenTest {
         composeRule.onNodeWithTag("memory_tab_search").assertExists()
         composeRule.onNodeWithTag("memory_tab_results").assertDoesNotExist()
         composeRule.onNodeWithTag("memory_results").assertExists()
+    }
+
+    @Test
+    fun memoryEditorPluralResourcesHandleZeroOneAndMany() {
+        composeRule.setContent {
+            MemoryEditorTheme {
+                Column {
+                    Text(
+                        pluralStringResource(
+                            R.plurals.memory_editor_results_summary,
+                            0,
+                            0,
+                            0,
+                        ),
+                    )
+                    Text(
+                        pluralStringResource(
+                            R.plurals.memory_editor_results_summary,
+                            1,
+                            1,
+                            0,
+                        ),
+                    )
+                    Text(
+                        pluralStringResource(
+                            R.plurals.memory_editor_results_summary,
+                            2,
+                            2,
+                            0,
+                        ),
+                    )
+                    Text(
+                        pluralStringResource(
+                            R.plurals.memory_editor_loaded,
+                            0,
+                            0,
+                            0,
+                        ),
+                    )
+                    Text(
+                        pluralStringResource(
+                            R.plurals.memory_editor_loaded,
+                            1,
+                            1,
+                            1,
+                        ),
+                    )
+                    Text(
+                        pluralStringResource(
+                            R.plurals.memory_editor_loaded,
+                            2,
+                            2,
+                            2,
+                        ),
+                    )
+                    Text(
+                        pluralStringResource(
+                            R.plurals.memory_editor_operation_result,
+                            0,
+                            0,
+                            0,
+                        ),
+                    )
+                    Text(
+                        pluralStringResource(
+                            R.plurals.memory_editor_operation_result,
+                            1,
+                            1,
+                            1,
+                        ),
+                    )
+                    Text(
+                        pluralStringResource(
+                            R.plurals.memory_editor_operation_result,
+                            2,
+                            2,
+                            2,
+                        ),
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithText("0 candidates · 0 frozen").assertExists()
+        composeRule.onNodeWithText("1 candidate · 0 frozen").assertExists()
+        composeRule.onNodeWithText("2 candidates · 0 frozen").assertExists()
+        composeRule.onNodeWithText("0 of 0 results loaded").assertExists()
+        composeRule.onNodeWithText("1 of 1 result loaded").assertExists()
+        composeRule.onNodeWithText("2 of 2 results loaded").assertExists()
+        composeRule.onNodeWithText("0 of 0 locations updated").assertExists()
+        composeRule.onNodeWithText("1 of 1 location updated").assertExists()
+        composeRule.onNodeWithText("2 of 2 locations updated").assertExists()
+    }
+
+    @Test
+    fun diagnosticsPreserveObservedCountsAboveIntMaxValue() {
+        val observed = Int.MAX_VALUE.toLong() + 1
+        composeRule.setContent {
+            MemoryEditorTheme {
+                MemoryEditorScreen(
+                    state = MemoryEditorUiState(
+                        phase = MemoryEditorPhase.RESULTS,
+                        snapshot = MemoryEditorSnapshot(
+                            searchType = MemoryEditorRuntime.SearchType.AUTO,
+                            intObservations = observed,
+                        ),
+                    ),
+                    actions = MemoryEditorActions(),
+                    onClose = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("memory_results").performScrollToIndex(3)
+        composeRule.onNodeWithText(
+            "Hooks observed — selected type: $observed; total: $observed",
+        ).assertExists()
     }
 }

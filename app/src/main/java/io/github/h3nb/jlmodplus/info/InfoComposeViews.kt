@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +41,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.LinkInteractionListener
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -53,10 +54,9 @@ import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.AppComposeTheme
 import javax.microedition.util.ContextHolder
 
-private const val LinkAnnotationTag = "info-link"
 private const val GithubUrl = "https://github.com/H3nb/JL-Mod-Plus"
 
-private fun Spanned.toComposeText(): AnnotatedString {
+private fun Spanned.toComposeText(onUrlClick: (String) -> Unit): AnnotatedString {
     val source = toString()
     return androidx.compose.ui.text.buildAnnotatedString {
         append(source)
@@ -76,14 +76,27 @@ private fun Spanned.toComposeText(): AnnotatedString {
                 }
                 is UnderlineSpan -> addStyle(SpanStyle(textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline), start, end)
                 is RelativeSizeSpan -> addStyle(SpanStyle(fontSize = (16f * span.sizeChange).sp), start, end)
-                is URLSpan -> addStringAnnotation(LinkAnnotationTag, span.url, start, end)
+                is URLSpan -> addLink(
+                    LinkAnnotation.Url(
+                        url = span.url,
+                        linkInteractionListener = LinkInteractionListener {
+                            onUrlClick(span.url)
+                        },
+                    ),
+                    start,
+                    end,
+                )
             }
         }
     }
 }
 
-private fun htmlToComposeText(html: String): AnnotatedString =
-    HtmlCompat.fromHtml(html, HtmlCompat.FROM_HTML_MODE_LEGACY).toComposeText()
+private fun htmlToComposeText(
+    html: String,
+    onUrlClick: (String) -> Unit,
+): AnnotatedString = HtmlCompat
+    .fromHtml(html, HtmlCompat.FROM_HTML_MODE_LEGACY)
+    .toComposeText(onUrlClick)
 
 @Composable
 private fun Modifier.infoBodyModifier(maxHeight: Int): Modifier =
@@ -95,44 +108,39 @@ private fun Modifier.infoBodyModifier(maxHeight: Int): Modifier =
 
 @Composable
 private fun InfoBody(text: AnnotatedString, modifier: Modifier = Modifier) {
-    val uriHandler = LocalUriHandler.current
     val textStyle = MaterialTheme.typography.bodyLarge.copy(
         color = MaterialTheme.colorScheme.onSurface,
         fontSize = 16.sp,
     )
-    val hasLinks = text.getStringAnnotations(LinkAnnotationTag, 0, text.length).isNotEmpty()
-    if (hasLinks) {
-        ClickableText(
-            text = text,
-            modifier = modifier,
-            style = textStyle,
-            onClick = { offset ->
-                text.getStringAnnotations(LinkAnnotationTag, offset, offset)
-                    .firstOrNull()
-                    ?.let { uriHandler.openUri(it.item) }
-            },
-        )
-    } else {
-        Text(text = text, modifier = modifier, style = textStyle)
-    }
+    Text(text = text, modifier = modifier, style = textStyle)
 }
 
 @Composable
 private fun AboutContent(version: String) {
+    val uriHandler = LocalUriHandler.current
     val versionLabel = stringResource(R.string.version)
     val author = stringResource(R.string.about_author)
     val github = stringResource(R.string.about_github)
     val copyright = stringResource(R.string.about_copyright)
-    val message = remember(version, versionLabel, author, github, copyright) {
+    val message = remember(version, versionLabel, author, github, copyright, uriHandler) {
         androidx.compose.ui.text.buildAnnotatedString {
             append(versionLabel)
             append(version)
             append(author)
-            val githubText = htmlToComposeText(github).text.trim()
+            val githubText = htmlToComposeText(github, uriHandler::openUri).text.trim()
             append("\n")
             val githubStart = length
             append(githubText)
-            addStringAnnotation(LinkAnnotationTag, GithubUrl, githubStart, length)
+            addLink(
+                LinkAnnotation.Url(
+                    url = GithubUrl,
+                    linkInteractionListener = LinkInteractionListener {
+                        uriHandler.openUri(GithubUrl)
+                    },
+                ),
+                githubStart,
+                length,
+            )
             append("\n")
             append(copyright)
         }
@@ -143,7 +151,10 @@ private fun AboutContent(version: String) {
 @Composable
 private fun HelpContent() {
     val help = stringResource(R.string.help_message)
-    val message = remember(help) { htmlToComposeText(help) }
+    val uriHandler = LocalUriHandler.current
+    val message = remember(help, uriHandler) {
+        htmlToComposeText(help, uriHandler::openUri)
+    }
     InfoBody(message, Modifier.infoBodyModifier(maxHeight = 360))
 }
 
@@ -160,7 +171,10 @@ private fun MoreInfoContent() {
 
 @Composable
 private fun LicensesContent(licensesHtml: String) {
-    val message = remember(licensesHtml) { htmlToComposeText(licensesHtml) }
+    val uriHandler = LocalUriHandler.current
+    val message = remember(licensesHtml, uriHandler) {
+        htmlToComposeText(licensesHtml, uriHandler::openUri)
+    }
     InfoBody(message, Modifier.infoBodyModifier(maxHeight = 520))
 }
 

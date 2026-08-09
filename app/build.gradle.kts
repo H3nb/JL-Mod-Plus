@@ -239,6 +239,9 @@ android {
         // Locale directories are intentionally partial; Android falls back to
         // the default resources for untranslated strings at runtime.
         disable += "MissingTranslation"
+        // The product publishes only the arm64-v8a split; Chrome OS ABI support
+        // is outside the supported ARM64-only distribution policy.
+        disable += "ChromeOsAbiSupport"
     }
 
     testOptions {

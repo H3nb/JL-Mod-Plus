@@ -12,6 +12,17 @@ third-party components remains with the respective authors.
 The JL-Mod Plus launcher icon is an original project asset generated for H3NB
 in 2026. It is distributed under the same Apache License 2.0 as this project.
 
-The TinySoundFont Git submodule and other third-party components retain their
-own licenses and notices. See individual source files, dependency metadata,
-and distributed license information for details.
+The current Android EmulatorDebug ARM64 native audio build uses the following
+third-party components:
+
+- dr_libs from https://github.com/mackron/dr_libs at revision
+  fa931f3285ced10ace628f7f1ac951e1951e7ea6. Its source license offers the
+  Unlicense or MIT No Attribution (SPDX: Unlicense / MIT-0).
+- SONiVOX v4 from https://github.com/EmbeddedSynth/sonivox at revision
+  2dac582929e545f6c085981100744753992addb8, Copyright (c) 2004-2006
+  Sonic Network Inc. Its source is licensed under Apache-2.0.
+- Oboe from https://github.com/google/oboe, licensed under Apache-2.0.
+
+These and all other third-party components retain their own licenses and
+notices. See individual source files, dependency metadata, and distributed
+license information for details.

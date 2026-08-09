@@ -70,7 +70,6 @@ internal fun FilePickerItemContent(
                     onClick = onClick,
                     onLongClick = {
                         onLongClick()
-                        Unit
                     },
                 )
                 .padding(horizontal = 10.dp),

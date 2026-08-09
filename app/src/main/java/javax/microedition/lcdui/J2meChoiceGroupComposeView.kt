@@ -16,6 +16,7 @@
 
 package javax.microedition.lcdui
 
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.widget.FrameLayout
 import androidx.compose.foundation.Image
@@ -54,6 +55,7 @@ import io.github.h3nb.jlmodplus.ui.AppComposeTheme
 import javax.microedition.lcdui.list.CompoundItem
 
 /** Compose-backed renderer for a J2ME ChoiceGroup item. */
+@SuppressLint("ViewConstructor") // Programmatic J2ME/Compose host; no XML inflation path.
 class J2meChoiceGroupComposeView(
     context: android.content.Context,
     private val choiceType: Int,
@@ -86,7 +88,7 @@ class J2meChoiceGroupComposeView(
         )
     }
 
-    fun setItems(items: java.util.List<CompoundItem>) {
+    fun setItems(items: kotlin.collections.List<CompoundItem>) {
         itemState = items.map { item ->
             J2meChoiceItemState(
                 id = item.getUiId(),

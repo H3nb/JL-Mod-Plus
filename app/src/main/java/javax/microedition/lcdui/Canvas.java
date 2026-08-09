@@ -1435,6 +1435,7 @@ public abstract class Canvas extends Displayable {
 			bgColor = ContextCompat.getColor(activity, R.color.background);
 		}
 
+		@SuppressLint("RtlHardcoded") // Nokia FullCanvas compatibility keeps the menu on the physical right softkey side.
 		private void showPopup() {
 			PopupWindow popup = prepareMenu(fullscreen ? 0 : 1);
 			if (popup == null || popup.isShowing()) {

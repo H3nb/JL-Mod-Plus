@@ -31,6 +31,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.content.edit
+import androidx.core.net.toUri
 import androidx.preference.PreferenceManager
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.WindowInsetsPolicy
@@ -49,7 +51,7 @@ class ProfilesActivity : AppCompatActivity() {
         object : ActivityResultContract<String, String>() {
             override fun createIntent(context: Context, input: String): Intent = Intent(
                 ACTION_EDIT_PROFILE,
-                Uri.parse(input),
+                input.toUri(),
                 applicationContext,
                 ConfigActivity::class.java,
             )
@@ -91,7 +93,7 @@ class ProfilesActivity : AppCompatActivity() {
     private fun onProfileAction(profile: Profile, itemId: Int) {
         when (itemId) {
             R.id.action_context_default -> {
-                preferences.edit().putString(PREF_DEFAULT_PROFILE, profile.name).apply()
+                preferences.edit { putString(PREF_DEFAULT_PROFILE, profile.name) }
                 defaultProfile = profile
                 uiState.setDefault(profile)
             }
@@ -145,7 +147,7 @@ class ProfilesActivity : AppCompatActivity() {
             profile.renameTo(newName)
             uiState.refresh()
             if (defaultProfile == profile) {
-                preferences.edit().putString(PREF_DEFAULT_PROFILE, newName).apply()
+                preferences.edit { putString(PREF_DEFAULT_PROFILE, newName) }
                 uiState.setDefault(profile)
             }
         }

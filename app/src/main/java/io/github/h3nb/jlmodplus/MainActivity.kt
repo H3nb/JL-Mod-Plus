@@ -34,6 +34,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.content.edit
 import androidx.lifecycle.ViewModelProvider
 import androidx.preference.PreferenceManager
 import io.github.h3nb.jlmodplus.applist.AppItem
@@ -99,10 +100,9 @@ class MainActivity : AppCompatActivity() {
         },
     ) { uri ->
         if (uri != Uri.EMPTY && !isFinishing && !isDestroyed) {
-            PreferenceManager.getDefaultSharedPreferences(this)
-                .edit()
-                .putString(Constants.PREF_LAST_PATH, uri.path)
-                .apply()
+            PreferenceManager.getDefaultSharedPreferences(this).edit {
+                putString(Constants.PREF_LAST_PATH, uri.path)
+            }
             showInstaller(uri)
         }
     }
@@ -142,10 +142,9 @@ class MainActivity : AppCompatActivity() {
                         appListModel.setAppListFilter(query.lowercase(Locale.getDefault()))
                     },
                     onLayoutChanged = { layoutType ->
-                        PreferenceManager.getDefaultSharedPreferences(this)
-                            .edit()
-                            .putInt(Constants.PREF_APPS_VIEW, layoutType)
-                            .apply()
+                        PreferenceManager.getDefaultSharedPreferences(this).edit {
+                            putInt(Constants.PREF_APPS_VIEW, layoutType)
+                        }
                     },
                     onToolbarAction = ::onToolbarAction,
                 )
@@ -249,10 +248,9 @@ class MainActivity : AppCompatActivity() {
             homeDialog = HomeDialogState.DirectoryError(path)
             return
         }
-        PreferenceManager.getDefaultSharedPreferences(this)
-            .edit()
-            .putString(Constants.PREF_EMULATOR_DIR, path)
-            .apply()
+        PreferenceManager.getDefaultSharedPreferences(this).edit {
+            putString(Constants.PREF_EMULATOR_DIR, path)
+        }
     }
 
     private fun onContextAction(item: AppItem, itemId: Int) {
@@ -311,7 +309,7 @@ class MainActivity : AppCompatActivity() {
         if (preferences.getInt(Constants.PREF_APP_SORT, 0) == sortVariant) {
             value = sortVariant or Int.MIN_VALUE
         }
-        preferences.edit().putInt(Constants.PREF_APP_SORT, value).apply()
+        preferences.edit { putInt(Constants.PREF_APP_SORT, value) }
         homeDialog = null
     }
 

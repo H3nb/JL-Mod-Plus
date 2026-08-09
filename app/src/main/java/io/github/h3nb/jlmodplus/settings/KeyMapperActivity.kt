@@ -24,6 +24,7 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.util.size
 import com.google.gson.GsonBuilder
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.config.ConfigActivity
@@ -139,7 +140,7 @@ class KeyMapperActivity : AppCompatActivity() {
     }
 
     private fun deleteDuplicates(value: Int) {
-        for (i in androidToMIDP.size() - 1 downTo 0) {
+        for (i in androidToMIDP.size - 1 downTo 0) {
             if (androidToMIDP.valueAt(i) == value) {
                 androidToMIDP.removeAt(i)
             }
@@ -201,8 +202,8 @@ class KeyMapperActivity : AppCompatActivity() {
 
     private fun equalMaps(map1: SparseIntArray?, map2: SparseIntArray?): Boolean {
         if (map1 === map2) return true
-        if (map1 == null || map2 == null || map1.size() != map2.size()) return false
-        for (i in 0 until map1.size()) {
+        if (map1 == null || map2 == null || map1.size != map2.size) return false
+        for (i in 0 until map1.size) {
             if (map2.keyAt(i) != map1.keyAt(i) || map2.valueAt(i) != map1.valueAt(i)) return false
         }
         return true

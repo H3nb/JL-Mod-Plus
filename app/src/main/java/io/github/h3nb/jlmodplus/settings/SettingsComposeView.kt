@@ -768,7 +768,7 @@ private fun SettingsPreview(darkTheme: Boolean) {
             selectedCameraMaxSnapshot = "2048x1536",
             cameraJpegQualityChoices = qualities,
             selectedCameraJpegQuality = "90",
-            directory = "/sdcard/JL-Mod Plus",
+            directory = "/example/JL-Mod Plus",
             switches = listOf(
                 SettingsSwitchState(PREF_TOOLBAR, R.string.pref_enable_actionbar_title, R.string.pref_enable_actionbar_summary, R.drawable.ic_setting_enable_action_bar, false),
                 SettingsSwitchState(PREF_STATUSBAR, R.string.pref_enable_statusbar_title, R.string.pref_enable_actionbar_summary, R.drawable.ic_setting_enable_statusbar, false),

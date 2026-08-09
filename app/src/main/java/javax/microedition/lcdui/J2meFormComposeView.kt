@@ -59,7 +59,7 @@ class J2meFormComposeView(context: Context) : FrameLayout(context) {
         )
     }
 
-    fun setItems(items: java.util.List<Item>) {
+    fun setItems(items: kotlin.collections.List<Item>) {
         itemState = items.map { item ->
             J2meFormItemState(
                 id = System.identityHashCode(item).toLong(),

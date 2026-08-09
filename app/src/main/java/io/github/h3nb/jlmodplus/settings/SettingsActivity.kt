@@ -22,6 +22,7 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import io.github.h3nb.jlmodplus.config.ProfilesActivity
 import io.github.h3nb.jlmodplus.crashes.dialog.AudioFailureReportActivity
@@ -67,10 +68,9 @@ class SettingsActivity : AppCompatActivity() {
             uiState.showDirectoryError(path)
             return
         }
-        PreferenceManager.getDefaultSharedPreferences(this)
-            .edit()
-            .putString(PREF_EMULATOR_DIR, path)
-            .apply()
+        PreferenceManager.getDefaultSharedPreferences(this).edit {
+            putString(PREF_EMULATOR_DIR, path)
+        }
         uiState.setDirectory(path)
     }
 }

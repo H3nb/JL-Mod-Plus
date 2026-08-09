@@ -88,6 +88,7 @@ import androidx.compose.ui.platform.ViewConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -164,8 +165,9 @@ internal fun MemoryEditorScreen(
                 },
             )
         } else {
-            stringResource(
-                R.string.memory_editor_operation_result,
+            pluralStringResource(
+                R.plurals.memory_editor_operation_result,
+                it.requested,
                 it.succeeded,
                 it.requested,
             )
@@ -770,8 +772,9 @@ private fun ResultsContent(
                         style = MaterialTheme.typography.titleMedium,
                     )
                     Text(
-                        text = stringResource(
-                            R.string.memory_editor_results_summary,
+                        text = pluralStringResource(
+                            R.plurals.memory_editor_results_summary,
+                            state.snapshot.candidates,
                             state.snapshot.candidates,
                             state.snapshot.frozen,
                         ),
@@ -1077,8 +1080,9 @@ private fun SelectionToolbar(state: MemoryEditorUiState, actions: MemoryEditorAc
             style = MaterialTheme.typography.labelLarge,
         )
         Text(
-            text = stringResource(
-                R.string.memory_editor_loaded,
+            text = pluralStringResource(
+                R.plurals.memory_editor_loaded,
+                state.snapshot.candidates,
                 state.candidates.size,
                 state.snapshot.candidates,
             ),

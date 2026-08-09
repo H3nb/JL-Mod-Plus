@@ -1,5 +1,6 @@
 /*
  * Copyright 2019 Yury Kharchenko
+ * Copyright 2026 H3NB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,36 +20,36 @@ import android.view.View;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.microedition.lcdui.graphics.CanvasWrapper;
 
 public class FpsCounter extends TimerTask implements Layer {
 
 	private final View view;
-	private String prevFrameCount = "0";
-	private int totalFrameCount;
+	private final AtomicInteger totalFrameCount = new AtomicInteger();
+	private volatile int displayFrameCount;
 	private final Timer timer;
 
 	public FpsCounter(View view) {
 		this.view = view;
 		timer = new Timer("FpsCounter", true);
-		timer.scheduleAtFixedRate(this, 0, 1000);
+		timer.schedule(this, 0, 1000);
 	}
 
 	public void run() {
-		prevFrameCount = String.valueOf(totalFrameCount);
-		totalFrameCount = 0;
+		displayFrameCount = totalFrameCount.getAndSet(0);
 		view.postInvalidate();
 	}
 
 	public void increment() {
-		totalFrameCount++;
+		totalFrameCount.incrementAndGet();
 	}
 
 	public void paint(CanvasWrapper g) {
 		g.setFillColor(0x90000000);
 		g.setTextColor(0xFF00FF00);
-		g.drawBackgroundedText(prevFrameCount);
+		g.drawBackgroundedText(String.valueOf(displayFrameCount));
 	}
 
 	public void stop() {

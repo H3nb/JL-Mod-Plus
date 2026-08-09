@@ -14,7 +14,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="about">Tentang</string>
     <string name="about_message">Aplikasi ini berfungsi meluncurkan aplikasi dan permainan J2ME di Android.\n</string>
     <string name="action_context_delete">Hapus</string>
@@ -25,11 +25,9 @@
     <string name="action_reinstall">Pasang ulang</string>
     <string name="action_settings">Pengaturan</string>
     <string name="add">Tambah</string>
-    <string name="add_profile_description">Buat profil baru</string>
     <string name="alert_map_menu">Tombol menu (M) belum ditetapkan!\nIni membuat opsi emulator tidak bisa diakses</string>
     <string name="alert_msg_workdir_not_exists">Direktori yang bisa dipakai tidak ada di jalur:\n\'%1$s\'.\nApakah ingin dibuat atau pilih yang lain?</string>
     <string name="alert_rewrite_profile">Profil bernama \"%1$s\" sudah ada.\n\nApakah ingin ditimpa?</string>
-    <string name="author">Lembaga: </string>
     <string name="CANCEL_CMD">Batal</string>
     <string name="change">Ubah</string>
     <string name="choose">Pilih</string>
@@ -38,14 +36,8 @@
     <string name="cmd_menu">Menu</string>
     <string name="CONFIRMATION_REQUIRED">Memerlukan konfirmasi</string>
     <string name="converting_wait">Mengkonversi JAR…</string>
-    <string name="crash_dialog_message">Laporan error tersedia.</string>
     <string name="crash_report_instruction">Periksa detail berikut, lalu salin atau laporkan error.</string>
     <string name="crash_dialog_title">Terjadi error</string>
-    <string name="audio_failure_notification_channel">Kegagalan audio</string>
-    <string name="audio_failure_notification_channel_description">Pemberitahuan tentang audio yang tidak dapat diputar.</string>
-    <string name="audio_failure_notification_title">Pemutaran audio gagal</string>
-    <string name="audio_failure_notification_text">Audio tidak dapat diputar. Ketuk untuk melihat laporan.</string>
-    <string name="audio_failure_toast">Audio tidak dapat diputar. Laporan tersedia.</string>
     <string name="audio_failure_report_title">Laporan kegagalan audio</string>
     <string name="audio_failure_report_instruction">Periksa detailnya, lalu salin atau bagikan laporan. Laporan tidak dikirim otomatis.</string>
     <string name="audio_failure_report_subject">Laporan kegagalan audio JL-Mod Plus</string>
@@ -59,9 +51,7 @@
     <string name="enter_new_name">Masukkan nama baru</string>
     <string name="err_missing_app">Aplikasi tak ditemukan.\nMohon periksa ketersediaan %1$spenyimpanan perangkat atau buat ulang pintasan.</string>
     <string name="error">Galat</string>
-    <string name="error_disk_io">Galat penyimpanan: periksa ruang diska</string>
     <string name="error_name">Masukkan nama!</string>
-    <string name="error_name_exists">Sudah ada, ketik nama lain</string>
     <string name="secure_connection_blocked_title">Koneksi aman diblokir</string>
     <string name="secure_connection_unknown_host">server yang diminta</string>
     <string name="secure_connection_blocked_message">Android tidak dapat memverifikasi %1$s. Periksa tanggal perangkat, jaringan, dan VPN. Untuk server lama yang tepercaya, ubah Keamanan HTTPS/SSL di bagian Eksperimental.</string>
@@ -79,7 +69,6 @@
     <string name="secure_connection_insecure_message">Semua pemeriksaan sertifikat HTTPS/SSL akan dinonaktifkan untuk MIDlet ini. Lalu lintas jaringan dapat disadap.</string>
     <string name="secure_connection_use_insecure">Gunakan mode tidak aman</string>
     <string name="exit">Keluar</string>
-    <string name="external_storage_not_mounted">Aplikasi ini perlu penyimpanan eksternal</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Menutup paksa aplikasi akan berakibat data menjadi hilang atau rusak sepenuhnya! \nLanjutkan?</string>
     <string name="help">Bantuan</string>
     <string name="help_message">&#8226; Mengaktifkan opsi \"Saring\" di kasus tertentu bisa sangat mengurangi kinerja. Nonaktifkan opsi ini jika permainan terlalu lambat.&lt;BR&gt;&#8226; Gambar yang berkedip bisa diatasi dengan mengaktifkan opsi \"Mode pengolahan seketika\".</string>
@@ -87,7 +76,6 @@
     <string name="identity_filter">Cepat (tanpa saring)</string>
     <string name="install">pasang</string>
     <string name="install_done">Aplikasi telah berhasil dipasang!</string>
-    <string name="install_jar_needed">Pilih berkas JAR</string>
     <string name="install_jar_non_matched_jad">Aplikasi ini berbeda dari yang dijelaskan di JAD.\nAbaikan JAD dan tetap pasang?</string>
     <string name="invalid_resolution_not_saved">Resolusi tidak absah: tidak disimpan!</string>
     <string name="layout_edit_finish">Akhiri mode ubah</string>
@@ -106,7 +94,6 @@
     <string name="message_delete">Apakah Anda yakin ingin menghapus aplikasi ini?</string>
     <string name="midlet_name"><b>Nama: </b></string>
     <string name="midlet_size"><b>Ukuran: </b></string>
-    <string name="midlet_source"><b>Sumber: </b></string>
     <string name="midlet_vendor"><b>Pihak jual: </b></string>
     <string name="midlet_version"><b>Versi: </b></string>
     <string name="more">Lainnya</string>
@@ -145,7 +132,6 @@
     <string name="pref_graphics_mode_title">Mode grafik:</string>
     <string name="pref_graphics_software">Software</string>
     <string name="PREF_HEIGHT">Tinggi</string>
-    <string name="PREF_HW_ACCELERATION">Akselerasi HW (tidak stabil)</string>
     <string name="PREF_IMMEDIATE">Mode pengolahan seketika</string>
     <string name="pref_input_devices_title">Perangkat masukan</string>
     <string name="PREF_KEEP_ASPECT_RATIO">Pertahankan aspek rasio</string>
@@ -168,27 +154,15 @@
     <string name="timing_migration_continue">Lanjut tanpa hook terbaru</string>
     <string name="memory_editor">Memory editor</string>
     <string name="memory_editor_title">Memory Editor</string>
-    <string name="memory_editor_description">Cari nilai yang diamati dari game hasil konversi. Ini bukan pemindai RAM Android sembarang.</string>
     <string name="memory_editor_type">Jenis nilai</string>
     <string name="memory_editor_mode">Mode pencarian</string>
     <string name="memory_editor_value">Nilai</string>
     <string name="memory_editor_second_value">Maksimum (rentang)</string>
-    <string name="memory_editor_start">Mulai cari</string>
     <string name="memory_editor_refine">Persempit</string>
-    <string name="memory_editor_edit">Edit semua kandidat</string>
-    <string name="memory_editor_freeze">Bekukan semua kandidat</string>
     <string name="memory_editor_unfreeze">Hapus pembekuan</string>
     <string name="memory_editor_undo">Urungkan perubahan</string>
     <string name="memory_editor_reset">Reset pencarian</string>
     <string name="memory_editor_close">Tutup</string>
-    <string name="memory_editor_no_session">Mulai pencarian terlebih dahulu.</string>
-    <string name="memory_editor_status">Kandidat: %1$d, beku: %2$d</string>
-    <string name="memory_editor_status_limited">Kandidat: %1$d, beku: %2$d (batas tercapai; persempit pencarian)</string>
-    <string name="memory_editor_applied">Lokasi yang diperbarui: %1$d</string>
-    <string name="memory_editor_refined">Kandidat tersisa: %1$d</string>
-    <string name="memory_editor_frozen_result">Lokasi yang dibekukan: %1$d</string>
-    <string name="memory_editor_undo_result">Kelompok edit yang dipulihkan: %1$d</string>
-    <string name="memory_editor_busy">Operasi memory editor masih berjalan.</string>
     <string name="memory_editor_preview_badge">Pratinjau eksperimental</string>
     <string name="memory_editor_setup_title">Pencarian nilai baru</string>
     <string name="memory_editor_setup_help">Pilih tipe, perbandingan, dan nilai.</string>
@@ -221,21 +195,25 @@
     <string name="memory_editor_return_to_game">Kembali ke game</string>
     <string name="memory_editor_collecting_title">Mengumpulkan saat game berjalan</string>
     <string name="memory_editor_collecting_help">Game sedang berjalan. Buka kembali Memory Editor untuk menyelesaikan pengumpulan dan melihat hasil.</string>
-    <string name="memory_editor_observed">Hook teramati: %1$d tipe terpilih, %2$d total</string>
+    <string name="memory_editor_observed">Hook teramati — tipe terpilih: %1$d; total: %2$d</string>
     <string name="memory_editor_observed_paths">Field %1$d · array %2$d · baca %3$d · tulis %4$d</string>
     <string name="memory_editor_candidate_budget">Estimasi penyimpanan kandidat: %1$d / %2$d KiB</string>
     <string name="memory_editor_no_hooks">Belum ada nilai game hasil transformasi yang mencapai editor. Bermainlah lebih lama; bila tetap nol, konversi ulang atau kompatibilitas hook perlu diperiksa.</string>
     <string name="memory_editor_wrong_type">Game menghasilkan nilai, tetapi bukan tipe yang dipilih. Coba jenis nilai lain.</string>
     <string name="memory_editor_results_title">Hasil pencarian</string>
-    <string name="memory_editor_results_summary">%1$d kandidat · %2$d dibekukan</string>
+    <plurals name="memory_editor_results_summary">
+        <item quantity="other">%1$d kandidat · %2$d dibekukan</item>
+    </plurals>
     <string name="memory_editor_limit_warning">Batas aman 50.000 kandidat tercapai. Persempit sebelum mengedit.</string>
     <string name="memory_editor_empty_results">Belum ada kandidat yang cocok.</string>
-    <string name="memory_editor_refine_title">Persempit hasil</string>
     <string name="memory_editor_refine_help">Ubah nilai di game, lalu bandingkan lagi.</string>
     <string name="memory_editor_select_loaded">Pilih yang dimuat</string>
     <string name="memory_editor_clear_selection">Hapus pilihan</string>
-    <string name="memory_editor_selected">%1$d dipilih</string>
-    <string name="memory_editor_loaded">%1$d dari %2$d hasil dimuat</string>
+    <!-- Jumlah mengubah status pilihan, bukan nomina yang dilokalkan. -->
+    <string name="memory_editor_selected" tools:ignore="PluralsCandidate">%1$d dipilih</string>
+    <plurals name="memory_editor_loaded">
+        <item quantity="other">%1$d dari %2$d hasil dimuat</item>
+    </plurals>
     <string name="memory_editor_edit_selected">Edit pilihan</string>
     <string name="memory_editor_freeze_selected">Bekukan pilihan</string>
     <string name="memory_editor_unfreeze_selected">Lepas beku pilihan</string>
@@ -250,7 +228,9 @@
     <string name="memory_editor_apply_freeze">Terapkan pembekuan</string>
     <string name="memory_editor_reset_confirm_title">Reset pencarian?</string>
     <string name="memory_editor_reset_confirm_body">Kandidat, pilihan, pembekuan, dan riwayat edit sesi ini akan dihapus.</string>
-    <string name="memory_editor_operation_result">%1$d dari %2$d lokasi diperbarui</string>
+    <plurals name="memory_editor_operation_result">
+        <item quantity="other">%1$d dari %2$d lokasi diperbarui</item>
+    </plurals>
     <string name="memory_editor_operation_cancelled">Operasi dibatalkan. Perubahan yang sudah selesai dapat diurungkan.</string>
     <string name="memory_editor_stale_session">Game atau sesi pencarian berubah. Hasil lama diabaikan.</string>
     <string name="memory_editor_operation_busy">Operasi Memory Editor lain masih berjalan.</string>
@@ -274,21 +254,6 @@
     <string name="memory_editor_layout_transparency">Transparansi editor</string>
     <string name="memory_editor_layout_transparency_help">Mengatur transparansi seluruh Memory Editor. Lihat game selalu menyembunyikannya sepenuhnya saat ditahan.</string>
     <string name="memory_editor_peek_help">Tahan ikon di sudut untuk melihat game sebentar. Sentuhan tidak pernah diteruskan ke game.</string>
-    <string-array name="memory_editor_types">
-        <item>Integer (boolean/byte/char/short/int)</item>
-        <item>Long</item>
-        <item>Float</item>
-        <item>Double</item>
-    </string-array>
-    <string-array name="memory_editor_modes">
-        <item>Tepat</item>
-        <item>Tidak diketahui</item>
-        <item>Berubah</item>
-        <item>Tidak berubah</item>
-        <item>Meningkat</item>
-        <item>Menurun</item>
-        <item>Rentang</item>
-    </string-array>
     <string name="rms_editor">Cadangan RMS</string>
     <string name="rms_editor_title">Cadangan RMS (offline)</string>
     <string name="rms_snapshot_create">Buat snapshot</string>
@@ -303,9 +268,7 @@
     <string name="pref_orientation_default">Bawaan</string>
     <string name="pref_orientation_land">Mendatar</string>
     <string name="pref_orientation_port">Menegak</string>
-    <string name="pref_requires_restart_summary">Perlu dibuka ulang</string>
     <string name="PREF_SCALE_RATIO">Skala(%)</string>
-    <string name="PREF_SCALE_TO_FIT">Sesuaikan dengan skala</string>
     <string name="pref_screen_gravity">Gravitasi layar</string>
     <string name="pref_screen_gravity_bottom">Bawah</string>
     <string name="pref_screen_gravity_center">Tengah</string>
@@ -335,22 +298,14 @@
     <string name="PREF_VK_ALPHA">Kelegapan: </string>
     <string name="PREF_VK_BACK">Tombol</string>
     <string name="PREF_VK_FEEDBACK">Ada sentuh getar</string>
-    <string name="PREF_VK_FIRE_KEY">Tembak/OK: </string>
     <string name="PREF_VK_FORCE_OPACITY">Paksa kelegapan untuk tombol di luar layar</string>
     <string name="PREF_VK_FORE">Label</string>
     <string name="PREF_VK_HIDE_DELAY">S\'bunyikan tundaan: </string>
     <string name="pref_vk_hide_hint">dinonaktifkan</string>
-    <string name="PREF_VK_KEY_SIZES">Ukuran tombol</string>
-    <string name="PREF_VK_NAV_KEYS">Tuas kendali: </string>
-    <string name="PREF_VK_NUM_KEYS">Angka: </string>
     <string name="PREF_VK_OUTLINE">Pinggiran</string>
     <string name="pref_vk_save_alert">Papan ketik kustom akan diganti yang sekarang\nSimpan?</string>
     <string name="PREF_VK_SEL_BACK">Tombol (ditekan)</string>
     <string name="PREF_VK_SEL_FORE">Label (ditekan)</string>
-    <string name="PREF_VK_SHOW">Tampilkan keypad</string>
-    <string name="PREF_VK_SIZE_HINT">Ukuran</string>
-    <string name="PREF_VK_SOFT_KEYS">Tombol virtual: </string>
-    <string name="PREF_VK_TYPE">Jenis keypad</string>
     <string name="pref_vk_type_arrows">Arah panah</string>
     <string name="pref_vk_type_arrows_numbers">Arah panah &amp; nomor</string>
     <string name="pref_vk_type_custom">Kustom</string>
@@ -384,12 +339,10 @@
     <string name="save_log">Simpan log</string>
     <string name="save_profile">Simpan profil</string>
     <string name="saved">Tersimpan %1$s</string>
-    <string name="scoped_storage_warning">Data pengguna Anda ditampung pada lokasi yang <b>akan dihapus</b> ketika mencopot aplikasi:\n</string>
     <string name="screenshot_saved">Tangkapan layar telah disimpan ke</string>
     <string name="search">Cari</string>
     <string name="select_dialog_title">Pilih MIDlet</string>
     <string name="set_as_default">Atur sebagai bawaan</string>
-    <string name="set_default_profile_description">Pilih profil ini sebagai pengaturan standar untuk semua aplikasi yang akan dipasang nanti</string>
     <string name="shader_tuning">Setelan Pencorak</string>
     <string name="SIZE_PRESETS">Praatur</string>
     <string name="START_CMD">Mulai</string>

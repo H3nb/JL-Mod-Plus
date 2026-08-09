@@ -16,6 +16,7 @@
 
 package javax.microedition.lcdui.commands
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.widget.FrameLayout
 import androidx.compose.foundation.layout.Column
@@ -40,6 +41,7 @@ import io.github.h3nb.jlmodplus.ui.AppComposeTheme
 import io.github.h3nb.jlmodplus.ui.ComposeViewTreeOwners
 import javax.microedition.lcdui.Command
 
+@SuppressLint("ViewConstructor") // Programmatic J2ME/Compose host owns callback wiring; no XML inflation path.
 class SoftMenuComposeView(
     context: Context,
     private val callback: Callback,

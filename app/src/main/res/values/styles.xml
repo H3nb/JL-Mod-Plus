@@ -40,35 +40,14 @@
         <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
     </style>
 
-    <style name="ConfigTitleTextStyle">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">40dp</item>
-        <item name="android:textSize">18sp</item>
-        <item name="android:textColor">?attr/textColorPrimary</item>
-        <item name="android:gravity">center</item>
-    </style>
 
-    <style name="SwitchStyle">
-        <item name="android:textSize">15sp</item>
-        <item name="android:textColor">?textColorSecondary</item>
-    </style>
 
-    <style name="EditTextStyle">
-        <item name="android:textSize">16sp</item>
-        <item name="android:textColorHint">#b0b0b0</item>
-        <item name="android:textColor">?attr/textColorPrimary</item>
-    </style>
 
     <style name="ButtonStyle" parent="Widget.AppCompat.Button.Colored">
         <item name="elevation">1dp</item>
         <item name="android:background">@drawable/bg_button</item>
     </style>
 
-    <style name="ImageButtonStyle" parent="Widget.AppCompat.ImageButton">
-        <item name="android:background">@android:color/transparent</item>
-        <item name="android:tint">?colorAccent</item>
-    </style>
 
-    <style name="TextViewVendor" parent="Widget.AppCompat.TextView" />
 
 </resources>
