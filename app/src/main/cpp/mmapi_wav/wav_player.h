@@ -7,6 +7,7 @@
 #define MMAPI_WAV_PLAYER_H
 
 #include <cstdint>
+#include <vector>
 #include <oboe/Oboe.h>
 
 #include "mmapi/BasePlayer.h"
@@ -39,6 +40,7 @@ private:
     void applyGain(int16_t *samples, uint64_t frames) const;
 
     drwav decoder{};
+    std::vector<uint8_t> decodedWave;
     bool decoderOpen = false;
     uint32_t channels = 0;
     uint32_t sampleRate = 0;

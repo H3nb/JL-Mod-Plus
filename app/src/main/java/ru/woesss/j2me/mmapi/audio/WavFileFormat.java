@@ -47,15 +47,18 @@ public final class WavFileFormat {
 		private final long averageBytesPerSecond;
 		private final int blockAlignment;
 		private final int bitsPerSample;
+		private final int samplesPerBlock;
 
 		private Info(int formatTag, int channels, long sampleRate,
-				long averageBytesPerSecond, int blockAlignment, int bitsPerSample) {
+				long averageBytesPerSecond, int blockAlignment, int bitsPerSample,
+				int samplesPerBlock) {
 			this.formatTag = formatTag;
 			this.channels = channels;
 			this.sampleRate = sampleRate;
 			this.averageBytesPerSecond = averageBytesPerSecond;
 			this.blockAlignment = blockAlignment;
 			this.bitsPerSample = bitsPerSample;
+			this.samplesPerBlock = samplesPerBlock;
 		}
 
 		public int getFormatTag() {
@@ -82,6 +85,11 @@ public final class WavFileFormat {
 			return bitsPerSample;
 		}
 
+		/** Returns compressed samples per block, or 0 when the fmt chunk omits it. */
+		public int getSamplesPerBlock() {
+			return samplesPerBlock;
+		}
+
 		public String getCodecName() {
 			return switch (formatTag) {
 				case PCM -> "PCM";
@@ -98,9 +106,13 @@ public final class WavFileFormat {
 		}
 
 		public String describe() {
-			return String.format(Locale.ROOT,
+			String result = String.format(Locale.ROOT,
 					"Container: RIFF/WAVE; Codec: %s; formatTag: 0x%04X; channels: %d; sampleRate: %d Hz; bitsPerSample: %d; blockAlign: %d",
 					getCodecName(), formatTag, channels, sampleRate, bitsPerSample, blockAlignment);
+			if (samplesPerBlock > 0) {
+				result += "; samplesPerBlock: " + samplesPerBlock;
+			}
+			return result;
 		}
 	}
 
@@ -138,8 +150,16 @@ public final class WavFileFormat {
 						long averageBytesPerSecond = readUnsignedInt(input);
 						int blockAlignment = readUnsignedShort(input);
 						int bitsPerSample = readUnsignedShort(input);
+						int samplesPerBlock = 0;
+						if (chunkSize >= 18) {
+							int extraSize = readUnsignedShort(input);
+							if (extraSize >= 2 && chunkSize >= 20) {
+								samplesPerBlock = readUnsignedShort(input);
+							}
+						}
 						return new Info(formatTag, channels, sampleRate,
-								averageBytesPerSecond, blockAlignment, bitsPerSample);
+								averageBytesPerSecond, blockAlignment, bitsPerSample,
+								samplesPerBlock);
 					}
 
 					long nextChunk = chunkDataStart + chunkSize + (chunkSize & 1L);
@@ -162,6 +182,18 @@ public final class WavFileFormat {
 				&& info.getFormatTag() == IMA_ADPCM
 				&& info.getChannels() == 1
 				&& info.getBitsPerSample() == 4;
+	}
+
+	/** Returns whether {@code file} declares the standard mono 8 kHz WAV49 layout. */
+	public static boolean isGsm610(File file) throws IOException {
+		Info info = inspect(file);
+		return info != null
+				&& info.getFormatTag() == GSM_610
+				&& info.getChannels() == 1
+				&& info.getSampleRate() == 8000
+				&& info.getBlockAlignment() == 65
+				&& info.getBitsPerSample() == 0
+				&& info.getSamplesPerBlock() == 320;
 	}
 
 	private static boolean matches(RandomAccessFile input, String expected) throws IOException {
