@@ -16,74 +16,152 @@
 
 package ru.woesss.j2me.mmapi.audio;
 
-import java.io.File;
 import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Locale;
 
 /**
- * Reads the small part of a RIFF/WAVE header needed for format diagnostics and
- * regression tests.
+ * Reads RIFF/WAVE format metadata used for diagnostics and regression tests.
  *
  * <p>Playback is handled by the dedicated dr_wav backend. This inspector is
  * intentionally side-effect free and, in particular, never routes WAVE data
  * into a MIDI synthesizer.</p>
  */
 public final class WavFileFormat {
-	private static final int WAVE_FORMAT_IMA_ADPCM = 0x0011;
+	public static final int PCM = 0x0001;
+	public static final int IEEE_FLOAT = 0x0003;
+	public static final int A_LAW = 0x0006;
+	public static final int MU_LAW = 0x0007;
+	public static final int IMA_ADPCM = 0x0011;
+	public static final int GSM_610 = 0x0031;
+	public static final int MPEG_LAYER_3 = 0x0055;
+	public static final int EXTENSIBLE = 0xfffe;
+	public static final int DVM = 0x2000;
+
+	public static final class Info {
+		private final int formatTag;
+		private final int channels;
+		private final long sampleRate;
+		private final long averageBytesPerSecond;
+		private final int blockAlignment;
+		private final int bitsPerSample;
+
+		private Info(int formatTag, int channels, long sampleRate,
+				long averageBytesPerSecond, int blockAlignment, int bitsPerSample) {
+			this.formatTag = formatTag;
+			this.channels = channels;
+			this.sampleRate = sampleRate;
+			this.averageBytesPerSecond = averageBytesPerSecond;
+			this.blockAlignment = blockAlignment;
+			this.bitsPerSample = bitsPerSample;
+		}
+
+		public int getFormatTag() {
+			return formatTag;
+		}
+
+		public int getChannels() {
+			return channels;
+		}
+
+		public long getSampleRate() {
+			return sampleRate;
+		}
+
+		public long getAverageBytesPerSecond() {
+			return averageBytesPerSecond;
+		}
+
+		public int getBlockAlignment() {
+			return blockAlignment;
+		}
+
+		public int getBitsPerSample() {
+			return bitsPerSample;
+		}
+
+		public String getCodecName() {
+			return switch (formatTag) {
+				case PCM -> "PCM";
+				case IEEE_FLOAT -> "IEEE Float";
+				case A_LAW -> "A-law";
+				case MU_LAW -> "mu-law";
+				case IMA_ADPCM -> "IMA/DVI ADPCM";
+				case GSM_610 -> "GSM 6.10";
+				case MPEG_LAYER_3 -> "MPEG Layer III";
+				case DVM -> "WAVE_FORMAT_DVM";
+				case EXTENSIBLE -> "WAVE_FORMAT_EXTENSIBLE";
+				default -> "Unknown WAVE codec";
+			};
+		}
+
+		public String describe() {
+			return String.format(Locale.ROOT,
+					"Container: RIFF/WAVE; Codec: %s; formatTag: 0x%04X; channels: %d; sampleRate: %d Hz; bitsPerSample: %d; blockAlign: %d",
+					getCodecName(), formatTag, channels, sampleRate, bitsPerSample, blockAlignment);
+		}
+	}
 
 	private WavFileFormat() {
 	}
 
-	/** Returns whether {@code file} declares mono, 4-bit IMA ADPCM WAVE audio. */
-	public static boolean isMonoImaAdpcm(File file) throws IOException {
+	/** Returns the WAVE fmt metadata, or {@code null} if the header is invalid/incomplete. */
+	public static Info inspect(File file) throws IOException {
 		if (file == null || !file.isFile()) {
-			return false;
+			return null;
 		}
 
 		try (RandomAccessFile input = new RandomAccessFile(file, "r")) {
 			try {
 				if (!matches(input, "RIFF") || readUnsignedInt(input) < 4 || !matches(input, "WAVE")) {
-					return false;
+					return null;
 				}
 
 				long fileLength = input.length();
-				boolean supportedFormat = false;
 				while (input.getFilePointer() + 8 <= fileLength) {
 					String chunkId = readFourCc(input);
 					long chunkSize = readUnsignedInt(input);
 					long chunkDataStart = input.getFilePointer();
-					if (chunkSize > fileLength - input.getFilePointer()) {
-						return false;
+					if (chunkSize > fileLength - chunkDataStart) {
+						return null;
 					}
 
 					if ("fmt ".equals(chunkId)) {
 						if (chunkSize < 16) {
-							return false;
+							return null;
 						}
-						int format = readUnsignedShort(input);
+						int formatTag = readUnsignedShort(input);
 						int channels = readUnsignedShort(input);
-						input.skipBytes(4); // sample rate
-						input.skipBytes(4); // average bytes per second
-						input.skipBytes(2); // block alignment
+						long sampleRate = readUnsignedInt(input);
+						long averageBytesPerSecond = readUnsignedInt(input);
+						int blockAlignment = readUnsignedShort(input);
 						int bitsPerSample = readUnsignedShort(input);
-						supportedFormat = format == WAVE_FORMAT_IMA_ADPCM
-								&& channels == 1 && bitsPerSample == 4;
-					} else if ("data".equals(chunkId)) {
-						return supportedFormat;
+						return new Info(formatTag, channels, sampleRate,
+								averageBytesPerSecond, blockAlignment, bitsPerSample);
 					}
 
 					long nextChunk = chunkDataStart + chunkSize + (chunkSize & 1L);
-					if (nextChunk < input.getFilePointer() || nextChunk > fileLength) {
-						return false;
+					if (nextChunk < chunkDataStart || nextChunk > fileLength) {
+						return null;
 					}
 					input.seek(nextChunk);
 				}
 			} catch (EOFException e) {
-				return false;
+				return null;
 			}
 		}
-		return false;
+		return null;
+	}
+
+	/** Returns whether {@code file} declares mono, 4-bit IMA ADPCM WAVE audio. */
+	public static boolean isMonoImaAdpcm(File file) throws IOException {
+		Info info = inspect(file);
+		return info != null
+				&& info.getFormatTag() == IMA_ADPCM
+				&& info.getChannels() == 1
+				&& info.getBitsPerSample() == 4;
 	}
 
 	private static boolean matches(RandomAccessFile input, String expected) throws IOException {
