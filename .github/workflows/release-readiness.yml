@@ -4,9 +4,9 @@ name: Release Readiness
 
 on:
   push:
-    branches: [dev, main]
+    branches: [alpha, main]
   pull_request:
-    branches: [dev, main]
+    branches: [alpha, main]
     paths:
       - "build.gradle.kts"
       - "settings.gradle.kts"
