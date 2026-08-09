@@ -42,6 +42,10 @@ public class MediaRouterTest {
 		assertEquals(MediaRouter.Backend.SYNTH,
 				MediaRouter.route(ContentProbe.Kind.IMELODY, null));
 		assertEquals(MediaRouter.Backend.SYNTH,
+				MediaRouter.route(ContentProbe.Kind.RTTTL, null));
+		assertEquals(MediaRouter.Backend.SYNTH,
+				MediaRouter.route(ContentProbe.Kind.NOKIA_OTA, null));
+		assertEquals(MediaRouter.Backend.SYNTH,
 				MediaRouter.route(ContentProbe.Kind.UNKNOWN, "audio/x-tone-seq"));
 	}
 
