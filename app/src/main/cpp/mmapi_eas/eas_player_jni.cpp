@@ -8,6 +8,12 @@
 #include "eas_util.h"
 #include "util/jbytearray.h"
 
+#ifdef EAS_JNI_44K
+#define EAS_JNI_METHOD(name) Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS44_##name
+#else
+#define EAS_JNI_METHOD(name) Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS22_##name
+#endif
+
 namespace {
 
 mmapi::eas::Player *requirePlayer(JNIEnv *env, jlong handle) {
@@ -28,12 +34,11 @@ void throwEasException(JNIEnv *env, const char *className, int32_t result) {
 
 } // namespace
 
-/* for C++ linkage */
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_nativeValidateSoundBank
+JNIEXPORT void JNICALL EAS_JNI_METHOD(nativeValidateSoundBank)
 (JNIEnv *env, jobject /*thiz*/, jstring soundBank) {
     if (soundBank == nullptr) {
         return;
@@ -46,7 +51,7 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_nativeValidate
     }
 }
 
-JNIEXPORT jlong JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_nativeCreatePlayer
+JNIEXPORT jlong JNICALL EAS_JNI_METHOD(nativeCreatePlayer)
 (JNIEnv *env, jobject /*thiz*/, jstring locatorString, jstring soundBankString) {
     if (locatorString == nullptr) {
         env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "locator == null");
@@ -73,12 +78,12 @@ JNIEXPORT jlong JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_nativeCreateP
     return reinterpret_cast<jlong>(player);
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_finalize
+JNIEXPORT void JNICALL EAS_JNI_METHOD(nativeFinalize)
 (JNIEnv */*env*/, jobject /*thiz*/, jlong handle) {
     delete reinterpret_cast<mmapi::eas::Player *>(handle);
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_realize
+JNIEXPORT void JNICALL EAS_JNI_METHOD(nativeRealize)
 (JNIEnv *env, jobject /*thiz*/, jlong handle) {
     auto *player = requirePlayer(env, handle);
     if (player != nullptr && !player->realize()) {
@@ -86,7 +91,7 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_realize
     }
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_prefetch
+JNIEXPORT void JNICALL EAS_JNI_METHOD(nativePrefetch)
 (JNIEnv *env, jobject /*thiz*/, jlong handle) {
     auto *player = requirePlayer(env, handle);
     if (player == nullptr) {
@@ -98,7 +103,7 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_prefetch
     }
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_start
+JNIEXPORT void JNICALL EAS_JNI_METHOD(nativeStart)
 (JNIEnv *env, jobject /*thiz*/, jlong handle) {
     auto *player = requirePlayer(env, handle);
     if (player == nullptr) {
@@ -110,7 +115,7 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_start
     }
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_pause
+JNIEXPORT void JNICALL EAS_JNI_METHOD(nativePause)
 (JNIEnv *env, jobject /*thiz*/, jlong handle) {
     auto *player = requirePlayer(env, handle);
     if (player == nullptr) {
@@ -122,7 +127,7 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_pause
     }
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_deallocate
+JNIEXPORT void JNICALL EAS_JNI_METHOD(nativeDeallocate)
 (JNIEnv *env, jobject /*thiz*/, jlong handle) {
     auto *player = requirePlayer(env, handle);
     if (player != nullptr) {
@@ -130,7 +135,7 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_deallocate
     }
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_close
+JNIEXPORT void JNICALL EAS_JNI_METHOD(nativeClose)
 (JNIEnv *env, jobject /*thiz*/, jlong handle) {
     auto *player = requirePlayer(env, handle);
     if (player != nullptr) {
@@ -138,19 +143,19 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_close
     }
 }
 
-JNIEXPORT jlong JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_setMediaTime
+JNIEXPORT jlong JNICALL EAS_JNI_METHOD(nativeSetMediaTime)
 (JNIEnv *env, jobject /*thiz*/, jlong handle, jlong now) {
     auto *player = requirePlayer(env, handle);
     return player == nullptr ? -1 : player->setMediaTime(now);
 }
 
-JNIEXPORT jlong JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_getMediaTime
+JNIEXPORT jlong JNICALL EAS_JNI_METHOD(nativeGetMediaTime)
 (JNIEnv *env, jobject /*thiz*/, jlong handle) {
     auto *player = requirePlayer(env, handle);
     return player == nullptr ? -1 : player->getMediaTime();
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_setRepeat
+JNIEXPORT void JNICALL EAS_JNI_METHOD(nativeSetRepeat)
 (JNIEnv *env, jobject /*thiz*/, jlong handle, jint count) {
     auto *player = requirePlayer(env, handle);
     if (player != nullptr) {
@@ -158,7 +163,7 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_setRepeat
     }
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_setVolume
+JNIEXPORT void JNICALL EAS_JNI_METHOD(nativeSetVolume)
 (JNIEnv *env, jobject /*thiz*/, jlong handle, jfloat left, jfloat right) {
     auto *player = requirePlayer(env, handle);
     if (player != nullptr) {
@@ -166,13 +171,13 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_setVolume
     }
 }
 
-JNIEXPORT jlong JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_getDuration
+JNIEXPORT jlong JNICALL EAS_JNI_METHOD(nativeGetDuration)
 (JNIEnv *env, jobject /*thiz*/, jlong handle) {
     auto *player = requirePlayer(env, handle);
     return player == nullptr ? -1 : player->duration;
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_setListener
+JNIEXPORT void JNICALL EAS_JNI_METHOD(nativeSetListener)
 (JNIEnv *env, jobject /*thiz*/, jlong handle, jobject listener) {
     auto *player = requirePlayer(env, handle);
     if (player == nullptr) {
@@ -185,7 +190,7 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_setListener
     player->setListener(new mmapi::PlayerListener(env, listener));
 }
 
-JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_setDataSource
+JNIEXPORT void JNICALL EAS_JNI_METHOD(nativeSetDataSource)
 (JNIEnv *env, jobject /*thiz*/, jlong handle, jbyteArray data) {
     auto *player = requirePlayer(env, handle);
     if (player == nullptr) {
@@ -204,7 +209,7 @@ JNIEXPORT void JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_setDataSource
     }
 }
 
-JNIEXPORT jint JNICALL Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_writeMIDI
+JNIEXPORT jint JNICALL EAS_JNI_METHOD(nativeWriteMIDI)
 (JNIEnv *env, jobject /*thiz*/, jlong handle, jbyteArray data, jint offset, jint length) {
     auto *player = requirePlayer(env, handle);
     if (player == nullptr) {
