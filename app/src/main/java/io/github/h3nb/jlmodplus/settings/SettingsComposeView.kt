@@ -72,6 +72,7 @@ import androidx.preference.PreferenceManager
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.config.Config
 import io.github.h3nb.jlmodplus.ui.AppComposeTheme
+import io.github.h3nb.jlmodplus.util.Constants.PREF_AUDIO_FAILURE_WARNINGS
 import io.github.h3nb.jlmodplus.util.Constants.PREF_CAMERA_DEFAULT_DEVICE
 import io.github.h3nb.jlmodplus.util.Constants.PREF_CAMERA_DEFAULT_SNAPSHOT
 import io.github.h3nb.jlmodplus.util.Constants.PREF_CAMERA_JPEG_QUALITY
@@ -164,6 +165,7 @@ internal class SettingsUiState(context: Context) {
     internal var keepScreenOnEnabled by mutableStateOf(preferences.getBoolean(PREF_KEEP_SCREEN, false))
     internal var rawScreenshot by mutableStateOf(preferences.getBoolean(PREF_SCREENSHOT_SWITCH, false))
     internal var vibrationEnabled by mutableStateOf(preferences.getBoolean(PREF_VIBRATION, true))
+    internal var audioFailureWarningsEnabled by mutableStateOf(preferences.getBoolean(PREF_AUDIO_FAILURE_WARNINGS, true))
     internal var mascotMessage by mutableStateOf(preferences.getBoolean("micro3d_using_message", false))
     internal var audioSpeed by mutableStateOf(preferences.getBoolean("pref_emulation_audio_speed", false))
     internal var extremeSpeeds by mutableStateOf(preferences.getBoolean("pref_emulation_extreme_speeds", false))
@@ -224,6 +226,7 @@ internal class SettingsUiState(context: Context) {
             PREF_KEEP_SCREEN -> keepScreenOnEnabled = value
             PREF_SCREENSHOT_SWITCH -> rawScreenshot = value
             PREF_VIBRATION -> vibrationEnabled = value
+            PREF_AUDIO_FAILURE_WARNINGS -> audioFailureWarningsEnabled = value
             "micro3d_using_message" -> mascotMessage = value
             "pref_emulation_audio_speed" -> audioSpeed = value
             "pref_emulation_extreme_speeds" -> extremeSpeeds = value
@@ -269,6 +272,7 @@ internal fun SettingsScreen(
                 SettingsSwitchState(PREF_KEEP_SCREEN, R.string.pref_wakelock_title, icon = R.drawable.ic_setting_keep_screen_on, defaultValue = state.keepScreenOnEnabled),
                 SettingsSwitchState(PREF_SCREENSHOT_SWITCH, R.string.pref_screenshot_title, R.string.pref_screenshot_summary, R.drawable.ic_setting_screenshot, state.rawScreenshot),
                 SettingsSwitchState(PREF_VIBRATION, R.string.pref_vibration_title, icon = R.drawable.ic_setting_enable_vibration, defaultValue = state.vibrationEnabled),
+                SettingsSwitchState(PREF_AUDIO_FAILURE_WARNINGS, R.string.audio_failure_warnings_title, R.string.audio_failure_warnings_summary, R.drawable.ic_setting_message, state.audioFailureWarningsEnabled),
             ),
             experimentalSwitches = listOf(
                 SettingsSwitchState("micro3d_using_message", R.string.pref_mascot_title, R.string.pref_mascot_summary, R.drawable.ic_setting_message, state.mascotMessage),
@@ -772,6 +776,7 @@ private fun SettingsPreview(darkTheme: Boolean) {
                 SettingsSwitchState(PREF_KEEP_SCREEN, R.string.pref_wakelock_title, icon = R.drawable.ic_setting_keep_screen_on, defaultValue = false),
                 SettingsSwitchState(PREF_SCREENSHOT_SWITCH, R.string.pref_screenshot_title, R.string.pref_screenshot_summary, R.drawable.ic_setting_screenshot, false),
                 SettingsSwitchState(PREF_VIBRATION, R.string.pref_vibration_title, icon = R.drawable.ic_setting_enable_vibration, defaultValue = true),
+                SettingsSwitchState(PREF_AUDIO_FAILURE_WARNINGS, R.string.audio_failure_warnings_title, R.string.audio_failure_warnings_summary, R.drawable.ic_setting_message, true),
             ),
             experimentalSwitches = listOf(
                 SettingsSwitchState("micro3d_using_message", R.string.pref_mascot_title, R.string.pref_mascot_summary, R.drawable.ic_setting_message, false),
