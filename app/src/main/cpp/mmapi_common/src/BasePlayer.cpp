@@ -15,6 +15,10 @@ namespace mmapi {
     }
 
     oboe::Result BasePlayer::prefetch() {
+        if (oboeStream != nullptr) {
+            state = PREFETCHED;
+            return oboe::Result::OK;
+        }
         oboe::Result result = createAudioStream();
         if (result == oboe::Result::OK) {
             state = PREFETCHED;
@@ -23,6 +27,9 @@ namespace mmapi {
     }
 
     oboe::Result BasePlayer::start() {
+        if (oboeStream == nullptr) {
+            return oboe::Result::ErrorInvalidState;
+        }
         oboe::Result result = oboeStream->start();
         if (result != oboe::Result::OK) {
             ALOGE("%s: can't start audio stream. %s", __func__, oboe::convertToText(result));
@@ -33,8 +40,12 @@ namespace mmapi {
     }
 
     oboe::Result BasePlayer::pause() {
+        if (oboeStream == nullptr) {
+            return oboe::Result::ErrorInvalidState;
+        }
         if (oboeStream->getState() < oboe::StreamState::Starting ||
             oboeStream->getState() > oboe::StreamState::Started) {
+            state = PREFETCHED;
             return oboe::Result::OK;
         }
         oboe::Result result = oboeStream->pause();
@@ -58,10 +69,11 @@ namespace mmapi {
     void BasePlayer::close() {
         if (state == CLOSED) {
             return;
-        } else if (state == STARTED) {
-            oboeStream->stop();
         }
-        if (state >= PREFETCHED) {
+        if (oboeStream != nullptr) {
+            if (state == STARTED) {
+                oboeStream->stop();
+            }
             oboeStream->close();
             oboeStream.reset();
         }
@@ -75,10 +87,13 @@ namespace mmapi {
     int64_t BasePlayer::setMediaTime(int64_t now) {
         if (now < 0) {
             now = 0;
-        } else if (now > duration) {
+        } else if (duration >= 0 && now > duration) {
             now = duration;
         }
         seekTime = now;
+        // Reflect the logical Player clock immediately; the decoder/synth will
+        // apply the pending seek on its next render callback.
+        playTime = now;
         return now;
     }
 
@@ -98,21 +113,32 @@ namespace mmapi {
     }
 
     void BasePlayer::setListener(PlayerListener *listener) {
-        this->playerListener = listener;
+        if (playerListener == listener) {
+            return;
+        }
+        delete playerListener;
+        playerListener = listener;
     }
 
-    void BasePlayer::onErrorAfterClose(oboe::AudioStream *stream, oboe::Result result) {
+    void BasePlayer::onErrorAfterClose(oboe::AudioStream * /*stream*/, oboe::Result result) {
+        if (state == CLOSED) {
+            return;
+        }
         if (result == oboe::Result::ErrorDisconnected) {
             oboe::Result res = createAudioStream();
             if (res != oboe::Result::OK) {
                 ALOGE("%s: reconnect error=%s", __func__, oboe::convertToText(res));
-                playerListener->postEvent(ERROR, 0);
+                if (playerListener != nullptr) {
+                    playerListener->postEvent(ERROR, 0);
+                }
             } else if (state == STARTED) {
                 oboeStream->requestStart();
             }
         } else {
             ALOGE("%s: %s", __func__, oboe::convertToText(result));
-            playerListener->postEvent(ERROR, 0);
+            if (playerListener != nullptr) {
+                playerListener->postEvent(ERROR, 0);
+            }
         }
     }
 } // namespace mmapi

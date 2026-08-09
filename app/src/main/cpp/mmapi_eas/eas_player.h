@@ -14,8 +14,6 @@
 namespace mmapi {
     namespace eas {
         class Player : public BasePlayer {
-            static EAS_DLSLIB_HANDLE soundBank;
-
             const S_EAS_LIB_CONFIG *easConfig = EAS_Config();
             EAS_DATA_HANDLE easHandle;
             EAS_HANDLE media;
@@ -39,13 +37,23 @@ namespace mmapi {
                                                   int32_t numFrames)
                                                   override;
 
-            static int32_t initSoundBank(const char *sound_bank);
-            static int32_t createPlayer(const char *locator, Player **pPlayer);
+            /** Validates that SONiVOX can load the selected DLS/SF2 bank. */
+            static int32_t validateSoundBank(const char *soundBank);
+
+            /**
+             * Creates one independent EAS instance. A custom soundbank, when
+             * supplied, is loaded into that instance only; no process-global
+             * SONiVOX sound-library handle is shared between players.
+             */
+            static int32_t createPlayer(const char *locator,
+                                        const char *soundBank,
+                                        Player **pPlayer);
 
         protected:
             oboe::Result createAudioStream() override;
 
         private:
+            static int32_t configureHandle(EAS_DATA_HANDLE easHandle, const char *soundBank);
             static int32_t openSource(EAS_DATA_HANDLE easHandle,
                                       BaseFile *pFile,
                                       EAS_HANDLE *outStream,

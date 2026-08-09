@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright 2026 H3NB
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+-->
+<resources>
+    <string name="audio_failure_toast_settings">Audio could not be played. See Settings &gt; Audio diagnostics.</string>
+    <string name="audio_failure_warnings_title">Audio failure warnings</string>
+    <string name="audio_failure_warnings_summary">Show a brief in-app message when audio playback fails. Failures are always recorded in Audio diagnostics.</string>
+    <string name="audio_diagnostics_title">Audio diagnostics</string>
+    <string name="audio_diagnostics_summary">Review recent audio playback failures</string>
+    <string name="audio_diagnostics_empty">No recent audio failures.</string>
+    <string name="audio_diagnostics_actions">Actions</string>
+    <string name="audio_diagnostics_clear">Clear history</string>
+    <string name="audio_diagnostics_cleared">Audio diagnostics history cleared.</string>
+</resources>

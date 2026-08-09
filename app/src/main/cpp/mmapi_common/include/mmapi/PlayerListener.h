@@ -24,19 +24,20 @@ namespace mmapi {
     };
 
     class JNIEnvPtr {
-        bool isJavaThread;
-        JNIEnv *env;
+        bool detachOnDestroy = false;
+        JNIEnv *env = nullptr;
     public:
         JNIEnvPtr();
         virtual ~JNIEnvPtr();
         JNIEnv *operator->() const;
+        explicit operator bool() const;
 
         static JavaVM *vm;
     };
 
     class PlayerListener {
-        jobject listener;
-        jmethodID method;
+        jobject listener = nullptr;
+        jmethodID method = nullptr;
     public:
         PlayerListener(JNIEnv *env, jobject pListener);
         virtual ~PlayerListener();
@@ -45,6 +46,7 @@ namespace mmapi {
         void postEvent(PlayerListenerEvent type, int64_t time);
 
     };
+
 } // mmapi
 
 #endif //MMAPI_PLAYER_LISTENER_H

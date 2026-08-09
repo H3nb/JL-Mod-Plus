@@ -42,6 +42,51 @@ public class AudioFailureReportStoreTest {
 	}
 
 	@Test
+	public void readAllReturnsRecentReports() throws IOException {
+		Path directory = Files.createTempDirectory("audio-reports-all");
+		assertEquals("", AudioFailureReportStore.readAll(directory.toFile()));
+
+		AudioFailure first = AudioFailure.createWithDetail("first.mid", "audio/midi", "EAS",
+				AudioFailure.Phase.START, "FIRST_FAILURE", "first");
+		AudioFailure second = AudioFailure.createWithDetail("second.wav", "audio/wav", "dr_wav",
+				AudioFailure.Phase.PREFETCH, "SECOND_FAILURE", "second");
+		AudioFailureReportStore.save(directory.toFile(), first);
+		AudioFailureReportStore.save(directory.toFile(), second);
+
+		String reports = AudioFailureReportStore.readAll(directory.toFile());
+		assertTrue(reports.contains("first.mid"));
+		assertTrue(reports.contains("second.wav"));
+		assertTrue(reports.contains("----------------"));
+	}
+
+	@Test
+	public void keepsTwentyMostRecentReports() throws IOException {
+		Path directory = Files.createTempDirectory("audio-reports-bounded");
+		for (int i = 0; i < 21; i++) {
+			AudioFailure failure = AudioFailure.createWithDetail(
+					"report-" + i + ".mid", "audio/midi", "EAS",
+					AudioFailure.Phase.RUNTIME, "TEST_FAILURE_" + i, "detail");
+			AudioFailureReportStore.save(directory.toFile(), failure);
+		}
+
+		String reports = AudioFailureReportStore.readAll(directory.toFile());
+		assertEquals(20, countOccurrences(reports, "JL-Mod Plus audio failure report"));
+	}
+
+	@Test
+	public void clearRemovesAllReports() throws IOException {
+		Path directory = Files.createTempDirectory("audio-reports-clear");
+		AudioFailure failure = AudioFailure.createWithDetail("song.mid", "audio/midi", "EAS",
+				AudioFailure.Phase.START, "NATIVE_START_FAILED", "test failure");
+		AudioFailureReportStore.save(directory.toFile(), failure);
+		assertFalse(AudioFailureReportStore.readAll(directory.toFile()).isEmpty());
+
+		AudioFailureReportStore.clear(directory.toFile());
+
+		assertEquals("", AudioFailureReportStore.readAll(directory.toFile()));
+	}
+
+	@Test
 	public void rejectsTraversalReportIds() throws IOException {
 		Path directory = Files.createTempDirectory("audio-reports");
 		try {
@@ -50,5 +95,15 @@ public class AudioFailureReportStoreTest {
 		} catch (IOException expected) {
 			assertEquals("Invalid audio report id", expected.getMessage());
 		}
+	}
+
+	private static int countOccurrences(String text, String needle) {
+		int count = 0;
+		int index = 0;
+		while ((index = text.indexOf(needle, index)) >= 0) {
+			count++;
+			index += needle.length();
+		}
+		return count;
 	}
 }

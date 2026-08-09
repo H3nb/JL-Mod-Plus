@@ -19,21 +19,45 @@ namespace mmapi {
         }
 
         IOFile::IOFile(const char *path, const char *const mode) {
+            if (path == nullptr || mode == nullptr) {
+                return;
+            }
             file = fopen(path, mode);
-            fseek(file, 0, SEEK_END);
-            length = ftell(file);
-            fseek(file, 0, SEEK_SET);
+            if (file == nullptr) {
+                return;
+            }
+            if (fseek(file, 0, SEEK_END) != 0) {
+                fclose(file);
+                file = nullptr;
+                return;
+            }
+            long fileLength = ftell(file);
+            if (fileLength < 0 || fseek(file, 0, SEEK_SET) != 0) {
+                fclose(file);
+                file = nullptr;
+                return;
+            }
+            length = static_cast<size_t>(fileLength);
         }
 
         IOFile::~IOFile() {
-            fclose(file);
+            if (file != nullptr) {
+                fclose(file);
+            }
+        }
+
+        bool IOFile::isOpen() const {
+            return file != nullptr;
         }
 
         int IOFile::readAt(void *buf, int offset, int size) {
+            if (file == nullptr || buf == nullptr || offset < 0 || size < 0) {
+                return -1;
+            }
             if (fseek(file, offset, SEEK_SET) != 0) {
                 return -1;
             }
-            return fread(buf, 1, size, file);
+            return static_cast<int>(fread(buf, 1, static_cast<size_t>(size), file));
         }
 
         MemFile::MemFile(JNIEnv *env, jbyteArray array) {

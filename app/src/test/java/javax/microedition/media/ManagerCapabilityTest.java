@@ -24,6 +24,7 @@ import java.util.List;
 import javax.microedition.media.camera.CaptureRequest;
 import javax.microedition.media.camera.VirtualCameraCapabilities;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
@@ -53,8 +54,38 @@ public class ManagerCapabilityTest {
 				Manager.getSupportedProtocols(RecordPlayer.CONTENT_TYPE));
 		assertEquals(VirtualCameraCapabilities.supportsAudioCapture(),
 				amrProtocols.contains("capture"));
+		assertFalse(amrProtocols.contains("device"));
+		assertTrue(amrProtocols.contains("https"));
 		assertFalse(Arrays.asList(Manager.getSupportedProtocols("audio/amr-wb"))
 				.contains("capture"));
+	}
+
+	@Test
+	public void deviceProtocolAdvertisesOnlyMidiAndToneDevices() {
+		assertArrayEquals(
+				new String[]{"audio/midi", "audio/x-midi", "audio/x-tone-seq"},
+				Manager.getSupportedContentTypes("device"));
+	}
+
+	@Test
+	public void sequencedAudioSupportsDeviceAndStreamProtocols() {
+		assertArrayEquals(
+				new String[]{"device", "file", "http", "https", "resource"},
+				Manager.getSupportedProtocols(" Audio/MIDI; charset=binary "));
+	}
+
+	@Test
+	public void decodedAudioDoesNotClaimDeviceProtocol() {
+		assertArrayEquals(
+				new String[]{"file", "http", "https", "resource"},
+				Manager.getSupportedProtocols("audio/x-wav"));
+	}
+
+	@Test
+	public void unimplementedMmfIsNotAdvertised() {
+		List<String> all = Arrays.asList(Manager.getSupportedContentTypes(null));
+		assertFalse(all.contains("audio/mmf"));
+		assertEquals(0, Manager.getSupportedProtocols("audio/mmf").length);
 	}
 
 	@Test
@@ -64,9 +95,9 @@ public class ManagerCapabilityTest {
 	}
 
 	@Test
-	public void nullCapabilityQueriesRemainNonEmpty() {
+	public void nullCapabilityQueriesRemainNonEmptyAndIncludeHttps() {
 		assertTrue(Manager.getSupportedContentTypes(null).length > 0);
-		assertTrue(Manager.getSupportedProtocols(null).length > 0);
+		assertTrue(Arrays.asList(Manager.getSupportedProtocols(null)).contains("https"));
 	}
 
 	@Test
@@ -80,6 +111,11 @@ public class ManagerCapabilityTest {
 	@Test
 	public void nullPlayerLocatorRemainsIllegalArgument() {
 		assertThrows(IllegalArgumentException.class, () -> Manager.createPlayer((String) null));
+	}
+
+	@Test
+	public void unsupportedPlayerLocatorUsesMediaExceptionInsteadOfNoOpPlayer() {
+		assertThrows(MediaException.class, () -> Manager.createPlayer("rtsp://example.invalid/audio"));
 	}
 
 	@Test

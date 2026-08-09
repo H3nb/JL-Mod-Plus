@@ -22,6 +22,13 @@ import android.media.PlaybackParams;
 
 import java.io.IOException;
 
+/**
+ * Small state adapter around Android MediaPlayer.
+ *
+ * <p>JSR-135 realization records the source while prefetch performs the actual
+ * platform prepare. This class therefore caches source/seek/volume parameters
+ * until {@link #prepareSource()} is called by {@link MicroPlayer#prefetch()}.</p>
+ */
 public class AndroidPlayer extends MediaPlayer {
 	private boolean loaded;
 	private String path;
@@ -41,8 +48,16 @@ public class AndroidPlayer extends MediaPlayer {
 		this.path = path;
 	}
 
+	/** Performs the expensive platform preparation required by JSR-135 prefetch. */
+	void prepareSource() throws IOException {
+		load();
+	}
+
 	@Override
 	public void seekTo(int msec) throws IllegalStateException {
+		if (msec < 0) {
+			msec = 0;
+		}
 		if (loaded) {
 			super.seekTo(msec);
 		}
@@ -86,19 +101,15 @@ public class AndroidPlayer extends MediaPlayer {
 
 	@Override
 	public void start() throws IllegalStateException {
-		try {
-			load();
-		} catch (IOException e) {
-			throw new IllegalStateException(e.getMessage(), e);
+		if (!loaded) {
+			throw new IllegalStateException("MediaPlayer must be prefetched before start()");
 		}
-		timePos = 0;
 		super.start();
 	}
 
 	/**
-	 * Caches the requested speed before the lazy MediaPlayer is prepared and
-	 * applies it when the platform player can accept playback parameters.
-	 * Unsupported rates leave the previously applied rate intact.
+	 * Caches the requested speed before the MediaPlayer is prepared and applies
+	 * it once the platform player can accept playback parameters.
 	 */
 	boolean setPlaybackSpeed(float speed) {
 		if (speed <= 0.0f) {
@@ -109,49 +120,60 @@ public class AndroidPlayer extends MediaPlayer {
 	}
 
 	void resumePlayback() throws IllegalStateException {
-		try {
-			load();
-		} catch (IOException e) {
-			throw new IllegalStateException(e.getMessage(), e);
+		if (!loaded) {
+			throw new IllegalStateException("MediaPlayer must be prefetched before resume");
 		}
 		super.start();
 	}
 
+	/**
+	 * Releases prepared platform resources but preserves source and media time so
+	 * a later JSR-135 prefetch/start can resume where playback stopped.
+	 */
 	@Override
 	public void reset() {
+		if (loaded) {
+			try {
+				timePos = super.getCurrentPosition();
+			} catch (RuntimeException ignored) {
+				// Preserve the last cached position if MediaPlayer is already in error.
+			}
+		}
 		if (loaded || path != null) {
 			super.reset();
-			loaded = false;
 		}
+		loaded = false;
 	}
 
 	private void load() throws IOException {
-		if (!loaded) {
-			if (path == null || path.isEmpty()) {
-				throw new IOException("Audio data source is empty");
-			}
-			try {
-				super.setDataSource(path);
-				super.prepare();
-				super.setVolume(leftVolume, rightVolume);
-				super.setLooping(looping);
-				super.seekTo(timePos);
-				if (playbackSpeed != 1.0f && !applyPlaybackSpeed()) {
-					playbackSpeed = 1.0f;
-				}
-			} catch (IOException | RuntimeException e) {
-				loaded = false;
-				try {
-					super.reset();
-				} catch (RuntimeException ignored) {
-					// MediaPlayer may already be in its error state.
-				}
-				if (e instanceof IOException ioException) {
-					throw ioException;
-				}
-				throw e;
+		if (loaded) {
+			return;
+		}
+		if (path == null || path.isEmpty()) {
+			throw new IOException("Audio data source is empty");
+		}
+
+		try {
+			super.setDataSource(path);
+			super.prepare();
+			super.setVolume(leftVolume, rightVolume);
+			super.setLooping(looping);
+			super.seekTo(timePos);
+			if (playbackSpeed != 1.0f && !applyPlaybackSpeed()) {
+				playbackSpeed = 1.0f;
 			}
 			loaded = true;
+		} catch (IOException | RuntimeException e) {
+			loaded = false;
+			try {
+				super.reset();
+			} catch (RuntimeException ignored) {
+				// MediaPlayer may already be in its error state.
+			}
+			if (e instanceof IOException ioException) {
+				throw ioException;
+			}
+			throw e;
 		}
 	}
 

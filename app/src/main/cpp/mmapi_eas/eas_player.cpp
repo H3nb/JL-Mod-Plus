@@ -12,23 +12,8 @@
 
 namespace mmapi {
     namespace eas {
-        EAS_DLSLIB_HANDLE Player::soundBank{nullptr};
-
         Player::Player(EAS_DATA_HANDLE easHandle, BaseFile *file, EAS_HANDLE stream, const int64_t duration)
-                : BasePlayer(duration), easHandle(easHandle), file(file), media(stream) {
-            EAS_DLSLIB_HANDLE dls = Player::soundBank;
-            if (dls == nullptr) {
-                EAS_SetParameter(easHandle, EAS_MODULE_REVERB, EAS_PARAM_REVERB_PRESET, EAS_PARAM_REVERB_CHAMBER);
-                EAS_SetParameter(easHandle, EAS_MODULE_REVERB, EAS_PARAM_REVERB_BYPASS, EAS_FALSE);
-            } else {
-                EAS_SetGlobalDLSLib(easHandle, dls);
-            }
-
-            EAS_RESULT result = EAS_OpenMIDIStream(easHandle, &interactive, stream);
-            if (result != EAS_SUCCESS) {
-                ALOGE("EAS_OpenMIDIStream return: %s", EAS_GetErrorString(result));
-            }
-        }
+                : BasePlayer(duration), easHandle(easHandle), media(stream), interactive(nullptr), file(file) {}
 
         Player::Player(EAS_DATA_HANDLE easHandle) : Player(easHandle, nullptr, nullptr, -1) {}
 
@@ -36,26 +21,82 @@ namespace mmapi {
             close();
         }
 
-        int32_t Player::createPlayer(const char *locator, Player **pPlayer) {
-            if (locator == nullptr) {
+        int32_t Player::configureHandle(EAS_DATA_HANDLE easHandle, const char *soundBank) {
+            if (easHandle == nullptr) {
+                return EAS_ERROR_INVALID_HANDLE;
+            }
+
+            EAS_RESULT result = EAS_SetHeaderSearchFlag(easHandle, EAS_FALSE);
+            if (result != EAS_SUCCESS) {
+                return result;
+            }
+
+            if (soundBank == nullptr || soundBank[0] == '\0') {
+                result = EAS_SetParameter(easHandle,
+                                          EAS_MODULE_REVERB,
+                                          EAS_PARAM_REVERB_PRESET,
+                                          EAS_PARAM_REVERB_CHAMBER);
+                if (result != EAS_SUCCESS) {
+                    return result;
+                }
+                return EAS_SetParameter(easHandle,
+                                        EAS_MODULE_REVERB,
+                                        EAS_PARAM_REVERB_BYPASS,
+                                        EAS_FALSE);
+            }
+
+            IOFile bankFile(soundBank, "rb");
+            if (!bankFile.isOpen()) {
+                return EAS_ERROR_FILE_OPEN_FAILED;
+            }
+            return EAS_LoadDLSCollection(easHandle, nullptr, &bankFile.easFile);
+        }
+
+        int32_t Player::createPlayer(const char *locator,
+                                     const char *soundBank,
+                                     Player **pPlayer) {
+            if (locator == nullptr || pPlayer == nullptr) {
                 return EAS_ERROR_INVALID_PARAMETER;
             }
-            EAS_DATA_HANDLE easHandle;
+            *pPlayer = nullptr;
+
+            EAS_DATA_HANDLE easHandle = nullptr;
             EAS_RESULT result = EAS_Init(&easHandle);
             if (result != EAS_SUCCESS) {
                 return result;
             }
-            EAS_SetHeaderSearchFlag(easHandle, false);
+
+            result = configureHandle(easHandle, soundBank);
+            if (result != EAS_SUCCESS) {
+                EAS_Shutdown(easHandle);
+                return result;
+            }
+
             if (strcmp(locator, "device://tone") == 0) {
                 *pPlayer = new Player(easHandle);
                 return EAS_SUCCESS;
             } else if (strcmp(locator, "device://midi") == 0) {
-                *pPlayer = new Player(easHandle);
+                Player *player = new Player(easHandle);
+                result = EAS_OpenMIDIStream(easHandle, &player->interactive, nullptr);
+                if (result != EAS_SUCCESS) {
+                    ALOGE("EAS_OpenMIDIStream return: %s", EAS_GetErrorString(result));
+                    delete player;
+                    return result;
+                }
+                *pPlayer = player;
                 return EAS_SUCCESS;
             }
-            BaseFile *file = new IOFile(locator, "rb");;
-            EAS_HANDLE stream;
-            int64_t duration;
+
+            BaseFile *file = new IOFile(locator, "rb");
+            auto *ioFile = static_cast<IOFile *>(file);
+            if (!ioFile->isOpen()) {
+                delete file;
+                EAS_Shutdown(easHandle);
+                return EAS_ERROR_FILE_OPEN_FAILED;
+            }
+
+            EAS_HANDLE stream = nullptr;
+            int64_t duration = -1;
             result = openSource(easHandle, file, &stream, &duration);
             if (result != EAS_SUCCESS) {
                 EAS_Shutdown(easHandle);
@@ -87,16 +128,25 @@ namespace mmapi {
         }
 
         void Player::deallocate() {
+            /*
+             * JSR-135 deallocate() releases scarce resources and moves the
+             * Player back to REALIZED without rewinding media time. The EAS
+             * parser/stream remains alive, so closing the Oboe output is enough;
+             * preserve both its current parser position and any pending seek.
+             */
             BasePlayer::deallocate();
-            if (file != nullptr) {
-                seekTime = 0;
-            }
         }
 
         void Player::close() {
+            if (easHandle == nullptr) {
+                return;
+            }
+
             BasePlayer::close();
             if (media != nullptr) {
                 EAS_CloseFile(easHandle, media);
+            }
+            if (file != nullptr) {
                 delete file;
             }
             if (interactive != nullptr) {
@@ -109,31 +159,55 @@ namespace mmapi {
             easHandle = nullptr;
         }
 
-        int32_t Player::initSoundBank(const char *sound_bank) {
-            EAS_DATA_HANDLE easHandle;
+        int32_t Player::validateSoundBank(const char *soundBank) {
+            if (soundBank == nullptr || soundBank[0] == '\0') {
+                return EAS_SUCCESS;
+            }
+
+            EAS_DATA_HANDLE easHandle = nullptr;
             EAS_RESULT result = EAS_Init(&easHandle);
             if (result != EAS_SUCCESS) {
                 return result;
             }
-            EAS_SetHeaderSearchFlag(easHandle, false);
-            IOFile file(sound_bank, "rb");
-            result = EAS_LoadDLSCollection(easHandle, nullptr, &file.easFile);
+
+            result = EAS_SetHeaderSearchFlag(easHandle, EAS_FALSE);
             if (result == EAS_SUCCESS) {
-                EAS_GetGlobalDLSLib(easHandle, &Player::soundBank);
+                IOFile bankFile(soundBank, "rb");
+                if (!bankFile.isOpen()) {
+                    result = EAS_ERROR_FILE_OPEN_FAILED;
+                } else {
+                    result = EAS_LoadDLSCollection(easHandle, nullptr, &bankFile.easFile);
+                }
             }
-            EAS_Shutdown(easHandle);
+
+            EAS_RESULT shutdownResult = EAS_Shutdown(easHandle);
+            if (result == EAS_SUCCESS && shutdownResult != EAS_SUCCESS) {
+                return shutdownResult;
+            }
             return result;
         }
 
         jint Player::writeMIDI(util::JByteArrayPtr &data) {
-            EAS_RESULT result = EAS_WriteMIDIStream(easHandle, interactive, (EAS_U8 *) data.buffer, data.length);
+            if (easHandle == nullptr || interactive == nullptr) {
+                ALOGE("%s: player has no interactive MIDI stream", __func__);
+                return 0;
+            }
+            EAS_RESULT result = EAS_WriteMIDIStream(easHandle,
+                                                    interactive,
+                                                    reinterpret_cast<EAS_U8 *>(data.buffer),
+                                                    data.length);
             if (result != EAS_SUCCESS) {
                 ALOGE("EAS_WriteMIDIStream return: %s", EAS_GetErrorString(result));
+                return 0;
             }
             return data.length;
         }
 
         int32_t Player::setDataSource(BaseFile *pFile) {
+            if (pFile == nullptr || easHandle == nullptr) {
+                return EAS_ERROR_INVALID_PARAMETER;
+            }
+
             EAS_HANDLE stream = nullptr;
             int32_t result = openSource(easHandle, pFile, &stream, &duration);
             if (result != EAS_SUCCESS) {
@@ -141,6 +215,8 @@ namespace mmapi {
             }
             if (media != nullptr) {
                 EAS_CloseFile(easHandle, media);
+            }
+            if (file != nullptr) {
                 delete file;
             }
             media = stream;
@@ -153,7 +229,11 @@ namespace mmapi {
                                    BaseFile *pFile,
                                    EAS_HANDLE *outStream,
                                    int64_t *outDuration) {
-            EAS_HANDLE stream;
+            if (easHandle == nullptr || pFile == nullptr || outStream == nullptr || outDuration == nullptr) {
+                return EAS_ERROR_INVALID_PARAMETER;
+            }
+
+            EAS_HANDLE stream = nullptr;
             EAS_RESULT result = EAS_OpenFile(easHandle, &pFile->easFile, &stream);
             if (result != EAS_SUCCESS) {
                 result = EAS_MMAPIToneControl(easHandle, &pFile->easFile, &stream);
@@ -175,8 +255,7 @@ namespace mmapi {
             ALOGV("EAS_checkFileType(): %s file recognized", EAS_GetFileTypeString(type));
             if (type == EAS_FILE_UNKNOWN) {
                 EAS_CloseFile(easHandle, stream);
-                result = EAS_ERROR_FILE_FORMAT;
-                return result;
+                return EAS_ERROR_FILE_FORMAT;
             }
             EAS_I32 length = -1;
             result = EAS_ParseMetaData(easHandle, stream, &length);
@@ -193,20 +272,14 @@ namespace mmapi {
             if (media == nullptr && interactive == nullptr) {
                 return oboe::Result::ErrorInvalidState;
             }
-            oboe::Result result = BasePlayer::prefetch();
-            if (result != oboe::Result::OK) {
-                return result;
-            }
-            if (file == nullptr) { // interactive midi
-                BasePlayer::start();
-            }
-            return result;
+            // Prefetch acquires/configures the audio device but does not begin
+            // rendering. This keeps device://midi in PREFETCHED until Player.start().
+            return BasePlayer::prefetch();
         }
 
         oboe::Result Player::pause() {
-            if (file == nullptr) { // interactive midi
-                return oboe::Result::OK;
-            }
+            // stop() on device://midi must pause rendering just like sequenced
+            // media; MIDIControl remains available while the Player is realized.
             return BasePlayer::pause();
         }
 
@@ -219,10 +292,17 @@ namespace mmapi {
                 if (easState == EAS_STATE_STOPPED || easState == EAS_STATE_ERROR) {
                     seekTime = 0;
                     if (looping == -1 || (--loopCount) > 0) {
-                        playerListener->postEvent(RESTART, playTime);
+                        if (playerListener != nullptr) {
+                            playerListener->postEvent(RESTART, playTime);
+                        }
                     } else {
+                        // A configured finite loop count applies again the next
+                        // time start() is called after end-of-media.
+                        loopCount = looping;
                         state = PREFETCHED;
-                        playerListener->postEvent(STOP, playTime);
+                        if (playerListener != nullptr) {
+                            playerListener->postEvent(STOP, playTime);
+                        }
                         return oboe::DataCallbackResult::Stop;
                     }
                 }
@@ -244,12 +324,14 @@ namespace mmapi {
                 EAS_I32 numRendered;
                 result = EAS_Render(easHandle, stream, easConfig->mixBufferSize, &numRendered);
                 if (result != EAS_SUCCESS) {
-                    playerListener->postEvent(ERROR, result);
+                    if (playerListener != nullptr) {
+                        playerListener->postEvent(ERROR, result);
+                    }
                     ALOGE("%s: EAS_Render() returned %s, numFramesOutput = %d",
                           __func__,
                           EAS_GetErrorString(result),
                           numFramesOutput);
-                    return oboe::DataCallbackResult::Stop; // Stop processing to prevent infinite loops.
+                    return oboe::DataCallbackResult::Stop;
                 }
                 for (int j = 0; j < numRendered; ++j) {
                     *stream++ *= gainLeft;

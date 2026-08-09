@@ -22,6 +22,7 @@ package javax.microedition.media;
 import android.Manifest;
 import android.webkit.MimeTypeMap;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -30,7 +31,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
+import javax.microedition.io.Connection;
 import javax.microedition.io.Connector;
+import javax.microedition.io.ContentConnection;
+import javax.microedition.io.InputConnection;
 import javax.microedition.media.camera.CaptureLocatorParser;
 import javax.microedition.media.camera.CaptureRequest;
 import javax.microedition.media.camera.VirtualCameraCapabilities;
@@ -42,6 +46,9 @@ import javax.microedition.util.ContextHolder;
 import ru.woesss.j2me.mmapi.Plugin;
 import ru.woesss.j2me.mmapi.audio.AudioFailure;
 import ru.woesss.j2me.mmapi.audio.AudioFailureReporter;
+import ru.woesss.j2me.mmapi.audio.ContentProbe;
+import ru.woesss.j2me.mmapi.audio.MediaRouter;
+import ru.woesss.j2me.mmapi.audio.WavPlayer;
 import ru.woesss.j2me.mmapi.synth.SynthPluginFactory;
 
 public class Manager {
@@ -50,13 +57,22 @@ public class Manager {
 
 	private static final String RESOURCE_LOCATOR = "resource://";
 	private static final String FILE_LOCATOR = "file://";
+	private static final String HTTP_LOCATOR = "http://";
+	private static final String HTTPS_LOCATOR = "https://";
 	private static final String CAPTURE_LOCATOR_PREFIX = "capture://";
+
+	/* Only formats with an explicit, tested backend are advertised. */
 	private static final String[] AUDIO_CONTENT_TYPES = new String[]{
 			"audio/wav", "audio/x-wav", "audio/midi", "audio/x-midi",
 			"audio/mpeg", "audio/aac", "audio/amr", "audio/amr-wb", "audio/mp3",
-			"audio/mp4", "audio/mmf", "audio/x-tone-seq"};
-	private static final String[] AUDIO_PROTOCOLS = new String[]{
-			"device", "file", "http", "resource"};
+			"audio/mp4", "audio/x-tone-seq"};
+	private static final String[] DEVICE_CONTENT_TYPES = new String[]{
+			"audio/midi", "audio/x-midi", "audio/x-tone-seq"};
+	private static final String[] STREAM_PROTOCOLS = new String[]{
+			"file", "http", "https", "resource"};
+	private static final String[] SEQUENCED_PROTOCOLS = new String[]{
+			"device", "file", "http", "https", "resource"};
+
 	private static final TimeBase DEFAULT_TIMEBASE = () -> System.nanoTime() / 1000L;
 	private static volatile TimeBase systemTimeBase = DEFAULT_TIMEBASE;
 
@@ -78,6 +94,7 @@ public class Manager {
 		if (locator == null) {
 			throw new IllegalArgumentException();
 		}
+
 		if (MIDI_DEVICE_LOCATOR.equals(locator) || TONE_DEVICE_LOCATOR.equals(locator)) {
 			for (Plugin plugin : plugins()) {
 				Player player = plugin.createPlayer(locator);
@@ -85,13 +102,22 @@ public class Manager {
 					return player;
 				}
 			}
-			return new MicroPlayer(locator);
-		} else if (locator.startsWith(FILE_LOCATOR) || locator.startsWith(RESOURCE_LOCATOR)) {
-			InputStream stream = Connector.openInputStream(locator);
-			String extension = locator.substring(locator.lastIndexOf('.') + 1);
-			String type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
-			return createPlayer(stream, type);
-		} else if (locator.startsWith(CAPTURE_LOCATOR_PREFIX)) {
+			if (TONE_DEVICE_LOCATOR.equals(locator)) {
+				// Retain the Java tone-to-MIDI fallback if no synth plugin can supply
+				// the dedicated ToneControl device.
+				return new MicroPlayer(locator);
+			}
+			throw new MediaException("No MIDI device backend is available");
+		}
+
+		if (locator.startsWith(FILE_LOCATOR)
+				|| locator.startsWith(RESOURCE_LOCATOR)
+				|| locator.startsWith(HTTP_LOCATOR)
+				|| locator.startsWith(HTTPS_LOCATOR)) {
+			return createPlayerFromConnection(locator);
+		}
+
+		if (locator.startsWith(CAPTURE_LOCATOR_PREFIX)) {
 			String device;
 			try {
 				device = CaptureLocatorParser.deviceOf(locator);
@@ -115,65 +141,154 @@ public class Manager {
 				return new RecordPlayer(locator);
 			}
 			throw new MediaException("Unsupported capture device: " + device);
-		} else {
-			return new BasePlayer();
 		}
+
+		throw new MediaException("Unsupported media locator: " + locator);
+	}
+
+	private static Player createPlayerFromConnection(String locator) throws IOException, MediaException {
+		Connection connection = Connector.open(locator, Connector.READ);
+		try {
+			if (!(connection instanceof InputConnection inputConnection)) {
+				throw new MediaException("Media locator is not readable: " + locator);
+			}
+
+			String type = null;
+			if (connection instanceof ContentConnection contentConnection) {
+				type = normalizeMime(contentConnection.getType());
+			}
+			if (type == null) {
+				type = mimeFromLocator(locator);
+			}
+
+			try (InputStream stream = inputConnection.openInputStream()) {
+				return createPlayer(stream, type, locator);
+			}
+		} finally {
+			connection.close();
+		}
+	}
+
+	private static String mimeFromLocator(String locator) {
+		int end = locator.length();
+		int query = locator.indexOf('?');
+		if (query >= 0) {
+			end = Math.min(end, query);
+		}
+		int fragment = locator.indexOf('#');
+		if (fragment >= 0) {
+			end = Math.min(end, fragment);
+		}
+		int slash = locator.lastIndexOf('/', end - 1);
+		int dot = locator.lastIndexOf('.', end - 1);
+		if (dot <= slash || dot + 1 >= end) {
+			return null;
+		}
+		String extension = locator.substring(dot + 1, end).toLowerCase(Locale.ROOT);
+		return normalizeMime(MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension));
 	}
 
 	public static Player createPlayer(DataSource source) throws IOException, MediaException {
 		if (source == null) {
 			throw new IllegalArgumentException();
 		}
-		String type = source.getContentType();
-		if (isAudioSource(type)) {
-			String locator = source.getLocator();
-			try {
-				source.connect();
-				SourceStream[] sourceStreams = source.getStreams();
-				if (sourceStreams == null || sourceStreams.length == 0) {
-					throw new MediaException("Audio source has no streams");
-				}
-				SourceStream sourceStream = sourceStreams[0];
-				InputStream stream = new InternalSourceStream(sourceStream);
-				InternalDataSource datasource = new InternalDataSource(stream, type);
-				Player pluginPlayer = createPluginPlayer(datasource);
-				return pluginPlayer == null ? new MicroPlayer(datasource) : pluginPlayer;
-			} catch (IOException | MediaException | RuntimeException e) {
-				AudioFailureReporter.report(locator, type, "MMAPI source", AudioFailure.Phase.CREATE,
-						e instanceof MediaException && "Audio source has no streams".equals(e.getMessage())
-								? "NO_SOURCE_STREAM" : "SOURCE_CREATE_FAILED", e);
-				throw e;
-			} finally {
-				source.disconnect();
+
+		String type = normalizeMime(source.getContentType());
+		String locator = source.getLocator();
+		try {
+			source.connect();
+			SourceStream[] sourceStreams = source.getStreams();
+			if (sourceStreams == null || sourceStreams.length == 0) {
+				throw new MediaException("Media source has no streams");
 			}
-		} else {
-			return new BasePlayer();
+			InputStream stream = new InternalSourceStream(sourceStreams[0]);
+			InternalDataSource datasource = new InternalDataSource(stream, type);
+			return createCachedPlayer(datasource, type, locator);
+		} catch (IOException | MediaException | RuntimeException e) {
+			AudioFailureReporter.report(locator, type, "MMAPI source", AudioFailure.Phase.CREATE,
+					e instanceof MediaException && "Media source has no streams".equals(e.getMessage())
+							? "NO_SOURCE_STREAM" : "SOURCE_CREATE_FAILED", e);
+			throw e;
+		} finally {
+			source.disconnect();
 		}
 	}
 
 	public static Player createPlayer(final InputStream stream, String type)
 			throws IOException, MediaException {
+		return createPlayer(stream, type, null);
+	}
+
+	private static Player createPlayer(final InputStream stream, String type, String diagnosticLocator)
+			throws IOException, MediaException {
 		if (stream == null) {
 			throw new IllegalArgumentException();
 		}
+		type = normalizeMime(type);
 		InternalDataSource datasource;
 		try {
 			datasource = new InternalDataSource(stream, type);
 		} catch (IOException | RuntimeException e) {
-			AudioFailureReporter.report(null, type, "MMAPI stream", AudioFailure.Phase.CREATE,
+			AudioFailureReporter.report(diagnosticLocator, type, "MMAPI stream", AudioFailure.Phase.CREATE,
 					"STREAM_CACHE_FAILED", e);
 			throw e;
 		}
-		Player pluginPlayer = createPluginPlayer(datasource);
-		if (pluginPlayer != null) {
-			return pluginPlayer;
+		return createCachedPlayer(datasource, type, diagnosticLocator);
+	}
+
+	/**
+	 * Routes cached media by its actual signature before consulting MIME hints.
+	 * WAV has a dedicated decoder and must never enter a synth backend. Known
+	 * compressed formats use Android MediaPlayer. Unknown data gets one chance at
+	 * legacy SONiVOX parsers and, only when explicitly declared audio/*, Android's
+	 * platform decoder; otherwise creation fails instead of returning a no-op Player.
+	 */
+	private static Player createCachedPlayer(InternalDataSource datasource, String type,
+			String diagnosticLocator) throws IOException, MediaException {
+		File mediaFile = new File(datasource.getLocator());
+		ContentProbe.Kind kind = ContentProbe.probe(mediaFile);
+		MediaRouter.Backend backend = MediaRouter.route(kind, type);
+
+		if (backend == MediaRouter.Backend.WAV) {
+			try {
+				return new WavPlayer(datasource);
+			} catch (MediaException | RuntimeException e) {
+				AudioFailureReporter.report(diagnosticSource(diagnosticLocator, datasource), type, "dr_wav",
+						AudioFailure.Phase.CREATE, "WAV_CREATE_FAILED", e);
+				datasource.disconnect();
+				throw e;
+			}
 		}
-		if (isAudioSource(type)) {
+
+		if (backend == MediaRouter.Backend.SYNTH
+				|| (backend == MediaRouter.Backend.UNKNOWN && kind == ContentProbe.Kind.UNKNOWN)) {
+			Player pluginPlayer = createPluginPlayer(datasource);
+			if (pluginPlayer != null) {
+				return pluginPlayer;
+			}
+		}
+
+		if (backend == MediaRouter.Backend.PLATFORM_AUDIO
+				|| (kind == ContentProbe.Kind.UNKNOWN && isDeclaredAudio(type))) {
 			return new MicroPlayer(datasource);
-		} else {
-			datasource.disconnect();
-			return new BasePlayer();
 		}
+
+		String code = kind == ContentProbe.Kind.UNKNOWN
+				? "UNKNOWN_AUDIO_FORMAT" : "UNSUPPORTED_AUDIO_FORMAT";
+		StringBuilder detail = new StringBuilder("Detected format: ").append(kind);
+		if (kind == ContentProbe.Kind.UNKNOWN) {
+			detail.append("; Header: ").append(ContentProbe.fingerprint(mediaFile));
+		}
+		AudioFailureReporter.report(AudioFailure.createWithDetail(
+				diagnosticSource(diagnosticLocator, datasource), type, backend.name(),
+				AudioFailure.Phase.CREATE, code, detail.toString()));
+		datasource.disconnect();
+		throw new MediaException("Unsupported media content"
+				+ (type == null ? "" : ": " + type));
+	}
+
+	private static String diagnosticSource(String locator, DataSource datasource) {
+		return locator != null ? locator : datasource.getLocator();
 	}
 
 	private static Player createPluginPlayer(DataSource datasource) {
@@ -186,16 +301,42 @@ public class Manager {
 		return null;
 	}
 
-	private static boolean isAudioSource(String type) {
-		return type == null || type.toLowerCase(Locale.ROOT).startsWith("audio/");
+	private static boolean isDeclaredAudio(String type) {
+		return type != null && type.startsWith("audio/");
+	}
+
+	private static String normalizeMime(String type) {
+		if (type == null) {
+			return null;
+		}
+		String normalized = type.trim().toLowerCase(Locale.ROOT);
+		int parameters = normalized.indexOf(';');
+		if (parameters >= 0) {
+			normalized = normalized.substring(0, parameters).trim();
+		}
+		return normalized.isEmpty() ? null : normalized;
 	}
 
 	private static boolean isSupportedAudioContentType(String type) {
+		type = normalizeMime(type);
 		if (type == null) {
 			return false;
 		}
 		for (String supported : AUDIO_CONTENT_TYPES) {
-			if (supported.equalsIgnoreCase(type)) {
+			if (supported.equals(type)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static boolean isDeviceContentType(String type) {
+		type = normalizeMime(type);
+		if (type == null) {
+			return false;
+		}
+		for (String supported : DEVICE_CONTENT_TYPES) {
+			if (supported.equals(type)) {
 				return true;
 			}
 		}
@@ -203,6 +344,9 @@ public class Manager {
 	}
 
 	public static String[] getSupportedContentTypes(String protocol) {
+		if (protocol != null) {
+			protocol = protocol.toLowerCase(Locale.ROOT);
+		}
 		if ("capture".equals(protocol)) {
 			List<String> supported = new ArrayList<>(2);
 			if (VirtualCameraCapabilities.supportsAudioCapture()) {
@@ -221,9 +365,13 @@ public class Manager {
 			}
 			return all;
 		}
-		if ("device".equals(protocol) || "file".equals(protocol)
-				|| "http".equals(protocol) || "resource".equals(protocol)) {
-			return Arrays.copyOf(AUDIO_CONTENT_TYPES, AUDIO_CONTENT_TYPES.length);
+		if ("device".equals(protocol)) {
+			return Arrays.copyOf(DEVICE_CONTENT_TYPES, DEVICE_CONTENT_TYPES.length);
+		}
+		for (String supportedProtocol : STREAM_PROTOCOLS) {
+			if (supportedProtocol.equals(protocol)) {
+				return Arrays.copyOf(AUDIO_CONTENT_TYPES, AUDIO_CONTENT_TYPES.length);
+			}
 		}
 		return new String[0];
 	}
@@ -232,26 +380,31 @@ public class Manager {
 		if (contentType == null) {
 			int extra = VirtualCameraCapabilities.supportsVideoCapture()
 					|| VirtualCameraCapabilities.supportsAudioCapture() ? 1 : 0;
-			String[] protocols = Arrays.copyOf(AUDIO_PROTOCOLS, AUDIO_PROTOCOLS.length + extra);
+			String[] protocols = Arrays.copyOf(SEQUENCED_PROTOCOLS, SEQUENCED_PROTOCOLS.length + extra);
 			if (extra != 0) {
-				protocols[AUDIO_PROTOCOLS.length] = "capture";
+				protocols[SEQUENCED_PROTOCOLS.length] = "capture";
 			}
 			return protocols;
 		}
-		if (CaptureRequest.CONTENT_TYPE.equalsIgnoreCase(contentType)) {
+
+		String normalized = normalizeMime(contentType);
+		if (CaptureRequest.CONTENT_TYPE.equalsIgnoreCase(normalized)) {
 			return VirtualCameraCapabilities.supportsVideoCapture()
 					? new String[]{"capture"} : new String[0];
 		}
-		if (RecordPlayer.CONTENT_TYPE.equalsIgnoreCase(contentType)) {
+		if (RecordPlayer.CONTENT_TYPE.equalsIgnoreCase(normalized)) {
 			if (!VirtualCameraCapabilities.supportsAudioCapture()) {
-				return Arrays.copyOf(AUDIO_PROTOCOLS, AUDIO_PROTOCOLS.length);
+				return Arrays.copyOf(STREAM_PROTOCOLS, STREAM_PROTOCOLS.length);
 			}
-			String[] protocols = Arrays.copyOf(AUDIO_PROTOCOLS, AUDIO_PROTOCOLS.length + 1);
-			protocols[AUDIO_PROTOCOLS.length] = "capture";
+			String[] protocols = Arrays.copyOf(STREAM_PROTOCOLS, STREAM_PROTOCOLS.length + 1);
+			protocols[STREAM_PROTOCOLS.length] = "capture";
 			return protocols;
 		}
-		if (isSupportedAudioContentType(contentType)) {
-			return Arrays.copyOf(AUDIO_PROTOCOLS, AUDIO_PROTOCOLS.length);
+		if (isDeviceContentType(normalized)) {
+			return Arrays.copyOf(SEQUENCED_PROTOCOLS, SEQUENCED_PROTOCOLS.length);
+		}
+		if (isSupportedAudioContentType(normalized)) {
+			return Arrays.copyOf(STREAM_PROTOCOLS, STREAM_PROTOCOLS.length);
 		}
 		return new String[0];
 	}

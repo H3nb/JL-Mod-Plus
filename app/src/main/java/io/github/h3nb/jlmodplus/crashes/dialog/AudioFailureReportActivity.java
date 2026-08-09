@@ -31,19 +31,23 @@ import java.io.IOException;
 import io.github.h3nb.jlmodplus.R;
 import ru.woesss.j2me.mmapi.audio.AudioFailureReportStore;
 
-/** Displays an audio report and lets the user copy or share it explicitly. */
+/** Displays one audio report or the recent global Audio diagnostics history. */
 public final class AudioFailureReportActivity extends AppCompatActivity {
 	public static final String EXTRA_REPORT_ID = "audio_report_id";
 
 	private String report;
+	private boolean diagnosticsMode;
 	private final ReportComposeState composeState = new ReportComposeState();
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		String reportId = getIntent().getStringExtra(EXTRA_REPORT_ID);
+		diagnosticsMode = reportId == null;
 		try {
-			report = AudioFailureReportStore.read(getFilesDir(), reportId);
+			report = diagnosticsMode
+					? AudioFailureReportStore.readAll(getFilesDir())
+					: AudioFailureReportStore.read(getFilesDir(), reportId);
 		} catch (IOException | RuntimeException e) {
 			Toast.makeText(this, R.string.audio_failure_report_unavailable, Toast.LENGTH_LONG).show();
 			finish();
@@ -52,14 +56,16 @@ public final class AudioFailureReportActivity extends AppCompatActivity {
 		ReportComposeHost.install(this, composeState, new ReportComposeCallbacks() {
 			@Override
 			public void onPrimaryAction() {
-				shareReport();
-				finish();
+				if (diagnosticsMode) {
+					showDiagnosticsActions();
+				} else {
+					shareReport();
+				}
 			}
 
 			@Override
 			public void onCopyAction() {
 				copyReport();
-				finish();
 			}
 
 			@Override
@@ -69,26 +75,50 @@ public final class AudioFailureReportActivity extends AppCompatActivity {
 
 			@Override
 			public void onChoice(int index) {
-				finish();
+				if (!diagnosticsMode) {
+					return;
+				}
+				if (index == 0) {
+					shareReport();
+				} else if (index == 1) {
+					clearHistory();
+				}
 			}
 		});
 		showReportDialog();
 	}
 
 	private void showReportDialog() {
+		String displayReport = report.isEmpty() ? getString(R.string.audio_diagnostics_empty) : report;
 		composeState.setReport(
-				getString(R.string.audio_failure_report_title),
-				report + "\n\n" + getString(R.string.audio_failure_report_instruction),
-				getString(R.string.share_error_report),
+				getString(diagnosticsMode ? R.string.audio_diagnostics_title : R.string.audio_failure_report_title),
+				getString(R.string.audio_failure_report_instruction) + "\n\n" + displayReport,
+				getString(diagnosticsMode ? R.string.audio_diagnostics_actions : R.string.share_error_report),
 				getString(android.R.string.copy),
 				getString(android.R.string.cancel)
 		);
 	}
 
+	private void showDiagnosticsActions() {
+		String[] options = {
+				getString(R.string.share_error_report),
+				getString(R.string.audio_diagnostics_clear)
+		};
+		composeState.showChoices(getString(R.string.audio_diagnostics_actions), options);
+	}
+
+	private void clearHistory() {
+		AudioFailureReportStore.clear(getFilesDir());
+		report = "";
+		showReportDialog();
+		Toast.makeText(this, R.string.audio_diagnostics_cleared, Toast.LENGTH_SHORT).show();
+	}
+
 	private void copyReport() {
 		ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
 		if (clipboard != null) {
-			clipboard.setPrimaryClip(ClipData.newPlainText(getString(R.string.audio_failure_report_title), report));
+			clipboard.setPrimaryClip(ClipData.newPlainText(
+					getString(diagnosticsMode ? R.string.audio_diagnostics_title : R.string.audio_failure_report_title), report));
 			Toast.makeText(this, R.string.msg_text_copied_to_clipboard, Toast.LENGTH_SHORT).show();
 		}
 	}

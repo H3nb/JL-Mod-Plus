@@ -12,8 +12,10 @@ namespace mmapi {
 
     class BasePlayer : public oboe::AudioStreamCallback {
     protected:
-        int32_t loopCount = 0;
-        int32_t looping = 0;
+        // JSR-135 default loop count is one playback. Keeping this in the
+        // common native base prevents backend-specific zero-count edge cases.
+        int32_t loopCount = 1;
+        int32_t looping = 1;
         std::shared_ptr<oboe::AudioStream> oboeStream;
         int64_t playTime = -1;
         int64_t seekTime = -1;

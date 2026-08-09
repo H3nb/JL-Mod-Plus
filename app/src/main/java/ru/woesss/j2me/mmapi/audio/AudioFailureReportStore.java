@@ -31,7 +31,7 @@ import java.util.Arrays;
 public final class AudioFailureReportStore {
 	private static final String DIRECTORY_NAME = "audio-failure-reports";
 	private static final String FILE_SUFFIX = ".txt";
-	private static final int MAX_REPORTS = 5;
+	private static final int MAX_REPORTS = 20;
 	private static final int MAX_REPORT_LENGTH = 8192;
 
 	private AudioFailureReportStore() {
@@ -62,6 +62,56 @@ public final class AudioFailureReportStore {
 		if (!reportFile.isFile()) {
 			throw new IOException("Audio report not found");
 		}
+		return readFile(reportFile);
+	}
+
+	/** Returns recent reports newest-first for the global Audio diagnostics screen. */
+	public static String readAll(File filesDirectory) throws IOException {
+		if (filesDirectory == null) {
+			throw new IllegalArgumentException("filesDirectory is required");
+		}
+		File directory = new File(filesDirectory, DIRECTORY_NAME);
+		File[] reports = directory.listFiles((dir, name) -> name.endsWith(FILE_SUFFIX));
+		if (reports == null || reports.length == 0) {
+			return "";
+		}
+		Arrays.sort(reports, (left, right) -> Long.compare(right.lastModified(), left.lastModified()));
+		StringBuilder all = new StringBuilder();
+		for (File report : reports) {
+			if (all.length() > 0) {
+				all.append("\n\n----------------\n\n");
+			}
+			all.append(readFile(report));
+		}
+		return all.toString();
+	}
+
+	public static boolean delete(File filesDirectory, String reportId) {
+		try {
+			return resolveReportFile(filesDirectory, reportId).delete();
+		} catch (IOException e) {
+			return false;
+		}
+	}
+
+	/** Deletes all persisted Audio diagnostics reports. */
+	public static void clear(File filesDirectory) {
+		if (filesDirectory == null) {
+			throw new IllegalArgumentException("filesDirectory is required");
+		}
+		File directory = new File(filesDirectory, DIRECTORY_NAME);
+		File[] reports = directory.listFiles((dir, name) -> name.endsWith(FILE_SUFFIX));
+		if (reports == null) {
+			return;
+		}
+		for (File report : reports) {
+			if (!report.delete()) {
+				report.deleteOnExit();
+			}
+		}
+	}
+
+	private static String readFile(File reportFile) throws IOException {
 		StringBuilder text = new StringBuilder();
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(
 				new FileInputStream(reportFile), StandardCharsets.UTF_8))) {
@@ -74,14 +124,6 @@ public final class AudioFailureReportStore {
 			}
 		}
 		return text.toString();
-	}
-
-	public static boolean delete(File filesDirectory, String reportId) {
-		try {
-			return resolveReportFile(filesDirectory, reportId).delete();
-		} catch (IOException e) {
-			return false;
-		}
 	}
 
 	private static File resolveReportFile(File filesDirectory, String reportId) throws IOException {

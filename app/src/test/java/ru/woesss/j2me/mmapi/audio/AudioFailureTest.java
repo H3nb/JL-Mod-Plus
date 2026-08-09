@@ -30,6 +30,8 @@ public class AudioFailureTest {
 				"MEDIA_PLAYER_START_FAILED", new IllegalStateException("decoder rejected /decoder/rejected/input"));
 
 		String report = failure.toReportText();
+		assertTrue(report.contains("App version: "));
+		assertTrue(report.contains("Build type: "));
 		assertTrue(report.contains("Source: unknown.adpcm"));
 		assertFalse(report.contains("/private/user/save"));
 		assertFalse(report.contains("token=secret"));

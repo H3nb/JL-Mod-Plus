@@ -11,32 +11,29 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := mmapi_tsf
+LOCAL_MODULE := mmapi_wav
 
-LOCAL_SRC_FILES = \
-	tsf_player.cpp \
-	tsf_player_jni.cpp \
+LOCAL_SRC_FILES := \
+	wav_player.cpp \
+	wav_player_jni.cpp
 
-LOCAL_CFLAGS += -O2 \
+LOCAL_CFLAGS += -O2
+LOCAL_CPPFLAGS += -std=c++17
+
+LOCAL_C_INCLUDES := \
+	$(LOCAL_PATH) \
+	$(LOCAL_PATH)/../dr_libs
 
 LOCAL_LDFLAGS += -Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384
 
-LOCAL_C_INCLUDES := $(LOCAL_PATH) \
-                    $(LOCAL_PATH)/TinySoundFont \
-
 LOCAL_SHARED_LIBRARIES := mmapi_common
 
-ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
-    LOCAL_ARM_NEON := false
-endif
-
-# Don't strip debug builds
+# Don't strip debug builds.
 ifeq ($(NDK_DEBUG),1)
     cmd-strip :=
 endif

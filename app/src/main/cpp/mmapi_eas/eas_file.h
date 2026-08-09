@@ -27,12 +27,13 @@ namespace mmapi {
         };
 
         class IOFile : public BaseFile {
-            FILE *file;
+            FILE *file = nullptr;
 
         public:
             IOFile(const char *path, const char *const mode);
             ~IOFile() override;
 
+            bool isOpen() const;
             int readAt(void *buf, int offset, int size) override;
         }; // class FileImpl
 
