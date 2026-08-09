@@ -1,9 +1,8 @@
 # Copyright 2026 H3NB
 # SPDX-License-Identifier: Apache-2.0
 #
-# SONiVOX v4.0.1 build profiles for JL-Mod Plus. SONiVOX selects its render
-# rate at compile time, so both supported rates are built as separate static
-# engines and selected by the Java MMAPI layer at runtime.
+# SONiVOX v4.0.1 integration for JL-Mod Plus. The active renderer is fixed at
+# 44.1 kHz; Java ME/MMAPI does not expose the synth's internal PCM rate.
 
 LOCAL_PATH := $(call my-dir)
 SONIVOX_V4 := $(LOCAL_PATH)/../sonivox_v4
@@ -59,9 +58,8 @@ SONIVOX_V4_CFLAGS := \
 	-Wformat \
 	-Werror=incompatible-function-pointer-types
 
-# Compatibility default: genuine 22.05 kHz SONiVOX renderer.
 include $(CLEAR_VARS)
-LOCAL_MODULE := sonivox_v4_22k
+LOCAL_MODULE := sonivox_v4
 LOCAL_SRC_FILES := $(SONIVOX_V4_SRC_FILES)
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/generated \
@@ -72,30 +70,6 @@ LOCAL_CFLAGS += $(SONIVOX_V4_CFLAGS)
 LOCAL_CONLYFLAGS += -std=c11
 LOCAL_EXPORT_C_INCLUDES := \
 	$(LOCAL_PATH)/include \
-	$(LOCAL_PATH)/generated \
-	$(SONIVOX_V4_HOST) \
-	$(SONIVOX_V4_LIB)
-LOCAL_EXPORT_LDLIBS := -lm -llog
-ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
-	LOCAL_ARM_NEON := false
-endif
-include $(BUILD_STATIC_LIBRARY)
-
-# Higher-quality option: same compatibility profile at genuine 44.1 kHz.
-include $(CLEAR_VARS)
-LOCAL_MODULE := sonivox_v4_44k
-LOCAL_SRC_FILES := $(SONIVOX_V4_SRC_FILES)
-LOCAL_C_INCLUDES := \
-	$(LOCAL_PATH)/generated_44k \
-	$(LOCAL_PATH)/generated \
-	$(SONIVOX_V4_HOST) \
-	$(SONIVOX_V4_LIB) \
-	$(SONIVOX_V4)/fakes
-LOCAL_CFLAGS += $(SONIVOX_V4_CFLAGS)
-LOCAL_CONLYFLAGS += -std=c11
-LOCAL_EXPORT_C_INCLUDES := \
-	$(LOCAL_PATH)/include \
-	$(LOCAL_PATH)/generated_44k \
 	$(LOCAL_PATH)/generated \
 	$(SONIVOX_V4_HOST) \
 	$(SONIVOX_V4_LIB)

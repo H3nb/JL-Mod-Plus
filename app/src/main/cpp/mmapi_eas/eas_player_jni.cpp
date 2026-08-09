@@ -8,11 +8,7 @@
 #include "eas_util.h"
 #include "util/jbytearray.h"
 
-#ifdef EAS_JNI_44K
-#define EAS_JNI_METHOD(name) Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS44_##name
-#else
-#define EAS_JNI_METHOD(name) Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS22_##name
-#endif
+#define EAS_JNI_METHOD(name) Java_ru_woesss_j2me_mmapi_synth_eas_LibEAS_##name
 
 namespace {
 

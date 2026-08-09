@@ -7,11 +7,13 @@ JL-Mod Plus pins the active EAS synth source to **EmbeddedSynth/sonivox v4.0.1**
 The build intentionally does not copy upstream CMake defaults. Java ME/MMAPI compatibility currently keeps:
 
 - wavetable synthesis, 64 voices, stereo, 16-bit output;
-- 22.05 kHz synthesis for the compatibility-first core migration;
+- a fixed 44.1 kHz internal SONiVOX render rate;
 - SMF, XMF, RMID, DLS and SF2;
 - iMelody, RTTTL/RTX and Nokia OTA ringtone parsing;
 - live `device://midi` and MMAPI ToneControl;
 - reverb and chorus.
+
+The render rate is an implementation detail below JSR-135 rather than an exposed MMAPI capability. JL-Mod Plus uses one 44.1 kHz SONiVOX engine and lets Oboe handle any conversion required by the Android output device.
 
 ## Legacy ringtone parser ABI compatibility
 
@@ -32,6 +34,4 @@ These local bridges should be removed when upstream migrates the three parser so
 
 The core migration deliberately leaves FM/hybrid synthesis, JET, SONiVOX WAVE parsing and the SONiVOX IMA decoder disabled. WAV/IMA-ADPCM belongs to the dedicated `dr_wav` backend so file audio cannot enter the MIDI synth path.
 
-Soundbanks are configured per `LibEAS`/native Player instance. DLS and supported SF2 use SONiVOX first; TinySoundFont remains in-tree only as a temporary SF2 compatibility fallback until representative soundbank parity testing is complete.
-
-The optional 44.1 kHz synthesis mode and removal of TinySoundFont remain separate follow-up phases. Keeping them separate from legacy-parser restoration makes regressions attributable and keeps the 22.05 kHz compatibility baseline stable while the restored ringtone formats are validated.
+Soundbanks are configured per `LibEAS`/native Player instance. DLS and supported SF2 use SONiVOX directly. A custom bank is validated before activation; if validation fails, the caller records the failure and retains the built-in SONiVOX bank as the playback fallback.

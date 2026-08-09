@@ -12,9 +12,6 @@
     <string name="audio_failure_toast_settings">Audio tidak dapat diputar. Lihat Pengaturan &gt; Diagnostik audio.</string>
     <string name="audio_failure_warnings_title">Peringatan kegagalan audio</string>
     <string name="audio_failure_warnings_summary">Tampilkan pesan singkat dalam aplikasi saat pemutaran audio gagal. Kegagalan selalu dicatat di Diagnostik audio.</string>
-    <string name="midi_sample_rate_title">Laju sampel MIDI</string>
-    <string name="midi_sample_rate_22050">22,05 kHz — Kompatibilitas</string>
-    <string name="midi_sample_rate_44100">44,1 kHz — Kualitas tinggi</string>
     <string name="audio_diagnostics_title">Diagnostik audio</string>
     <string name="audio_diagnostics_summary">Tinjau kegagalan pemutaran audio terbaru</string>
     <string name="audio_diagnostics_empty">Tidak ada kegagalan audio terbaru.</string>
