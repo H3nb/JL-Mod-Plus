@@ -27,6 +27,8 @@ public class MediaRouterTest {
 				MediaRouter.route(ContentProbe.Kind.WAV, "audio/midi"));
 		assertEquals(MediaRouter.Backend.SYNTH,
 				MediaRouter.route(ContentProbe.Kind.MIDI, "audio/wav"));
+		assertEquals(MediaRouter.Backend.UNKNOWN,
+				MediaRouter.route(ContentProbe.Kind.SMAF, "audio/midi"));
 	}
 
 	@Test
@@ -37,6 +39,8 @@ public class MediaRouterTest {
 				MediaRouter.route(ContentProbe.Kind.XMF, null));
 		assertEquals(MediaRouter.Backend.SYNTH,
 				MediaRouter.route(ContentProbe.Kind.RMID, null));
+		assertEquals(MediaRouter.Backend.SYNTH,
+				MediaRouter.route(ContentProbe.Kind.IMELODY, null));
 		assertEquals(MediaRouter.Backend.SYNTH,
 				MediaRouter.route(ContentProbe.Kind.UNKNOWN, "audio/x-tone-seq"));
 	}
@@ -55,6 +59,10 @@ public class MediaRouterTest {
 				MediaRouter.route(ContentProbe.Kind.AMR_WB, null));
 		assertEquals(MediaRouter.Backend.PLATFORM_AUDIO,
 				MediaRouter.route(ContentProbe.Kind.MP4, null));
+		assertEquals(MediaRouter.Backend.PLATFORM_AUDIO,
+				MediaRouter.route(ContentProbe.Kind.ASF, "audio/midi"));
+		assertEquals(MediaRouter.Backend.PLATFORM_AUDIO,
+				MediaRouter.route(ContentProbe.Kind.QCP, "audio/midi"));
 	}
 
 	@Test
