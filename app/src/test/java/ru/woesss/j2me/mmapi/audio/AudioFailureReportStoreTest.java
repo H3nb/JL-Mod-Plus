@@ -42,6 +42,24 @@ public class AudioFailureReportStoreTest {
 	}
 
 	@Test
+	public void readAllReturnsRecentReports() throws IOException {
+		Path directory = Files.createTempDirectory("audio-reports-all");
+		assertEquals("", AudioFailureReportStore.readAll(directory.toFile()));
+
+		AudioFailure first = AudioFailure.createWithDetail("first.mid", "audio/midi", "EAS",
+				AudioFailure.Phase.START, "FIRST_FAILURE", "first");
+		AudioFailure second = AudioFailure.createWithDetail("second.wav", "audio/wav", "dr_wav",
+				AudioFailure.Phase.PREFETCH, "SECOND_FAILURE", "second");
+		AudioFailureReportStore.save(directory.toFile(), first);
+		AudioFailureReportStore.save(directory.toFile(), second);
+
+		String reports = AudioFailureReportStore.readAll(directory.toFile());
+		assertTrue(reports.contains("first.mid"));
+		assertTrue(reports.contains("second.wav"));
+		assertTrue(reports.contains("----------------"));
+	}
+
+	@Test
 	public void rejectsTraversalReportIds() throws IOException {
 		Path directory = Files.createTempDirectory("audio-reports");
 		try {
