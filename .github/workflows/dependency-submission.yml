@@ -4,7 +4,7 @@ name: Dependency Submission
 
 on:
   push:
-    branches: [dev, main]
+    branches: [alpha, main]
   workflow_dispatch:
 
 permissions:
