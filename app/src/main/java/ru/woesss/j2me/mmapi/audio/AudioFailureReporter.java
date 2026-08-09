@@ -41,7 +41,8 @@ import io.github.h3nb.jlmodplus.R;
 public final class AudioFailureReporter {
 	private static final String TAG = AudioFailureReporter.class.getSimpleName();
 	private static final long DEDUPLICATION_WINDOW_MS = 30_000L;
-	private static final Map<String, Long> recentFailures = new ConcurrentHashMap<>();
+	private static final Map<String, Long> recentReports = new ConcurrentHashMap<>();
+	private static final Map<String, Long> recentNotifications = new ConcurrentHashMap<>();
 	private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
 	private static final ExecutorService REPORT_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
 		Thread thread = new Thread(r, "AudioFailureReporter");
@@ -62,16 +63,15 @@ public final class AudioFailureReporter {
 			return;
 		}
 		Log.e(TAG, failure.toReportText());
-		if (!claimFailure(failure)) {
+		if (!claim(recentReports, failure.getNotificationKey())) {
 			return;
 		}
 		REPORT_EXECUTOR.execute(() -> persistAndNotifyInApp(failure));
 	}
 
-	private static boolean claimFailure(AudioFailure failure) {
+	private static boolean claim(Map<String, Long> recent, String key) {
 		long now = System.currentTimeMillis();
-		String key = failure.getNotificationKey();
-		Long previous = recentFailures.put(key, now);
+		Long previous = recent.put(key, now);
 		return previous == null || now - previous >= DEDUPLICATION_WINDOW_MS;
 	}
 
@@ -93,7 +93,12 @@ public final class AudioFailureReporter {
 		} catch (IOException | RuntimeException e) {
 			Log.e(TAG, "Unable to persist audio failure report", e);
 		}
-		showToast(context);
+
+		// One resource may generate layered MMAPI/backend reports for a single
+		// failure. Keep those details, but do not spam the player with toasts.
+		if (claim(recentNotifications, failure.getSource())) {
+			showToast(context);
+		}
 	}
 
 	private static void showToast(Context context) {
