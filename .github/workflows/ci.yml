@@ -4,9 +4,9 @@ name: CI
 
 on:
   pull_request:
-    branches: [dev, main]
+    branches: [alpha, main]
   push:
-    branches: [dev, main]
+    branches: [alpha, main]
   workflow_dispatch:
 
 permissions:
@@ -43,9 +43,9 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
 
-      - name: Add development version suffix
+      - name: Add alpha version suffix
         shell: bash
-        run: echo "VERSION_SUFFIX=-dev.${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+        run: echo "VERSION_SUFFIX=-alpha.${GITHUB_SHA::7}" >> "$GITHUB_ENV"
 
       # Build-script edge cases and lint are blocking quality gates. Warnings remain
       # visible in the uploaded report and must be triaged without broad suppression.
@@ -122,9 +122,9 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
 
-      - name: Add development version suffix
+      - name: Add alpha version suffix
         shell: bash
-        run: echo "VERSION_SUFFIX=-dev.${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+        run: echo "VERSION_SUFFIX=-alpha.${GITHUB_SHA::7}" >> "$GITHUB_ENV"
 
       - name: Test and assemble emulator debug
         run: >-
