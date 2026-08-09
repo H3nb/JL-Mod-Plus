@@ -76,6 +76,24 @@ public class WavFileFormatTest {
 		Path wrongSamples = Files.createTempFile("gsm610-samples", ".wav");
 		Files.write(wrongSamples, gsm610WaveFile(1, 65, 160));
 		assertFalse(WavFileFormat.isGsm610(wrongSamples.toFile()));
+
+		Path invalidExtension = Files.createTempFile("gsm610-extension", ".wav");
+		Files.write(invalidExtension, gsm610WaveFile(1, 65, 320, 4));
+		WavFileFormat.Info invalidInfo = WavFileFormat.inspect(invalidExtension.toFile());
+		assertNotNull(invalidInfo);
+		assertEquals(0, invalidInfo.getSamplesPerBlock());
+		assertFalse(WavFileFormat.isGsm610(invalidExtension.toFile()));
+	}
+
+	@Test
+	public void doesNotTreatGenericFmtExtensionAsSamplesPerBlock() throws IOException {
+		Path file = Files.createTempFile("extended-non-gsm", ".wav");
+		Files.write(file, extendedWaveFile(WavFileFormat.MPEG_LAYER_3, 0x1234));
+
+		WavFileFormat.Info info = WavFileFormat.inspect(file.toFile());
+		assertNotNull(info);
+		assertEquals(WavFileFormat.MPEG_LAYER_3, info.getFormatTag());
+		assertEquals(0, info.getSamplesPerBlock());
 	}
 
 	@Test
@@ -123,6 +141,10 @@ public class WavFileFormatTest {
 	}
 
 	private static byte[] gsm610WaveFile(int channels, int blockAlign, int samplesPerBlock) {
+		return gsm610WaveFile(channels, blockAlign, samplesPerBlock, 2);
+	}
+
+	private static byte[] gsm610WaveFile(int channels, int blockAlign, int samplesPerBlock, int extraSize) {
 		int fmtSize = 20;
 		int dataSize = 65;
 		int factSize = 4;
@@ -139,7 +161,7 @@ public class WavFileFormatTest {
 		buffer.putInt(1625);
 		buffer.putShort((short) blockAlign);
 		buffer.putShort((short) 0);
-		buffer.putShort((short) 2);
+		buffer.putShort((short) extraSize);
 		buffer.putShort((short) samplesPerBlock);
 		putAscii(buffer, "fact");
 		buffer.putInt(factSize);
@@ -148,6 +170,29 @@ public class WavFileFormatTest {
 		buffer.putInt(dataSize);
 		buffer.put(new byte[dataSize]);
 		buffer.put((byte) 0); // RIFF chunks are word-aligned; padding is outside data size.
+		return buffer.array();
+	}
+
+	private static byte[] extendedWaveFile(int format, int extensionValue) {
+		int fmtSize = 20;
+		int dataSize = 0;
+		int riffSize = 4 + 8 + fmtSize + 8 + dataSize;
+		ByteBuffer buffer = ByteBuffer.allocate(8 + riffSize).order(ByteOrder.LITTLE_ENDIAN);
+		putAscii(buffer, "RIFF");
+		buffer.putInt(riffSize);
+		putAscii(buffer, "WAVE");
+		putAscii(buffer, "fmt ");
+		buffer.putInt(fmtSize);
+		buffer.putShort((short) format);
+		buffer.putShort((short) 1);
+		buffer.putInt(8000);
+		buffer.putInt(4096);
+		buffer.putShort((short) 1);
+		buffer.putShort((short) 0);
+		buffer.putShort((short) 2);
+		buffer.putShort((short) extensionValue);
+		putAscii(buffer, "data");
+		buffer.putInt(dataSize);
 		return buffer.array();
 	}
 
