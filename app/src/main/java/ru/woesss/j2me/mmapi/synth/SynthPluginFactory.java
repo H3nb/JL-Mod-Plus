@@ -16,9 +16,7 @@ import android.util.Log;
 import java.util.List;
 
 import javax.microedition.shell.MicroLoader;
-import javax.microedition.util.ContextHolder;
 
-import io.github.h3nb.jlmodplus.R;
 import ru.woesss.j2me.mmapi.Plugin;
 import ru.woesss.j2me.mmapi.audio.AudioFailure;
 import ru.woesss.j2me.mmapi.audio.AudioFailureReporter;
@@ -59,7 +57,6 @@ public class SynthPluginFactory {
 					"SOUNDBANK_LOAD_FAILED",
 					error
 			);
-			ContextHolder.getActivity().toast(R.string.msg_unsupported_soundbank);
 		}
 
 		if (plugins.isEmpty()) {
