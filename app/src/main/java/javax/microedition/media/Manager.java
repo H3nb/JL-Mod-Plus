@@ -162,7 +162,7 @@ public class Manager {
 			}
 
 			try (InputStream stream = inputConnection.openInputStream()) {
-				return createPlayer(stream, type);
+				return createPlayer(stream, type, locator);
 			}
 		} finally {
 			connection.close();
@@ -203,7 +203,7 @@ public class Manager {
 			}
 			InputStream stream = new InternalSourceStream(sourceStreams[0]);
 			InternalDataSource datasource = new InternalDataSource(stream, type);
-			return createCachedPlayer(datasource, type);
+			return createCachedPlayer(datasource, type, locator);
 		} catch (IOException | MediaException | RuntimeException e) {
 			AudioFailureReporter.report(locator, type, "MMAPI source", AudioFailure.Phase.CREATE,
 					e instanceof MediaException && "Media source has no streams".equals(e.getMessage())
@@ -216,6 +216,11 @@ public class Manager {
 
 	public static Player createPlayer(final InputStream stream, String type)
 			throws IOException, MediaException {
+		return createPlayer(stream, type, null);
+	}
+
+	private static Player createPlayer(final InputStream stream, String type, String diagnosticLocator)
+			throws IOException, MediaException {
 		if (stream == null) {
 			throw new IllegalArgumentException();
 		}
@@ -224,11 +229,11 @@ public class Manager {
 		try {
 			datasource = new InternalDataSource(stream, type);
 		} catch (IOException | RuntimeException e) {
-			AudioFailureReporter.report(null, type, "MMAPI stream", AudioFailure.Phase.CREATE,
+			AudioFailureReporter.report(diagnosticLocator, type, "MMAPI stream", AudioFailure.Phase.CREATE,
 					"STREAM_CACHE_FAILED", e);
 			throw e;
 		}
-		return createCachedPlayer(datasource, type);
+		return createCachedPlayer(datasource, type, diagnosticLocator);
 	}
 
 	/**
@@ -238,36 +243,52 @@ public class Manager {
 	 * legacy SONiVOX parsers and, only when explicitly declared audio/*, Android's
 	 * platform decoder; otherwise creation fails instead of returning a no-op Player.
 	 */
-	private static Player createCachedPlayer(InternalDataSource datasource, String type)
-			throws IOException, MediaException {
-		ContentProbe.Kind kind = ContentProbe.probe(new File(datasource.getLocator()));
+	private static Player createCachedPlayer(InternalDataSource datasource, String type,
+			String diagnosticLocator) throws IOException, MediaException {
+		File mediaFile = new File(datasource.getLocator());
+		ContentProbe.Kind kind = ContentProbe.probe(mediaFile);
 		MediaRouter.Backend backend = MediaRouter.route(kind, type);
 
 		if (backend == MediaRouter.Backend.WAV) {
 			try {
 				return new WavPlayer(datasource);
 			} catch (MediaException | RuntimeException e) {
-				AudioFailureReporter.report(datasource.getLocator(), type, "dr_wav",
+				AudioFailureReporter.report(diagnosticSource(diagnosticLocator, datasource), type, "dr_wav",
 						AudioFailure.Phase.CREATE, "WAV_CREATE_FAILED", e);
 				datasource.disconnect();
 				throw e;
 			}
 		}
 
-		if (backend != MediaRouter.Backend.PLATFORM_AUDIO) {
+		if (backend == MediaRouter.Backend.SYNTH
+				|| (backend == MediaRouter.Backend.UNKNOWN && kind == ContentProbe.Kind.UNKNOWN)) {
 			Player pluginPlayer = createPluginPlayer(datasource);
 			if (pluginPlayer != null) {
 				return pluginPlayer;
 			}
 		}
 
-		if (backend == MediaRouter.Backend.PLATFORM_AUDIO || isDeclaredAudio(type)) {
+		if (backend == MediaRouter.Backend.PLATFORM_AUDIO
+				|| (kind == ContentProbe.Kind.UNKNOWN && isDeclaredAudio(type))) {
 			return new MicroPlayer(datasource);
 		}
 
+		String code = kind == ContentProbe.Kind.UNKNOWN
+				? "UNKNOWN_AUDIO_FORMAT" : "UNSUPPORTED_AUDIO_FORMAT";
+		StringBuilder detail = new StringBuilder("Detected format: ").append(kind);
+		if (kind == ContentProbe.Kind.UNKNOWN) {
+			detail.append("; Header: ").append(ContentProbe.fingerprint(mediaFile));
+		}
+		AudioFailureReporter.report(AudioFailure.createWithDetail(
+				diagnosticSource(diagnosticLocator, datasource), type, backend.name(),
+				AudioFailure.Phase.CREATE, code, detail.toString()));
 		datasource.disconnect();
 		throw new MediaException("Unsupported media content"
 				+ (type == null ? "" : ": " + type));
+	}
+
+	private static String diagnosticSource(String locator, DataSource datasource) {
+		return locator != null ? locator : datasource.getLocator();
 	}
 
 	private static Player createPluginPlayer(DataSource datasource) {
@@ -276,7 +297,6 @@ public class Manager {
 			if (player != null) {
 				return player;
 			}
-		}
 		return null;
 	}
 
@@ -305,7 +325,6 @@ public class Manager {
 			if (supported.equals(type)) {
 				return true;
 			}
-		}
 		return false;
 	}
 
@@ -318,7 +337,6 @@ public class Manager {
 			if (supported.equals(type)) {
 				return true;
 			}
-		}
 		return false;
 	}
 
@@ -351,7 +369,6 @@ public class Manager {
 			if (supportedProtocol.equals(protocol)) {
 				return Arrays.copyOf(AUDIO_CONTENT_TYPES, AUDIO_CONTENT_TYPES.length);
 			}
-		}
 		return new String[0];
 	}
 
