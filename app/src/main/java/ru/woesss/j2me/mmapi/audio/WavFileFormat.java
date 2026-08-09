@@ -85,7 +85,7 @@ public final class WavFileFormat {
 			return bitsPerSample;
 		}
 
-		/** Returns compressed samples per block, or 0 when the fmt chunk omits it. */
+		/** Returns GSM 6.10 samples per block, or 0 when not applicable/valid. */
 		public int getSamplesPerBlock() {
 			return samplesPerBlock;
 		}
@@ -153,7 +153,11 @@ public final class WavFileFormat {
 						int samplesPerBlock = 0;
 						if (chunkSize >= 18) {
 							int extraSize = readUnsignedShort(input);
-							if (extraSize >= 2 && chunkSize >= 20) {
+							long extensionEnd = 18L + extraSize;
+							if (formatTag == GSM_610
+									&& extraSize >= 2
+									&& extensionEnd <= chunkSize
+									&& chunkSize >= 20) {
 								samplesPerBlock = readUnsignedShort(input);
 							}
 						}
@@ -184,7 +188,7 @@ public final class WavFileFormat {
 				&& info.getBitsPerSample() == 4;
 	}
 
-	/** Returns whether {@code file} declares the standard mono 8 kHz WAV49 layout. */
+	/** Returns whether {@code file} declares the supported mono 8 kHz WAV49 layout. */
 	public static boolean isGsm610(File file) throws IOException {
 		Info info = inspect(file);
 		return info != null
