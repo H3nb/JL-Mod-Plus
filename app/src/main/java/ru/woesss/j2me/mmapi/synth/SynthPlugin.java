@@ -20,14 +20,17 @@ package ru.woesss.j2me.mmapi.synth;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Locale;
 
 import javax.microedition.media.Player;
 import javax.microedition.media.protocol.DataSource;
 
+import ru.woesss.j2me.mmapi.FileCacheDataSource;
 import ru.woesss.j2me.mmapi.Plugin;
 import ru.woesss.j2me.mmapi.audio.ContentProbe;
+import ru.woesss.j2me.mmapi.audio.SmafSequenceConverter;
 import ru.woesss.j2me.mmapi.protocol.device.DeviceDataSource;
 
 public class SynthPlugin implements Plugin {
@@ -41,13 +44,50 @@ public class SynthPlugin implements Plugin {
 
 	@Override
 	public Player createPlayer(DataSource dataSource) {
-		if (!acceptsSequencedData(dataSource)) {
+		if (dataSource == null || dataSource.getLocator() == null) {
+			return null;
+		}
+
+		ContentProbe.Kind kind = probe(dataSource);
+		if (kind == ContentProbe.Kind.SMAF) {
+			return createSmafPlayer(dataSource);
+		}
+		if (!acceptsSequencedData(dataSource, kind)) {
 			return null;
 		}
 		try {
 			return new SynthPlayer(library, dataSource);
 		} catch (Exception e) {
 			Log.w(TAG, "createPlayer: ", e);
+			return null;
+		}
+	}
+
+	private Player createSmafPlayer(DataSource source) {
+		FileCacheDataSource translated = null;
+		try {
+			byte[] smf = SmafSequenceConverter.convert(new File(source.getLocator()));
+			if (smf == null) {
+				return null;
+			}
+
+			// Keep SMAF as the MMAPI-facing content type. Only the cached payload is
+			// SMF so the existing SONiVOX parser can render the supported subset.
+			translated = new FileCacheDataSource(SmafSequenceConverter.CONTENT_TYPE, "mid");
+			try (FileOutputStream output = new FileOutputStream(translated.getLocator())) {
+				output.write(smf);
+			}
+
+			Player player = new SynthPlayer(library, translated);
+			// The returned player owns the translated cache; the original MMF cache
+			// is no longer needed after successful conversion.
+			source.disconnect();
+			return player;
+		} catch (Exception e) {
+			if (translated != null) {
+				translated.disconnect();
+			}
+			Log.w(TAG, "Unable to create SMAF score player", e);
 			return null;
 		}
 	}
@@ -62,33 +102,33 @@ public class SynthPlugin implements Plugin {
 		}
 	}
 
+	private static ContentProbe.Kind probe(DataSource dataSource) {
+		try {
+			return ContentProbe.probe(new File(dataSource.getLocator()));
+		} catch (IOException | RuntimeException e) {
+			Log.w(TAG, "Unable to probe synth data source", e);
+			return ContentProbe.Kind.UNKNOWN;
+		}
+	}
+
 	/**
 	 * Keep arbitrary unknown binary away from native synth parser discovery.
 	 * Signature evidence wins; an explicit synth MIME remains a conservative
 	 * fallback for callers that provide a valid MMAPI content type.
 	 */
-	private static boolean acceptsSequencedData(DataSource dataSource) {
-		if (dataSource == null || dataSource.getLocator() == null) {
-			return false;
-		}
-
-		try {
-			ContentProbe.Kind kind = ContentProbe.probe(new File(dataSource.getLocator()));
-			switch (kind) {
-				case MIDI:
-				case XMF:
-				case RMID:
-				case IMELODY:
-				case RTTTL:
-				case NOKIA_OTA:
-					return true;
-				case UNKNOWN:
-					break;
-				default:
-					return false;
-			}
-		} catch (IOException | RuntimeException e) {
-			Log.w(TAG, "Unable to probe synth data source", e);
+	private static boolean acceptsSequencedData(DataSource dataSource, ContentProbe.Kind kind) {
+		switch (kind) {
+			case MIDI:
+			case XMF:
+			case RMID:
+			case IMELODY:
+			case RTTTL:
+			case NOKIA_OTA:
+				return true;
+			case UNKNOWN:
+				break;
+			default:
+				return false;
 		}
 
 		String contentType = dataSource.getContentType();

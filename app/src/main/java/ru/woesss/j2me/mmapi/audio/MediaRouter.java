@@ -49,6 +49,10 @@ public final class MediaRouter {
 			case RTTTL:
 			case NOKIA_OTA:
 				return Backend.SYNTH;
+			case SMAF:
+				// SMAF remains a distinct probed format. The synth plugin performs
+				// the explicit supported-subset translation before SONiVOX sees it.
+				return Backend.SYNTH;
 			case WAV:
 				return Backend.WAV;
 			case MP3:
@@ -61,9 +65,6 @@ public final class MediaRouter {
 				// ASF/WMA and QCP are platform-decoder candidates, not advertised
 				// capabilities. If Android rejects them, MicroPlayer reports it.
 				return Backend.PLATFORM_AUDIO;
-			case SMAF:
-				// Recognized for diagnostics, but no backend claim yet.
-				return Backend.UNKNOWN;
 			case UNKNOWN:
 			default:
 				return routeMime(declaredMime);
