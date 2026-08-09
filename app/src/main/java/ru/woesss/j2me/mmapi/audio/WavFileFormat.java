@@ -188,16 +188,23 @@ public final class WavFileFormat {
 				&& info.getBitsPerSample() == 4;
 	}
 
-	/** Returns whether {@code file} declares the supported mono 8 kHz WAV49 layout. */
+	/** Returns whether {@code file} declares a supported mono GSM 6.10 WAV49 layout. */
 	public static boolean isGsm610(File file) throws IOException {
 		Info info = inspect(file);
 		return info != null
 				&& info.getFormatTag() == GSM_610
 				&& info.getChannels() == 1
-				&& info.getSampleRate() == 8000
+				&& isGsm610SampleRate(info.getSampleRate())
 				&& info.getBlockAlignment() == 65
 				&& info.getBitsPerSample() == 0
 				&& info.getSamplesPerBlock() == 320;
+	}
+
+	private static boolean isGsm610SampleRate(long sampleRate) {
+		return sampleRate == 8000
+				|| sampleRate == 11025
+				|| sampleRate == 22050
+				|| sampleRate == 44100;
 	}
 
 	private static boolean matches(RandomAccessFile input, String expected) throws IOException {
