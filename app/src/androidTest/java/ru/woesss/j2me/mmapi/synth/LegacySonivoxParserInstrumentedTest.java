@@ -68,8 +68,6 @@ public class LegacySonivoxParserInstrumentedTest {
     public void nokiaOtaLifecycleAndMalformedInputAreSafe() throws Exception {
         assertLifecycle(nokiaOtaFixture(), "ota");
         assertRepeatedOpenClose(nokiaOtaFixture(), "ota");
-        // Valid OTA command prefix, deliberately truncated before the song
-        // header. This gets far enough to exercise prepare/cleanup ownership.
         assertControlledMalformedFailure(new byte[]{0x02, 0x4a, 0x3a}, "ota");
     }
 
@@ -93,13 +91,10 @@ public class LegacySonivoxParserInstrumentedTest {
 
         try {
             assertEquals(Player.UNREALIZED, player.getState());
-
             player.realize();
             assertEquals(Player.REALIZED, player.getState());
-
             player.prefetch();
             assertEquals(Player.PREFETCHED, player.getState());
-
             player.start();
             assertEquals(Player.STARTED, player.getState());
             assertTrue("first END_OF_MEDIA timed out for " + suffix,
@@ -107,7 +102,6 @@ public class LegacySonivoxParserInstrumentedTest {
             assertEquals(Player.PREFETCHED, player.getState());
             assertStartedBeforeFirstEom(events, suffix);
 
-            // JSR-135: start() after natural EOM must replay from the beginning.
             player.start();
             assertTrue("second END_OF_MEDIA timed out for " + suffix,
                     secondEom.await(EVENT_TIMEOUT_SECONDS, TimeUnit.SECONDS));
@@ -118,7 +112,7 @@ public class LegacySonivoxParserInstrumentedTest {
         } finally {
             player.close();
             assertEquals(Player.CLOSED, player.getState());
-            player.close(); // close() must remain idempotent.
+            player.close();
             assertEquals(Player.CLOSED, player.getState());
         }
     }
@@ -153,9 +147,6 @@ public class LegacySonivoxParserInstrumentedTest {
             player.realize();
             player.prefetch();
             player.start();
-            // Some truncated sequenced files are accepted as an empty song.
-            // That is still safe as long as they terminate without a native
-            // crash/hang; give the callback thread a short bounded window.
             Thread.sleep(150);
             if (player.getState() == Player.STARTED) {
                 player.stop();
@@ -177,7 +168,7 @@ public class LegacySonivoxParserInstrumentedTest {
         }
 
         try {
-            return new SynthPlayer(new LibEAS(), new TestFileDataSource(file));
+            return new SynthPlayer(LibEAS.create(), new TestFileDataSource(file));
         } catch (Throwable error) {
             file.delete();
             if (error instanceof Exception exception) {
@@ -207,26 +198,23 @@ public class LegacySonivoxParserInstrumentedTest {
         return "JLTest:d=32,o=5,b=120:c".getBytes(StandardCharsets.US_ASCII);
     }
 
-    /** Builds one short temporary-song Nokia OTA ringtone, MSB first. */
     private static byte[] nokiaOtaFixture() {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        output.write(2);          // two OTA commands
-        output.write(0x25 << 1);  // Ringing Tone Programming command (7-bit ID)
+        output.write(2);
+        output.write(0x25 << 1);
 
         BitWriter bits = new BitWriter(output);
-        bits.write(0x1d, 7); // Sound command
-        bits.write(0x02, 3); // temporary song
-        bits.write(1, 8);    // one pattern
-
-        bits.write(0, 3);    // pattern-header instruction
-        bits.write(0, 2);    // pattern id 0
-        bits.write(0, 4);    // no loop
-        bits.write(1, 8);    // one instruction in the pattern
-
-        bits.write(1, 3);    // note instruction
-        bits.write(1, 4);    // note C
-        bits.write(5, 3);    // 32nd-note duration
-        bits.write(0, 2);    // normal duration modifier
+        bits.write(0x1d, 7);
+        bits.write(0x02, 3);
+        bits.write(1, 8);
+        bits.write(0, 3);
+        bits.write(0, 2);
+        bits.write(0, 4);
+        bits.write(1, 8);
+        bits.write(1, 3);
+        bits.write(1, 4);
+        bits.write(5, 3);
+        bits.write(0, 2);
         bits.finish();
         return output.toByteArray();
     }
