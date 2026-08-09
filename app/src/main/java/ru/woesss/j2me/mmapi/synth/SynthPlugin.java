@@ -31,6 +31,8 @@ import ru.woesss.j2me.mmapi.FileCacheDataSource;
 import ru.woesss.j2me.mmapi.Plugin;
 import ru.woesss.j2me.mmapi.audio.ContentProbe;
 import ru.woesss.j2me.mmapi.audio.SmafSequenceConverter;
+import ru.woesss.j2me.mmapi.audio.SmafWaveformRenderer;
+import ru.woesss.j2me.mmapi.audio.WavPlayer;
 import ru.woesss.j2me.mmapi.protocol.device.DeviceDataSource;
 
 public class SynthPlugin implements Plugin {
@@ -64,31 +66,52 @@ public class SynthPlugin implements Plugin {
 	}
 
 	private Player createSmafPlayer(DataSource source) {
-		FileCacheDataSource translated = null;
 		try {
-			byte[] smf = SmafSequenceConverter.convert(new File(source.getLocator()));
-			if (smf == null) {
-				return null;
+			File smaf = new File(source.getLocator());
+			byte[] smf = SmafSequenceConverter.convert(smaf);
+			if (smf != null) {
+				return createSmafScorePlayer(source, smf);
 			}
+			return createSmafWaveformPlayer(source, smaf);
+		} catch (Exception e) {
+			Log.w(TAG, "Unable to create SMAF player", e);
+			return null;
+		}
+	}
 
-			// Keep SMAF as the MMAPI-facing content type. Only the cached payload is
-			// SMF so the existing SONiVOX parser can render the supported subset.
-			translated = new FileCacheDataSource(SmafSequenceConverter.CONTENT_TYPE, "mid");
+	private Player createSmafScorePlayer(DataSource source, byte[] smf) throws Exception {
+		FileCacheDataSource translated = new FileCacheDataSource(SmafSequenceConverter.CONTENT_TYPE, "mid");
+		boolean success = false;
+		try {
 			try (FileOutputStream output = new FileOutputStream(translated.getLocator())) {
 				output.write(smf);
 			}
-
 			Player player = new SynthPlayer(library, translated);
-			// The returned player owns the translated cache; the original MMF cache
-			// is no longer needed after successful conversion.
 			source.disconnect();
+			success = true;
 			return player;
-		} catch (Exception e) {
-			if (translated != null) {
+		} finally {
+			if (!success) {
 				translated.disconnect();
 			}
-			Log.w(TAG, "Unable to create SMAF score player", e);
-			return null;
+		}
+	}
+
+	private Player createSmafWaveformPlayer(DataSource source, File smaf) throws Exception {
+		FileCacheDataSource translated = new FileCacheDataSource(SmafWaveformRenderer.CONTENT_TYPE, "wav");
+		boolean success = false;
+		try {
+			if (!SmafWaveformRenderer.render(smaf, new File(translated.getLocator()))) {
+				return null;
+			}
+			Player player = new WavPlayer(translated, SmafWaveformRenderer.CONTENT_TYPE);
+			source.disconnect();
+			success = true;
+			return player;
+		} finally {
+			if (!success) {
+				translated.disconnect();
+			}
 		}
 	}
 

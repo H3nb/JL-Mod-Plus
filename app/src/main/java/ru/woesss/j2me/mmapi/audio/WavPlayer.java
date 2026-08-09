@@ -44,7 +44,7 @@ import javax.microedition.media.protocol.DataSource;
  */
 public final class WavPlayer extends BasePlayer implements VolumeControl {
 	private static final String TAG = WavPlayer.class.getSimpleName();
-	private static final String CONTENT_TYPE = "audio/x-wav";
+	private static final String DEFAULT_CONTENT_TYPE = "audio/x-wav";
 
 	private static final class NativeEvent {
 		final int type;
@@ -57,6 +57,7 @@ public final class WavPlayer extends BasePlayer implements VolumeControl {
 	}
 
 	private final DataSource source;
+	private final String contentType;
 	private final Map<String, Control> controls = new HashMap<>();
 	private final ArrayList<PlayerListener> listeners = new ArrayList<>();
 	private final ArrayList<NativeEvent> pendingStartEvents = new ArrayList<>();
@@ -84,10 +85,22 @@ public final class WavPlayer extends BasePlayer implements VolumeControl {
 	}
 
 	public WavPlayer(DataSource source) throws MediaException {
+		this(source, DEFAULT_CONTENT_TYPE);
+	}
+
+	/**
+	 * Internal adapter constructor for media such as SMAF that is rendered to a
+	 * temporary WAVE payload but must retain its original MMAPI content type.
+	 */
+	public WavPlayer(DataSource source, String contentType) throws MediaException {
 		if (source == null || source.getLocator() == null) {
 			throw new IllegalArgumentException("WAV source has no locator");
 		}
+		if (contentType == null || contentType.isEmpty()) {
+			throw new IllegalArgumentException("content type is empty");
+		}
 		this.source = source;
+		this.contentType = contentType;
 		try {
 			handle = nativeCreate(source.getLocator());
 		} catch (MediaException e) {
@@ -272,7 +285,7 @@ public final class WavPlayer extends BasePlayer implements VolumeControl {
 	@Override
 	public synchronized String getContentType() {
 		checkRealized();
-		return CONTENT_TYPE;
+		return contentType;
 	}
 
 	@Override
@@ -428,7 +441,7 @@ public final class WavPlayer extends BasePlayer implements VolumeControl {
 	}
 
 	private void reportRuntimeError(String code, Throwable error, boolean notify) {
-		AudioFailureReporter.report(source.getLocator(), CONTENT_TYPE, "dr_wav",
+		AudioFailureReporter.report(source.getLocator(), contentType, "dr_wav",
 				AudioFailure.Phase.RUNTIME, code, error);
 		if (notify && !errorEventPosted) {
 			errorEventPosted = true;
