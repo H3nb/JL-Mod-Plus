@@ -80,6 +80,7 @@ import io.github.h3nb.jlmodplus.util.Constants.PREF_CAMERA_MAX_SNAPSHOT
 import io.github.h3nb.jlmodplus.util.Constants.PREF_EMULATOR_DIR
 import io.github.h3nb.jlmodplus.util.Constants.PREF_EXPAND_TO_CUTOUT
 import io.github.h3nb.jlmodplus.util.Constants.PREF_KEEP_SCREEN
+import io.github.h3nb.jlmodplus.util.Constants.PREF_MIDI_SAMPLE_RATE
 import io.github.h3nb.jlmodplus.util.Constants.PREF_SCREENSHOT_SWITCH
 import io.github.h3nb.jlmodplus.util.Constants.PREF_STATUSBAR
 import io.github.h3nb.jlmodplus.util.Constants.PREF_THEME
@@ -135,6 +136,10 @@ internal class SettingsUiState(context: Context) {
         SettingsChoice("90", "90"),
         SettingsChoice("100", "100"),
     )
+    internal val midiSampleRateChoices = listOf(
+        SettingsChoice("22050", context.getString(R.string.midi_sample_rate_22050)),
+        SettingsChoice("44100", context.getString(R.string.midi_sample_rate_44100)),
+    )
 
     internal var themeValue by mutableStateOf(
         preferences.getString(PREF_THEME, context.getString(R.string.pref_theme_default))
@@ -157,6 +162,9 @@ internal class SettingsUiState(context: Context) {
     )
     internal var cameraJpegQualityValue by mutableStateOf(
         preferences.getInt(PREF_CAMERA_JPEG_QUALITY, 90).toString(),
+    )
+    internal var midiSampleRateValue by mutableStateOf(
+        if (preferences.getString(PREF_MIDI_SAMPLE_RATE, "22050") == "44100") "44100" else "22050",
     )
 
     internal var actionBarEnabled by mutableStateOf(preferences.getBoolean(PREF_TOOLBAR, false))
@@ -218,6 +226,11 @@ internal class SettingsUiState(context: Context) {
         preferences.edit { putInt(PREF_CAMERA_JPEG_QUALITY, value.toIntOrNull() ?: 90) }
     }
 
+    internal fun setMidiSampleRate(value: String) {
+        midiSampleRateValue = if (value == "44100") "44100" else "22050"
+        preferences.edit { putString(PREF_MIDI_SAMPLE_RATE, midiSampleRateValue) }
+    }
+
     internal fun setSwitch(key: String, value: Boolean) {
         when (key) {
             PREF_TOOLBAR -> actionBarEnabled = value
@@ -264,6 +277,8 @@ internal fun SettingsScreen(
             selectedCameraMaxSnapshot = state.cameraMaxSnapshotValue,
             cameraJpegQualityChoices = state.cameraJpegQualityChoices,
             selectedCameraJpegQuality = state.cameraJpegQualityValue,
+            midiSampleRateChoices = state.midiSampleRateChoices,
+            selectedMidiSampleRate = state.midiSampleRateValue,
             directory = state.directoryValue,
             switches = listOf(
                 SettingsSwitchState(PREF_TOOLBAR, R.string.pref_enable_actionbar_title, R.string.pref_enable_actionbar_summary, R.drawable.ic_setting_enable_action_bar, state.actionBarEnabled),
@@ -287,6 +302,7 @@ internal fun SettingsScreen(
             onCameraDefaultSnapshotSelected = state::setCameraDefaultSnapshot,
             onCameraMaxSnapshotSelected = state::setCameraMaxSnapshot,
             onCameraJpegQualitySelected = state::setCameraJpegQuality,
+            onMidiSampleRateSelected = state::setMidiSampleRate,
             onSwitchChanged = state::setSwitch,
             onProfiles = onProfiles,
             onAudioDiagnostics = onAudioDiagnostics,
@@ -310,6 +326,8 @@ private fun SettingsContent(
     selectedCameraMaxSnapshot: String,
     cameraJpegQualityChoices: List<SettingsChoice>,
     selectedCameraJpegQuality: String,
+    midiSampleRateChoices: List<SettingsChoice>,
+    selectedMidiSampleRate: String,
     directory: String,
     switches: List<SettingsSwitchState>,
     experimentalSwitches: List<SettingsSwitchState>,
@@ -321,6 +339,7 @@ private fun SettingsContent(
     onCameraDefaultSnapshotSelected: (String) -> Unit,
     onCameraMaxSnapshotSelected: (String) -> Unit,
     onCameraJpegQualitySelected: (String) -> Unit,
+    onMidiSampleRateSelected: (String) -> Unit,
     onSwitchChanged: (String, Boolean) -> Unit,
     onProfiles: () -> Unit,
     onAudioDiagnostics: () -> Unit,
@@ -334,6 +353,7 @@ private fun SettingsContent(
     var cameraDefaultDialogVisible by androidx.compose.runtime.remember { mutableStateOf(false) }
     var cameraMaxDialogVisible by androidx.compose.runtime.remember { mutableStateOf(false) }
     var cameraQualityDialogVisible by androidx.compose.runtime.remember { mutableStateOf(false) }
+    var midiSampleRateDialogVisible by androidx.compose.runtime.remember { mutableStateOf(false) }
 
     BackHandler(enabled = cameraSettingsVisible) {
         cameraSettingsVisible = false
@@ -437,6 +457,13 @@ private fun SettingsContent(
                     item {
                         SettingsChoiceRow(
                             icon = R.drawable.ic_setting_message,
+                            title = stringResource(R.string.midi_sample_rate_title),
+                            summary = midiSampleRateChoices
+                                .firstOrNull { it.value == selectedMidiSampleRate }?.label.orEmpty(),
+                            onClick = { midiSampleRateDialogVisible = true },
+                        )
+                        SettingsChoiceRow(
+                            icon = R.drawable.ic_setting_message,
                             title = stringResource(R.string.audio_diagnostics_title),
                             summary = stringResource(R.string.audio_diagnostics_summary),
                             onClick = onAudioDiagnostics,
@@ -484,6 +511,15 @@ private fun SettingsContent(
             selected = selectedLanguage,
             onSelected = { onLanguageSelected(it); languageDialogVisible = false },
             onDismiss = { languageDialogVisible = false },
+        )
+    }
+    if (midiSampleRateDialogVisible) {
+        SettingsChoiceDialog(
+            title = stringResource(R.string.midi_sample_rate_title),
+            choices = midiSampleRateChoices,
+            selected = selectedMidiSampleRate,
+            onSelected = { onMidiSampleRateSelected(it); midiSampleRateDialogVisible = false },
+            onDismiss = { midiSampleRateDialogVisible = false },
         )
     }
     if (cameraDeviceDialogVisible) {
@@ -754,6 +790,10 @@ private fun SettingsPreview(darkTheme: Boolean) {
     val defaultSnapshots = listOf(SettingsChoice("640x480", "VGA (640×480)"))
     val maxSnapshots = listOf(SettingsChoice("2048x1536", "3 MP (2048×1536)"))
     val qualities = listOf(SettingsChoice("90", "90"))
+    val midiRates = listOf(
+        SettingsChoice("22050", stringResource(R.string.midi_sample_rate_22050)),
+        SettingsChoice("44100", stringResource(R.string.midi_sample_rate_44100)),
+    )
     AppComposeTheme(darkTheme = darkTheme) {
         SettingsContent(
             themeChoices = themeChoices,
@@ -768,6 +808,8 @@ private fun SettingsPreview(darkTheme: Boolean) {
             selectedCameraMaxSnapshot = "2048x1536",
             cameraJpegQualityChoices = qualities,
             selectedCameraJpegQuality = "90",
+            midiSampleRateChoices = midiRates,
+            selectedMidiSampleRate = "22050",
             directory = "/sdcard/JL-Mod Plus",
             switches = listOf(
                 SettingsSwitchState(PREF_TOOLBAR, R.string.pref_enable_actionbar_title, R.string.pref_enable_actionbar_summary, R.drawable.ic_setting_enable_action_bar, false),
@@ -789,6 +831,7 @@ private fun SettingsPreview(darkTheme: Boolean) {
             onCameraDefaultSnapshotSelected = {},
             onCameraMaxSnapshotSelected = {},
             onCameraJpegQualitySelected = {},
+            onMidiSampleRateSelected = {},
             onSwitchChanged = { _, _ -> },
             onProfiles = {},
             onAudioDiagnostics = {},
