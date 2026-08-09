@@ -24,34 +24,54 @@ import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class WavFileFormatTest {
 	@Test
 	public void recognizesMonoImaAdpcmWithNonAudioChunk() throws IOException {
 		Path file = Files.createTempFile("ima", ".wav");
-		Files.write(file, waveFile(0x0011, 1, 4, true));
+		Files.write(file, waveFile(WavFileFormat.IMA_ADPCM, 1, 4, true));
 
 		assertTrue(WavFileFormat.isMonoImaAdpcm(file.toFile()));
 	}
 
 	@Test
-	public void rejectsStereoImaAdpcmBecauseEasSupportsMonoOnly() throws IOException {
+	public void rejectsStereoImaAdpcmForMonoCompatibilityCheck() throws IOException {
 		Path file = Files.createTempFile("ima-stereo", ".wav");
-		Files.write(file, waveFile(0x0011, 2, 4, false));
+		Files.write(file, waveFile(WavFileFormat.IMA_ADPCM, 2, 4, false));
 
 		assertFalse(WavFileFormat.isMonoImaAdpcm(file.toFile()));
 	}
 
 	@Test
-	public void rejectsPcmAndMalformedFiles() throws IOException {
+	public void identifiesGsm610ForFailureDiagnostics() throws IOException {
+		Path file = Files.createTempFile("gsm610", ".wav");
+		Files.write(file, waveFile(WavFileFormat.GSM_610, 1, 0, false));
+
+		WavFileFormat.Info info = WavFileFormat.inspect(file.toFile());
+		assertNotNull(info);
+		assertEquals(WavFileFormat.GSM_610, info.getFormatTag());
+		assertEquals("GSM 6.10", info.getCodecName());
+		assertEquals(1, info.getChannels());
+		assertEquals(8000, info.getSampleRate());
+		assertTrue(info.describe().contains("formatTag: 0x0031"));
+	}
+
+	@Test
+	public void identifiesPcmAndRejectsMalformedFiles() throws IOException {
 		Path pcm = Files.createTempFile("pcm", ".wav");
-		Files.write(pcm, waveFile(0x0001, 1, 16, false));
+		Files.write(pcm, waveFile(WavFileFormat.PCM, 1, 16, false));
+		WavFileFormat.Info info = WavFileFormat.inspect(pcm.toFile());
+		assertNotNull(info);
+		assertEquals("PCM", info.getCodecName());
 		assertFalse(WavFileFormat.isMonoImaAdpcm(pcm.toFile()));
 
 		Path malformed = Files.createTempFile("malformed", ".wav");
 		Files.write(malformed, new byte[]{'R', 'I', 'F', 'F', 0, 0, 0, 0});
+		assertEquals(null, WavFileFormat.inspect(malformed.toFile()));
 		assertFalse(WavFileFormat.isMonoImaAdpcm(malformed.toFile()));
 	}
 
