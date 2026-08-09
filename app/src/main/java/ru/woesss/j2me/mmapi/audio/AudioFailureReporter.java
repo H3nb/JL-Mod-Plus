@@ -16,44 +16,32 @@
 
 package ru.woesss.j2me.mmapi.audio;
 
-import android.Manifest;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
-import androidx.core.content.ContextCompat;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
 
 import io.github.h3nb.jlmodplus.R;
-import io.github.h3nb.jlmodplus.crashes.dialog.AudioFailureReportActivity;
 
 /**
- * Converts an audio backend failure into a persistent report and a user-visible
- * notification without doing file I/O on an audio callback thread.
+ * Persists audio backend failures and surfaces a short in-app warning.
+ *
+ * <p>Audio failures intentionally do not create Android system notifications.
+ * Details remain available from global Settings > Audio diagnostics.</p>
  */
 public final class AudioFailureReporter {
 	private static final String TAG = AudioFailureReporter.class.getSimpleName();
-	private static final String CHANNEL_ID = "audio-failures";
 	private static final long DEDUPLICATION_WINDOW_MS = 30_000L;
 	private static final Map<String, Long> recentFailures = new ConcurrentHashMap<>();
-	private static final AtomicInteger nextNotificationId = new AtomicInteger(0x4A000000);
 	private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
 	private static final ExecutorService REPORT_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
 		Thread thread = new Thread(r, "AudioFailureReporter");
@@ -74,24 +62,20 @@ public final class AudioFailureReporter {
 			return;
 		}
 		Log.e(TAG, failure.toReportText());
-		if (!claimNotification(failure)) {
+		if (!claimFailure(failure)) {
 			return;
 		}
-		REPORT_EXECUTOR.execute(() -> persistAndNotify(failure));
+		REPORT_EXECUTOR.execute(() -> persistAndNotifyInApp(failure));
 	}
 
-	private static boolean claimNotification(AudioFailure failure) {
+	private static boolean claimFailure(AudioFailure failure) {
 		long now = System.currentTimeMillis();
 		String key = failure.getNotificationKey();
-		Long previous = recentFailures.get(key);
-		if (previous != null && now - previous < DEDUPLICATION_WINDOW_MS) {
-			return false;
-		}
-		recentFailures.put(key, now);
-		return true;
+		Long previous = recentFailures.put(key, now);
+		return previous == null || now - previous >= DEDUPLICATION_WINDOW_MS;
 	}
 
-	private static void persistAndNotify(AudioFailure failure) {
+	private static void persistAndNotifyInApp(AudioFailure failure) {
 		Context context;
 		try {
 			context = ContextHolder.getAppContext();
@@ -104,86 +88,23 @@ public final class AudioFailureReporter {
 			return;
 		}
 
-		String reportId;
 		try {
-			reportId = AudioFailureReportStore.save(context.getFilesDir(), failure);
+			AudioFailureReportStore.save(context.getFilesDir(), failure);
 		} catch (IOException | RuntimeException e) {
 			Log.e(TAG, "Unable to persist audio failure report", e);
-			showToast(context);
-			return;
 		}
-
-		final String id = reportId;
-		MAIN_HANDLER.post(() -> {
-			if (!postNotification(context, id)) {
-				showToast(context);
-			}
-		});
-	}
-
-	private static boolean postNotification(Context context, String reportId) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-				&& ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
-				!= PackageManager.PERMISSION_GRANTED) {
-			return false;
-		}
-		NotificationManagerCompat manager = NotificationManagerCompat.from(context);
-		if (!manager.areNotificationsEnabled()) {
-			return false;
-		}
-		try {
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-				NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
-						context.getString(R.string.audio_failure_notification_channel),
-						NotificationManager.IMPORTANCE_DEFAULT);
-				channel.setDescription(context.getString(R.string.audio_failure_notification_channel_description));
-				NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
-				if (notificationManager == null) {
-					return false;
-				}
-				notificationManager.createNotificationChannel(channel);
-			}
-
-			Intent intent = new Intent(context, AudioFailureReportActivity.class)
-				.putExtra(AudioFailureReportActivity.EXTRA_REPORT_ID, reportId)
-				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-			int pendingIntentFlags = PendingIntentFlags.value();
-			android.app.PendingIntent pendingIntent = android.app.PendingIntent.getActivity(
-				context, reportId.hashCode(), intent, pendingIntentFlags);
-			NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-				.setSmallIcon(R.mipmap.ic_launcher)
-				.setContentTitle(context.getString(R.string.audio_failure_notification_title))
-				.setContentText(context.getString(R.string.audio_failure_notification_text))
-				.setContentIntent(pendingIntent)
-				.setAutoCancel(true)
-				.setPriority(NotificationCompat.PRIORITY_DEFAULT);
-			manager.notify(nextNotificationId.getAndIncrement(), builder.build());
-			return true;
-		} catch (RuntimeException e) {
-			Log.e(TAG, "Unable to post audio failure notification", e);
-			return false;
-		}
+		showToast(context);
 	}
 
 	private static void showToast(Context context) {
 		MAIN_HANDLER.post(() -> {
 			MicroActivity activity = ContextHolder.getActivity();
 			if (activity != null) {
-				activity.toast(R.string.audio_failure_toast);
+				activity.toast(R.string.audio_failure_toast_settings);
 			} else {
-				android.widget.Toast.makeText(context, R.string.audio_failure_toast,
-						android.widget.Toast.LENGTH_LONG).show();
+				android.widget.Toast.makeText(context, R.string.audio_failure_toast_settings,
+						android.widget.Toast.LENGTH_SHORT).show();
 			}
 		});
-	}
-
-	private static final class PendingIntentFlags {
-		private PendingIntentFlags() {
-		}
-
-		static int value() {
-			return android.app.PendingIntent.FLAG_UPDATE_CURRENT
-					| android.app.PendingIntent.FLAG_IMMUTABLE;
-		}
 	}
 }
