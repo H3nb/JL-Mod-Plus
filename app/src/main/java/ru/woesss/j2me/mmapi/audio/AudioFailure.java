@@ -21,6 +21,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import io.github.h3nb.jlmodplus.BuildConfig;
+
 /**
  * A bounded, privacy-conscious description of one audio playback failure.
  *
@@ -118,6 +120,9 @@ public final class AudioFailure {
 		format.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
 		StringBuilder report = new StringBuilder(768);
 		report.append("JL-Mod Plus audio failure report\n");
+		report.append("App version: ").append(BuildConfig.VERSION_NAME)
+				.append(" (").append(BuildConfig.VERSION_CODE).append(")\n");
+		report.append("Build type: ").append(BuildConfig.BUILD_TYPE).append('\n');
 		report.append("Timestamp (UTC): ").append(format.format(new Date(timestampMillis))).append('\n');
 		report.append("Source: ").append(source).append('\n');
 		report.append("Declared MIME: ").append(contentType).append('\n');
