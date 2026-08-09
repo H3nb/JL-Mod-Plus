@@ -22,7 +22,6 @@ namespace {
 
 constexpr uint16_t kGsm610Format = 0x0031;
 constexpr uint16_t kChannels = 1;
-constexpr uint32_t kSampleRate = 8000;
 constexpr uint16_t kBlockAlign = 65;
 constexpr uint16_t kSamplesPerBlock = 320;
 constexpr uint16_t kPcmBitsPerSample = 16;
@@ -38,6 +37,13 @@ uint32_t readLe32(const uint8_t *data) {
             | static_cast<uint32_t>(data[1]) << 8
             | static_cast<uint32_t>(data[2]) << 16
             | static_cast<uint32_t>(data[3]) << 24;
+}
+
+bool isSupportedSampleRate(uint32_t sampleRate) {
+    return sampleRate == 8000
+            || sampleRate == 11025
+            || sampleRate == 22050
+            || sampleRate == 44100;
 }
 
 bool readExact(std::ifstream &input, void *data, std::streamsize size) {
@@ -61,7 +67,9 @@ void appendFourCc(std::vector<uint8_t> &output, const char *value) {
     output.insert(output.end(), value, value + 4);
 }
 
-void writePcmHeader(std::vector<uint8_t> &output, uint32_t dataBytes) {
+void writePcmHeader(std::vector<uint8_t> &output,
+                    uint32_t dataBytes,
+                    uint32_t sampleRate) {
     output.clear();
     output.reserve(44ULL + dataBytes);
     appendFourCc(output, "RIFF");
@@ -71,8 +79,8 @@ void writePcmHeader(std::vector<uint8_t> &output, uint32_t dataBytes) {
     appendLe32(output, 16U);
     appendLe16(output, 1U);
     appendLe16(output, kChannels);
-    appendLe32(output, kSampleRate);
-    appendLe32(output, kSampleRate * kChannels * (kPcmBitsPerSample / 8U));
+    appendLe32(output, sampleRate);
+    appendLe32(output, sampleRate * kChannels * (kPcmBitsPerSample / 8U));
     appendLe16(output, kChannels * (kPcmBitsPerSample / 8U));
     appendLe16(output, kPcmBitsPerSample);
     appendFourCc(output, "data");
@@ -211,7 +219,7 @@ Gsm610DecodeResult decodeGsm610WaveFile(const char *path,
     }
 
     if (channels != kChannels
-            || sampleRate != kSampleRate
+            || !isSupportedSampleRate(sampleRate)
             || blockAlign != kBlockAlign
             || bitsPerSample != 0
             || extraSize < 2
@@ -249,7 +257,7 @@ Gsm610DecodeResult decodeGsm610WaveFile(const char *path,
         return Gsm610DecodeResult::Invalid;
     }
 
-    writePcmHeader(pcmWave, static_cast<uint32_t>(dataBytes));
+    writePcmHeader(pcmWave, static_cast<uint32_t>(dataBytes), sampleRate);
     input.seekg(static_cast<std::streamoff>(dataOffset), std::ios::beg);
 
     uint64_t remainingFrames = outputFrames;
