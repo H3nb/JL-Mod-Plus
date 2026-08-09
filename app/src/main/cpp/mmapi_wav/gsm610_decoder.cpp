@@ -133,15 +133,16 @@ Gsm610DecodeResult decodeGsm610WaveFile(const char *path,
 
     bool sawFmt = false;
     bool isGsm = false;
-    bool sawData = false;
     uint16_t channels = 0;
     uint32_t sampleRate = 0;
     uint16_t blockAlign = 0;
     uint16_t bitsPerSample = 0;
     uint16_t extraSize = 0;
     uint16_t samplesPerBlock = 0;
+    uint64_t fmtChunkSize = 0;
     uint64_t dataOffset = 0;
     uint64_t dataSize = 0;
+    int dataChunkCount = 0;
     uint32_t factFrames = 0;
 
     uint64_t position = 12;
@@ -161,6 +162,9 @@ Gsm610DecodeResult decodeGsm610WaveFile(const char *path,
         }
 
         if (std::memcmp(header, "fmt ", 4) == 0) {
+            if (sawFmt) {
+                return isGsm ? Gsm610DecodeResult::Invalid : Gsm610DecodeResult::NotGsm;
+            }
             if (chunkSize < 16) {
                 return Gsm610DecodeResult::NotGsm;
             }
@@ -177,6 +181,7 @@ Gsm610DecodeResult decodeGsm610WaveFile(const char *path,
                 if (chunkSize < 20) {
                     return Gsm610DecodeResult::Invalid;
                 }
+                fmtChunkSize = chunkSize;
                 channels = readLe16(format + 2);
                 sampleRate = readLe32(format + 4);
                 blockAlign = readLe16(format + 12);
@@ -190,10 +195,12 @@ Gsm610DecodeResult decodeGsm610WaveFile(const char *path,
                 return isGsm ? Gsm610DecodeResult::Invalid : Gsm610DecodeResult::NotGsm;
             }
             factFrames = readLe32(fact);
-        } else if (std::memcmp(header, "data", 4) == 0 && !sawData) {
-            sawData = true;
-            dataOffset = dataStart;
-            dataSize = chunkSize;
+        } else if (std::memcmp(header, "data", 4) == 0) {
+            ++dataChunkCount;
+            if (dataChunkCount == 1) {
+                dataOffset = dataStart;
+                dataSize = chunkSize;
+            }
         }
 
         position = paddedEnd;
@@ -208,8 +215,9 @@ Gsm610DecodeResult decodeGsm610WaveFile(const char *path,
             || blockAlign != kBlockAlign
             || bitsPerSample != 0
             || extraSize < 2
+            || 18ULL + extraSize > fmtChunkSize
             || samplesPerBlock != kSamplesPerBlock
-            || !sawData
+            || dataChunkCount != 1
             || dataSize == 0
             || dataSize % kBlockAlign != 0) {
         return Gsm610DecodeResult::Invalid;
