@@ -23,7 +23,7 @@ import java.util.Locale;
  *
  * <p>Stable content signatures always take precedence over a caller supplied
  * MIME type. MIME is only used as a fallback when the content is inconclusive.
- * UNKNOWN means no backend has made an explicit compatibility claim.</p>
+ * Backend routing is separate from public capability advertising.</p>
  */
 public final class MediaRouter {
 	public enum Backend {
@@ -45,6 +45,7 @@ public final class MediaRouter {
 			case MIDI:
 			case XMF:
 			case RMID:
+			case IMELODY:
 				return Backend.SYNTH;
 			case WAV:
 				return Backend.WAV;
@@ -53,13 +54,13 @@ public final class MediaRouter {
 			case AMR:
 			case AMR_WB:
 			case MP4:
-				return Backend.PLATFORM_AUDIO;
-			case SMAF:
 			case ASF:
 			case QCP:
-			case IMELODY:
-				// These signatures are useful diagnostic evidence, but no backend is
-				// claimed until the format has passed its compatibility gate.
+				// ASF/WMA and QCP are platform-decoder candidates, not advertised
+				// capabilities. If Android rejects them, MicroPlayer reports it.
+				return Backend.PLATFORM_AUDIO;
+			case SMAF:
+				// Recognized for diagnostics, but no backend claim yet.
 				return Backend.UNKNOWN;
 			case UNKNOWN:
 			default:
