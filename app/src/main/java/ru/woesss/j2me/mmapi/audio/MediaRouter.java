@@ -54,6 +54,13 @@ public final class MediaRouter {
 			case AMR_WB:
 			case MP4:
 				return Backend.PLATFORM_AUDIO;
+			case SMAF:
+			case ASF:
+			case QCP:
+			case IMELODY:
+				// These signatures are useful diagnostic evidence, but no backend is
+				// claimed until the format has passed its compatibility gate.
+				return Backend.UNKNOWN;
 			case UNKNOWN:
 			default:
 				return routeMime(declaredMime);
