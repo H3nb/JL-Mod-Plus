@@ -15,4 +15,7 @@
     <string name="audio_diagnostics_title">Audio diagnostics</string>
     <string name="audio_diagnostics_summary">Review recent audio playback failures</string>
     <string name="audio_diagnostics_empty">No recent audio failures.</string>
+    <string name="audio_diagnostics_actions">Actions</string>
+    <string name="audio_diagnostics_clear">Clear history</string>
+    <string name="audio_diagnostics_cleared">Audio diagnostics history cleared.</string>
 </resources>
