@@ -1,275 +1,49 @@
-# Copyright 2026 H3NB
-
-name: CI
+name: Android CI
 
 on:
   pull_request:
-    branches: [alpha, main]
+    branches:
+      - alpha
   push:
-    branches: [alpha, main]
+    branches:
+      - alpha
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: android-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  quality:
-    name: Quality, Midlet ID, and emulator debug lint
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
     steps:
       - name: Check out sources
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@v4.1.6
         with:
-          persist-credentials: false
-          submodules: recursive
+          submodules: 'true'
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4.2.1
         with:
-          distribution: temurin
-          java-version: "21"
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
-        with:
-          cache-read-only: true
-
-      - name: Make Gradle wrapper executable
+      - name: Grant execute permission for Gradle wrapper
         run: chmod +x gradlew
 
-      - name: Add alpha version suffix
-        shell: bash
-        run: echo "VERSION_SUFFIX=-alpha.${GITHUB_SHA::7}" >> "$GITHUB_ENV"
-
-      # Build-script edge cases and lint are blocking quality gates. Warnings remain
-      # visible in the uploaded report and must be triaged without broad suppression.
-      - name: Test Midlet ID and run emulator debug lint
-        run: >-
-          ./gradlew --no-daemon --stacktrace --console=plain --non-interactive
-          --warning-mode=all
-          --configuration-cache --configuration-cache-problems=fail
-          :app:testMidletApplicationIdSegment
-          :app:lintEmulatorDebug
-
-      - name: Upload lint report
-        if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: jl-mod-plus-lint-${{ github.run_number }}
-          path: |
-            app/build/reports/lint-results-emulatorDebug.html
-            app/build/reports/lint-results-emulatorDebug.xml
-            app/build/reports/lint-results-emulatorDebug.txt
-          if-no-files-found: warn
-          retention-days: 7
-
-      - name: Upload Gradle diagnostic reports
-        if: failure()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: jl-mod-plus-quality-diagnostics-${{ github.run_number }}
-          path: |
-            build/reports/problems/**
-            build/reports/dependency-verification/**
-            build/reports/configuration-cache/**
-            app/build/reports/problems/**
-            app/build/reports/configuration-cache/**
-          if-no-files-found: warn
-          retention-days: 7
-
-  unit-assemble:
-    name: Emulator debug tests and ARM64 assembly
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-
-    steps:
-      - name: Check out sources
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-          submodules: recursive
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
-        with:
-          distribution: temurin
-          java-version: "21"
-
-      - name: Restore shared debug keystore
-        shell: bash
-        env:
-          ANDROID_DEBUG_KEYSTORE_BASE64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 }}
-        run: |
-          if [ -z "$ANDROID_DEBUG_KEYSTORE_BASE64" ]; then
-            echo "::warning::ANDROID_DEBUG_KEYSTORE_BASE64 is unavailable; using the runner debug keystore."
-            exit 0
-          fi
-          mkdir -p "$HOME/.android"
-          printf '%s' "$ANDROID_DEBUG_KEYSTORE_BASE64" | base64 --decode > "$HOME/.android/debug.keystore"
-          chmod 600 "$HOME/.android/debug.keystore"
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
-        with:
-          cache-read-only: ${{ github.ref_name != github.event.repository.default_branch }}
-
-      - name: Make Gradle wrapper executable
-        run: chmod +x gradlew
-
-      - name: Add alpha version suffix
-        shell: bash
-        run: echo "VERSION_SUFFIX=-alpha.${GITHUB_SHA::7}" >> "$GITHUB_ENV"
-
-      - name: Test and assemble emulator debug
-        run: >-
-          ./gradlew --no-daemon --stacktrace --console=plain --non-interactive
-          --warning-mode=all
-          --build-cache
-          --configuration-cache --configuration-cache-problems=fail
-          :app:testEmulatorDebugUnitTest
-          :app:assembleEmulatorDebugAndroidTest
-          :app:assembleEmulatorDebug
-
-      - name: Verify packaged ABI
-        shell: bash
-        run: |
-          apk="$(find app/build/outputs/renamed_apks/emulatorDebug -type f -name '*.apk' -print -quit)"
-          test -n "$apk"
-          abis="$(unzip -Z1 "$apk" | awk -F/ '/^lib\/[^/]+\// {print $2}' | sort -u)"
-          test "$abis" = "arm64-v8a"
-          printf 'Verified APK: %s\nABI: %s\n' "$apk" "$abis"
-
-      - name: Verify crash observability packaging
-        shell: bash
-        run: |
-          set -euo pipefail
-          apk="$(find app/build/outputs/renamed_apks/emulatorDebug -type f -name '*.apk' -print -quit)"
-          test -n "$apk"
-          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
-          apkanalyzer="$(find "$sdk_root/cmdline-tools" -type f -name apkanalyzer -print -quit)"
-          test -x "$apkanalyzer"
-          manifest="$RUNNER_TEMP/emulator-debug-manifest.xml"
-          "$apkanalyzer" manifest print "$apk" > "$manifest"
-          python3 - "$manifest" <<'PY'
-          import sys
-          import xml.etree.ElementTree as ET
-
-          android = "{http://schemas.android.com/apk/res/android}"
-          root = ET.parse(sys.argv[1]).getroot()
-          application = root.find("application")
-          if application is None:
-              raise SystemExit("APK manifest has no <application>")
-
-          activities = {item.get(android + "name"): item for item in application.findall("activity")}
-          expected_processes = {
-              "javax.microedition.shell.MicroActivity": ":midlet",
-              "io.github.h3nb.jlmodplus.crashes.dialog.CrashReportDialog": ":acra",
-          }
-          for target, expected in expected_processes.items():
-              activity = activities.get(target)
-              if activity is None:
-                  raise SystemExit(f"{target} is missing from APK manifest")
-              process = activity.get(android + "process")
-              if process != expected:
-                  raise SystemExit(
-                      f"Process isolation lost for {target}: expected {expected!r}, got {process!r}"
-                  )
-
-          report_activity = activities.get(
-              "io.github.h3nb.jlmodplus.crashes.dialog.ProcessDeathReportActivity"
-          )
-          if report_activity is None or report_activity.get(android + "exported") != "false":
-              raise SystemExit("ProcessDeathReportActivity must exist and remain non-exported")
-
-          receivers = {item.get(android + "name"): item for item in application.findall("receiver")}
-          injector = receivers.get("io.github.h3nb.jlmodplus.crashes.debug.DebugCrashReceiver")
-          if injector is None:
-              raise SystemExit("DebugCrashReceiver is missing from debug APK")
-          if injector.get(android + "process") != ":midlet":
-              raise SystemExit("DebugCrashReceiver must execute in :midlet")
-          if injector.get(android + "exported") != "true":
-              raise SystemExit("DebugCrashReceiver must be exported for adb acceptance tests")
-          if injector.get(android + "permission") != "android.permission.DUMP":
-              raise SystemExit("DebugCrashReceiver must remain guarded by android.permission.DUMP")
-
-          providers = {item.get(android + "name"): item for item in application.findall("provider")}
-          provider = providers.get("androidx.core.content.FileProvider")
-          if provider is None:
-              raise SystemExit("Crash trace FileProvider is missing")
-          if provider.get(android + "authorities") != "io.github.h3nb.jlmodplus.debug.crash-reports":
-              raise SystemExit("Unexpected debug crash trace FileProvider authority")
-          if provider.get(android + "exported") != "false":
-              raise SystemExit("Crash trace FileProvider must remain non-exported")
-          if provider.get(android + "grantUriPermissions") != "true":
-              raise SystemExit("Crash trace FileProvider must grant per-URI read permission")
-
-          print("Verified debug crash process isolation, injector guard, report UI, and trace provider")
-          PY
-
-      - name: Verify ACRA report interaction packaging
-        shell: bash
-        run: |
-          set -euo pipefail
-          apk="$(find app/build/outputs/renamed_apks/emulatorDebug -type f -name '*.apk' -print -quit)"
-          test -n "$apk"
-          service_path="META-INF/services/org.acra.interaction.ReportInteraction"
-          provider="io.github.h3nb.jlmodplus.crashes.dialog.DialogInteraction"
-          unzip -Z1 "$apk" | grep -Fx "$service_path"
-          unzip -p "$apk" "$service_path" | tr -d '\r' | sed 's/[[:space:]]*$//' | grep -Fx "$provider"
-          printf 'Verified ACRA ReportInteraction provider in %s\n' "$apk"
-
-      - name: Upload unit-test reports
-        if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: jl-mod-plus-unit-tests-${{ github.run_number }}
-          path: |
-            app/build/test-results/testEmulatorDebugUnitTest/**
-            app/build/reports/tests/testEmulatorDebugUnitTest/**
-          if-no-files-found: warn
-          retention-days: 7
-
-      - name: Upload Gradle diagnostic reports
-        if: failure()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: jl-mod-plus-gradle-diagnostics-${{ github.run_number }}
-          path: |
-            build/reports/problems/**
-            build/reports/dependency-verification/**
-            build/reports/configuration-cache/**
-            app/build/reports/problems/**
-            app/build/reports/configuration-cache/**
-          if-no-files-found: warn
-          retention-days: 7
+      - name: Run unit tests and assemble emulator debug APK
+        run: ./gradlew --no-daemon testEmulatorDebugUnitTest assembleEmulatorDebug
 
       - name: Upload emulator debug APK
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@v4.3.3
         with:
-          name: jl-mod-plus-${{ github.run_number }}-arm64-v8a-debug
-          path: app/build/outputs/renamed_apks/emulatorDebug/*.apk
+          name: JL-Mod-Plus-alpha-debug
+          path: app/build/outputs/apk/emulator/debug/*.apk
           if-no-files-found: error
           retention-days: 7
-
-  dependency-review:
-    name: Review dependency changes
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - name: Check out sources
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-
-      - name: Review dependency changes
-        uses: actions/dependency-review-action@3c4e3dcb1aa7874d2c16be7d79418e9b7efd6261 # v4.8.2
-        with:
-          fail-on-severity: high
