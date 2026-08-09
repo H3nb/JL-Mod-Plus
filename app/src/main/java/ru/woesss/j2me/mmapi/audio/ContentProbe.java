@@ -25,10 +25,13 @@ import java.util.Arrays;
  * Small, side-effect-free probe for media formats with stable file signatures.
  *
  * <p>This deliberately does not guess from file extensions or MIME strings.
- * Callers may use those as hints only when the content itself is inconclusive.</p>
+ * Callers may use those as hints only when the content itself is inconclusive.
+ * A recognized kind is not automatically a claim that playback is supported;
+ * some kinds exist so unsupported media can be diagnosed accurately.</p>
  */
 public final class ContentProbe {
 	private static final int PROBE_BYTES = 64;
+	private static final int FINGERPRINT_BYTES = 16;
 
 	public enum Kind {
 		MIDI,
@@ -40,6 +43,10 @@ public final class ContentProbe {
 		AMR,
 		AMR_WB,
 		MP4,
+		SMAF,
+		ASF,
+		QCP,
+		IMELODY,
 		UNKNOWN
 	}
 
@@ -51,27 +58,7 @@ public final class ContentProbe {
 		if (file == null) {
 			throw new IllegalArgumentException("file == null");
 		}
-
-		byte[] prefix = new byte[PROBE_BYTES];
-		int total = 0;
-		try (FileInputStream input = new FileInputStream(file)) {
-			while (total < prefix.length) {
-				int read = input.read(prefix, total, prefix.length - total);
-				if (read == -1) {
-					break;
-				}
-				if (read == 0) {
-					int value = input.read();
-					if (value == -1) {
-						break;
-					}
-					prefix[total++] = (byte) value;
-				} else {
-					total += read;
-				}
-			}
-		}
-		return probe(total == prefix.length ? prefix : Arrays.copyOf(prefix, total));
+		return probe(readPrefix(file, PROBE_BYTES));
 	}
 
 	public static Kind probe(byte[] prefix) {
@@ -85,12 +72,25 @@ public final class ContentProbe {
 		if (matches(prefix, 0, 'X', 'M', 'F', '_')) {
 			return Kind.XMF;
 		}
+		if (matches(prefix, 0, 'M', 'M', 'M', 'D')) {
+			return Kind.SMAF;
+		}
+		if (matchesAsciiIgnoreCase(prefix, 0, "BEGIN:IMELODY")) {
+			return Kind.IMELODY;
+		}
+		if (matches(prefix, 0, 0x30, 0x26, 0xb2, 0x75, 0x8e, 0x66, 0xcf, 0x11,
+				0xa6, 0xd9, 0x00, 0xaa, 0x00, 0x62, 0xce, 0x6c)) {
+			return Kind.ASF;
+		}
 		if (matches(prefix, 0, 'R', 'I', 'F', 'F') && prefix.length >= 12) {
 			if (matches(prefix, 8, 'W', 'A', 'V', 'E')) {
 				return Kind.WAV;
 			}
 			if (matches(prefix, 8, 'R', 'M', 'I', 'D')) {
 				return Kind.RMID;
+			}
+			if (matches(prefix, 8, 'Q', 'L', 'C', 'M')) {
+				return Kind.QCP;
 			}
 		}
 		if (matches(prefix, 0, '#', '!', 'A', 'M', 'R', '-', 'W', 'B', '\n')) {
@@ -109,6 +109,53 @@ public final class ContentProbe {
 			return Kind.MP4;
 		}
 		return Kind.UNKNOWN;
+	}
+
+	/**
+	 * Returns at most 16 leading bytes as hexadecimal evidence for an unknown
+	 * format. This is intentionally tiny: diagnostics should classify media, not
+	 * copy game assets into reports.
+	 */
+	public static String fingerprint(File file) throws IOException {
+		byte[] prefix = readPrefix(file, FINGERPRINT_BYTES);
+		if (prefix.length == 0) {
+			return "empty";
+		}
+		StringBuilder result = new StringBuilder(prefix.length * 3 - 1);
+		for (int i = 0; i < prefix.length; i++) {
+			if (i > 0) {
+				result.append(' ');
+			}
+			int value = prefix[i] & 0xff;
+			if (value < 0x10) {
+				result.append('0');
+			}
+			result.append(Integer.toHexString(value).toUpperCase(java.util.Locale.ROOT));
+		}
+		return result.toString();
+	}
+
+	private static byte[] readPrefix(File file, int limit) throws IOException {
+		byte[] prefix = new byte[limit];
+		int total = 0;
+		try (FileInputStream input = new FileInputStream(file)) {
+			while (total < prefix.length) {
+				int read = input.read(prefix, total, prefix.length - total);
+				if (read == -1) {
+					break;
+				}
+				if (read == 0) {
+					int value = input.read();
+					if (value == -1) {
+						break;
+					}
+					prefix[total++] = (byte) value;
+				} else {
+					total += read;
+				}
+			}
+		}
+		return total == prefix.length ? prefix : Arrays.copyOf(prefix, total);
 	}
 
 	private static boolean isMpegAudioFrame(byte[] data) {
@@ -142,7 +189,27 @@ public final class ContentProbe {
 		return b0 == 0xff && (b1 & 0xf6) == 0xf0;
 	}
 
-	private static boolean matches(byte[] data, int offset, char... expected) {
+	private static boolean matchesAsciiIgnoreCase(byte[] data, int offset, String expected) {
+		if (offset < 0 || data.length - offset < expected.length()) {
+			return false;
+		}
+		for (int i = 0; i < expected.length(); i++) {
+			int actual = data[offset + i] & 0xff;
+			char wanted = expected.charAt(i);
+			if (actual >= 'a' && actual <= 'z') {
+				actual -= 'a' - 'A';
+			}
+			if (wanted >= 'a' && wanted <= 'z') {
+				wanted -= 'a' - 'A';
+			}
+			if (actual != wanted) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static boolean matches(byte[] data, int offset, int... expected) {
 		if (offset < 0 || data.length - offset < expected.length) {
 			return false;
 		}
@@ -150,7 +217,6 @@ public final class ContentProbe {
 			if ((data[offset + i] & 0xff) != expected[i]) {
 				return false;
 			}
-		}
 		return true;
 	}
 }
