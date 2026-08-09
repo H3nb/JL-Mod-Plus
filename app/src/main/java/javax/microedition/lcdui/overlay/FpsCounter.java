@@ -34,7 +34,7 @@ public class FpsCounter extends TimerTask implements Layer {
 	public FpsCounter(View view) {
 		this.view = view;
 		timer = new Timer("FpsCounter", true);
-		timer.schedule(this, 0, 1000);
+		timer.scheduleAtFixedRate(this, 0, 1000);
 	}
 
 	public void run() {
