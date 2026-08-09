@@ -217,6 +217,7 @@ public final class ContentProbe {
 			if ((data[offset + i] & 0xff) != expected[i]) {
 				return false;
 			}
+		}
 		return true;
 	}
 }
