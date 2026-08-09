@@ -1,7 +1,3 @@
-[submodule "TinySoundFont"]
-	path = app/src/main/cpp/mmapi_tsf/TinySoundFont
-	url = https://github.com/schellingb/TinySoundFont.git
-
 [submodule "dr_libs"]
 	path = app/src/main/cpp/dr_libs
 	url = https://github.com/mackron/dr_libs.git
