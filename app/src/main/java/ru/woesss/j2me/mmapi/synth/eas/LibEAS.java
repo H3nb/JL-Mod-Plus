@@ -78,85 +78,24 @@ public abstract class LibEAS implements Library {
 		return nativeCreatePlayer(locator, soundBank);
 	}
 
-	@Override
-	public final void finalize(long handle) {
-		nativeFinalize(handle);
-	}
-
-	@Override
-	public final void realize(long handle) {
-		nativeRealize(handle);
-	}
-
-	@Override
-	public final void prefetch(long handle) {
-		nativePrefetch(handle);
-	}
-
-	@Override
-	public final void start(long handle) {
-		nativeStart(handle);
-	}
-
-	@Override
-	public final void pause(long handle) {
-		nativePause(handle);
-	}
-
-	@Override
-	public final void deallocate(long handle) {
-		nativeDeallocate(handle);
-	}
-
-	@Override
-	public final void close(long handle) {
-		nativeClose(handle);
-	}
-
-	@Override
-	public final long setMediaTime(long handle, long now) {
-		return nativeSetMediaTime(handle, now);
-	}
-
-	@Override
-	public final long getMediaTime(long handle) {
-		return nativeGetMediaTime(handle);
-	}
-
-	@Override
-	public final void setRepeat(long handle, int count) {
-		nativeSetRepeat(handle, count);
-	}
-
-	@Override
-	public final void setVolume(long handle, float left, float right) {
-		nativeSetVolume(handle, left, right);
-	}
-
-	@Override
-	public final long getDuration(long handle) {
-		return nativeGetDuration(handle);
-	}
-
-	@Override
-	public final void setListener(long handle, Object listener) {
-		nativeSetListener(handle, listener);
-	}
-
-	@Override
-	public final void setDataSource(long handle, byte[] data) {
-		nativeSetDataSource(handle, data);
-	}
-
-	@Override
-	public final int writeMIDI(long handle, byte[] data, int offset, int length) {
+	@Override public final void finalize(long handle) { nativeFinalize(handle); }
+	@Override public final void realize(long handle) { nativeRealize(handle); }
+	@Override public final void prefetch(long handle) { nativePrefetch(handle); }
+	@Override public final void start(long handle) { nativeStart(handle); }
+	@Override public final void pause(long handle) { nativePause(handle); }
+	@Override public final void deallocate(long handle) { nativeDeallocate(handle); }
+	@Override public final void close(long handle) { nativeClose(handle); }
+	@Override public final long setMediaTime(long handle, long now) { return nativeSetMediaTime(handle, now); }
+	@Override public final long getMediaTime(long handle) { return nativeGetMediaTime(handle); }
+	@Override public final void setRepeat(long handle, int count) { nativeSetRepeat(handle, count); }
+	@Override public final void setVolume(long handle, float left, float right) { nativeSetVolume(handle, left, right); }
+	@Override public final long getDuration(long handle) { return nativeGetDuration(handle); }
+	@Override public final void setListener(long handle, Object listener) { nativeSetListener(handle, listener); }
+	@Override public final void setDataSource(long handle, byte[] data) { nativeSetDataSource(handle, data); }
+	@Override public final int writeMIDI(long handle, byte[] data, int offset, int length) {
 		return nativeWriteMIDI(handle, data, offset, length);
 	}
-
-	@Override
-	public final boolean hasToneControl() {
-		return true;
-	}
+	@Override public final boolean hasToneControl() { return true; }
 
 	protected abstract void nativeValidateSoundBank(String soundBank);
 	protected abstract long nativeCreatePlayer(String locator, String soundBank);
@@ -188,7 +127,6 @@ final class LibEAS22 extends LibEAS {
 		loadCommonLibraries();
 		System.loadLibrary("mmapi_eas_22k");
 	}
-
 	@Override protected native void nativeValidateSoundBank(String soundBank);
 	@Override protected native long nativeCreatePlayer(String locator, String soundBank);
 	@Override protected native void nativeFinalize(long handle);
@@ -213,7 +151,6 @@ final class LibEAS44 extends LibEAS {
 		loadCommonLibraries();
 		System.loadLibrary("mmapi_eas_44k");
 	}
-
 	@Override protected native void nativeValidateSoundBank(String soundBank);
 	@Override protected native long nativeCreatePlayer(String locator, String soundBank);
 	@Override protected native void nativeFinalize(long handle);
