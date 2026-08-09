@@ -21,10 +21,10 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
 import io.github.h3nb.jlmodplus.config.ProfilesActivity
+import io.github.h3nb.jlmodplus.crashes.dialog.AudioFailureReportActivity
 import io.github.h3nb.jlmodplus.ui.WindowInsetsPolicy
 import io.github.h3nb.jlmodplus.util.Constants.PREF_EMULATOR_DIR
 import io.github.h3nb.jlmodplus.util.FileUtils
@@ -48,6 +48,9 @@ class SettingsActivity : AppCompatActivity() {
                 onBack = ::finish,
                 onProfiles = {
                     startActivity(Intent(this, ProfilesActivity::class.java))
+                },
+                onAudioDiagnostics = {
+                    startActivity(Intent(this, AudioFailureReportActivity::class.java))
                 },
                 onChooseDirectory = { openDirLauncher.launch(null) },
             )
