@@ -21,6 +21,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import androidx.preference.PreferenceManager;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,12 +33,14 @@ import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
 
 import io.github.h3nb.jlmodplus.R;
+import io.github.h3nb.jlmodplus.util.Constants;
 
 /**
- * Persists audio backend failures and surfaces a short in-app warning.
+ * Persists audio backend failures and optionally surfaces a short in-app warning.
  *
  * <p>Audio failures intentionally do not create Android system notifications.
- * Details remain available from global Settings > Audio diagnostics.</p>
+ * Details remain available from global Settings > Audio diagnostics even when
+ * the user disables in-app failure warnings.</p>
  */
 public final class AudioFailureReporter {
 	private static final String TAG = AudioFailureReporter.class.getSimpleName();
@@ -64,10 +68,10 @@ public final class AudioFailureReporter {
 		}
 		Log.e(TAG, failure.toReportText());
 
-		// A lower backend and Manager may both describe the same operation. Keep
-		// one useful report per source/phase during a short retry burst.
-		String reportKey = failure.getSource() + '|' + failure.getPhase();
-		if (!claim(recentReports, reportKey)) {
+		// Lower backends and Manager can describe the same operation. Deduplicate
+		// only identical failures so a different backend/error code is preserved
+		// as separate diagnostic evidence.
+		if (!claim(recentReports, failure.getNotificationKey())) {
 			return;
 		}
 		REPORT_EXECUTOR.execute(() -> persistAndNotifyInApp(failure));
@@ -96,6 +100,12 @@ public final class AudioFailureReporter {
 			AudioFailureReportStore.save(context.getFilesDir(), failure);
 		} catch (IOException | RuntimeException e) {
 			Log.e(TAG, "Unable to persist audio failure report", e);
+		}
+
+		boolean warningsEnabled = PreferenceManager.getDefaultSharedPreferences(context)
+				.getBoolean(Constants.PREF_AUDIO_FAILURE_WARNINGS, true);
+		if (!warningsEnabled) {
+			return;
 		}
 
 		// Different phases can still fail close together for one resource. Keep
