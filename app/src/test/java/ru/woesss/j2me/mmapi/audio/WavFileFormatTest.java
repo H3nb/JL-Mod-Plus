@@ -49,7 +49,7 @@ public class WavFileFormatTest {
 	@Test
 	public void identifiesStandardGsm610Wav49() throws IOException {
 		Path file = Files.createTempFile("gsm610", ".wav");
-		Files.write(file, gsm610WaveFile(1, 65, 320));
+		Files.write(file, gsm610WaveFile(8000, 1, 65, 320));
 
 		WavFileFormat.Info info = WavFileFormat.inspect(file.toFile());
 		assertNotNull(info);
@@ -64,21 +64,34 @@ public class WavFileFormatTest {
 	}
 
 	@Test
+	public void recognizesGsm610StandardSampleRates() throws IOException {
+		for (int sampleRate : new int[]{8000, 11025, 22050, 44100}) {
+			Path file = Files.createTempFile("gsm610-rate-" + sampleRate, ".wav");
+			Files.write(file, gsm610WaveFile(sampleRate, 1, 65, 320));
+			assertTrue("sampleRate=" + sampleRate, WavFileFormat.isGsm610(file.toFile()));
+		}
+	}
+
+	@Test
 	public void rejectsNonStandardGsm610Layout() throws IOException {
 		Path stereo = Files.createTempFile("gsm610-stereo", ".wav");
-		Files.write(stereo, gsm610WaveFile(2, 65, 320));
+		Files.write(stereo, gsm610WaveFile(8000, 2, 65, 320));
 		assertFalse(WavFileFormat.isGsm610(stereo.toFile()));
 
+		Path wrongRate = Files.createTempFile("gsm610-rate", ".wav");
+		Files.write(wrongRate, gsm610WaveFile(16000, 1, 65, 320));
+		assertFalse(WavFileFormat.isGsm610(wrongRate.toFile()));
+
 		Path wrongBlock = Files.createTempFile("gsm610-block", ".wav");
-		Files.write(wrongBlock, gsm610WaveFile(1, 64, 320));
+		Files.write(wrongBlock, gsm610WaveFile(8000, 1, 64, 320));
 		assertFalse(WavFileFormat.isGsm610(wrongBlock.toFile()));
 
 		Path wrongSamples = Files.createTempFile("gsm610-samples", ".wav");
-		Files.write(wrongSamples, gsm610WaveFile(1, 65, 160));
+		Files.write(wrongSamples, gsm610WaveFile(8000, 1, 65, 160));
 		assertFalse(WavFileFormat.isGsm610(wrongSamples.toFile()));
 
 		Path invalidExtension = Files.createTempFile("gsm610-extension", ".wav");
-		Files.write(invalidExtension, gsm610WaveFile(1, 65, 320, 4));
+		Files.write(invalidExtension, gsm610WaveFile(8000, 1, 65, 320, 4));
 		WavFileFormat.Info invalidInfo = WavFileFormat.inspect(invalidExtension.toFile());
 		assertNotNull(invalidInfo);
 		assertEquals(0, invalidInfo.getSamplesPerBlock());
@@ -140,11 +153,12 @@ public class WavFileFormatTest {
 		return buffer.array();
 	}
 
-	private static byte[] gsm610WaveFile(int channels, int blockAlign, int samplesPerBlock) {
-		return gsm610WaveFile(channels, blockAlign, samplesPerBlock, 2);
+	private static byte[] gsm610WaveFile(int sampleRate, int channels, int blockAlign, int samplesPerBlock) {
+		return gsm610WaveFile(sampleRate, channels, blockAlign, samplesPerBlock, 2);
 	}
 
-	private static byte[] gsm610WaveFile(int channels, int blockAlign, int samplesPerBlock, int extraSize) {
+	private static byte[] gsm610WaveFile(int sampleRate, int channels, int blockAlign,
+			int samplesPerBlock, int extraSize) {
 		int fmtSize = 20;
 		int dataSize = 65;
 		int factSize = 4;
@@ -157,8 +171,8 @@ public class WavFileFormatTest {
 		buffer.putInt(fmtSize);
 		buffer.putShort((short) WavFileFormat.GSM_610);
 		buffer.putShort((short) channels);
-		buffer.putInt(8000);
-		buffer.putInt(1625);
+		buffer.putInt(sampleRate);
+		buffer.putInt((65 * sampleRate) / 320);
 		buffer.putShort((short) blockAlign);
 		buffer.putShort((short) 0);
 		buffer.putShort((short) extraSize);
