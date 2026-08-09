@@ -63,7 +63,11 @@ public final class AudioFailureReporter {
 			return;
 		}
 		Log.e(TAG, failure.toReportText());
-		if (!claim(recentReports, failure.getNotificationKey())) {
+
+		// A lower backend and Manager may both describe the same operation. Keep
+		// one useful report per source/phase during a short retry burst.
+		String reportKey = failure.getSource() + '|' + failure.getPhase();
+		if (!claim(recentReports, reportKey)) {
 			return;
 		}
 		REPORT_EXECUTOR.execute(() -> persistAndNotifyInApp(failure));
@@ -94,8 +98,8 @@ public final class AudioFailureReporter {
 			Log.e(TAG, "Unable to persist audio failure report", e);
 		}
 
-		// One resource may generate layered MMAPI/backend reports for a single
-		// failure. Keep those details, but do not spam the player with toasts.
+		// Different phases can still fail close together for one resource. Keep
+		// those details in diagnostics without stacking in-game toast messages.
 		if (claim(recentNotifications, failure.getSource())) {
 			showToast(context);
 		}
