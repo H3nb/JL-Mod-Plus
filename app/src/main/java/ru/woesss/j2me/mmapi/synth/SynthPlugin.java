@@ -69,17 +69,22 @@ public class SynthPlugin implements Plugin {
 		try {
 			File smaf = new File(source.getLocator());
 			SmafFileFormat.Info info = SmafFileFormat.inspect(smaf);
+			if (info == null) {
+				return null;
+			}
 
-			// The pinned upstream engine is the primary SMAF renderer. Keep the
-			// already-validated R5 path only for pure ATR/Awa files because Awa
-			// inherits its wave metadata from ATR and the upstream initial release
-			// still handles that corner loosely. This avoids regressing Awa while
-			// score/Mobile/Huffman/multitrack/Mwa and mixed content move upstream.
-			if (isPureAwa(info)) {
-				Player awaPlayer = createAwaFallbackPlayer(source, smaf);
-				if (awaPlayer != null) {
-					return awaPlayer;
-				}
+			// Pure ATR/Awa stays on the already-validated R5 path. Do not fall
+			// through to the pinned upstream parser when the fallback rejects a
+			// file: that revision does not model inherited ATR/Awa metadata safely.
+			if (info.hasAwa()) {
+				return isPureAwa(info) ? createAwaFallbackPlayer(source, smaf) : null;
+			}
+
+			// Keep the native dependency behind the subset its pinned parser is
+			// known to interpret correctly. In particular, that revision decodes
+			// Mwa WaveType and the extended 10/20/40/50 ms timebase codes wrongly.
+			if (!isNativeScoreSafe(info)) {
+				return null;
 			}
 
 			return createNativeSmafPlayer(source, smaf);
@@ -95,6 +100,29 @@ public class SynthPlugin implements Plugin {
 				&& info.getPcmAudioTrackCount() == 1
 				&& info.hasAwa()
 				&& !info.hasMwa();
+	}
+
+	private static boolean isNativeScoreSafe(SmafFileFormat.Info info) {
+		if (info.getScoreTrackCount() != 1
+				|| info.hasPcmAudioTrack()
+				|| info.hasAwa()
+				|| info.hasMwa()) {
+			return false;
+		}
+
+		SmafFileFormat.TrackInfo track = info.getFirstScoreTrack();
+		if (track == null
+				|| track.getFormatType() == SmafFileFormat.FormatType.UNKNOWN
+				|| track.getSequenceType() != SmafFileFormat.SequenceType.STREAM_SEQUENCE) {
+			return false;
+		}
+
+		return isNativeBasicTimeBase(track.getDurationTimeBaseMs())
+				&& isNativeBasicTimeBase(track.getGateTimeTimeBaseMs());
+	}
+
+	private static boolean isNativeBasicTimeBase(int timeBaseMs) {
+		return timeBaseMs == 1 || timeBaseMs == 2 || timeBaseMs == 4 || timeBaseMs == 5;
 	}
 
 	private Player createNativeSmafPlayer(DataSource source, File smaf) throws Exception {

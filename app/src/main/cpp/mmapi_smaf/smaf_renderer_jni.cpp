@@ -20,6 +20,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
+#include <exception>
 #include <fstream>
 #include <limits>
 #include <string>
@@ -74,8 +75,9 @@ bool readFile(const char* path, std::vector<uint8_t>& bytes) {
 
     bytes.resize(static_cast<size_t>(size));
     input.seekg(0, std::ios::beg);
-    input.read(reinterpret_cast<char*>(bytes.data()), size);
-    return input.good() || input.eof();
+    const std::streamsize expected = static_cast<std::streamsize>(size);
+    input.read(reinterpret_cast<char*>(bytes.data()), expected);
+    return input.gcount() == expected && !input.bad();
 }
 
 bool renderToWav(const char* sourcePath, const char* targetPath) {
@@ -104,7 +106,7 @@ bool renderToWav(const char* sourcePath, const char* targetPath) {
 
     while (true) {
         const int frames = player.render(floatBuffer.data(), static_cast<int>(kRenderFrames));
-        if (frames < 0) {
+        if (frames < 0 || frames > static_cast<int>(kRenderFrames)) {
             output.close();
             std::remove(targetPath);
             return false;
@@ -120,7 +122,13 @@ bool renderToWav(const char* sourcePath, const char* targetPath) {
         }
 
         for (size_t i = 0; i < samples; ++i) {
-            const float sample = std::clamp(floatBuffer[i], -1.0f, 1.0f);
+            float sample = floatBuffer[i];
+            if (!std::isfinite(sample)) {
+                output.close();
+                std::remove(targetPath);
+                return false;
+            }
+            sample = std::clamp(sample, -1.0f, 1.0f);
             const int value = static_cast<int>(std::lrint(sample * 32767.0f));
             pcmBuffer[i] = static_cast<int16_t>(value);
         }
@@ -175,5 +183,13 @@ Java_ru_woesss_j2me_mmapi_audio_SmafNativeRenderer_nativeRenderToWav(
     UtfChars target(env, targetPath);
     if (!source.get() || !target.get()) return JNI_FALSE;
 
-    return renderToWav(source.get(), target.get()) ? JNI_TRUE : JNI_FALSE;
+    try {
+        return renderToWav(source.get(), target.get()) ? JNI_TRUE : JNI_FALSE;
+    } catch (const std::exception&) {
+        std::remove(target.get());
+        return JNI_FALSE;
+    } catch (...) {
+        std::remove(target.get());
+        return JNI_FALSE;
+    }
 }
