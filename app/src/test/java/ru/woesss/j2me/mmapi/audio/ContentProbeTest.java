@@ -30,6 +30,7 @@ public class ContentProbeTest {
 		assertEquals(ContentProbe.Kind.MIDI, probe("MThd\0\0\0\6"));
 		assertEquals(ContentProbe.Kind.XMF, probe("XMF_1.00"));
 		assertEquals(ContentProbe.Kind.RMID, probe("RIFF\0\0\0\0RMID"));
+		assertEquals(ContentProbe.Kind.IMELODY, probe("BEGIN:IMELODY\nVERSION:1.2"));
 	}
 
 	@Test
@@ -38,11 +39,32 @@ public class ContentProbeTest {
 	}
 
 	@Test
+	public void detectsDiagnosticOnlySignatures() {
+		assertEquals(ContentProbe.Kind.SMAF, probe("MMMD\0\0\0\0CNTI"));
+		assertEquals(ContentProbe.Kind.QCP, probe("RIFF\0\0\0\0QLCMfmt "));
+		assertEquals(ContentProbe.Kind.ASF, ContentProbe.probe(new byte[]{
+				0x30, 0x26, (byte) 0xb2, 0x75, (byte) 0x8e, 0x66, (byte) 0xcf, 0x11,
+				(byte) 0xa6, (byte) 0xd9, 0x00, (byte) 0xaa, 0x00, 0x62, (byte) 0xce, 0x6c
+		}));
+	}
+
+	@Test
 	public void probesCachedFilesWithoutDependingOnTheirExtension() throws Exception {
 		File file = File.createTempFile("mmapi-content-probe", ".mid");
 		try {
 			Files.write(file.toPath(), "RIFF\0\0\0\0WAVEfmt ".getBytes(StandardCharsets.ISO_8859_1));
 			assertEquals(ContentProbe.Kind.WAV, ContentProbe.probe(file));
+		} finally {
+			Files.deleteIfExists(file.toPath());
+		}
+	}
+
+	@Test
+	public void fingerprintsOnlySmallLeadingPrefix() throws Exception {
+		File file = File.createTempFile("mmapi-content-probe", ".dat");
+		try {
+			Files.write(file.toPath(), new byte[]{0x01, 0x23, (byte) 0xab, (byte) 0xcd});
+			assertEquals("01 23 AB CD", ContentProbe.fingerprint(file));
 		} finally {
 			Files.deleteIfExists(file.toPath());
 		}
