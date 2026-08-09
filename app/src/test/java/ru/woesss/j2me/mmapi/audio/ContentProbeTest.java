@@ -31,6 +31,18 @@ public class ContentProbeTest {
 		assertEquals(ContentProbe.Kind.XMF, probe("XMF_1.00"));
 		assertEquals(ContentProbe.Kind.RMID, probe("RIFF\0\0\0\0RMID"));
 		assertEquals(ContentProbe.Kind.IMELODY, probe("BEGIN:IMELODY\nVERSION:1.2"));
+		assertEquals(ContentProbe.Kind.RTTTL, probe("JLTest:d=32,o=5,b=120:c"));
+		assertEquals(ContentProbe.Kind.NOKIA_OTA,
+				ContentProbe.probe(new byte[]{0x02, 0x4a, 0x3a}));
+	}
+
+	@Test
+	public void rejectsMalformedLegacyRingtoneLookalikes() {
+		assertEquals(ContentProbe.Kind.UNKNOWN, probe("broken:d=999,o=9,b=1:"));
+		assertEquals(ContentProbe.Kind.UNKNOWN,
+				ContentProbe.probe(new byte[]{0x02, 0x4a}));
+		assertEquals(ContentProbe.Kind.UNKNOWN,
+				ContentProbe.probe(new byte[]{0x02, 0x4a, 0x00}));
 	}
 
 	@Test
@@ -54,6 +66,29 @@ public class ContentProbeTest {
 		try {
 			Files.write(file.toPath(), "RIFF\0\0\0\0WAVEfmt ".getBytes(StandardCharsets.ISO_8859_1));
 			assertEquals(ContentProbe.Kind.WAV, ContentProbe.probe(file));
+		} finally {
+			Files.deleteIfExists(file.toPath());
+		}
+	}
+
+	@Test
+	public void doesNotTreatEmbeddedMidiInRawContainerAsStandaloneMidi() throws Exception {
+		File file = File.createTempFile("mmapi-resource-container", ".raw");
+		try {
+			byte[] container = "RESOURCE-DATA-MThd\0\0\0\6".getBytes(StandardCharsets.ISO_8859_1);
+			Files.write(file.toPath(), container);
+			assertEquals(ContentProbe.Kind.UNKNOWN, ContentProbe.probe(file));
+		} finally {
+			Files.deleteIfExists(file.toPath());
+		}
+	}
+
+	@Test
+	public void fakeMmfExtensionDoesNotOverrideMissingSmafSignature() throws Exception {
+		File file = File.createTempFile("mmapi-not-smaf", ".mmf");
+		try {
+			Files.write(file.toPath(), "game resource data".getBytes(StandardCharsets.ISO_8859_1));
+			assertEquals(ContentProbe.Kind.UNKNOWN, ContentProbe.probe(file));
 		} finally {
 			Files.deleteIfExists(file.toPath());
 		}
