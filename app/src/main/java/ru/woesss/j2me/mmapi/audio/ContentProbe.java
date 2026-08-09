@@ -30,7 +30,7 @@ import java.util.Arrays;
  * some kinds exist so unsupported media can be diagnosed accurately.</p>
  */
 public final class ContentProbe {
-	private static final int PROBE_BYTES = 64;
+	private static final int PROBE_BYTES = 128;
 	private static final int FINGERPRINT_BYTES = 16;
 
 	public enum Kind {
@@ -47,6 +47,8 @@ public final class ContentProbe {
 		ASF,
 		QCP,
 		IMELODY,
+		RTTTL,
+		NOKIA_OTA,
 		UNKNOWN
 	}
 
@@ -77,6 +79,12 @@ public final class ContentProbe {
 		}
 		if (matchesAsciiIgnoreCase(prefix, 0, "BEGIN:IMELODY")) {
 			return Kind.IMELODY;
+		}
+		if (isNokiaOta(prefix)) {
+			return Kind.NOKIA_OTA;
+		}
+		if (isRtttl(prefix)) {
+			return Kind.RTTTL;
 		}
 		if (matches(prefix, 0, 0x30, 0x26, 0xb2, 0x75, 0x8e, 0x66, 0xcf, 0x11,
 				0xa6, 0xd9, 0x00, 0xaa, 0x00, 0x62, 0xce, 0x6c)) {
@@ -156,6 +164,120 @@ public final class ContentProbe {
 			}
 		}
 		return total == prefix.length ? prefix : Arrays.copyOf(prefix, total);
+	}
+
+	/** Mirrors the command envelope used by SONiVOX's OTA_CheckFileType(). */
+	private static boolean isNokiaOta(byte[] data) {
+		if (data.length < 3) {
+			return false;
+		}
+		int commandCount = data[0] & 0xff;
+		if (commandCount < 2) {
+			return false;
+		}
+		int availableCommands = Math.min(commandCount, data.length - 1);
+		for (int i = 0; i < availableCommands; i++) {
+			int command = (data[i + 1] & 0xff) >>> 1;
+			if (i == 0) {
+				if (command != 0x25) { // Ringing Tone Programming
+					return false;
+				}
+				continue;
+			}
+			if (command == 0x1d) { // Sound
+				return true;
+			}
+			if (command != 0x22) { // optional Unicode command before Sound
+				return false;
+			}
+		}
+		return false;
+	}
+
+	/** Validates the RTTTL title/control header before native parser discovery. */
+	private static boolean isRtttl(byte[] data) {
+		int titleEnd = -1;
+		for (int i = 0; i < Math.min(data.length, 32); i++) {
+			int value = data[i] & 0xff;
+			if (value == ':') {
+				titleEnd = i;
+				break;
+			}
+			if (value < 0x20 || value > 0x7e) {
+				return false;
+			}
+		}
+		if (titleEnd <= 0) {
+			return false;
+		}
+
+		int position = titleEnd + 1;
+		int controls = 0;
+		while (position < data.length) {
+			position = skipAsciiWhitespace(data, position);
+			if (position >= data.length) {
+				return false;
+			}
+			int control = lowerAscii(data[position++] & 0xff);
+			if (control != 'b' && control != 'd' && control != 'l'
+					&& control != 'o' && control != 's') {
+				return false;
+			}
+
+			position = skipAsciiWhitespace(data, position);
+			if (position >= data.length || data[position++] != '=') {
+				return false;
+			}
+			position = skipAsciiWhitespace(data, position);
+			if (position >= data.length) {
+				return false;
+			}
+
+			if (control == 's') {
+				int style = lowerAscii(data[position++] & 0xff);
+				if (style != 's' && style != 'n' && style != 'c') {
+					return false;
+				}
+			} else {
+				int digits = 0;
+				while (position < data.length && data[position] >= '0' && data[position] <= '9') {
+					position++;
+					digits++;
+				}
+				if (digits == 0) {
+					return false;
+				}
+			}
+
+			position = skipAsciiWhitespace(data, position);
+			if (position >= data.length) {
+				return false;
+			}
+			int separator = data[position++] & 0xff;
+			controls++;
+			if (separator == ':') {
+				return controls > 0;
+			}
+			if (separator != ',') {
+				return false;
+			}
+		}
+		return false;
+	}
+
+	private static int skipAsciiWhitespace(byte[] data, int position) {
+		while (position < data.length) {
+			int value = data[position] & 0xff;
+			if (value != ' ' && value != '\t' && value != '\r' && value != '\n') {
+				break;
+			}
+			position++;
+		}
+		return position;
+	}
+
+	private static int lowerAscii(int value) {
+		return value >= 'A' && value <= 'Z' ? value + ('a' - 'A') : value;
 	}
 
 	private static boolean isMpegAudioFrame(byte[] data) {
