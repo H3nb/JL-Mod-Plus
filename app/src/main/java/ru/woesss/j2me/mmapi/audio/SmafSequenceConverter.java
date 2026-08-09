@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -439,9 +438,15 @@ public final class SmafSequenceConverter {
 
 	private static byte[] writeSmf(List<MidiEvent> events, long endTick)
 			throws UnsupportedSmafException {
-		events.sort(Comparator.comparingLong((MidiEvent event) -> event.tick)
-				.thenComparingInt(event -> event.priority)
-				.thenComparingInt(event -> event.order));
+		java.util.Collections.sort(events, (left, right) -> {
+			if (left.tick != right.tick) {
+				return left.tick < right.tick ? -1 : 1;
+			}
+			if (left.priority != right.priority) {
+				return left.priority < right.priority ? -1 : 1;
+			}
+			return Integer.compare(left.order, right.order);
+		});
 
 		ByteArrayOutputStream track = new ByteArrayOutputStream();
 		track.write(0x00);
