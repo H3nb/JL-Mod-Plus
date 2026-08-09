@@ -53,13 +53,14 @@ public final class AudioFailureReportActivity extends AppCompatActivity {
 			finish();
 			return;
 		}
-		if (diagnosticsMode && report.isEmpty()) {
-			report = getString(R.string.audio_diagnostics_empty);
-		}
 		ReportComposeHost.install(this, composeState, new ReportComposeCallbacks() {
 			@Override
 			public void onPrimaryAction() {
-				shareReport();
+				if (diagnosticsMode) {
+					showDiagnosticsActions();
+				} else {
+					shareReport();
+				}
 			}
 
 			@Override
@@ -74,20 +75,43 @@ public final class AudioFailureReportActivity extends AppCompatActivity {
 
 			@Override
 			public void onChoice(int index) {
-				finish();
+				if (!diagnosticsMode) {
+					return;
+				}
+				if (index == 0) {
+					shareReport();
+				} else if (index == 1) {
+					clearHistory();
+				}
 			}
 		});
 		showReportDialog();
 	}
 
 	private void showReportDialog() {
+		String displayReport = report.isEmpty() ? getString(R.string.audio_diagnostics_empty) : report;
 		composeState.setReport(
 				getString(diagnosticsMode ? R.string.audio_diagnostics_title : R.string.audio_failure_report_title),
-				report + "\n\n" + getString(R.string.audio_failure_report_instruction),
-				getString(R.string.share_error_report),
+				getString(R.string.audio_failure_report_instruction) + "\n\n" + displayReport,
+				getString(diagnosticsMode ? R.string.audio_diagnostics_actions : R.string.share_error_report),
 				getString(android.R.string.copy),
 				getString(android.R.string.cancel)
 		);
+	}
+
+	private void showDiagnosticsActions() {
+		String[] options = {
+				getString(R.string.share_error_report),
+				getString(R.string.audio_diagnostics_clear)
+		};
+		composeState.showChoices(getString(R.string.audio_diagnostics_actions), options);
+	}
+
+	private void clearHistory() {
+		AudioFailureReportStore.clear(getFilesDir());
+		report = "";
+		showReportDialog();
+		Toast.makeText(this, R.string.audio_diagnostics_cleared, Toast.LENGTH_SHORT).show();
 	}
 
 	private void copyReport() {
