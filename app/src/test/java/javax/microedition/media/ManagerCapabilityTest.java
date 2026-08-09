@@ -82,7 +82,20 @@ public class ManagerCapabilityTest {
 	}
 
 	@Test
-	public void unimplementedMmfIsNotAdvertised() {
+	public void smafAdvertisesRegisteredContentTypeForStreamProtocolsOnly() {
+		List<String> all = Arrays.asList(Manager.getSupportedContentTypes(null));
+		List<String> fileTypes = Arrays.asList(Manager.getSupportedContentTypes("file"));
+		assertTrue(all.contains("application/vnd.smaf"));
+		assertTrue(fileTypes.contains("application/vnd.smaf"));
+		assertArrayEquals(
+				new String[]{"file", "http", "https", "resource"},
+				Manager.getSupportedProtocols(" Application/Vnd.Smaf; charset=binary "));
+		assertFalse(Arrays.asList(Manager.getSupportedContentTypes("device"))
+				.contains("application/vnd.smaf"));
+	}
+
+	@Test
+	public void legacyAudioMmfAliasIsNotAdvertised() {
 		List<String> all = Arrays.asList(Manager.getSupportedContentTypes(null));
 		assertFalse(all.contains("audio/mmf"));
 		assertEquals(0, Manager.getSupportedProtocols("audio/mmf").length);

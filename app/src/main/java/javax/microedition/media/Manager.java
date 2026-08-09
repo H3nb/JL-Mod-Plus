@@ -65,7 +65,7 @@ public class Manager {
 	private static final String[] AUDIO_CONTENT_TYPES = new String[]{
 			"audio/wav", "audio/x-wav", "audio/midi", "audio/x-midi",
 			"audio/mpeg", "audio/aac", "audio/amr", "audio/amr-wb", "audio/mp3",
-			"audio/mp4", "audio/x-tone-seq"};
+			"audio/mp4", "audio/x-tone-seq", "application/vnd.smaf"};
 	private static final String[] DEVICE_CONTENT_TYPES = new String[]{
 			"audio/midi", "audio/x-midi", "audio/x-tone-seq"};
 	private static final String[] STREAM_PROTOCOLS = new String[]{
