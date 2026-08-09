@@ -23,16 +23,12 @@ LOCAL_SRC_FILES := \
 	wav_player_jni.cpp \
 	gsm610_decoder.cpp \
 	../libgsm/src/add.c \
-	../libgsm/src/code.c \
 	../libgsm/src/decode.c \
 	../libgsm/src/gsm_create.c \
 	../libgsm/src/gsm_decode.c \
 	../libgsm/src/gsm_destroy.c \
-	../libgsm/src/gsm_encode.c \
 	../libgsm/src/gsm_option.c \
 	../libgsm/src/long_term.c \
-	../libgsm/src/lpc.c \
-	../libgsm/src/preprocess.c \
 	../libgsm/src/rpe.c \
 	../libgsm/src/short_term.c \
 	../libgsm/src/table.c
