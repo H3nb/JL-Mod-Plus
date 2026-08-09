@@ -9,3 +9,7 @@
 [submodule "yamaha_smaf"]
 	path = app/src/main/cpp/yamaha_smaf
 	url = https://github.com/akustikrausch/yamaha-smaf-player.git
+
+[submodule "libgsm"]
+	path = app/src/main/cpp/libgsm
+	url = https://android.googlesource.com/platform/external/libgsm

@@ -9,7 +9,9 @@
 #include <algorithm>
 #include <cstring>
 #include <limits>
+#include <vector>
 
+#include "gsm610_decoder.h"
 #include "util/log.h"
 
 #define LOG_TAG "MMAPI-WAV"
@@ -34,10 +36,21 @@ bool Player::create(const char *path, Player **outPlayer) {
     *outPlayer = nullptr;
 
     Player *player = new Player();
-    if (!drwav_init_file(&player->decoder, path, nullptr)) {
+    const Gsm610DecodeResult gsmResult = decodeGsm610WaveFile(path, player->decodedWave);
+    bool opened = false;
+    if (gsmResult == Gsm610DecodeResult::Decoded) {
+        opened = drwav_init_memory(&player->decoder,
+                                   player->decodedWave.data(),
+                                   player->decodedWave.size(),
+                                   nullptr);
+    } else if (gsmResult == Gsm610DecodeResult::NotGsm) {
+        opened = drwav_init_file(&player->decoder, path, nullptr);
+    }
+    if (!opened) {
         delete player;
         return false;
     }
+
     player->decoderOpen = true;
     player->channels = player->decoder.channels;
     player->sampleRate = player->decoder.sampleRate;
@@ -78,6 +91,7 @@ void Player::close() {
         drwav_uninit(&decoder);
         decoderOpen = false;
     }
+    std::vector<uint8_t>().swap(decodedWave);
 }
 
 oboe::Result Player::createAudioStream() {

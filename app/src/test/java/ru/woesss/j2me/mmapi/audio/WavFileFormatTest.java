@@ -47,9 +47,9 @@ public class WavFileFormatTest {
 	}
 
 	@Test
-	public void identifiesGsm610ForFailureDiagnostics() throws IOException {
+	public void identifiesStandardGsm610Wav49() throws IOException {
 		Path file = Files.createTempFile("gsm610", ".wav");
-		Files.write(file, waveFile(WavFileFormat.GSM_610, 1, 0, false));
+		Files.write(file, gsm610WaveFile(8000, 1, 65, 320));
 
 		WavFileFormat.Info info = WavFileFormat.inspect(file.toFile());
 		assertNotNull(info);
@@ -57,7 +57,56 @@ public class WavFileFormatTest {
 		assertEquals("GSM 6.10", info.getCodecName());
 		assertEquals(1, info.getChannels());
 		assertEquals(8000, info.getSampleRate());
+		assertEquals(65, info.getBlockAlignment());
+		assertEquals(320, info.getSamplesPerBlock());
 		assertTrue(info.describe().contains("formatTag: 0x0031"));
+		assertTrue(WavFileFormat.isGsm610(file.toFile()));
+	}
+
+	@Test
+	public void recognizesGsm610StandardSampleRates() throws IOException {
+		for (int sampleRate : new int[]{8000, 11025, 22050, 44100}) {
+			Path file = Files.createTempFile("gsm610-rate-" + sampleRate, ".wav");
+			Files.write(file, gsm610WaveFile(sampleRate, 1, 65, 320));
+			assertTrue("sampleRate=" + sampleRate, WavFileFormat.isGsm610(file.toFile()));
+		}
+	}
+
+	@Test
+	public void rejectsNonStandardGsm610Layout() throws IOException {
+		Path stereo = Files.createTempFile("gsm610-stereo", ".wav");
+		Files.write(stereo, gsm610WaveFile(8000, 2, 65, 320));
+		assertFalse(WavFileFormat.isGsm610(stereo.toFile()));
+
+		Path wrongRate = Files.createTempFile("gsm610-rate", ".wav");
+		Files.write(wrongRate, gsm610WaveFile(16000, 1, 65, 320));
+		assertFalse(WavFileFormat.isGsm610(wrongRate.toFile()));
+
+		Path wrongBlock = Files.createTempFile("gsm610-block", ".wav");
+		Files.write(wrongBlock, gsm610WaveFile(8000, 1, 64, 320));
+		assertFalse(WavFileFormat.isGsm610(wrongBlock.toFile()));
+
+		Path wrongSamples = Files.createTempFile("gsm610-samples", ".wav");
+		Files.write(wrongSamples, gsm610WaveFile(8000, 1, 65, 160));
+		assertFalse(WavFileFormat.isGsm610(wrongSamples.toFile()));
+
+		Path invalidExtension = Files.createTempFile("gsm610-extension", ".wav");
+		Files.write(invalidExtension, gsm610WaveFile(8000, 1, 65, 320, 4));
+		WavFileFormat.Info invalidInfo = WavFileFormat.inspect(invalidExtension.toFile());
+		assertNotNull(invalidInfo);
+		assertEquals(0, invalidInfo.getSamplesPerBlock());
+		assertFalse(WavFileFormat.isGsm610(invalidExtension.toFile()));
+	}
+
+	@Test
+	public void doesNotTreatGenericFmtExtensionAsSamplesPerBlock() throws IOException {
+		Path file = Files.createTempFile("extended-non-gsm", ".wav");
+		Files.write(file, extendedWaveFile(WavFileFormat.MPEG_LAYER_3, 0x1234));
+
+		WavFileFormat.Info info = WavFileFormat.inspect(file.toFile());
+		assertNotNull(info);
+		assertEquals(WavFileFormat.MPEG_LAYER_3, info.getFormatTag());
+		assertEquals(0, info.getSamplesPerBlock());
 	}
 
 	@Test
@@ -68,11 +117,13 @@ public class WavFileFormatTest {
 		assertNotNull(info);
 		assertEquals("PCM", info.getCodecName());
 		assertFalse(WavFileFormat.isMonoImaAdpcm(pcm.toFile()));
+		assertFalse(WavFileFormat.isGsm610(pcm.toFile()));
 
 		Path malformed = Files.createTempFile("malformed", ".wav");
 		Files.write(malformed, new byte[]{'R', 'I', 'F', 'F', 0, 0, 0, 0});
 		assertEquals(null, WavFileFormat.inspect(malformed.toFile()));
 		assertFalse(WavFileFormat.isMonoImaAdpcm(malformed.toFile()));
+		assertFalse(WavFileFormat.isGsm610(malformed.toFile()));
 	}
 
 	private static byte[] waveFile(int format, int channels, int bitsPerSample, boolean includeJunk) {
@@ -97,6 +148,63 @@ public class WavFileFormatTest {
 		buffer.putInt(4096);
 		buffer.putShort((short) 1);
 		buffer.putShort((short) bitsPerSample);
+		putAscii(buffer, "data");
+		buffer.putInt(dataSize);
+		return buffer.array();
+	}
+
+	private static byte[] gsm610WaveFile(int sampleRate, int channels, int blockAlign, int samplesPerBlock) {
+		return gsm610WaveFile(sampleRate, channels, blockAlign, samplesPerBlock, 2);
+	}
+
+	private static byte[] gsm610WaveFile(int sampleRate, int channels, int blockAlign,
+			int samplesPerBlock, int extraSize) {
+		int fmtSize = 20;
+		int dataSize = 65;
+		int factSize = 4;
+		int riffSize = 4 + (8 + fmtSize) + (8 + factSize) + (8 + dataSize + 1);
+		ByteBuffer buffer = ByteBuffer.allocate(8 + riffSize).order(ByteOrder.LITTLE_ENDIAN);
+		putAscii(buffer, "RIFF");
+		buffer.putInt(riffSize);
+		putAscii(buffer, "WAVE");
+		putAscii(buffer, "fmt ");
+		buffer.putInt(fmtSize);
+		buffer.putShort((short) WavFileFormat.GSM_610);
+		buffer.putShort((short) channels);
+		buffer.putInt(sampleRate);
+		buffer.putInt((65 * sampleRate) / 320);
+		buffer.putShort((short) blockAlign);
+		buffer.putShort((short) 0);
+		buffer.putShort((short) extraSize);
+		buffer.putShort((short) samplesPerBlock);
+		putAscii(buffer, "fact");
+		buffer.putInt(factSize);
+		buffer.putInt(320);
+		putAscii(buffer, "data");
+		buffer.putInt(dataSize);
+		buffer.put(new byte[dataSize]);
+		buffer.put((byte) 0); // RIFF chunks are word-aligned; padding is outside data size.
+		return buffer.array();
+	}
+
+	private static byte[] extendedWaveFile(int format, int extensionValue) {
+		int fmtSize = 20;
+		int dataSize = 0;
+		int riffSize = 4 + 8 + fmtSize + 8 + dataSize;
+		ByteBuffer buffer = ByteBuffer.allocate(8 + riffSize).order(ByteOrder.LITTLE_ENDIAN);
+		putAscii(buffer, "RIFF");
+		buffer.putInt(riffSize);
+		putAscii(buffer, "WAVE");
+		putAscii(buffer, "fmt ");
+		buffer.putInt(fmtSize);
+		buffer.putShort((short) format);
+		buffer.putShort((short) 1);
+		buffer.putInt(8000);
+		buffer.putInt(4096);
+		buffer.putShort((short) 1);
+		buffer.putShort((short) 0);
+		buffer.putShort((short) 2);
+		buffer.putShort((short) extensionValue);
 		putAscii(buffer, "data");
 		buffer.putInt(dataSize);
 		return buffer.array();

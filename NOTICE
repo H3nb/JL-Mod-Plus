@@ -21,6 +21,13 @@ third-party components:
 - SONiVOX v4 from https://github.com/EmbeddedSynth/sonivox at revision
   2dac582929e545f6c085981100744753992addb8, Copyright (c) 2004-2006
   Sonic Network Inc. Its source is licensed under Apache-2.0.
+- Yamaha SMAF Player from https://github.com/akustikrausch/yamaha-smaf-player
+  at revision 627f7ad8583ce34c5fec0269ef9778167af080d6, licensed under
+  Apache-2.0.
+- libgsm from https://android.googlesource.com/platform/external/libgsm at
+  revision 8ec969cea971fe25ff2d3933a5a9f8504f8e86c9. The imported source
+  contains its upstream COPYRIGHT notice and AOSP license metadata identifying
+  0BSD, BSD, and Apache-2.0 license material.
 - Oboe from https://github.com/google/oboe, licensed under Apache-2.0.
 
 These and all other third-party components retain their own licenses and
