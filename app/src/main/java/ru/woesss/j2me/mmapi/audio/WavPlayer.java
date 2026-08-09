@@ -20,6 +20,8 @@ import android.util.Log;
 
 import androidx.annotation.Keep;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -86,12 +88,33 @@ public final class WavPlayer extends BasePlayer implements VolumeControl {
 			throw new IllegalArgumentException("WAV source has no locator");
 		}
 		this.source = source;
-		handle = nativeCreate(source.getLocator());
+		try {
+			handle = nativeCreate(source.getLocator());
+		} catch (MediaException e) {
+			throw enrichCreateFailure(source.getLocator(), e);
+		}
 		if (handle == 0) {
-			throw new MediaException("Unable to create WAV player");
+			throw enrichCreateFailure(source.getLocator(),
+					new MediaException("Unable to create WAV player"));
 		}
 		nativeSetListener(handle, this);
 		controls.put(VolumeControl.class.getName(), this);
+	}
+
+	private static MediaException enrichCreateFailure(String path, MediaException error) {
+		String message = error.getMessage();
+		if (message == null || message.isEmpty()) {
+			message = "Unable to create WAV player";
+		}
+		try {
+			WavFileFormat.Info info = WavFileFormat.inspect(new File(path));
+			if (info != null) {
+				message += "; " + info.describe();
+			}
+		} catch (IOException | RuntimeException ignored) {
+			// The original playback failure remains useful even if inspection fails.
+		}
+		return new MediaException(message);
 	}
 
 	@Override
