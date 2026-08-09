@@ -31,7 +31,7 @@ import java.util.Arrays;
 public final class AudioFailureReportStore {
 	private static final String DIRECTORY_NAME = "audio-failure-reports";
 	private static final String FILE_SUFFIX = ".txt";
-	private static final int MAX_REPORTS = 5;
+	private static final int MAX_REPORTS = 20;
 	private static final int MAX_REPORT_LENGTH = 8192;
 
 	private AudioFailureReportStore() {
@@ -91,6 +91,23 @@ public final class AudioFailureReportStore {
 			return resolveReportFile(filesDirectory, reportId).delete();
 		} catch (IOException e) {
 			return false;
+		}
+	}
+
+	/** Deletes all persisted Audio diagnostics reports. */
+	public static void clear(File filesDirectory) {
+		if (filesDirectory == null) {
+			throw new IllegalArgumentException("filesDirectory is required");
+		}
+		File directory = new File(filesDirectory, DIRECTORY_NAME);
+		File[] reports = directory.listFiles((dir, name) -> name.endsWith(FILE_SUFFIX));
+		if (reports == null) {
+			return;
+		}
+		for (File report : reports) {
+			if (!report.delete()) {
+				report.deleteOnExit();
+			}
 		}
 	}
 
