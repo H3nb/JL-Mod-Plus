@@ -46,6 +46,8 @@ public final class MediaRouter {
 			case XMF:
 			case RMID:
 			case IMELODY:
+			case RTTTL:
+			case NOKIA_OTA:
 				return Backend.SYNTH;
 			case WAV:
 				return Backend.WAV;
