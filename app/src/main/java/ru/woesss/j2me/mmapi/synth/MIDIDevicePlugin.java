@@ -7,12 +7,6 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package ru.woesss.j2me.mmapi.synth;
@@ -25,15 +19,10 @@ import ru.woesss.j2me.mmapi.synth.eas.LibEAS;
 /**
  * Built-in SONiVOX plugin for sequenced media plus the JSR-135 MIDI and tone
  * device endpoints.
- *
- * <p>Manager's signature-based media router is the boundary that keeps WAV and
- * other decoded/platform media away from synth plugins. This plugin therefore
- * keeps the normal {@link SynthPlugin} DataSource path so built-in MIDI/XMF/
- * RMID playback does not regress to Android's generic media backend.</p>
  */
 public class MIDIDevicePlugin extends SynthPlugin {
 	public MIDIDevicePlugin() {
-		super(new LibEAS());
+		super(LibEAS.create());
 	}
 
 	@Override
