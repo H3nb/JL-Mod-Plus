@@ -20,7 +20,6 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
-#include <exception>
 #include <fstream>
 #include <limits>
 #include <string>
@@ -183,13 +182,5 @@ Java_ru_woesss_j2me_mmapi_audio_SmafNativeRenderer_nativeRenderToWav(
     UtfChars target(env, targetPath);
     if (!source.get() || !target.get()) return JNI_FALSE;
 
-    try {
-        return renderToWav(source.get(), target.get()) ? JNI_TRUE : JNI_FALSE;
-    } catch (const std::exception&) {
-        std::remove(target.get());
-        return JNI_FALSE;
-    } catch (...) {
-        std::remove(target.get());
-        return JNI_FALSE;
-    }
+    return renderToWav(source.get(), target.get()) ? JNI_TRUE : JNI_FALSE;
 }
