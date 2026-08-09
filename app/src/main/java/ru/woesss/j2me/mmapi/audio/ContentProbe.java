@@ -240,11 +240,16 @@ public final class ContentProbe {
 				}
 			} else {
 				int digits = 0;
+				int value = 0;
 				while (position < data.length && data[position] >= '0' && data[position] <= '9') {
+					if (value > 10000) {
+						return false;
+					}
+					value = value * 10 + data[position] - '0';
 					position++;
 					digits++;
 				}
-				if (digits == 0) {
+				if (digits == 0 || !isValidRtttlControlValue(control, value)) {
 					return false;
 				}
 			}
@@ -263,6 +268,17 @@ public final class ContentProbe {
 			}
 		}
 		return false;
+	}
+
+	private static boolean isValidRtttlControlValue(int control, int value) {
+		return switch (control) {
+			case 'b' -> value >= 25 && value <= 900;
+			case 'd' -> value == 1 || value == 2 || value == 4 || value == 8
+					|| value == 16 || value == 32;
+			case 'l' -> value >= 0 && value <= 15;
+			case 'o' -> value >= 4 && value <= 7;
+			default -> false;
+		};
 	}
 
 	private static int skipAsciiWhitespace(byte[] data, int position) {
