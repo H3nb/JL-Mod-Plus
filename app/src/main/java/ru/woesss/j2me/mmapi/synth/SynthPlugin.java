@@ -20,7 +20,6 @@ package ru.woesss.j2me.mmapi.synth;
 import android.util.Log;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Locale;
 
@@ -30,7 +29,8 @@ import javax.microedition.media.protocol.DataSource;
 import ru.woesss.j2me.mmapi.FileCacheDataSource;
 import ru.woesss.j2me.mmapi.Plugin;
 import ru.woesss.j2me.mmapi.audio.ContentProbe;
-import ru.woesss.j2me.mmapi.audio.SmafSequenceConverter;
+import ru.woesss.j2me.mmapi.audio.SmafFileFormat;
+import ru.woesss.j2me.mmapi.audio.SmafNativeRenderer;
 import ru.woesss.j2me.mmapi.audio.SmafWaveformRenderer;
 import ru.woesss.j2me.mmapi.audio.WavPlayer;
 import ru.woesss.j2me.mmapi.protocol.device.DeviceDataSource;
@@ -68,49 +68,67 @@ public class SynthPlugin implements Plugin {
 	private Player createSmafPlayer(DataSource source) {
 		try {
 			File smaf = new File(source.getLocator());
-			byte[] smf = SmafSequenceConverter.convert(smaf);
-			if (smf != null) {
-				return createSmafScorePlayer(source, smf);
+			SmafFileFormat.Info info = SmafFileFormat.inspect(smaf);
+
+			// The pinned upstream engine is the primary SMAF renderer. Keep the
+			// already-validated R5 path only for pure ATR/Awa files because Awa
+			// inherits its wave metadata from ATR and the upstream initial release
+			// still handles that corner loosely. This avoids regressing Awa while
+			// score/Mobile/Huffman/multitrack/Mwa and mixed content move upstream.
+			if (isPureAwa(info)) {
+				Player awaPlayer = createAwaFallbackPlayer(source, smaf);
+				if (awaPlayer != null) {
+					return awaPlayer;
+				}
 			}
-			return createSmafWaveformPlayer(source, smaf);
+
+			return createNativeSmafPlayer(source, smaf);
 		} catch (Exception e) {
 			Log.w(TAG, "Unable to create SMAF player", e);
 			return null;
 		}
 	}
 
-	private Player createSmafScorePlayer(DataSource source, byte[] smf) throws Exception {
-		FileCacheDataSource translated = new FileCacheDataSource(SmafSequenceConverter.CONTENT_TYPE, "mid");
+	private static boolean isPureAwa(SmafFileFormat.Info info) {
+		return info != null
+				&& !info.hasScore()
+				&& info.getPcmAudioTrackCount() == 1
+				&& info.hasAwa()
+				&& !info.hasMwa();
+	}
+
+	private Player createNativeSmafPlayer(DataSource source, File smaf) throws Exception {
+		FileCacheDataSource rendered = new FileCacheDataSource(SmafNativeRenderer.CONTENT_TYPE, "wav");
 		boolean success = false;
 		try {
-			try (FileOutputStream output = new FileOutputStream(translated.getLocator())) {
-				output.write(smf);
+			if (!SmafNativeRenderer.render(smaf, new File(rendered.getLocator()))) {
+				return null;
 			}
-			Player player = new SynthPlayer(library, translated);
+			Player player = new WavPlayer(rendered, SmafNativeRenderer.CONTENT_TYPE);
 			source.disconnect();
 			success = true;
 			return player;
 		} finally {
 			if (!success) {
-				translated.disconnect();
+				rendered.disconnect();
 			}
 		}
 	}
 
-	private Player createSmafWaveformPlayer(DataSource source, File smaf) throws Exception {
-		FileCacheDataSource translated = new FileCacheDataSource(SmafWaveformRenderer.CONTENT_TYPE, "wav");
+	private Player createAwaFallbackPlayer(DataSource source, File smaf) throws Exception {
+		FileCacheDataSource rendered = new FileCacheDataSource(SmafWaveformRenderer.CONTENT_TYPE, "wav");
 		boolean success = false;
 		try {
-			if (!SmafWaveformRenderer.render(smaf, new File(translated.getLocator()))) {
+			if (!SmafWaveformRenderer.render(smaf, new File(rendered.getLocator()))) {
 				return null;
 			}
-			Player player = new WavPlayer(translated, SmafWaveformRenderer.CONTENT_TYPE);
+			Player player = new WavPlayer(rendered, SmafWaveformRenderer.CONTENT_TYPE);
 			source.disconnect();
 			success = true;
 			return player;
 		} finally {
 			if (!success) {
-				translated.disconnect();
+				rendered.disconnect();
 			}
 		}
 	}

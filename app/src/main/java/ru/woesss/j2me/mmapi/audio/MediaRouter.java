@@ -50,8 +50,9 @@ public final class MediaRouter {
 			case NOKIA_OTA:
 				return Backend.SYNTH;
 			case SMAF:
-				// SMAF remains a distinct probed format. The synth plugin performs
-				// the explicit supported-subset translation before SONiVOX sees it.
+				// SMAF stays signature-distinct. SynthPlugin owns the dispatch only
+				// as the existing sequenced-media plugin entry point; playback is
+				// rendered by the dedicated Yamaha SMAF engine, not by SONiVOX.
 				return Backend.SYNTH;
 			case WAV:
 				return Backend.WAV;
