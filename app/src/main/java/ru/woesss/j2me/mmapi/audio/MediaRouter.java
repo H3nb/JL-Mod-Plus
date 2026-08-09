@@ -49,6 +49,11 @@ public final class MediaRouter {
 			case RTTTL:
 			case NOKIA_OTA:
 				return Backend.SYNTH;
+			case SMAF:
+				// SMAF stays signature-distinct. SynthPlugin owns the dispatch only
+				// as the existing sequenced-media plugin entry point; playback is
+				// rendered by the dedicated Yamaha SMAF engine, not by SONiVOX.
+				return Backend.SYNTH;
 			case WAV:
 				return Backend.WAV;
 			case MP3:
@@ -61,9 +66,6 @@ public final class MediaRouter {
 				// ASF/WMA and QCP are platform-decoder candidates, not advertised
 				// capabilities. If Android rejects them, MicroPlayer reports it.
 				return Backend.PLATFORM_AUDIO;
-			case SMAF:
-				// Recognized for diagnostics, but no backend claim yet.
-				return Backend.UNKNOWN;
 			case UNKNOWN:
 			default:
 				return routeMime(declaredMime);

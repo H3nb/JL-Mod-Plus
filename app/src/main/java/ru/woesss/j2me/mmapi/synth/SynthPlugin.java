@@ -26,8 +26,13 @@ import java.util.Locale;
 import javax.microedition.media.Player;
 import javax.microedition.media.protocol.DataSource;
 
+import ru.woesss.j2me.mmapi.FileCacheDataSource;
 import ru.woesss.j2me.mmapi.Plugin;
 import ru.woesss.j2me.mmapi.audio.ContentProbe;
+import ru.woesss.j2me.mmapi.audio.SmafFileFormat;
+import ru.woesss.j2me.mmapi.audio.SmafNativeRenderer;
+import ru.woesss.j2me.mmapi.audio.SmafWaveformRenderer;
+import ru.woesss.j2me.mmapi.audio.WavPlayer;
 import ru.woesss.j2me.mmapi.protocol.device.DeviceDataSource;
 
 public class SynthPlugin implements Plugin {
@@ -41,7 +46,15 @@ public class SynthPlugin implements Plugin {
 
 	@Override
 	public Player createPlayer(DataSource dataSource) {
-		if (!acceptsSequencedData(dataSource)) {
+		if (dataSource == null || dataSource.getLocator() == null) {
+			return null;
+		}
+
+		ContentProbe.Kind kind = probe(dataSource);
+		if (kind == ContentProbe.Kind.SMAF) {
+			return createSmafPlayer(dataSource);
+		}
+		if (!acceptsSequencedData(dataSource, kind)) {
 			return null;
 		}
 		try {
@@ -49,6 +62,102 @@ public class SynthPlugin implements Plugin {
 		} catch (Exception e) {
 			Log.w(TAG, "createPlayer: ", e);
 			return null;
+		}
+	}
+
+	private Player createSmafPlayer(DataSource source) {
+		try {
+			File smaf = new File(source.getLocator());
+			SmafFileFormat.Info info = SmafFileFormat.inspect(smaf);
+			if (info == null) {
+				return null;
+			}
+
+			// Pure ATR/Awa stays on the already-validated R5 path. Do not fall
+			// through to the pinned upstream parser when the fallback rejects a
+			// file: that revision does not model inherited ATR/Awa metadata safely.
+			if (info.hasAwa()) {
+				return isPureAwa(info) ? createAwaFallbackPlayer(source, smaf) : null;
+			}
+
+			// Keep the native dependency behind the subset its pinned parser is
+			// known to interpret correctly. In particular, that revision decodes
+			// Mwa WaveType and the extended 10/20/40/50 ms timebase codes wrongly.
+			if (!isNativeScoreSafe(info)) {
+				return null;
+			}
+
+			return createNativeSmafPlayer(source, smaf);
+		} catch (Exception e) {
+			Log.w(TAG, "Unable to create SMAF player", e);
+			return null;
+		}
+	}
+
+	private static boolean isPureAwa(SmafFileFormat.Info info) {
+		return info != null
+				&& !info.hasScore()
+				&& info.getPcmAudioTrackCount() == 1
+				&& info.hasAwa()
+				&& !info.hasMwa();
+	}
+
+	private static boolean isNativeScoreSafe(SmafFileFormat.Info info) {
+		if (info.getScoreTrackCount() != 1
+				|| info.hasPcmAudioTrack()
+				|| info.hasAwa()
+				|| info.hasMwa()) {
+			return false;
+		}
+
+		SmafFileFormat.TrackInfo track = info.getFirstScoreTrack();
+		if (track == null
+				|| track.getFormatType() == SmafFileFormat.FormatType.UNKNOWN
+				|| track.getSequenceType() != SmafFileFormat.SequenceType.STREAM_SEQUENCE) {
+			return false;
+		}
+
+		return isNativeBasicTimeBase(track.getDurationTimeBaseMs())
+				&& isNativeBasicTimeBase(track.getGateTimeTimeBaseMs());
+	}
+
+	private static boolean isNativeBasicTimeBase(int timeBaseMs) {
+		return timeBaseMs == 1 || timeBaseMs == 2 || timeBaseMs == 4 || timeBaseMs == 5;
+	}
+
+	private Player createNativeSmafPlayer(DataSource source, File smaf) throws Exception {
+		FileCacheDataSource rendered = new FileCacheDataSource(SmafNativeRenderer.CONTENT_TYPE, "wav");
+		boolean success = false;
+		try {
+			if (!SmafNativeRenderer.render(smaf, new File(rendered.getLocator()))) {
+				return null;
+			}
+			Player player = new WavPlayer(rendered, SmafNativeRenderer.CONTENT_TYPE);
+			source.disconnect();
+			success = true;
+			return player;
+		} finally {
+			if (!success) {
+				rendered.disconnect();
+			}
+		}
+	}
+
+	private Player createAwaFallbackPlayer(DataSource source, File smaf) throws Exception {
+		FileCacheDataSource rendered = new FileCacheDataSource(SmafWaveformRenderer.CONTENT_TYPE, "wav");
+		boolean success = false;
+		try {
+			if (!SmafWaveformRenderer.render(smaf, new File(rendered.getLocator()))) {
+				return null;
+			}
+			Player player = new WavPlayer(rendered, SmafWaveformRenderer.CONTENT_TYPE);
+			source.disconnect();
+			success = true;
+			return player;
+		} finally {
+			if (!success) {
+				rendered.disconnect();
+			}
 		}
 	}
 
@@ -62,33 +171,33 @@ public class SynthPlugin implements Plugin {
 		}
 	}
 
+	private static ContentProbe.Kind probe(DataSource dataSource) {
+		try {
+			return ContentProbe.probe(new File(dataSource.getLocator()));
+		} catch (IOException | RuntimeException e) {
+			Log.w(TAG, "Unable to probe synth data source", e);
+			return ContentProbe.Kind.UNKNOWN;
+		}
+	}
+
 	/**
 	 * Keep arbitrary unknown binary away from native synth parser discovery.
 	 * Signature evidence wins; an explicit synth MIME remains a conservative
 	 * fallback for callers that provide a valid MMAPI content type.
 	 */
-	private static boolean acceptsSequencedData(DataSource dataSource) {
-		if (dataSource == null || dataSource.getLocator() == null) {
-			return false;
-		}
-
-		try {
-			ContentProbe.Kind kind = ContentProbe.probe(new File(dataSource.getLocator()));
-			switch (kind) {
-				case MIDI:
-				case XMF:
-				case RMID:
-				case IMELODY:
-				case RTTTL:
-				case NOKIA_OTA:
-					return true;
-				case UNKNOWN:
-					break;
-				default:
-					return false;
-			}
-		} catch (IOException | RuntimeException e) {
-			Log.w(TAG, "Unable to probe synth data source", e);
+	private static boolean acceptsSequencedData(DataSource dataSource, ContentProbe.Kind kind) {
+		switch (kind) {
+			case MIDI:
+			case XMF:
+			case RMID:
+			case IMELODY:
+			case RTTTL:
+			case NOKIA_OTA:
+				return true;
+			case UNKNOWN:
+				break;
+			default:
+				return false;
 		}
 
 		String contentType = dataSource.getContentType();

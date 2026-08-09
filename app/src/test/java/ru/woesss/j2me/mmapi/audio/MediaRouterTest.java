@@ -27,7 +27,7 @@ public class MediaRouterTest {
 				MediaRouter.route(ContentProbe.Kind.WAV, "audio/midi"));
 		assertEquals(MediaRouter.Backend.SYNTH,
 				MediaRouter.route(ContentProbe.Kind.MIDI, "audio/wav"));
-		assertEquals(MediaRouter.Backend.UNKNOWN,
+		assertEquals(MediaRouter.Backend.SYNTH,
 				MediaRouter.route(ContentProbe.Kind.SMAF, "audio/midi"));
 	}
 
@@ -45,6 +45,8 @@ public class MediaRouterTest {
 				MediaRouter.route(ContentProbe.Kind.RTTTL, null));
 		assertEquals(MediaRouter.Backend.SYNTH,
 				MediaRouter.route(ContentProbe.Kind.NOKIA_OTA, null));
+		assertEquals(MediaRouter.Backend.SYNTH,
+				MediaRouter.route(ContentProbe.Kind.SMAF, null));
 		assertEquals(MediaRouter.Backend.SYNTH,
 				MediaRouter.route(ContentProbe.Kind.UNKNOWN, "audio/x-tone-seq"));
 	}
@@ -77,6 +79,8 @@ public class MediaRouterTest {
 				MediaRouter.route(ContentProbe.Kind.UNKNOWN, "audio/x-wav"));
 		assertEquals(MediaRouter.Backend.UNKNOWN,
 				MediaRouter.route(ContentProbe.Kind.UNKNOWN, "audio/mmf"));
+		assertEquals(MediaRouter.Backend.UNKNOWN,
+				MediaRouter.route(ContentProbe.Kind.UNKNOWN, "application/vnd.smaf"));
 		assertEquals(MediaRouter.Backend.UNKNOWN,
 				MediaRouter.route(ContentProbe.Kind.UNKNOWN, "audio/ogg"));
 		assertEquals(MediaRouter.Backend.UNKNOWN,
