@@ -12,6 +12,9 @@
     <string name="audio_failure_toast_settings">Audio could not be played. See Settings &gt; Audio diagnostics.</string>
     <string name="audio_failure_warnings_title">Audio failure warnings</string>
     <string name="audio_failure_warnings_summary">Show a brief in-app message when audio playback fails. Failures are always recorded in Audio diagnostics.</string>
+    <string name="midi_sample_rate_title">MIDI sample rate</string>
+    <string name="midi_sample_rate_22050">22.05 kHz — Compatibility</string>
+    <string name="midi_sample_rate_44100">44.1 kHz — High quality</string>
     <string name="audio_diagnostics_title">Audio diagnostics</string>
     <string name="audio_diagnostics_summary">Review recent audio playback failures</string>
     <string name="audio_diagnostics_empty">No recent audio failures.</string>
