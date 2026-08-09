@@ -244,6 +244,7 @@ internal fun SettingsScreen(
     state: SettingsUiState,
     onBack: () -> Unit,
     onProfiles: () -> Unit,
+    onAudioDiagnostics: () -> Unit,
     onChooseDirectory: () -> Unit,
 ) {
     AppComposeTheme {
@@ -284,6 +285,7 @@ internal fun SettingsScreen(
             onCameraJpegQualitySelected = state::setCameraJpegQuality,
             onSwitchChanged = state::setSwitch,
             onProfiles = onProfiles,
+            onAudioDiagnostics = onAudioDiagnostics,
             onChooseDirectory = onChooseDirectory,
             onDismissDirectoryError = { state.directoryErrorPath = null },
         )
@@ -317,6 +319,7 @@ private fun SettingsContent(
     onCameraJpegQualitySelected: (String) -> Unit,
     onSwitchChanged: (String, Boolean) -> Unit,
     onProfiles: () -> Unit,
+    onAudioDiagnostics: () -> Unit,
     onChooseDirectory: () -> Unit,
     onDismissDirectoryError: () -> Unit,
 ) {
@@ -428,6 +431,12 @@ private fun SettingsContent(
                         SettingsSwitchRow(state, onSwitchChanged)
                     }
                     item {
+                        SettingsChoiceRow(
+                            icon = R.drawable.ic_setting_message,
+                            title = stringResource(R.string.audio_diagnostics_title),
+                            summary = stringResource(R.string.audio_diagnostics_summary),
+                            onClick = onAudioDiagnostics,
+                        )
                         SettingsChoiceRow(
                             icon = R.drawable.ic_setting_default,
                             title = stringResource(R.string.profiles),
@@ -777,6 +786,7 @@ private fun SettingsPreview(darkTheme: Boolean) {
             onCameraJpegQualitySelected = {},
             onSwitchChanged = { _, _ -> },
             onProfiles = {},
+            onAudioDiagnostics = {},
             onChooseDirectory = {},
             onDismissDirectoryError = {},
         )
