@@ -50,8 +50,30 @@ Treat licensing and copyright as correctness constraints, not decoration.
 - Do not blindly cherry-pick experimental history. Reconstruct the intended final behavior from relevant source history, current code, tests, and specifications.
 - A feature that took many experimental commits in `dev` may become one coherent implementation in `alpha`.
 - A mixed or superseded `dev` commit may be partially incorporated, superseded, or dropped.
-- Keep each `temp -> alpha` change focused on one logical concern and keep every stage buildable.
+- Keep each PR focused on one logical concern. Intermediate commits may be exploratory, fixup-oriented, or temporarily fail validation when that is part of the investigation, but the final PR state must be coherent and validated.
 - When reconstructing from `dev`, be able to explain which historical behavior was incorporated and which was intentionally omitted.
+
+## Git and pull request workflow
+
+`alpha` is the default integration branch. Normal development happens on a dedicated branch and is integrated through a pull request to `alpha`.
+
+- Do not develop directly on `alpha` unless the user explicitly requests it.
+- Start each PR-sized logical concern from the latest `alpha`, then create a fresh descriptive branch for that work.
+- `temp` is not a required workflow branch. It may be used as temporary staging or scratch space when explicitly requested, but normal implementation work should use a dedicated PR branch.
+- Keep one PR centered on one coherent logical concern. Split unrelated work instead of allowing opportunistic cleanup to expand the PR.
+- A PR may contain multiple implementation, experiment, fixup, cleanup, and validation commits. Commit history inside the PR does not need to be cosmetically rewritten merely to look clean.
+- Commits that exist to test whether an approach works, capture a useful checkpoint, fix a discovered failure, or prepare the branch for merge or squash merge may remain in the PR history.
+- Use `[skip ci]` on intermediate commits when running CI would provide little or no additional validation and would only create an unnecessary GitHub Actions run.
+- Intentionally omit `[skip ci]` on meaningful validation checkpoints so CI verifies the branch when the result is useful.
+- Never use `[skip ci]` to conceal a known CI failure, bypass relevant validation, or make a broken PR appear mergeable.
+- Before merging, ensure the final PR state has been validated successfully by CI without a skip instruction. If the PR head has changed since the last successful relevant run, validate the current head again.
+- Do not create empty or no-op commits solely to trigger, suppress, or manipulate CI. Use an actual follow-up change or the workflow rerun/manual-dispatch mechanism instead.
+- Prefer Squash Merge when the PR history contains WIP, experimentation, fixups, reversions, or other development-only commits that are not useful in `alpha` history.
+- A Merge commit is acceptable when the individual PR commits were intentionally designed as atomic, understandable units worth preserving for history, revert, or bisect purposes.
+- Rebase Merge is not the default strategy; use it only when there is a concrete reason or the user explicitly requests it.
+- For Squash Merge, make the final squash title/message describe the completed logical change rather than the experimental path taken to reach it. Do not carry `[skip ci]` from intermediate commits into the final squash commit.
+- PR descriptions should summarize the final change: what changed, why, important intentional exclusions, relevant validation, and historical `dev` behavior or commits used during reconstruction when applicable. They do not need to narrate every intermediate experiment.
+- After a PR is merged, start unrelated new work from the latest `alpha` on a fresh branch rather than continuing development on the already-merged branch.
 
 ## Versioning
 
