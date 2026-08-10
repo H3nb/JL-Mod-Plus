@@ -119,6 +119,14 @@ android {
     }
 }
 
+// Keep the legacy standalone MIDlet-to-APK source set available as reference, but do not
+// create build variants for it unless porting support is intentionally re-enabled.
+androidComponents {
+    beforeVariants(selector().withFlavor("default" to "midlet")) { variantBuilder ->
+        variantBuilder.enable = false
+    }
+}
+
 kotlin.compilerOptions.jvmTarget.set(JvmTarget.JVM_17)
 
 fun getMidletManifestProperties(): Attributes = Manifest().let { mf ->
