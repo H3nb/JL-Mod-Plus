@@ -160,7 +160,6 @@ dependencies {
 
     implementation(libs.acra.http)
     implementation(libs.ambilwarna)
-    implementation(libs.donations)
     implementation(libs.ffmpeg.mobile)
     implementation(libs.filepicker)
     implementation(libs.pngj)
