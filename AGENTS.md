@@ -151,6 +151,8 @@ The vendored skill set includes the selected `SKILL.md` entry points and local r
 ## Android/UI constraints
 
 - The standalone `midlet` product flavor for building Java ME source directly into an Android APK is intentionally disabled. Keep its source set as dormant reference material; do not re-enable or remove it unless the user explicitly requests MIDlet porting support.
+- Debug development and CI are intentionally focused on `arm64-v8a`, the architecture available for device validation. Do not spend routine debug build time compiling other ABIs unless cross-ABI validation is explicitly requested.
+- Release/distribution builds retain the project's configured multi-ABI support; do not narrow release ABI coverage merely because debug is ARM64-only.
 - Migrate application-owned XML layouts and programmatic View UI to Jetpack Compose Material 3 incrementally when doing so does not alter Java ME API/JSR/vendor behavior or a required emulator/platform/input boundary. Keep each stage buildable.
 - Do not change a Java ME API implementation merely to facilitate Compose migration. Preserve a native/View boundary where emulator rendering, platform interop, or input behavior concretely requires it.
 - For internal application UI icons, prefer official Material Symbols when a suitable symbol exists. Search the official Material Symbols source directly or use `scripts/material-symbols.py`; use a custom icon only when no suitable Material Symbol exists.
@@ -166,6 +168,7 @@ Use the narrowest relevant tests while iterating. For the current alpha baseline
 ./gradlew --no-daemon :app:testEmulatorDebugUnitTest :app:assembleEmulatorDebug
 ```
 
+- Routine debug and CI builds should compile/package only `arm64-v8a`; other ABIs are reserved for explicit compatibility or release validation.
 - Prefer debug builds during reconstruction. Do not run release/R8 builds unless the task specifically requires release behavior, shrinking, signing, or R8 validation.
 - Do not run `clean` routinely; it wastes time and destroys useful incremental build state.
 - Add focused regression or characterization tests for compatibility-sensitive behavior.
