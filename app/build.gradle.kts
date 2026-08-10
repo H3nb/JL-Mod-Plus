@@ -23,8 +23,8 @@ android {
         applicationId = "io.github.h3nb.jlmodplus"
         minSdk = rootProject.extra["minSdk"] as Int
         targetSdk = rootProject.extra["targetSdk"] as Int
-        versionCode = 48
-        versionName = "0.87.1"
+        versionCode = 1
+        versionName = "0.1.0"
         resValue("string", "app_name", "JL-Mod Plus")
         resValue("string", "app_center", secret.getProperty("appCenterKey", ""))
         resValue("string", "fingerprint", secret.getProperty("fingerprint", ""))

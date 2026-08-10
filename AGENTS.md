@@ -53,6 +53,13 @@ Treat licensing and copyright as correctness constraints, not decoration.
 - Keep each `temp -> alpha` change focused on one logical concern and keep every stage buildable.
 - When reconstructing from `dev`, be able to explain which historical behavior was incorporated and which was intentionally omitted.
 
+## Versioning
+
+- JL-Mod Plus `versionName` follows Semantic Versioning (`MAJOR.MINOR.PATCH`). The independent JL-Mod Plus release line starts at `0.1.0`.
+- During `0.x`, use MINOR for incompatible or substantial behavior changes while the project is still stabilizing, and PATCH for backward-compatible fixes. Starting with `1.0.0`, increment MAJOR for incompatible changes, MINOR for backward-compatible features, and PATCH for backward-compatible fixes.
+- Android `versionCode` is a separate monotonically increasing integer. Never reuse or decrease a `versionCode` that has already been published.
+- Do not bump versions incidentally in an unrelated change unless release/versioning work is part of the task.
+
 ## Repeated audit loop
 
 Do not treat a successful build as the end of the task. Audit repeatedly.
@@ -121,8 +128,9 @@ The vendored `SKILL.md` files are intentionally lightweight entry points. If a s
 
 ## Android/UI constraints
 
-- Migrate application-owned UI toward Compose Material 3 incrementally and keep each stage buildable.
-- Preserve a native/View boundary where emulator rendering, platform interop, or input behavior concretely requires it.
+- Migrate application-owned XML layouts and programmatic View UI to Jetpack Compose Material 3 incrementally when doing so does not alter Java ME API/JSR/vendor behavior or a required emulator/platform/input boundary. Keep each stage buildable.
+- Do not change a Java ME API implementation merely to facilitate Compose migration. Preserve a native/View boundary where emulator rendering, platform interop, or input behavior concretely requires it.
+- For internal application UI icons, prefer official Material Symbols when a suitable symbol exists. Search the official Material Symbols source directly or use `scripts/material-symbols.py`; use a custom icon only when no suitable Material Symbol exists.
 - For edge-to-edge, keep one clear owner for each inset. Avoid double-padding and duplicated inset consumption.
 - Do not introduce Navigation 3, adaptive APIs, or other architectural migrations before the task and prerequisites justify them.
 - Preserve behavior first during UI migration; redesign and behavior changes should be explicit separate concerns when practical.
