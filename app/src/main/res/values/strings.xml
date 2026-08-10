@@ -39,8 +39,6 @@
     <string name="create_apps_dir_failed">Failed to create a folder in the path:\n%1$s\nselect another.</string>
     <string name="default_label">%1$s (default)</string>
     <string name="dismiss">Dismiss</string>
-    <string name="donate">Donate</string>
-    <string name="donation_paypal_item" translatable="false">J2ME Loader donation</string>
     <string name="edit">Edit</string>
     <string name="enter_name">Enter name</string>
     <string name="enter_new_name">Enter new name</string>
