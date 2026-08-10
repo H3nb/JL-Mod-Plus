@@ -1,21 +1,28 @@
 ---
 name: Bug report
-about: Please specify the parameters of the device, game and emulator and describe
-  the problem
+about: Report a reproducible problem in JL-Mod Plus
 title: ''
 labels: bug
 assignees: ''
-
 ---
 
-**Build version:**
+<!-- Modified for JL-Mod Plus. -->
 
-**Game version:**
-
-**Game resolution:**
+**JL-Mod Plus version/build:**
 
 **Device model:**
 
 **Android version:**
 
-**Description of the issue:**
+**MIDlet/game and version:**
+
+**Steps to reproduce:**
+1.
+2.
+3.
+
+**Expected behavior:**
+
+**Actual behavior:**
+
+**Logs or screenshots (if relevant):**

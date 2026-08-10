@@ -1,3 +1,4 @@
+// Modified for JL-Mod Plus.
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Locale
 import java.util.Properties
@@ -19,12 +20,12 @@ android {
     namespace = "ru.playsoftware.j2meloader"
 
     defaultConfig {
-        applicationId = "ru.woesss.j2meloader"
+        applicationId = "io.github.h3nb.jlmodplus"
         minSdk = rootProject.extra["minSdk"] as Int
         targetSdk = rootProject.extra["targetSdk"] as Int
-        versionCode = 48
-        versionName = "0.87.1"
-        resValue("string", "app_name", rootProject.name)
+        versionCode = 1
+        versionName = "0.1.0"
+        resValue("string", "app_name", "JL-Mod Plus")
         resValue("string", "app_center", secret.getProperty("appCenterKey", ""))
         resValue("string", "fingerprint", secret.getProperty("fingerprint", ""))
         vectorDrawables.useSupportLibrary = true
@@ -59,6 +60,9 @@ android {
             isJniDebuggable = true
             multiDexEnabled = true
             multiDexKeepProguard = file("multidex-config.pro")
+            ndk {
+                abiFilters += "arm64-v8a"
+            }
         }
     }
 
@@ -108,13 +112,21 @@ android {
 
     applicationVariants.configureEach {
         if (buildType.name == "debug" && flavorName == "emulator") {
-            resValue("string", "app_name", "JL-Debug")
+            resValue("string", "app_name", "JL-Mod Plus Debug")
         }
         outputs.configureEach {
             if (this is com.android.build.gradle.internal.api.BaseVariantOutputImpl) {
                 outputFileName = "${rootProject.name}_$versionName-$dirName.apk"
             }
         }
+    }
+}
+
+// Keep the legacy standalone MIDlet-to-APK source set available as reference, but do not
+// create build variants for it unless porting support is intentionally re-enabled.
+androidComponents {
+    beforeVariants(selector().withFlavor("default" to "midlet")) { variantBuilder ->
+        variantBuilder.enable = false
     }
 }
 
@@ -159,7 +171,6 @@ dependencies {
 
     implementation(libs.acra.http)
     implementation(libs.ambilwarna)
-    implementation(libs.donations)
     implementation(libs.ffmpeg.mobile)
     implementation(libs.filepicker)
     implementation(libs.pngj)
