@@ -66,7 +66,7 @@ Treat licensing and copyright as correctness constraints, not decoration.
 - Use `[skip ci]` on intermediate commits when running CI would provide little or no additional validation and would only create an unnecessary GitHub Actions run.
 - Intentionally omit `[skip ci]` on meaningful validation checkpoints so CI verifies the branch when the result is useful.
 - Never use `[skip ci]` to conceal a known CI failure, bypass relevant validation, or make a broken PR appear mergeable.
-- Before merging, ensure the final PR state has been validated successfully by CI without a skip instruction. If the PR head has changed since the last successful relevant run, validate the current head again.
+- Before merging changes that can affect build, runtime behavior, tests, or CI, ensure the final PR state has been validated successfully by relevant CI without a skip instruction. Documentation-only or policy-only PRs do not require an unrelated Android build solely for formality; run only validation relevant to their changes. If the PR head has changed since the last successful relevant run, validate the current head again.
 - Do not create empty or no-op commits solely to trigger, suppress, or manipulate CI. Use an actual follow-up change or the workflow rerun/manual-dispatch mechanism instead.
 - Prefer Squash Merge when the PR history contains WIP, experimentation, fixups, reversions, or other development-only commits that are not useful in `alpha` history.
 - A Merge commit is acceptable when the individual PR commits were intentionally designed as atomic, understandable units worth preserving for history, revert, or bisect purposes.
