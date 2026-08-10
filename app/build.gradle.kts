@@ -60,6 +60,9 @@ android {
             isJniDebuggable = true
             multiDexEnabled = true
             multiDexKeepProguard = file("multidex-config.pro")
+            ndk {
+                abiFilters += "arm64-v8a"
+            }
         }
     }
 
