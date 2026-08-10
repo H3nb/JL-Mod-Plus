@@ -16,7 +16,7 @@
 - Prefer existing project patterns and dependencies when they are adequate.
 - Preserve application behavior during UI migration. Do not change Java ME API behavior merely to facilitate Compose.
 - Application-owned UI may migrate to Compose incrementally, but emulator, rendering, input, or Android-platform boundaries may remain native/View when they serve a concrete purpose.
-- For internal app icons, prefer official Material Symbols when suitable; use `scripts/material-symbols.py` or the official source before creating a custom icon.
+- For internal app icons, prefer official Material Symbols when suitable; use a repository-provided helper when available before creating a custom icon.
 
 ## Java ME compatibility
 
@@ -39,8 +39,8 @@ For changes to Java ME APIs, JSRs, vendor APIs, or compatibility behavior:
 
 ## Git, PR, and CI workflow
 
-- `alpha` is the integration branch. Do normal development on a dedicated branch and integrate through a PR to `alpha`.
-- Start unrelated work from the latest `alpha` on a fresh branch. `temp` may be used only as optional scratch/staging when explicitly requested.
+- Use the repository's current default/integration branch as the base. Do normal development on a dedicated branch and integrate through a PR rather than working directly on the integration branch unless explicitly requested.
+- Start unrelated work from the latest integration branch on a fresh branch. Use scratch/staging branches only when they are actually useful or explicitly requested.
 - Keep one PR centered on one coherent concern. Intermediate experiment/fixup commits may remain when they are useful to the development process.
 - Use `[skip ci]` on intermediate commits when CI would provide little additional value.
 - Do not use `[skip ci]` to hide a known failure or bypass relevant validation.
@@ -51,8 +51,7 @@ For changes to Java ME APIs, JSRs, vendor APIs, or compatibility behavior:
 
 ## Versioning
 
-- `versionName` follows Semantic Versioning.
-- During `0.x`, use MINOR for substantial or incompatible changes and PATCH for backward-compatible fixes.
+- `versionName` follows Semantic Versioning; apply the semantics appropriate to the current major version.
 - Android `versionCode` must increase monotonically for published application IDs.
 - Do not bump versions as an unrelated side effect.
 
