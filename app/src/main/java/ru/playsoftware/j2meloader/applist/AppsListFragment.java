@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+// Modified for JL-Mod Plus.
 package ru.playsoftware.j2meloader.applist;
 
 import static ru.playsoftware.j2meloader.util.Constants.KEY_APP_URI;
