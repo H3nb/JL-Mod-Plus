@@ -30,6 +30,20 @@ Project workflows are CLI-first and must not require Android Studio. If a skill 
 - Do not upgrade AGP, Gradle, Kotlin, JDK, NDK, SDK levels, or libraries as a side effect unless the task requires it.
 - Do not add blanket H3NB copyright headers to inherited/upstream files. Preserve upstream copyright, license, and attribution notices. Add new attribution only where it is actually appropriate for genuinely new work.
 
+## License and copyright policy
+
+Treat licensing and copyright as correctness constraints, not decoration.
+
+- Before changing `LICENSE`, `NOTICE`, source headers, attribution, or bundled third-party notices, inspect the relevant upstream provenance and license terms first.
+- Keep the standard Apache License 2.0 text in the root `LICENSE` unchanged unless a concrete licensing requirement explicitly requires otherwise.
+- Preserve inherited copyright, license, patent, trademark, and attribution notices. Do not remove or replace them merely to rebrand the fork.
+- For inherited Apache-2.0 files that are modified, satisfy the license requirement to identify modified files without turning that notice into a blanket ownership claim.
+- Do not mass-insert project or maintainer copyright statements into inherited files.
+- Do not assume AI-assisted output is automatically copyrightable by the project maintainer. Make a copyright claim only when there is a clear basis for human authorship and the user explicitly wants that claim.
+- Keep `NOTICE` focused on meaningful or required attribution. Do not use it as a dependency changelog or as a place for speculative ownership claims.
+- When legal attribution needs the maintainer's name, use `Hendra Bara'langi'`. Use `h3nb` for technical identifiers, usernames, package-related naming, and similar non-legal identifiers.
+- If ownership or licensing is genuinely uncertain, preserve existing rights and attribution, state the uncertainty, and avoid inventing a legal conclusion.
+
 ## Reconstruction policy
 
 - `dev` and `dev_backup` are historical/reference branches, not units of truth to replay blindly.
