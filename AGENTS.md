@@ -142,14 +142,15 @@ Use a skill only when the task matches it. Do not load or apply every skill by d
 - `navigation-3`: migration to or work involving Jetpack Navigation 3.
 - `migrate-xml-views-to-jetpack-compose`: migration of application-owned XML/View UI to Compose. Do not use it as justification to replace a required emulator/native host boundary.
 - `adaptive`: adaptive Compose layouts after its prerequisites are actually satisfied. Experimental APIs mentioned by the skill require a concrete need; do not adopt them merely because the skill describes them.
-- `r8-analyzer`: R8/ProGuard configuration analysis. Respect the skill's analysis-only scope unless the user separately requests implementation changes.
+- `r8-analyzer`: R8/ProGuard configuration analysis. Respect the skill's analysis-only scope unless the user separately requests implementation changes. The pinned upstream currently lacks two scripts referenced by its scripted path; follow the fallback documented in `.agents/UPSTREAM.md` and never fabricate those scripts.
 - `edge-to-edge`: system bars, cutouts, IME, WindowInsets, and inset ownership.
 - `testing-setup`: testing strategy and infrastructure. Preserve the existing testing stack by default; do not install Hilt, Robolectric, Jacoco, mocking frameworks, screenshot frameworks, or other test infrastructure solely because the skill lists them. Add infrastructure only when the current task needs it and the existing stack is inadequate.
 
-The vendored `SKILL.md` files are intentionally lightweight entry points. If a skill references a local `references/` or `scripts/` file that is not vendored, retrieve the exact corresponding file from the pinned upstream revision documented in `.agents/UPSTREAM.md`. Never invent missing skill content from memory.
+The vendored skill set includes the selected `SKILL.md` entry points and local reference files documented in `.agents/UPSTREAM.md`. If a referenced `references/` or `scripts/` file is not vendored, check the exact corresponding path at the pinned upstream revision. Retrieve it only if it exists there and is needed for the current task. If it is absent upstream too, follow the documented project fallback instead of inventing missing skill content or tooling.
 
 ## Android/UI constraints
 
+- The standalone `midlet` product flavor for building Java ME source directly into an Android APK is intentionally disabled. Keep its source set as dormant reference material; do not re-enable or remove it unless the user explicitly requests MIDlet porting support.
 - Migrate application-owned XML layouts and programmatic View UI to Jetpack Compose Material 3 incrementally when doing so does not alter Java ME API/JSR/vendor behavior or a required emulator/platform/input boundary. Keep each stage buildable.
 - Do not change a Java ME API implementation merely to facilitate Compose migration. Preserve a native/View boundary where emulator rendering, platform interop, or input behavior concretely requires it.
 - For internal application UI icons, prefer official Material Symbols when a suitable symbol exists. Search the official Material Symbols source directly or use `scripts/material-symbols.py`; use a custom icon only when no suitable Material Symbol exists.
