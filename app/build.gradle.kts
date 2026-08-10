@@ -1,3 +1,4 @@
+// Modified for JL-Mod Plus.
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Locale
 import java.util.Properties
@@ -19,12 +20,12 @@ android {
     namespace = "ru.playsoftware.j2meloader"
 
     defaultConfig {
-        applicationId = "ru.woesss.j2meloader"
+        applicationId = "io.github.h3nb.jlmodplus"
         minSdk = rootProject.extra["minSdk"] as Int
         targetSdk = rootProject.extra["targetSdk"] as Int
         versionCode = 48
         versionName = "0.87.1"
-        resValue("string", "app_name", rootProject.name)
+        resValue("string", "app_name", "JL-Mod Plus")
         resValue("string", "app_center", secret.getProperty("appCenterKey", ""))
         resValue("string", "fingerprint", secret.getProperty("fingerprint", ""))
         vectorDrawables.useSupportLibrary = true
@@ -108,7 +109,7 @@ android {
 
     applicationVariants.configureEach {
         if (buildType.name == "debug" && flavorName == "emulator") {
-            resValue("string", "app_name", "JL-Debug")
+            resValue("string", "app_name", "JL-Mod Plus Debug")
         }
         outputs.configureEach {
             if (this is com.android.build.gradle.internal.api.BaseVariantOutputImpl) {

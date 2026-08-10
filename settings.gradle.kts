@@ -1,3 +1,4 @@
+// Modified for JL-Mod Plus.
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
     repositories {
@@ -16,5 +17,5 @@ dependencyResolutionManagement {
         maven("https://jitpack.io")
     }
 }
-rootProject.name = "JL-Mod"
+rootProject.name = "JL-Mod-Plus"
 include(":app", ":dexlib")
