@@ -30,38 +30,4 @@
 <issue id="MissingPermission" message="Missing permissions required by NotificationManagerCompat.notify: android.permission.POST_NOTIFICATIONS"><location file="src/main/java/com/nokia/mid/ui/SoftNotificationImpl.java" line="166"/></issue>
 <issue id="NotificationPermission" message="When targeting Android 13 or higher, posting a permission requires holding the `POST_NOTIFICATIONS` permission"><location file="src/main/java/com/nokia/mid/ui/SoftNotificationImpl.java" line="166"/></issue>
 <issue id="CoarseFineLocation" message="If you need access to FINE location, you must request both `ACCESS_FINE_LOCATION` and `ACCESS_COARSE_LOCATION`"><location file="src/main/AndroidManifest.xml" line="14"/></issue>
-<issue id="UseAppTint" message="Must use `app:tint` instead of `android:tint`"><location file="src/main/res/layout/listitem_checkable.xml" line="23"/></issue>
-<issue id="UseAppTint" message="Must use `app:tint` instead of `android:tint`"><location file="src/main/res/layout/listitem_dir.xml" line="23"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-sv/strings.xml" line="8"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-da/strings.xml" line="15"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-th/strings.xml" line="16"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-bn/strings.xml" line="17"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-fi/strings.xml" line="17"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-kk/strings.xml" line="17"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-pl/strings.xml" line="17"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-ro/strings.xml" line="17"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-zh-rTW/strings.xml" line="18"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-fa/strings.xml" line="19"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-it/strings.xml" line="21"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-ko/strings.xml" line="21"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-nl/strings.xml" line="21"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-pt/strings.xml" line="21"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-hu/strings.xml" line="23"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-bg/strings.xml" line="25"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-ja/strings.xml" line="25"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-or/strings.xml" line="25"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-vi/strings.xml" line="27"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-de/strings.xml" line="28"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-es/strings.xml" line="30"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-ar/strings.xml" line="32"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-cs/strings.xml" line="32"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-fr/strings.xml" line="32"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-hi/strings.xml" line="32"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-in/strings.xml" line="32"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-pt-rBR/strings.xml" line="32"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-sat/strings.xml" line="32"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-tr/strings.xml" line="32"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-uk/strings.xml" line="32"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-zh-rCN/strings.xml" line="32"/></issue>
-<issue id="ExtraTranslation" message="&quot;donate&quot; is translated here but not found in default locale"><location file="src/main/res/values-ru/strings.xml" line="34"/></issue>
 </issues>

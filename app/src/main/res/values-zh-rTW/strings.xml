@@ -15,7 +15,6 @@
     <string name="converting_wait">正在安裝…</string>
     <string name="crash_dialog_message">是否需要向開發者發送錯誤報告？</string>
     <string name="crash_dialog_title">檢測到錯誤</string>
-    <string name="donate">捐贈</string>
     <string name="error">錯誤</string>
     <string name="exit">退出</string>
     <string name="external_storage_not_mounted">該功能需要存儲權限，請去設置授予存儲權限，以便您繼續使用該功能。</string>
