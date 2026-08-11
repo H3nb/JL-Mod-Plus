@@ -22,6 +22,8 @@ import android.os.Message;
 import android.os.Process;
 import android.util.Log;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.midlet.MIDlet;
@@ -37,7 +39,7 @@ import ru.playsoftware.j2meloader.crashes.MidletSessionJournal;
 
 public class MidletThread extends HandlerThread implements Handler.Callback {
 	private static final String TAG = MidletThread.class.getName();
-	private static final UncaughtExceptionHandler uncaughtExceptionHandler = (t, e) ->
+	private static final UncaughtExceptionHandler POST_DESTROY_UNCAUGHT_HANDLER = (t, e) ->
 			Log.e(TAG, "Error in thread: \"" + t + "\" after destroy app called", e);
 
 	private static final int INIT = 0;
@@ -53,9 +55,12 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private final MicroLoader microLoader;
 	private final String mainClass;
 	private final MidletSessionJournal journal;
+	private final AtomicBoolean fatalFailureStarted = new AtomicBoolean();
+	private final UncaughtExceptionHandler sessionUncaughtHandler = this::handleUncaughtSessionFailure;
 	private final LifecycleEventObserver activityLifecycleObserver = this::onActivityStateChanged;
 	private MIDlet midlet;
 	private Handler handler;
+	private UncaughtExceptionHandler upstreamUncaughtHandler;
 	private int state;
 
 	MidletThread(MicroLoader microLoader, String mainClass, MidletSessionJournal journal) {
@@ -67,7 +72,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	}
 
 	public static void notifyDestroyed() {
-		Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
+		Thread.setDefaultUncaughtExceptionHandler(POST_DESTROY_UNCAUGHT_HANDLER);
 		if (instance != null) {
 			instance.journal.complete(MidletSessionJournal.Outcome.MIDLET_REQUEST);
 			instance.state = DESTROYED;
@@ -91,7 +96,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	}
 
 	static void destroyApp() {
-		Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
+		Thread.setDefaultUncaughtExceptionHandler(POST_DESTROY_UNCAUGHT_HANDLER);
 		if (instance != null) {
 			instance.journal.markOutcome(MidletSessionJournal.Outcome.USER_STOP);
 		}
@@ -117,6 +122,8 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	@Override
 	public void start() {
 		super.start();
+		upstreamUncaughtHandler = Thread.getDefaultUncaughtExceptionHandler();
+		Thread.setDefaultUncaughtExceptionHandler(sessionUncaughtHandler);
 		handler = new Handler(getLooper(), this);
 		ContextHolder.getActivity().getLifecycle().addObserver(activityLifecycleObserver);
 	}
@@ -205,15 +212,80 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		return true;
 	}
 
+	private void handleUncaughtSessionFailure(Thread thread, Throwable error) {
+		if (!fatalFailureStarted.compareAndSet(false, true)) {
+			Log.e(TAG, "Secondary uncaught failure while primary session failure is being reported", error);
+			return;
+		}
+
+		Throwable reportError = error;
+		try {
+			MidletSessionJournal.FailureBoundary boundary = classifyFailureBoundary(thread);
+			String eventId = journal.recordUnexpectedFailure(boundary);
+			if (eventId == null) {
+				Log.w(TAG, "Ignoring uncaught failure after intentional MIDlet termination", error);
+				return;
+			}
+			reportError = new SessionFailureException(eventId, boundary, error);
+		} catch (Throwable journalFailure) {
+			// The durable journal is best-effort under severe memory/storage failure. Preserve the
+			// original crash by still delegating it to the reporter captured before this wrapper.
+			try {
+				Log.e(TAG, "Unable to correlate uncaught MIDlet session failure", journalFailure);
+			} catch (Throwable ignored) {}
+		}
+
+		UncaughtExceptionHandler reporter = upstreamUncaughtHandler;
+		if (reporter != null && reporter != sessionUncaughtHandler) {
+			try {
+				reporter.uncaughtException(thread, reportError);
+				return;
+			} catch (Throwable reporterFailure) {
+				try {
+					Log.e(TAG, "Crash reporter failed while handling MIDlet session failure", reporterFailure);
+				} catch (Throwable ignored) {}
+			}
+		}
+
+		// A broken/missing upstream handler must not leave a corrupted isolated MIDlet process alive.
+		Process.killProcess(Process.myPid());
+	}
+
+	private MidletSessionJournal.FailureBoundary classifyFailureBoundary(Thread thread) {
+		if (thread != this) {
+			return MidletSessionJournal.FailureBoundary.UNCAUGHT_THREAD;
+		}
+		return switch (journal.getStage()) {
+			case INITIALIZING -> MidletSessionJournal.FailureBoundary.LIFECYCLE_INIT;
+			case STARTING -> MidletSessionJournal.FailureBoundary.LIFECYCLE_START;
+			case PAUSING -> MidletSessionJournal.FailureBoundary.LIFECYCLE_PAUSE;
+			case STOPPING -> MidletSessionJournal.FailureBoundary.LIFECYCLE_DESTROY;
+			default -> MidletSessionJournal.FailureBoundary.MIDLET_THREAD;
+		};
+	}
+
 	private void onActivityStateChanged(LifecycleOwner lifecycleOwner, Lifecycle.Event event) {
 		switch (event) {
 			case ON_CREATE -> handler.obtainMessage(INIT).sendToTarget();
 			case ON_START -> handler.obtainMessage(START).sendToTarget();
 			case ON_STOP -> handler.obtainMessage(PAUSE).sendToTarget();
 			case ON_DESTROY -> {
+				if (fatalFailureStarted.get()) {
+					// ACRA finishes the crashing activity before persisting its report. Do not enqueue the
+					// normal DESTROY path here: it can kill :midlet before ACRA writes the report file.
+					break;
+				}
+				Thread.setDefaultUncaughtExceptionHandler(POST_DESTROY_UNCAUGHT_HANDLER);
 				journal.markOutcome(MidletSessionJournal.Outcome.LIFECYCLE_STOP);
 				handler.obtainMessage(DESTROY).sendToTarget();
 			}
+		}
+	}
+
+	private static final class SessionFailureException extends RuntimeException {
+		SessionFailureException(String eventId, MidletSessionJournal.FailureBoundary boundary,
+				Throwable cause) {
+			super("JL-Mod Plus session failure; eventId=" + eventId + "; boundary=" + boundary.name(), cause);
 		}
 	}
 }
