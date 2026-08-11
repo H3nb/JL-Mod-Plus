@@ -14,7 +14,6 @@
     <string name="converting_wait">Se convertește JAR…</string>
     <string name="crash_dialog_message">Dorești să trimiți raportul erorii către programator?</string>
     <string name="crash_dialog_title">Eroare detectată</string>
-    <string name="donate">Donează</string>
     <string name="error">Eroare</string>
     <string name="exit">Ieșire</string>
     <string name="external_storage_not_mounted">Aceasta aplicație are nevoie de stocare externă</string>
