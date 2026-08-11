@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="midlet_failure_recovery_title">Game stopped unexpectedly</string>
-    <string name="midlet_failure_recovery_message">The game stopped unexpectedly. Diagnostic information was saved locally. You can continue using JL-Mod Plus.</string>
-    <string name="midlet_failure_recovery_message_named">“%1$s” stopped unexpectedly. Diagnostic information was saved locally. You can continue using JL-Mod Plus.</string>
+    <string name="midlet_failure_recovery_title" translatable="false">Game stopped unexpectedly</string>
+    <string name="midlet_failure_recovery_message" translatable="false">The game stopped unexpectedly. Diagnostic information was saved locally. You can continue using JL-Mod Plus.</string>
+    <string name="midlet_failure_recovery_message_named" translatable="false">“%1$s” stopped unexpectedly. Diagnostic information was saved locally. You can continue using JL-Mod Plus.</string>
 </resources>
