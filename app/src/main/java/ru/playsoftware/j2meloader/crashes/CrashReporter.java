@@ -112,9 +112,10 @@ public final class CrashReporter {
 		putBounded(reporter, KEY_PROCESS_ROLE, processRole);
 		putBounded(reporter, KEY_PROCESS_PID, Integer.toString(Process.myPid()));
 
-		// A single process owns retention to avoid cross-process deletion races with :midlet.
+		// The main process owns diagnostic retention so :midlet remains a single-purpose writer.
 		if (ROLE_MAIN.equals(processRole)) {
 			LocalCrashReportStore.prune(application);
+			MidletSessionJournal.prune(application);
 		}
 		return false;
 	}
