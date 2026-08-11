@@ -26,6 +26,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -40,6 +43,10 @@ import ru.playsoftware.j2meloader.EmulatorApplication;
  */
 public final class MidletSessionJournal {
 	static final int SCHEMA_VERSION = 1;
+	static final int MAX_JOURNAL_COUNT = 64;
+	static final long MAX_JOURNAL_AGE_MILLIS = 30L * 24L * 60L * 60L * 1000L;
+	static final long DELETE_GRACE_MILLIS = 5L * 60L * 1000L;
+
 	private static final String TAG = MidletSessionJournal.class.getSimpleName();
 	private static final String JOURNAL_DIR = "diagnostics/midlet-sessions";
 	private static final int MAX_VALUE_LENGTH = 256;
@@ -123,7 +130,7 @@ public final class MidletSessionJournal {
 	public static MidletSessionJournal create(Context context, String midletName, String midletVendor,
 			String midletVersion, String mainClass, String jarSize, String jarSha256) {
 		String sessionId = UUID.randomUUID().toString();
-		File directory = new File(context.getFilesDir(), JOURNAL_DIR);
+		File directory = journalDirectory(context);
 		File file = new File(directory, sessionId + ".properties");
 		MidletSessionJournal journal = new MidletSessionJournal(
 				file,
@@ -144,6 +151,63 @@ public final class MidletSessionJournal {
 		}
 		journal.persistAndPublish();
 		return journal;
+	}
+
+	static void prune(Context context) {
+		File directory = journalDirectory(context);
+		File[] files = directory.listFiles();
+		if (files == null || files.length == 0) {
+			return;
+		}
+		ArrayList<File> journals = new ArrayList<>(files.length);
+		Collections.addAll(journals, files);
+		pruneFiles(
+				journals,
+				System.currentTimeMillis(),
+				MAX_JOURNAL_COUNT,
+				MAX_JOURNAL_AGE_MILLIS,
+				DELETE_GRACE_MILLIS
+		);
+	}
+
+	static void pruneFiles(List<File> files, long now, int maxCount, long maxAgeMillis,
+			long graceMillis) {
+		ArrayList<File> candidates = new ArrayList<>(files.size());
+		for (File file : files) {
+			if (file != null && file.isFile()) {
+				candidates.add(file);
+			}
+		}
+		Collections.sort(candidates, (left, right) -> {
+			long leftModified = left.lastModified();
+			long rightModified = right.lastModified();
+			if (leftModified == rightModified) {
+				return 0;
+			}
+			return leftModified < rightModified ? 1 : -1;
+		});
+
+		int keptCount = 0;
+		for (File journal : candidates) {
+			long modified = journal.lastModified();
+			long age = modified > 0 && now >= modified ? now - modified : 0;
+			boolean inGracePeriod = modified > 0 && now >= modified && age < graceMillis;
+			boolean expired = modified > 0 && now >= modified && age > maxAgeMillis;
+			boolean overCount = keptCount >= maxCount;
+			boolean shouldDelete = !inGracePeriod && (expired || overCount);
+
+			if (shouldDelete && journal.delete()) {
+				continue;
+			}
+			if (shouldDelete) {
+				Log.w(TAG, "Unable to delete old MIDlet session journal: " + journal.getName());
+			}
+			keptCount++;
+		}
+	}
+
+	static File journalDirectory(Context context) {
+		return new File(context.getFilesDir(), JOURNAL_DIR);
 	}
 
 	public String getSessionId() {
