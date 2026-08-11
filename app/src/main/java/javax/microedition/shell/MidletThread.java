@@ -151,7 +151,12 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 				try {
 					state = STARTED;
 					midlet.startApp();
-					journal.transition(MidletSessionJournal.Stage.RUNNING);
+					// startApp() may call notifyPaused(); preserve the state selected by the MIDlet.
+					if (state == STARTED) {
+						journal.transition(MidletSessionJournal.Stage.RUNNING);
+					} else if (state == PAUSED) {
+						journal.transition(MidletSessionJournal.Stage.PAUSED);
+					}
 				} catch (MIDletStateChangeException e) {
 					state = PAUSED;
 					journal.transition(MidletSessionJournal.Stage.PAUSED);
