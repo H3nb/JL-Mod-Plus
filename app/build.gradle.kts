@@ -245,7 +245,7 @@ dependencies {
 
     implementation(libs.acra.http)
     implementation(libs.ambilwarna)
-    implementation(libs.ffmpeg.mobile)
+    implementation(libs.ffmpeg.kit)
     implementation(libs.filepicker)
     implementation(libs.pngj)
     implementation(libs.rx.android)

@@ -16,15 +16,18 @@
  * limitations under the License.
  */
 
+// Modified for JL-Mod Plus.
 package javax.microedition.media;
 
 import android.util.Log;
 
-import com.arthenica.mobileffmpeg.Config;
-import com.arthenica.mobileffmpeg.FFmpeg;
-import com.arthenica.mobileffmpeg.FFprobe;
-import com.arthenica.mobileffmpeg.MediaInformation;
-import com.arthenica.mobileffmpeg.StreamInformation;
+import com.arthenica.ffmpegkit.FFmpegKit;
+import com.arthenica.ffmpegkit.FFmpegSession;
+import com.arthenica.ffmpegkit.FFprobeKit;
+import com.arthenica.ffmpegkit.MediaInformation;
+import com.arthenica.ffmpegkit.MediaInformationSession;
+import com.arthenica.ffmpegkit.ReturnCode;
+import com.arthenica.ffmpegkit.StreamInformation;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,14 +68,16 @@ class InternalDataSource extends FileCacheDataSource {
 	private void convert() {
 		try {
 			String path = mediaFile.getPath();
-			MediaInformation mediaInformation = FFprobe.getMediaInformation(path);
+			MediaInformationSession mediaInformationSession = FFprobeKit.getMediaInformation(path);
+			MediaInformation mediaInformation = mediaInformationSession.getMediaInformation();
 			if (mediaInformation != null) {
 				StreamInformation streamInformation = mediaInformation.getStreams().get(0);
 				if (streamInformation.getCodec().contains("adpcm")) {
 					File pcmU8 = createCacheFile(null, ".wav");
 					String cmd = "-i " + path + " -acodec pcm_u8 -ar 16000 -y " + pcmU8.getPath();
-					int rc = FFmpeg.execute(cmd);
-					if (rc == Config.RETURN_CODE_SUCCESS) {
+					FFmpegSession session = FFmpegKit.execute(cmd);
+					ReturnCode rc = session.getReturnCode();
+					if (ReturnCode.isSuccess(rc)) {
 						Log.i(TAG, "FFmpeg command execution completed successfully.");
 						if (!mediaFile.delete()) {
 							Log.w(TAG, "convert: error delete file=" + mediaFile);
