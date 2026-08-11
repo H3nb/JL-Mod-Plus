@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+// Modified for JL-Mod Plus.
 package ru.playsoftware.j2meloader;
 
 import android.app.Application;
@@ -26,7 +27,6 @@ import android.view.ViewConfiguration;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.multidex.MultiDex;
 import androidx.preference.PreferenceManager;
 
 import org.acra.ACRA;
@@ -48,9 +48,6 @@ public class EmulatorApplication extends Application implements OnSharedPreferen
 	protected void attachBaseContext(Context base) {
 		super.attachBaseContext(base);
 		instance = this;
-		if (BuildConfig.DEBUG) {
-			MultiDex.install(this);
-		}
 
 		ACRA.init(this, new CoreConfigurationBuilder()
 				.withParallel(false)
