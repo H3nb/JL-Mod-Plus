@@ -20,8 +20,6 @@ import android.os.SystemClock;
 import android.util.AtomicFile;
 import android.util.Log;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -174,7 +172,10 @@ public final class MidletSessionJournal {
 		if (outcome == Outcome.NONE && fallbackOutcome != null && fallbackOutcome != Outcome.NONE) {
 			outcome = fallbackOutcome;
 		}
-		stage = Stage.COMPLETED;
+		// Preserve the causal lifecycle stage when an unexpected failure already won the session.
+		if (outcome != Outcome.UNEXPECTED_FAILURE) {
+			stage = Stage.COMPLETED;
+		}
 		touch();
 		persistAndPublish();
 	}
