@@ -72,9 +72,9 @@ class InternalDataSource extends FileCacheDataSource {
 			MediaInformation mediaInformation = mediaInformationSession.getMediaInformation();
 			if (mediaInformation != null) {
 				StreamInformation streamInformation = mediaInformation.getStreams().get(0);
-				if (streamInformation.getCodec().contains("adpcm")) {
+				if (FfmpegAudioConversion.requiresPcmU8Conversion(streamInformation.getCodec())) {
 					File pcmU8 = createCacheFile(null, ".wav");
-					String cmd = "-i " + path + " -acodec pcm_u8 -ar 16000 -y " + pcmU8.getPath();
+					String cmd = FfmpegAudioConversion.buildPcmU8Command(path, pcmU8.getPath());
 					FFmpegSession session = FFmpegKit.execute(cmd);
 					ReturnCode rc = session.getReturnCode();
 					if (ReturnCode.isSuccess(rc)) {
