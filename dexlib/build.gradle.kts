@@ -7,6 +7,7 @@ plugins {
 android {
     compileSdk = rootProject.extra["compileSdk"] as Int
     namespace = "ru.playsoftware.j2meloader.dexlib"
+    enableKotlin = false
 
     defaultConfig {
         minSdk = rootProject.extra["minSdk"] as Int
@@ -17,7 +18,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 

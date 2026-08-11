@@ -22,7 +22,6 @@ import java.util.jar.Manifest
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
 }
 
 /** Copies AGP's final APKs to a stable, human-readable distribution directory. */
