@@ -164,9 +164,6 @@ public final class CrashReporter {
 		appendContext(message, "midletVendor", midletVendor);
 		appendContext(message, "midletVersion", midletVersion);
 		appendContext(message, "jarSize", jarSize);
-		if (message.length() > MAX_CONTEXT_MESSAGE_LENGTH) {
-			message.setLength(MAX_CONTEXT_MESSAGE_LENGTH);
-		}
 		return message.toString();
 	}
 
@@ -175,8 +172,7 @@ public final class CrashReporter {
 		if (bounded == null || message.length() >= MAX_CONTEXT_MESSAGE_LENGTH) {
 			return;
 		}
-		message.append(message.indexOf("[") < 0 ? " [" : ", ");
-		message.append(key).append('=').append(bounded);
+		message.append("; ").append(key).append('=').append(bounded);
 		if (message.length() > MAX_CONTEXT_MESSAGE_LENGTH) {
 			message.setLength(MAX_CONTEXT_MESSAGE_LENGTH);
 		}
