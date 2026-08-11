@@ -22,6 +22,8 @@ import android.content.Intent;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.Nullable;
@@ -35,6 +37,7 @@ import java.io.File;
 import ru.playsoftware.j2meloader.applist.AppListModel;
 import ru.playsoftware.j2meloader.applist.AppsListFragment;
 import ru.playsoftware.j2meloader.config.Config;
+import ru.playsoftware.j2meloader.crashes.CrashReportsActivity;
 import ru.playsoftware.j2meloader.crashes.MidletFailureRecovery;
 import ru.playsoftware.j2meloader.util.Constants;
 import ru.playsoftware.j2meloader.util.FileUtils;
@@ -72,6 +75,21 @@ public class MainActivity extends AppCompatActivity {
 					.replace(R.id.container, fragment).commit();
 		}
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.crash_reports_entry, menu);
+		return super.onCreateOptionsMenu(menu);
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		if (item.getItemId() == R.id.action_crash_reports) {
+			startActivity(new Intent(this, CrashReportsActivity.class));
+			return true;
+		}
+		return super.onOptionsItemSelected(item);
 	}
 
 	@Override
