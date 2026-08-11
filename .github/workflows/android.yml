@@ -23,17 +23,22 @@ jobs:
 
     steps:
       - name: Check out sources
-        uses: actions/checkout@v4.1.6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
           submodules: recursive
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4.2.1
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           java-version: '17'
-          distribution: 'temurin'
-          cache: gradle
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
+        with:
+          cache-provider: basic
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
 
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x gradlew
@@ -45,6 +50,8 @@ jobs:
         run: ./gradlew --no-daemon --stacktrace build --dry-run
 
       - name: Run emulator debug lint
+        id: app_lint
+        continue-on-error: true
         run: ./gradlew --no-daemon --stacktrace :app:lintEmulatorDebug
 
       - name: Run dexlib lint baseline
@@ -52,7 +59,7 @@ jobs:
 
       - name: Upload lint reports
         if: always()
-        uses: actions/upload-artifact@v4.3.3
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: JL-Mod-Plus-lint-${{ github.run_number }}
           path: |
@@ -85,9 +92,15 @@ jobs:
           done
 
       - name: Upload emulator debug APK
-        uses: actions/upload-artifact@v4.3.3
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: JL-Mod-Plus-alpha-debug
           path: app/build/outputs/renamed_apks/emulatorDebug/*.apk
           if-no-files-found: error
           retention-days: 7
+
+      - name: Enforce emulator lint gate
+        if: ${{ always() && steps.app_lint.outcome == 'failure' }}
+        run: |
+          echo "Android lint reported findings outside the committed baseline."
+          exit 1

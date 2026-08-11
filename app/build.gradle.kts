@@ -123,7 +123,10 @@ android {
         }
     }
 
-    lint.disable += "MissingTranslation"
+    lint {
+        baseline = file("lint-baseline.xml")
+        disable += "MissingTranslation"
+    }
 
     flavorDimensions += "default"
     productFlavors {
