@@ -33,6 +33,8 @@ import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.LifecycleOwner;
 
+import ru.playsoftware.j2meloader.crashes.MidletSessionJournal;
+
 public class MidletThread extends HandlerThread implements Handler.Callback {
 	private static final String TAG = MidletThread.class.getName();
 	private static final UncaughtExceptionHandler uncaughtExceptionHandler = (t, e) ->
@@ -50,21 +52,24 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private static MidletThread instance;
 	private final MicroLoader microLoader;
 	private final String mainClass;
+	private final MidletSessionJournal journal;
 	private final LifecycleEventObserver activityLifecycleObserver = this::onActivityStateChanged;
 	private MIDlet midlet;
 	private Handler handler;
 	private int state;
 
-	MidletThread(MicroLoader microLoader, String mainClass) {
+	MidletThread(MicroLoader microLoader, String mainClass, MidletSessionJournal journal) {
 		super("MidletMain");
 		this.microLoader = microLoader;
 		this.mainClass = mainClass;
+		this.journal = journal;
 		instance = this;
 	}
 
 	public static void notifyDestroyed() {
 		Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
 		if (instance != null) {
+			instance.journal.complete(MidletSessionJournal.Outcome.MIDLET_REQUEST);
 			instance.state = DESTROYED;
 		}
 		MicroActivity activity = ContextHolder.getActivity();
@@ -76,6 +81,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 
 	public static void notifyPaused() {
 		instance.state = PAUSED;
+		instance.journal.transition(MidletSessionJournal.Stage.PAUSED);
 	}
 
 	public static void resumeRequest() {
@@ -86,6 +92,9 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 
 	static void destroyApp() {
 		Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
+		if (instance != null) {
+			instance.journal.markOutcome(MidletSessionJournal.Outcome.USER_STOP);
+		}
 		new Thread(() -> {
 			try {
 				Thread.sleep(1000);
@@ -119,10 +128,12 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 				if (state != UNINITIALIZED) {
 					break;
 				}
+				journal.transition(MidletSessionJournal.Stage.INITIALIZING);
 				try {
 					midlet = microLoader.loadMIDlet(this.mainClass);
 					state = INITIALIZED;
 				} catch (Throwable t) {
+					journal.markOutcome(MidletSessionJournal.Outcome.UNEXPECTED_FAILURE);
 					throw new RuntimeException("Init midlet failed", t);
 				}
 				break;
@@ -132,17 +143,27 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 						break;
 					} else if (microLoader.params.skipResumeCall) {
 						state = STARTED;
+						journal.transition(MidletSessionJournal.Stage.RUNNING);
 						break;
 					}
 				}
+				journal.transition(MidletSessionJournal.Stage.STARTING);
 				try {
 					state = STARTED;
 					midlet.startApp();
+					// startApp() may call notifyPaused(); preserve the state selected by the MIDlet.
+					if (state == STARTED) {
+						journal.transition(MidletSessionJournal.Stage.RUNNING);
+					} else if (state == PAUSED) {
+						journal.transition(MidletSessionJournal.Stage.PAUSED);
+					}
 				} catch (MIDletStateChangeException e) {
 					state = PAUSED;
+					journal.transition(MidletSessionJournal.Stage.PAUSED);
 					Log.w(TAG, "Midlet doesn't want to start!", e);
 				} catch (Throwable t) {
 					state = DESTROYED;
+					journal.markOutcome(MidletSessionJournal.Outcome.UNEXPECTED_FAILURE);
 					throw new RuntimeException("Failed startApp", t);
 				}
 				break;
@@ -150,11 +171,14 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 				if (state != STARTED) {
 					break;
 				}
+				journal.transition(MidletSessionJournal.Stage.PAUSING);
 				try {
 					midlet.pauseApp();
 					state = PAUSED;
+					journal.transition(MidletSessionJournal.Stage.PAUSED);
 				} catch (Throwable t) {
 					state = DESTROYED;
+					journal.markOutcome(MidletSessionJournal.Outcome.UNEXPECTED_FAILURE);
 					try {
 						midlet.destroyApp(true);
 					} catch (MIDletStateChangeException ignored) {}
@@ -166,6 +190,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 					notifyDestroyed();
 					break;
 				}
+				journal.transition(MidletSessionJournal.Stage.STOPPING);
 				state = DESTROYED;
 				try {
 					midlet.destroyApp(true);
@@ -185,7 +210,10 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			case ON_CREATE -> handler.obtainMessage(INIT).sendToTarget();
 			case ON_START -> handler.obtainMessage(START).sendToTarget();
 			case ON_STOP -> handler.obtainMessage(PAUSE).sendToTarget();
-			case ON_DESTROY -> handler.obtainMessage(DESTROY).sendToTarget();
+			case ON_DESTROY -> {
+				journal.markOutcome(MidletSessionJournal.Outcome.LIFECYCLE_STOP);
+				handler.obtainMessage(DESTROY).sendToTarget();
+			}
 		}
 	}
 }
