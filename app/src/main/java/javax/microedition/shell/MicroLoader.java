@@ -70,6 +70,7 @@ import ru.playsoftware.j2meloader.config.ProfileModel;
 import ru.playsoftware.j2meloader.config.ProfilesManager;
 import ru.playsoftware.j2meloader.config.ShaderInfo;
 import ru.playsoftware.j2meloader.crashes.CrashReporter;
+import ru.playsoftware.j2meloader.crashes.MidletSessionJournal;
 import ru.playsoftware.j2meloader.util.AppUtils;
 import ru.playsoftware.j2meloader.util.FileUtils;
 import ru.playsoftware.j2meloader.util.IOUtils;
@@ -85,6 +86,11 @@ public class MicroLoader {
 	private final File appDir;
 	private final String workDir;
 	private final String appDirName;
+	private String midletName;
+	private String midletVendor;
+	private String midletVersion;
+	private String jarSize;
+	private String jarSha256;
 
 	MicroLoader(String appPath) {
 		this.appDir = new File(appPath);
@@ -121,13 +127,13 @@ public class MicroLoader {
 			return midlets;
 		}
 		String jarHash = null;
-		String jarSize = null;
+		String jarLength = null;
 		Descriptor descriptor;
 		if (BuildConfig.FULL_EMULATOR) {
 			descriptor = new Descriptor(new File(appDir, Config.MIDLET_MANIFEST_FILE), false);
 			File jar = new File(appDir, Config.MIDLET_RES_FILE);
 			if (jar.isFile()) {
-				jarSize = Long.toString(jar.length());
+				jarLength = Long.toString(jar.length());
 				jarHash = sha256(jar);
 			}
 		} else {
@@ -141,12 +147,17 @@ public class MicroLoader {
 			}
 		}
 		Map<String, String> attr = descriptor.getAttrs();
+		midletName = descriptor.getName();
+		midletVendor = descriptor.getVendor();
+		midletVersion = descriptor.getVersion();
+		jarSize = jarLength;
+		jarSha256 = jarHash;
 		CrashReporter.setMidletContext(
-				descriptor.getName(),
-				descriptor.getVendor(),
-				descriptor.getVersion(),
+				midletName,
+				midletVendor,
+				midletVersion,
 				jarSize,
-				jarHash
+				jarSha256
 		);
 		MIDlet.initProps(attr);
 		for (int i = 1; ; i++) {
@@ -336,8 +347,17 @@ public class MicroLoader {
 	}
 
 	void loadMidlet(String clazz, String appName) {
+		MidletSessionJournal journal = MidletSessionJournal.create(
+				ContextHolder.getAppContext(),
+				midletName,
+				midletVendor,
+				midletVersion,
+				clazz,
+				jarSize,
+				jarSha256
+		);
 		CrashReporter.setMidletMainClass(clazz);
-		MidletThread midletThread = new MidletThread(this, clazz);
+		MidletThread midletThread = new MidletThread(this, clazz, journal);
 		midletThread.start();
 		if (!BuildConfig.FULL_EMULATOR) {
 			return;
