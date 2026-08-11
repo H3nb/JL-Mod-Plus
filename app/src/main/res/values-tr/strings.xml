@@ -29,7 +29,6 @@
     <string name="create_apps_dir_failed">Bu yolda klasör oluşturulamadı:\n%1$s\nbaşka yol seçin.</string>
     <string name="default_label">%1$s (varsayılan)</string>
     <string name="dismiss">Reddet</string>
-    <string name="donate">Bağış yap</string>
     <string name="edit">Düzenle</string>
     <string name="enter_name">İsim girin</string>
     <string name="enter_new_name">Yeni isim girin</string>

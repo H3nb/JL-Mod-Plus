@@ -20,7 +20,6 @@
     <string name="create">létrehozás</string>
     <string name="create_apps_dir_failed">Könyvtár létrehozása sikertelen a következő útvonalon:\n%1$s\nVálasszon másikat.</string>
     <string name="default_label">"%s (alapértelmezett)"</string>
-    <string name="donate">Támogatás</string>
     <string name="edit">Szerkesztés</string>
     <string name="enter_name">Név megadása</string>
     <string name="enter_new_name">Adja meg az új nevet</string>

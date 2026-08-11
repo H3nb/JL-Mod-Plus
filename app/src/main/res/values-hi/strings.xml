@@ -29,7 +29,6 @@
     <string name="create_apps_dir_failed">पथ में एक फ़ोल्डर बनाने में विफल:\n%s\nदूसरे का चयन करें।</string>
     <string name="default_label">"%s (डिफ़ॉल्ट)"</string>
     <string name="dismiss">खारिज करें</string>
-    <string name="donate">दान करें</string>
     <string name="edit">संपादित करें</string>
     <string name="enter_name">नाम दर्ज</string>
     <string name="enter_new_name">नया नाम दर्ज करें</string>

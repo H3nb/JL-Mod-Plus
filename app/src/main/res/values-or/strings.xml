@@ -22,7 +22,6 @@
     <string name="create_apps_dir_failed">ପଥରେ ଏକ ଫୋଲ୍ଡର ସୃଷ୍ଟି କରିବାରେ ବିଫଳ:\n\'%s\'\n ଅନ୍ୟକୁ ଚୟନ କରନ୍ତୁ।</string>
     <string name="default_label">"%s (ଡିଫଲ୍ଟ)"</string>
     <string name="dismiss">ଖାରଜ କରନ୍ତୁ</string>
-    <string name="donate">ଦାନ କରନ୍ତୁ</string>
     <string name="edit">ସମ୍ପାଦନ କରନ୍ତୁ</string>
     <string name="enter_name">ନାମ ପ୍ରବେଶ କରନ୍ତୁ</string>
     <string name="enter_new_name">ନୂତନ ନାମ ପ୍ରବେଶ କରନ୍ତୁ</string>

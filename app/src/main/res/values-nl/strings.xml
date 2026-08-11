@@ -18,7 +18,6 @@
     <string name="crash_dialog_title">Fout gedetecteerd</string>
     <string name="create_apps_dir_failed">Het aanmaken van een map in het pad is mislukt:\n%1$s\nselecteer een andere.</string>
     <string name="default_label">%1$s (standaard)</string>
-    <string name="donate">Doneer</string>
     <string name="edit">Bewerken</string>
     <string name="enter_name">Naam invoeren</string>
     <string name="enter_new_name">Voer nieuwe naam in</string>

@@ -14,7 +14,6 @@
     <string name="converting_wait">Muunnetaan JARia…</string>
     <string name="crash_dialog_message">Haluatko lähettää virheilmoituksen kehittäjälle?</string>
     <string name="crash_dialog_title">Havaittiin virhe</string>
-    <string name="donate">Lahjoita</string>
     <string name="error">Virhe</string>
     <string name="exit">Poistu</string>
     <string name="external_storage_not_mounted">Tämä sovellus vaatii ulkoisen tallennustilan</string>

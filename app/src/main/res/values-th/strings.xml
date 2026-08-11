@@ -13,7 +13,6 @@
     <string name="converting_wait">กำลังแปลง JAR…</string>
     <string name="crash_dialog_message">คุณต้องการส่งรายงานข้อผิดพลาดให้นักพัฒนาหรือไม่?</string>
     <string name="crash_dialog_title">พบข้อผิดพลาด</string>
-    <string name="donate">บริจาค</string>
     <string name="error">ผิดพลาด</string>
     <string name="exit">ออก</string>
     <string name="external_storage_not_mounted">แอปฯนี้ต้องใช้สิทธิ์ที่เก็บข้อมูลภายนอก</string>

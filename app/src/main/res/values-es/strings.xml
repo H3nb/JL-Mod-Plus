@@ -27,7 +27,6 @@
     <string name="create_apps_dir_failed">Error creando una carpeta en la ruta:\n%1$s\nSeleccione otra.</string>
     <string name="default_label">%1$s (por defecto)</string>
     <string name="dismiss">Ignorar</string>
-    <string name="donate">Donar</string>
     <string name="edit">Editar</string>
     <string name="enter_name">Escribir nombre</string>
     <string name="enter_new_name">Escribir nuevo nombre</string>

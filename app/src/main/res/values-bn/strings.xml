@@ -14,7 +14,6 @@
     <string name="converting_wait">JAR রূপান্তর…</string>
     <string name="crash_dialog_message">ডেভেলপারের করা ত্রুটির প্রতিবেদন পাঠাতে চান?</string>
     <string name="crash_dialog_title">ত্রুটি শনাক্ত হয়েছে</string>
-    <string name="donate">দান করুন ।</string>
     <string name="error">ত্রুটি</string>
     <string name="exit">প্রস্থান করুন</string>
     <string name="external_storage_not_mounted">অ্যাপটির এক্সটার্নাল স্টোরেজ প্রয়োজন ।</string>

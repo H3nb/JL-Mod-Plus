@@ -29,7 +29,6 @@
     <string name="create_apps_dir_failed">Impossible de créer un dossier dans le chemin :\n%1$s\nsélectionnez un autre.</string>
     <string name="default_label">%1$s (par défaut)</string>
     <string name="dismiss">Ignorer</string>
-    <string name="donate">Donner</string>
     <string name="edit">Paramètres</string>
     <string name="enter_name">Entrer le nom</string>
     <string name="enter_new_name">Entrez un nouveau nom de dossier</string>

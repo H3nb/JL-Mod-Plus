@@ -16,7 +16,6 @@
     <string name="converting_wait">در حال تبدیل فایل جاوا …</string>
     <string name="crash_dialog_message">آیا می خواهید گزارش خطا را به توسعه دهنده ارسال کنید؟</string>
     <string name="crash_dialog_title">خطا شناسایی شده</string>
-    <string name="donate">حمایت مالی</string>
     <string name="error">خطا</string>
     <string name="exit">خروج</string>
     <string name="external_storage_not_mounted">این برنامه به مجوز نوشتن و ذخیره سازی در حافظه خارجی نیاز دارد</string>

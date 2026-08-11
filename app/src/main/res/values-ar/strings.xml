@@ -29,7 +29,6 @@
     <string name="create_apps_dir_failed">فشل في إنشاء مجلد في المسار:\n\'%1$s\'\nحدد مجلد آخر.</string>
     <string name="default_label">%1$s (افتراضي)</string>
     <string name="dismiss">إلغاء</string>
-    <string name="donate">تبرع</string>
     <string name="edit">تعديل</string>
     <string name="enter_name">أدخل الاسم</string>
     <string name="enter_new_name">أدخل الاسم الجديد</string>

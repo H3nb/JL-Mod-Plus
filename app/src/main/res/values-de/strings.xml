@@ -25,7 +25,6 @@
     <string name="create_apps_dir_failed">Fehler beim Erstellen eines Ordners im Pfad:\n\'%s\'\nWähle einen anderen.</string>
     <string name="default_label">"%s (Standard)"</string>
     <string name="dismiss">Verwerfen</string>
-    <string name="donate">Spenden</string>
     <string name="edit">Bearbeiten</string>
     <string name="enter_name">Namen eingeben</string>
     <string name="enter_new_name">Neuen Namen eingeben</string>
