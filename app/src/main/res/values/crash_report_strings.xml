@@ -4,6 +4,7 @@
     <string name="crash_reports_empty" translatable="false">No local crash reports</string>
     <string name="crash_report_midlet_failure" translatable="false">MIDlet session failure</string>
     <string name="crash_report_java_report" translatable="false">Java diagnostic report</string>
+    <string name="crash_report_list_subtitle" translatable="false">%1$s · %2$s</string>
     <string name="copy_report" translatable="false">Copy report</string>
     <string name="share_report" translatable="false">Share report</string>
     <string name="delete_report" translatable="false">Delete report</string>
