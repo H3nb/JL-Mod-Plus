@@ -132,6 +132,10 @@ public class MainActivity extends AppCompatActivity {
 				.setTitle(R.string.midlet_failure_recovery_title)
 				.setMessage(message)
 				.setCancelable(false)
+				.setNeutralButton(R.string.view_reports, (dialog, which) -> {
+					MidletFailureRecovery.acknowledgePendingFailures(this);
+					startActivity(new Intent(this, CrashReportsActivity.class));
+				})
 				.setPositiveButton(R.string.close, (dialog, which) ->
 						MidletFailureRecovery.acknowledgePendingFailures(this))
 				.create();
