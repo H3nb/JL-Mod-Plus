@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+// Modified for JL-Mod Plus.
 package javax.microedition.shell;
 
 import static android.os.Build.VERSION.SDK_INT;
@@ -29,17 +30,14 @@ import android.view.KeyEvent;
 
 import androidx.core.content.ContextCompat;
 
-import org.acra.ACRA;
-import org.acra.ErrorReporter;
-
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
@@ -71,14 +69,15 @@ import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.config.ProfileModel;
 import ru.playsoftware.j2meloader.config.ProfilesManager;
 import ru.playsoftware.j2meloader.config.ShaderInfo;
+import ru.playsoftware.j2meloader.crashes.CrashReporter;
 import ru.playsoftware.j2meloader.util.AppUtils;
-import ru.playsoftware.j2meloader.util.Constants;
 import ru.playsoftware.j2meloader.util.FileUtils;
 import ru.playsoftware.j2meloader.util.IOUtils;
 import ru.woesss.j2me.jar.Descriptor;
 
 public class MicroLoader {
 	private static final String TAG = MicroLoader.class.getName();
+	private static final char[] HEX = "0123456789abcdef".toCharArray();
 	private static String soundBank;
 	private final Map<String, String> midlets = new LinkedHashMap<>();
 
@@ -126,14 +125,10 @@ public class MicroLoader {
 		Descriptor descriptor;
 		if (BuildConfig.FULL_EMULATOR) {
 			descriptor = new Descriptor(new File(appDir, Config.MIDLET_MANIFEST_FILE), false);
-			try {
-				File jar = new File(appDir, Config.MIDLET_RES_FILE);
+			File jar = new File(appDir, Config.MIDLET_RES_FILE);
+			if (jar.isFile()) {
 				jarSize = Long.toString(jar.length());
-				byte[] bytes = FileUtils.getBytes(jar);
-				byte[] sum = MessageDigest.getInstance("md5").digest(bytes);
-				BigInteger bi = new BigInteger(1, sum);
-				jarHash = bi.toString(16);
-			} catch (Throwable ignored) {
+				jarHash = sha256(jar);
 			}
 		} else {
 			try (InputStream stream = getClass().getResourceAsStream("/MIDLET-META-INF/MANIFEST.MF")) {
@@ -146,20 +141,13 @@ public class MicroLoader {
 			}
 		}
 		Map<String, String> attr = descriptor.getAttrs();
-		ErrorReporter errorReporter = ACRA.getErrorReporter();
-		String report = errorReporter.getCustomData(Constants.KEY_APPCENTER_ATTACHMENT);
-		StringBuilder sb = new StringBuilder();
-		if (report != null) {
-			sb.append(report).append("\n");
-		}
-		sb.append(Descriptor.MIDLET_NAME).append(": ").append(descriptor.getName()).append("\n");
-		sb.append(Descriptor.MIDLET_VENDOR).append(": ").append(descriptor.getVendor()).append("\n");
-		sb.append(Descriptor.MIDLET_VERSION).append(": ").append(descriptor.getVersion()).append("\n");
-		if (jarHash != null) {
-			sb.append(Descriptor.MIDLET_JAR_SIZE).append(": ").append(jarSize).append("\n");
-			sb.append("JAR_HASH_MD5").append(": ").append(jarHash);
-		}
-		errorReporter.putCustomData(Constants.KEY_APPCENTER_ATTACHMENT, sb.toString());
+		CrashReporter.setMidletContext(
+				descriptor.getName(),
+				descriptor.getVendor(),
+				descriptor.getVersion(),
+				jarSize,
+				jarHash
+		);
 		MIDlet.initProps(attr);
 		for (int i = 1; ; i++) {
 			String v = attr.get(Descriptor.MIDLET_N + i);
@@ -171,6 +159,29 @@ public class MicroLoader {
 			midlets.put(clazz, title);
 		}
 		return midlets;
+	}
+
+	private static String sha256(File file) {
+		try {
+			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+			try (InputStream input = new FileInputStream(file)) {
+				byte[] buffer = new byte[8192];
+				for (int read; (read = input.read(buffer)) != -1; ) {
+					digest.update(buffer, 0, read);
+				}
+			}
+			byte[] sum = digest.digest();
+			char[] encoded = new char[sum.length * 2];
+			for (int i = 0; i < sum.length; i++) {
+				int value = sum[i] & 0xff;
+				encoded[i * 2] = HEX[value >>> 4];
+				encoded[i * 2 + 1] = HEX[value & 0x0f];
+			}
+			return new String(encoded);
+		} catch (Exception e) {
+			Log.w(TAG, "Unable to calculate MIDlet JAR hash", e);
+			return null;
+		}
 	}
 
 	MIDlet loadMIDlet(String mainClass) throws ClassNotFoundException, InstantiationException,
@@ -325,6 +336,7 @@ public class MicroLoader {
 	}
 
 	void loadMidlet(String clazz, String appName) {
+		CrashReporter.setMidletMainClass(clazz);
 		MidletThread midletThread = new MidletThread(this, clazz);
 		midletThread.start();
 		if (!BuildConfig.FULL_EMULATOR) {
