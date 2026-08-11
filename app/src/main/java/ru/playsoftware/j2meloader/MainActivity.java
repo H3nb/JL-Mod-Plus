@@ -23,12 +23,15 @@ import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.MenuProvider;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 
@@ -62,6 +65,21 @@ public class MainActivity extends AppCompatActivity {
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		addMenuProvider(new MenuProvider() {
+			@Override
+			public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+				menuInflater.inflate(R.menu.crash_reports_entry, menu);
+			}
+
+			@Override
+			public boolean onMenuItemSelected(@NonNull MenuItem item) {
+				if (item.getItemId() != R.id.action_crash_reports) {
+					return false;
+				}
+				startActivity(new Intent(MainActivity.this, CrashReportsActivity.class));
+				return true;
+			}
+		}, this);
 		storagePermissionHelper.launch(this);
 		appListModel = new ViewModelProvider(this).get(AppListModel.class);
 		if (savedInstanceState == null) {
@@ -75,21 +93,6 @@ public class MainActivity extends AppCompatActivity {
 					.replace(R.id.container, fragment).commit();
 		}
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
-	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.crash_reports_entry, menu);
-		return super.onCreateOptionsMenu(menu);
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		if (item.getItemId() == R.id.action_crash_reports) {
-			startActivity(new Intent(this, CrashReportsActivity.class));
-			return true;
-		}
-		return super.onOptionsItemSelected(item);
 	}
 
 	@Override
