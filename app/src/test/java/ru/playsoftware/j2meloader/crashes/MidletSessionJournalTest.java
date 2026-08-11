@@ -15,17 +15,28 @@
 package ru.playsoftware.j2meloader.crashes;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class MidletSessionJournalTest {
+	@Rule
+	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
 	@Test
 	public void roundTripPreservesDiagnosticFields() throws Exception {
 		MidletSessionJournal.Snapshot expected = new MidletSessionJournal.Snapshot(
@@ -117,6 +128,84 @@ public class MidletSessionJournalTest {
 	public void invalidLifecycleEnumIsRejected() throws Exception {
 		String data = validProperties().replace("stage=RUNNING", "stage=NOT_A_STAGE");
 		assertReadFails(data);
+	}
+
+	@Test
+	public void retentionKeepsNewestJournalsWithinCountLimit() throws Exception {
+		long now = 1_000_000L;
+		List<File> journals = new ArrayList<>();
+		for (int i = 0; i < 5; i++) {
+			journals.add(createJournalFile("journal-" + i, now - 10_000L - i));
+		}
+
+		MidletSessionJournal.pruneFiles(journals, now, 3, 100_000L, 1_000L);
+
+		assertEquals(3, existingCount(journals));
+		assertTrue(journals.get(0).exists());
+		assertTrue(journals.get(1).exists());
+		assertTrue(journals.get(2).exists());
+	}
+
+	@Test
+	public void retentionPreservesRecentlyUpdatedJournals() throws Exception {
+		long now = 1_000_000L;
+		List<File> journals = Arrays.asList(
+				createJournalFile("recent-1", now - 100L),
+				createJournalFile("recent-2", now - 200L),
+				createJournalFile("recent-3", now - 300L)
+		);
+
+		MidletSessionJournal.pruneFiles(journals, now, 1, 100L, 1_000L);
+
+		assertEquals(3, existingCount(journals));
+	}
+
+	@Test
+	public void retentionDeletesExpiredJournalEvenBelowCountLimit() throws Exception {
+		long now = 1_000_000L;
+		File recent = createJournalFile("recent", now - 500L);
+		File expired = createJournalFile("expired", now - 10_000L);
+		List<File> journals = Arrays.asList(recent, expired);
+
+		MidletSessionJournal.pruneFiles(journals, now, 10, 2_000L, 100L);
+
+		assertTrue(recent.exists());
+		assertFalse(expired.exists());
+	}
+
+	@Test
+	public void retentionIgnoresDirectoriesWithoutMutatingCallerList() throws Exception {
+		long now = 1_000_000L;
+		File newest = createJournalFile("newest", now - 10_000L);
+		File older = createJournalFile("older", now - 20_000L);
+		File directory = temporaryFolder.newFolder("not-a-journal");
+		List<File> journals = Arrays.asList(older, null, directory, newest);
+		List<File> originalOrder = new ArrayList<>(journals);
+
+		MidletSessionJournal.pruneFiles(journals, now, 1, 100_000L, 1_000L);
+
+		assertEquals(originalOrder, journals);
+		assertTrue(newest.exists());
+		assertFalse(older.exists());
+		assertTrue(directory.exists());
+	}
+
+	private File createJournalFile(String name, long modified) throws IOException {
+		File file = temporaryFolder.newFile(name);
+		if (!file.setLastModified(modified)) {
+			throw new IOException("Unable to set journal timestamp");
+		}
+		return file;
+	}
+
+	private static int existingCount(List<File> files) {
+		int count = 0;
+		for (File file : files) {
+			if (file != null && file.exists()) {
+				count++;
+			}
+		}
+		return count;
 	}
 
 	private static String validProperties() {
