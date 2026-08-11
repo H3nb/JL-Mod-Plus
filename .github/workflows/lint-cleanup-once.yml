@@ -1,0 +1,85 @@
+name: One-shot lint cleanup
+
+on:
+  push:
+    branches:
+      - agent/reduce-lint-baseline
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out cleanup branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Apply deterministic lint cleanup
+        shell: python
+        run: |
+          from pathlib import Path
+
+          locale_files = [
+              "values-sv", "values-da", "values-th", "values-bn", "values-fi", "values-kk",
+              "values-pl", "values-ro", "values-zh-rTW", "values-fa", "values-it", "values-ko",
+              "values-nl", "values-pt", "values-hu", "values-bg", "values-ja", "values-or",
+              "values-vi", "values-de", "values-es", "values-ar", "values-cs", "values-fr",
+              "values-hi", "values-in", "values-pt-rBR", "values-sat", "values-tr", "values-uk",
+              "values-zh-rCN", "values-ru",
+          ]
+
+          for values_dir in locale_files:
+              path = Path("app/src/main/res") / values_dir / "strings.xml"
+              text = path.read_text(encoding="utf-8")
+              marker = 'name="donate"'
+              if text.count(marker) != 1:
+                  raise RuntimeError(f"Expected exactly one donate resource in {path}")
+              lines = text.splitlines(keepends=True)
+              updated = "".join(line for line in lines if marker not in line)
+              path.write_text(updated, encoding="utf-8")
+
+          for layout_name in ("listitem_checkable.xml", "listitem_dir.xml"):
+              path = Path("app/src/main/res/layout") / layout_name
+              text = path.read_text(encoding="utf-8")
+              old = 'android:tint="?attr/nnf_dir_icon_color"'
+              new = 'app:tint="?attr/nnf_dir_icon_color"'
+              if text.count(old) != 1:
+                  raise RuntimeError(f"Expected exactly one android:tint in {path}")
+              path.write_text(text.replace(old, new), encoding="utf-8")
+
+          baseline = Path("app/lint-baseline.xml")
+          lines = baseline.read_text(encoding="utf-8").splitlines(keepends=True)
+          removed = [
+              line for line in lines
+              if 'id="UseAppTint"' in line or 'id="ExtraTranslation"' in line
+          ]
+          if len(removed) != 34:
+              raise RuntimeError(f"Expected to remove 34 lint baseline entries; found {len(removed)}")
+          updated = "".join(
+              line for line in lines
+              if 'id="UseAppTint"' not in line and 'id="ExtraTranslation"' not in line
+          )
+          if updated.count("<issue ") != 30:
+              raise RuntimeError("Expected exactly 30 permission/runtime findings to remain")
+          baseline.write_text(updated, encoding="utf-8")
+
+      - name: Verify patch scope
+        run: |
+          test "$(git diff --name-only | wc -l)" -eq 35
+          test "$(git grep -l 'name="donate"' -- 'app/src/main/res/values-*/strings.xml' | wc -l)" -eq 0
+          test "$(grep -c '<issue ' app/lint-baseline.xml)" -eq 30
+          git diff --check
+          git diff --stat
+
+      - name: Commit cleanup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/lint-baseline.xml app/src/main/res
+          git commit -m "Reduce legacy lint baseline noise"
+          git push origin HEAD:${GITHUB_REF_NAME}
