@@ -1,6 +1,7 @@
 package ru.playsoftware.j2meloader.crashes;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Rule;
@@ -61,6 +62,23 @@ public class LocalCrashReportStoreTest {
 		assertEquals(1, existingCount(reports));
 	}
 
+	@Test
+	public void retentionIgnoresNonFilesWithoutMutatingCallerList() throws IOException {
+		long now = 1_000_000L;
+		File newest = createReport("valid-newest", 1, now - 10_000);
+		File older = createReport("valid-older", 1, now - 20_000);
+		File directory = temporaryFolder.newFolder("not-a-report");
+		List<File> reports = Arrays.asList(older, null, directory, newest);
+		List<File> originalOrder = new ArrayList<>(reports);
+
+		LocalCrashReportStore.pruneReports(reports, now, 1, 100, 100_000, 1_000);
+
+		assertEquals(originalOrder, reports);
+		assertTrue(newest.exists());
+		assertFalse(older.exists());
+		assertTrue(directory.exists());
+	}
+
 	private File createReport(String name, long size, long modified) throws IOException {
 		File file = temporaryFolder.newFile(name);
 		try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw")) {
@@ -75,7 +93,7 @@ public class LocalCrashReportStoreTest {
 	private static int existingCount(List<File> files) {
 		int count = 0;
 		for (File file : files) {
-			if (file.exists()) {
+			if (file != null && file.exists()) {
 				count++;
 			}
 		}
