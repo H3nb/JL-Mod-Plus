@@ -114,8 +114,6 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             isJniDebuggable = true
-            multiDexEnabled = true
-            multiDexKeepProguard = file("multidex-config.pro")
             ndk {
                 abiFilters += "arm64-v8a"
             }
@@ -229,7 +227,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.common)
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.multidex)
     implementation(libs.androidx.preference.ktx)
     implementation(libs.androidx.recyclerview)
     annotationProcessor(libs.androidx.room.compiler)
