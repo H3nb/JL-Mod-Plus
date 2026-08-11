@@ -35,6 +35,7 @@ import java.io.File;
 import ru.playsoftware.j2meloader.applist.AppListModel;
 import ru.playsoftware.j2meloader.applist.AppsListFragment;
 import ru.playsoftware.j2meloader.config.Config;
+import ru.playsoftware.j2meloader.crashes.MidletFailureRecovery;
 import ru.playsoftware.j2meloader.util.Constants;
 import ru.playsoftware.j2meloader.util.FileUtils;
 import ru.playsoftware.j2meloader.util.PickDirResultContract;
@@ -51,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
 	);
 
 	private AppListModel appListModel;
+	private AlertDialog midletFailureDialog;
+	private boolean recoveryNoticeShown;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -69,6 +72,50 @@ public class MainActivity extends AppCompatActivity {
 					.replace(R.id.container, fragment).commit();
 		}
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
+	}
+
+	@Override
+	public void onWindowFocusChanged(boolean hasFocus) {
+		super.onWindowFocusChanged(hasFocus);
+		if (hasFocus) {
+			maybeShowMidletFailureRecovery();
+		}
+	}
+
+	private void maybeShowMidletFailureRecovery() {
+		if (recoveryNoticeShown || isFinishing() || isDestroyed()) {
+			return;
+		}
+		if (midletFailureDialog != null && midletFailureDialog.isShowing()) {
+			return;
+		}
+		if (getSupportFragmentManager().findFragmentByTag("installer") != null) {
+			return;
+		}
+
+		MidletFailureRecovery.PendingFailure failure = MidletFailureRecovery.findPendingFailure(this);
+		if (failure == null) {
+			return;
+		}
+
+		recoveryNoticeShown = true;
+		String midletName = failure.getMidletName();
+		int messageRes = midletName == null || midletName.trim().isEmpty()
+				? R.string.midlet_failure_recovery_message
+				: R.string.midlet_failure_recovery_message_named;
+		String message = messageRes == R.string.midlet_failure_recovery_message
+				? getString(messageRes)
+				: getString(messageRes, midletName);
+
+		midletFailureDialog = new AlertDialog.Builder(this)
+				.setTitle(R.string.midlet_failure_recovery_title)
+				.setMessage(message)
+				.setCancelable(false)
+				.setPositiveButton(R.string.close, (dialog, which) ->
+						MidletFailureRecovery.acknowledgePendingFailures(this))
+				.create();
+		midletFailureDialog.setOnDismissListener(dialog -> midletFailureDialog = null);
+		midletFailureDialog.show();
 	}
 
 	private void checkAndCreateDirs() {
