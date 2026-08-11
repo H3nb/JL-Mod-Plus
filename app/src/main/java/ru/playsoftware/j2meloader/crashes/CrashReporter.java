@@ -30,6 +30,7 @@ import static org.acra.ReportField.USER_APP_START_DATE;
 import static org.acra.ReportField.USER_CRASH_DATE;
 
 import android.app.Application;
+import android.os.Process;
 
 import org.acra.ACRA;
 import org.acra.ErrorReporter;
@@ -52,6 +53,7 @@ public final class CrashReporter {
 
 	private static final String KEY_PROCESS_NAME = "jlmod.process.name";
 	private static final String KEY_PROCESS_ROLE = "jlmod.process.role";
+	private static final String KEY_PROCESS_PID = "jlmod.process.pid";
 	private static final String KEY_MIDLET_NAME = "jlmod.midlet.name";
 	private static final String KEY_MIDLET_VENDOR = "jlmod.midlet.vendor";
 	private static final String KEY_MIDLET_VERSION = "jlmod.midlet.version";
@@ -104,6 +106,7 @@ public final class CrashReporter {
 		ErrorReporter reporter = ACRA.getErrorReporter();
 		putBounded(reporter, KEY_PROCESS_NAME, processName);
 		putBounded(reporter, KEY_PROCESS_ROLE, processRole);
+		putBounded(reporter, KEY_PROCESS_PID, Integer.toString(Process.myPid()));
 
 		// A single process owns retention to avoid cross-process deletion races with :midlet.
 		if (ROLE_MAIN.equals(processRole)) {
