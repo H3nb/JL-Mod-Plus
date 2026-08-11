@@ -62,9 +62,6 @@ import androidx.preference.PreferenceManager;
 
 import com.google.android.material.textfield.TextInputLayout;
 
-import org.acra.ACRA;
-import org.acra.ErrorReporter;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -87,7 +84,6 @@ import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.databinding.ActivityMicroBinding;
 import ru.playsoftware.j2meloader.databinding.DialogInputBinding;
-import ru.playsoftware.j2meloader.util.Constants;
 import ru.playsoftware.j2meloader.util.LogUtils;
 
 public class MicroActivity extends AppCompatActivity {
@@ -249,18 +245,7 @@ public class MicroActivity extends AppCompatActivity {
 	private void showMidletDialog(String[] names, final String[] classes) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this)
 				.setTitle(R.string.select_dialog_title)
-				.setItems(names, (d, n) -> {
-					String clazz = classes[n];
-					ErrorReporter errorReporter = ACRA.getErrorReporter();
-					String report = errorReporter.getCustomData(Constants.KEY_APPCENTER_ATTACHMENT);
-					StringBuilder sb = new StringBuilder();
-					if (report != null) {
-						sb.append(report).append("\n");
-					}
-					sb.append("Begin app: ").append(names[n]).append(", ").append(clazz);
-					errorReporter.putCustomData(Constants.KEY_APPCENTER_ATTACHMENT, sb.toString());
-					microLoader.loadMidlet(clazz, appName);
-				})
+				.setItems(names, (d, n) -> microLoader.loadMidlet(classes[n], appName))
 				.setOnCancelListener(d -> {
 					d.dismiss();
 					MidletThread.notifyDestroyed();

@@ -4,7 +4,7 @@
 [versions]
 agp = "9.3.0"
 
-acra-http = "5.13.1"
+acra = "5.13.1"
 ambilwarna = "2.0.1"
 androidx-activity = "1.8.2"
 androidx-appcompat = "1.6.1"
@@ -36,7 +36,7 @@ rx-android = "2.1.1"
 zip4j = "2.11.5"
 
 [libraries]
-acra-http = { module = "ch.acra:acra-http", version.ref = "acra-http" }
+acra-core = { module = "ch.acra:acra-core", version.ref = "acra" }
 ambilwarna = { module = "com.github.yukuku:ambilwarna", version.ref = "ambilwarna" }
 androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "androidx-activity" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidx-appcompat" }
