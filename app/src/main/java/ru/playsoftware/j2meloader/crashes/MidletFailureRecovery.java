@@ -77,6 +77,17 @@ public final class MidletFailureRecovery {
 		}
 	}
 
+	/** Removes only the main-process notice marker for a diagnostic event. */
+	static void deleteAcknowledgment(Context context, String eventId) {
+		if (!isSafeEventId(eventId)) {
+			return;
+		}
+		File marker = acknowledgmentFile(acknowledgmentDirectory(context), eventId);
+		if (marker.isFile() && !marker.delete()) {
+			Log.w(TAG, "Unable to delete MIDlet failure acknowledgment: " + eventId);
+		}
+	}
+
 	static PendingFailure selectNewestPending(List<MidletSessionJournal.Snapshot> failures,
 			Set<String> acknowledgedEventIds) {
 		MidletSessionJournal.Snapshot newest = null;
