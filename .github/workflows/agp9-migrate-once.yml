@@ -47,6 +47,11 @@ jobs:
               '    namespace = "ru.playsoftware.j2meloader.dexlib"\n    enableKotlin = false\n',
           )
           replace_exact(
+              "dexlib/build.gradle.kts",
+              'getDefaultProguardFile("proguard-android.txt")',
+              'getDefaultProguardFile("proguard-android-optimize.txt")',
+          )
+          replace_exact(
               "gradle/libs.versions.toml",
               'agp = "8.13.2"',
               'agp = "9.3.0"',
@@ -77,6 +82,7 @@ jobs:
           grep -Fxq 'distributionUrl=https\://services.gradle.org/distributions/gradle-9.6.1-bin.zip' gradle/wrapper/gradle-wrapper.properties
           grep -Fxq 'distributionSha256Sum=9c0f7faeeb306cb14e4279a3e084ca6b596894089a0638e68a07c945a32c9e14' gradle/wrapper/gradle-wrapper.properties
           grep -Fxq '    enableKotlin = false' dexlib/build.gradle.kts
+          grep -Fq 'getDefaultProguardFile("proguard-android-optimize.txt")' dexlib/build.gradle.kts
           git diff --check
           git diff --stat
 
