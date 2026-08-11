@@ -14,6 +14,9 @@
 - Do not add abstractions, modules, dependencies, frameworks, generic helpers, or configuration layers without a concrete need in the current task.
 - Do not mix unrelated cleanup, formatting churn, dependency upgrades, toolchain upgrades, renames, or broad refactors into a focused change.
 - Prefer existing project patterns and dependencies when they are adequate.
+- Treat historical or experimental branches as reference material rather than implementation authority; do not merge them wholesale or replay broad commit ranges unless explicitly requested.
+- Reconstruct desired behavior against the current architecture, carrying forward verified contracts and tests rather than obsolete implementation structure.
+- Keep migration status, roadmap state, and branch-specific reconstruction decisions in dedicated tracking artifacts rather than this file.
 - Preserve application behavior during UI migration. Do not change Java ME API behavior merely to facilitate Compose.
 - Application-owned UI may migrate to Compose incrementally, but emulator, rendering, input, or Android-platform boundaries may remain native/View when they serve a concrete purpose.
 - For internal app icons, prefer official Material Symbols when suitable; use a repository-provided helper when available before creating a custom icon.
