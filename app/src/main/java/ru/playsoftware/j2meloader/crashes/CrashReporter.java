@@ -61,6 +61,7 @@ public final class CrashReporter {
 	private static final String KEY_MIDLET_JAR_SIZE = "jlmod.midlet.jar.size";
 	private static final String KEY_MIDLET_JAR_SHA256 = "jlmod.midlet.jar.sha256";
 	private static final String KEY_MIDLET_MAIN_CLASS = "jlmod.midlet.mainClass";
+	private static final String KEY_SESSION_ID = "jlmod.session.id";
 
 	private static final List<ReportField> REPORT_FIELDS = Arrays.asList(
 			REPORT_ID,
@@ -109,9 +110,10 @@ public final class CrashReporter {
 		putBounded(reporter, KEY_PROCESS_ROLE, processRole);
 		putBounded(reporter, KEY_PROCESS_PID, Integer.toString(Process.myPid()));
 
-		// A single process owns retention to avoid cross-process deletion races with :midlet.
+		// The main process owns diagnostic retention so :midlet remains a single-purpose writer.
 		if (ROLE_MAIN.equals(processRole)) {
 			LocalCrashReportStore.prune(application);
+			MidletSessionJournal.prune(application);
 		}
 		return false;
 	}
@@ -120,6 +122,7 @@ public final class CrashReporter {
 											 String jarSize, String jarSha256) {
 		ErrorReporter reporter = ACRA.getErrorReporter();
 		clearMidletContext(reporter);
+		clearSessionContext(reporter);
 		putBounded(reporter, KEY_MIDLET_NAME, name);
 		putBounded(reporter, KEY_MIDLET_VENDOR, vendor);
 		putBounded(reporter, KEY_MIDLET_VERSION, version);
@@ -129,6 +132,10 @@ public final class CrashReporter {
 
 	public static void setMidletMainClass(String mainClass) {
 		putBounded(ACRA.getErrorReporter(), KEY_MIDLET_MAIN_CLASS, mainClass);
+	}
+
+	static void setSessionContext(String sessionId) {
+		putBounded(ACRA.getErrorReporter(), KEY_SESSION_ID, sessionId);
 	}
 
 	/** Persists a non-fatal installer exception without mutating process-global ACRA context. */
@@ -185,6 +192,10 @@ public final class CrashReporter {
 		reporter.removeCustomData(KEY_MIDLET_JAR_SIZE);
 		reporter.removeCustomData(KEY_MIDLET_JAR_SHA256);
 		reporter.removeCustomData(KEY_MIDLET_MAIN_CLASS);
+	}
+
+	private static void clearSessionContext(ErrorReporter reporter) {
+		reporter.removeCustomData(KEY_SESSION_ID);
 	}
 
 	private static void putBounded(ErrorReporter reporter, String key, String value) {
