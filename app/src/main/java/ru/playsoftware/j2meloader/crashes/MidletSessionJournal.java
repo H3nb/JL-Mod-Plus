@@ -149,7 +149,14 @@ public final class MidletSessionJournal {
 		if (!directory.isDirectory() && !directory.mkdirs()) {
 			Log.w(TAG, "Unable to create MIDlet session journal directory");
 		}
-		journal.persistAndPublish();
+		journal.persist();
+		try {
+			// ACRA custom data is a process-global HashMap. Publish only the immutable session ID;
+			// stage/outcome stay authoritative in the durable journal and are never mutated there.
+			CrashReporter.setSessionContext(sessionId);
+		} catch (RuntimeException e) {
+			Log.w(TAG, "Unable to publish MIDlet session ID to crash context", e);
+		}
 		return journal;
 	}
 
@@ -220,7 +227,7 @@ public final class MidletSessionJournal {
 		}
 		stage = nextStage;
 		touch();
-		persistAndPublish();
+		persist();
 	}
 
 	public synchronized void markOutcome(Outcome nextOutcome) {
@@ -229,7 +236,7 @@ public final class MidletSessionJournal {
 		}
 		outcome = nextOutcome;
 		touch();
-		persistAndPublish();
+		persist();
 	}
 
 	public synchronized void complete(Outcome fallbackOutcome) {
@@ -241,7 +248,7 @@ public final class MidletSessionJournal {
 			stage = Stage.COMPLETED;
 		}
 		touch();
-		persistAndPublish();
+		persist();
 	}
 
 	private void touch() {
@@ -249,7 +256,7 @@ public final class MidletSessionJournal {
 		updatedElapsedRealtimeMillis = SystemClock.elapsedRealtime();
 	}
 
-	private void persistAndPublish() {
+	private void persist() {
 		Snapshot snapshot = snapshot();
 		FileOutputStream output = null;
 		try {
@@ -262,7 +269,6 @@ public final class MidletSessionJournal {
 			}
 			Log.w(TAG, "Unable to persist MIDlet session journal", e);
 		}
-		CrashReporter.setSessionContext(sessionId, stage.name(), outcome.name());
 	}
 
 	private synchronized Snapshot snapshot() {
