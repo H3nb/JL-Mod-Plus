@@ -1,5 +1,20 @@
 // Modified for JL-Mod Plus.
+import com.android.build.api.artifact.SingleArtifact
+import com.android.build.api.variant.BuildConfigField
+import com.android.build.api.variant.BuiltArtifactsLoader
+import com.android.build.api.variant.ResValue
+import org.gradle.api.DefaultTask
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
+import org.gradle.api.tasks.TaskAction
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.io.File
 import java.util.Locale
 import java.util.Properties
 import java.util.jar.Attributes
@@ -8,6 +23,47 @@ import java.util.jar.Manifest
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+}
+
+/** Copies AGP's final APKs to a stable, human-readable distribution directory. */
+abstract class CopyApk : DefaultTask() {
+    @get:InputDirectory
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val input: DirectoryProperty
+
+    @get:OutputDirectory
+    abstract val output: DirectoryProperty
+
+    @get:Internal
+    abstract val builtArtifactsLoader: Property<BuiltArtifactsLoader>
+
+    @get:Input
+    abstract val archiveBaseName: Property<String>
+
+    @get:Input
+    abstract val variantName: Property<String>
+
+    @TaskAction
+    fun copyApks() {
+        val outputDirectory = output.get()
+        outputDirectory.asFile.deleteRecursively()
+        outputDirectory.asFile.mkdirs()
+
+        val builtArtifacts = builtArtifactsLoader.get().load(input.get())
+            ?: throw GradleException("Cannot load APKs for ${variantName.get()}")
+
+        builtArtifacts.elements.forEach { artifact ->
+            val versionName = artifact.versionName?.takeIf(String::isNotBlank) ?: "unspecified"
+            val outputSuffix = artifact.filters.firstOrNull()?.identifier ?: variantName.get()
+            val fileName = "${archiveBaseName.get()}_${versionName}-${outputSuffix}.apk"
+            File(artifact.outputFile).copyTo(
+                outputDirectory.file(fileName).asFile,
+                overwrite = true
+            )
+        }
+
+        builtArtifacts.save(outputDirectory)
+    }
 }
 
 val secret = Properties().also { properties ->
@@ -39,6 +95,7 @@ android {
         viewBinding = true
         prefab = true
         buildConfig = true
+        resValues = true
     }
 
     signingConfigs.create("emulator") {
@@ -71,7 +128,6 @@ android {
     flavorDimensions += "default"
     productFlavors {
         create("emulator") { // variant dimension for create emulator
-            buildConfigField("boolean", "FULL_EMULATOR", "true")
             signingConfig = signingConfigs.getByName("emulator")
             versionNameSuffix = System.getenv("VERSION_SUFFIX")
             proguardFiles(
@@ -80,7 +136,6 @@ android {
             )
         }
         create("midlet") { // variant dimension for create android port from J2ME app source
-            buildConfigField("boolean", "FULL_EMULATOR", "false")
             // configure midlet's port project params here, as default it read from app manifest,
             // placed to 'app/src/midlet/resources/MIDLET-META-INF/MANIFEST.MF'
             val props = getMidletManifestProperties()
@@ -109,17 +164,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
         sourceCompatibility = JavaVersion.VERSION_17
     }
-
-    applicationVariants.configureEach {
-        if (buildType.name == "debug" && flavorName == "emulator") {
-            resValue("string", "app_name", "JL-Mod Plus Debug")
-        }
-        outputs.configureEach {
-            if (this is com.android.build.gradle.internal.api.BaseVariantOutputImpl) {
-                outputFileName = "${rootProject.name}_$versionName-$dirName.apk"
-            }
-        }
-    }
 }
 
 // Keep the legacy standalone MIDlet-to-APK source set available as reference, but do not
@@ -127,6 +171,34 @@ android {
 androidComponents {
     beforeVariants(selector().withFlavor("default" to "midlet")) { variantBuilder ->
         variantBuilder.enable = false
+    }
+
+    onVariants { variant ->
+        val fullEmulator = variant.flavorName == "emulator"
+        variant.buildConfigFields?.put(
+            "FULL_EMULATOR",
+            BuildConfigField(
+                type = "boolean",
+                value = fullEmulator.toString(),
+                comment = "Whether this is the full emulator flavor"
+            )
+        )
+
+        if (variant.name == "emulatorDebug") {
+            variant.resValues.put(
+                variant.makeResValueKey("string", "app_name"),
+                ResValue("JL-Mod Plus Debug", "Debug application name")
+            )
+        }
+
+        val taskSuffix = variant.name.replaceFirstChar { it.uppercaseChar() }
+        val copyTask = tasks.register<CopyApk>("copy${taskSuffix}Apk") {
+            archiveBaseName.set(rootProject.name)
+            variantName.set(variant.name)
+            output.set(layout.buildDirectory.dir("outputs/renamed_apks/${variant.name}"))
+            builtArtifactsLoader.set(variant.artifacts.getBuiltArtifactsLoader())
+        }
+        variant.artifacts.use(copyTask).wiredWith { it.input }.toListenTo(SingleArtifact.APK)
     }
 }
 

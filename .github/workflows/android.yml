@@ -25,7 +25,8 @@ jobs:
       - name: Check out sources
         uses: actions/checkout@v4.1.6
         with:
-          submodules: 'true'
+          persist-credentials: false
+          submodules: recursive
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4.2.1
@@ -37,13 +38,56 @@ jobs:
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x gradlew
 
+      - name: Check Gradle configuration
+        run: ./gradlew --no-daemon --stacktrace help
+
+      - name: Check Gradle task graph
+        run: ./gradlew --no-daemon --stacktrace build --dry-run
+
+      - name: Run emulator debug lint
+        run: ./gradlew --no-daemon --stacktrace :app:lintEmulatorDebug
+
+      - name: Run dexlib lint baseline
+        run: ./gradlew --no-daemon --stacktrace :dexlib:lintDebug
+
+      - name: Upload lint reports
+        if: always()
+        uses: actions/upload-artifact@v4.3.3
+        with:
+          name: JL-Mod-Plus-lint-${{ github.run_number }}
+          path: |
+            app/build/reports/lint-results-emulatorDebug.*
+            dexlib/build/reports/lint-results-debug.*
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Run unit tests and assemble emulator debug APK
-        run: ./gradlew --no-daemon :app:testEmulatorDebugUnitTest :app:assembleEmulatorDebug
+        run: >-
+          ./gradlew --no-daemon --stacktrace
+          :app:testEmulatorDebugUnitTest
+          :app:assembleEmulatorDebug
+          :app:copyEmulatorDebugApk
+
+      - name: Verify emulator debug APK
+        shell: bash
+        run: |
+          shopt -s nullglob
+          apks=(app/build/outputs/renamed_apks/emulatorDebug/*.apk)
+          if (( ${#apks[@]} == 0 )); then
+            echo "No renamed emulator debug APK was produced."
+            exit 1
+          fi
+
+          for apk in "${apks[@]}"; do
+            unzip -tqq "$apk"
+            abis="$(unzip -Z1 "$apk" | awk -F/ '/^lib\/[^/]+\// {print $2}' | sort -u | paste -sd, -)"
+            printf 'Verified APK: %s\nPackaged ABIs: %s\n' "$apk" "${abis:-none}"
+          done
 
       - name: Upload emulator debug APK
         uses: actions/upload-artifact@v4.3.3
         with:
           name: JL-Mod-Plus-alpha-debug
-          path: app/build/outputs/apk/emulator/debug/*.apk
+          path: app/build/outputs/renamed_apks/emulatorDebug/*.apk
           if-no-files-found: error
           retention-days: 7
