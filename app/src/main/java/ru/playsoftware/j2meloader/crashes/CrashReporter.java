@@ -62,8 +62,6 @@ public final class CrashReporter {
 	private static final String KEY_MIDLET_JAR_SHA256 = "jlmod.midlet.jar.sha256";
 	private static final String KEY_MIDLET_MAIN_CLASS = "jlmod.midlet.mainClass";
 	private static final String KEY_SESSION_ID = "jlmod.session.id";
-	private static final String KEY_SESSION_STAGE = "jlmod.session.stage";
-	private static final String KEY_SESSION_OUTCOME = "jlmod.session.outcome";
 
 	private static final List<ReportField> REPORT_FIELDS = Arrays.asList(
 			REPORT_ID,
@@ -136,11 +134,8 @@ public final class CrashReporter {
 		putBounded(ACRA.getErrorReporter(), KEY_MIDLET_MAIN_CLASS, mainClass);
 	}
 
-	static void setSessionContext(String sessionId, String stage, String outcome) {
-		ErrorReporter reporter = ACRA.getErrorReporter();
-		putBounded(reporter, KEY_SESSION_ID, sessionId);
-		putBounded(reporter, KEY_SESSION_STAGE, stage);
-		putBounded(reporter, KEY_SESSION_OUTCOME, outcome);
+	static void setSessionContext(String sessionId) {
+		putBounded(ACRA.getErrorReporter(), KEY_SESSION_ID, sessionId);
 	}
 
 	/** Persists a non-fatal installer exception without mutating process-global ACRA context. */
@@ -201,8 +196,6 @@ public final class CrashReporter {
 
 	private static void clearSessionContext(ErrorReporter reporter) {
 		reporter.removeCustomData(KEY_SESSION_ID);
-		reporter.removeCustomData(KEY_SESSION_STAGE);
-		reporter.removeCustomData(KEY_SESSION_OUTCOME);
 	}
 
 	private static void putBounded(ErrorReporter reporter, String key, String value) {
