@@ -22,6 +22,8 @@ import android.os.Message;
 import android.os.Process;
 import android.util.Log;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.midlet.MIDlet;
@@ -37,7 +39,7 @@ import ru.playsoftware.j2meloader.crashes.MidletSessionJournal;
 
 public class MidletThread extends HandlerThread implements Handler.Callback {
 	private static final String TAG = MidletThread.class.getName();
-	private static final UncaughtExceptionHandler uncaughtExceptionHandler = (t, e) ->
+	private static final UncaughtExceptionHandler POST_DESTROY_UNCAUGHT_HANDLER = (t, e) ->
 			Log.e(TAG, "Error in thread: \"" + t + "\" after destroy app called", e);
 
 	private static final int INIT = 0;
@@ -53,9 +55,16 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private final MicroLoader microLoader;
 	private final String mainClass;
 	private final MidletSessionJournal journal;
+	private final AtomicBoolean fatalFailureClaimed = new AtomicBoolean();
+	private final UncaughtExceptionHandler sessionUncaughtHandler = this::handleUncaughtSessionFailure;
 	private final LifecycleEventObserver activityLifecycleObserver = this::onActivityStateChanged;
 	private MIDlet midlet;
 	private Handler handler;
+	private UncaughtExceptionHandler upstreamUncaughtHandler;
+	private volatile Thread primaryFailureThread;
+	private volatile String primaryFailureEventId;
+	private volatile MidletSessionJournal.FailureBoundary primaryFailureBoundary;
+	private volatile boolean destroyCallbackInProgress;
 	private int state;
 
 	MidletThread(MicroLoader microLoader, String mainClass, MidletSessionJournal journal) {
@@ -67,10 +76,16 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	}
 
 	public static void notifyDestroyed() {
-		Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
-		if (instance != null) {
-			instance.journal.complete(MidletSessionJournal.Outcome.MIDLET_REQUEST);
-			instance.state = DESTROYED;
+		MidletThread current = instance;
+		if (current != null && current.destroyCallbackInProgress) {
+			// The shell owns completion of destroyApp(); a MIDlet callback must not terminate the
+			// process from inside destroyApp() before cleanup/reporting finishes.
+			return;
+		}
+		Thread.setDefaultUncaughtExceptionHandler(POST_DESTROY_UNCAUGHT_HANDLER);
+		if (current != null) {
+			current.completeJournal(MidletSessionJournal.Outcome.MIDLET_REQUEST);
+			current.state = DESTROYED;
 		}
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity != null) {
@@ -81,7 +96,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 
 	public static void notifyPaused() {
 		instance.state = PAUSED;
-		instance.journal.transition(MidletSessionJournal.Stage.PAUSED);
+		instance.transitionJournal(MidletSessionJournal.Stage.PAUSED);
 	}
 
 	public static void resumeRequest() {
@@ -91,9 +106,9 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	}
 
 	static void destroyApp() {
-		Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
+		Thread.setDefaultUncaughtExceptionHandler(POST_DESTROY_UNCAUGHT_HANDLER);
 		if (instance != null) {
-			instance.journal.markOutcome(MidletSessionJournal.Outcome.USER_STOP);
+			instance.markJournalOutcome(MidletSessionJournal.Outcome.USER_STOP);
 		}
 		new Thread(() -> {
 			try {
@@ -117,6 +132,8 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	@Override
 	public void start() {
 		super.start();
+		upstreamUncaughtHandler = Thread.getDefaultUncaughtExceptionHandler();
+		Thread.setDefaultUncaughtExceptionHandler(sessionUncaughtHandler);
 		handler = new Handler(getLooper(), this);
 		ContextHolder.getActivity().getLifecycle().addObserver(activityLifecycleObserver);
 	}
@@ -128,12 +145,12 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 				if (state != UNINITIALIZED) {
 					break;
 				}
-				journal.transition(MidletSessionJournal.Stage.INITIALIZING);
+				transitionJournal(MidletSessionJournal.Stage.INITIALIZING);
 				try {
 					midlet = microLoader.loadMIDlet(this.mainClass);
 					state = INITIALIZED;
 				} catch (Throwable t) {
-					journal.markOutcome(MidletSessionJournal.Outcome.UNEXPECTED_FAILURE);
+					claimLifecycleFailure(MidletSessionJournal.FailureBoundary.LIFECYCLE_INIT);
 					throw new RuntimeException("Init midlet failed", t);
 				}
 				break;
@@ -143,27 +160,27 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 						break;
 					} else if (microLoader.params.skipResumeCall) {
 						state = STARTED;
-						journal.transition(MidletSessionJournal.Stage.RUNNING);
+						transitionJournal(MidletSessionJournal.Stage.RUNNING);
 						break;
 					}
 				}
-				journal.transition(MidletSessionJournal.Stage.STARTING);
+				transitionJournal(MidletSessionJournal.Stage.STARTING);
 				try {
 					state = STARTED;
 					midlet.startApp();
 					// startApp() may call notifyPaused(); preserve the state selected by the MIDlet.
 					if (state == STARTED) {
-						journal.transition(MidletSessionJournal.Stage.RUNNING);
+						transitionJournal(MidletSessionJournal.Stage.RUNNING);
 					} else if (state == PAUSED) {
-						journal.transition(MidletSessionJournal.Stage.PAUSED);
+						transitionJournal(MidletSessionJournal.Stage.PAUSED);
 					}
 				} catch (MIDletStateChangeException e) {
 					state = PAUSED;
-					journal.transition(MidletSessionJournal.Stage.PAUSED);
+					transitionJournal(MidletSessionJournal.Stage.PAUSED);
 					Log.w(TAG, "Midlet doesn't want to start!", e);
 				} catch (Throwable t) {
 					state = DESTROYED;
-					journal.markOutcome(MidletSessionJournal.Outcome.UNEXPECTED_FAILURE);
+					claimLifecycleFailure(MidletSessionJournal.FailureBoundary.LIFECYCLE_START);
 					throw new RuntimeException("Failed startApp", t);
 				}
 				break;
@@ -171,18 +188,22 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 				if (state != STARTED) {
 					break;
 				}
-				journal.transition(MidletSessionJournal.Stage.PAUSING);
+				transitionJournal(MidletSessionJournal.Stage.PAUSING);
 				try {
 					midlet.pauseApp();
 					state = PAUSED;
-					journal.transition(MidletSessionJournal.Stage.PAUSED);
+					transitionJournal(MidletSessionJournal.Stage.PAUSED);
 				} catch (Throwable t) {
 					state = DESTROYED;
-					journal.markOutcome(MidletSessionJournal.Outcome.UNEXPECTED_FAILURE);
+					claimLifecycleFailure(MidletSessionJournal.FailureBoundary.LIFECYCLE_PAUSE);
 					try {
-						midlet.destroyApp(true);
-					} catch (MIDletStateChangeException ignored) {}
-					throw new RuntimeException("Filed pauseApp", t);
+						invokeDestroyApp();
+					} catch (MIDletStateChangeException ignored) {
+						// Unconditional destroy ignores MIDletStateChangeException by MIDP contract.
+					} catch (Throwable cleanupFailure) {
+						Log.e(TAG, "Failed destroyApp cleanup after pauseApp failure", cleanupFailure);
+					}
+					throw new RuntimeException("Failed pauseApp", t);
 				}
 				break;
 			case DESTROY:
@@ -190,19 +211,145 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 					notifyDestroyed();
 					break;
 				}
-				journal.transition(MidletSessionJournal.Stage.STOPPING);
+				transitionJournal(MidletSessionJournal.Stage.STOPPING);
 				state = DESTROYED;
 				try {
-					midlet.destroyApp(true);
+					invokeDestroyApp();
 				} catch (MIDletStateChangeException e) {
 					Log.w(TAG, "Midlet didn't want to die!", e);
 				} catch (Throwable t) {
-					Log.e(TAG, "Filed destroyApp:", t);
+					Log.e(TAG, "Failed destroyApp:", t);
 				}
 				notifyDestroyed();
 				break;
 		}
 		return true;
+	}
+
+	private void claimLifecycleFailure(MidletSessionJournal.FailureBoundary boundary) {
+		if (!fatalFailureClaimed.compareAndSet(false, true)) {
+			return;
+		}
+		primaryFailureThread = Thread.currentThread();
+		primaryFailureBoundary = boundary;
+		try {
+			primaryFailureEventId = journal.recordUnexpectedFailure(boundary);
+			if (primaryFailureEventId == null) {
+				// An intentional termination outcome already owns this session. Do not convert
+				// teardown noise into a fatal diagnostic event.
+				primaryFailureThread = null;
+				primaryFailureBoundary = null;
+				fatalFailureClaimed.set(false);
+			}
+		} catch (Throwable journalFailure) {
+			// Preserve the original lifecycle failure even if correlation metadata cannot be written.
+			markJournalOutcome(MidletSessionJournal.Outcome.UNEXPECTED_FAILURE);
+		}
+	}
+
+	private void handleUncaughtSessionFailure(Thread thread, Throwable error) {
+		if (!fatalFailureClaimed.get()) {
+			if (fatalFailureClaimed.compareAndSet(false, true)) {
+				primaryFailureThread = thread;
+				primaryFailureBoundary = classifyFailureBoundary(thread);
+				try {
+					primaryFailureEventId = journal.recordUnexpectedFailure(primaryFailureBoundary);
+					if (primaryFailureEventId == null) {
+						clearPrimaryFailureClaim();
+						Log.w(TAG, "Ignoring uncaught failure after intentional MIDlet termination", error);
+						return;
+					}
+				} catch (Throwable journalFailure) {
+					try {
+						Log.e(TAG, "Unable to correlate uncaught MIDlet session failure", journalFailure);
+					} catch (Throwable ignored) {}
+				}
+			}
+		}
+
+		if (thread != primaryFailureThread) {
+			Log.e(TAG, "Secondary uncaught failure while primary session failure is being reported", error);
+			return;
+		}
+
+		Throwable reportError = error;
+		String eventId = primaryFailureEventId;
+		MidletSessionJournal.FailureBoundary boundary = primaryFailureBoundary;
+		if (eventId != null && boundary != null) {
+			try {
+				reportError = new SessionFailureException(eventId, boundary, error);
+			} catch (OutOfMemoryError ignored) {
+				// Preserve the original Throwable; sessionId still correlates it to the durable journal.
+			}
+		}
+
+		UncaughtExceptionHandler reporter = upstreamUncaughtHandler;
+		if (reporter != null && reporter != sessionUncaughtHandler) {
+			try {
+				reporter.uncaughtException(thread, reportError);
+				return;
+			} catch (Throwable reporterFailure) {
+				try {
+					Log.e(TAG, "Crash reporter failed while handling MIDlet session failure", reporterFailure);
+				} catch (Throwable ignored) {}
+			}
+		}
+
+		// A broken/missing upstream handler must not leave a corrupted isolated MIDlet process alive.
+		Process.killProcess(Process.myPid());
+	}
+
+	private MidletSessionJournal.FailureBoundary classifyFailureBoundary(Thread thread) {
+		if (thread != this) {
+			return MidletSessionJournal.FailureBoundary.UNCAUGHT_THREAD;
+		}
+		return switch (journal.getStage()) {
+			case INITIALIZING -> MidletSessionJournal.FailureBoundary.LIFECYCLE_INIT;
+			case STARTING -> MidletSessionJournal.FailureBoundary.LIFECYCLE_START;
+			case PAUSING -> MidletSessionJournal.FailureBoundary.LIFECYCLE_PAUSE;
+			case STOPPING -> MidletSessionJournal.FailureBoundary.LIFECYCLE_DESTROY;
+			default -> MidletSessionJournal.FailureBoundary.MIDLET_THREAD;
+		};
+	}
+
+	private void clearPrimaryFailureClaim() {
+		primaryFailureThread = null;
+		primaryFailureEventId = null;
+		primaryFailureBoundary = null;
+		fatalFailureClaimed.set(false);
+	}
+
+	private void invokeDestroyApp() throws MIDletStateChangeException {
+		destroyCallbackInProgress = true;
+		try {
+			midlet.destroyApp(true);
+		} finally {
+			destroyCallbackInProgress = false;
+		}
+	}
+
+	private void transitionJournal(MidletSessionJournal.Stage stage) {
+		try {
+			journal.transition(stage);
+		} catch (RuntimeException | OutOfMemoryError ignored) {
+			// Diagnostics must not alter MIDlet lifecycle behavior. The last committed snapshot wins.
+		}
+	}
+
+	private void markJournalOutcome(MidletSessionJournal.Outcome outcome) {
+		try {
+			journal.markOutcome(outcome);
+		} catch (RuntimeException | OutOfMemoryError ignored) {
+			// Diagnostics must not replace the original failure or intentional termination path.
+		}
+	}
+
+	private void completeJournal(MidletSessionJournal.Outcome outcome) {
+		try {
+			journal.complete(outcome);
+		} catch (RuntimeException | OutOfMemoryError ignored) {
+			// Process termination must remain reliable even when diagnostics cannot allocate/write.
+		}
 	}
 
 	private void onActivityStateChanged(LifecycleOwner lifecycleOwner, Lifecycle.Event event) {
@@ -211,9 +358,22 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			case ON_START -> handler.obtainMessage(START).sendToTarget();
 			case ON_STOP -> handler.obtainMessage(PAUSE).sendToTarget();
 			case ON_DESTROY -> {
-				journal.markOutcome(MidletSessionJournal.Outcome.LIFECYCLE_STOP);
+				if (fatalFailureClaimed.get()) {
+					// ACRA finishes the crashing activity before persisting its report. Do not enqueue the
+					// normal DESTROY path here: it can kill :midlet before ACRA writes the report file.
+					break;
+				}
+				Thread.setDefaultUncaughtExceptionHandler(POST_DESTROY_UNCAUGHT_HANDLER);
+				markJournalOutcome(MidletSessionJournal.Outcome.LIFECYCLE_STOP);
 				handler.obtainMessage(DESTROY).sendToTarget();
 			}
+		}
+	}
+
+	private static final class SessionFailureException extends RuntimeException {
+		SessionFailureException(String eventId, MidletSessionJournal.FailureBoundary boundary,
+				Throwable cause) {
+			super("JL-Mod Plus session failure; eventId=" + eventId + "; boundary=" + boundary.name(), cause);
 		}
 	}
 }
