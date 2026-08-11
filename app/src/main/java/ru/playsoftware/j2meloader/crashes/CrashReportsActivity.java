@@ -123,7 +123,7 @@ public class CrashReportsActivity extends AppCompatActivity {
 			String time = record.getTimestampMillis() > 0
 					? dateFormat.format(new Date(record.getTimestampMillis()))
 					: "";
-			subtitle.setText(time.isEmpty() ? type : type + " · " + time);
+			subtitle.setText(time.isEmpty() ? type : getString(R.string.crash_report_list_subtitle, type, time));
 			return view;
 		}
 	}
