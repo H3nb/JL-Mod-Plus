@@ -61,6 +61,8 @@ public final class MidletSessionJournal {
 	private static final String KEY_UPDATED_ELAPSED_TIME = "updatedElapsedRealtimeMillis";
 	private static final String KEY_STAGE = "stage";
 	private static final String KEY_OUTCOME = "outcome";
+	private static final String KEY_FAILURE_EVENT_ID = "failureEventId";
+	private static final String KEY_FAILURE_BOUNDARY = "failureBoundary";
 	private static final String KEY_MIDLET_NAME = "midletName";
 	private static final String KEY_MIDLET_VENDOR = "midletVendor";
 	private static final String KEY_MIDLET_VERSION = "midletVersion";
@@ -87,6 +89,15 @@ public final class MidletSessionJournal {
 		UNEXPECTED_FAILURE
 	}
 
+	public enum FailureBoundary {
+		LIFECYCLE_INIT,
+		LIFECYCLE_START,
+		LIFECYCLE_PAUSE,
+		LIFECYCLE_DESTROY,
+		MIDLET_THREAD,
+		UNCAUGHT_THREAD
+	}
+
 	private final AtomicFile atomicFile;
 	private final String sessionId;
 	private final String processName;
@@ -102,6 +113,8 @@ public final class MidletSessionJournal {
 
 	private Stage stage;
 	private Outcome outcome;
+	private String failureEventId;
+	private FailureBoundary failureBoundary;
 	private long updatedWallTimeMillis;
 	private long updatedElapsedRealtimeMillis;
 
@@ -221,6 +234,10 @@ public final class MidletSessionJournal {
 		return sessionId;
 	}
 
+	public synchronized Stage getStage() {
+		return stage;
+	}
+
 	public synchronized void transition(Stage nextStage) {
 		if (nextStage == null || stage == Stage.COMPLETED) {
 			return;
@@ -237,6 +254,26 @@ public final class MidletSessionJournal {
 		outcome = nextOutcome;
 		touch();
 		persist();
+	}
+
+	/**
+	 * Records the first unexpected fatal event for this session and returns its stable event ID.
+	 * A prior intentional termination outcome rejects a new failure event so teardown noise is not
+	 * promoted into a crash report.
+	 */
+	public synchronized String recordUnexpectedFailure(FailureBoundary boundary) {
+		if (failureEventId != null) {
+			return failureEventId;
+		}
+		if (outcome != Outcome.NONE && outcome != Outcome.UNEXPECTED_FAILURE) {
+			return null;
+		}
+		outcome = Outcome.UNEXPECTED_FAILURE;
+		failureEventId = UUID.randomUUID().toString();
+		failureBoundary = boundary == null ? FailureBoundary.UNCAUGHT_THREAD : boundary;
+		touch();
+		persist();
+		return failureEventId;
 	}
 
 	public synchronized void complete(Outcome fallbackOutcome) {
@@ -283,6 +320,8 @@ public final class MidletSessionJournal {
 				updatedElapsedRealtimeMillis,
 				stage,
 				outcome,
+				failureEventId,
+				failureBoundary,
 				midletName,
 				midletVendor,
 				midletVersion,
@@ -304,6 +343,10 @@ public final class MidletSessionJournal {
 		properties.setProperty(KEY_UPDATED_ELAPSED_TIME, Long.toString(snapshot.updatedElapsedRealtimeMillis));
 		properties.setProperty(KEY_STAGE, snapshot.stage.name());
 		properties.setProperty(KEY_OUTCOME, snapshot.outcome.name());
+		put(properties, KEY_FAILURE_EVENT_ID, snapshot.failureEventId);
+		if (snapshot.failureBoundary != null) {
+			properties.setProperty(KEY_FAILURE_BOUNDARY, snapshot.failureBoundary.name());
+		}
 		put(properties, KEY_MIDLET_NAME, snapshot.midletName);
 		put(properties, KEY_MIDLET_VENDOR, snapshot.midletVendor);
 		put(properties, KEY_MIDLET_VERSION, snapshot.midletVersion);
@@ -323,6 +366,8 @@ public final class MidletSessionJournal {
 		String sessionId = require(properties, KEY_SESSION_ID);
 		Stage stage = parseEnum(Stage.class, properties, KEY_STAGE);
 		Outcome outcome = parseEnum(Outcome.class, properties, KEY_OUTCOME);
+		FailureBoundary failureBoundary = parseOptionalEnum(
+				FailureBoundary.class, properties, KEY_FAILURE_BOUNDARY);
 		return new Snapshot(
 				schemaVersion,
 				sessionId,
@@ -334,6 +379,8 @@ public final class MidletSessionJournal {
 				parseLong(properties, KEY_UPDATED_ELAPSED_TIME),
 				stage,
 				outcome,
+				properties.getProperty(KEY_FAILURE_EVENT_ID),
+				failureBoundary,
 				properties.getProperty(KEY_MIDLET_NAME),
 				properties.getProperty(KEY_MIDLET_VENDOR),
 				properties.getProperty(KEY_MIDLET_VERSION),
@@ -388,6 +435,19 @@ public final class MidletSessionJournal {
 		}
 	}
 
+	private static <T extends Enum<T>> T parseOptionalEnum(Class<T> type, Properties properties,
+			String key) throws IOException {
+		String value = properties.getProperty(key);
+		if (value == null || value.isEmpty()) {
+			return null;
+		}
+		try {
+			return Enum.valueOf(type, value);
+		} catch (IllegalArgumentException e) {
+			throw new IOException("Invalid MIDlet session journal enum: " + key, e);
+		}
+	}
+
 	private static String bound(String value) {
 		if (value == null) {
 			return null;
@@ -412,6 +472,8 @@ public final class MidletSessionJournal {
 		final long updatedElapsedRealtimeMillis;
 		final Stage stage;
 		final Outcome outcome;
+		final String failureEventId;
+		final FailureBoundary failureBoundary;
 		final String midletName;
 		final String midletVendor;
 		final String midletVersion;
@@ -422,8 +484,9 @@ public final class MidletSessionJournal {
 		Snapshot(int schemaVersion, String sessionId, String processName, int processPid,
 				 long startedWallTimeMillis, long startedElapsedRealtimeMillis,
 				 long updatedWallTimeMillis, long updatedElapsedRealtimeMillis, Stage stage,
-				 Outcome outcome, String midletName, String midletVendor, String midletVersion,
-				 String mainClass, String jarSize, String jarSha256) {
+				 Outcome outcome, String failureEventId, FailureBoundary failureBoundary,
+				 String midletName, String midletVendor, String midletVersion, String mainClass,
+				 String jarSize, String jarSha256) {
 			this.schemaVersion = schemaVersion;
 			this.sessionId = sessionId;
 			this.processName = processName;
@@ -434,6 +497,8 @@ public final class MidletSessionJournal {
 			this.updatedElapsedRealtimeMillis = updatedElapsedRealtimeMillis;
 			this.stage = stage;
 			this.outcome = outcome;
+			this.failureEventId = failureEventId;
+			this.failureBoundary = failureBoundary;
 			this.midletName = midletName;
 			this.midletVendor = midletVendor;
 			this.midletVersion = midletVersion;
