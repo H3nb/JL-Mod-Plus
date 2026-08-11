@@ -53,12 +53,17 @@ final class LocalCrashReportStore {
 
 	static void pruneReports(List<File> reports, long now, int maxCount, long maxBytes,
 								 long maxAgeMillis, long graceMillis) {
-		reports.removeIf(file -> file == null || !file.isFile());
-		reports.sort(Comparator.comparingLong(File::lastModified).reversed());
+		ArrayList<File> candidates = new ArrayList<>(reports.size());
+		for (File file : reports) {
+			if (file != null && file.isFile()) {
+				candidates.add(file);
+			}
+		}
+		candidates.sort(Comparator.comparingLong(File::lastModified).reversed());
 
 		int keptCount = 0;
 		long keptBytes = 0;
-		for (File report : reports) {
+		for (File report : candidates) {
 			long modified = report.lastModified();
 			long age = modified > 0 && now >= modified ? now - modified : 0;
 			long size = Math.max(0L, report.length());
