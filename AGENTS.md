@@ -6,8 +6,28 @@
 - Preserve emulator behavior and compatibility unless the task intentionally changes them.
 - Prefer the smallest coherent change that solves the problem.
 - Treat the current source, Gradle configuration, workflows, tests, and verified specifications as the source of truth. Do not encode transient project state into this file.
-- Use relevant guidance under `.agents/skills/` only when the task matches it.
+- Route matching tasks through the repository skills described below.
 - Project workflows are CLI-first; do not require Android Studio unless the user explicitly asks for it.
+
+## Repository skills
+
+The repository contains task-specific guidance under `.agents/skills/`. When a task matches a skill, read that skill's `SKILL.md` before planning or editing and follow the parts that are relevant to the current task.
+
+- User instructions, this `AGENTS.md`, verified project behavior, and the current repository state take precedence over generic defaults in a skill.
+- Use only skills that match the current task. A skill prerequisite is a planning constraint, not permission to widen the PR or perform unrelated migrations.
+- Do not install every framework, dependency, test tool, or architectural pattern suggested by a general skill. Prefer the current project stack and add only what the current task concretely requires.
+- Follow a skill's local `references/`, scripts, and validation instructions when they apply; do not substitute remembered or historical guidance for repository-provided material.
+- If a skill's assumptions do not match the project, preserve the task scope and current behavior, then adapt or defer the incompatible part rather than forcing the project to fit the skill.
+
+Available skill routing:
+
+- `agp-9-upgrade`: AGP 9 migration, built-in Kotlin/new DSL work, AGP compatibility, or AGP-specific troubleshooting.
+- `testing-setup`: analysis or changes to unit, UI, screenshot, instrumentation, end-to-end, or coverage infrastructure. Respect the existing test stack and introduce new frameworks only when the task needs them.
+- `migrate-xml-views-to-jetpack-compose`: bounded XML/View-to-Compose migrations. Preserve visual and functional behavior and keep Android/emulator boundaries native/View when they still serve a concrete purpose.
+- `edge-to-edge`: Compose edge-to-edge, system-bar, WindowInsets, cutout, or IME work. Check its Compose and target-SDK prerequisites; do not silently widen an unrelated task to satisfy them.
+- `navigation-3`: Navigation 3 installation or migration, back stacks, deep links, scenes, navigation state, and related View/Compose interoperability.
+- `adaptive`: adaptive/multi-pane Compose UI across window sizes and device classes. Check its Compose and Navigation 3 prerequisites before applying it.
+- `r8-analyzer`: R8/keep-rule analysis and app-size optimization investigation. Treat the skill as analysis-only unless a separate implementation task is explicitly in scope.
 
 ## Change discipline
 
