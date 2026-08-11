@@ -59,9 +59,10 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 			return;
 		}
 
-		exportText = buildExportText(record);
+		String displayText = buildReportText(record);
+		exportText = DiagnosticExportSanitizer.sanitize(this, displayText);
 		TextView details = findViewById(R.id.crash_report_details_text);
-		details.setText(exportText);
+		details.setText(displayText);
 	}
 
 	@Override
@@ -134,7 +135,7 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 		}
 	}
 
-	private String buildExportText(LocalDiagnosticRepository.Record record) {
+	private String buildReportText(LocalDiagnosticRepository.Record record) {
 		StringBuilder text = new StringBuilder();
 		text.append("JL-Mod Plus diagnostic report\n");
 		if (record.getTimestampMillis() > 0) {
