@@ -33,12 +33,12 @@ jobs:
         with:
           java-version: '17'
           distribution: temurin
+          cache: gradle
 
-      - name: Set up Gradle
+      - name: Validate Gradle wrapper
         uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
         with:
-          cache-provider: basic
-          cache-read-only: ${{ github.event_name == 'pull_request' }}
+          cache-disabled: true
 
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x gradlew
@@ -54,7 +54,7 @@ jobs:
         continue-on-error: true
         run: ./gradlew --no-daemon --stacktrace :app:lintEmulatorDebug
 
-      - name: Run dexlib lint baseline
+      - name: Run dexlib lint
         run: ./gradlew --no-daemon --stacktrace :dexlib:lintDebug
 
       - name: Upload lint reports
@@ -68,34 +68,59 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
-      - name: Run unit tests and assemble emulator debug APK
+      - name: Run unit test task and assemble emulator debug APK
         run: >-
           ./gradlew --no-daemon --stacktrace
           :app:testEmulatorDebugUnitTest
           :app:assembleEmulatorDebug
           :app:copyEmulatorDebugApk
 
-      - name: Verify emulator debug APK
+      - name: Verify arm64 emulator debug APK
         shell: bash
         run: |
           shopt -s nullglob
-          apks=(app/build/outputs/renamed_apks/emulatorDebug/*.apk)
-          if (( ${#apks[@]} == 0 )); then
-            echo "No renamed emulator debug APK was produced."
+          apks=(app/build/outputs/renamed_apks/emulatorDebug/*-arm64-v8a.apk)
+          if (( ${#apks[@]} != 1 )); then
+            echo "Expected exactly one arm64-v8a emulator debug APK; found ${#apks[@]}."
+            printf '%s\n' "${apks[@]}"
             exit 1
           fi
 
-          for apk in "${apks[@]}"; do
-            unzip -tqq "$apk"
-            abis="$(unzip -Z1 "$apk" | awk -F/ '/^lib\/[^/]+\// {print $2}' | sort -u | paste -sd, -)"
-            printf 'Verified APK: %s\nPackaged ABIs: %s\n' "$apk" "${abis:-none}"
+          apk="${apks[0]}"
+          unzip -tqq "$apk"
+
+          abis="$(unzip -Z1 "$apk" | awk -F/ '/^lib\/[^/]+\// {print $2}' | sort -u | paste -sd, -)"
+          if [[ "$abis" != "arm64-v8a" ]]; then
+            echo "Expected only arm64-v8a native libraries; found: ${abis:-none}"
+            exit 1
+          fi
+
+          required_native_libs=(
+            libc++_shared.so
+            libgles_utils.so
+            libjavam3g.so
+            libmicro3d.so
+            libmmapi_common.so
+            libmmapi_eas.so
+            libmmapi_tsf.so
+          )
+          apk_entries="$(unzip -Z1 "$apk")"
+          for lib in "${required_native_libs[@]}"; do
+            if ! grep -Fxq "lib/arm64-v8a/$lib" <<<"$apk_entries"; then
+              echo "Required native library is missing from $apk: $lib"
+              exit 1
+            fi
           done
 
-      - name: Upload emulator debug APK
+          echo "Verified APK: $apk"
+          echo "Packaged ABI: arm64-v8a"
+          echo "Required app-owned native libraries: present"
+
+      - name: Upload arm64 emulator debug APK
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: JL-Mod-Plus-alpha-debug
-          path: app/build/outputs/renamed_apks/emulatorDebug/*.apk
+          name: JL-Mod-Plus-emulator-debug-arm64-v8a
+          path: app/build/outputs/renamed_apks/emulatorDebug/*-arm64-v8a.apk
           if-no-files-found: error
           retention-days: 7
 
