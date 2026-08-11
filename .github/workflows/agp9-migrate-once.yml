@@ -1,0 +1,94 @@
+name: One-shot AGP 9 migration
+
+on:
+  push:
+    branches:
+      - agent/agp9-gradle9-built-in-kotlin
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out migration branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Apply AGP 9 and Gradle 9 migration
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace_exact(path: str, old: str, new: str, count: int = 1) -> None:
+              file = Path(path)
+              text = file.read_text(encoding="utf-8")
+              if text.count(old) != count:
+                  raise RuntimeError(f"Expected {count} occurrence(s) in {path}: {old!r}")
+              file.write_text(text.replace(old, new, count), encoding="utf-8")
+
+          replace_exact(
+              "build.gradle.kts",
+              "    alias(libs.plugins.kotlin.android).apply(false)\n",
+              "",
+          )
+          replace_exact(
+              "app/build.gradle.kts",
+              "    alias(libs.plugins.kotlin.android)\n",
+              "",
+          )
+          replace_exact(
+              "dexlib/build.gradle.kts",
+              '    namespace = "ru.playsoftware.j2meloader.dexlib"\n',
+              '    namespace = "ru.playsoftware.j2meloader.dexlib"\n    enableKotlin = false\n',
+          )
+          replace_exact(
+              "gradle/libs.versions.toml",
+              'agp = "8.13.2"',
+              'agp = "9.3.0"',
+          )
+          replace_exact(
+              "gradle/libs.versions.toml",
+              'kotlin = "2.2.10"\n',
+              "",
+          )
+          replace_exact(
+              "gradle/libs.versions.toml",
+              'kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }\n',
+              "",
+          )
+          replace_exact(
+              "gradle/wrapper/gradle-wrapper.properties",
+              "distributionUrl=https\\://services.gradle.org/distributions/gradle-8.13-bin.zip\n",
+              "distributionUrl=https\\://services.gradle.org/distributions/gradle-9.6.1-bin.zip\n"
+              "distributionSha256Sum=9c0f7faeeb306cb14e4279a3e084ca6b596894089a0638e68a07c945a32c9e14\n",
+          )
+
+      - name: Verify migration scope
+        run: |
+          test "$(git diff --name-only | wc -l)" -eq 5
+          ! git grep -n 'org.jetbrains.kotlin.android' -- '*.gradle.kts' 'gradle/libs.versions.toml'
+          ! git grep -n 'libs.plugins.kotlin.android' -- '*.gradle.kts'
+          grep -Fxq 'agp = "9.3.0"' gradle/libs.versions.toml
+          grep -Fxq 'distributionUrl=https\://services.gradle.org/distributions/gradle-9.6.1-bin.zip' gradle/wrapper/gradle-wrapper.properties
+          grep -Fxq 'distributionSha256Sum=9c0f7faeeb306cb14e4279a3e084ca6b596894089a0638e68a07c945a32c9e14' gradle/wrapper/gradle-wrapper.properties
+          grep -Fxq '    enableKotlin = false' dexlib/build.gradle.kts
+          git diff --check
+          git diff --stat
+
+      - name: Smoke-test Gradle configuration
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace help
+
+      - name: Commit migration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add build.gradle.kts app/build.gradle.kts dexlib/build.gradle.kts gradle/libs.versions.toml gradle/wrapper/gradle-wrapper.properties
+          git commit -m "Migrate build engine to AGP 9"
+          git push origin HEAD:${GITHUB_REF_NAME}
