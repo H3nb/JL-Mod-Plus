@@ -45,6 +45,7 @@ import ru.playsoftware.j2meloader.EmulatorApplication;
 /** Configures ACRA as a local Java exception collector for JL-Mod Plus. */
 public final class CrashReporter {
 	private static final int MAX_CONTEXT_VALUE_LENGTH = 256;
+	private static final int MAX_CONTEXT_MESSAGE_LENGTH = 768;
 
 	private static final String ROLE_MAIN = "main";
 	private static final String ROLE_MIDLET = "midlet";
@@ -60,12 +61,6 @@ public final class CrashReporter {
 	private static final String KEY_MIDLET_JAR_SIZE = "jlmod.midlet.jar.size";
 	private static final String KEY_MIDLET_JAR_SHA256 = "jlmod.midlet.jar.sha256";
 	private static final String KEY_MIDLET_MAIN_CLASS = "jlmod.midlet.mainClass";
-	private static final String KEY_FAILURE_SUBSYSTEM = "jlmod.failure.subsystem";
-	private static final String KEY_INSTALLER_SOURCE_SCHEME = "jlmod.installer.sourceScheme";
-	private static final String KEY_INSTALLER_MIDLET_NAME = "jlmod.installer.midlet.name";
-	private static final String KEY_INSTALLER_MIDLET_VENDOR = "jlmod.installer.midlet.vendor";
-	private static final String KEY_INSTALLER_MIDLET_VERSION = "jlmod.installer.midlet.version";
-	private static final String KEY_INSTALLER_JAR_SIZE = "jlmod.installer.jar.size";
 
 	private static final List<ReportField> REPORT_FIELDS = Arrays.asList(
 			REPORT_ID,
@@ -136,27 +131,13 @@ public final class CrashReporter {
 		putBounded(ACRA.getErrorReporter(), KEY_MIDLET_MAIN_CLASS, mainClass);
 	}
 
-	/** Persists a non-fatal installer exception with temporary, privacy-bounded context. */
+	/** Persists a non-fatal installer exception without mutating process-global ACRA context. */
 	public static void reportInstallerFailure(Throwable error, String sourceScheme,
 												  String midletName, String midletVendor,
 												  String midletVersion, String jarSize) {
-		ErrorReporter reporter = ACRA.getErrorReporter();
-		putBounded(reporter, KEY_FAILURE_SUBSYSTEM, "installer");
-		putBounded(reporter, KEY_INSTALLER_SOURCE_SCHEME, sourceScheme);
-		putBounded(reporter, KEY_INSTALLER_MIDLET_NAME, midletName);
-		putBounded(reporter, KEY_INSTALLER_MIDLET_VENDOR, midletVendor);
-		putBounded(reporter, KEY_INSTALLER_MIDLET_VERSION, midletVersion);
-		putBounded(reporter, KEY_INSTALLER_JAR_SIZE, jarSize);
-		try {
-			reporter.handleException(error, false);
-		} finally {
-			reporter.removeCustomData(KEY_FAILURE_SUBSYSTEM);
-			reporter.removeCustomData(KEY_INSTALLER_SOURCE_SCHEME);
-			reporter.removeCustomData(KEY_INSTALLER_MIDLET_NAME);
-			reporter.removeCustomData(KEY_INSTALLER_MIDLET_VENDOR);
-			reporter.removeCustomData(KEY_INSTALLER_MIDLET_VERSION);
-			reporter.removeCustomData(KEY_INSTALLER_JAR_SIZE);
-		}
+		String message = buildInstallerContext(sourceScheme, midletName, midletVendor,
+				midletVersion, jarSize);
+		ACRA.getErrorReporter().handleException(new InstallerFailureException(message, error), false);
 	}
 
 	static String classifyProcess(String packageName, String processName) {
@@ -173,6 +154,32 @@ public final class CrashReporter {
 			return ROLE_REPORTER;
 		}
 		return ROLE_OTHER;
+	}
+
+	private static String buildInstallerContext(String sourceScheme, String midletName,
+												String midletVendor, String midletVersion, String jarSize) {
+		StringBuilder message = new StringBuilder("Installer failure");
+		appendContext(message, "sourceScheme", sourceScheme);
+		appendContext(message, "midletName", midletName);
+		appendContext(message, "midletVendor", midletVendor);
+		appendContext(message, "midletVersion", midletVersion);
+		appendContext(message, "jarSize", jarSize);
+		if (message.length() > MAX_CONTEXT_MESSAGE_LENGTH) {
+			message.setLength(MAX_CONTEXT_MESSAGE_LENGTH);
+		}
+		return message.toString();
+	}
+
+	private static void appendContext(StringBuilder message, String key, String value) {
+		String bounded = boundValue(value);
+		if (bounded == null || message.length() >= MAX_CONTEXT_MESSAGE_LENGTH) {
+			return;
+		}
+		message.append(message.indexOf("[") < 0 ? " [" : ", ");
+		message.append(key).append('=').append(bounded);
+		if (message.length() > MAX_CONTEXT_MESSAGE_LENGTH) {
+			message.setLength(MAX_CONTEXT_MESSAGE_LENGTH);
+		}
 	}
 
 	private static void clearMidletContext(ErrorReporter reporter) {
@@ -205,5 +212,11 @@ public final class CrashReporter {
 			return normalized.substring(0, MAX_CONTEXT_VALUE_LENGTH);
 		}
 		return normalized;
+	}
+
+	private static final class InstallerFailureException extends RuntimeException {
+		InstallerFailureException(String message, Throwable cause) {
+			super(message, cause);
+		}
 	}
 }
