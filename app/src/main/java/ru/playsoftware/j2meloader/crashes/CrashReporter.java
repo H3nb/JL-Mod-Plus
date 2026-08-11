@@ -128,7 +128,7 @@ public final class CrashReporter {
 	}
 
 	static String classifyProcess(String packageName, String processName) {
-		if (processName == null || processName.isBlank()) {
+		if (processName == null || processName.trim().isEmpty()) {
 			return ROLE_OTHER;
 		}
 		if (processName.equals(packageName)) {
