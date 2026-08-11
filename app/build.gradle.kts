@@ -81,8 +81,6 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         resValue("string", "app_name", "JL-Mod Plus")
-        resValue("string", "app_center", secret.getProperty("appCenterKey", ""))
-        resValue("string", "fingerprint", secret.getProperty("fingerprint", ""))
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -240,7 +238,7 @@ dependencies {
     implementation(libs.google.material)
     implementation(libs.google.oboe)
 
-    implementation(libs.acra.http)
+    implementation(libs.acra.core)
     implementation(libs.ambilwarna)
     implementation(libs.ffmpeg.kit)
     implementation(libs.filepicker)

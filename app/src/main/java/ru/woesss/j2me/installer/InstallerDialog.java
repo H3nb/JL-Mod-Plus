@@ -33,14 +33,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import org.acra.ACRA;
-import org.acra.ErrorReporter;
-
 import java.io.File;
 import java.io.IOException;
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -51,9 +45,8 @@ import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.applist.AppItem;
 import ru.playsoftware.j2meloader.applist.AppListModel;
 import ru.playsoftware.j2meloader.config.Config;
+import ru.playsoftware.j2meloader.crashes.CrashReporter;
 import ru.playsoftware.j2meloader.databinding.FragmentInstallerBinding;
-import ru.playsoftware.j2meloader.util.Constants;
-import ru.playsoftware.j2meloader.util.FileUtils;
 import ru.woesss.j2me.jar.Descriptor;
 
 public class InstallerDialog extends DialogFragment {
@@ -311,45 +304,22 @@ public class InstallerDialog extends DialogFragment {
 
 	private void onError(Throwable e) {
 		Log.e("Installer", e.toString(), e);
-		ErrorReporter errorReporter = ACRA.getErrorReporter();
 		Bundle args = getArguments();
-		if (args != null) {
-			String report = errorReporter.getCustomData(Constants.KEY_APPCENTER_ATTACHMENT);
-			StringBuilder sb = new StringBuilder();
-			if (report != null) {
-				sb.append(report);
-			}
-			sb.append("\n====================Installer==================\n");
-			Uri uri = args.getParcelable(ARG_URI);
-			if (uri != null) {
-				sb.append("from uri: ").append(uri).append('\n');
-			}
-			Descriptor descriptor = installer.getNewDescriptor();
-			if (descriptor != null) {
-				sb.append(Descriptor.MIDLET_NAME).append(": ").append(descriptor.getName()).append("\n");
-				sb.append(Descriptor.MIDLET_VENDOR).append(": ").append(descriptor.getVendor()).append("\n");
-				sb.append(Descriptor.MIDLET_VERSION).append(": ").append(descriptor.getVersion()).append("\n");
-			}
-			File jar = installer.getJar();
-			if (jar != null) {
-				String jarSize = Long.toString(jar.length());
-				sb.append(Descriptor.MIDLET_JAR_SIZE).append(": ").append(jarSize).append("\n");
-				try {
-					byte[] bytes = FileUtils.getBytes(jar);
-					byte[] sum = MessageDigest.getInstance("md5").digest(bytes);
-					BigInteger bi = new BigInteger(1, sum);
-					String jarHash = bi.toString(16);
-					sb.append("JAR_HASH_MD5").append(": ").append(jarHash);
-				} catch (IOException ignored) {
-				} catch (NoSuchAlgorithmException ignored) {
-				}
-			}
-			errorReporter.putCustomData(Constants.KEY_APPCENTER_ATTACHMENT, sb.toString());
+		Uri uri = args == null ? null : args.getParcelable(ARG_URI);
+		Descriptor descriptor = installer == null ? null : installer.getNewDescriptor();
+		File jar = installer == null ? null : installer.getJar();
+		CrashReporter.reportInstallerFailure(
+				e,
+				uri == null ? null : uri.getScheme(),
+				descriptor == null ? null : descriptor.getName(),
+				descriptor == null ? null : descriptor.getVendor(),
+				descriptor == null ? null : descriptor.getVersion(),
+				jar == null ? null : Long.toString(jar.length())
+		);
+		if (installer != null) {
+			installer.clearCache();
+			installer.deleteTemp();
 		}
-
-		errorReporter.handleException(e);
-		installer.clearCache();
-		installer.deleteTemp();
 		if (!isAdded()) {
 			return;
 		}

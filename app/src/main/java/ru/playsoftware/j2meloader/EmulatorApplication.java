@@ -29,11 +29,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.preference.PreferenceManager;
 
-import org.acra.ACRA;
-import org.acra.config.CoreConfigurationBuilder;
-
-import ru.playsoftware.j2meloader.crashes.AppCenterCollector;
-import ru.playsoftware.j2meloader.crashes.AppCenterSender;
+import ru.playsoftware.j2meloader.crashes.CrashReporter;
 import ru.playsoftware.j2meloader.util.Constants;
 import ru.playsoftware.j2meloader.util.FileUtils;
 
@@ -47,12 +43,10 @@ public class EmulatorApplication extends Application implements OnSharedPreferen
 	@Override
 	protected void attachBaseContext(Context base) {
 		super.attachBaseContext(base);
+		if (CrashReporter.initialize(this)) {
+			return;
+		}
 		instance = this;
-
-		ACRA.init(this, new CoreConfigurationBuilder()
-				.withParallel(false)
-				.withReportContent(AppCenterCollector.REPORT_FIELDS)
-				.withPluginConfigurations(AppCenterSender.buildHttpSenderConfiguration(this)));
 
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
 		if (!sp.contains(Constants.PREF_TOOLBAR)) {
