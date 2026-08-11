@@ -22,7 +22,6 @@ import org.acra.file.ReportLocator;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /** App-owned retention policy for the raw local ACRA payloads. */
@@ -59,7 +58,14 @@ final class LocalCrashReportStore {
 				candidates.add(file);
 			}
 		}
-		candidates.sort(Comparator.comparingLong(File::lastModified).reversed());
+		Collections.sort(candidates, (left, right) -> {
+			long leftModified = left.lastModified();
+			long rightModified = right.lastModified();
+			if (leftModified == rightModified) {
+				return 0;
+			}
+			return leftModified < rightModified ? 1 : -1;
+		});
 
 		int keptCount = 0;
 		long keptBytes = 0;
