@@ -60,6 +60,12 @@ public final class CrashReporter {
 	private static final String KEY_MIDLET_JAR_SIZE = "jlmod.midlet.jar.size";
 	private static final String KEY_MIDLET_JAR_SHA256 = "jlmod.midlet.jar.sha256";
 	private static final String KEY_MIDLET_MAIN_CLASS = "jlmod.midlet.mainClass";
+	private static final String KEY_FAILURE_SUBSYSTEM = "jlmod.failure.subsystem";
+	private static final String KEY_INSTALLER_SOURCE_SCHEME = "jlmod.installer.sourceScheme";
+	private static final String KEY_INSTALLER_MIDLET_NAME = "jlmod.installer.midlet.name";
+	private static final String KEY_INSTALLER_MIDLET_VENDOR = "jlmod.installer.midlet.vendor";
+	private static final String KEY_INSTALLER_MIDLET_VERSION = "jlmod.installer.midlet.version";
+	private static final String KEY_INSTALLER_JAR_SIZE = "jlmod.installer.jar.size";
 
 	private static final List<ReportField> REPORT_FIELDS = Arrays.asList(
 			REPORT_ID,
@@ -128,6 +134,29 @@ public final class CrashReporter {
 
 	public static void setMidletMainClass(String mainClass) {
 		putBounded(ACRA.getErrorReporter(), KEY_MIDLET_MAIN_CLASS, mainClass);
+	}
+
+	/** Persists a non-fatal installer exception with temporary, privacy-bounded context. */
+	public static void reportInstallerFailure(Throwable error, String sourceScheme,
+												  String midletName, String midletVendor,
+												  String midletVersion, String jarSize) {
+		ErrorReporter reporter = ACRA.getErrorReporter();
+		putBounded(reporter, KEY_FAILURE_SUBSYSTEM, "installer");
+		putBounded(reporter, KEY_INSTALLER_SOURCE_SCHEME, sourceScheme);
+		putBounded(reporter, KEY_INSTALLER_MIDLET_NAME, midletName);
+		putBounded(reporter, KEY_INSTALLER_MIDLET_VENDOR, midletVendor);
+		putBounded(reporter, KEY_INSTALLER_MIDLET_VERSION, midletVersion);
+		putBounded(reporter, KEY_INSTALLER_JAR_SIZE, jarSize);
+		try {
+			reporter.handleException(error, false);
+		} finally {
+			reporter.removeCustomData(KEY_FAILURE_SUBSYSTEM);
+			reporter.removeCustomData(KEY_INSTALLER_SOURCE_SCHEME);
+			reporter.removeCustomData(KEY_INSTALLER_MIDLET_NAME);
+			reporter.removeCustomData(KEY_INSTALLER_MIDLET_VENDOR);
+			reporter.removeCustomData(KEY_INSTALLER_MIDLET_VERSION);
+			reporter.removeCustomData(KEY_INSTALLER_JAR_SIZE);
+		}
 	}
 
 	static String classifyProcess(String packageName, String processName) {
