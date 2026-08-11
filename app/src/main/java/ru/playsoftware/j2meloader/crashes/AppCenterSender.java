@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+// Modified for JL-Mod Plus.
 package ru.playsoftware.j2meloader.crashes;
 
 import android.content.Context;
@@ -35,7 +36,6 @@ import org.acra.config.HttpSenderConfiguration;
 import org.acra.config.HttpSenderConfigurationBuilder;
 import org.acra.data.CrashReportData;
 import org.acra.http.DefaultHttpRequest;
-import org.acra.security.TLS;
 import org.acra.sender.ReportSender;
 import org.acra.util.Installation;
 import org.json.JSONObject;
@@ -67,12 +67,6 @@ public class AppCenterSender implements ReportSender {
 	@NonNull
 	public static HttpSenderConfiguration buildHttpSenderConfiguration(Context context) {
 		HttpSenderConfigurationBuilder builder = new HttpSenderConfigurationBuilder();
-		// Force TLSv1.2 for Android 4.1-4.4
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN
-				&& Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-			builder.withCertificatePath("asset://appcenter.cer");
-			builder.withTlsProtocols(TLS.V1_2);
-		}
 		Map<String, String> httpHeaders = new HashMap<>();
 		httpHeaders.put("App-Secret", context.getString(R.string.app_center));
 		httpHeaders.put("Install-ID", Installation.id(context));
