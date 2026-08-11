@@ -11,4 +11,4 @@ tasks.register<Delete>("clean") {
 extra.set("compileSdk", 36)
 extra.set("minSdk", 23)
 extra.set("targetSdk", 34)
-extra.set("ndkVersion", "22.1.7171670")
+extra.set("ndkVersion", "28.2.13676358")
