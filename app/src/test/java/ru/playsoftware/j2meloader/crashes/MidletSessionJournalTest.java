@@ -50,6 +50,8 @@ public class MidletSessionJournalTest {
 				4000L,
 				MidletSessionJournal.Stage.STARTING,
 				MidletSessionJournal.Outcome.UNEXPECTED_FAILURE,
+				"event-1",
+				MidletSessionJournal.FailureBoundary.LIFECYCLE_START,
 				"Game",
 				"Vendor",
 				"1.0",
@@ -73,6 +75,8 @@ public class MidletSessionJournalTest {
 		assertEquals(expected.updatedElapsedRealtimeMillis, actual.updatedElapsedRealtimeMillis);
 		assertEquals(expected.stage, actual.stage);
 		assertEquals(expected.outcome, actual.outcome);
+		assertEquals(expected.failureEventId, actual.failureEventId);
+		assertEquals(expected.failureBoundary, actual.failureBoundary);
 		assertEquals(expected.midletName, actual.midletName);
 		assertEquals(expected.midletVendor, actual.midletVendor);
 		assertEquals(expected.midletVersion, actual.midletVersion);
@@ -97,6 +101,8 @@ public class MidletSessionJournalTest {
 				null,
 				null,
 				null,
+				null,
+				null,
 				"game.Main",
 				null,
 				null
@@ -108,8 +114,23 @@ public class MidletSessionJournalTest {
 				new ByteArrayInputStream(output.toByteArray()));
 
 		assertNull(actual.processName);
+		assertNull(actual.failureEventId);
+		assertNull(actual.failureBoundary);
 		assertNull(actual.midletName);
 		assertNull(actual.jarSize);
+	}
+
+	@Test
+	public void legacySchemaOneWithoutFailureFieldsStillReads() throws Exception {
+		MidletSessionJournal.Snapshot actual = MidletSessionJournal.read(
+				new ByteArrayInputStream(validProperties().getBytes(StandardCharsets.UTF_8)));
+
+		assertEquals(MidletSessionJournal.SCHEMA_VERSION, actual.schemaVersion);
+		assertEquals("session-3", actual.sessionId);
+		assertEquals(MidletSessionJournal.Stage.RUNNING, actual.stage);
+		assertEquals(MidletSessionJournal.Outcome.NONE, actual.outcome);
+		assertNull(actual.failureEventId);
+		assertNull(actual.failureBoundary);
 	}
 
 	@Test
@@ -127,6 +148,13 @@ public class MidletSessionJournalTest {
 	@Test
 	public void invalidLifecycleEnumIsRejected() throws Exception {
 		String data = validProperties().replace("stage=RUNNING", "stage=NOT_A_STAGE");
+		assertReadFails(data);
+	}
+
+	@Test
+	public void invalidOptionalFailureBoundaryIsRejected() throws Exception {
+		String data = validProperties() + "failureEventId=event-2\n"
+				+ "failureBoundary=NOT_A_BOUNDARY\n";
 		assertReadFails(data);
 	}
 
