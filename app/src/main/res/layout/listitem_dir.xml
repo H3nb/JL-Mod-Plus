@@ -20,7 +20,7 @@
         android:layout_height="30dp"
         android:layout_marginEnd="10dp"
         android:layout_marginRight="10dp"
-        android:tint="?attr/nnf_dir_icon_color"
+        app:tint="?attr/nnf_dir_icon_color"
         android:visibility="visible"
         app:srcCompat="@drawable/nnf_ic_folder_black_48dp"
         tools:ignore="ContentDescription" />

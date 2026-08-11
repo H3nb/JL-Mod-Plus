@@ -29,7 +29,6 @@
     <string name="create_apps_dir_failed">Nepodařilo se vytvořit složku na cestě:\n\'%s\'\nVyberte jinou.</string>
     <string name="default_label">"%s (výchozí)"</string>
     <string name="dismiss">Zavřít</string>
-    <string name="donate">Podpořit</string>
     <string name="edit">Upravit</string>
     <string name="enter_name">Zadejte název</string>
     <string name="enter_new_name">Zadejte nový název</string>
