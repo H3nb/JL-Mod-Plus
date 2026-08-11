@@ -124,6 +124,7 @@ public final class CrashReporter {
 											 String jarSize, String jarSha256) {
 		ErrorReporter reporter = ACRA.getErrorReporter();
 		clearMidletContext(reporter);
+		clearSessionContext(reporter);
 		putBounded(reporter, KEY_MIDLET_NAME, name);
 		putBounded(reporter, KEY_MIDLET_VENDOR, vendor);
 		putBounded(reporter, KEY_MIDLET_VERSION, version);
@@ -196,6 +197,12 @@ public final class CrashReporter {
 		reporter.removeCustomData(KEY_MIDLET_JAR_SIZE);
 		reporter.removeCustomData(KEY_MIDLET_JAR_SHA256);
 		reporter.removeCustomData(KEY_MIDLET_MAIN_CLASS);
+	}
+
+	private static void clearSessionContext(ErrorReporter reporter) {
+		reporter.removeCustomData(KEY_SESSION_ID);
+		reporter.removeCustomData(KEY_SESSION_STAGE);
+		reporter.removeCustomData(KEY_SESSION_OUTCOME);
 	}
 
 	private static void putBounded(ErrorReporter reporter, String key, String value) {
