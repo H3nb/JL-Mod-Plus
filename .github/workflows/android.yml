@@ -113,6 +113,78 @@ jobs:
           echo "Packaged ABI: arm64-v8a"
           echo "Required app-owned native libraries: present"
 
+      - name: Verify 16 KB alignment of native audio dependencies
+        shell: bash
+        run: |
+          shopt -s nullglob
+          apks=(app/build/outputs/renamed_apks/emulatorDebug/*-arm64-v8a.apk)
+          if (( ${#apks[@]} != 1 )); then
+            echo "Expected exactly one arm64-v8a emulator debug APK; found ${#apks[@]}."
+            exit 1
+          fi
+          apk="${apks[0]}"
+
+          ndk_version="$(sed -n 's/.*extra.set("ndkVersion", "\([^"]*\)").*/\1/p' build.gradle.kts)"
+          llvm_objdump="$ANDROID_HOME/ndk/$ndk_version/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-objdump"
+          if [[ -z "$ndk_version" || ! -x "$llvm_objdump" ]]; then
+            echo "Cannot locate llvm-objdump for configured NDK: ${ndk_version:-unknown}"
+            exit 1
+          fi
+
+          native_dir="$(mktemp -d)"
+          trap 'rm -rf "$native_dir"' EXIT
+          unzip -q "$apk" 'lib/arm64-v8a/*.so' -d "$native_dir"
+
+          dependency_native_libs=(
+            liboboe.so
+            libffmpegkit.so
+            libffmpegkit_abidetect.so
+            libavcodec.so
+            libavdevice.so
+            libavfilter.so
+            libavformat.so
+            libavutil.so
+            libswresample.so
+            libswscale.so
+          )
+
+          alignment_failed=0
+          for lib in "${dependency_native_libs[@]}"; do
+            so="$native_dir/lib/arm64-v8a/$lib"
+            if [[ ! -f "$so" ]]; then
+              echo "Required native audio dependency is missing from $apk: $lib"
+              alignment_failed=1
+              continue
+            fi
+
+            mapfile -t load_alignments < <("$llvm_objdump" -p "$so" | awk '$1 == "LOAD" {print $NF}')
+            if (( ${#load_alignments[@]} == 0 )); then
+              echo "No ELF LOAD segments found: $lib"
+              alignment_failed=1
+              continue
+            fi
+
+            library_failed=0
+            for alignment in "${load_alignments[@]}"; do
+              exponent="$(sed -n 's/^2\*\*\([0-9][0-9]*\)$/\1/p' <<<"$alignment")"
+              if [[ -z "$exponent" ]] || (( exponent < 14 )); then
+                echo "ELF alignment below 16 KB: $lib ($alignment)"
+                library_failed=1
+                alignment_failed=1
+              fi
+            done
+
+            if (( library_failed == 0 )); then
+              echo "ELF 16 KB aligned: $lib (${load_alignments[*]})"
+            fi
+          done
+
+          if (( alignment_failed != 0 )); then
+            exit 1
+          fi
+
+          echo "All packaged Oboe and FFmpegKit arm64 binaries are 16 KB aligned."
+
       - name: Upload arm64 emulator debug APK
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
