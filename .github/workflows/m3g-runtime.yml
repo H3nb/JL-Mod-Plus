@@ -100,13 +100,15 @@ jobs:
         run: |
           mkdir -p build/ci-logs
           avd='jlmod-m3g-runtime-30'
+          # M3G exercises fixed-function GLES 1.x. Keep it in the guest because
+          # the hosted runner's gfxstream/swangle path rejects valid GLES 1 calls.
           nohup "$ANDROID_HOME/emulator/emulator" \
             -avd "$avd" \
             -no-window \
             -no-audio \
             -no-boot-anim \
             -no-snapshot \
-            -gpu software \
+            -gpu off \
             > build/ci-logs/m3g-runtime-emulator.log 2>&1 &
           echo $! > build/ci-logs/m3g-runtime-emulator.pid
 
@@ -140,8 +142,8 @@ jobs:
             objectReferenceArraysAndDuplicateRoundTripThroughJni
             translatedGraphicsTargetPreservesViewportAndClearOutput
             mutableImage2DTargetBindsClearsAndReleases
-            immediateRenderingExecutesOn64BitNativeBackend
             retainedMorphingWorldAndPickingExecuteOn64BitNativeBackend
+            immediateRenderingExecutesOn64BitNativeBackend
           )
 
           status=0
@@ -178,7 +180,7 @@ jobs:
             echo
             echo '- Android API: 30'
             echo '- Runtime ABI: x86_64 (64-bit)'
-            echo '- Emulator graphics: software-selected backend'
+            echo '- Emulator graphics: guest software GLES 1.x (`-gpu off`)'
             echo '- Supported production ABI remains arm64-v8a and is compiled by Android CI.'
             echo "- Instrumentation outcome: ${{ steps.runtime_test.outcome }}"
             echo
