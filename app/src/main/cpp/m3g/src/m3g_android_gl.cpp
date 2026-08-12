@@ -39,14 +39,18 @@ M3Gbool m3gglLockNativeBitmap(M3GNativeBitmap bitmap,
                               M3Gubyte **ptr,
                               M3Gsizei *stride) 
 {
-    return M3G_TRUE;
+    (void) bitmap;
+    (void) ptr;
+    (void) stride;
+    return M3G_FALSE;
 }
 
 /*!
  * \brief
  */
 void m3gglReleaseNativeBitmap(M3GNativeBitmap bitmap) 
-{    
+{
+    (void) bitmap;
 }
 
 /*!
@@ -54,9 +58,15 @@ void m3gglReleaseNativeBitmap(M3GNativeBitmap bitmap)
  */
 extern "C" M3Gbool m3gglGetNativeBitmapParams(M3GNativeBitmap bitmap,
                                               M3GPixelFormat *format,
-                                              M3Gint *width, M3Gint *height, M3Gint *pixels)
+                                              M3Gint *width, M3Gint *height,
+                                              void **pixels)
 {
-    return M3G_TRUE;
+    (void) bitmap;
+    (void) format;
+    (void) width;
+    (void) height;
+    (void) pixels;
+    return M3G_FALSE;
 }
 
 /*!
@@ -66,6 +76,10 @@ extern "C" M3Gbool m3gglGetNativeWindowParams(M3GNativeWindow wnd,
                                               M3GPixelFormat *format,
                                               M3Gint *width, M3Gint *height)
 {
-    return M3G_TRUE;
+    (void) wnd;
+    (void) format;
+    (void) width;
+    (void) height;
+    return M3G_FALSE;
 }
 

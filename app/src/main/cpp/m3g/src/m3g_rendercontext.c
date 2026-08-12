@@ -788,7 +788,7 @@ static void m3gUpdateColorMaskStatus(RenderContext *ctx,
         glMatrixMode(GL_PROJECTION);
         glOrthox(0, ctx->target.width << 16,
                  0, ctx->target.height << 16,
-                 -1 << 16, 1 << 16);
+                 -(1 << 16), 1 << 16);
         glMatrixMode(GL_MODELVIEW);
             
         /* Set up texture and vertex coordinate arrays */
@@ -911,7 +911,7 @@ static void m3gPushScreenSpace(RenderContext *ctx, M3Gbool realPixels)
     if (realPixels) {
         int w = ctx->viewport.width;
         int h = ctx->viewport.height;
-        glOrthox(0, w << 16, 0, h << 16, -1 << 16, 1 << 16);
+        glOrthox(0, w << 16, 0, h << 16, -(1 << 16), 1 << 16);
     }
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -1252,8 +1252,7 @@ M3G_API void m3gBindImageTarget(M3GRenderContext hCtx, M3GImage hImage)
     M3G_VALIDATE_OBJECT(ctx);
     M3G_VALIDATE_OBJECT(img);
 
-    M3G_LOG1(M3G_LOG_RENDERING, "Binding image target 0x%08X\n",
-             (unsigned) img);
+    M3G_LOG1(M3G_LOG_RENDERING, "Binding image target %p\n", (void *) img);
 
     /* Check for image-specific errors */
     
@@ -1681,7 +1680,7 @@ M3G_API void m3gRenderWorld(M3GRenderContext context, M3GWorld hWorld)
     RenderContext *ctx = (RenderContext*) context;
 	World *world = (World *) hWorld;
 
-    M3G_LOG1(M3G_LOG_STAGES, "Rendering World 0x%08X\n", (unsigned) world);
+    M3G_LOG1(M3G_LOG_STAGES, "Rendering World %p\n", (void *) world);
     
     M3G_VALIDATE_OBJECT(ctx);
     M3G_VALIDATE_OBJECT(world);
@@ -1797,7 +1796,7 @@ M3G_API void m3gRenderNode(M3GRenderContext context,
     RenderContext *ctx = (RenderContext*) context;
     Node *node = (Node *) hNode;
 
-    M3G_LOG1(M3G_LOG_STAGES, "Rendering Node 0x%08X\n", (unsigned) node);
+    M3G_LOG1(M3G_LOG_STAGES, "Rendering Node %p\n", (void *) node);
     
     M3G_VALIDATE_OBJECT(ctx);
     M3G_VALIDATE_OBJECT(node);
@@ -1889,8 +1888,8 @@ M3G_API void m3gRender(M3GRenderContext context,
     const Appearance *app = (const Appearance *) hAppearance;
     M3G_VALIDATE_OBJECT(ctx);
 
-    M3G_LOG1(M3G_LOG_STAGES, "Rendering vertex buffer 0x%08X\n",
-             (unsigned) vb);
+    M3G_LOG1(M3G_LOG_STAGES, "Rendering vertex buffer %p\n",
+             (const void *) vb);
     
     /* Check validity of input */
     
