@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
 
 	private AppListModel appListModel;
 	private AlertDialog midletFailureDialog;
-	private boolean recoveryNoticeShown;
+	private String lastRecoveryNoticeEventId;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -105,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void maybeShowMidletFailureRecovery() {
-		if (recoveryNoticeShown || isFinishing() || isDestroyed()) {
+		if (isFinishing() || isDestroyed()) {
 			return;
 		}
 		if (midletFailureDialog != null && midletFailureDialog.isShowing()) {
@@ -116,11 +116,11 @@ public class MainActivity extends AppCompatActivity {
 		}
 
 		MidletFailureRecovery.PendingFailure failure = MidletFailureRecovery.findPendingFailure(this);
-		if (failure == null) {
+		if (failure == null || failure.getEventId().equals(lastRecoveryNoticeEventId)) {
 			return;
 		}
 
-		recoveryNoticeShown = true;
+		lastRecoveryNoticeEventId = failure.getEventId();
 		String midletName = failure.getMidletName();
 		int messageRes = midletName == null || midletName.trim().isEmpty()
 				? R.string.midlet_failure_recovery_message
