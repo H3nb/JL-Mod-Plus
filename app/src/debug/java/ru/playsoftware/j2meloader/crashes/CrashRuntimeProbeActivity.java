@@ -16,28 +16,43 @@ package ru.playsoftware.j2meloader.crashes;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Process;
 
 /** Debug-only remote-process probe used by instrumentation runtime validation. */
 public final class CrashRuntimeProbeActivity extends Activity {
+	static final String EXTRA_MODE = "ru.playsoftware.j2meloader.crashes.RUNTIME_PROBE_MODE";
+	static final String MODE_SIGNAL_KILL = "signal-kill";
 	static final String MIDLET_NAME = "JL-Mod Plus Crash Runtime Probe";
+	static final String SIGNAL_MIDLET_NAME = "JL-Mod Plus Process Exit Runtime Probe";
 	static final String MAIN_CLASS = CrashRuntimeProbeActivity.class.getName();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		CrashReporter.setMidletContext(MIDLET_NAME, "JL-Mod Plus", "debug", null, null);
+		boolean signalKill = MODE_SIGNAL_KILL.equals(getIntent().getStringExtra(EXTRA_MODE));
+		String midletName = signalKill ? SIGNAL_MIDLET_NAME : MIDLET_NAME;
+		CrashReporter.setMidletContext(midletName, "JL-Mod Plus", "debug", null, null);
 		CrashReporter.setMidletMainClass(MAIN_CLASS);
 
 		MidletSessionJournal journal = MidletSessionJournal.create(
 				this,
-				MIDLET_NAME,
+				midletName,
 				"JL-Mod Plus",
 				"debug",
 				MAIN_CLASS,
 				null,
 				null
 		);
+
+		if (signalKill) {
+			// Deliberately leave outcome=NONE: this represents an abrupt process death that cannot
+			// execute Java exception reporting or graceful MIDlet teardown.
+			journal.transition(MidletSessionJournal.Stage.RUNNING);
+			Process.killProcess(Process.myPid());
+			return;
+		}
+
 		String eventId = journal.recordUnexpectedFailure(
 				MidletSessionJournal.FailureBoundary.UNCAUGHT_THREAD);
 		if (eventId == null) {
