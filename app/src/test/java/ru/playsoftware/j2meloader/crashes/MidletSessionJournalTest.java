@@ -159,6 +159,48 @@ public class MidletSessionJournalTest {
 	}
 
 	@Test
+	public void atomicSidecarsCollapseToOneCanonicalJournal() throws Exception {
+		File root = temporaryFolder.getRoot();
+		File backup = temporaryFolder.newFile("session.properties.bak");
+		File pending = temporaryFolder.newFile("session.properties.new");
+		File unrelated = temporaryFolder.newFile("notes.txt");
+
+		List<File> journals = MidletSessionJournal.canonicalJournalFiles(
+				Arrays.asList(pending, unrelated, backup));
+
+		assertEquals(1, journals.size());
+		assertEquals(new File(root, "session.properties").getAbsolutePath(),
+				journals.get(0).getAbsolutePath());
+	}
+
+	@Test
+	public void deletingJournalAlsoDeletesAtomicSidecars() throws Exception {
+		File base = temporaryFolder.newFile("session-delete.properties");
+		File backup = temporaryFolder.newFile("session-delete.properties.bak");
+		File pending = temporaryFolder.newFile("session-delete.properties.new");
+
+		assertTrue(MidletSessionJournal.delete(base));
+		assertFalse(base.exists());
+		assertFalse(backup.exists());
+		assertFalse(pending.exists());
+	}
+
+	@Test
+	public void retentionDeletesExpiredBackupOnlyJournal() throws Exception {
+		long now = 1_000_000L;
+		File base = new File(temporaryFolder.getRoot(), "backup-only.properties");
+		File backup = temporaryFolder.newFile("backup-only.properties.bak");
+		if (!backup.setLastModified(now - 10_000L)) {
+			throw new IOException("Unable to set backup journal timestamp");
+		}
+
+		MidletSessionJournal.pruneFiles(
+				Arrays.asList(base), now, 10, 2_000L, 100L);
+
+		assertFalse(backup.exists());
+	}
+
+	@Test
 	public void retentionKeepsNewestJournalsWithinCountLimit() throws Exception {
 		long now = 1_000_000L;
 		List<File> journals = new ArrayList<>();
@@ -232,7 +274,6 @@ public class MidletSessionJournalTest {
 			if (file != null && file.exists()) {
 				count++;
 			}
-		}
 		return count;
 	}
 
