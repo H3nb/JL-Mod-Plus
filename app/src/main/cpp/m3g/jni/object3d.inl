@@ -17,6 +17,44 @@
 
 #include "javax_microedition_m3g_Object3D.h"
 
+#include <stdlib.h>
+
+static M3Gulong* m3gAllocNativeReferences(JNIEnv* aEnv,
+                                          jlongArray aReferences,
+                                          jlong** javaReferences,
+                                          jsize* length)
+{
+    *javaReferences = NULL;
+    *length = aReferences ? aEnv->GetArrayLength(aReferences) : 0;
+    if (aReferences == NULL || *length == 0) {
+        return NULL;
+    }
+
+    *javaReferences = aEnv->GetLongArrayElements(aReferences, NULL);
+    if (*javaReferences == NULL) {
+        M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
+        return NULL;
+    }
+
+    M3Gulong* nativeReferences =
+        (M3Gulong*)calloc((size_t)*length, sizeof(M3Gulong));
+    if (nativeReferences == NULL) {
+        aEnv->ReleaseLongArrayElements(aReferences, *javaReferences, JNI_ABORT);
+        *javaReferences = NULL;
+        M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
+    }
+    return nativeReferences;
+}
+
+static void m3gCopyNativeReferences(jlong* javaReferences,
+                                    const M3Gulong* nativeReferences,
+                                    jsize length)
+{
+    for (jsize i = 0; i < length; ++i) {
+        javaReferences[i] = (jlong)nativeReferences[i];
+    }
+}
+
 JNIEXPORT jint JNICALL Java_javax_microedition_m3g_Object3D__1animate
 (JNIEnv* aEnv, jclass, jlong aHObject, jint aTime)
 {
@@ -98,52 +136,58 @@ JNIEXPORT void JNICALL Java_javax_microedition_m3g_Object3D__1addRef
 JNIEXPORT jlong JNICALL Java_javax_microedition_m3g_Object3D__1duplicate
 (JNIEnv* aEnv, jclass, jlong aHObject, jlongArray aHReferences)
 {
-    jlong* references = NULL;
-    if (aHReferences)
-    {
-        references = aEnv->GetLongArrayElements(aHReferences, NULL);
-        if (references == NULL)
-        {
-            M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
-            return 0;
-        }
+    jlong* javaReferences = NULL;
+    jsize referenceCount = 0;
+    M3Gulong* nativeReferences =
+        m3gAllocNativeReferences(aEnv, aHReferences,
+                                 &javaReferences, &referenceCount);
+    if (aHReferences != NULL && referenceCount > 0 && nativeReferences == NULL) {
+        return 0;
     }
 
     M3G_DO_LOCK
-    jlong ret = (jlong)m3gDuplicate((M3GObject)aHObject, (M3Gulong *)references);
+    M3GObject duplicate = m3gDuplicate((M3GObject)aHObject, nativeReferences);
     M3G_DO_UNLOCK(aEnv)
 
-    if (references)
-    {
-        aEnv->ReleaseLongArrayElements(aHReferences, references, 0);
+    const M3Gbool copyBack = duplicate != NULL && !aEnv->ExceptionCheck();
+    if (copyBack && javaReferences != NULL) {
+        m3gCopyNativeReferences(javaReferences, nativeReferences, referenceCount);
     }
 
-    return ret;
+    free(nativeReferences);
+    if (javaReferences != NULL) {
+        aEnv->ReleaseLongArrayElements(aHReferences, javaReferences,
+                                       copyBack ? 0 : JNI_ABORT);
+    }
+    return (jlong)duplicate;
 }
 
 JNIEXPORT jint JNICALL Java_javax_microedition_m3g_Object3D__1getReferences
 (JNIEnv* aEnv, jclass, jlong aHObject, jlongArray aHReferences)
 {
-    jlong* references = NULL;
-    if (aHReferences)
-    {
-        references = aEnv->GetLongArrayElements(aHReferences, NULL);
-        if (references == NULL)
-        {
-            M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
-            return 0;
-        }
+    jlong* javaReferences = NULL;
+    jsize referenceCount = 0;
+    M3Gulong* nativeReferences =
+        m3gAllocNativeReferences(aEnv, aHReferences,
+                                 &javaReferences, &referenceCount);
+    if (aHReferences != NULL && referenceCount > 0 && nativeReferences == NULL) {
+        return 0;
     }
-    jint numReferences = aHReferences ? aEnv->GetArrayLength(aHReferences) : 0;
 
     M3G_DO_LOCK
-    jint ret = m3gGetReferences((M3GObject)aHObject, (M3Gulong *)references, numReferences);
+    jint ret = m3gGetReferences((M3GObject)aHObject,
+                                 nativeReferences, referenceCount);
     M3G_DO_UNLOCK(aEnv)
 
-    if (references)
-    {
-        aEnv->ReleaseLongArrayElements(aHReferences, references, 0);
+    const M3Gbool copyBack = ret > 0 && !aEnv->ExceptionCheck();
+    if (copyBack && javaReferences != NULL) {
+        m3gCopyNativeReferences(javaReferences, nativeReferences, ret);
     }
 
+    free(nativeReferences);
+    if (javaReferences != NULL) {
+        aEnv->ReleaseLongArrayElements(aHReferences, javaReferences,
+                                       copyBack ? 0 : JNI_ABORT);
+    }
     return ret;
 }
