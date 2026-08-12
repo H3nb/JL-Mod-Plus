@@ -40,7 +40,7 @@ public class ProcessExitStoreTest {
 	}
 
 	@Test
-	public void expectedUserAndPackageManagementExitsAreSuppressed() {
+	public void expectedUserPackageAndNonActionableSystemExitsAreSuppressed() {
 		assertFalse(ProcessExitStore.shouldRetain(
 				ApplicationExitInfo.REASON_USER_REQUESTED, 0, FOREGROUND, true));
 		assertFalse(ProcessExitStore.shouldRetain(
@@ -49,6 +49,8 @@ public class ProcessExitStoreTest {
 				ApplicationExitInfo.REASON_PACKAGE_UPDATED, 0, FOREGROUND, true));
 		assertFalse(ProcessExitStore.shouldRetain(
 				ApplicationExitInfo.REASON_PACKAGE_STATE_CHANGE, 0, FOREGROUND, true));
+		assertFalse(ProcessExitStore.shouldRetain(
+				ProcessExitStore.REASON_OTHER, 0, FOREGROUND, true));
 	}
 
 	@Test
