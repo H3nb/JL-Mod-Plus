@@ -141,6 +141,12 @@ public final class CrashReporter {
 
 	static void setSessionContext(String sessionId) {
 		putBounded(ACRA.getErrorReporter(), KEY_SESSION_ID, sessionId);
+		EmulatorApplication application = EmulatorApplication.getInstance();
+		if (application != null) {
+			// The same immutable session key now survives Java exceptions (ACRA), durable journal
+			// writes, and Android process death (ApplicationExitInfo) without timestamp heuristics.
+			ProcessExitStore.setMidletSession(application, sessionId);
+		}
 	}
 
 	/** Persists a non-fatal installer exception without mutating process-global ACRA context. */
