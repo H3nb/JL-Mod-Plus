@@ -6,17 +6,6 @@ LOCAL_MODULE    := javam3g
 # Warning-zero is part of the supported ARM64 M3G contract; fail on regressions.
 LOCAL_CFLAGS    := -O3 -Werror -DM3G_TARGET_ANDROID #-DM3G_DEBUG -DM3G_GL_ES_1_1
 LOCAL_CXXFLAGS  := $(LOCAL_CFLAGS)
-
-# Hosted M3G runtime characterization uses x86_64 only. Enable the inherited
-# M3G render log and GL assertions there so a renderer failure is localized
-# without changing the supported arm64-v8a production build. Legacy debug-only
-# assertions contain diagnostics that are intentionally outside the production
-# warning-zero baseline, so keep them visible without promoting them to errors.
-ifeq ($(TARGET_ARCH_ABI),x86_64)
-    LOCAL_CFLAGS   += -DM3G_DEBUG -Wno-error -include m3g_runtime_compositing_diagnostics.h
-    LOCAL_CXXFLAGS += -DM3G_DEBUG -Wno-error -include m3g_runtime_compositing_diagnostics.h
-endif
-
 LOCAL_LDLIBS    := -llog -lEGL -lGLESv1_CM -lz -ljnigraphics
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/inc/
 LOCAL_SRC_FILES := \

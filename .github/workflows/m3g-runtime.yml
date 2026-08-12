@@ -83,11 +83,6 @@ jobs:
           echo "ANDROID_USER_HOME=$ANDROID_USER_HOME" >> "$GITHUB_ENV"
           echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
 
-          # M3G is a GLES 1.x fixed-function renderer. Keep the hosted emulator
-          # in its documented OpenGL ES 1.1/2.0 compatibility mode instead of
-          # advertising GLES 3.x through the host translator.
-          printf 'GLESDynamicVersion = off\n' > "$HOME/.android/advancedFeatures.ini"
-
           image='system-images;android-30;google_apis;x86_64'
           avd='jlmod-m3g-runtime-30'
           yes | sdkmanager --licenses >/dev/null || true
@@ -111,7 +106,7 @@ jobs:
             -no-audio \
             -no-boot-anim \
             -no-snapshot \
-            -gpu swangle \
+            -gpu software \
             > build/ci-logs/m3g-runtime-emulator.log 2>&1 &
           echo $! > build/ci-logs/m3g-runtime-emulator.pid
 
@@ -140,11 +135,31 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          ./gradlew --no-daemon --stacktrace \
-            -PjlmodRuntimeTestAbi=x86_64 \
-            -Pandroid.testInstrumentationRunnerArguments.class=javax.microedition.m3g.M3GRuntimeTest \
-            :app:connectedEmulatorDebugAndroidTest \
-            2>&1 | tee build/ci-logs/m3g-runtime-gradle.log
+          tests=(
+            cameraAndLightTransformsCrossJniWithJsr184Semantics
+            objectReferenceArraysAndDuplicateRoundTripThroughJni
+            translatedGraphicsTargetPreservesViewportAndClearOutput
+            mutableImage2DTargetBindsClearsAndReleases
+            immediateRenderingExecutesOn64BitNativeBackend
+            retainedMorphingWorldAndPickingExecuteOn64BitNativeBackend
+          )
+
+          status=0
+          for test in "${tests[@]}"; do
+            echo "::group::M3GRuntimeTest#$test"
+            if ./gradlew --no-daemon --stacktrace \
+              -PjlmodRuntimeTestAbi=x86_64 \
+              "-Pandroid.testInstrumentationRunnerArguments.class=javax.microedition.m3g.M3GRuntimeTest#$test" \
+              :app:connectedEmulatorDebugAndroidTest \
+              2>&1 | tee -a build/ci-logs/m3g-runtime-gradle.log; then
+              echo "PASS $test" | tee -a build/ci-logs/m3g-runtime-results.txt
+            else
+              echo "FAIL $test" | tee -a build/ci-logs/m3g-runtime-results.txt
+              status=1
+            fi
+            echo '::endgroup::'
+          done
+          exit "$status"
 
       - name: Capture M3G runtime evidence
         if: always()
@@ -163,9 +178,19 @@ jobs:
             echo
             echo '- Android API: 30'
             echo '- Runtime ABI: x86_64 (64-bit)'
-            echo '- Emulator OpenGL ES mode: compatibility (1.1/2.0)'
+            echo '- Emulator graphics: software-selected backend'
             echo '- Supported production ABI remains arm64-v8a and is compiled by Android CI.'
             echo "- Instrumentation outcome: ${{ steps.runtime_test.outcome }}"
+            echo
+            echo '### Per-test results'
+            echo
+            echo '```text'
+            if [[ -f build/ci-logs/m3g-runtime-results.txt ]]; then
+              cat build/ci-logs/m3g-runtime-results.txt
+            else
+              echo 'No test result file was produced.'
+            fi
+            echo '```'
             echo
             echo '### ADB state after instrumentation'
             echo
@@ -190,6 +215,7 @@ jobs:
             build/ci-logs/m3g-runtime-emulator.log
             build/ci-logs/m3g-runtime-gradle.log
             build/ci-logs/m3g-runtime-logcat.txt
+            build/ci-logs/m3g-runtime-results.txt
             build/ci-reports/m3g-runtime-summary.md
             app/build/outputs/androidTest-results/connected/
             app/build/reports/androidTests/connected/

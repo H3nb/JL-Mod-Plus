@@ -50,39 +50,6 @@ extern "C" {
  * Handy macros
  *--------------------------------------------------------------------*/
 
-#if defined(M3G_TARGET_ANDROID) && !defined(M3G_NGL_CONTEXT_API)
-    /*
-     * Some Android GLES1 translation paths reject GL_MULTISAMPLE even for
-     * single-sample drawables. Toggling multisample state cannot affect
-     * rasterization when GL_SAMPLE_BUFFERS is zero, so avoid the unsupported
-     * call in that case while preserving normal behavior for true multisample
-     * framebuffers.
-     */
-    static M3G_INLINE M3Gbool m3gHasMultisampleBuffer(void)
-    {
-        GLint sampleBuffers = 0;
-        glGetIntegerv(GL_SAMPLE_BUFFERS, &sampleBuffers);
-        return sampleBuffers > 0 ? M3G_TRUE : M3G_FALSE;
-    }
-
-    static M3G_INLINE void m3gEnableGLCapability(GLenum cap)
-    {
-        if (cap != GL_MULTISAMPLE || m3gHasMultisampleBuffer()) {
-            glEnable(cap);
-        }
-    }
-
-    static M3G_INLINE void m3gDisableGLCapability(GLenum cap)
-    {
-        if (cap != GL_MULTISAMPLE || m3gHasMultisampleBuffer()) {
-            glDisable(cap);
-        }
-    }
-
-#   define glEnable(cap)  m3gEnableGLCapability(cap)
-#   define glDisable(cap) m3gDisableGLCapability(cap)
-#endif
-
 #if defined(M3G_DEBUG_ASSERTS)
     static M3G_INLINE void m3gAssertGL(const char *filename, int line)
     {
