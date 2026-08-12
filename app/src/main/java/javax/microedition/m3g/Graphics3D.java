@@ -142,24 +142,32 @@ public class Graphics3D {
 		if (target == null) {
 			throw new NullPointerException();
 		}
+		if ((flags & ~(ANTIALIAS | DITHER | TRUE_COLOR | OVERWRITE)) != 0) {
+			throw new IllegalArgumentException();
+		}
 
 		final int finalFlags = flags;
 		final boolean finalDepth = depth;
 
 		if (target instanceof Graphics) {
 			final Graphics finalG = (Graphics) target;
-			final int clipX = finalG.getClipX() + finalG.getTranslateX();
-			final int clipY = finalG.getClipY() + finalG.getTranslateY();
-			final int clipW = finalG.getClipWidth();
-			final int clipH = finalG.getClipHeight();
-			if (clipW > Defs.MAX_VIEWPORT_WIDTH ||
-					clipH > Defs.MAX_VIEWPORT_HEIGHT) {
-				throw new IllegalArgumentException();
-			}
-
 			buffer = finalG.getBitmap();
 			final int width = buffer.getWidth();
 			final int height = buffer.getHeight();
+			if (width > Defs.MAX_VIEWPORT_WIDTH ||
+					height > Defs.MAX_VIEWPORT_HEIGHT) {
+				throw new IllegalArgumentException();
+			}
+
+			// M3G viewport coordinates are relative to the Graphics origin
+			// that is in effect at bind time. Native rendering addresses the
+			// backing Bitmap directly, so keep that origin as a fixed offset.
+			offsetX = finalG.getTranslateX();
+			offsetY = finalG.getTranslateY();
+			final int clipX = finalG.getClipX() + offsetX;
+			final int clipY = finalG.getClipY() + offsetY;
+			final int clipW = finalG.getClipWidth();
+			final int clipH = finalG.getClipHeight();
 
 			// TODO: draw on background? Probably should fix alpha
 			/*
@@ -191,6 +199,15 @@ public class Graphics3D {
 			cur_height = height;
 		} else if (target instanceof Image2D) {
 			Image2D img = (Image2D) target;
+			final int format = img.getFormat();
+			final int width = img.getWidth();
+			final int height = img.getHeight();
+			if (!img.isMutable() ||
+					(format != Image2D.RGB && format != Image2D.RGBA) ||
+					width > Defs.MAX_VIEWPORT_WIDTH ||
+					height > Defs.MAX_VIEWPORT_HEIGHT) {
+				throw new IllegalArgumentException();
+			}
 
 			offsetX = offsetY = 0;
 			final long imageHandle = img.handle;
@@ -249,8 +266,8 @@ public class Graphics3D {
 	public void setViewport(int x, int y, int width, int height) {
 		integrityCheck();
 		if (width <= 0 || height <= 0
-				|| width > Defs.MAX_VIEWPORT_DIMENSION
-				|| height > Defs.MAX_VIEWPORT_DIMENSION) {
+				|| width > Defs.MAX_VIEWPORT_WIDTH
+				|| height > Defs.MAX_VIEWPORT_HEIGHT) {
 			throw new IllegalArgumentException();
 		}
 		_setViewport(handle, x + offsetX, y + offsetY, width, height);
