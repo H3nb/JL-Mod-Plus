@@ -75,6 +75,12 @@ jobs:
       - name: Install Android Emulator image
         shell: bash
         run: |
+          export ANDROID_USER_HOME="$RUNNER_TEMP/android-user"
+          export ANDROID_AVD_HOME="$RUNNER_TEMP/android-avd"
+          mkdir -p "$ANDROID_USER_HOME" "$ANDROID_AVD_HOME"
+          echo "ANDROID_USER_HOME=$ANDROID_USER_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
+
           yes | sdkmanager --licenses >/dev/null || true
           sdkmanager \
             'platform-tools' \
@@ -83,7 +89,10 @@ jobs:
           echo 'no' | avdmanager create avd \
             --force \
             --name jlmod-crash-runtime \
-            --package 'system-images;android-30;google_apis;x86_64'
+            --package 'system-images;android-30;google_apis;x86_64' \
+            -p "$ANDROID_AVD_HOME/jlmod-crash-runtime.avd"
+          avdmanager list avd
+          test -f "$ANDROID_AVD_HOME/jlmod-crash-runtime.ini"
 
       - name: Start Android Emulator
         shell: bash
