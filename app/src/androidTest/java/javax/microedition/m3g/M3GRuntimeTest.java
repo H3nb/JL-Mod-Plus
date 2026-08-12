@@ -119,7 +119,7 @@ public class M3GRuntimeTest {
 
 		runtimeStep("graphics target: bind translated target");
 		g3d.bindTarget(translatedGraphics, true,
-				Graphics3D.TRUE_COLOR | Graphics3D.OVERWRITE);
+				Graphics3D.TRUE_COLOR);
 		try {
 			assertSame(translatedGraphics, g3d.getTarget());
 			assertEquals(initialClipX, g3d.getViewportX());
@@ -158,7 +158,7 @@ public class M3GRuntimeTest {
 
 		runtimeStep("graphics target: bind clipped target");
 		g3d.bindTarget(clippedGraphics, true,
-				Graphics3D.TRUE_COLOR | Graphics3D.OVERWRITE);
+				Graphics3D.TRUE_COLOR);
 		try {
 			g3d.setViewport(0, 0, 20, 20);
 			runtimeStep("graphics target: clear clipped viewport");
