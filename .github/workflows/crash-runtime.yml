@@ -7,8 +7,10 @@ on:
     paths:
       - '.github/workflows/crash-runtime.yml'
       - 'app/build.gradle.kts'
+      - 'app/src/main/AndroidManifest.xml'
       - 'app/src/debug/**'
       - 'app/src/androidTest/java/ru/playsoftware/j2meloader/crashes/**'
+      - 'app/src/main/java/ru/playsoftware/j2meloader/EmulatorApplication.java'
       - 'app/src/main/java/ru/playsoftware/j2meloader/crashes/**'
       - 'app/src/main/java/javax/microedition/shell/**'
   workflow_dispatch:
@@ -43,6 +45,22 @@ jobs:
 
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x gradlew
+
+      - name: Expose Android SDK tools
+        shell: bash
+        run: |
+          sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          if [[ ! -d "$sdk_root" ]]; then
+            echo "Android SDK root not found: $sdk_root"
+            exit 1
+          fi
+          echo "ANDROID_HOME=$sdk_root" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk_root" >> "$GITHUB_ENV"
+          echo "$sdk_root/platform-tools" >> "$GITHUB_PATH"
+          echo "$sdk_root/emulator" >> "$GITHUB_PATH"
+          echo "$sdk_root/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          test -x "$sdk_root/cmdline-tools/latest/bin/sdkmanager"
+          test -x "$sdk_root/cmdline-tools/latest/bin/avdmanager"
 
       - name: Enable KVM access
         shell: bash
