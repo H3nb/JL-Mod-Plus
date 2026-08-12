@@ -119,7 +119,7 @@ public final class LocalDiagnosticRepository {
 			return false;
 		}
 		if (record.journalFile != null) {
-			if (record.journalFile.isFile() && !record.journalFile.delete()) {
+			if (!MidletSessionJournal.delete(record.journalFile)) {
 				Log.w(TAG, "Unable to delete MIDlet failure journal: " + record.journalFile.getName());
 				return false;
 			}
@@ -139,15 +139,9 @@ public final class LocalDiagnosticRepository {
 	}
 
 	private static ArrayList<MutableRecord> readFailureJournals(Context context) {
-		File[] files = MidletSessionJournal.journalDirectory(context).listFiles();
-		ArrayList<MutableRecord> records = new ArrayList<>();
-		if (files == null) {
-			return records;
-		}
+		List<File> files = MidletSessionJournal.journalFiles(context);
+		ArrayList<MutableRecord> records = new ArrayList<>(files.size());
 		for (File file : files) {
-			if (file == null || !file.isFile()) {
-				continue;
-			}
 			try {
 				MidletSessionJournal.Snapshot snapshot = MidletSessionJournal.read(file);
 				if (snapshot.outcome == MidletSessionJournal.Outcome.UNEXPECTED_FAILURE
