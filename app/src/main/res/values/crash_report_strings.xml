@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="crash_reports" translatable="false">Crash reports</string>
+    <string name="view_reports" translatable="false">View reports</string>
+    <string name="crash_reports_empty" translatable="false">No local crash reports</string>
+    <string name="crash_report_midlet_failure" translatable="false">MIDlet session failure</string>
+    <string name="crash_report_java_report" translatable="false">Java diagnostic report</string>
+    <string name="crash_report_list_subtitle" translatable="false">%1$s · %2$s</string>
+    <string name="copy_report" translatable="false">Copy report</string>
+    <string name="share_report" translatable="false">Share report</string>
+    <string name="delete_report" translatable="false">Delete report</string>
+    <string name="crash_report_copied" translatable="false">Report copied</string>
+    <string name="crash_report_share_title" translatable="false">Share diagnostic report</string>
+    <string name="crash_report_share_disclosure" translatable="false">This diagnostic report may contain device information, MIDlet metadata, identifiers used only for crash correlation, and a Java stack trace. Review the report before sharing it.</string>
+    <string name="crash_report_delete_title" translatable="false">Delete crash report?</string>
+    <string name="crash_report_delete_message" translatable="false">This permanently removes the selected local diagnostic record from JL-Mod Plus.</string>
+    <string name="crash_report_delete_failed" translatable="false">Could not delete the complete report</string>
+    <string name="crash_report_unavailable" translatable="false">This report is no longer available</string>
+</resources>

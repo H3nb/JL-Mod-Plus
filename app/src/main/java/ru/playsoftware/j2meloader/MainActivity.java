@@ -16,17 +16,23 @@
  * limitations under the License.
  */
 
+// Modified for JL-Mod Plus.
 package ru.playsoftware.j2meloader;
 
 import android.content.Intent;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.MenuProvider;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 
@@ -35,6 +41,7 @@ import java.io.File;
 import ru.playsoftware.j2meloader.applist.AppListModel;
 import ru.playsoftware.j2meloader.applist.AppsListFragment;
 import ru.playsoftware.j2meloader.config.Config;
+import ru.playsoftware.j2meloader.crashes.CrashReportsActivity;
 import ru.playsoftware.j2meloader.crashes.MidletFailureRecovery;
 import ru.playsoftware.j2meloader.util.Constants;
 import ru.playsoftware.j2meloader.util.FileUtils;
@@ -53,12 +60,27 @@ public class MainActivity extends AppCompatActivity {
 
 	private AppListModel appListModel;
 	private AlertDialog midletFailureDialog;
-	private boolean recoveryNoticeShown;
+	private String lastRecoveryNoticeEventId;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		addMenuProvider(new MenuProvider() {
+			@Override
+			public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+				menuInflater.inflate(R.menu.crash_reports_entry, menu);
+			}
+
+			@Override
+			public boolean onMenuItemSelected(@NonNull MenuItem item) {
+				if (item.getItemId() != R.id.action_crash_reports) {
+					return false;
+				}
+				startActivity(new Intent(MainActivity.this, CrashReportsActivity.class));
+				return true;
+			}
+		}, this);
 		storagePermissionHelper.launch(this);
 		appListModel = new ViewModelProvider(this).get(AppListModel.class);
 		if (savedInstanceState == null) {
@@ -83,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void maybeShowMidletFailureRecovery() {
-		if (recoveryNoticeShown || isFinishing() || isDestroyed()) {
+		if (isFinishing() || isDestroyed()) {
 			return;
 		}
 		if (midletFailureDialog != null && midletFailureDialog.isShowing()) {
@@ -94,11 +116,11 @@ public class MainActivity extends AppCompatActivity {
 		}
 
 		MidletFailureRecovery.PendingFailure failure = MidletFailureRecovery.findPendingFailure(this);
-		if (failure == null) {
+		if (failure == null || failure.getEventId().equals(lastRecoveryNoticeEventId)) {
 			return;
 		}
 
-		recoveryNoticeShown = true;
+		lastRecoveryNoticeEventId = failure.getEventId();
 		String midletName = failure.getMidletName();
 		int messageRes = midletName == null || midletName.trim().isEmpty()
 				? R.string.midlet_failure_recovery_message
@@ -111,6 +133,10 @@ public class MainActivity extends AppCompatActivity {
 				.setTitle(R.string.midlet_failure_recovery_title)
 				.setMessage(message)
 				.setCancelable(false)
+				.setNeutralButton(R.string.view_reports, (dialog, which) -> {
+					MidletFailureRecovery.acknowledgePendingFailures(this);
+					startActivity(new Intent(this, CrashReportsActivity.class));
+				})
 				.setPositiveButton(R.string.close, (dialog, which) ->
 						MidletFailureRecovery.acknowledgePendingFailures(this))
 				.create();
