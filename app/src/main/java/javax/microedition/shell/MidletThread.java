@@ -56,6 +56,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private final String mainClass;
 	private final MidletSessionJournal journal;
 	private final AtomicBoolean fatalFailureClaimed = new AtomicBoolean();
+	private final Object terminationLock = new Object();
 	private final UncaughtExceptionHandler sessionUncaughtHandler = this::handleUncaughtSessionFailure;
 	private final LifecycleEventObserver activityLifecycleObserver = this::onActivityStateChanged;
 	private MIDlet midlet;
@@ -65,6 +66,8 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	private volatile String primaryFailureEventId;
 	private volatile MidletSessionJournal.FailureBoundary primaryFailureBoundary;
 	private volatile boolean destroyCallbackInProgress;
+	private MidletSessionJournal.Outcome requestedTerminationOutcome;
+	private boolean intentionalTerminationFinalized;
 	private int state;
 
 	MidletThread(MicroLoader microLoader, String mainClass, MidletSessionJournal journal) {
@@ -82,10 +85,15 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			// process from inside destroyApp() before cleanup/reporting finishes.
 			return;
 		}
-		Thread.setDefaultUncaughtExceptionHandler(POST_DESTROY_UNCAUGHT_HANDLER);
 		if (current != null) {
-			current.completeJournal(MidletSessionJournal.Outcome.MIDLET_REQUEST);
+			if (!current.finalizeIntentionalTermination(MidletSessionJournal.Outcome.MIDLET_REQUEST)) {
+				// A fatal MIDlet failure owns process teardown. Let ACRA persist the report before the
+				// isolated process exits instead of racing it with an intentional kill.
+				return;
+			}
 			current.state = DESTROYED;
+		} else {
+			Thread.setDefaultUncaughtExceptionHandler(POST_DESTROY_UNCAUGHT_HANDLER);
 		}
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity != null) {
@@ -106,26 +114,37 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	}
 
 	static void destroyApp() {
-		Thread.setDefaultUncaughtExceptionHandler(POST_DESTROY_UNCAUGHT_HANDLER);
-		if (instance != null) {
-			instance.markJournalOutcome(MidletSessionJournal.Outcome.USER_STOP);
+		MidletThread current = instance;
+		if (current != null) {
+			// This is only an in-memory intent until destroyApp(true) completes. Persisting USER_STOP
+			// here would hide a real exception thrown by the MIDlet during destruction.
+			current.requestIntentionalTermination(MidletSessionJournal.Outcome.USER_STOP);
 		}
 		new Thread(() -> {
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException ignored) {}
+			MidletThread pending = instance;
+			if (pending != null) {
+				if (!pending.finalizeIntentionalTermination(MidletSessionJournal.Outcome.USER_STOP)) {
+					return;
+				}
+				pending.state = DESTROYED;
+			} else {
+				Thread.setDefaultUncaughtExceptionHandler(POST_DESTROY_UNCAUGHT_HANDLER);
+			}
 			Process.killProcess(Process.myPid());
 		}, "ForceDestroyTimer").start();
 		MicroActivity activity = ContextHolder.getActivity();
 		if (activity != null) {
-			Displayable current = activity.getCurrent();
-			if (current instanceof Canvas canvas) {
+			Displayable displayable = activity.getCurrent();
+			if (displayable instanceof Canvas canvas) {
 				canvas.postKeyPressed(Canvas.KEY_END);
 				canvas.postKeyReleased(Canvas.KEY_END);
 			}
 		}
-		if (instance != null) {
-			instance.handler.obtainMessage(DESTROY).sendToTarget();
+		if (current != null) {
+			current.handler.obtainMessage(DESTROY).sendToTarget();
 		}
 	}
 
@@ -216,9 +235,11 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 				try {
 					invokeDestroyApp();
 				} catch (MIDletStateChangeException e) {
+					// destroyApp(true) is unconditional; MIDP permits the shell to ignore this refusal.
 					Log.w(TAG, "Midlet didn't want to die!", e);
 				} catch (Throwable t) {
-					Log.e(TAG, "Failed destroyApp:", t);
+					claimLifecycleFailure(MidletSessionJournal.FailureBoundary.LIFECYCLE_DESTROY);
+					throw new RuntimeException("Failed destroyApp", t);
 				}
 				notifyDestroyed();
 				break;
@@ -227,19 +248,15 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 	}
 
 	private void claimLifecycleFailure(MidletSessionJournal.FailureBoundary boundary) {
-		if (!fatalFailureClaimed.compareAndSet(false, true)) {
+		if (!beginFatalFailure(Thread.currentThread(), boundary)) {
 			return;
 		}
-		primaryFailureThread = Thread.currentThread();
-		primaryFailureBoundary = boundary;
 		try {
 			primaryFailureEventId = journal.recordUnexpectedFailure(boundary);
 			if (primaryFailureEventId == null) {
-				// An intentional termination outcome already owns this session. Do not convert
+				// A completed intentional termination already owns this session. Do not convert
 				// teardown noise into a fatal diagnostic event.
-				primaryFailureThread = null;
-				primaryFailureBoundary = null;
-				fatalFailureClaimed.set(false);
+				clearPrimaryFailureClaim();
 			}
 		} catch (Throwable journalFailure) {
 			// Preserve the original lifecycle failure even if correlation metadata cannot be written.
@@ -249,11 +266,10 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 
 	private void handleUncaughtSessionFailure(Thread thread, Throwable error) {
 		if (!fatalFailureClaimed.get()) {
-			if (fatalFailureClaimed.compareAndSet(false, true)) {
-				primaryFailureThread = thread;
-				primaryFailureBoundary = classifyFailureBoundary(thread);
+			MidletSessionJournal.FailureBoundary boundary = classifyFailureBoundary(thread);
+			if (beginFatalFailure(thread, boundary)) {
 				try {
-					primaryFailureEventId = journal.recordUnexpectedFailure(primaryFailureBoundary);
+					primaryFailureEventId = journal.recordUnexpectedFailure(boundary);
 					if (primaryFailureEventId == null) {
 						clearPrimaryFailureClaim();
 						Log.w(TAG, "Ignoring uncaught failure after intentional MIDlet termination", error);
@@ -312,11 +328,52 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		};
 	}
 
+	private boolean beginFatalFailure(Thread thread, MidletSessionJournal.FailureBoundary boundary) {
+		synchronized (terminationLock) {
+			if (intentionalTerminationFinalized || fatalFailureClaimed.get()) {
+				return false;
+			}
+			fatalFailureClaimed.set(true);
+			primaryFailureThread = thread;
+			primaryFailureBoundary = boundary;
+			return true;
+		}
+	}
+
 	private void clearPrimaryFailureClaim() {
-		primaryFailureThread = null;
-		primaryFailureEventId = null;
-		primaryFailureBoundary = null;
-		fatalFailureClaimed.set(false);
+		synchronized (terminationLock) {
+			primaryFailureThread = null;
+			primaryFailureEventId = null;
+			primaryFailureBoundary = null;
+			fatalFailureClaimed.set(false);
+		}
+	}
+
+	private void requestIntentionalTermination(MidletSessionJournal.Outcome outcome) {
+		synchronized (terminationLock) {
+			if (fatalFailureClaimed.get() || intentionalTerminationFinalized) {
+				return;
+			}
+			if (requestedTerminationOutcome == null) {
+				requestedTerminationOutcome = outcome;
+			}
+		}
+	}
+
+	private boolean finalizeIntentionalTermination(MidletSessionJournal.Outcome fallbackOutcome) {
+		synchronized (terminationLock) {
+			if (fatalFailureClaimed.get()) {
+				return false;
+			}
+			if (!intentionalTerminationFinalized) {
+				MidletSessionJournal.Outcome outcome = requestedTerminationOutcome == null
+						? fallbackOutcome : requestedTerminationOutcome;
+				completeJournal(outcome);
+				intentionalTerminationFinalized = true;
+			}
+			Thread.setDefaultUncaughtExceptionHandler(POST_DESTROY_UNCAUGHT_HANDLER);
+			return true;
+		}
 	}
 
 	private void invokeDestroyApp() throws MIDletStateChangeException {
@@ -363,8 +420,9 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 					// normal DESTROY path here: it can kill :midlet before ACRA writes the report file.
 					break;
 				}
-				Thread.setDefaultUncaughtExceptionHandler(POST_DESTROY_UNCAUGHT_HANDLER);
-				markJournalOutcome(MidletSessionJournal.Outcome.LIFECYCLE_STOP);
+				// Keep this as an in-memory intent until destroyApp(true) finishes successfully. A real
+				// destruction failure must still win and be reported as LIFECYCLE_DESTROY.
+				requestIntentionalTermination(MidletSessionJournal.Outcome.LIFECYCLE_STOP);
 				handler.obtainMessage(DESTROY).sendToTarget();
 			}
 		}
