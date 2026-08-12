@@ -174,7 +174,9 @@ public class MicroActivity extends AppCompatActivity {
 		getOnBackPressedDispatcher().addCallback(new OnBackPressedCallback(true) {
 			@Override
 			public void handleOnBackPressed() {
-				// Intentionally overridden by empty due to support for back-key remapping.
+				// Android system Back is distinct from physical/remapped key events. Keep the
+				// established short-Back action without synthesizing a KEYCODE_BACK event.
+				openOptionsMenu();
 			}
 		});
 		loadMIDlet();
