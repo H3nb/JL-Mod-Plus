@@ -206,6 +206,7 @@ public class CrashRuntimeIsolationTest {
 			String controlCommand, int mainPid, String mainProcessName, String midletProcessName)
 			throws IOException {
 		Set<String> existingIds = recordIds(LocalDiagnosticRepository.load(context));
+		Set<String> existingSessionIds = journalSessionIds(context);
 		clearMarker(marker);
 		writeLifecycleManifest(appDir, mode, marker);
 		launchLifecycleMidlet(context, appDir);
@@ -213,7 +214,10 @@ public class CrashRuntimeIsolationTest {
 			awaitMarker(marker);
 			launchLifecycleControl(context, controlCommand);
 		}
+		MidletSessionJournal.Snapshot journalFailure = awaitJournalFailure(
+				context, existingSessionIds, expectedBoundary);
 		LocalDiagnosticRepository.Record failure = awaitLifecycleFailure(context, existingIds);
+		assertEquals(journalFailure.sessionId, failure.getSessionId());
 		assertRemoteProcessStops(context, midletProcessName);
 		assertEquals(mainPid, Process.myPid());
 		assertEquals(mainPid, processPid(context, mainProcessName));
@@ -287,6 +291,29 @@ public class CrashRuntimeIsolationTest {
 		return null;
 	}
 
+	private static MidletSessionJournal.Snapshot awaitJournalFailure(Context context,
+			Set<String> existingSessionIds, MidletSessionJournal.FailureBoundary expectedBoundary) {
+		long deadline = SystemClock.uptimeMillis() + REPORT_TIMEOUT_MILLIS;
+		do {
+			for (File journalFile : MidletSessionJournal.journalFiles(context)) {
+				try {
+					MidletSessionJournal.Snapshot snapshot = MidletSessionJournal.read(journalFile);
+					if (!existingSessionIds.contains(snapshot.sessionId)
+							&& snapshot.outcome == MidletSessionJournal.Outcome.UNEXPECTED_FAILURE
+							&& snapshot.failureBoundary == expectedBoundary
+							&& LIFECYCLE_MIDLET_NAME.equals(snapshot.midletName)) {
+						return snapshot;
+					}
+				} catch (IOException ignored) {
+					// AtomicFile may be between snapshots while the child is writing. Retry the read.
+				}
+			}
+			SystemClock.sleep(100L);
+		} while (SystemClock.uptimeMillis() < deadline);
+		fail("Timed out waiting for real MIDlet failure journal at " + expectedBoundary.name());
+		return null;
+	}
+
 	private static LocalDiagnosticRepository.Record awaitLifecycleFailure(
 			Context context, Set<String> existingIds) {
 		long deadline = SystemClock.uptimeMillis() + REPORT_TIMEOUT_MILLIS;
@@ -303,6 +330,18 @@ public class CrashRuntimeIsolationTest {
 		} while (SystemClock.uptimeMillis() < deadline);
 		fail("Timed out waiting for real MIDlet lifecycle crash report");
 		return null;
+	}
+
+	private static Set<String> journalSessionIds(Context context) {
+		Set<String> ids = new HashSet<>();
+		for (File journalFile : MidletSessionJournal.journalFiles(context)) {
+			try {
+				ids.add(MidletSessionJournal.read(journalFile).sessionId);
+			} catch (IOException ignored) {
+				// A transient/incomplete diagnostics file cannot be a stable baseline session.
+			}
+		}
+		return ids;
 	}
 
 	private static void launchLifecycleMidlet(Context context, File appDir) {
