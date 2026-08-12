@@ -1,0 +1,176 @@
+name: M3G Runtime CI
+
+on:
+  pull_request:
+    branches:
+      - alpha
+    paths:
+      - '.github/workflows/m3g-runtime.yml'
+      - 'app/build.gradle.kts'
+      - 'gradle/libs.versions.toml'
+      - 'app/src/androidTest/java/javax/microedition/m3g/**'
+      - 'app/src/main/java/javax/microedition/m3g/**'
+      - 'app/src/main/cpp/Android.mk'
+      - 'app/src/main/cpp/m3g/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: m3g-runtime-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  runtime:
+    name: runtime-api-30-x86_64
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Set up and validate Gradle
+        uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
+
+      - name: Grant execute permission for Gradle wrapper
+        run: chmod +x gradlew
+
+      - name: Expose Android SDK tools
+        shell: bash
+        run: |
+          sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          if [[ ! -d "$sdk_root" ]]; then
+            echo "Android SDK root not found: $sdk_root"
+            exit 1
+          fi
+          echo "ANDROID_HOME=$sdk_root" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk_root" >> "$GITHUB_ENV"
+          echo "$sdk_root/platform-tools" >> "$GITHUB_PATH"
+          echo "$sdk_root/emulator" >> "$GITHUB_PATH"
+          echo "$sdk_root/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          test -x "$sdk_root/cmdline-tools/latest/bin/sdkmanager"
+          test -x "$sdk_root/cmdline-tools/latest/bin/avdmanager"
+
+      - name: Enable KVM access
+        shell: bash
+        run: |
+          if [[ ! -e /dev/kvm ]]; then
+            echo '/dev/kvm is unavailable on this runner.'
+            exit 1
+          fi
+          sudo chmod 666 /dev/kvm
+          ls -l /dev/kvm
+
+      - name: Install Android Emulator image
+        shell: bash
+        run: |
+          export ANDROID_USER_HOME="$RUNNER_TEMP/android-user"
+          export ANDROID_AVD_HOME="$RUNNER_TEMP/android-avd"
+          mkdir -p "$ANDROID_USER_HOME" "$ANDROID_AVD_HOME"
+          echo "ANDROID_USER_HOME=$ANDROID_USER_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
+
+          image='system-images;android-30;google_apis;x86_64'
+          avd='jlmod-m3g-runtime-30'
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager 'platform-tools' 'emulator' "$image"
+          echo 'no' | avdmanager create avd \
+            --force \
+            --name "$avd" \
+            --package "$image" \
+            -p "$ANDROID_AVD_HOME/$avd.avd"
+          avdmanager list avd
+          test -f "$ANDROID_AVD_HOME/$avd.ini"
+
+      - name: Start Android Emulator
+        shell: bash
+        run: |
+          mkdir -p build/ci-logs
+          avd='jlmod-m3g-runtime-30'
+          nohup "$ANDROID_HOME/emulator/emulator" \
+            -avd "$avd" \
+            -no-window \
+            -no-audio \
+            -no-boot-anim \
+            -no-snapshot \
+            -gpu swiftshader_indirect \
+            > build/ci-logs/m3g-runtime-emulator.log 2>&1 &
+          echo $! > build/ci-logs/m3g-runtime-emulator.pid
+
+          timeout 120 adb wait-for-device
+          timeout 240 bash -c '
+            until [[ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")" == "1" ]]; do
+              sleep 2
+            done
+          '
+          adb shell input keyevent 82 || true
+          adb shell settings put global window_animation_scale 0
+          adb shell settings put global transition_animation_scale 0
+          adb shell settings put global animator_duration_scale 0
+          adb shell getprop ro.build.version.release
+          adb shell getprop ro.build.version.sdk
+          adb shell getprop ro.product.cpu.abi
+
+      - name: Run focused M3G runtime instrumentation
+        id: runtime_test
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon --stacktrace \
+            -PjlmodRuntimeTestAbi=x86_64 \
+            -Pandroid.testInstrumentationRunnerArguments.class=javax.microedition.m3g.M3GRuntimeTest \
+            :app:connectedEmulatorDebugAndroidTest \
+            2>&1 | tee build/ci-logs/m3g-runtime-gradle.log
+
+      - name: Capture M3G runtime evidence
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p build/ci-reports
+          adb logcat -d -v threadtime > build/ci-logs/m3g-runtime-logcat.txt || true
+          {
+            echo '## M3G runtime validation'
+            echo
+            echo '- Android API: 30'
+            echo '- Runtime ABI: x86_64 (64-bit)'
+            echo '- Supported production ABI remains arm64-v8a and is compiled by Android CI.'
+            echo "- Instrumentation outcome: ${{ steps.runtime_test.outcome }}"
+            echo
+            echo '### Runtime process snapshot'
+            echo
+            echo '```text'
+            adb shell ps | grep 'io.github.h3nb.jlmodplus.debug' || true
+            echo '```'
+          } > build/ci-reports/m3g-runtime-summary.md
+          cat build/ci-reports/m3g-runtime-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload M3G runtime evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: JL-Mod-Plus-m3g-runtime-${{ github.run_number }}
+          path: |
+            build/ci-logs/m3g-runtime-emulator.log
+            build/ci-logs/m3g-runtime-gradle.log
+            build/ci-logs/m3g-runtime-logcat.txt
+            build/ci-reports/m3g-runtime-summary.md
+            app/build/outputs/androidTest-results/connected/
+            app/build/reports/androidTests/connected/
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Stop Android Emulator
+        if: always()
+        shell: bash
+        run: adb emu kill || true
