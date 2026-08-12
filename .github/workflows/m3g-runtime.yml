@@ -83,7 +83,7 @@ jobs:
           echo "ANDROID_USER_HOME=$ANDROID_USER_HOME" >> "$GITHUB_ENV"
           echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
 
-          image='system-images;android-30;google_apis;x86_64'
+          image='system-images;android-30;default;x86_64'
           avd='jlmod-m3g-runtime-30'
           yes | sdkmanager --licenses >/dev/null || true
           sdkmanager 'platform-tools' 'emulator' "$image"
@@ -121,6 +121,7 @@ jobs:
             -no-audio \
             -no-boot-anim \
             -no-snapshot \
+            -memory 1024 \
             -gpu swiftshader_indirect \
             > build/ci-logs/m3g-runtime-emulator.log 2>&1 &
           echo $! > build/ci-logs/m3g-runtime-emulator.pid
