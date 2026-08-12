@@ -17,10 +17,10 @@ jobs:
         with:
           ref: agent/m3g-arm64-warning-zero-v2
           fetch-depth: 0
-      - name: Apply patch
+      - name: Apply deterministic source edits
         run: |
-          git apply --check .github/m3g-warning-zero.patch
-          git apply .github/m3g-warning-zero.patch
+          python3 .github/apply_m3g_warning_zero.py
+          git diff --check
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add app/src/main/cpp/m3g
