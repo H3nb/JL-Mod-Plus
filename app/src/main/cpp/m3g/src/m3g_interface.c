@@ -1,6 +1,4 @@
 /*
-* Copyright 2026 H3NB
-*
 * Copyright (c) 2003 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
@@ -839,7 +837,7 @@ AllocFailed:
 
 /*!
  * \internal
- * \brief Frees a memory object allocated with m3gAllocObject
+ * \brief Frees a memory object allocated using m3gAllocObject
  */
 /*@access M3GMemObject@*/
 #if defined(M3G_DEBUG)
@@ -861,8 +859,7 @@ static void m3gFreeObject(Interface *m3g, M3GMemObject handle)
         
         if (ptr != NULL) {
 #           if defined(M3G_ENABLE_PROFILING) || defined(M3G_DEBUG_OUT_OF_MEMORY)
-            M3Gint size = PAYLOAD_SIZE(ptr);
-#           endif
+            M3Gint size = PAYLOAD_SIZE(ptr);        
 #           if defined(M3G_ENABLE_PROFILING)
             m3gIncStat(m3g, M3G_STAT_MEMORY_ALLOCATED, -size);
             m3gIncStat(m3g, M3G_STAT_MEMORY_OBJECT_BYTES, -size);
