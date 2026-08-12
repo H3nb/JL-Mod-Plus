@@ -139,7 +139,10 @@
         <activity android:name=".config.ProfilesActivity" android:exported="false" />
         <activity android:name=".crashes.CrashReportsActivity" android:exported="false" />
         <activity android:name=".crashes.CrashReportDetailsActivity" android:exported="false" />
-        <activity android:name="com.nokia.mid.ui.NotificationActivity" />
+        <activity
+            android:name="com.nokia.mid.ui.NotificationActivity"
+            android:exported="false"
+            android:process=":midlet" />
 
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"

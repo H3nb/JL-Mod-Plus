@@ -42,13 +42,15 @@ public class SoftNotificationImpl extends SoftNotification {
 	private static NotificationManagerCompat notificationmgr;
 	@SuppressLint("StaticFieldLeak")
 	private static MicroActivity activity;
+	static final Hashtable<Integer, SoftNotificationImpl> instanceMap = new Hashtable<>();
 
 	static {
 		try {
 			activity = ContextHolder.getActivity();
 			notificationmgr = NotificationManagerCompat.from(activity);
-			instanceMap = new Hashtable<>();
 		} catch (Exception ignored) {
+			// A stale notification can relaunch the isolated :midlet process without MicroActivity.
+			// Keep the callback registry valid so NotificationActivity can safely no-op in that case.
 		}
 	}
 
@@ -62,7 +64,6 @@ public class SoftNotificationImpl extends SoftNotification {
 	private String softAction2;
 	private int id;
 	private static int ids = 1;
-	static Hashtable<Integer, SoftNotificationImpl> instanceMap;
 	private SoftNotificationImpl old;
 	private Bitmap bitmap;
 
@@ -80,7 +81,9 @@ public class SoftNotificationImpl extends SoftNotification {
 		listeners = new SoftNotificationListener[1];
 		if (id != -1) {
 			old = instanceMap.get(id);
-			notification = old.notification;
+			if (old != null) {
+				notification = old.notification;
+			}
 		}
 	}
 
