@@ -406,6 +406,23 @@ static void m3gNormalizeWeights(SkinnedMesh *mesh)
 
 /*!
  * \internal
+ * \brief Scales a signed integer by a power of two without left-shifting
+ * a potentially negative value.
+ */
+static M3G_INLINE M3Gint m3gScaleSignedPowerOfTwo(M3Gint value, M3Gint shift)
+{
+    int64_t scaled;
+    M3G_ASSERT(shift >= 0 && shift < 31);
+
+    scaled = (int64_t)value * ((int64_t)1 << shift);
+    M3G_ASSERT(scaled >= (-2147483647LL - 1) && scaled <= 2147483647LL);
+    return (M3Gint)scaled;
+}
+
+M3G_CT_ASSERT(sizeof(M3Gfloat) == sizeof(M3Guint));
+
+/*!
+ * \internal
  * \brief Computes an optimal exponent value for a fixed point
  * transformation
  *
@@ -472,9 +489,9 @@ static M3Gint m3gFixedPointTransform(const M3Gshort *mtx, M3Gint mtxExp,
         shift = maxExp - (transExp - 16);
         M3G_ASSERT(shift >= 0);
         if (shift < 32) {
-            ox += ((M3Gint) trans[0] << 16) >> shift;
-            oy += ((M3Gint) trans[1] << 16) >> shift;
-            oz += ((M3Gint) trans[2] << 16) >> shift;
+            ox += m3gScaleSignedPowerOfTwo((M3Gint)trans[0], 16) >> shift;
+            oy += m3gScaleSignedPowerOfTwo((M3Gint)trans[1], 16) >> shift;
+            oz += m3gScaleSignedPowerOfTwo((M3Gint)trans[2], 16) >> shift;
         }
     }
         
@@ -487,7 +504,7 @@ static M3Gint m3gFixedPointTransform(const M3Gshort *mtx, M3Gint mtxExp,
     if (shift < 32) {
         
 #       if defined(M3G_DEBUG)
-        M3Gint iMin = (-1 << 31) + (65535 * 32768 >> shift);
+        M3Gint iMin = (-2147483647 - 1) + (65535 * 32768 >> shift);
         M3Gint iMax = (M3Gint)((1u << 31)-1) - (65535 * 32768 >> shift);
         M3G_ASSERT(m3gInRange(ox, iMin, iMax));
         M3G_ASSERT(m3gInRange(oy, iMin, iMax));
@@ -531,14 +548,16 @@ static M3Gint m3gScaleAndBiasVertex(const SkinnedMesh *mesh,
     M3Gint temp[3];
     M3Gint expo;
 
-    M3G_ASSERT(m3gInRange(vx, -1 << 15, (1 << 15) - 1));
-    M3G_ASSERT(m3gInRange(vy, -1 << 15, (1 << 15) - 1));
-    M3G_ASSERT(m3gInRange(vz, -1 << 15, (1 << 15) - 1));
+    M3G_ASSERT(m3gInRange(vx, -(1 << 15), (1 << 15) - 1));
+    M3G_ASSERT(m3gInRange(vy, -(1 << 15), (1 << 15) - 1));
+    M3G_ASSERT(m3gInRange(vz, -(1 << 15), (1 << 15) - 1));
     
     expo = m3gFixedPointTransform(mesh->scaleMatrix, mesh->scaleExp,
                                   mesh->biasVector, mesh->biasExp + upshift,
                                   mesh->scaleBiasExp,
-                                  vx << upshift, vy << upshift, vz << upshift,
+                                  m3gScaleSignedPowerOfTwo(vx, upshift),
+                                  m3gScaleSignedPowerOfTwo(vy, upshift),
+                                  m3gScaleSignedPowerOfTwo(vz, upshift),
                                   temp) - upshift;
 
     /* Scale down from 25 to 16 bits, adjusting the exponent
@@ -582,13 +601,13 @@ static M3Gint m3gBlendVertex(const SkinnedMesh *mesh,
     
     M3Gint ox = 0, oy = 0, oz = 0;
     
-    vx <<= upshift;
-    vy <<= upshift;
-    vz <<= upshift;
+    vx = m3gScaleSignedPowerOfTwo(vx, upshift);
+    vy = m3gScaleSignedPowerOfTwo(vy, upshift);
+    vz = m3gScaleSignedPowerOfTwo(vz, upshift);
 
-    M3G_ASSERT(m3gInRange(vx, -1 << 15, (1 << 15) - 1));
-    M3G_ASSERT(m3gInRange(vy, -1 << 15, (1 << 15) - 1));
-    M3G_ASSERT(m3gInRange(vz, -1 << 15, (1 << 15) - 1));
+    M3G_ASSERT(m3gInRange(vx, -(1 << 15), (1 << 15) - 1));
+    M3G_ASSERT(m3gInRange(vy, -(1 << 15), (1 << 15) - 1));
+    M3G_ASSERT(m3gInRange(vz, -(1 << 15), (1 << 15) - 1));
 
     /* Loop over the bones and sum the contribution from each */
     
@@ -633,9 +652,9 @@ static M3Gint m3gBlendVertex(const SkinnedMesh *mesh,
             
             if (shift < 31) {
                 
-                M3G_ASSERT(m3gInRange(temp[0], -1 << 24, (1 << 24) - 1));
-                M3G_ASSERT(m3gInRange(temp[1], -1 << 24, (1 << 24) - 1));
-                M3G_ASSERT(m3gInRange(temp[2], -1 << 24, (1 << 24) - 1));
+                M3G_ASSERT(m3gInRange(temp[0], -(1 << 24), (1 << 24) - 1));
+                M3G_ASSERT(m3gInRange(temp[1], -(1 << 24), (1 << 24) - 1));
+                M3G_ASSERT(m3gInRange(temp[2], -(1 << 24), (1 << 24) - 1));
                 
                 ox += (weight * temp[0]) >> shift;
                 oy += (weight * temp[1]) >> shift;
@@ -695,13 +714,13 @@ static void m3gBlendNormal(const SkinnedMesh *mesh,
     
     M3Gint ox = 0, oy = 0, oz = 0;
 
-    nx <<= upshift;
-    ny <<= upshift;
-    nz <<= upshift;
+    nx = m3gScaleSignedPowerOfTwo(nx, upshift);
+    ny = m3gScaleSignedPowerOfTwo(ny, upshift);
+    nz = m3gScaleSignedPowerOfTwo(nz, upshift);
     
-    M3G_ASSERT(m3gInRange(nx, -1 << 15, (1 << 15) - 1));
-    M3G_ASSERT(m3gInRange(ny, -1 << 15, (1 << 15) - 1));
-    M3G_ASSERT(m3gInRange(nz, -1 << 15, (1 << 15) - 1));
+    M3G_ASSERT(m3gInRange(nx, -(1 << 15), (1 << 15) - 1));
+    M3G_ASSERT(m3gInRange(ny, -(1 << 15), (1 << 15) - 1));
+    M3G_ASSERT(m3gInRange(nz, -(1 << 15), (1 << 15) - 1));
 
     /* Loop over the bones and sum the contribution from each */
     
@@ -746,9 +765,9 @@ static void m3gBlendNormal(const SkinnedMesh *mesh,
             
             if (shift < 31) {
                 
-                M3G_ASSERT(m3gInRange(temp[0], -1 << 24, (1 << 24) - 1));
-                M3G_ASSERT(m3gInRange(temp[1], -1 << 24, (1 << 24) - 1));
-                M3G_ASSERT(m3gInRange(temp[2], -1 << 24, (1 << 24) - 1));
+                M3G_ASSERT(m3gInRange(temp[0], -(1 << 24), (1 << 24) - 1));
+                M3G_ASSERT(m3gInRange(temp[1], -(1 << 24), (1 << 24) - 1));
+                M3G_ASSERT(m3gInRange(temp[2], -(1 << 24), (1 << 24) - 1));
                 
                 ox += (weight * temp[0]) >> shift;
                 oy += (weight * temp[1]) >> shift;
@@ -1007,7 +1026,10 @@ static M3Gbool m3gPreComputeTransformations(SkinnedMesh *mesh,
 
         maxExp = maxExp + 16 - posShift;
         M3G_ASSERT(m3gInRange(maxExp, -127, 127));
-        *(M3Gint*)&mesh->morphedVB->vertexScale = (maxExp + 127) << 23;
+        {
+            M3Guint scaleBits = (M3Guint)(maxExp + 127) << 23;
+            m3gCopy(&mesh->morphedVB->vertexScale, &scaleBits, sizeof(scaleBits));
+        }
         mesh->maxExp = (M3Gshort) maxExp;
     }
     
@@ -1248,9 +1270,9 @@ static void m3gSkinnedMeshMorph(SkinnedMesh *mesh)
                 const M3Gshort *src =
                     ((const M3Gshort*) srcNormals) + startIndex * 3;
                 for (i = startIndex ; i < vertexCount; ++i) {
-                    *dstNorm++ = (M3Gbyte)((*src++ << normShift) >> 8);
-                    *dstNorm++ = (M3Gbyte)((*src++ << normShift) >> 8);
-                    *dstNorm++ = (M3Gbyte)((*src++ << normShift) >> 8);
+                    *dstNorm++ = (M3Gbyte)(m3gScaleSignedPowerOfTwo(*src++, normShift) >> 8);
+                    *dstNorm++ = (M3Gbyte)(m3gScaleSignedPowerOfTwo(*src++, normShift) >> 8);
+                    *dstNorm++ = (M3Gbyte)(m3gScaleSignedPowerOfTwo(*src++, normShift) >> 8);
                     ++dstNorm; /* again, padding for byte values */
                 }
             }
@@ -1302,7 +1324,7 @@ static M3Gbool m3gSkinnedMeshSetupRender(Node *self,
     }
 
     /* Handle self and the skeleton if enabled */
-
+    
     if (enabled) {
         
         /* Traverse into the skeleton unless coming from there */
@@ -1622,7 +1644,7 @@ static M3Gint m3gSkinnedMeshGetBBox(Node *self, AABB *bbox)
             int i;
             
             for (i = 0; i < 3; ++i) {
-                mesh->bbox.min[i] = m3gMadd(scale, -1 << 15, bias[i]);
+                mesh->bbox.min[i] = m3gMadd(scale, -(1 << 15), bias[i]);
                 mesh->bbox.max[i] = m3gMadd(scale, (1 << 15) - 1, bias[i]);
             }
         }
@@ -2071,4 +2093,3 @@ M3G_API M3Gint m3gGetBoneVertices(M3GSkinnedMesh handle,
     }
     return count;
 }
-
