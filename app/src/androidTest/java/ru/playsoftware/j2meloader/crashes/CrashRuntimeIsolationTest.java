@@ -22,8 +22,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.ActivityManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.os.Process;
 import android.os.SystemClock;
 
@@ -53,6 +56,7 @@ public class CrashRuntimeIsolationTest {
 		try {
 			assertEquals(mainProcessName, ru.playsoftware.j2meloader.EmulatorApplication.getProcessName());
 			assertEquals(mainPid, processPid(context, mainProcessName));
+			assertMicroActivityUsesMidletProcess(context, midletProcessName);
 
 			LocalDiagnosticRepository.Record first = launchProbeAndAwaitCorrelatedRecord(
 					context, baselineIds);
@@ -72,6 +76,16 @@ public class CrashRuntimeIsolationTest {
 			assertNotEquals(first.getSessionId(), second.getSessionId());
 		} finally {
 			cleanupProbeDiagnostics(context, baselineIds);
+		}
+	}
+
+	private static void assertMicroActivityUsesMidletProcess(Context context, String midletProcessName) {
+		try {
+			ActivityInfo info = context.getPackageManager().getActivityInfo(
+					new ComponentName(context, javax.microedition.shell.MicroActivity.class), 0);
+			assertEquals(midletProcessName, info.processName);
+		} catch (PackageManager.NameNotFoundException e) {
+			throw new AssertionError("MicroActivity is missing from the merged debug manifest", e);
 		}
 	}
 
