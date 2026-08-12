@@ -25,15 +25,12 @@ import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -55,6 +52,7 @@ public final class ProcessExitStore {
 	private static final int DISPLAY_TRACE_HEAD_BYTES = 96 * 1024;
 	private static final int MAX_DESCRIPTION_LENGTH = 1024;
 	private static final int MAX_PROCESS_NAME_LENGTH = 256;
+	private static final int MAX_DEVICE_VALUE_LENGTH = 128;
 	private static final int MAX_STATE_SUMMARY_BYTES = 128;
 	private static final int MAX_HISTORY_RESULTS = 64;
 
@@ -85,6 +83,8 @@ public final class ProcessExitStore {
 	private static final String KEY_STATE_VERSION_CODE = "stateVersionCode";
 	private static final String KEY_STATE_SDK = "stateSdk";
 	private static final String KEY_SESSION_ID = "sessionId";
+	private static final String KEY_DEVICE_BRAND = "deviceBrand";
+	private static final String KEY_DEVICE_MODEL = "deviceModel";
 	private static final String KEY_PRIMARY_ABI = "primaryAbi";
 	private static final String KEY_TRACE_KIND = "traceKind";
 	private static final String KEY_TRACE_BYTES = "traceBytes";
@@ -147,7 +147,15 @@ public final class ProcessExitStore {
 		ArrayList<Snapshot> records = new ArrayList<>(files.size());
 		for (File file : files) {
 			try {
-				records.add(read(file));
+				Snapshot snapshot = read(file);
+				// A normal MIDlet shutdown intentionally ends the isolated :midlet process. Never let
+				// that expected SIGKILL become crash-report noise, even if it was stored before the
+				// journal's final state became visible.
+				if (isIntentionalSessionExit(context, snapshot.sessionId)) {
+					delete(context, snapshot);
+					continue;
+				}
+				records.add(snapshot);
 			} catch (IOException | RuntimeException e) {
 				Log.w(TAG, "Ignoring unreadable process-exit record: " + file.getName());
 			}
@@ -209,19 +217,19 @@ public final class ProcessExitStore {
 		}
 	}
 
+	/** Deletes trace evidence first, then metadata, then the notice marker. */
 	static boolean delete(Context context, Snapshot snapshot) {
 		if (snapshot == null) {
 			return false;
 		}
-		boolean success = deleteAtomic(snapshot.recordFile);
-		if (snapshot.traceFile != null) {
-			success &= deleteAtomic(snapshot.traceFile);
+		if (snapshot.traceFile != null && !deleteAtomic(snapshot.traceFile)) {
+			return false;
+		}
+		if (!deleteAtomic(snapshot.recordFile)) {
+			return false;
 		}
 		File marker = new File(acknowledgmentDirectory(context), snapshot.key + ACK_SUFFIX);
-		if (marker.exists() && (!marker.isFile() || !marker.delete())) {
-			success = false;
-		}
-		return success;
+		return !marker.exists() || (marker.isFile() && marker.delete());
 	}
 
 	static String reasonLabel(int reason) {
@@ -271,6 +279,7 @@ public final class ProcessExitStore {
 		};
 	}
 
+	/** Returns a bounded head+tail ANR trace for human inspection/copy/share. */
 	static String readDisplayTrace(Snapshot snapshot) {
 		if (snapshot == null || snapshot.traceFile == null || !"anr-text".equals(snapshot.traceKind)) {
 			return null;
@@ -289,6 +298,7 @@ public final class ProcessExitStore {
 		}
 	}
 
+	/** Pure signal-quality policy, unit-testable without an Android process-history provider. */
 	static boolean shouldRetain(int reason, int status, int importance, boolean midletProcess) {
 		boolean foregroundish = importance <= ActivityManager.RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE;
 		return switch (reason) {
@@ -400,6 +410,8 @@ public final class ProcessExitStore {
 				parseLongDefault(properties, KEY_STATE_VERSION_CODE, -1),
 				parseIntDefault(properties, KEY_STATE_SDK, -1),
 				optional(properties, KEY_SESSION_ID),
+				optional(properties, KEY_DEVICE_BRAND),
+				optional(properties, KEY_DEVICE_MODEL),
 				optional(properties, KEY_PRIMARY_ABI),
 				traceKind,
 				traceBytes,
@@ -430,6 +442,8 @@ public final class ProcessExitStore {
 			properties.setProperty(KEY_STATE_SDK, Integer.toString(snapshot.stateSdk));
 		}
 		put(properties, KEY_SESSION_ID, snapshot.sessionId);
+		put(properties, KEY_DEVICE_BRAND, snapshot.deviceBrand);
+		put(properties, KEY_DEVICE_MODEL, snapshot.deviceModel);
 		put(properties, KEY_PRIMARY_ABI, snapshot.primaryAbi);
 		put(properties, KEY_TRACE_KIND, snapshot.traceKind);
 		properties.setProperty(KEY_TRACE_BYTES, Long.toString(snapshot.traceBytes));
@@ -442,11 +456,7 @@ public final class ProcessExitStore {
 			properties.store(output, null);
 			atomicFile.finishWrite(output);
 		} catch (IOException | RuntimeException e) {
-			if (output != null) {
-				try {
-					atomicFile.failWrite(output);
-				} catch (Throwable ignored) {}
-			}
+			rollback(atomicFile, output);
 			if (e instanceof IOException) {
 				throw (IOException) e;
 			}
@@ -462,16 +472,21 @@ public final class ProcessExitStore {
 			output.write(data);
 			atomicFile.finishWrite(output);
 		} catch (IOException | RuntimeException e) {
-			if (output != null) {
-				try {
-					atomicFile.failWrite(output);
-				} catch (Throwable ignored) {}
-			}
+			rollback(atomicFile, output);
 			if (e instanceof IOException) {
 				throw (IOException) e;
 			}
 			throw new IOException("Unable to persist process-exit trace", e);
 		}
+	}
+
+	private static void rollback(AtomicFile atomicFile, FileOutputStream output) {
+		if (output == null) {
+			return;
+		}
+		try {
+			atomicFile.failWrite(output);
+		} catch (Throwable ignored) {}
 	}
 
 	private static byte[] readBoundedAtomic(File file, int maxBytes) throws IOException {
@@ -584,7 +599,17 @@ public final class ProcessExitStore {
 				&& MidletFailureRecovery.isSafeEventId(session.failureEventId);
 	}
 
-	private static MidletSessionJournal.Snapshot findSession(Context context, String sessionId) {
+	private static boolean isIntentionalSessionExit(Context context, String sessionId) {
+		MidletSessionJournal.Snapshot session = findSession(context, sessionId);
+		if (session == null) {
+			return false;
+		}
+		return session.outcome == MidletSessionJournal.Outcome.MIDLET_REQUEST
+				|| session.outcome == MidletSessionJournal.Outcome.USER_STOP
+				|| session.outcome == MidletSessionJournal.Outcome.LIFECYCLE_STOP;
+	}
+
+	static MidletSessionJournal.Snapshot findSession(Context context, String sessionId) {
 		if (!MidletFailureRecovery.isSafeEventId(sessionId)) {
 			return null;
 		}
@@ -707,6 +732,8 @@ public final class ProcessExitStore {
 		final long stateVersionCode;
 		final int stateSdk;
 		final String sessionId;
+		final String deviceBrand;
+		final String deviceModel;
 		final String primaryAbi;
 		final String traceKind;
 		final long traceBytes;
@@ -716,8 +743,8 @@ public final class ProcessExitStore {
 				 String processName, String processRole, int pid, int reason, int status,
 				 int importance, long pssKb, long rssKb, String description,
 				 boolean lowMemoryKillReportSupported, String stateRole, long stateVersionCode,
-				 int stateSdk, String sessionId, String primaryAbi, String traceKind,
-				 long traceBytes, boolean traceTruncated) {
+				 int stateSdk, String sessionId, String deviceBrand, String deviceModel,
+				 String primaryAbi, String traceKind, long traceBytes, boolean traceTruncated) {
 			this.recordFile = recordFile;
 			this.traceFile = traceFile;
 			this.key = key;
@@ -737,6 +764,8 @@ public final class ProcessExitStore {
 			this.stateVersionCode = stateVersionCode;
 			this.stateSdk = stateSdk;
 			this.sessionId = sessionId;
+			this.deviceBrand = deviceBrand;
+			this.deviceModel = deviceModel;
 			this.primaryAbi = primaryAbi;
 			this.traceKind = traceKind;
 			this.traceBytes = traceBytes;
@@ -819,9 +848,13 @@ public final class ProcessExitStore {
 				PackageInfo info = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
 				versionCode = info.getLongVersionCode();
 			} catch (Exception ignored) {}
+			String role = bound(processRole, 16);
+			if (role == null) {
+				role = "other";
+			}
 			StringBuilder state = new StringBuilder(96);
 			state.append(STATE_PREFIX)
-					.append("|r=").append(bound(processRole, 16))
+					.append("|r=").append(role)
 					.append("|vc=").append(versionCode)
 					.append("|sdk=").append(Build.VERSION.SDK_INT);
 			if (MidletFailureRecovery.isSafeEventId(sessionId)) {
@@ -852,6 +885,10 @@ public final class ProcessExitStore {
 					continue;
 				}
 				String processRole = CrashReporter.classifyProcess(context.getPackageName(), processName);
+				StateSummary state = parseState(info.getProcessStateSummary());
+				if (isIntentionalSessionExit(context, state.sessionId)) {
+					continue;
+				}
 				boolean midlet = "midlet".equals(processRole);
 				if (!shouldRetain(info.getReason(), info.getStatus(), info.getImportance(), midlet)) {
 					continue;
@@ -861,7 +898,6 @@ public final class ProcessExitStore {
 				if (atomicExists(recordFile)) {
 					continue;
 				}
-				StateSummary state = parseState(info.getProcessStateSummary());
 				TraceCapture trace = captureTrace(info);
 				File traceFile = null;
 				long traceBytes = 0;
@@ -895,6 +931,8 @@ public final class ProcessExitStore {
 						state.versionCode,
 						state.sdk,
 						state.sessionId,
+						bound(Build.BRAND, MAX_DEVICE_VALUE_LENGTH),
+						bound(Build.MODEL, MAX_DEVICE_VALUE_LENGTH),
 						primaryAbi,
 						trace == null ? null : trace.kind,
 						traceBytes,
@@ -984,9 +1022,7 @@ public final class ProcessExitStore {
 					kind = "system-trace";
 				}
 				return new TraceCapture(output.toByteArray(), truncated, kind);
-			} catch (IOException | RuntimeException e) {
-				return null;
-			} catch (OutOfMemoryError e) {
+			} catch (IOException | RuntimeException | OutOfMemoryError e) {
 				return null;
 			}
 		}
