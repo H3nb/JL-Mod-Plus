@@ -30,10 +30,12 @@ import javax.microedition.lcdui.Image;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Runtime characterization for the public JSR-184 surface that crosses the
@@ -106,38 +108,67 @@ public class M3GRuntimeTest {
 		Image translatedImage = Image.createImage(SIZE, SIZE);
 		Graphics translatedGraphics = translatedImage.getGraphics();
 		translatedGraphics.translate(5, 7);
+		int bindOffsetX = translatedGraphics.getTranslateX();
+		int bindOffsetY = translatedGraphics.getTranslateY();
+		int initialClipX = translatedGraphics.getClipX();
+		int initialClipY = translatedGraphics.getClipY();
+		int initialClipWidth = translatedGraphics.getClipWidth();
+		int initialClipHeight = translatedGraphics.getClipHeight();
+		Background background = createBackground(BACKGROUND_ARGB);
 
 		runtimeStep("graphics target: bind translated target");
 		g3d.bindTarget(translatedGraphics, true,
 				Graphics3D.TRUE_COLOR | Graphics3D.OVERWRITE);
 		try {
-			g3d.setViewport(2, 3, 31, 29);
 			assertSame(translatedGraphics, g3d.getTarget());
+			assertEquals(initialClipX, g3d.getViewportX());
+			assertEquals(initialClipY, g3d.getViewportY());
+			assertEquals(initialClipWidth, g3d.getViewportWidth());
+			assertEquals(initialClipHeight, g3d.getViewportHeight());
+
+			g3d.setViewport(2, 3, 10, 10);
 			assertEquals(2, g3d.getViewportX());
 			assertEquals(3, g3d.getViewportY());
-			assertEquals(31, g3d.getViewportWidth());
-			assertEquals(29, g3d.getViewportHeight());
+			assertEquals(10, g3d.getViewportWidth());
+			assertEquals(10, g3d.getViewportHeight());
+
+			// The Graphics origin is captured by bindTarget. Later translation
+			// must not move the M3G viewport or its physical bitmap position.
+			translatedGraphics.translate(100, 100);
+			assertEquals(2, g3d.getViewportX());
+			assertEquals(3, g3d.getViewportY());
+			runtimeStep("graphics target: clear translated viewport");
+			g3d.clear(background);
 		} finally {
 			runtimeStep("graphics target: release translated target");
 			g3d.releaseTarget();
 		}
 
-		Image clearImage = Image.createImage(SIZE, SIZE);
-		Graphics clearGraphics = clearImage.getGraphics();
-		Background background = createBackground(BACKGROUND_ARGB);
+		int translatedCenterX = bindOffsetX + 2 + 5;
+		int translatedCenterY = bindOffsetY + 3 + 5;
+		assertEquals(BACKGROUND_ARGB & RGB_MASK,
+				readPixel(translatedImage, translatedCenterX, translatedCenterY) & RGB_MASK);
+		assertEquals(0x00FFFFFF, readPixel(translatedImage, 0, 0) & RGB_MASK);
 
-		runtimeStep("graphics target: bind/clear target");
-		g3d.bindTarget(clearGraphics, true,
+		Image clippedImage = Image.createImage(SIZE, SIZE);
+		Graphics clippedGraphics = clippedImage.getGraphics();
+		clippedGraphics.setClip(8, 8, 12, 12);
+
+		runtimeStep("graphics target: bind clipped target");
+		g3d.bindTarget(clippedGraphics, true,
 				Graphics3D.TRUE_COLOR | Graphics3D.OVERWRITE);
 		try {
+			g3d.setViewport(0, 0, 20, 20);
+			runtimeStep("graphics target: clear clipped viewport");
 			g3d.clear(background);
 		} finally {
-			runtimeStep("graphics target: release cleared target");
+			runtimeStep("graphics target: release clipped target");
 			g3d.releaseTarget();
 		}
 
 		assertEquals(BACKGROUND_ARGB & RGB_MASK,
-				readPixel(clearImage, SIZE / 2, SIZE / 2) & RGB_MASK);
+				readPixel(clippedImage, 9, 9) & RGB_MASK);
+		assertEquals(0x00FFFFFF, readPixel(clippedImage, 4, 4) & RGB_MASK);
 	}
 
 	@Test
@@ -252,24 +283,48 @@ public class M3GRuntimeTest {
 
 	@Test
 	public void mutableImage2DTargetBindsClearsAndReleases() {
-		Image2D target = new Image2D(Image2D.RGBA, 32, 32);
-		assertTrue(target.isMutable());
 		Background background = createBackground(0xFF224466);
 
-		runtimeStep("image2d: bind target");
-		g3d.bindTarget(target, true, Graphics3D.TRUE_COLOR);
-		try {
-			assertSame(target, g3d.getTarget());
-			g3d.setViewport(1, 2, 24, 23);
-			assertEquals(1, g3d.getViewportX());
-			assertEquals(2, g3d.getViewportY());
-			runtimeStep("image2d: clear");
-			g3d.clear(background);
-		} finally {
-			runtimeStep("image2d: release target");
-			g3d.releaseTarget();
+		for (int format : new int[]{Image2D.RGB, Image2D.RGBA}) {
+			Image2D target = new Image2D(format, 32, 32);
+			assertTrue(target.isMutable());
+			assertEquals(format, target.getFormat());
+
+			runtimeStep("image2d: bind " + format + " target");
+			g3d.bindTarget(target, true, Graphics3D.TRUE_COLOR);
+			try {
+				assertSame(target, g3d.getTarget());
+				g3d.setViewport(1, 2, 24, 23);
+				assertEquals(1, g3d.getViewportX());
+				assertEquals(2, g3d.getViewportY());
+				runtimeStep("image2d: clear " + format + " target");
+				g3d.clear(background);
+			} finally {
+				runtimeStep("image2d: release " + format + " target");
+				g3d.releaseTarget();
+			}
+			assertEquals(null, g3d.getTarget());
 		}
-		assertEquals(null, g3d.getTarget());
+	}
+
+	@Test
+	public void rejectsImmutableAndUnsupportedImage2DTargets() {
+		Image2D immutable = new Image2D(Image2D.RGB, 1, 1, new byte[]{0, 0, 0});
+		assertFalse(immutable.isMutable());
+		assertIllegalImage2DTarget(immutable);
+
+		Image2D unsupportedFormat = new Image2D(Image2D.LUMINANCE, 1, 1);
+		assertTrue(unsupportedFormat.isMutable());
+		assertIllegalImage2DTarget(unsupportedFormat);
+	}
+
+	private void assertIllegalImage2DTarget(Image2D target) {
+		try {
+			g3d.bindTarget(target, true, Graphics3D.TRUE_COLOR);
+			fail("Expected Image2D target rejection");
+		} catch (IllegalArgumentException expected) {
+			assertEquals(null, g3d.getTarget());
+		}
 	}
 
 	private void cleanupContext() {

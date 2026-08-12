@@ -6,13 +6,19 @@ on:
       - alpha
     paths:
       - '.github/workflows/m3g-runtime.yml'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle.properties'
+      - 'gradle/**'
       - 'app/build.gradle.kts'
+      - 'app/src/main/AndroidManifest.xml'
       - 'gradle/libs.versions.toml'
       - 'app/src/androidTest/java/javax/microedition/m3g/**'
       - 'app/src/main/java/javax/microedition/m3g/**'
       - 'app/src/main/java/javax/microedition/lcdui/Graphics.java'
       - 'app/src/main/java/javax/microedition/lcdui/Image.java'
       - 'app/src/main/cpp/Android.mk'
+      - 'app/src/main/cpp/Application.mk'
       - 'app/src/main/cpp/m3g/**'
   workflow_dispatch:
     inputs:
@@ -32,7 +38,7 @@ concurrency:
 jobs:
   runtime:
     name: runtime-api-30-x86_64
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
 
     steps:
@@ -85,7 +91,7 @@ jobs:
         run: |
           export ANDROID_USER_HOME="$RUNNER_TEMP/android-user"
           export ANDROID_AVD_HOME="$RUNNER_TEMP/android-avd"
-          mkdir -p "$ANDROID_USER_HOME" "$ANDROID_AVD_HOME" "$HOME/.android"
+          mkdir -p "$ANDROID_USER_HOME" "$ANDROID_AVD_HOME" "$HOME/.android" build/ci-logs
           echo "ANDROID_USER_HOME=$ANDROID_USER_HOME" >> "$GITHUB_ENV"
           echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
 
@@ -93,13 +99,15 @@ jobs:
           avd='jlmod-m3g-runtime-30'
           yes | sdkmanager --licenses >/dev/null || true
           sdkmanager 'platform-tools' 'emulator' "$image"
+          sdkmanager --list_installed > build/ci-logs/android-sdk-packages.txt
+          "$ANDROID_HOME/emulator/emulator" -version > build/ci-logs/android-emulator-version.txt 2>&1
 
           echo 'no' | avdmanager create avd \
             --force \
             --name "$avd" \
             --package "$image" \
             -p "$ANDROID_AVD_HOME/$avd.avd"
-          avdmanager list avd
+          avdmanager list avd | tee build/ci-logs/avd-list.txt
           test -f "$ANDROID_AVD_HOME/$avd.ini"
 
       - name: Start Android Emulator
@@ -148,6 +156,7 @@ jobs:
             objectReferenceArraysAndDuplicateRoundTripThroughJni
             translatedGraphicsTargetPreservesViewportAndClearOutput
             mutableImage2DTargetBindsClearsAndReleases
+            rejectsImmutableAndUnsupportedImage2DTargets
           )
 
           if [[ '${{ inputs.include_render_probes }}' == 'true' ]]; then
@@ -158,8 +167,12 @@ jobs:
           fi
 
           status=0
+          : > build/ci-logs/m3g-runtime-results.txt
+          mkdir -p build/ci-reports/per-test
           for test in "${tests[@]}"; do
             echo "::group::M3GRuntimeTest#$test"
+            rm -rf app/build/outputs/androidTest-results/connected
+            rm -rf app/build/reports/androidTests/connected
             if ./gradlew --no-daemon --stacktrace \
               -PjlmodRuntimeTestAbi=x86_64 \
               "-Pandroid.testInstrumentationRunnerArguments.class=javax.microedition.m3g.M3GRuntimeTest#$test" \
@@ -170,6 +183,20 @@ jobs:
               echo "FAIL $test" | tee -a build/ci-logs/m3g-runtime-results.txt
               status=1
             fi
+
+            test_evidence_dir="build/ci-reports/per-test/$test"
+            mkdir -p "$test_evidence_dir"
+            if [[ -d app/build/outputs/androidTest-results/connected ]]; then
+              mkdir -p "$test_evidence_dir/androidTest-results"
+              cp -a app/build/outputs/androidTest-results/connected/. \
+                "$test_evidence_dir/androidTest-results/"
+            fi
+            if [[ -d app/build/reports/androidTests/connected ]]; then
+              mkdir -p "$test_evidence_dir/androidTest-reports"
+              cp -a app/build/reports/androidTests/connected/. \
+                "$test_evidence_dir/androidTest-reports/"
+            fi
+            adb logcat -d -v threadtime > "$test_evidence_dir/logcat.txt" 2>&1 || true
             echo '::endgroup::'
           done
           exit "$status"
@@ -192,6 +219,7 @@ jobs:
             echo '- Android API: 30'
             echo '- Runtime ABI: x86_64 (64-bit)'
             echo '- Emulator graphics: software-selected backend'
+            echo '- Per-test evidence: build/ci-reports/per-test/<test-name>/'
             echo "- Optional geometry render probes requested: ${{ inputs.include_render_probes || false }}"
             echo '- Supported production ABI remains arm64-v8a and is compiled by Android CI.'
             echo "- Instrumentation outcome: ${{ steps.runtime_test.outcome }}"
@@ -227,10 +255,14 @@ jobs:
           name: JL-Mod-Plus-m3g-runtime-${{ github.run_number }}
           path: |
             build/ci-logs/m3g-runtime-emulator.log
+            build/ci-logs/android-sdk-packages.txt
+            build/ci-logs/android-emulator-version.txt
+            build/ci-logs/avd-list.txt
             build/ci-logs/m3g-runtime-gradle.log
             build/ci-logs/m3g-runtime-logcat.txt
             build/ci-logs/m3g-runtime-results.txt
             build/ci-reports/m3g-runtime-summary.md
+            build/ci-reports/per-test/
             app/build/outputs/androidTest-results/connected/
             app/build/reports/androidTests/connected/
           if-no-files-found: warn
