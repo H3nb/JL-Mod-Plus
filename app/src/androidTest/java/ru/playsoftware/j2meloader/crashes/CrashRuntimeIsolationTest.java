@@ -141,16 +141,10 @@ public class CrashRuntimeIsolationTest {
 			assertEquals(mainPid, processPid(context, mainProcessName));
 			assertNoNewLifecycleFailure(context, afterCrashIds);
 		} finally {
-			killRemoteProcessIfPresent(context, midletProcessName);
+			killRemoteProcessBestEffort(context, midletProcessName);
 			cleanupLifecycleDiagnostics(context, baselineIds);
-			SharedPreferences.Editor editor = preferences.edit();
-			if (hadPreviousEmulatorDir) {
-				editor.putString(Constants.PREF_EMULATOR_DIR, previousEmulatorDir);
-			} else {
-				editor.remove(Constants.PREF_EMULATOR_DIR);
-			}
-			editor.commit();
-			deleteRecursively(root);
+			restoreEmulatorDirectoryBestEffort(preferences, hadPreviousEmulatorDir, previousEmulatorDir);
+			deleteRecursivelyBestEffort(root);
 		}
 	}
 
@@ -322,10 +316,29 @@ public class CrashRuntimeIsolationTest {
 		return 0;
 	}
 
-	private static void killRemoteProcessIfPresent(Context context, String processName) {
-		int pid = processPid(context, processName);
-		if (pid != 0) {
-			Process.killProcess(pid);
+	private static void killRemoteProcessBestEffort(Context context, String processName) {
+		try {
+			int pid = processPid(context, processName);
+			if (pid != 0) {
+				Process.killProcess(pid);
+			}
+		} catch (RuntimeException ignored) {
+			// Teardown must not replace the validation failure.
+		}
+	}
+
+	private static void restoreEmulatorDirectoryBestEffort(SharedPreferences preferences,
+			boolean hadPreviousEmulatorDir, String previousEmulatorDir) {
+		try {
+			SharedPreferences.Editor editor = preferences.edit();
+			if (hadPreviousEmulatorDir) {
+				editor.putString(Constants.PREF_EMULATOR_DIR, previousEmulatorDir);
+			} else {
+				editor.remove(Constants.PREF_EMULATOR_DIR);
+			}
+			editor.commit();
+		} catch (RuntimeException ignored) {
+			// Teardown must not replace the validation failure.
 		}
 	}
 
@@ -380,6 +393,14 @@ public class CrashRuntimeIsolationTest {
 		}
 		if (!file.delete() && file.exists()) {
 			throw new IllegalStateException("Unable to delete runtime fixture path: " + file);
+		}
+	}
+
+	private static void deleteRecursivelyBestEffort(File file) {
+		try {
+			deleteRecursively(file);
+		} catch (RuntimeException ignored) {
+			// Teardown must not replace the validation failure.
 		}
 	}
 }
