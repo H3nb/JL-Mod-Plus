@@ -7,7 +7,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -42,7 +42,9 @@ import ru.playsoftware.j2meloader.applist.AppListModel;
 import ru.playsoftware.j2meloader.applist.AppsListFragment;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.crashes.CrashReportsActivity;
+import ru.playsoftware.j2meloader.crashes.LegacyProcessExitFallback;
 import ru.playsoftware.j2meloader.crashes.MidletFailureRecovery;
+import ru.playsoftware.j2meloader.crashes.ProcessExitStore;
 import ru.playsoftware.j2meloader.util.Constants;
 import ru.playsoftware.j2meloader.util.FileUtils;
 import ru.playsoftware.j2meloader.util.PickDirResultContract;
@@ -59,8 +61,8 @@ public class MainActivity extends AppCompatActivity {
 	);
 
 	private AppListModel appListModel;
-	private AlertDialog midletFailureDialog;
-	private String lastRecoveryNoticeEventId;
+	private AlertDialog recoveryDialog;
+	private String lastRecoveryNoticeId;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -100,15 +102,15 @@ public class MainActivity extends AppCompatActivity {
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
 		if (hasFocus) {
-			maybeShowMidletFailureRecovery();
+			maybeShowDiagnosticRecovery();
 		}
 	}
 
-	private void maybeShowMidletFailureRecovery() {
+	private void maybeShowDiagnosticRecovery() {
 		if (isFinishing() || isDestroyed()) {
 			return;
 		}
-		if (midletFailureDialog != null && midletFailureDialog.isShowing()) {
+		if (recoveryDialog != null && recoveryDialog.isShowing()) {
 			return;
 		}
 		if (getSupportFragmentManager().findFragmentByTag("installer") != null) {
@@ -116,32 +118,69 @@ public class MainActivity extends AppCompatActivity {
 		}
 
 		MidletFailureRecovery.PendingFailure failure = MidletFailureRecovery.findPendingFailure(this);
-		if (failure == null || failure.getEventId().equals(lastRecoveryNoticeEventId)) {
+		if (failure != null) {
+			String noticeId = "midlet:" + failure.getEventId();
+			if (noticeId.equals(lastRecoveryNoticeId)) {
+				return;
+			}
+			lastRecoveryNoticeId = noticeId;
+			String midletName = failure.getMidletName();
+			int messageRes = midletName == null || midletName.trim().isEmpty()
+					? R.string.midlet_failure_recovery_message
+					: R.string.midlet_failure_recovery_message_named;
+			String message = messageRes == R.string.midlet_failure_recovery_message
+					? getString(messageRes)
+					: getString(messageRes, midletName);
+
+			recoveryDialog = new AlertDialog.Builder(this)
+					.setTitle(R.string.midlet_failure_recovery_title)
+					.setMessage(message)
+					.setCancelable(false)
+					.setNeutralButton(R.string.view_reports, (dialog, which) -> {
+						MidletFailureRecovery.acknowledgePendingFailures(this);
+						startActivity(new Intent(this, CrashReportsActivity.class));
+					})
+					.setPositiveButton(R.string.close, (dialog, which) ->
+							MidletFailureRecovery.acknowledgePendingFailures(this))
+					.create();
+			recoveryDialog.setOnDismissListener(dialog -> recoveryDialog = null);
+			recoveryDialog.show();
 			return;
 		}
 
-		lastRecoveryNoticeEventId = failure.getEventId();
-		String midletName = failure.getMidletName();
-		int messageRes = midletName == null || midletName.trim().isEmpty()
-				? R.string.midlet_failure_recovery_message
-				: R.string.midlet_failure_recovery_message_named;
-		String message = messageRes == R.string.midlet_failure_recovery_message
-				? getString(messageRes)
-				: getString(messageRes, midletName);
+		// Android 6-10 has no ApplicationExitInfo. Reconcile an unfinished, no-longer-running
+		// isolated MIDlet session into the same ProcessExitStore schema before looking for notices.
+		// The fallback records only UNKNOWN cause; it never guesses ANR/native/LMK classifications.
+		LegacyProcessExitFallback.ingest(this);
+		ProcessExitStore.PendingExit exit = ProcessExitStore.findPendingExit(this);
+		if (exit == null || exit.getId().equals(lastRecoveryNoticeId)) {
+			return;
+		}
+		lastRecoveryNoticeId = exit.getId();
+		String midletName = exit.getMidletName();
+		String message;
+		if (midletName != null && !midletName.trim().isEmpty()) {
+			message = getString(R.string.process_exit_recovery_message_named,
+					midletName, exit.getReason());
+		} else if ("midlet".equals(exit.getProcessRole())) {
+			message = getString(R.string.process_exit_recovery_message_midlet, exit.getReason());
+		} else {
+			message = getString(R.string.process_exit_recovery_message, exit.getReason());
+		}
 
-		midletFailureDialog = new AlertDialog.Builder(this)
-				.setTitle(R.string.midlet_failure_recovery_title)
+		recoveryDialog = new AlertDialog.Builder(this)
+				.setTitle(R.string.process_exit_recovery_title)
 				.setMessage(message)
 				.setCancelable(false)
 				.setNeutralButton(R.string.view_reports, (dialog, which) -> {
-					MidletFailureRecovery.acknowledgePendingFailures(this);
+					ProcessExitStore.acknowledgePendingExits(this);
 					startActivity(new Intent(this, CrashReportsActivity.class));
 				})
 				.setPositiveButton(R.string.close, (dialog, which) ->
-						MidletFailureRecovery.acknowledgePendingFailures(this))
+						ProcessExitStore.acknowledgePendingExits(this))
 				.create();
-		midletFailureDialog.setOnDismissListener(dialog -> midletFailureDialog = null);
-		midletFailureDialog.show();
+		recoveryDialog.setOnDismissListener(dialog -> recoveryDialog = null);
+		recoveryDialog.show();
 	}
 
 	private void checkAndCreateDirs() {

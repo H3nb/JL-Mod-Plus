@@ -25,8 +25,13 @@ concurrency:
 
 jobs:
   runtime:
+    name: runtime-api-${{ matrix.api }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [23, 30]
 
     steps:
       - name: Check out sources
@@ -82,25 +87,25 @@ jobs:
           echo "ANDROID_USER_HOME=$ANDROID_USER_HOME" >> "$GITHUB_ENV"
           echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
 
+          image="system-images;android-${{ matrix.api }};google_apis;x86_64"
+          avd="jlmod-crash-runtime-${{ matrix.api }}"
           yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager \
-            'platform-tools' \
-            'emulator' \
-            'system-images;android-30;google_apis;x86_64'
+          sdkmanager 'platform-tools' 'emulator' "$image"
           echo 'no' | avdmanager create avd \
             --force \
-            --name jlmod-crash-runtime \
-            --package 'system-images;android-30;google_apis;x86_64' \
-            -p "$ANDROID_AVD_HOME/jlmod-crash-runtime.avd"
+            --name "$avd" \
+            --package "$image" \
+            -p "$ANDROID_AVD_HOME/$avd.avd"
           avdmanager list avd
-          test -f "$ANDROID_AVD_HOME/jlmod-crash-runtime.ini"
+          test -f "$ANDROID_AVD_HOME/$avd.ini"
 
       - name: Start Android Emulator
         shell: bash
         run: |
           mkdir -p build/ci-logs
+          avd="jlmod-crash-runtime-${{ matrix.api }}"
           nohup "$ANDROID_HOME/emulator/emulator" \
-            -avd jlmod-crash-runtime \
+            -avd "$avd" \
             -no-window \
             -no-audio \
             -no-boot-anim \
@@ -120,6 +125,7 @@ jobs:
           adb shell settings put global transition_animation_scale 0
           adb shell settings put global animator_duration_scale 0
           adb shell getprop ro.build.version.release
+          adb shell getprop ro.build.version.sdk
           adb shell getprop ro.product.cpu.abi
 
       - name: Run crash runtime instrumentation
@@ -140,8 +146,10 @@ jobs:
           {
             echo '## Runtime process snapshot'
             echo
+            echo "Android API: ${{ matrix.api }}"
+            echo
             echo '```text'
-            adb shell ps -A | grep 'io.github.h3nb.jlmodplus.debug' || true
+            adb shell ps | grep 'io.github.h3nb.jlmodplus.debug' || true
             echo '```'
           } > build/ci-reports/crash-runtime-processes.md
           cat build/ci-reports/crash-runtime-processes.md >> "$GITHUB_STEP_SUMMARY"
@@ -150,7 +158,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: JL-Mod-Plus-crash-runtime-${{ github.run_number }}
+          name: JL-Mod-Plus-crash-runtime-${{ github.run_number }}-api${{ matrix.api }}
           path: |
             build/ci-logs/crash-runtime-emulator.log
             build/ci-logs/crash-runtime-gradle.log

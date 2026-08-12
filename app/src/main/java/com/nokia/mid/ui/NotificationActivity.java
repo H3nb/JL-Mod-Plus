@@ -25,19 +25,21 @@ public class NotificationActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		Intent intent = getIntent();
-		int id = intent.getIntExtra("id", 0);
-		int event = intent.getIntExtra("event", 0);
-		SoftNotificationImpl inst = SoftNotificationImpl.instanceMap.get(id);
-		if (inst != null) {
-			inst.notificationCallback(event);
-			try {
-				if (event == 2) {
-					inst.remove();
+		if (intent != null) {
+			int id = intent.getIntExtra("id", 0);
+			int event = intent.getIntExtra("event", 0);
+			SoftNotificationImpl inst = SoftNotificationImpl.instanceMap.get(id);
+			if (inst != null) {
+				inst.notificationCallback(event);
+				try {
+					if (event == 2) {
+						inst.remove();
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
-			} catch (Exception e) {
-				e.printStackTrace();
 			}
 		}
-		this.finish();
+		finish();
 	}
 }
