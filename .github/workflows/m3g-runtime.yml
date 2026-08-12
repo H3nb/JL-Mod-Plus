@@ -114,13 +114,13 @@ jobs:
               sleep 2
             done
           '
-          adb shell input keyevent 82 || true
-          adb shell settings put global window_animation_scale 0
-          adb shell settings put global transition_animation_scale 0
-          adb shell settings put global animator_duration_scale 0
-          adb shell getprop ro.build.version.release
-          adb shell getprop ro.build.version.sdk
-          adb shell getprop ro.product.cpu.abi
+          timeout 10 adb shell input keyevent 82 || true
+          timeout 10 adb shell settings put global window_animation_scale 0
+          timeout 10 adb shell settings put global transition_animation_scale 0
+          timeout 10 adb shell settings put global animator_duration_scale 0
+          timeout 10 adb shell getprop ro.build.version.release
+          timeout 10 adb shell getprop ro.build.version.sdk
+          timeout 10 adb shell getprop ro.product.cpu.abi
 
       - name: Run focused M3G runtime instrumentation
         id: runtime_test
@@ -138,7 +138,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p build/ci-reports
-          adb logcat -d -v threadtime > build/ci-logs/m3g-runtime-logcat.txt || true
+          timeout 20 adb logcat -d -v threadtime > build/ci-logs/m3g-runtime-logcat.txt || true
           {
             echo '## M3G runtime validation'
             echo
@@ -150,7 +150,7 @@ jobs:
             echo '### Runtime process snapshot'
             echo
             echo '```text'
-            adb shell ps | grep 'io.github.h3nb.jlmodplus.debug' || true
+            timeout 10 adb shell ps | grep 'io.github.h3nb.jlmodplus.debug' || true
             echo '```'
           } > build/ci-reports/m3g-runtime-summary.md
           cat build/ci-reports/m3g-runtime-summary.md >> "$GITHUB_STEP_SUMMARY"
@@ -173,4 +173,4 @@ jobs:
       - name: Stop Android Emulator
         if: always()
         shell: bash
-        run: adb emu kill || true
+        run: timeout 10 adb emu kill || true
