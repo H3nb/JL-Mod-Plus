@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/crash-runtime.yml'
       - 'app/build.gradle.kts'
+      - 'gradle/libs.versions.toml'
       - 'app/src/main/AndroidManifest.xml'
       - 'app/src/debug/**'
       - 'app/src/androidTest/java/ru/playsoftware/j2meloader/crashes/**'
