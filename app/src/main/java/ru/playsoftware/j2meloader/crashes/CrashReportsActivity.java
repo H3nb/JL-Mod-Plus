@@ -73,6 +73,14 @@ public class CrashReportsActivity extends AppCompatActivity {
 		return true;
 	}
 
+	private int kindLabel(LocalDiagnosticRepository.Kind kind) {
+		return switch (kind) {
+			case MIDLET_FAILURE -> R.string.crash_report_midlet_failure;
+			case JAVA_REPORT -> R.string.crash_report_java_report;
+			case PROCESS_EXIT -> R.string.crash_report_process_exit;
+		};
+	}
+
 	private final class ReportAdapter extends BaseAdapter {
 		private final DateFormat dateFormat = DateFormat.getDateTimeInstance(
 				DateFormat.MEDIUM, DateFormat.SHORT);
@@ -112,14 +120,11 @@ public class CrashReportsActivity extends AppCompatActivity {
 			String midletName = record.getMidletName();
 			if (midletName != null && !midletName.trim().isEmpty()) {
 				title.setText(midletName);
-			} else if (record.getKind() == LocalDiagnosticRepository.Kind.MIDLET_FAILURE) {
-				title.setText(R.string.crash_report_midlet_failure);
 			} else {
-				title.setText(R.string.crash_report_java_report);
+				title.setText(kindLabel(record.getKind()));
 			}
 
-			String type = getString(record.getKind() == LocalDiagnosticRepository.Kind.MIDLET_FAILURE
-					? R.string.crash_report_midlet_failure : R.string.crash_report_java_report);
+			String type = getString(kindLabel(record.getKind()));
 			String time = record.getTimestampMillis() > 0
 					? dateFormat.format(new Date(record.getTimestampMillis()))
 					: "";

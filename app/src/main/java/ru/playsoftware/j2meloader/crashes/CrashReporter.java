@@ -110,6 +110,11 @@ public final class CrashReporter {
 		putBounded(reporter, KEY_PROCESS_ROLE, processRole);
 		putBounded(reporter, KEY_PROCESS_PID, Integer.toString(Process.myPid()));
 
+		// Android 11+ keeps a small process-owned state summary and a system exit-history ring.
+		// Publish only stable diagnostic identity here; ProcessExitStore snapshots useful prior exits
+		// from the main process and deliberately filters normal process-management noise.
+		ProcessExitStore.initializeProcess(application, processRole);
+
 		// The main process owns diagnostic retention so :midlet remains a single-purpose writer.
 		if (ROLE_MAIN.equals(processRole)) {
 			LocalCrashReportStore.prune(application);
@@ -136,6 +141,12 @@ public final class CrashReporter {
 
 	static void setSessionContext(String sessionId) {
 		putBounded(ACRA.getErrorReporter(), KEY_SESSION_ID, sessionId);
+		EmulatorApplication application = EmulatorApplication.getInstance();
+		if (application != null) {
+			// The same immutable session key now survives Java exceptions (ACRA), durable journal
+			// writes, and Android process death (ApplicationExitInfo) without timestamp heuristics.
+			ProcessExitStore.setMidletSession(application, sessionId);
+		}
 	}
 
 	/** Persists a non-fatal installer exception without mutating process-global ACRA context. */
