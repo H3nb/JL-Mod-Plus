@@ -40,6 +40,10 @@ public final class MidletFailureRecovery {
 
 	/** Returns the newest unacknowledged unexpected MIDlet session failure, if any. */
 	public static PendingFailure findPendingFailure(Context context) {
+		// The main process can survive many isolated MIDlet sessions without being re-created. Reapply
+		// retention when the library regains focus so bounded diagnostics do not depend on app restart.
+		MidletSessionJournal.prune(context);
+		LocalCrashReportStore.prune(context);
 		List<MidletSessionJournal.Snapshot> failures = readRetainedFailures(context);
 		Set<String> acknowledged = readAcknowledgedEventIds(context);
 		pruneOrphanAcknowledgments(context, failures);
