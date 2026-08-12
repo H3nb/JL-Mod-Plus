@@ -60,20 +60,16 @@ public class CrashRuntimeIsolationTest {
 			assertRemoteProcessStops(context, midletProcessName);
 			assertEquals(mainPid, Process.myPid());
 			assertEquals(mainPid, processPid(context, mainProcessName));
-			assertTrue(first.hasJavaReport());
-			assertNotNull(first.getEventId());
-			assertEquals(CrashRuntimeProbeActivity.MIDLET_NAME, first.getMidletName());
-			assertTrue(first.getDetailText().contains("Failure boundary: UNCAUGHT_THREAD"));
+			assertCorrelatedProbeRecord(first);
 
 			Set<String> afterFirstIds = recordIds(LocalDiagnosticRepository.load(context));
 			second = launchProbeAndAwaitCorrelatedRecord(context, afterFirstIds);
 			assertRemoteProcessStops(context, midletProcessName);
 			assertEquals(mainPid, Process.myPid());
 			assertEquals(mainPid, processPid(context, mainProcessName));
-			assertTrue(second.hasJavaReport());
-			assertNotNull(second.getEventId());
+			assertCorrelatedProbeRecord(second);
 			assertNotEquals(first.getEventId(), second.getEventId());
-			assertEquals(CrashRuntimeProbeActivity.MIDLET_NAME, second.getMidletName());
+			assertNotEquals(first.getSessionId(), second.getSessionId());
 		} finally {
 			if (first != null) {
 				LocalDiagnosticRepository.delete(context, first);
@@ -82,6 +78,17 @@ public class CrashRuntimeIsolationTest {
 				LocalDiagnosticRepository.delete(context, second);
 			}
 		}
+	}
+
+	private static void assertCorrelatedProbeRecord(LocalDiagnosticRepository.Record record) {
+		assertTrue(record.hasJavaReport());
+		assertNotNull(record.getEventId());
+		assertNotNull(record.getSessionId());
+		assertEquals(CrashRuntimeProbeActivity.MIDLET_NAME, record.getMidletName());
+		assertEquals("midlet", record.getProcessRole());
+		assertTrue(record.getDetailText().contains("Failure boundary: UNCAUGHT_THREAD"));
+		assertNotNull(record.getStackTrace());
+		assertTrue(record.getStackTrace().contains("runtimeProbe=true;"));
 	}
 
 	private static LocalDiagnosticRepository.Record launchProbeAndAwaitCorrelatedRecord(
