@@ -35,7 +35,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -120,11 +119,12 @@ public final class LocalDiagnosticRepository {
 			return false;
 		}
 		if (record.journalFile != null) {
-			MidletFailureRecovery.deleteAcknowledgment(context, record.eventId);
 			if (record.journalFile.isFile() && !record.journalFile.delete()) {
 				Log.w(TAG, "Unable to delete MIDlet failure journal: " + record.journalFile.getName());
 				return false;
 			}
+			// Do not drop the recovery acknowledgment until the durable failure journal is gone.
+			MidletFailureRecovery.deleteAcknowledgment(context, record.eventId);
 		}
 		return true;
 	}
@@ -133,7 +133,7 @@ public final class LocalDiagnosticRepository {
 			String stackTrace) {
 		return journalSessionId != null
 				&& journalSessionId.equals(rawSessionId)
-				&& eventId != null
+				&& MidletFailureRecovery.isSafeEventId(eventId)
 				&& stackTrace != null
 				&& stackTrace.contains("eventId=" + eventId + ";");
 	}
@@ -151,7 +151,7 @@ public final class LocalDiagnosticRepository {
 			try {
 				MidletSessionJournal.Snapshot snapshot = MidletSessionJournal.read(file);
 				if (snapshot.outcome == MidletSessionJournal.Outcome.UNEXPECTED_FAILURE
-						&& snapshot.failureEventId != null) {
+						&& MidletFailureRecovery.isSafeEventId(snapshot.failureEventId)) {
 					records.add(new MutableRecord(file, snapshot));
 				}
 			} catch (IOException | RuntimeException e) {
