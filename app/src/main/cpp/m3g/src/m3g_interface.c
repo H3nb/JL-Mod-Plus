@@ -1,4 +1,6 @@
 /*
+* Copyright 2026 H3NB
+*
 * Copyright (c) 2003 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
@@ -992,11 +994,15 @@ static void m3gGetObjectsWithClassID(Interface *m3g, M3GClass classID, PointerAr
  * The objects will be deleted when a GL context is next made current.
  *
  */
-static void m3gDeleteGLTextures(Interface *m3g, M3Gsizei n, M3Gpointer *t)
+static void m3gDeleteGLTextures(Interface *m3g, M3Gsizei n,
+                                const M3Guint *t)
 {
     PointerArray *objs = &m3g->deadGLObjects;
     while (n--) {
-        if (m3gArrayAppend(objs, (void*) t[n], m3g) < 0) {
+        /* PointerArray is also used for GL object tokens. Convert through
+         * uintptr_t so a 32-bit GLuint is never read with an ARM64 pointer
+         * stride and the integer-to-pointer conversion is explicit. */
+        if (m3gArrayAppend(objs, (void *)(uintptr_t) t[n], m3g) < 0) {
             return; 
         }
     }
@@ -1015,7 +1021,7 @@ static void m3gCollectGLObjects(Interface *m3g)
     M3Gsizei n = m3gArraySize(objs);
     M3Gint i;
     for (i = 0; i < n; ++i) {
-        GLuint t = (GLuint) m3gGetArrayElement(objs, i);
+        GLuint t = (GLuint) (uintptr_t) m3gGetArrayElement(objs, i);
         glDeleteTextures(1, &t);
         M3G_LOG1(M3G_LOG_OBJECTS, "Destroyed GL texture object 0x%08X\n",
                  (unsigned) t);
