@@ -457,7 +457,8 @@ static M3Gbool m3gMemoryLocked(Interface *m3g)
                  "%d memory lock(s) in effect:\n", m3g->lockCount);
         for (i = m3g->lockCount - 1; i >= 0; --i) {
             M3G_LOG2(M3G_LOG_FATAL_ERRORS, "%s, line %d\n",
-                     m3g->lockHeap[i].file, m3g->lockHeap[i].line);
+                     m3g->lockHeap[i].file,
+                     m3g->lockHeap[i].line);
         }
 #       endif
         return M3G_TRUE;
@@ -837,7 +838,7 @@ AllocFailed:
 
 /*!
  * \internal
- * \brief Frees a memory object allocated using m3gAllocObject
+ * \brief Frees a memory object allocated with m3gAllocObject
  */
 /*@access M3GMemObject@*/
 #if defined(M3G_DEBUG)
@@ -859,7 +860,8 @@ static void m3gFreeObject(Interface *m3g, M3GMemObject handle)
         
         if (ptr != NULL) {
 #           if defined(M3G_ENABLE_PROFILING) || defined(M3G_DEBUG_OUT_OF_MEMORY)
-            M3Gint size = PAYLOAD_SIZE(ptr);        
+            M3Gint size = PAYLOAD_SIZE(ptr);
+#           endif
 #           if defined(M3G_ENABLE_PROFILING)
             m3gIncStat(m3g, M3G_STAT_MEMORY_ALLOCATED, -size);
             m3gIncStat(m3g, M3G_STAT_MEMORY_OBJECT_BYTES, -size);
@@ -1570,7 +1572,7 @@ static void m3gLogProfileCounters(Interface *m3g)
         m3g->profileInterval = 0;
     }
 }
-#endif /* M3G_ENABLE_PROFILING && M3G_PROFILE_LOG_INTERVAL > 0 */
+#endif /* M3G_ENABLE_PROFILING && (M3G_PROFILE_LOG_INTERVAL > 0) */
 
 /*----------------------------------------------------------------------
  * Public API implementation
