@@ -25,7 +25,7 @@ final class GuestWindowPolicy {
 
 	static Padding calculate(boolean canvas, boolean skinLayerAvailable, boolean statusBarEnabled,
 			boolean actionBarEnabled, int systemLeft, int statusTop, int systemRight, int navigationBottom,
-			int cutoutLeft, int cutoutTop, int cutoutRight, int imeBottom) {
+			int cutoutLeft, int cutoutTop, int cutoutRight, int cutoutBottom, int imeBottom) {
 		boolean canUseCutout = canUseDisplayCutout(canvas, skinLayerAvailable,
 				statusBarEnabled, actionBarEnabled);
 		if (canvas) {
@@ -33,13 +33,13 @@ final class GuestWindowPolicy {
 					canUseCutout ? 0 : cutoutLeft,
 					canUseCutout ? 0 : Math.max(statusBarEnabled ? statusTop : 0, cutoutTop),
 					canUseCutout ? 0 : cutoutRight,
-					0);
+					canUseCutout ? 0 : cutoutBottom);
 		}
 		return new Padding(
 				Math.max(systemLeft, cutoutLeft),
 				Math.max(statusTop, cutoutTop),
 				Math.max(systemRight, cutoutRight),
-				Math.max(navigationBottom, imeBottom));
+				Math.max(Math.max(navigationBottom, imeBottom), cutoutBottom));
 	}
 
 	static final class Padding {

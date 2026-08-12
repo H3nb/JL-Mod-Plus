@@ -42,6 +42,9 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.Surface;
+import android.view.SurfaceView;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -113,6 +116,10 @@ public class MicroActivity extends AppCompatActivity {
 	private int virtualDisplayPaddingTop;
 	private int virtualDisplayPaddingRight;
 	private int virtualDisplayPaddingBottom;
+	private View overlayAnchor;
+	private final View.OnLayoutChangeListener overlayAnchorLayoutListener =
+			(view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
+					updateOverlayLocation();
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -294,6 +301,15 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void hideSystemUI() {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+			int flags = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+			if (!statusBarEnabled) {
+				flags |= View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+						| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_FULLSCREEN;
+			}
+			getWindow().getDecorView().setSystemUiVisibility(flags);
+			return;
+		}
 		WindowInsetsControllerCompat controller = getInsetsController();
 		controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
 		controller.hide(WindowInsetsCompat.Type.navigationBars());
@@ -306,6 +322,10 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void showSystemUI() {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+			getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+			return;
+		}
 		WindowInsetsControllerCompat controller = getInsetsController();
 		controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
 		controller.show(WindowInsetsCompat.Type.systemBars());
@@ -345,7 +365,7 @@ public class MicroActivity extends AppCompatActivity {
 			GuestWindowPolicy.Padding guestPadding = GuestWindowPolicy.calculate(canvas,
 					skinLayerAvailable, statusBarEnabled, actionBarEnabled,
 					systemBars.left, statusBars.top, systemBars.right, navigationBars.bottom,
-					cutout.left, cutout.top, cutout.right, ime.bottom);
+					cutout.left, cutout.top, cutout.right, cutout.bottom, ime.bottom);
 			left += guestPadding.left;
 			top += guestPadding.top;
 			right += guestPadding.right;
@@ -359,13 +379,42 @@ public class MicroActivity extends AppCompatActivity {
 		if (binding == null || !binding.displayableContainer.isLaidOut() || !binding.overlay.isLaidOut()) {
 			return;
 		}
+		View anchor = current instanceof Canvas
+				? findCanvasSurface(binding.displayableContainer)
+				: binding.displayableContainer;
+		if (anchor == null || !anchor.isLaidOut()) {
+			return;
+		}
+		if (overlayAnchor != anchor) {
+			if (overlayAnchor != null) {
+				overlayAnchor.removeOnLayoutChangeListener(overlayAnchorLayoutListener);
+			}
+			overlayAnchor = anchor;
+			anchor.addOnLayoutChangeListener(overlayAnchorLayoutListener);
+		}
 		int[] containerLocation = new int[2];
 		int[] overlayLocation = new int[2];
-		binding.displayableContainer.getLocationOnScreen(containerLocation);
+		anchor.getLocationOnScreen(containerLocation);
 		binding.overlay.getLocationOnScreen(overlayLocation);
 		binding.overlay.setLocation(
 				containerLocation[0] - overlayLocation[0],
 				containerLocation[1] - overlayLocation[1]);
+	}
+
+	@Nullable
+	private static SurfaceView findCanvasSurface(@NonNull View view) {
+		if (view instanceof SurfaceView surfaceView) {
+			return surfaceView;
+		}
+		if (view instanceof ViewGroup group) {
+			for (int i = 0; i < group.getChildCount(); i++) {
+				SurfaceView surfaceView = findCanvasSurface(group.getChildAt(i));
+				if (surfaceView != null) {
+					return surfaceView;
+				}
+			}
+		}
+		return null;
 	}
 
 	public void setCurrent(Displayable displayable) {

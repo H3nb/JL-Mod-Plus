@@ -65,15 +65,27 @@ public class FilteredFilePickerFragment extends AbstractFilePickerFragment<File>
 	private final Map<View, Rect> initialPadding = new IdentityHashMap<>();
 
 	private File mRequestedPath;
+	private View insetsRoot;
 
 	@Override
 	public void onViewCreated(@NonNull View view, @Nullable android.os.Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
+		insetsRoot = view;
 		ViewCompat.setOnApplyWindowInsetsListener(view, (root, insets) -> {
 			applyInsets(root, insets);
 			return insets;
 		});
 		ViewCompat.requestApplyInsets(view);
+	}
+
+	@Override
+	public void onDestroyView() {
+		if (insetsRoot != null) {
+			ViewCompat.setOnApplyWindowInsetsListener(insetsRoot, null);
+			insetsRoot = null;
+		}
+		initialPadding.clear();
+		super.onDestroyView();
 	}
 
 	private void applyInsets(@NonNull View root, @NonNull WindowInsetsCompat insets) {

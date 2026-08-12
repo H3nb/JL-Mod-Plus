@@ -20,7 +20,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.view.WindowManager;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -29,26 +28,15 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.lang.reflect.Method;
-
-import javax.microedition.shell.MicroActivity;
-
 import ru.playsoftware.j2meloader.config.ConfigActivity;
 import ru.playsoftware.j2meloader.filepicker.FilteredFilePickerActivity;
 
 @RunWith(AndroidJUnit4.class)
 public class PlatformCompatManifestTest {
 	@Test
-	public void modernBackAndImeManifestContractsRemainScopedToHostActivities() throws Exception {
+	public void imeResizeManifestContractRemainsScopedToHostActivities() throws Exception {
 		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 		PackageManager packageManager = context.getPackageManager();
-
-		ActivityInfo microActivity = activityInfo(packageManager, context, MicroActivity.class);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-			Method callbackEnabled = ActivityInfo.class.getMethod("isOnBackInvokedCallbackEnabled");
-			assertTrue("MicroActivity must opt into AndroidX system Back dispatch",
-					(Boolean) callbackEnabled.invoke(microActivity));
-		}
 
 		assertAdjustResize(activityInfo(packageManager, context, ConfigActivity.class));
 		assertAdjustResize(activityInfo(packageManager, context, FilteredFilePickerActivity.class));

@@ -35,7 +35,7 @@ public class GuestWindowPolicyTest {
 		GuestWindowPolicy.Padding padding = GuestWindowPolicy.calculate(
 				true, true, false, false,
 				30, 40, 50, 60,
-				7, 8, 9, 100);
+				7, 8, 9, 10, 100);
 
 		assertPadding(padding, 0, 0, 0, 0);
 	}
@@ -45,9 +45,9 @@ public class GuestWindowPolicyTest {
 		GuestWindowPolicy.Padding padding = GuestWindowPolicy.calculate(
 				true, false, false, true,
 				30, 40, 50, 60,
-				7, 8, 9, 100);
+				7, 8, 9, 10, 100);
 
-		assertPadding(padding, 7, 8, 9, 0);
+		assertPadding(padding, 7, 8, 9, 10);
 	}
 
 	@Test
@@ -55,9 +55,9 @@ public class GuestWindowPolicyTest {
 		GuestWindowPolicy.Padding padding = GuestWindowPolicy.calculate(
 				true, true, true, false,
 				30, 40, 50, 60,
-				7, 8, 9, 100);
+				7, 8, 9, 10, 100);
 
-		assertPadding(padding, 7, 40, 9, 0);
+		assertPadding(padding, 7, 40, 9, 10);
 	}
 
 	@Test
@@ -65,9 +65,19 @@ public class GuestWindowPolicyTest {
 		GuestWindowPolicy.Padding padding = GuestWindowPolicy.calculate(
 				false, true, false, false,
 				30, 40, 50, 60,
-				7, 8, 9, 100);
+				7, 8, 9, 10, 100);
 
 		assertPadding(padding, 30, 40, 50, 100);
+	}
+
+	@Test
+	public void hostDisplayableReservesBottomCutoutWhenItExceedsNavigationAndIme() {
+		GuestWindowPolicy.Padding padding = GuestWindowPolicy.calculate(
+				false, true, false, false,
+				0, 0, 0, 20,
+				0, 0, 0, 40, 10);
+
+		assertPadding(padding, 0, 0, 0, 40);
 	}
 
 	private static void assertPadding(GuestWindowPolicy.Padding padding,

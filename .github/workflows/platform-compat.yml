@@ -9,9 +9,13 @@ on:
       - 'app/build.gradle.kts'
       - 'gradle/libs.versions.toml'
       - 'app/src/main/AndroidManifest.xml'
+      - 'build.gradle.kts'
+      - 'app/src/main/res/**'
       - 'app/src/main/java/javax/microedition/shell/**'
       - 'app/src/main/java/javax/microedition/lcdui/overlay/**'
       - 'app/src/main/java/ru/playsoftware/j2meloader/**'
+      - 'app/src/debug/**'
+      - 'app/src/test/java/javax/microedition/shell/**'
       - 'app/src/androidTest/java/ru/playsoftware/j2meloader/platform/**'
   workflow_dispatch:
 
@@ -122,11 +126,19 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          ./gradlew --no-daemon --stacktrace \
+          ./gradlew --stacktrace \
             -PjlmodRuntimeTestAbi=x86_64 \
-            -Pandroid.testInstrumentationRunnerArguments.class=ru.playsoftware.j2meloader.platform.PlatformCompatManifestTest \
+            -Pandroid.testInstrumentationRunnerArguments.class=ru.playsoftware.j2meloader.platform.PlatformCompatManifestTest,ru.playsoftware.j2meloader.platform.PlatformCompatBehaviorTest \
             :app:connectedEmulatorDebugAndroidTest \
             2>&1 | tee build/ci-logs/platform-compat-gradle.log
+
+      - name: Verify merged Android 16 manifest contract
+        shell: bash
+        run: |
+          apk='app/build/outputs/apk/emulator/debug/app-emulator-x86_64-debug.apk'
+          test -f "$apk"
+          apkanalyzer manifest print "$apk" \
+            | grep -F 'android:enableOnBackInvokedCallback="true"'
 
       - name: Upload platform compatibility evidence
         if: always()
