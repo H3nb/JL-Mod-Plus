@@ -287,7 +287,10 @@ public final class MidletSessionJournal {
 	}
 
 	private static boolean deleteIfExists(File file) {
-		return !file.exists() || file.delete();
+		if (!file.exists()) {
+			return true;
+		}
+		return file.isFile() && file.delete();
 	}
 
 	private static boolean atomicRecordExists(File baseFile) {
@@ -374,17 +377,32 @@ public final class MidletSessionJournal {
 	}
 
 	private void persist() {
-		Snapshot snapshot = snapshot();
 		FileOutputStream output = null;
 		try {
+			Snapshot snapshot = snapshot();
 			output = atomicFile.startWrite();
 			write(snapshot, output);
 			atomicFile.finishWrite(output);
 		} catch (IOException | RuntimeException e) {
-			if (output != null) {
-				atomicFile.failWrite(output);
-			}
+			rollbackWrite(output);
 			Log.w(TAG, "Unable to persist MIDlet session journal", e);
+		} catch (OutOfMemoryError e) {
+			rollbackWrite(output);
+			// Do not attach the OOM or build richer diagnostics while already under memory pressure.
+			try {
+				Log.w(TAG, "Unable to persist MIDlet session journal under low memory");
+			} catch (Throwable ignored) {}
+		}
+	}
+
+	private void rollbackWrite(FileOutputStream output) {
+		if (output == null) {
+			return;
+		}
+		try {
+			atomicFile.failWrite(output);
+		} catch (Throwable ignored) {
+			// Diagnostics are fail-open; preserve the original emulator/failure path.
 		}
 	}
 
