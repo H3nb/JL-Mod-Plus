@@ -23,7 +23,9 @@ import static org.acra.ReportField.REPORT_ID;
 import static org.acra.ReportField.STACK_TRACE;
 import static org.acra.ReportField.THREAD_DETAILS;
 
+import android.app.ApplicationExitInfo;
 import android.content.Context;
+import android.system.OsConstants;
 import android.util.Log;
 
 import org.acra.data.CrashReportData;
@@ -58,22 +60,45 @@ public final class LocalDiagnosticRepository {
 	private LocalDiagnosticRepository() {}
 
 	public static List<Record> load(Context context) {
-		ArrayList<MutableRecord> journalRecords = readFailureJournals(context);
-		Map<String, MutableRecord> bySession = new HashMap<>();
-		for (MutableRecord record : journalRecords) {
-			if (record.sessionId != null) {
-				bySession.put(record.sessionId, record);
+		// Snapshot system exit history before reading the local projection; Android keeps it in a
+		// bounded ring and traces can be overwritten independently of our app-private records.
+		ProcessExitStore.ingest(context);
+
+		ArrayList<SessionRecord> sessions = readSessionRecords(context);
+		Map<String, SessionRecord> allSessions = new HashMap<>();
+		ArrayList<MutableRecord> journalRecords = new ArrayList<>();
+		Map<String, MutableRecord> failuresBySession = new HashMap<>();
+		for (SessionRecord session : sessions) {
+			if (session.snapshot.sessionId != null) {
+				allSessions.put(session.snapshot.sessionId, session);
+			}
+			if (session.snapshot.outcome == MidletSessionJournal.Outcome.UNEXPECTED_FAILURE
+					&& MidletFailureRecovery.isSafeEventId(session.snapshot.failureEventId)) {
+				MutableRecord failure = new MutableRecord(session);
+				journalRecords.add(failure);
+				failuresBySession.put(failure.sessionId, failure);
 			}
 		}
 
 		ArrayList<Record> standaloneReports = new ArrayList<>();
 		for (RawJavaReport raw : readRawJavaReports(context)) {
-			MutableRecord journal = bySession.get(raw.sessionId);
+			MutableRecord journal = failuresBySession.get(raw.sessionId);
 			if (journal != null && isExactEventMatch(
 					journal.sessionId, journal.eventId, raw.sessionId, raw.stackTrace)) {
 				journal.attach(raw);
 			} else {
 				standaloneReports.add(Record.fromRaw(raw));
+			}
+		}
+
+		for (ProcessExitStore.Snapshot exit : ProcessExitStore.loadStored(context)) {
+			MutableRecord journal = failuresBySession.get(exit.sessionId);
+			if (journal != null) {
+				// Process state summary carries the exact immutable session ID. No timestamp/PID
+				// heuristic is needed to enrich the existing MIDlet failure logical record.
+				journal.attach(exit);
+			} else {
+				standaloneReports.add(Record.fromProcessExit(exit, allSessions.get(exit.sessionId)));
 			}
 		}
 
@@ -103,27 +128,27 @@ public final class LocalDiagnosticRepository {
 		return null;
 	}
 
-	/** Deletes exactly the selected logical record. Correlated raw files are deleted before journal. */
+	/** Deletes exactly the selected logical record, preserving metadata if dependent evidence fails. */
 	public static boolean delete(Context context, Record record) {
 		if (record == null) {
 			return false;
 		}
-		boolean success = true;
 		for (File rawFile : record.rawFiles) {
 			if (rawFile.isFile() && !rawFile.delete()) {
 				Log.w(TAG, "Unable to delete raw crash report: " + rawFile.getName());
-				success = false;
+				return false;
 			}
 		}
-		if (!success) {
+		if (record.processExit != null && !ProcessExitStore.delete(context, record.processExit)) {
+			Log.w(TAG, "Unable to delete process-exit diagnostic: " + record.processExit.key);
 			return false;
 		}
 		if (record.journalFile != null) {
 			if (!MidletSessionJournal.delete(record.journalFile)) {
-				Log.w(TAG, "Unable to delete MIDlet failure journal: " + record.journalFile.getName());
+				Log.w(TAG, "Unable to delete MIDlet session journal: " + record.journalFile.getName());
 				return false;
 			}
-			// Do not drop the recovery acknowledgment until the durable failure journal is gone.
+			// Do not drop the recovery acknowledgment until the durable journal is gone.
 			MidletFailureRecovery.deleteAcknowledgment(context, record.eventId);
 		}
 		return true;
@@ -138,16 +163,12 @@ public final class LocalDiagnosticRepository {
 				&& stackTrace.contains("eventId=" + eventId + ";");
 	}
 
-	private static ArrayList<MutableRecord> readFailureJournals(Context context) {
+	private static ArrayList<SessionRecord> readSessionRecords(Context context) {
 		List<File> files = MidletSessionJournal.journalFiles(context);
-		ArrayList<MutableRecord> records = new ArrayList<>(files.size());
+		ArrayList<SessionRecord> records = new ArrayList<>(files.size());
 		for (File file : files) {
 			try {
-				MidletSessionJournal.Snapshot snapshot = MidletSessionJournal.read(file);
-				if (snapshot.outcome == MidletSessionJournal.Outcome.UNEXPECTED_FAILURE
-						&& MidletFailureRecovery.isSafeEventId(snapshot.failureEventId)) {
-					records.add(new MutableRecord(file, snapshot));
-				}
+				records.add(new SessionRecord(file, MidletSessionJournal.read(file)));
 			} catch (IOException | RuntimeException e) {
 				Log.w(TAG, "Ignoring unreadable MIDlet diagnostic journal: " + file.getName(), e);
 			}
@@ -195,9 +216,82 @@ public final class LocalDiagnosticRepository {
 		}
 	}
 
+	private static void appendPositiveKb(StringBuilder text, String label, long value) {
+		if (value > 0) {
+			text.append(label).append(": ").append(value).append(" kB\n");
+		}
+	}
+
+	private static void appendSessionDetails(StringBuilder detail, MidletSessionJournal.Snapshot snapshot) {
+		if (snapshot == null) {
+			return;
+		}
+		appendLine(detail, "Session ID", snapshot.sessionId);
+		appendLine(detail, "Lifecycle stage", snapshot.stage == null ? null : snapshot.stage.name());
+		appendLine(detail, "Session outcome", snapshot.outcome == null ? null : snapshot.outcome.name());
+		appendLine(detail, "MIDlet", snapshot.midletName);
+		appendLine(detail, "Vendor", snapshot.midletVendor);
+		appendLine(detail, "Version", snapshot.midletVersion);
+		appendLine(detail, "Entrypoint", snapshot.mainClass);
+		appendLine(detail, "JAR size", snapshot.jarSize);
+		appendLine(detail, "JAR SHA-256", snapshot.jarSha256);
+	}
+
+	private static void appendProcessExitDetails(StringBuilder detail, ProcessExitStore.Snapshot exit) {
+		if (exit == null) {
+			return;
+		}
+		appendLine(detail, "Exit reason", ProcessExitStore.reasonLabel(exit.reason)
+				+ " (" + exit.reason + ")");
+		appendLine(detail, "Process role", exit.processRole);
+		appendLine(detail, "Process name", exit.processName);
+		if (exit.pid > 0) {
+			detail.append("Process PID: ").append(exit.pid).append('\n');
+		}
+		if (exit.reason == ApplicationExitInfo.REASON_SIGNALED
+				|| exit.reason == ApplicationExitInfo.REASON_CRASH_NATIVE || exit.status != 0) {
+			appendLine(detail, "Exit status", ProcessExitStore.statusLabel(exit));
+		}
+		appendLine(detail, "Process importance", ProcessExitStore.importanceLabel(exit.importance));
+		appendPositiveKb(detail, "Last PSS sample", exit.pssKb);
+		appendPositiveKb(detail, "Last RSS sample", exit.rssKb);
+		appendLine(detail, "System description", exit.description);
+		if (exit.stateVersionCode >= 0) {
+			detail.append("App version code at exit: ").append(exit.stateVersionCode).append('\n');
+		}
+		if (exit.stateSdk >= 0) {
+			detail.append("Android SDK at exit: ").append(exit.stateSdk).append('\n');
+		}
+		appendLine(detail, "Device", joinDevice(exit.deviceBrand, exit.deviceModel));
+		appendLine(detail, "Primary ABI", exit.primaryAbi);
+		if (exit.reason == ApplicationExitInfo.REASON_LOW_MEMORY
+				|| (exit.reason == ApplicationExitInfo.REASON_SIGNALED && exit.status == OsConstants.SIGKILL)) {
+			detail.append("Dedicated low-memory kill classification supported: ")
+					.append(exit.lowMemoryKillReportSupported ? "yes" : "no")
+					.append('\n');
+		}
+		if (exit.traceBytes > 0) {
+			String label = "native-tombstone-protobuf".equals(exit.traceKind)
+					? "Native tombstone" : "System trace";
+			detail.append(label).append(": captured, ").append(exit.traceBytes).append(" bytes");
+			if (exit.traceKind != null) {
+				detail.append(" (").append(exit.traceKind).append(')');
+			}
+			if (exit.traceTruncated) {
+				detail.append(" [retention limit reached]");
+			}
+			detail.append('\n');
+		}
+		String trace = ProcessExitStore.readDisplayTrace(exit);
+		if (trace != null && !trace.trim().isEmpty()) {
+			detail.append("\nANR trace:\n").append(trace.trim()).append('\n');
+		}
+	}
+
 	public enum Kind {
 		MIDLET_FAILURE,
-		JAVA_REPORT
+		JAVA_REPORT,
+		PROCESS_EXIT
 	}
 
 	public static final class Record {
@@ -212,10 +306,11 @@ public final class LocalDiagnosticRepository {
 		private final String detailText;
 		private final File journalFile;
 		private final List<File> rawFiles;
+		private final ProcessExitStore.Snapshot processExit;
 
 		private Record(String id, Kind kind, long timestampMillis, String eventId, String sessionId,
 				String midletName, String processRole, String stackTrace, String detailText,
-				File journalFile, List<File> rawFiles) {
+				File journalFile, List<File> rawFiles, ProcessExitStore.Snapshot processExit) {
 			this.id = id;
 			this.kind = kind;
 			this.timestampMillis = timestampMillis;
@@ -227,6 +322,7 @@ public final class LocalDiagnosticRepository {
 			this.detailText = detailText;
 			this.journalFile = journalFile;
 			this.rawFiles = Collections.unmodifiableList(new ArrayList<>(rawFiles));
+			this.processExit = processExit;
 		}
 
 		private static Record fromRaw(RawJavaReport raw) {
@@ -262,7 +358,32 @@ public final class LocalDiagnosticRepository {
 					raw.stackTrace,
 					detail.toString().trim(),
 					null,
-					Collections.singletonList(raw.file)
+					Collections.singletonList(raw.file),
+					null
+			);
+		}
+
+		private static Record fromProcessExit(ProcessExitStore.Snapshot exit, SessionRecord session) {
+			StringBuilder detail = new StringBuilder();
+			detail.append("Type: Process exit diagnostic\n");
+			appendProcessExitDetails(detail, exit);
+			if (session != null) {
+				detail.append('\n');
+				appendSessionDetails(detail, session.snapshot);
+			}
+			return new Record(
+					exit.id,
+					Kind.PROCESS_EXIT,
+					exit.timestampMillis,
+					null,
+					exit.sessionId,
+					session == null ? null : session.snapshot.midletName,
+					exit.processRole,
+					null,
+					detail.toString().trim(),
+					session == null ? null : session.file,
+					Collections.emptyList(),
+					exit
 			);
 		}
 
@@ -305,6 +426,20 @@ public final class LocalDiagnosticRepository {
 		public boolean hasJavaReport() {
 			return !rawFiles.isEmpty();
 		}
+
+		public boolean hasProcessExit() {
+			return processExit != null;
+		}
+	}
+
+	private static final class SessionRecord {
+		private final File file;
+		private final MidletSessionJournal.Snapshot snapshot;
+
+		private SessionRecord(File file, MidletSessionJournal.Snapshot snapshot) {
+			this.file = file;
+			this.snapshot = snapshot;
+		}
 	}
 
 	private static final class MutableRecord {
@@ -314,10 +449,11 @@ public final class LocalDiagnosticRepository {
 		private final String sessionId;
 		private final String midletName;
 		private final ArrayList<RawJavaReport> rawReports = new ArrayList<>();
+		private ProcessExitStore.Snapshot processExit;
 
-		private MutableRecord(File journalFile, MidletSessionJournal.Snapshot snapshot) {
-			this.journalFile = journalFile;
-			this.snapshot = snapshot;
+		private MutableRecord(SessionRecord session) {
+			this.journalFile = session.file;
+			this.snapshot = session.snapshot;
 			this.eventId = snapshot.failureEventId;
 			this.sessionId = snapshot.sessionId;
 			this.midletName = snapshot.midletName;
@@ -327,23 +463,25 @@ public final class LocalDiagnosticRepository {
 			rawReports.add(raw);
 		}
 
+		private void attach(ProcessExitStore.Snapshot exit) {
+			// There should be at most one terminal ApplicationExitInfo for one process/session.
+			// If malformed history yields duplicates, retain the newest rather than multiplying UI noise.
+			if (processExit == null || exit.timestampMillis > processExit.timestampMillis) {
+				processExit = exit;
+			}
+		}
+
 		private Record freeze() {
 			StringBuilder detail = new StringBuilder();
 			detail.append("Type: MIDlet session failure\n");
 			appendLine(detail, "Event ID", eventId);
-			appendLine(detail, "Session ID", sessionId);
-			appendLine(detail, "Lifecycle stage", snapshot.stage == null ? null : snapshot.stage.name());
+			appendSessionDetails(detail, snapshot);
 			appendLine(detail, "Failure boundary", snapshot.failureBoundary == null
 					? null : snapshot.failureBoundary.name());
 			appendLine(detail, "Process name", snapshot.processName);
 			detail.append("Process PID: ").append(snapshot.processPid).append('\n');
-			appendLine(detail, "MIDlet", snapshot.midletName);
-			appendLine(detail, "Vendor", snapshot.midletVendor);
-			appendLine(detail, "Version", snapshot.midletVersion);
-			appendLine(detail, "Entrypoint", snapshot.mainClass);
-			appendLine(detail, "JAR size", snapshot.jarSize);
-			appendLine(detail, "JAR SHA-256", snapshot.jarSha256);
 			detail.append("Java report attached: ").append(rawReports.isEmpty() ? "no" : "yes").append('\n');
+			detail.append("Process-exit evidence attached: ").append(processExit == null ? "no" : "yes").append('\n');
 
 			String stackTrace = null;
 			String processRole = "midlet";
@@ -361,13 +499,21 @@ public final class LocalDiagnosticRepository {
 				appendLine(detail, "Device", joinDevice(raw.brand, raw.phoneModel));
 				appendLine(detail, "Thread", raw.threadDetails);
 			}
+			if (processExit != null) {
+				detail.append('\n');
+				appendProcessExitDetails(detail, processExit);
+				if (processExit.processRole != null) {
+					processRole = processExit.processRole;
+				}
+			}
 			if (stackTrace != null) {
 				detail.append("\nStack trace:\n").append(stackTrace.trim()).append('\n');
 			}
 			return new Record(
 					"event:" + eventId,
 					Kind.MIDLET_FAILURE,
-					snapshot.updatedWallTimeMillis,
+					Math.max(snapshot.updatedWallTimeMillis,
+							processExit == null ? 0 : processExit.timestampMillis),
 					eventId,
 					sessionId,
 					midletName,
@@ -375,7 +521,8 @@ public final class LocalDiagnosticRepository {
 					stackTrace,
 					detail.toString().trim(),
 					journalFile,
-					rawFiles
+					rawFiles,
+					processExit
 			);
 		}
 	}
