@@ -1,8 +1,33 @@
 JL-Mod Plus
+Copyright (c) 2026 Hendra Bara'langi
 
-JL-Mod Plus is a fork of JL-Mod:
+JL-Mod Plus is a modified fork of JL-Mod by woesss:
 https://github.com/woesss/JL-Mod
 
-Copyright, license, and attribution notices for inherited and third-party code remain with their respective authors and copyright holders.
+JL-Mod and the inherited J2ME Loader application/emulator sources are primarily
+licensed under the Apache License 2.0. Individual bundled components retain
+their own copyright notices and license terms.
 
-Project maintainer: Hendra Bara'langi' (h3nb)
+Canonical third-party provenance and license inventory:
+THIRD_PARTY_NOTICES.md
+
+The application ships a user-visible notice at:
+About -> Licenses
+(backed by app/src/main/assets/licenses.html)
+
+Distinct bundled source components include:
+- MicroEmulator subset — LGPL-2.1-or-later OR Apache-2.0
+- Android Open Source Project dx/dex sources — Apache-2.0
+- Nokia M3G / JSR-184 native reference code — EPL-1.0
+- SoniVox EAS native code — Apache-2.0
+- TinySoundFont — MIT
+- TinyMidiLoader — Zlib
+
+Runtime libraries such as AndroidX, Kotlin, Material Components, Gson, Oboe,
+ACRA, RxJava/RxAndroid, Zip4j, ASM, FFmpegKit and their shipped transitive
+components retain their upstream licenses. Exact origins, coordinates, license
+identifiers and important transitive notices are recorded in
+THIRD_PARTY_NOTICES.md and summarized in the in-app Licenses notice.
+
+Unless a file or component states otherwise, JL-Mod Plus project modifications
+are distributed under the repository's Apache License 2.0.
