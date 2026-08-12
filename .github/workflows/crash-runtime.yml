@@ -1,0 +1,138 @@
+name: Crash Runtime CI
+
+on:
+  pull_request:
+    branches:
+      - alpha
+    paths:
+      - '.github/workflows/crash-runtime.yml'
+      - 'app/build.gradle.kts'
+      - 'app/src/debug/**'
+      - 'app/src/androidTest/java/ru/playsoftware/j2meloader/crashes/**'
+      - 'app/src/main/java/ru/playsoftware/j2meloader/crashes/**'
+      - 'app/src/main/java/javax/microedition/shell/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: crash-runtime-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Set up and validate Gradle
+        uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
+
+      - name: Grant execute permission for Gradle wrapper
+        run: chmod +x gradlew
+
+      - name: Enable KVM access
+        shell: bash
+        run: |
+          if [[ ! -e /dev/kvm ]]; then
+            echo '/dev/kvm is unavailable on this runner.'
+            exit 1
+          fi
+          sudo chmod 666 /dev/kvm
+          ls -l /dev/kvm
+
+      - name: Install Android Emulator image
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager \
+            'platform-tools' \
+            'emulator' \
+            'system-images;android-30;google_apis;x86_64'
+          echo 'no' | avdmanager create avd \
+            --force \
+            --name jlmod-crash-runtime \
+            --package 'system-images;android-30;google_apis;x86_64'
+
+      - name: Start Android Emulator
+        shell: bash
+        run: |
+          mkdir -p build/ci-logs
+          nohup "$ANDROID_HOME/emulator/emulator" \
+            -avd jlmod-crash-runtime \
+            -no-window \
+            -no-audio \
+            -no-boot-anim \
+            -no-snapshot \
+            -gpu swiftshader_indirect \
+            > build/ci-logs/crash-runtime-emulator.log 2>&1 &
+          echo $! > build/ci-logs/crash-runtime-emulator.pid
+
+          adb wait-for-device
+          timeout 240 bash -c '
+            until [[ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")" == "1" ]]; do
+              sleep 2
+            done
+          '
+          adb shell input keyevent 82 || true
+          adb shell settings put global window_animation_scale 0
+          adb shell settings put global transition_animation_scale 0
+          adb shell settings put global animator_duration_scale 0
+          adb shell getprop ro.build.version.release
+          adb shell getprop ro.product.cpu.abi
+
+      - name: Run crash runtime instrumentation
+        id: runtime_test
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon --stacktrace \
+            -PjlmodRuntimeTestAbi=x86_64 \
+            :app:connectedEmulatorDebugAndroidTest \
+            2>&1 | tee build/ci-logs/crash-runtime-gradle.log
+
+      - name: Capture runtime process evidence
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p build/ci-reports
+          {
+            echo '## Runtime process snapshot'
+            echo
+            echo '```text'
+            adb shell ps -A | grep 'io.github.h3nb.jlmodplus.debug' || true
+            echo '```'
+          } > build/ci-reports/crash-runtime-processes.md
+          cat build/ci-reports/crash-runtime-processes.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload crash runtime evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: JL-Mod-Plus-crash-runtime-${{ github.run_number }}
+          path: |
+            build/ci-logs/crash-runtime-emulator.log
+            build/ci-logs/crash-runtime-gradle.log
+            build/ci-reports/crash-runtime-processes.md
+            app/build/outputs/androidTest-results/connected/
+            app/build/reports/androidTests/connected/
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Stop Android Emulator
+        if: always()
+        shell: bash
+        run: adb emu kill || true
