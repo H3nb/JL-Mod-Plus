@@ -110,6 +110,11 @@ public final class CrashReporter {
 		putBounded(reporter, KEY_PROCESS_ROLE, processRole);
 		putBounded(reporter, KEY_PROCESS_PID, Integer.toString(Process.myPid()));
 
+		// Android 11+ keeps a small process-owned state summary and a system exit-history ring.
+		// Publish only stable diagnostic identity here; ProcessExitStore snapshots useful prior exits
+		// from the main process and deliberately filters normal process-management noise.
+		ProcessExitStore.initializeProcess(application, processRole);
+
 		// The main process owns diagnostic retention so :midlet remains a single-purpose writer.
 		if (ROLE_MAIN.equals(processRole)) {
 			LocalCrashReportStore.prune(application);
