@@ -233,25 +233,22 @@ JNIEXPORT void JNICALL Java_javax_microedition_m3g_Graphics3D__1releaseGraphics
 JNIEXPORT void JNICALL Java_javax_microedition_m3g_Graphics3D__1setCamera
 (JNIEnv* aEnv, jclass, jlong aHContext, jlong aHCamera, jbyteArray aTransform)
 {
+    Matrix matrix;
     M3GMatrix *transform = NULL;
-    if (aTransform)
+    if (aTransform != NULL)
     {
-        transform = (Matrix *)(aEnv->GetByteArrayElements(aTransform, NULL));
-        if (transform == NULL)
+        if (!m3gReadTransformMatrix(aEnv, aTransform, &matrix))
         {
-            M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
             return;
         }
+        transform = &matrix;
     }
 
     M3G_DO_LOCK
     m3gSetCamera((M3GRenderContext) aHContext, (M3GCamera) aHCamera, transform);
     M3G_DO_UNLOCK(aEnv)
 
-    if (transform)
-    {
-        aEnv->ReleaseByteArrayElements(aTransform, (jbyte*)transform, JNI_ABORT);
-    }
+
 }
 
 /*
@@ -315,15 +312,15 @@ JNIEXPORT void JNICALL Java_javax_microedition_m3g_Graphics3D__1render
 (JNIEnv* aEnv, jclass, jlong aHContext,
  jlong aHVertices, jlong aHIndices, jlong aHAppearance, jbyteArray aTransform, jint aScope)
 {
+    Matrix matrix;
     M3GMatrix *transform = NULL;
-    if (aTransform)
+    if (aTransform != NULL)
     {
-        transform = (M3GMatrix *)aEnv->GetByteArrayElements(aTransform, NULL);
-        if (transform == NULL)
+        if (!m3gReadTransformMatrix(aEnv, aTransform, &matrix))
         {
-            M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
             return;
         }
+        transform = &matrix;
     }
 
     /*
@@ -347,10 +344,7 @@ JNIEXPORT void JNICALL Java_javax_microedition_m3g_Graphics3D__1render
     M3G_DO_UNLOCK(aEnv)
 
 
-    if (transform)
-    {
-        aEnv->ReleaseByteArrayElements(aTransform, (jbyte*)transform, JNI_ABORT);
-    }
+
 }
 
 /*
@@ -401,24 +395,21 @@ JNIEXPORT void JNICALL Java_javax_microedition_m3g_Graphics3D__1addRef
 JNIEXPORT jint JNICALL Java_javax_microedition_m3g_Graphics3D__1addLight
 (JNIEnv* aEnv, jclass, jlong aHContext, jlong aHLight, jbyteArray aTransform)
 {
+    Matrix matrix;
     M3GMatrix *transform = NULL;
-    if (aTransform)
+    if (aTransform != NULL)
     {
-        transform = (M3GMatrix *)(aEnv->GetByteArrayElements(aTransform, NULL));
-        if (transform == NULL)
+        if (!m3gReadTransformMatrix(aEnv, aTransform, &matrix))
         {
-            M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
             return 0;
         }
+        transform = &matrix;
     }
     M3G_DO_LOCK
     int idx = m3gAddLight((M3GRenderContext) aHContext, (M3GLight) aHLight, transform);
     M3G_DO_UNLOCK(aEnv)
 
-    if (transform)
-    {
-        aEnv->ReleaseByteArrayElements(aTransform, (jbyte*)transform, JNI_ABORT);
-    }
+
 
     return idx;
 }
@@ -466,25 +457,22 @@ JNIEXPORT void JNICALL Java_javax_microedition_m3g_Graphics3D__1setDepthRange
 JNIEXPORT void JNICALL Java_javax_microedition_m3g_Graphics3D__1setLight
 (JNIEnv* aEnv, jclass, jlong aHContext, jint aLightIndex, jlong aHLight, jbyteArray aTransform)
 {
+    Matrix matrix;
     M3GMatrix *transform = NULL;
-    if (aTransform)
+    if (aTransform != NULL)
     {
-        transform = (M3GMatrix *)(aEnv->GetByteArrayElements(aTransform, NULL));
-        if (transform == NULL)
+        if (!m3gReadTransformMatrix(aEnv, aTransform, &matrix))
         {
-            M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
             return;
         }
+        transform = &matrix;
     }
 
     M3G_DO_LOCK
     m3gSetLight((M3GRenderContext) aHContext, aLightIndex, (M3GLight) aHLight, transform);
     M3G_DO_UNLOCK(aEnv)
 
-    if (transform)
-    {
-        aEnv->ReleaseByteArrayElements(aTransform, (jbyte*)transform, JNI_ABORT);
-    }
+
 }
 
 /*
@@ -499,15 +487,15 @@ static void renderNode(M3GRenderContext aHCtx,
 JNIEXPORT void JNICALL Java_javax_microedition_m3g_Graphics3D__1renderNode
 (JNIEnv* aEnv, jclass, jlong aHCtx, jlong aHNode, jbyteArray aTransform)
 {
+    Matrix matrix;
     M3GMatrix *transform = NULL;
-    if (aTransform)
+    if (aTransform != NULL)
     {
-        transform = (M3GMatrix *)(aEnv->GetByteArrayElements(aTransform, NULL));
-        if (transform == NULL)
+        if (!m3gReadTransformMatrix(aEnv, aTransform, &matrix))
         {
-            M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
             return;
         }
+        transform = &matrix;
     }
 
     M3G_DO_LOCK
@@ -518,10 +506,7 @@ JNIEXPORT void JNICALL Java_javax_microedition_m3g_Graphics3D__1renderNode
     //eventSource->ExecuteV(&renderNode, (M3GRenderContext)aHCtx, (M3GNode)aHNode, (const M3GMatrix *)transform);
     M3G_DO_UNLOCK(aEnv)
 
-    if (aTransform)
-    {
-        aEnv->ReleaseByteArrayElements(aTransform, (jbyte*)transform, JNI_ABORT);
-    }
+
 }
 
 #if defined(M3G_ENABLE_PROFILING)
@@ -558,25 +543,24 @@ JNIEXPORT jint JNICALL Java_javax_microedition_m3g_Graphics3D__1getStatistics
 JNIEXPORT void JNICALL Java_javax_microedition_m3g_Graphics3D__1getViewTransform
 (JNIEnv* aEnv, jclass, jlong aHCtx, jbyteArray aTransform)
 {
+    Matrix matrix;
     M3GMatrix *transform = NULL;
-    if (aTransform)
+    if (aTransform != NULL)
     {
-        transform = (M3GMatrix *)(aEnv->GetByteArrayElements(aTransform, NULL));
-        if (transform == NULL)
+        if (!m3gReadTransformMatrix(aEnv, aTransform, &matrix))
         {
-            M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
             return;
         }
+        transform = &matrix;
     }
 
     M3G_DO_LOCK
     m3gGetViewTransform((M3GRenderContext) aHCtx, transform);
     M3G_DO_UNLOCK(aEnv)
 
-    if (transform)
+    if (transform != NULL)
     {
-        /* copy array to Java side and release arrays */
-        aEnv->ReleaseByteArrayElements(aTransform, (jbyte*)transform, 0);
+        m3gWriteTransformMatrix(aEnv, aTransform, &matrix);
     }
 }
 
@@ -593,23 +577,23 @@ JNIEXPORT jlong JNICALL Java_javax_microedition_m3g_Graphics3D__1getCamera
 JNIEXPORT jlong JNICALL Java_javax_microedition_m3g_Graphics3D__1getLightTransform
 (JNIEnv* aEnv, jclass, jlong aHCtx, jint aLightIndex, jbyteArray aTransform)
 {
+    Matrix matrix;
     M3GMatrix *transform = NULL;
-    if (aTransform)
+    if (aTransform != NULL)
     {
-        transform = (M3GMatrix *)(aEnv->GetByteArrayElements(aTransform, NULL));
-        if (transform == NULL)
+        if (!m3gReadTransformMatrix(aEnv, aTransform, &matrix))
         {
-            M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
             return 0;
         }
+        transform = &matrix;
     }
     M3G_DO_LOCK
     jlong lightTransform = (jlong)m3gGetLightTransform((M3GRenderContext)aHCtx, aLightIndex, transform);
     M3G_DO_UNLOCK(aEnv)
 
-    if (transform)
+    if (transform != NULL)
     {
-        aEnv->ReleaseByteArrayElements(aTransform, (jbyte*)transform, 0);
+        m3gWriteTransformMatrix(aEnv, aTransform, &matrix);
     }
 
     return (jlong)lightTransform;

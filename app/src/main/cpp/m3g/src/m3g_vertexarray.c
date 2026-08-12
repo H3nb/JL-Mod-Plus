@@ -641,14 +641,13 @@ M3G_API M3GVertexArray m3gCreateVertexArray(M3GInterface interface,
             return NULL;
         }
 
-        switch (type) {
-        case M3G_BYTE:
+        if (type == M3G_BYTE) {
             /* always padded to 4 bytes */
             array->stride = 4;
-            break;
-        case M3G_SHORT:
+        }
+        else {
+            M3G_ASSERT(type == M3G_SHORT);
             array->stride = size * sizeof(M3Gshort);
-            break;
         }
 
         /* Alloc and initialize all values to zero */
