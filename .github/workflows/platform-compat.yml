@@ -1,38 +1,31 @@
-name: Crash Runtime CI
+name: Android Platform Compatibility CI
 
 on:
   pull_request:
     branches:
       - alpha
     paths:
-      - '.github/workflows/crash-runtime.yml'
+      - '.github/workflows/platform-compat.yml'
       - 'app/build.gradle.kts'
       - 'gradle/libs.versions.toml'
       - 'app/src/main/AndroidManifest.xml'
-      - 'app/src/debug/**'
-      - 'app/src/androidTest/java/ru/playsoftware/j2meloader/crashes/**'
-      - 'app/src/androidTest/java/ru/playsoftware/j2meloader/platform/**'
-      - 'app/src/main/java/ru/playsoftware/j2meloader/EmulatorApplication.java'
-      - 'app/src/main/java/ru/playsoftware/j2meloader/crashes/**'
       - 'app/src/main/java/javax/microedition/shell/**'
+      - 'app/src/main/java/javax/microedition/lcdui/overlay/**'
+      - 'app/src/main/java/ru/playsoftware/j2meloader/**'
+      - 'app/src/androidTest/java/ru/playsoftware/j2meloader/platform/**'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: crash-runtime-${{ github.workflow }}-${{ github.ref }}
+  group: platform-compat-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  runtime:
-    name: runtime-api-${{ matrix.api }}
+  runtime-api-36:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      matrix:
-        api: [23, 30]
+    timeout-minutes: 30
 
     steps:
       - name: Check out sources
@@ -79,7 +72,7 @@ jobs:
           sudo chmod 666 /dev/kvm
           ls -l /dev/kvm
 
-      - name: Install Android Emulator image
+      - name: Install Android 16 emulator image
         shell: bash
         run: |
           export ANDROID_USER_HOME="$RUNNER_TEMP/android-user"
@@ -88,8 +81,8 @@ jobs:
           echo "ANDROID_USER_HOME=$ANDROID_USER_HOME" >> "$GITHUB_ENV"
           echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
 
-          image="system-images;android-${{ matrix.api }};google_apis;x86_64"
-          avd="jlmod-crash-runtime-${{ matrix.api }}"
+          image='system-images;android-36;google_apis;x86_64'
+          avd='jlmod-platform-compat-36'
           yes | sdkmanager --licenses >/dev/null || true
           sdkmanager 'platform-tools' 'emulator' "$image"
           echo 'no' | avdmanager create avd \
@@ -97,23 +90,21 @@ jobs:
             --name "$avd" \
             --package "$image" \
             -p "$ANDROID_AVD_HOME/$avd.avd"
-          avdmanager list avd
           test -f "$ANDROID_AVD_HOME/$avd.ini"
 
-      - name: Start Android Emulator
+      - name: Start Android 16 emulator
         shell: bash
         run: |
           mkdir -p build/ci-logs
-          avd="jlmod-crash-runtime-${{ matrix.api }}"
           nohup "$ANDROID_HOME/emulator/emulator" \
-            -avd "$avd" \
+            -avd 'jlmod-platform-compat-36' \
             -no-window \
             -no-audio \
             -no-boot-anim \
             -no-snapshot \
             -gpu swiftshader_indirect \
-            > build/ci-logs/crash-runtime-emulator.log 2>&1 &
-          echo $! > build/ci-logs/crash-runtime-emulator.pid
+            > build/ci-logs/platform-compat-emulator.log 2>&1 &
+          echo $! > build/ci-logs/platform-compat-emulator.pid
 
           timeout 120 adb wait-for-device
           timeout 240 bash -c '
@@ -121,55 +112,36 @@ jobs:
               sleep 2
             done
           '
-          adb shell input keyevent 82 || true
           adb shell settings put global window_animation_scale 0
           adb shell settings put global transition_animation_scale 0
           adb shell settings put global animator_duration_scale 0
-          adb shell getprop ro.build.version.release
           adb shell getprop ro.build.version.sdk
           adb shell getprop ro.product.cpu.abi
 
-      - name: Run crash runtime instrumentation
-        id: runtime_test
+      - name: Run Android 16 platform compatibility instrumentation
         shell: bash
         run: |
           set -o pipefail
           ./gradlew --no-daemon --stacktrace \
             -PjlmodRuntimeTestAbi=x86_64 \
+            -Pandroid.testInstrumentationRunnerArguments.class=ru.playsoftware.j2meloader.platform.PlatformCompatManifestTest \
             :app:connectedEmulatorDebugAndroidTest \
-            2>&1 | tee build/ci-logs/crash-runtime-gradle.log
+            2>&1 | tee build/ci-logs/platform-compat-gradle.log
 
-      - name: Capture runtime process evidence
-        if: always()
-        shell: bash
-        run: |
-          mkdir -p build/ci-reports
-          {
-            echo '## Runtime process snapshot'
-            echo
-            echo "Android API: ${{ matrix.api }}"
-            echo
-            echo '```text'
-            adb shell ps | grep 'io.github.h3nb.jlmodplus.debug' || true
-            echo '```'
-          } > build/ci-reports/crash-runtime-processes.md
-          cat build/ci-reports/crash-runtime-processes.md >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload crash runtime evidence
+      - name: Upload platform compatibility evidence
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: JL-Mod-Plus-crash-runtime-${{ github.run_number }}-api${{ matrix.api }}
+          name: JL-Mod-Plus-platform-compat-${{ github.run_number }}-api36
           path: |
-            build/ci-logs/crash-runtime-emulator.log
-            build/ci-logs/crash-runtime-gradle.log
-            build/ci-reports/crash-runtime-processes.md
+            build/ci-logs/platform-compat-emulator.log
+            build/ci-logs/platform-compat-gradle.log
             app/build/outputs/androidTest-results/connected/
             app/build/reports/androidTests/connected/
           if-no-files-found: warn
           retention-days: 7
 
-      - name: Stop Android Emulator
+      - name: Stop Android emulator
         if: always()
         shell: bash
         run: adb emu kill || true
