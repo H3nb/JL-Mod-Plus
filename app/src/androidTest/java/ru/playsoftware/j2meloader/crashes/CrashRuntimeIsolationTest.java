@@ -49,21 +49,21 @@ public class CrashRuntimeIsolationTest {
 		String midletProcessName = mainProcessName + ":midlet";
 		int mainPid = Process.myPid();
 		Set<String> baselineIds = recordIds(LocalDiagnosticRepository.load(context));
-		LocalDiagnosticRepository.Record first = null;
-		LocalDiagnosticRepository.Record second = null;
 
 		try {
 			assertEquals(mainProcessName, ru.playsoftware.j2meloader.EmulatorApplication.getProcessName());
 			assertEquals(mainPid, processPid(context, mainProcessName));
 
-			first = launchProbeAndAwaitCorrelatedRecord(context, baselineIds);
+			LocalDiagnosticRepository.Record first = launchProbeAndAwaitCorrelatedRecord(
+					context, baselineIds);
 			assertRemoteProcessStops(context, midletProcessName);
 			assertEquals(mainPid, Process.myPid());
 			assertEquals(mainPid, processPid(context, mainProcessName));
 			assertCorrelatedProbeRecord(first);
 
 			Set<String> afterFirstIds = recordIds(LocalDiagnosticRepository.load(context));
-			second = launchProbeAndAwaitCorrelatedRecord(context, afterFirstIds);
+			LocalDiagnosticRepository.Record second = launchProbeAndAwaitCorrelatedRecord(
+					context, afterFirstIds);
 			assertRemoteProcessStops(context, midletProcessName);
 			assertEquals(mainPid, Process.myPid());
 			assertEquals(mainPid, processPid(context, mainProcessName));
@@ -71,12 +71,7 @@ public class CrashRuntimeIsolationTest {
 			assertNotEquals(first.getEventId(), second.getEventId());
 			assertNotEquals(first.getSessionId(), second.getSessionId());
 		} finally {
-			if (first != null) {
-				LocalDiagnosticRepository.delete(context, first);
-			}
-			if (second != null) {
-				LocalDiagnosticRepository.delete(context, second);
-			}
+			cleanupProbeDiagnostics(context, baselineIds);
 		}
 	}
 
@@ -138,6 +133,19 @@ public class CrashRuntimeIsolationTest {
 			}
 		}
 		return 0;
+	}
+
+	private static void cleanupProbeDiagnostics(Context context, Set<String> baselineIds) {
+		try {
+			for (LocalDiagnosticRepository.Record record : LocalDiagnosticRepository.load(context)) {
+				if (!baselineIds.contains(record.getId())
+						&& CrashRuntimeProbeActivity.MIDLET_NAME.equals(record.getMidletName())) {
+					LocalDiagnosticRepository.delete(context, record);
+				}
+			}
+		} catch (RuntimeException ignored) {
+			// Test cleanup is best-effort and must not replace the validation failure that led here.
+		}
 	}
 
 	private static Set<String> recordIds(List<LocalDiagnosticRepository.Record> records) {
