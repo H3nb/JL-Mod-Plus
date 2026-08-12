@@ -79,9 +79,14 @@ jobs:
         run: |
           export ANDROID_USER_HOME="$RUNNER_TEMP/android-user"
           export ANDROID_AVD_HOME="$RUNNER_TEMP/android-avd"
-          mkdir -p "$ANDROID_USER_HOME" "$ANDROID_AVD_HOME"
+          mkdir -p "$ANDROID_USER_HOME" "$ANDROID_AVD_HOME" "$HOME/.android"
           echo "ANDROID_USER_HOME=$ANDROID_USER_HOME" >> "$GITHUB_ENV"
           echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
+
+          # M3G is a GLES 1.x fixed-function renderer. Keep the hosted emulator
+          # in its documented OpenGL ES 1.1/2.0 compatibility mode instead of
+          # advertising GLES 3.x through the host translator.
+          printf 'GLESDynamicVersion = off\n' > "$HOME/.android/advancedFeatures.ini"
 
           image='system-images;android-30;google_apis;x86_64'
           avd='jlmod-m3g-runtime-30'
@@ -123,6 +128,7 @@ jobs:
           timeout 10 adb shell getprop ro.build.version.release
           timeout 10 adb shell getprop ro.build.version.sdk
           timeout 10 adb shell getprop ro.product.cpu.abi
+          timeout 10 adb shell getprop ro.opengles.version
 
           adb logcat -c
           nohup adb logcat -v threadtime \
@@ -157,6 +163,7 @@ jobs:
             echo
             echo '- Android API: 30'
             echo '- Runtime ABI: x86_64 (64-bit)'
+            echo '- Emulator OpenGL ES mode: compatibility (1.1/2.0)'
             echo '- Supported production ABI remains arm64-v8a and is compiled by Android CI.'
             echo "- Instrumentation outcome: ${{ steps.runtime_test.outcome }}"
             echo
