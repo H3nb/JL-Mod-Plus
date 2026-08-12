@@ -107,6 +107,7 @@ public class M3GRuntimeTest {
 	public void translatedGraphicsTargetPreservesViewportAndClearOutput() {
 		Image translatedImage = Image.createImage(SIZE, SIZE);
 		Graphics translatedGraphics = translatedImage.getGraphics();
+		fillImage(translatedGraphics);
 		translatedGraphics.translate(5, 7);
 		int bindOffsetX = translatedGraphics.getTranslateX();
 		int bindOffsetY = translatedGraphics.getTranslateY();
@@ -152,6 +153,7 @@ public class M3GRuntimeTest {
 
 		Image clippedImage = Image.createImage(SIZE, SIZE);
 		Graphics clippedGraphics = clippedImage.getGraphics();
+		fillImage(clippedGraphics);
 		clippedGraphics.setClip(8, 8, 12, 12);
 
 		runtimeStep("graphics target: bind clipped target");
@@ -375,6 +377,11 @@ public class M3GRuntimeTest {
 		background.setColorClearEnable(true);
 		background.setDepthClearEnable(true);
 		return background;
+	}
+
+	private static void fillImage(Graphics graphics) {
+		graphics.setColor(0x00FFFFFF);
+		graphics.fillRect(0, 0, SIZE, SIZE);
 	}
 
 	private static void assertTransformEquals(Transform expected, Transform actual) {
