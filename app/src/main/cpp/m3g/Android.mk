@@ -12,9 +12,11 @@ LOCAL_CXXFLAGS  := $(LOCAL_CFLAGS)
 # without changing the supported arm64-v8a production build. Legacy debug-only
 # assertions contain diagnostics that are intentionally outside the production
 # warning-zero baseline, so keep them visible without promoting them to errors.
+# The forced diagnostic header checks the small set of GL calls that can feed
+# the first M3G_ASSERT_GL failure during target activation.
 ifeq ($(TARGET_ARCH_ABI),x86_64)
-    LOCAL_CFLAGS   += -DM3G_DEBUG -Wno-error
-    LOCAL_CXXFLAGS += -DM3G_DEBUG -Wno-error
+    LOCAL_CFLAGS   += -DM3G_DEBUG -Wno-error -include m3g_runtime_gl_diagnostics.h
+    LOCAL_CXXFLAGS += -DM3G_DEBUG -Wno-error -include m3g_runtime_gl_diagnostics.h
 endif
 
 LOCAL_LDLIBS    := -llog -lEGL -lGLESv1_CM -lz -ljnigraphics
