@@ -63,8 +63,20 @@ public class EmulatorApplication extends Application implements OnSharedPreferen
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
 			return Application.getProcessName();
 		} else {
-			return FileUtils.getText("/proc/self/cmdline").trim();
+			return normalizeProcessName(FileUtils.getText("/proc/self/cmdline"));
 		}
+	}
+
+	/** Procfs exposes the command line as a NUL-terminated string on legacy Android releases. */
+	static String normalizeProcessName(String rawName) {
+		if (rawName == null) {
+			return "";
+		}
+		int terminator = rawName.indexOf('\0');
+		if (terminator >= 0) {
+			rawName = rawName.substring(0, terminator);
+		}
+		return rawName.trim();
 	}
 
 	void setNightMode(String theme) {
