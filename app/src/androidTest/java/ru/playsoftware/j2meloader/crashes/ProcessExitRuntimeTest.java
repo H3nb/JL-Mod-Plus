@@ -19,10 +19,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Process;
 import android.os.SystemClock;
 
@@ -43,6 +45,10 @@ public class ProcessExitRuntimeTest {
 
 	@Test
 	public void abruptRemoteSignalDeathIsCapturedWithoutJavaException() {
+		// ApplicationExitInfo is public from Android 11. API23-29 exercise the existing Java/journal
+		// containment suite in CI, but cannot truthfully classify this process death via public API.
+		assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R);
+
 		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 		String mainProcessName = context.getPackageName();
 		String midletProcessName = mainProcessName + ":midlet";
