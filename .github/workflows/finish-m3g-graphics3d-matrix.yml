@@ -63,9 +63,17 @@ jobs:
                   aEnv->ReleaseByteArrayElements(aTransform, (jbyte*)transform, JNI_ABORT);
               }'''
           input_count = text.count(input_release)
-          if input_count != 5:
-              raise SystemExit(f'expected 5 input-only matrix releases, found {input_count}')
+          if input_count != 4:
+              raise SystemExit(f'expected 4 standard input-only matrix releases, found {input_count}')
           text = text.replace(input_release, '')
+
+          render_node_release = '''    if (aTransform)
+              {
+                  aEnv->ReleaseByteArrayElements(aTransform, (jbyte*)transform, JNI_ABORT);
+              }'''
+          if text.count(render_node_release) != 1:
+              raise SystemExit('expected one renderNode input-only matrix release')
+          text = text.replace(render_node_release, '')
 
           output_release = '''    if (transform)
               {
@@ -102,6 +110,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add app/src/main/cpp/m3g/jni/graphics3d.inl
-          git rm .github/workflows/finish-m3g-graphics3d-matrix.yml
+          git rm .github/workflows/finish-m3g-graphics3d-matrix.yml .github/workflows/apply-m3g-warning-gate.yml
           git commit -m "Harden Graphics3D JNI matrix storage on ARM64"
           git push origin HEAD:agent/m3g-arm64-warning-zero-v2
