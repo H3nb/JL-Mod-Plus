@@ -98,6 +98,8 @@ jobs:
             "https://dl.google.com/android/repository/emulator-linux_x64-$emulator_build.zip"
           test "$(stat --format='%s' "$emulator_archive")" = '320951246'
           unzip -o -q "$emulator_archive" -d "$ANDROID_HOME"
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends libpulse0
           "$ANDROID_HOME/emulator/emulator" -version
 
           echo 'no' | avdmanager create avd \
