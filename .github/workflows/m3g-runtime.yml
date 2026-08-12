@@ -97,6 +97,8 @@ jobs:
 
           image='system-images;android-30;default;x86_64'
           avd='jlmod-m3g-runtime-30'
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends libpulse0
           yes | sdkmanager --licenses >/dev/null || true
           sdkmanager 'platform-tools' 'emulator' "$image"
           sdkmanager --list_installed > build/ci-logs/android-sdk-packages.txt
