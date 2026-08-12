@@ -182,7 +182,7 @@ public class CrashRuntimeIsolationTest {
 		assertEquals(LIFECYCLE_MIDLET_NAME, record.getMidletName());
 		assertEquals("midlet", record.getProcessRole());
 		assertTrue(record.getDetailText().contains("Failure boundary: LIFECYCLE_START"));
-		assertTrue(record.getDetailText().contains("MIDlet main class: " + LifecycleMidlet.CLASS_NAME));
+		assertTrue(record.getDetailText().contains("Entrypoint: " + LifecycleMidlet.CLASS_NAME));
 		assertNotNull(record.getStackTrace());
 		assertTrue(record.getStackTrace().contains("Failed startApp"));
 		assertTrue(record.getStackTrace().contains(LifecycleMidlet.START_FAILURE_MARKER));
