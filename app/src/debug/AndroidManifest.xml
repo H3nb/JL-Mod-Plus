@@ -6,6 +6,12 @@
         <activity
             android:name="javax.microedition.shell.MicroActivity"
             tools:remove="android:process" />
+        <activity
+            android:name="ru.playsoftware.j2meloader.crashes.CrashRuntimeProbeActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:process=":midlet" />
     </application>
 
 </manifest>
