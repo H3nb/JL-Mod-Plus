@@ -22,7 +22,8 @@ import ru.playsoftware.j2meloader.config.Config;
 
 /** Second privacy pass applied only to text copied/shared outside the app. */
 final class DiagnosticExportSanitizer {
-	private static final Pattern URL = Pattern.compile("(?i)\\b(?:https?|file)://\\S+");
+	private static final Pattern URI = Pattern.compile(
+			"(?i)\\b(?:https?|file|content|ftp|ftps|sftp|jar|mailto|tel|geo|market|intent):(?:/{1,3})?\\S+");
 	private static final Pattern WINDOWS_PATH = Pattern.compile("(?i)\\b[A-Z]:\\\\\\S+");
 	private static final Pattern UNIX_PATH = Pattern.compile("(?<![A-Za-z0-9:/])/(?:[^\\s]+)");
 
@@ -43,7 +44,7 @@ final class DiagnosticExportSanitizer {
 		if (text == null || text.isEmpty()) {
 			return text;
 		}
-		String sanitized = URL.matcher(text).replaceAll("<url>");
+		String sanitized = URI.matcher(text).replaceAll("<uri>");
 		sanitized = replacePath(sanitized, emulatorDir, "<emulator-dir>");
 		sanitized = replacePath(sanitized, appDataDir, "<app-data>");
 		sanitized = WINDOWS_PATH.matcher(sanitized).replaceAll("<path>");
