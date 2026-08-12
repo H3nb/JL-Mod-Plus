@@ -11,7 +11,6 @@ on:
       - 'app/src/main/AndroidManifest.xml'
       - 'app/src/debug/**'
       - 'app/src/androidTest/java/ru/playsoftware/j2meloader/crashes/**'
-      - 'app/src/androidTest/java/ru/playsoftware/j2meloader/platform/**'
       - 'app/src/main/java/ru/playsoftware/j2meloader/EmulatorApplication.java'
       - 'app/src/main/java/ru/playsoftware/j2meloader/crashes/**'
       - 'app/src/main/java/javax/microedition/shell/**'

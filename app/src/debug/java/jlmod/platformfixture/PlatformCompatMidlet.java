@@ -15,6 +15,7 @@
 package jlmod.platformfixture;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -31,19 +32,21 @@ public final class PlatformCompatMidlet extends MIDlet {
 	public static final String CLASS_NAME = "jlmod.platformfixture.PlatformCompatMidlet";
 	public static final String MARKER_PROPERTY = "JLMod-Platform-Marker";
 	public static final String DISPLAY_PROPERTY = "JLMod-Platform-Display";
-	public static final String DISPLAY_FORM = "form";
+	public static final String DISPLAY_TRANSITION = "transition";
+	public static final String RETURN_REQUEST = "return-request";
+
+	private Display display;
+	private ProbeCanvas canvas;
+	private String markerPath;
+	private boolean transitionMode;
 
 	@Override
 	public void startApp() {
-		String markerPath = getAppProperty(MARKER_PROPERTY);
-		if (DISPLAY_FORM.equals(getAppProperty(DISPLAY_PROPERTY))) {
-			Form form = new Form("Platform host displayable");
-			form.append(new TextField("IME probe", "", 32, TextField.ANY));
-			Display.getDisplay(this).setCurrent(form);
-			writeMarker(markerPath, "form\n");
-		} else {
-			Display.getDisplay(this).setCurrent(new ProbeCanvas(markerPath));
-		}
+		markerPath = getAppProperty(MARKER_PROPERTY);
+		display = Display.getDisplay(this);
+		transitionMode = DISPLAY_TRANSITION.equals(getAppProperty(DISPLAY_PROPERTY));
+		canvas = new ProbeCanvas(markerPath);
+		display.setCurrent(canvas);
 	}
 
 	@Override
@@ -54,7 +57,32 @@ public final class PlatformCompatMidlet extends MIDlet {
 	public void destroyApp(boolean unconditional) throws MIDletStateChangeException {
 	}
 
-	private static final class ProbeCanvas extends Canvas {
+	private Form createForm() {
+		Form form = new Form("Platform host displayable");
+		form.append(new TextField("IME probe", "", 32, TextField.ANY));
+		return form;
+	}
+
+	private void showTransitionForm() {
+		display.setCurrent(createForm());
+		writeMarker(markerPath, "form\n");
+		Thread returnWatcher = new Thread(() -> {
+			while (!markerContains(markerPath, RETURN_REQUEST)) {
+				try {
+					Thread.sleep(50L);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					return;
+				}
+			}
+			display.setCurrent(canvas);
+			writeMarker(markerPath, "returned\n");
+		}, "platform-fixture-return");
+		returnWatcher.setDaemon(true);
+		returnWatcher.start();
+	}
+
+	private final class ProbeCanvas extends Canvas {
 		private final File marker;
 
 		private ProbeCanvas(String markerPath) {
@@ -78,6 +106,9 @@ public final class PlatformCompatMidlet extends MIDlet {
 		@Override
 		protected void pointerPressed(int x, int y) {
 			writeMarker("pointer=" + x + "," + y + "\n");
+			if (transitionMode) {
+				showTransitionForm();
+			}
 		}
 
 		private void writeMarker(String value) {
@@ -99,6 +130,21 @@ public final class PlatformCompatMidlet extends MIDlet {
 			output.flush();
 		} catch (IOException e) {
 			throw new IllegalStateException("Unable to write platform fixture marker", e);
+		}
+	}
+
+	private static boolean markerContains(String markerPath, String expected) {
+		if (markerPath == null) {
+			return false;
+		}
+		File marker = new File(markerPath);
+		byte[] bytes = new byte[(int) marker.length()];
+		try (FileInputStream input = new FileInputStream(marker)) {
+			int read = input.read(bytes);
+			return read > 0 && new String(bytes, 0, read,
+					java.nio.charset.StandardCharsets.UTF_8).contains(expected);
+		} catch (IOException ignored) {
+			return false;
 		}
 	}
 }

@@ -24,9 +24,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+import android.accessibilityservice.AccessibilityService;
+import android.graphics.Rect;
 import android.view.accessibility.AccessibilityNodeInfo;
 
 import androidx.preference.PreferenceManager;
@@ -34,6 +35,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Test;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.runner.RunWith;
 
 import java.io.File;
@@ -62,112 +65,169 @@ public class PlatformCompatBehaviorTest {
 	private static final String MIDLET_NAME = "JL-Mod Plus Platform Compatibility Fixture";
 	private static final String MIDLET_VENDOR = "JL-Mod Plus";
 	private static final String MIDLET_VERSION = "1.0";
+	private Context context;
+	private SharedPreferences preferences;
+	private String midletProcessName;
+	private boolean hadEmulatorDirectory;
+	private String previousEmulatorDirectory;
+	private boolean hadToolbar;
+	private boolean previousToolbar;
+	private boolean hadStatusBar;
+	private boolean previousStatusBar;
+	private File root;
+	private File appDir;
+	private File marker;
+
+	@Before
+	public void setUpFixture() throws Exception {
+		context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+		preferences = PreferenceManager.getDefaultSharedPreferences(context);
+		midletProcessName = context.getPackageName() + ":midlet";
+		hadEmulatorDirectory = preferences.contains(Constants.PREF_EMULATOR_DIR);
+		previousEmulatorDirectory = preferences.getString(Constants.PREF_EMULATOR_DIR, null);
+		hadToolbar = preferences.contains(Constants.PREF_TOOLBAR);
+		previousToolbar = preferences.getBoolean(Constants.PREF_TOOLBAR, false);
+		hadStatusBar = preferences.contains(Constants.PREF_STATUSBAR);
+		previousStatusBar = preferences.getBoolean(Constants.PREF_STATUSBAR, false);
+		root = new File(context.getFilesDir(), FIXTURE_ROOT);
+		appDir = new File(new File(root, "converted"), "fixture");
+		marker = new File(root, "platform.marker");
+		deleteRecursively(root);
+		prepareFixture(context, root, appDir, marker);
+		assertTrue("Unable to select platform compatibility fixture",
+				preferences.edit()
+						.putString(Constants.PREF_EMULATOR_DIR, root.getAbsolutePath())
+						.commit());
+	}
+
+	@After
+	public void tearDownFixture() {
+		killProcessBestEffort(context, midletProcessName);
+		restorePreference(preferences, Constants.PREF_EMULATOR_DIR,
+				hadEmulatorDirectory, previousEmulatorDirectory);
+		restorePreference(preferences, Constants.PREF_TOOLBAR, hadToolbar, previousToolbar);
+		restorePreference(preferences, Constants.PREF_STATUSBAR, hadStatusBar, previousStatusBar);
+		deleteRecursivelyBestEffort(root);
+	}
 
 	@Test
 	public void systemBackOpensMenuWithoutRestartingCanvasMidlet() throws Exception {
-		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-		String midletProcessName = context.getPackageName() + ":midlet";
-		boolean hadEmulatorDirectory = preferences.contains(Constants.PREF_EMULATOR_DIR);
-		String previousEmulatorDirectory = preferences.getString(Constants.PREF_EMULATOR_DIR, null);
-		boolean hadToolbar = preferences.contains(Constants.PREF_TOOLBAR);
-		boolean previousToolbar = preferences.getBoolean(Constants.PREF_TOOLBAR, false);
-		boolean hadStatusBar = preferences.contains(Constants.PREF_STATUSBAR);
-		boolean previousStatusBar = preferences.getBoolean(Constants.PREF_STATUSBAR, false);
-		File root = new File(context.getFilesDir(), FIXTURE_ROOT);
-		File appDir = new File(new File(root, "converted"), "fixture");
-		File marker = new File(root, "platform.marker");
+		launchFixture(context, appDir);
+		awaitMarker(marker, "shown");
+		awaitMarker(marker, "size=");
+		int sizeEventsBeforeBack = awaitStableSizeEventCount(marker);
+		invokeGlobalBack();
+		awaitAccessibilityText(context.getString(R.string.exit));
+		awaitMicroActivityTask(context);
+		invokeGlobalBack();
+		awaitAccessibilityTextAbsent(context.getString(R.string.exit));
+		assertEquals("Opening system Back menu must not resize the Java ME Canvas",
+				sizeEventsBeforeBack, awaitStableSizeEventCount(marker));
+	}
 
-		try {
-			deleteRecursively(root);
-			prepareFixture(context, root, appDir, marker);
-			assertTrue("Unable to select platform compatibility fixture",
-					preferences.edit()
-						.putString(Constants.PREF_EMULATOR_DIR, root.getAbsolutePath())
-						.commit());
+	@Test
+	public void hardwareLongPressBackRetainsExitConfirmation() throws Exception {
+		launchFixture(context, appDir);
+		awaitMarker(marker, "shown");
+		executeShellCommand("input keyevent --longpress KEYCODE_BACK");
+		awaitAccessibilityText(context.getString(R.string.FORCE_CLOSE_CONFIRMATION));
+		invokeGlobalBack();
+		awaitAccessibilityTextAbsent(context.getString(R.string.FORCE_CLOSE_CONFIRMATION));
+		assertTrue("Long-press confirmation must not stop the MIDlet process",
+				processPid(context, midletProcessName) != 0);
+	}
 
-			boolean[][] barStates = {{false, false}, {true, false}, {false, true}, {true, true}};
-			for (int i = 0; i < barStates.length; i++) {
-				clearMarker(marker);
-				assertTrue("Unable to configure platform compatibility bar state",
-						preferences.edit()
-								.putBoolean(Constants.PREF_TOOLBAR, barStates[i][0])
-								.putBoolean(Constants.PREF_STATUSBAR, barStates[i][1])
-								.commit());
-				launchFixture(context, appDir);
-				awaitMarker(marker, "shown");
-				awaitMarker(marker, "size=");
-
-				if (i == 0) {
-					executeShellCommand("input tap 100 100");
-					awaitMarker(marker, "pointer=");
-					int sizeEventsBeforeBack = awaitStableSizeEventCount(marker);
-					invokeSystemBack(context);
-					awaitAccessibilityText(context.getString(R.string.exit));
-					awaitMicroActivityTask(context);
-					assertEquals("Opening system Back menu must not resize the Java ME Canvas",
-							sizeEventsBeforeBack, awaitStableSizeEventCount(marker));
-				}
-				assertTrue("MIDlet process must remain alive for toolbar/status-bar state",
-						processPid(context, midletProcessName) != 0);
-				killProcessBestEffort(context, midletProcessName);
-				awaitProcessStops(context, midletProcessName);
-			}
-
+	@Test
+	public void toolbarAndStatusBarStatesKeepCanvasAlive() throws Exception {
+		boolean[][] barStates = {{false, false}, {true, false}, {false, true}, {true, true}};
+		for (boolean[] barState : barStates) {
 			clearMarker(marker);
-			writeManifest(appDir, marker, PlatformCompatMidlet.DISPLAY_FORM);
+			assertTrue("Unable to configure platform compatibility bar state",
+					preferences.edit()
+							.putBoolean(Constants.PREF_TOOLBAR, barState[0])
+							.putBoolean(Constants.PREF_STATUSBAR, barState[1])
+							.commit());
 			launchFixture(context, appDir);
-			awaitMarker(marker, "form");
-			awaitAccessibilityText("IME probe");
-			assertTrue("Host Displayable must remain alive after Canvas switching coverage",
-					processPid(context, midletProcessName) != 0);
-		} finally {
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-				executeShellCommandBestEffort("cmd overlay enable-exclusive --category "
-						+ "com.android.internal.systemui.navbar.threebutton");
+			awaitMarker(marker, "shown");
+			awaitMarker(marker, "size=");
+			executeShellCommand("input tap 100 100");
+			awaitMarker(marker, "pointer=");
+			if (!barState[0] && !barState[1]) {
+				int sizeEventsBeforeTransientBars = awaitStableSizeEventCount(marker);
+				int[] displaySize = physicalDisplaySize();
+				executeShellCommand("input touchscreen swipe " + displaySize[0] / 2 + " "
+						+ (displaySize[1] - 1) + " " + displaySize[0] / 2 + " "
+						+ displaySize[1] / 2 + " 300");
+				assertEquals("Transient system bars must overlay instead of resizing the Canvas",
+						sizeEventsBeforeTransientBars, awaitStableSizeEventCount(marker));
 			}
-			killProcessBestEffort(context, midletProcessName);
-			restorePreference(preferences, Constants.PREF_EMULATOR_DIR,
-					hadEmulatorDirectory, previousEmulatorDirectory);
-			restorePreference(preferences, Constants.PREF_TOOLBAR, hadToolbar, previousToolbar);
-			restorePreference(preferences, Constants.PREF_STATUSBAR, hadStatusBar, previousStatusBar);
-			deleteRecursivelyBestEffort(root);
+			assertTrue("MIDlet process must remain alive for toolbar/status-bar state",
+					processPid(context, midletProcessName) != 0);
+			killFixtureProcess();
 		}
 	}
 
-	private static void invokeSystemBack(Context context) throws IOException {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-			executeShellCommand("cmd overlay enable-exclusive --category "
-					+ "com.android.internal.systemui.navbar.gestural");
-			SystemClock.sleep(500L);
-			int width = context.getResources().getDisplayMetrics().widthPixels;
-			int y = context.getResources().getDisplayMetrics().heightPixels / 2;
-			executeShellCommand("input swipe 1 " + y + " " + (width / 3) + " " + y + " 300");
-		} else {
-			executeShellCommand("input keyevent KEYCODE_BACK");
-		}
+	@Test
+	public void canvasFormImeCanvasTransitionPreservesGeometry() throws Exception {
+		writeManifest(appDir, marker, PlatformCompatMidlet.DISPLAY_TRANSITION);
+		launchFixture(context, appDir);
+		awaitMarker(marker, "shown");
+		awaitMarker(marker, "size=");
+		String initialSize = lastMarkerValue(marker, "size=");
+		executeShellCommand("input tap 100 100");
+		awaitMarker(marker, "form");
+		awaitAccessibilityText("IME probe");
+		focusFirstEditableNode();
+		awaitImeShown();
+		appendMarker(marker, PlatformCompatMidlet.RETURN_REQUEST + "\n");
+		awaitMarker(marker, "returned");
+		awaitMarkerOccurrences(marker, "shown", 2);
+		assertEquals("Canvas geometry must survive Canvas-to-Form-to-Canvas transition",
+				initialSize, lastMarkerValue(marker, "size="));
+		assertTrue("Host Displayable must remain alive after Canvas switching coverage",
+				processPid(context, midletProcessName) != 0);
+	}
+
+	private void killFixtureProcess() {
+		killProcessBestEffort(context, midletProcessName);
+		awaitProcessStops(context, midletProcessName);
+	}
+
+	private static void invokeGlobalBack() {
+		assertTrue("System Back action was rejected",
+				InstrumentationRegistry.getInstrumentation().getUiAutomation()
+						.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK));
+		InstrumentationRegistry.getInstrumentation().waitForIdleSync();
 	}
 
 	private static void executeShellCommand(String command) throws IOException {
+		executeShellCommandForOutput(command);
+	}
+
+	private static String executeShellCommandForOutput(String command) throws IOException {
 		ParcelFileDescriptor descriptor = InstrumentationRegistry.getInstrumentation()
 				.getUiAutomation().executeShellCommand(command);
+		StringBuilder output = new StringBuilder();
 		if (descriptor != null) {
 			try (InputStream input = new ParcelFileDescriptor.AutoCloseInputStream(descriptor)) {
 				byte[] buffer = new byte[256];
-				while (input.read(buffer) != -1) {
-					// Drain output so the shell command has completed before assertions run.
+				for (int read; (read = input.read(buffer)) != -1; ) {
+					output.append(new String(buffer, 0, read, StandardCharsets.UTF_8));
 				}
 			}
 		}
 		InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+		return output.toString();
 	}
 
-	private static void executeShellCommandBestEffort(String command) {
-		try {
-			executeShellCommand(command);
-		} catch (IOException ignored) {
-			// Teardown must not replace the validation failure.
+	private static int[] physicalDisplaySize() throws IOException {
+		String output = executeShellCommandForOutput("wm size");
+		java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("(\\d+)x(\\d+)")
+				.matcher(output);
+		if (!matcher.find()) {
+			throw new IOException("Unable to read physical display size: " + output);
 		}
+		return new int[]{Integer.parseInt(matcher.group(1)), Integer.parseInt(matcher.group(2))};
 	}
 
 	private static void awaitAccessibilityText(String expected) {
@@ -183,15 +243,47 @@ public class PlatformCompatBehaviorTest {
 		fail("System Back did not expose the MIDlet options menu item: " + expected);
 	}
 
+	private static void awaitAccessibilityTextAbsent(String expected) {
+		long deadline = SystemClock.uptimeMillis() + BACK_TIMEOUT_MILLIS;
+		do {
+			AccessibilityNodeInfo root = InstrumentationRegistry.getInstrumentation()
+					.getUiAutomation().getRootInActiveWindow();
+			if (root == null || !containsText(root, expected)) {
+				return;
+			}
+			SystemClock.sleep(100L);
+		} while (SystemClock.uptimeMillis() < deadline);
+		fail("Accessibility text remained visible: " + expected);
+	}
+
+	private static void focusFirstEditableNode() throws IOException {
+		AccessibilityNodeInfo root = InstrumentationRegistry.getInstrumentation()
+				.getUiAutomation().getRootInActiveWindow();
+		AccessibilityNodeInfo node = root == null ? null : findEditableNode(root);
+		if (node == null) {
+			fail("Unable to locate the host Displayable's editable field");
+		}
+		node.performAction(AccessibilityNodeInfo.ACTION_FOCUS);
+		node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+		Rect bounds = new Rect();
+		node.getBoundsInScreen(bounds);
+		executeShellCommand("input tap " + bounds.centerX() + " " + bounds.centerY());
+	}
+
 	private static boolean containsText(AccessibilityNodeInfo root, String expected) {
+		return findText(root, expected) != null;
+	}
+
+	private static AccessibilityNodeInfo findText(AccessibilityNodeInfo root, String expected) {
 		ArrayDeque<AccessibilityNodeInfo> pending = new ArrayDeque<>();
 		pending.add(root);
 		while (!pending.isEmpty()) {
 			AccessibilityNodeInfo node = pending.removeFirst();
 			CharSequence text = node.getText();
 			CharSequence description = node.getContentDescription();
-			if (expected.contentEquals(text) || expected.contentEquals(description)) {
-				return true;
+			if ((text != null && expected.contentEquals(text))
+					|| (description != null && expected.contentEquals(description))) {
+				return node;
 			}
 			for (int i = 0; i < node.getChildCount(); i++) {
 				AccessibilityNodeInfo child = node.getChild(i);
@@ -200,7 +292,25 @@ public class PlatformCompatBehaviorTest {
 				}
 			}
 		}
-		return false;
+		return null;
+	}
+
+	private static AccessibilityNodeInfo findEditableNode(AccessibilityNodeInfo root) {
+		ArrayDeque<AccessibilityNodeInfo> pending = new ArrayDeque<>();
+		pending.add(root);
+		while (!pending.isEmpty()) {
+			AccessibilityNodeInfo node = pending.removeFirst();
+			if (node.isEditable()) {
+				return node;
+			}
+			for (int i = 0; i < node.getChildCount(); i++) {
+				AccessibilityNodeInfo child = node.getChild(i);
+				if (child != null) {
+					pending.addLast(child);
+				}
+			}
+		}
+		return null;
 	}
 
 	private static void prepareFixture(Context context, File root, File appDir, File marker)
@@ -264,6 +374,35 @@ public class PlatformCompatBehaviorTest {
 			SystemClock.sleep(100L);
 		} while (SystemClock.uptimeMillis() < deadline);
 		fail("Platform compatibility fixture did not write marker: " + expected);
+	}
+
+	private static void awaitMarkerOccurrences(File marker, String expected, int minimum) {
+		long deadline = SystemClock.uptimeMillis() + FIXTURE_TIMEOUT_MILLIS;
+		do {
+			try {
+				if (marker.isFile() && countOccurrences(readFile(marker), expected) >= minimum) {
+					return;
+				}
+			} catch (IOException ignored) {
+				// The fixture can be writing the marker concurrently; retry the read.
+			}
+			SystemClock.sleep(100L);
+		} while (SystemClock.uptimeMillis() < deadline);
+		fail("Platform compatibility fixture marker count did not reach " + minimum
+				+ " for: " + expected);
+	}
+
+	private static void awaitImeShown() throws IOException {
+		long deadline = SystemClock.uptimeMillis() + FIXTURE_TIMEOUT_MILLIS;
+		do {
+			String state = executeShellCommandForOutput("dumpsys input_method");
+			if (state.contains("mInputShown=true") || state.contains("isInputViewShown=true")
+					|| state.contains("inputShown=true")) {
+				return;
+			}
+			SystemClock.sleep(100L);
+		} while (SystemClock.uptimeMillis() < deadline);
+		fail("IME did not become visible for the host TextField");
 	}
 
 	private static void awaitMicroActivityTask(Context context) {
@@ -345,6 +484,26 @@ public class PlatformCompatBehaviorTest {
 			}
 			return new String(bytes, 0, offset, StandardCharsets.UTF_8);
 		}
+	}
+
+	private static void appendMarker(File marker, String value) throws IOException {
+		try (FileOutputStream output = new FileOutputStream(marker, true)) {
+			output.write(value.getBytes(StandardCharsets.UTF_8));
+			output.flush();
+		}
+	}
+
+	private static String lastMarkerValue(File marker, String prefix) throws IOException {
+		String result = null;
+		for (String line : readFile(marker).split("\\R")) {
+			if (line.startsWith(prefix)) {
+				result = line;
+			}
+		}
+		if (result == null) {
+			fail("Platform compatibility fixture did not write value: " + prefix);
+		}
+		return result;
 	}
 
 	private static int countOccurrences(String value, String token) {
