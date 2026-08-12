@@ -664,8 +664,8 @@ M3G_API M3Gint m3gAnimate(M3GObject hObject, M3Gint time)
     Object *obj = (Object *) hObject;
 
     M3G_LOG2(M3G_LOG_STAGES,
-             "Animating %s 0x%08X\n",
-             m3gClassName((M3GClass) obj->classID), (unsigned) obj);
+             "Animating %s %p\n",
+             m3gClassName((M3GClass) obj->classID), (void *) obj);
     
     M3G_VALIDATE_OBJECT(obj);
     
