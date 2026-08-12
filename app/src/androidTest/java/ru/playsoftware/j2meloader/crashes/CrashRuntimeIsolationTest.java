@@ -25,25 +25,46 @@ import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Process;
 import android.os.SystemClock;
 
+import androidx.preference.PreferenceManager;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import javax.microedition.shell.MicroActivity;
+
+import jlmod.runtimefixture.LifecycleMidlet;
+import ru.playsoftware.j2meloader.config.ProfileModel;
+import ru.playsoftware.j2meloader.config.ProfilesManager;
+import ru.playsoftware.j2meloader.util.Constants;
 
 @RunWith(AndroidJUnit4.class)
 public class CrashRuntimeIsolationTest {
 	private static final long REPORT_TIMEOUT_MILLIS = 20_000L;
 	private static final long PROCESS_TIMEOUT_MILLIS = 10_000L;
+	private static final long CLEAN_SESSION_TIMEOUT_MILLIS = 10_000L;
+	private static final String LIFECYCLE_MIDLET_NAME = "JL-Mod Plus Lifecycle Runtime Fixture";
+	private static final String LIFECYCLE_MIDLET_VENDOR = "JL-Mod Plus";
+	private static final String LIFECYCLE_MIDLET_VERSION = "1.0";
+	private static final String LIFECYCLE_FIXTURE_ROOT = "crash-runtime-lifecycle";
 
 	@Test
 	public void repeatedRemoteSessionCrashesKeepMainProcessAndPersistExactReports() {
@@ -79,10 +100,64 @@ public class CrashRuntimeIsolationTest {
 		}
 	}
 
+	@Test
+	public void realMidletStartFailureIsContainedAndNextSessionLaunchesCleanly() throws Exception {
+		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+		String mainProcessName = context.getPackageName();
+		String midletProcessName = mainProcessName + ":midlet";
+		int mainPid = Process.myPid();
+		Set<String> baselineIds = recordIds(LocalDiagnosticRepository.load(context));
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+		boolean hadPreviousEmulatorDir = preferences.contains(Constants.PREF_EMULATOR_DIR);
+		String previousEmulatorDir = preferences.getString(Constants.PREF_EMULATOR_DIR, null);
+		File root = new File(context.getFilesDir(), LIFECYCLE_FIXTURE_ROOT);
+		File appDir = new File(new File(root, "converted"), "fixture");
+		File marker = new File(root, "clean-start.marker");
+
+		try {
+			assertMicroActivityUsesMidletProcess(context, midletProcessName);
+			deleteRecursively(root);
+			prepareLifecycleFixture(context, root, appDir);
+			assertTrue("Unable to switch emulator directory for lifecycle runtime fixture",
+					preferences.edit().putString(Constants.PREF_EMULATOR_DIR, root.getAbsolutePath()).commit());
+
+			writeLifecycleManifest(appDir, LifecycleMidlet.MODE_CRASH_START, marker);
+			LocalDiagnosticRepository.Record failure = launchLifecycleMidletAndAwaitFailure(
+					context, appDir, baselineIds);
+			assertRemoteProcessStops(context, midletProcessName);
+			assertEquals(mainPid, Process.myPid());
+			assertEquals(mainPid, processPid(context, mainProcessName));
+			assertLifecycleStartFailure(failure);
+
+			Set<String> afterCrashIds = recordIds(LocalDiagnosticRepository.load(context));
+			if (marker.exists() && !marker.delete()) {
+				fail("Unable to clear lifecycle clean-start marker");
+			}
+			writeLifecycleManifest(appDir, LifecycleMidlet.MODE_CLEAN, marker);
+			launchLifecycleMidlet(context, appDir);
+			awaitMarker(marker);
+			assertRemoteProcessStops(context, midletProcessName);
+			assertEquals(mainPid, Process.myPid());
+			assertEquals(mainPid, processPid(context, mainProcessName));
+			assertNoNewLifecycleFailure(context, afterCrashIds);
+		} finally {
+			killRemoteProcessIfPresent(context, midletProcessName);
+			cleanupLifecycleDiagnostics(context, baselineIds);
+			SharedPreferences.Editor editor = preferences.edit();
+			if (hadPreviousEmulatorDir) {
+				editor.putString(Constants.PREF_EMULATOR_DIR, previousEmulatorDir);
+			} else {
+				editor.remove(Constants.PREF_EMULATOR_DIR);
+			}
+			editor.commit();
+			deleteRecursively(root);
+		}
+	}
+
 	private static void assertMicroActivityUsesMidletProcess(Context context, String midletProcessName) {
 		try {
 			ActivityInfo info = context.getPackageManager().getActivityInfo(
-					new ComponentName(context, javax.microedition.shell.MicroActivity.class), 0);
+					new ComponentName(context, MicroActivity.class), 0);
 			assertEquals(midletProcessName, info.processName);
 		} catch (PackageManager.NameNotFoundException e) {
 			throw new AssertionError("MicroActivity is missing from the merged debug manifest", e);
@@ -98,6 +173,20 @@ public class CrashRuntimeIsolationTest {
 		assertTrue(record.getDetailText().contains("Failure boundary: UNCAUGHT_THREAD"));
 		assertNotNull(record.getStackTrace());
 		assertTrue(record.getStackTrace().contains("runtimeProbe=true;"));
+	}
+
+	private static void assertLifecycleStartFailure(LocalDiagnosticRepository.Record record) {
+		assertTrue(record.hasJavaReport());
+		assertNotNull(record.getEventId());
+		assertNotNull(record.getSessionId());
+		assertEquals(LIFECYCLE_MIDLET_NAME, record.getMidletName());
+		assertEquals("midlet", record.getProcessRole());
+		assertTrue(record.getDetailText().contains("Failure boundary: LIFECYCLE_START"));
+		assertTrue(record.getDetailText().contains("MIDlet main class: " + LifecycleMidlet.CLASS_NAME));
+		assertNotNull(record.getStackTrace());
+		assertTrue(record.getStackTrace().contains("Failed startApp"));
+		assertTrue(record.getStackTrace().contains(LifecycleMidlet.START_FAILURE_MARKER));
+		assertTrue(record.getStackTrace().contains(LifecycleMidlet.CLASS_NAME));
 	}
 
 	private static LocalDiagnosticRepository.Record launchProbeAndAwaitCorrelatedRecord(
@@ -122,6 +211,90 @@ public class CrashRuntimeIsolationTest {
 
 		fail("Timed out waiting for exact-correlated remote crash report");
 		return null;
+	}
+
+	private static LocalDiagnosticRepository.Record launchLifecycleMidletAndAwaitFailure(
+			Context context, File appDir, Set<String> existingIds) {
+		launchLifecycleMidlet(context, appDir);
+		long deadline = SystemClock.uptimeMillis() + REPORT_TIMEOUT_MILLIS;
+		do {
+			for (LocalDiagnosticRepository.Record record : LocalDiagnosticRepository.load(context)) {
+				if (!existingIds.contains(record.getId())
+						&& record.getKind() == LocalDiagnosticRepository.Kind.MIDLET_FAILURE
+						&& LIFECYCLE_MIDLET_NAME.equals(record.getMidletName())
+						&& record.hasJavaReport()) {
+					return record;
+				}
+			}
+			SystemClock.sleep(100L);
+		} while (SystemClock.uptimeMillis() < deadline);
+		fail("Timed out waiting for real MIDlet lifecycle crash report");
+		return null;
+	}
+
+	private static void launchLifecycleMidlet(Context context, File appDir) {
+		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(appDir.getAbsolutePath()),
+				context, MicroActivity.class)
+				.putExtra(Constants.KEY_MIDLET_NAME, LIFECYCLE_MIDLET_NAME)
+				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		context.startActivity(intent);
+	}
+
+	private static void prepareLifecycleFixture(Context context, File root, File appDir) throws IOException {
+		File configDir = new File(new File(root, "configs"), appDir.getName());
+		if (!appDir.mkdirs() && !appDir.isDirectory()) {
+			throw new IOException("Unable to create lifecycle fixture converted directory");
+		}
+		if (!configDir.mkdirs() && !configDir.isDirectory()) {
+			throw new IOException("Unable to create lifecycle fixture config directory");
+		}
+		copyFile(new File(context.getApplicationInfo().sourceDir), new File(appDir, "converted.zip"));
+		ProfileModel profile = new ProfileModel(configDir);
+		profile.showKeyboard = false;
+		profile.touchInput = false;
+		profile.soundBank = "";
+		if (!ProfilesManager.saveConfig(profile)) {
+			throw new IOException("Unable to write lifecycle fixture profile");
+		}
+	}
+
+	private static void writeLifecycleManifest(File appDir, String mode, File marker) throws IOException {
+		File manifest = new File(appDir, "converted.dex.conf");
+		String text = "Manifest-Version: 1.0\n"
+				+ "MIDlet-Name: " + LIFECYCLE_MIDLET_NAME + "\n"
+				+ "MIDlet-Vendor: " + LIFECYCLE_MIDLET_VENDOR + "\n"
+				+ "MIDlet-Version: " + LIFECYCLE_MIDLET_VERSION + "\n"
+				+ "MIDlet-1: " + LIFECYCLE_MIDLET_NAME + ",," + LifecycleMidlet.CLASS_NAME + "\n"
+				+ LifecycleMidlet.MODE_PROPERTY + ": " + mode + "\n"
+				+ LifecycleMidlet.MARKER_PROPERTY + ": " + marker.getAbsolutePath() + "\n";
+		try (OutputStreamWriter writer = new OutputStreamWriter(
+				new FileOutputStream(manifest), StandardCharsets.UTF_8)) {
+			writer.write(text);
+		}
+	}
+
+	private static void awaitMarker(File marker) {
+		long deadline = SystemClock.uptimeMillis() + CLEAN_SESSION_TIMEOUT_MILLIS;
+		do {
+			if (marker.isFile() && marker.length() > 0) {
+				return;
+			}
+			SystemClock.sleep(100L);
+		} while (SystemClock.uptimeMillis() < deadline);
+		fail("Subsequent clean MIDlet session never reached startApp()");
+	}
+
+	private static void assertNoNewLifecycleFailure(Context context, Set<String> existingIds) {
+		long deadline = SystemClock.uptimeMillis() + 1_000L;
+		do {
+			for (LocalDiagnosticRepository.Record record : LocalDiagnosticRepository.load(context)) {
+				if (!existingIds.contains(record.getId())
+						&& LIFECYCLE_MIDLET_NAME.equals(record.getMidletName())) {
+					fail("Clean follow-up MIDlet session produced a diagnostic failure: " + record.getId());
+				}
+			}
+			SystemClock.sleep(100L);
+		} while (SystemClock.uptimeMillis() < deadline);
 	}
 
 	private static void assertRemoteProcessStops(Context context, String processName) {
@@ -149,11 +322,25 @@ public class CrashRuntimeIsolationTest {
 		return 0;
 	}
 
+	private static void killRemoteProcessIfPresent(Context context, String processName) {
+		int pid = processPid(context, processName);
+		if (pid != 0) {
+			Process.killProcess(pid);
+		}
+	}
+
 	private static void cleanupProbeDiagnostics(Context context, Set<String> baselineIds) {
+		cleanupDiagnostics(context, baselineIds, CrashRuntimeProbeActivity.MIDLET_NAME);
+	}
+
+	private static void cleanupLifecycleDiagnostics(Context context, Set<String> baselineIds) {
+		cleanupDiagnostics(context, baselineIds, LIFECYCLE_MIDLET_NAME);
+	}
+
+	private static void cleanupDiagnostics(Context context, Set<String> baselineIds, String midletName) {
 		try {
 			for (LocalDiagnosticRepository.Record record : LocalDiagnosticRepository.load(context)) {
-				if (!baselineIds.contains(record.getId())
-						&& CrashRuntimeProbeActivity.MIDLET_NAME.equals(record.getMidletName())) {
+				if (!baselineIds.contains(record.getId()) && midletName.equals(record.getMidletName())) {
 					LocalDiagnosticRepository.delete(context, record);
 				}
 			}
@@ -168,5 +355,31 @@ public class CrashRuntimeIsolationTest {
 			ids.add(record.getId());
 		}
 		return ids;
+	}
+
+	private static void copyFile(File source, File destination) throws IOException {
+		byte[] buffer = new byte[64 * 1024];
+		try (FileInputStream input = new FileInputStream(source);
+			 FileOutputStream output = new FileOutputStream(destination)) {
+			for (int read; (read = input.read(buffer)) != -1; ) {
+				output.write(buffer, 0, read);
+			}
+			output.flush();
+		}
+	}
+
+	private static void deleteRecursively(File file) {
+		if (file == null || !file.exists()) {
+			return;
+		}
+		File[] children = file.listFiles();
+		if (children != null) {
+			for (File child : children) {
+				deleteRecursively(child);
+			}
+		}
+		if (!file.delete() && file.exists()) {
+			throw new IllegalStateException("Unable to delete runtime fixture path: " + file);
+		}
 	}
 }
