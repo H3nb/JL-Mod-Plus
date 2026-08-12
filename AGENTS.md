@@ -65,6 +65,10 @@ For changes to Java ME APIs, JSRs, vendor APIs, or compatibility behavior:
 - Use the repository's current default/integration branch as the base. Do normal development on a dedicated branch and integrate through a PR rather than working directly on the integration branch unless explicitly requested.
 - Start unrelated work from the latest integration branch on a fresh branch. Use scratch/staging branches only when they are actually useful or explicitly requested.
 - Keep one PR centered on one coherent concern. Intermediate experiment/fixup commits may remain when they are useful to the development process.
+- Treat GitHub autolinks as repository-sensitive data, not harmless formatting. Never publish an ambiguous shorthand that could resolve to the wrong repository, fork, issue, PR, workflow run, commit, release, discussion, or other object.
+- Do not use a bare `#N` unless it intentionally refers to an issue or PR in the current repository and that target has been verified. When repository identity matters, use an explicit repository-qualified reference such as `owner/repository#N`.
+- For objects that are not issues or PRs, use an unambiguous label or direct Markdown link to the intended object. In particular, do not write an Actions run number as bare `#N`; link the run using the repository URL and run ID, or render the number as non-autolink text when no link is intended.
+- Before publishing PR bodies, comments, release notes, documentation, or other GitHub-rendered text, check that generated references cannot silently resolve through fork-network or cross-repository context to an unrelated project.
 - Use `[skip ci]` on intermediate commits when CI would provide little additional value.
 - Do not use `[skip ci]` to hide a known failure or bypass relevant validation.
 - Before merging changes that can affect build, runtime behavior, tests, or CI, validate the final relevant state with CI without a skip instruction. Documentation-only or policy-only changes need only validation relevant to those changes.
