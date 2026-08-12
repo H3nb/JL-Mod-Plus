@@ -68,6 +68,10 @@ abstract class CopyApk : DefaultTask() {
 val secret = Properties().also { properties ->
     rootProject.file("keystore.properties").runCatching { inputStream().use(properties::load) }
 }
+val runtimeTestAbi = providers.gradleProperty("jlmodRuntimeTestAbi").orNull
+require(runtimeTestAbi == null || runtimeTestAbi == "arm64-v8a" || runtimeTestAbi == "x86_64") {
+    "jlmodRuntimeTestAbi must be arm64-v8a or x86_64"
+}
 
 android {
     compileSdk = rootProject.extra["compileSdk"] as Int
@@ -113,7 +117,9 @@ android {
             applicationIdSuffix = ".debug"
             isJniDebuggable = true
             ndk {
-                abiFilters += "arm64-v8a"
+                // Normal debug builds remain arm64-only. Hosted runtime tests opt into x86_64
+                // explicitly so they can run on a Linux x86_64 Android Emulator.
+                abiFilters += runtimeTestAbi ?: "arm64-v8a"
             }
         }
     }
