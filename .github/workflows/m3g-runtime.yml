@@ -111,7 +111,7 @@ jobs:
             -no-audio \
             -no-boot-anim \
             -no-snapshot \
-            -gpu swiftshader \
+            -gpu swangle \
             > build/ci-logs/m3g-runtime-emulator.log 2>&1 &
           echo $! > build/ci-logs/m3g-runtime-emulator.pid
 
