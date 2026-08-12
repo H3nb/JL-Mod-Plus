@@ -139,7 +139,20 @@
         <activity android:name=".config.ProfilesActivity" android:exported="false" />
         <activity android:name=".crashes.CrashReportsActivity" android:exported="false" />
         <activity android:name=".crashes.CrashReportDetailsActivity" android:exported="false" />
-        <activity android:name="com.nokia.mid.ui.NotificationActivity" />
+        <activity
+            android:name="com.nokia.mid.ui.NotificationActivity"
+            android:exported="false"
+            android:process=":midlet" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.diagnostic-files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/diagnostic_file_paths" />
+        </provider>
 
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
