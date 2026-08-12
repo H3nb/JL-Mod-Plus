@@ -40,6 +40,10 @@ public final class MidletFailureRecovery {
 
 	/** Returns the newest unacknowledged unexpected MIDlet session failure, if any. */
 	public static PendingFailure findPendingFailure(Context context) {
+		// The main process can survive many isolated MIDlet sessions without being re-created. Reapply
+		// retention when the library regains focus so bounded diagnostics do not depend on app restart.
+		MidletSessionJournal.prune(context);
+		LocalCrashReportStore.prune(context);
 		List<MidletSessionJournal.Snapshot> failures = readRetainedFailures(context);
 		Set<String> acknowledged = readAcknowledgedEventIds(context);
 		pruneOrphanAcknowledgments(context, failures);
@@ -77,6 +81,17 @@ public final class MidletFailureRecovery {
 		}
 	}
 
+	/** Removes only the main-process notice marker for a diagnostic event. */
+	static void deleteAcknowledgment(Context context, String eventId) {
+		if (!isSafeEventId(eventId)) {
+			return;
+		}
+		File marker = acknowledgmentFile(acknowledgmentDirectory(context), eventId);
+		if (marker.isFile() && !marker.delete()) {
+			Log.w(TAG, "Unable to delete MIDlet failure acknowledgment: " + eventId);
+		}
+	}
+
 	static PendingFailure selectNewestPending(List<MidletSessionJournal.Snapshot> failures,
 			Set<String> acknowledgedEventIds) {
 		MidletSessionJournal.Snapshot newest = null;
@@ -107,16 +122,12 @@ public final class MidletFailureRecovery {
 	}
 
 	private static List<MidletSessionJournal.Snapshot> readRetainedFailures(Context context) {
-		File directory = MidletSessionJournal.journalDirectory(context);
-		File[] files = directory.listFiles();
-		if (files == null || files.length == 0) {
+		List<File> files = MidletSessionJournal.journalFiles(context);
+		if (files.isEmpty()) {
 			return Collections.emptyList();
 		}
-		ArrayList<MidletSessionJournal.Snapshot> failures = new ArrayList<>(files.length);
+		ArrayList<MidletSessionJournal.Snapshot> failures = new ArrayList<>(files.size());
 		for (File file : files) {
-			if (file == null || !file.isFile()) {
-				continue;
-			}
 			try {
 				MidletSessionJournal.Snapshot snapshot = MidletSessionJournal.read(file);
 				if (isUnexpectedFailure(snapshot)) {
@@ -178,7 +189,7 @@ public final class MidletFailureRecovery {
 				&& isSafeEventId(snapshot.failureEventId);
 	}
 
-	private static boolean isSafeEventId(String eventId) {
+	static boolean isSafeEventId(String eventId) {
 		if (eventId == null || eventId.length() < 1 || eventId.length() > 128) {
 			return false;
 		}
