@@ -998,9 +998,9 @@ public final class ProcessExitStore {
 				}
 				boolean truncated = total == MAX_TRACE_BYTES && input.read() >= 0;
 				String kind;
-				if (info.getReason() == REASON_ANR) {
+				if (info.getReason() == ApplicationExitInfo.REASON_ANR) {
 					kind = "anr-text";
-				} else if (info.getReason() == REASON_CRASH_NATIVE
+				} else if (info.getReason() == ApplicationExitInfo.REASON_CRASH_NATIVE
 						&& Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
 					kind = "native-tombstone-protobuf";
 				} else {
