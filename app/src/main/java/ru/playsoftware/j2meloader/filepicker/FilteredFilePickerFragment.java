@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// Modified for JL-Mod Plus.
+
 package ru.playsoftware.j2meloader.filepicker;
 
 import android.app.Activity;
@@ -50,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Stack;
 
@@ -201,7 +204,7 @@ public class FilteredFilePickerFragment extends AbstractFilePickerFragment<File>
 		if (i < 0) {
 			return null;
 		} else {
-			return name.substring(i).toLowerCase();
+		return name.substring(i).toLowerCase(Locale.ROOT);
 		}
 	}
 

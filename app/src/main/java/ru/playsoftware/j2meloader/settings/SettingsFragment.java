@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+// Modified for JL-Mod Plus.
 package ru.playsoftware.j2meloader.settings;
 
 import static ru.playsoftware.j2meloader.util.Constants.PREF_EMULATOR_DIR;
@@ -107,7 +108,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 	}
 
 	private void onPickDirResult(Uri uri) {
-		if (uri == null || uri.getPath() == null) {
+		if (uri == null || !"file".equals(uri.getScheme()) || uri.getPath() == null) {
 			return;
 		}
 		File file = new File(uri.getPath());

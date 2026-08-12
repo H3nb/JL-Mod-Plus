@@ -12,6 +12,8 @@
  * limitations under the License.
  */
 
+// Modified for JL-Mod Plus.
+
 package ru.playsoftware.j2meloader.crashes;
 
 import android.content.Intent;

@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// Modified for JL-Mod Plus.
+
 package ru.playsoftware.j2meloader.config;
 
 import static ru.playsoftware.j2meloader.util.Constants.ACTION_EDIT_PROFILE;

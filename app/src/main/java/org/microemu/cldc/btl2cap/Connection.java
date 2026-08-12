@@ -30,8 +30,12 @@ import java.io.OutputStream;
 
 import javax.bluetooth.L2CAPConnection;
 import javax.bluetooth.L2CAPConnectionNotifier;
+import javax.bluetooth.LocalDevice;
 import javax.bluetooth.UUID;
 
+import ru.playsoftware.j2meloader.util.BluetoothPermissionHelper;
+
+// Modified for JL-Mod Plus.
 public class Connection implements ConnectionImplementation, L2CAPConnectionNotifier {
 	private static final String TAG = "btl2cap.Connection";
 	private BluetoothServerSocket serverSocket = null;
@@ -79,8 +83,16 @@ public class Connection implements ConnectionImplementation, L2CAPConnectionNoti
 		java.util.UUID btUuid = connUuid.uuid;
 
 		BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-		if (adapter.isDiscovering()) {
-			adapter.cancelDiscovery();
+		LocalDevice.requireConnectPermission();
+		if (BluetoothPermissionHelper.hasScanPermission()) {
+			try {
+				if (adapter.isDiscovering()) {
+					adapter.cancelDiscovery();
+				}
+			} catch (SecurityException e) {
+				// Inquiry cancellation is optional for a connection and permission
+				// may have been revoked between the boundary check and this call.
+			}
 		}
 		// java.util.UUID btUuid = getJavaUUID(uuid);
 		// "localhost" indicates that we are acting as server
@@ -90,7 +102,11 @@ public class Connection implements ConnectionImplementation, L2CAPConnectionNoti
 			// Android 6.0.1 bug: UUID is reversed
 			// see https://issuetracker.google.com/issues/37075233
 			UUID NameUuid = new UUID(0x1102);
-			nameServerSocket = adapter.listenUsingInsecureRfcommWithServiceRecord(srvname, NameUuid.uuid);
+			try {
+				nameServerSocket = adapter.listenUsingInsecureRfcommWithServiceRecord(srvname, NameUuid.uuid);
+			} catch (SecurityException e) {
+				throw new javax.bluetooth.BluetoothStateException("Bluetooth connect permission was revoked");
+			}
 
 			String finalSrvname = srvname;
 			// Send service name to client
@@ -105,15 +121,19 @@ public class Connection implements ConnectionImplementation, L2CAPConnectionNoti
 					os.write(dstByte);
 					os.flush();
 					nameServerSocket.close();
-				} catch (IOException e) {
+				} catch (IOException | SecurityException e) {
 					Log.w(TAG, "openConnection: ", e);
 				}
 			});
 			connectThread.start();
-			if (secure) {
-				serverSocket = adapter.listenUsingRfcommWithServiceRecord(finalSrvname, btUuid);
-			} else {
-				serverSocket = adapter.listenUsingInsecureRfcommWithServiceRecord(finalSrvname, btUuid);
+			try {
+				if (secure) {
+					serverSocket = adapter.listenUsingRfcommWithServiceRecord(finalSrvname, btUuid);
+				} else {
+					serverSocket = adapter.listenUsingInsecureRfcommWithServiceRecord(finalSrvname, btUuid);
+				}
+			} catch (SecurityException e) {
+				throw new javax.bluetooth.BluetoothStateException("Bluetooth connect permission was revoked");
 			}
 			return this;
 		} else {
@@ -123,15 +143,26 @@ public class Connection implements ConnectionImplementation, L2CAPConnectionNoti
 			}
 			String addr = sb.toString();
 
-			BluetoothDevice dev = adapter.getRemoteDevice(addr);
-			if (secure) {
-				socket = dev.createRfcommSocketToServiceRecord(btUuid);
-			} else {
-				socket = dev.createInsecureRfcommSocketToServiceRecord(btUuid);
+			BluetoothDevice dev;
+			try {
+				dev = adapter.getRemoteDevice(addr);
+			} catch (SecurityException e) {
+				throw new javax.bluetooth.BluetoothStateException("Bluetooth connect permission was revoked");
+			}
+			try {
+				if (secure) {
+					socket = dev.createRfcommSocketToServiceRecord(btUuid);
+				} else {
+					socket = dev.createInsecureRfcommSocketToServiceRecord(btUuid);
+				}
+			} catch (SecurityException e) {
+				throw new javax.bluetooth.BluetoothStateException("Bluetooth connect permission was revoked");
 			}
 
 			try {
 				socket.connect();
+			} catch (SecurityException e) {
+				throw new javax.bluetooth.BluetoothStateException("Bluetooth connect permission was revoked");
 			} catch (IOException e) {
 				Log.w(TAG, "openConnection: ", e);
 			}
@@ -144,17 +175,25 @@ public class Connection implements ConnectionImplementation, L2CAPConnectionNoti
 		if (serverSocket == null) {
 			throw new IOException();
 		}
-		socket = serverSocket.accept();
+		try {
+			socket = serverSocket.accept();
+		} catch (SecurityException e) {
+			throw new javax.bluetooth.BluetoothStateException("Bluetooth connect permission was revoked");
+		}
 		return new L2CAPConnectionImpl(socket);
 	}
 
 	@Override
 	public void close() throws IOException {
-		if (serverSocket != null) {
-			serverSocket.close();
-		}
-		if (nameServerSocket != null) {
-			nameServerSocket.close();
+		try {
+			if (serverSocket != null) {
+				serverSocket.close();
+			}
+			if (nameServerSocket != null) {
+				nameServerSocket.close();
+			}
+		} catch (SecurityException e) {
+			throw new javax.bluetooth.BluetoothStateException("Bluetooth connect permission was revoked");
 		}
 	}
 }

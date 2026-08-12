@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// Modified for JL-Mod Plus.
+
 package ru.playsoftware.j2meloader.settings;
 
 import android.content.Intent;

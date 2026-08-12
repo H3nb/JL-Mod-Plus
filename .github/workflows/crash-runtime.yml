@@ -135,7 +135,7 @@ jobs:
           set -o pipefail
           ./gradlew --no-daemon --stacktrace \
             -PjlmodRuntimeTestAbi=x86_64 \
-            -Pandroid.testInstrumentationRunnerArguments.class=ru.playsoftware.j2meloader.crashes.CrashRuntimeIsolationTest \
+            -Pandroid.testInstrumentationRunnerArguments.package=ru.playsoftware.j2meloader.crashes \
             :app:connectedEmulatorDebugAndroidTest \
             2>&1 | tee build/ci-logs/crash-runtime-gradle.log
 

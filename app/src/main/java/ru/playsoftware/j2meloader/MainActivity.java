@@ -226,7 +226,9 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void onPickDirResult(Uri uri) {
-		if (uri == null || uri.getPath() == null) {
+		// PickDirResultContract is backed by the app's raw-path picker. Keep this
+		// boundary explicit: external content URIs are installer inputs, not workdir paths.
+		if (uri == null || !"file".equals(uri.getScheme()) || uri.getPath() == null) {
 			checkAndCreateDirs();
 			return;
 		}
@@ -262,6 +264,7 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
+		setIntent(intent);
 		Uri uri = intent.getData();
 		if (uri != null) {
 			InstallerDialog.newInstance(uri).show(getSupportFragmentManager(), "installer");

@@ -11,15 +11,20 @@
         tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="29" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
+        android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
         android:usesPermissionFlags="neverForLocation"
         tools:targetApi="s" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"
+        tools:targetApi="tiramisu" />
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
 
     <uses-sdk tools:overrideLibrary="com.google.oboe" />
@@ -66,7 +71,7 @@
                 <data android:scheme="file" />
                 <data android:scheme="content" />
             </intent-filter>
-            <intent-filter>
+            <intent-filter android:autoVerify="false">
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.DEFAULT" />
@@ -76,6 +81,25 @@
                 <data android:host="*" />
                 <data android:scheme="http" />
                 <data android:scheme="https" />
+            </intent-filter>
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!-- URI-only web links still need to be limited to JAD descriptors. -->
+                <data android:host="*" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:pathPattern=".*.jad" />
+                <data android:pathPattern=".*..*.jad" />
+                <data android:pathPattern=".*..*..*.jad" />
+                <data android:pathPattern=".*..*..*..*.jad" />
+                <data android:pathPattern=".*.JAD" />
+                <data android:pathPattern=".*..*.JAD" />
+                <data android:pathPattern=".*..*..*.JAD" />
+                <data android:pathPattern=".*..*..*..*.JAD" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -111,6 +135,52 @@
                 <data android:pathPattern=".*..*.KJX" />
                 <data android:pathPattern=".*..*..*.KJX" />
                 <data android:pathPattern=".*..*..*..*.KJX" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!-- URI-only file/content imports need extension matching without a MIME. -->
+                <data android:host="*" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+                <data android:pathPattern=".*.jar" />
+                <data android:pathPattern=".*..*.jar" />
+                <data android:pathPattern=".*..*..*.jar" />
+                <data android:pathPattern=".*..*..*..*.jar" />
+                <data android:pathPattern=".*.JAR" />
+                <data android:pathPattern=".*..*.JAR" />
+                <data android:pathPattern=".*..*..*.JAR" />
+                <data android:pathPattern=".*..*..*..*.JAR" />
+                <data android:pathPattern=".*.jad" />
+                <data android:pathPattern=".*..*.jad" />
+                <data android:pathPattern=".*..*..*.jad" />
+                <data android:pathPattern=".*..*..*..*.jad" />
+                <data android:pathPattern=".*.JAD" />
+                <data android:pathPattern=".*..*.JAD" />
+                <data android:pathPattern=".*..*..*.JAD" />
+                <data android:pathPattern=".*..*..*..*.JAD" />
+                <data android:pathPattern=".*.kjx" />
+                <data android:pathPattern=".*..*.kjx" />
+                <data android:pathPattern=".*..*..*.kjx" />
+                <data android:pathPattern=".*..*..*..*.kjx" />
+                <data android:pathPattern=".*.KJX" />
+                <data android:pathPattern=".*..*.KJX" />
+                <data android:pathPattern=".*..*..*.KJX" />
+                <data android:pathPattern=".*..*..*..*.KJX" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!-- Some content providers expose opaque URIs and only report octet-stream. -->
+                <data android:mimeType="application/octet-stream" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
             </intent-filter>
         </activity>
         <activity
