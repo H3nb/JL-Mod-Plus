@@ -29,20 +29,6 @@ jobs:
           script.write_text(text.replace(ambiguous, ''))
           PY
           python3 .github/apply_m3g_warning_zero.py
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('app/src/main/cpp/m3g/src/m3g_object.c')
-          text = p.read_text()
-          old = '''    M3G_LOG2(M3G_LOG_STAGES,
-                     "Animating %s 0x%08X\\n",
-                     m3gClassName((M3GClass) obj->classID), (unsigned) obj);'''
-          new = '''    M3G_LOG2(M3G_LOG_STAGES,
-                     "Animating %s %p\\n",
-                     m3gClassName((M3GClass) obj->classID), (void *) obj);'''
-          if text.count(old) != 1:
-              raise SystemExit(f'm3g_object.c: expected one animate log, found {text.count(old)}')
-          p.write_text(text.replace(old, new))
-          PY
           git diff --check
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
