@@ -42,7 +42,16 @@ import java.util.List;
 
 import ru.playsoftware.j2meloader.EmulatorApplication;
 
-/** Configures ACRA as a local Java exception collector for JL-Mod Plus. */
+/**
+ * Configures ACRA as a local Java exception collector for JL-Mod Plus.
+ *
+ * Fatal failures are captured at process/lifecycle boundaries. Non-fatal collection is deliberately
+ * allowlisted: only actionable emulator-owned incidents get a dedicated reporting method. Do not
+ * report arbitrary caught MIDlet/vendor exceptions here; those are often compatibility behavior,
+ * can be high-frequency, and observability must not perturb emulator hot paths. The current
+ * allowlisted non-fatal incident is an installer failure, where the emulator owns the operation and
+ * the retained context is directly useful for diagnosis.
+ */
 public final class CrashReporter {
 	private static final int MAX_CONTEXT_VALUE_LENGTH = 256;
 	private static final int MAX_CONTEXT_MESSAGE_LENGTH = 768;
@@ -149,7 +158,10 @@ public final class CrashReporter {
 		}
 	}
 
-	/** Persists a non-fatal installer exception without mutating process-global ACRA context. */
+	/**
+	 * Allowlisted non-fatal incident: the emulator-owned installer operation failed.
+	 * This is intentionally not a generic caught-exception API.
+	 */
 	public static void reportInstallerFailure(Throwable error, String sourceScheme,
 												  String midletName, String midletVendor,
 												  String midletVersion, String jarSize) {

@@ -26,15 +26,42 @@ public final class LifecycleMidlet extends MIDlet {
 	public static final String CLASS_NAME = "jlmod.runtimefixture.LifecycleMidlet";
 	public static final String MODE_PROPERTY = "JLMod-Runtime-Mode";
 	public static final String MARKER_PROPERTY = "JLMod-Runtime-Marker";
+	public static final String MODE_CRASH_INIT = "crash-init";
 	public static final String MODE_CRASH_START = "crash-start";
+	public static final String MODE_CRASH_WORKER = "crash-worker";
+	public static final String MODE_CRASH_PAUSE = "crash-pause";
+	public static final String MODE_CRASH_DESTROY = "crash-destroy";
 	public static final String MODE_CLEAN = "clean";
+	public static final String INIT_FAILURE_MARKER = "JL-Mod Plus lifecycle runtime fixture init failure";
 	public static final String START_FAILURE_MARKER = "JL-Mod Plus lifecycle runtime fixture start failure";
+	public static final String WORKER_FAILURE_MARKER = "JL-Mod Plus lifecycle runtime fixture worker failure";
+	public static final String PAUSE_FAILURE_MARKER = "JL-Mod Plus lifecycle runtime fixture pause failure";
+	public static final String DESTROY_FAILURE_MARKER = "JL-Mod Plus lifecycle runtime fixture destroy failure";
+
+	public LifecycleMidlet() {
+		if (MODE_CRASH_INIT.equals(getAppProperty(MODE_PROPERTY))) {
+			throw new IllegalStateException(INIT_FAILURE_MARKER);
+		}
+	}
 
 	@Override
 	public void startApp() {
 		String mode = getAppProperty(MODE_PROPERTY);
 		if (MODE_CRASH_START.equals(mode)) {
 			throw new IllegalStateException(START_FAILURE_MARKER);
+		}
+		if (MODE_CRASH_WORKER.equals(mode)) {
+			new Thread(() -> {
+				try {
+					Thread.sleep(100L);
+				} catch (InterruptedException ignored) {}
+				throw new IllegalStateException(WORKER_FAILURE_MARKER);
+			}, "LifecycleFixtureWorker").start();
+			return;
+		}
+		if (MODE_CRASH_PAUSE.equals(mode) || MODE_CRASH_DESTROY.equals(mode)) {
+			writeMarker(getAppProperty(MARKER_PROPERTY));
+			return;
 		}
 		if (MODE_CLEAN.equals(mode)) {
 			writeMarker(getAppProperty(MARKER_PROPERTY));
@@ -45,10 +72,18 @@ public final class LifecycleMidlet extends MIDlet {
 	}
 
 	@Override
-	public void pauseApp() {}
+	public void pauseApp() {
+		if (MODE_CRASH_PAUSE.equals(getAppProperty(MODE_PROPERTY))) {
+			throw new IllegalStateException(PAUSE_FAILURE_MARKER);
+		}
+	}
 
 	@Override
-	public void destroyApp(boolean unconditional) throws MIDletStateChangeException {}
+	public void destroyApp(boolean unconditional) throws MIDletStateChangeException {
+		if (MODE_CRASH_DESTROY.equals(getAppProperty(MODE_PROPERTY))) {
+			throw new IllegalStateException(DESTROY_FAILURE_MARKER);
+		}
+	}
 
 	private static void writeMarker(String path) {
 		if (path == null || path.isEmpty()) {

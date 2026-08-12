@@ -111,10 +111,18 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 	}
 
 	private void shareReport() {
+		DiagnosticTraceAttachment.Attachment attachment = DiagnosticTraceAttachment.find(
+				this, record.getId(), record.getSessionId());
 		Intent share = new Intent(Intent.ACTION_SEND);
-		share.setType("text/plain");
+		share.setType(attachment == null ? "text/plain" : attachment.mimeType);
 		share.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crash_reports));
 		share.putExtra(Intent.EXTRA_TEXT, exportText);
+		if (attachment != null) {
+			share.putExtra(Intent.EXTRA_STREAM, attachment.uri);
+			share.setClipData(ClipData.newUri(
+					getContentResolver(), getString(R.string.crash_reports), attachment.uri));
+			share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+		}
 		startActivity(Intent.createChooser(share, getString(R.string.crash_report_share_title)));
 	}
 

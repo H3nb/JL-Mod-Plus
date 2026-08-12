@@ -10,6 +10,12 @@
             android:exported="false"
             android:noHistory="true"
             android:process=":midlet" />
+        <activity
+            android:name="javax.microedition.shell.CrashRuntimeLifecycleControlActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:process=":midlet" />
     </application>
 
 </manifest>
