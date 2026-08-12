@@ -1,0 +1,28 @@
+name: Apply M3G warning-zero patch
+
+on:
+  push:
+    branches:
+      - agent/m3g-arm64-warning-zero-v2
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m3g-arm64-warning-zero-v2
+          fetch-depth: 0
+      - name: Apply patch
+        run: |
+          git apply --check .github/m3g-warning-zero.patch
+          git apply .github/m3g-warning-zero.patch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/cpp/m3g
+          git commit -m "Harden remaining M3G ARM64 handle and UB sites"
+          git push origin HEAD:agent/m3g-arm64-warning-zero-v2
