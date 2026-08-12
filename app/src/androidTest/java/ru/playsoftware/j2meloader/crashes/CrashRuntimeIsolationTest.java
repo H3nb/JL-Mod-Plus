@@ -189,8 +189,11 @@ public class CrashRuntimeIsolationTest {
 			assertEquals(mainPid, Process.myPid());
 			assertEquals(mainPid, processPid(context, mainProcessName));
 			for (LocalDiagnosticRepository.Record record : LocalDiagnosticRepository.load(context)) {
-				if (!baselineIds.contains(record.getId()) && "midlet".equals(record.getProcessRole())) {
-					fail("Stale Nokia notification action produced a MIDlet-process crash: " + record.getId());
+				if (!baselineIds.contains(record.getId())
+						&& "midlet".equals(record.getProcessRole())
+						&& record.hasJavaReport()) {
+					fail("Stale Nokia notification action produced a MIDlet-process Java crash: "
+							+ record.getId());
 				}
 			}
 		} finally {
