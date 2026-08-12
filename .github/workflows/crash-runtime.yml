@@ -99,7 +99,7 @@ jobs:
             > build/ci-logs/crash-runtime-emulator.log 2>&1 &
           echo $! > build/ci-logs/crash-runtime-emulator.pid
 
-          adb wait-for-device
+          timeout 120 adb wait-for-device
           timeout 240 bash -c '
             until [[ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")" == "1" ]]; do
               sleep 2
