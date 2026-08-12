@@ -328,9 +328,10 @@ public final class ProcessExitStore {
 					REASON_EXCESSIVE_RESOURCE_USAGE -> true;
 			case REASON_LOW_MEMORY -> midletProcess || foregroundish;
 			case REASON_SIGNALED -> status != OsConstants.SIGKILL || midletProcess || foregroundish;
-			case REASON_DEPENDENCY_DIED, REASON_FREEZER, REASON_OTHER -> midletProcess || foregroundish;
+			case REASON_DEPENDENCY_DIED, REASON_FREEZER -> midletProcess || foregroundish;
 			case REASON_EXIT_SELF -> status != 0 && (midletProcess || foregroundish);
 			case REASON_UNKNOWN,
+					REASON_OTHER,
 					REASON_PERMISSION_CHANGE,
 					REASON_USER_REQUESTED,
 					REASON_USER_STOPPED,
