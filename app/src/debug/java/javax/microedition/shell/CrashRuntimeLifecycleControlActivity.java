@@ -17,6 +17,8 @@ package javax.microedition.shell;
 import android.app.Activity;
 import android.os.Bundle;
 
+import javax.microedition.util.ContextHolder;
+
 /** Debug-only lifecycle trigger used by hosted MIDlet containment tests. */
 public final class CrashRuntimeLifecycleControlActivity extends Activity {
 	public static final String EXTRA_COMMAND = "command";
@@ -26,11 +28,20 @@ public final class CrashRuntimeLifecycleControlActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		if (COMMAND_DESTROY.equals(getIntent().getStringExtra(EXTRA_COMMAND))) {
+		String command = getIntent().getStringExtra(EXTRA_COMMAND);
+		if (COMMAND_DESTROY.equals(command)) {
 			MidletThread.destroyApp();
+		} else if (COMMAND_PAUSE.equals(command)) {
+			// This activity can be launched in a separate task by instrumentation, which does not
+			// reliably drive MicroActivity through ON_STOP. Finish the real shell activity instead;
+			// its normal Android lifecycle then exercises the production pauseApp() path before
+			// destruction. A pause failure claims fatal teardown first, so the queued destroy path
+			// cannot overwrite the failure.
+			MicroActivity activity = ContextHolder.getActivity();
+			if (activity != null) {
+				activity.finish();
+			}
 		}
-		// Merely launching this activity pauses MicroActivity first. That is enough for COMMAND_PAUSE;
-		// finishing immediately keeps the trigger out of normal emulator state.
 		finish();
 	}
 }
