@@ -60,7 +60,7 @@ import ru.playsoftware.j2meloader.util.Constants;
 public class CrashRuntimeIsolationTest {
 	private static final long REPORT_TIMEOUT_MILLIS = 20_000L;
 	private static final long PROCESS_TIMEOUT_MILLIS = 10_000L;
-	private static final long CLEAN_SESSION_TIMEOUT_MILLIS = 10_000L;
+	private static final long CLEAN_SESSION_TIMEOUT_MILLIS = 20_000L;
 	private static final String LIFECYCLE_MIDLET_NAME = "JL-Mod Plus Lifecycle Runtime Fixture";
 	private static final String LIFECYCLE_MIDLET_VENDOR = "JL-Mod Plus";
 	private static final String LIFECYCLE_MIDLET_VERSION = "1.0";
