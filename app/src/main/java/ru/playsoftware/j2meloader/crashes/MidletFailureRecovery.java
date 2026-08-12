@@ -118,16 +118,12 @@ public final class MidletFailureRecovery {
 	}
 
 	private static List<MidletSessionJournal.Snapshot> readRetainedFailures(Context context) {
-		File directory = MidletSessionJournal.journalDirectory(context);
-		File[] files = directory.listFiles();
-		if (files == null || files.length == 0) {
+		List<File> files = MidletSessionJournal.journalFiles(context);
+		if (files.isEmpty()) {
 			return Collections.emptyList();
 		}
-		ArrayList<MidletSessionJournal.Snapshot> failures = new ArrayList<>(files.length);
+		ArrayList<MidletSessionJournal.Snapshot> failures = new ArrayList<>(files.size());
 		for (File file : files) {
-			if (file == null || !file.isFile()) {
-				continue;
-			}
 			try {
 				MidletSessionJournal.Snapshot snapshot = MidletSessionJournal.read(file);
 				if (isUnexpectedFailure(snapshot)) {
