@@ -29,7 +29,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 import javax.microedition.shell.MicroActivity;
 
@@ -45,9 +45,9 @@ public class PlatformCompatManifestTest {
 
 		ActivityInfo microActivity = activityInfo(packageManager, context, MicroActivity.class);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-			Field flag = ActivityInfo.class.getField("enableOnBackInvokedCallback");
+			Method callbackEnabled = ActivityInfo.class.getMethod("isOnBackInvokedCallbackEnabled");
 			assertTrue("MicroActivity must opt into AndroidX system Back dispatch",
-					flag.getBoolean(microActivity));
+					(Boolean) callbackEnabled.invoke(microActivity));
 		}
 
 		assertAdjustResize(activityInfo(packageManager, context, ConfigActivity.class));
@@ -60,7 +60,7 @@ public class PlatformCompatManifestTest {
 	}
 
 	private static void assertAdjustResize(ActivityInfo activityInfo) {
-		int mode = activityInfo.windowSoftInputMode & WindowManager.LayoutParams.SOFT_INPUT_MASK_ADJUST;
+		int mode = activityInfo.softInputMode & WindowManager.LayoutParams.SOFT_INPUT_MASK_ADJUST;
 		assertTrue("Activity must resize above the IME", mode == WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 	}
 }

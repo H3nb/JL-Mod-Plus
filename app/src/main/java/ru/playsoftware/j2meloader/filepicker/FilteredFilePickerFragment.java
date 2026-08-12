@@ -93,8 +93,12 @@ public class FilteredFilePickerFragment extends AbstractFilePickerFragment<File>
 		if (view == null) {
 			return;
 		}
-		Rect base = initialPadding.computeIfAbsent(view,
-				key -> new Rect(key.getPaddingLeft(), key.getPaddingTop(), key.getPaddingRight(), key.getPaddingBottom()));
+		Rect base = initialPadding.get(view);
+		if (base == null) {
+			base = new Rect(view.getPaddingLeft(), view.getPaddingTop(),
+					view.getPaddingRight(), view.getPaddingBottom());
+			initialPadding.put(view, base);
+		}
 		view.setPadding(base.left + left, base.top + top, base.right + right, base.bottom + bottom);
 	}
 
