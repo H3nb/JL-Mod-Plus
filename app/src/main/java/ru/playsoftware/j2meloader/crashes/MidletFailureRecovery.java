@@ -189,7 +189,7 @@ public final class MidletFailureRecovery {
 				&& isSafeEventId(snapshot.failureEventId);
 	}
 
-	private static boolean isSafeEventId(String eventId) {
+	static boolean isSafeEventId(String eventId) {
 		if (eventId == null || eventId.length() < 1 || eventId.length() > 128) {
 			return false;
 		}
