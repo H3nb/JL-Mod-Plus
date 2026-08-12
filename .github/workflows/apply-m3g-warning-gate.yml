@@ -35,38 +35,65 @@ jobs:
 
           replace_once(
               '          native_warnings="build/ci-reports/native-warnings.txt"\n          : > "$native_warnings"',
-              '          native_warnings="build/ci-reports/native-warnings.txt"\n          m3g_native_warnings="build/ci-reports/m3g-native-warnings.txt"\n          : > "$native_warnings"\n          : > "$m3g_native_warnings"',
+              '          native_warnings="build/ci-reports/native-warnings.txt"\n'
+              '          m3g_native_warnings="build/ci-reports/m3g-native-warnings.txt"\n'
+              '          : > "$native_warnings"\n'
+              '          : > "$m3g_native_warnings"',
           )
           replace_once(
-              "          if [[ -f \"$assemble_log\" ]]; then\n            grep -nE 'app/src/main/cpp/.*warning:' \"$assemble_log\" > \"$native_warnings\" || true\n          fi\n          native_warning_count=\"$(wc -l < \"$native_warnings\" | tr -d ' ')\"\n          pointer_to_integer_count=\"$(grep -Ec '\\\[-W(pointer-to-int-cast|void-pointer-to-int-cast)\\\]' \"$native_warnings\" || true)\"\n          integer_to_pointer_count=\"$(grep -Ec '\\\[-W(int-to-pointer-cast|int-to-void-pointer-cast)\\\]' \"$native_warnings\" || true)\"\n          pointer_integer_compare_count=\"$(grep -Ec '\\\[-Wpointer-integer-compare\\\]' \"$native_warnings\" || true)\"\n          pointer_type_count=\"$(grep -Ec '\\\[-Wincompatible-pointer-types\\\]' \"$native_warnings\" || true)\"\n          shift_count=\"$(grep -Ec '\\\[-Wshift-negative-value\\\]' \"$native_warnings\" || true)\"",
-              "          if [[ -f \"$assemble_log\" ]]; then\n            grep -nE 'app/src/main/cpp/.*warning:' \"$assemble_log\" > \"$native_warnings\" || true\n            grep -nE 'app/src/main/cpp/m3g/.*warning:' \"$assemble_log\" > \"$m3g_native_warnings\" || true\n          fi\n          native_warning_count=\"$(wc -l < \"$native_warnings\" | tr -d ' ')\"\n          m3g_native_warning_count=\"$(wc -l < \"$m3g_native_warnings\" | tr -d ' ')\"\n          pointer_to_integer_count=\"$(grep -Ec '\\\[-W(pointer-to-int-cast|void-pointer-to-int-cast)\\\]' \"$m3g_native_warnings\" || true)\"\n          integer_to_pointer_count=\"$(grep -Ec '\\\[-W(int-to-pointer-cast|int-to-void-pointer-cast)\\\]' \"$m3g_native_warnings\" || true)\"\n          pointer_integer_compare_count=\"$(grep -Ec '\\\[-Wpointer-integer-compare\\\]' \"$m3g_native_warnings\" || true)\"\n          pointer_type_count=\"$(grep -Ec '\\\[-Wincompatible-pointer-types\\\]' \"$m3g_native_warnings\" || true)\"\n          shift_count=\"$(grep -Ec '\\\[-Wshift-negative-value\\\]' \"$m3g_native_warnings\" || true)\"",
+              "          if [[ -f \"$assemble_log\" ]]; then\n"
+              "            grep -nE 'app/src/main/cpp/.*warning:' \"$assemble_log\" > \"$native_warnings\" || true\n"
+              "          fi\n"
+              "          native_warning_count=\"$(wc -l < \"$native_warnings\" | tr -d ' ')\"\n"
+              "          pointer_to_integer_count=\"$(grep -Ec '\\\[-W(pointer-to-int-cast|void-pointer-to-int-cast)\\\]' \"$native_warnings\" || true)\"\n"
+              "          integer_to_pointer_count=\"$(grep -Ec '\\\[-W(int-to-pointer-cast|int-to-void-pointer-cast)\\\]' \"$native_warnings\" || true)\"\n"
+              "          pointer_integer_compare_count=\"$(grep -Ec '\\\[-Wpointer-integer-compare\\\]' \"$native_warnings\" || true)\"\n"
+              "          pointer_type_count=\"$(grep -Ec '\\\[-Wincompatible-pointer-types\\\]' \"$native_warnings\" || true)\"\n"
+              "          shift_count=\"$(grep -Ec '\\\[-Wshift-negative-value\\\]' \"$native_warnings\" || true)\"",
+              "          if [[ -f \"$assemble_log\" ]]; then\n"
+              "            grep -nE 'app/src/main/cpp/.*warning:' \"$assemble_log\" > \"$native_warnings\" || true\n"
+              "            grep -nE 'app/src/main/cpp/m3g/.*warning:' \"$assemble_log\" > \"$m3g_native_warnings\" || true\n"
+              "          fi\n"
+              "          native_warning_count=\"$(wc -l < \"$native_warnings\" | tr -d ' ')\"\n"
+              "          m3g_native_warning_count=\"$(wc -l < \"$m3g_native_warnings\" | tr -d ' ')\"\n"
+              "          pointer_to_integer_count=\"$(grep -Ec '\\\[-W(pointer-to-int-cast|void-pointer-to-int-cast)\\\]' \"$m3g_native_warnings\" || true)\"\n"
+              "          integer_to_pointer_count=\"$(grep -Ec '\\\[-W(int-to-pointer-cast|int-to-void-pointer-cast)\\\]' \"$m3g_native_warnings\" || true)\"\n"
+              "          pointer_integer_compare_count=\"$(grep -Ec '\\\[-Wpointer-integer-compare\\\]' \"$m3g_native_warnings\" || true)\"\n"
+              "          pointer_type_count=\"$(grep -Ec '\\\[-Wincompatible-pointer-types\\\]' \"$m3g_native_warnings\" || true)\"\n"
+              "          shift_count=\"$(grep -Ec '\\\[-Wshift-negative-value\\\]' \"$m3g_native_warnings\" || true)\"",
           )
           replace_once(
-              '          - Native compiler warnings captured from app/src/main/cpp: ${native_warning_count}\n          - Selected native warning categories by Clang diagnostic flag:',
-              '          - Native compiler warnings captured from app/src/main/cpp: ${native_warning_count}\n          - M3G native compiler warnings captured from app/src/main/cpp/m3g: ${m3g_native_warning_count}\n          - Selected M3G warning categories by Clang diagnostic flag:',
+              '          - Native compiler warnings captured from app/src/main/cpp: ${native_warning_count}\n'
+              '          - Selected native warning categories by Clang diagnostic flag:',
+              '          - Native compiler warnings captured from app/src/main/cpp: ${native_warning_count}\n'
+              '          - M3G native compiler warnings captured from app/src/main/cpp/m3g: ${m3g_native_warning_count}\n'
+              '          - Selected M3G warning categories by Clang diagnostic flag:',
+          )
+
+          condition = '$' + "{{ steps.assemble.outcome == 'success' }}"
+          gate = (
+              '          retention-days: 7\n\n'
+              '      - name: Enforce M3G native warning gate\n'
+              f'        if: {condition}\n'
+              '        shell: bash\n'
+              '        run: |\n'
+              '          warnings="build/ci-reports/m3g-native-warnings.txt"\n'
+              '          if [[ ! -f "$warnings" ]]; then\n'
+              '            echo "M3G native warning evidence was not produced."\n'
+              '            exit 1\n'
+              '          fi\n'
+              '          warning_count="$(wc -l < "$warnings" | tr -d \' \')"\n'
+              '          if (( warning_count != 0 )); then\n'
+              '            echo "M3G native compiler warnings must remain at zero; found $warning_count."\n'
+              '            cat "$warnings"\n'
+              '            exit 1\n'
+              '          fi\n'
+              '          echo "M3G native compiler warning gate: 0 warnings"\n\n'
+              '      - name: Enforce emulator lint gate'
           )
           replace_once(
               '          retention-days: 7\n\n      - name: Enforce emulator lint gate',
-              '''          retention-days: 7
-
-      - name: Enforce M3G native warning gate
-        if: ${{ steps.assemble.outcome == 'success' }}
-        shell: bash
-        run: |
-          warnings="build/ci-reports/m3g-native-warnings.txt"
-          if [[ ! -f "$warnings" ]]; then
-            echo "M3G native warning evidence was not produced."
-            exit 1
-          fi
-          warning_count="$(wc -l < "$warnings" | tr -d ' ')"
-          if (( warning_count != 0 )); then
-            echo "M3G native compiler warnings must remain at zero; found $warning_count."
-            cat "$warnings"
-            exit 1
-          fi
-          echo "M3G native compiler warning gate: 0 warnings"
-
-      - name: Enforce emulator lint gate''',
+              gate,
           )
 
           path.write_text(text)
