@@ -87,6 +87,19 @@ jobs:
           avd='jlmod-m3g-runtime-30'
           yes | sdkmanager --licenses >/dev/null || true
           sdkmanager 'platform-tools' 'emulator' "$image"
+
+          # Emulator 36.4.9 replaced the legacy software selection with
+          # swangle/lavapipe. That backend terminates on valid fixed-function
+          # GLES 1.x calls used by M3G, so keep the last preceding stable build.
+          emulator_build='14472402' # 36.3.10
+          emulator_archive="$RUNNER_TEMP/emulator-linux_x64-$emulator_build.zip"
+          curl --fail --location --retry 3 \
+            --output "$emulator_archive" \
+            "https://dl.google.com/android/repository/emulator-linux_x64-$emulator_build.zip"
+          test "$(stat --format='%s' "$emulator_archive")" = '320951246'
+          unzip -o -q "$emulator_archive" -d "$ANDROID_HOME"
+          "$ANDROID_HOME/emulator/emulator" -version
+
           echo 'no' | avdmanager create avd \
             --force \
             --name "$avd" \
@@ -100,15 +113,13 @@ jobs:
         run: |
           mkdir -p build/ci-logs
           avd='jlmod-m3g-runtime-30'
-          # M3G exercises fixed-function GLES 1.x. Keep it in the guest because
-          # the hosted runner's gfxstream/swangle path rejects valid GLES 1 calls.
           nohup "$ANDROID_HOME/emulator/emulator" \
             -avd "$avd" \
             -no-window \
             -no-audio \
             -no-boot-anim \
             -no-snapshot \
-            -gpu off \
+            -gpu swiftshader_indirect \
             > build/ci-logs/m3g-runtime-emulator.log 2>&1 &
           echo $! > build/ci-logs/m3g-runtime-emulator.pid
 
@@ -180,7 +191,7 @@ jobs:
             echo
             echo '- Android API: 30'
             echo '- Runtime ABI: x86_64 (64-bit)'
-            echo '- Emulator graphics: guest software GLES 1.x (`-gpu off`)'
+            echo '- Emulator graphics: 36.3.10 SwiftShader indirect'
             echo '- Supported production ABI remains arm64-v8a and is compiled by Android CI.'
             echo "- Instrumentation outcome: ${{ steps.runtime_test.outcome }}"
             echo
