@@ -10,6 +10,8 @@ on:
       - 'gradle/libs.versions.toml'
       - 'app/src/androidTest/java/javax/microedition/m3g/**'
       - 'app/src/main/java/javax/microedition/m3g/**'
+      - 'app/src/main/java/javax/microedition/lcdui/Graphics.java'
+      - 'app/src/main/java/javax/microedition/lcdui/Image.java'
       - 'app/src/main/cpp/Android.mk'
       - 'app/src/main/cpp/m3g/**'
   workflow_dispatch:
@@ -122,6 +124,11 @@ jobs:
           timeout 10 adb shell getprop ro.build.version.sdk
           timeout 10 adb shell getprop ro.product.cpu.abi
 
+          adb logcat -c
+          nohup adb logcat -v threadtime \
+            > build/ci-logs/m3g-runtime-logcat.txt 2>&1 &
+          echo $! > build/ci-logs/m3g-runtime-logcat.pid
+
       - name: Run focused M3G runtime instrumentation
         id: runtime_test
         shell: bash
@@ -138,7 +145,13 @@ jobs:
         shell: bash
         run: |
           mkdir -p build/ci-reports
-          timeout 20 adb logcat -d -v threadtime > build/ci-logs/m3g-runtime-logcat.txt || true
+
+          if [[ -f build/ci-logs/m3g-runtime-logcat.pid ]]; then
+            logcat_pid="$(cat build/ci-logs/m3g-runtime-logcat.pid)"
+            kill "$logcat_pid" 2>/dev/null || true
+            wait "$logcat_pid" 2>/dev/null || true
+          fi
+
           {
             echo '## M3G runtime validation'
             echo
@@ -146,6 +159,12 @@ jobs:
             echo '- Runtime ABI: x86_64 (64-bit)'
             echo '- Supported production ABI remains arm64-v8a and is compiled by Android CI.'
             echo "- Instrumentation outcome: ${{ steps.runtime_test.outcome }}"
+            echo
+            echo '### ADB state after instrumentation'
+            echo
+            echo '```text'
+            timeout 10 adb devices -l || true
+            echo '```'
             echo
             echo '### Runtime process snapshot'
             echo

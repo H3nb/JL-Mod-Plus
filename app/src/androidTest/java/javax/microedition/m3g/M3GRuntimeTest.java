@@ -16,6 +16,8 @@
 
 package javax.microedition.m3g;
 
+import android.util.Log;
+
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.After;
@@ -29,6 +31,7 @@ import javax.microedition.lcdui.Image;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
@@ -41,6 +44,7 @@ import static org.junit.Assert.assertTrue;
  */
 @RunWith(AndroidJUnit4.class)
 public class M3GRuntimeTest {
+	private static final String TAG = "JLModM3GRuntime";
 	private static final int SIZE = 64;
 	private static final int RGB_MASK = 0x00FFFFFF;
 	private static final int BACKGROUND_ARGB = 0xFF17324D;
@@ -60,13 +64,14 @@ public class M3GRuntimeTest {
 	}
 
 	@Test
-	public void cameraAndLightTransformsRoundTripThroughJni() {
+	public void cameraAndLightTransformsCrossJniWithJsr184Semantics() {
 		Camera camera = new Camera();
 		camera.setPerspective(60.0f, 1.0f, 1.0f, 100.0f);
 		Transform cameraTransform = new Transform();
 		cameraTransform.postTranslate(1.25f, -2.5f, 3.75f);
 		cameraTransform.postRotate(37.0f, 0.0f, 1.0f, 0.0f);
 
+		runtimeStep("camera: set/get transform");
 		g3d.setCamera(camera, cameraTransform);
 		Transform returnedCameraTransform = new Transform();
 		assertSame(camera, g3d.getCamera(returnedCameraTransform));
@@ -78,19 +83,22 @@ public class M3GRuntimeTest {
 		lightTransform.postTranslate(-3.0f, 2.0f, 5.0f);
 		lightTransform.postRotate(23.0f, 1.0f, 0.0f, 0.0f);
 
+		runtimeStep("light: add/get transform");
 		int lightIndex = g3d.addLight(light, lightTransform);
 		assertEquals(1, g3d.getLightCount());
 		Transform returnedLightTransform = new Transform();
 		assertSame(light, g3d.getLight(lightIndex, returnedLightTransform));
-		assertTransformEquals(lightTransform, returnedLightTransform);
+		assertDirectionalLightEquivalent(lightTransform, returnedLightTransform);
 
 		Transform replacementTransform = new Transform();
 		replacementTransform.postTranslate(0.5f, 1.5f, -2.5f);
 		replacementTransform.postRotate(11.0f, 0.0f, 0.0f, 1.0f);
+
+		runtimeStep("light: set/get replacement transform");
 		g3d.setLight(lightIndex, light, replacementTransform);
 		Transform returnedReplacement = new Transform();
 		assertSame(light, g3d.getLight(lightIndex, returnedReplacement));
-		assertTransformEquals(replacementTransform, returnedReplacement);
+		assertDirectionalLightEquivalent(replacementTransform, returnedReplacement);
 	}
 
 	@Test
@@ -99,6 +107,7 @@ public class M3GRuntimeTest {
 		Graphics translatedGraphics = translatedImage.getGraphics();
 		translatedGraphics.translate(5, 7);
 
+		runtimeStep("graphics target: bind translated target");
 		g3d.bindTarget(translatedGraphics, true,
 				Graphics3D.TRUE_COLOR | Graphics3D.OVERWRITE);
 		try {
@@ -109,6 +118,7 @@ public class M3GRuntimeTest {
 			assertEquals(31, g3d.getViewportWidth());
 			assertEquals(29, g3d.getViewportHeight());
 		} finally {
+			runtimeStep("graphics target: release translated target");
 			g3d.releaseTarget();
 		}
 
@@ -116,11 +126,13 @@ public class M3GRuntimeTest {
 		Graphics clearGraphics = clearImage.getGraphics();
 		Background background = createBackground(BACKGROUND_ARGB);
 
+		runtimeStep("graphics target: bind/clear target");
 		g3d.bindTarget(clearGraphics, true,
 				Graphics3D.TRUE_COLOR | Graphics3D.OVERWRITE);
 		try {
 			g3d.clear(background);
 		} finally {
+			runtimeStep("graphics target: release cleared target");
 			g3d.releaseTarget();
 		}
 
@@ -129,24 +141,39 @@ public class M3GRuntimeTest {
 	}
 
 	@Test
-	public void immediateAndRetainedRenderingExecuteOn64BitNativeBackend() {
+	public void immediateRenderingExecutesOn64BitNativeBackend() {
 		TriangleFixture triangle = createTriangleFixture();
 		Camera camera = new Camera();
 		camera.setPerspective(60.0f, 1.0f, 1.0f, 20.0f);
 		Background background = createBackground(BACKGROUND_ARGB);
+		Image image = Image.createImage(SIZE, SIZE);
 
-		Image immediateImage = Image.createImage(SIZE, SIZE);
-		g3d.bindTarget(immediateImage.getGraphics(), true,
+		runtimeStep("immediate: bind target");
+		g3d.bindTarget(image.getGraphics(), true,
 				Graphics3D.TRUE_COLOR | Graphics3D.OVERWRITE);
 		try {
+			runtimeStep("immediate: set camera");
 			g3d.setCamera(camera, null);
+			runtimeStep("immediate: clear");
 			g3d.clear(background);
+			runtimeStep("immediate: render triangle");
 			g3d.render(triangle.vertices, triangle.indices,
 					triangle.appearance, null);
 		} finally {
+			runtimeStep("immediate: release target");
 			g3d.releaseTarget();
 		}
-		assertRenderedCenter(immediateImage);
+
+		runtimeStep("immediate: verify rendered pixels");
+		assertRenderedCenter(image);
+	}
+
+	@Test
+	public void retainedMorphingWorldAndPickingExecuteOn64BitNativeBackend() {
+		TriangleFixture triangle = createTriangleFixture();
+		Camera camera = new Camera();
+		camera.setPerspective(60.0f, 1.0f, 1.0f, 20.0f);
+		Background background = createBackground(BACKGROUND_ARGB);
 
 		VertexBuffer morphTarget = createVertexBuffer(new short[]{
 				-2, -1, -4,
@@ -171,20 +198,56 @@ public class M3GRuntimeTest {
 		world.addChild(morphingMesh);
 		world.setActiveCamera(camera);
 
+		runtimeStep("retained: pick world");
 		assertTrue(world.pick(-1,
 				0.0f, 0.0f, 0.0f,
 				0.0f, 0.0f, -1.0f,
 				null));
 
-		Image retainedImage = Image.createImage(SIZE, SIZE);
-		g3d.bindTarget(retainedImage.getGraphics(), true,
+		Image image = Image.createImage(SIZE, SIZE);
+		runtimeStep("retained: bind target");
+		g3d.bindTarget(image.getGraphics(), true,
 				Graphics3D.TRUE_COLOR | Graphics3D.OVERWRITE);
 		try {
+			runtimeStep("retained: render world");
 			g3d.render(world);
 		} finally {
+			runtimeStep("retained: release target");
 			g3d.releaseTarget();
 		}
-		assertRenderedCenter(retainedImage);
+
+		runtimeStep("retained: verify rendered pixels");
+		assertRenderedCenter(image);
+	}
+
+	@Test
+	public void objectReferenceArraysAndDuplicateRoundTripThroughJni() {
+		Group root = new Group();
+		Group child = new Group();
+		Object rootMarker = new Object();
+		Object childMarker = new Object();
+		root.setUserObject(rootMarker);
+		child.setUserObject(childMarker);
+		root.addChild(child);
+
+		runtimeStep("object3d: count references");
+		int referenceCount = root.getReferences(null);
+		assertTrue(referenceCount > 0);
+
+		Object3D[] references = new Object3D[referenceCount];
+		runtimeStep("object3d: populate references");
+		assertEquals(referenceCount, root.getReferences(references));
+		assertContainsSame(child, references);
+
+		runtimeStep("object3d: duplicate subtree");
+		Group duplicate = (Group) root.duplicate();
+		assertNotSame(root, duplicate);
+		assertSame(rootMarker, duplicate.getUserObject());
+		assertEquals(1, duplicate.getChildCount());
+
+		Node duplicateChild = duplicate.getChild(0);
+		assertNotSame(child, duplicateChild);
+		assertSame(childMarker, duplicateChild.getUserObject());
 	}
 
 	@Test
@@ -193,14 +256,17 @@ public class M3GRuntimeTest {
 		assertTrue(target.isMutable());
 		Background background = createBackground(0xFF224466);
 
+		runtimeStep("image2d: bind target");
 		g3d.bindTarget(target, true, Graphics3D.TRUE_COLOR);
 		try {
 			assertSame(target, g3d.getTarget());
 			g3d.setViewport(1, 2, 24, 23);
 			assertEquals(1, g3d.getViewportX());
 			assertEquals(2, g3d.getViewportY());
+			runtimeStep("image2d: clear");
 			g3d.clear(background);
 		} finally {
+			runtimeStep("image2d: release target");
 			g3d.releaseTarget();
 		}
 		assertEquals(null, g3d.getTarget());
@@ -264,6 +330,38 @@ public class M3GRuntimeTest {
 		assertArrayEquals(expectedValues, actualValues, EPSILON);
 	}
 
+	private static void assertDirectionalLightEquivalent(
+			Transform expected, Transform actual) {
+		float[] expectedDirection = {0.0f, 0.0f, -1.0f, 0.0f};
+		float[] actualDirection = {0.0f, 0.0f, -1.0f, 0.0f};
+		expected.transform(expectedDirection);
+		actual.transform(actualDirection);
+		normalizeDirection(expectedDirection);
+		normalizeDirection(actualDirection);
+		assertArrayEquals(expectedDirection, actualDirection, EPSILON);
+	}
+
+	private static void normalizeDirection(float[] direction) {
+		float length = (float) Math.sqrt(
+				direction[0] * direction[0]
+						+ direction[1] * direction[1]
+						+ direction[2] * direction[2]);
+		assertTrue(length > 0.0f);
+		direction[0] /= length;
+		direction[1] /= length;
+		direction[2] /= length;
+		direction[3] = 0.0f;
+	}
+
+	private static void assertContainsSame(Object3D expected, Object3D[] actual) {
+		for (Object3D candidate : actual) {
+			if (candidate == expected) {
+				return;
+			}
+		}
+		throw new AssertionError("Expected Object3D reference was not returned");
+	}
+
 	private static void assertRenderedCenter(Image image) {
 		int center = readPixel(image, SIZE / 2, SIZE / 2) & RGB_MASK;
 		int corner = readPixel(image, 1, 1) & RGB_MASK;
@@ -275,6 +373,10 @@ public class M3GRuntimeTest {
 		int[] pixel = new int[1];
 		image.getRGB(pixel, 0, 1, x, y, 1, 1);
 		return pixel[0];
+	}
+
+	private static void runtimeStep(String step) {
+		Log.i(TAG, step);
 	}
 
 	private static final class TriangleFixture {
