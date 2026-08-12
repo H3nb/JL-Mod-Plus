@@ -37,16 +37,21 @@ public class DiagnosticExportSanitizerTest {
 	}
 
 	@Test
-	public void redactsUrlsAndRemainingAbsolutePaths() {
-		String input = "GET https://example.com/private?q=token file:///storage/emulated/0/a.jar "
+	public void redactsUrisAndRemainingAbsolutePaths() {
+		String input = "GET https://example.com/private?q=token "
+				+ "content://com.example.provider/private/42 "
+				+ "ftp://example.com/private.bin "
+				+ "jar:file:/storage/emulated/0/a.jar!/secret.txt "
 				+ "native=/vendor/lib64/libx.so windows=C:\\Users\\User\\secret.txt";
 
 		String sanitized = DiagnosticExportSanitizer.sanitize(input, null, null);
 
 		assertFalse(sanitized.contains("example.com"));
+		assertFalse(sanitized.contains("com.example.provider"));
+		assertFalse(sanitized.contains("/storage/emulated/0/a.jar"));
 		assertFalse(sanitized.contains("/vendor/lib64/libx.so"));
 		assertFalse(sanitized.contains("C:\\Users\\User"));
-		assertTrue(sanitized.contains("<url>"));
+		assertTrue(sanitized.contains("<uri>"));
 		assertTrue(sanitized.contains("<path>"));
 	}
 
