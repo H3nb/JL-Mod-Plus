@@ -24,12 +24,14 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import ru.playsoftware.j2meloader.R;
+import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 
 public class SettingsActivity extends AppCompatActivity {
 
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		EdgeToEdgeCompat.enableIfSupported(this);
 		setContentView(R.layout.activity_settings);
 		ActionBar actionBar = getSupportActionBar();
 		if (actionBar != null) {

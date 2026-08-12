@@ -46,6 +46,7 @@ import ru.playsoftware.j2meloader.crashes.LegacyProcessExitFallback;
 import ru.playsoftware.j2meloader.crashes.MidletFailureRecovery;
 import ru.playsoftware.j2meloader.crashes.ProcessExitStore;
 import ru.playsoftware.j2meloader.util.Constants;
+import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 import ru.playsoftware.j2meloader.util.FileUtils;
 import ru.playsoftware.j2meloader.util.PickDirResultContract;
 import ru.playsoftware.j2meloader.util.StoragePermissionHelper;
@@ -67,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		EdgeToEdgeCompat.enableIfSupported(this);
 		setContentView(R.layout.activity_main);
 		addMenuProvider(new MenuProvider() {
 			@Override

@@ -116,7 +116,7 @@
         <activity
             android:name=".config.ConfigActivity"
             android:exported="true"
-            android:windowSoftInputMode="stateHidden" />
+            android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity
             android:name="javax.microedition.shell.MicroActivity"
             android:exported="false"
@@ -136,7 +136,8 @@
         <activity
             android:name=".filepicker.FilteredFilePickerActivity"
             android:exported="false"
-            android:theme="@style/FilePickerTheme" />
+            android:theme="@style/FilePickerTheme"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity android:name=".config.ProfilesActivity" android:exported="false" />
         <activity android:name=".crashes.CrashReportsActivity" android:exported="false" />
         <activity android:name=".crashes.CrashReportDetailsActivity" android:exported="false" />

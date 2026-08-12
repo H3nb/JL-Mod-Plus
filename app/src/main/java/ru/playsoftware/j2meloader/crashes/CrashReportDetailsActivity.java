@@ -33,6 +33,7 @@ import java.text.DateFormat;
 import java.util.Date;
 
 import ru.playsoftware.j2meloader.R;
+import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 
 /** Read-only diagnostic detail view with explicit copy/share/delete actions. */
 public class CrashReportDetailsActivity extends AppCompatActivity {
@@ -44,6 +45,7 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		EdgeToEdgeCompat.enableIfSupported(this);
 		setContentView(R.layout.activity_crash_report_details);
 		setTitle(R.string.crash_reports);
 		ActionBar actionBar = getSupportActionBar();
