@@ -54,8 +54,12 @@ public class OverlayView extends View {
 	}
 
 	public void setLocation(int x, int y) {
+		if (this.x == x && this.y == y) {
+			return;
+		}
 		this.x = x;
 		this.y = y;
+		postInvalidate();
 	}
 
 	public void addLayer(Layer layer) {

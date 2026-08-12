@@ -51,12 +51,18 @@ import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.AppCompatCheckBox;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.lifecycle.Lifecycle;
 import androidx.preference.PreferenceManager;
 
@@ -84,6 +90,7 @@ import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.databinding.ActivityMicroBinding;
 import ru.playsoftware.j2meloader.databinding.DialogInputBinding;
+import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 import ru.playsoftware.j2meloader.util.LogUtils;
 
 public class MicroActivity extends AppCompatActivity {
@@ -101,14 +108,36 @@ public class MicroActivity extends AppCompatActivity {
 	private int menuKey;
 	private String appPath;
 	private ActivityMicroBinding binding;
+	private WindowInsetsCompat lastWindowInsets;
+	private boolean skinLayerAvailable;
+	private int virtualDisplayPaddingLeft;
+	private int virtualDisplayPaddingTop;
+	private int virtualDisplayPaddingRight;
+	private int virtualDisplayPaddingBottom;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		lockNightMode();
 		super.onCreate(savedInstanceState);
+		EdgeToEdgeCompat.enableIfSupported(this);
 		ContextHolder.setCurrentActivity(this);
 		binding = ActivityMicroBinding.inflate(getLayoutInflater());
 		setContentView(binding.getRoot());
+		virtualDisplayPaddingLeft = binding.virtualDisplay.getPaddingLeft();
+		virtualDisplayPaddingTop = binding.virtualDisplay.getPaddingTop();
+		virtualDisplayPaddingRight = binding.virtualDisplay.getPaddingRight();
+		virtualDisplayPaddingBottom = binding.virtualDisplay.getPaddingBottom();
+		ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (view, insets) -> {
+			lastWindowInsets = insets;
+			applyGuestInsets(current);
+			return insets;
+		});
+		binding.displayableContainer.addOnLayoutChangeListener((view, left, top, right, bottom,
+				oldLeft, oldTop, oldRight, oldBottom) -> updateOverlayLocation());
+		binding.toolbar.addOnLayoutChangeListener((view, left, top, right, bottom,
+				oldLeft, oldTop, oldRight, oldBottom) -> updateOverlayLocation());
+		binding.overlay.addOnLayoutChangeListener((view, left, top, right, bottom,
+				oldLeft, oldTop, oldRight, oldBottom) -> updateOverlayLocation());
 		setSupportActionBar(binding.toolbar);
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
@@ -145,18 +174,9 @@ public class MicroActivity extends AppCompatActivity {
 		microLoader.applyConfiguration();
 		SkinLayer skinLayer = SkinLayer.getInstance();
 		if (skinLayer != null) {
+			skinLayerAvailable = true;
 			binding.overlay.addLayer(skinLayer);
-			if (!statusBarEnabled && !actionBarEnabled) {
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-					WindowManager.LayoutParams attributes = getWindow().getAttributes();
-					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-						attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
-					} else {
-						attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-					}
-					getWindow().setAttributes(attributes);
-				}
-			}
+			configureDisplayCutoutWindow();
 		}
 		VirtualKeyboard vk = ContextHolder.getVk();
 		int orientation = microLoader.getOrientation();
@@ -170,6 +190,8 @@ public class MicroActivity extends AppCompatActivity {
 		setOrientation(orientation);
 		menuKey = microLoader.getMenuKeyCode();
 		inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+		ViewCompat.requestApplyInsets(binding.getRoot());
+		binding.getRoot().post(this::updateOverlayLocation);
 
 		getOnBackPressedDispatcher().addCallback(new OnBackPressedCallback(true) {
 			@Override
@@ -207,8 +229,7 @@ public class MicroActivity extends AppCompatActivity {
 	@Override
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
-		if (hasFocus && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT &&
-				current instanceof Canvas) {
+		if (hasFocus && current instanceof Canvas) {
 			hideSystemUI();
 		}
 	}
@@ -274,25 +295,78 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void hideSystemUI() {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-			int flags = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
-			if (!statusBarEnabled) {
-				flags |= View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-						| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_FULLSCREEN;
-			}
-			getWindow().getDecorView().setSystemUiVisibility(flags);
-		} else if (!statusBarEnabled) {
-			getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-					WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		WindowInsetsControllerCompat controller = getInsetsController();
+		controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+		controller.hide(WindowInsetsCompat.Type.navigationBars());
+		if (statusBarEnabled) {
+			controller.show(WindowInsetsCompat.Type.statusBars());
+		} else {
+			controller.hide(WindowInsetsCompat.Type.statusBars());
 		}
+		applyGuestInsets(current);
 	}
 
 	private void showSystemUI() {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-			getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
-		} else {
-			getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		WindowInsetsControllerCompat controller = getInsetsController();
+		controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+		controller.show(WindowInsetsCompat.Type.systemBars());
+		applyGuestInsets(current);
+	}
+
+	private WindowInsetsControllerCompat getInsetsController() {
+		return WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+	}
+
+	private void configureDisplayCutoutWindow() {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P || !skinLayerAvailable
+				|| statusBarEnabled || actionBarEnabled) {
+			return;
 		}
+		WindowManager.LayoutParams attributes = getWindow().getAttributes();
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+			attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+		} else {
+			attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+		}
+		getWindow().setAttributes(attributes);
+	}
+
+	private void applyGuestInsets(@Nullable Displayable displayable) {
+		int left = virtualDisplayPaddingLeft;
+		int top = virtualDisplayPaddingTop;
+		int right = virtualDisplayPaddingRight;
+		int bottom = virtualDisplayPaddingBottom;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM && lastWindowInsets != null) {
+			Insets systemBars = lastWindowInsets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.systemBars());
+			Insets statusBars = lastWindowInsets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.statusBars());
+			Insets navigationBars = lastWindowInsets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.navigationBars());
+			Insets cutout = lastWindowInsets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.displayCutout());
+			Insets ime = lastWindowInsets.getInsets(WindowInsetsCompat.Type.ime());
+			boolean canvas = displayable instanceof Canvas;
+			GuestWindowPolicy.Padding guestPadding = GuestWindowPolicy.calculate(canvas,
+					skinLayerAvailable, statusBarEnabled, actionBarEnabled,
+					systemBars.left, statusBars.top, systemBars.right, navigationBars.bottom,
+					cutout.left, cutout.top, cutout.right, ime.bottom);
+			left += guestPadding.left;
+			top += guestPadding.top;
+			right += guestPadding.right;
+			bottom += guestPadding.bottom;
+		}
+		binding.virtualDisplay.setPadding(left, top, right, bottom);
+		updateOverlayLocation();
+	}
+
+	private void updateOverlayLocation() {
+		if (binding == null || !binding.displayableContainer.isLaidOut() || !binding.overlay.isLaidOut()) {
+			return;
+		}
+		int[] containerLocation = new int[2];
+		int[] overlayLocation = new int[2];
+		binding.displayableContainer.getLocationOnScreen(containerLocation);
+		binding.overlay.getLocationOnScreen(overlayLocation);
+		binding.overlay.setLocation(
+				containerLocation[0] - overlayLocation[0],
+				containerLocation[1] - overlayLocation[1]);
 	}
 
 	public void setCurrent(Displayable displayable) {
@@ -345,8 +419,7 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	public void openOptionsMenu() {
-		if (!actionBarEnabled &&
-				Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && current instanceof Canvas) {
+		if (!actionBarEnabled && current instanceof Canvas) {
 			showSystemUI();
 		}
 		super.openOptionsMenu();
@@ -673,11 +746,12 @@ public class MicroActivity extends AppCompatActivity {
 				toolbarHeight = (int) getToolBarHeight();
 				layoutParams.height = toolbarHeight;
 			}
-			binding.overlay.setLocation(0, toolbarHeight);
 			binding.toolbar.setLayoutParams(layoutParams);
+			applyGuestInsets(next);
 			if (next != null) {
 				binding.displayableContainer.addView(next.getDisplayableView());
 			}
+			binding.displayableContainer.post(MicroActivity.this::updateOverlayLocation);
 		}
 	}
 }
