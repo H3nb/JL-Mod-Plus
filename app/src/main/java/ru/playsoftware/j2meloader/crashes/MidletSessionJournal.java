@@ -21,15 +21,16 @@ import android.util.AtomicFile;
 import android.util.Log;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.UUID;
 
 import ru.playsoftware.j2meloader.EmulatorApplication;
@@ -49,6 +50,9 @@ public final class MidletSessionJournal {
 
 	private static final String TAG = MidletSessionJournal.class.getSimpleName();
 	private static final String JOURNAL_DIR = "diagnostics/midlet-sessions";
+	private static final String JOURNAL_SUFFIX = ".properties";
+	private static final String LEGACY_BACKUP_SUFFIX = ".bak";
+	private static final String NEW_WRITE_SUFFIX = ".new";
 	private static final int MAX_VALUE_LENGTH = 256;
 
 	private static final String KEY_SCHEMA_VERSION = "schemaVersion";
@@ -144,7 +148,7 @@ public final class MidletSessionJournal {
 			String midletVersion, String mainClass, String jarSize, String jarSha256) {
 		String sessionId = UUID.randomUUID().toString();
 		File directory = journalDirectory(context);
-		File file = new File(directory, sessionId + ".properties");
+		File file = new File(directory, sessionId + JOURNAL_SUFFIX);
 		MidletSessionJournal journal = new MidletSessionJournal(
 				file,
 				sessionId,
@@ -174,13 +178,10 @@ public final class MidletSessionJournal {
 	}
 
 	static void prune(Context context) {
-		File directory = journalDirectory(context);
-		File[] files = directory.listFiles();
-		if (files == null || files.length == 0) {
+		List<File> journals = journalFiles(context);
+		if (journals.isEmpty()) {
 			return;
 		}
-		ArrayList<File> journals = new ArrayList<>(files.length);
-		Collections.addAll(journals, files);
 		pruneFiles(
 				journals,
 				System.currentTimeMillis(),
@@ -194,13 +195,13 @@ public final class MidletSessionJournal {
 			long graceMillis) {
 		ArrayList<File> candidates = new ArrayList<>(files.size());
 		for (File file : files) {
-			if (file != null && file.isFile()) {
+			if (file != null && atomicRecordExists(file)) {
 				candidates.add(file);
 			}
 		}
 		Collections.sort(candidates, (left, right) -> {
-			long leftModified = left.lastModified();
-			long rightModified = right.lastModified();
+			long leftModified = atomicLastModified(left);
+			long rightModified = atomicLastModified(right);
 			if (leftModified == rightModified) {
 				return 0;
 			}
@@ -209,14 +210,14 @@ public final class MidletSessionJournal {
 
 		int keptCount = 0;
 		for (File journal : candidates) {
-			long modified = journal.lastModified();
+			long modified = atomicLastModified(journal);
 			long age = modified > 0 && now >= modified ? now - modified : 0;
 			boolean inGracePeriod = modified > 0 && now >= modified && age < graceMillis;
 			boolean expired = modified > 0 && now >= modified && age > maxAgeMillis;
 			boolean overCount = keptCount >= maxCount;
 			boolean shouldDelete = !inGracePeriod && (expired || overCount);
 
-			if (shouldDelete && journal.delete()) {
+			if (shouldDelete && delete(journal)) {
 				continue;
 			}
 			if (shouldDelete) {
@@ -228,6 +229,85 @@ public final class MidletSessionJournal {
 
 	static File journalDirectory(Context context) {
 		return new File(context.getFilesDir(), JOURNAL_DIR);
+	}
+
+	/** Returns each logical AtomicFile journal once, even when only a .bak/.new sidecar exists. */
+	static List<File> journalFiles(Context context) {
+		File[] files = journalDirectory(context).listFiles();
+		if (files == null || files.length == 0) {
+			return Collections.emptyList();
+		}
+		ArrayList<File> discovered = new ArrayList<>(files.length);
+		Collections.addAll(discovered, files);
+		return canonicalJournalFiles(discovered);
+	}
+
+	static List<File> canonicalJournalFiles(List<File> files) {
+		ArrayList<File> bases = new ArrayList<>();
+		Set<String> seenPaths = new HashSet<>();
+		for (File file : files) {
+			File base = canonicalJournalFile(file);
+			if (base == null) {
+				continue;
+			}
+			String path = base.getAbsolutePath();
+			if (seenPaths.add(path)) {
+				bases.add(base);
+			}
+		}
+		return bases;
+	}
+
+	private static File canonicalJournalFile(File file) {
+		if (file == null || !file.isFile()) {
+			return null;
+		}
+		String name = file.getName();
+		String baseName;
+		if (name.endsWith(JOURNAL_SUFFIX)) {
+			baseName = name;
+		} else if (name.endsWith(JOURNAL_SUFFIX + LEGACY_BACKUP_SUFFIX)) {
+			baseName = name.substring(0, name.length() - LEGACY_BACKUP_SUFFIX.length());
+		} else if (name.endsWith(JOURNAL_SUFFIX + NEW_WRITE_SUFFIX)) {
+			baseName = name.substring(0, name.length() - NEW_WRITE_SUFFIX.length());
+		} else {
+			return null;
+		}
+		return new File(file.getParentFile(), baseName);
+	}
+
+	static boolean delete(File baseFile) {
+		if (baseFile == null) {
+			return false;
+		}
+		boolean success = deleteIfExists(baseFile);
+		success &= deleteIfExists(sidecar(baseFile, LEGACY_BACKUP_SUFFIX));
+		success &= deleteIfExists(sidecar(baseFile, NEW_WRITE_SUFFIX));
+		return success;
+	}
+
+	private static boolean deleteIfExists(File file) {
+		return !file.exists() || file.delete();
+	}
+
+	private static boolean atomicRecordExists(File baseFile) {
+		return baseFile.isFile()
+				|| sidecar(baseFile, LEGACY_BACKUP_SUFFIX).isFile()
+				|| sidecar(baseFile, NEW_WRITE_SUFFIX).isFile();
+	}
+
+	private static long atomicLastModified(File baseFile) {
+		return Math.max(
+				baseFile.lastModified(),
+				Math.max(
+						sidecar(baseFile, LEGACY_BACKUP_SUFFIX).lastModified(),
+						sidecar(baseFile, NEW_WRITE_SUFFIX).lastModified()
+				)
+		);
+	}
+
+	private static File sidecar(File baseFile, String suffix) {
+		return new File(baseFile.getPath() + suffix);
 	}
 
 	public String getSessionId() {
@@ -391,7 +471,9 @@ public final class MidletSessionJournal {
 	}
 
 	static Snapshot read(File file) throws IOException {
-		try (InputStream input = new FileInputStream(file)) {
+		// openRead() is required to restore the last committed state after an interrupted AtomicFile
+		// write. Directly reading the base path can observe an invalid/partial file on older Android.
+		try (InputStream input = new AtomicFile(file).openRead()) {
 			return read(input);
 		}
 	}
