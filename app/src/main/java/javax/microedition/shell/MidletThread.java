@@ -113,6 +113,13 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			instance.handler.obtainMessage(START).sendToTarget();
 	}
 
+	static void requestPause() {
+		MidletThread current = instance;
+		if (current != null && current.handler != null) {
+			current.handler.obtainMessage(PAUSE).sendToTarget();
+		}
+	}
+
 	static void destroyApp() {
 		MidletThread current = instance;
 		if (current != null) {
@@ -413,7 +420,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		switch (event) {
 			case ON_CREATE -> handler.obtainMessage(INIT).sendToTarget();
 			case ON_START -> handler.obtainMessage(START).sendToTarget();
-			case ON_STOP -> handler.obtainMessage(PAUSE).sendToTarget();
+			case ON_STOP -> requestPause();
 			case ON_DESTROY -> {
 				if (fatalFailureClaimed.get()) {
 					// ACRA finishes the crashing activity before persisting its report. Do not enqueue the
