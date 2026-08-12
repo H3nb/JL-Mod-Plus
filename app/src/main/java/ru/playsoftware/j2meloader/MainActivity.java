@@ -42,6 +42,7 @@ import ru.playsoftware.j2meloader.applist.AppListModel;
 import ru.playsoftware.j2meloader.applist.AppsListFragment;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.crashes.CrashReportsActivity;
+import ru.playsoftware.j2meloader.crashes.LegacyProcessExitFallback;
 import ru.playsoftware.j2meloader.crashes.MidletFailureRecovery;
 import ru.playsoftware.j2meloader.crashes.ProcessExitStore;
 import ru.playsoftware.j2meloader.util.Constants;
@@ -147,6 +148,10 @@ public class MainActivity extends AppCompatActivity {
 			return;
 		}
 
+		// Android 6-10 has no ApplicationExitInfo. Reconcile an unfinished, no-longer-running
+		// isolated MIDlet session into the same ProcessExitStore schema before looking for notices.
+		// The fallback records only UNKNOWN cause; it never guesses ANR/native/LMK classifications.
+		LegacyProcessExitFallback.ingest(this);
 		ProcessExitStore.PendingExit exit = ProcessExitStore.findPendingExit(this);
 		if (exit == null || exit.getId().equals(lastRecoveryNoticeId)) {
 			return;

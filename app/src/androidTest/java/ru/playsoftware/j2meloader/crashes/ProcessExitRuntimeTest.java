@@ -19,7 +19,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityManager;
 import android.content.Context;
@@ -45,10 +44,6 @@ public class ProcessExitRuntimeTest {
 
 	@Test
 	public void abruptRemoteSignalDeathIsCapturedWithoutJavaException() {
-		// ApplicationExitInfo is public from Android 11. API23-29 exercise the existing Java/journal
-		// containment suite in CI, but cannot truthfully classify this process death via public API.
-		assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R);
-
 		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 		String mainProcessName = context.getPackageName();
 		String midletProcessName = mainProcessName + ":midlet";
@@ -72,10 +67,19 @@ public class ProcessExitRuntimeTest {
 			assertNotNull(record.getSessionId());
 			assertTrue(record.hasProcessExit());
 			assertFalse(record.hasJavaReport());
-			assertTrue(record.getDetailText().contains("Exit reason: Signal termination"));
-			assertTrue(record.getDetailText().contains("SIGKILL"));
 			assertTrue(record.getDetailText().contains("Lifecycle stage: RUNNING"));
 			assertTrue(record.getDetailText().contains("Session outcome: NONE"));
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+				assertTrue(record.getDetailText().contains("Exit reason: Signal termination"));
+				assertTrue(record.getDetailText().contains("SIGKILL"));
+			} else {
+				assertTrue(record.getDetailText().contains("Exit reason: Process termination (reason 0)"));
+				assertTrue(record.getDetailText().contains(
+						"Exact termination cause unavailable on Android 6-10"));
+				assertFalse(record.getDetailText().contains("Native crash"));
+				assertFalse(record.getDetailText().contains("ANR"));
+				assertFalse(record.getDetailText().contains("Low-memory kill"));
+			}
 		} finally {
 			cleanupSignalDiagnostics(context, baselineIds);
 		}
@@ -85,6 +89,9 @@ public class ProcessExitRuntimeTest {
 			Context context, Set<String> existingIds) {
 		long deadline = SystemClock.uptimeMillis() + REPORT_TIMEOUT_MILLIS;
 		do {
+			// API30+ ingests ApplicationExitInfo from LocalDiagnosticRepository.load(). API23-29
+			// deliberately materialize only an UNKNOWN process exit after proving the journal owner died.
+			LegacyProcessExitFallback.ingest(context);
 			for (LocalDiagnosticRepository.Record record : LocalDiagnosticRepository.load(context)) {
 				if (!existingIds.contains(record.getId())
 						&& record.getKind() == LocalDiagnosticRepository.Kind.PROCESS_EXIT
