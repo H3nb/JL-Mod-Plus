@@ -16,22 +16,45 @@
 */
 #include "javax_microedition_m3g_Transform.h"
 
+#include <string.h>
+
+static_assert(sizeof(Matrix) == 72,
+              "Transform.java matrix storage must match native Matrix size");
+
+static M3Gbool m3gReadTransformMatrix(JNIEnv* aEnv,
+                                      jbyteArray aMatrix,
+                                      Matrix* matrix)
+{
+    jbyte bytes[sizeof(Matrix)];
+    aEnv->GetByteArrayRegion(aMatrix, 0, (jsize)sizeof(Matrix), bytes);
+    if (aEnv->ExceptionCheck()) {
+        return M3G_FALSE;
+    }
+    memcpy(matrix, bytes, sizeof(*matrix));
+    return M3G_TRUE;
+}
+
+static M3Gbool m3gWriteTransformMatrix(JNIEnv* aEnv,
+                                       jbyteArray aMatrix,
+                                       const Matrix* matrix)
+{
+    jbyte bytes[sizeof(Matrix)];
+    memcpy(bytes, matrix, sizeof(*matrix));
+    aEnv->SetByteArrayRegion(aMatrix, 0, (jsize)sizeof(Matrix), bytes);
+    return aEnv->ExceptionCheck() ? M3G_FALSE : M3G_TRUE;
+}
+
 JNIEXPORT void JNICALL Java_javax_microedition_m3g_Transform__1transformArray
 (JNIEnv* aEnv, jclass, jbyteArray aMatrix, jlong aHArray, jfloatArray aOutArray, jboolean aW)
 {
-    // null pointers are never passed
-    Matrix* matrix = (Matrix *)(aEnv->GetByteArrayElements(aMatrix, NULL));
-    if (matrix == NULL)
-    {
-        M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
+    Matrix matrix;
+    if (!m3gReadTransformMatrix(aEnv, aMatrix, &matrix)) {
         return;
     }
 
     jfloat* outArray = aEnv->GetFloatArrayElements(aOutArray, NULL);
     if (outArray == NULL)
     {
-        aEnv->ReleaseByteArrayElements(aMatrix, (jbyte*)matrix, JNI_ABORT);
-
         M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
         return;
     }
@@ -39,10 +62,9 @@ JNIEXPORT void JNICALL Java_javax_microedition_m3g_Transform__1transformArray
     int outArrayLen = aEnv->GetArrayLength(aOutArray);
 
     M3G_DO_LOCK
-    m3gTransformArray((M3GVertexArray)aHArray, matrix, (M3Gfloat *)outArray, outArrayLen, (M3Gbool)aW);
+    m3gTransformArray((M3GVertexArray)aHArray, &matrix, (M3Gfloat *)outArray, outArrayLen, (M3Gbool)aW);
     M3G_DO_UNLOCK(aEnv)
 
-    aEnv->ReleaseByteArrayElements(aMatrix, (jbyte*)matrix, JNI_ABORT);
     aEnv->ReleaseFloatArrayElements(aOutArray, outArray, 0);
 }
 
@@ -50,7 +72,7 @@ JNIEXPORT void JNICALL Java_javax_microedition_m3g_Transform__1rotateQuat
 (JNIEnv* aEnv, jclass, jbyteArray aMatrix, jfloat aQx, jfloat aQy, jfloat aQz, jfloat aQw)
 {
     M3GQuat quat;
-    Matrix* matrix = NULL;
+    Matrix matrix;
 
     if (aQx == 0 && aQy == 0 && aQz == 0 && aQw == 0)
     {
@@ -58,10 +80,7 @@ JNIEXPORT void JNICALL Java_javax_microedition_m3g_Transform__1rotateQuat
         return;
     }
 
-    matrix = (Matrix *)(aEnv->GetByteArrayElements(aMatrix, NULL));
-    if (matrix == NULL)
-    {
-        M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
+    if (!m3gReadTransformMatrix(aEnv, aMatrix, &matrix)) {
         return;
     }
 
@@ -72,47 +91,41 @@ JNIEXPORT void JNICALL Java_javax_microedition_m3g_Transform__1rotateQuat
 
     M3G_DO_LOCK
     m3gNormalizeQuat(&quat);
-    m3gPostRotateMatrixQuat(matrix, (const Quat *)&quat);
+    m3gPostRotateMatrixQuat(&matrix, (const Quat *)&quat);
     M3G_DO_UNLOCK(aEnv)
 
-    aEnv->ReleaseByteArrayElements(aMatrix, (jbyte*)matrix, 0);
+    m3gWriteTransformMatrix(aEnv, aMatrix, &matrix);
 }
 
 JNIEXPORT void JNICALL Java_javax_microedition_m3g_Transform__1setIdentity
 (JNIEnv* aEnv, jclass, jbyteArray aMatrix)
 {
-    Matrix* matrix = (Matrix *)(aEnv->GetByteArrayElements(aMatrix, NULL));
-    if (matrix == NULL)
-    {
-        M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
-        return;
-    }
+    Matrix matrix;
     M3G_DO_LOCK
-    m3gIdentityMatrix(matrix);
+    m3gIdentityMatrix(&matrix);
     M3G_DO_UNLOCK(aEnv)
-    aEnv->ReleaseByteArrayElements(aMatrix, (jbyte*)matrix, 0);
+    m3gWriteTransformMatrix(aEnv, aMatrix, &matrix);
 }
 
 JNIEXPORT void JNICALL Java_javax_microedition_m3g_Transform__1translate
 (JNIEnv* aEnv, jclass, jbyteArray aMatrix, jfloat aTx, jfloat aTy, jfloat aTz)
 {
-    Matrix* matrix = (Matrix *)(aEnv->GetByteArrayElements(aMatrix, NULL));
-    if (matrix == NULL)
-    {
-        M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
+    Matrix matrix;
+    if (!m3gReadTransformMatrix(aEnv, aMatrix, &matrix)) {
         return;
     }
+
     M3G_DO_LOCK
-    m3gPostTranslateMatrix(matrix, aTx, aTy, aTz);
+    m3gPostTranslateMatrix(&matrix, aTx, aTy, aTz);
     M3G_DO_UNLOCK(aEnv)
 
-    aEnv->ReleaseByteArrayElements(aMatrix, (jbyte*)matrix, 0);
+    m3gWriteTransformMatrix(aEnv, aMatrix, &matrix);
 }
 
 JNIEXPORT void JNICALL Java_javax_microedition_m3g_Transform__1getMatrix
 (JNIEnv* aEnv, jclass, jbyteArray aMatrix, jfloatArray aDstArray)
 {
-    Matrix *matrix = NULL;
+    Matrix matrix;
 
     if (aDstArray == NULL)
     {
@@ -126,27 +139,21 @@ JNIEXPORT void JNICALL Java_javax_microedition_m3g_Transform__1getMatrix
         return;
     }
 
-    matrix = (Matrix *)(aEnv->GetByteArrayElements(aMatrix, NULL));
-    if (matrix == NULL)
-    {
-        M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
+    if (!m3gReadTransformMatrix(aEnv, aMatrix, &matrix)) {
         return;
     }
 
     float* dstArray = (float*)(aEnv->GetFloatArrayElements(aDstArray, NULL));
     if (dstArray == NULL)
     {
-        aEnv->ReleaseByteArrayElements(aMatrix, (jbyte*)matrix, JNI_ABORT);
-
         M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
         return;
     }
 
     M3G_DO_LOCK
-    m3gGetMatrixRows(matrix, dstArray);
+    m3gGetMatrixRows(&matrix, dstArray);
     M3G_DO_UNLOCK(aEnv)
 
-    aEnv->ReleaseByteArrayElements(aMatrix, (jbyte*)matrix, JNI_ABORT);
     aEnv->ReleaseFloatArrayElements(aDstArray, dstArray, 0);
 }
 
@@ -161,12 +168,9 @@ JNIEXPORT void JNICALL Java_javax_microedition_m3g_Transform__1transformTable
         return;
     }
     int tabelArrayLen = aEnv->GetArrayLength(aTableArray);
-    Matrix* matrix = (Matrix *)(aEnv->GetByteArrayElements(aMatrix, NULL));
-    if (matrix == NULL)
-    {
+    Matrix matrix;
+    if (!m3gReadTransformMatrix(aEnv, aMatrix, &matrix)) {
         aEnv->ReleaseFloatArrayElements(aTableArray, v, JNI_ABORT);
-
-        M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
         return;
     }
 
@@ -178,7 +182,7 @@ JNIEXPORT void JNICALL Java_javax_microedition_m3g_Transform__1transformTable
         for (i = 0; i < tabelArrayLen; i += 4)
         {
             m3gSetVec4(&vec, v[i + 0], v[i + 1], v[i + 2], v[i + 3]);
-            m3gTransformVec4(matrix, &vec);
+            m3gTransformVec4(&matrix, &vec);
             v[i + 0] = vec.x;
             v[i + 1] = vec.y;
             v[i + 2] = vec.z;
@@ -187,25 +191,22 @@ JNIEXPORT void JNICALL Java_javax_microedition_m3g_Transform__1transformTable
         M3G_DO_UNLOCK(aEnv)
     }
 
-    aEnv->ReleaseByteArrayElements(aMatrix, (jbyte*)matrix, JNI_ABORT);
     aEnv->ReleaseFloatArrayElements(aTableArray, v, 0);
 }
 
 JNIEXPORT void JNICALL Java_javax_microedition_m3g_Transform__1scale
 (JNIEnv* aEnv, jclass, jbyteArray aMatrix, jfloat aSx, jfloat aSy, jfloat aSz)
 {
-    Matrix* matrix = (Matrix *)(aEnv->GetByteArrayElements(aMatrix, NULL));
-    if (matrix == NULL)
-    {
-        M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
+    Matrix matrix;
+    if (!m3gReadTransformMatrix(aEnv, aMatrix, &matrix)) {
         return;
     }
 
     M3G_DO_LOCK
-    m3gPostScaleMatrix(matrix, aSx, aSy, aSz);
+    m3gPostScaleMatrix(&matrix, aSx, aSy, aSz);
     M3G_DO_UNLOCK(aEnv)
 
-    aEnv->ReleaseByteArrayElements(aMatrix, (jbyte*)matrix, 0);
+    m3gWriteTransformMatrix(aEnv, aMatrix, &matrix);
 }
 
 JNIEXPORT void JNICALL Java_javax_microedition_m3g_Transform__1mul
@@ -218,50 +219,25 @@ JNIEXPORT void JNICALL Java_javax_microedition_m3g_Transform__1mul
         return;
     }
 
-    {
-        const Matrix *right = (const Matrix *)(aEnv->GetByteArrayElements(aRightArray, NULL));
-        if (right == NULL)
-        {
-            M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
-            return;
-        }
-
-        const Matrix *left = (const Matrix *)(aEnv->GetByteArrayElements(aLeftArray, NULL));
-        if (left == NULL)
-        {
-            aEnv->ReleaseByteArrayElements(aRightArray, (jbyte*)right, JNI_ABORT);
-
-            M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
-            return;
-        }
-
-        Matrix *prod = (Matrix *)(aEnv->GetByteArrayElements(aProdArray, NULL));
-        if (prod == NULL)
-        {
-            aEnv->ReleaseByteArrayElements(aRightArray, (jbyte*)right, JNI_ABORT);
-            aEnv->ReleaseByteArrayElements(aLeftArray, (jbyte*)left, JNI_ABORT);
-
-            M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
-            return;
-        }
-
-        Matrix temp;
-        M3G_DO_LOCK
-        m3gMatrixProduct(&temp, left, right);
-        M3G_DO_UNLOCK(aEnv)
-
-        *prod = temp;
-
-        aEnv->ReleaseByteArrayElements(aRightArray, (jbyte*)right, JNI_ABORT);
-        aEnv->ReleaseByteArrayElements(aLeftArray, (jbyte*)left, JNI_ABORT);
-        aEnv->ReleaseByteArrayElements(aProdArray, (jbyte*)prod, 0);
+    Matrix right;
+    Matrix left;
+    Matrix prod;
+    if (!m3gReadTransformMatrix(aEnv, aRightArray, &right) ||
+        !m3gReadTransformMatrix(aEnv, aLeftArray, &left)) {
+        return;
     }
+
+    M3G_DO_LOCK
+    m3gMatrixProduct(&prod, &left, &right);
+    M3G_DO_UNLOCK(aEnv)
+
+    m3gWriteTransformMatrix(aEnv, aProdArray, &prod);
 }
 
 JNIEXPORT void JNICALL Java_javax_microedition_m3g_Transform__1setMatrix
 (JNIEnv* aEnv, jclass, jbyteArray aMatrix, jfloatArray aSrcArray)
 {
-    Matrix *matrix = NULL;
+    Matrix matrix;
 
     if (aSrcArray == NULL)
     {
@@ -274,63 +250,49 @@ JNIEXPORT void JNICALL Java_javax_microedition_m3g_Transform__1setMatrix
         return;
     }
 
-    matrix = (Matrix *)(aEnv->GetByteArrayElements(aMatrix, NULL));
-    if (matrix == NULL)
-    {
-        M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
-        return;
-    }
-
     float* srcArray = aEnv->GetFloatArrayElements(aSrcArray, NULL);
     if (srcArray == NULL)
     {
-        aEnv->ReleaseByteArrayElements(aMatrix, (jbyte*)matrix, JNI_ABORT);
-
         M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
         return;
     }
 
     M3G_DO_LOCK
-    m3gSetMatrixRows(matrix, (const float *)srcArray);
+    m3gSetMatrixRows(&matrix, (const float *)srcArray);
     M3G_DO_UNLOCK(aEnv)
 
     aEnv->ReleaseFloatArrayElements(aSrcArray, srcArray, JNI_ABORT);
-    aEnv->ReleaseByteArrayElements(aMatrix, (jbyte*)matrix, 0);
+    m3gWriteTransformMatrix(aEnv, aMatrix, &matrix);
 }
 
 JNIEXPORT void JNICALL Java_javax_microedition_m3g_Transform__1transpose
 (JNIEnv* aEnv, jclass, jbyteArray aMatrix)
 {
+    Matrix matrix;
     Matrix tpos;
-    Matrix *matrix = (Matrix *)(aEnv->GetByteArrayElements(aMatrix, NULL));
-    if (matrix == NULL)
-    {
-        M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
+    if (!m3gReadTransformMatrix(aEnv, aMatrix, &matrix)) {
         return;
     }
+
     M3G_DO_LOCK
-    m3gMatrixTranspose(&tpos, matrix);
-    m3gCopyMatrix(matrix, &tpos);
+    m3gMatrixTranspose(&tpos, &matrix);
     M3G_DO_UNLOCK(aEnv)
 
-    aEnv->ReleaseByteArrayElements(aMatrix, (jbyte*)matrix, 0);
+    m3gWriteTransformMatrix(aEnv, aMatrix, &tpos);
 }
 
 JNIEXPORT void JNICALL Java_javax_microedition_m3g_Transform__1invert
 (JNIEnv* aEnv, jclass, jbyteArray aMatrix)
 {
-    Matrix *matrix = (Matrix *)(aEnv->GetByteArrayElements(aMatrix, NULL));
-    if (matrix == NULL)
-    {
-        M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
+    Matrix matrix;
+    if (!m3gReadTransformMatrix(aEnv, aMatrix, &matrix)) {
         return;
     }
 
     M3G_BEGIN_PROFILE(M3G_PROFILE_TRANSFORM_INVERT);
     M3G_DO_LOCK
-    if (!m3gInvertMatrix(matrix))
+    if (!m3gInvertMatrix(&matrix))
     {
-        aEnv->ReleaseByteArrayElements(aMatrix, (jbyte*)matrix, JNI_ABORT);
         M3G_RAISE_EXCEPTION(aEnv, "java/lang/ArithmeticException");
         M3G_DO_UNLOCK(aEnv)
         return;
@@ -338,13 +300,13 @@ JNIEXPORT void JNICALL Java_javax_microedition_m3g_Transform__1invert
     M3G_DO_UNLOCK(aEnv)
     M3G_END_PROFILE(M3G_PROFILE_TRANSFORM_INVERT);
 
-    aEnv->ReleaseByteArrayElements(aMatrix, (jbyte*)matrix, 0);
+    m3gWriteTransformMatrix(aEnv, aMatrix, &matrix);
 }
 
 JNIEXPORT void JNICALL Java_javax_microedition_m3g_Transform__1rotate
 (JNIEnv* aEnv, jclass, jbyteArray aMatrix, jfloat aAngle, jfloat aAx, jfloat aAy, jfloat aAz)
 {
-    Matrix *matrix = NULL;
+    Matrix matrix;
 
     if (aAx == 0 && aAy == 0 && aAz == 0 && aAngle != 0)
     {
@@ -352,16 +314,13 @@ JNIEXPORT void JNICALL Java_javax_microedition_m3g_Transform__1rotate
         return;
     }
 
-    matrix = (Matrix *)(aEnv->GetByteArrayElements(aMatrix, NULL));
-    if (matrix == NULL)
-    {
-        M3G_RAISE_EXCEPTION(aEnv, "java/lang/OutOfMemoryError");
+    if (!m3gReadTransformMatrix(aEnv, aMatrix, &matrix)) {
         return;
     }
 
     M3G_DO_LOCK
-    m3gPostRotateMatrix(matrix, aAngle, aAx, aAy, aAz);
+    m3gPostRotateMatrix(&matrix, aAngle, aAx, aAy, aAz);
     M3G_DO_UNLOCK(aEnv)
 
-    aEnv->ReleaseByteArrayElements(aMatrix, (jbyte*)matrix, 0);
+    m3gWriteTransformMatrix(aEnv, aMatrix, &matrix);
 }
