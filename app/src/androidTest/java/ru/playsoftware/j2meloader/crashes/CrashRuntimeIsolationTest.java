@@ -49,7 +49,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.microedition.shell.CrashRuntimeLifecycleControlActivity;
 import javax.microedition.shell.MicroActivity;
+
+import com.nokia.mid.ui.NotificationActivity;
 
 import jlmod.runtimefixture.LifecycleMidlet;
 import ru.playsoftware.j2meloader.config.ProfileModel;
@@ -77,7 +80,7 @@ public class CrashRuntimeIsolationTest {
 		try {
 			assertEquals(mainProcessName, ru.playsoftware.j2meloader.EmulatorApplication.getProcessName());
 			assertEquals(mainPid, processPid(context, mainProcessName));
-			assertMicroActivityUsesMidletProcess(context, midletProcessName);
+			assertMidletFacingActivitiesUseMidletProcess(context, midletProcessName);
 
 			LocalDiagnosticRepository.Record first = launchProbeAndAwaitCorrelatedRecord(
 					context, baselineIds);
@@ -101,7 +104,7 @@ public class CrashRuntimeIsolationTest {
 	}
 
 	@Test
-	public void realMidletStartFailureIsContainedAndNextSessionLaunchesCleanly() throws Exception {
+	public void realMidletFailureMatrixIsContainedAndNextSessionLaunchesCleanly() throws Exception {
 		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 		String mainProcessName = context.getPackageName();
 		String midletProcessName = mainProcessName + ":midlet";
@@ -112,27 +115,45 @@ public class CrashRuntimeIsolationTest {
 		String previousEmulatorDir = preferences.getString(Constants.PREF_EMULATOR_DIR, null);
 		File root = new File(context.getFilesDir(), LIFECYCLE_FIXTURE_ROOT);
 		File appDir = new File(new File(root, "converted"), "fixture");
-		File marker = new File(root, "clean-start.marker");
+		File marker = new File(root, "lifecycle.marker");
 
 		try {
-			assertMicroActivityUsesMidletProcess(context, midletProcessName);
+			assertMidletFacingActivitiesUseMidletProcess(context, midletProcessName);
 			deleteRecursively(root);
 			prepareLifecycleFixture(context, root, appDir);
 			assertTrue("Unable to switch emulator directory for lifecycle runtime fixture",
 					preferences.edit().putString(Constants.PREF_EMULATOR_DIR, root.getAbsolutePath()).commit());
 
-			writeLifecycleManifest(appDir, LifecycleMidlet.MODE_CRASH_START, marker);
-			LocalDiagnosticRepository.Record failure = launchLifecycleMidletAndAwaitFailure(
-					context, appDir, baselineIds);
-			assertRemoteProcessStops(context, midletProcessName);
-			assertEquals(mainPid, Process.myPid());
-			assertEquals(mainPid, processPid(context, mainProcessName));
-			assertLifecycleStartFailure(failure);
+			assertLifecycleFailureCase(context, appDir, marker,
+					LifecycleMidlet.MODE_CRASH_INIT,
+					MidletSessionJournal.FailureBoundary.LIFECYCLE_INIT,
+					LifecycleMidlet.INIT_FAILURE_MARKER,
+					null, mainPid, mainProcessName, midletProcessName);
+			assertLifecycleFailureCase(context, appDir, marker,
+					LifecycleMidlet.MODE_CRASH_START,
+					MidletSessionJournal.FailureBoundary.LIFECYCLE_START,
+					LifecycleMidlet.START_FAILURE_MARKER,
+					null, mainPid, mainProcessName, midletProcessName);
+			assertLifecycleFailureCase(context, appDir, marker,
+					LifecycleMidlet.MODE_CRASH_WORKER,
+					MidletSessionJournal.FailureBoundary.UNCAUGHT_THREAD,
+					LifecycleMidlet.WORKER_FAILURE_MARKER,
+					null, mainPid, mainProcessName, midletProcessName);
+			assertLifecycleFailureCase(context, appDir, marker,
+					LifecycleMidlet.MODE_CRASH_PAUSE,
+					MidletSessionJournal.FailureBoundary.LIFECYCLE_PAUSE,
+					LifecycleMidlet.PAUSE_FAILURE_MARKER,
+					CrashRuntimeLifecycleControlActivity.COMMAND_PAUSE,
+					mainPid, mainProcessName, midletProcessName);
+			assertLifecycleFailureCase(context, appDir, marker,
+					LifecycleMidlet.MODE_CRASH_DESTROY,
+					MidletSessionJournal.FailureBoundary.LIFECYCLE_DESTROY,
+					LifecycleMidlet.DESTROY_FAILURE_MARKER,
+					CrashRuntimeLifecycleControlActivity.COMMAND_DESTROY,
+					mainPid, mainProcessName, midletProcessName);
 
 			Set<String> afterCrashIds = recordIds(LocalDiagnosticRepository.load(context));
-			if (marker.exists() && !marker.delete()) {
-				fail("Unable to clear lifecycle clean-start marker");
-			}
+			clearMarker(marker);
 			writeLifecycleManifest(appDir, LifecycleMidlet.MODE_CLEAN, marker);
 			launchLifecycleMidlet(context, appDir);
 			awaitMarker(marker);
@@ -148,13 +169,69 @@ public class CrashRuntimeIsolationTest {
 		}
 	}
 
-	private static void assertMicroActivityUsesMidletProcess(Context context, String midletProcessName) {
+	@Test
+	public void staleNokiaNotificationActionCannotEscapeTheMidletProcess() {
+		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+		String mainProcessName = context.getPackageName();
+		String midletProcessName = mainProcessName + ":midlet";
+		int mainPid = Process.myPid();
+		Set<String> baselineIds = recordIds(LocalDiagnosticRepository.load(context));
+
+		try {
+			assertActivityUsesProcess(context, NotificationActivity.class, midletProcessName);
+			Intent intent = new Intent(context, NotificationActivity.class)
+					.putExtra("id", Integer.MAX_VALUE)
+					.putExtra("event", 1)
+					.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			context.startActivity(intent);
+			SystemClock.sleep(1_000L);
+
+			assertEquals(mainPid, Process.myPid());
+			assertEquals(mainPid, processPid(context, mainProcessName));
+			for (LocalDiagnosticRepository.Record record : LocalDiagnosticRepository.load(context)) {
+				if (!baselineIds.contains(record.getId()) && "midlet".equals(record.getProcessRole())) {
+					fail("Stale Nokia notification action produced a MIDlet-process crash: " + record.getId());
+				}
+			}
+		} finally {
+			killRemoteProcessBestEffort(context, midletProcessName);
+		}
+	}
+
+	private static void assertLifecycleFailureCase(Context context, File appDir, File marker,
+			String mode, MidletSessionJournal.FailureBoundary expectedBoundary, String failureMarker,
+			String controlCommand, int mainPid, String mainProcessName, String midletProcessName)
+			throws IOException {
+		Set<String> existingIds = recordIds(LocalDiagnosticRepository.load(context));
+		clearMarker(marker);
+		writeLifecycleManifest(appDir, mode, marker);
+		launchLifecycleMidlet(context, appDir);
+		if (controlCommand != null) {
+			awaitMarker(marker);
+			launchLifecycleControl(context, controlCommand);
+		}
+		LocalDiagnosticRepository.Record failure = awaitLifecycleFailure(context, existingIds);
+		assertRemoteProcessStops(context, midletProcessName);
+		assertEquals(mainPid, Process.myPid());
+		assertEquals(mainPid, processPid(context, mainProcessName));
+		assertLifecycleFailure(failure, expectedBoundary, failureMarker);
+	}
+
+	private static void assertMidletFacingActivitiesUseMidletProcess(
+			Context context, String midletProcessName) {
+		assertActivityUsesProcess(context, MicroActivity.class, midletProcessName);
+		assertActivityUsesProcess(context, NotificationActivity.class, midletProcessName);
+	}
+
+	private static void assertActivityUsesProcess(Context context, Class<?> activityClass,
+			String expectedProcessName) {
 		try {
 			ActivityInfo info = context.getPackageManager().getActivityInfo(
-					new ComponentName(context, MicroActivity.class), 0);
-			assertEquals(midletProcessName, info.processName);
+					new ComponentName(context, activityClass), 0);
+			assertEquals(expectedProcessName, info.processName);
 		} catch (PackageManager.NameNotFoundException e) {
-			throw new AssertionError("MicroActivity is missing from the merged debug manifest", e);
+			throw new AssertionError(activityClass.getSimpleName()
+					+ " is missing from the merged debug manifest", e);
 		}
 	}
 
@@ -169,17 +246,17 @@ public class CrashRuntimeIsolationTest {
 		assertTrue(record.getStackTrace().contains("runtimeProbe=true;"));
 	}
 
-	private static void assertLifecycleStartFailure(LocalDiagnosticRepository.Record record) {
+	private static void assertLifecycleFailure(LocalDiagnosticRepository.Record record,
+			MidletSessionJournal.FailureBoundary expectedBoundary, String failureMarker) {
 		assertTrue(record.hasJavaReport());
 		assertNotNull(record.getEventId());
 		assertNotNull(record.getSessionId());
 		assertEquals(LIFECYCLE_MIDLET_NAME, record.getMidletName());
 		assertEquals("midlet", record.getProcessRole());
-		assertTrue(record.getDetailText().contains("Failure boundary: LIFECYCLE_START"));
+		assertTrue(record.getDetailText().contains("Failure boundary: " + expectedBoundary.name()));
 		assertTrue(record.getDetailText().contains("Entrypoint: " + LifecycleMidlet.CLASS_NAME));
 		assertNotNull(record.getStackTrace());
-		assertTrue(record.getStackTrace().contains("Failed startApp"));
-		assertTrue(record.getStackTrace().contains(LifecycleMidlet.START_FAILURE_MARKER));
+		assertTrue(record.getStackTrace().contains(failureMarker));
 		assertTrue(record.getStackTrace().contains(LifecycleMidlet.CLASS_NAME));
 	}
 
@@ -207,9 +284,8 @@ public class CrashRuntimeIsolationTest {
 		return null;
 	}
 
-	private static LocalDiagnosticRepository.Record launchLifecycleMidletAndAwaitFailure(
-			Context context, File appDir, Set<String> existingIds) {
-		launchLifecycleMidlet(context, appDir);
+	private static LocalDiagnosticRepository.Record awaitLifecycleFailure(
+			Context context, Set<String> existingIds) {
 		long deadline = SystemClock.uptimeMillis() + REPORT_TIMEOUT_MILLIS;
 		do {
 			for (LocalDiagnosticRepository.Record record : LocalDiagnosticRepository.load(context)) {
@@ -230,6 +306,13 @@ public class CrashRuntimeIsolationTest {
 		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(appDir.getAbsolutePath()),
 				context, MicroActivity.class)
 				.putExtra(Constants.KEY_MIDLET_NAME, LIFECYCLE_MIDLET_NAME)
+				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		context.startActivity(intent);
+	}
+
+	private static void launchLifecycleControl(Context context, String command) {
+		Intent intent = new Intent(context, CrashRuntimeLifecycleControlActivity.class)
+				.putExtra(CrashRuntimeLifecycleControlActivity.EXTRA_COMMAND, command)
 				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		context.startActivity(intent);
 	}
@@ -267,6 +350,12 @@ public class CrashRuntimeIsolationTest {
 		}
 	}
 
+	private static void clearMarker(File marker) {
+		if (marker.exists() && !marker.delete()) {
+			fail("Unable to clear lifecycle runtime marker");
+		}
+	}
+
 	private static void awaitMarker(File marker) {
 		long deadline = SystemClock.uptimeMillis() + CLEAN_SESSION_TIMEOUT_MILLIS;
 		do {
@@ -275,7 +364,7 @@ public class CrashRuntimeIsolationTest {
 			}
 			SystemClock.sleep(100L);
 		} while (SystemClock.uptimeMillis() < deadline);
-		fail("Subsequent clean MIDlet session never reached startApp()");
+		fail("MIDlet lifecycle fixture never reached its ready marker");
 	}
 
 	private static void assertNoNewLifecycleFailure(Context context, Set<String> existingIds) {
