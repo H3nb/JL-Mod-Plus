@@ -33,7 +33,7 @@ google-oboe = "1.10.0"
 junit = "4.13.2"
 pngj = "2.2.3"
 rx-android = "2.1.1"
-zip4j = "2.11.5"
+zip4j = "2.11.6"
 
 [libraries]
 acra-core = { module = "ch.acra:acra-core", version.ref = "acra" }
