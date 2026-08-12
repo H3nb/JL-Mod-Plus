@@ -13,8 +13,8 @@ LOCAL_CXXFLAGS  := $(LOCAL_CFLAGS)
 # assertions contain diagnostics that are intentionally outside the production
 # warning-zero baseline, so keep them visible without promoting them to errors.
 ifeq ($(TARGET_ARCH_ABI),x86_64)
-    LOCAL_CFLAGS   += -DM3G_DEBUG -Wno-error
-    LOCAL_CXXFLAGS += -DM3G_DEBUG -Wno-error
+    LOCAL_CFLAGS   += -DM3G_DEBUG -Wno-error -include m3g_runtime_compositing_diagnostics.h
+    LOCAL_CXXFLAGS += -DM3G_DEBUG -Wno-error -include m3g_runtime_compositing_diagnostics.h
 endif
 
 LOCAL_LDLIBS    := -llog -lEGL -lGLESv1_CM -lz -ljnigraphics
