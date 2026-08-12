@@ -274,6 +274,7 @@ public class MidletSessionJournalTest {
 			if (file != null && file.exists()) {
 				count++;
 			}
+		}
 		return count;
 	}
 
