@@ -3,7 +3,8 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE    := javam3g
-LOCAL_CFLAGS    := -O3 -DM3G_TARGET_ANDROID #-DM3G_DEBUG -DM3G_GL_ES_1_1
+# Warning-zero is part of the supported ARM64 M3G contract; fail on regressions.
+LOCAL_CFLAGS    := -O3 -Werror -DM3G_TARGET_ANDROID #-DM3G_DEBUG -DM3G_GL_ES_1_1
 LOCAL_CXXFLAGS  := $(LOCAL_CFLAGS)
 LOCAL_LDLIBS    := -llog -lEGL -lGLESv1_CM -lz -ljnigraphics
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/inc/
