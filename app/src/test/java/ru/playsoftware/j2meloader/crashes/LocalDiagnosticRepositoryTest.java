@@ -57,6 +57,15 @@ public class LocalDiagnosticRepositoryTest {
 	}
 
 	@Test
+	public void unsafeEventIdDoesNotCorrelate() {
+		assertFalse(LocalDiagnosticRepository.isExactEventMatch(
+				"session-1",
+				"event/../1",
+				"session-1",
+				"eventId=event/../1; boundary=UNCAUGHT_THREAD"));
+	}
+
+	@Test
 	public void missingFieldsDoNotCorrelate() {
 		assertFalse(LocalDiagnosticRepository.isExactEventMatch(null, "event-1", "session-1", "eventId=event-1;"));
 		assertFalse(LocalDiagnosticRepository.isExactEventMatch("session-1", null, "session-1", "eventId=event-1;"));
