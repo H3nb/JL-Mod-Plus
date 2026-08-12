@@ -16,7 +16,8 @@ About -> Licenses
 (backed by app/src/main/assets/licenses.html)
 
 Distinct bundled source components include:
-- MicroEmulator subset — LGPL-2.1-or-later OR Apache-2.0
+- MicroEmulator subset — source is dual LGPL-2.1-or-later OR Apache-2.0;
+  JL-Mod Plus relies on the Apache-2.0 alternative for redistribution
 - Android Open Source Project dx/dex sources — Apache-2.0
 - Nokia M3G / JSR-184 native reference code — EPL-1.0
 - SoniVox EAS native code — Apache-2.0
@@ -26,8 +27,9 @@ Distinct bundled source components include:
 Runtime libraries such as AndroidX, Kotlin, Material Components, Gson, Oboe,
 ACRA, RxJava/RxAndroid, Zip4j, ASM, FFmpegKit and their shipped transitive
 components retain their upstream licenses. Exact origins, coordinates, license
-identifiers and important transitive notices are recorded in
-THIRD_PARTY_NOTICES.md and summarized in the in-app Licenses notice.
+identifiers, source-availability pointers for reciprocal licenses, and important
+transitive notices are recorded in THIRD_PARTY_NOTICES.md and summarized in the
+in-app Licenses notice.
 
 Unless a file or component states otherwise, JL-Mod Plus project modifications
 are distributed under the repository's Apache License 2.0.

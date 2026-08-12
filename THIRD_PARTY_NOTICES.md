@@ -2,16 +2,18 @@
 
 This file is the canonical provenance ledger for third-party software currently bundled by JL-Mod Plus. It was audited against `alpha` at `cf7542e602c280b2caa677a0cbbc2b37c8bdc08a` and the `emulatorDebugRuntimeClasspath` captured by Android CI #130.
 
-The app-facing copy is `app/src/main/assets/licenses.html`, reachable from **About -> Licenses**. Source-file copyright headers and upstream license files remain authoritative when they are more specific than this summary.
+The app-facing copy is `app/src/main/assets/licenses.html`, reachable from **About -> Licenses**. Source-file copyright headers, published artifact metadata, and upstream license files remain authoritative when they are more specific than this summary.
+
+This ledger is a provenance/notice inventory for the current project state, not a legal certification. Release packaging should be re-audited when a bundled source component, runtime coordinate, or native binary package changes.
 
 ## Bundled and inherited source
 
-| Component | Local evidence / path | Traceable origin | License |
+| Component | Local evidence / path | Traceable origin | License / redistribution note |
 | --- | --- | --- | --- |
 | JL-Mod / J2ME Loader lineage | Main application/emulator sources; representative `javax.microedition.shell` files retain upstream authorship | `https://github.com/woesss/JL-Mod` and inherited J2ME Loader history | Apache-2.0 unless a file carries a more specific notice |
-| MicroEmulator subset | `app/src/main/java/org/microemu/**` | MicroEmulator; source headers identify the project and Bartek Teodorczyk | LGPL-2.1-or-later **OR** Apache-2.0 |
+| MicroEmulator subset | `app/src/main/java/org/microemu/**` | MicroEmulator; source headers identify the project and Bartek Teodorczyk | Source offers LGPL-2.1-or-later **OR** Apache-2.0; JL-Mod Plus relies on the Apache-2.0 alternative for redistribution |
 | Android dx/dex | `dexlib/src/main/java/com/android/dx/**`, `dexlib/src/main/java/com/android/dex/**` | Android Open Source Project | Apache-2.0 |
-| Nokia M3G / JSR-184 native reference code | `app/src/main/cpp/m3g/src/**`; source headers identify Nokia Corporation | Nokia M3G reference implementation lineage carried by JL-Mod | EPL-1.0 |
+| Nokia M3G / JSR-184 native reference code | `app/src/main/cpp/m3g/src/**`; source headers identify Nokia Corporation | Nokia M3G reference implementation lineage carried by JL-Mod | EPL-1.0; source is available in the public JL-Mod Plus repository at the local path shown |
 | SoniVox EAS | `app/src/main/cpp/sonivox/**`; source headers identify Sonic Network Inc. | Android/SoniVox Embedded Audio Synthesis code lineage | Apache-2.0 |
 | Mascot Capsule Micro3D implementation | `app/src/main/java/com/mascotcapsule/micro3d/**` and `app/src/main/cpp/micro3d/**`; current files identify JL-Mod/Yury Kharchenko/woesss authorship | JL-Mod implementation currently in this tree | Apache-2.0 where stated by the source files |
 | TinySoundFont | Git submodule `app/src/main/cpp/mmapi_tsf/TinySoundFont` pinned at `0d10306120037ce049a7699f9eaa5314d5b888f8` | `https://github.com/schellingb/TinySoundFont` | MIT |
@@ -37,16 +39,27 @@ The table below covers direct runtime dependencies and license-significant trans
 | `org.jspecify:jspecify` | JSpecify | Apache-2.0 |
 | `org.checkerframework:checker-qual` | Checker Framework | MIT |
 | `com.github.yukuku:ambilwarna` | `https://github.com/yukuku/ambilwarna` | Apache-2.0 |
-| `io.github.nikita36078:ffmpeg-kit:6.0.LTS` | `https://github.com/nikita36078/ffmpeg-kit`, fork lineage from FFmpegKit | Repository/artifact declares LGPL-3.0 by default. FFmpegKit documentation notes GPL-3.0 applies when GPL libraries are enabled; bundled FFmpeg/external libraries retain their own upstream license terms. |
+| `io.github.nikita36078:ffmpeg-kit:6.0.LTS` | Maven SCM / source: `https://github.com/nikita36078/ffmpeg-kit` | Published POM declares LGPL-3.0. FFmpegKit documentation notes GPL-3.0 applies when GPL libraries are enabled; FFmpeg and bundled external libraries retain their own upstream terms. |
 | `com.arthenica:smart-exception-java:0.2.1`, `smart-exception-common:0.2.1` | `https://github.com/tanersener/smart-exception` | BSD-3-Clause |
-| `com.github.woesss:filepicker:4.4.0` | `https://github.com/woesss/filepicker`, fork of NoNonsense-FilePicker | MPL-2.0 |
+| `com.github.woesss:filepicker:4.4.0` | `https://github.com/woesss/filepicker`, fork of NoNonsense-FilePicker | MPL-2.0; source for the distributed fork is available at the origin URL |
 | `com.github.nikita36078:pngj:2.2.3` | `https://github.com/nikita36078/pngj`, fork of `leonbloy/pngj` | Apache-2.0 |
-| `junit:junit:4.12` (runtime transitive of current PNGJ artifact) | JUnit 4 | EPL-1.0 |
+| `junit:junit:4.12` (runtime transitive of current PNGJ artifact) | JUnit 4, `https://github.com/junit-team/junit4` | EPL-1.0; source is available at the origin URL |
 | `org.hamcrest:hamcrest-core:1.3` (runtime transitive of JUnit 4.12) | Hamcrest | BSD-3-Clause |
 | `io.reactivex.rxjava2:rxjava`, `io.reactivex.rxjava2:rxandroid` | ReactiveX | Apache-2.0 |
 | `org.reactivestreams:reactive-streams` | Reactive Streams JVM API | MIT-0 |
 | `net.lingala.zip4j:zip4j:2.11.6` | `https://github.com/srikanth-lingala/zip4j` | Apache-2.0 |
 | `org.ow2.asm:asm:9.6` | OW2 ASM | BSD-3-Clause |
+
+## Source availability for reciprocal-license components
+
+The following public source locations are recorded so recipients can trace the source corresponding to reciprocal-license components in the current distribution:
+
+- Nokia M3G / JSR-184 EPL-1.0 source: `https://github.com/H3nb/JL-Mod-Plus/tree/alpha/app/src/main/cpp/m3g/src`
+- FFmpegKit 6.0.LTS LGPL-3.0 source/SCM: `https://github.com/nikita36078/ffmpeg-kit`
+- FilePicker MPL-2.0 source: `https://github.com/woesss/filepicker`
+- JUnit 4 EPL-1.0 source: `https://github.com/junit-team/junit4`
+
+The exact Maven coordinate or pinned submodule revision in this ledger identifies the artifact/source snapshot used by JL-Mod Plus where such a pin exists. These source links are notice/provenance pointers; they do not replace the upstream license terms or any additional redistribution obligations those licenses may impose.
 
 The Gradle runtime graph is the authority for what resolves into the current APK configuration. If a dependency is added, removed, or changes license/package composition, this ledger and the in-app notice must be reviewed in the same change or immediately before release.
 
@@ -59,7 +72,7 @@ The Gradle runtime graph is the authority for what resolves into the current APK
 The previous `licenses.html` mixed historical and current components. This audit makes the following corrections:
 
 - removes Volley and Android Donations Lib because they are not part of the current runtime graph/project dependency set;
-- replaces the old MobileFFmpeg label with the actual `io.github.nikita36078:ffmpeg-kit:6.0.LTS` fork and its current license caveat;
+- replaces the old MobileFFmpeg label with the actual `io.github.nikita36078:ffmpeg-kit:6.0.LTS` artifact and its published LGPL-3.0 metadata;
 - replaces the ambiguous `Symbian OS` label with the actual Nokia M3G / JSR-184 native source attribution and EPL-1.0;
 - removes the old FreeJ2ME M3D(O) attribution because current Mascot Capsule/Micro3D source in this tree carries JL-Mod/Yury Kharchenko/woesss provenance instead;
 - removes the old Aha-Soft launcher attribution because the JL-Mod Plus launcher assets were replaced in the project-foundation change and are not the inherited upstream launcher blobs;
@@ -73,7 +86,6 @@ Canonical license identifiers used above:
 - Apache-2.0 — `https://www.apache.org/licenses/LICENSE-2.0`
 - BSD-3-Clause — `https://opensource.org/license/bsd-3-clause`
 - EPL-1.0 — `https://www.eclipse.org/legal/epl-v10.html`
-- LGPL-2.1-or-later — `https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html`
 - LGPL-3.0 — `https://www.gnu.org/licenses/lgpl-3.0.html`
 - MIT — `https://opensource.org/license/mit`
 - MIT-0 — `https://opensource.org/license/mit-0`
