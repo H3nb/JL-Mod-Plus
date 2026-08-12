@@ -1,0 +1,107 @@
+name: Finish M3G Graphics3D matrix hardening
+
+on:
+  push:
+    branches:
+      - agent/m3g-arm64-warning-zero-v2
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m3g-arm64-warning-zero-v2
+          fetch-depth: 0
+      - name: Replace JNI byte-array matrix aliasing
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('app/src/main/cpp/m3g/jni/graphics3d.inl')
+          text = path.read_text()
+
+          acquisition = re.compile(
+              r'    M3GMatrix \*transform = NULL;\n'
+              r'    if \(aTransform\)\n'
+              r'    \{\n'
+              r'        transform = \((?:Matrix|M3GMatrix) \*\)\(?aEnv->GetByteArrayElements\(aTransform, NULL\)\)?;\n'
+              r'        if \(transform == NULL\)\n'
+              r'        \{\n'
+              r'            M3G_RAISE_EXCEPTION\(aEnv, "java/lang/OutOfMemoryError"\);\n'
+              r'            return(?P<zero> 0)?;\n'
+              r'        \}\n'
+              r'    \}'
+          )
+
+          def replace_acquisition(match):
+              suffix = match.group('zero') or ''
+              return (
+                  '    Matrix matrix;\n'
+                  '    M3GMatrix *transform = NULL;\n'
+                  '    if (aTransform != NULL)\n'
+                  '    {\n'
+                  '        if (!m3gReadTransformMatrix(aEnv, aTransform, &matrix))\n'
+                  '        {\n'
+                  f'            return{suffix};\n'
+                  '        }\n'
+                  '        transform = &matrix;\n'
+                  '    }'
+              )
+
+          text, acquisitions = acquisition.subn(replace_acquisition, text)
+          if acquisitions != 7:
+              raise SystemExit(f'expected 7 Graphics3D matrix acquisitions, replaced {acquisitions}')
+
+          input_release = '''    if (transform)
+              {
+                  aEnv->ReleaseByteArrayElements(aTransform, (jbyte*)transform, JNI_ABORT);
+              }'''
+          input_count = text.count(input_release)
+          if input_count != 5:
+              raise SystemExit(f'expected 5 input-only matrix releases, found {input_count}')
+          text = text.replace(input_release, '')
+
+          output_release = '''    if (transform)
+              {
+                  /* copy array to Java side and release arrays */
+                  aEnv->ReleaseByteArrayElements(aTransform, (jbyte*)transform, 0);
+              }'''
+          if text.count(output_release) != 1:
+              raise SystemExit('expected one getViewTransform output release')
+          text = text.replace(
+              output_release,
+              '''    if (transform != NULL)
+              {
+                  m3gWriteTransformMatrix(aEnv, aTransform, &matrix);
+              }'''
+          )
+
+          light_output_release = '''    if (transform)
+              {
+                  aEnv->ReleaseByteArrayElements(aTransform, (jbyte*)transform, 0);
+              }'''
+          if text.count(light_output_release) != 1:
+              raise SystemExit('expected one getLightTransform output release')
+          text = text.replace(
+              light_output_release,
+              '''    if (transform != NULL)
+              {
+                  m3gWriteTransformMatrix(aEnv, aTransform, &matrix);
+              }'''
+          )
+
+          path.write_text(text)
+          PY
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/cpp/m3g/jni/graphics3d.inl
+          git rm .github/workflows/finish-m3g-graphics3d-matrix.yml
+          git commit -m "Harden Graphics3D JNI matrix storage on ARM64"
+          git push origin HEAD:agent/m3g-arm64-warning-zero-v2
