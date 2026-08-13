@@ -16,10 +16,13 @@
 
 package ru.playsoftware.j2meloader.screenshot
 
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
+import android.widget.FrameLayout
 import android.widget.ListView
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.ext.junit.rules.ActivityScenarioRule
@@ -43,14 +46,7 @@ class CrashReportsLegacyScreenshotTest {
     @Test
     fun crashReportsListEmptyLegacy() {
         activityRule.scenario.onActivity { activity ->
-            prepareHost(activity)
-            activity.setContentView(R.layout.activity_crash_reports)
-            activity.setTitle(R.string.crash_reports)
-            activity.supportActionBar?.setDisplayHomeAsUpEnabled(true)
-            EdgeToEdgeCompat.protectHostContent(activity)
-            val list = activity.findViewById<ListView>(R.id.crash_reports_list)
-            list.emptyView = activity.findViewById(R.id.crash_reports_empty)
-            list.adapter = ReportAdapter(emptyList())
+            installLegacyList(activity, emptyList())
         }
         InstrumentationRegistry.getInstrumentation().waitForIdleSync()
         activityRule.scenario.onActivity { activity ->
@@ -61,19 +57,11 @@ class CrashReportsLegacyScreenshotTest {
     @Test
     fun crashReportsListContentLegacy() {
         activityRule.scenario.onActivity { activity ->
-            prepareHost(activity)
-            activity.setContentView(R.layout.activity_crash_reports)
-            activity.setTitle(R.string.crash_reports)
-            activity.supportActionBar?.setDisplayHomeAsUpEnabled(true)
-            EdgeToEdgeCompat.protectHostContent(activity)
-            val list = activity.findViewById<ListView>(R.id.crash_reports_list)
-            list.emptyView = activity.findViewById(R.id.crash_reports_empty)
-            list.adapter = ReportAdapter(
+            installLegacyList(activity,
                 listOf(
                     ReportRow("Demo MIDlet", "MIDlet session failure · Aug 13, 2026, 12:00 PM"),
                     ReportRow("Java diagnostic report", "Java diagnostic report · Aug 13, 2026, 11:45 AM"),
-                ),
-            )
+                ))
         }
         InstrumentationRegistry.getInstrumentation().waitForIdleSync()
         activityRule.scenario.onActivity { activity ->
@@ -84,17 +72,12 @@ class CrashReportsLegacyScreenshotTest {
     @Test
     fun crashReportDetailsLegacy() {
         activityRule.scenario.onActivity { activity ->
-            prepareHost(activity)
-            activity.setContentView(R.layout.activity_crash_report_details)
-            activity.setTitle(R.string.crash_reports)
-            activity.supportActionBar?.setDisplayHomeAsUpEnabled(true)
-            EdgeToEdgeCompat.protectHostContent(activity)
-            activity.findViewById<TextView>(R.id.crash_report_details_text).text =
+            installLegacyDetails(activity,
                 "JL-Mod Plus diagnostic report\n\n" +
                     "Type: Java diagnostic report\n" +
                     "MIDlet: Demo MIDlet\n" +
                     "Android: 16\n\n" +
-                    "Stack trace:\njava.lang.IllegalStateException: sample"
+                    "Stack trace:\njava.lang.IllegalStateException: sample")
         }
         InstrumentationRegistry.getInstrumentation().waitForIdleSync()
         activityRule.scenario.onActivity { activity ->
@@ -106,6 +89,65 @@ class CrashReportsLegacyScreenshotTest {
         EdgeToEdgeCompat.enableIfSupported(activity)
         activity.setTitle(R.string.crash_reports)
     }
+
+    private fun installLegacyList(
+        activity: ScreenshotHostActivity,
+        rows: List<ReportRow>,
+    ) {
+        prepareHost(activity)
+        val root = FrameLayout(activity)
+        val list = ListView(activity).apply {
+            dividerHeight = 1.dp(activity)
+        }
+        val empty = TextView(activity).apply {
+            text = "No local crash reports"
+            setPadding(24.dp(activity), 24.dp(activity), 24.dp(activity), 24.dp(activity))
+            setTextAppearance(android.R.style.TextAppearance_Material_Body1)
+        }
+        root.addView(list, FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT,
+        ))
+        root.addView(empty, FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            Gravity.CENTER,
+        ))
+        activity.setContentView(root)
+        configureLegacyActionBar(activity)
+        EdgeToEdgeCompat.protectHostContent(activity)
+        list.emptyView = empty
+        list.adapter = ReportAdapter(rows)
+    }
+
+    private fun installLegacyDetails(activity: ScreenshotHostActivity, text: String) {
+        prepareHost(activity)
+        val scroll = ScrollView(activity).apply {
+            isFillViewport = true
+        }
+        val details = TextView(activity).apply {
+            setPadding(16.dp(activity), 16.dp(activity), 16.dp(activity), 16.dp(activity))
+            setTextIsSelectable(true)
+            setTextAppearance(android.R.style.TextAppearance_Material_Body2)
+            typeface = android.graphics.Typeface.MONOSPACE
+            this.text = text
+        }
+        scroll.addView(details, ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+        ))
+        activity.setContentView(scroll)
+        configureLegacyActionBar(activity)
+        EdgeToEdgeCompat.protectHostContent(activity)
+    }
+
+    private fun configureLegacyActionBar(activity: ScreenshotHostActivity) {
+        activity.setTitle(R.string.crash_reports)
+        activity.supportActionBar?.setDisplayHomeAsUpEnabled(true)
+    }
+
+    private fun Int.dp(activity: ScreenshotHostActivity): Int =
+        (this * activity.resources.displayMetrics.density + 0.5f).toInt()
 
     private data class ReportRow(val title: String, val subtitle: String)
 
