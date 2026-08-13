@@ -46,6 +46,12 @@ import ru.playsoftware.j2meloader.filepicker.FilteredFilePickerActivity;
 @RunWith(AndroidJUnit4.class)
 public class PlatformCompatManifestTest {
 	@Test
+	public void suiteRunsOnAndroid15OrLaterDevice() {
+		assertTrue("Platform compatibility suite must run on API 35 or later",
+				Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM);
+	}
+
+	@Test
 	public void imeResizeManifestContractRemainsScopedToHostActivities() throws Exception {
 		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 		PackageManager packageManager = context.getPackageManager();

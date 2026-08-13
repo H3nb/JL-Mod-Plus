@@ -126,7 +126,7 @@ public class PlatformCompatBehaviorTest {
 	}
 
 	@Test
-	public void hardwareLongPressBackRetainsExitConfirmation() throws Exception {
+	public void adbLongPressBackRetainsExitConfirmation() throws Exception {
 		launchFixture(context, appDir);
 		awaitMarker(marker, "shown");
 		executeShellCommand("input keyevent --longpress KEYCODE_BACK");
