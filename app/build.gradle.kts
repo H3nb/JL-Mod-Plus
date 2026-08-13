@@ -260,4 +260,5 @@ dependencies {
     implementation(libs.rx.android)
 
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.test.runner)
 }
