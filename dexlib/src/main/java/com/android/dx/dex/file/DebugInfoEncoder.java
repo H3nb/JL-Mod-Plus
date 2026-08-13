@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2007 The Android Open Source Project
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +47,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Locale;
 
 /**
  * An encoder for the dex debug info state machine format. The format
@@ -823,7 +825,7 @@ public final class DebugInfoEncoder {
 
         if (annotateTo != null || debugPrint != null) {
             annotate(1,
-                    String.format("%04x: line %d", address, line));
+                    String.format(Locale.ROOT, "%04x: line %d", address, line));
         }
     }
 
@@ -866,7 +868,7 @@ public final class DebugInfoEncoder {
 
         if (annotateTo != null || debugPrint != null) {
             annotate(output.getCursor() - mark,
-                    String.format("line = %d", line));
+                    String.format(Locale.ROOT, "line = %d", line));
         }
 
         if (DEBUG) {

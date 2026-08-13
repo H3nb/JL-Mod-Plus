@@ -215,7 +215,7 @@ public class MidiSequence {
 		this.resolution = resolution / TONE_MULTIPLIER;
 	}
 
-	/*
+	/**
 	 * Write midi event to stream. This method writes both variable length
 	 * delta time and midi event.
 	 * @param length time between last event and this event (delta time)

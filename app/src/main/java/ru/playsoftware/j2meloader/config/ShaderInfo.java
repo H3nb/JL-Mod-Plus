@@ -1,5 +1,6 @@
 /*
  *  Copyright 2020 Yury Kharchenko
+ *  Modified for JL-Mod Plus.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,6 +23,8 @@ import android.os.Parcelable;
 import androidx.annotation.NonNull;
 
 import com.google.gson.annotations.SerializedName;
+
+import java.util.Locale;
 
 public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 	public transient String dir;
@@ -218,7 +221,8 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		if (this.name == null) {
 			return oName == null ? 0 : 1;
 		} else if (oName == null) return -1;
-		return name.toLowerCase().compareTo(oName.toLowerCase());
+		Locale locale = Locale.getDefault();
+		return name.toLowerCase(locale).compareTo(oName.toLowerCase(locale));
 	}
 
 	@Override

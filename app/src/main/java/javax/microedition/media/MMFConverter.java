@@ -1,5 +1,6 @@
 /*
  * Copyright 2021 ohayoyogi
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class MMFConverter {
@@ -54,7 +56,7 @@ public class MMFConverter {
 
 		@Override
 		void output(DataOutputStream dos, int currentTime) throws IOException {
-			System.out.println(String.format("timestamp: %d, NOP", timestamp));
+			System.out.println(String.format(Locale.ROOT, "timestamp: %d, NOP", timestamp));
 		}
 	}
 
@@ -67,7 +69,7 @@ public class MMFConverter {
 		void output(DataOutputStream dos, int currentTime) throws IOException {
 			writeVariableLengthValue(timestamp - currentTime, dos);
 			dos.write(new byte[]{(byte) 0xFF, 0x2F, 0x00});
-			System.out.println(String.format("timestamp: %d, EOS", timestamp));
+			System.out.println(String.format(Locale.ROOT, "timestamp: %d, EOS", timestamp));
 		}
 	}
 

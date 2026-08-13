@@ -15,6 +15,7 @@
  *  limitations under the License.
  */
 
+// Modified for JL-Mod Plus.
 package javax.microedition.shell.custom;
 
 /**
@@ -62,7 +63,7 @@ public abstract class TimerTask implements Runnable {
         }
     }
 
-    /*
+    /**
      * Is TimerTask scheduled into any timer?
      *
      * @return {@code true} if the timer task is scheduled, {@code false}
