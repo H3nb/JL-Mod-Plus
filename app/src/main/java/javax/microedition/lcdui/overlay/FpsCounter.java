@@ -19,30 +19,31 @@ import android.view.View;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.microedition.lcdui.graphics.CanvasWrapper;
 
 public class FpsCounter extends TimerTask implements Layer {
 
 	private final View view;
-	private String prevFrameCount = "0";
-	private int totalFrameCount;
+	private volatile String prevFrameCount = "0";
+	private final AtomicInteger totalFrameCount = new AtomicInteger();
 	private final Timer timer;
 
 	public FpsCounter(View view) {
 		this.view = view;
 		timer = new Timer("FpsCounter", true);
-		timer.scheduleAtFixedRate(this, 0, 1000);
+		// Avoid catch-up bursts after a cached process resumes on Android 16.
+		timer.schedule(this, 0, 1000);
 	}
 
 	public void run() {
-		prevFrameCount = String.valueOf(totalFrameCount);
-		totalFrameCount = 0;
+		prevFrameCount = String.valueOf(totalFrameCount.getAndSet(0));
 		view.postInvalidate();
 	}
 
 	public void increment() {
-		totalFrameCount++;
+		totalFrameCount.incrementAndGet();
 	}
 
 	public void paint(CanvasWrapper g) {
