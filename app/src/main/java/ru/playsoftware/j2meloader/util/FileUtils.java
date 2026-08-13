@@ -168,7 +168,8 @@ public class FileUtils {
 	 * providers do not have a stable raw path and must not be guessed.</p>
 	 */
 	public static File getDirectoryForTreeUri(Context context, Uri uri) {
-		if (context == null || uri == null || !DocumentsContract.isTreeUri(uri)
+		if (context == null || uri == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.N
+				|| !DocumentsContract.isTreeUri(uri)
 				|| !"com.android.externalstorage.documents".equals(uri.getAuthority())) {
 			return null;
 		}
@@ -251,7 +252,8 @@ public class FileUtils {
 
 	/** Retains access to a directory selected through the Storage Access Framework. */
 	public static void takePersistableTreePermission(Context context, Uri uri) {
-		if (context == null || uri == null || !"content".equals(uri.getScheme())
+		if (context == null || uri == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.N
+				|| !"content".equals(uri.getScheme())
 				|| !DocumentsContract.isTreeUri(uri)) {
 			return;
 		}
