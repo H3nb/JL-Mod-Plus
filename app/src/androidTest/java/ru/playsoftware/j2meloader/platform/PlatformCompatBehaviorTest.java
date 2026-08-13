@@ -83,6 +83,7 @@ public class PlatformCompatBehaviorTest {
 		context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 		preferences = PreferenceManager.getDefaultSharedPreferences(context);
 		midletProcessName = context.getPackageName() + ":midlet";
+		stopFixtureBeforeTest();
 		hadEmulatorDirectory = preferences.contains(Constants.PREF_EMULATOR_DIR);
 		previousEmulatorDirectory = preferences.getString(Constants.PREF_EMULATOR_DIR, null);
 		hadToolbar = preferences.contains(Constants.PREF_TOOLBAR);
@@ -102,7 +103,7 @@ public class PlatformCompatBehaviorTest {
 
 	@After
 	public void tearDownFixture() {
-		killProcessBestEffort(context, midletProcessName);
+		stopFixtureAfterTest();
 		restorePreference(preferences, Constants.PREF_EMULATOR_DIR,
 				hadEmulatorDirectory, previousEmulatorDirectory);
 		restorePreference(preferences, Constants.PREF_TOOLBAR, hadToolbar, previousToolbar);
@@ -191,6 +192,19 @@ public class PlatformCompatBehaviorTest {
 	private void killFixtureProcess() {
 		killProcessBestEffort(context, midletProcessName);
 		awaitProcessStops(context, midletProcessName);
+	}
+
+	private void stopFixtureBeforeTest() {
+		finishMicroActivityTasks(context);
+		killProcessBestEffort(context, midletProcessName);
+		awaitProcessStops(context, midletProcessName);
+		finishMicroActivityTasks(context);
+	}
+
+	private void stopFixtureAfterTest() {
+		killProcessBestEffort(context, midletProcessName);
+		awaitProcessStopsBestEffort(context, midletProcessName);
+		finishMicroActivityTasks(context);
 	}
 
 	private static void invokeGlobalBack() {
@@ -354,7 +368,7 @@ public class PlatformCompatBehaviorTest {
 		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(appDir.getAbsolutePath()),
 				context, MicroActivity.class)
 				.putExtra(Constants.KEY_MIDLET_NAME, MIDLET_NAME)
-				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 		context.startActivity(intent);
 	}
 
@@ -421,6 +435,35 @@ public class PlatformCompatBehaviorTest {
 		fail("System Back finished MicroActivity instead of opening its options menu");
 	}
 
+	private static void finishMicroActivityTasks(Context context) {
+		ActivityManager activityManager =
+				(ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+		if (activityManager == null) {
+			return;
+		}
+		for (ActivityManager.AppTask task : activityManager.getAppTasks()) {
+			ActivityManager.RecentTaskInfo info;
+			try {
+				info = task.getTaskInfo();
+			} catch (RuntimeException ignored) {
+				continue;
+			}
+			if (info == null || (!isMicroActivity(info.baseActivity)
+					&& !isMicroActivity(info.topActivity))) {
+				continue;
+			}
+			try {
+				task.finishAndRemoveTask();
+			} catch (RuntimeException ignored) {
+				// The task may disappear while the fixture process is being stopped.
+			}
+		}
+	}
+
+	private static boolean isMicroActivity(ComponentName component) {
+		return component != null && MicroActivity.class.getName().equals(component.getClassName());
+	}
+
 	private static int processPid(Context context, String processName) {
 		ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
 		List<ActivityManager.RunningAppProcessInfo> processes = activityManager.getRunningAppProcesses();
@@ -444,6 +487,16 @@ public class PlatformCompatBehaviorTest {
 			SystemClock.sleep(100L);
 		} while (SystemClock.uptimeMillis() < deadline);
 		fail("MIDlet fixture process did not stop between platform states");
+	}
+
+	private static void awaitProcessStopsBestEffort(Context context, String processName) {
+		long deadline = SystemClock.uptimeMillis() + BACK_TIMEOUT_MILLIS;
+		do {
+			if (processPid(context, processName) == 0) {
+				return;
+			}
+			SystemClock.sleep(100L);
+		} while (SystemClock.uptimeMillis() < deadline);
 	}
 
 	private static void killProcessBestEffort(Context context, String processName) {
