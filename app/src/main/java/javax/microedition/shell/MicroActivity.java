@@ -43,7 +43,6 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.Surface;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
@@ -566,36 +565,7 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void lockOrientation() {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-			setRequestedOrientation(SCREEN_ORIENTATION_LOCKED);
-			return;
-		}
-		Configuration configuration = getResources().getConfiguration();
-		int rotation = getWindowManager().getDefaultDisplay().getRotation();
-
-		// Search for the natural position of the device
-		if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE &&
-				(rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_180) ||
-				configuration.orientation == Configuration.ORIENTATION_PORTRAIT &&
-						(rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270)) {
-			// Natural position is Landscape
-			setRequestedOrientation(switch (rotation) {
-				case Surface.ROTATION_0 -> SCREEN_ORIENTATION_LANDSCAPE;
-				case Surface.ROTATION_90 -> SCREEN_ORIENTATION_REVERSE_PORTRAIT;
-				case Surface.ROTATION_180 -> SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
-				case Surface.ROTATION_270 -> SCREEN_ORIENTATION_PORTRAIT;
-				default -> SCREEN_ORIENTATION_UNSPECIFIED;
-			});
-		} else {
-			// Natural position is Portrait
-			setRequestedOrientation(switch (rotation) {
-				case Surface.ROTATION_0 -> SCREEN_ORIENTATION_PORTRAIT;
-				case Surface.ROTATION_90 -> SCREEN_ORIENTATION_LANDSCAPE;
-				case Surface.ROTATION_180 -> SCREEN_ORIENTATION_REVERSE_PORTRAIT;
-				case Surface.ROTATION_270 -> SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
-				default -> SCREEN_ORIENTATION_UNSPECIFIED;
-			});
-		}
+		setRequestedOrientation(SCREEN_ORIENTATION_LOCKED);
 	}
 
 	private void handleVkOptions(int id) {
