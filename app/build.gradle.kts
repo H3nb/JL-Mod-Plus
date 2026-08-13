@@ -22,6 +22,7 @@ import java.util.jar.Manifest
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.dropshots)
 }
 
 /** Copies AGP's final APKs to a stable, human-readable distribution directory. */
@@ -268,6 +269,8 @@ dependencies {
     implementation(libs.filepicker)
     implementation(libs.pngj)
     implementation(libs.rx.android)
+
+    androidTestImplementation(libs.dropshots)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

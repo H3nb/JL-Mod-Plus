@@ -16,6 +16,9 @@
             android:exported="false"
             android:noHistory="true"
             android:process=":midlet" />
+        <activity
+            android:name="ru.playsoftware.j2meloader.screenshot.ScreenshotHostActivity"
+            android:exported="false" />
     </application>
 
 </manifest>
