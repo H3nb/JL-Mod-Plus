@@ -68,6 +68,9 @@ abstract class CopyApk : DefaultTask() {
 val secret = Properties().also { properties ->
     rootProject.file("keystore.properties").runCatching { inputStream().use(properties::load) }
 }
+// CI restores this key from ANDROID_DEBUG_KEYSTORE_BASE64. Never reuse it for release.
+val sharedDebugKeystore = rootProject.file("debug.keystore")
+val hasSharedDebugKeystore = sharedDebugKeystore.isFile
 val runtimeTestAbi = providers.gradleProperty("jlmodRuntimeTestAbi").orNull
 require(runtimeTestAbi == null || runtimeTestAbi == "arm64-v8a" || runtimeTestAbi == "x86_64") {
     "jlmodRuntimeTestAbi must be arm64-v8a or x86_64"
@@ -99,6 +102,15 @@ android {
         resValues = true
     }
 
+    signingConfigs.create("sharedDebug") {
+        if (hasSharedDebugKeystore) {
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+            storeFile = sharedDebugKeystore
+            storePassword = "android"
+        }
+    }
+
     signingConfigs.create("emulator") {
         if (secret.isNotEmpty()) {
             keyAlias = secret.getProperty("keyAlias")
@@ -112,8 +124,14 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            if (secret.isNotEmpty()) {
+                signingConfig = signingConfigs.getByName("emulator")
+            }
         }
         debug {
+            if (hasSharedDebugKeystore) {
+                signingConfig = signingConfigs.getByName("sharedDebug")
+            }
             applicationIdSuffix = ".debug"
             isJniDebuggable = true
             ndk {
@@ -133,7 +151,6 @@ android {
     flavorDimensions += "default"
     productFlavors {
         create("emulator") { // variant dimension for create emulator
-            signingConfig = signingConfigs.getByName("emulator")
             versionNameSuffix = System.getenv("VERSION_SUFFIX")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
