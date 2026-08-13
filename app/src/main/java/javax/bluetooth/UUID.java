@@ -1,5 +1,6 @@
 /*
  * Copyright 2018 cerg2010cerg2010
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +16,8 @@
  */
 
 package javax.bluetooth;
+
+import java.util.Locale;
 
 // wrapper around Java UUID
 public class UUID {
@@ -63,7 +66,7 @@ public class UUID {
 	}
 
 	public String toString() {
-		return uuid.toString().replaceAll("-", "").toUpperCase().replaceFirst("^0+(?!$)", "");
+		return uuid.toString().replaceAll("-", "").toUpperCase(Locale.ROOT).replaceFirst("^0+(?!$)", "");
 	}
 
 	public boolean equals(Object value) {

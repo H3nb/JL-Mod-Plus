@@ -1,5 +1,6 @@
 /*
  * Copyright 2018 Nikita Shakarun
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +18,7 @@
 package ru.playsoftware.j2meloader.config;
 
 import java.io.File;
+import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -68,7 +70,8 @@ public class Profile implements Comparable<Profile> {
 
 	@Override
 	public int compareTo(@NonNull Profile o) {
-		return name.toLowerCase().compareTo(o.name.toLowerCase());
+		Locale locale = Locale.getDefault();
+		return name.toLowerCase(locale).compareTo(o.name.toLowerCase(locale));
 	}
 
 	boolean hasConfig() {
