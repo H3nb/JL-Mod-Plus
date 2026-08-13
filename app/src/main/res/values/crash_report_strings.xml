@@ -3,6 +3,7 @@
     <string name="crash_reports" translatable="false">Crash reports</string>
     <string name="view_reports" translatable="false">View reports</string>
     <string name="crash_reports_empty" translatable="false">No local crash reports</string>
+    <string name="crash_reports_loading" translatable="false">Loading crash reports</string>
     <string name="crash_report_midlet_failure" translatable="false">MIDlet session failure</string>
     <string name="crash_report_java_report" translatable="false">Java diagnostic report</string>
     <string name="crash_report_process_exit" translatable="false">Process exit diagnostic</string>

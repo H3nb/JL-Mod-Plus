@@ -19,6 +19,9 @@
         <activity
             android:name="ru.playsoftware.j2meloader.screenshot.ScreenshotHostActivity"
             android:exported="false" />
+        <activity
+            android:name="ru.playsoftware.j2meloader.screenshot.ComposeScreenshotHostActivity"
+            android:exported="false" />
     </application>
 
 </manifest>
