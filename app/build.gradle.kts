@@ -1,20 +1,5 @@
-// Modified for JL-Mod Plus.
-import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.variant.BuildConfigField
-import com.android.build.api.variant.BuiltArtifactsLoader
 import com.android.build.api.variant.ResValue
-import org.gradle.api.DefaultTask
-import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.PathSensitive
-import org.gradle.api.tasks.PathSensitivity
-import org.gradle.api.tasks.TaskAction
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.io.File
 import java.util.Locale
 import java.util.Properties
 import java.util.jar.Attributes
@@ -22,47 +7,8 @@ import java.util.jar.Manifest
 
 plugins {
     alias(libs.plugins.android.application)
-}
-
-/** Copies AGP's final APKs to a stable, human-readable distribution directory. */
-abstract class CopyApk : DefaultTask() {
-    @get:InputDirectory
-    @get:PathSensitive(PathSensitivity.RELATIVE)
-    abstract val input: DirectoryProperty
-
-    @get:OutputDirectory
-    abstract val output: DirectoryProperty
-
-    @get:Internal
-    abstract val builtArtifactsLoader: Property<BuiltArtifactsLoader>
-
-    @get:Input
-    abstract val archiveBaseName: Property<String>
-
-    @get:Input
-    abstract val variantName: Property<String>
-
-    @TaskAction
-    fun copyApks() {
-        val outputDirectory = output.get()
-        outputDirectory.asFile.deleteRecursively()
-        outputDirectory.asFile.mkdirs()
-
-        val builtArtifacts = builtArtifactsLoader.get().load(input.get())
-            ?: throw GradleException("Cannot load APKs for ${variantName.get()}")
-
-        builtArtifacts.elements.forEach { artifact ->
-            val versionName = artifact.versionName?.takeIf(String::isNotBlank) ?: "unspecified"
-            val outputSuffix = artifact.filters.firstOrNull()?.identifier ?: variantName.get()
-            val fileName = "${archiveBaseName.get()}_${versionName}-${outputSuffix}.apk"
-            File(artifact.outputFile).copyTo(
-                outputDirectory.file(fileName).asFile,
-                overwrite = true
-            )
-        }
-
-        builtArtifacts.save(outputDirectory)
-    }
+    alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.compose.screenshot)
 }
 
 val secret = Properties().also { properties ->
@@ -77,6 +23,7 @@ require(runtimeTestAbi == null || runtimeTestAbi == "arm64-v8a" || runtimeTestAb
 }
 
 android {
+    experimentalProperties["android.experimental.enableScreenshotTest"] = true
     compileSdk = rootProject.extra["compileSdk"] as Int
     ndkVersion = rootProject.extra["ndkVersion"] as String
     namespace = "ru.playsoftware.j2meloader"
@@ -96,6 +43,7 @@ android {
     androidResources.generateLocaleConfig = true
 
     buildFeatures {
+        compose = true
         viewBinding = true
         prefab = true
         buildConfig = true
@@ -212,19 +160,8 @@ androidComponents {
                 ResValue("JL-Mod Plus Debug", "Debug application name")
             )
         }
-
-        val taskSuffix = variant.name.replaceFirstChar { it.uppercaseChar() }
-        val copyTask = tasks.register<CopyApk>("copy${taskSuffix}Apk") {
-            archiveBaseName.set(rootProject.name)
-            variantName.set(variant.name)
-            output.set(layout.buildDirectory.dir("outputs/renamed_apks/${variant.name}"))
-            builtArtifactsLoader.set(variant.artifacts.getBuiltArtifactsLoader())
-        }
-        variant.artifacts.use(copyTask).wiredWith { it.input }.toListenTo(SingleArtifact.APK)
     }
 }
-
-kotlin.compilerOptions.jvmTarget.set(JvmTarget.JVM_17)
 
 fun getMidletManifestProperties(): Attributes = Manifest().let { mf ->
     project.file("src/midlet/resources/MIDLET-META-INF/MANIFEST.MF").runCatching {
@@ -236,15 +173,18 @@ fun getMidletManifestProperties(): Attributes = Manifest().let { mf ->
 dependencies {
     implementation(projects.dexlib)
 
+    implementation(platform(libs.compose.bom))
+    androidTestImplementation(platform(libs.compose.bom))
+
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.arch.core.common)
     implementation(libs.androidx.collection)
-    implementation(libs.androidx.concurrent.futures)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.runtime)
+    implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.constraintlayout)
-    implementation(libs.androidx.coordinatorlayout)
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.documentfile)
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.lifecycle.common)
     implementation(libs.androidx.lifecycle.livedata.ktx)
@@ -254,20 +194,23 @@ dependencies {
     annotationProcessor(libs.androidx.room.compiler)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.rxjava2)
-    implementation(libs.androidx.transition)
-
-    annotationProcessor(libs.google.auto.service)
-    compileOnly(libs.google.auto.service.annotations)
     implementation(libs.google.gson)
     implementation(libs.google.material)
     implementation(libs.google.oboe)
 
-    implementation(libs.acra.core)
+    implementation(libs.acra.core) {
+        exclude(group = "com.google.auto.service", module = "auto-service")
+    }
     implementation(libs.ambilwarna)
     implementation(libs.ffmpeg.kit)
     implementation(libs.filepicker)
     implementation(libs.pngj)
     implementation(libs.rx.android)
+
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+    screenshotTestImplementation(libs.androidx.compose.ui.tooling)
+    screenshotTestImplementation(libs.screenshot.validation.api)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

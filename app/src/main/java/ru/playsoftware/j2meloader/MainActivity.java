@@ -2,7 +2,6 @@
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2020 Nikita Shakarun
  * Copyright 2020-2024 Yury Kharchenko
- * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
  * limitations under the License.
  */
 
-// Modified for JL-Mod Plus.
 package ru.playsoftware.j2meloader;
 
 import android.content.Intent;

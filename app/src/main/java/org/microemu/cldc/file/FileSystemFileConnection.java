@@ -64,7 +64,6 @@ import java.util.regex.Pattern;
 import javax.microedition.io.file.ConnectionClosedException;
 import javax.microedition.util.ContextHolder;
 
-// Modified for JL-Mod Plus.
 public class FileSystemFileConnection implements FileConnection {
 	private static final String TAG = FileSystemFileConnection.class.getSimpleName();
 
