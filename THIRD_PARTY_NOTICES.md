@@ -19,6 +19,16 @@ This ledger is a provenance/notice inventory for the current project state, not 
 | TinySoundFont | Git submodule `app/src/main/cpp/mmapi_tsf/TinySoundFont` pinned at `0d10306120037ce049a7699f9eaa5314d5b888f8` | `https://github.com/schellingb/TinySoundFont` | MIT |
 | TinyMidiLoader | `tml.h` in the same pinned TinySoundFont submodule | `https://github.com/schellingb/TinySoundFont` | Zlib |
 
+## Material Symbols assets
+
+The Crash Reports Compose pilot uses four official Material Symbols Android VectorDrawable assets. They
+were downloaded with `scripts/material-symbols.py` as developer-time inputs and are committed locally;
+Gradle and CI do not access the network to obtain them.
+
+| Local resources | Source | Variant | Revision / SHA-256 | License |
+| --- | --- | --- | --- | --- |
+| `ic_arrow_back.xml`, `ic_content_copy.xml`, `ic_share.xml`, `ic_delete_report.xml` | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | `50f0603134ce7b70b2d71b686cc13e8b57ccb74c`; arrow back `cd1f5a1109c07c79ac3e52a9a1ae8ab14be7a3bff7f7bc3559f7088d60eca3aa`; content copy `f83b9c4f3f51b5a64365e6222498934cbccaead05fd720d4cabcb175eb50d2d4`; share `e68cc51976886c8395e3317d8bea0b8324e98d365ed8a15fc8c67767c2241931`; delete `8589dfd0ab9c15182ba5698bd38c4502ad8f476dbd983e840a709a24281211fa` | Apache-2.0 |
+
 ### `third_party/` audit
 
 The current repository tree does **not** contain a `third_party/` directory. The active external native checkout is the TinySoundFont submodule at `app/src/main/cpp/mmapi_tsf/TinySoundFont`, and `.gitmodules` points to its upstream repository directly. Historical notices for `third_party/minimp3`, `third_party/stb`, Mesa-derived code, or other absent paths must not be treated as current shipped provenance.
