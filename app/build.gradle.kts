@@ -8,6 +8,7 @@ import java.util.jar.Manifest
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.compose.screenshot)
 }
 
 val secret = Properties().also { properties ->
@@ -22,6 +23,7 @@ require(runtimeTestAbi == null || runtimeTestAbi == "arm64-v8a" || runtimeTestAb
 }
 
 android {
+    experimentalProperties["android.experimental.enableScreenshotTest"] = true
     compileSdk = rootProject.extra["compileSdk"] as Int
     ndkVersion = rootProject.extra["ndkVersion"] as String
     namespace = "ru.playsoftware.j2meloader"
@@ -207,6 +209,8 @@ dependencies {
 
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    screenshotTestImplementation(libs.androidx.compose.ui.tooling)
+    screenshotTestImplementation(libs.screenshot.validation.api)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

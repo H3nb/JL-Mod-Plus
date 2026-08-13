@@ -64,6 +64,7 @@ jobs:
           :app:lintEmulatorDebug
           :dexlib:lintDebug
           :app:testEmulatorDebugUnitTest
+          :app:validateEmulatorDebugScreenshotTest
           :app:assembleEmulatorDebug
           :app:assembleEmulatorDebugAndroidTest
 
