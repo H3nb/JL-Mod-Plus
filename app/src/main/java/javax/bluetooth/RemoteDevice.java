@@ -24,7 +24,6 @@ import javax.microedition.io.Connection;
 
 import ru.playsoftware.j2meloader.util.BluetoothPermissionHelper;
 
-// Modified for JL-Mod Plus.
 public class RemoteDevice {
 	BluetoothDevice dev;
 	private final String address;

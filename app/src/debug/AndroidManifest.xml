@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modified for JL-Mod Plus. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
@@ -16,12 +15,6 @@
             android:exported="false"
             android:noHistory="true"
             android:process=":midlet" />
-        <activity
-            android:name="ru.playsoftware.j2meloader.screenshot.ScreenshotHostActivity"
-            android:exported="false" />
-        <activity
-            android:name="ru.playsoftware.j2meloader.screenshot.ComposeScreenshotHostActivity"
-            android:exported="false" />
     </application>
 
 </manifest>

@@ -35,7 +35,6 @@ import javax.microedition.io.StreamConnectionNotifier;
 
 import ru.playsoftware.j2meloader.util.BluetoothPermissionHelper;
 
-// Modified for JL-Mod Plus.
 public class Connection implements ConnectionImplementation, StreamConnectionNotifier {
 	private static final String TAG = "btspp.Connection";
 	private BluetoothServerSocket serverSocket = null;

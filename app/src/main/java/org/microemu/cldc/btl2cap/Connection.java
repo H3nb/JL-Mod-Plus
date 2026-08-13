@@ -35,7 +35,6 @@ import javax.bluetooth.UUID;
 
 import ru.playsoftware.j2meloader.util.BluetoothPermissionHelper;
 
-// Modified for JL-Mod Plus.
 public class Connection implements ConnectionImplementation, L2CAPConnectionNotifier {
 	private static final String TAG = "btl2cap.Connection";
 	private BluetoothServerSocket serverSocket = null;

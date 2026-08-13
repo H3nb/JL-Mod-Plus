@@ -45,7 +45,6 @@ The table below covers direct runtime dependencies and license-significant trans
 | `com.google.code.gson:gson` | Google Gson | Apache-2.0 |
 | `com.google.oboe:oboe` | Google Oboe | Apache-2.0 |
 | `ch.acra:acra-core` | ACRA | Apache-2.0 |
-| Google support transitives used by the runtime graph: AutoService/Auto Common, Guava/failureaccess/listenablefuture, Error Prone annotations, J2ObjC annotations and JSR-305 | Google / FindBugs projects | Apache-2.0 as published for these artifacts |
 | `org.jspecify:jspecify` | JSpecify | Apache-2.0 |
 | `org.checkerframework:checker-qual` | Checker Framework | MIT |
 | `com.github.yukuku:ambilwarna` | `https://github.com/yukuku/ambilwarna` | Apache-2.0 |

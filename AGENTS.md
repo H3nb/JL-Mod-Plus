@@ -55,7 +55,7 @@ For changes to Java ME APIs, JSRs, vendor APIs, or compatibility behavior:
 
 - Preserve inherited copyright, license, patent, trademark, and attribution notices.
 - Keep the root Apache-2.0 `LICENSE` unchanged unless a concrete licensing requirement says otherwise.
-- Mark inherited Apache-2.0 files that are modified with a neutral modification notice such as `Modified for JL-Mod Plus.` without implying ownership of upstream work.
+- Mark inherited Apache-2.0 files that are modified with a neutral modification notice without implying ownership of upstream work.
 - Do not mass-add project or maintainer copyright claims to inherited files.
 - Keep `NOTICE` limited to meaningful or required attribution.
 - If ownership or licensing is uncertain, preserve existing rights and attribution rather than inventing a legal conclusion.

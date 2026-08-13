@@ -39,7 +39,6 @@ import javax.microedition.util.ContextHolder;
 import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.util.PNGUtils;
 
-// Modified for JL-Mod Plus.
 public class SoftNotificationImpl extends SoftNotification {
 	@SuppressLint("StaticFieldLeak")
 	private static NotificationManagerCompat notificationmgr;
