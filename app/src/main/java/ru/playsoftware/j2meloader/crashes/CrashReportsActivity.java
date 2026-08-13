@@ -30,6 +30,7 @@ import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 /** Local-only inbox for retained JL-Mod Plus diagnostic records. */
 public class CrashReportsActivity extends AppCompatActivity {
 	private ComposeView composeView;
+	private CrashReportsListController composeController;
 
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -39,14 +40,14 @@ public class CrashReportsActivity extends AppCompatActivity {
 		composeView.setId(R.id.crash_reports_compose_root);
 		setContentView(composeView);
 		EdgeToEdgeCompat.protectHostContent(this);
-		CrashReportsComposeBridge.installList(composeView, null, createActions());
+		composeController = CrashReportsComposeBridge.installList(composeView, createActions());
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
 		List<LocalDiagnosticRepository.Record> records = LocalDiagnosticRepository.load(this);
-		CrashReportsComposeBridge.installList(composeView, records, createActions());
+		composeController.update(records);
 	}
 
 	private CrashReportsActions createActions() {

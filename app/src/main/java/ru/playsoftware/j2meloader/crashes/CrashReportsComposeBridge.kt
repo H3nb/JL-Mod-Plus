@@ -15,6 +15,8 @@
 
 package ru.playsoftware.j2meloader.crashes
 
+import android.content.Context
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -24,7 +26,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -50,6 +51,7 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -86,6 +88,28 @@ data class CrashReportsListState(
     val loading: Boolean,
     val records: List<CrashReportListItem>,
 )
+
+enum class CrashReportConfirmation {
+    Share,
+    Delete,
+}
+
+/** Keeps list data observable without reinstalling the Activity's Compose content. */
+class CrashReportsListController internal constructor(
+    private val context: Context,
+) {
+    var state by mutableStateOf(
+        CrashReportsListState(loading = true, records = emptyList()),
+    )
+        private set
+
+    fun update(records: List<LocalDiagnosticRepository.Record>) {
+        state = CrashReportsListState(
+            loading = false,
+            records = records.map { it.toComposeListItem(context) },
+        )
+    }
+}
 
 private fun LocalDiagnosticRepository.Record.toComposeListItem(
     context: android.content.Context,
@@ -128,7 +152,13 @@ fun CrashReportsScreen(
         topBar = {
             TopAppBar(
                 windowInsets = NoWindowInsets,
-                title = { Text(stringResource(R.string.crash_reports)) },
+                title = {
+                    Text(
+                        text = stringResource(R.string.crash_reports),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = actions::onBack) {
                         Icon(
@@ -178,10 +208,7 @@ fun CrashReportsScreen(
                         supportingContent = { Text(record.subtitle) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .selectable(
-                                selected = false,
-                                onClick = { actions.onOpen(record.id) },
-                            ),
+                            .clickable { actions.onOpen(record.id) },
                     )
                     HorizontalDivider()
                 }
@@ -196,14 +223,20 @@ fun CrashReportDetailsScreen(
     state: CrashReportDetailState,
     actions: CrashReportDetailsActions,
 ) {
-    var confirmation by rememberSaveable { mutableStateOf("") }
+    var confirmation by rememberSaveable { mutableStateOf<CrashReportConfirmation?>(null) }
 
     Scaffold(
         contentWindowInsets = NoWindowInsets,
         topBar = {
             TopAppBar(
                 windowInsets = NoWindowInsets,
-                title = { Text(stringResource(R.string.crash_reports)) },
+                title = {
+                    Text(
+                        text = stringResource(R.string.crash_reports),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = actions::onBack) {
                         Icon(
@@ -219,13 +252,13 @@ fun CrashReportDetailsScreen(
                             contentDescription = stringResource(R.string.copy_report),
                         )
                     }
-                    IconButton(onClick = { confirmation = "share" }) {
+                    IconButton(onClick = { confirmation = CrashReportConfirmation.Share }) {
                         Icon(
                             painter = painterResource(R.drawable.ic_share),
                             contentDescription = stringResource(R.string.share_report),
                         )
                     }
-                    IconButton(onClick = { confirmation = "delete" }) {
+                    IconButton(onClick = { confirmation = CrashReportConfirmation.Delete }) {
                         Icon(
                             painter = painterResource(R.drawable.ic_delete_report),
                             contentDescription = stringResource(R.string.delete_report),
@@ -245,6 +278,7 @@ fun CrashReportDetailsScreen(
             ) {
                 Text(
                     text = state.displayText,
+                    style = MaterialTheme.typography.bodyMedium,
                     fontFamily = FontFamily.Monospace,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
@@ -252,40 +286,55 @@ fun CrashReportDetailsScreen(
         }
     }
 
+    confirmation?.let { pendingConfirmation ->
+        CrashReportConfirmationDialog(
+            confirmation = pendingConfirmation,
+            onDismiss = { confirmation = null },
+            onConfirm = {
+                confirmation = null
+                when (pendingConfirmation) {
+                    CrashReportConfirmation.Share -> actions.onShare()
+                    CrashReportConfirmation.Delete -> actions.onDelete()
+                }
+            },
+        )
+    }
+}
+
+@Composable
+fun CrashReportConfirmationDialog(
+    confirmation: CrashReportConfirmation,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
     when (confirmation) {
-        "share" -> AlertDialog(
-            onDismissRequest = { confirmation = "" },
+        CrashReportConfirmation.Share -> AlertDialog(
+            onDismissRequest = onDismiss,
             title = { Text(stringResource(R.string.share_report)) },
             text = { Text(stringResource(R.string.crash_report_share_disclosure)) },
             dismissButton = {
-                TextButton(onClick = { confirmation = "" }) {
+                TextButton(onClick = onDismiss) {
                     Text(stringResource(android.R.string.cancel))
                 }
             },
             confirmButton = {
-                TextButton(onClick = {
-                    confirmation = ""
-                    actions.onShare()
-                }) {
+                TextButton(onClick = onConfirm) {
                     Text(stringResource(R.string.share_report))
                 }
             },
         )
 
-        "delete" -> AlertDialog(
-            onDismissRequest = { confirmation = "" },
+        CrashReportConfirmation.Delete -> AlertDialog(
+            onDismissRequest = onDismiss,
             title = { Text(stringResource(R.string.crash_report_delete_title)) },
             text = { Text(stringResource(R.string.crash_report_delete_message)) },
             dismissButton = {
-                TextButton(onClick = { confirmation = "" }) {
+                TextButton(onClick = onDismiss) {
                     Text(stringResource(android.R.string.cancel))
                 }
             },
             confirmButton = {
-                TextButton(onClick = {
-                    confirmation = ""
-                    actions.onDelete()
-                }) {
+                TextButton(onClick = onConfirm) {
                     Text(stringResource(R.string.delete_report))
                 }
             },
@@ -298,20 +347,19 @@ object CrashReportsComposeBridge {
     @JvmStatic
     fun installList(
         view: ComposeView,
-        records: List<LocalDiagnosticRepository.Record>?,
         actions: CrashReportsActions,
-    ) {
+    ): CrashReportsListController {
         view.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-        val loading = records == null
-        val items = records.orEmpty().map { it.toComposeListItem(view.context) }
+        val controller = CrashReportsListController(view.context)
         view.setContent {
             JLModPlusTheme {
                 CrashReportsScreen(
-                    state = CrashReportsListState(loading = loading, records = items),
+                    state = controller.state,
                     actions = actions,
                 )
             }
         }
+        return controller
     }
 
     @JvmStatic
