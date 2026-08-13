@@ -16,7 +16,6 @@
  * limitations under the License.
  */
 
-// Modified for JL-Mod Plus.
 package javax.microedition.media;
 
 import android.util.Log;

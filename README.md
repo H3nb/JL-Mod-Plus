@@ -1,4 +1,3 @@
-<!-- Modified for JL-Mod Plus. -->
 # JL-Mod Plus
 
 JL-Mod Plus is a fork of [JL-Mod](https://github.com/woesss/JL-Mod).

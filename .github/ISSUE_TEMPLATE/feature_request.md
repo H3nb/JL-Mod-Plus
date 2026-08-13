@@ -6,7 +6,6 @@ labels: enhancement
 assignees: ''
 ---
 
-<!-- Modified for JL-Mod Plus. -->
 
 **What would you like to add or change?**
 

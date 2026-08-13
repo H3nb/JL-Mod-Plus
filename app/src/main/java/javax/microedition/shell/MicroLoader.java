@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-// Modified for JL-Mod Plus.
 package javax.microedition.shell;
 
 import static android.os.Build.VERSION.SDK_INT;

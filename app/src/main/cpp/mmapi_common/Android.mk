@@ -24,10 +24,6 @@ LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/include
 LOCAL_EXPORT_LDLIBS := $(LOCAL_LDLIBS)
 LOCAL_EXPORT_SHARED_LIBRARIES := $(LOCAL_SHARED_LIBRARIES)
 
-ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
-    LOCAL_ARM_NEON := false
-endif
-
 # Don't strip debug builds
 ifeq ($(NDK_DEBUG),1)
     cmd-strip :=

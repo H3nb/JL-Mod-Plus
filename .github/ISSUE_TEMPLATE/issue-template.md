@@ -6,7 +6,6 @@ labels: bug
 assignees: ''
 ---
 
-<!-- Modified for JL-Mod Plus. -->
 
 **JL-Mod Plus version/build:**
 

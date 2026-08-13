@@ -21,10 +21,6 @@ LOCAL_SHARED_LIBRARIES := mmapi_common
 
 LOCAL_STATIC_LIBRARIES := sonivox
 
-ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
-    LOCAL_ARM_NEON := false
-endif
-
 # Don't strip debug builds
 ifeq ($(NDK_DEBUG),1)
     cmd-strip :=

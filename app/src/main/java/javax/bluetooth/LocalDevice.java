@@ -28,7 +28,6 @@ import javax.microedition.util.ContextHolder;
 
 import ru.playsoftware.j2meloader.util.BluetoothPermissionHelper;
 
-// Modified for JL-Mod Plus.
 public class LocalDevice implements ActivityResultListener {
 	private static final String PRIVATE_BLUETOOTH_ADDRESS = "020000000000";
 	private static LocalDevice dev;

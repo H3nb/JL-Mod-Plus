@@ -119,10 +119,6 @@ LOCAL_CFLAGS += -D NATIVE_EAS_KERNEL
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/lib_src/ARM_synth_constants_gnu.inc
 endif
 
-ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
-    LOCAL_ARM_NEON := false
-endif
-
 # Don't strip debug builds
 ifeq ($(NDK_DEBUG),1)
     cmd-strip :=

@@ -40,7 +40,6 @@ import java.util.Set;
 
 import javax.microedition.util.ContextHolder;
 
-// Modified for JL-Mod Plus.
 public class DiscoveryAgent {
 	public static final int NOT_DISCOVERABLE = 0;
 	public static final int GIAC = 0x9E8B33;

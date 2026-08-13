@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="crash_reports_compose_root" type="id" />
+    <item name="crash_report_details_compose_root" type="id" />
+</resources>
