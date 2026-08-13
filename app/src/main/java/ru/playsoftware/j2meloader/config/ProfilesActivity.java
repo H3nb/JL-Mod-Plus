@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// Modified for JL-Mod Plus.
+
 package ru.playsoftware.j2meloader.config;
 
 import static ru.playsoftware.j2meloader.util.Constants.ACTION_EDIT_PROFILE;
@@ -46,6 +48,7 @@ import java.util.Objects;
 
 import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.databinding.ActivityProfilesBinding;
+import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 
 public class ProfilesActivity extends AppCompatActivity implements EditNameAlert.Callback, AdapterView.OnItemClickListener {
 	private ProfilesAdapter adapter;
@@ -76,6 +79,7 @@ public class ProfilesActivity extends AppCompatActivity implements EditNameAlert
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		EdgeToEdgeCompat.enableIfSupported(this);
 		ActivityProfilesBinding binding = ActivityProfilesBinding.inflate(getLayoutInflater());
 		setContentView(binding.getRoot());
 		ActionBar actionBar = getSupportActionBar();

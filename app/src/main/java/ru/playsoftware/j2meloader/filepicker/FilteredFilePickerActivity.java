@@ -14,16 +14,33 @@
  * limitations under the License.
  */
 
+// Modified for JL-Mod Plus.
+
 package ru.playsoftware.j2meloader.filepicker;
 
+import android.os.Bundle;
+import android.view.View;
+
 import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
 
 import com.nononsenseapps.filepicker.AbstractFilePickerActivity;
 import com.nononsenseapps.filepicker.AbstractFilePickerFragment;
 
 import java.io.File;
 
+import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
+
 public class FilteredFilePickerActivity extends AbstractFilePickerActivity<File> {
+	@Override
+	protected void onCreate(@Nullable Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		EdgeToEdgeCompat.enableIfSupported(this);
+		View content = findViewById(android.R.id.content);
+		if (content != null) {
+			ViewCompat.requestApplyInsets(content);
+		}
+	}
 
 	@Override
 	protected AbstractFilePickerFragment<File> getFragment(@Nullable String startPath, int mode, boolean allowMultiple,
