@@ -23,6 +23,7 @@ import java.util.jar.Manifest
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.dropshots)
+    alias(libs.plugins.compose.compiler)
 }
 
 /** Copies AGP's final APKs to a stable, human-readable distribution directory. */
@@ -97,6 +98,7 @@ android {
     androidResources.generateLocaleConfig = true
 
     buildFeatures {
+        compose = true
         viewBinding = true
         prefab = true
         buildConfig = true
@@ -237,10 +239,18 @@ fun getMidletManifestProperties(): Attributes = Manifest().let { mf ->
 dependencies {
     implementation(projects.dexlib)
 
+    implementation(platform(libs.compose.bom))
+    androidTestImplementation(platform(libs.compose.bom))
+
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.arch.core.common)
     implementation(libs.androidx.collection)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.runtime)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.concurrent.futures)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.coordinatorlayout)
@@ -271,6 +281,9 @@ dependencies {
     implementation(libs.rx.android)
 
     androidTestImplementation(libs.dropshots)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+    debugImplementation(libs.androidx.compose.ui.tooling)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
