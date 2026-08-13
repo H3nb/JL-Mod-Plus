@@ -49,8 +49,12 @@ public class PlatformCompatManifestTest {
 	public void targetAndMinimumSdkRemainAtCompatibilityBoundary() {
 		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 		ApplicationInfo applicationInfo = context.getApplicationInfo();
-		assertEquals("The compatibility baseline must remain API 23",
-				23, applicationInfo.minSdkVersion);
+		// ApplicationInfo.minSdkVersion was added in API 24. The APK-level
+		// assertion in platform-compat.yml covers API 23 as well.
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+			assertEquals("The compatibility baseline must remain API 23",
+					23, applicationInfo.minSdkVersion);
+		}
 		assertEquals("The Android 16 migration must remain target SDK 36",
 				36, applicationInfo.targetSdkVersion);
 	}

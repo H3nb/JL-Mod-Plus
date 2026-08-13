@@ -150,8 +150,11 @@ jobs:
             exit 1
           fi
           target_sdk="$(apkanalyzer manifest target-sdk "$apk" | tr -d '\r')"
+          min_sdk="$(apkanalyzer manifest min-sdk "$apk" | tr -d '\r')"
           echo "APK: $apk"
+          echo "APK min SDK: $min_sdk"
           echo "APK target SDK: $target_sdk"
+          test "$min_sdk" = "23"
           test "$target_sdk" = "36"
 
       - name: Upload platform compatibility evidence
