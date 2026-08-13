@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+// Modified for JL-Mod Plus.
+
 package ru.playsoftware.j2meloader.settings;
 
 import android.content.Intent;
@@ -48,6 +50,7 @@ import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.config.ProfileModel;
 import ru.playsoftware.j2meloader.config.ProfilesManager;
 import ru.playsoftware.j2meloader.databinding.ActivityKeymapperBinding;
+import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 import ru.playsoftware.j2meloader.util.SparseIntArrayAdapter;
 
 public class KeyMapperActivity extends AppCompatActivity implements View.OnClickListener {
@@ -63,6 +66,7 @@ public class KeyMapperActivity extends AppCompatActivity implements View.OnClick
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		EdgeToEdgeCompat.enableIfSupported(this);
 		Intent intent = getIntent();
 		String path = intent.getDataString();
 		if (path == null) {

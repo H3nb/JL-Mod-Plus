@@ -22,11 +22,16 @@ import java.io.IOException;
 
 import javax.microedition.io.Connection;
 
+import ru.playsoftware.j2meloader.util.BluetoothPermissionHelper;
+
+// Modified for JL-Mod Plus.
 public class RemoteDevice {
 	BluetoothDevice dev;
+	private final String address;
 
 	RemoteDevice(BluetoothDevice dev) {
 		this.dev = dev;
+		this.address = addressOf(dev);
 	}
 
 	static String javaToAndroidAddress(String addr) {
@@ -41,11 +46,23 @@ public class RemoteDevice {
 			throw new NullPointerException("address is null");
 		}
 
-		dev = DiscoveryAgent.adapter.getRemoteDevice(javaToAndroidAddress(address));
+		this.address = normalizeAddress(address);
+		if (this.address.length() != 12) {
+			throw new IllegalArgumentException("Invalid Bluetooth address");
+		}
+		dev = DiscoveryAgent.adapter.getRemoteDevice(javaToAndroidAddress(this.address));
 	}
 
 	public String getFriendlyName(boolean alwaysAsk) throws IOException {
-		String name = dev.getName();
+		if (dev == null || !BluetoothPermissionHelper.ensureConnectPermission()) {
+			throw new BluetoothStateException("Bluetooth connect permission is not granted");
+		}
+		String name;
+		try {
+			name = dev.getName();
+		} catch (SecurityException e) {
+			throw new BluetoothStateException("Bluetooth connect permission was revoked");
+		}
 		if (name == null) {
 			name =  "";
 		}
@@ -53,17 +70,38 @@ public class RemoteDevice {
 	}
 
 	public final String getBluetoothAddress() {
-		return dev.getAddress().replace(":", "");
+		return address;
+	}
+
+	private static String addressOf(BluetoothDevice device) {
+		if (device == null) {
+			return "";
+		}
+		try {
+			return normalizeAddress(device.getAddress());
+		} catch (SecurityException e) {
+			// BluetoothDevice.toString() is its cached address on Android and remains
+			// available when a permission is revoked between discovery and wrapping.
+			return normalizeAddress(device.toString());
+		}
+	}
+
+	private static String normalizeAddress(String value) {
+		if (value == null) {
+			return "";
+		}
+		String normalized = value.replace(":", "").toUpperCase(java.util.Locale.ROOT);
+		return normalized.matches("[0-9A-F]{12}") ? normalized : "";
 	}
 
 	public boolean equals(Object obj) {
 		if (obj == null || !(obj instanceof RemoteDevice))
 			return false;
-		return dev.equals(((RemoteDevice) obj).dev);
+		return address.equals(((RemoteDevice) obj).address);
 	}
 
 	public int hashCode() {
-		return dev.hashCode();
+		return address.hashCode();
 	}
 
 	public static RemoteDevice getRemoteDevice(Connection conn) throws IOException {
@@ -72,19 +110,30 @@ public class RemoteDevice {
 		if (!(conn instanceof org.microemu.cldc.btspp.SPPConnectionImpl
 				|| conn instanceof org.microemu.cldc.btl2cap.L2CAPConnectionImpl))
 			throw new java.lang.IllegalArgumentException("not a RFCOMM connection");
+		if (!BluetoothPermissionHelper.ensureConnectPermission()) {
+			throw new BluetoothStateException("Bluetooth connect permission is not granted");
+		}
 
 		if (conn instanceof org.microemu.cldc.btspp.SPPConnectionImpl) {
 			org.microemu.cldc.btspp.SPPConnectionImpl connection =
 					(org.microemu.cldc.btspp.SPPConnectionImpl) conn;
 			if (connection.socket == null)
 				throw new IOException("socket is null");
-			return new RemoteDevice(connection.socket.getRemoteDevice());
+			try {
+				return new RemoteDevice(connection.socket.getRemoteDevice());
+			} catch (SecurityException e) {
+				throw new BluetoothStateException("Bluetooth connect permission was revoked");
+			}
 		} else {
 			org.microemu.cldc.btl2cap.L2CAPConnectionImpl connection =
 					(org.microemu.cldc.btl2cap.L2CAPConnectionImpl) conn;
 			if (connection.socket == null)
 				throw new IOException("socket is null");
-			return new RemoteDevice(connection.socket.getRemoteDevice());
+			try {
+				return new RemoteDevice(connection.socket.getRemoteDevice());
+			} catch (SecurityException e) {
+				throw new BluetoothStateException("Bluetooth connect permission was revoked");
+			}
 		}
 	}
 

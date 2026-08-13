@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// Modified for JL-Mod Plus.
 package javax.microedition.lcdui.overlay;
 
 import android.content.Context;
@@ -54,8 +55,12 @@ public class OverlayView extends View {
 	}
 
 	public void setLocation(int x, int y) {
+		if (this.x == x && this.y == y) {
+			return;
+		}
 		this.x = x;
 		this.y = y;
+		postInvalidate();
 	}
 
 	public void addLayer(Layer layer) {
