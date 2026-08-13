@@ -179,10 +179,8 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <!-- Some content providers expose opaque URIs and only report octet-stream. -->
+                <!-- Opaque providers may report only octet-stream; MIME-only matching accepts file/content URIs without path assumptions. -->
                 <data android:mimeType="application/octet-stream" />
-                <data android:scheme="file" />
-                <data android:scheme="content" />
             </intent-filter>
         </activity>
         <activity

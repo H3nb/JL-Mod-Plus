@@ -126,10 +126,10 @@ public class PlatformCompatBehaviorTest {
 	}
 
 	@Test
-	public void adbLongPressBackRetainsExitConfirmation() throws Exception {
+	public void adbLongPressMenuKeyRetainsExitConfirmation() throws Exception {
 		launchFixture(context, appDir);
 		awaitMarker(marker, "shown");
-		executeShellCommand("input keyevent --longpress KEYCODE_BACK");
+		executeShellCommand("input keyevent --longpress KEYCODE_MENU");
 		awaitAccessibilityText(context.getString(R.string.FORCE_CLOSE_CONFIRMATION));
 		invokeGlobalBack();
 		awaitAccessibilityTextAbsent(context.getString(R.string.FORCE_CLOSE_CONFIRMATION));
