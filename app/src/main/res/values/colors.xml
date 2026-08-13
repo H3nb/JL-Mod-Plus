@@ -2,7 +2,6 @@
 <!-- Modified for JL-Mod Plus. -->
 <resources>
     <color name="ic_launcher_background">#06143A</color>
-    <color name="fab_material_red_500">#f44336</color>
     <color name="file_picker_accent">#ffb62e</color>
 
     <!--light theme colors-->
