@@ -16,6 +16,7 @@
 
 package com.nokia.mid.ui;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -30,6 +31,7 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.core.graphics.drawable.IconCompat;
 
 import java.util.Hashtable;
+import java.util.Locale;
 
 import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
@@ -37,6 +39,7 @@ import javax.microedition.util.ContextHolder;
 import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.util.PNGUtils;
 
+// Modified for JL-Mod Plus.
 public class SoftNotificationImpl extends SoftNotification {
 	@SuppressLint("StaticFieldLeak")
 	private static NotificationManagerCompat notificationmgr;
@@ -105,12 +108,24 @@ public class SoftNotificationImpl extends SoftNotification {
 		return id;
 	}
 
+	@SuppressLint("MissingPermission")
 	public void post() throws SoftNotificationException {
 		try {
+			initializeNotificationContext();
+			if (activity == null || notificationmgr == null) {
+				throw new SoftNotificationException("Notification activity is unavailable");
+			}
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+					&& !ContextHolder.requestPermission(Manifest.permission.POST_NOTIFICATIONS)) {
+				throw new SoftNotificationException("Notification permission is not granted");
+			}
+			if (!notificationmgr.areNotificationsEnabled()) {
+				throw new SoftNotificationException("Notifications are disabled");
+			}
 			if (id == -1) id = ids++;
 			instanceMap.put(id, this);
 			String appName = activity.getAppName();
-			String channelId = appName.toLowerCase();
+			String channelId = appName.toLowerCase(Locale.ROOT);
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 				NotificationChannel channel = notificationmgr.getNotificationChannel(channelId);
 				if (channel == null) {
@@ -123,10 +138,10 @@ public class SoftNotificationImpl extends SoftNotification {
 			NotificationCompat.Builder builder = new NotificationCompat.Builder(activity, channelId);
 			builder.setContentTitle(appName);
 			if (text != null) builder.setContentText(text);
-			if (groupText != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+			if (groupText != null) {
 				builder.setGroup(groupText);
 			}
-			if (bitmap != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			if (bitmap != null) {
 				builder.setSmallIcon(IconCompat.createWithBitmap(bitmap));
 			} else {
 				builder.setSmallIcon(R.mipmap.ic_launcher);
@@ -135,7 +150,7 @@ public class SoftNotificationImpl extends SoftNotification {
 			builder.setAutoCancel(true);
 
 			@SuppressLint("InlinedApi")
-			int pendingIntentFlags = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) ? PendingIntent.FLAG_IMMUTABLE : 0;
+			int pendingIntentFlags = PendingIntent.FLAG_IMMUTABLE;
 			if (softAction1 != null) {
 				Intent selectIntent = new Intent(activity, NotificationActivity.class);
 				selectIntent.setAction("select");
@@ -167,14 +182,41 @@ public class SoftNotificationImpl extends SoftNotification {
 			builder.addAction(dismissAction);
 			notification = builder.build();
 			notificationmgr.notify(id, notification);
+		} catch (SoftNotificationException e) {
+			throw e;
 		} catch (Throwable e) {
 			throw new SoftNotificationException(e);
 		}
 	}
 
+	private static void initializeNotificationContext() {
+		if (activity != null && notificationmgr != null) {
+			return;
+		}
+		try {
+			MicroActivity currentActivity = ContextHolder.getActivity();
+			if (currentActivity != null) {
+				activity = currentActivity;
+				notificationmgr = NotificationManagerCompat.from(currentActivity);
+			}
+		} catch (RuntimeException ignored) {
+			// post() maps an unavailable isolated-process activity to the J2ME exception.
+		}
+	}
+
 	public void remove() throws SoftNotificationException {
-		if (notification == null) throw new SoftNotificationException("not posted");
-		notificationmgr.cancel(id);
+		if (notification == null) {
+			return;
+		}
+		initializeNotificationContext();
+		if (notificationmgr == null) {
+			throw new SoftNotificationException("Notification activity is unavailable");
+		}
+		try {
+			notificationmgr.cancel(id);
+		} catch (Throwable e) {
+			throw new SoftNotificationException(e);
+		}
 	}
 
 	public void setListener(SoftNotificationListener listener) {

@@ -17,7 +17,6 @@
 package javax.microedition.lcdui.commands;
 
 import android.content.Context;
-import android.os.Build;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -52,9 +51,7 @@ public abstract class AbstractSoftKeysBar {
 		if (popup == null) {
 			Context context = ContextHolder.getActivity();
 			popup = new PopupWindow(context, null, androidx.appcompat.R.attr.actionOverflowMenuStyle);
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-				popup.setExitTransition(null);
-			}
+			popup.setExitTransition(null);
 			popup.setOutsideTouchable(true);
 			popup.setFocusable(true);
 			ListView lv = new ListView(context);

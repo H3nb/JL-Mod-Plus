@@ -30,6 +30,7 @@ package org.microemu.cldc.file;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
 import android.util.Log;
@@ -54,13 +55,16 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Vector;
 import java.util.regex.Pattern;
 
 import javax.microedition.io.file.ConnectionClosedException;
 import javax.microedition.util.ContextHolder;
 
+// Modified for JL-Mod Plus.
 public class FileSystemFileConnection implements FileConnection {
 	private static final String TAG = FileSystemFileConnection.class.getSimpleName();
 
@@ -75,10 +79,9 @@ public class FileSystemFileConnection implements FileConnection {
 			"b:/",
 			"fs/MyStuff/"
 	);
-	private static final String[] FS_ROOTS = getFileSystemRoots();
-
 	private final String host;
 	private final String root;
+	private final String fsRootPath;
 	private String name;
 	private String path;
 	private File file;
@@ -102,7 +105,12 @@ public class FileSystemFileConnection implements FileConnection {
 		root = getRoot(path);
 		if (root == null) throw new IllegalArgumentException("Root is not specified: " + url);
 		path = path.substring(root.length());
-		String fsRootPath = getFsRoot();
+		String[] fsRoots = getFileSystemRoots();
+		if (fsRoots.length == 0) {
+			throw new IOException("No mounted file system roots");
+		}
+		int rootIndex = FC_ROOTS.indexOf(root);
+		fsRootPath = fsRoots[rootIndex == -1 ? 0 : rootIndex % fsRoots.length];
 		if (path.length() == 0) {
 			file = new File(fsRootPath);
 			this.path = "";
@@ -124,8 +132,7 @@ public class FileSystemFileConnection implements FileConnection {
 	}
 
 	private String getFsRoot() {
-		int idx = FC_ROOTS.indexOf(root);
-		return FS_ROOTS[idx == -1 ? 0 : idx % FS_ROOTS.length] + DIR_SEP_STR;
+		return fsRootPath + DIR_SEP_STR;
 	}
 
 	private static String getRoot(String path) {
@@ -140,7 +147,9 @@ public class FileSystemFileConnection implements FileConnection {
 	}
 
 	static Enumeration<String> listRoots() {
-		Vector<String> list = new Vector<>(FC_ROOTS.subList(0, FS_ROOTS.length));
+		String[] fsRoots = getFileSystemRoots();
+		int rootCount = Math.min(fsRoots.length, FC_ROOTS.size());
+		Vector<String> list = new Vector<>(FC_ROOTS.subList(0, rootCount));
 		return list.elements();
 	}
 
@@ -337,7 +346,8 @@ public class FileSystemFileConnection implements FileConnection {
 		if (files == null) {
 			return list.elements();
 		}
-		Arrays.sort(files, (f1, f2) -> f1.getName().toLowerCase().compareTo(f2.getName().toLowerCase()));
+		Arrays.sort(files, (f1, f2) -> f1.getName().toLowerCase(Locale.ROOT)
+				.compareTo(f2.getName().toLowerCase(Locale.ROOT)));
 		int dirsLen = 0;
 		for (File child : files) {
 			if (!includeHidden && child.isHidden()) {
@@ -558,16 +568,25 @@ public class FileSystemFileConnection implements FileConnection {
 			StorageManager sm = ContextCompat.getSystemService(context, StorageManager.class);
 			if (sm != null) {
 				List<StorageVolume> volumes = sm.getStorageVolumes();
-				int volumesSize = volumes.size();
-				String[] roots = new String[volumesSize];
-				for (int i = 0; i < volumesSize; i++) {
-					StorageVolume volume = volumes.get(i);
+				LinkedHashSet<String> roots = new LinkedHashSet<>(volumes.size());
+				for (StorageVolume volume : volumes) {
+					String state = volume.getState();
+					if (!Environment.MEDIA_MOUNTED.equals(state)
+							&& !Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+						continue;
+					}
 					File dir = volume.getDirectory();
-					roots[i] = dir == null ? "dev/null" : dir.getPath();
+					if (dir != null) {
+						roots.add(dir.getPath());
+					}
 				}
-				return roots;
+				return roots.toArray(new String[0]);
 			}
 		}
-		return new String[]{System.getProperty("user.home")};
+		String userHome = System.getProperty("user.home");
+		if (userHome != null && !userHome.isEmpty()) {
+			return new String[]{userHome};
+		}
+		return new String[]{ContextHolder.getAppContext().getFilesDir().getPath()};
 	}
 }

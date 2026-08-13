@@ -15,22 +15,30 @@
  * limitations under the License.
  */
 
+// Modified for JL-Mod Plus.
+
 package ru.playsoftware.j2meloader.filepicker;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.loader.content.AsyncTaskLoader;
 import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.RecyclerView;
@@ -42,7 +50,10 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Stack;
 
 import ru.playsoftware.j2meloader.R;
@@ -54,8 +65,57 @@ public class FilteredFilePickerFragment extends AbstractFilePickerFragment<File>
 
 	private final Stack<File> history = new Stack<>();
 	private final StoragePermissionHelper storagePermissionHelper = new StoragePermissionHelper(this, this::onPermissionResult);
+	private final Map<View, Rect> initialPadding = new IdentityHashMap<>();
 
 	private File mRequestedPath;
+	private View insetsRoot;
+
+	@Override
+	public void onViewCreated(@NonNull View view, @Nullable android.os.Bundle savedInstanceState) {
+		super.onViewCreated(view, savedInstanceState);
+		insetsRoot = view;
+		ViewCompat.setOnApplyWindowInsetsListener(view, (root, insets) -> {
+			applyInsets(root, insets);
+			return insets;
+		});
+		ViewCompat.requestApplyInsets(view);
+	}
+
+	@Override
+	public void onDestroyView() {
+		if (insetsRoot != null) {
+			ViewCompat.setOnApplyWindowInsetsListener(insetsRoot, null);
+			insetsRoot = null;
+		}
+		initialPadding.clear();
+		super.onDestroyView();
+	}
+
+	private void applyInsets(@NonNull View root, @NonNull WindowInsetsCompat insets) {
+		Insets safe = insets.getInsetsIgnoringVisibility(
+				WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+		Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+		int bottom = Math.max(safe.bottom, ime.bottom);
+
+		View toolbar = root.findViewById(com.nononsenseapps.filepicker.R.id.nnf_picker_toolbar);
+		applyPadding(toolbar, safe.left, safe.top, safe.right, 0);
+		applyPadding(root.findViewById(android.R.id.list), safe.left, 0, safe.right, 0);
+		applyPadding(root.findViewById(com.nononsenseapps.filepicker.R.id.nnf_buttons_container),
+				safe.left, 0, safe.right, bottom);
+	}
+
+	private void applyPadding(@Nullable View view, int left, int top, int right, int bottom) {
+		if (view == null) {
+			return;
+		}
+		Rect base = initialPadding.get(view);
+		if (base == null) {
+			base = new Rect(view.getPaddingLeft(), view.getPaddingTop(),
+					view.getPaddingRight(), view.getPaddingBottom());
+			initialPadding.put(view, base);
+		}
+		view.setPadding(base.left + left, base.top + top, base.right + right, base.bottom + bottom);
+	}
 
 	@Override
 	public void onAttach(Context context) {
@@ -144,7 +204,7 @@ public class FilteredFilePickerFragment extends AbstractFilePickerFragment<File>
 		if (i < 0) {
 			return null;
 		} else {
-			return name.substring(i).toLowerCase();
+		return name.substring(i).toLowerCase(Locale.ROOT);
 		}
 	}
 

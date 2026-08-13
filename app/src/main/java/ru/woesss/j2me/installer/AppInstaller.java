@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+// Modified for JL-Mod Plus.
 package ru.woesss.j2me.installer;
 
 import android.net.Uri;
@@ -113,13 +114,15 @@ public class AppInstaller {
 			emitter.onSuccess(STATUS_EQUAL);
 			return;
 		}
-		boolean isLocal;
-		if ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme())) {
+		boolean isLocal = srcFile != null;
+		if (!isLocal && uri != null && ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme()))) {
 			downloadJad();
 			isLocal = false;
-		} else {
+		} else if (!isLocal && uri != null) {
 			srcFile = FileUtils.getFileForUri(uri);
 			isLocal = true;
+		} else if (!isLocal) {
+			throw new IOException("No installer source URI");
 		}
 
 		String name = srcFile.getName();
@@ -134,7 +137,15 @@ public class AppInstaller {
 			String scheme = uri.getScheme();
 			String host = uri.getHost();
 			if (isLocal && scheme == null && host == null) {
-				if (!checkJarFile(srcFile)) {
+				boolean matches = this.uri != null && "content".equals(this.uri.getScheme())
+						? checkContentUriJar(this.uri, srcFile)
+						: checkJarFile(srcFile);
+				if (!matches) {
+					emitter.onSuccess(STATUS_UNMATCHED);
+					return;
+				}
+			} else if (isLocal && "content".equals(scheme)) {
+				if (!checkContentUriJar(this.uri, srcFile)) {
 					emitter.onSuccess(STATUS_UNMATCHED);
 					return;
 				}
@@ -353,6 +364,23 @@ public class AppInstaller {
 			if (!jar.exists()) {
 				throw new ConverterException("Jar-file not found for url: " + jarUrl);
 			}
+		}
+		srcJar = jar;
+		manifest = loadManifest(jar);
+		return manifest.equals(newDesc);
+	}
+
+	private boolean checkContentUriJar(Uri jadUri, File jadFile) throws IOException, ConverterException {
+		Uri jarUri = Uri.parse(newDesc.getJarUrl());
+		if (jarUri.getScheme() == null) {
+			jarUri = FileUtils.resolveSiblingUri(jadUri, jarUri);
+		}
+		if (jarUri == null || !"content".equals(jarUri.getScheme())) {
+			return checkJarFile(jadFile);
+		}
+		File jar = FileUtils.getFileForUri(jarUri);
+		if (!jar.exists()) {
+			throw new ConverterException("Jar-file not found for uri: " + jarUri);
 		}
 		srcJar = jar;
 		manifest = loadManifest(jar);

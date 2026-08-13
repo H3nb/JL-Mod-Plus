@@ -26,6 +26,8 @@ import android.content.IntentFilter;
 import android.os.ParcelUuid;
 import android.os.Parcelable;
 
+import androidx.core.content.ContextCompat;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -38,6 +40,7 @@ import java.util.Set;
 
 import javax.microedition.util.ContextHolder;
 
+// Modified for JL-Mod Plus.
 public class DiscoveryAgent {
 	public static final int NOT_DISCOVERABLE = 0;
 	public static final int GIAC = 0x9E8B33;
@@ -90,7 +93,7 @@ public class DiscoveryAgent {
 			String action = intent.getAction();
 			if (BluetoothDevice.ACTION_UUID.equals(action)) {
 				BluetoothDevice d = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-				if (d.equals(dev.dev)) {
+				if (d != null && d.equals(dev.dev)) {
 					LinkedList<J2MEServiceRecord> records = new LinkedList<J2MEServiceRecord>();
 					UUID[] uuidExtra = null;
 					UUID SppUuid = new UUID(0x1101);
@@ -125,7 +128,7 @@ public class DiscoveryAgent {
 										serviceName = new String(resByte).trim();
 									}
 									bluetoothSocket.close();
-								} catch (IOException e) {
+								} catch (IOException | SecurityException e) {
 									e.printStackTrace();
 								}
 							}
@@ -154,7 +157,7 @@ public class DiscoveryAgent {
 					}
 					listener.serviceSearchCompleted(transID, (records.isEmpty() && !supportsSPP) ? DiscoveryListener.SERVICE_SEARCH_NO_RECORDS :
 							stop ? DiscoveryListener.SERVICE_SEARCH_TERMINATED : DiscoveryListener.SERVICE_SEARCH_COMPLETED);
-					ContextHolder.getActivity().unregisterReceiver(this);
+					unregisterReceiver(this);
 					synchronized (transList) {
 						transList.remove(this);
 					}
@@ -178,9 +181,19 @@ public class DiscoveryAgent {
 		if (option == CACHED) {
 			set = discoveredList;
 		} else if (option == PREKNOWN) {
-			set = adapter.getBondedDevices();
+			if (!ru.playsoftware.j2meloader.util.BluetoothPermissionHelper.ensureConnectPermission()) {
+				return null;
+			}
+			try {
+				set = adapter.getBondedDevices();
+			} catch (SecurityException e) {
+				return null;
+			}
 		} else {
 			throw new IllegalArgumentException();
+		}
+		if (set == null || set.isEmpty()) {
+			return null;
 		}
 		RemoteDevice[] devices = new RemoteDevice[set.size()];
 		int i = 0;
@@ -195,9 +208,14 @@ public class DiscoveryAgent {
 		if ((accessCode != LIAC) && (accessCode != GIAC) && ((accessCode < 0x9E8B00) || (accessCode > 0x9E8B3F))) {
 			throw new IllegalArgumentException("Invalid accessCode " + accessCode);
 		}
+		LocalDevice.requireScanPermission();
 
-		if (adapter.isDiscovering())
-			return false;
+		try {
+			if (adapter.isDiscovering())
+				return false;
+		} catch (SecurityException e) {
+			throw new BluetoothStateException("Bluetooth inquiry permission was revoked");
+		}
 
 		synchronized (transList) {
 			if (!transList.isEmpty())
@@ -215,16 +233,19 @@ public class DiscoveryAgent {
 					if (adapter.isDiscovering())
 						adapter.cancelDiscovery();
 				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				} catch (SecurityException ignored) {
+					// Inquiry permission may have been revoked during the timeout.
 				}
 			}
 		}).start();
 
-		ContextHolder.getActivity().registerReceiver(new BroadcastReceiver() {
+		BroadcastReceiver receiver = new BroadcastReceiver() {
 			public void onReceive(Context context, Intent intent) {
 				String action = intent.getAction();
 				if (BluetoothDevice.ACTION_FOUND.equals(action)) {
 					BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-					if (discoveredList.add(device)) {
+					if (device != null && discoveredList.add(device)) {
 						RemoteDevice dev = new RemoteDevice(device);
 						DeviceClass cod = new DeviceClass();
 						listener.deviceDiscovered(dev, cod);
@@ -236,26 +257,53 @@ public class DiscoveryAgent {
 							for (Transaction t : transList) {
 								if (!t.discovering) {
 									// FIXME: 17.06.2020 requires API15
-									t.dev.dev.fetchUuidsWithSdp();
-									t.discovering = true;
+									try {
+										t.dev.dev.fetchUuidsWithSdp();
+										t.discovering = true;
+									} catch (SecurityException e) {
+										t.stop = true;
+									}
 								}
 							}
 						}
 					}
-					ContextHolder.getActivity().unregisterReceiver(this);
+					unregisterReceiver(this);
 				}
 			}
-		}, filter);
+		};
+		try {
+			ContextCompat.registerReceiver(ContextHolder.getActivity(), receiver, filter,
+					ContextCompat.RECEIVER_EXPORTED);
+		} catch (SecurityException | NullPointerException e) {
+			throw new BluetoothStateException("Bluetooth inquiry receiver could not be registered");
+		}
 
 		discoveredList.clear();
-		return adapter.startDiscovery();
+		try {
+			boolean started = adapter.startDiscovery();
+			if (!started) {
+				unregisterReceiver(receiver);
+			}
+			return started;
+		} catch (SecurityException e) {
+			unregisterReceiver(receiver);
+			throw new BluetoothStateException("Bluetooth inquiry permission was revoked");
+		}
 	}
 
 	public boolean cancelInquiry(DiscoveryListener listener) {
 		if (listener == null) {
 			throw new NullPointerException("DiscoveryListener is null");
 		}
-		boolean ret = adapter.cancelDiscovery();
+		if (!ru.playsoftware.j2meloader.util.BluetoothPermissionHelper.hasScanPermission()) {
+			return false;
+		}
+		boolean ret;
+		try {
+			ret = adapter.cancelDiscovery();
+		} catch (SecurityException e) {
+			return false;
+		}
 		listener.inquiryCompleted(DiscoveryListener.INQUIRY_TERMINATED);
 		return ret;
 	}
@@ -287,23 +335,62 @@ public class DiscoveryAgent {
 				throw new IllegalArgumentException("attrSet[" + i + "] not in range");
 			}
 		}
+		LocalDevice.requireConnectPermission();
 
 		final Transaction curTrans = new Transaction(maxID, attrSet, uuidSet, btDev, listener);
 		transList.add(curTrans);
-		ContextHolder.getActivity().registerReceiver(curTrans, new IntentFilter(BluetoothDevice.ACTION_UUID));
-
-		if (!adapter.isDiscovering()) {
+		try {
+			ContextCompat.registerReceiver(ContextHolder.getActivity(), curTrans,
+					new IntentFilter(BluetoothDevice.ACTION_UUID), ContextCompat.RECEIVER_EXPORTED);
+		} catch (SecurityException | NullPointerException e) {
 			synchronized (transList) {
-				for (Transaction t : transList) {
-					if (!t.discovering) {
-						// FIXME: 17.06.2020 requires API15
-						t.dev.dev.fetchUuidsWithSdp();
-						t.discovering = true;
+				transList.remove(curTrans);
+			}
+			throw new BluetoothStateException("Bluetooth service search receiver could not be registered");
+		}
+
+		try {
+			// isDiscovering() is a scan capability on Android 12+, while SDP itself
+			// only needs CONNECT. If scan was not granted, proceed with SDP rather
+			// than making service search depend on an unrelated capability.
+			boolean inquiryRunning = false;
+			if (LocalDevice.hasScanPermission()) {
+				try {
+					inquiryRunning = adapter.isDiscovering();
+				} catch (SecurityException ignored) {
+					// Permission may have been revoked between the check and the call.
+				}
+			}
+			if (!inquiryRunning) {
+				synchronized (transList) {
+					for (Transaction t : transList) {
+						if (!t.discovering) {
+							// FIXME: 17.06.2020 requires API15
+							t.dev.dev.fetchUuidsWithSdp();
+							t.discovering = true;
+						}
 					}
 				}
 			}
+		} catch (SecurityException e) {
+			synchronized (transList) {
+				transList.remove(curTrans);
+			}
+			unregisterReceiver(curTrans);
+			throw new BluetoothStateException("Bluetooth connect permission was revoked");
 		}
 		return maxID++;
+	}
+
+	private static void unregisterReceiver(BroadcastReceiver receiver) {
+		try {
+			Context context = ContextHolder.getActivity();
+			if (context != null) {
+				context.unregisterReceiver(receiver);
+			}
+		} catch (RuntimeException ignored) {
+			// The activity may be gone or the receiver may already be unregistered.
+		}
 	}
 
 	public boolean cancelServiceSearch(int transID) {

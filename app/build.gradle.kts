@@ -125,7 +125,8 @@ android {
     }
 
     lint {
-        baseline = file("lint-baseline.xml")
+        // Missing translations are intentionally deferred to the dedicated localization pass.
+        // Keep lint active so all other findings remain visible and fail the CI task on errors.
         disable += "MissingTranslation"
     }
 

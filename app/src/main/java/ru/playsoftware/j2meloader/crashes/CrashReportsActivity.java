@@ -12,6 +12,8 @@
  * limitations under the License.
  */
 
+// Modified for JL-Mod Plus.
+
 package ru.playsoftware.j2meloader.crashes;
 
 import android.content.Intent;
@@ -33,6 +35,7 @@ import java.util.Date;
 import java.util.List;
 
 import ru.playsoftware.j2meloader.R;
+import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 
 /** Local-only inbox for retained JL-Mod Plus diagnostic records. */
 public class CrashReportsActivity extends AppCompatActivity {
@@ -41,6 +44,7 @@ public class CrashReportsActivity extends AppCompatActivity {
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		EdgeToEdgeCompat.enableIfSupported(this);
 		setContentView(R.layout.activity_crash_reports);
 		setTitle(R.string.crash_reports);
 		ActionBar actionBar = getSupportActionBar();

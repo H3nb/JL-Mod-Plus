@@ -20,7 +20,6 @@ package javax.microedition.lcdui.list;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.os.Build;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,8 +32,6 @@ import java.util.ArrayList;
 
 import javax.microedition.lcdui.Choice;
 import javax.microedition.util.ContextHolder;
-
-import ru.playsoftware.j2meloader.R;
 
 public class CompoundListAdapter extends CompoundAdapter implements ListAdapter {
 	private static int highlightColor;
@@ -58,12 +55,7 @@ public class CompoundListAdapter extends CompoundAdapter implements ListAdapter 
 				viewResourceID = android.R.layout.simple_list_item_single_choice;
 				break;
 			case Choice.MULTIPLE:
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-					viewResourceID = android.R.layout.simple_list_item_multiple_choice;
-				} else {
-					// use a local copy from SDK 16 because older versions look different
-					viewResourceID = R.layout.simple_list_item_multiple_choice;
-				}
+				viewResourceID = android.R.layout.simple_list_item_multiple_choice;
 				break;
 			default:
 				throw new IllegalArgumentException("list type " + type + " is not supported");

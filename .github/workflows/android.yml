@@ -285,5 +285,5 @@ jobs:
       - name: Enforce emulator lint gate
         if: ${{ always() && steps.app_lint.outcome == 'failure' }}
         run: |
-          echo "Android lint reported findings outside the committed baseline."
+          echo "Android emulator lint task failed."
           exit 1

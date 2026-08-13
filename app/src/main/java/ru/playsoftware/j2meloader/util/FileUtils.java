@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+// Modified for JL-Mod Plus.
+
 package ru.playsoftware.j2meloader.util;
 
 import android.content.Context;
@@ -30,8 +32,11 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.util.Locale;
 
 import kotlin.io.FilesKt;
 import ru.playsoftware.j2meloader.EmulatorApplication;
@@ -92,6 +97,9 @@ public class FileUtils {
 	}
 
 	public static File getFileForUri(Uri uri) throws IOException {
+		if (uri == null) {
+			throw new NullPointerException("uri is null");
+		}
 		Context context = EmulatorApplication.getInstance();
 		if ("file".equals(uri.getScheme())) {
 			String path = uri.getPath();
@@ -109,25 +117,87 @@ public class FileUtils {
 		File file;
 		try (InputStream in = context.getContentResolver().openInputStream(uri)) {
 			byte[] buf = new byte[BUFFER_SIZE];
-			int len;
-			if (in == null || (len = in.read(buf)) == -1)
-				throw new IOException("Can't read data from uri: " + uri);
-			if (buf[0] == 0x50 && buf[1] == 0x4B) {
-				file = new File(tmpDir, TEMP_JAR_NAME);
-			} else if (buf[0] == 'K' && buf[1] == 'J' && buf[2] == 'X') {
-				file = new File(tmpDir, TEMP_KJX_NAME);
-			} else {
-				file = new File(tmpDir, TEMP_JAD_NAME);
+			int len = 0;
+			if (in != null) {
+				while (len < buf.length) {
+					int read = in.read(buf, len, buf.length - len);
+					if (read < 0) {
+						break;
+					}
+					if (read == 0) {
+						break;
+					}
+					len += read;
+					if (len >= 3) {
+						break;
+					}
+				}
 			}
+			if (len <= 0)
+				throw new IOException("Can't read data from uri: " + uri);
+			String mimeType = context.getContentResolver().getType(uri);
+			file = new File(tmpDir, getTempFileName(uri, mimeType, buf, len));
 			//noinspection IOStreamConstructor
 			try (OutputStream out = new FileOutputStream(file)) {
 				out.write(buf, 0, len);
-				while ((len = in.read(buf)) > 0) {
-					out.write(buf, 0, len);
+				while ((len = in.read(buf)) != -1) {
+					if (len > 0) {
+						out.write(buf, 0, len);
+					}
 				}
 			}
+		} catch (SecurityException e) {
+			IOException failure = new IOException("Can't read data from uri: " + uri);
+			failure.initCause(e);
+			throw failure;
 		}
 		return file;
+	}
+
+	static String getTempFileName(Uri uri, String mimeType, byte[] prefix, int length) {
+		if (length >= 3 && prefix[0] == 'K' && prefix[1] == 'J' && prefix[2] == 'X') {
+			return TEMP_KJX_NAME;
+		}
+		if (length >= 2 && prefix[0] == 0x50 && prefix[1] == 0x4B) {
+			return TEMP_JAR_NAME;
+		}
+		String path = uri.getPath();
+		if (path != null) {
+			String lowerPath = path.toLowerCase(Locale.ROOT);
+			if (lowerPath.endsWith(".kjx")) {
+				return TEMP_KJX_NAME;
+			}
+			if (lowerPath.endsWith(".jar")) {
+				return TEMP_JAR_NAME;
+			}
+			if (lowerPath.endsWith(".jad")) {
+				return TEMP_JAD_NAME;
+			}
+		}
+		if ("application/java-archive".equalsIgnoreCase(mimeType)
+				|| "application/java".equalsIgnoreCase(mimeType)
+				|| "application/x-java-archive".equalsIgnoreCase(mimeType)
+				|| "application/zip".equalsIgnoreCase(mimeType)) {
+			return TEMP_JAR_NAME;
+		}
+		return TEMP_JAD_NAME;
+	}
+
+	/** Resolves a relative JAD jar URL against a path-bearing content JAD URI. */
+	public static Uri resolveSiblingUri(Uri baseUri, Uri relativeUri) {
+		String basePath = baseUri == null ? null : baseUri.getPath();
+		if (baseUri == null || relativeUri == null || basePath == null
+				|| !basePath.toLowerCase(Locale.ROOT).endsWith(".jad")
+				|| relativeUri.getScheme() != null) {
+			return null;
+		}
+		try {
+			URI base = new URI(baseUri.toString());
+			URI resolved = base.resolve(new URI(relativeUri.toString()));
+			return Uri.parse(resolved.toString());
+		} catch (URISyntaxException e) {
+			return null;
+		}
 	}
 
 	public static byte[] getBytes(File file) throws IOException {

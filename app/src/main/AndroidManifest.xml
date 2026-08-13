@@ -11,15 +11,20 @@
         tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="29" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
+        android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
         android:usesPermissionFlags="neverForLocation"
         tools:targetApi="s" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"
+        tools:targetApi="tiramisu" />
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
 
     <uses-sdk tools:overrideLibrary="com.google.oboe" />
@@ -32,6 +37,8 @@
         android:name=".EmulatorApplication"
         android:allowBackup="false"
         android:appCategory="game"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:theme="@style/AppTheme"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -66,7 +73,7 @@
                 <data android:scheme="file" />
                 <data android:scheme="content" />
             </intent-filter>
-            <intent-filter>
+            <intent-filter android:autoVerify="false">
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.DEFAULT" />
@@ -76,6 +83,25 @@
                 <data android:host="*" />
                 <data android:scheme="http" />
                 <data android:scheme="https" />
+            </intent-filter>
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!-- URI-only web links still need to be limited to JAD descriptors. -->
+                <data android:host="*" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:pathPattern=".*.jad" />
+                <data android:pathPattern=".*..*.jad" />
+                <data android:pathPattern=".*..*..*.jad" />
+                <data android:pathPattern=".*..*..*..*.jad" />
+                <data android:pathPattern=".*.JAD" />
+                <data android:pathPattern=".*..*.JAD" />
+                <data android:pathPattern=".*..*..*.JAD" />
+                <data android:pathPattern=".*..*..*..*.JAD" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -112,16 +138,61 @@
                 <data android:pathPattern=".*..*..*.KJX" />
                 <data android:pathPattern=".*..*..*..*.KJX" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!-- URI-only file/content imports need extension matching without a MIME. -->
+                <data android:host="*" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+                <data android:pathPattern=".*.jar" />
+                <data android:pathPattern=".*..*.jar" />
+                <data android:pathPattern=".*..*..*.jar" />
+                <data android:pathPattern=".*..*..*..*.jar" />
+                <data android:pathPattern=".*.JAR" />
+                <data android:pathPattern=".*..*.JAR" />
+                <data android:pathPattern=".*..*..*.JAR" />
+                <data android:pathPattern=".*..*..*..*.JAR" />
+                <data android:pathPattern=".*.jad" />
+                <data android:pathPattern=".*..*.jad" />
+                <data android:pathPattern=".*..*..*.jad" />
+                <data android:pathPattern=".*..*..*..*.jad" />
+                <data android:pathPattern=".*.JAD" />
+                <data android:pathPattern=".*..*.JAD" />
+                <data android:pathPattern=".*..*..*.JAD" />
+                <data android:pathPattern=".*..*..*..*.JAD" />
+                <data android:pathPattern=".*.kjx" />
+                <data android:pathPattern=".*..*.kjx" />
+                <data android:pathPattern=".*..*..*.kjx" />
+                <data android:pathPattern=".*..*..*..*.kjx" />
+                <data android:pathPattern=".*.KJX" />
+                <data android:pathPattern=".*..*.KJX" />
+                <data android:pathPattern=".*..*..*.KJX" />
+                <data android:pathPattern=".*..*..*..*.KJX" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!-- Opaque providers may report only octet-stream; MIME-only matching accepts file/content URIs without path assumptions. -->
+                <data android:mimeType="application/octet-stream" />
+            </intent-filter>
         </activity>
         <activity
             android:name=".config.ConfigActivity"
             android:exported="true"
-            android:windowSoftInputMode="stateHidden" />
+            android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity
             android:name="javax.microedition.shell.MicroActivity"
             android:exported="false"
             android:theme="@style/AppTheme.NoActionBar"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode"
+            android:enableOnBackInvokedCallback="true"
             android:process=":midlet" />
         <activity android:name=".settings.SettingsActivity"
             android:exported="true">
@@ -135,7 +206,8 @@
         <activity
             android:name=".filepicker.FilteredFilePickerActivity"
             android:exported="false"
-            android:theme="@style/FilePickerTheme" />
+            android:theme="@style/FilePickerTheme"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity android:name=".config.ProfilesActivity" android:exported="false" />
         <activity android:name=".crashes.CrashReportsActivity" android:exported="false" />
         <activity android:name=".crashes.CrashReportDetailsActivity" android:exported="false" />

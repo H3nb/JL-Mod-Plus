@@ -297,7 +297,14 @@ public class CrashRuntimeIsolationTest {
 		do {
 			for (File journalFile : MidletSessionJournal.journalFiles(context)) {
 				try {
-					MidletSessionJournal.Snapshot snapshot = MidletSessionJournal.read(journalFile);
+					// Do not call AtomicFile.openRead() while the isolated process is finishing a
+					// write. openRead() may recover/rename sidecars, racing the writer on API 30.
+					// A direct read observes the previous complete snapshot and retries until the
+					// writer has committed the next one.
+					MidletSessionJournal.Snapshot snapshot;
+					try (FileInputStream input = new FileInputStream(journalFile)) {
+						snapshot = MidletSessionJournal.read(input);
+					}
 					if (!existingSessionIds.contains(snapshot.sessionId)
 							&& snapshot.outcome == MidletSessionJournal.Outcome.UNEXPECTED_FAILURE
 							&& snapshot.failureBoundary == expectedBoundary
@@ -348,7 +355,9 @@ public class CrashRuntimeIsolationTest {
 		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(appDir.getAbsolutePath()),
 				context, MicroActivity.class)
 				.putExtra(Constants.KEY_MIDLET_NAME, LIFECYCLE_MIDLET_NAME)
-				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				// MicroActivity is singleTask in the host manifest. Clear the old fixture task so
+				// each lifecycle mode is delivered through a fresh onCreate/onNew process boundary.
+				.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 		context.startActivity(intent);
 	}
 
