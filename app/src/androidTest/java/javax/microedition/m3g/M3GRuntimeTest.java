@@ -518,3 +518,5 @@ public class M3GRuntimeTest {
 			this.indices = indices;
 			this.appearance = appearance;
 		}
+	}
+}
