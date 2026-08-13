@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-// Modified for JL-Mod Plus.
 package ru.playsoftware.j2meloader.settings;
 
 import static ru.playsoftware.j2meloader.util.Constants.PREF_EMULATOR_DIR;

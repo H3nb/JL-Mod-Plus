@@ -1,5 +1,4 @@
 /*
- * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +13,6 @@
  * limitations under the License.
  */
 
-// Modified for JL-Mod Plus.
-
 package ru.playsoftware.j2meloader.crashes;
 
 import android.content.ClipData;
@@ -23,15 +20,11 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.compose.ui.platform.ComposeView;
 
 import java.text.DateFormat;
 import java.util.Date;
@@ -45,19 +38,16 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 
 	private LocalDiagnosticRepository.Record record;
 	private String exportText;
+	private ComposeView composeView;
 
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		EdgeToEdgeCompat.enableIfSupported(this);
-		setContentView(R.layout.activity_crash_report_details);
+		composeView = new ComposeView(this);
+		composeView.setId(R.id.crash_report_details_compose_root);
+		setContentView(composeView);
 		EdgeToEdgeCompat.protectHostContent(this);
-		setTitle(R.string.crash_reports);
-		ActionBar actionBar = getSupportActionBar();
-		if (actionBar != null) {
-			actionBar.setDisplayHomeAsUpEnabled(true);
-		}
-
 		String recordId = getIntent().getStringExtra(EXTRA_REPORT_ID);
 		record = LocalDiagnosticRepository.find(this, recordId);
 		if (record == null) {
@@ -68,36 +58,28 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 
 		String displayText = buildReportText(record);
 		exportText = DiagnosticExportSanitizer.sanitize(this, displayText);
-		TextView details = findViewById(R.id.crash_report_details_text);
-		details.setText(displayText);
-	}
+		CrashReportsComposeBridge.installDetails(composeView, displayText,
+				new CrashReportDetailsActions() {
+					@Override
+					public void onBack() {
+						finish();
+					}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.crash_report_details, menu);
-		return true;
-	}
+					@Override
+					public void onCopy() {
+						copyReport();
+					}
 
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		int id = item.getItemId();
-		if (id == android.R.id.home || id == R.id.action_close_crash_report) {
-			finish();
-			return true;
-		}
-		if (id == R.id.action_copy_crash_report) {
-			copyReport();
-			return true;
-		}
-		if (id == R.id.action_share_crash_report) {
-			confirmShare();
-			return true;
-		}
-		if (id == R.id.action_delete_crash_report) {
-			confirmDelete();
-			return true;
-		}
-		return super.onOptionsItemSelected(item);
+					@Override
+					public void onShare() {
+						shareReport();
+					}
+
+					@Override
+					public void onDelete() {
+						deleteReport();
+					}
+				});
 	}
 
 	private void copyReport() {
@@ -106,15 +88,6 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 			clipboard.setPrimaryClip(ClipData.newPlainText(getString(R.string.crash_reports), exportText));
 			Toast.makeText(this, R.string.crash_report_copied, Toast.LENGTH_SHORT).show();
 		}
-	}
-
-	private void confirmShare() {
-		new AlertDialog.Builder(this)
-				.setTitle(R.string.share_report)
-				.setMessage(R.string.crash_report_share_disclosure)
-				.setNegativeButton(android.R.string.cancel, null)
-				.setPositiveButton(R.string.share_report, (dialog, which) -> shareReport())
-				.show();
 	}
 
 	private void shareReport() {
@@ -131,15 +104,6 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 			share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 		}
 		startActivity(Intent.createChooser(share, getString(R.string.crash_report_share_title)));
-	}
-
-	private void confirmDelete() {
-		new AlertDialog.Builder(this)
-				.setTitle(R.string.crash_report_delete_title)
-				.setMessage(R.string.crash_report_delete_message)
-				.setNegativeButton(android.R.string.cancel, null)
-				.setPositiveButton(R.string.delete_report, (dialog, which) -> deleteReport())
-				.show();
 	}
 
 	private void deleteReport() {

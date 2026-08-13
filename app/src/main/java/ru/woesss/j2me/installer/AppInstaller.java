@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-// Modified for JL-Mod Plus.
 package ru.woesss.j2me.installer;
 
 import android.net.Uri;
