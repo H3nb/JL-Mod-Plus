@@ -35,7 +35,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api: [35, 36]
+        # API 23/29/30 cover the supported storage/runtime baselines; API 35/36
+        # exercise target-36 edge-to-edge and predictive-back behavior.
+        api: [23, 29, 30, 35, 36]
 
     steps:
       - name: Check out sources

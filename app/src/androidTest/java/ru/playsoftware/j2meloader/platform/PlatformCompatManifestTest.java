@@ -46,9 +46,13 @@ import ru.playsoftware.j2meloader.filepicker.FilteredFilePickerActivity;
 @RunWith(AndroidJUnit4.class)
 public class PlatformCompatManifestTest {
 	@Test
-	public void suiteRunsOnAndroid15OrLaterDevice() {
-		assertTrue("Platform compatibility suite must run on API 35 or later",
-				Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM);
+	public void targetAndMinimumSdkRemainAtCompatibilityBoundary() {
+		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+		ApplicationInfo applicationInfo = context.getApplicationInfo();
+		assertEquals("The compatibility baseline must remain API 23",
+				23, applicationInfo.minSdkVersion);
+		assertEquals("The Android 16 migration must remain target SDK 36",
+				36, applicationInfo.targetSdkVersion);
 	}
 
 	@Test
