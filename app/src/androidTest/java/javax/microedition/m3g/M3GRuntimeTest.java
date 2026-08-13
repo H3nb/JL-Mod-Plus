@@ -202,6 +202,50 @@ public class M3GRuntimeTest {
 	}
 
 	@Test
+	public void image2DTargetClearRoundTripsThroughBackgroundRendering() {
+		Image2D target = new Image2D(Image2D.RGB, SIZE, SIZE);
+		Background clearBackground = createBackground(BACKGROUND_ARGB);
+
+		runtimeStep("image2d probe: bind RGB target");
+		g3d.bindTarget(target, true, Graphics3D.TRUE_COLOR);
+		try {
+			g3d.setViewport(0, 0, SIZE, SIZE);
+			runtimeStep("image2d probe: clear RGB target");
+			g3d.clear(clearBackground);
+		} finally {
+			runtimeStep("image2d probe: release RGB target");
+			g3d.releaseTarget();
+		}
+		assertEquals(null, g3d.getTarget());
+
+		// Image2D has no public pixel getter. Sample the released target through
+		// the JSR-184 background-image path into a public lcdui.Image instead.
+		Background imageBackground = new Background();
+		imageBackground.setImage(target);
+		imageBackground.setImageMode(Background.BORDER, Background.BORDER);
+		Camera camera = new Camera();
+		camera.setPerspective(60.0f, 1.0f, 1.0f, 20.0f);
+		World world = new World();
+		world.setBackground(imageBackground);
+		world.addChild(camera);
+		world.setActiveCamera(camera);
+
+		Image output = Image.createImage(SIZE, SIZE);
+		runtimeStep("image2d probe: render target as background");
+		g3d.bindTarget(output.getGraphics(), true,
+				Graphics3D.TRUE_COLOR | Graphics3D.OVERWRITE);
+		try {
+			g3d.render(world);
+		} finally {
+			runtimeStep("image2d probe: release sampled target");
+			g3d.releaseTarget();
+		}
+
+		assertEquals(BACKGROUND_ARGB & RGB_MASK,
+				readPixel(output, SIZE / 2, SIZE / 2) & RGB_MASK);
+	}
+
+	@Test
 	public void retainedMorphingWorldAndPickingExecuteOn64BitNativeBackend() {
 		TriangleFixture triangle = createTriangleFixture();
 		Camera camera = new Camera();
@@ -284,7 +328,13 @@ public class M3GRuntimeTest {
 	}
 
 	@Test
-	public void mutableImage2DTargetBindsClearsAndReleases() {
+	public void mutableImage2DTargetLifecycleIsStable() {
+		/*
+		 * JSR-184 exposes Image2D mutation but no pixel readback method. This
+		 * stable test therefore proves the public target lifecycle and metadata;
+		 * the optional render probe above proves clear visibility when the hosted
+		 * renderer can execute the background path.
+		 */
 		Background background = createBackground(0xFF224466);
 
 		for (int format : new int[]{Image2D.RGB, Image2D.RGBA}) {
@@ -310,7 +360,22 @@ public class M3GRuntimeTest {
 	}
 
 	@Test
-	public void rejectsImmutableAndUnsupportedImage2DTargets() {
+	public void rejectsInvalidBindTargetHintsAtPublicApiBoundary() {
+		Graphics target = Image.createImage(SIZE, SIZE).getGraphics();
+		int invalidHints = Graphics3D.TRUE_COLOR | (1 << 30);
+
+		try {
+			g3d.bindTarget(target, true, invalidHints);
+			fail("Expected invalid bindTarget hints to be rejected");
+		} catch (IllegalArgumentException expected) {
+			assertEquals(null, g3d.getTarget());
+		}
+	}
+
+	@Test
+	public void rejectsImmutableAndUnsupportedImage2DTargetsAtPublicApiBoundary() {
+		// These are intentionally public-API boundary checks. Graphics3D rejects
+		// them before JNI, so this test does not claim native-path coverage.
 		Image2D immutable = new Image2D(Image2D.RGB, 1, 1, new byte[]{0, 0, 0});
 		assertFalse(immutable.isMutable());
 		assertIllegalImage2DTarget(immutable);
@@ -453,5 +518,3 @@ public class M3GRuntimeTest {
 			this.indices = indices;
 			this.appearance = appearance;
 		}
-	}
-}

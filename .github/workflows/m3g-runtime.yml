@@ -10,6 +10,7 @@ on:
       - 'settings.gradle.kts'
       - 'gradle.properties'
       - 'gradle/**'
+      - 'gradlew'
       - 'app/build.gradle.kts'
       - 'app/src/main/AndroidManifest.xml'
       - 'gradle/libs.versions.toml'
@@ -23,7 +24,7 @@ on:
   workflow_dispatch:
     inputs:
       include_render_probes:
-        description: 'Run geometry probes that can terminate hosted emulator renderers'
+        description: 'Run optional render and Image2D readback probes'
         required: false
         default: false
         type: boolean
@@ -157,14 +158,16 @@ jobs:
             cameraAndLightTransformsCrossJniWithJsr184Semantics
             objectReferenceArraysAndDuplicateRoundTripThroughJni
             translatedGraphicsTargetPreservesViewportAndClearOutput
-            mutableImage2DTargetBindsClearsAndReleases
-            rejectsImmutableAndUnsupportedImage2DTargets
+            mutableImage2DTargetLifecycleIsStable
+            rejectsImmutableAndUnsupportedImage2DTargetsAtPublicApiBoundary
+            rejectsInvalidBindTargetHintsAtPublicApiBoundary
           )
 
           if [[ '${{ inputs.include_render_probes }}' == 'true' ]]; then
             tests+=(
               retainedMorphingWorldAndPickingExecuteOn64BitNativeBackend
               immediateRenderingExecutesOn64BitNativeBackend
+              image2DTargetClearRoundTripsThroughBackgroundRendering
             )
           fi
 
@@ -222,7 +225,8 @@ jobs:
             echo '- Runtime ABI: x86_64 (64-bit)'
             echo '- Emulator graphics: software-selected backend'
             echo '- Per-test evidence: build/ci-reports/per-test/<test-name>/'
-            echo "- Optional geometry render probes requested: ${{ inputs.include_render_probes || false }}"
+            echo "- Optional render/readback probes requested: ${{ inputs.include_render_probes || false }}"
+            echo '- Stable Image2D coverage verifies public lifecycle/metadata; pixel readback is optional because JSR-184 exposes no Image2D getter.'
             echo '- Supported production ABI remains arm64-v8a and is compiled by Android CI.'
             echo "- Instrumentation outcome: ${{ steps.runtime_test.outcome }}"
             echo
