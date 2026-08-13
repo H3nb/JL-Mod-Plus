@@ -104,7 +104,7 @@ public class Manager {
 			Player player = plugin.createPlayer(datasource);
 			if (player != null) {
 				return player;
-				}
+			}
 		}
 		String[] supportedTypes = getSupportedContentTypes(null);
 		if (type != null && Arrays.asList(supportedTypes).contains(type.toLowerCase(Locale.ROOT))) {
