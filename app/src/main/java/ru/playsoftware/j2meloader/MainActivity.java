@@ -2,6 +2,7 @@
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2020 Nikita Shakarun
  * Copyright 2020-2024 Yury Kharchenko
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		EdgeToEdgeCompat.enableIfSupported(this);
 		setContentView(R.layout.activity_main);
+		EdgeToEdgeCompat.protectHostContent(this);
 		addMenuProvider(new MenuProvider() {
 			@Override
 			public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {

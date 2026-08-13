@@ -157,7 +157,7 @@ jobs:
           set -o pipefail
           ./gradlew --no-daemon --stacktrace \
             -PjlmodRuntimeTestAbi=x86_64 \
-            -Pandroid.testInstrumentationRunnerArguments.class=ru.playsoftware.j2meloader.platform.PlatformCompatManifestTest,ru.playsoftware.j2meloader.platform.PlatformCompatBehaviorTest,ru.playsoftware.j2meloader.platform.FileConnectionContractTest,ru.playsoftware.j2meloader.util.UriImportContractTest \
+            -Pandroid.testInstrumentationRunnerArguments.class=ru.playsoftware.j2meloader.platform.PlatformCompatManifestTest,ru.playsoftware.j2meloader.platform.PlatformCompatBehaviorTest,ru.playsoftware.j2meloader.platform.HostEdgeToEdgeContractTest,ru.playsoftware.j2meloader.platform.FileConnectionContractTest,ru.playsoftware.j2meloader.util.UriImportContractTest \
             :app:connectedEmulatorDebugAndroidTest \
             2>&1 | tee build/ci-logs/platform-compat-gradle.log
 
