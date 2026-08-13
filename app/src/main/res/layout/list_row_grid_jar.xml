@@ -16,6 +16,7 @@
         android:id="@+id/list_image"
         android:layout_width="48dp"
         android:layout_height="48dp"
+        android:importantForAccessibility="no"
         android:scaleType="centerCrop"
         tools:src="@mipmap/ic_launcher" />
 
