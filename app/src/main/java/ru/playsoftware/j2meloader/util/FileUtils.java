@@ -21,7 +21,13 @@
 package ru.playsoftware.j2meloader.util;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
+import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.util.Log;
 
@@ -152,6 +158,114 @@ public class FileUtils {
 			throw failure;
 		}
 		return file;
+	}
+
+	/**
+	 * Maps a Storage Access Framework tree URI to the raw directory used by the
+	 * emulator's existing file-based storage model.
+	 *
+	 * <p>Only Android's external-storage provider is accepted. Arbitrary document
+	 * providers do not have a stable raw path and must not be guessed.</p>
+	 */
+	public static File getDirectoryForTreeUri(Context context, Uri uri) {
+		if (context == null || uri == null || !DocumentsContract.isTreeUri(uri)
+				|| !"com.android.externalstorage.documents".equals(uri.getAuthority())) {
+			return null;
+		}
+		final String documentId;
+		try {
+			documentId = DocumentsContract.getTreeDocumentId(uri);
+		} catch (IllegalArgumentException e) {
+			return null;
+		}
+		int separator = documentId.indexOf(':');
+		if (separator <= 0) {
+			return null;
+		}
+		String volumeId = documentId.substring(0, separator);
+		String relativePath = documentId.substring(separator + 1);
+		File volumeRoot = findExternalStorageRoot(context, volumeId);
+		if (volumeRoot == null) {
+			return null;
+		}
+		File candidate = relativePath.isEmpty()
+				? volumeRoot
+				: new File(volumeRoot, relativePath.replace('/', File.separatorChar));
+		try {
+			File canonicalRoot = volumeRoot.getCanonicalFile();
+			File canonicalCandidate = candidate.getCanonicalFile();
+			String rootPath = canonicalRoot.getPath();
+			String candidatePath = canonicalCandidate.getPath();
+			if (!candidatePath.equals(rootPath)
+					&& !candidatePath.startsWith(rootPath + File.separatorChar)) {
+				return null;
+			}
+			return canonicalCandidate;
+		} catch (IOException e) {
+			return null;
+		}
+	}
+
+	private static File findExternalStorageRoot(Context context, String volumeId) {
+		if ("primary".equalsIgnoreCase(volumeId)) {
+			return Environment.getExternalStorageDirectory();
+		}
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+			return null;
+		}
+		StorageManager storageManager = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
+		if (storageManager == null) {
+			return null;
+		}
+		for (StorageVolume volume : storageManager.getStorageVolumes()) {
+			if (volumeId.equalsIgnoreCase(volume.getUuid()) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+				return volume.getDirectory();
+			}
+		}
+		return null;
+	}
+
+	/** Returns an initial SAF tree URI when {@code path} is on primary storage. */
+	public static Uri getTreeUriForPath(String path) {
+		if (path == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+			return null;
+		}
+		try {
+			File root = Environment.getExternalStorageDirectory().getCanonicalFile();
+			File candidate = new File(path).getCanonicalFile();
+			String rootPath = root.getPath();
+			String candidatePath = candidate.getPath();
+			if (!candidatePath.equals(rootPath)
+					&& !candidatePath.startsWith(rootPath + File.separatorChar)) {
+				return null;
+			}
+			String relative = candidatePath.substring(rootPath.length())
+					.replace(File.separatorChar, '/');
+			String documentId = "primary:" + (relative.startsWith("/") ? relative.substring(1) : relative);
+			return DocumentsContract.buildTreeDocumentUri(
+					"com.android.externalstorage.documents", documentId);
+		} catch (IOException e) {
+			return null;
+		}
+	}
+
+	/** Retains access to a directory selected through the Storage Access Framework. */
+	public static void takePersistableTreePermission(Context context, Uri uri) {
+		if (context == null || uri == null || !"content".equals(uri.getScheme())
+				|| !DocumentsContract.isTreeUri(uri)) {
+			return;
+		}
+		try {
+			context.getContentResolver().takePersistableUriPermission(uri,
+					Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+		} catch (SecurityException | IllegalArgumentException e) {
+			try {
+				context.getContentResolver().takePersistableUriPermission(uri,
+						Intent.FLAG_GRANT_READ_URI_PERMISSION);
+			} catch (SecurityException | IllegalArgumentException ignored) {
+				// The provider did not grant persistable access; raw-path access is still validated below.
+			}
+		}
 	}
 
 	static String getTempFileName(Uri uri, String mimeType, byte[] prefix, int length) {

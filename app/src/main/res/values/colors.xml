@@ -3,7 +3,6 @@
 <resources>
     <color name="ic_launcher_background">#06143A</color>
     <color name="fab_material_red_500">#f44336</color>
-    <color name="file_picker_accent">#ffb62e</color>
 
     <!--light theme colors-->
     <color name="primary">#212121</color>
@@ -16,5 +15,4 @@
     <color name="btn_bg_pressed">#707070</color>
     <color name="config_card">#ffffff</color>
 
-    <color name="nnf_separator_color">@color/nnf_light_separator_color</color>
 </resources>

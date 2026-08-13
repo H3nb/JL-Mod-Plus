@@ -41,7 +41,6 @@ import java.util.List;
 import javax.microedition.shell.MicroActivity;
 
 import ru.playsoftware.j2meloader.config.ConfigActivity;
-import ru.playsoftware.j2meloader.filepicker.FilteredFilePickerActivity;
 
 @RunWith(AndroidJUnit4.class)
 public class PlatformCompatManifestTest {
@@ -65,7 +64,6 @@ public class PlatformCompatManifestTest {
 		PackageManager packageManager = context.getPackageManager();
 
 		assertAdjustResize(activityInfo(packageManager, context, ConfigActivity.class));
-		assertAdjustResize(activityInfo(packageManager, context, FilteredFilePickerActivity.class));
 	}
 
 	@Test

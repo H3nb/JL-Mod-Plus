@@ -203,11 +203,6 @@
             </intent-filter>
         </activity>
         <activity android:name=".settings.KeyMapperActivity" android:exported="false" />
-        <activity
-            android:name=".filepicker.FilteredFilePickerActivity"
-            android:exported="false"
-            android:theme="@style/FilePickerTheme"
-            android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity android:name=".config.ProfilesActivity" android:exported="false" />
         <activity android:name=".crashes.CrashReportsActivity" android:exported="false" />
         <activity android:name=".crashes.CrashReportDetailsActivity" android:exported="false" />

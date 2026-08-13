@@ -228,13 +228,26 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void onPickDirResult(Uri uri) {
-		// PickDirResultContract is backed by the app's raw-path picker. Keep this
-		// boundary explicit: external content URIs are installer inputs, not workdir paths.
-		if (uri == null || !"file".equals(uri.getScheme()) || uri.getPath() == null) {
+		if (uri == null) {
 			checkAndCreateDirs();
 			return;
 		}
-		File file = new File(uri.getPath());
+		FileUtils.takePersistableTreePermission(this, uri);
+		File file;
+		if ("file".equals(uri.getScheme()) && uri.getPath() != null) {
+			file = new File(uri.getPath());
+		} else {
+			file = FileUtils.getDirectoryForTreeUri(this, uri);
+		}
+		if (file == null) {
+			new AlertDialog.Builder(this)
+					.setTitle(R.string.error)
+					.setMessage(getString(R.string.create_apps_dir_failed, uri))
+					.setNegativeButton(android.R.string.cancel, null)
+					.setPositiveButton(R.string.choose, (d, w) -> openDirLauncher.launch(null))
+					.show();
+			return;
+		}
 		applyWorkDir(file);
 	}
 

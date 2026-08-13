@@ -19,7 +19,6 @@ androidx-recyclerview = "1.4.0"
 androidx-room = "2.8.4"
 asm = "9.10.1"
 ffmpeg-kit = "6.0.LTS"
-filepicker = "4.4.0"
 google-gson = "2.14.0"
 google-material = "1.14.0"
 google-oboe = "1.10.0"
@@ -46,7 +45,6 @@ androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "
 androidx-room-rxjava2 = { module = "androidx.room:room-rxjava2", version.ref = "androidx-room" }
 asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
 ffmpeg-kit = { module = "io.github.nikita36078:ffmpeg-kit", version.ref = "ffmpeg-kit" }
-filepicker = { module = "com.github.woesss:filepicker", version.ref = "filepicker" }
 google-gson = { module = "com.google.code.gson:gson", version.ref = "google-gson" }
 google-material = { module = "com.google.android.material:material", version.ref = "google-material" }
 google-oboe = { module = "com.google.oboe:oboe", version.ref = "google-oboe" }

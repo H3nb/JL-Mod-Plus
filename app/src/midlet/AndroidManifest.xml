@@ -20,7 +20,6 @@
             </intent-filter>
         </activity>
         <activity android:name=".settings.KeyMapperActivity" tools:node="remove" />
-        <activity android:name=".filepicker.FilteredFilePickerActivity" tools:node="remove" />
         <activity android:name=".config.ProfilesActivity" tools:node="remove" />
 
         <provider

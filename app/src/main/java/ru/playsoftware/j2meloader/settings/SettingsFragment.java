@@ -108,10 +108,25 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 	}
 
 	private void onPickDirResult(Uri uri) {
-		if (uri == null || !"file".equals(uri.getScheme()) || uri.getPath() == null) {
+		if (uri == null) {
 			return;
 		}
-		File file = new File(uri.getPath());
+		FileUtils.takePersistableTreePermission(requireContext(), uri);
+		File file;
+		if ("file".equals(uri.getScheme()) && uri.getPath() != null) {
+			file = new File(uri.getPath());
+		} else {
+			file = FileUtils.getDirectoryForTreeUri(requireContext(), uri);
+		}
+		if (file == null) {
+			new AlertDialog.Builder(requireActivity())
+					.setTitle(R.string.error)
+					.setMessage(getString(R.string.create_apps_dir_failed, uri))
+					.setNegativeButton(android.R.string.cancel, null)
+					.setPositiveButton(R.string.choose, (d, w) -> openDirLauncher.launch(null))
+					.show();
+			return;
+		}
 		String path = file.getAbsolutePath();
 		if (!FileUtils.initWorkDir(file)) {
 			new AlertDialog.Builder(requireActivity())

@@ -22,17 +22,14 @@ package ru.playsoftware.j2meloader.applist;
 import static ru.playsoftware.j2meloader.util.Constants.KEY_APP_URI;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_VIEW;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APP_SORT;
-import static ru.playsoftware.j2meloader.util.Constants.PREF_LAST_PATH;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -46,7 +43,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContract;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -64,8 +61,6 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.GridLayoutManager;
 
 import com.google.android.material.textfield.TextInputLayout;
-import com.nononsenseapps.filepicker.FilePickerActivity;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -80,7 +75,6 @@ import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.config.ProfilesActivity;
 import ru.playsoftware.j2meloader.databinding.DialogInputBinding;
 import ru.playsoftware.j2meloader.databinding.FragmentAppslistBinding;
-import ru.playsoftware.j2meloader.filepicker.FilteredFilePickerActivity;
 import ru.playsoftware.j2meloader.info.AboutDialogFragment;
 import ru.playsoftware.j2meloader.info.HelpDialogFragment;
 import ru.playsoftware.j2meloader.settings.SettingsActivity;
@@ -89,36 +83,18 @@ import ru.playsoftware.j2meloader.util.LogUtils;
 import ru.woesss.j2me.installer.InstallerDialog;
 
 public class AppsListFragment extends Fragment implements MenuProvider, AppsListAdapter.OnItemClickListener {
+	private static final String[] MIDLET_DOCUMENT_TYPES = {
+			"application/java-archive",
+			"application/java",
+			"application/x-java-archive",
+			"application/zip",
+			"application/octet-stream",
+			"text/vnd.sun.j2me.app-descriptor",
+			"text/plain"
+	};
 
-	private final ActivityResultLauncher<Void> openFileLauncher = registerForActivityResult(
-			new ActivityResultContract<Void, Uri>() {
-				@NonNull
-				@Override
-				public Intent createIntent(@NonNull Context context, Void input) {
-					Intent i = new Intent(context, FilteredFilePickerActivity.class);
-					i.putExtra(FilePickerActivity.EXTRA_ALLOW_MULTIPLE, false);
-					i.putExtra(FilePickerActivity.EXTRA_SINGLE_CLICK, true);
-					i.putExtra(FilePickerActivity.EXTRA_ALLOW_CREATE_DIR, false);
-					i.putExtra(FilePickerActivity.EXTRA_MODE, FilePickerActivity.MODE_FILE);
-					String path = preferences.getString(PREF_LAST_PATH, null);
-					if (path == null) {
-						File dir = Environment.getExternalStorageDirectory();
-						if (dir.canRead()) {
-							path = dir.getAbsolutePath();
-						}
-					}
-					i.putExtra(FilePickerActivity.EXTRA_START_PATH, path);
-					return i;
-				}
-
-				@Override
-				public Uri parseResult(int resultCode, @Nullable Intent intent) {
-					if (resultCode == Activity.RESULT_OK && intent != null) {
-						return intent.getData();
-					}
-					return null;
-				}
-			},
+	private final ActivityResultLauncher<String[]> openFileLauncher = registerForActivityResult(
+			new ActivityResultContracts.OpenDocument(),
 			this::onActivityResult);
 	private final AppsListAdapter adapter = new AppsListAdapter(this);
 	private Uri appUri;
@@ -177,7 +153,7 @@ public class AppsListFragment extends Fragment implements MenuProvider, AppsList
 		});
 		binding.list.setLayoutManager(layoutManager);
 		binding.list.setAdapter(adapter);
-		binding.fab.setOnClickListener(v -> openFileLauncher.launch(null));
+		binding.fab.setOnClickListener(v -> openFileLauncher.launch(MIDLET_DOCUMENT_TYPES));
 		appListViewModel.getAppList().observe(getViewLifecycleOwner(), this::onDbUpdated);
 	}
 
@@ -388,9 +364,6 @@ public class AppsListFragment extends Fragment implements MenuProvider, AppsList
 		if (uri == null) {
 			return;
 		}
-		preferences.edit()
-				.putString(PREF_LAST_PATH, uri.getPath())
-				.apply();
 		InstallerDialog.newInstance(uri).show(getParentFragmentManager(), "installer");
 	}
 

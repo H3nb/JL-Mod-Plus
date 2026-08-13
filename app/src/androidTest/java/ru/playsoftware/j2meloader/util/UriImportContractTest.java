@@ -15,14 +15,19 @@
 package ru.playsoftware.j2meloader.util;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import android.net.Uri;
+import android.os.Environment;
+import android.provider.DocumentsContract;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.io.File;
 
 @RunWith(AndroidJUnit4.class)
 public class UriImportContractTest {
@@ -70,5 +75,19 @@ public class UriImportContractTest {
 	public void opaqueContentUriCannotInventSiblingPath() {
 		assertNull(FileUtils.resolveSiblingUri(
 				Uri.parse("content://provider/opaque-id"), Uri.parse("app.jar")));
+	}
+
+	@Test
+	public void primaryStoragePathProducesSafTreeUri() {
+		File directory = new File(Environment.getExternalStorageDirectory(), "JL-Mod Plus");
+		Uri uri = FileUtils.getTreeUriForPath(directory.getPath());
+		assertNotNull(uri);
+		assertEquals("com.android.externalstorage.documents", uri.getAuthority());
+		assertEquals("primary:JL-Mod Plus", DocumentsContract.getTreeDocumentId(uri));
+	}
+
+	@Test
+	public void nonExternalPathDoesNotPretendToBeSafTree() {
+		assertNull(FileUtils.getTreeUriForPath("/data/local/tmp/jl-mod-plus"));
 	}
 }
