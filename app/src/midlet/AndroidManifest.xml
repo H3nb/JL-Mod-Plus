@@ -19,7 +19,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".donations.DonationsActivity" tools:node="remove" />
         <activity android:name=".settings.KeyMapperActivity" tools:node="remove" />
         <activity android:name=".filepicker.FilteredFilePickerActivity" tools:node="remove" />
         <activity android:name=".config.ProfilesActivity" tools:node="remove" />

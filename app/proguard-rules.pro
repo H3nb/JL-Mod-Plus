@@ -41,8 +41,7 @@
 -keep class ru.playsoftware.j2meloader.util.SparseIntArrayAdapter { *; }
 -keep class ru.playsoftware.j2meloader.crashes.models.* { *; }
 
-# dependencies
--keep class com.arthenica.mobileffmpeg.** { *; }
+# FFmpegKit publishes its own consumer rules; no app-owned reflection entry points are used.
 -keep public class org.acra.** { public protected *; }
 -keepclassmembers,allowobfuscation class * {
  @com.google.gson.annotations.SerializedName <fields>;
