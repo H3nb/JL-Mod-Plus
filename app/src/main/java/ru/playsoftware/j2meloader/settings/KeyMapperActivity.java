@@ -1,6 +1,7 @@
 /*
  * Copyright 2018-2019 Nikita Shakarun
  * Copyright 2020-2023 Yury Kharchenko
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +77,7 @@ public class KeyMapperActivity extends AppCompatActivity implements View.OnClick
 		}
 		binding = ActivityKeymapperBinding.inflate(getLayoutInflater());
 		setContentView(binding.getRoot());
+		EdgeToEdgeCompat.protectHostContent(this);
 		ActionBar actionBar = getSupportActionBar();
 		if (actionBar != null) {
 			actionBar.setDisplayHomeAsUpEnabled(true);

@@ -1,6 +1,7 @@
 /*
  * Copyright 2018 Nikita Shakarun
  * Copyright 2019-2023 Yury Kharchenko
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +83,7 @@ public class ProfilesActivity extends AppCompatActivity implements EditNameAlert
 		EdgeToEdgeCompat.enableIfSupported(this);
 		ActivityProfilesBinding binding = ActivityProfilesBinding.inflate(getLayoutInflater());
 		setContentView(binding.getRoot());
+		EdgeToEdgeCompat.protectHostContent(this);
 		ActionBar actionBar = getSupportActionBar();
 		if (actionBar != null) {
 			actionBar.setDisplayHomeAsUpEnabled(true);

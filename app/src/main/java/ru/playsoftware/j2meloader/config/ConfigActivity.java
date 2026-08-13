@@ -3,6 +3,7 @@
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2018-2019 Nikita Shakarun
  * Copyright 2019-2026 Yury Kharchenko
+ * Modified for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -170,6 +171,7 @@ public class ConfigActivity extends AppCompatActivity implements View.OnClickLis
 		loadKeyLayout();
 		binding = ActivityConfigBinding.inflate(getLayoutInflater());
 		setContentView(binding.getRoot());
+		EdgeToEdgeCompat.protectHostContent(this);
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		display = getWindowManager().getDefaultDisplay();
 
