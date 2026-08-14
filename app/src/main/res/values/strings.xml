@@ -10,6 +10,7 @@
     <string name="action_context_delete">Delete</string>
     <string name="action_context_rename">Rename</string>
     <string name="action_context_shortcut">Add Shortcut</string>
+    <string name="action_back">Back</string>
     <string name="action_keyboard_ime">Keyboard (IME)</string>
     <string name="action_lock_orientation">Lock Screen Rotation</string>
     <string name="action_reinstall">Reinstall</string>

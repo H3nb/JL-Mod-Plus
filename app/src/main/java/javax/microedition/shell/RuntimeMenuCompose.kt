@@ -14,30 +14,33 @@
 
 package javax.microedition.shell
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.semantics.Role
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,13 +50,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
@@ -311,54 +314,46 @@ private fun RuntimeMenuDialog(
     onDismiss: () -> Unit,
 ) {
     var virtualKeyboardPage by remember { mutableStateOf(false) }
-    Dialog(
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    AlertDialog(
+        modifier = if (landscape) {
+            Modifier
+                .fillMaxWidth(0.94f)
+                .widthIn(max = 760.dp)
+        } else {
+            Modifier.widthIn(max = 560.dp)
+        },
+        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Surface(
-                modifier = Modifier
-                    .widthIn(max = 360.dp)
-                    .fillMaxWidth()
-                    .heightIn(max = 560.dp),
-                shape = MaterialTheme.shapes.extraLarge,
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                contentColor = MaterialTheme.colorScheme.onSurface,
-                tonalElevation = 6.dp,
-            ) {
-                Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
-                ) {
-                    Text(
-                        text = state.title,
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
-                        style = MaterialTheme.typography.titleLarge,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    HorizontalDivider()
-                    RuntimeMenuItems(
-                        state = state,
-                        includeCanvasShortcuts = true,
-                        virtualKeyboardPage = virtualKeyboardPage,
-                        actions = actions,
-                        onOpenVirtualKeyboardPage = { virtualKeyboardPage = true },
-                        onCloseVirtualKeyboardPage = { virtualKeyboardPage = false },
-                        onDismiss = onDismiss,
-                    )
-                }
+        title = {
+            Text(
+                text = if (virtualKeyboardPage) {
+                    stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS)
+                } else {
+                    state.title
+                },
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        text = {
+            LazyColumn(modifier = Modifier.heightIn(max = if (landscape) 220.dp else 420.dp)) {
+                runtimeMenuItems(
+                    state = state,
+                    includeCanvasShortcuts = true,
+                    virtualKeyboardPage = virtualKeyboardPage,
+                    actions = actions,
+                    onOpenVirtualKeyboardPage = { virtualKeyboardPage = true },
+                    onCloseVirtualKeyboardPage = { virtualKeyboardPage = false },
+                    onDismiss = onDismiss,
+                )
             }
-        }
-    }
+        },
+        confirmButton = {},
+    )
 }
 
-@Composable
-private fun RuntimeMenuItems(
+private fun LazyListScope.runtimeMenuItems(
     state: RuntimeMenuUiState,
     includeCanvasShortcuts: Boolean,
     virtualKeyboardPage: Boolean,
@@ -368,61 +363,86 @@ private fun RuntimeMenuItems(
     onDismiss: () -> Unit,
 ) {
     if (virtualKeyboardPage) {
-        RuntimeMenuItem(
-            label = R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS,
-            leadingIcon = R.drawable.ic_arrow_back,
-            onClick = onCloseVirtualKeyboardPage,
-        )
-        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-        RuntimeActionItem(R.string.layout_edit_mode, onDismiss, actions::onEditVirtualKeyboardLayout)
-        RuntimeActionItem(R.string.layout_scale_mode, onDismiss, actions::onResizeVirtualKeyboardLayout)
-        if (state.virtualKeyboardEditing) {
-            RuntimeActionItem(
-                R.string.layout_edit_finish,
-                onDismiss,
-                actions::onFinishVirtualKeyboardLayout,
+        item {
+            RuntimeMenuItem(
+                label = R.string.action_back,
+                leadingIcon = R.drawable.ic_arrow_back,
+                onClick = onCloseVirtualKeyboardPage,
             )
         }
-        RuntimeActionItem(R.string.layout_switch, onDismiss, actions::onSwitchVirtualKeyboardLayout)
-        RuntimeActionItem(R.string.hide_buttons, onDismiss, actions::onHideVirtualKeyboardButtons)
+        item {
+            RuntimeActionItem(R.string.layout_edit_mode, onDismiss, actions::onEditVirtualKeyboardLayout)
+        }
+        item {
+            RuntimeActionItem(R.string.layout_scale_mode, onDismiss, actions::onResizeVirtualKeyboardLayout)
+        }
+        if (state.virtualKeyboardEditing) {
+            item {
+                RuntimeActionItem(
+                    R.string.layout_edit_finish,
+                    onDismiss,
+                    actions::onFinishVirtualKeyboardLayout,
+                )
+            }
+        }
+        item {
+            RuntimeActionItem(R.string.layout_switch, onDismiss, actions::onSwitchVirtualKeyboardLayout)
+        }
+        item {
+            RuntimeActionItem(R.string.hide_buttons, onDismiss, actions::onHideVirtualKeyboardButtons)
+        }
         return
     }
 
-    RuntimeActionItem(R.string.exit, onDismiss, actions::onExit)
-    RuntimeActionItem(R.string.save_log, onDismiss, actions::onSaveLog)
-    RuntimeToggleItem(
-        label = R.string.action_lock_orientation,
-        checked = state.orientationLocked,
-        onClick = {
-            onDismiss()
-            actions.onToggleOrientationLock()
-        },
-    )
+    item {
+        RuntimeActionItem(R.string.exit, onDismiss, actions::onExit)
+    }
+    item {
+        RuntimeActionItem(R.string.save_log, onDismiss, actions::onSaveLog)
+    }
+    item {
+        RuntimeToggleItem(
+            label = R.string.action_lock_orientation,
+            checked = state.orientationLocked,
+            onClick = {
+                onDismiss()
+                actions.onToggleOrientationLock()
+            },
+        )
+    }
     if (state.isCanvas) {
         if (includeCanvasShortcuts && state.imeAvailable) {
-            RuntimeMenuItem(
-                label = R.string.action_keyboard_ime,
-                onClick = {
-                    onDismiss()
-                    actions.onOpenImeKeyboard()
-                },
-            )
+            item {
+                RuntimeMenuItem(
+                    label = R.string.action_keyboard_ime,
+                    onClick = {
+                        onDismiss()
+                        actions.onOpenImeKeyboard()
+                    },
+                )
+            }
         }
         if (includeCanvasShortcuts) {
-            RuntimeMenuItem(
-                label = R.string.take_screenshot,
-                onClick = {
-                    onDismiss()
-                    actions.onTakeScreenshot()
-                },
-            )
+            item {
+                RuntimeMenuItem(
+                    label = R.string.take_screenshot,
+                    onClick = {
+                        onDismiss()
+                        actions.onTakeScreenshot()
+                    },
+                )
+            }
         }
-        RuntimeActionItem(R.string.PREF_LIMIT_FPS, onDismiss, actions::onLimitFps)
+        item {
+            RuntimeActionItem(R.string.PREF_LIMIT_FPS, onDismiss, actions::onLimitFps)
+        }
         if (state.virtualKeyboardAvailable) {
-            RuntimeMenuItem(
-                label = R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS,
-                onClick = onOpenVirtualKeyboardPage,
-            )
+            item {
+                RuntimeMenuItem(
+                    label = R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS,
+                    onClick = onOpenVirtualKeyboardPage,
+                )
+            }
         }
     }
 }
@@ -445,15 +465,22 @@ private fun RuntimeToggleItem(
     checked: Boolean,
     onClick: () -> Unit,
 ) {
-    DropdownMenuItem(
-        text = { Text(stringResource(label)) },
-        onClick = onClick,
-        trailingIcon = {
+    ListItem(
+        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+        headlineContent = { Text(stringResource(label)) },
+        trailingContent = {
             Switch(
                 checked = checked,
-                onCheckedChange = { onClick() },
+                onCheckedChange = null,
             )
         },
+        modifier = Modifier
+            .fillMaxWidth()
+            .toggleable(
+                value = checked,
+                role = Role.Switch,
+                onValueChange = { onClick() },
+            ),
     )
 }
 
@@ -463,10 +490,10 @@ private fun RuntimeMenuItem(
     leadingIcon: Int? = null,
     onClick: () -> Unit,
 ) {
-    DropdownMenuItem(
-        text = { Text(stringResource(label)) },
-        onClick = onClick,
-        leadingIcon = leadingIcon?.let { icon ->
+    ListItem(
+        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+        headlineContent = { Text(stringResource(label)) },
+        leadingContent = leadingIcon?.let { icon ->
             {
                 Icon(
                     painter = painterResource(icon),
@@ -474,5 +501,11 @@ private fun RuntimeMenuItem(
                 )
             }
         },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                role = Role.Button,
+                onClick = onClick,
+            ),
     )
 }

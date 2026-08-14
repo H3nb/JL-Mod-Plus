@@ -222,11 +222,7 @@ public class MicroActivity extends AppCompatActivity {
 
 					@Override
 					public void onOpenImeKeyboard() {
-						if (inputMethodManager != null) {
-							inputMethodManager.toggleSoftInputFromWindow(
-									binding.displayableContainer.getWindowToken(),
-									InputMethodManager.SHOW_FORCED, 0);
-						}
+						showImeKeyboardAfterMenuDismissal();
 					}
 
 					@Override
@@ -330,8 +326,37 @@ public class MicroActivity extends AppCompatActivity {
 	private void hideSoftInput() {
 		if (inputMethodManager != null) {
 			IBinder windowToken = binding.displayableContainer.getWindowToken();
-			inputMethodManager.hideSoftInputFromWindow(windowToken, 0);
+			if (windowToken != null) {
+				inputMethodManager.hideSoftInputFromWindow(windowToken, 0);
+			}
 		}
+	}
+
+	/**
+	 * The Compose host menu owns a separate dialog window. Post the legacy IME toggle until that
+	 * window has been dismissed so the Canvas/GLSurfaceView can regain focus and expose its existing
+	 * input connection. The delayed call intentionally keeps the old toggle semantics.
+	 */
+	private void showImeKeyboardAfterMenuDismissal() {
+		if (inputMethodManager == null || binding == null) {
+			return;
+		}
+		binding.displayableContainer.postDelayed(() -> {
+			if (isFinishing() || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1
+					&& isDestroyed()) || !(current instanceof Canvas)) {
+				return;
+			}
+			View inputTarget = findCanvasSurface(binding.displayableContainer);
+			if (inputTarget == null) {
+				inputTarget = binding.displayableContainer;
+			}
+			inputTarget.requestFocus();
+			IBinder windowToken = inputTarget.getWindowToken();
+			if (windowToken != null) {
+				inputMethodManager.toggleSoftInputFromWindow(
+						windowToken, InputMethodManager.SHOW_FORCED, 0);
+			}
+		}, 100L);
 	}
 
 	@Override
