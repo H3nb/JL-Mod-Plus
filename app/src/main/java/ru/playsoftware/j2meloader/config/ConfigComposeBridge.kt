@@ -206,6 +206,21 @@ private fun ScreenSection(
                     state.screenPresets.forEach { preset ->
                         DropdownMenuItem(
                             text = { Text(preset.toString()) },
+                            trailingIcon = if (state.removableScreenPresets.contains(preset)) {
+                                {
+                                    IconButton(onClick = {
+                                        presetsExpanded = false
+                                        events.onRemoveResolutionPreset(preset)
+                                    }) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.ic_delete_report),
+                                            contentDescription = stringResource(R.string.remove_screen_preset),
+                                        )
+                                    }
+                                }
+                            } else {
+                                null
+                            },
                             onClick = {
                                 presetsExpanded = false
                                 onFormChanged(

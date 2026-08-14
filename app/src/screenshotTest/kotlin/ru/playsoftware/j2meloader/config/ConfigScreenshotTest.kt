@@ -24,6 +24,7 @@ import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 private val NoOpConfigEvents = object : ConfigFormEvents {
     override fun onFormChanged(state: ConfigFormState) = Unit
     override fun onAddResolutionPreset() = Unit
+    override fun onRemoveResolutionPreset(size: Size) = Unit
     override fun onColorPicker(field: ConfigFormEvents.ColorField) = Unit
     override fun onColorPicked(field: ConfigFormEvents.ColorField, value: String) = Unit
     override fun onKeyMappings() = Unit

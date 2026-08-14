@@ -35,6 +35,8 @@ public final class ConfigUiState {
 	@NonNull
 	public final List<Size> screenPresets;
 	@NonNull
+	public final List<Size> removableScreenPresets;
+	@NonNull
 	public final List<FontPreset> fontPresets;
 	@NonNull
 	public final List<String> skins;
@@ -50,8 +52,21 @@ public final class ConfigUiState {
 			@NonNull List<String> skins,
 			@NonNull List<String> soundBanks,
 			@NonNull List<ShaderInfo> shaders) {
+		this(form, screenPresets, fontPresets, skins, soundBanks, shaders,
+				Collections.emptyList());
+	}
+
+	public ConfigUiState(
+			@NonNull ConfigFormState form,
+			@NonNull List<Size> screenPresets,
+			@NonNull List<FontPreset> fontPresets,
+			@NonNull List<String> skins,
+			@NonNull List<String> soundBanks,
+			@NonNull List<ShaderInfo> shaders,
+			@NonNull List<Size> removableScreenPresets) {
 		this.form = form;
 		this.screenPresets = immutableCopy(screenPresets);
+		this.removableScreenPresets = immutableCopy(removableScreenPresets);
 		this.fontPresets = immutableCopy(fontPresets);
 		this.skins = immutableCopy(skins);
 		this.soundBanks = immutableCopy(soundBanks);

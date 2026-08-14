@@ -16,6 +16,7 @@ package ru.playsoftware.j2meloader.config
 
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
@@ -91,6 +92,21 @@ class ConfigComposeTest {
         assertEquals("D0D0D0", picked)
     }
 
+    @Test
+    fun customScreenPresetCanBeRemovedFromPresetMenu() {
+        val events = RecordingConfigEvents()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), events)
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Presets").performClick()
+        composeRule.onNodeWithContentDescription("Remove screen preset").performClick()
+
+        assertEquals(Size(360, 640), events.removed)
+    }
+
     private fun sampleState(): ConfigUiState {
         val form = ConfigFormState.builder()
             .screenWidth("240")
@@ -116,11 +132,12 @@ class ConfigComposeTest {
             .build()
         return ConfigUiState(
             form,
-            listOf(Size(240, 320)),
+            listOf(Size(240, 320), Size(360, 640)),
             listOf(ConfigUiState.FontPreset("240 x 320", 18, 22, 26)),
             listOf("Not set"),
             listOf("Android (default)"),
             emptyList(),
+            listOf(Size(360, 640)),
         )
     }
 
@@ -134,10 +151,15 @@ class ConfigComposeTest {
         }
 
         override fun onAddResolutionPreset() = Unit
+        override fun onRemoveResolutionPreset(size: Size) {
+            removed = size
+        }
         override fun onColorPicker(field: ConfigFormEvents.ColorField) = Unit
         override fun onColorPicked(field: ConfigFormEvents.ColorField, value: String) = Unit
         override fun onKeyMappings() = Unit
         override fun onEncodingPicker() = Unit
         override fun onShaderTuning() = Unit
+
+        var removed: Size? = null
     }
 }

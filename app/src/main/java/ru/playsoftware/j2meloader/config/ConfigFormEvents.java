@@ -14,12 +14,16 @@
 
 package ru.playsoftware.j2meloader.config;
 
+import ru.playsoftware.j2meloader.config.model.Size;
+
 /** Presentation events emitted by the Compose form to its host activity. */
 public interface ConfigFormEvents {
 	/** Called for every presentation-only draft edit; persistence remains owned by ConfigActivity. */
 	void onFormChanged(ConfigFormState state);
 
 	void onAddResolutionPreset();
+
+	void onRemoveResolutionPreset(Size size);
 
 	void onColorPicker(ColorField field);
 

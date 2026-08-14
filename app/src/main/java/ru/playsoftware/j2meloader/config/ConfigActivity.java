@@ -71,6 +71,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private static final String TAG = ConfigActivity.class.getSimpleName();
 
 	private final ArrayList<Size> screenPresets = new ArrayList<>();
+	private final ArrayList<Size> removableScreenPresets = new ArrayList<>();
 	private final ArrayList<ConfigUiState.FontPreset> fontPresets = new ArrayList<>();
 	private final ArrayList<String> skinOptions = new ArrayList<>();
 	private final ArrayList<String> soundBankOptions = new ArrayList<>();
@@ -97,6 +98,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		@Override
 		public void onAddResolutionPreset() {
 			addResolutionToPresets();
+		}
+
+		@Override
+		public void onRemoveResolutionPreset(@NonNull Size size) {
+			removeResolutionPreset(size);
 		}
 
 		@Override
@@ -393,6 +399,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private void fillScreenSizePresets(int w, int h) {
 		ArrayList<Size> screenPresets = this.screenPresets;
 		screenPresets.clear();
+		removableScreenPresets.clear();
 
 		screenPresets.add(new Size(128, 128));
 		screenPresets.add(new Size(128, 160));
@@ -419,10 +426,14 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				Size size = Size.parse(s);
 				if (size != null) {
 					screenPresets.add(size);
+					if (!removableScreenPresets.contains(size)) {
+						removableScreenPresets.add(size);
+					}
 				}
 			}
 		}
 		Collections.sort(screenPresets);
+		Collections.sort(removableScreenPresets);
 		Size prev = null;
 		for (Iterator<Size> iterator = screenPresets.iterator(); iterator.hasNext(); ) {
 			Size next = iterator.next();
@@ -548,16 +559,41 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			Toast.makeText(this, R.string.not_saved_exists, Toast.LENGTH_SHORT).show();
 			return;
 		}
-		screenPresets.add(~index, size);
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		Set<String> set = preferences.getStringSet("ResolutionsPreset", null);
 		Set<String> presets = set == null ? new HashSet<>(1) : new HashSet<>(set);
 		presets.add(size.toString());
 		preferences.edit().putStringSet("ResolutionsPreset", presets).apply();
+		fillScreenSizePresets(display.getWidth(), display.getHeight());
 		if (composeController != null) {
 			composeController.update(createUiState());
 		}
 		Toast.makeText(this, getString(R.string.saved, size.toString()), Toast.LENGTH_SHORT).show();
+	}
+
+	private void removeResolutionPreset(Size size) {
+		if (!removableScreenPresets.contains(size)) {
+			return;
+		}
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		Set<String> set = preferences.getStringSet("ResolutionsPreset", null);
+		if (set == null || !set.contains(size.toString())) {
+			return;
+		}
+		Set<String> presets = new HashSet<>(set);
+		presets.remove(size.toString());
+		SharedPreferences.Editor editor = preferences.edit();
+		if (presets.isEmpty()) {
+			editor.remove("ResolutionsPreset");
+		} else {
+			editor.putStringSet("ResolutionsPreset", presets);
+		}
+		editor.apply();
+		fillScreenSizePresets(display.getWidth(), display.getHeight());
+		if (composeController != null) {
+			composeController.update(createUiState());
+		}
+		Toast.makeText(this, getString(R.string.removed, size.toString()), Toast.LENGTH_SHORT).show();
 	}
 
 	@Override
@@ -578,7 +614,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				? ConfigFormState.fromProfile(params, normalizedSystemProperties())
 				: currentForm;
 		return new ConfigUiState(state, screenPresets, fontPresets, skinOptions, soundBankOptions,
-				shaders == null ? Collections.emptyList() : shaders);
+				shaders == null ? Collections.emptyList() : shaders, removableScreenPresets);
 	}
 
 	private String normalizedSystemProperties() {
