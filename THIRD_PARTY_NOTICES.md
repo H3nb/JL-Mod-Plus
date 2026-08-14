@@ -21,13 +21,13 @@ This ledger is a provenance/notice inventory for the current project state, not 
 
 ## Material Symbols assets
 
-The Compose host UI uses seven official Material Symbols Android VectorDrawable assets. They
+The Compose host UI uses nine official Material Symbols Android VectorDrawable assets. They
 were downloaded with `scripts/material-symbols.py` as developer-time inputs and are committed locally;
 Gradle and CI do not access the network to obtain them.
 
 | Local resources | Source | Variant | Revision / SHA-256 | License |
 | --- | --- | --- | --- | --- |
-| `ic_arrow_back.xml`, `ic_content_copy.xml`, `ic_share.xml`, `ic_delete_report.xml`, `ic_file_picker_folder.xml`, `ic_file_picker_file.xml`, `ic_file_picker_storage.xml` | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | `50f0603134ce7b70b2d71b686cc13e8b57ccb74c`; arrow back `cd1f5a1109c07c79ac3e52a9a1ae8ab14be7a3bff7f7bc3559f7088d60eca3aa`; content copy `f83b9c4f3f51b5a64365e6222498934cbccaead05fd720d4cabcb175eb50d2d4`; share `e68cc51976886c8395e3317d8bea0b8324e98d365ed8a15fc8c67767c2241931`; delete `8589dfd0ab9c15182ba5698bd38c4502ad8f476dbd983e840a709a24281211fa`; folder `527c6a7dd741753f91cd8f33894aa2cfac375138c852b1ebfc2b43195ebaa313`; file `5b98cf8276cf644fa1e5c8a1e06ee5e1dc1e421454c66f7f6f77de416498bdc4`; storage `ec25a2938d8ed12c94d52413336d2eea5e559ef35e75878defded6cec9e2ac64` | Apache-2.0 |
+| `ic_arrow_back.xml`, `ic_content_copy.xml`, `ic_share.xml`, `ic_delete_report.xml`, `ic_file_picker_folder.xml`, `ic_file_picker_file.xml`, `ic_file_picker_storage.xml`, `ic_arrow_downward.xml`, `ic_arrow_upward.xml` | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | Existing seven assets remain pinned to their recorded source revisions; arrow downward `eac1ec84bb5251dfd1dec10a3db387363594eb20247bacaddf1c033ff954094d` and arrow upward `b398faf24ea12a63b2c4f708d8be24c8ae3714d277ea82da8f405cd066873d0a`, both revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 
 ### `third_party/` audit
 

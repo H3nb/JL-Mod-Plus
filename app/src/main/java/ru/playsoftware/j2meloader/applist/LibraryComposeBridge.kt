@@ -280,11 +280,47 @@ fun LibraryScreen(
                                 contentDescription = stringResource(R.string.pref_apps_view),
                             )
                         }
-                        IconButton(onClick = { sortVisible = true }) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_sort),
-                                contentDescription = stringResource(R.string.pref_app_sort_title),
-                            )
+                        Box {
+                            IconButton(onClick = { sortVisible = true }) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_sort),
+                                    contentDescription = stringResource(R.string.pref_app_sort_title),
+                                )
+                            }
+                            val entries = stringArrayResource(R.array.pref_app_sort_entries)
+                            val selectedSort = state.sortVariant and Int.MAX_VALUE
+                            DropdownMenu(
+                                expanded = sortVisible,
+                                onDismissRequest = { sortVisible = false },
+                            ) {
+                                entries.forEachIndexed { index, entry ->
+                                    DropdownMenuItem(
+                                        text = { Text(entry) },
+                                        leadingIcon = if (index == selectedSort) {
+                                            {
+                                                Icon(
+                                                    painter = painterResource(
+                                                        if (state.sortVariant >= 0) {
+                                                            R.drawable.ic_arrow_downward
+                                                        } else {
+                                                            R.drawable.ic_arrow_upward
+                                                        },
+                                                    ),
+                                                    contentDescription = stringResource(
+                                                        R.string.pref_app_sort_title,
+                                                    ),
+                                                )
+                                            }
+                                        } else {
+                                            null
+                                        },
+                                        onClick = {
+                                            sortVisible = false
+                                            actions.onSort(index)
+                                        },
+                                    )
+                                }
+                            }
                         }
                         Box {
                             IconButton(onClick = { overflowVisible = true }) {
@@ -326,16 +362,6 @@ fun LibraryScreen(
         )
     }
 
-    if (sortVisible) {
-        LibrarySortDialog(
-            sortVariant = state.sortVariant,
-            onDismiss = { sortVisible = false },
-            onSelect = { index ->
-                sortVisible = false
-                actions.onSort(index)
-            },
-        )
-    }
     appActions?.let { app ->
         AppActionsDialog(
             app = app,
@@ -570,42 +596,6 @@ private fun LibraryOverflowMenu(
         DropdownMenuItem(text = { Text(stringResource(R.string.save_log)) }, onClick = { closeThen(onSaveLog) })
         DropdownMenuItem(text = { Text(stringResource(R.string.exit)) }, onClick = { closeThen(onExit) })
     }
-}
-
-@Composable
-private fun LibrarySortDialog(
-    sortVariant: Int,
-    onDismiss: () -> Unit,
-    onSelect: (Int) -> Unit,
-) {
-    val entries = stringArrayResource(R.array.pref_app_sort_entries)
-    val selected = sortVariant and 0x7fffffff
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.pref_app_sort_title)) },
-        text = {
-            Column {
-                entries.forEachIndexed { index, entry ->
-                    TextButton(
-                        onClick = { onSelect(index) },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(
-                            text = if (index == selected) {
-                                val arrow = if (sortVariant >= 0) "↓" else "↑"
-                                "$entry  $arrow"
-                            } else {
-                                entry
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Start,
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {},
-    )
 }
 
 @Composable

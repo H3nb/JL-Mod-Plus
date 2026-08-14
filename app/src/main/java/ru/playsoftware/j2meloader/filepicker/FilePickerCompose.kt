@@ -225,6 +225,7 @@ fun FilePickerScreen(
                     Button(
                         onClick = actions::onConfirmSelection,
                         enabled = state.canConfirm,
+                        shape = MaterialTheme.shapes.medium,
                     ) {
                         Text(stringResource(R.string.file_picker_choose))
                     }
@@ -462,7 +463,10 @@ private fun PermissionContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(20.dp))
-        Button(onClick = actions::onGrantPermission) {
+        Button(
+            onClick = actions::onGrantPermission,
+            shape = MaterialTheme.shapes.medium,
+        ) {
             Text(stringResource(R.string.file_picker_grant_access))
         }
     }
@@ -481,7 +485,10 @@ private fun ErrorContent(
     ) {
         Text(text = message, color = MaterialTheme.colorScheme.error)
         Spacer(Modifier.height(16.dp))
-        Button(onClick = actions::onRetry) {
+        Button(
+            onClick = actions::onRetry,
+            shape = MaterialTheme.shapes.medium,
+        ) {
             Text(stringResource(R.string.file_picker_retry))
         }
     }

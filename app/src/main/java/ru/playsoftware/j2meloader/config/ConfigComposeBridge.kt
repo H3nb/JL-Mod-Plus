@@ -18,6 +18,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -38,6 +39,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -65,6 +67,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import ru.playsoftware.j2meloader.R
+import ru.playsoftware.j2meloader.ui.AppDropdownField
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import kotlin.math.roundToInt
 
@@ -144,26 +147,76 @@ fun ConfigScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(scrollState)
-                .padding(horizontal = 8.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                .padding(horizontal = 12.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            ScreenSection(
-                form = form,
-                state = state,
-                lockAspect = lockAspect,
-                onLockAspectChanged = { checked ->
-                    val width = form.screenWidth.toIntOrNull()
-                    val height = form.screenHeight.toIntOrNull()
-                    lockAspect = checked && width != null && height != null && width > 0 && height > 0
-                },
-                onFormChanged = updateForm,
-                events = events,
-            )
-            FontSection(form = form, state = state, onFormChanged = updateForm)
-            InputSection(form = form, state = state, onFormChanged = updateForm, events = events)
-            EmulationSection(form = form, onFormChanged = updateForm)
-            AudioSection(form = form, state = state, onFormChanged = updateForm)
-            SystemSection(form = form, onFormChanged = updateForm, events = events)
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                // A landscape phone (typically 600–719dp) keeps one readable form column;
+                // tablets and desktop-sized windows get the two-column layout.
+                val wideLayout = maxWidth >= 840.dp
+                val screen: @Composable () -> Unit = {
+                    ScreenSection(
+                        form = form,
+                        state = state,
+                        lockAspect = lockAspect,
+                        onLockAspectChanged = { checked ->
+                            val width = form.screenWidth.toIntOrNull()
+                            val height = form.screenHeight.toIntOrNull()
+                            lockAspect = checked && width != null && height != null && width > 0 && height > 0
+                        },
+                        onFormChanged = updateForm,
+                        events = events,
+                    )
+                }
+                val font: @Composable () -> Unit = {
+                    FontSection(form = form, state = state, onFormChanged = updateForm)
+                }
+                val input: @Composable () -> Unit = {
+                    InputSection(form = form, state = state, onFormChanged = updateForm, events = events)
+                }
+                val emulation: @Composable () -> Unit = {
+                    EmulationSection(form = form, onFormChanged = updateForm)
+                }
+                val audio: @Composable () -> Unit = {
+                    AudioSection(form = form, state = state, onFormChanged = updateForm)
+                }
+                val system: @Composable () -> Unit = {
+                    SystemSection(form = form, onFormChanged = updateForm, events = events)
+                }
+                if (wideLayout) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            screen()
+                            input()
+                            audio()
+                        }
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            font()
+                            emulation()
+                            system()
+                        }
+                    }
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        screen()
+                        font()
+                        input()
+                        emulation()
+                        audio()
+                        system()
+                    }
+                }
+            }
         }
     }
 
@@ -464,36 +517,26 @@ private fun FontSection(
             )
         }
         ConfigRow(stringResource(R.string.SIZE_PRESETS)) {
-            var expanded by remember { mutableStateOf(false) }
-            Box(modifier = Modifier.fillMaxWidth()) {
-                OutlinedButton(
-                    onClick = { expanded = true },
-                    enabled = state.fontPresets.isNotEmpty(),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(stringResource(R.string.SIZE_PRESETS))
-                }
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                ) {
-                    state.fontPresets.forEach { preset ->
-                        DropdownMenuItem(
-                            text = { Text(preset.title) },
-                            onClick = {
-                                expanded = false
-                                onFormChanged(
-                                    form.toBuilder()
-                                        .fontSizeSmall(preset.small.toString())
-                                        .fontSizeMedium(preset.medium.toString())
-                                        .fontSizeLarge(preset.large.toString())
-                                        .build(),
-                                )
-                            },
+            val selectedPreset = state.fontPresets.firstOrNull { preset ->
+                preset.small.toString() == form.fontSizeSmall &&
+                    preset.medium.toString() == form.fontSizeMedium &&
+                    preset.large.toString() == form.fontSizeLarge
+            }?.title ?: stringResource(R.string.SIZE_PRESETS)
+            AppDropdownField(
+                selected = selectedPreset,
+                options = state.fontPresets.map { it.title },
+                onSelected = { index ->
+                    state.fontPresets.getOrNull(index)?.let { preset ->
+                        onFormChanged(
+                            form.toBuilder()
+                                .fontSizeSmall(preset.small.toString())
+                                .fontSizeMedium(preset.medium.toString())
+                                .fontSizeLarge(preset.large.toString())
+                                .build(),
                         )
                     }
-                }
-            }
+                },
+            )
         }
         SwitchRow(
             title = stringResource(R.string.PREF_FONT_SIZE_IN_SP),
@@ -534,6 +577,7 @@ private fun InputSection(
         OutlinedButton(
             onClick = events::onKeyMappings,
             modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium,
         ) {
             Text(stringResource(R.string.pref_map_keys))
         }
@@ -681,7 +725,10 @@ private fun SystemSection(
     events: ConfigFormEvents,
 ) {
     ConfigCard(title = stringResource(R.string.PREF_SYS_PROPS)) {
-        OutlinedButton(onClick = events::onEncodingPicker) {
+        OutlinedButton(
+            onClick = events::onEncodingPicker,
+            shape = MaterialTheme.shapes.medium,
+        ) {
             Text(stringResource(R.string.pref_encoding_title))
         }
         OutlinedTextField(
@@ -701,12 +748,23 @@ private fun ConfigCard(
     title: String,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = androidx.compose.material3.CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
+    ) {
         Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             content = {
-                Text(text = title, style = MaterialTheme.typography.titleLarge)
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 content()
             },
         )
@@ -726,11 +784,12 @@ private fun ConfigRow(
         Text(
             text = label,
             modifier = Modifier
-                .weight(0.42f)
-                .widthIn(min = 80.dp),
+                .weight(0.38f)
+                .widthIn(min = 72.dp),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodyMedium,
         )
-        Box(modifier = Modifier.weight(0.58f)) {
+        Box(modifier = Modifier.weight(0.62f)) {
             content()
         }
     }
@@ -768,35 +827,12 @@ private fun DropdownField(
     onSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var expanded by remember(selected, options) { mutableStateOf(false) }
-    Box(modifier = modifier.fillMaxWidth()) {
-        OutlinedButton(
-            onClick = { expanded = true },
-            enabled = options.isNotEmpty(),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(
-                text = selected,
-                modifier = Modifier.weight(1f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
-            options.forEachIndexed { index, option ->
-                DropdownMenuItem(
-                    text = { Text(option) },
-                    onClick = {
-                        expanded = false
-                        onSelected(index)
-                    },
-                )
-            }
-        }
-    }
+    AppDropdownField(
+        selected = selected,
+        options = options,
+        onSelected = onSelected,
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -833,6 +869,7 @@ private fun ColorRow(
             onClick = onPick,
             modifier = Modifier.weight(0.42f),
             contentPadding = PaddingValues(horizontal = 8.dp),
+            shape = MaterialTheme.shapes.medium,
         ) {
             Text(
                 label,
@@ -845,6 +882,7 @@ private fun ColorRow(
             value = value,
             onValueChange = { onValueChange(normalizeHex(it)) },
             modifier = Modifier.weight(0.58f),
+            shape = MaterialTheme.shapes.medium,
             label = { Text(stringResource(R.string.PREF_COLOR_HINT)) },
             singleLine = true,
             leadingIcon = {

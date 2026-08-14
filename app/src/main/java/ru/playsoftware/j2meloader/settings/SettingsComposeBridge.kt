@@ -16,22 +16,22 @@ package ru.playsoftware.j2meloader.settings
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -43,6 +43,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -121,6 +123,8 @@ fun SettingsScreen(
     actions: SettingsActions,
     modifier: Modifier = Modifier,
 ) {
+    var choiceDialog by remember { mutableStateOf<SettingsChoice?>(null) }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         contentWindowInsets = NoWindowInsets,
@@ -141,60 +145,62 @@ fun SettingsScreen(
             )
         },
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-        ) {
-            item {
-                SettingsDropdownRow(
-                    title = stringResource(R.string.pref_theme_title),
-                    selected = state.theme,
-                    options = state.themes,
-                    onSelected = actions::onThemeChanged,
-                )
-            }
-            item {
-                SettingsDropdownRow(
-                    title = stringResource(R.string.pref_language),
-                    selected = state.language,
-                    options = state.languages,
-                    onSelected = actions::onLanguageChanged,
-                )
-            }
-            items(state.switches, key = { it.key }) { setting ->
-                SettingsSwitchRow(setting = setting, onCheckedChange = { checked ->
-                    actions.onToggle(setting.key, checked)
-                })
-            }
-            if (state.showProfiles) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .widthIn(max = 720.dp)
+                    .padding(padding),
+            ) {
                 item {
-                    SettingsActionRow(
-                        title = stringResource(R.string.profiles),
-                        onClick = actions::onOpenProfiles,
+                    SettingsChoiceRow(
+                        title = stringResource(R.string.pref_theme_title),
+                        selected = state.theme,
+                        onClick = { choiceDialog = SettingsChoice.Theme },
                     )
                 }
-            }
-            item {
-                HorizontalDivider()
-                SettingsActionRow(
-                    title = stringResource(R.string.pref_emulator_dir),
-                    summary = state.workingDirectory,
-                    onClick = actions::onChooseDirectory,
-                )
-            }
-            item {
-                Text(
-                    text = stringResource(R.string.pref_category_experimental),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
-                )
-            }
-            items(state.experimentalSwitches, key = { it.key }) { setting ->
-                SettingsSwitchRow(setting = setting, onCheckedChange = { checked ->
-                    actions.onToggle(setting.key, checked)
-                })
+                item {
+                    SettingsChoiceRow(
+                        title = stringResource(R.string.pref_language),
+                        selected = state.language,
+                        onClick = { choiceDialog = SettingsChoice.Language },
+                    )
+                }
+                items(state.switches, key = { it.key }) { setting ->
+                    SettingsSwitchRow(setting = setting, onCheckedChange = { checked ->
+                        actions.onToggle(setting.key, checked)
+                    })
+                }
+                if (state.showProfiles) {
+                    item {
+                        SettingsActionRow(
+                            title = stringResource(R.string.profiles),
+                            onClick = actions::onOpenProfiles,
+                        )
+                    }
+                }
+                item {
+                    HorizontalDivider()
+                    SettingsActionRow(
+                        title = stringResource(R.string.pref_emulator_dir),
+                        summary = state.workingDirectory,
+                        onClick = actions::onChooseDirectory,
+                    )
+                }
+                item {
+                    Text(
+                        text = stringResource(R.string.pref_category_experimental),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+                    )
+                }
+                items(state.experimentalSwitches, key = { it.key }) { setting ->
+                    SettingsSwitchRow(setting = setting, onCheckedChange = { checked ->
+                        actions.onToggle(setting.key, checked)
+                    })
+                }
             }
         }
     }
@@ -219,45 +225,105 @@ fun SettingsScreen(
             },
         )
     }
+
+    when (choiceDialog) {
+        SettingsChoice.Theme -> SettingsChoiceDialog(
+            title = stringResource(R.string.pref_theme_title),
+            selected = state.theme,
+            options = state.themes,
+            onDismiss = { choiceDialog = null },
+            onSelected = { value ->
+                choiceDialog = null
+                actions.onThemeChanged(value)
+            },
+        )
+
+        SettingsChoice.Language -> SettingsChoiceDialog(
+            title = stringResource(R.string.pref_language),
+            selected = state.language,
+            options = state.languages,
+            onDismiss = { choiceDialog = null },
+            onSelected = { value ->
+                choiceDialog = null
+                actions.onLanguageChanged(value)
+            },
+        )
+
+        null -> Unit
+    }
 }
 
 @Composable
-private fun SettingsDropdownRow(
+private fun SettingsChoiceRow(
+    title: String,
+    selected: SettingsOption,
+    onClick: () -> Unit,
+) {
+    ListItem(
+        headlineContent = { Text(title) },
+        supportingContent = {
+            Text(
+                text = selected.label,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        trailingContent = {
+            Icon(
+                painter = painterResource(R.drawable.ic_list),
+                contentDescription = title,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+    )
+}
+
+private enum class SettingsChoice {
+    Theme,
+    Language,
+}
+
+@Composable
+private fun SettingsChoiceDialog(
     title: String,
     selected: SettingsOption,
     options: List<SettingsOption>,
+    onDismiss: () -> Unit,
     onSelected: (String) -> Unit,
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    Box(modifier = Modifier.fillMaxWidth()) {
-        ListItem(
-            headlineContent = { Text(title) },
-            supportingContent = {
-                Text(
-                    text = selected.label,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { expanded = true },
-        )
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(option.label) },
-                    onClick = {
-                        expanded = false
-                        onSelected(option.value)
-                    },
-                )
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            LazyColumn(modifier = Modifier.heightIn(max = 360.dp)) {
+                items(options, key = { it.value }) { option ->
+                    ListItem(
+                        headlineContent = { Text(option.label) },
+                        leadingContent = {
+                            RadioButton(
+                                selected = option.value == selected.value,
+                                onClick = null,
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(
+                                role = Role.RadioButton,
+                                onClick = { onSelected(option.value) },
+                            ),
+                    )
+                }
             }
-        }
-    }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        },
+    )
 }
 
 @Composable
