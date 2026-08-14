@@ -119,6 +119,11 @@ public final class ConfigFormState {
 		return new Builder();
 	}
 
+	/** Returns a builder pre-populated with this draft for presentation-only edits. */
+	public Builder toBuilder() {
+		return new Builder(this);
+	}
+
 	public static ConfigFormState fromProfile(ProfileModel params, String systemProperties) {
 		return builder()
 				.screenWidth(optionalInt(params.screenWidth))
@@ -294,6 +299,50 @@ public final class ConfigFormState {
 		private boolean vkForceOpacity;
 		private boolean touchInput;
 		private boolean skipResumeCall;
+
+		private Builder() {
+		}
+
+		private Builder(ConfigFormState source) {
+			screenWidth = source.screenWidth;
+			screenHeight = source.screenHeight;
+			screenBackground = source.screenBackground;
+			screenScaleRatio = source.screenScaleRatio;
+			screenPadding = source.screenPadding;
+			fpsLimit = source.fpsLimit;
+			fontSizeSmall = source.fontSizeSmall;
+			fontSizeMedium = source.fontSizeMedium;
+			fontSizeLarge = source.fontSizeLarge;
+			vkHideDelay = source.vkHideDelay;
+			vkBackground = source.vkBackground;
+			vkForeground = source.vkForeground;
+			vkSelectedBackground = source.vkSelectedBackground;
+			vkSelectedForeground = source.vkSelectedForeground;
+			vkOutline = source.vkOutline;
+			systemProperties = source.systemProperties;
+			screenBackgroundImage = source.screenBackgroundImage;
+			soundBank = source.soundBank;
+			shader = source.shader;
+			orientation = source.orientation;
+			screenScaleType = source.screenScaleType;
+			screenGravity = source.screenGravity;
+			graphicsMode = source.graphicsMode;
+			keyCodesLayout = source.keyCodesLayout;
+			vkButtonShape = source.vkButtonShape;
+			vkAlpha = source.vkAlpha;
+			screenFilter = source.screenFilter;
+			immediateMode = source.immediateMode;
+			parallelRedrawScreen = source.parallelRedrawScreen;
+			forceFullscreen = source.forceFullscreen;
+			showFps = source.showFps;
+			fontApplyDimensions = source.fontApplyDimensions;
+			fontAA = source.fontAA;
+			showKeyboard = source.showKeyboard;
+			vkFeedback = source.vkFeedback;
+			vkForceOpacity = source.vkForceOpacity;
+			touchInput = source.touchInput;
+			skipResumeCall = source.skipResumeCall;
+		}
 
 		public Builder screenWidth(String value) { screenWidth = value; return this; }
 		public Builder screenHeight(String value) { screenHeight = value; return this; }

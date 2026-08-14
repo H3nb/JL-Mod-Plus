@@ -201,7 +201,6 @@ dependencies {
     implementation(libs.acra.core) {
         exclude(group = "com.google.auto.service", module = "auto-service")
     }
-    implementation(libs.ambilwarna)
     implementation(libs.ffmpeg.kit)
     implementation(libs.filepicker)
     implementation(libs.pngj)

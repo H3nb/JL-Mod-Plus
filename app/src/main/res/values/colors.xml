@@ -13,7 +13,5 @@
     <color name="text_secondary">#353535</color>
     <color name="btn_bg_normal">#2e2e2e</color>
     <color name="btn_bg_pressed">#707070</color>
-    <color name="config_card">#ffffff</color>
-
     <color name="nnf_separator_color">@color/nnf_light_separator_color</color>
 </resources>
