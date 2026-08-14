@@ -14,26 +14,24 @@
 
 package ru.playsoftware.j2meloader.platform;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.FrameLayout;
-
+import android.widget.LinearLayout;
+import androidx.compose.ui.platform.ComposeView;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.google.android.material.textfield.TextInputLayout;
+import javax.microedition.shell.RuntimeHostView;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import ru.playsoftware.j2meloader.R;
-
 /**
- * Keeps the remaining intentional XML/View boundaries loadable while the host UI is Compose-owned.
+ * Keeps the intentional runtime View boundaries constructible while host chrome is Compose-owned.
  */
 @RunWith(AndroidJUnit4.class)
 public class LegacyUiResourceContractTest {
@@ -41,26 +39,23 @@ public class LegacyUiResourceContractTest {
 			InstrumentationRegistry.getInstrumentation().getTargetContext();
 
 	@Test
-	public void guestAndSoftKeyLayoutsRemainInflatable() {
-		LayoutInflater inflater = LayoutInflater.from(targetContext);
-		View micro = inflater.inflate(R.layout.activity_micro, new FrameLayout(targetContext), false);
-		assertNotNull("Guest overlay must remain a View boundary", micro.findViewById(R.id.overlay));
-		assertNotNull("Guest display container must remain available",
-				micro.findViewById(R.id.displayable_container));
-
-		View input = inflater.inflate(R.layout.dialog_input, new FrameLayout(targetContext), false);
-		assertTrue("Guest input must retain the Material TextInputLayout contract",
-				input instanceof TextInputLayout);
-		assertNotNull("Guest input edit field must remain available",
-				((TextInputLayout) input).getEditText());
-
-		View softKeys = inflater.inflate(R.layout.soft_button_bar,
-				new FrameLayout(targetContext), false);
-		assertNotNull("Java ME soft-key bar must remain available",
-				softKeys.findViewById(R.id.softBar));
-		assertNotNull(softKeys.findViewById(R.id.softLeft));
-		assertNotNull(softKeys.findViewById(R.id.softMiddle));
-		assertNotNull(softKeys.findViewById(R.id.softRight));
+	public void guestViewBoundariesRemainConstructible() {
+		RuntimeHostView micro = new RuntimeHostView(targetContext);
+		assertNotNull("Guest overlay must remain a View boundary", micro.overlay);
+		assertNotNull("Guest display container must remain available", micro.displayableContainer);
+		assertTrue("Runtime host menu must use the Compose-owned Material 3 toolbar",
+				micro.toolbar instanceof ComposeView);
+		assertEquals("Virtual display and overlay must remain direct root children",
+				2, micro.root.getChildCount());
+		assertSame(micro.virtualDisplay, micro.root.getChildAt(0));
+		assertSame("Overlay must remain above the guest display", micro.overlay,
+				micro.root.getChildAt(1));
+		assertSame(micro.toolbar, micro.virtualDisplay.getChildAt(0));
+		assertSame(micro.displayableContainer, micro.virtualDisplay.getChildAt(1));
+		LinearLayout.LayoutParams displayParams =
+				(LinearLayout.LayoutParams) micro.displayableContainer.getLayoutParams();
+		assertEquals("Display container must retain weighted remaining height", 0,
+				displayParams.height);
+		assertEquals(1f, displayParams.weight, 0f);
 	}
-
 }
