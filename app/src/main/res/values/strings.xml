@@ -261,9 +261,9 @@
     <string name="virtual_key_up" translatable="false">↑</string>
     <string name="warn_install_from_net">File will be downloaded from Internet</string>
     <string name="warning">Warning!</string>
-    <string name="remove_screen_preset">Remove screen preset</string>
+    <string name="remove_screen_preset">Remove Screen Preset</string>
     <string name="removed">Removed %1$s</string>
-    <string name="config_color_picker_title">Choose color</string>
+    <string name="config_color_picker_title">Choose Color</string>
     <string name="config_color_picker_hex">Hex color</string>
     <string name="config_color_picker_hint">Drag the color fields or enter a six-digit RGB value.</string>
 </resources>
