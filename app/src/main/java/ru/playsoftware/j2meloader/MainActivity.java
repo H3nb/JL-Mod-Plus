@@ -22,16 +22,11 @@ import android.content.Intent;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 
 import androidx.activity.result.ActivityResultLauncher;
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.MenuProvider;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 
@@ -70,21 +65,6 @@ public class MainActivity extends AppCompatActivity {
 		EdgeToEdgeCompat.enableIfSupported(this);
 		setContentView(R.layout.activity_main);
 		EdgeToEdgeCompat.protectHostContent(this);
-		addMenuProvider(new MenuProvider() {
-			@Override
-			public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
-				menuInflater.inflate(R.menu.crash_reports_entry, menu);
-			}
-
-			@Override
-			public boolean onMenuItemSelected(@NonNull MenuItem item) {
-				if (item.getItemId() != R.id.action_crash_reports) {
-					return false;
-				}
-				startActivity(new Intent(MainActivity.this, CrashReportsActivity.class));
-				return true;
-			}
-		}, this);
 		storagePermissionHelper.launch(this);
 		appListModel = new ViewModelProvider(this).get(AppListModel.class);
 		if (savedInstanceState == null) {
