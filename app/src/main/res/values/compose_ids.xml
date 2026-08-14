@@ -12,4 +12,9 @@
     <item name="main_host_root" type="id" />
     <item name="main_host_compose_root" type="id" />
     <item name="container" type="id" />
+    <item name="midletFrame" type="id" />
+    <item name="virtual_display" type="id" />
+    <item name="toolbar" type="id" />
+    <item name="displayable_container" type="id" />
+    <item name="overlay" type="id" />
 </resources>

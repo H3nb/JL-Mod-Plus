@@ -127,14 +127,14 @@ public class PlatformCompatBehaviorTest {
 	}
 
 	@Test
-	public void adbLongPressMenuKeyRetainsExitConfirmation() throws Exception {
+	public void adbLongPressMenuKeyOpensMenuWithoutExiting() throws Exception {
 		launchFixture(context, appDir);
 		awaitMarker(marker, "shown");
 		executeShellCommand("input keyevent --longpress KEYCODE_MENU");
-		awaitAccessibilityText(context.getString(R.string.FORCE_CLOSE_CONFIRMATION));
+		awaitAccessibilityText(context.getString(R.string.exit));
 		invokeGlobalBack();
-		awaitAccessibilityTextAbsent(context.getString(R.string.FORCE_CLOSE_CONFIRMATION));
-		assertTrue("Long-press confirmation must not stop the MIDlet process",
+		awaitAccessibilityTextAbsent(context.getString(R.string.exit));
+		assertTrue("Long-press menu must not stop the MIDlet process",
 				processPid(context, midletProcessName) != 0);
 	}
 

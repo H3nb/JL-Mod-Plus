@@ -5,6 +5,7 @@
     <string name="action_context_delete">Hapus</string>
     <string name="action_context_rename">Ubah Nama</string>
     <string name="action_context_shortcut">Buat Pintasan</string>
+    <string name="action_back">Kembali</string>
     <string name="action_keyboard_ime">Papan ketik (IME)</string>
     <string name="action_lock_orientation">Tahan Rotasi Layar</string>
     <string name="action_reinstall">Pasang Ulang</string>
@@ -49,11 +50,11 @@
     <string name="install_jar_needed">Pilih berkas JAR</string>
     <string name="install_jar_non_matched_jad">Aplikasi ini berbeda dari yang dijelaskan di JAD.\nAbaikan JAD dan tetap pasang?</string>
     <string name="invalid_resolution_not_saved">Resolusi tidak absah: tidak disimpan!</string>
-    <string name="layout_edit_finish">Akhiri mode ubah</string>
+    <string name="layout_edit_finish">Akhiri Mode Ubah</string>
     <string name="layout_edit_finished">Mode ubah telah selesai</string>
-    <string name="layout_edit_mode">Ubah letak tombol</string>
-    <string name="layout_scale_mode">Ubah ukuran tombol</string>
-    <string name="layout_switch">Tukar letak tombol</string>
+    <string name="layout_edit_mode">Ubah Letak Tombol</string>
+    <string name="layout_scale_mode">Ubah Ukuran Tombol</string>
+    <string name="layout_switch">Tukar Letak Tombol</string>
     <string name="licenses">Lisensi</string>
     <string name="load_profile">Muat Profil</string>
     <string name="loading_info">Memuat info…</string>
@@ -149,7 +150,7 @@
     <string name="PREF_TOUCH_INPUT">Pakai layar sentuh</string>
     <string name="PREF_UNIT_MS">ms</string>
     <string name="pref_vibration_title">Aktifkan getar</string>
-    <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Papan ketik virtual</string>
+    <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Papan Ketik Virtual</string>
     <string name="PREF_VK_ALPHA">Kelegapan: </string>
     <string name="PREF_VK_BACK">Tombol</string>
     <string name="PREF_VK_FEEDBACK">Ada sentuh getar</string>
