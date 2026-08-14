@@ -90,7 +90,11 @@ public class HostEdgeToEdgeContractTest {
 
 		try (ActivityScenario<KeyMapperActivity> scenario = ActivityScenario.launch(intent)) {
 			InstrumentationRegistry.getInstrumentation().waitForIdleSync();
-			scenario.onActivity(HostEdgeToEdgeContractTest::assertHostUiInsideSafeArea);
+			scenario.onActivity(activity -> {
+				assertNotNull("Key mapper must host the Compose visual layer",
+						activity.findViewById(ru.playsoftware.j2meloader.R.id.key_mapper_compose_root));
+				assertHostUiInsideSafeArea(activity);
+			});
 		}
 	}
 
