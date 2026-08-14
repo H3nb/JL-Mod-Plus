@@ -44,6 +44,19 @@ public class SecurityInfoImplTest {
 	}
 
 	@Test
+	public void certificateExceptionProvidesMidpReasonMessage() {
+		assertEquals(
+				"Certificate is expired",
+				new CertificateException(null, CertificateException.EXPIRED).getMessage());
+		assertEquals(
+				"Certificate does not contain the correct site name",
+				new CertificateException(null, CertificateException.SITENAME_MISMATCH).getMessage());
+		assertEquals(
+				"Certificate failed verification",
+				new CertificateException(null, CertificateException.VERIFICATION_FAILED).getMessage());
+	}
+
+	@Test
 	public void leavesNonCertificateNetworkFailureUntouched() {
 		SocketException failure = new SocketException("connection reset");
 
