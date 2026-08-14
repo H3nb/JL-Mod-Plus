@@ -35,10 +35,10 @@ class InstallerComposeTest {
 
     @Test
     fun loadingStateHidesCancellationActions() {
-        setState(InstallerUiState.Loading("MIDlet installer", "loading info…"))
+        setState(InstallerUiState.Loading("MIDlet Installer", "Loading info…"))
 
-        composeRule.onNodeWithText("loading info…").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("loading info…").assertIsDisplayed()
+        composeRule.onNodeWithText("Loading info…").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Loading info…").assertIsDisplayed()
         composeRule.onAllNodesWithText("Install").assertCountEquals(0)
         composeRule.onAllNodesWithText("Close").assertCountEquals(0)
     }

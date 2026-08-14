@@ -34,8 +34,8 @@ fun InstallerLoadingScreenshot() {
     JLModPlusTheme(darkTheme = false) {
         InstallerScreen(
             state = InstallerUiState.Loading(
-                title = "MIDlet installer",
-                status = "loading info…",
+                title = "MIDlet Installer",
+                status = "Loading info…",
             ),
             actions = NoOpInstallerActions,
         )
@@ -54,6 +54,25 @@ fun InstallerConfirmationScreenshot() {
                 installLabel = "Install",
                 closeLabel = "Cancel",
                 runLabel = null,
+                iconPath = null,
+            ),
+            actions = NoOpInstallerActions,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Installer Indonesian actions", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun InstallerIndonesianActionsScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        InstallerScreen(
+            state = InstallerUiState.Confirmation(
+                title = "Demo MIDlet",
+                message = "Nama: Demo MIDlet\nPenerbit: Studio Contoh\nVersi: 1.0\n\nPasang aplikasi ini?",
+                installLabel = "Pasang",
+                closeLabel = "Batal",
+                runLabel = "Mulai",
                 iconPath = null,
             ),
             actions = NoOpInstallerActions,

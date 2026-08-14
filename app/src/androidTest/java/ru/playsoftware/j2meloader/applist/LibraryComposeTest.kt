@@ -77,7 +77,7 @@ class LibraryComposeTest {
             actions = actions,
         )
         composeRule.onNodeWithText("No matches for \"missing\"").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("install").performClick()
+        composeRule.onNodeWithContentDescription("Install").performClick()
         assertEquals(1, actions.installCount)
     }
 
@@ -100,10 +100,10 @@ class LibraryComposeTest {
     fun viewAndSortActionsRemainExplicitCallbacks() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
-        composeRule.onNodeWithContentDescription("view").performClick()
+        composeRule.onNodeWithContentDescription("View").performClick()
         assertEquals(LibraryLayout.List, actions.layout)
 
-        composeRule.onNodeWithContentDescription("App sort order").performClick()
+        composeRule.onNodeWithContentDescription("App Sort Order").performClick()
         composeRule.onNodeWithText("Vendor").performClick()
         assertEquals(2, actions.sortIndex)
     }
