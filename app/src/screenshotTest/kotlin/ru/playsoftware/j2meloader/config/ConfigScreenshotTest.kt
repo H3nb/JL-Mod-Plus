@@ -116,6 +116,15 @@ fun ConfigColorPickerScreenshot() {
 }
 
 @PreviewTest
+@Preview(name = "Config landscape", widthDp = 640, heightDp = 360, showBackground = true)
+@Composable
+fun ConfigLandscapeScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents)
+    }
+}
+
+@PreviewTest
 @Preview(name = "Config color picker landscape", widthDp = 640, heightDp = 360, showBackground = true)
 @Composable
 fun ConfigColorPickerLandscapeScreenshot() {

@@ -54,6 +54,18 @@ fun LibraryGridScreenshot() {
 }
 
 @PreviewTest
+@Preview(name = "Library landscape", widthDp = 640, heightDp = 360, showBackground = true)
+@Composable
+fun LibraryLandscapeScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryScreen(
+            state = LibraryUiState(loading = false, apps = PreviewApps),
+            actions = NoOpLibraryActions,
+        )
+    }
+}
+
+@PreviewTest
 @Preview(
     name = "Library list dark",
     widthDp = 360,

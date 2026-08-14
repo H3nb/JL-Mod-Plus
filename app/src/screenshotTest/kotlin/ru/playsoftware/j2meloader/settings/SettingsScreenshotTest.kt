@@ -67,6 +67,15 @@ fun SettingsLightScreenshot() {
 }
 
 @PreviewTest
+@Preview(name = "Settings landscape", widthDp = 640, heightDp = 360, showBackground = true)
+@Composable
+fun SettingsLandscapeScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        SettingsScreen(state = PreviewSettingsState, actions = NoOpSettingsActions)
+    }
+}
+
+@PreviewTest
 @Preview(
     name = "Settings dark large font",
     widthDp = 360,

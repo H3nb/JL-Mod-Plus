@@ -73,6 +73,21 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun configurationDropdownsExposeTheirOptionsAndUpdateTheDraft() {
+        val events = RecordingConfigEvents()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), events)
+            }
+        }
+
+        composeRule.onNodeWithText("Screen orientation").performClick()
+        composeRule.onNodeWithText("Landscape").performClick()
+
+        assertEquals(3, events.lastForm?.orientation)
+    }
+
+    @Test
     fun colorPickerConfirmsCurrentValueWithoutExternalDependency() {
         var picked: String? = null
         composeRule.setContent {
