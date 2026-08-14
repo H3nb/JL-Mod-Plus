@@ -31,7 +31,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -43,6 +42,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -115,6 +116,14 @@ internal fun RuntimeHostDialogs(
 }
 
 @Composable
+private fun runtimeDialogListHeight(maxHeight: Int = 420) =
+    LocalConfiguration.current.screenHeightDp
+        .minus(220)
+        .coerceAtLeast(120)
+        .coerceAtMost(maxHeight)
+        .dp
+
+@Composable
 private fun MidletSelectionDialog(
     state: RuntimeHostDialogState.MidletSelection,
     actions: RuntimeHostDialogActions,
@@ -128,10 +137,10 @@ private fun MidletSelectionDialog(
         },
         title = { Text(stringResource(R.string.select_dialog_title)) },
         text = {
-            LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
+            LazyColumn(modifier = Modifier.heightIn(max = runtimeDialogListHeight())) {
                 itemsIndexed(state.names) { index, name ->
                     ListItem(
-                        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         headlineContent = {
                             Text(
                                 text = name,
@@ -216,11 +225,11 @@ private fun HideButtonsDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.hide_buttons)) },
         text = {
-            LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
+            LazyColumn(modifier = Modifier.heightIn(max = runtimeDialogListHeight())) {
                 itemsIndexed(state.names) { index, name ->
                     val isChecked = checked.getOrNull(index) == true
                     ListItem(
-                        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         headlineContent = { Text(name, maxLines = 2, overflow = TextOverflow.Ellipsis) },
                         leadingContent = {
                             Checkbox(checked = isChecked, onCheckedChange = null)
@@ -266,7 +275,7 @@ private fun SaveVirtualKeyboardDialog(
                 Text(stringResource(R.string.pref_vk_save_alert))
                 if (state.phone) {
                     ListItem(
-                        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         headlineContent = {
                             Text(stringResource(R.string.opt_save_screen_params))
                         },
@@ -309,10 +318,10 @@ private fun LayoutSelectionDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.layout_switch)) },
         text = {
-            LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
+            LazyColumn(modifier = Modifier.heightIn(max = runtimeDialogListHeight())) {
                 itemsIndexed(state.entries) { index, entry ->
                     ListItem(
-                        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         headlineContent = { Text(entry) },
                         leadingContent = {
                             RadioButton(
