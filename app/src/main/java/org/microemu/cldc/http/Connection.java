@@ -79,6 +79,9 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 		} catch (MalformedURLException ex) {
 			throw new IOException(ex.toString());
 		}
+		if (url.getHost() == null || url.getHost().length() == 0) {
+			throw new IllegalArgumentException("missing host in URL");
+		}
 
 		URLConnection opened = url.openConnection();
 		if (!(opened instanceof HttpURLConnection)) {
@@ -128,7 +131,11 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 
 	@Override
 	public String getFile() {
-		return isClosed() || cn == null ? null : cn.getURL().getFile();
+		if (isClosed() || cn == null) {
+			return null;
+		}
+		String path = cn.getURL().getPath();
+		return path == null || path.length() == 0 ? null : path;
 	}
 
 	@Override
@@ -353,7 +360,15 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 	@Override
 	public long getLength() {
 		try {
-			return getHeaderFieldInt("content-length", -1);
+			String value = getHeaderField("content-length");
+			if (value == null) {
+				return -1;
+			}
+			try {
+				return Long.parseLong(value.trim());
+			} catch (NumberFormatException ex) {
+				return -1;
+			}
 		} catch (IOException ex) {
 			return -1;
 		}
