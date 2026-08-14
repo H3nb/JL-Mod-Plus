@@ -37,6 +37,31 @@ Audit baseline: `alpha` at `e01e7007`.
 | Java ME Screen soft keys | `ScreenSoftBarCompose.kt` and `ScreenSoftBarPresentation.kt`, hosted by `ScreenSoftBar` | Compose-owned Material 3 presentation over a protected LCDUI event boundary | MIDP/vendor placement policy prefers `OK` for middle and `BACK`/`EXIT` for right, with remaining commands in the left menu; `Display.postEvent(CommandActionEvent)` dispatch remains unchanged. Canvas layer soft keys remain native and close/rebuild stale popups on command updates. |
 | Guest/configuration compatibility dialogs | `LoadProfileAlert`, `SaveProfileAlert`, `ShaderTuneAlert`, `Alert`, and platform `AlertDialog` calls | Mixed: Compose body with intentional DialogFragment/platform shells | Profile persistence, validation, shader, and guest-runtime callbacks remain host-owned. The migrated profile/shader bodies no longer inflate XML or use legacy `EditText`/`SeekBar` views. |
 
+## Remaining programmatic View audit
+
+There are no remaining app-owned layout/menu XML files under `app/src/main/res`.
+The remaining programmatic Views are deliberately bounded:
+
+- `RuntimeHostView`, `FragmentContainerView`, Compose hosts, and
+  `DialogFragment` windows are lifecycle/result shells. They do not implement
+  Java ME rendering or command semantics.
+- `CanvasView`, `GlesView`, `OverlayView`, `VirtualKeyboard`, and the native
+  Canvas/GL surface keep the renderer, pointer/key dispatch, IME connection,
+  orientation, and overlay hit geometry intact.
+- `TextBox`, `TextFieldImpl`, `Form`, `List`, `ChoiceGroup`, `DateField`,
+  `Gauge`, `CustomItem`, and their list adapters are the Java ME/MIDP API
+  implementation. Their Android Views are not app-owned host UI and must not
+  be rewritten as Compose without a separate API/JSR compatibility review.
+- `AbstractSoftKeysBar` remains the native Canvas command popup boundary;
+  `ScreenSoftBar` uses Compose for presentation but still dispatches the same
+  `CommandActionEvent` path. No `CommandListener` is invoked from Compose.
+
+The local MIDP references used for this classification are
+`D:\\Personal\\J2ME_Docs\\docs\\midp-2.0\\javax\\microedition\\lcdui\\Command.html`,
+`Displayable.html`, and `Canvas.html`. The runtime migration records the
+specific command/soft-key and IME safeguards in
+`docs/runtime-menu-compose-migration.md`.
+
 ## Resources removed only after consumer audit
 
 The following files had no source, manifest, menu, binding, or resource
