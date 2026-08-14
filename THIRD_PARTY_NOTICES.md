@@ -47,7 +47,6 @@ The table below covers direct runtime dependencies and license-significant trans
 | `ch.acra:acra-core` | ACRA | Apache-2.0 |
 | `org.jspecify:jspecify` | JSpecify | Apache-2.0 |
 | `org.checkerframework:checker-qual` | Checker Framework | MIT |
-| `com.github.yukuku:ambilwarna` | `https://github.com/yukuku/ambilwarna` | Apache-2.0 |
 | `io.github.nikita36078:ffmpeg-kit:6.0.LTS` | Maven SCM / source: `https://github.com/nikita36078/ffmpeg-kit` | Published POM declares LGPL-3.0. FFmpegKit documentation notes GPL-3.0 applies when GPL libraries are enabled; FFmpeg and bundled external libraries retain their own upstream terms. |
 | `com.arthenica:smart-exception-java:0.2.1`, `smart-exception-common:0.2.1` | `https://github.com/tanersener/smart-exception` | BSD-3-Clause |
 | `com.github.woesss:filepicker:4.4.0` | `https://github.com/woesss/filepicker`, fork of NoNonsense-FilePicker | MPL-2.0; source for the distributed fork is available at the origin URL |
