@@ -179,7 +179,13 @@ fun KeyMapperScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.pref_map_keys)) },
+                title = {
+                    Text(
+                        text = stringResource(R.string.pref_map_keys),
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = actions::onBack) {
                         Icon(
