@@ -31,7 +31,7 @@ ordering, or replace `Displayable` views.
 | Exit | Every Displayable | `showExitConfirmation()` |
 | Save Log | Every Displayable | `saveLog()` |
 | Lock Screen Rotation | Every Displayable | Existing lock/unlock orientation calculation |
-| Keyboard (IME) | Canvas when Android IME exists | Existing `InputMethodManager` call and display-container token |
+| Keyboard (IME) | Canvas when Android IME exists | Existing `InputMethodManager` toggle, posted after popup dismissal, using the Canvas/GLSurfaceView window token |
 | Take Screenshot | Canvas | `takeScreenshot()` and existing asynchronous result handling |
 | Limit FPS | Canvas | Compose Material 3 digits-only dialog and existing `Canvas.setLimitFps()` values (`0` unlimited, `-1` reset) |
 | Virtual Keyboard options | Canvas when a virtual keyboard exists | Existing layout edit/resize/finish/switch/hide methods |

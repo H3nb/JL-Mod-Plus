@@ -345,7 +345,7 @@ private fun ConfigTopBar(
         windowInsets = NoWindowInsets,
         title = {
             Text(
-                text = title,
+                text = title.ifBlank { stringResource(R.string.action_settings) },
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
