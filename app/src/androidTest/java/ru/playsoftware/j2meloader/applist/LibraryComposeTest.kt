@@ -15,6 +15,7 @@
 package ru.playsoftware.j2meloader.applist
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.longClick
@@ -104,6 +105,24 @@ class LibraryComposeTest {
         composeRule.onNodeWithContentDescription("App sort order").performClick()
         composeRule.onNodeWithText("Vendor").performClick()
         assertEquals(2, actions.sortIndex)
+    }
+
+    @Test
+    fun aboutUsesCurrentProjectIdentityWithoutLegacyEmail() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                LibraryInformationDialog(
+                    dialog = LibraryInfoDialog.About,
+                    onDismiss = {},
+                    onOpen = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("JL-Mod Plus").assertIsDisplayed()
+        composeRule.onNodeWithText("GitHub: H3nb/JL-Mod-Plus").assertIsDisplayed()
+        composeRule.onNodeWithText("Maintainer: Hendra Bara'langi (H3NB)").assertIsDisplayed()
+        composeRule.onNodeWithText("j2me.forever@gmail.com").assertDoesNotExist()
     }
 
     private fun setLibraryContent(
