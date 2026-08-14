@@ -56,6 +56,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -104,6 +105,11 @@ fun FilePickerNavHost(
     modifier: Modifier = Modifier,
 ) {
     val backStack = remember { mutableStateListOf<Any>(FilePickerFolderRoute(state.currentPath)) }
+    // NavDisplay may retain an entry while the controller publishes a new state. Keep the
+    // entry content subscribed to the latest state instead of capturing the initial loading
+    // snapshot forever.
+    val latestState = rememberUpdatedState(state)
+    val latestActions = rememberUpdatedState(actions)
 
     LaunchedEffect(state.currentPath) {
         val route = FilePickerFolderRoute(state.currentPath)
@@ -117,41 +123,47 @@ fun FilePickerNavHost(
         }
     }
 
-    val navigationActions = object : FilePickerActions by actions {
-        override fun onNavigateBack() {
-            if (backStack.size > 1) {
-                backStack.removeLastOrNull()
-                actions.onNavigateBack()
-            } else {
-                actions.onExit()
-            }
-        }
+    val navigationActions = remember {
+        object : FilePickerActions {
+            override fun onNavigateBack() = latestActions.value.onNavigateBack()
 
-        override fun onOpen(entry: FilePickerEntry) {
-            actions.onOpen(entry)
-            if (entry.kind != FilePickerEntryKind.FILE) {
-                val route = FilePickerFolderRoute(entry.path)
-                if (backStack.lastOrNull() != route) {
-                    backStack.add(route)
+            override fun onExit() = latestActions.value.onExit()
+
+            override fun onOpen(entry: FilePickerEntry) {
+                latestActions.value.onOpen(entry)
+                if (entry.kind != FilePickerEntryKind.FILE) {
+                    val route = FilePickerFolderRoute(entry.path)
+                    if (backStack.lastOrNull() != route) {
+                        backStack.add(route)
+                    }
                 }
             }
+
+            override fun onConfirmSelection() = latestActions.value.onConfirmSelection()
+            override fun onToggleSearch() = latestActions.value.onToggleSearch()
+            override fun onSearchQueryChanged(query: String) =
+                latestActions.value.onSearchQueryChanged(query)
+            override fun onSortOrderSelected(sortOrder: FilePickerSortOrder) =
+                latestActions.value.onSortOrderSelected(sortOrder)
+            override fun onGrantPermission() = latestActions.value.onGrantPermission()
+            override fun onRetry() = latestActions.value.onRetry()
+            override fun onShowCreateFolder() = latestActions.value.onShowCreateFolder()
+            override fun onDismissCreateFolder() = latestActions.value.onDismissCreateFolder()
+            override fun onCreateFolderNameChanged(name: String) =
+                latestActions.value.onCreateFolderNameChanged(name)
+            override fun onCreateFolder() = latestActions.value.onCreateFolder()
         }
     }
 
     NavDisplay(
         backStack = backStack,
-        onBack = {
-            if (backStack.size > 1) {
-                backStack.removeLastOrNull()
-                actions.onNavigateBack()
-            } else {
-                actions.onExit()
-            }
-        },
+        // Keep hardware/gesture back under the Activity contract. It distinguishes
+        // parent navigation from an explicit picker exit and owns double-back-to-exit.
+        onBack = { latestActions.value.onNavigateBack() },
         modifier = modifier,
         entryProvider = { key ->
             NavEntry(key) {
-                FilePickerScreen(state = state, actions = navigationActions)
+                FilePickerScreen(state = latestState.value, actions = navigationActions)
             }
         },
     )

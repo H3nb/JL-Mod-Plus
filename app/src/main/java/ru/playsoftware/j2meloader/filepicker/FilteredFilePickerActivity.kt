@@ -21,7 +21,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.SystemClock
 import android.widget.Toast
-import androidx.activity.OnBackPressedCallback
 import androidx.annotation.Nullable
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
@@ -102,11 +101,6 @@ class FilteredFilePickerActivity : AppCompatActivity() {
         supportActionBar?.hide()
         EdgeToEdgeCompat.protectHostContent(this)
 
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                handleBack()
-            }
-        })
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -170,6 +164,10 @@ class FilteredFilePickerActivity : AppCompatActivity() {
 
     private fun handleBack() {
         if (controller.navigateBack()) {
+            // A directory navigation is not an exit attempt. Do not let a back
+            // press from the previous screen count toward the root double-back
+            // confirmation after returning here.
+            lastBackPressAt = 0L
             return
         }
         val now = SystemClock.elapsedRealtime()

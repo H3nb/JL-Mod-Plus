@@ -89,6 +89,7 @@
     <string name="file_picker_invalid_folder_name">Enter a valid folder name.</string>
     <string name="file_picker_folder_exists">A folder with this name already exists.</string>
     <string name="file_picker_create_folder_failed">Unable to create the folder.</string>
+    <string name="file_picker_selection_unavailable">The selected item is no longer available.</string>
     <string name="invalid_resolution_not_saved">Invalid resolutions: not saved!</string>
     <string name="layout_edit_finish">Finish edit mode</string>
     <string name="layout_edit_finished">Edit mode finished</string>

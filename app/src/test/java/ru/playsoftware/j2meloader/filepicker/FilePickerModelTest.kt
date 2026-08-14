@@ -116,6 +116,10 @@ class FilePickerModelTest {
         val nested = File(root, "emulated/0").apply { mkdirs() }
         try {
             assertEquals(nested, FilePickerRules.normalizeStartPath(nested.path, root))
+            assertEquals(
+                nested,
+                FilePickerRules.normalizeStartPath(File(nested, "missing/deeper").path, root),
+            )
             assertEquals(root, FilePickerRules.normalizeStartPath(File(root, "outside").path, root))
             assertEquals(
                 root,

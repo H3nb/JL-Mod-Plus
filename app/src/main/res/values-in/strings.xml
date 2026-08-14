@@ -242,6 +242,7 @@
     <string name="file_picker_invalid_folder_name">Masukkan nama folder yang valid.</string>
     <string name="file_picker_folder_exists">Folder dengan nama ini sudah ada.</string>
     <string name="file_picker_create_folder_failed">Tidak dapat membuat folder.</string>
+    <string name="file_picker_selection_unavailable">Item yang dipilih sudah tidak tersedia.</string>
     <string name="config_color_picker_title">Pilih Warna</string>
     <string name="config_color_picker_hex">Warna heksadesimal</string>
     <string name="config_color_picker_hint">Seret bidang warna atau masukkan nilai RGB enam digit.</string>

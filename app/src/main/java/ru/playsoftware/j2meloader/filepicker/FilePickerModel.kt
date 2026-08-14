@@ -108,11 +108,21 @@ object FilePickerRules {
     private val allowedExtensions = setOf(".jad", ".jar", ".kjx")
 
     fun normalizeStartPath(startPath: String?, root: File): File {
-        val candidate = startPath
+        val requested = startPath
             ?.takeIf { it.isNotBlank() }
             ?.let(::File)
-            ?.let { if (it.isDirectory) it else it.parentFile }
-            ?: root
+        var candidate = when {
+            requested == null -> root
+            requested.isDirectorySafely() -> requested
+            else -> requested.parentFile ?: root
+        }
+        // A remembered work directory or installer path may have been removed since
+        // the last visit. Start at the nearest existing ancestor instead of exposing
+        // an empty, non-navigable screen.
+        while (!candidate.existsSafely()) {
+            val parent = candidate.parentFile ?: break
+            candidate = parent
+        }
         val absolute = canonicalFile(candidate)
         val rootAbsolute = canonicalFile(root)
         return if (isWithinRoot(absolute, rootAbsolute)) absolute else rootAbsolute
@@ -222,5 +232,17 @@ object FilePickerRules {
         file.absoluteFile
     } catch (_: SecurityException) {
         file.absoluteFile
+    }
+
+    private fun File.existsSafely(): Boolean = try {
+        exists()
+    } catch (_: SecurityException) {
+        false
+    }
+
+    private fun File.isDirectorySafely(): Boolean = try {
+        isDirectory
+    } catch (_: SecurityException) {
+        false
     }
 }

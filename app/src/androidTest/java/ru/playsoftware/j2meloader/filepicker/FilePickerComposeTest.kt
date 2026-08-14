@@ -15,6 +15,7 @@
 package ru.playsoftware.j2meloader.filepicker
 
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -85,6 +86,53 @@ class FilePickerComposeTest {
 
         composeRule.onNodeWithText("Games").performClick()
         assertEquals("open:Games", events.get())
+    }
+
+    @Test
+    fun directoryModeOffersCurrentFolderAsTheSelection() {
+        val events = AtomicReference<String>("")
+        val request = FilePickerRequest(
+            startPath = "/storage/emulated/0",
+            mode = FilePickerContract.MODE_DIR,
+            allowMultiple = false,
+            singleClick = false,
+            allowCreateDirectory = true,
+            allowExistingFile = false,
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                FilePickerScreen(
+                    state = sampleState().copy(request = request),
+                    actions = RecordingActions(events),
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Current Folder").assertExists()
+        composeRule.onNodeWithText("Choose").assertIsEnabled().performClick()
+        assertEquals("confirm", events.get())
+    }
+
+    @Test
+    fun navHostReflectsLoadedStateAfterInitialLoading() {
+        val events = AtomicReference<String>("")
+        lateinit var publishState: (FilePickerState) -> Unit
+        composeRule.setContent {
+            var state by remember {
+                mutableStateOf(sampleState().copy(loading = true, entries = emptyList()))
+            }
+            publishState = { next -> state = next }
+            JLModPlusTheme {
+                FilePickerNavHost(
+                    state = state,
+                    actions = RecordingActions(events),
+                )
+            }
+        }
+
+        publishState(sampleState())
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Games").assertExists()
     }
 
     @Test

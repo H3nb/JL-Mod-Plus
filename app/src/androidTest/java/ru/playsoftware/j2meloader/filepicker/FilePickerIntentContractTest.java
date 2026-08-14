@@ -53,6 +53,19 @@ public class FilePickerIntentContractTest {
 		Uri selected = Uri.fromFile(new java.io.File("/storage/emulated/0"));
 		Intent result = new Intent().setData(selected);
 		assertEquals(selected, new PickDirResultContract().parseResult(Activity.RESULT_OK, result));
+
+		FilePickerRequest pickerRequest = new FilePickerRequest(
+				"/storage/emulated/0",
+				FilePickerContract.MODE_DIR,
+				false,
+				false,
+				true,
+				false);
+		Intent pickerResult = FilteredFilePickerActivityKt.createFilePickerResult(
+				context,
+				pickerRequest,
+				Arrays.asList(new File("/storage/emulated/0")));
+		assertEquals(selected, pickerResult.getData());
 	}
 
 	@Test

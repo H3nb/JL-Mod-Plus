@@ -22,6 +22,7 @@ import android.os.Looper
 import android.os.storage.StorageManager
 import androidx.core.content.ContextCompat
 import java.io.File
+import java.io.IOException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
@@ -53,6 +54,7 @@ class FilePickerController(
     @Volatile
     private var closed = false
     private var loadGeneration = 0L
+    private var folderOperationGeneration = 0L
     private var currentDirectory = FilePickerRules.normalizeStartPath(restoredPath, root)
     private var state = FilePickerState(
         request = request,
@@ -123,7 +125,7 @@ class FilePickerController(
             selected.clear()
             selected.add(path)
         }
-        publish(state.copy(selectedPaths = selected))
+        publish(state.copy(selectedPaths = selected, errorMessage = null))
     }
 
     fun confirmSelection() {
@@ -202,20 +204,26 @@ class FilePickerController(
 
         val parent = currentDirectory
         val target = File(parent, name)
-        if (target.exists()) {
+        val targetExists = try {
+            target.exists()
+        } catch (_: SecurityException) {
+            false
+        }
+        if (targetExists) {
             publish(state.copy(createFolderError = context.getString(R.string.file_picker_folder_exists)))
             return
         }
 
+        val operation = ++folderOperationGeneration
         publish(state.copy(loading = true, createFolderError = null))
-        execute {
+        if (!execute {
             val created = try {
                 target.mkdir()
             } catch (_: SecurityException) {
                 false
             }
             mainHandler.post {
-                if (closed) {
+                if (closed || operation != folderOperationGeneration) {
                     return@post
                 }
                 if (created) {
@@ -231,6 +239,15 @@ class FilePickerController(
                     )
                 }
             }
+        }) {
+            if (operation == folderOperationGeneration) {
+                publish(
+                    state.copy(
+                        loading = false,
+                        createFolderError = context.getString(R.string.file_picker_create_folder_failed),
+                    ),
+                )
+            }
         }
     }
 
@@ -241,6 +258,7 @@ class FilePickerController(
     }
 
     private fun navigateTo(directory: File) {
+        folderOperationGeneration++
         currentDirectory = FilePickerRules.normalizeStartPath(directory.absolutePath, root)
         publish(
             state.copy(
@@ -263,15 +281,15 @@ class FilePickerController(
         if (closed) {
             return
         }
+        val directory = currentDirectory
+        val generation = ++loadGeneration
         if (!StoragePermissionHelper.isGranted(context)) {
             publish(state.copy(permissionRequired = true, loading = false))
             return
         }
 
-        val directory = currentDirectory
-        val generation = ++loadGeneration
         publish(state.copy(loading = true, errorMessage = null))
-        execute {
+        if (!execute {
             try {
                 val entries = loadEntries(directory)
                 mainHandler.post {
@@ -308,6 +326,16 @@ class FilePickerController(
                     )
                 }
             }
+        }) {
+            if (generation == loadGeneration) {
+                publish(
+                    state.copy(
+                        entries = emptyList(),
+                        loading = false,
+                        errorMessage = context.getString(R.string.file_picker_load_failed),
+                    ),
+                )
+            }
         }
     }
 
@@ -329,8 +357,12 @@ class FilePickerController(
             }
         }
 
+        if (!directory.isDirectory || !directory.canRead()) {
+            throw IOException("Unable to read ${directory.absolutePath}")
+        }
+        val files = directory.listFiles() ?: throw IOException("Unable to list ${directory.absolutePath}")
         return FilePickerRules.sortEntries(
-            directory.listFiles()?.toList() ?: emptyList(),
+            files.asList(),
             request.mode,
             request.allowExistingFile,
             root,
@@ -339,30 +371,42 @@ class FilePickerController(
 
     private fun complete(files: List<File>) {
         val existing = files.filter { file ->
-            file.exists() &&
-                FilePickerRules.isWithinRoot(file, root) &&
-                if (file.isDirectory) {
-                    request.allowsDirectories
-                } else {
-                    request.allowsFiles &&
-                        file.isFile &&
-                        FilePickerRules.isVisible(file, request.mode, request.allowExistingFile)
-                }
+            try {
+                file.exists() &&
+                    FilePickerRules.isWithinRoot(file, root) &&
+                    if (file.isDirectory) {
+                        request.allowsDirectories
+                    } else {
+                        request.allowsFiles &&
+                            file.isFile &&
+                            FilePickerRules.isVisible(file, request.mode, request.allowExistingFile)
+                    }
+            } catch (_: SecurityException) {
+                false
+            }
         }
         if (existing.isNotEmpty()) {
             onFilesPicked(existing)
+        } else {
+            publish(
+                state.copy(
+                    selectedPaths = emptySet(),
+                    loading = false,
+                    errorMessage = context.getString(R.string.file_picker_selection_unavailable),
+                ),
+            )
         }
     }
 
-    private fun execute(task: () -> Unit) {
+    private fun execute(task: () -> Unit): Boolean {
         if (closed) {
-            return
+            return false
         }
         try {
             executor.execute(task)
+            return true
         } catch (_: RejectedExecutionException) {
-            // Activity teardown can race a final UI action. The result is already
-            // cancelled by the host, so a rejected background refresh is benign.
+            return false
         }
     }
 
