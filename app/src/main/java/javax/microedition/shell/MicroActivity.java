@@ -227,8 +227,41 @@ public class MicroActivity extends AppCompatActivity {
 	private void hideSoftInput() {
 		if (inputMethodManager != null) {
 			IBinder windowToken = binding.displayableContainer.getWindowToken();
-			inputMethodManager.hideSoftInputFromWindow(windowToken, 0);
+			if (windowToken != null) {
+				inputMethodManager.hideSoftInputFromWindow(windowToken, 0);
+			}
 		}
+	}
+
+	/**
+	 * Opens the Android IME after the options popup has released its window focus.
+	 *
+	 * The legacy menu used to toggle the IME synchronously from the menu callback. On recent
+	 * Android releases that callback runs while the popup still owns focus, so the toggle is
+	 * ignored. Posting the request and using the actual Canvas surface's token keeps the J2ME
+	 * input boundary unchanged while making the action reliable on phones and tablets.
+	 */
+	private void showImeKeyboardAfterMenuDismissal() {
+		if (inputMethodManager == null || binding == null) {
+			return;
+		}
+		View target = findCanvasSurface(binding.displayableContainer);
+		if (target == null) {
+			target = binding.displayableContainer;
+		}
+		View imeTarget = target;
+		imeTarget.postDelayed(() -> {
+			if (isFinishing() || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && isDestroyed())) {
+				return;
+			}
+			IBinder token = imeTarget.getWindowToken();
+			if (token == null) {
+				return;
+			}
+			imeTarget.requestFocus();
+			inputMethodManager.toggleSoftInputFromWindow(token,
+					InputMethodManager.SHOW_FORCED, 0);
+		}, 120L);
 	}
 
 	@Override
@@ -549,8 +582,7 @@ public class MicroActivity extends AppCompatActivity {
 				item.setChecked(true);
 			}
 		} else if (id == R.id.action_ime_keyboard) {
-			inputMethodManager.toggleSoftInputFromWindow(binding.displayableContainer.getWindowToken(),
-					InputMethodManager.SHOW_FORCED, 0);
+			showImeKeyboardAfterMenuDismissal();
 		} else if (id == R.id.action_take_screenshot) {
 			takeScreenshot();
 		} else if (id == R.id.action_limit_fps) {
