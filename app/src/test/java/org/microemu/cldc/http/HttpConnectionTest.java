@@ -9,6 +9,7 @@
 package org.microemu.cldc.http;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -57,6 +58,50 @@ public class HttpConnectionTest {
 			task.get(3, TimeUnit.SECONDS);
 			assertEquals(1, requests.size());
 			assertEquals("POST /login?world=1 HTTP/1.1", requests.get(0));
+		}
+	}
+
+	@Test
+	public void urlMetadataKeepsPathAndQuerySeparate() throws Exception {
+		Connection connection = new Connection();
+		connection.openConnection(
+				"http://127.0.0.1/path/file?world=1#fragment",
+				Connector.READ,
+				false);
+		try {
+			assertEquals("/path/file", connection.getFile());
+			assertEquals("world=1", connection.getQuery());
+			assertEquals("fragment", connection.getRef());
+		} finally {
+			connection.close();
+		}
+	}
+
+	@Test
+	public void missingHttpHostIsRejectedDuringOpen() throws Exception {
+		try {
+			new Connection().openConnection("http:///path", Connector.READ, false);
+			fail("Expected IllegalArgumentException");
+		} catch (IllegalArgumentException expected) {
+			// MIDP requires an HTTP host to be present.
+		}
+	}
+
+	@Test
+	public void contentLengthSupportsValuesAboveIntegerRange() throws Exception {
+		try (ServerSocket server = loopbackServer()) {
+			long declaredLength = 4294967296L;
+			FutureTask<Void> task = startLengthServer(server, declaredLength);
+
+			Connection connection = new Connection();
+			connection.openConnection(
+					"http://127.0.0.1:" + server.getLocalPort() + "/large",
+					Connector.READ,
+					false);
+			assertEquals(declaredLength, connection.getLength());
+			connection.close();
+
+			task.get(3, TimeUnit.SECONDS);
 		}
 	}
 
@@ -110,6 +155,32 @@ public class HttpConnectionTest {
 			return null;
 		});
 		Thread thread = new Thread(task, "j2me-http-test-server");
+		thread.setDaemon(true);
+		thread.start();
+		return task;
+	}
+
+	private static FutureTask<Void> startLengthServer(ServerSocket server, long declaredLength) {
+		FutureTask<Void> task = new FutureTask<>(() -> {
+			try (Socket connection = server.accept()) {
+				connection.setSoTimeout(2000);
+				BufferedReader reader = new BufferedReader(
+						new InputStreamReader(connection.getInputStream(), StandardCharsets.US_ASCII));
+				String line;
+				while ((line = reader.readLine()) != null && line.length() > 0) {
+					// Consume the request headers before sending the response.
+				}
+
+				String headers = "HTTP/1.1 200 OK\r\n"
+						+ "Content-Length: " + declaredLength + "\r\n"
+						+ "Connection: close\r\n\r\n";
+				OutputStream output = connection.getOutputStream();
+				output.write(headers.getBytes(StandardCharsets.US_ASCII));
+				output.flush();
+			}
+			return null;
+		});
+		Thread thread = new Thread(task, "j2me-http-length-test-server");
 		thread.setDaemon(true);
 		thread.start();
 		return task;
