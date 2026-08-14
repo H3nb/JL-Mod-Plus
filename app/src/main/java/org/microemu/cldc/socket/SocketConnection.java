@@ -201,7 +201,7 @@ public class SocketConnection implements javax.microedition.io.SocketConnection 
 		return new DataOutputStream(openOutputStream());
 	}
 
-	private void ensureConnectionOpen() throws IOException {
+	protected final void ensureConnectionOpen() throws IOException {
 		if (connectionClosed || socket == null || socket.isClosed()) {
 			throw new IOException("Connection is closed");
 		}

@@ -1,6 +1,7 @@
 /*
  *  MicroEmulator
  *  Copyright (C) 2006 Bartek Teodorczyk <barteo@barteo.net>
+ *  Modified for JL-Mod Plus to align HTTPS security behavior with MIDP 2.0.
  *
  *  It is licensed under the following two licenses as alternatives:
  *    1. GNU Lesser General Public License (the "LGPL") version 2.1 or any newer version
@@ -26,56 +27,46 @@ package org.microemu.cldc.https;
 
 import org.microemu.cldc.CertificateImpl;
 import org.microemu.cldc.SecurityInfoImpl;
+import org.microemu.cldc.TlsExceptionMapper;
 
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 
 import javax.microedition.io.HttpsConnection;
 import javax.microedition.io.SecurityInfo;
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
 
 public class Connection extends org.microemu.cldc.http.Connection implements HttpsConnection {
 
-	private SSLContext sslContext;
-
 	private SecurityInfo securityInfo;
-
-	public Connection() {
-		try {
-			sslContext = SSLContext.getInstance("TLS");
-		} catch (NoSuchAlgorithmException ex) {
-			ex.printStackTrace();
-		}
-
-		securityInfo = null;
-	}
 
 	@Override
 	public SecurityInfo getSecurityInfo() throws IOException {
-		if (securityInfo == null) {
-			if (cn == null) {
-				throw new IOException();
-			}
-			if (!connected) {
-				cn.connect();
-				connected = true;
-			}
-			HttpsURLConnection https = (HttpsURLConnection) cn;
+		if (securityInfo != null) {
+			return securityInfo;
+		}
 
-			Certificate[] certs = https.getServerCertificates();
-			if (certs.length == 0) {
-				throw new IOException();
+		ensureConnected();
+		HttpsURLConnection https = (HttpsURLConnection) cn;
+		try {
+			Certificate[] certificates = https.getServerCertificates();
+			if (certificates.length == 0 || !(certificates[0] instanceof X509Certificate)) {
+				throw new IOException("HTTPS peer did not provide an X.509 certificate");
 			}
 			securityInfo = new SecurityInfoImpl(
 					https.getCipherSuite(),
-					sslContext.getProtocol(),
-					new CertificateImpl((X509Certificate) certs[0]));
+					"TLS",
+					new CertificateImpl((X509Certificate) certificates[0]));
+			return securityInfo;
+		} catch (IOException ex) {
+			throw translateException(ex);
 		}
+	}
 
-		return securityInfo;
+	@Override
+	protected IOException translateException(IOException exception) {
+		return TlsExceptionMapper.translate(exception, null);
 	}
 
 	@Override
@@ -83,22 +74,12 @@ public class Connection extends org.microemu.cldc.http.Connection implements Htt
 		return "https";
 	}
 
-
-	/**
-	 * Returns the network port number of the URL for this HttpsConnection
-	 *
-	 * @return the network port number of the URL for this HttpsConnection. The default HTTPS port number (443) is returned if there was no port number in the string passed to Connector.open.
-	 */
 	@Override
 	public int getPort() {
 		if (cn == null) {
 			return -1;
 		}
 		int port = cn.getURL().getPort();
-		if (port == -1) {
-			return 443;
-		}
-		return port;
+		return port == -1 ? 443 : port;
 	}
-
 }
