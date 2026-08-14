@@ -3,13 +3,10 @@
     <string name="_FONT_SEPARATOR" translatable="false">-</string>
     <string name="_MINUS_ONE" translatable="false">-1</string>
     <string name="about">About</string>
-    <string name="about_4pda" translatable="false">&lt;BR>4PDA: &lt;a href="http://4pda.to/forum/index.php?showtopic=824201">4pda.ru/forum/index.php?showtopic=824201&lt;/a></string>
-    <string name="about_crowdin" translatable="false">&lt;BR>Crowdin(translation): &lt;a href="https://crowdin.com/project/j2me-loader">crowdin.com/project/j2me-loader&lt;/a></string>
     <string name="about_github" translatable="false">GitHub: &lt;a href="https://github.com/H3nb/JL-Mod-Plus"&gt;H3nb/JL-Mod-Plus&lt;/a&gt;</string>
     <string name="about_maintainer" translatable="false">Maintainer: Hendra Bara\'langi\' (H3NB)</string>
     <string name="about_product_name" translatable="false">JL-Mod Plus</string>
     <string name="about_message">This app allows you to launch J2ME apps and games on Android.\n</string>
-    <string name="about_xda" translatable="false">&lt;BR>XDA: &lt;a href="https://forum.xda-developers.com/android/apps-games/app-j2me-loader-t3777889">forum.xda-developers.com/android/apps-games/app-j2me-loader-t3777889&lt;/a></string>
     <string name="action_context_delete">Delete</string>
     <string name="action_context_rename">Rename</string>
     <string name="action_context_shortcut">Add Shortcut</string>
@@ -59,6 +56,40 @@
     <string name="installer_title">MIDlet Installer</string>
     <string name="install_jar_needed">Select the JAR file</string>
     <string name="install_jar_non_matched_jad">This app differs from that described in JAD.\nIgnore JAD and install anyway?</string>
+    <string name="file_picker_title">File Picker</string>
+    <string name="file_picker_select_file">Select File</string>
+    <string name="file_picker_select_folder">Select Folder</string>
+    <string name="file_picker_navigate_back">Back to Parent Folder</string>
+    <string name="file_picker_cancel">Cancel</string>
+    <string name="file_picker_search">Search</string>
+    <string name="file_picker_sort">Sort</string>
+    <string name="file_picker_sort_type">Folders First</string>
+    <string name="file_picker_sort_name_ascending">Name A–Z</string>
+    <string name="file_picker_sort_name_descending">Name Z–A</string>
+    <string name="file_picker_sort_modified_newest">Modified Newest</string>
+    <string name="file_picker_sort_modified_oldest">Modified Oldest</string>
+    <string name="file_picker_choose">Choose</string>
+    <string name="file_picker_current_folder">Current Folder</string>
+    <string name="file_picker_parent_folder">Parent Folder</string>
+    <string name="file_picker_parent_marker" translatable="false">..</string>
+    <string name="file_picker_file">File</string>
+    <string name="file_picker_storage_volume">Storage Volume</string>
+    <string name="file_picker_empty">No Matching Files</string>
+    <string name="file_picker_empty_folder">Folder Is Empty</string>
+    <string name="file_picker_no_matches">No Matches</string>
+    <string name="file_picker_permission_required">Storage Permission Required</string>
+    <string name="file_picker_permission_message">Allow storage access to browse JAR, JAD, and KJX files.</string>
+    <string name="file_picker_permission_denied">Storage access was not granted.</string>
+    <string name="file_picker_grant_access">Grant Access</string>
+    <string name="file_picker_retry">Retry</string>
+    <string name="file_picker_load_failed">Unable to read this folder.</string>
+    <string name="file_picker_create_folder">New Folder</string>
+    <string name="file_picker_create_folder_title">Create Folder</string>
+    <string name="file_picker_folder_name">Folder Name</string>
+    <string name="file_picker_invalid_folder_name">Enter a valid folder name.</string>
+    <string name="file_picker_folder_exists">A folder with this name already exists.</string>
+    <string name="file_picker_create_folder_failed">Unable to create the folder.</string>
+    <string name="file_picker_selection_unavailable">The selected item is no longer available.</string>
     <string name="invalid_resolution_not_saved">Invalid resolutions: not saved!</string>
     <string name="layout_edit_finish">Finish edit mode</string>
     <string name="layout_edit_finished">Edit mode finished</string>
@@ -96,6 +127,8 @@
     <string name="pref_app_sort_name">Name</string>
     <string name="pref_app_sort_title">App Sort Order</string>
     <string name="pref_app_sort_vendor">Vendor</string>
+    <string name="pref_app_sort_ascending">Ascending</string>
+    <string name="pref_app_sort_descending">Descending</string>
     <string name="pref_apps_view">View</string>
     <string name="pref_audio_title">Audio</string>
     <string name="PREF_BACKGROUND">Background</string>
@@ -165,6 +198,7 @@
     <string name="pref_soundbank_title">Soundbank</string>
     <string name="PREF_SYS_PROPS">System properties</string>
     <string name="PREF_SYS_PROPS_HINT" translatable="false">microedition.platform: Sony Ericsson C510i\nmicroedition.profiles: MIDP2.0</string>
+    <string name="config_system_properties_empty">No custom properties</string>
     <string name="pref_theme_auto_battery">Auto, by Battery Saver</string>
     <string name="pref_theme_auto_time">Auto, by time of day</string>
     <string name="pref_theme_default" translatable="false">light</string>
@@ -266,4 +300,7 @@
     <string name="config_color_picker_title">Choose Color</string>
     <string name="config_color_picker_hex">Hex color</string>
     <string name="config_color_picker_hint">Drag the color fields or enter a six-digit RGB value.</string>
+    <string name="config_color_picker_invalid">Enter exactly six hexadecimal digits.</string>
+    <string name="config_color_picker_saturation_value">Saturation and brightness</string>
+    <string name="config_color_picker_hue">Hue</string>
 </resources>

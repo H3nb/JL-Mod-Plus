@@ -206,7 +206,7 @@
         <activity
             android:name=".filepicker.FilteredFilePickerActivity"
             android:exported="false"
-            android:theme="@style/FilePickerTheme"
+            android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity
             android:name=".config.ProfilesActivity"

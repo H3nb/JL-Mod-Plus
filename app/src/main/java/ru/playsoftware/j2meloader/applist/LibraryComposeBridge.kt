@@ -17,6 +17,7 @@ package ru.playsoftware.j2meloader.applist
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,6 +47,8 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -62,6 +65,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
@@ -70,6 +74,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
@@ -280,21 +285,35 @@ fun LibraryScreen(
                                 contentDescription = stringResource(R.string.pref_apps_view),
                             )
                         }
-                        IconButton(onClick = { sortVisible = true }) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_sort),
-                                contentDescription = stringResource(R.string.pref_app_sort_title),
-                            )
-                        }
                         Box {
-                            IconButton(onClick = { overflowVisible = true }) {
+                            IconButton(onClick = { sortVisible = true }) {
                                 Icon(
-                                    painter = painterResource(R.drawable.ic_more_vert),
-                                    contentDescription = stringResource(R.string.more),
+                                    painter = painterResource(R.drawable.ic_sort),
+                                    contentDescription = stringResource(R.string.pref_app_sort_title),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
-                            LibraryOverflowMenu(
-                                expanded = overflowVisible,
+                            LibrarySortMenu(
+                                expanded = sortVisible,
+                                entries = stringArrayResource(R.array.pref_app_sort_entries).toList(),
+                                selectedSort = state.sortVariant and Int.MAX_VALUE,
+                                ascending = state.sortVariant >= 0,
+                                onDismissRequest = { sortVisible = false },
+                                onSelected = { index ->
+                                    sortVisible = false
+                                    actions.onSort(index)
+                                },
+                            )
+                        }
+                        IconButton(onClick = { overflowVisible = true }) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_more_vert),
+                                contentDescription = stringResource(R.string.more),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        if (overflowVisible) {
+                            LibraryOverflowDialog(
                                 onDismiss = { overflowVisible = false },
                                 onAbout = { infoDialog = LibraryInfoDialog.About },
                                 onSettings = actions::onOpenSettings,
@@ -326,16 +345,6 @@ fun LibraryScreen(
         )
     }
 
-    if (sortVisible) {
-        LibrarySortDialog(
-            sortVariant = state.sortVariant,
-            onDismiss = { sortVisible = false },
-            onSelect = { index ->
-                sortVisible = false
-                actions.onSort(index)
-            },
-        )
-    }
     appActions?.let { app ->
         AppActionsDialog(
             app = app,
@@ -520,6 +529,7 @@ private fun LibraryListItem(
             Icon(
                 painter = painterResource(R.drawable.ic_more_vert),
                 contentDescription = stringResource(R.string.more),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -546,8 +556,74 @@ private fun AppIcon(app: LibraryAppUiItem, size: Int) {
 }
 
 @Composable
-private fun LibraryOverflowMenu(
+internal fun LibrarySortMenu(
     expanded: Boolean,
+    entries: List<String>,
+    selectedSort: Int,
+    ascending: Boolean,
+    onDismissRequest: () -> Unit,
+    onSelected: (Int) -> Unit,
+) {
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismissRequest,
+    ) {
+        entries.forEachIndexed { index, entry ->
+            val selected = index == selectedSort
+            DropdownMenuItem(
+                text = {
+                    Column {
+                        Text(entry)
+                        if (selected) {
+                            Text(
+                                text = stringResource(
+                                    if (ascending) {
+                                        R.string.pref_app_sort_ascending
+                                    } else {
+                                        R.string.pref_app_sort_descending
+                                    },
+                                ),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                },
+                leadingIcon = {
+                    if (selected) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_check),
+                            contentDescription = null,
+                        )
+                    } else {
+                        Spacer(Modifier.size(24.dp))
+                    }
+                },
+                trailingIcon = if (selected) {
+                    {
+                        Icon(
+                            painter = painterResource(
+                                if (ascending) {
+                                    R.drawable.ic_arrow_downward
+                                } else {
+                                    R.drawable.ic_arrow_upward
+                                },
+                            ),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                } else {
+                    null
+                },
+                onClick = { onSelected(index) },
+            )
+        }
+    }
+}
+
+@Composable
+internal fun LibraryOverflowDialog(
     onDismiss: () -> Unit,
     onAbout: () -> Unit,
     onSettings: () -> Unit,
@@ -557,54 +633,35 @@ private fun LibraryOverflowMenu(
     onSaveLog: () -> Unit,
     onExit: () -> Unit,
 ) {
-    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
-        fun closeThen(action: () -> Unit) {
-            onDismiss()
-            action()
-        }
-        DropdownMenuItem(text = { Text(stringResource(R.string.about)) }, onClick = { closeThen(onAbout) })
-        DropdownMenuItem(text = { Text(stringResource(R.string.action_settings)) }, onClick = { closeThen(onSettings) })
-        DropdownMenuItem(text = { Text(stringResource(R.string.profiles)) }, onClick = { closeThen(onProfiles) })
-        DropdownMenuItem(text = { Text(stringResource(R.string.help)) }, onClick = { closeThen(onHelp) })
-        DropdownMenuItem(text = { Text(stringResource(R.string.crash_reports)) }, onClick = { closeThen(onCrashReports) })
-        DropdownMenuItem(text = { Text(stringResource(R.string.save_log)) }, onClick = { closeThen(onSaveLog) })
-        DropdownMenuItem(text = { Text(stringResource(R.string.exit)) }, onClick = { closeThen(onExit) })
-    }
-}
-
-@Composable
-private fun LibrarySortDialog(
-    sortVariant: Int,
-    onDismiss: () -> Unit,
-    onSelect: (Int) -> Unit,
-) {
-    val entries = stringArrayResource(R.array.pref_app_sort_entries)
-    val selected = sortVariant and 0x7fffffff
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.pref_app_sort_title)) },
+        title = { Text(stringResource(R.string.app_name)) },
         text = {
-            Column {
-                entries.forEachIndexed { index, entry ->
-                    TextButton(
-                        onClick = { onSelect(index) },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(
-                            text = if (index == selected) {
-                                val arrow = if (sortVariant >= 0) "↓" else "↑"
-                                "$entry  $arrow"
-                            } else {
-                                entry
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Start,
-                        )
-                    }
-                }
+            LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
+                item { LibraryActionRow(R.string.about, onDismiss, onAbout) }
+                item { LibraryActionRow(R.string.action_settings, onDismiss, onSettings) }
+                item { LibraryActionRow(R.string.profiles, onDismiss, onProfiles) }
+                item { LibraryActionRow(R.string.help, onDismiss, onHelp) }
+                item { LibraryActionRow(R.string.crash_reports, onDismiss, onCrashReports) }
+                item { LibraryActionRow(R.string.save_log, onDismiss, onSaveLog) }
+                item { LibraryActionRow(R.string.exit, onDismiss, onExit) }
             }
         },
         confirmButton = {},
+    )
+}
+
+@Composable
+private fun LibraryActionRow(label: Int, onDismiss: () -> Unit, action: () -> Unit) {
+    ListItem(
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        headlineContent = { Text(stringResource(label)) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                onDismiss()
+                action()
+            },
     )
 }
 
@@ -640,19 +697,19 @@ internal fun AppActionsDialog(
 
 @Composable
 private fun DialogAction(label: Int, onDismiss: () -> Unit, action: () -> Unit) {
-    TextButton(
-        onClick = {
-            onDismiss()
-            action()
-        },
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Text(
-            text = stringResource(label),
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Start,
-        )
-    }
+    ListItem(
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        headlineContent = { Text(stringResource(label)) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                role = Role.Button,
+                onClick = {
+                    onDismiss()
+                    action()
+                },
+            ),
+    )
 }
 
 @Composable

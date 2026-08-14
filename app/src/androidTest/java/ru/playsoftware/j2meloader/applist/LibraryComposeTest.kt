@@ -109,6 +109,35 @@ class LibraryComposeTest {
     }
 
     @Test
+    fun overflowActionsUseTheMaterialActionList() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(actions = actions)
+
+        composeRule.onNodeWithContentDescription("More").performClick()
+        composeRule.onNodeWithText("Settings").performClick()
+
+        assertEquals(1, actions.settingsCount)
+    }
+
+    @Test
+    fun sortMenuExplainsCurrentDirection() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                apps = listOf(LibraryAppUiItem(7, "Demo MIDlet", "Example Vendor", "1.0", null, true)),
+                sortVariant = Int.MIN_VALUE,
+            ),
+            actions = actions,
+        )
+
+        composeRule.onNodeWithContentDescription("App Sort Order").performClick()
+        composeRule.onNodeWithText("Descending").assertIsDisplayed()
+        composeRule.onNodeWithText("Name").performClick()
+        assertEquals(0, actions.sortIndex)
+    }
+
+    @Test
     fun aboutUsesCurrentProjectIdentityWithoutLegacyEmail() {
         composeRule.setContent {
             JLModPlusTheme {
@@ -155,6 +184,7 @@ class LibraryComposeTest {
         var installCount = 0
         var openedId: Int? = null
         var renamed: Pair<Int, String>? = null
+        var settingsCount = 0
 
         override fun onSearch(query: String) { searches += query }
         override fun onLayoutChange(layout: LibraryLayout) { this.layout = layout }
@@ -166,7 +196,7 @@ class LibraryComposeTest {
         override fun onOpenAppSettings(appId: Int) = Unit
         override fun onReinstall(appId: Int) = Unit
         override fun onDelete(appId: Int) = Unit
-        override fun onOpenSettings() = Unit
+        override fun onOpenSettings() { settingsCount++ }
         override fun onOpenProfiles() = Unit
         override fun onOpenCrashReports() = Unit
         override fun onSaveLog() = Unit

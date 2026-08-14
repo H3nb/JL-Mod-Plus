@@ -59,9 +59,9 @@ class SettingsComposeTest {
         }
 
         composeRule.onNodeWithText("Theme").performClick()
-        composeRule.onAllNodesWithText("Light").get(1).performClick()
+        composeRule.onNodeWithText("Light").performClick()
         composeRule.onNodeWithText("Language").performClick()
-        composeRule.onAllNodesWithText("English").get(1).performClick()
+        composeRule.onNodeWithText("English").performClick()
         composeRule.onNodeWithText("Keep screen on").performClick()
         composeRule.onNodeWithText("Profiles").performClick()
         composeRule.onNodeWithText("Working directory").performClick()

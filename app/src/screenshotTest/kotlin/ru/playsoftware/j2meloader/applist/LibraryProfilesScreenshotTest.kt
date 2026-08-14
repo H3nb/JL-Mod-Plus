@@ -54,6 +54,18 @@ fun LibraryGridScreenshot() {
 }
 
 @PreviewTest
+@Preview(name = "Library landscape", widthDp = 640, heightDp = 360, showBackground = true)
+@Composable
+fun LibraryLandscapeScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryScreen(
+            state = LibraryUiState(loading = false, apps = PreviewApps),
+            actions = NoOpLibraryActions,
+        )
+    }
+}
+
+@PreviewTest
 @Preview(
     name = "Library list dark",
     widthDp = 360,
@@ -104,6 +116,24 @@ fun LibraryAppActionsScreenshot() {
             onSettings = {},
             onReinstall = {},
             onDelete = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Library overflow dialog", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun LibraryOverflowDialogScreenshot() {
+    JLModPlusTheme {
+        LibraryOverflowDialog(
+            onDismiss = {},
+            onAbout = {},
+            onSettings = {},
+            onProfiles = {},
+            onHelp = {},
+            onCrashReports = {},
+            onSaveLog = {},
+            onExit = {},
         )
     }
 }
