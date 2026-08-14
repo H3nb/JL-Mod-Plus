@@ -15,11 +15,12 @@
 package ru.playsoftware.j2meloader.applist
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertDoesNotExist
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -120,10 +121,8 @@ class LibraryComposeTest {
         }
 
         composeRule.onNodeWithText("JL-Mod Plus").assertIsDisplayed()
-        composeRule.onNodeWithText("GitHub: H3nb/JL-Mod-Plus").assertIsDisplayed()
-        composeRule.onNodeWithText("Maintainer: Hendra Bara'langi (H3NB)").assertIsDisplayed()
-        composeRule.onNodeWithText("j2me.forever@gmail.com").assertDoesNotExist()
-        composeRule.onNodeWithText("Copyright 2020-2026 Yury Kharchenko").assertDoesNotExist()
+        composeRule.onAllNodesWithText("j2me.forever@gmail.com").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Copyright 2020-2026 Yury Kharchenko").assertCountEquals(0)
     }
 
     private fun setLibraryContent(

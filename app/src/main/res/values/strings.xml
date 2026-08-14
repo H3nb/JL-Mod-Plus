@@ -6,7 +6,7 @@
     <string name="about_4pda" translatable="false">&lt;BR>4PDA: &lt;a href="http://4pda.to/forum/index.php?showtopic=824201">4pda.ru/forum/index.php?showtopic=824201&lt;/a></string>
     <string name="about_crowdin" translatable="false">&lt;BR>Crowdin(translation): &lt;a href="https://crowdin.com/project/j2me-loader">crowdin.com/project/j2me-loader&lt;/a></string>
     <string name="about_github" translatable="false">GitHub: &lt;a href="https://github.com/H3nb/JL-Mod-Plus"&gt;H3nb/JL-Mod-Plus&lt;/a&gt;</string>
-    <string name="about_maintainer" translatable="false">Maintainer: Hendra Bara\'langi (H3NB)</string>
+    <string name="about_maintainer" translatable="false">Maintainer: Hendra Bara\'langi\' (H3NB)</string>
     <string name="about_product_name" translatable="false">JL-Mod Plus</string>
     <string name="about_message">This app allows you to launch J2ME apps and games on Android.\n</string>
     <string name="about_xda" translatable="false">&lt;BR>XDA: &lt;a href="https://forum.xda-developers.com/android/apps-games/app-j2me-loader-t3777889">forum.xda-developers.com/android/apps-games/app-j2me-loader-t3777889&lt;/a></string>
