@@ -49,6 +49,8 @@ private val PreviewSettingsState = SettingsUiState(
         SettingsSwitch("pref_wakelock_switch", "Keep screen on", null, false),
         SettingsSwitch("pref_screenshot_switch", "Raw screenshot", "Disable scaling and filtering for screenshots", false),
         SettingsSwitch("pref_vibration_switch", "Enable vibration", null, true),
+    ),
+    experimentalSwitches = listOf(
         SettingsSwitch("micro3d_using_message", "Detect Mascot Capsule 3D", "Show message when using", false),
     ),
     showProfiles = true,

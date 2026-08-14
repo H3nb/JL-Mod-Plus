@@ -70,6 +70,7 @@ data class SettingsUiState(
     val language: SettingsOption,
     val languages: List<SettingsOption>,
     val switches: List<SettingsSwitch>,
+    val experimentalSwitches: List<SettingsSwitch>,
     val showProfiles: Boolean,
     val workingDirectory: String,
     val directoryError: String? = null,
@@ -189,6 +190,11 @@ fun SettingsScreen(
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
                 )
+            }
+            items(state.experimentalSwitches, key = { it.key }) { setting ->
+                SettingsSwitchRow(setting = setting, onCheckedChange = { checked ->
+                    actions.onToggle(setting.key, checked)
+                })
             }
         }
     }

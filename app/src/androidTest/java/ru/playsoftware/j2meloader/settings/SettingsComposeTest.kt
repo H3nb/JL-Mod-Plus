@@ -90,6 +90,7 @@ class SettingsComposeTest {
                 checked = false,
             ),
         ),
+        experimentalSwitches = emptyList(),
         showProfiles = true,
         workingDirectory = "/data/jlmod",
     )

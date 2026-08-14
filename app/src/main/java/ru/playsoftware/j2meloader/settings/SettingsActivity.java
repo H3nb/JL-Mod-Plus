@@ -173,7 +173,8 @@ public class SettingsActivity extends AppCompatActivity {
 						PREF_VIBRATION,
 						getString(R.string.pref_vibration_title),
 						null,
-						preferences.getBoolean(PREF_VIBRATION, true)),
+						preferences.getBoolean(PREF_VIBRATION, true)));
+		List<SettingsSwitch> experimentalSwitches = Arrays.asList(
 				new SettingsSwitch(
 						"micro3d_using_message",
 						getString(R.string.pref_mascot_title),
@@ -186,6 +187,7 @@ public class SettingsActivity extends AppCompatActivity {
 				selectedLanguage,
 				languages,
 				switches,
+				experimentalSwitches,
 				true,
 				Config.getEmulatorDir(),
 				directoryError);
