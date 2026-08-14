@@ -21,13 +21,13 @@ This ledger is a provenance/notice inventory for the current project state, not 
 
 ## Material Symbols assets
 
-The Compose host UI uses ten official Material Symbols Android VectorDrawable assets. They
+The Compose host UI uses eleven official Material Symbols Android VectorDrawable assets. They
 were downloaded with `scripts/material-symbols.py` as developer-time inputs and are committed locally;
 Gradle and CI do not access the network to obtain them.
 
 | Local resources | Source | Variant | Revision / SHA-256 | License |
 | --- | --- | --- | --- | --- |
-| `ic_arrow_back.xml`, `ic_content_copy.xml`, `ic_share.xml`, `ic_delete_report.xml`, `ic_file_picker_folder.xml`, `ic_file_picker_file.xml`, `ic_file_picker_storage.xml`, `ic_arrow_downward.xml`, `ic_arrow_upward.xml`, `ic_palette.xml` | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | Existing seven assets remain pinned to their recorded source revisions; arrow downward `eac1ec84bb5251dfd1dec10a3db387363594eb20247bacaddf1c033ff954094d`, arrow upward `b398faf24ea12a63b2c4f708d8be24c8ae3714d277ea82da8f405cd066873d0a`, and palette `77da392d239862f1c1a4f736d698debcffe9477eacb49947b41210360af23b92`, all revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
+| `ic_arrow_back.xml`, `ic_check.xml`, `ic_content_copy.xml`, `ic_share.xml`, `ic_delete_report.xml`, `ic_file_picker_folder.xml`, `ic_file_picker_file.xml`, `ic_file_picker_storage.xml`, `ic_arrow_downward.xml`, `ic_arrow_upward.xml`, `ic_palette.xml` | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | Existing seven assets remain pinned to their recorded source revisions; check SHA-256 `b38c518aa15e88cb9f2eda91aa5617427530ae9359a1b2c8ab96f7d16bffabe7`, arrow downward `eac1ec84bb5251dfd1dec10a3db387363594eb20247bacaddf1c033ff954094d`, arrow upward `b398faf24ea12a63b2c4f708d8be24c8ae3714d277ea82da8f405cd066873d0a`, and palette `77da392d239862f1c1a4f736d698debcffe9477eacb49947b41210360af23b92`, all revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 
 ### `third_party/` audit
 

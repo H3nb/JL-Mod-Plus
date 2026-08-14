@@ -87,6 +87,36 @@ class FilePickerComposeTest {
         assertEquals("open:Games", events.get())
     }
 
+    @Test
+    fun parentNavigationAndPickerExitAreDistinctActions() {
+        val events = AtomicReference<String>("")
+        composeRule.setContent {
+            JLModPlusTheme {
+                FilePickerScreen(
+                    state = sampleState(),
+                    actions = RecordingActions(events),
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Choose").assertExists()
+        composeRule.onNodeWithContentDescription("Back to Parent Folder").performClick()
+        assertEquals("back", events.get())
+        composeRule.onNodeWithText("Cancel").performClick()
+        assertEquals("exit", events.get())
+
+        composeRule.setContent {
+            JLModPlusTheme {
+                FilePickerScreen(
+                    state = sampleState().copy(currentPath = "/storage"),
+                    actions = RecordingActions(events),
+                )
+            }
+        }
+        composeRule.onNodeWithText("Cancel").performClick()
+        assertEquals("exit", events.get())
+    }
+
     private fun sampleState() = FilePickerState(
         request = FilePickerRequest(
             startPath = "/storage/emulated/0",
@@ -106,6 +136,7 @@ class FilePickerComposeTest {
 
     private open class RecordingActions(private val events: AtomicReference<String>) : FilePickerActions {
         override fun onNavigateBack() = events.set("back")
+        override fun onExit() = events.set("exit")
         override fun onOpen(entry: FilePickerEntry) = events.set("open:${entry.name}")
         override fun onConfirmSelection() = events.set("confirm")
         override fun onToggleSearch() = events.set("search")

@@ -22,6 +22,7 @@ import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 
 private val PreviewActions = object : FilePickerActions {
     override fun onNavigateBack() = Unit
+    override fun onExit() = Unit
     override fun onOpen(entry: FilePickerEntry) = Unit
     override fun onConfirmSelection() = Unit
     override fun onToggleSearch() = Unit
@@ -91,6 +92,33 @@ fun FilePickerPermissionScreenshot() {
                 permissionRequired = true,
                 entries = emptyList(),
             ),
+            actions = PreviewActions,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "File picker root", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun FilePickerRootScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        FilePickerScreen(
+            state = PreviewState.copy(
+                rootPath = "/storage",
+                currentPath = "/storage",
+            ),
+            actions = PreviewActions,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "File picker wide grid", widthDp = 840, heightDp = 480, showBackground = true)
+@Composable
+fun FilePickerWideGridScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        FilePickerScreen(
+            state = PreviewState,
             actions = PreviewActions,
         )
     }

@@ -27,6 +27,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
@@ -44,8 +48,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -59,11 +67,15 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.ui.NavDisplay
+import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOWER_BOUND
 import ru.playsoftware.j2meloader.R
 
 /** Event surface for the picker presentation. File-system work stays in the controller. */
 interface FilePickerActions {
     fun onNavigateBack()
+    fun onExit()
     fun onOpen(entry: FilePickerEntry)
     fun onConfirmSelection()
     fun onToggleSearch()
@@ -79,12 +91,78 @@ interface FilePickerActions {
 
 private val NoWindowInsets = WindowInsets(left = 0, top = 0, right = 0, bottom = 0)
 
+private data class FilePickerFolderRoute(val path: String)
+
+/**
+ * Navigation 3 host for folder traversal. The controller remains the owner of filesystem
+ * state; this stack only makes parent navigation and explicit picker exit distinct actions.
+ */
+@Composable
+fun FilePickerNavHost(
+    state: FilePickerState,
+    actions: FilePickerActions,
+    modifier: Modifier = Modifier,
+) {
+    val backStack = remember { mutableStateListOf<Any>(FilePickerFolderRoute(state.currentPath)) }
+
+    LaunchedEffect(state.currentPath) {
+        val route = FilePickerFolderRoute(state.currentPath)
+        val existingIndex = backStack.indexOfLast { it == route }
+        if (existingIndex >= 0) {
+            while (backStack.size > existingIndex + 1) {
+                backStack.removeLastOrNull()
+            }
+        } else {
+            backStack.add(route)
+        }
+    }
+
+    val navigationActions = object : FilePickerActions by actions {
+        override fun onNavigateBack() {
+            if (backStack.size > 1) {
+                backStack.removeLastOrNull()
+                actions.onNavigateBack()
+            } else {
+                actions.onExit()
+            }
+        }
+
+        override fun onOpen(entry: FilePickerEntry) {
+            actions.onOpen(entry)
+            if (entry.kind != FilePickerEntryKind.FILE) {
+                val route = FilePickerFolderRoute(entry.path)
+                if (backStack.lastOrNull() != route) {
+                    backStack.add(route)
+                }
+            }
+        }
+    }
+
+    NavDisplay(
+        backStack = backStack,
+        onBack = {
+            if (backStack.size > 1) {
+                backStack.removeLastOrNull()
+                actions.onNavigateBack()
+            } else {
+                actions.onExit()
+            }
+        },
+        modifier = modifier,
+        entryProvider = { key ->
+            NavEntry(key) {
+                FilePickerScreen(state = state, actions = navigationActions)
+            }
+        },
+    )
+}
+
 /**
  * App-owned picker screen. It deliberately uses only the repository's existing
  * Material 3 and foundation components; no forked picker widgets are embedded.
  */
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3AdaptiveApi::class)
 fun FilePickerScreen(
     state: FilePickerState,
     actions: FilePickerActions,
@@ -99,11 +177,14 @@ fun FilePickerScreen(
             TopAppBar(
                 windowInsets = NoWindowInsets,
                 navigationIcon = {
-                    IconButton(onClick = actions::onNavigateBack) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_arrow_back),
-                            contentDescription = stringResource(R.string.file_picker_navigate_back),
-                        )
+                    if (state.canGoUp) {
+                        IconButton(onClick = actions::onNavigateBack) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_arrow_back),
+                                contentDescription = stringResource(R.string.file_picker_navigate_back),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 },
                 title = {
@@ -123,64 +204,30 @@ fun FilePickerScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = actions::onToggleSearch) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_search),
-                            contentDescription = stringResource(R.string.file_picker_search),
-                        )
-                    }
                     Box {
                         IconButton(onClick = { sortMenuExpanded = true }) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_sort),
                                 contentDescription = stringResource(R.string.file_picker_sort),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
-                        DropdownMenu(
+                        FilePickerSortMenu(
                             expanded = sortMenuExpanded,
+                            selected = state.sortOrder,
                             onDismissRequest = { sortMenuExpanded = false },
-                        ) {
-                            SortMenuItem(
-                                label = stringResource(R.string.file_picker_sort_type),
-                                selected = state.sortOrder == FilePickerSortOrder.TYPE_THEN_NAME,
-                                onClick = {
-                                    actions.onSortOrderSelected(FilePickerSortOrder.TYPE_THEN_NAME)
-                                    sortMenuExpanded = false
-                                },
-                            )
-                            SortMenuItem(
-                                label = stringResource(R.string.file_picker_sort_name_ascending),
-                                selected = state.sortOrder == FilePickerSortOrder.NAME_ASCENDING,
-                                onClick = {
-                                    actions.onSortOrderSelected(FilePickerSortOrder.NAME_ASCENDING)
-                                    sortMenuExpanded = false
-                                },
-                            )
-                            SortMenuItem(
-                                label = stringResource(R.string.file_picker_sort_name_descending),
-                                selected = state.sortOrder == FilePickerSortOrder.NAME_DESCENDING,
-                                onClick = {
-                                    actions.onSortOrderSelected(FilePickerSortOrder.NAME_DESCENDING)
-                                    sortMenuExpanded = false
-                                },
-                            )
-                            SortMenuItem(
-                                label = stringResource(R.string.file_picker_sort_modified_newest),
-                                selected = state.sortOrder == FilePickerSortOrder.MODIFIED_NEWEST,
-                                onClick = {
-                                    actions.onSortOrderSelected(FilePickerSortOrder.MODIFIED_NEWEST)
-                                    sortMenuExpanded = false
-                                },
-                            )
-                            SortMenuItem(
-                                label = stringResource(R.string.file_picker_sort_modified_oldest),
-                                selected = state.sortOrder == FilePickerSortOrder.MODIFIED_OLDEST,
-                                onClick = {
-                                    actions.onSortOrderSelected(FilePickerSortOrder.MODIFIED_OLDEST)
-                                    sortMenuExpanded = false
-                                },
-                            )
-                        }
+                            onSelected = { sortOrder ->
+                                sortMenuExpanded = false
+                                actions.onSortOrderSelected(sortOrder)
+                            },
+                        )
+                    }
+                    IconButton(onClick = actions::onToggleSearch) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_search),
+                            contentDescription = stringResource(R.string.file_picker_search),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                     if (state.request.allowCreateDirectory) {
                         IconButton(
@@ -190,6 +237,7 @@ fun FilePickerScreen(
                             Icon(
                                 painter = painterResource(R.drawable.ic_add),
                                 contentDescription = stringResource(R.string.file_picker_create_folder),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -197,38 +245,36 @@ fun FilePickerScreen(
             )
         },
         bottomBar = {
-            if (state.request.mode == FilePickerContract.MODE_DIR ||
-                (state.request.mode == FilePickerContract.MODE_FILE_AND_DIR &&
-                    !state.request.allowMultiple && state.selectedPaths.isEmpty()) ||
-                state.selectedPaths.isNotEmpty()
-            ) {
-                BottomAppBar(
-                    windowInsets = NoWindowInsets,
-                ) {
-                    Text(
-                        text = if (state.request.mode == FilePickerContract.MODE_DIR ||
+            BottomAppBar(windowInsets = NoWindowInsets) {
+                Text(
+                    text = when {
+                        state.request.mode == FilePickerContract.MODE_DIR ||
                             (state.request.mode == FilePickerContract.MODE_FILE_AND_DIR &&
-                                state.selectedPaths.isEmpty())
-                        ) {
+                                state.selectedPaths.isEmpty()) -> {
                             stringResource(R.string.file_picker_current_folder)
-                        } else {
+                        }
+                        state.selectedPaths.isNotEmpty() -> {
                             pluralStringResource(
                                 R.plurals.file_picker_selected_count,
                                 state.selectedPaths.size,
                                 state.selectedPaths.size,
                             )
-                        },
-                        modifier = Modifier.weight(1f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Button(
-                        onClick = actions::onConfirmSelection,
-                        enabled = state.canConfirm,
-                        shape = MaterialTheme.shapes.medium,
-                    ) {
-                        Text(stringResource(R.string.file_picker_choose))
-                    }
+                        }
+                        else -> stringResource(R.string.file_picker_select_file)
+                    },
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                TextButton(onClick = actions::onExit) {
+                    Text(stringResource(R.string.file_picker_cancel))
+                }
+                Button(
+                    onClick = actions::onConfirmSelection,
+                    enabled = state.canConfirm,
+                    shape = MaterialTheme.shapes.medium,
+                ) {
+                    Text(stringResource(R.string.file_picker_choose))
                 }
             }
         },
@@ -296,40 +342,57 @@ private fun PickerContent(
                             message = stringResource(R.string.file_picker_no_matches),
                         )
                     } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                                vertical = 8.dp,
-                            ),
-                        ) {
-                            if (state.canGoUp) {
-                                item(key = "..:${state.currentPath}") {
-                                    ListItem(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable(onClick = actions::onNavigateBack)
-                                            .semantics { role = Role.Button },
-                                        headlineContent = {
-                                            Text(stringResource(R.string.file_picker_parent_marker))
-                                        },
-                                        supportingContent = {
-                                            Text(stringResource(R.string.file_picker_parent_folder))
-                                        },
-                                        leadingContent = {
-                                            PickerEntryIcon(FilePickerEntryKind.DIRECTORY)
-                                        },
+                        val mediumOrLarger = currentWindowAdaptiveInfo()
+                            .windowSizeClass
+                            .isWidthAtLeastBreakpoint(WIDTH_DP_MEDIUM_LOWER_BOUND)
+                        if (mediumOrLarger) {
+                            LazyVerticalGrid(
+                                columns = GridCells.Adaptive(minSize = 280.dp),
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                                    vertical = 8.dp,
+                                    horizontal = 8.dp,
+                                ),
+                            ) {
+                                if (state.canGoUp) {
+                                    item(
+                                        key = "..:${state.currentPath}",
+                                        span = { GridItemSpan(maxLineSpan) },
+                                    ) {
+                                        ParentFolderRow(onClick = actions::onNavigateBack)
+                                    }
+                                }
+                                items(visibleEntries, key = { it.path }) { entry ->
+                                    PickerEntryRow(
+                                        entry = entry,
+                                        selected = state.selectedPaths.contains(entry.path),
+                                        allowSelection = state.request.allowsFiles &&
+                                            entry.kind == FilePickerEntryKind.FILE,
+                                        onClick = { actions.onOpen(entry) },
                                     )
-                                    HorizontalDivider()
                                 }
                             }
-                            items(visibleEntries, key = { it.path }) { entry ->
-                                PickerEntryRow(
-                                    entry = entry,
-                                    selected = state.selectedPaths.contains(entry.path),
-                                    allowSelection = state.request.allowsFiles &&
-                                        entry.kind == FilePickerEntryKind.FILE,
-                                    onClick = { actions.onOpen(entry) },
-                                )
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                                    vertical = 8.dp,
+                                ),
+                            ) {
+                                if (state.canGoUp) {
+                                    item(key = "..:${state.currentPath}") {
+                                        ParentFolderRow(onClick = actions::onNavigateBack)
+                                    }
+                                }
+                                items(visibleEntries, key = { it.path }) { entry ->
+                                    PickerEntryRow(
+                                        entry = entry,
+                                        selected = state.selectedPaths.contains(entry.path),
+                                        allowSelection = state.request.allowsFiles &&
+                                            entry.kind == FilePickerEntryKind.FILE,
+                                        onClick = { actions.onOpen(entry) },
+                                    )
+                                }
                             }
                         }
                     }
@@ -340,25 +403,62 @@ private fun PickerContent(
 }
 
 @Composable
-private fun SortMenuItem(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
+private fun ParentFolderRow(onClick: () -> Unit) {
+    Column {
+        ListItem(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .semantics { role = Role.Button },
+            headlineContent = {
+                Text(stringResource(R.string.file_picker_parent_marker))
+            },
+            supportingContent = {
+                Text(stringResource(R.string.file_picker_parent_folder))
+            },
+            leadingContent = {
+                PickerEntryIcon(FilePickerEntryKind.DIRECTORY)
+            },
+        )
+        HorizontalDivider()
+    }
+}
+
+@Composable
+internal fun FilePickerSortMenu(
+    expanded: Boolean,
+    selected: FilePickerSortOrder,
+    onDismissRequest: () -> Unit,
+    onSelected: (FilePickerSortOrder) -> Unit,
 ) {
-    DropdownMenuItem(
-        text = { Text(label) },
-        onClick = onClick,
-        trailingIcon = if (selected) {
-            {
-                Text(
-                    stringResource(R.string.file_picker_selected_mark),
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-        } else {
-            null
-        },
+    val options = listOf(
+        FilePickerSortOrder.TYPE_THEN_NAME to R.string.file_picker_sort_type,
+        FilePickerSortOrder.NAME_ASCENDING to R.string.file_picker_sort_name_ascending,
+        FilePickerSortOrder.NAME_DESCENDING to R.string.file_picker_sort_name_descending,
+        FilePickerSortOrder.MODIFIED_NEWEST to R.string.file_picker_sort_modified_newest,
+        FilePickerSortOrder.MODIFIED_OLDEST to R.string.file_picker_sort_modified_oldest,
     )
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismissRequest,
+    ) {
+        options.forEach { (sortOrder, label) ->
+            DropdownMenuItem(
+                text = { Text(stringResource(label)) },
+                onClick = { onSelected(sortOrder) },
+                leadingIcon = {
+                    if (selected == sortOrder) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_check),
+                            contentDescription = null,
+                        )
+                    } else {
+                        Spacer(Modifier.size(24.dp))
+                    }
+                },
+            )
+        }
+    }
 }
 
 @Composable

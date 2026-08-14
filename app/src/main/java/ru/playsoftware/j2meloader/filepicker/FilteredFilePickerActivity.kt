@@ -94,7 +94,7 @@ class FilteredFilePickerActivity : AppCompatActivity() {
             setContent {
                 val state = pickerState ?: return@setContent
                 JLModPlusTheme {
-                    FilePickerScreen(state = state, actions = createActions())
+                    FilePickerNavHost(state = state, actions = createActions())
                 }
             }
         }
@@ -133,6 +133,8 @@ class FilteredFilePickerActivity : AppCompatActivity() {
 
     private fun createActions(): FilePickerActions = object : FilePickerActions {
         override fun onNavigateBack() = handleBack()
+
+        override fun onExit() = exitPicker()
 
         override fun onOpen(entry: FilePickerEntry) = controller.open(entry)
 
@@ -177,6 +179,11 @@ class FilteredFilePickerActivity : AppCompatActivity() {
         }
         lastBackPressAt = now
         Toast.makeText(this, R.string.msg_press_again_to_close, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun exitPicker() {
+        setResult(RESULT_CANCELED)
+        finish()
     }
 
     private fun finishWithFiles(files: List<File>) {
