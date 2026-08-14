@@ -31,7 +31,7 @@ ordering, or replace `Displayable` views.
 | Exit | Every Displayable | `showExitConfirmation()` |
 | Save Log | Every Displayable | `saveLog()` |
 | Lock Screen Rotation | Every Displayable | Existing lock/unlock orientation calculation |
-| Keyboard (IME) | Canvas when Android IME exists | Existing `InputMethodManager` toggle, posted after popup dismissal, using the Canvas/GLSurfaceView window token |
+| Keyboard (IME) | Canvas when Android IME exists | Existing toggle semantics, posted after popup dismissal, using the Canvas/GLSurfaceView window token and its explicit `InputConnection` contract |
 | Take Screenshot | Canvas | `takeScreenshot()` and existing asynchronous result handling |
 | Limit FPS | Canvas | Compose Material 3 digits-only dialog and existing `Canvas.setLimitFps()` values (`0` unlimited, `-1` reset) |
 | Virtual Keyboard options | Canvas when a virtual keyboard exists | Existing layout edit/resize/finish/switch/hide methods |
@@ -61,6 +61,14 @@ non-Canvas Displayables.
   task removal/force-stop remain independent termination paths.
 - A `Displayable` transition closes the menu before replacing its View, then
   refreshes the host title and action visibility.
+- `CanvasView` and `GlesView` report `onCheckIsTextEditor() == true` alongside
+  their existing key-event `InputConnection`. The host requests focus on the
+  actual Surface/GL view, restarts input, and chooses show/hide from current IME
+  insets; it never sends text into a MIDP `TextField` or changes Canvas key
+  dispatch.
+- Host-only recovery, exit/settings, MIDlet selection, and virtual-keyboard
+  dialogs are Compose Material 3 surfaces. The Java side still owns loader,
+  orientation, persistence, cleanup, and `MidletThread` callbacks.
 
 ## Validation gates
 

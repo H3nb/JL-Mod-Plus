@@ -29,7 +29,7 @@ Audit baseline: `alpha` at `e01e7007`.
 | Configuration form, color picker, screen presets, charset/profile/shader dialogs | `ConfigComposeBridge.kt`, `ConfigDialogComposeBridge.kt`, hosted by `ConfigActivity` | Compose-owned presentation; transitional Activity/DialogFragment host | Stored formats, validation/defaults, profile copy/overwrite semantics, shader values, activity results, and guest launch remain in Java. The DialogFragment shell is retained only as a lifecycle bridge. |
 | Key mapper keypad, mapper menu, reset action, and missing-menu warning | `KeyMapperComposeBridge.kt`, hosted by `KeyMapperActivity` | Compose-owned presentation; transitional Activity host | Activity-level key/touch dispatch, key codes/order, mapping serialization, and cancellation remain in Java. |
 | Crash report list/details | `CrashReportsComposeBridge.kt`, hosted by crash Activities | Compose-owned presentation; transitional Activity host | Diagnostic storage, process-isolation and share/export contracts remain in Java. |
-| Runtime host toolbar and options menu | `RuntimeMenuCompose.kt`, hosted by `MicroActivity` | Compose-owned Material 3 presentation inside the View runtime shell | Toolbar overflow, Android Back, and legacy menu-key paths share one modal popup. Popup Back only dismisses it; explicit host Exit, a MIDlet Exit command, and system task removal remain the separate termination paths. Existing callbacks remain owned by `MicroActivity`; no MIDP `Command` or input dispatch moves into Compose. |
+| Runtime host toolbar, options menu, and host dialogs | `RuntimeMenuCompose.kt`, `RuntimeHostDialogs.kt`, hosted by `MicroActivity` | Compose-owned Material 3 presentation inside the View runtime shell | Toolbar overflow, Android Back, and legacy menu-key paths share one modal popup. Popup Back only dismisses it; explicit host Exit, a MIDlet Exit command, and system task removal remain the separate termination paths. Midlet selection, recovery, exit/settings, virtual-keyboard layout, and hide/save dialogs use stable callbacks; no MIDP `Command` or input dispatch moves into Compose. |
 | Main host container | Programmatic `FrameLayout` + `FragmentContainerView` in `MainActivity` | Transitional programmatic host | The container is still the Fragment host for the library state machine and exported import/install intents; it has no XML visual tree. |
 | File picker browsing, search, sort, directory creation, and selection | `FilteredFilePickerActivity.kt`, `FilePickerController.kt`, `FilePickerCompose.kt`, `FilePickerModel.kt` | Compose-owned presentation; transitional Activity/result host | The implementation is app-owned and clean-room. It preserves raw-path `file://` results, JAR/JAD/KJX filtering, storage permissions, start paths, directory mode, cancellation, and work-directory/import callers without a picker dependency. |
 | MIDlet shell and rendering | `MicroActivity`, `RuntimeHostView`, `OverlayView`, `CanvasView`/`GlesView`, native C/C++ renderer | Permanent programmatic View boundary with Compose-owned host chrome | The former XML hierarchy is reproduced directly to preserve Surface/overlay geometry. Java ME rendering, lifecycle, orientation, IME, and runtime input remain compatibility-sensitive. |
@@ -44,7 +44,9 @@ The remaining programmatic Views are deliberately bounded:
 
 - `RuntimeHostView`, `FragmentContainerView`, Compose hosts, and
   `DialogFragment` windows are lifecycle/result shells. They do not implement
-  Java ME rendering or command semantics.
+  Java ME rendering or command semantics. The installer `DialogFragment` keeps
+  a platform `Dialog` shell only for lifecycle and cancellation ownership; its
+  body is Compose-owned.
 - `CanvasView`, `GlesView`, `OverlayView`, `VirtualKeyboard`, and the native
   Canvas/GL surface keep the renderer, pointer/key dispatch, IME connection,
   orientation, and overlay hit geometry intact.
@@ -52,6 +54,9 @@ The remaining programmatic Views are deliberately bounded:
   `Gauge`, `CustomItem`, and their list adapters are the Java ME/MIDP API
   implementation. Their Android Views are not app-owned host UI and must not
   be rewritten as Compose without a separate API/JSR compatibility review.
+- `Alert`/`Display` remain native platform-dialog boundaries for the Java ME
+  `Alert` contract; their asynchronous dismissal and `Command` dispatch are
+  not app-owned host UI.
 - `AbstractSoftKeysBar` remains the native Canvas command popup boundary;
   `ScreenSoftBar` uses Compose for presentation but still dispatches the same
   `CommandActionEvent` path. No `CommandListener` is invoked from Compose.
@@ -90,7 +95,7 @@ compiled and its contract/UI tests were added.
 | Dependency family | Current consumers | Decision |
 | --- | --- | --- |
 | `androidx.activity` | Activity Result APIs and back-press dispatch in host, picker, settings, key mapper, and guest shell | Retain |
-| `androidx.appcompat` | All host Activities, guest shell, AppCompat widgets/dialogs, locale service, and themes | Retain |
+| `androidx.appcompat` | Host Activities/themes, locale service, and the Java ME `Alert` platform-dialog boundary | Retain |
 | `androidx.fragment` | Library Fragment, installer and compatibility `DialogFragment`s | Retain |
 | `androidx.preference` | SharedPreferences access and locale/profile/config persistence | Retain |
 | `androidx.lifecycle` | AppListModel/ViewModel, LiveData/Rx repository, installer and guest lifecycle observers | Retain |
