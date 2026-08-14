@@ -15,10 +15,12 @@
 package ru.playsoftware.j2meloader.applist
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -75,7 +77,7 @@ class LibraryComposeTest {
             actions = actions,
         )
         composeRule.onNodeWithText("No matches for \"missing\"").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("install").performClick()
+        composeRule.onNodeWithContentDescription("Install").performClick()
         assertEquals(1, actions.installCount)
     }
 
@@ -98,12 +100,29 @@ class LibraryComposeTest {
     fun viewAndSortActionsRemainExplicitCallbacks() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
-        composeRule.onNodeWithContentDescription("view").performClick()
+        composeRule.onNodeWithContentDescription("View").performClick()
         assertEquals(LibraryLayout.List, actions.layout)
 
-        composeRule.onNodeWithContentDescription("App sort order").performClick()
+        composeRule.onNodeWithContentDescription("App Sort Order").performClick()
         composeRule.onNodeWithText("Vendor").performClick()
         assertEquals(2, actions.sortIndex)
+    }
+
+    @Test
+    fun aboutUsesCurrentProjectIdentityWithoutLegacyEmail() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                LibraryInformationDialog(
+                    dialog = LibraryInfoDialog.About,
+                    onDismiss = {},
+                    onOpen = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("JL-Mod Plus").assertIsDisplayed()
+        composeRule.onAllNodesWithText("j2me.forever@gmail.com").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Copyright 2020-2026 Yury Kharchenko").assertCountEquals(0)
     }
 
     private fun setLibraryContent(

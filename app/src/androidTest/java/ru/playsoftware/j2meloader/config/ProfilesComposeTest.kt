@@ -36,7 +36,7 @@ class ProfilesComposeTest {
     fun createFiltersFileNameCharactersAndDispatchesName() {
         val actions = RecordingProfilesActions()
         setProfilesContent(actions)
-        composeRule.onNodeWithContentDescription("Create new profile").performClick()
+        composeRule.onNodeWithContentDescription("Create New Profile").performClick()
         composeRule.onNode(hasSetTextAction()).performTextInput("New/Profile")
         composeRule.onNodeWithText("OK").performClick()
         assertEquals("NewProfile", actions.created)
@@ -48,7 +48,7 @@ class ProfilesComposeTest {
         setProfilesContent(actions)
 
         composeRule.onNodeWithText("Playable").performClick()
-        composeRule.onNodeWithText("Set as default").performClick()
+        composeRule.onNodeWithText("Set As Default").performClick()
         assertEquals("Playable", actions.defaulted)
 
         composeRule.onNodeWithText("Playable").performClick()

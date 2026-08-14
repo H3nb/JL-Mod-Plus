@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -73,6 +74,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.font.FontWeight
@@ -191,6 +193,9 @@ internal enum class LibraryInfoDialog {
     Licenses,
 }
 
+/** The Java host already owns the safe-area padding for this hybrid screen. */
+private val NoWindowInsets = WindowInsets(left = 0, top = 0, right = 0, bottom = 0)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
@@ -214,8 +219,10 @@ fun LibraryScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        contentWindowInsets = NoWindowInsets,
         topBar = {
             TopAppBar(
+                windowInsets = NoWindowInsets,
                 title = {
                     if (searchVisible) {
                         OutlinedTextField(
@@ -698,14 +705,16 @@ internal fun LibraryInformationDialog(
     val maxMessageHeight = if (dialog == LibraryInfoDialog.Licenses) 380.dp else 300.dp
     when (dialog) {
         LibraryInfoDialog.About -> {
-            title = stringResource(R.string.app_name)
-            val versionLabel = stringResource(R.string.version)
-            message = AnnotatedString.fromHtml(
-                "$versionLabel${BuildConfig.VERSION_NAME}" +
-                    "<br><br>Email: <a href=\"mailto:j2me.forever@gmail.com\">j2me.forever@gmail.com</a>" +
-                    "<br>Github: <a href=\"https://github.com/woesss/JL-Mod\">woesss/JL-Mod</a>" +
-                    "<br><br>Copyright 2020-2026 Yury Kharchenko",
-            )
+            title = stringResource(R.string.about_product_name)
+            message = buildAnnotatedString {
+                append(stringResource(R.string.version))
+                append(' ')
+                append(BuildConfig.VERSION_NAME)
+                append('\n')
+                append(AnnotatedString.fromHtml(stringResource(R.string.about_github)))
+                append('\n')
+                append(stringResource(R.string.about_maintainer))
+            }
         }
         LibraryInfoDialog.More -> {
             title = stringResource(R.string.app_name)

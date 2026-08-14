@@ -31,6 +31,6 @@ class CrashReportsActivityComposeSmokeTest {
 
     @Test
     fun activityHostsCrashReportsComposeScreen() {
-        composeRule.onNodeWithText("Crash reports").assertIsDisplayed()
+        composeRule.onNodeWithText("Crash Reports").assertIsDisplayed()
     }
 }
