@@ -204,4 +204,7 @@
     <string name="version">Versi: </string>
     <string name="warn_install_from_net">Berkas akan diunduh dari internet</string>
     <string name="warning">Peringatan</string>
+    <string name="config_color_picker_title">Pilih warna</string>
+    <string name="config_color_picker_hex">Warna heksadesimal</string>
+    <string name="config_color_picker_hint">Seret bidang warna atau masukkan nilai RGB enam digit.</string>
 </resources>

@@ -14,17 +14,17 @@
 
 package ru.playsoftware.j2meloader.config;
 
-/** Presentation events shared by the current View form and the next Compose form. */
+/** Presentation events emitted by the Compose form to its host activity. */
 public interface ConfigFormEvents {
-	void onScreenSizePresets();
-
-	void onSwapSizes();
+	/** Called for every presentation-only draft edit; persistence remains owned by ConfigActivity. */
+	void onFormChanged(ConfigFormState state);
 
 	void onAddResolutionPreset();
 
-	void onFontSizePresets();
-
 	void onColorPicker(ColorField field);
+
+	/** Called after the host-owned picker confirms a six-digit RGB value. */
+	void onColorPicked(ColorField field, String value);
 
 	void onKeyMappings();
 
