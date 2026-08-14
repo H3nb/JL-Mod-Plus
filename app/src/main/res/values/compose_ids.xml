@@ -2,4 +2,6 @@
 <resources>
     <item name="crash_reports_compose_root" type="id" />
     <item name="crash_report_details_compose_root" type="id" />
+    <item name="library_compose_root" type="id" />
+    <item name="profiles_compose_root" type="id" />
 </resources>
