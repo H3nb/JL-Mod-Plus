@@ -33,9 +33,6 @@ import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
 import android.util.Log;
 import android.view.Display;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -128,8 +125,18 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 
 		@Override
+		public void onEncodingSelected(@NonNull String charset) {
+			applyCharset(charset);
+		}
+
+		@Override
 		public void onShaderTuning() {
 			showShaderSettings();
+		}
+
+		@Override
+		public void onShaderTuningComplete(@NonNull float[] values) {
+			onTuneComplete(values);
 		}
 	};
 
@@ -197,7 +204,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		ComposeView composeView = new ComposeView(this);
 		setContentView(composeView);
 		EdgeToEdgeCompat.protectHostContent(this);
-		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+		if (getSupportActionBar() != null) {
+			getSupportActionBar().hide();
+		}
 		display = getWindowManager().getDefaultDisplay();
 
 		fillScreenSizePresets(display.getWidth(), display.getHeight());
@@ -210,7 +219,67 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		initSkinOptions();
 		initShaderSpinner();
 		currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
-		composeController = new ConfigComposeController(composeView, createUiState(), formEvents);
+		composeController = new ConfigComposeController(
+				composeView,
+				createUiState(),
+				formEvents,
+				new ConfigMenuActions() {
+					@Override
+					public void onBack() {
+						finish();
+					}
+
+					@Override
+					public void onStart() {
+						startMIDlet();
+					}
+
+					@Override
+					public void onClearData() {
+						// Compose owns the confirmation surface; the activity performs the side effect.
+					}
+
+					@Override
+					public void onConfirmClearData() {
+						if (dataDir != null) {
+							FileUtils.clearDirectory(dataDir);
+						}
+					}
+
+					@Override
+					public void onResetSettings() {
+						params = new ProfileModel(configDir);
+						loadParams(false);
+					}
+
+					@Override
+					public void onResetLayout() {
+						if (keylayoutFile != null) {
+							//noinspection ResultOfMethodCallIgnored
+							keylayoutFile.delete();
+						}
+						loadKeyLayout();
+					}
+
+					@Override
+					public void onLoadProfile() {
+						if (keylayoutFile != null) {
+							LoadProfileAlert.newInstance(keylayoutFile.getParent())
+									.show(getSupportFragmentManager(), "load_profile");
+						}
+					}
+
+					@Override
+					public void onSaveProfile() {
+						if (keylayoutFile != null) {
+							saveParams();
+							SaveProfileAlert.getInstance(keylayoutFile.getParent())
+									.show(getSupportFragmentManager(), "save_profile");
+						}
+					}
+				},
+				getTitle() == null ? "" : getTitle().toString(),
+				isProfile);
 	}
 
 	private void initSkinOptions() {
@@ -329,24 +398,43 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	}
 
 	private void showCharsetPicker() {
+		if (composeController == null) {
+			return;
+		}
 		String[] charsets = Charset.availableCharsets().keySet().toArray(new String[0]);
-		new AlertDialog.Builder(this).setItems(charsets, (d, w) -> {
-			String text = currentForm == null ? "" : currentForm.systemProperties;
+		String selected = null;
+		if (currentForm != null) {
 			String key = "microedition.encoding:";
-			int idx = text.lastIndexOf(key);
-			if (idx != -1) {
-				int nl = text.indexOf('\n', idx);
-				text = text.substring(0, idx + key.length()) + " " + charsets[w] + (nl == -1 ? "\n" : text.substring(nl));
-				updateForm(currentForm.toBuilder().systemProperties(text).build());
-				return;
+			for (String line : currentForm.systemProperties.split("[\\n\\r]+")) {
+				if (line.startsWith(key)) {
+					selected = line.substring(key.length()).trim();
+					break;
+				}
 			}
+		}
+		composeController.showEncodingPicker(Arrays.asList(charsets), selected);
+	}
 
-			if (!text.endsWith("\n")) {
-				text += "\n";
-			}
-			updateForm(currentForm.toBuilder().systemProperties(
-					text + key + " " + charsets[w] + "\n").build());
-		}).setTitle(R.string.pref_encoding_title).show();
+	private void applyCharset(@NonNull String charset) {
+		if (currentForm == null) {
+			return;
+		}
+		String text = currentForm.systemProperties;
+		String key = "microedition.encoding:";
+		int idx = text.lastIndexOf(key);
+		if (idx != -1) {
+			int nl = text.indexOf('\n', idx);
+			text = text.substring(0, idx + key.length()) + " " + charset
+					+ (nl == -1 ? "\n" : text.substring(nl));
+			updateForm(currentForm.toBuilder().systemProperties(text).build());
+			return;
+		}
+
+		if (!text.endsWith("\n")) {
+			text += "\n";
+		}
+		updateForm(currentForm.toBuilder().systemProperties(
+				text + key + " " + charset + "\n").build());
 	}
 
 	private void loadKeyLayout() {
@@ -465,55 +553,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
-	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.config, menu);
-		if (isProfile) {
-			menu.findItem(R.id.action_start).setVisible(false);
-			menu.findItem(R.id.action_clear_data).setVisible(false);
-		}
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		int itemId = item.getItemId();
-		if (itemId == R.id.action_start) {
-			startMIDlet();
-		} else if (itemId == R.id.action_clear_data) {
-			showClearDataDialog();
-		} else if (itemId == R.id.action_reset_settings) {
-			params = new ProfileModel(configDir);
-			loadParams(false);
-		} else if (itemId == R.id.action_reset_layout) {
-			//noinspection ResultOfMethodCallIgnored
-			keylayoutFile.delete();
-			loadKeyLayout();
-		} else if (itemId == R.id.action_load_profile) {
-			LoadProfileAlert.newInstance(keylayoutFile.getParent())
-					.show(getSupportFragmentManager(), "load_profile");
-		} else if (itemId == R.id.action_save_profile) {
-			saveParams();
-			SaveProfileAlert.getInstance(keylayoutFile.getParent())
-					.show(getSupportFragmentManager(), "save_profile");
-		} else if (itemId == android.R.id.home) {
-			finish();
-		} else {
-			return false;
-		}
-		return true;
-	}
-
-	private void showClearDataDialog() {
-		AlertDialog.Builder builder = new AlertDialog.Builder(this)
-				.setTitle(android.R.string.dialog_alert_title)
-				.setMessage(R.string.message_clear_data)
-				.setPositiveButton(android.R.string.ok, (d, w) -> FileUtils.clearDirectory(dataDir))
-				.setNegativeButton(android.R.string.cancel, null);
-		builder.show();
 	}
 
 	private void startMIDlet() {

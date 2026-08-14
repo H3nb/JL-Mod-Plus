@@ -39,6 +39,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -56,6 +58,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -84,13 +87,17 @@ import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import kotlin.math.roundToInt
 
 /** Host bridge; ConfigActivity remains the owner of persistence and platform-sensitive flows. */
-class ConfigComposeController(
+class ConfigComposeController @JvmOverloads constructor(
     composeView: ComposeView,
     initialState: ConfigUiState,
     private val events: ConfigFormEvents,
+    private val menuActions: ConfigMenuActions? = null,
+    private val title: String = "",
+    private val isProfile: Boolean = false,
 ) {
     private var state by mutableStateOf(initialState)
     private var colorPicker by mutableStateOf<ColorPickerRequest?>(null)
+    private var encodingPicker by mutableStateOf<EncodingPickerRequest?>(null)
 
     init {
         composeView.id = R.id.config_compose_root
@@ -102,11 +109,20 @@ class ConfigComposeController(
                 ConfigScreen(
                     state = state,
                     events = events,
+                    title = title,
+                    isProfile = isProfile,
+                    menuActions = menuActions,
                     colorPicker = colorPicker,
+                    encodingPicker = encodingPicker,
                     onColorPickerDismiss = { colorPicker = null },
                     onColorPicked = { field, value ->
                         colorPicker = null
                         events.onColorPicked(field, value)
+                    },
+                    onEncodingPickerDismiss = { encodingPicker = null },
+                    onEncodingSelected = { charset ->
+                        encodingPicker = null
+                        events.onEncodingSelected(charset)
                     },
                 )
             }
@@ -120,11 +136,20 @@ class ConfigComposeController(
     fun showColorPicker(field: ConfigFormEvents.ColorField, initialHex: String) {
         colorPicker = ColorPickerRequest(field, initialHex)
     }
+
+    fun showEncodingPicker(options: List<String>, selected: String?) {
+        encodingPicker = EncodingPickerRequest(options, selected)
+    }
 }
 
 data class ColorPickerRequest(
     val field: ConfigFormEvents.ColorField,
     val initialHex: String,
+)
+
+data class EncodingPickerRequest(
+    val options: List<String>,
+    val selected: String?,
 )
 
 /**
@@ -138,12 +163,20 @@ fun ConfigScreen(
     state: ConfigUiState,
     events: ConfigFormEvents,
     modifier: Modifier = Modifier,
+    title: String = "",
+    isProfile: Boolean = false,
+    menuActions: ConfigMenuActions? = null,
     colorPicker: ColorPickerRequest? = null,
+    encodingPicker: EncodingPickerRequest? = null,
     onColorPickerDismiss: () -> Unit = {},
     onColorPicked: (ConfigFormEvents.ColorField, String) -> Unit = { _, _ -> },
+    onEncodingPickerDismiss: () -> Unit = {},
+    onEncodingSelected: (String) -> Unit = {},
 ) {
     var form by remember(state.form) { mutableStateOf(state.form) }
     var lockAspect by rememberSaveable { mutableStateOf(false) }
+    var menuExpanded by rememberSaveable { mutableStateOf(false) }
+    var clearDataVisible by rememberSaveable { mutableStateOf(false) }
     val scrollState = rememberScrollState()
     val updateForm: (ConfigFormState) -> Unit = { next ->
         form = next
@@ -153,6 +186,25 @@ fun ConfigScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         contentWindowInsets = NoWindowInsets,
+        topBar = {
+            ConfigTopBar(
+                title = title,
+                isProfile = isProfile,
+                menuExpanded = menuExpanded,
+                onMenuExpandedChange = { menuExpanded = it },
+                onBack = { menuActions?.onBack() },
+                onStart = { menuExpanded = false; menuActions?.onStart() },
+                onClearData = {
+                    menuExpanded = false
+                    menuActions?.onClearData()
+                    clearDataVisible = true
+                },
+                onResetSettings = { menuExpanded = false; menuActions?.onResetSettings() },
+                onResetLayout = { menuExpanded = false; menuActions?.onResetLayout() },
+                onLoadProfile = { menuExpanded = false; menuActions?.onLoadProfile() },
+                onSaveProfile = { menuExpanded = false; menuActions?.onSaveProfile() },
+            )
+        },
     ) { padding ->
         Column(
             modifier = Modifier
@@ -239,6 +291,115 @@ fun ConfigScreen(
             onConfirm = { value -> onColorPicked(request.field, value) },
         )
     }
+
+    encodingPicker?.let { request ->
+        ConfigChoiceDialog(
+            title = stringResource(R.string.pref_encoding_title),
+            selected = request.selected.orEmpty(),
+            options = request.options,
+            onDismissRequest = onEncodingPickerDismiss,
+            onSelected = { index ->
+                request.options.getOrNull(index)?.let(onEncodingSelected)
+            },
+        )
+    }
+
+    if (clearDataVisible) {
+        AlertDialog(
+            onDismissRequest = { clearDataVisible = false },
+            title = { Text(stringResource(android.R.string.dialog_alert_title)) },
+            text = { Text(stringResource(R.string.message_clear_data)) },
+            dismissButton = {
+                TextButton(onClick = { clearDataVisible = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    clearDataVisible = false
+                    menuActions?.onConfirmClearData()
+                }) {
+                    Text(stringResource(android.R.string.ok))
+                }
+            },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ConfigTopBar(
+    title: String,
+    isProfile: Boolean,
+    menuExpanded: Boolean,
+    onMenuExpandedChange: (Boolean) -> Unit,
+    onBack: () -> Unit,
+    onStart: () -> Unit,
+    onClearData: () -> Unit,
+    onResetSettings: () -> Unit,
+    onResetLayout: () -> Unit,
+    onLoadProfile: () -> Unit,
+    onSaveProfile: () -> Unit,
+) {
+    TopAppBar(
+        windowInsets = NoWindowInsets,
+        title = {
+            Text(
+                text = title,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        navigationIcon = {
+            IconButton(onClick = onBack) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_arrow_back),
+                    contentDescription = stringResource(androidx.appcompat.R.string.abc_action_bar_up_description),
+                )
+            }
+        },
+        actions = {
+            Box {
+                IconButton(onClick = { onMenuExpandedChange(true) }) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_more_vert),
+                        contentDescription = stringResource(R.string.more),
+                    )
+                }
+                DropdownMenu(
+                    expanded = menuExpanded,
+                    onDismissRequest = { onMenuExpandedChange(false) },
+                ) {
+                    if (!isProfile) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.START_CMD)) },
+                            onClick = onStart,
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.CLEAR_DATA_CMD)) },
+                            onClick = onClearData,
+                        )
+                    }
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.RESET_SETTINGS_CMD)) },
+                        onClick = onResetSettings,
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.RESET_LAYOUT_CMD)) },
+                        onClick = onResetLayout,
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.load_profile)) },
+                        onClick = onLoadProfile,
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.save_profile)) },
+                        onClick = onSaveProfile,
+                    )
+                }
+            }
+        },
+    )
 }
 
 @Composable

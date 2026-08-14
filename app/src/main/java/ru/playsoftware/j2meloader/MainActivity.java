@@ -22,11 +22,14 @@ import android.content.Intent;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.compose.ui.platform.ComposeView;
+import androidx.fragment.app.FragmentContainerView;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 
@@ -56,15 +59,75 @@ public class MainActivity extends AppCompatActivity {
 	);
 
 	private AppListModel appListModel;
-	private AlertDialog recoveryDialog;
+	private MainActivityComposeController mainComposeController;
 	private String lastRecoveryNoticeId;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		EdgeToEdgeCompat.enableIfSupported(this);
-		setContentView(R.layout.activity_main);
+		FrameLayout root = new FrameLayout(this);
+		root.setId(R.id.main_host_root);
+		FragmentContainerView container = new FragmentContainerView(this);
+		container.setId(R.id.container);
+		root.addView(container, new FrameLayout.LayoutParams(
+				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+		ComposeView overlay = new ComposeView(this);
+		root.addView(overlay, new FrameLayout.LayoutParams(
+				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+		setContentView(root);
 		EdgeToEdgeCompat.protectHostContent(this);
+		mainComposeController = new MainActivityComposeController(overlay, new MainHostActions() {
+			@Override
+			public void onViewMidletReports() {
+				mainComposeController.dismiss();
+				MidletFailureRecovery.acknowledgePendingFailures(MainActivity.this);
+				startActivity(new Intent(MainActivity.this, CrashReportsActivity.class));
+			}
+
+			@Override
+			public void onCloseMidletNotice() {
+				mainComposeController.dismiss();
+				MidletFailureRecovery.acknowledgePendingFailures(MainActivity.this);
+			}
+
+			@Override
+			public void onViewProcessReports() {
+				mainComposeController.dismiss();
+				ProcessExitStore.acknowledgePendingExits(MainActivity.this);
+				startActivity(new Intent(MainActivity.this, CrashReportsActivity.class));
+			}
+
+			@Override
+			public void onCloseProcessNotice() {
+				mainComposeController.dismiss();
+				ProcessExitStore.acknowledgePendingExits(MainActivity.this);
+			}
+
+			@Override
+			public void onChooseDirectory() {
+				mainComposeController.dismiss();
+				openDirLauncher.launch(null);
+			}
+
+			@Override
+			public void onCreateDirectory() {
+				mainComposeController.dismiss();
+				applyWorkDir(new File(Config.getEmulatorDir()));
+			}
+
+			@Override
+			public void onRetryPermission() {
+				mainComposeController.dismiss();
+				storagePermissionHelper.launch(MainActivity.this);
+			}
+
+			@Override
+			public void onExit() {
+				mainComposeController.dismiss();
+				finish();
+			}
+		});
 		storagePermissionHelper.launch(this);
 		appListModel = new ViewModelProvider(this).get(AppListModel.class);
 		if (savedInstanceState == null) {
@@ -92,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
 		if (isFinishing() || isDestroyed()) {
 			return;
 		}
-		if (recoveryDialog != null && recoveryDialog.isShowing()) {
+		if (mainComposeController != null && mainComposeController.isDialogVisible()) {
 			return;
 		}
 		if (getSupportFragmentManager().findFragmentByTag("installer") != null) {
@@ -114,19 +177,7 @@ public class MainActivity extends AppCompatActivity {
 					? getString(messageRes)
 					: getString(messageRes, midletName);
 
-			recoveryDialog = new AlertDialog.Builder(this)
-					.setTitle(R.string.midlet_failure_recovery_title)
-					.setMessage(message)
-					.setCancelable(false)
-					.setNeutralButton(R.string.view_reports, (dialog, which) -> {
-						MidletFailureRecovery.acknowledgePendingFailures(this);
-						startActivity(new Intent(this, CrashReportsActivity.class));
-					})
-					.setPositiveButton(R.string.close, (dialog, which) ->
-							MidletFailureRecovery.acknowledgePendingFailures(this))
-					.create();
-			recoveryDialog.setOnDismissListener(dialog -> recoveryDialog = null);
-			recoveryDialog.show();
+			mainComposeController.showMidletFailure(message);
 			return;
 		}
 
@@ -150,19 +201,7 @@ public class MainActivity extends AppCompatActivity {
 			message = getString(R.string.process_exit_recovery_message, exit.getReason());
 		}
 
-		recoveryDialog = new AlertDialog.Builder(this)
-				.setTitle(R.string.process_exit_recovery_title)
-				.setMessage(message)
-				.setCancelable(false)
-				.setNeutralButton(R.string.view_reports, (dialog, which) -> {
-					ProcessExitStore.acknowledgePendingExits(this);
-					startActivity(new Intent(this, CrashReportsActivity.class));
-				})
-				.setPositiveButton(R.string.close, (dialog, which) ->
-						ProcessExitStore.acknowledgePendingExits(this))
-				.create();
-		recoveryDialog.setOnDismissListener(dialog -> recoveryDialog = null);
-		recoveryDialog.show();
+		mainComposeController.showProcessExit(message);
 	}
 
 	private void checkAndCreateDirs() {
@@ -182,13 +221,8 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void alertDirCannotCreate(String emulatorDir) {
-		new AlertDialog.Builder(this)
-				.setTitle(R.string.error)
-				.setCancelable(false)
-				.setMessage(getString(R.string.create_apps_dir_failed, emulatorDir))
-				.setNegativeButton(R.string.exit, (d, w) -> finish())
-				.setPositiveButton(R.string.choose, (d, w) -> openDirLauncher.launch(null))
-				.show();
+		mainComposeController.showDirectoryFailure(
+				getString(R.string.create_apps_dir_failed, emulatorDir));
 	}
 
 	void onPermissionResult(boolean granted) {
@@ -196,13 +230,7 @@ public class MainActivity extends AppCompatActivity {
 			checkAndCreateDirs();
 			return;
 		}
-		new AlertDialog.Builder(this)
-				.setTitle(android.R.string.dialog_alert_title)
-				.setCancelable(false)
-				.setMessage(R.string.permission_request_failed)
-				.setNegativeButton(R.string.retry, (d, w) -> storagePermissionHelper.launch(this))
-				.setPositiveButton(R.string.exit, (d, w) -> finish())
-				.show();
+		mainComposeController.showPermissionFailure();
 	}
 
 	private void onPickDirResult(Uri uri) {
@@ -219,14 +247,7 @@ public class MainActivity extends AppCompatActivity {
 	private void alertCreateDir() {
 		String emulatorDir = Config.getEmulatorDir();
 		String msg = getString(R.string.alert_msg_workdir_not_exists, emulatorDir);
-		new AlertDialog.Builder(this)
-				.setTitle(android.R.string.dialog_alert_title)
-				.setCancelable(false)
-				.setMessage(msg)
-				.setPositiveButton(R.string.create, (d, w) -> applyWorkDir(new File(emulatorDir)))
-				.setNeutralButton(R.string.change, (d, w) -> openDirLauncher.launch(emulatorDir))
-				.setNegativeButton(R.string.exit, (d, w) -> finish())
-				.show();
+		mainComposeController.showDirectoryMissing(msg);
 	}
 
 	private void applyWorkDir(File file) {

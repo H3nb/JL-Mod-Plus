@@ -9,4 +9,7 @@
     <item name="config_compose_root" type="id" />
     <item name="key_mapper_compose_root" type="id" />
     <item name="file_picker_compose_root" type="id" />
+    <item name="main_host_root" type="id" />
+    <item name="main_host_compose_root" type="id" />
+    <item name="container" type="id" />
 </resources>
