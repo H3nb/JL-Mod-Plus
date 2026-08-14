@@ -38,6 +38,16 @@ private object NoOpRuntimeMenuActions : RuntimeMenuActions {
     override fun onHideVirtualKeyboardButtons() = Unit
 }
 
+private object NoOpRuntimeHostDialogActions : RuntimeHostDialogActions {
+    override fun onMidletSelected(index: Int) = Unit
+    override fun onMidletCancelled() = Unit
+    override fun onErrorAcknowledged() = Unit
+    override fun onExitConfirmed(openSettings: Boolean) = Unit
+    override fun onHideButtonsConfirmed(states: BooleanArray) = Unit
+    override fun onSaveVirtualKeyboard(saveScreenParams: Boolean) = Unit
+    override fun onLayoutSelected(index: Int) = Unit
+}
+
 private val CanvasMenuState = RuntimeMenuUiState(
     title = "Demo MIDlet",
     isCanvas = true,
@@ -107,6 +117,41 @@ fun RuntimeFpsDialogLandscapeScreenshot() {
             onDismiss = {},
             onConfirm = {},
             onReset = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Runtime exit confirmation", widthDp = 360, heightDp = 480, showBackground = true)
+@Composable
+fun RuntimeExitConfirmationScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        RuntimeHostDialogs(
+            state = RuntimeHostDialogState.ExitConfirmation,
+            actions = NoOpRuntimeHostDialogActions,
+            onDismiss = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(
+    name = "Runtime layout selection dark landscape",
+    widthDp = 640,
+    heightDp = 360,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    showBackground = true,
+)
+@Composable
+fun RuntimeLayoutSelectionScreenshot() {
+    JLModPlusTheme(darkTheme = true) {
+        RuntimeHostDialogs(
+            state = RuntimeHostDialogState.LayoutSelection(
+                entries = listOf("Default", "Phone", "Tablet", "Custom"),
+                selected = 0,
+            ),
+            actions = NoOpRuntimeHostDialogActions,
+            onDismiss = {},
         )
     }
 }
