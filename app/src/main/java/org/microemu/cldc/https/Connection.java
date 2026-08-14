@@ -55,20 +55,11 @@ public class Connection extends org.microemu.cldc.http.Connection implements Htt
 		if (verifier == null) {
 			verifier = HttpsURLConnection.getDefaultHostnameVerifier();
 		}
-		final HostnameVerifier delegate = verifier;
 
 		securityInfo = null;
 		sslSession = null;
 		hostnameVerificationFailed = false;
-		https.setHostnameVerifier(new HostnameVerifier() {
-			@Override
-			public boolean verify(String hostname, SSLSession session) {
-				sslSession = session;
-				boolean accepted = delegate.verify(hostname, session);
-				hostnameVerificationFailed = !accepted;
-				return accepted;
-			}
-		});
+		https.setHostnameVerifier(wrapHostnameVerifier(verifier));
 		return connection;
 	}
 
@@ -89,8 +80,8 @@ public class Connection extends org.microemu.cldc.http.Connection implements Htt
 				}
 				certificate = new CertificateImpl((X509Certificate) certificates[0]);
 			}
-			String protocol = sslSession == null ? "TLS" : sslSession.getProtocol();
-			securityInfo = new SecurityInfoImpl(https.getCipherSuite(), protocol, certificate);
+			securityInfo = new SecurityInfoImpl(
+					https.getCipherSuite(), getNegotiatedProtocol(), certificate);
 			return securityInfo;
 		} catch (IOException ex) {
 			throw translateException(ex);
@@ -121,6 +112,22 @@ public class Connection extends org.microemu.cldc.http.Connection implements Htt
 		}
 		int port = cn.getURL().getPort();
 		return port == -1 ? 443 : port;
+	}
+
+	HostnameVerifier wrapHostnameVerifier(final HostnameVerifier delegate) {
+		return new HostnameVerifier() {
+			@Override
+			public boolean verify(String hostname, SSLSession session) {
+				sslSession = session;
+				boolean accepted = delegate.verify(hostname, session);
+				hostnameVerificationFailed = !accepted;
+				return accepted;
+			}
+		};
+	}
+
+	String getNegotiatedProtocol() {
+		return sslSession == null ? "TLS" : sslSession.getProtocol();
 	}
 
 	private static javax.microedition.pki.Certificate getPeerCertificate(SSLSession session) {
