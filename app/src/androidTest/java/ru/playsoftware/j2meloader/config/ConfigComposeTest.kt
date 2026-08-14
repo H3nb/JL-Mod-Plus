@@ -18,6 +18,8 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -90,6 +92,24 @@ class ConfigComposeTest {
         composeRule.onNodeWithText("OK").performClick()
 
         assertEquals("D0D0D0", picked)
+    }
+
+    @Test
+    fun colorPickerRejectsIncompleteHexValue() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigColorPickerDialog(
+                    initialHex = "D0D0D0",
+                    onDismissRequest = {},
+                    onConfirm = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("D0D0D0").performTextReplacement("ABC")
+
+        composeRule.onNodeWithText("Enter exactly six hexadecimal digits.").assertExists()
+        composeRule.onNodeWithText("OK").assertIsNotEnabled()
     }
 
     @Test

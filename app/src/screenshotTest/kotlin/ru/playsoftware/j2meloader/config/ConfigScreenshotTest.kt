@@ -114,3 +114,16 @@ fun ConfigColorPickerScreenshot() {
         )
     }
 }
+
+@PreviewTest
+@Preview(name = "Config color picker landscape", widthDp = 640, heightDp = 360, showBackground = true)
+@Composable
+fun ConfigColorPickerLandscapeScreenshot() {
+    JLModPlusTheme {
+        ConfigColorPickerDialog(
+            initialHex = "D0D0D0",
+            onDismissRequest = {},
+            onConfirm = {},
+        )
+    }
+}
