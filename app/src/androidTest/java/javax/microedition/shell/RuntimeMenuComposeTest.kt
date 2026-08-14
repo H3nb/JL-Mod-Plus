@@ -147,7 +147,7 @@ class RuntimeMenuComposeTest {
     }
 
     @Test
-    fun fpsDialog_keepsNumericConfirmAndResetValues() {
+	fun fpsDialog_keepsNumericConfirmAndResetValues() {
         var confirmed: Int? = null
         var resets = 0
         composeRule.setContent {
@@ -165,8 +165,46 @@ class RuntimeMenuComposeTest {
         assertEquals(60, confirmed)
 
         composeRule.onNodeWithText("Reset").performClick()
-        assertEquals(1, resets)
-    }
+		assertEquals(1, resets)
+	}
+
+	@Test
+	fun runtimeExitDialog_keepsCancelSeparateFromExplicitExit() {
+		val events = mutableListOf<String>()
+		composeRule.setContent {
+			JLModPlusTheme {
+				RuntimeHostDialogs(
+					state = RuntimeHostDialogState.ExitConfirmation,
+					actions = RecordingRuntimeHostDialogActions(events),
+					onDismiss = { events += "dismiss" },
+				)
+			}
+		}
+
+		composeRule.onNodeWithText("Cancel").performClick()
+		assertEquals(listOf("dismiss"), events)
+	}
+
+	@Test
+	fun runtimeLayoutDialog_dispatchesOnlyTheConfirmedSelection() {
+		val events = mutableListOf<String>()
+		composeRule.setContent {
+			JLModPlusTheme {
+				RuntimeHostDialogs(
+					state = RuntimeHostDialogState.LayoutSelection(
+						entries = listOf("Phone", "Tablet"),
+						selected = 0,
+					),
+					actions = RecordingRuntimeHostDialogActions(events),
+					onDismiss = { events += "dismiss" },
+				)
+			}
+		}
+
+		composeRule.onNodeWithText("Tablet").performClick()
+		composeRule.onNodeWithText("OK").performClick()
+		assertEquals(listOf("dismiss", "layout:1"), events)
+	}
 }
 
 private class RecordingRuntimeMenuActions(
@@ -223,4 +261,36 @@ private class RecordingRuntimeMenuActions(
     override fun onHideVirtualKeyboardButtons() {
         events += "hide"
     }
+}
+
+private class RecordingRuntimeHostDialogActions(
+	private val events: MutableList<String>,
+) : RuntimeHostDialogActions {
+	override fun onMidletSelected(index: Int) {
+		events += "midlet:$index"
+	}
+
+	override fun onMidletCancelled() {
+		events += "midlet-cancel"
+	}
+
+	override fun onErrorAcknowledged() {
+		events += "error"
+	}
+
+	override fun onExitConfirmed(openSettings: Boolean) {
+		events += if (openSettings) "settings" else "exit"
+	}
+
+	override fun onHideButtonsConfirmed(states: BooleanArray) {
+		events += "hide"
+	}
+
+	override fun onSaveVirtualKeyboard(saveScreenParams: Boolean) {
+		events += "save"
+	}
+
+	override fun onLayoutSelected(index: Int) {
+		events += "layout:$index"
+	}
 }
