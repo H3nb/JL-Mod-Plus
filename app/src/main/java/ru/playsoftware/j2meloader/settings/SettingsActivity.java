@@ -24,6 +24,7 @@ import static ru.playsoftware.j2meloader.util.Constants.PREF_THEME;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_TOOLBAR;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_VIBRATION;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
@@ -200,6 +201,7 @@ public class SettingsActivity extends AppCompatActivity {
 		return options;
 	}
 
+	@SuppressLint("DiscouragedApi")
 	private List<SettingsOption> buildLanguageOptions() {
 		List<String> tags = new ArrayList<>();
 		Resources resources = getResources();
