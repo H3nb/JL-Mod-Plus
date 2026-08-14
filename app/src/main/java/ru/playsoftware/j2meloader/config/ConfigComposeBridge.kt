@@ -844,7 +844,7 @@ private fun InputSection(
                     keyboardType = KeyboardType.Number,
                     dialogTitle = stringResource(R.string.PREF_VK_HIDE_DELAY),
                     showLabel = false,
-                    valueSuffix = "ms",
+                    valueSuffix = stringResource(R.string.PREF_UNIT_MS),
                     onValueChange = { value -> onFormChanged(form.toBuilder().vkHideDelay(value).build()) },
                 )
             }

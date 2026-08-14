@@ -40,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -141,7 +142,7 @@ private fun LoadProfileContent(
     callbacks: ConfigDialogComposeBridge.LoadProfileCallbacks,
 ) {
     var selectedIndex by rememberSaveable {
-        mutableStateOf(profiles.indexOfFirst { it.name == defaultName }.takeIf { it >= 0 } ?: -1)
+        mutableIntStateOf(profiles.indexOfFirst { it.name == defaultName }.takeIf { it >= 0 } ?: -1)
     }
     val initialProfile = profiles.getOrNull(selectedIndex)
     val initialHasConfig = initialProfile?.let { it.hasConfig() || it.hasOldConfig() } == true
