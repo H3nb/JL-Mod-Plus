@@ -30,6 +30,8 @@ import javax.microedition.pki.Certificate;
 
 public class CertificateImpl implements Certificate {
 
+	private static final char[] HEX = "0123456789ABCDEF".toCharArray();
+
 	private X509Certificate cert;
 
 	public CertificateImpl(X509Certificate cert) {
@@ -53,7 +55,17 @@ public class CertificateImpl implements Certificate {
 
 	@Override
 	public String getSerialNumber() {
-		return cert.getSerialNumber().toString();
+		byte[] serial = cert.getSerialNumber().toByteArray();
+		StringBuilder result = new StringBuilder(serial.length == 0 ? 0 : serial.length * 3 - 1);
+		for (int i = 0; i < serial.length; i++) {
+			if (i != 0) {
+				result.append(':');
+			}
+			int value = serial[i] & 0xff;
+			result.append(HEX[value >>> 4]);
+			result.append(HEX[value & 0x0f]);
+		}
+		return result.toString();
 	}
 
 	@Override
