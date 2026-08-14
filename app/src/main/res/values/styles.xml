@@ -49,6 +49,4 @@
         <item name="android:background">@drawable/bg_button</item>
     </style>
 
-    <style name="TextViewVendor" parent="Widget.AppCompat.TextView" />
-
 </resources>
