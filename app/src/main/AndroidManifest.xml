@@ -52,7 +52,8 @@
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"
             android:launchMode="singleTask"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -207,7 +208,10 @@
             android:exported="false"
             android:theme="@style/FilePickerTheme"
             android:windowSoftInputMode="stateHidden|adjustResize" />
-        <activity android:name=".config.ProfilesActivity" android:exported="false" />
+        <activity
+            android:name=".config.ProfilesActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".crashes.CrashReportsActivity"
             android:exported="false"
