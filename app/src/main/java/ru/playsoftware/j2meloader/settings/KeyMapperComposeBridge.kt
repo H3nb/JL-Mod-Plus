@@ -32,11 +32,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +54,7 @@ import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntSize
@@ -68,11 +77,20 @@ data class KeyMapperMappingDialog(
 
 data class KeyMapperUiState(
     val mappingDialog: KeyMapperMappingDialog? = null,
+    val warningVisible: Boolean = false,
 )
 
 interface KeyMapperActions {
     fun onVirtualKey(canvasKey: Int)
     fun onDismissMapping()
+
+    fun onBack() {}
+
+    fun onResetMapping() {}
+
+    fun onSaveAndExit() {}
+
+    fun onDismissWarning() {}
 }
 
 class KeyMapperComposeController(
@@ -99,12 +117,20 @@ class KeyMapperComposeController(
     }
 
     fun showMappingDialog(canvasKey: Int, currentKeyName: String) {
-        state = KeyMapperUiState(KeyMapperMappingDialog(canvasKey, currentKeyName))
+        state = state.copy(mappingDialog = KeyMapperMappingDialog(canvasKey, currentKeyName))
     }
 
     fun hideMappingDialog() {
-        state = KeyMapperUiState()
+        state = state.copy(mappingDialog = null)
         popupBounds = null
+    }
+
+    fun showMenuKeyWarning() {
+        state = state.copy(warningVisible = true)
+    }
+
+    fun hideMenuKeyWarning() {
+        state = state.copy(warningVisible = false)
     }
 
     fun isMappingDialogVisible(): Boolean = state.mappingDialog != null
@@ -139,6 +165,7 @@ internal fun keyMapperButtons(): List<KeyMapperButton> = listOf(
     KeyMapperButton(R.string.virtual_key_pound, Canvas.KEY_POUND),
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KeyMapperScreen(
     state: KeyMapperUiState,
@@ -147,38 +174,96 @@ fun KeyMapperScreen(
     onPopupBoundsChanged: (Rect) -> Unit = {},
 ) {
     val buttons = keyMapperButtons()
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-    ) {
-        Column(
+    var menuExpanded by remember { mutableStateOf(false) }
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.pref_map_keys)) },
+                navigationIcon = {
+                    IconButton(onClick = actions::onBack) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_arrow_back),
+                            contentDescription = stringResource(androidx.appcompat.R.string.abc_action_bar_up_description),
+                        )
+                    }
+                },
+                actions = {
+                    Box {
+                        IconButton(onClick = { menuExpanded = true }) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_more_vert),
+                                contentDescription = stringResource(R.string.more),
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = menuExpanded,
+                            onDismissRequest = { menuExpanded = false },
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.reset)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    actions.onResetMapping()
+                                },
+                            )
+                        }
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 8.dp, vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+                .padding(padding)
+                .background(MaterialTheme.colorScheme.background),
         ) {
-            KeyRow(buttons.subList(0, 3), actions)
-            Spacer(Modifier.height(12.dp))
-            KeyRow(buttons.subList(3, 6), actions)
-            KeyRow(buttons.subList(6, 9), actions)
-            KeyRow(buttons.subList(9, 12), actions)
-            Spacer(Modifier.height(8.dp))
-            KeyRow(buttons.subList(12, 15), actions)
-            KeyRow(buttons.subList(15, 18), actions)
-            KeyRow(buttons.subList(18, 21), actions)
-            KeyRow(buttons.subList(21, 24), actions)
-        }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                KeyRow(buttons.subList(0, 3), actions)
+                Spacer(Modifier.height(12.dp))
+                KeyRow(buttons.subList(3, 6), actions)
+                KeyRow(buttons.subList(6, 9), actions)
+                KeyRow(buttons.subList(9, 12), actions)
+                Spacer(Modifier.height(8.dp))
+                KeyRow(buttons.subList(12, 15), actions)
+                KeyRow(buttons.subList(15, 18), actions)
+                KeyRow(buttons.subList(18, 21), actions)
+                KeyRow(buttons.subList(21, 24), actions)
+            }
 
-        state.mappingDialog?.let { dialog ->
-            MappingOverlay(
-                dialog = dialog,
-                actions = actions,
-                onPopupBoundsChanged = onPopupBoundsChanged,
-            )
+            state.mappingDialog?.let { dialog ->
+                MappingOverlay(
+                    dialog = dialog,
+                    actions = actions,
+                    onPopupBoundsChanged = onPopupBoundsChanged,
+                )
+            }
         }
+    }
+    if (state.warningVisible) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = actions::onDismissWarning,
+            title = { Text(stringResource(R.string.warning)) },
+            text = { Text(stringResource(R.string.alert_map_menu)) },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = actions::onSaveAndExit) {
+                    Text(stringResource(R.string.save))
+                }
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = actions::onDismissWarning) {
+                    Text(stringResource(R.string.CANCEL_CMD))
+                }
+            },
+        )
     }
 }
 
