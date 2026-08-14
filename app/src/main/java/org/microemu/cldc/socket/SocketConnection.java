@@ -126,14 +126,14 @@ public class SocketConnection implements javax.microedition.io.SocketConnection 
 	@Override
 	public void setSocketOption(byte option, int value) throws IllegalArgumentException, IOException {
 		ensureConnectionOpen();
+		if (value < 0) {
+			throw new IllegalArgumentException("Negative socket option value");
+		}
 		switch (option) {
 			case DELAY:
 				socket.setTcpNoDelay(value == 0);
 				break;
 			case LINGER:
-				if (value < 0) {
-					throw new IllegalArgumentException("Negative linger");
-				}
 				socket.setSoLinger(value != 0, value);
 				break;
 			case KEEPALIVE:

@@ -60,6 +60,12 @@ public class SocketConnectionTest {
 				assertEquals(0, client.getSocketOption(javax.microedition.io.SocketConnection.DELAY));
 				client.setSocketOption(javax.microedition.io.SocketConnection.DELAY, 1);
 				assertEquals(1, client.getSocketOption(javax.microedition.io.SocketConnection.DELAY));
+				try {
+					client.setSocketOption(javax.microedition.io.SocketConnection.DELAY, -1);
+					fail("Expected IllegalArgumentException");
+				} catch (IllegalArgumentException expected) {
+					// MIDP rejects negative socket option values.
+				}
 			} finally {
 				client.close();
 			}
