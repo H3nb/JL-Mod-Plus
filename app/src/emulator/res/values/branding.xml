@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="about_email" translatable="false">\n\nIssues: <a href="https://github.com/H3nb/JL-Mod-Plus/issues">H3nb/JL-Mod-Plus/issues</a>\n</string>
-    <string name="about_github" translatable="false">\nGitHub: <a href="https://github.com/H3nb/JL-Mod-Plus">H3nb/JL-Mod-Plus</a>\n</string>
-    <string name="about_copyright" translatable="false">\nFork of <a href="https://github.com/woesss/JL-Mod">JL-Mod</a>\n\nCopyright 2020-2026 Yury Kharchenko</string>
+    <string name="about_github" translatable="false">GitHub: &lt;a href="https://github.com/H3nb/JL-Mod-Plus"&gt;H3nb/JL-Mod-Plus&lt;/a&gt;</string>
 </resources>

@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -63,6 +64,9 @@ data class ProfileUiItem(
 data class ProfilesUiState(
     val profiles: List<ProfileUiItem> = emptyList(),
 )
+
+/** The Activity shell already applies the host safe-area padding. */
+private val NoWindowInsets = WindowInsets(left = 0, top = 0, right = 0, bottom = 0)
 
 interface ProfilesActions {
     fun onBack()
@@ -117,8 +121,10 @@ fun ProfilesScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        contentWindowInsets = NoWindowInsets,
         topBar = {
             TopAppBar(
+                windowInsets = NoWindowInsets,
                 title = { Text(stringResource(R.string.profiles)) },
                 navigationIcon = {
                     IconButton(onClick = actions::onBack) {
