@@ -59,22 +59,42 @@ public abstract class ConnectorAdapter implements ConnectorDelegate {
 
 	@Override
 	public DataInputStream openDataInputStream(String name) throws IOException {
-		return ((InputConnection) open(name)).openDataInputStream();
+		InputConnection connection;
+		try {
+			connection = (InputConnection) open(name, Connector.READ, false);
+		} catch (ClassCastException ex) {
+			throw new IOException("Connection does not support input");
+		}
+		try {
+			return connection.openDataInputStream();
+		} finally {
+			connection.close();
+		}
 	}
 
 	@Override
 	public DataOutputStream openDataOutputStream(String name) throws IOException {
-		return ((OutputConnection) open(name)).openDataOutputStream();
+		OutputConnection connection;
+		try {
+			connection = (OutputConnection) open(name, Connector.WRITE, false);
+		} catch (ClassCastException ex) {
+			throw new IOException("Connection does not support output");
+		}
+		try {
+			return connection.openDataOutputStream();
+		} finally {
+			connection.close();
+		}
 	}
 
 	@Override
 	public InputStream openInputStream(String name) throws IOException {
-		return ((InputConnection) open(name)).openInputStream();
+		return openDataInputStream(name);
 	}
 
 	@Override
 	public OutputStream openOutputStream(String name) throws IOException {
-		return ((OutputConnection) open(name)).openOutputStream();
+		return openDataOutputStream(name);
 	}
 
 }
