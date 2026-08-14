@@ -108,7 +108,7 @@ public class SocketConnection implements javax.microedition.io.SocketConnection 
 		ensureConnectionOpen();
 		switch (option) {
 			case DELAY:
-				return socket.getTcpNoDelay() ? 1 : 0;
+				return socket.getTcpNoDelay() ? 0 : 1;
 			case LINGER:
 				int value = socket.getSoLinger();
 				return value == -1 ? 0 : value;
@@ -128,7 +128,7 @@ public class SocketConnection implements javax.microedition.io.SocketConnection 
 		ensureConnectionOpen();
 		switch (option) {
 			case DELAY:
-				socket.setTcpNoDelay(value != 0);
+				socket.setTcpNoDelay(value == 0);
 				break;
 			case LINGER:
 				if (value < 0) {
@@ -174,8 +174,9 @@ public class SocketConnection implements javax.microedition.io.SocketConnection 
 		if (inputOpened) {
 			throw new IOException("Input stream already opened");
 		}
+		InputStream input = socket.getInputStream();
 		inputOpened = true;
-		return new ManagedInputStream(socket.getInputStream());
+		return new ManagedInputStream(input);
 	}
 
 	@Override
@@ -192,8 +193,9 @@ public class SocketConnection implements javax.microedition.io.SocketConnection 
 		if (outputOpened) {
 			throw new IOException("Output stream already opened");
 		}
+		OutputStream output = socket.getOutputStream();
 		outputOpened = true;
-		return new ManagedOutputStream(socket.getOutputStream());
+		return new ManagedOutputStream(output);
 	}
 
 	@Override

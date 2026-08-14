@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 
+import javax.microedition.io.Connector;
 import javax.microedition.io.SecureConnection;
 import javax.microedition.io.SecurityInfo;
 import javax.microedition.pki.CertificateException;
@@ -53,6 +54,9 @@ public class Connection extends org.microemu.cldc.socket.SocketConnection
 	public javax.microedition.io.Connection openConnection(String name, int mode, boolean timeouts) throws IOException {
 		if (!org.microemu.cldc.http.Connection.isAllowNetworkConnection()) {
 			throw new IOException("No network");
+		}
+		if (mode != Connector.READ && mode != Connector.WRITE && mode != Connector.READ_WRITE) {
+			throw new IllegalArgumentException("Invalid connection mode: " + mode);
 		}
 
 		ConnectionEndpoint endpoint = ConnectionEndpoint.parse(name, "ssl");

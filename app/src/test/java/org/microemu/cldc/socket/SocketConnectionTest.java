@@ -52,6 +52,21 @@ public class SocketConnectionTest {
 	}
 
 	@Test
+	public void delayOptionMapsToTcpNoDelayWithMidpSemantics() throws Exception {
+		try (ServerSocket server = loopbackServer()) {
+			SocketConnection client = new SocketConnection("127.0.0.1", server.getLocalPort());
+			try (Socket accepted = server.accept()) {
+				client.setSocketOption(javax.microedition.io.SocketConnection.DELAY, 0);
+				assertEquals(0, client.getSocketOption(javax.microedition.io.SocketConnection.DELAY));
+				client.setSocketOption(javax.microedition.io.SocketConnection.DELAY, 1);
+				assertEquals(1, client.getSocketOption(javax.microedition.io.SocketConnection.DELAY));
+			} finally {
+				client.close();
+			}
+		}
+	}
+
+	@Test
 	public void streamCanOnlyBeOpenedOncePerDirection() throws Exception {
 		try (ServerSocket server = loopbackServer()) {
 			SocketConnection client = new SocketConnection("127.0.0.1", server.getLocalPort());
