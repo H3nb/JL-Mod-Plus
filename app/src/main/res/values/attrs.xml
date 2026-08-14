@@ -2,5 +2,4 @@
 <resources>
     <attr name="textColorPrimary" format="color" />
     <attr name="textColorSecondary" format="color" />
-    <attr name="bg_button" format="reference" />
 </resources>
