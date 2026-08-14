@@ -15,6 +15,7 @@
 package ru.playsoftware.j2meloader.config
 
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
@@ -82,9 +83,32 @@ class ConfigComposeTest {
         }
 
         composeRule.onNodeWithText("Screen orientation").performClick()
+        composeRule.onNodeWithText("Screen orientation").assertExists()
         composeRule.onNodeWithText("Landscape").performClick()
 
         assertEquals(3, events.lastForm?.orientation)
+    }
+
+    @Test
+    fun numericAndSliderValuesCommitFromTheirDialogs() {
+        val events = RecordingConfigEvents()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), events)
+            }
+        }
+
+        composeRule.onNodeWithText("240").performClick()
+        composeRule.onNodeWithText("Width").assertExists()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("360")
+        composeRule.onNodeWithText("OK").performClick()
+        assertEquals("360", events.lastForm?.screenWidth)
+
+        composeRule.onNodeWithText("64").performClick()
+        composeRule.onNodeWithText("Opacity").assertExists()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("128")
+        composeRule.onNodeWithText("OK").performClick()
+        assertEquals(128, events.lastForm?.vkAlpha)
     }
 
     @Test
@@ -125,6 +149,20 @@ class ConfigComposeTest {
 
         composeRule.onNodeWithText("Enter exactly six hexadecimal digits.").assertExists()
         composeRule.onNodeWithText("OK").assertIsNotEnabled()
+    }
+
+    @Test
+    fun colorRowsOpenTheDedicatedPicker() {
+        val events = RecordingConfigEvents()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), events)
+            }
+        }
+
+        composeRule.onNodeWithText("Background").performClick()
+
+        assertEquals(ConfigFormEvents.ColorField.SCREEN_BACKGROUND, events.colorPickerField)
     }
 
     @Test
@@ -189,12 +227,15 @@ class ConfigComposeTest {
         override fun onRemoveResolutionPreset(size: Size) {
             removed = size
         }
-        override fun onColorPicker(field: ConfigFormEvents.ColorField) = Unit
+        override fun onColorPicker(field: ConfigFormEvents.ColorField) {
+            colorPickerField = field
+        }
         override fun onColorPicked(field: ConfigFormEvents.ColorField, value: String) = Unit
         override fun onKeyMappings() = Unit
         override fun onEncodingPicker() = Unit
         override fun onShaderTuning() = Unit
 
         var removed: Size? = null
+        var colorPickerField: ConfigFormEvents.ColorField? = null
     }
 }

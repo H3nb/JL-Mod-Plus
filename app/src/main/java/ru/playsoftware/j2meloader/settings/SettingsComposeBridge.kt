@@ -30,6 +30,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -260,19 +261,13 @@ private fun SettingsChoiceRow(
     onClick: () -> Unit,
 ) {
     ListItem(
+        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
         headlineContent = { Text(title) },
         supportingContent = {
             Text(
                 text = selected.label,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-            )
-        },
-        trailingContent = {
-            Icon(
-                painter = painterResource(R.drawable.ic_list),
-                contentDescription = title,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         },
         modifier = Modifier
@@ -301,6 +296,7 @@ private fun SettingsChoiceDialog(
             LazyColumn(modifier = Modifier.heightIn(max = 360.dp)) {
                 items(options, key = { it.value }) { option ->
                     ListItem(
+                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
                         headlineContent = { Text(option.label) },
                         leadingContent = {
                             RadioButton(
@@ -318,11 +314,7 @@ private fun SettingsChoiceDialog(
                 }
             }
         },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(android.R.string.cancel))
-            }
-        },
+        confirmButton = {},
     )
 }
 
@@ -332,6 +324,7 @@ private fun SettingsSwitchRow(
     onCheckedChange: (Boolean) -> Unit,
 ) {
     ListItem(
+        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
         headlineContent = { Text(setting.title) },
         supportingContent = setting.summary?.let { summary -> { Text(summary) } },
         trailingContent = {
@@ -353,6 +346,7 @@ private fun SettingsActionRow(
     onClick: () -> Unit,
 ) {
     ListItem(
+        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
         headlineContent = { Text(title) },
         supportingContent = summary?.let { value ->
             {
