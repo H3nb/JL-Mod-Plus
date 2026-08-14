@@ -208,3 +208,32 @@ fun ConfigChoiceDialogScreenshot() {
         )
     }
 }
+
+@PreviewTest
+@Preview(name = "Config screen presets", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun ConfigScreenPresetDialogScreenshot() {
+    JLModPlusTheme {
+        ScreenPresetDialog(
+            presets = listOf(Size(240, 320), Size(360, 640), Size(640, 360)),
+            removablePresets = listOf(Size(360, 640)),
+            selectedPreset = Size(240, 320),
+            onDismissRequest = {},
+            onSelected = {},
+            onRemove = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Config system properties landscape", widthDp = 640, heightDp = 360, showBackground = true)
+@Composable
+fun ConfigSystemPropertiesLandscapeScreenshot() {
+    JLModPlusTheme {
+        ConfigSystemPropertiesDialog(
+            initialValue = "microedition.platform: Sony Ericsson C510i\nmicroedition.profiles: MIDP2.0\n",
+            onDismissRequest = {},
+            onConfirm = {},
+        )
+    }
+}

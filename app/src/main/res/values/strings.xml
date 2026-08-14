@@ -59,7 +59,8 @@
     <string name="file_picker_title">File Picker</string>
     <string name="file_picker_select_file">Select File</string>
     <string name="file_picker_select_folder">Select Folder</string>
-    <string name="file_picker_navigate_back">Navigate Back</string>
+    <string name="file_picker_navigate_back">Back to Parent Folder</string>
+    <string name="file_picker_cancel">Cancel</string>
     <string name="file_picker_search">Search</string>
     <string name="file_picker_sort">Sort</string>
     <string name="file_picker_sort_type">Folders First</string>
@@ -71,7 +72,6 @@
     <string name="file_picker_current_folder">Current Folder</string>
     <string name="file_picker_parent_folder">Parent Folder</string>
     <string name="file_picker_parent_marker" translatable="false">..</string>
-    <string name="file_picker_selected_mark" translatable="false">✓</string>
     <string name="file_picker_file">File</string>
     <string name="file_picker_storage_volume">Storage Volume</string>
     <string name="file_picker_empty">No Matching Files</string>
@@ -126,6 +126,8 @@
     <string name="pref_app_sort_name">Name</string>
     <string name="pref_app_sort_title">App Sort Order</string>
     <string name="pref_app_sort_vendor">Vendor</string>
+    <string name="pref_app_sort_ascending">Ascending</string>
+    <string name="pref_app_sort_descending">Descending</string>
     <string name="pref_apps_view">View</string>
     <string name="pref_audio_title">Audio</string>
     <string name="PREF_BACKGROUND">Background</string>
@@ -195,6 +197,7 @@
     <string name="pref_soundbank_title">Soundbank</string>
     <string name="PREF_SYS_PROPS">System properties</string>
     <string name="PREF_SYS_PROPS_HINT" translatable="false">microedition.platform: Sony Ericsson C510i\nmicroedition.profiles: MIDP2.0</string>
+    <string name="config_system_properties_empty">No custom properties</string>
     <string name="pref_theme_auto_battery">Auto, by Battery Saver</string>
     <string name="pref_theme_auto_time">Auto, by time of day</string>
     <string name="pref_theme_default" translatable="false">light</string>

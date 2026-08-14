@@ -180,6 +180,37 @@ class ConfigComposeTest {
         assertEquals(Size(360, 640), events.removed)
     }
 
+    @Test
+    fun hideDelayUsesMillisecondsAndSystemPropertiesCommitOnlyOnConfirm() {
+        val events = RecordingConfigEvents()
+        val baseState = sampleState()
+        val state = ConfigUiState(
+            baseState.form.toBuilder().vkHideDelay("250").build(),
+            baseState.screenPresets,
+            baseState.fontPresets,
+            baseState.skins,
+            baseState.soundBanks,
+            baseState.shaders,
+            baseState.removableScreenPresets,
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(state, events)
+            }
+        }
+
+        composeRule.onNodeWithText("ms").assertExists()
+        composeRule.onNodeWithText("Edit").performClick()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("microedition.platform: updated\n")
+        composeRule.onNodeWithText("Cancel").performClick()
+        assertEquals(null, events.lastForm)
+
+        composeRule.onNodeWithText("Edit").performClick()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("microedition.platform: updated\n")
+        composeRule.onNodeWithText("OK").performClick()
+        assertEquals("microedition.platform: updated\n", events.lastForm?.systemProperties)
+    }
+
     private fun sampleState(): ConfigUiState {
         val form = ConfigFormState.builder()
             .screenWidth("240")

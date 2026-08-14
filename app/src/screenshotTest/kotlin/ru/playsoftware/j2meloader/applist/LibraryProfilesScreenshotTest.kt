@@ -121,6 +121,24 @@ fun LibraryAppActionsScreenshot() {
 }
 
 @PreviewTest
+@Preview(name = "Library overflow dialog", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun LibraryOverflowDialogScreenshot() {
+    JLModPlusTheme {
+        LibraryOverflowDialog(
+            onDismiss = {},
+            onAbout = {},
+            onSettings = {},
+            onProfiles = {},
+            onHelp = {},
+            onCrashReports = {},
+            onSaveLog = {},
+            onExit = {},
+        )
+    }
+}
+
+@PreviewTest
 @Preview(name = "Profiles content", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
 fun ProfilesContentScreenshot() {

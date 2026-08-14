@@ -78,6 +78,8 @@
     <string name="pref_app_sort_name">Nama</string>
     <string name="pref_app_sort_title">Bentuk Urutan Aplikasi</string>
     <string name="pref_app_sort_vendor">Pihak jual</string>
+    <string name="pref_app_sort_ascending">Menaik</string>
+    <string name="pref_app_sort_descending">Menurun</string>
     <string name="PREF_BACKGROUND">Latar belakang</string>
     <string name="pref_button_shape_oval">Lonjong</string>
     <string name="pref_button_shape_rect">Kotak</string>
@@ -137,6 +139,7 @@
     <string name="PREF_SHADER_FILTER">Pencorak:</string>
     <string name="PREF_SHOW_FPS">Tampilkan FPS</string>
     <string name="PREF_SYS_PROPS">Properti sistem</string>
+    <string name="config_system_properties_empty">Tidak ada properti khusus</string>
     <string name="pref_theme_auto_battery">Otomatis, ikut Penghemat Baterai</string>
     <string name="pref_theme_auto_time">Otomatis, ikut waktu harinya</string>
     <string name="pref_theme_light">Terang</string>
@@ -209,7 +212,8 @@
     <string name="file_picker_title">Pemilih Berkas</string>
     <string name="file_picker_select_file">Pilih Berkas</string>
     <string name="file_picker_select_folder">Pilih Folder</string>
-    <string name="file_picker_navigate_back">Kembali</string>
+    <string name="file_picker_navigate_back">Kembali ke Folder Induk</string>
+    <string name="file_picker_cancel">Batal</string>
     <string name="file_picker_search">Cari</string>
     <string name="file_picker_sort">Urutkan</string>
     <string name="file_picker_sort_type">Folder Dahulu</string>
@@ -221,7 +225,6 @@
     <string name="file_picker_current_folder">Folder Saat Ini</string>
     <string name="file_picker_parent_folder">Folder Induk</string>
     <string name="file_picker_parent_marker" translatable="false">..</string>
-    <string name="file_picker_selected_mark" translatable="false">✓</string>
     <string name="file_picker_file">Berkas</string>
     <string name="file_picker_storage_volume">Volume Penyimpanan</string>
     <string name="file_picker_empty">Tidak Ada Berkas yang Cocok</string>
