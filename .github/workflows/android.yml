@@ -68,6 +68,21 @@ jobs:
           :app:assembleEmulatorDebug
           :app:assembleEmulatorDebugAndroidTest
 
+      - name: Upload lint reports
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: JL-Mod-Plus-lint-reports
+          path: |
+            app/build/reports/lint-results-*.html
+            app/build/reports/lint-results-*.xml
+            app/build/reports/lint-results-*.sarif
+            dexlib/build/reports/lint-results-*.html
+            dexlib/build/reports/lint-results-*.xml
+            dexlib/build/reports/lint-results-*.sarif
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Upload arm64 emulator debug APK
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:

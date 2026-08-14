@@ -1,6 +1,6 @@
 # Third-party provenance and license inventory
 
-This file is the canonical provenance ledger for third-party software currently bundled by JL-Mod Plus. It was audited against `alpha` at `cf7542e602c280b2caa677a0cbbc2b37c8bdc08a` and the `emulatorDebugRuntimeClasspath` captured by Android CI #130.
+This file is the canonical provenance ledger for third-party software currently bundled by JL-Mod Plus. It was audited against `alpha` at `8b16918dda43f01af4d16d6bfb23b43efbe7d486` and the local `emulatorDebugRuntimeClasspath` on 2026-08-14.
 
 The app-facing copy is `app/src/main/assets/licenses.html`, reachable from **About -> Licenses**. Source-file copyright headers, published artifact metadata, and upstream license files remain authoritative when they are more specific than this summary.
 
@@ -21,13 +21,13 @@ This ledger is a provenance/notice inventory for the current project state, not 
 
 ## Material Symbols assets
 
-The Crash Reports Compose pilot uses four official Material Symbols Android VectorDrawable assets. They
+The Compose host UI uses eleven official Material Symbols Android VectorDrawable assets. They
 were downloaded with `scripts/material-symbols.py` as developer-time inputs and are committed locally;
 Gradle and CI do not access the network to obtain them.
 
 | Local resources | Source | Variant | Revision / SHA-256 | License |
 | --- | --- | --- | --- | --- |
-| `ic_arrow_back.xml`, `ic_content_copy.xml`, `ic_share.xml`, `ic_delete_report.xml` | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | `50f0603134ce7b70b2d71b686cc13e8b57ccb74c`; arrow back `cd1f5a1109c07c79ac3e52a9a1ae8ab14be7a3bff7f7bc3559f7088d60eca3aa`; content copy `f83b9c4f3f51b5a64365e6222498934cbccaead05fd720d4cabcb175eb50d2d4`; share `e68cc51976886c8395e3317d8bea0b8324e98d365ed8a15fc8c67767c2241931`; delete `8589dfd0ab9c15182ba5698bd38c4502ad8f476dbd983e840a709a24281211fa` | Apache-2.0 |
+| `ic_arrow_back.xml`, `ic_check.xml`, `ic_content_copy.xml`, `ic_share.xml`, `ic_delete_report.xml`, `ic_file_picker_folder.xml`, `ic_file_picker_file.xml`, `ic_file_picker_storage.xml`, `ic_arrow_downward.xml`, `ic_arrow_upward.xml`, `ic_palette.xml` | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | All assets are pinned to their recorded source revisions; check SHA-256 `b38c518aa15e88cb9f2eda91aa5617427530ae9359a1b2c8ab96f7d16bffabe7`, arrow downward `eac1ec84bb5251dfd1dec10a3db387363594eb20247bacaddf1c033ff954094d`, arrow upward `b398faf24ea12a63b2c4f708d8be24c8ae3714d277ea82da8f405cd066873d0a`, and palette `77da392d239862f1c1a4f736d698debcffe9477eacb49947b41210360af23b92`, all revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 
 ### `third_party/` audit
 
@@ -39,7 +39,7 @@ The table below covers direct runtime dependencies and license-significant trans
 
 | Runtime component / coordinates | Origin | License / notice |
 | --- | --- | --- |
-| `androidx.*` (Activity, Core, AppCompat, Fragment, Lifecycle, Room, Preference, RecyclerView, ConstraintLayout, Transition and transitives) | Android Open Source Project / AndroidX | Apache-2.0 |
+| `androidx.*` (Activity, Core, AppCompat, Fragment, Lifecycle, Room, Preference, ConstraintLayout, Transition and transitives) | Android Open Source Project / AndroidX | Apache-2.0 |
 | Kotlin stdlib and `kotlinx-coroutines-*`, plus `org.jetbrains:annotations` | JetBrains Kotlin projects | Apache-2.0 |
 | `com.google.android.material:material` | Material Components for Android | Apache-2.0 |
 | `com.google.code.gson:gson` | Google Gson | Apache-2.0 |
@@ -49,7 +49,6 @@ The table below covers direct runtime dependencies and license-significant trans
 | `org.checkerframework:checker-qual` | Checker Framework | MIT |
 | `io.github.nikita36078:ffmpeg-kit:6.0.LTS` | Maven SCM / source: `https://github.com/nikita36078/ffmpeg-kit` | Published POM declares LGPL-3.0. FFmpegKit documentation notes GPL-3.0 applies when GPL libraries are enabled; FFmpeg and bundled external libraries retain their own upstream terms. |
 | `com.arthenica:smart-exception-java:0.2.1`, `smart-exception-common:0.2.1` | `https://github.com/tanersener/smart-exception` | BSD-3-Clause |
-| `com.github.woesss:filepicker:4.4.0` | `https://github.com/woesss/filepicker`, fork of NoNonsense-FilePicker | MPL-2.0; source for the distributed fork is available at the origin URL |
 | `com.github.nikita36078:pngj:2.2.3` | `https://github.com/nikita36078/pngj`, fork of `leonbloy/pngj` | Apache-2.0 |
 | `junit:junit:4.12` (runtime transitive of current PNGJ artifact) | JUnit 4, `https://github.com/junit-team/junit4` | EPL-1.0; source is available at the origin URL |
 | `org.hamcrest:hamcrest-core:1.3` (runtime transitive of JUnit 4.12) | Hamcrest | BSD-3-Clause |
@@ -58,13 +57,18 @@ The table below covers direct runtime dependencies and license-significant trans
 | `net.lingala.zip4j:zip4j:2.11.6` | `https://github.com/srikanth-lingala/zip4j` | Apache-2.0 |
 | `org.ow2.asm:asm:9.6` | OW2 ASM | BSD-3-Clause |
 
+`androidx.constraintlayout:constraintlayout:2.0.1` is present only as a
+transitive dependency of `com.google.android.material:material:1.11.0` in the
+current runtime graph. It has no direct Gradle alias or source XML consumer;
+the direct dependency was removed after the mapper migration and must not be
+reintroduced solely because the transitive artifact remains.
+
 ## Source availability for reciprocal-license components
 
 The following public source locations are recorded so recipients can trace the source corresponding to reciprocal-license components in the current distribution:
 
 - Nokia M3G / JSR-184 EPL-1.0 source: `https://github.com/H3nb/JL-Mod-Plus/tree/alpha/app/src/main/cpp/m3g/src`
 - FFmpegKit 6.0.LTS LGPL-3.0 source/SCM: `https://github.com/nikita36078/ffmpeg-kit`
-- FilePicker MPL-2.0 source: `https://github.com/woesss/filepicker`
 - JUnit 4 EPL-1.0 source: `https://github.com/junit-team/junit4`
 
 The exact Maven coordinate or pinned submodule revision in this ledger identifies the artifact/source snapshot used by JL-Mod Plus where such a pin exists. These source links are notice/provenance pointers; they do not replace the upstream license terms or any additional redistribution obligations those licenses may impose.

@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -196,7 +195,7 @@ private fun KeyRow(
             Button(
                 onClick = { actions.onVirtualKey(button.canvasKey) },
                 modifier = Modifier.size(width = 72.dp, height = 52.dp),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 contentPadding = PaddingValues(0.dp),
             ) {
                 Text(

@@ -181,6 +181,7 @@ dependencies {
     implementation(libs.androidx.collection)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.material3.adaptive)
     implementation(libs.androidx.compose.runtime)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.core.ktx)
@@ -188,8 +189,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.common)
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.preference.ktx)
-    implementation(libs.androidx.recyclerview)
     annotationProcessor(libs.androidx.room.compiler)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.rxjava2)
@@ -201,7 +203,6 @@ dependencies {
         exclude(group = "com.google.auto.service", module = "auto-service")
     }
     implementation(libs.ffmpeg.kit)
-    implementation(libs.filepicker)
     implementation(libs.pngj)
     implementation(libs.rx.android)
 

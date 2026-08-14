@@ -20,35 +20,9 @@
         <item name="windowNoTitle">true</item>
     </style>
 
-    <style name="FilePickerTheme" parent="Theme.AppCompat.DayNight.DialogWhenLarge">
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorPrimaryDark">@color/primary_dark</item>
-        <item name="colorAccent">@color/file_picker_accent</item>
-        <item name="android:colorBackground">@color/background</item>
-        <item name="android:windowBackground">@color/background</item>
-        <item name="nnf_toolbarTheme">@style/ThemeOverlay.AppCompat.Dark.ActionBar</item>
-        <item name="alertDialogTheme">@style/FilePickerAlertDialogTheme</item>
-        <item name="nnf_separator_color">@color/nnf_separator_color</item>
-        <item name="nnf_save_icon_color">?attr/colorAccent</item>
-        <item name="nnf_dir_icon_color">?attr/colorAccent</item>
-        <item name="nnf_list_item_divider">?attr/dividerHorizontal</item>
-
-        <!-- These are important. Handled by toolbar. -->
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
-        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
-    </style>
-
-    <style name="FilePickerAlertDialogTheme" parent="Theme.AppCompat.DayNight.Dialog.Alert">
-        <item name="colorAccent">@color/file_picker_accent</item>
-        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
-    </style>
-
     <style name="ButtonStyle" parent="Widget.AppCompat.Button.Colored">
         <item name="elevation">1dp</item>
         <item name="android:background">@drawable/bg_button</item>
     </style>
-
-    <style name="TextViewVendor" parent="Widget.AppCompat.TextView" />
 
 </resources>

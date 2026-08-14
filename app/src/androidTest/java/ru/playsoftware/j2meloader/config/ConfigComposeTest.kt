@@ -15,9 +15,12 @@
 package ru.playsoftware.j2meloader.config
 
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -71,6 +74,44 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun configurationDropdownsExposeTheirOptionsAndUpdateTheDraft() {
+        val events = RecordingConfigEvents()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), events)
+            }
+        }
+
+        composeRule.onNodeWithText("Screen orientation").performClick()
+        composeRule.onNodeWithText("Screen orientation").assertExists()
+        composeRule.onNodeWithText("Landscape").performClick()
+
+        assertEquals(3, events.lastForm?.orientation)
+    }
+
+    @Test
+    fun numericAndSliderValuesCommitFromTheirDialogs() {
+        val events = RecordingConfigEvents()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), events)
+            }
+        }
+
+        composeRule.onNodeWithText("240").performClick()
+        composeRule.onNodeWithText("Width").assertExists()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("360")
+        composeRule.onNodeWithText("OK").performClick()
+        assertEquals("360", events.lastForm?.screenWidth)
+
+        composeRule.onNodeWithText("64").performClick()
+        composeRule.onNodeWithText("Opacity").assertExists()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("128")
+        composeRule.onNodeWithText("OK").performClick()
+        assertEquals(128, events.lastForm?.vkAlpha)
+    }
+
+    @Test
     fun colorPickerConfirmsCurrentValueWithoutExternalDependency() {
         var picked: String? = null
         composeRule.setContent {
@@ -93,6 +134,38 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun colorPickerRejectsIncompleteHexValue() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigColorPickerDialog(
+                    initialHex = "D0D0D0",
+                    onDismissRequest = {},
+                    onConfirm = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("D0D0D0").performTextReplacement("ABC")
+
+        composeRule.onNodeWithText("Enter exactly six hexadecimal digits.").assertExists()
+        composeRule.onNodeWithText("OK").assertIsNotEnabled()
+    }
+
+    @Test
+    fun colorRowsOpenTheDedicatedPicker() {
+        val events = RecordingConfigEvents()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), events)
+            }
+        }
+
+        composeRule.onNodeWithText("Background").performClick()
+
+        assertEquals(ConfigFormEvents.ColorField.SCREEN_BACKGROUND, events.colorPickerField)
+    }
+
+    @Test
     fun customScreenPresetCanBeRemovedFromPresetMenu() {
         val events = RecordingConfigEvents()
         composeRule.setContent {
@@ -105,6 +178,37 @@ class ConfigComposeTest {
         composeRule.onNodeWithContentDescription("Remove screen preset").performClick()
 
         assertEquals(Size(360, 640), events.removed)
+    }
+
+    @Test
+    fun hideDelayUsesMillisecondsAndSystemPropertiesCommitOnlyOnConfirm() {
+        val events = RecordingConfigEvents()
+        val baseState = sampleState()
+        val state = ConfigUiState(
+            baseState.form.toBuilder().vkHideDelay("250").build(),
+            baseState.screenPresets,
+            baseState.fontPresets,
+            baseState.skins,
+            baseState.soundBanks,
+            baseState.shaders,
+            baseState.removableScreenPresets,
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(state, events)
+            }
+        }
+
+        composeRule.onNodeWithText("ms").assertExists()
+        composeRule.onNodeWithText("Edit").performClick()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("microedition.platform: updated\n")
+        composeRule.onNodeWithText("Cancel").performClick()
+        assertEquals(null, events.lastForm)
+
+        composeRule.onNodeWithText("Edit").performClick()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("microedition.platform: updated\n")
+        composeRule.onNodeWithText("OK").performClick()
+        assertEquals("microedition.platform: updated\n", events.lastForm?.systemProperties)
     }
 
     private fun sampleState(): ConfigUiState {
@@ -154,12 +258,15 @@ class ConfigComposeTest {
         override fun onRemoveResolutionPreset(size: Size) {
             removed = size
         }
-        override fun onColorPicker(field: ConfigFormEvents.ColorField) = Unit
+        override fun onColorPicker(field: ConfigFormEvents.ColorField) {
+            colorPickerField = field
+        }
         override fun onColorPicked(field: ConfigFormEvents.ColorField, value: String) = Unit
         override fun onKeyMappings() = Unit
         override fun onEncodingPicker() = Unit
         override fun onShaderTuning() = Unit
 
         var removed: Size? = null
+        var colorPickerField: ConfigFormEvents.ColorField? = null
     }
 }
