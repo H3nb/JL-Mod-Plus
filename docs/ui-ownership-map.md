@@ -4,7 +4,7 @@ This document records the post-migration UI audit for JL-Mod Plus. It is a
 repository contract for future UI work: a component is not a migration target
 just because it still uses a `View`.
 
-Audit baseline: `alpha` at `8b16918dda43f01af4d16d6bfb23b43efbe7d486`.
+Audit baseline: `alpha` at `e01e7007`.
 
 ## How the audit was performed
 
@@ -29,11 +29,12 @@ Audit baseline: `alpha` at `8b16918dda43f01af4d16d6bfb23b43efbe7d486`.
 | Configuration form, color picker, screen presets | `ConfigComposeBridge.kt`, hosted by `ConfigActivity` | Compose-owned presentation; transitional Activity host | Stored formats, validation/defaults, activity results, native pickers, profile dialogs, and guest launch remain in Java. |
 | Key mapper keypad and mapping prompt | `KeyMapperComposeBridge.kt`, hosted by `KeyMapperActivity` | Compose-owned presentation; transitional Activity host | Activity-level key/touch dispatch, key codes/order, mapping serialization, and cancellation remain in Java. |
 | Crash report list/details | `CrashReportsComposeBridge.kt`, hosted by crash Activities | Compose-owned presentation; transitional Activity host | Diagnostic storage, process-isolation and share/export contracts remain in Java. |
+| Runtime host toolbar and options menu | `RuntimeMenuCompose.kt`, hosted by `MicroActivity` | Compose-owned Material 3 presentation inside the View runtime shell | Toolbar overflow, Android Back, and legacy menu-key paths share one modal popup. Popup Back only dismisses it; explicit host Exit, a MIDlet Exit command, and system task removal remain the separate termination paths. Existing callbacks remain owned by `MicroActivity`; no MIDP `Command` or input dispatch moves into Compose. |
 | Main host container | `activity_main.xml` and `MainActivity` | Transitional View host | The container is still the Fragment host for the library state machine and exported import/install intents. |
 | File picker browsing, search, sort, directory creation, and selection | `FilteredFilePickerActivity.kt`, `FilePickerController.kt`, `FilePickerCompose.kt`, `FilePickerModel.kt` | Compose-owned presentation; transitional Activity/result host | The implementation is app-owned and clean-room. It preserves raw-path `file://` results, JAR/JAD/KJX filtering, storage permissions, start paths, directory mode, cancellation, and work-directory/import callers without a picker dependency. |
-| MIDlet shell and rendering | `MicroActivity`, `activity_micro.xml`, `OverlayView`, `CanvasView`/`GlesView`, native C/C++ renderer | Permanent native/View boundary | Surface/overlay geometry, Java ME rendering, lifecycle, orientation, IME, and runtime input are compatibility-sensitive. |
-| MIDlet text input and limit-FPS dialog | `dialog_input.xml`, `DialogInputBinding`, Material `TextInputLayout` | Permanent native/View boundary | The guest runtime owns this input path and its keyboard/focus semantics. |
-| Java ME soft keys | `soft_button_bar.xml`, `ScreenSoftBar`, LCDUI command classes | Permanent native/View boundary | Soft-key hit regions and command dispatch are part of Java ME behavior. |
+| MIDlet shell and rendering | `MicroActivity`, `RuntimeHostView`, `OverlayView`, `CanvasView`/`GlesView`, native C/C++ renderer | Permanent programmatic View boundary with Compose-owned host chrome | The former XML hierarchy is reproduced directly to preserve Surface/overlay geometry. Java ME rendering, lifecycle, orientation, IME, and runtime input remain compatibility-sensitive. |
+| Runtime FPS-limit dialog | `RuntimeMenuCompose.kt`, callback to `Canvas.setLimitFps()` | Compose-owned Material 3 presentation | Digits-only input, unlimited value `0`, and reset value `-1` remain unchanged. This dialog was not the MIDP TextBox/TextField editor. |
+| Java ME Screen soft keys | `ScreenSoftBarCompose.kt` and `ScreenSoftBarPresentation.kt`, hosted by `ScreenSoftBar` | Compose-owned Material 3 presentation over a protected LCDUI event boundary | MIDP/vendor placement policy prefers `OK` for middle and `BACK`/`EXIT` for right, with remaining commands in the left menu; `Display.postEvent(CommandActionEvent)` dispatch remains unchanged. Canvas layer soft keys remain native and close/rebuild stale popups on command updates. |
 | Guest/configuration compatibility dialogs | `LoadProfileAlert`, `SaveProfileAlert`, `ShaderTuneAlert`, `Alert`, and platform `AlertDialog` calls | Intentional transitional View boundary | These dialogs still carry persistence, validation, shader, or guest-runtime contracts; migrate only with focused characterization coverage. |
 
 ## Resources removed only after consumer audit
@@ -49,12 +50,14 @@ consumer in the current tree and were removed by PR 7:
 - the unused `TextViewVendor` style (including its `values-ldrtl` override),
   `fab_material_red_500`, and stale About links for 4PDA, Crowdin, and XDA.
 
-The following are deliberately retained despite looking legacy: all layouts
-listed in the ownership map, `bg_button.xml`/`ButtonStyle` (the AppTheme
-default button style), menu icons used by `midlet_displayable.xml`, and every
-generated binding still imported by Java. The forked picker rows, theme, and
-colors were removed only after the app-owned replacement compiled and its
-contract/UI tests were added.
+The following are deliberately retained despite looking legacy:
+`bg_button.xml`/`ButtonStyle` (the AppTheme default button style), the remaining
+profile/shader dialog layouts with active binding consumers, Material Symbols
+used by Compose, and every generated binding still imported by Java. The
+runtime host/menu, FPS-input, and Screen soft-key XML files were removed only
+after their replacements preserved geometry, values, command ordering, and
+callback dispatch. The forked picker rows, theme, and colors were removed only
+after the app-owned replacement compiled and its contract/UI tests were added.
 
 ## Dependency decisions
 
@@ -66,9 +69,7 @@ contract/UI tests were added.
 | `androidx.preference` | SharedPreferences access and locale/profile/config persistence | Retain |
 | `androidx.lifecycle` | AppListModel/ViewModel, LiveData/Rx repository, installer and guest lifecycle observers | Retain |
 | `androidx.room` | App database/entity/DAO/repository | Retain |
-| `com.google.android.material:material` | `dialog_input.xml` TextInputLayout/EditText and guest input dialog | Retain |
 | Compose Material 3/runtime/foundation/UI | All migrated app-owned surfaces and screenshot tests | Retain |
-| ConstraintLayout | No current direct declaration or source XML consumer; `androidx.constraintlayout:constraintlayout:2.0.1` is still pulled transitively by Material Components 1.11.0 | Do not add a direct alias; keep the transitive artifact and its notice coverage |
 
 The file-picker and direct RecyclerView dependencies are removed because the
 new picker owns its state and Compose list. Every other retained dependency

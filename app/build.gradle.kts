@@ -196,7 +196,6 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.rxjava2)
     implementation(libs.google.gson)
-    implementation(libs.google.material)
     implementation(libs.google.oboe)
 
     implementation(libs.acra.core) {
