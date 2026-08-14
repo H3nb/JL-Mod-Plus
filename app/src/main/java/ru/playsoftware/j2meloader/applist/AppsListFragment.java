@@ -46,8 +46,6 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 
-import com.nononsenseapps.filepicker.FilePickerActivity;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -58,6 +56,7 @@ import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.config.ProfilesActivity;
 import ru.playsoftware.j2meloader.crashes.CrashReportsActivity;
+import ru.playsoftware.j2meloader.filepicker.FilePickerContract;
 import ru.playsoftware.j2meloader.filepicker.FilteredFilePickerActivity;
 import ru.playsoftware.j2meloader.settings.SettingsActivity;
 import ru.playsoftware.j2meloader.util.AppUtils;
@@ -74,10 +73,10 @@ public class AppsListFragment extends Fragment {
 				@Override
 				public Intent createIntent(@NonNull Context context, Void input) {
 					Intent intent = new Intent(context, FilteredFilePickerActivity.class);
-					intent.putExtra(FilePickerActivity.EXTRA_ALLOW_MULTIPLE, false);
-					intent.putExtra(FilePickerActivity.EXTRA_SINGLE_CLICK, true);
-					intent.putExtra(FilePickerActivity.EXTRA_ALLOW_CREATE_DIR, false);
-					intent.putExtra(FilePickerActivity.EXTRA_MODE, FilePickerActivity.MODE_FILE);
+					intent.putExtra(FilePickerContract.EXTRA_ALLOW_MULTIPLE, false);
+					intent.putExtra(FilePickerContract.EXTRA_SINGLE_CLICK, true);
+					intent.putExtra(FilePickerContract.EXTRA_ALLOW_CREATE_DIR, false);
+					intent.putExtra(FilePickerContract.EXTRA_MODE, FilePickerContract.MODE_FILE);
 					String path = preferences.getString(PREF_LAST_PATH, null);
 					if (path == null) {
 						File dir = Environment.getExternalStorageDirectory();
@@ -85,7 +84,7 @@ public class AppsListFragment extends Fragment {
 							path = dir.getAbsolutePath();
 						}
 					}
-					intent.putExtra(FilePickerActivity.EXTRA_START_PATH, path);
+					intent.putExtra(FilePickerContract.EXTRA_START_PATH, path);
 					return intent;
 				}
 
