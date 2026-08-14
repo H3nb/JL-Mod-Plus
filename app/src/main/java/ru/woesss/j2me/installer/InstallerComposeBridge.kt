@@ -298,6 +298,11 @@ private fun InstallerButtons(
             TextButton(onClick = onRun) { Text(runLabel) }
         }
         TextButton(onClick = onClose) { Text(closeLabel) }
-        Button(onClick = onPrimary) { Text(primaryLabel) }
+        Button(
+            onClick = onPrimary,
+            shape = MaterialTheme.shapes.medium,
+        ) {
+            Text(primaryLabel)
+        }
     }
 }

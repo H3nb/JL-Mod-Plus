@@ -8,4 +8,5 @@
     <item name="settings_compose_root" type="id" />
     <item name="config_compose_root" type="id" />
     <item name="key_mapper_compose_root" type="id" />
+    <item name="file_picker_compose_root" type="id" />
 </resources>
