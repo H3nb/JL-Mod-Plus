@@ -37,7 +37,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.compose.ui.platform.ComposeView;
 import androidx.preference.PreferenceManager;
@@ -179,12 +178,17 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 						}
 					}
 				}
-				new AlertDialog.Builder(this)
-						.setTitle(R.string.error)
-						.setMessage(getString(R.string.err_missing_app, storageName))
-						.setPositiveButton(R.string.exit, (d, w) -> finish())
-						.setCancelable(false)
-						.show();
+				ComposeView errorView = new ComposeView(this);
+				setContentView(errorView);
+				EdgeToEdgeCompat.protectHostContent(this);
+				ConfigErrorComposeBridge.install(errorView,
+						getString(R.string.err_missing_app, storageName),
+						new ConfigErrorActions() {
+							@Override
+							public void onExit() {
+								finish();
+							}
+						});
 				return;
 			}
 			dataDir = new File(workDir + Config.MIDLET_DATA_DIR + appDir.getName());

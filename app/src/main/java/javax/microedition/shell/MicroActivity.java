@@ -22,7 +22,6 @@ import static android.content.pm.ActivityInfo.*;
 import static ru.playsoftware.j2meloader.util.Constants.*;
 
 import android.annotation.SuppressLint;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -47,10 +46,8 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.appcompat.widget.AppCompatCheckBox;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
@@ -93,6 +90,7 @@ public class MicroActivity extends AppCompatActivity {
 	private boolean orientationLocked;
 	private MicroLoader microLoader;
 	private String appName;
+	private String[] pendingMidletClasses;
 	private InputMethodManager inputMethodManager;
 	private int menuKey;
 	private String appPath;
@@ -141,6 +139,10 @@ public class MicroActivity extends AppCompatActivity {
 		}
 		ContextHolder.setVibration(sp.getBoolean(PREF_VIBRATION, true));
 		Canvas.setScreenshotRawMode(sp.getBoolean(PREF_SCREENSHOT_SWITCH, false));
+		inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+		// Install the Compose runtime host before intent validation so early error dialogs use the
+		// same Material 3 surface as dialogs shown after a MIDlet has been loaded.
+		initializeRuntimeMenu();
 		Intent intent = getIntent();
 		if (BuildConfig.FULL_EMULATOR) {
 			appName = intent.getStringExtra(KEY_MIDLET_NAME);
@@ -182,8 +184,6 @@ public class MicroActivity extends AppCompatActivity {
 		}
 		setOrientation(orientation);
 		menuKey = microLoader.getMenuKeyCode();
-		inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-		initializeRuntimeMenu();
 		ViewCompat.requestApplyInsets(binding.getRoot());
 		binding.getRoot().post(this::updateOverlayLocation);
 
@@ -275,6 +275,51 @@ public class MicroActivity extends AppCompatActivity {
 							showHideButtonDialog();
 						}
 					}
+				},
+				new RuntimeHostDialogActions() {
+					@Override
+					public void onMidletSelected(int index) {
+						String[] classes = pendingMidletClasses;
+						pendingMidletClasses = null;
+						if (classes != null && index >= 0 && index < classes.length && microLoader != null) {
+							microLoader.loadMidlet(classes[index], appName);
+						}
+					}
+
+					@Override
+					public void onMidletCancelled() {
+						pendingMidletClasses = null;
+						MidletThread.notifyDestroyed();
+					}
+
+					@Override
+					public void onErrorAcknowledged() {
+						MidletThread.notifyDestroyed();
+					}
+
+					@Override
+					public void onExitConfirmed(boolean openSettings) {
+						hideSoftInput();
+						if (openSettings) {
+							Config.openSettings(MicroActivity.this, appName, appPath);
+						}
+						MidletThread.destroyApp();
+					}
+
+					@Override
+					public void onHideButtonsConfirmed(boolean[] states) {
+						applyHiddenButtons(states);
+					}
+
+					@Override
+					public void onSaveVirtualKeyboard(boolean saveScreenParams) {
+						applyVirtualKeyboardSave(saveScreenParams);
+					}
+
+					@Override
+					public void onLayoutSelected(int index) {
+						applyLayoutSelection(index);
+					}
 				});
 		setRuntimeToolbarHeight((int) getToolBarHeight());
 		updateRuntimeMenuState(current);
@@ -353,8 +398,14 @@ public class MicroActivity extends AppCompatActivity {
 			inputTarget.requestFocus();
 			IBinder windowToken = inputTarget.getWindowToken();
 			if (windowToken != null) {
-				inputMethodManager.toggleSoftInputFromWindow(
-						windowToken, InputMethodManager.SHOW_FORCED, 0);
+				inputMethodManager.restartInput(inputTarget);
+				boolean imeVisible = lastWindowInsets != null
+						&& lastWindowInsets.isVisible(WindowInsetsCompat.Type.ime());
+				if (imeVisible) {
+					inputMethodManager.hideSoftInputFromWindow(windowToken, 0);
+				} else {
+					inputMethodManager.showSoftInput(inputTarget, InputMethodManager.SHOW_IMPLICIT);
+				}
 			}
 		}, 100L);
 	}
@@ -399,24 +450,21 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void showMidletDialog(String[] names, final String[] classes) {
-		AlertDialog.Builder builder = new AlertDialog.Builder(this)
-				.setTitle(R.string.select_dialog_title)
-				.setItems(names, (d, n) -> microLoader.loadMidlet(classes[n], appName))
-				.setOnCancelListener(d -> {
-					d.dismiss();
-					MidletThread.notifyDestroyed();
-				});
-		builder.show();
+		pendingMidletClasses = classes.clone();
+		if (runtimeMenuController != null) {
+			runtimeMenuController.showMidletDialog(names.clone());
+		} else {
+			pendingMidletClasses = null;
+			MidletThread.notifyDestroyed();
+		}
 	}
 
 	void showErrorDialog(String message) {
-		AlertDialog.Builder builder = new AlertDialog.Builder(this)
-				.setIcon(android.R.drawable.ic_dialog_alert)
-				.setTitle(R.string.error)
-				.setMessage(message)
-				.setPositiveButton(android.R.string.ok, (d, w) -> MidletThread.notifyDestroyed());
-		builder.setOnCancelListener(dialogInterface -> MidletThread.notifyDestroyed());
-		builder.show();
+		if (runtimeMenuController != null) {
+			runtimeMenuController.showErrorDialog(message);
+		} else {
+			MidletThread.notifyDestroyed();
+		}
 	}
 
 	private float getToolBarHeight() {
@@ -558,20 +606,9 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	public void showExitConfirmation() {
-		AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
-		DialogInterface.OnClickListener onClickListener = (d, w) -> {
-			hideSoftInput();
-			if (w == DialogInterface.BUTTON_NEUTRAL) {
-				Config.openSettings(this, appName, appPath);
-			}
-			MidletThread.destroyApp();
-		};
-		alertBuilder.setTitle(R.string.CONFIRMATION_REQUIRED)
-				.setMessage(R.string.FORCE_CLOSE_CONFIRMATION)
-				.setPositiveButton(android.R.string.ok, onClickListener)
-				.setNeutralButton(R.string.action_settings, onClickListener)
-				.setNegativeButton(android.R.string.cancel, null);
-		alertBuilder.create().show();
+		if (runtimeMenuController != null) {
+			runtimeMenuController.showExitConfirmation();
+		}
 	}
 
 	@Override
@@ -721,65 +758,65 @@ public class MicroActivity extends AppCompatActivity {
 
 	private void showHideButtonDialog() {
 		final VirtualKeyboard vk = ContextHolder.getVk();
+		if (vk == null || runtimeMenuController == null) {
+			return;
+		}
 		boolean[] states = vk.getKeysVisibility();
-		boolean[] changed = states.clone();
-		new AlertDialog.Builder(this)
-				.setTitle(R.string.hide_buttons)
-				.setMultiChoiceItems(vk.getKeyNames(), changed, (dialog, which, isChecked) -> {})
-				.setPositiveButton(android.R.string.ok, (dialog, which) -> {
-					if (!Arrays.equals(states, changed)) {
-						vk.setKeysVisibility(changed);
-						showSaveVkAlert(true);
-					}
-				}).show();
+		runtimeMenuController.showHideButtons(vk.getKeyNames(), states);
 	}
 
 	private void showSaveVkAlert(boolean keepScreenPreferred) {
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setTitle(R.string.CONFIRMATION_REQUIRED);
-		builder.setMessage(R.string.pref_vk_save_alert);
-		builder.setNegativeButton(android.R.string.no, null);
-		AlertDialog dialog = builder.create();
-
 		final VirtualKeyboard vk = ContextHolder.getVk();
-		if (vk.isPhone()) {
-			AppCompatCheckBox cb = new AppCompatCheckBox(this);
-			cb.setText(R.string.opt_save_screen_params);
-			cb.setChecked(keepScreenPreferred);
-
-			TypedValue out = new TypedValue();
-			getTheme().resolveAttribute(androidx.appcompat.R.attr.dialogPreferredPadding, out, true);
-			int paddingH = getResources().getDimensionPixelOffset(out.resourceId);
-			int paddingT = getResources().getDimensionPixelOffset(androidx.appcompat.R.dimen.abc_dialog_padding_top_material);
-			dialog.setView(cb, paddingH, paddingT, paddingH, 0);
-
-			dialog.setButton(dialog.BUTTON_POSITIVE, getText(android.R.string.yes), (d, w) -> {
-				if (cb.isChecked()) {
-					vk.saveScreenParams();
-				}
-				vk.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
-			});
-		} else {
-			dialog.setButton(dialog.BUTTON_POSITIVE, getText(android.R.string.yes), (d, w) ->
-					ContextHolder.getVk().onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM));
+		if (vk != null && runtimeMenuController != null) {
+			runtimeMenuController.showSaveVirtualKeyboard(vk.isPhone(), keepScreenPreferred);
 		}
-		dialog.show();
 	}
 
 	private void showSetLayoutDialog() {
 		final VirtualKeyboard vk = ContextHolder.getVk();
-		AlertDialog.Builder builder = new AlertDialog.Builder(this)
-				.setTitle(R.string.layout_switch)
-				.setSingleChoiceItems(R.array.PREF_VK_TYPE_ENTRIES, vk.getLayout(), null)
-				.setPositiveButton(android.R.string.ok, (d, w) -> {
-					vk.setLayout(((AlertDialog) d).getListView().getCheckedItemPosition());
-					if (vk.isPhone()) {
-						setOrientation(ORIENTATION_PORTRAIT);
-					} else {
-						setOrientation(microLoader.getOrientation());
-					}
-				});
-		builder.show();
+		if (vk == null || runtimeMenuController == null) {
+			return;
+		}
+		runtimeMenuController.showLayoutSelection(
+				getResources().getStringArray(R.array.PREF_VK_TYPE_ENTRIES), vk.getLayout());
+	}
+
+	private void applyHiddenButtons(boolean[] changed) {
+		VirtualKeyboard vk = ContextHolder.getVk();
+		if (vk == null || changed == null) {
+			return;
+		}
+		boolean[] states = vk.getKeysVisibility();
+		if (changed.length != states.length || Arrays.equals(states, changed)) {
+			return;
+		}
+		vk.setKeysVisibility(changed.clone());
+		showSaveVkAlert(true);
+	}
+
+	private void applyVirtualKeyboardSave(boolean saveScreenParams) {
+		VirtualKeyboard vk = ContextHolder.getVk();
+		if (vk == null) {
+			return;
+		}
+		if (saveScreenParams && vk.isPhone()) {
+			vk.saveScreenParams();
+		}
+		vk.onLayoutChanged(VirtualKeyboard.TYPE_CUSTOM);
+	}
+
+	private void applyLayoutSelection(int index) {
+		VirtualKeyboard vk = ContextHolder.getVk();
+		if (vk == null || index < 0 || index >= getResources()
+				.getStringArray(R.array.PREF_VK_TYPE_ENTRIES).length) {
+			return;
+		}
+		vk.setLayout(index);
+		if (vk.isPhone()) {
+			setOrientation(ORIENTATION_PORTRAIT);
+		} else if (microLoader != null) {
+			setOrientation(microLoader.getOrientation());
+		}
 	}
 
 	@Override

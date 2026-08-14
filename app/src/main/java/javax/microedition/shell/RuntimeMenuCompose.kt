@@ -92,13 +92,15 @@ interface RuntimeMenuActions {
  * Interop owner for the app-owned runtime chrome. Rendering, input dispatch, and MIDP
  * Displayable transitions deliberately remain in [MicroActivity].
  */
-class RuntimeMenuComposeController(
+class RuntimeMenuComposeController @JvmOverloads constructor(
     composeView: ComposeView,
     private val actions: RuntimeMenuActions,
+    private val hostDialogActions: RuntimeHostDialogActions? = null,
 ) {
     private var state by mutableStateOf(RuntimeMenuUiState())
     private var menuVisible by mutableStateOf(false)
     private var limitFpsVisible by mutableStateOf(false)
+    private var hostDialogState by mutableStateOf<RuntimeHostDialogState?>(null)
     private val menuActions = object : RuntimeMenuActions by actions {
         override fun onLimitFps() {
             closeMenu()
@@ -130,6 +132,13 @@ class RuntimeMenuComposeController(
                             limitFpsVisible = false
                             actions.onResetFpsLimit()
                         },
+                    )
+                }
+                if (hostDialogActions != null) {
+                    RuntimeHostDialogs(
+                        state = hostDialogState,
+                        actions = hostDialogActions,
+                        onDismiss = { hostDialogState = null },
                     )
                 }
             }
@@ -165,6 +174,30 @@ class RuntimeMenuComposeController(
 
     fun closeMenu() {
         menuVisible = false
+    }
+
+    fun showMidletDialog(names: Array<String>) {
+        hostDialogState = RuntimeHostDialogState.MidletSelection(names.toList())
+    }
+
+    fun showErrorDialog(message: String) {
+        hostDialogState = RuntimeHostDialogState.Error(message)
+    }
+
+    fun showExitConfirmation() {
+        hostDialogState = RuntimeHostDialogState.ExitConfirmation
+    }
+
+    fun showHideButtons(names: Array<String>, checked: BooleanArray) {
+        hostDialogState = RuntimeHostDialogState.HideButtons(names.toList(), checked.copyOf())
+    }
+
+    fun showSaveVirtualKeyboard(phone: Boolean, keepScreenPreferred: Boolean) {
+        hostDialogState = RuntimeHostDialogState.SaveVirtualKeyboard(phone, keepScreenPreferred)
+    }
+
+    fun showLayoutSelection(entries: Array<String>, selected: Int) {
+        hostDialogState = RuntimeHostDialogState.LayoutSelection(entries.toList(), selected)
     }
 }
 
