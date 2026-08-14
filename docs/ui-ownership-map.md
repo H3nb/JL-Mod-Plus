@@ -67,7 +67,7 @@ default button style), file-picker colors/styles, menu icons used by
 | `androidx.room` | App database/entity/DAO/repository | Retain |
 | `com.google.android.material:material` | `dialog_input.xml` TextInputLayout/EditText and guest input dialog | Retain |
 | Compose Material 3/runtime/foundation/UI | All migrated app-owned surfaces and screenshot tests | Retain |
-| ConstraintLayout | No current direct declaration or source consumer after the mapper migration | Not reintroduced; the stale notice entry was removed |
+| ConstraintLayout | No current direct declaration or source XML consumer; `androidx.constraintlayout:constraintlayout:2.0.1` is still pulled transitively by Material Components 1.11.0 | Do not add a direct alias; keep the transitive artifact and its notice coverage |
 
 No remaining direct dependency was removed merely because a Compose surface no
 longer uses Views: every retained View/platform boundary above still has a

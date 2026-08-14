@@ -1,6 +1,6 @@
 # Third-party provenance and license inventory
 
-This file is the canonical provenance ledger for third-party software currently bundled by JL-Mod Plus. It was audited against `alpha` at `cf7542e602c280b2caa677a0cbbc2b37c8bdc08a` and the `emulatorDebugRuntimeClasspath` captured by Android CI #130.
+This file is the canonical provenance ledger for third-party software currently bundled by JL-Mod Plus. It was audited against `alpha` at `8b16918dda43f01af4d16d6bfb23b43efbe7d486` and the local `emulatorDebugRuntimeClasspath` on 2026-08-14.
 
 The app-facing copy is `app/src/main/assets/licenses.html`, reachable from **About -> Licenses**. Source-file copyright headers, published artifact metadata, and upstream license files remain authoritative when they are more specific than this summary.
 
@@ -21,7 +21,7 @@ This ledger is a provenance/notice inventory for the current project state, not 
 
 ## Material Symbols assets
 
-The Crash Reports Compose pilot uses four official Material Symbols Android VectorDrawable assets. They
+The Compose host UI uses four official Material Symbols Android VectorDrawable assets. They
 were downloaded with `scripts/material-symbols.py` as developer-time inputs and are committed locally;
 Gradle and CI do not access the network to obtain them.
 
@@ -57,6 +57,12 @@ The table below covers direct runtime dependencies and license-significant trans
 | `org.reactivestreams:reactive-streams` | Reactive Streams JVM API | MIT-0 |
 | `net.lingala.zip4j:zip4j:2.11.6` | `https://github.com/srikanth-lingala/zip4j` | Apache-2.0 |
 | `org.ow2.asm:asm:9.6` | OW2 ASM | BSD-3-Clause |
+
+`androidx.constraintlayout:constraintlayout:2.0.1` is present only as a
+transitive dependency of `com.google.android.material:material:1.11.0` in the
+current runtime graph. It has no direct Gradle alias or source XML consumer;
+the direct dependency was removed after the mapper migration and must not be
+reintroduced solely because the transitive artifact remains.
 
 ## Source availability for reciprocal-license components
 
