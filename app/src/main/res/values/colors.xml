@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#06143A</color>
-    <color name="file_picker_accent">#ffb62e</color>
 
     <!--light theme colors-->
     <color name="primary">#212121</color>
@@ -12,5 +11,4 @@
     <color name="text_secondary">#353535</color>
     <color name="btn_bg_normal">#2e2e2e</color>
     <color name="btn_bg_pressed">#707070</color>
-    <color name="nnf_separator_color">@color/nnf_light_separator_color</color>
 </resources>

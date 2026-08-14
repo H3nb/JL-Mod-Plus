@@ -189,7 +189,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.preference.ktx)
-    implementation(libs.androidx.recyclerview)
     annotationProcessor(libs.androidx.room.compiler)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.rxjava2)
@@ -201,7 +200,6 @@ dependencies {
         exclude(group = "com.google.auto.service", module = "auto-service")
     }
     implementation(libs.ffmpeg.kit)
-    implementation(libs.filepicker)
     implementation(libs.pngj)
     implementation(libs.rx.android)
 

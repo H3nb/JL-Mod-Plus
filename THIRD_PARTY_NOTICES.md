@@ -21,13 +21,13 @@ This ledger is a provenance/notice inventory for the current project state, not 
 
 ## Material Symbols assets
 
-The Compose host UI uses four official Material Symbols Android VectorDrawable assets. They
+The Compose host UI uses seven official Material Symbols Android VectorDrawable assets. They
 were downloaded with `scripts/material-symbols.py` as developer-time inputs and are committed locally;
 Gradle and CI do not access the network to obtain them.
 
 | Local resources | Source | Variant | Revision / SHA-256 | License |
 | --- | --- | --- | --- | --- |
-| `ic_arrow_back.xml`, `ic_content_copy.xml`, `ic_share.xml`, `ic_delete_report.xml` | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | `50f0603134ce7b70b2d71b686cc13e8b57ccb74c`; arrow back `cd1f5a1109c07c79ac3e52a9a1ae8ab14be7a3bff7f7bc3559f7088d60eca3aa`; content copy `f83b9c4f3f51b5a64365e6222498934cbccaead05fd720d4cabcb175eb50d2d4`; share `e68cc51976886c8395e3317d8bea0b8324e98d365ed8a15fc8c67767c2241931`; delete `8589dfd0ab9c15182ba5698bd38c4502ad8f476dbd983e840a709a24281211fa` | Apache-2.0 |
+| `ic_arrow_back.xml`, `ic_content_copy.xml`, `ic_share.xml`, `ic_delete_report.xml`, `ic_file_picker_folder.xml`, `ic_file_picker_file.xml`, `ic_file_picker_storage.xml` | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | `50f0603134ce7b70b2d71b686cc13e8b57ccb74c`; arrow back `cd1f5a1109c07c79ac3e52a9a1ae8ab14be7a3bff7f7bc3559f7088d60eca3aa`; content copy `f83b9c4f3f51b5a64365e6222498934cbccaead05fd720d4cabcb175eb50d2d4`; share `e68cc51976886c8395e3317d8bea0b8324e98d365ed8a15fc8c67767c2241931`; delete `8589dfd0ab9c15182ba5698bd38c4502ad8f476dbd983e840a709a24281211fa`; folder `527c6a7dd741753f91cd8f33894aa2cfac375138c852b1ebfc2b43195ebaa313`; file `5b98cf8276cf644fa1e5c8a1e06ee5e1dc1e421454c66f7f6f77de416498bdc4`; storage `ec25a2938d8ed12c94d52413336d2eea5e559ef35e75878defded6cec9e2ac64` | Apache-2.0 |
 
 ### `third_party/` audit
 
@@ -39,7 +39,7 @@ The table below covers direct runtime dependencies and license-significant trans
 
 | Runtime component / coordinates | Origin | License / notice |
 | --- | --- | --- |
-| `androidx.*` (Activity, Core, AppCompat, Fragment, Lifecycle, Room, Preference, RecyclerView, ConstraintLayout, Transition and transitives) | Android Open Source Project / AndroidX | Apache-2.0 |
+| `androidx.*` (Activity, Core, AppCompat, Fragment, Lifecycle, Room, Preference, ConstraintLayout, Transition and transitives) | Android Open Source Project / AndroidX | Apache-2.0 |
 | Kotlin stdlib and `kotlinx-coroutines-*`, plus `org.jetbrains:annotations` | JetBrains Kotlin projects | Apache-2.0 |
 | `com.google.android.material:material` | Material Components for Android | Apache-2.0 |
 | `com.google.code.gson:gson` | Google Gson | Apache-2.0 |
@@ -49,7 +49,6 @@ The table below covers direct runtime dependencies and license-significant trans
 | `org.checkerframework:checker-qual` | Checker Framework | MIT |
 | `io.github.nikita36078:ffmpeg-kit:6.0.LTS` | Maven SCM / source: `https://github.com/nikita36078/ffmpeg-kit` | Published POM declares LGPL-3.0. FFmpegKit documentation notes GPL-3.0 applies when GPL libraries are enabled; FFmpeg and bundled external libraries retain their own upstream terms. |
 | `com.arthenica:smart-exception-java:0.2.1`, `smart-exception-common:0.2.1` | `https://github.com/tanersener/smart-exception` | BSD-3-Clause |
-| `com.github.woesss:filepicker:4.4.0` | `https://github.com/woesss/filepicker`, fork of NoNonsense-FilePicker | MPL-2.0; source for the distributed fork is available at the origin URL |
 | `com.github.nikita36078:pngj:2.2.3` | `https://github.com/nikita36078/pngj`, fork of `leonbloy/pngj` | Apache-2.0 |
 | `junit:junit:4.12` (runtime transitive of current PNGJ artifact) | JUnit 4, `https://github.com/junit-team/junit4` | EPL-1.0; source is available at the origin URL |
 | `org.hamcrest:hamcrest-core:1.3` (runtime transitive of JUnit 4.12) | Hamcrest | BSD-3-Clause |
@@ -70,7 +69,6 @@ The following public source locations are recorded so recipients can trace the s
 
 - Nokia M3G / JSR-184 EPL-1.0 source: `https://github.com/H3nb/JL-Mod-Plus/tree/alpha/app/src/main/cpp/m3g/src`
 - FFmpegKit 6.0.LTS LGPL-3.0 source/SCM: `https://github.com/nikita36078/ffmpeg-kit`
-- FilePicker MPL-2.0 source: `https://github.com/woesss/filepicker`
 - JUnit 4 EPL-1.0 source: `https://github.com/junit-team/junit4`
 
 The exact Maven coordinate or pinned submodule revision in this ledger identifies the artifact/source snapshot used by JL-Mod Plus where such a pin exists. These source links are notice/provenance pointers; they do not replace the upstream license terms or any additional redistribution obligations those licenses may impose.

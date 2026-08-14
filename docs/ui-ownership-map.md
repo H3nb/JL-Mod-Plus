@@ -14,7 +14,7 @@ Audit baseline: `alpha` at `8b16918dda43f01af4d16d6bfb23b43efbe7d486`.
   mention the XML filename directly;
 - checked the current Android dependency declarations against imports and
   runtime/library boundaries;
-- treated reflection, Android resource lookup, external file-picker layouts,
+- treated reflection, Android resource lookup, file-picker result contracts,
   and Java ME runtime code as protected until their consumers were proven
   absent.
 
@@ -30,7 +30,7 @@ Audit baseline: `alpha` at `8b16918dda43f01af4d16d6bfb23b43efbe7d486`.
 | Key mapper keypad and mapping prompt | `KeyMapperComposeBridge.kt`, hosted by `KeyMapperActivity` | Compose-owned presentation; transitional Activity host | Activity-level key/touch dispatch, key codes/order, mapping serialization, and cancellation remain in Java. |
 | Crash report list/details | `CrashReportsComposeBridge.kt`, hosted by crash Activities | Compose-owned presentation; transitional Activity host | Diagnostic storage, process-isolation and share/export contracts remain in Java. |
 | Main host container | `activity_main.xml` and `MainActivity` | Transitional View host | The container is still the Fragment host for the library state machine and exported import/install intents. |
-| File picker | `FilteredFilePickerActivity`/`FilteredFilePickerFragment`, `listitem_dir.xml`, `listitem_checkable.xml`, `FilePickerTheme` | Intentional View/platform boundary | The forked FilePicker contract owns RecyclerView holders, raw-path selection, permission results, and external picker behavior. |
+| File picker browsing, search, sort, directory creation, and selection | `FilteredFilePickerActivity.kt`, `FilePickerController.kt`, `FilePickerCompose.kt`, `FilePickerModel.kt` | Compose-owned presentation; transitional Activity/result host | The implementation is app-owned and clean-room. It preserves raw-path `file://` results, JAR/JAD/KJX filtering, storage permissions, start paths, directory mode, cancellation, and work-directory/import callers without a picker dependency. |
 | MIDlet shell and rendering | `MicroActivity`, `activity_micro.xml`, `OverlayView`, `CanvasView`/`GlesView`, native C/C++ renderer | Permanent native/View boundary | Surface/overlay geometry, Java ME rendering, lifecycle, orientation, IME, and runtime input are compatibility-sensitive. |
 | MIDlet text input and limit-FPS dialog | `dialog_input.xml`, `DialogInputBinding`, Material `TextInputLayout` | Permanent native/View boundary | The guest runtime owns this input path and its keyboard/focus semantics. |
 | Java ME soft keys | `soft_button_bar.xml`, `ScreenSoftBar`, LCDUI command classes | Permanent native/View boundary | Soft-key hit regions and command dispatch are part of Java ME behavior. |
@@ -51,8 +51,10 @@ consumer in the current tree and were removed by PR 7:
 
 The following are deliberately retained despite looking legacy: all layouts
 listed in the ownership map, `bg_button.xml`/`ButtonStyle` (the AppTheme
-default button style), file-picker colors/styles, menu icons used by
-`midlet_displayable.xml`, and every generated binding still imported by Java.
+default button style), menu icons used by `midlet_displayable.xml`, and every
+generated binding still imported by Java. The forked picker rows, theme, and
+colors were removed only after the app-owned replacement compiled and its
+contract/UI tests were added.
 
 ## Dependency decisions
 
@@ -62,27 +64,29 @@ default button style), file-picker colors/styles, menu icons used by
 | `androidx.appcompat` | All host Activities, guest shell, AppCompat widgets/dialogs, locale service, and themes | Retain |
 | `androidx.fragment` | Library Fragment, installer and compatibility `DialogFragment`s | Retain |
 | `androidx.preference` | SharedPreferences access and locale/profile/config persistence | Retain |
-| `androidx.recyclerview` | FilePicker RecyclerView holders | Retain |
 | `androidx.lifecycle` | AppListModel/ViewModel, LiveData/Rx repository, installer and guest lifecycle observers | Retain |
 | `androidx.room` | App database/entity/DAO/repository | Retain |
 | `com.google.android.material:material` | `dialog_input.xml` TextInputLayout/EditText and guest input dialog | Retain |
 | Compose Material 3/runtime/foundation/UI | All migrated app-owned surfaces and screenshot tests | Retain |
 | ConstraintLayout | No current direct declaration or source XML consumer; `androidx.constraintlayout:constraintlayout:2.0.1` is still pulled transitively by Material Components 1.11.0 | Do not add a direct alias; keep the transitive artifact and its notice coverage |
 
-No remaining direct dependency was removed merely because a Compose surface no
-longer uses Views: every retained View/platform boundary above still has a
-concrete consumer. The app continues to use the shared debug keystore; this
+The file-picker and direct RecyclerView dependencies are removed because the
+new picker owns its state and Compose list. Every other retained dependency
+still has a concrete consumer. The app continues to use the shared debug
+keystore; this
 audit does not change signing, min/target SDK, NDK, or Java ME runtime
 configuration.
 
 ## Validation and manual gates
 
 The Compose screenshot suite and host contract tests cover migrated states and
-edge-to-edge roots. The final debug matrix additionally compiles/assembles the
-host and Android-test artifacts and runs lint/unit tests. A connected emulator
-or device is still required for the final smoke pass over exported JAR/JAD/KJX
-intents, raw-path/file-picker results, install/overwrite/cancel/error cleanup,
-guest launch, hardware key/touch dispatch, rotation, and IME behavior.
+edge-to-edge roots. File-picker tests additionally cover filtering, search,
+sorting (including modified time), directory navigation, and result state. The
+final debug matrix additionally compiles/assembles the host and Android-test
+artifacts and runs lint/unit tests. A connected emulator or device is still
+required for the final smoke pass over exported JAR/JAD/KJX intents, raw-path/
+file-picker results, permission recovery, install/overwrite/cancel/error
+cleanup, guest launch, hardware key/touch dispatch, rotation, and IME behavior.
 
 Navigation 3 and adaptive UI remain intentionally deferred: no current screen
 requires multiple back stacks, list-detail navigation, or a product-specific

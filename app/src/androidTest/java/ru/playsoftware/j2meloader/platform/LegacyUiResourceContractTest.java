@@ -18,7 +18,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
-import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -64,18 +63,4 @@ public class LegacyUiResourceContractTest {
 		assertNotNull(softKeys.findViewById(R.id.softRight));
 	}
 
-	@Test
-	public void filePickerRowsRemainInflatableWithPickerTheme() {
-		Context pickerContext = new ContextThemeWrapper(targetContext, R.style.FilePickerTheme);
-		LayoutInflater inflater = LayoutInflater.from(pickerContext);
-		View directory = inflater.inflate(R.layout.listitem_dir, new FrameLayout(pickerContext), false);
-		View checkable = inflater.inflate(R.layout.listitem_checkable,
-				new FrameLayout(pickerContext), false);
-
-		assertNotNull(directory.findViewById(R.id.item_icon));
-		assertNotNull(directory.findViewById(android.R.id.text1));
-		assertNotNull(checkable.findViewById(R.id.item_icon));
-		assertNotNull(checkable.findViewById(android.R.id.text1));
-		assertNotNull(checkable.findViewById(R.id.checkbox));
-	}
 }
