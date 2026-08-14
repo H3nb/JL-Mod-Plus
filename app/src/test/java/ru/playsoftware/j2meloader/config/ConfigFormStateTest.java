@@ -115,4 +115,27 @@ public class ConfigFormStateTest {
 		assertEquals("", ConfigFormState.normalizeSystemProperties(null));
 		assertFalse(ConfigFormState.normalizeSystemProperties("malformed").contains("malformed"));
 	}
+
+	@Test
+	public void presentationDraftCanChangeOneFieldWithoutResettingOthers() {
+		ConfigFormState original = ConfigFormState.builder()
+				.screenWidth("240")
+				.screenHeight("320")
+				.screenBackground("D0D0D0")
+				.graphicsMode(1)
+				.showKeyboard(true)
+				.vkAlpha(64)
+				.systemProperties("microedition.platform: test\n")
+				.build();
+
+		ConfigFormState changed = original.toBuilder().screenWidth("360").build();
+
+		assertEquals("360", changed.screenWidth);
+		assertEquals("320", changed.screenHeight);
+		assertEquals("D0D0D0", changed.screenBackground);
+		assertEquals(1, changed.graphicsMode);
+		assertTrue(changed.showKeyboard);
+		assertEquals(64, changed.vkAlpha);
+		assertEquals("microedition.platform: test\n", changed.systemProperties);
+	}
 }

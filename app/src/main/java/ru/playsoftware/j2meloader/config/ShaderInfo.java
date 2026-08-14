@@ -215,6 +215,19 @@ public class ShaderInfo implements Comparable<ShaderInfo>, Parcelable {
 		return name == null ? "unnamed" : name;
 	}
 
+	/** Returns whether this shader exposes at least one legacy tuning slider. */
+	public boolean hasTunableSettings() {
+		if (settings == null) {
+			return false;
+		}
+		for (Setting setting : settings) {
+			if (setting != null) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	@Override
 	public int compareTo(ShaderInfo o) {
 		String oName = o.name;

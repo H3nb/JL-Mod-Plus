@@ -6,4 +6,5 @@
     <item name="profiles_compose_root" type="id" />
     <item name="installer_compose_root" type="id" />
     <item name="settings_compose_root" type="id" />
+    <item name="config_compose_root" type="id" />
 </resources>
