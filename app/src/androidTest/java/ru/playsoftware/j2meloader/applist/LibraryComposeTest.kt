@@ -123,6 +123,7 @@ class LibraryComposeTest {
         composeRule.onNodeWithText("GitHub: H3nb/JL-Mod-Plus").assertIsDisplayed()
         composeRule.onNodeWithText("Maintainer: Hendra Bara'langi (H3NB)").assertIsDisplayed()
         composeRule.onNodeWithText("j2me.forever@gmail.com").assertDoesNotExist()
+        composeRule.onNodeWithText("Copyright 2020-2026 Yury Kharchenko").assertDoesNotExist()
     }
 
     private fun setLibraryContent(

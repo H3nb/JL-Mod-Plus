@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="about_github" translatable="false">GitHub: &lt;a href="https://github.com/H3nb/JL-Mod-Plus"&gt;H3nb/JL-Mod-Plus&lt;/a&gt;</string>
-    <string name="about_copyright" translatable="false">Copyright 2020-2026 Yury Kharchenko</string>
 </resources>

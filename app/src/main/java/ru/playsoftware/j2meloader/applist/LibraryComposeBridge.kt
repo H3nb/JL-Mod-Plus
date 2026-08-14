@@ -714,8 +714,6 @@ internal fun LibraryInformationDialog(
                 append(AnnotatedString.fromHtml(stringResource(R.string.about_github)))
                 append('\n')
                 append(stringResource(R.string.about_maintainer))
-                append('\n')
-                append(stringResource(R.string.about_copyright))
             }
         }
         LibraryInfoDialog.More -> {
