@@ -145,8 +145,15 @@ public class SettingsActivity extends AppCompatActivity {
 
 		List<SettingsOption> languages = buildLanguageOptions();
 		Locale locale = AppCompatDelegate.getApplicationLocales().get(0);
-		String languageValue = locale == null ? "" : locale.getLanguage();
-		SettingsOption selectedLanguage = findOption(languages, languageValue, languages.get(0));
+		String languageValue = locale == null ? "" : locale.toLanguageTag();
+		SettingsOption selectedLanguage = findOption(languages, languageValue, null);
+		if (selectedLanguage == null && locale != null) {
+			// Keep compatibility with older entries that stored only the language subtag.
+			selectedLanguage = findOption(languages, locale.getLanguage(), null);
+		}
+		if (selectedLanguage == null) {
+			selectedLanguage = languages.get(0);
+		}
 
 		List<SettingsSwitch> switches = Arrays.asList(
 				new SettingsSwitch(
