@@ -1467,8 +1467,10 @@ private enum class LibraryIconKind {
 
 private data class LibraryIconAnalysis(
     val contentBounds: Rect,
+    val framedCropBounds: Rect?,
     val kind: LibraryIconKind,
     val occupancy: Float,
+    val aspectFill: Float,
     val foregroundLuminance: Float,
     val pixelArt: Boolean,
 )
@@ -1520,25 +1522,24 @@ private fun loadLibraryIcon(
             )
         }
         if (analysis != null) {
+            val cropBounds = when (analysis.kind) {
+                LibraryIconKind.Foreground -> analysis.contentBounds
+                LibraryIconKind.Artwork -> analysis.framedCropBounds
+                LibraryIconKind.Fallback -> null
+            }
             val normalized = if (
-                analysis.kind == LibraryIconKind.Foreground &&
-                !analysis.contentBounds.isFullBitmap(fileSource)
+                cropBounds != null &&
+                !cropBounds.isFullBitmap(fileSource)
             ) {
-                runCatching {
-                    Bitmap.createBitmap(
-                        fileSource,
-                        analysis.contentBounds.left,
-                        analysis.contentBounds.top,
-                        analysis.contentBounds.width(),
-                        analysis.contentBounds.height(),
-                    )
-                }.getOrElse { fileSource }
+                fileSource.cropLibraryBounds(cropBounds)
             } else {
                 fileSource
             }
             val visualScale = if (analysis.kind == LibraryIconKind.Foreground) {
-                val sparseAmount = ((0.68f - analysis.occupancy) / 0.58f).coerceIn(0f, 1f)
-                1f + sparseAmount * LIBRARY_FOREGROUND_MAX_SCALE_BOOST
+                val sparseAmount = ((0.72f - analysis.occupancy) / 0.62f).coerceIn(0f, 1f)
+                val elongatedAmount = ((0.68f - analysis.aspectFill) / 0.50f).coerceIn(0f, 1f)
+                LIBRARY_FOREGROUND_BASE_SCALE +
+                    maxOf(sparseAmount, elongatedAmount) * LIBRARY_FOREGROUND_SCALE_RANGE
             } else {
                 1f
             }
@@ -1575,15 +1576,7 @@ private fun loadLibraryIcon(
         fallbackBounds != null &&
         !fallbackBounds.isFullBitmap(fallbackSource)
     ) {
-        runCatching {
-            Bitmap.createBitmap(
-                fallbackSource,
-                fallbackBounds.left,
-                fallbackBounds.top,
-                fallbackBounds.width(),
-                fallbackBounds.height(),
-            )
-        }.getOrElse { fallbackSource }
+        fallbackSource.cropLibraryBounds(fallbackBounds)
     } else {
         fallbackSource
     }
@@ -1591,12 +1584,32 @@ private fun loadLibraryIcon(
     return LibraryNormalizedIcon(
         bitmap = fallback.asImageBitmap(),
         filterQuality = fallback.libraryFilterQuality(),
-        // Preserve the pre-refinement fallback geometry/color in square mode.
+        // Preserve the existing fallback geometry/color so screenshot baselines stay focused
+        // on real J2ME artwork rather than the test-only missing-icon path.
         representativeColor = if (normalizeSquareIcon) fallback.findAverageVisibleColor() else null,
         kind = LibraryIconKind.Fallback,
         visualScale = 1f,
         foregroundLuminance = fallback.averageVisibleLuminance(),
     )
+}
+
+private fun Bitmap.cropLibraryBounds(bounds: Rect): Bitmap {
+    val left = bounds.left.coerceIn(0, width)
+    val top = bounds.top.coerceIn(0, height)
+    val right = bounds.right.coerceIn(left, width)
+    val bottom = bounds.bottom.coerceIn(top, height)
+    val cropWidth = right - left
+    val cropHeight = bottom - top
+    if (cropWidth <= 0 || cropHeight <= 0 || (cropWidth == width && cropHeight == height)) {
+        return this
+    }
+    return try {
+        Bitmap.createBitmap(this, left, top, cropWidth, cropHeight)
+    } catch (_: OutOfMemoryError) {
+        this
+    } catch (_: RuntimeException) {
+        this
+    }
 }
 
 private fun decodeLibraryBitmap(path: String, targetSizePx: Int): Bitmap? {
@@ -1667,14 +1680,27 @@ private fun Bitmap.analyzeLibraryIcon(): LibraryIconAnalysis? {
     val boundsArea = contentBounds.width().toLong() * contentBounds.height().toLong()
     val boundsCoverage = if (canvasArea == 0L) 1f else boundsArea.toFloat() / canvasArea.toFloat()
     val occupancy = if (boundsArea == 0L) 1f else visiblePixels.toFloat() / boundsArea.toFloat()
+    val transparentRatio = if (canvasArea == 0L) {
+        0f
+    } else {
+        1f - visiblePixels.toFloat() / canvasArea.toFloat()
+    }
     val kind = if (
-        hasAlpha() &&
+        transparentRatio >= LIBRARY_FOREGROUND_MIN_TRANSPARENT_RATIO &&
         (boundsCoverage < LIBRARY_FOREGROUND_BOUNDS_COVERAGE ||
             occupancy < LIBRARY_FOREGROUND_OCCUPANCY)
     ) {
         LibraryIconKind.Foreground
     } else {
         LibraryIconKind.Artwork
+    }
+    val maxContentDimension = maxOf(contentBounds.width(), contentBounds.height()).coerceAtLeast(1)
+    val aspectFill = minOf(contentBounds.width(), contentBounds.height()).toFloat() /
+        maxContentDimension.toFloat()
+    val framedCropBounds = if (kind == LibraryIconKind.Artwork) {
+        findFramedArtworkCropBounds()
+    } else {
+        null
     }
     val semiTransparentRatio = semiTransparentPixels.toFloat() / visiblePixels.toFloat()
     val pixelArt = maxOf(width, height) <= LIBRARY_PIXEL_ART_MAX_DIMENSION &&
@@ -1684,11 +1710,192 @@ private fun Bitmap.analyzeLibraryIcon(): LibraryIconAnalysis? {
 
     return LibraryIconAnalysis(
         contentBounds = contentBounds,
+        framedCropBounds = framedCropBounds,
         kind = kind,
         occupancy = occupancy,
+        aspectFill = aspectFill,
         foregroundLuminance = foregroundLuminance,
         pixelArt = pixelArt,
     )
+}
+
+private fun Bitmap.findFramedArtworkCropBounds(): Rect? {
+    if (width < 6 || height < 6) return null
+    val backgroundColor = findUniformCornerBackgroundColor() ?: return null
+    val distanceLimit = LIBRARY_BACKGROUND_FOREGROUND_DISTANCE *
+        LIBRARY_BACKGROUND_FOREGROUND_DISTANCE * 3
+    val row = IntArray(width)
+    var left = width
+    var top = height
+    var right = -1
+    var bottom = -1
+    var foregroundPixels = 0L
+
+    for (y in 0 until height) {
+        getPixels(row, 0, width, 0, y, width, 1)
+        for (x in row.indices) {
+            val pixel = row[x]
+            val alpha = (pixel ushr 24) and 0xff
+            if (alpha < MIN_VISIBLE_ALPHA) continue
+            if (libraryColorDistanceSquared(pixel, backgroundColor) <= distanceLimit) continue
+
+            foregroundPixels++
+            if (x < left) left = x
+            if (x > right) right = x
+            if (y < top) top = y
+            if (y > bottom) bottom = y
+        }
+    }
+    if (right < left || bottom < top || foregroundPixels == 0L) return null
+
+    val canvasArea = width.toLong() * height.toLong()
+    val foregroundRatio = foregroundPixels.toFloat() / canvasArea.toFloat()
+    if (
+        foregroundRatio < LIBRARY_FRAMED_MIN_FOREGROUND_RATIO ||
+        foregroundRatio > LIBRARY_FRAMED_MAX_FOREGROUND_RATIO
+    ) {
+        return null
+    }
+
+    val opticalBounds = Rect(left, top, right + 1, bottom + 1)
+    val opticalCoverage = opticalBounds.width().toLong() * opticalBounds.height().toLong() /
+        canvasArea.toDouble()
+    if (opticalCoverage >= LIBRARY_FRAMED_MAX_OPTICAL_COVERAGE) return null
+
+    val cropBounds = opticalBounds.toLibraryFramedCrop(width, height)
+    val cropCoverage = cropBounds.width().toLong() * cropBounds.height().toLong() /
+        canvasArea.toDouble()
+    return cropBounds.takeIf { cropCoverage <= LIBRARY_FRAMED_MAX_CROP_COVERAGE }
+}
+
+private fun Bitmap.findUniformCornerBackgroundColor(): Int? {
+    val minDimension = minOf(width, height)
+    if (minDimension < 6) return null
+
+    val patchSize = maxOf(2, minDimension / 8).coerceAtMost(minDimension)
+    val step = maxOf(1, patchSize / 4)
+    val cornerRects = arrayOf(
+        Rect(0, 0, patchSize, patchSize),
+        Rect(width - patchSize, 0, width, patchSize),
+        Rect(0, height - patchSize, patchSize, height),
+        Rect(width - patchSize, height - patchSize, width, height),
+    )
+    val cornerSamples = Array(cornerRects.size) { ArrayList<Int>() }
+    val bins = IntArray(4096)
+    var totalSamples = 0
+
+    cornerRects.forEachIndexed { index, rect ->
+        for (y in rect.top until rect.bottom step step) {
+            for (x in rect.left until rect.right step step) {
+                val pixel = getPixel(x, y)
+                val alpha = (pixel ushr 24) and 0xff
+                if (alpha < LIBRARY_BACKGROUND_SAMPLE_ALPHA) continue
+                cornerSamples[index].add(pixel)
+                bins[quantizeLibraryColor(pixel)]++
+                totalSamples++
+            }
+        }
+    }
+    if (totalSamples < LIBRARY_BACKGROUND_MIN_CORNER_SAMPLES) return null
+
+    var dominantBin = 0
+    var dominantCount = 0
+    for (index in bins.indices) {
+        if (bins[index] > dominantCount) {
+            dominantBin = index
+            dominantCount = bins[index]
+        }
+    }
+    if (dominantCount.toFloat() / totalSamples < LIBRARY_BACKGROUND_MIN_DOMINANT_BIN_RATIO) {
+        return null
+    }
+
+    val candidate = quantizedLibraryColorCenter(dominantBin)
+    val distanceLimit = LIBRARY_BACKGROUND_EDGE_DISTANCE *
+        LIBRARY_BACKGROUND_EDGE_DISTANCE * 3
+    var closeSamples = 0
+    var red = 0L
+    var green = 0L
+    var blue = 0L
+
+    for (samples in cornerSamples) {
+        if (samples.size < 2) return null
+        var cornerClose = 0
+        for (pixel in samples) {
+            if (libraryColorDistanceSquared(pixel, candidate) > distanceLimit) continue
+            cornerClose++
+            closeSamples++
+            red += AndroidColor.red(pixel)
+            green += AndroidColor.green(pixel)
+            blue += AndroidColor.blue(pixel)
+        }
+        if (cornerClose.toFloat() / samples.size < LIBRARY_BACKGROUND_MIN_PER_CORNER_RATIO) {
+            return null
+        }
+    }
+    if (closeSamples.toFloat() / totalSamples < LIBRARY_BACKGROUND_MIN_TOTAL_CORNER_RATIO) {
+        return null
+    }
+
+    return AndroidColor.rgb(
+        (red / closeSamples).toInt().coerceIn(0, 255),
+        (green / closeSamples).toInt().coerceIn(0, 255),
+        (blue / closeSamples).toInt().coerceIn(0, 255),
+    )
+}
+
+private fun Rect.toLibraryFramedCrop(canvasWidth: Int, canvasHeight: Int): Rect {
+    val subjectMargin = maxOf(
+        2,
+        (maxOf(width(), height()) * LIBRARY_FRAMED_SUBJECT_MARGIN).roundToInt(),
+    )
+    var desiredWidth = (width() + subjectMargin * 2).coerceAtMost(canvasWidth)
+    var desiredHeight = (height() + subjectMargin * 2).coerceAtMost(canvasHeight)
+    desiredWidth = maxOf(
+        desiredWidth,
+        (canvasWidth / LIBRARY_FRAMED_MAX_ZOOM).roundToInt().coerceAtLeast(1),
+    )
+    desiredHeight = maxOf(
+        desiredHeight,
+        (canvasHeight / LIBRARY_FRAMED_MAX_ZOOM).roundToInt().coerceAtLeast(1),
+    )
+
+    val canvasAspect = canvasWidth.toFloat() / canvasHeight.toFloat()
+    val desiredAspect = desiredWidth.toFloat() / desiredHeight.toFloat()
+    if (desiredAspect < canvasAspect) {
+        desiredWidth = (desiredHeight * canvasAspect).roundToInt().coerceAtMost(canvasWidth)
+    } else if (desiredAspect > canvasAspect) {
+        desiredHeight = (desiredWidth / canvasAspect).roundToInt().coerceAtMost(canvasHeight)
+    }
+
+    val centerX = (left + right) / 2f
+    val centerY = (top + bottom) / 2f
+    val cropLeft = (centerX - desiredWidth / 2f)
+        .roundToInt()
+        .coerceIn(0, canvasWidth - desiredWidth)
+    val cropTop = (centerY - desiredHeight / 2f)
+        .roundToInt()
+        .coerceIn(0, canvasHeight - desiredHeight)
+    return Rect(
+        cropLeft,
+        cropTop,
+        cropLeft + desiredWidth,
+        cropTop + desiredHeight,
+    )
+}
+
+private fun quantizedLibraryColorCenter(bin: Int): Int {
+    val red = ((bin shr 8) and 0x0f) * 17
+    val green = ((bin shr 4) and 0x0f) * 17
+    val blue = (bin and 0x0f) * 17
+    return AndroidColor.rgb(red, green, blue)
+}
+
+private fun libraryColorDistanceSquared(first: Int, second: Int): Int {
+    val red = AndroidColor.red(first) - AndroidColor.red(second)
+    val green = AndroidColor.green(first) - AndroidColor.green(second)
+    val blue = AndroidColor.blue(first) - AndroidColor.blue(second)
+    return red * red + green * green + blue * blue
 }
 
 private fun Rect.isFullBitmap(bitmap: Bitmap): Boolean {
@@ -1819,9 +2026,25 @@ private const val LIBRARY_MIN_DOMINANT_COLOR_RATIO = 0.10
 private const val LIBRARY_LIGHT_SLOT_TINT_AMOUNT = 0.12f
 private const val LIBRARY_DARK_SLOT_TINT_AMOUNT = 0.14f
 private const val LIBRARY_NEUTRAL_SLOT_TINT_AMOUNT = 0.06f
+private const val LIBRARY_FOREGROUND_TINT_SCALE = 0.60f
+private const val LIBRARY_FOREGROUND_MIN_TRANSPARENT_RATIO = 0.06f
 private const val LIBRARY_FOREGROUND_BOUNDS_COVERAGE = 0.88f
 private const val LIBRARY_FOREGROUND_OCCUPANCY = 0.80f
-private const val LIBRARY_FOREGROUND_MAX_SCALE_BOOST = 0.16f
+private const val LIBRARY_FOREGROUND_BASE_SCALE = 1.04f
+private const val LIBRARY_FOREGROUND_SCALE_RANGE = 0.18f
+private const val LIBRARY_BACKGROUND_SAMPLE_ALPHA = 240
+private const val LIBRARY_BACKGROUND_MIN_CORNER_SAMPLES = 8
+private const val LIBRARY_BACKGROUND_MIN_DOMINANT_BIN_RATIO = 0.16f
+private const val LIBRARY_BACKGROUND_MIN_PER_CORNER_RATIO = 0.55f
+private const val LIBRARY_BACKGROUND_MIN_TOTAL_CORNER_RATIO = 0.70f
+private const val LIBRARY_BACKGROUND_EDGE_DISTANCE = 42
+private const val LIBRARY_BACKGROUND_FOREGROUND_DISTANCE = 42
+private const val LIBRARY_FRAMED_MIN_FOREGROUND_RATIO = 0.035f
+private const val LIBRARY_FRAMED_MAX_FOREGROUND_RATIO = 0.72f
+private const val LIBRARY_FRAMED_MAX_OPTICAL_COVERAGE = 0.82
+private const val LIBRARY_FRAMED_SUBJECT_MARGIN = 0.10f
+private const val LIBRARY_FRAMED_MAX_ZOOM = 1.30f
+private const val LIBRARY_FRAMED_MAX_CROP_COVERAGE = 0.94
 private const val LIBRARY_PIXEL_ART_MAX_DIMENSION = 160
 private const val LIBRARY_PIXEL_ART_MAX_COLORS = 48
 private const val LIBRARY_PIXEL_ART_OPAQUE_ALPHA = 240
@@ -1840,6 +2063,7 @@ private fun adaptiveLibrarySlotColor(
     base: Color,
     accent: Color,
     foregroundLuminance: Float,
+    tintStrength: Float = 1f,
 ): Color {
     val brightness = base.red * 0.2126f + base.green * 0.7152f + base.blue * 0.0722f
     val isLightSurface = brightness >= 0.5f
@@ -1857,11 +2081,12 @@ private fun adaptiveLibrarySlotColor(
         (accent.blue * 255f).toInt(),
         hsv,
     )
+    val strength = tintStrength.coerceIn(0f, 1f)
     if (hsv[1] < LIBRARY_MIN_COLOR_SATURATION) {
         return blendLibrarySlotColor(
             contrastBase,
             accent,
-            amount = LIBRARY_NEUTRAL_SLOT_TINT_AMOUNT,
+            amount = LIBRARY_NEUTRAL_SLOT_TINT_AMOUNT * strength,
         )
     }
 
@@ -1874,9 +2099,9 @@ private fun adaptiveLibrarySlotColor(
         contrastBase,
         softenedAccent,
         amount = if (isLightSurface) {
-            LIBRARY_LIGHT_SLOT_TINT_AMOUNT
+            LIBRARY_LIGHT_SLOT_TINT_AMOUNT * strength
         } else {
-            LIBRARY_DARK_SLOT_TINT_AMOUNT
+            LIBRARY_DARK_SLOT_TINT_AMOUNT * strength
         },
     )
 }
@@ -1953,6 +2178,11 @@ private fun LibraryIconSlot(
                     base = baseContainerColor,
                     accent = representativeColor,
                     foregroundLuminance = icon.foregroundLuminance,
+                    tintStrength = if (icon.kind == LibraryIconKind.Fallback) {
+                        1f
+                    } else {
+                        LIBRARY_FOREGROUND_TINT_SCALE
+                    },
                 )
             } ?: baseContainerColor
         } else {
