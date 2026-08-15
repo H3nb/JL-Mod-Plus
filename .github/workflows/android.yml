@@ -58,6 +58,17 @@ jobs:
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x gradlew
 
+      - name: Refresh screenshot references
+        run: ./gradlew --no-daemon :app:updateEmulatorDebugScreenshotTest
+
+      - name: Upload refreshed screenshot references
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: JL-Mod-Plus-screenshot-references
+          path: app/src/screenshotTestEmulatorDebug/reference
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Lint, test, and assemble
         run: >-
           ./gradlew --no-daemon --stacktrace
