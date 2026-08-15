@@ -25,6 +25,7 @@
 
 package org.microemu.cldc.http;
 
+import org.microemu.cldc.GcfIoExceptionMapper;
 import org.microemu.microedition.io.ConnectionImplementation;
 
 import java.io.DataInputStream;
@@ -55,14 +56,16 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 	protected boolean connected;
 
 	private State state = State.CLOSED;
-	private int mode = Connector.READ_WRITE;
+	private boolean timeouts;
 	private String requestMethod = HttpConnection.GET;
+	private boolean requestParametersSent;
 	private final Map<String, String> requestProperties =
 			new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 	private boolean inputOpened;
 	private boolean inputClosed;
 	private boolean outputOpened;
 	private boolean outputClosed;
+	private ManagedOutputStream activeOutput;
 
 	protected static boolean allowNetworkConnection = true;
 
@@ -92,8 +95,9 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 		cn.setInstanceFollowRedirects(false);
 		cn.setRequestProperty("Accept-Encoding", "identity");
 
-		this.mode = mode;
+		this.timeouts = timeouts;
 		requestMethod = HttpConnection.GET;
+		requestParametersSent = false;
 		requestProperties.clear();
 		requestProperties.put("Accept-Encoding", "identity");
 		state = State.SETUP;
@@ -102,6 +106,7 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 		inputClosed = false;
 		outputOpened = false;
 		outputClosed = false;
+		activeOutput = null;
 		return this;
 	}
 
@@ -116,7 +121,7 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 
 	@Override
 	public String getURL() {
-		return isClosed() || cn == null ? null : cn.getURL().toString();
+		return isConnectionClosed() || cn == null ? null : cn.getURL().toString();
 	}
 
 	@Override
@@ -126,12 +131,12 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 
 	@Override
 	public String getHost() {
-		return isClosed() || cn == null ? null : cn.getURL().getHost();
+		return isConnectionClosed() || cn == null ? null : cn.getURL().getHost();
 	}
 
 	@Override
 	public String getFile() {
-		if (isClosed() || cn == null) {
+		if (isConnectionClosed() || cn == null) {
 			return null;
 		}
 		String path = cn.getURL().getPath();
@@ -140,17 +145,17 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 
 	@Override
 	public String getRef() {
-		return isClosed() || cn == null ? null : cn.getURL().getRef();
+		return isConnectionClosed() || cn == null ? null : cn.getURL().getRef();
 	}
 
 	@Override
 	public String getQuery() {
-		return isClosed() || cn == null ? null : cn.getURL().getQuery();
+		return isConnectionClosed() || cn == null ? null : cn.getURL().getQuery();
 	}
 
 	@Override
 	public int getPort() {
-		if (isClosed() || cn == null) {
+		if (isConnectionClosed() || cn == null) {
 			return -1;
 		}
 		int port = cn.getURL().getPort();
@@ -159,13 +164,16 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 
 	@Override
 	public String getRequestMethod() {
-		return isClosed() ? null : requestMethod;
+		return isConnectionClosed() ? null : requestMethod;
 	}
 
 	@Override
 	public synchronized void setRequestMethod(String method) throws IOException {
 		ensureConnectionOpen();
 		if (state == State.OUTPUT_OPEN) {
+			if (requestParametersSent) {
+				throw new IOException("Request parameters already sent");
+			}
 			return;
 		}
 		if (state == State.CONNECTED) {
@@ -184,13 +192,16 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 
 	@Override
 	public String getRequestProperty(String key) {
-		return isClosed() ? null : requestProperties.get(key);
+		return isConnectionClosed() ? null : requestProperties.get(key);
 	}
 
 	@Override
 	public synchronized void setRequestProperty(String key, String value) throws IOException {
 		ensureConnectionOpen();
 		if (state == State.OUTPUT_OPEN) {
+			if (requestParametersSent) {
+				throw new IOException("Request parameters already sent");
+			}
 			return;
 		}
 		if (state == State.CONNECTED) {
@@ -279,9 +290,6 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 	@Override
 	public synchronized InputStream openInputStream() throws IOException {
 		ensureConnectionOpen();
-		if (mode == Connector.WRITE) {
-			throw new IOException("Connection is write-only");
-		}
 		if (inputOpened) {
 			throw new IOException("Input stream already opened");
 		}
@@ -309,9 +317,6 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 	@Override
 	public synchronized OutputStream openOutputStream() throws IOException {
 		ensureConnectionOpen();
-		if (mode == Connector.READ) {
-			throw new IOException("Connection is read-only");
-		}
 		if (outputOpened) {
 			throw new IOException("Output stream already opened");
 		}
@@ -321,14 +326,20 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 
 		try {
 			if (HttpConnection.GET.equals(requestMethod)) {
+				// Android HttpURLConnection promotes GET-with-output to POST. Mirror
+				// that host limitation explicitly so the MIDlet never sees a logical
+				// GET while a POST is sent on the wire. A custom HTTP stack solely to
+				// preserve a rare GET request body would be a larger compatibility risk.
 				requestMethod = HttpConnection.POST;
 				cn.setRequestMethod(HttpConnection.POST);
 			}
 			cn.setDoOutput(true);
+			configureRequestStreaming();
 			OutputStream output = cn.getOutputStream();
 			outputOpened = true;
 			state = State.OUTPUT_OPEN;
-			return new ManagedOutputStream(output);
+			activeOutput = new ManagedOutputStream(output);
+			return activeOutput;
 		} catch (IOException ex) {
 			throw translateException(ex);
 		}
@@ -374,9 +385,28 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 		}
 	}
 
+	private void configureRequestStreaming() {
+		String value = requestProperties.get("Content-Length");
+		if (value == null) {
+			return;
+		}
+		try {
+			long length = Long.parseLong(value.trim());
+			if (length >= 0) {
+				cn.setFixedLengthStreamingMode(length);
+			}
+		} catch (IllegalArgumentException ignored) {
+			// Preserve host compatibility for malformed legacy headers.
+		}
+	}
+
 	protected synchronized void ensureConnected() throws IOException {
 		ensureConnectionOpen();
 		if (state == State.CONNECTED) {
+			return;
+		}
+		if (state == State.OUTPUT_OPEN && activeOutput != null && !activeOutput.isClosed()) {
+			activeOutput.close();
 			return;
 		}
 		try {
@@ -388,11 +418,16 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 	}
 
 	protected IOException translateException(IOException exception) {
-		return exception;
+		return GcfIoExceptionMapper.translate(exception, timeouts);
+	}
+
+	protected final boolean isConnectionClosed() {
+		return state == State.CLOSED;
 	}
 
 	private synchronized void markConnected() {
 		connected = true;
+		requestParametersSent = true;
 		if (state != State.CLOSED) {
 			state = State.CONNECTED;
 		}
@@ -407,7 +442,7 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 	}
 
 	private synchronized void onOutputFlushed() {
-		markConnected();
+		requestParametersSent = true;
 	}
 
 	private synchronized void onOutputClosed() throws IOException {
@@ -437,10 +472,6 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 		}
 	}
 
-	private boolean isClosed() {
-		return state == State.CLOSED;
-	}
-
 	private static void validateMode(int mode) {
 		if (mode != Connector.READ && mode != Connector.WRITE && mode != Connector.READ_WRITE) {
 			throw new IllegalArgumentException("Invalid connection mode: " + mode);
@@ -457,7 +488,7 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 
 	private final class ManagedInputStream extends InputStream {
 		private final InputStream input;
-		private boolean closed;
+		private volatile boolean closed;
 
 		ManagedInputStream(InputStream input) {
 			this.input = input;
@@ -466,25 +497,41 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 		@Override
 		public int read() throws IOException {
 			ensureStreamOpen();
-			return input.read();
+			try {
+				return input.read();
+			} catch (IOException ex) {
+				throw translateException(ex);
+			}
 		}
 
 		@Override
 		public int read(byte[] buffer, int offset, int length) throws IOException {
 			ensureStreamOpen();
-			return input.read(buffer, offset, length);
+			try {
+				return input.read(buffer, offset, length);
+			} catch (IOException ex) {
+				throw translateException(ex);
+			}
 		}
 
 		@Override
 		public long skip(long count) throws IOException {
 			ensureStreamOpen();
-			return input.skip(count);
+			try {
+				return input.skip(count);
+			} catch (IOException ex) {
+				throw translateException(ex);
+			}
 		}
 
 		@Override
 		public int available() throws IOException {
 			ensureStreamOpen();
-			return input.available();
+			try {
+				return input.available();
+			} catch (IOException ex) {
+				throw translateException(ex);
+			}
 		}
 
 		@Override
@@ -493,10 +540,19 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 				return;
 			}
 			closed = true;
+			IOException failure = null;
 			try {
 				input.close();
-			} finally {
+			} catch (IOException ex) {
+				failure = translateException(ex);
+			}
+			try {
 				onInputClosed();
+			} catch (IOException ex) {
+				failure = merge(failure, translateException(ex));
+			}
+			if (failure != null) {
+				throw failure;
 			}
 		}
 
@@ -509,29 +565,45 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 
 	private final class ManagedOutputStream extends OutputStream {
 		private final OutputStream output;
-		private boolean closed;
+		private volatile boolean closed;
 
 		ManagedOutputStream(OutputStream output) {
 			this.output = output;
 		}
 
+		boolean isClosed() {
+			return closed;
+		}
+
 		@Override
 		public void write(int value) throws IOException {
 			ensureStreamOpen();
-			output.write(value);
+			try {
+				output.write(value);
+			} catch (IOException ex) {
+				throw translateException(ex);
+			}
 		}
 
 		@Override
 		public void write(byte[] buffer, int offset, int length) throws IOException {
 			ensureStreamOpen();
-			output.write(buffer, offset, length);
+			try {
+				output.write(buffer, offset, length);
+			} catch (IOException ex) {
+				throw translateException(ex);
+			}
 		}
 
 		@Override
 		public void flush() throws IOException {
 			ensureStreamOpen();
-			output.flush();
-			onOutputFlushed();
+			try {
+				output.flush();
+				onOutputFlushed();
+			} catch (IOException ex) {
+				throw translateException(ex);
+			}
 		}
 
 		@Override
@@ -539,11 +611,20 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 			if (closed) {
 				return;
 			}
+			closed = true;
+			IOException failure = null;
 			try {
 				output.close();
-			} finally {
-				closed = true;
+			} catch (IOException ex) {
+				failure = translateException(ex);
+			}
+			try {
 				onOutputClosed();
+			} catch (IOException ex) {
+				failure = merge(failure, translateException(ex));
+			}
+			if (failure != null) {
+				throw failure;
 			}
 		}
 
@@ -552,5 +633,15 @@ public class Connection implements HttpConnection, ConnectionImplementation {
 				throw new IOException("Output stream is closed");
 			}
 		}
+	}
+
+	private static IOException merge(IOException first, IOException second) {
+		if (first == null) {
+			return second;
+		}
+		if (second != null && second != first) {
+			first.addSuppressed(second);
+		}
+		return first;
 	}
 }
