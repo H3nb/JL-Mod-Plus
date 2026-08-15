@@ -48,6 +48,19 @@ internal data class LibraryIconPresentationDecision(
 internal fun decideLibraryIconPresentation(
     input: LibraryIconPresentationInput,
 ): LibraryIconPresentationDecision {
+    // Uniform matte/backplate plus a smaller detected foreground is stronger evidence than raw
+    // color diversity that the bitmap is a contained icon rather than full-bleed cover art.
+    if (input.hasFramedCrop) {
+        return LibraryIconPresentationDecision(
+            mode = if (input.hasBackingColor) {
+                LibraryIconPresentationMode.Backed
+            } else {
+                LibraryIconPresentationMode.Subject
+            },
+            visualScale = LIBRARY_PRESENTATION_FRAMED_SUBJECT_SCALE,
+        )
+    }
+
     val highConfidenceCover =
         input.transparentRatio <= LIBRARY_PRESENTATION_COVER_MAX_TRANSPARENT_RATIO &&
             input.boundsCoverage >= LIBRARY_PRESENTATION_COVER_MIN_BOUNDS_COVERAGE &&
@@ -76,13 +89,6 @@ internal fun decideLibraryIconPresentation(
         return LibraryIconPresentationDecision(
             mode = LibraryIconPresentationMode.Backed,
             visualScale = LIBRARY_PRESENTATION_BACKED_SCALE,
-        )
-    }
-
-    if (input.hasFramedCrop) {
-        return LibraryIconPresentationDecision(
-            mode = LibraryIconPresentationMode.Subject,
-            visualScale = LIBRARY_PRESENTATION_FRAMED_SUBJECT_SCALE,
         )
     }
 
