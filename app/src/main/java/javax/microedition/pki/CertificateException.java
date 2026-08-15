@@ -1,6 +1,7 @@
 /*
  *  MicroEmulator
  *  Copyright (C) 2001-2006 Bartek Teodorczyk <barteo@barteo.net>
+ *  Modified for JL-Mod Plus to align certificate exception behavior with the MIDP contract.
  *
  *  It is licensed under the following two licenses as alternatives:
  *    1. GNU Lesser General Public License (the "LGPL") version 2.1 or any newer version
