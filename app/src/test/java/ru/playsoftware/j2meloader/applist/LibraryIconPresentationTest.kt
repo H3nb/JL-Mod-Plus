@@ -30,17 +30,17 @@ class LibraryIconPresentationTest {
         )
 
         assertEquals(LibraryIconPresentationMode.Subject, decision.mode)
-        assertTrue(decision.visualScale in 0.80f..0.90f)
+        assertTrue(decision.visualScale in 0.88f..0.92f)
     }
 
     @Test
-    fun sparseOrElongatedSubjectNeverInflatesToSlotEdges() {
-        val sparse = decideLibraryIconPresentation(
+    fun elongatedSubjectGetsMoreRoomThanDenseRoundSubject() {
+        val denseRound = decideLibraryIconPresentation(
             input(
-                transparentRatio = 0.60f,
-                boundsCoverage = 0.48f,
-                occupancy = 0.18f,
-                aspectFill = 0.92f,
+                transparentRatio = 0.22f,
+                boundsCoverage = 0.78f,
+                occupancy = 0.79f,
+                aspectFill = 0.98f,
             ),
         )
         val elongated = decideLibraryIconPresentation(
@@ -52,10 +52,34 @@ class LibraryIconPresentationTest {
             ),
         )
 
-        assertEquals(LibraryIconPresentationMode.Subject, sparse.mode)
+        assertEquals(LibraryIconPresentationMode.Subject, denseRound.mode)
         assertEquals(LibraryIconPresentationMode.Subject, elongated.mode)
-        assertTrue(sparse.visualScale in 0.80f..0.90f)
-        assertTrue(elongated.visualScale in 0.80f..0.90f)
+        assertTrue(denseRound.visualScale in 0.80f..0.84f)
+        assertEquals(0.94f, elongated.visualScale, 0.0001f)
+        assertTrue(elongated.visualScale > denseRound.visualScale)
+    }
+
+    @Test
+    fun opticalAreaNormalizationStaysWithinConservativeBounds() {
+        val extremelyDense = decideLibraryIconPresentation(
+            input(
+                transparentRatio = 0.10f,
+                boundsCoverage = 0.84f,
+                occupancy = 1f,
+                aspectFill = 1f,
+            ),
+        )
+        val extremelySparse = decideLibraryIconPresentation(
+            input(
+                transparentRatio = 0.90f,
+                boundsCoverage = 0.30f,
+                occupancy = 0.05f,
+                aspectFill = 0.10f,
+            ),
+        )
+
+        assertEquals(0.72f, extremelyDense.visualScale, 0.01f)
+        assertEquals(0.94f, extremelySparse.visualScale, 0.0001f)
     }
 
     @Test
