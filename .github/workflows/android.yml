@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   patch:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Check out branch
@@ -74,18 +73,20 @@ jobs:
             )
         }
 '''
-          if old not in text:
+          if old in text:
+              text = text.replace(old, new, 1)
+          elif new not in text:
               raise SystemExit('Landscape navigation block changed unexpectedly')
-          text = text.replace(old, new, 1)
 
           old_callback = '                onNavigationVisibilityChanged = { showNavigationBar = it },\n'
           new_callback = '''                onNavigationVisibilityChanged = { visible ->
                     if (!isLandscape) showNavigationBar = visible
                 },
 '''
-          if old_callback not in text:
+          if old_callback in text:
+              text = text.replace(old_callback, new_callback, 1)
+          elif new_callback not in text:
               raise SystemExit('Navigation visibility callback changed unexpectedly')
-          text = text.replace(old_callback, new_callback, 1)
 
           path.write_text(text)
           PY
