@@ -43,17 +43,15 @@ jobs:
       - name: Refresh screenshot references
         run: ./gradlew --no-daemon :app:updateEmulatorDebugScreenshotTest
 
-      - name: Commit references and restore CI workflow
+      - name: Commit refreshed screenshot references
         shell: bash
         env:
-          RESTORE_FROM: d668bc3bfcb25f7ae34e76e4f1b8af035d7d8d95
           HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
           set -euo pipefail
-          git show "$RESTORE_FROM:.github/workflows/android.yml" > .github/workflows/android.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add .github/workflows/android.yml app/src/screenshotTestEmulatorDebug/reference
+          git add app/src/screenshotTestEmulatorDebug/reference
           if git diff --cached --quiet; then
             echo 'No screenshot reference changes to commit.'
             exit 0
