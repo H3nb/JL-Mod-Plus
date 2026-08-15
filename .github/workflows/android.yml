@@ -23,71 +23,22 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-
+          import re
           path = Path('app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryComposeBridge.kt')
           text = path.read_text()
-
           text = text.replace('import androidx.compose.animation.expandHorizontally\n', '', 1)
           text = text.replace('import androidx.compose.animation.shrinkHorizontally\n', '', 1)
-
-          old = '''        if (isLandscape && !isImeVisible) {
-            AnimatedVisibility(
-                visible = showNavigationBar,
-                enter = fadeIn(
-                    animationSpec = tween(
-                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                        easing = FastOutSlowInEasing,
-                    ),
-                ) + expandHorizontally(
-                    animationSpec = tween(
-                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                        easing = FastOutSlowInEasing,
-                    ),
-                    expandFrom = Alignment.Start,
-                ),
-                exit = fadeOut(
-                    animationSpec = tween(
-                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                        easing = FastOutSlowInEasing,
-                    ),
-                ) + shrinkHorizontally(
-                    animationSpec = tween(
-                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                        easing = FastOutSlowInEasing,
-                    ),
-                    shrinkTowards = Alignment.Start,
-                ),
-            ) {
-                LibraryNavigationRail(
-                    selected = destination,
-                    onSelected = { selectedDestinationIndex = it.ordinal },
-                )
-            }
-        }
-'''
-          new = '''        if (isLandscape) {
-            // The side rail does not consume vertical content space, so keep it persistent.
-            LibraryNavigationRail(
-                selected = destination,
-                onSelected = { selectedDestinationIndex = it.ordinal },
-            )
-        }
-'''
-          if old in text:
-              text = text.replace(old, new, 1)
-          elif new not in text:
+          pattern = re.compile(r"        if \(isLandscape && !isImeVisible\) \{\n            AnimatedVisibility\(.*?\n        \}\n\n        Scaffold\(", re.S)
+          replacement = "        if (isLandscape) {\n            // The side rail does not consume vertical content space, so keep it persistent.\n            LibraryNavigationRail(\n                selected = destination,\n                onSelected = { selectedDestinationIndex = it.ordinal },\n            )\n        }\n\n        Scaffold("
+          text, count = pattern.subn(replacement, text, count=1)
+          if count == 0 and replacement[:-1] not in text:
               raise SystemExit('Landscape navigation block changed unexpectedly')
-
           old_callback = '                onNavigationVisibilityChanged = { showNavigationBar = it },\n'
-          new_callback = '''                onNavigationVisibilityChanged = { visible ->
-                    if (!isLandscape) showNavigationBar = visible
-                },
-'''
+          new_callback = '                onNavigationVisibilityChanged = { visible ->\n                    if (!isLandscape) showNavigationBar = visible\n                },\n'
           if old_callback in text:
               text = text.replace(old_callback, new_callback, 1)
           elif new_callback not in text:
               raise SystemExit('Navigation visibility callback changed unexpectedly')
-
           path.write_text(text)
           PY
 
