@@ -16,6 +16,7 @@ package ru.playsoftware.j2meloader.applist
 
 import android.content.res.Configuration
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.tooling.preview.Preview
 import com.android.tools.screenshot.PreviewTest
 import ru.playsoftware.j2meloader.config.ProfileActionsDialog
@@ -47,8 +48,13 @@ private val PreviewProfiles = listOf(
 fun LibraryGridScreenshot() {
     JLModPlusTheme(darkTheme = false) {
         LibraryScreen(
-            state = LibraryUiState(loading = false, apps = PreviewApps),
+            state = LibraryUiState(
+                loading = false,
+                apps = PreviewApps,
+                layout = LibraryLayout.Grid,
+            ),
             actions = NoOpLibraryActions,
+            enableIdleTitleMarquee = false,
         )
     }
 }
@@ -61,6 +67,7 @@ fun LibraryLandscapeScreenshot() {
         LibraryScreen(
             state = LibraryUiState(loading = false, apps = PreviewApps),
             actions = NoOpLibraryActions,
+            enableIdleTitleMarquee = false,
         )
     }
 }
@@ -83,6 +90,26 @@ fun LibraryListDarkScreenshot() {
                 layout = LibraryLayout.List,
             ),
             actions = NoOpLibraryActions,
+            enableIdleTitleMarquee = false,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(
+    name = "Library landscape dark",
+    widthDp = 640,
+    heightDp = 360,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    showBackground = true,
+)
+@Composable
+fun LibraryLandscapeDarkScreenshot() {
+    JLModPlusTheme(darkTheme = true) {
+        LibraryScreen(
+            state = LibraryUiState(loading = false, apps = PreviewApps),
+            actions = NoOpLibraryActions,
+            enableIdleTitleMarquee = false,
         )
     }
 }
@@ -99,6 +126,7 @@ fun LibraryFilteredEmptyScreenshot() {
                 appliedFilter = "missing",
             ),
             actions = NoOpLibraryActions,
+            enableIdleTitleMarquee = false,
         )
     }
 }
@@ -121,12 +149,14 @@ fun LibraryAppActionsScreenshot() {
 }
 
 @PreviewTest
-@Preview(name = "Library overflow dialog", widthDp = 360, heightDp = 640, showBackground = true)
+@Preview(name = "Library options", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
-fun LibraryOverflowDialogScreenshot() {
-    JLModPlusTheme {
-        LibraryOverflowDialog(
-            onDismiss = {},
+fun LibraryOptionsScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryOptionsDestination(
+            state = LibraryUiState(loading = false, apps = PreviewApps),
+            scaffoldPadding = PaddingValues(),
+            onLayoutChange = {},
             onAbout = {},
             onSettings = {},
             onProfiles = {},

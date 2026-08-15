@@ -87,6 +87,7 @@
     <string name="layout_scale_mode">Key Layout Resize Mode</string>
     <string name="layout_switch">Switch Key Layout</string>
     <string name="licenses">Licenses</string>
+    <string name="licenses_unavailable">License details are temporarily unavailable.</string>
     <string name="loading_apps">Loading apps</string>
     <string name="load_profile">Load Profile</string>
     <string name="loading_info">Loading information…</string>
@@ -105,6 +106,19 @@
     <string name="msg_immediate_mode_disabled">Immediate mode disabled due to stack overflow</string>
     <string name="msg_mascot_capsule" translatable="false">Mascot Capsule 3D!</string>
     <string name="msg_no_matches">No matches for \"%1$s\"</string>
+    <string name="library_destination_apps">Apps</string>
+    <string name="library_destination_collections">Collections</string>
+    <string name="library_destination_options">Options</string>
+    <string name="library_search_placeholder">Search apps or developers…</string>
+    <string name="library_filter_all">All</string>
+    <string name="library_filter_recently_opened">Recently opened</string>
+    <string name="library_filter_recently_added">Recently added</string>
+    <string name="library_filter_favorites">Favorites</string>
+    <string name="library_favorite_coming_soon">Favorite (coming soon)</string>
+    <string name="library_view_list">List</string>
+    <string name="library_view_grid">Grid</string>
+    <string name="library_collections_empty_title">Collections</string>
+    <string name="library_collections_empty_message">Collections and folders will be available in a future update.</string>
     <string name="msg_press_again_to_close">Press again to close</string>
     <string name="msg_unsupported_soundbank">Unsupported soundbank; using the default bank!</string>
     <string name="no_data_for_display">No data</string>

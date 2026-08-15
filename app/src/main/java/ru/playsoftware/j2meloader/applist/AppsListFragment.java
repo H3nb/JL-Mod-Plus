@@ -131,7 +131,7 @@ public class AppsListFragment extends Fragment {
 
 	@Override
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-		int storedLayout = preferences.getInt(PREF_APPS_VIEW, LAYOUT_TYPE_GRID);
+		int storedLayout = preferences.getInt(PREF_APPS_VIEW, LAYOUT_TYPE_LIST);
 		LibraryLayout layout = storedLayout == LAYOUT_TYPE_LIST
 				? LibraryLayout.List : LibraryLayout.Grid;
 		composeController = new LibraryComposeController(
