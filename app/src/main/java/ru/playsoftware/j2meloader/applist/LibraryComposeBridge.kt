@@ -2339,9 +2339,12 @@ private fun LibraryIconArtwork(
 
     val artworkModifier = when {
         iconRatio != LibraryIconRatio.Square -> Modifier.fillMaxSize()
-        icon.presentationMode == LibraryIconPresentationMode.Subject ||
-            icon.presentationMode == LibraryIconPresentationMode.Fallback ->
+        icon.presentationMode == LibraryIconPresentationMode.Subject ->
             Modifier.size(contentSize * icon.visualScale)
+        icon.presentationMode == LibraryIconPresentationMode.Fallback ->
+            Modifier
+                .size(contentSize * icon.visualScale)
+                .clip(MaterialTheme.shapes.small)
         else -> Modifier.fillMaxSize()
     }
     val contentScale = if (
