@@ -44,7 +44,6 @@ android {
 
     buildFeatures {
         compose = true
-        viewBinding = true
         prefab = true
         buildConfig = true
         resValues = true
