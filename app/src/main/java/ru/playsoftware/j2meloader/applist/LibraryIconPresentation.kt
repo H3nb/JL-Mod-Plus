@@ -63,10 +63,17 @@ internal fun decideLibraryIconPresentation(
         )
     }
 
-    if (input.hasBackingColor || input.hasFramedCrop) {
+    if (input.hasBackingColor) {
         return LibraryIconPresentationDecision(
             mode = LibraryIconPresentationMode.Backed,
             visualScale = LIBRARY_PRESENTATION_BACKED_SCALE,
+        )
+    }
+
+    if (input.hasFramedCrop) {
+        return LibraryIconPresentationDecision(
+            mode = LibraryIconPresentationMode.Subject,
+            visualScale = LIBRARY_PRESENTATION_FRAMED_SUBJECT_SCALE,
         )
     }
 
@@ -120,6 +127,7 @@ private const val LIBRARY_PRESENTATION_SUBJECT_ELONGATED_RANGE = 0.62f
 private const val LIBRARY_PRESENTATION_SUBJECT_ELONGATED_BONUS = 0.12f
 private const val LIBRARY_PRESENTATION_SUBJECT_MIN_SCALE = 0.58f
 private const val LIBRARY_PRESENTATION_SUBJECT_MAX_SCALE = 0.78f
+private const val LIBRARY_PRESENTATION_FRAMED_SUBJECT_SCALE = 0.74f
 private const val LIBRARY_PRESENTATION_BACKED_SCALE = 0.86f
 
 private const val LIBRARY_PRESENTATION_COVER_MAX_TRANSPARENT_RATIO = 0.025f
