@@ -21,7 +21,7 @@ This ledger is a provenance/notice inventory for the current project state, not 
 
 ## Material Symbols assets
 
-The Compose host UI uses thirteen official Material Symbols Android VectorDrawable assets. They
+The Compose host UI uses nineteen official Material Symbols Android VectorDrawable assets. They
 were downloaded with `scripts/material-symbols.py` as developer-time inputs and are committed locally;
 Gradle and CI do not access the network to obtain them.
 
@@ -29,6 +29,9 @@ Gradle and CI do not access the network to obtain them.
 | --- | --- | --- | --- | --- |
 | `ic_arrow_back.xml`, `ic_check.xml`, `ic_content_copy.xml`, `ic_share.xml`, `ic_delete_report.xml`, `ic_file_picker_folder.xml`, `ic_file_picker_file.xml`, `ic_file_picker_storage.xml`, `ic_arrow_downward.xml`, `ic_arrow_upward.xml`, `ic_palette.xml` | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | All assets are pinned to their recorded source revisions; check SHA-256 `b38c518aa15e88cb9f2eda91aa5617427530ae9359a1b2c8ab96f7d16bffabe7`, arrow downward `eac1ec84bb5251dfd1dec10a3db387363594eb20247bacaddf1c033ff954094d`, arrow upward `b398faf24ea12a63b2c4f708d8be24c8ae3714d277ea82da8f405cd066873d0a`, and palette `77da392d239862f1c1a4f736d698debcffe9477eacb49947b41210360af23b92`, all revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 | `ic_action_keyboard.xml`, `ic_action_screenshot.xml` | `https://github.com/google/material-design-icons` | rounded, fill 0, weight 400, grade 0, optical size 24 | SHA-256 `d3d83c5f827ad0e17b7a525194d3f4f6499c63afe5791dd253dea9846fb05435` and `4c7e957173d1c89b8a12a25d3e46150acdca1ba73fc0037a8dc1da439550e683`; revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
+| `ic_apps.xml`, `ic_collections.xml`, `ic_options.xml`, `ic_star.xml` | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | SHA-256 `6d16e921a41841590351fef37fb40fcba3b92a8846699ec6ab52d23e74e33fb3`, `527c6a7dd741753f91cd8f33894aa2cfac375138c852b1ebfc2b43195ebaa313`, `7f350bff4766520d4011185658a0c05e517aa2729e7b8113b8b28d2a8a5d45fb`, and `49d8cf2a439f18bcafc0c9e765ac04cf52edc7105f82c637c50b4e8890fd00b2`; revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
+| `ic_star_filled.xml` | `https://github.com/google/material-design-icons` | rounded, fill 1, weight 500, grade 0, optical size 24 | SHA-256 `cd856fbefa8393b8b9d7dcf84ddbe37f506eadf282637d3fa3469e0a7049eed1`; revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
+| `ic_default_midlet.xml` (source symbol: `widgets`) | `https://github.com/google/material-design-icons` | rounded, fill 0, weight 500, grade 0, optical size 48 | SHA-256 `fba03b38b04bc32237fc12237df02795971b2d5cec1261cdc6dc18f32cf81f13`; revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 
 ### `third_party/` audit
 

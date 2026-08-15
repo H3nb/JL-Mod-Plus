@@ -37,6 +37,18 @@ public final class EdgeToEdgeCompat {
 	}
 
 	/**
+	 * Enables edge-to-edge for the Compose-owned library host on every supported Android API.
+	 * The library screen applies its own safe drawing insets, so the Activity content must not be
+	 * padded as a conventional View host.
+	 */
+	public static void enableForComposeLibrary(Activity activity) {
+		WindowCompat.enableEdgeToEdge(activity.getWindow());
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+			activity.getWindow().setNavigationBarContrastEnforced(false);
+		}
+	}
+
+	/**
 	 * Keeps conventional host screens inside the unobscured area while their window remains
 	 * edge-to-edge. AppCompat's decor ActionBar is a sibling of {@code android.R.id.content}; on
 	 * Android 15+ the content frame otherwise fills the whole window and is drawn underneath both

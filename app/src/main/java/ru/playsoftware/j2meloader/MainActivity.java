@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		EdgeToEdgeCompat.enableIfSupported(this);
+		EdgeToEdgeCompat.enableForComposeLibrary(this);
 		FrameLayout root = new FrameLayout(this);
 		root.setId(R.id.main_host_root);
 		FragmentContainerView container = new FragmentContainerView(this);
@@ -76,7 +76,6 @@ public class MainActivity extends AppCompatActivity {
 		root.addView(overlay, new FrameLayout.LayoutParams(
 				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 		setContentView(root);
-		EdgeToEdgeCompat.protectHostContent(this);
 		mainComposeController = new MainActivityComposeController(overlay, new MainHostActions() {
 			@Override
 			public void onViewMidletReports() {
