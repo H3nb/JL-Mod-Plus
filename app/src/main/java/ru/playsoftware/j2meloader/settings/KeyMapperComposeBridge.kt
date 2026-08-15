@@ -48,7 +48,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.ComposeView
@@ -304,11 +303,13 @@ private fun MappingOverlay(
     actions: KeyMapperActions,
     onPopupBoundsChanged: (Rect) -> Unit,
 ) {
+    val dismissDescription = stringResource(R.string.dismiss_mapping)
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.56f))
-            .semantics { contentDescription = "Dismiss mapping" }
+            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.56f))
+            .semantics { contentDescription = dismissDescription }
             .clickable(onClick = actions::onDismissMapping),
         contentAlignment = Alignment.Center,
     ) {

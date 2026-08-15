@@ -22,6 +22,28 @@ consistent across the library, profiles, and installer surfaces.
 - Apply the same rule to translated resources according to the target language's writing conventions. Do not mechanically capitalize every word in a translation.
 - Keep lowercase where it is technically required or grammatically embedded, such as units (`ms`), identifiers, URLs, or a word that intentionally continues a sentence.
 
+## Typography
+
+Compose surfaces use the Material 3 type scale instead of arbitrary `sp`
+values. The following mapping is the review baseline:
+
+- Top app bar titles use `titleLarge`/the component default.
+- Screen and dialog headings use `headlineSmall` or `titleLarge` when the
+  available width is constrained.
+- Primary list and card titles use `titleMedium` or `titleSmall`; supporting
+  metadata uses `bodyMedium`/`bodySmall` with `onSurfaceVariant`.
+- Field labels, units, and compact secondary annotations use `labelMedium` or
+  `labelSmall`.
+- `fontScale`, long translations, and landscape width must be checked before
+  introducing a custom size. A custom `sp` value needs a component-specific
+  reason and a screenshot/regression case.
+
+Colors follow the same semantic rule: surfaces, text, controls, and icons use
+`MaterialTheme.colorScheme`. Literal colors are allowed only for user-selected
+content (for example, the color-picker preview), for fixed color-space
+gradients (white/black HSV endpoints), or when `Color.Transparent` is needed
+to let a component reveal its already-themed parent surface.
+
 ## Review checklist
 
 When adding or changing a string, check the rendered context rather than only the resource value:
