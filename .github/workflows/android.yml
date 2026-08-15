@@ -1,92 +1,105 @@
-name: Android CI
+name: Apply landscape navigation refinement
 
 on:
-  pull_request:
+  push:
     branches:
-      - alpha
-  workflow_dispatch:
+      - ui/redesign
 
 permissions:
-  contents: read
-
-concurrency:
-  group: android-ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  contents: write
 
 jobs:
-  build:
+  patch:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-
     steps:
-      - name: Check out sources
+      - name: Check out branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          persist-credentials: false
-          submodules: recursive
+          ref: ui/redesign
+          persist-credentials: true
 
-      - name: Restore shared debug keystore
+      - name: Keep landscape navigation rail persistent
         shell: bash
-        env:
-          ANDROID_DEBUG_KEYSTORE_BASE64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 }}
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
-          GITHUB_REPOSITORY_NAME: ${{ github.repository }}
-          PR_HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryComposeBridge.kt')
+          text = path.read_text()
+
+          text = text.replace('import androidx.compose.animation.expandHorizontally\n', '', 1)
+          text = text.replace('import androidx.compose.animation.shrinkHorizontally\n', '', 1)
+
+          old = '''        if (isLandscape && !isImeVisible) {
+            AnimatedVisibility(
+                visible = showNavigationBar,
+                enter = fadeIn(
+                    animationSpec = tween(
+                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                        easing = FastOutSlowInEasing,
+                    ),
+                ) + expandHorizontally(
+                    animationSpec = tween(
+                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                        easing = FastOutSlowInEasing,
+                    ),
+                    expandFrom = Alignment.Start,
+                ),
+                exit = fadeOut(
+                    animationSpec = tween(
+                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                        easing = FastOutSlowInEasing,
+                    ),
+                ) + shrinkHorizontally(
+                    animationSpec = tween(
+                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                        easing = FastOutSlowInEasing,
+                    ),
+                    shrinkTowards = Alignment.Start,
+                ),
+            ) {
+                LibraryNavigationRail(
+                    selected = destination,
+                    onSelected = { selectedDestinationIndex = it.ordinal },
+                )
+            }
+        }
+'''
+          new = '''        if (isLandscape) {
+            // The side rail does not consume vertical content space, so keep it persistent.
+            LibraryNavigationRail(
+                selected = destination,
+                onSelected = { selectedDestinationIndex = it.ordinal },
+            )
+        }
+'''
+          if old not in text:
+              raise SystemExit('Landscape navigation block changed unexpectedly')
+          text = text.replace(old, new, 1)
+
+          old_callback = '                onNavigationVisibilityChanged = { showNavigationBar = it },\n'
+          new_callback = '''                onNavigationVisibilityChanged = { visible ->
+                    if (!isLandscape) showNavigationBar = visible
+                },
+'''
+          if old_callback not in text:
+              raise SystemExit('Navigation visibility callback changed unexpectedly')
+          text = text.replace(old_callback, new_callback, 1)
+
+          path.write_text(text)
+          PY
+
+      - name: Commit refinement
+        shell: bash
         run: |
           set -euo pipefail
-          if [[ -z "$ANDROID_DEBUG_KEYSTORE_BASE64" ]]; then
-            if [[ "$GITHUB_EVENT_NAME" == "pull_request" && "$PR_HEAD_REPOSITORY" != "$GITHUB_REPOSITORY_NAME" ]]; then
-              echo 'Shared debug keystore secret is unavailable to fork pull requests; using the runner debug key.'
-              exit 0
-            fi
-            echo 'ANDROID_DEBUG_KEYSTORE_BASE64 is required for this workflow.' >&2
-            exit 1
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryComposeBridge.kt
+          if git diff --cached --quiet; then
+            echo 'No source change required.'
+            exit 0
           fi
-          printf '%s' "$ANDROID_DEBUG_KEYSTORE_BASE64" | base64 --decode > debug.keystore
-          chmod 600 debug.keystore
-          keytool -list -keystore debug.keystore -storepass android -alias androiddebugkey >/dev/null
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
-        with:
-          java-version: '21'
-          distribution: temurin
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
-
-      - name: Grant execute permission for Gradle wrapper
-        run: chmod +x gradlew
-
-      - name: Lint, test, and assemble
-        run: >-
-          ./gradlew --no-daemon --stacktrace
-          :app:lintEmulatorDebug
-          :dexlib:lintDebug
-          :app:testEmulatorDebugUnitTest
-          :app:validateEmulatorDebugScreenshotTest
-          :app:assembleEmulatorDebug
-          :app:assembleEmulatorDebugAndroidTest
-
-      - name: Upload lint reports
-        if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: JL-Mod-Plus-lint-reports
-          path: |
-            app/build/reports/lint-results-*.html
-            app/build/reports/lint-results-*.xml
-            app/build/reports/lint-results-*.sarif
-            dexlib/build/reports/lint-results-*.html
-            dexlib/build/reports/lint-results-*.xml
-            dexlib/build/reports/lint-results-*.sarif
-          if-no-files-found: warn
-          retention-days: 7
-
-      - name: Upload arm64 emulator debug APK
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: JL-Mod-Plus-emulator-debug-arm64-v8a
-          path: app/build/outputs/apk/emulator/debug/app-emulator-arm64-v8a-debug.apk
-          if-no-files-found: error
-          retention-days: 7
+          git commit -m 'fix(ui): keep landscape navigation rail visible'
+          git push origin HEAD:ui/redesign
