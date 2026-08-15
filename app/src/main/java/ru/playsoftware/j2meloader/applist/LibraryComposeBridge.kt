@@ -19,7 +19,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color as AndroidColor
 import android.graphics.Rect
-import android.os.SystemClock
+import android.util.LruCache
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -38,7 +38,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -49,8 +51,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -58,13 +58,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -74,6 +74,7 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -111,11 +112,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -124,6 +125,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -134,26 +136,23 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.fromHtml
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.platform.ViewCompositionStrategy
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import ru.playsoftware.j2meloader.BuildConfig
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import java.io.File
 import java.util.Locale
-import kotlin.math.abs
 import kotlin.math.roundToInt
 
 enum class LibraryLayout {
@@ -525,10 +524,67 @@ fun LibraryScreen(
 }
 
 private const val LIBRARY_CHROME_ANIMATION_MILLIS = 220
-private const val LIBRARY_CHROME_REVEAL_SPEED_DP_PER_SECOND = 180f
+private const val LIBRARY_CHROME_HIDE_DISTANCE_DP = 10f
+private const val LIBRARY_CHROME_REVEAL_DISTANCE_DP = 18f
 private val LibraryGridMinCellSize = 88.dp
 private const val LIBRARY_GRID_ARTWORK_FRACTION = 0.78f
 private val LibraryGridMaxArtworkSize = 72.dp
+
+internal class LibraryChromeScrollHysteresis(
+    hideDistancePx: Float,
+    revealDistancePx: Float,
+) {
+    private val hideThreshold = hideDistancePx.coerceAtLeast(1f)
+    private val revealThreshold = revealDistancePx.coerceAtLeast(1f)
+    private var forwardDistance = 0f
+    private var reverseDistance = 0f
+
+    var chromeVisible: Boolean = true
+        private set
+
+    fun reset(): Boolean? {
+        forwardDistance = 0f
+        reverseDistance = 0f
+        return if (chromeVisible) {
+            null
+        } else {
+            chromeVisible = true
+            true
+        }
+    }
+
+    fun revealNow(): Boolean? {
+        forwardDistance = 0f
+        reverseDistance = 0f
+        return if (chromeVisible) {
+            null
+        } else {
+            chromeVisible = true
+            true
+        }
+    }
+
+    fun onScrollDelta(delta: Float): Boolean? {
+        if (delta < 0f) {
+            reverseDistance = 0f
+            forwardDistance += -delta
+            if (chromeVisible && forwardDistance >= hideThreshold) {
+                chromeVisible = false
+                forwardDistance = 0f
+                return false
+            }
+        } else if (delta > 0f) {
+            forwardDistance = 0f
+            reverseDistance += delta
+            if (!chromeVisible && reverseDistance >= revealThreshold) {
+                chromeVisible = true
+                reverseDistance = 0f
+                return true
+            }
+        }
+        return null
+    }
+}
 
 @Composable
 private fun LibraryNavigationBar(
@@ -599,10 +655,10 @@ private fun LibraryAppsDestination(
     val gridState = rememberLazyGridState()
     val headerHeightPx = remember { mutableStateOf(0) }
     val headerOffsetPx = remember { mutableStateOf(0f) }
-    val previousScrollTimestamp = remember { mutableStateOf(SystemClock.uptimeMillis()) }
-    val upwardRevealArmed = remember { mutableStateOf(false) }
-    val revealSpeedPxPerSecond = with(LocalDensity.current) {
-        LIBRARY_CHROME_REVEAL_SPEED_DP_PER_SECOND.dp.toPx()
+    val hideDistancePx = with(LocalDensity.current) { LIBRARY_CHROME_HIDE_DISTANCE_DP.dp.toPx() }
+    val revealDistancePx = with(LocalDensity.current) { LIBRARY_CHROME_REVEAL_DISTANCE_DP.dp.toPx() }
+    val chromeHysteresis = remember(hideDistancePx, revealDistancePx) {
+        LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx)
     }
 
     LaunchedEffect(query) {
@@ -612,8 +668,7 @@ private fun LibraryAppsDestination(
 
     LaunchedEffect(state.layout) {
         headerOffsetPx.value = 0f
-        upwardRevealArmed.value = false
-        previousScrollTimestamp.value = SystemClock.uptimeMillis()
+        chromeHysteresis.reset()
         onFabVisibilityChanged(true)
         onNavigationVisibilityChanged(true)
         snapshotFlow {
@@ -625,7 +680,7 @@ private fun LibraryAppsDestination(
         }.collectLatest { (index, offset) ->
             if (index == 0 && offset == 0) {
                 headerOffsetPx.value = 0f
-                upwardRevealArmed.value = false
+                chromeHysteresis.reset()
                 onFabVisibilityChanged(true)
                 onNavigationVisibilityChanged(true)
             }
@@ -648,7 +703,11 @@ private fun LibraryAppsDestination(
             interactive = interactive,
         )
     }
-    val headerScrollConnection = remember(revealSpeedPxPerSecond) {
+    val headerScrollConnection = remember(
+        chromeHysteresis,
+        onFabVisibilityChanged,
+        onNavigationVisibilityChanged,
+    ) {
         object : NestedScrollConnection {
             override fun onPreScroll(
                 available: Offset,
@@ -658,27 +717,20 @@ private fun LibraryAppsDestination(
                 val height = headerHeightPx.value
                 if (delta == 0f || height <= 0) return Offset.Zero
 
-                val now = SystemClock.uptimeMillis()
-                val elapsedMillis =
-                    (now - previousScrollTimestamp.value).coerceAtLeast(1L)
-                val speedPxPerSecond = abs(delta) * 1_000f / elapsedMillis
-                previousScrollTimestamp.value = now
+                headerOffsetPx.value =
+                    (headerOffsetPx.value + delta).coerceIn(-height.toFloat(), 0f)
 
-                if (delta < 0f) {
-                    upwardRevealArmed.value = false
-                    headerOffsetPx.value =
-                        (headerOffsetPx.value + delta).coerceIn(-height.toFloat(), 0f)
-                    onFabVisibilityChanged(false)
-                    onNavigationVisibilityChanged(false)
-                } else if (
+                var visibilityChange = chromeHysteresis.onScrollDelta(delta)
+                if (
                     delta > 0f &&
-                    (speedPxPerSecond >= revealSpeedPxPerSecond || upwardRevealArmed.value)
+                    headerOffsetPx.value >= -0.5f &&
+                    !chromeHysteresis.chromeVisible
                 ) {
-                    upwardRevealArmed.value = true
-                    headerOffsetPx.value =
-                        (headerOffsetPx.value + delta).coerceIn(-height.toFloat(), 0f)
-                    onFabVisibilityChanged(true)
-                    onNavigationVisibilityChanged(true)
+                    visibilityChange = chromeHysteresis.revealNow()
+                }
+                visibilityChange?.let { visible ->
+                    onFabVisibilityChanged(visible)
+                    onNavigationVisibilityChanged(visible)
                 }
 
                 return Offset.Zero
@@ -1247,12 +1299,12 @@ private fun LibraryListItem(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.Top,
         ) {
-        LibraryIconSlot(
-            app = app,
-            modifier = Modifier.width(48.dp),
-            contentSize = 36.dp,
-            iconRatio = iconRatio,
-        )
+            LibraryIconSlot(
+                app = app,
+                modifier = Modifier.width(48.dp),
+                contentSize = 36.dp,
+                iconRatio = iconRatio,
+            )
             Spacer(Modifier.width(12.dp))
             Column(
                 modifier = Modifier
@@ -1399,11 +1451,38 @@ private fun LibraryFavoritePlaceholder(appId: Int) {
     }
 }
 
+private enum class LibraryIconKind {
+    Foreground,
+    Artwork,
+    Fallback,
+}
+
+private data class LibraryIconAnalysis(
+    val contentBounds: Rect,
+    val kind: LibraryIconKind,
+    val occupancy: Float,
+    val foregroundLuminance: Float,
+    val pixelArt: Boolean,
+)
+
 private data class LibraryNormalizedIcon(
     val bitmap: ImageBitmap,
     val filterQuality: FilterQuality,
     val representativeColor: Color?,
+    val kind: LibraryIconKind,
+    val visualScale: Float,
+    val foregroundLuminance: Float,
 )
+
+private const val LIBRARY_ICON_CACHE_BYTES = 4 * 1024 * 1024
+private val LibraryIconCache = object : LruCache<String, LibraryNormalizedIcon>(LIBRARY_ICON_CACHE_BYTES) {
+    override fun sizeOf(key: String, value: LibraryNormalizedIcon): Int {
+        return (value.bitmap.width.toLong() * value.bitmap.height.toLong() * 4L)
+            .coerceAtMost(Int.MAX_VALUE.toLong())
+            .toInt()
+            .coerceAtLeast(1)
+    }
+}
 
 private fun loadLibraryIcon(
     context: Context,
@@ -1411,97 +1490,195 @@ private fun loadLibraryIcon(
     fallbackSizePx: Int,
     normalizeSquareIcon: Boolean,
 ): LibraryNormalizedIcon? {
-    val source = iconPath
+    val requestedSizePx = fallbackSizePx.coerceAtLeast(1)
+    val fileSource = iconPath
         ?.takeIf(String::isNotBlank)
-        ?.let { path -> runCatching { BitmapFactory.decodeFile(path) }.getOrNull() }
-        ?: ContextCompat.getDrawable(context, R.drawable.ic_default_midlet)
-            ?.mutate()
-            ?.also { drawable ->
-                drawable.setTint(
-                    ContextCompat.getColor(context, R.color.library_default_icon),
-                )
-            }
-            ?.toBitmap(fallbackSizePx, fallbackSizePx)
-        ?: return null
+        ?.let { path -> decodeLibraryBitmap(path, requestedSizePx) }
 
-    val contentBounds = if (normalizeSquareIcon) {
-        runCatching { source.findAlphaContentBounds() }.getOrNull()
-    } else {
-        null
-    }
-    val normalized = if (contentBounds == null ||
-        (contentBounds.left == 0 &&
-            contentBounds.top == 0 &&
-            contentBounds.right == source.width &&
-            contentBounds.bottom == source.height)
-    ) {
-        source
-    } else {
-        runCatching {
-            Bitmap.createBitmap(
-                source,
-                contentBounds.left,
-                contentBounds.top,
-                contentBounds.width(),
-                contentBounds.height(),
-            )
-        }.getOrElse { source }
-    }
-
-    return LibraryNormalizedIcon(
-        bitmap = normalized.asImageBitmap(),
-        filterQuality = if (normalized.width <= 64 && normalized.height <= 64) {
-            FilterQuality.None
-        } else {
-            FilterQuality.Medium
-        },
-        representativeColor = if (normalizeSquareIcon) {
-            runCatching { normalized.findRepresentativeColor() }.getOrNull()
+    if (fileSource != null) {
+        val analysis = if (normalizeSquareIcon) {
+            fileSource.analyzeLibraryIcon()
         } else {
             null
-        },
+        }
+        if (!normalizeSquareIcon) {
+            return LibraryNormalizedIcon(
+                bitmap = fileSource.asImageBitmap(),
+                filterQuality = fileSource.libraryFilterQuality(),
+                representativeColor = null,
+                kind = LibraryIconKind.Artwork,
+                visualScale = 1f,
+                foregroundLuminance = 0.5f,
+            )
+        }
+        if (analysis != null) {
+            val normalized = if (
+                analysis.kind == LibraryIconKind.Foreground &&
+                !analysis.contentBounds.isFullBitmap(fileSource)
+            ) {
+                runCatching {
+                    Bitmap.createBitmap(
+                        fileSource,
+                        analysis.contentBounds.left,
+                        analysis.contentBounds.top,
+                        analysis.contentBounds.width(),
+                        analysis.contentBounds.height(),
+                    )
+                }.getOrElse { fileSource }
+            } else {
+                fileSource
+            }
+            val visualScale = if (analysis.kind == LibraryIconKind.Foreground) {
+                val sparseAmount = ((0.68f - analysis.occupancy) / 0.58f).coerceIn(0f, 1f)
+                1f + sparseAmount * LIBRARY_FOREGROUND_MAX_SCALE_BOOST
+            } else {
+                1f
+            }
+            return LibraryNormalizedIcon(
+                bitmap = normalized.asImageBitmap(),
+                filterQuality = if (analysis.pixelArt) FilterQuality.None else FilterQuality.Medium,
+                representativeColor = if (analysis.kind == LibraryIconKind.Foreground) {
+                    normalized.findRepresentativeColor()
+                } else {
+                    null
+                },
+                kind = analysis.kind,
+                visualScale = visualScale,
+                foregroundLuminance = analysis.foregroundLuminance,
+            )
+        }
+    }
+
+    val fallback = ContextCompat.getDrawable(context, R.drawable.ic_default_midlet)
+        ?.mutate()
+        ?.also { drawable ->
+            drawable.setTint(
+                ContextCompat.getColor(context, R.color.library_default_icon),
+            )
+        }
+        ?.toBitmap(requestedSizePx, requestedSizePx)
+        ?: return null
+
+    return LibraryNormalizedIcon(
+        bitmap = fallback.asImageBitmap(),
+        filterQuality = fallback.libraryFilterQuality(),
+        // Preserve the existing neutral fallback treatment so screenshot baselines remain stable.
+        representativeColor = fallback.findAverageVisibleColor(),
+        kind = LibraryIconKind.Fallback,
+        visualScale = 1f,
+        foregroundLuminance = fallback.averageVisibleLuminance(),
     )
 }
 
-private fun Bitmap.findAlphaContentBounds(): Rect? {
-    if (!hasAlpha() || width <= 0 || height <= 0) {
-        return Rect(0, 0, width, height)
+private fun decodeLibraryBitmap(path: String, targetSizePx: Int): Bitmap? {
+    return try {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(path, bounds)
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+
+        val decodeTarget = (targetSizePx.coerceAtLeast(48) * 2).coerceAtMost(1024)
+        var sampleSize = 1
+        while (
+            bounds.outWidth / sampleSize > decodeTarget ||
+            bounds.outHeight / sampleSize > decodeTarget
+        ) {
+            if (sampleSize >= 1 shl 20) break
+            sampleSize *= 2
+        }
+        val options = BitmapFactory.Options().apply {
+            inSampleSize = sampleSize.coerceAtLeast(1)
+            inPreferredConfig = Bitmap.Config.ARGB_8888
+        }
+        BitmapFactory.decodeFile(path, options)
+    } catch (_: OutOfMemoryError) {
+        null
+    } catch (_: RuntimeException) {
+        null
     }
+}
+
+private fun Bitmap.analyzeLibraryIcon(): LibraryIconAnalysis? {
+    if (width <= 0 || height <= 0) return null
 
     val row = IntArray(width)
     var left = width
     var top = height
     var right = -1
     var bottom = -1
+    var visiblePixels = 0L
+    var semiTransparentPixels = 0L
+    var luminanceSum = 0.0
+    val quantizedColors = HashSet<Int>(LIBRARY_PIXEL_ART_MAX_COLORS + 1)
+
     for (y in 0 until height) {
         getPixels(row, 0, width, 0, y, width, 1)
         for (x in row.indices) {
-            if ((row[x] ushr 24) < MIN_VISIBLE_ALPHA) continue
+            val pixel = row[x]
+            val alpha = (pixel ushr 24) and 0xff
+            if (alpha < MIN_VISIBLE_ALPHA) continue
+
+            visiblePixels++
+            if (alpha < LIBRARY_PIXEL_ART_OPAQUE_ALPHA) semiTransparentPixels++
             if (x < left) left = x
             if (x > right) right = x
             if (y < top) top = y
             if (y > bottom) bottom = y
+
+            val alphaWeight = alpha / 255.0
+            luminanceSum += pixelLibraryLuminance(pixel) * alphaWeight
+            if (quantizedColors.size <= LIBRARY_PIXEL_ART_MAX_COLORS) {
+                quantizedColors += quantizeLibraryColor(pixel)
+            }
         }
     }
-    return if (right < left || bottom < top) {
-        null
+    if (right < left || bottom < top || visiblePixels == 0L) return null
+
+    val contentBounds = Rect(left, top, right + 1, bottom + 1)
+    val canvasArea = width.toLong() * height.toLong()
+    val boundsArea = contentBounds.width().toLong() * contentBounds.height().toLong()
+    val boundsCoverage = if (canvasArea == 0L) 1f else boundsArea.toFloat() / canvasArea.toFloat()
+    val occupancy = if (boundsArea == 0L) 1f else visiblePixels.toFloat() / boundsArea.toFloat()
+    val kind = if (
+        hasAlpha() &&
+        (boundsCoverage < LIBRARY_FOREGROUND_BOUNDS_COVERAGE ||
+            occupancy < LIBRARY_FOREGROUND_OCCUPANCY)
+    ) {
+        LibraryIconKind.Foreground
     } else {
-        Rect(left, top, right + 1, bottom + 1)
+        LibraryIconKind.Artwork
     }
+    val semiTransparentRatio = semiTransparentPixels.toFloat() / visiblePixels.toFloat()
+    val pixelArt = maxOf(width, height) <= LIBRARY_PIXEL_ART_MAX_DIMENSION &&
+        quantizedColors.size <= LIBRARY_PIXEL_ART_MAX_COLORS &&
+        semiTransparentRatio <= LIBRARY_PIXEL_ART_MAX_SEMI_TRANSPARENT_RATIO
+    val foregroundLuminance = (luminanceSum / visiblePixels.toDouble()).toFloat().coerceIn(0f, 1f)
+
+    return LibraryIconAnalysis(
+        contentBounds = contentBounds,
+        kind = kind,
+        occupancy = occupancy,
+        foregroundLuminance = foregroundLuminance,
+        pixelArt = pixelArt,
+    )
+}
+
+private fun Rect.isFullBitmap(bitmap: Bitmap): Boolean {
+    return left == 0 && top == 0 && right == bitmap.width && bottom == bitmap.height
+}
+
+private fun Bitmap.libraryFilterQuality(): FilterQuality {
+    return if (width <= 64 && height <= 64) FilterQuality.None else FilterQuality.Medium
 }
 
 private fun Bitmap.findRepresentativeColor(): Color? {
     if (width <= 0 || height <= 0) return null
 
     val step = maxOf(1, maxOf(width, height) / 32)
-    val hueWeights = DoubleArray(LIBRARY_HUE_BUCKETS)
+    val hueScores = DoubleArray(LIBRARY_HUE_BUCKETS)
+    val huePopulation = DoubleArray(LIBRARY_HUE_BUCKETS)
     val hueRed = DoubleArray(LIBRARY_HUE_BUCKETS)
     val hueGreen = DoubleArray(LIBRARY_HUE_BUCKETS)
     val hueBlue = DoubleArray(LIBRARY_HUE_BUCKETS)
-    var neutralRed = 0.0
-    var neutralGreen = 0.0
-    var neutralBlue = 0.0
-    var neutralWeight = 0.0
     var sampledWeight = 0.0
     val row = IntArray(width)
     val hsv = FloatArray(3)
@@ -1510,7 +1687,7 @@ private fun Bitmap.findRepresentativeColor(): Color? {
         for (x in 0 until width step step) {
             val pixel = row[x]
             val alpha = (pixel ushr 24) and 0xff
-            if (alpha < 16) continue
+            if (alpha < MIN_VISIBLE_ALPHA) continue
 
             val alphaWeight = alpha / 255.0
             sampledWeight += alphaWeight
@@ -1519,58 +1696,131 @@ private fun Bitmap.findRepresentativeColor(): Color? {
                 val hueBucket = (hsv[0] / 360f * LIBRARY_HUE_BUCKETS)
                     .toInt()
                     .coerceIn(0, LIBRARY_HUE_BUCKETS - 1)
-                val colorWeight = alphaWeight * (0.5 + hsv[1]) * (0.35 + hsv[2])
-                hueWeights[hueBucket] += colorWeight
-                hueRed[hueBucket] += AndroidColor.red(pixel) * colorWeight
-                hueGreen[hueBucket] += AndroidColor.green(pixel) * colorWeight
-                hueBlue[hueBucket] += AndroidColor.blue(pixel) * colorWeight
-            } else {
-                neutralRed += AndroidColor.red(pixel) * alphaWeight
-                neutralGreen += AndroidColor.green(pixel) * alphaWeight
-                neutralBlue += AndroidColor.blue(pixel) * alphaWeight
-                neutralWeight += alphaWeight
+                val score = alphaWeight * (0.5 + hsv[1]) * (0.35 + hsv[2])
+                hueScores[hueBucket] += score
+                huePopulation[hueBucket] += alphaWeight
+                hueRed[hueBucket] += AndroidColor.red(pixel) * score
+                hueGreen[hueBucket] += AndroidColor.green(pixel) * score
+                hueBlue[hueBucket] += AndroidColor.blue(pixel) * score
             }
         }
     }
 
     if (sampledWeight == 0.0) return null
-
-    val dominantHueBucket = hueWeights.indices.maxByOrNull { hueWeights[it] }
-    val dominantHueWeight = dominantHueBucket?.let { hueWeights[it] } ?: 0.0
-    if (dominantHueBucket != null && dominantHueWeight / sampledWeight >= LIBRARY_MIN_DOMINANT_COLOR_RATIO) {
-        return Color(
-            red = (hueRed[dominantHueBucket] / dominantHueWeight / 255.0).toFloat().coerceIn(0f, 1f),
-            green = (hueGreen[dominantHueBucket] / dominantHueWeight / 255.0).toFloat().coerceIn(0f, 1f),
-            blue = (hueBlue[dominantHueBucket] / dominantHueWeight / 255.0).toFloat().coerceIn(0f, 1f),
-        )
+    val dominantHueBucket = hueScores.indices.maxByOrNull { hueScores[it] } ?: return null
+    val dominantHueScore = hueScores[dominantHueBucket]
+    val dominantPopulation = huePopulation[dominantHueBucket]
+    if (
+        dominantHueScore <= 0.0 ||
+        dominantPopulation / sampledWeight < LIBRARY_MIN_DOMINANT_COLOR_RATIO
+    ) {
+        return null
     }
 
-    if (neutralWeight == 0.0) return null
-
     return Color(
-        red = (neutralRed / neutralWeight / 255.0).toFloat().coerceIn(0f, 1f),
-        green = (neutralGreen / neutralWeight / 255.0).toFloat().coerceIn(0f, 1f),
-        blue = (neutralBlue / neutralWeight / 255.0).toFloat().coerceIn(0f, 1f),
+        red = (hueRed[dominantHueBucket] / dominantHueScore / 255.0).toFloat().coerceIn(0f, 1f),
+        green = (hueGreen[dominantHueBucket] / dominantHueScore / 255.0).toFloat().coerceIn(0f, 1f),
+        blue = (hueBlue[dominantHueBucket] / dominantHueScore / 255.0).toFloat().coerceIn(0f, 1f),
     )
+}
+
+private fun Bitmap.findAverageVisibleColor(): Color? {
+    if (width <= 0 || height <= 0) return null
+    val row = IntArray(width)
+    var red = 0.0
+    var green = 0.0
+    var blue = 0.0
+    var weight = 0.0
+    for (y in 0 until height) {
+        getPixels(row, 0, width, 0, y, width, 1)
+        for (pixel in row) {
+            val alpha = (pixel ushr 24) and 0xff
+            if (alpha < MIN_VISIBLE_ALPHA) continue
+            val alphaWeight = alpha / 255.0
+            red += AndroidColor.red(pixel) * alphaWeight
+            green += AndroidColor.green(pixel) * alphaWeight
+            blue += AndroidColor.blue(pixel) * alphaWeight
+            weight += alphaWeight
+        }
+    }
+    if (weight == 0.0) return null
+    return Color(
+        red = (red / weight / 255.0).toFloat().coerceIn(0f, 1f),
+        green = (green / weight / 255.0).toFloat().coerceIn(0f, 1f),
+        blue = (blue / weight / 255.0).toFloat().coerceIn(0f, 1f),
+    )
+}
+
+private fun Bitmap.averageVisibleLuminance(): Float {
+    if (width <= 0 || height <= 0) return 0.5f
+    val row = IntArray(width)
+    var luminance = 0.0
+    var weight = 0.0
+    for (y in 0 until height) {
+        getPixels(row, 0, width, 0, y, width, 1)
+        for (pixel in row) {
+            val alpha = (pixel ushr 24) and 0xff
+            if (alpha < MIN_VISIBLE_ALPHA) continue
+            val alphaWeight = alpha / 255.0
+            luminance += pixelLibraryLuminance(pixel) * alphaWeight
+            weight += alphaWeight
+        }
+    }
+    return if (weight == 0.0) 0.5f else (luminance / weight).toFloat().coerceIn(0f, 1f)
+}
+
+private fun pixelLibraryLuminance(pixel: Int): Double {
+    val red = AndroidColor.red(pixel) / 255.0
+    val green = AndroidColor.green(pixel) / 255.0
+    val blue = AndroidColor.blue(pixel) / 255.0
+    return red * 0.2126 + green * 0.7152 + blue * 0.0722
+}
+
+private fun quantizeLibraryColor(pixel: Int): Int {
+    return ((AndroidColor.red(pixel) shr 4) shl 8) or
+        ((AndroidColor.green(pixel) shr 4) shl 4) or
+        (AndroidColor.blue(pixel) shr 4)
 }
 
 private const val MIN_VISIBLE_ALPHA = 16
 private const val LIBRARY_HUE_BUCKETS = 12
 private const val LIBRARY_MIN_COLOR_SATURATION = 0.28f
 private const val LIBRARY_MIN_COLOR_VALUE = 0.16f
-private const val LIBRARY_MIN_DOMINANT_COLOR_RATIO = 0.08
-private const val LIBRARY_LIGHT_SLOT_TINT_AMOUNT = 0.34f
-private const val LIBRARY_DARK_SLOT_TINT_AMOUNT = 0.45f
+private const val LIBRARY_MIN_DOMINANT_COLOR_RATIO = 0.10
+private const val LIBRARY_LIGHT_SLOT_TINT_AMOUNT = 0.12f
+private const val LIBRARY_DARK_SLOT_TINT_AMOUNT = 0.14f
+private const val LIBRARY_NEUTRAL_SLOT_TINT_AMOUNT = 0.06f
+private const val LIBRARY_FOREGROUND_BOUNDS_COVERAGE = 0.88f
+private const val LIBRARY_FOREGROUND_OCCUPANCY = 0.80f
+private const val LIBRARY_FOREGROUND_MAX_SCALE_BOOST = 0.16f
+private const val LIBRARY_PIXEL_ART_MAX_DIMENSION = 160
+private const val LIBRARY_PIXEL_ART_MAX_COLORS = 48
+private const val LIBRARY_PIXEL_ART_OPAQUE_ALPHA = 240
+private const val LIBRARY_PIXEL_ART_MAX_SEMI_TRANSPARENT_RATIO = 0.06f
+private const val LIBRARY_DARK_FOREGROUND_LUMINANCE = 0.20f
+private const val LIBRARY_LIGHT_FOREGROUND_LUMINANCE = 0.82f
+private const val LIBRARY_DARK_CONTRAST_LIFT = 0.10f
+private const val LIBRARY_LIGHT_CONTRAST_DROP = 0.06f
 
 /**
- * Gives the slot a soft adaptive-icon-like tint without touching the bitmap
- * foreground. A saturated seed is first softened into a theme-appropriate
- * pastel/deep tone, then blended with the Material surface. This keeps the
- * slot visibly related to the icon without allowing a dark or vivid bitmap to
- * erase the foreground contrast.
+ * Gives transparent foreground artwork a restrained adaptive-style surface while leaving
+ * already-framed artwork on the neutral Material container. Contrast correction only shifts
+ * the neutral base when a nearly black/white foreground would otherwise disappear into it.
  */
-private fun adaptiveLibrarySlotColor(base: Color, accent: Color): Color {
+private fun adaptiveLibrarySlotColor(
+    base: Color,
+    accent: Color,
+    foregroundLuminance: Float,
+): Color {
     val brightness = base.red * 0.2126f + base.green * 0.7152f + base.blue * 0.0722f
+    val isLightSurface = brightness >= 0.5f
+    val contrastBase = when {
+        isLightSurface && foregroundLuminance >= LIBRARY_LIGHT_FOREGROUND_LUMINANCE ->
+            blendLibrarySlotColor(base, Color.Black, LIBRARY_LIGHT_CONTRAST_DROP)
+        !isLightSurface && foregroundLuminance <= LIBRARY_DARK_FOREGROUND_LUMINANCE ->
+            blendLibrarySlotColor(base, Color.White, LIBRARY_DARK_CONTRAST_LIFT)
+        else -> base
+    }
     val hsv = FloatArray(3)
     AndroidColor.RGBToHSV(
         (accent.red * 255f).toInt(),
@@ -1579,17 +1829,20 @@ private fun adaptiveLibrarySlotColor(base: Color, accent: Color): Color {
         hsv,
     )
     if (hsv[1] < LIBRARY_MIN_COLOR_SATURATION) {
-        return blendLibrarySlotColor(base, accent, amount = 0.06f)
+        return blendLibrarySlotColor(
+            contrastBase,
+            accent,
+            amount = LIBRARY_NEUTRAL_SLOT_TINT_AMOUNT,
+        )
     }
 
-    val isLightSurface = brightness >= 0.5f
     val softenedAccent = Color.hsv(
         hue = hsv[0],
-        saturation = hsv[1].coerceIn(0.35f, 0.72f),
-        value = if (isLightSurface) 0.96f else 0.26f,
+        saturation = hsv[1].coerceIn(0.28f, 0.58f),
+        value = if (isLightSurface) 0.95f else 0.32f,
     )
     return blendLibrarySlotColor(
-        base,
+        contrastBase,
         softenedAccent,
         amount = if (isLightSurface) {
             LIBRARY_LIGHT_SLOT_TINT_AMOUNT
@@ -1616,15 +1869,32 @@ private fun rememberLibraryIcon(
     iconRatio: LibraryIconRatio,
 ): LibraryNormalizedIcon? {
     val context = LocalContext.current
-    val contentSizePx = with(LocalDensity.current) { contentSize.roundToPx() }
-    return remember(app.iconPath, contentSizePx, iconRatio) {
-        loadLibraryIcon(
+    val contentSizePx = with(LocalDensity.current) { contentSize.roundToPx() }.coerceAtLeast(1)
+    val cacheKey = remember(app.iconPath, contentSizePx, iconRatio) {
+        libraryIconCacheKey(app.iconPath, contentSizePx, iconRatio)
+    }
+    return remember(cacheKey) {
+        LibraryIconCache.get(cacheKey) ?: loadLibraryIcon(
             context = context,
             iconPath = app.iconPath,
             fallbackSizePx = contentSizePx,
             normalizeSquareIcon = iconRatio == LibraryIconRatio.Square,
-        )
+        )?.also { LibraryIconCache.put(cacheKey, it) }
     }
+}
+
+private fun libraryIconCacheKey(
+    iconPath: String?,
+    targetSizePx: Int,
+    iconRatio: LibraryIconRatio,
+): String {
+    if (iconPath.isNullOrBlank()) {
+        return "fallback:$targetSizePx:${iconRatio.name}"
+    }
+    val file = File(iconPath)
+    val modified = runCatching { file.lastModified() }.getOrDefault(0L)
+    val length = runCatching { file.length() }.getOrDefault(0L)
+    return "$iconPath:$modified:$length:$targetSizePx:${iconRatio.name}"
 }
 
 @Composable
@@ -1643,9 +1913,16 @@ private fun LibraryIconSlot(
         )
         val icon = rememberLibraryIcon(app, artworkSize, iconRatio)
         val baseContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        val containerColor = if (iconRatio == LibraryIconRatio.Square) {
+        val containerColor = if (
+            iconRatio == LibraryIconRatio.Square &&
+            icon?.kind != LibraryIconKind.Artwork
+        ) {
             icon?.representativeColor?.let { representativeColor ->
-                adaptiveLibrarySlotColor(baseContainerColor, representativeColor)
+                adaptiveLibrarySlotColor(
+                    base = baseContainerColor,
+                    accent = representativeColor,
+                    foregroundLuminance = icon.foregroundLuminance,
+                )
             } ?: baseContainerColor
         } else {
             baseContainerColor
@@ -1680,24 +1957,28 @@ private fun LibraryIconArtwork(
     contentSize: Dp,
     iconRatio: LibraryIconRatio,
 ) {
-    if (icon != null) {
-        Image(
-            bitmap = icon.bitmap,
-            contentDescription = null,
-            modifier = if (iconRatio == LibraryIconRatio.Square) {
-                Modifier
-                    .size(contentSize)
-                    .clip(MaterialTheme.shapes.small)
-            } else {
-                Modifier
-                    .fillMaxSize()
-                    .padding(4.dp)
-                    .clip(MaterialTheme.shapes.small)
-            },
-            contentScale = ContentScale.Fit,
-            filterQuality = icon.filterQuality,
-        )
+    if (icon == null) return
+
+    val artworkModifier = when {
+        iconRatio != LibraryIconRatio.Square -> Modifier
+            .fillMaxSize()
+            .padding(4.dp)
+            .clip(MaterialTheme.shapes.small)
+        icon.kind == LibraryIconKind.Artwork -> Modifier
+            .fillMaxSize()
+            .padding(4.dp)
+            .clip(MaterialTheme.shapes.small)
+        else -> Modifier
+            .size(contentSize * icon.visualScale)
+            .clip(MaterialTheme.shapes.small)
     }
+    Image(
+        bitmap = icon.bitmap,
+        contentDescription = null,
+        modifier = artworkModifier,
+        contentScale = ContentScale.Fit,
+        filterQuality = icon.filterQuality,
+    )
 }
 
 @Composable
