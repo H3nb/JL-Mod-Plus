@@ -76,10 +76,15 @@
     <string name="pref_app_sort_title">Сортировка приложений</string>
     <string name="pref_app_sort_vendor">Поставщик</string>
     <string name="pref_apps_view">вид</string>
+    <string name="library_options_display_title">Отображение</string>
+    <string name="library_options_grid_title">Сетка</string>
+    <string name="library_options_actions_title">Действия</string>
     <string name="library_icon_ratio_title">Пропорции значков</string>
+    <string name="library_icon_ratio_summary">1:1 использует адаптивную рамку; 3:4 только подгоняет размер.</string>
     <string name="library_icon_ratio_square">1:1</string>
     <string name="library_icon_ratio_portrait">3:4</string>
     <string name="library_grid_spacing_title">Интервал сетки</string>
+    <string name="library_grid_spacing_summary">Настройте расстояние между приложениями.</string>
     <string name="library_grid_spacing_compact">Компактный (4 dp)</string>
     <string name="library_grid_spacing_standard">Стандартный (8 dp)</string>
     <string name="library_grid_spacing_spacious">Свободный (12 dp)</string>

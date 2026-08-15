@@ -82,10 +82,15 @@
     <string name="library_vendor_version">%1$s · %2$s</string>
     <string name="library_view_list">Daftar</string>
     <string name="library_view_grid">Grid</string>
+    <string name="library_options_display_title">Tampilan</string>
+    <string name="library_options_grid_title">Grid</string>
+    <string name="library_options_actions_title">Tindakan</string>
     <string name="library_icon_ratio_title">Rasio ikon</string>
+    <string name="library_icon_ratio_summary">1:1 memakai bingkai adaptif; 3:4 hanya menyesuaikan ukuran ikon.</string>
     <string name="library_icon_ratio_square">1:1</string>
     <string name="library_icon_ratio_portrait">3:4</string>
     <string name="library_grid_spacing_title">Jarak grid</string>
+    <string name="library_grid_spacing_summary">Atur jarak antar kotak aplikasi.</string>
     <string name="library_grid_spacing_compact">Rapat (4 dp)</string>
     <string name="library_grid_spacing_standard">Standar (8 dp)</string>
     <string name="library_grid_spacing_spacious">Lega (12 dp)</string>

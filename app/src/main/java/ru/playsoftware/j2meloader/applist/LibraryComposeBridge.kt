@@ -19,6 +19,18 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color as AndroidColor
 import android.graphics.Rect
+import android.os.SystemClock
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -28,6 +40,9 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -47,8 +62,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -65,6 +82,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -88,12 +106,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -101,6 +126,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
@@ -112,7 +138,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -123,6 +151,8 @@ import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import java.io.File
 import java.util.Locale
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 enum class LibraryLayout {
     List,
@@ -307,7 +337,45 @@ fun LibraryScreen(
         modifier = modifier.fillMaxSize(),
         contentWindowInsets = LibraryScaffoldInsets,
         bottomBar = {
-            if (showNavigationBar) {
+            AnimatedVisibility(
+                visible = showNavigationBar,
+                enter = fadeIn(
+                    animationSpec = tween(
+                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                        easing = FastOutSlowInEasing,
+                    ),
+                ) + expandVertically(
+                    animationSpec = tween(
+                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                        easing = FastOutSlowInEasing,
+                    ),
+                    expandFrom = Alignment.Bottom,
+                ) + slideInVertically(
+                    animationSpec = tween(
+                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                        easing = FastOutSlowInEasing,
+                    ),
+                    initialOffsetY = { it / 2 },
+                ),
+                exit = fadeOut(
+                    animationSpec = tween(
+                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                        easing = FastOutSlowInEasing,
+                    ),
+                ) + shrinkVertically(
+                    animationSpec = tween(
+                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                        easing = FastOutSlowInEasing,
+                    ),
+                    shrinkTowards = Alignment.Bottom,
+                ) + slideOutVertically(
+                    animationSpec = tween(
+                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                        easing = FastOutSlowInEasing,
+                    ),
+                    targetOffsetY = { it / 2 },
+                ),
+            ) {
                 LibraryNavigationBar(
                     selected = destination,
                     onSelected = { selectedDestinationIndex = it.ordinal },
@@ -315,7 +383,45 @@ fun LibraryScreen(
             }
         },
         floatingActionButton = {
-            if (destination == LibraryDestination.Apps && showInstallFab) {
+            AnimatedVisibility(
+                visible = destination == LibraryDestination.Apps && showInstallFab,
+                enter = fadeIn(
+                    animationSpec = tween(
+                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                        easing = FastOutSlowInEasing,
+                    ),
+                ) + scaleIn(
+                    initialScale = 0.86f,
+                    animationSpec = tween(
+                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                        easing = FastOutSlowInEasing,
+                    ),
+                ) + slideInVertically(
+                    animationSpec = tween(
+                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                        easing = FastOutSlowInEasing,
+                    ),
+                    initialOffsetY = { it / 2 },
+                ),
+                exit = fadeOut(
+                    animationSpec = tween(
+                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                        easing = FastOutSlowInEasing,
+                    ),
+                ) + scaleOut(
+                    targetScale = 0.86f,
+                    animationSpec = tween(
+                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                        easing = FastOutSlowInEasing,
+                    ),
+                ) + slideOutVertically(
+                    animationSpec = tween(
+                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                        easing = FastOutSlowInEasing,
+                    ),
+                    targetOffsetY = { it / 2 },
+                ),
+            ) {
                 FloatingActionButton(onClick = actions::onInstall) {
                     Icon(
                         painter = painterResource(R.drawable.ic_add),
@@ -407,6 +513,9 @@ fun LibraryScreen(
     }
 }
 
+private const val LIBRARY_CHROME_ANIMATION_MILLIS = 220
+private const val LIBRARY_CHROME_REVEAL_SPEED_DP_PER_SECOND = 180f
+
 @Composable
 private fun LibraryNavigationBar(
     selected: LibraryDestination,
@@ -472,9 +581,15 @@ private fun LibraryAppsDestination(
 ) {
     var query by rememberSaveable { mutableStateOf(state.appliedFilter) }
     var sortVisible by remember { mutableStateOf(false) }
-    var showHeader by rememberSaveable { mutableStateOf(true) }
     val listState = rememberLazyListState()
     val gridState = rememberLazyGridState()
+    val headerHeightPx = remember { mutableStateOf(0) }
+    val headerOffsetPx = remember { mutableStateOf(0f) }
+    val previousScrollTimestamp = remember { mutableStateOf(SystemClock.uptimeMillis()) }
+    val upwardRevealArmed = remember { mutableStateOf(false) }
+    val revealSpeedPxPerSecond = with(LocalDensity.current) {
+        LIBRARY_CHROME_REVEAL_SPEED_DP_PER_SECOND.dp.toPx()
+    }
 
     LaunchedEffect(query) {
         delay(300)
@@ -482,11 +597,11 @@ private fun LibraryAppsDestination(
     }
 
     LaunchedEffect(state.layout) {
+        headerOffsetPx.value = 0f
+        upwardRevealArmed.value = false
+        previousScrollTimestamp.value = SystemClock.uptimeMillis()
         onFabVisibilityChanged(true)
         onNavigationVisibilityChanged(true)
-        showHeader = true
-        var previousIndex = 0
-        var previousOffset = 0
         snapshotFlow {
             if (state.layout == LibraryLayout.List) {
                 listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
@@ -494,20 +609,12 @@ private fun LibraryAppsDestination(
                 gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset
             }
         }.collectLatest { (index, offset) ->
-            val movingDown = index > previousIndex ||
-                    (index == previousIndex && offset > previousOffset)
             if (index == 0 && offset == 0) {
+                headerOffsetPx.value = 0f
+                upwardRevealArmed.value = false
                 onFabVisibilityChanged(true)
                 onNavigationVisibilityChanged(true)
-                showHeader = true
-            } else {
-                val shouldShowChrome = !movingDown
-                onFabVisibilityChanged(shouldShowChrome)
-                onNavigationVisibilityChanged(shouldShowChrome)
-                showHeader = shouldShowChrome
             }
-            previousIndex = index
-            previousOffset = offset
         }
     }
 
@@ -515,27 +622,75 @@ private fun LibraryAppsDestination(
         .fillMaxSize()
         .imePadding()
         .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
-    Column(
-        modifier = listModifier.padding(scaffoldPadding),
-    ) {
-        if (showHeader) {
-            LibraryAppsHeader(
-                query = query,
-                onQueryChange = { query = it },
-                state = state,
-                sortVisible = sortVisible,
-                onSortVisibilityChanged = { sortVisible = it },
-                onSort = onSort,
-            )
+    val renderHeader: @Composable (Modifier, Boolean) -> Unit = { headerModifier, interactive ->
+        LibraryAppsHeader(
+            modifier = headerModifier,
+            query = query,
+            onQueryChange = { query = it },
+            state = state,
+            sortVisible = sortVisible,
+            onSortVisibilityChanged = { sortVisible = it },
+            onSort = onSort,
+            interactive = interactive,
+        )
+    }
+    val headerScrollConnection = remember(revealSpeedPxPerSecond) {
+        object : NestedScrollConnection {
+            override fun onPreScroll(
+                available: Offset,
+                source: NestedScrollSource,
+            ): Offset {
+                val delta = available.y
+                val height = headerHeightPx.value
+                if (delta == 0f || height <= 0) return Offset.Zero
+
+                val now = SystemClock.uptimeMillis()
+                val elapsedMillis =
+                    (now - previousScrollTimestamp.value).coerceAtLeast(1L)
+                val speedPxPerSecond = abs(delta) * 1_000f / elapsedMillis
+                previousScrollTimestamp.value = now
+
+                if (delta < 0f) {
+                    upwardRevealArmed.value = false
+                    headerOffsetPx.value =
+                        (headerOffsetPx.value + delta).coerceIn(-height.toFloat(), 0f)
+                    onFabVisibilityChanged(false)
+                    onNavigationVisibilityChanged(false)
+                } else if (
+                    delta > 0f &&
+                    (speedPxPerSecond >= revealSpeedPxPerSecond || upwardRevealArmed.value)
+                ) {
+                    upwardRevealArmed.value = true
+                    headerOffsetPx.value =
+                        (headerOffsetPx.value + delta).coerceIn(-height.toFloat(), 0f)
+                    onFabVisibilityChanged(true)
+                    onNavigationVisibilityChanged(true)
+                }
+
+                return Offset.Zero
+            }
         }
+    }
+    Box(
+        modifier = listModifier
+            .padding(scaffoldPadding)
+            .clipToBounds()
+            .nestedScroll(headerScrollConnection),
+    ) {
         if (state.layout == LibraryLayout.Grid) {
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 80.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
+                modifier = Modifier.fillMaxSize(),
                 state = gridState,
             ) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    renderHeader(
+                        Modifier
+                            .alpha(0f)
+                            .clearAndSetSemantics { },
+                        false,
+                    )
+                }
                 if (state.loading) {
                     item {
                         LibraryLoadingState()
@@ -559,11 +714,17 @@ private fun LibraryAppsDestination(
             }
         } else {
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
+                modifier = Modifier.fillMaxSize(),
                 state = listState,
             ) {
+                item {
+                    renderHeader(
+                        Modifier
+                            .alpha(0f)
+                            .clearAndSetSemantics { },
+                        false,
+                    )
+                }
                 when {
                     state.loading -> item { LibraryLoadingState() }
                     state.apps.isEmpty() -> item { LibraryEmptyState(state.appliedFilter) }
@@ -578,21 +739,35 @@ private fun LibraryAppsDestination(
                 }
             }
         }
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .offset {
+                    IntOffset(0, headerOffsetPx.value.roundToInt())
+                }
+                .background(MaterialTheme.colorScheme.background)
+                .onSizeChanged { headerHeightPx.value = it.height },
+        ) {
+            renderHeader(Modifier, true)
+        }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LibraryAppsHeader(
+    modifier: Modifier = Modifier,
     query: String,
     onQueryChange: (String) -> Unit,
     state: LibraryUiState,
     sortVisible: Boolean,
     onSortVisibilityChanged: (Boolean) -> Unit,
     onSort: (Int) -> Unit,
+    interactive: Boolean = true,
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
             .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -613,8 +788,12 @@ private fun LibraryAppsHeader(
             OutlinedTextField(
                 value = query,
                 onValueChange = onQueryChange,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(54.dp),
+                enabled = interactive,
                 singleLine = true,
+                shape = RoundedCornerShape(18.dp),
                 placeholder = { Text(stringResource(R.string.library_search_placeholder)) },
                 leadingIcon = {
                     Icon(
@@ -623,25 +802,29 @@ private fun LibraryAppsHeader(
                     )
                 },
             )
-            Box {
-                IconButton(onClick = { onSortVisibilityChanged(true) }) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_sort),
-                        contentDescription = stringResource(R.string.pref_app_sort_title),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            if (interactive) {
+                Box {
+                    IconButton(onClick = { onSortVisibilityChanged(true) }) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_sort),
+                            contentDescription = stringResource(R.string.pref_app_sort_title),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    LibrarySortMenu(
+                        expanded = sortVisible,
+                        entries = stringArrayResource(R.array.pref_app_sort_entries).toList(),
+                        selectedSort = state.sortVariant and Int.MAX_VALUE,
+                        ascending = state.sortVariant >= 0,
+                        onDismissRequest = { onSortVisibilityChanged(false) },
+                        onSelected = { index ->
+                            onSortVisibilityChanged(false)
+                            onSort(index)
+                        },
                     )
                 }
-                LibrarySortMenu(
-                    expanded = sortVisible,
-                    entries = stringArrayResource(R.array.pref_app_sort_entries).toList(),
-                    selectedSort = state.sortVariant and Int.MAX_VALUE,
-                    ascending = state.sortVariant >= 0,
-                    onDismissRequest = { onSortVisibilityChanged(false) },
-                    onSelected = { index ->
-                        onSortVisibilityChanged(false)
-                        onSort(index)
-                    },
-                )
+            } else {
+                Spacer(Modifier.size(48.dp))
             }
         }
         Row(
@@ -747,6 +930,7 @@ private fun LibraryCollectionsDestination(scaffoldPadding: PaddingValues) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun LibraryOptionsDestination(
     state: LibraryUiState,
@@ -782,24 +966,17 @@ internal fun LibraryOptionsDestination(
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.SemiBold,
                 )
-                Surface(
+                LibraryOptionsSection(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 16.dp),
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    title = R.string.library_options_display_title,
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = stringResource(R.string.pref_apps_view),
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp)
-                                .horizontalScroll(rememberScrollState()),
+                    LibraryOptionGroup(label = R.string.pref_apps_view) {
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             FilterChip(
                                 selected = state.layout == LibraryLayout.List,
@@ -812,17 +989,16 @@ internal fun LibraryOptionsDestination(
                                 label = { Text(stringResource(R.string.library_view_grid)) },
                             )
                         }
-                        Text(
-                            text = stringResource(R.string.library_icon_ratio_title),
-                            modifier = Modifier.padding(top = 16.dp),
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp)
-                                .horizontalScroll(rememberScrollState()),
+                    }
+                    Spacer(Modifier.height(16.dp))
+                    LibraryOptionGroup(
+                        label = R.string.library_icon_ratio_title,
+                        summary = R.string.library_icon_ratio_summary,
+                    ) {
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             FilterChip(
                                 selected = state.iconRatio == LibraryIconRatio.Square,
@@ -835,18 +1011,23 @@ internal fun LibraryOptionsDestination(
                                 label = { Text(stringResource(R.string.library_icon_ratio_portrait)) },
                             )
                         }
-                        if (state.layout == LibraryLayout.Grid) {
-                            Text(
-                                text = stringResource(R.string.library_grid_spacing_title),
-                                modifier = Modifier.padding(top = 16.dp),
-                                style = MaterialTheme.typography.titleMedium,
-                            )
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 8.dp)
-                                    .horizontalScroll(rememberScrollState()),
+                    }
+                }
+                if (state.layout == LibraryLayout.Grid) {
+                    LibraryOptionsSection(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                        title = R.string.library_options_grid_title,
+                    ) {
+                        LibraryOptionGroup(
+                            label = R.string.library_grid_spacing_title,
+                            summary = R.string.library_grid_spacing_summary,
+                        ) {
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 FilterChip(
                                     selected = state.gridSpacing == LibraryGridSpacing.Compact,
@@ -876,43 +1057,108 @@ internal fun LibraryOptionsDestination(
                                     },
                                 )
                             }
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = stringResource(R.string.library_hide_grid_titles),
-                                        style = MaterialTheme.typography.titleMedium,
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.library_hide_grid_titles_summary),
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        style = MaterialTheme.typography.bodySmall,
-                                    )
-                                }
-                                Switch(
-                                    checked = state.hideGridTitles,
-                                    onCheckedChange = onHideGridTitlesChange,
-                                    modifier = Modifier.semantics {
-                                        contentDescription = hideGridTitlesLabel
-                                    },
+                        }
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(R.string.library_hide_grid_titles),
+                                    style = MaterialTheme.typography.titleMedium,
+                                )
+                                Text(
+                                    text = stringResource(R.string.library_hide_grid_titles_summary),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.bodySmall,
                                 )
                             }
+                            Switch(
+                                checked = state.hideGridTitles,
+                                onCheckedChange = onHideGridTitlesChange,
+                                modifier = Modifier.semantics {
+                                    contentDescription = hideGridTitlesLabel
+                                },
+                            )
                         }
+                    }
+                }
+                Text(
+                    text = stringResource(R.string.library_options_actions_title),
+                    modifier = Modifier.padding(start = 4.dp, top = 24.dp, bottom = 4.dp),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.large,
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                ) {
+                    Column {
+                        LibraryActionRow(R.string.about, onAbout)
+                        HorizontalDivider()
+                        LibraryActionRow(R.string.action_settings, onSettings)
+                        HorizontalDivider()
+                        LibraryActionRow(R.string.profiles, onProfiles)
+                        HorizontalDivider()
+                        LibraryActionRow(R.string.help, onHelp)
+                        HorizontalDivider()
+                        LibraryActionRow(R.string.crash_reports, onCrashReports)
+                        HorizontalDivider()
+                        LibraryActionRow(R.string.save_log, onSaveLog)
+                        HorizontalDivider()
+                        LibraryActionRow(R.string.exit, onExit)
                     }
                 }
             }
         }
-        item { LibraryActionRow(R.string.about, onAbout) }
-        item { LibraryActionRow(R.string.action_settings, onSettings) }
-        item { LibraryActionRow(R.string.profiles, onProfiles) }
-        item { LibraryActionRow(R.string.help, onHelp) }
-        item { LibraryActionRow(R.string.crash_reports, onCrashReports) }
-        item { LibraryActionRow(R.string.save_log, onSaveLog) }
-        item { LibraryActionRow(R.string.exit, onExit) }
+    }
+}
+
+@Composable
+private fun LibraryOptionsSection(
+    modifier: Modifier = Modifier,
+    title: Int,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Surface(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = stringResource(title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(Modifier.height(12.dp))
+            content()
+        }
+    }
+}
+
+@Composable
+private fun LibraryOptionGroup(
+    label: Int,
+    summary: Int? = null,
+    content: @Composable () -> Unit,
+) {
+    Column {
+        Text(
+            text = stringResource(label),
+            style = MaterialTheme.typography.labelLarge,
+        )
+        summary?.let {
+            Text(
+                text = stringResource(it),
+                modifier = Modifier.padding(top = 2.dp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        content()
     }
 }
 

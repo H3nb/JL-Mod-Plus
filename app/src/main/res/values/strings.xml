@@ -119,10 +119,15 @@
     <string name="library_vendor_version">%1$s · %2$s</string>
     <string name="library_view_list">List</string>
     <string name="library_view_grid">Grid</string>
+    <string name="library_options_display_title">Display</string>
+    <string name="library_options_grid_title">Grid</string>
+    <string name="library_options_actions_title">Actions</string>
     <string name="library_icon_ratio_title">Icon ratio</string>
+    <string name="library_icon_ratio_summary">Square uses adaptive framing; portrait uses fit-only rendering.</string>
     <string name="library_icon_ratio_square">1:1</string>
     <string name="library_icon_ratio_portrait">3:4</string>
     <string name="library_grid_spacing_title">Grid spacing</string>
+    <string name="library_grid_spacing_summary">Adjust the space between app tiles.</string>
     <string name="library_grid_spacing_compact">Compact (4 dp)</string>
     <string name="library_grid_spacing_standard">Standard (8 dp)</string>
     <string name="library_grid_spacing_spacious">Spacious (12 dp)</string>
