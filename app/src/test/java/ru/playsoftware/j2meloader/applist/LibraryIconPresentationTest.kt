@@ -20,26 +20,27 @@ import org.junit.Test
 
 class LibraryIconPresentationTest {
     @Test
-    fun transparentSparseArtworkUsesSubjectPresentation() {
+    fun denseRoundSubjectKeepsBreathingRoom() {
         val decision = decideLibraryIconPresentation(
             input(
-                transparentRatio = 0.42f,
-                boundsCoverage = 0.56f,
-                occupancy = 0.64f,
+                transparentRatio = 0.34f,
+                boundsCoverage = 0.72f,
+                occupancy = 0.80f,
+                aspectFill = 0.98f,
             ),
         )
 
         assertEquals(LibraryIconPresentationMode.Subject, decision.mode)
-        assertTrue(decision.visualScale in 0.88f..0.92f)
+        assertTrue(decision.visualScale in 0.60f..0.63f)
     }
 
     @Test
     fun elongatedSubjectGetsMoreRoomThanDenseRoundSubject() {
         val denseRound = decideLibraryIconPresentation(
             input(
-                transparentRatio = 0.22f,
-                boundsCoverage = 0.78f,
-                occupancy = 0.79f,
+                transparentRatio = 0.34f,
+                boundsCoverage = 0.72f,
+                occupancy = 0.80f,
                 aspectFill = 0.98f,
             ),
         )
@@ -54,22 +55,13 @@ class LibraryIconPresentationTest {
 
         assertEquals(LibraryIconPresentationMode.Subject, denseRound.mode)
         assertEquals(LibraryIconPresentationMode.Subject, elongated.mode)
-        assertTrue(denseRound.visualScale in 0.80f..0.84f)
-        assertEquals(0.94f, elongated.visualScale, 0.0001f)
+        assertTrue(elongated.visualScale in 0.72f..0.75f)
         assertTrue(elongated.visualScale > denseRound.visualScale)
     }
 
     @Test
-    fun opticalAreaNormalizationStaysWithinConservativeBounds() {
-        val extremelyDense = decideLibraryIconPresentation(
-            input(
-                transparentRatio = 0.10f,
-                boundsCoverage = 0.84f,
-                occupancy = 1f,
-                aspectFill = 1f,
-            ),
-        )
-        val extremelySparse = decideLibraryIconPresentation(
+    fun extremelySparseSubjectNeverInflatesToSlotEdges() {
+        val decision = decideLibraryIconPresentation(
             input(
                 transparentRatio = 0.90f,
                 boundsCoverage = 0.30f,
@@ -78,12 +70,27 @@ class LibraryIconPresentationTest {
             ),
         )
 
-        assertEquals(0.72f, extremelyDense.visualScale, 0.01f)
-        assertEquals(0.94f, extremelySparse.visualScale, 0.0001f)
+        assertEquals(LibraryIconPresentationMode.Subject, decision.mode)
+        assertEquals(0.78f, decision.visualScale, 0.0001f)
     }
 
     @Test
-    fun framedArtworkKeepsBadgeSizedSubjectPresentation() {
+    fun detectedSelfBackedArtworkUsesBackedPresentation() {
+        val decision = decideLibraryIconPresentation(
+            input(
+                transparentRatio = 0.18f,
+                boundsCoverage = 0.82f,
+                occupancy = 0.78f,
+                hasBackingColor = true,
+            ),
+        )
+
+        assertEquals(LibraryIconPresentationMode.Backed, decision.mode)
+        assertEquals(0.86f, decision.visualScale, 0.0001f)
+    }
+
+    @Test
+    fun matteFramedArtworkBecomesContainedSubject() {
         val decision = decideLibraryIconPresentation(
             input(
                 transparentRatio = 0f,
@@ -94,7 +101,7 @@ class LibraryIconPresentationTest {
         )
 
         assertEquals(LibraryIconPresentationMode.Subject, decision.mode)
-        assertEquals(0.92f, decision.visualScale, 0.0001f)
+        assertEquals(0.74f, decision.visualScale, 0.0001f)
     }
 
     @Test
@@ -104,6 +111,22 @@ class LibraryIconPresentationTest {
                 transparentRatio = 0.01f,
                 boundsCoverage = 0.995f,
                 occupancy = 0.98f,
+                highColorDiversity = true,
+                sourceAspectRatio = 0.75f,
+            ),
+        )
+
+        assertEquals(LibraryIconPresentationMode.Cover, decision.mode)
+    }
+
+    @Test
+    fun coverWinsOverBackingEvidence() {
+        val decision = decideLibraryIconPresentation(
+            input(
+                transparentRatio = 0.01f,
+                boundsCoverage = 0.995f,
+                occupancy = 0.98f,
+                hasBackingColor = true,
                 highColorDiversity = true,
                 sourceAspectRatio = 0.75f,
             ),
@@ -188,6 +211,7 @@ class LibraryIconPresentationTest {
         occupancy: Float = 1f,
         aspectFill: Float = 1f,
         hasFramedCrop: Boolean = false,
+        hasBackingColor: Boolean = false,
         highColorDiversity: Boolean = false,
         sourceAspectRatio: Float = 1f,
     ) = LibraryIconPresentationInput(
@@ -196,6 +220,7 @@ class LibraryIconPresentationTest {
         occupancy = occupancy,
         aspectFill = aspectFill,
         hasFramedCrop = hasFramedCrop,
+        hasBackingColor = hasBackingColor,
         highColorDiversity = highColorDiversity,
         sourceAspectRatio = sourceAspectRatio,
     )
