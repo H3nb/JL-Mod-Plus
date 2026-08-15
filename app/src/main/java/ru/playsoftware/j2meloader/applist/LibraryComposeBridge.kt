@@ -717,10 +717,18 @@ private fun LibraryAppsDestination(
                 val height = headerHeightPx.value
                 if (delta == 0f || height <= 0) return Offset.Zero
 
-                headerOffsetPx.value =
-                    (headerOffsetPx.value + delta).coerceIn(-height.toFloat(), 0f)
-
+                val fullyHidden = headerOffsetPx.value <= -height.toFloat() + 0.5f
                 var visibilityChange = chromeHysteresis.onScrollDelta(delta)
+                val shouldMoveHeader =
+                    delta < 0f ||
+                        !fullyHidden ||
+                        chromeHysteresis.chromeVisible ||
+                        visibilityChange == true
+                if (shouldMoveHeader) {
+                    headerOffsetPx.value =
+                        (headerOffsetPx.value + delta).coerceIn(-height.toFloat(), 0f)
+                }
+
                 if (
                     delta > 0f &&
                     headerOffsetPx.value >= -0.5f &&
@@ -1538,7 +1546,7 @@ private fun loadLibraryIcon(
                 bitmap = normalized.asImageBitmap(),
                 filterQuality = if (analysis.pixelArt) FilterQuality.None else FilterQuality.Medium,
                 representativeColor = if (analysis.kind == LibraryIconKind.Foreground) {
-                    normalized.findRepresentativeColor()
+                    normalized.findRepresentativeColor() ?: normalized.findAverageVisibleColor()
                 } else {
                     null
                 },
@@ -1549,7 +1557,7 @@ private fun loadLibraryIcon(
         }
     }
 
-    val fallback = ContextCompat.getDrawable(context, R.drawable.ic_default_midlet)
+    val fallbackSource = ContextCompat.getDrawable(context, R.drawable.ic_default_midlet)
         ?.mutate()
         ?.also { drawable ->
             drawable.setTint(
@@ -1558,12 +1566,33 @@ private fun loadLibraryIcon(
         }
         ?.toBitmap(requestedSizePx, requestedSizePx)
         ?: return null
+    val fallbackBounds = if (normalizeSquareIcon) {
+        fallbackSource.analyzeLibraryIcon()?.contentBounds
+    } else {
+        null
+    }
+    val fallback = if (
+        fallbackBounds != null &&
+        !fallbackBounds.isFullBitmap(fallbackSource)
+    ) {
+        runCatching {
+            Bitmap.createBitmap(
+                fallbackSource,
+                fallbackBounds.left,
+                fallbackBounds.top,
+                fallbackBounds.width(),
+                fallbackBounds.height(),
+            )
+        }.getOrElse { fallbackSource }
+    } else {
+        fallbackSource
+    }
 
     return LibraryNormalizedIcon(
         bitmap = fallback.asImageBitmap(),
         filterQuality = fallback.libraryFilterQuality(),
-        // Preserve the existing neutral fallback treatment so screenshot baselines remain stable.
-        representativeColor = fallback.findAverageVisibleColor(),
+        // Preserve the pre-refinement fallback geometry/color in square mode.
+        representativeColor = if (normalizeSquareIcon) fallback.findAverageVisibleColor() else null,
         kind = LibraryIconKind.Fallback,
         visualScale = 1f,
         foregroundLuminance = fallback.averageVisibleLuminance(),
@@ -1799,8 +1828,8 @@ private const val LIBRARY_PIXEL_ART_OPAQUE_ALPHA = 240
 private const val LIBRARY_PIXEL_ART_MAX_SEMI_TRANSPARENT_RATIO = 0.06f
 private const val LIBRARY_DARK_FOREGROUND_LUMINANCE = 0.20f
 private const val LIBRARY_LIGHT_FOREGROUND_LUMINANCE = 0.82f
-private const val LIBRARY_DARK_CONTRAST_LIFT = 0.10f
-private const val LIBRARY_LIGHT_CONTRAST_DROP = 0.06f
+private const val LIBRARY_DARK_CONTRAST_LIFT = 0.18f
+private const val LIBRARY_LIGHT_CONTRAST_DROP = 0.08f
 
 /**
  * Gives transparent foreground artwork a restrained adaptive-style surface while leaving
@@ -1870,8 +1899,9 @@ private fun rememberLibraryIcon(
 ): LibraryNormalizedIcon? {
     val context = LocalContext.current
     val contentSizePx = with(LocalDensity.current) { contentSize.roundToPx() }.coerceAtLeast(1)
-    val cacheKey = remember(app.iconPath, contentSizePx, iconRatio) {
-        libraryIconCacheKey(app.iconPath, contentSizePx, iconRatio)
+    val fallbackTint = ContextCompat.getColor(context, R.color.library_default_icon)
+    val cacheKey = remember(app.iconPath, contentSizePx, iconRatio, fallbackTint) {
+        libraryIconCacheKey(app.iconPath, contentSizePx, iconRatio, fallbackTint)
     }
     return remember(cacheKey) {
         LibraryIconCache.get(cacheKey) ?: loadLibraryIcon(
@@ -1887,9 +1917,10 @@ private fun libraryIconCacheKey(
     iconPath: String?,
     targetSizePx: Int,
     iconRatio: LibraryIconRatio,
+    fallbackTint: Int,
 ): String {
     if (iconPath.isNullOrBlank()) {
-        return "fallback:$targetSizePx:${iconRatio.name}"
+        return "fallback:$fallbackTint:$targetSizePx:${iconRatio.name}"
     }
     val file = File(iconPath)
     val modified = runCatching { file.lastModified() }.getOrDefault(0L)
