@@ -15,17 +15,20 @@
 package ru.playsoftware.j2meloader.applist
 
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color as AndroidColor
 import android.graphics.Rect
 import android.util.LruCache
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -92,6 +95,8 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -122,6 +127,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -325,6 +331,7 @@ fun LibraryScreen(
     var deleteTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var infoDialog by remember { mutableStateOf<LibraryInfoDialog?>(null) }
     val isImeVisible = WindowInsets.isImeVisible
+    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     LaunchedEffect(destination) {
         if (destination != LibraryDestination.Apps) {
@@ -334,14 +341,52 @@ fun LibraryScreen(
         }
     }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
+    Row(modifier = modifier.fillMaxSize()) {
+        if (isLandscape && !isImeVisible) {
+            AnimatedVisibility(
+                visible = showNavigationBar,
+                enter = fadeIn(
+                    animationSpec = tween(
+                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                        easing = FastOutSlowInEasing,
+                    ),
+                ) + expandHorizontally(
+                    animationSpec = tween(
+                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                        easing = FastOutSlowInEasing,
+                    ),
+                    expandFrom = Alignment.Start,
+                ),
+                exit = fadeOut(
+                    animationSpec = tween(
+                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                        easing = FastOutSlowInEasing,
+                    ),
+                ) + shrinkHorizontally(
+                    animationSpec = tween(
+                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                        easing = FastOutSlowInEasing,
+                    ),
+                    shrinkTowards = Alignment.Start,
+                ),
+            ) {
+                LibraryNavigationRail(
+                    selected = destination,
+                    onSelected = { selectedDestinationIndex = it.ordinal },
+                )
+            }
+        }
+
+        Scaffold(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxSize(),
         contentWindowInsets = LibraryScaffoldInsets,
         bottomBar = {
             // Remove the slot while the IME is open. Scaffold includes the slot's measured
             // height in its content padding; animating it out would leave a blank strip above
             // the keyboard and make the list appear clipped.
-            if (!isImeVisible) {
+            if (!isLandscape && !isImeVisible) {
                 AnimatedVisibility(
                     visible = showNavigationBar,
                     enter = fadeIn(
@@ -469,6 +514,7 @@ fun LibraryScreen(
             )
         }
     }
+    }
 
     appActions?.let { app ->
         AppActionsDialog(
@@ -586,6 +632,59 @@ internal class LibraryChromeScrollHysteresis(
 }
 
 @Composable
+private fun LibraryNavigationRail(
+    selected: LibraryDestination,
+    onSelected: (LibraryDestination) -> Unit,
+) {
+    NavigationRail {
+        LibraryNavigationRailItem(
+            destination = LibraryDestination.Apps,
+            selected = selected,
+            label = R.string.library_destination_apps,
+            icon = R.drawable.ic_apps,
+            onSelected = onSelected,
+        )
+        LibraryNavigationRailItem(
+            destination = LibraryDestination.Collections,
+            selected = selected,
+            label = R.string.library_destination_collections,
+            icon = R.drawable.ic_collections,
+            onSelected = onSelected,
+        )
+        LibraryNavigationRailItem(
+            destination = LibraryDestination.Options,
+            selected = selected,
+            label = R.string.library_destination_options,
+            icon = R.drawable.ic_options,
+            onSelected = onSelected,
+        )
+    }
+}
+
+@Composable
+private fun ColumnScope.LibraryNavigationRailItem(
+    destination: LibraryDestination,
+    selected: LibraryDestination,
+    label: Int,
+    icon: Int,
+    onSelected: (LibraryDestination) -> Unit,
+) {
+    val labelText = stringResource(label)
+    NavigationRailItem(
+        selected = destination == selected,
+        onClick = { onSelected(destination) },
+        icon = {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = labelText,
+            )
+        },
+        label = { Text(labelText) },
+        alwaysShowLabel = false,
+    )
+}
+
+@Composable
 private fun LibraryNavigationBar(
     selected: LibraryDestination,
     onSelected: (LibraryDestination) -> Unit,
@@ -672,12 +771,20 @@ private fun LibraryAppsDestination(
         onNavigationVisibilityChanged(true)
         snapshotFlow {
             if (state.layout == LibraryLayout.List) {
-                listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+                Triple(
+                    listState.firstVisibleItemIndex,
+                    listState.firstVisibleItemScrollOffset,
+                    listState.canScrollForward || listState.canScrollBackward,
+                )
             } else {
-                gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset
+                Triple(
+                    gridState.firstVisibleItemIndex,
+                    gridState.firstVisibleItemScrollOffset,
+                    gridState.canScrollForward || gridState.canScrollBackward,
+                )
             }
-        }.collectLatest { (index, offset) ->
-            if (index == 0 && offset == 0) {
+        }.collectLatest { (index, offset, canScroll) ->
+            if (!canScroll || (index == 0 && offset == 0)) {
                 headerOffsetPx.value = 0f
                 chromeHysteresis.reset()
                 onFabVisibilityChanged(true)
@@ -704,6 +811,7 @@ private fun LibraryAppsDestination(
     }
     val headerScrollConnection = remember(
         chromeHysteresis,
+        state.layout,
         onFabVisibilityChanged,
         onNavigationVisibilityChanged,
     ) {
@@ -715,6 +823,21 @@ private fun LibraryAppsDestination(
                 val delta = available.y
                 val height = headerHeightPx.value
                 if (delta == 0f || height <= 0) return Offset.Zero
+
+                val canScroll = if (state.layout == LibraryLayout.List) {
+                    listState.canScrollForward || listState.canScrollBackward
+                } else {
+                    gridState.canScrollForward || gridState.canScrollBackward
+                }
+                if (!canScroll) {
+                    if (headerOffsetPx.value != 0f || !chromeHysteresis.chromeVisible) {
+                        headerOffsetPx.value = 0f
+                        chromeHysteresis.reset()
+                        onFabVisibilityChanged(true)
+                        onNavigationVisibilityChanged(true)
+                    }
+                    return Offset.Zero
+                }
 
                 val fullyHidden = headerOffsetPx.value <= -height.toFloat() + 0.5f
                 var visibilityChange = chromeHysteresis.onScrollDelta(delta)
@@ -1481,6 +1604,7 @@ private data class LibraryNormalizedIcon(
     val kind: LibraryIconKind,
     val visualScale: Float,
     val foregroundLuminance: Float,
+    val letterboxColor: Color? = null,
 )
 
 private const val LIBRARY_ICON_CACHE_BYTES = 4 * 1024 * 1024
@@ -1553,6 +1677,11 @@ private fun loadLibraryIcon(
                 kind = analysis.kind,
                 visualScale = visualScale,
                 foregroundLuminance = analysis.foregroundLuminance,
+                letterboxColor = if (analysis.kind == LibraryIconKind.Artwork) {
+                    fileSource.findLibraryLetterboxColor()
+                } else {
+                    null
+                },
             )
         }
     }
@@ -1583,11 +1712,9 @@ private fun loadLibraryIcon(
     return LibraryNormalizedIcon(
         bitmap = fallback.asImageBitmap(),
         filterQuality = fallback.libraryFilterQuality(),
-        // Preserve the existing fallback geometry/color so screenshot baselines stay focused
-        // on real J2ME artwork rather than the test-only missing-icon path.
         representativeColor = if (normalizeSquareIcon) fallback.findAverageVisibleColor() else null,
         kind = LibraryIconKind.Fallback,
-        visualScale = 1f,
+        visualScale = LIBRARY_FALLBACK_VISUAL_SCALE,
         foregroundLuminance = fallback.averageVisibleLuminance(),
     )
 }
@@ -1959,6 +2086,19 @@ private fun Bitmap.findRepresentativeColor(): Color? {
     )
 }
 
+private fun Bitmap.findLibraryLetterboxColor(): Color? {
+    if (width <= 0 || height <= 0) return null
+    val aspectRatio = width.toFloat() / height.toFloat()
+    if (kotlin.math.abs(aspectRatio - 1f) < LIBRARY_LETTERBOX_MIN_ASPECT_DELTA) return null
+    val edgeColor = findUniformCornerBackgroundColor() ?: return null
+    return Color(
+        red = AndroidColor.red(edgeColor) / 255f,
+        green = AndroidColor.green(edgeColor) / 255f,
+        blue = AndroidColor.blue(edgeColor) / 255f,
+        alpha = 1f,
+    )
+}
+
 private fun Bitmap.findAverageVisibleColor(): Color? {
     if (width <= 0 || height <= 0) return null
     val row = IntArray(width)
@@ -2030,7 +2170,10 @@ private const val LIBRARY_FOREGROUND_MIN_TRANSPARENT_RATIO = 0.06f
 private const val LIBRARY_FOREGROUND_BOUNDS_COVERAGE = 0.88f
 private const val LIBRARY_FOREGROUND_OCCUPANCY = 0.80f
 private const val LIBRARY_FOREGROUND_BASE_SCALE = 1.04f
-private const val LIBRARY_FOREGROUND_SCALE_RANGE = 0.18f
+private const val LIBRARY_FOREGROUND_SCALE_RANGE = 0.20f
+private const val LIBRARY_FALLBACK_VISUAL_SCALE = 0.86f
+private const val LIBRARY_FALLBACK_TINT_SCALE = 0.60f
+private const val LIBRARY_LETTERBOX_MIN_ASPECT_DELTA = 0.18f
 private const val LIBRARY_BACKGROUND_SAMPLE_ALPHA = 240
 private const val LIBRARY_BACKGROUND_MIN_CORNER_SAMPLES = 8
 private const val LIBRARY_BACKGROUND_MIN_DOMINANT_BIN_RATIO = 0.16f
@@ -2168,24 +2311,26 @@ private fun LibraryIconSlot(
         )
         val icon = rememberLibraryIcon(app, artworkSize, iconRatio)
         val baseContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        val containerColor = if (
+        val containerColor = when {
             iconRatio == LibraryIconRatio.Square &&
-            icon?.kind != LibraryIconKind.Artwork
-        ) {
-            icon?.representativeColor?.let { representativeColor ->
-                adaptiveLibrarySlotColor(
-                    base = baseContainerColor,
-                    accent = representativeColor,
-                    foregroundLuminance = icon.foregroundLuminance,
-                    tintStrength = if (icon.kind == LibraryIconKind.Fallback) {
-                        1f
-                    } else {
-                        LIBRARY_FOREGROUND_TINT_SCALE
-                    },
-                )
-            } ?: baseContainerColor
-        } else {
-            baseContainerColor
+                icon?.kind == LibraryIconKind.Artwork &&
+                icon.letterboxColor != null -> icon.letterboxColor
+            iconRatio == LibraryIconRatio.Square &&
+                icon?.kind != LibraryIconKind.Artwork -> {
+                icon?.representativeColor?.let { representativeColor ->
+                    adaptiveLibrarySlotColor(
+                        base = baseContainerColor,
+                        accent = representativeColor,
+                        foregroundLuminance = icon.foregroundLuminance,
+                        tintStrength = if (icon.kind == LibraryIconKind.Fallback) {
+                            LIBRARY_FALLBACK_TINT_SCALE
+                        } else {
+                            LIBRARY_FOREGROUND_TINT_SCALE
+                        },
+                    )
+                } ?: baseContainerColor
+            }
+            else -> baseContainerColor
         }
 
         Card(

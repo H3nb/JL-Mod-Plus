@@ -249,6 +249,27 @@ class LibraryComposeTest {
     }
 
     @Test
+    fun shortLibraryKeepsChromeVisibleWhenContentCannotScroll() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                apps = listOf(
+                    LibraryAppUiItem(7, "Demo MIDlet", "Example Vendor", "1.0", null, true),
+                ),
+            ),
+            actions = actions,
+        )
+
+        composeRule.onNodeWithText("Demo MIDlet").performTouchInput { swipeUp() }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Install").assertIsDisplayed()
+        composeRule.onNodeWithText("Apps").assertIsDisplayed()
+        composeRule.onNodeWithText("JL-Mod Plus Debug").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("App Sort Order").assertIsDisplayed()
+    }
+
+    @Test
     fun sortMenuExplainsCurrentDirection() {
         val actions = RecordingLibraryActions()
         setLibraryContent(
