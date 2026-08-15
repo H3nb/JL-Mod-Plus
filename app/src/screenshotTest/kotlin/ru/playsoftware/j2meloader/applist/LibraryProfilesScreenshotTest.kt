@@ -115,6 +115,22 @@ fun LibraryLandscapeScreenshot() {
 }
 
 @PreviewTest
+@Preview(name = "Library grid landscape", widthDp = 640, heightDp = 360, showBackground = true)
+@Composable
+fun LibraryGridLandscapeScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryScreen(
+            state = LibraryUiState(
+                loading = false,
+                apps = PreviewApps,
+                layout = LibraryLayout.Grid,
+            ),
+            actions = NoOpLibraryActions,
+        )
+    }
+}
+
+@PreviewTest
 @Preview(
     name = "Library list dark",
     widthDp = 360,
@@ -149,6 +165,28 @@ fun LibraryLandscapeDarkScreenshot() {
     JLModPlusTheme(darkTheme = true) {
         LibraryScreen(
             state = LibraryUiState(loading = false, apps = PreviewApps),
+            actions = NoOpLibraryActions,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(
+    name = "Library grid landscape dark",
+    widthDp = 640,
+    heightDp = 360,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    showBackground = true,
+)
+@Composable
+fun LibraryGridLandscapeDarkScreenshot() {
+    JLModPlusTheme(darkTheme = true) {
+        LibraryScreen(
+            state = LibraryUiState(
+                loading = false,
+                apps = PreviewApps,
+                layout = LibraryLayout.Grid,
+            ),
             actions = NoOpLibraryActions,
         )
     }

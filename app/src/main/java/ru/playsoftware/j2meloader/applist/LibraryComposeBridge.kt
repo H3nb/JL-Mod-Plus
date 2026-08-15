@@ -50,12 +50,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -305,7 +307,7 @@ internal enum class LibraryInfoDialog {
 
 private val LibraryScaffoldInsets = WindowInsets(left = 0, top = 0, right = 0, bottom = 0)
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
     state: LibraryUiState,
@@ -324,6 +326,7 @@ fun LibraryScreen(
     var renameTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var deleteTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var infoDialog by remember { mutableStateOf<LibraryInfoDialog?>(null) }
+    val isImeVisible = WindowInsets.isImeVisible
 
     LaunchedEffect(destination) {
         if (destination != LibraryDestination.Apps) {
@@ -337,96 +340,104 @@ fun LibraryScreen(
         modifier = modifier.fillMaxSize(),
         contentWindowInsets = LibraryScaffoldInsets,
         bottomBar = {
-            AnimatedVisibility(
-                visible = showNavigationBar,
-                enter = fadeIn(
-                    animationSpec = tween(
-                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                        easing = FastOutSlowInEasing,
+            // Remove the slot while the IME is open. Scaffold includes the slot's measured
+            // height in its content padding; animating it out would leave a blank strip above
+            // the keyboard and make the list appear clipped.
+            if (!isImeVisible) {
+                AnimatedVisibility(
+                    visible = showNavigationBar,
+                    enter = fadeIn(
+                        animationSpec = tween(
+                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                            easing = FastOutSlowInEasing,
+                        ),
+                    ) + expandVertically(
+                        animationSpec = tween(
+                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                            easing = FastOutSlowInEasing,
+                        ),
+                        expandFrom = Alignment.Bottom,
+                    ) + slideInVertically(
+                        animationSpec = tween(
+                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                            easing = FastOutSlowInEasing,
+                        ),
+                        initialOffsetY = { it / 2 },
                     ),
-                ) + expandVertically(
-                    animationSpec = tween(
-                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                        easing = FastOutSlowInEasing,
+                    exit = fadeOut(
+                        animationSpec = tween(
+                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                            easing = FastOutSlowInEasing,
+                        ),
+                    ) + shrinkVertically(
+                        animationSpec = tween(
+                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                            easing = FastOutSlowInEasing,
+                        ),
+                        shrinkTowards = Alignment.Bottom,
+                    ) + slideOutVertically(
+                        animationSpec = tween(
+                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                            easing = FastOutSlowInEasing,
+                        ),
+                        targetOffsetY = { it / 2 },
                     ),
-                    expandFrom = Alignment.Bottom,
-                ) + slideInVertically(
-                    animationSpec = tween(
-                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                        easing = FastOutSlowInEasing,
-                    ),
-                    initialOffsetY = { it / 2 },
-                ),
-                exit = fadeOut(
-                    animationSpec = tween(
-                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                        easing = FastOutSlowInEasing,
-                    ),
-                ) + shrinkVertically(
-                    animationSpec = tween(
-                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                        easing = FastOutSlowInEasing,
-                    ),
-                    shrinkTowards = Alignment.Bottom,
-                ) + slideOutVertically(
-                    animationSpec = tween(
-                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                        easing = FastOutSlowInEasing,
-                    ),
-                    targetOffsetY = { it / 2 },
-                ),
-            ) {
-                LibraryNavigationBar(
-                    selected = destination,
-                    onSelected = { selectedDestinationIndex = it.ordinal },
-                )
+                ) {
+                    LibraryNavigationBar(
+                        selected = destination,
+                        onSelected = { selectedDestinationIndex = it.ordinal },
+                    )
+                }
             }
         },
         floatingActionButton = {
-            AnimatedVisibility(
-                visible = destination == LibraryDestination.Apps && showInstallFab,
-                enter = fadeIn(
-                    animationSpec = tween(
-                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                        easing = FastOutSlowInEasing,
+            // The FAB is part of the same transient chrome and must not compete with the IME.
+            if (!isImeVisible && destination == LibraryDestination.Apps) {
+                AnimatedVisibility(
+                    visible = showInstallFab,
+                    enter = fadeIn(
+                        animationSpec = tween(
+                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                            easing = FastOutSlowInEasing,
+                        ),
+                    ) + scaleIn(
+                        initialScale = 0.86f,
+                        animationSpec = tween(
+                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                            easing = FastOutSlowInEasing,
+                        ),
+                    ) + slideInVertically(
+                        animationSpec = tween(
+                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                            easing = FastOutSlowInEasing,
+                        ),
+                        initialOffsetY = { it / 2 },
                     ),
-                ) + scaleIn(
-                    initialScale = 0.86f,
-                    animationSpec = tween(
-                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                        easing = FastOutSlowInEasing,
+                    exit = fadeOut(
+                        animationSpec = tween(
+                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                            easing = FastOutSlowInEasing,
+                        ),
+                    ) + scaleOut(
+                        targetScale = 0.86f,
+                        animationSpec = tween(
+                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                            easing = FastOutSlowInEasing,
+                        ),
+                    ) + slideOutVertically(
+                        animationSpec = tween(
+                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                            easing = FastOutSlowInEasing,
+                        ),
+                        targetOffsetY = { it / 2 },
                     ),
-                ) + slideInVertically(
-                    animationSpec = tween(
-                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                        easing = FastOutSlowInEasing,
-                    ),
-                    initialOffsetY = { it / 2 },
-                ),
-                exit = fadeOut(
-                    animationSpec = tween(
-                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                        easing = FastOutSlowInEasing,
-                    ),
-                ) + scaleOut(
-                    targetScale = 0.86f,
-                    animationSpec = tween(
-                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                        easing = FastOutSlowInEasing,
-                    ),
-                ) + slideOutVertically(
-                    animationSpec = tween(
-                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                        easing = FastOutSlowInEasing,
-                    ),
-                    targetOffsetY = { it / 2 },
-                ),
-            ) {
-                FloatingActionButton(onClick = actions::onInstall) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_add),
-                        contentDescription = stringResource(R.string.install),
-                    )
+                ) {
+                    FloatingActionButton(onClick = actions::onInstall) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_add),
+                            contentDescription = stringResource(R.string.install),
+                        )
+                    }
                 }
             }
         },
@@ -515,6 +526,9 @@ fun LibraryScreen(
 
 private const val LIBRARY_CHROME_ANIMATION_MILLIS = 220
 private const val LIBRARY_CHROME_REVEAL_SPEED_DP_PER_SECOND = 180f
+private val LibraryGridMinCellSize = 88.dp
+private const val LIBRARY_GRID_ARTWORK_FRACTION = 0.78f
+private val LibraryGridMaxArtworkSize = 72.dp
 
 @Composable
 private fun LibraryNavigationBar(
@@ -679,7 +693,7 @@ private fun LibraryAppsDestination(
     ) {
         if (state.layout == LibraryLayout.Grid) {
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 80.dp),
+                columns = GridCells.Adaptive(minSize = LibraryGridMinCellSize),
                 modifier = Modifier.fillMaxSize(),
                 state = gridState,
             ) {
@@ -1184,8 +1198,8 @@ private fun LibraryGridItem(
     ) {
         LibraryIconSlot(
             app = app,
-            slotSize = 64.dp,
-            contentSize = 48.dp,
+            modifier = Modifier.fillMaxWidth(),
+            contentSize = null,
             iconRatio = iconRatio,
         )
         if (!hideTitle) {
@@ -1233,12 +1247,12 @@ private fun LibraryListItem(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.Top,
         ) {
-            LibraryIconSlot(
-                app = app,
-                slotSize = 48.dp,
-                contentSize = 36.dp,
-                iconRatio = iconRatio,
-            )
+        LibraryIconSlot(
+            app = app,
+            modifier = Modifier.width(48.dp),
+            contentSize = 36.dp,
+            iconRatio = iconRatio,
+        )
             Spacer(Modifier.width(12.dp))
             Column(
                 modifier = Modifier
@@ -1616,40 +1630,46 @@ private fun rememberLibraryIcon(
 @Composable
 private fun LibraryIconSlot(
     app: LibraryAppUiItem,
-    slotSize: Dp,
-    contentSize: Dp,
+    modifier: Modifier,
+    contentSize: Dp?,
     iconRatio: LibraryIconRatio,
 ) {
-    val icon = rememberLibraryIcon(app, contentSize, iconRatio)
-    val baseContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
-    val containerColor = if (iconRatio == LibraryIconRatio.Square) {
-        icon?.representativeColor?.let { representativeColor ->
-            adaptiveLibrarySlotColor(baseContainerColor, representativeColor)
-        } ?: baseContainerColor
-    } else {
-        baseContainerColor
-    }
-
-    Card(
-        modifier = Modifier
-            .width(slotSize)
-            .aspectRatio(iconRatio.widthToHeight),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = containerColor),
-        border = BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
-        ),
+    BoxWithConstraints(
+        modifier = modifier.aspectRatio(iconRatio.widthToHeight),
     ) {
-        Box(
+        val artworkSize = contentSize ?: minOf(
+            maxWidth * LIBRARY_GRID_ARTWORK_FRACTION,
+            LibraryGridMaxArtworkSize,
+        )
+        val icon = rememberLibraryIcon(app, artworkSize, iconRatio)
+        val baseContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        val containerColor = if (iconRatio == LibraryIconRatio.Square) {
+            icon?.representativeColor?.let { representativeColor ->
+                adaptiveLibrarySlotColor(baseContainerColor, representativeColor)
+            } ?: baseContainerColor
+        } else {
+            baseContainerColor
+        }
+
+        Card(
             modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
+            shape = MaterialTheme.shapes.medium,
+            colors = CardDefaults.cardColors(containerColor = containerColor),
+            border = BorderStroke(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
+            ),
         ) {
-            LibraryIconArtwork(
-                icon = icon,
-                contentSize = contentSize,
-                iconRatio = iconRatio,
-            )
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                LibraryIconArtwork(
+                    icon = icon,
+                    contentSize = artworkSize,
+                    iconRatio = iconRatio,
+                )
+            }
         }
     }
 }
