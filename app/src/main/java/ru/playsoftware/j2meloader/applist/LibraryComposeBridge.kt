@@ -31,7 +31,6 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -2193,10 +2192,6 @@ private fun LibraryIconSlot(
             modifier = Modifier.fillMaxSize(),
             shape = MaterialTheme.shapes.medium,
             colors = CardDefaults.cardColors(containerColor = containerColor),
-            border = BorderStroke(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
-            ),
         ) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -2221,14 +2216,8 @@ private fun LibraryIconArtwork(
     if (icon == null) return
 
     val artworkModifier = when {
-        iconRatio != LibraryIconRatio.Square -> Modifier
-            .fillMaxSize()
-            .padding(4.dp)
-            .clip(MaterialTheme.shapes.small)
-        icon.kind == LibraryIconKind.Artwork -> Modifier
-            .fillMaxSize()
-            .padding(4.dp)
-            .clip(MaterialTheme.shapes.small)
+        iconRatio != LibraryIconRatio.Square -> Modifier.fillMaxSize()
+        icon.kind == LibraryIconKind.Artwork -> Modifier.fillMaxSize()
         else -> Modifier
             .size(contentSize * icon.visualScale)
             .clip(MaterialTheme.shapes.small)
