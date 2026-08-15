@@ -22,16 +22,16 @@ import static ru.playsoftware.j2meloader.util.Constants.PREF_DEFAULT_PROFILE;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
+import androidx.compose.ui.platform.ComposeView;
 import androidx.fragment.app.DialogFragment;
 import androidx.preference.PreferenceManager;
 
@@ -39,11 +39,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.databinding.DialogLoadProfileBinding;
 
+/** Compose presentation with the legacy profile copy contract kept in the host callback. */
 public class LoadProfileAlert extends DialogFragment {
 	private ArrayList<Profile> profiles;
-	private DialogLoadProfileBinding binding;
+	private String configPath;
 
 	static LoadProfileAlert newInstance(String parent) {
 		LoadProfileAlert fragment = new LoadProfileAlert();
@@ -58,73 +58,89 @@ public class LoadProfileAlert extends DialogFragment {
 		super.onCreate(savedInstanceState);
 		profiles = ProfilesManager.getProfiles();
 		Collections.sort(profiles);
+		configPath = requireArguments().getString(KEY_CONFIG_PATH);
 	}
 
 	@NonNull
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
-		String configPath = requireArguments().getString(KEY_CONFIG_PATH);
-		binding = DialogLoadProfileBinding.inflate(getLayoutInflater());
-		ArrayAdapter<Profile> adapter = new ArrayAdapter<>(requireActivity(),
-				android.R.layout.simple_list_item_single_choice, profiles);
-		binding.list.setOnItemClickListener(this::onItemClick);
-		binding.list.setAdapter(adapter);
-		AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
-		builder.setTitle(R.string.load_profile)
-				.setView(binding.getRoot())
-				.setPositiveButton(android.R.string.ok, (dialog, which) -> {
-					DialogLoadProfileBinding binding = this.binding;
-					Context context = getActivity();
-					if (binding == null || context == null) {
-						return;
+		ComposeView composeView = new ComposeView(requireContext());
+		String defaultName = PreferenceManager.getDefaultSharedPreferences(requireContext())
+				.getString(PREF_DEFAULT_PROFILE, null);
+		ConfigDialogComposeBridge.setLoadProfileContent(
+				composeView,
+				profiles,
+				defaultName,
+				new ConfigDialogComposeBridge.LoadProfileCallbacks() {
+					@Override
+					public void onDismiss() {
+						dismiss();
 					}
-					try {
-						final int pos = binding.list.getCheckedItemPosition();
-						final boolean configChecked = binding.cbConfig.isChecked();
-						final boolean vkChecked = binding.cbKeyboard.isChecked();
-						if (pos == -1) {
+
+					@Override
+					public void onError() {
+						Context context = getContext();
+						if (context != null) {
 							Toast.makeText(context, R.string.error, Toast.LENGTH_SHORT).show();
+						}
+					}
+
+					@Override
+					public void onConfirm(String name, boolean config, boolean keyboard) {
+						Context context = getContext();
+						if (context == null) {
 							return;
 						}
-						ProfilesManager.load((Profile) binding.list.getItemAtPosition(pos), configPath,
-								configChecked, vkChecked);
-						((ConfigActivity) context).loadParams(true);
-					} catch (Exception e) {
-						e.printStackTrace();
-						Toast.makeText(context, R.string.error, Toast.LENGTH_SHORT).show();
+						try {
+							Profile selected = null;
+							for (Profile profile : profiles) {
+								if (profile.getName().equals(name)) {
+									selected = profile;
+									break;
+								}
+							}
+							if (selected == null) {
+								Toast.makeText(context, R.string.error, Toast.LENGTH_SHORT).show();
+								return;
+							}
+							ProfilesManager.load(selected, configPath, config, keyboard);
+							if (context instanceof ConfigActivity) {
+								((ConfigActivity) context).loadParams(true);
+							}
+							dismiss();
+						} catch (Exception e) {
+							e.printStackTrace();
+							Toast.makeText(context, R.string.error, Toast.LENGTH_SHORT).show();
+						}
 					}
-				})
-				.setNegativeButton(android.R.string.cancel, null);
-		final String def = PreferenceManager.getDefaultSharedPreferences(requireContext())
-				.getString(PREF_DEFAULT_PROFILE, null);
+				});
 
-		if (def != null) {
-			for (int i = 0, size = profiles.size(); i < size; i++) {
-				Profile profile = profiles.get(i);
-				if (profile.getName().equals(def)) {
-					binding.list.setItemChecked(i, true);
-					onItemClick(binding.list, null, i, i);
-					break;
-				}
-			}
-		}
-		return builder.create();
+		Dialog dialog = new Dialog(requireContext());
+		dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+		dialog.setContentView(composeView);
+		dialog.setCanceledOnTouchOutside(true);
+		return dialog;
 	}
 
 	@Override
-	public void onDismiss(@NonNull DialogInterface dialog) {
-		super.onDismiss(dialog);
-		binding = null;
+	public void onStart() {
+		super.onStart();
+		Dialog dialog = getDialog();
+		if (dialog == null || dialog.getWindow() == null) {
+			return;
+		}
+		Window window = dialog.getWindow();
+		window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+		window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+		WindowManager.LayoutParams attributes = window.getAttributes();
+		attributes.dimAmount = 0.32f;
+		window.setAttributes(attributes);
+		int width = Math.min(getResources().getDisplayMetrics().widthPixels - dp(32), dp(560));
+		int height = Math.min((int) (getResources().getDisplayMetrics().heightPixels * 0.84f), dp(680));
+		window.setLayout(Math.max(width, dp(280)), Math.max(height, dp(320)));
 	}
 
-	private void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
-		final Profile profile = profiles.get(pos);
-		final boolean hasConfig = profile.hasConfig() || profile.hasOldConfig();
-		final boolean hasVk = profile.hasKeyLayout();
-		binding.cbConfig.setEnabled(hasConfig && hasVk);
-		binding.cbConfig.setChecked(hasConfig);
-		binding.cbKeyboard.setEnabled(hasVk && hasConfig);
-		binding.cbKeyboard.setChecked(hasVk);
+	private int dp(int value) {
+		return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
 	}
-
 }

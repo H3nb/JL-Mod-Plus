@@ -43,8 +43,9 @@ public abstract class AbstractSoftKeysBar {
 	}
 
 	public void notifyChanged(List<Command> list) {
-		Collections.sort(list);
-		ViewHandler.postEvent(() -> onCommandsChanged(list));
+		List<Command> snapshot = new ArrayList<>(list);
+		Collections.sort(snapshot);
+		ViewHandler.postEvent(() -> onCommandsChanged(snapshot));
 	}
 
 	protected PopupWindow prepareMenu(int skip) {
@@ -62,7 +63,9 @@ public abstract class AbstractSoftKeysBar {
 			lv.setOnItemClickListener(this::onMenuItemClick);
 			popup.setOnDismissListener(() -> adapter.clear());
 		}
-		adapter.addAll(skip == 0 ? commands : commands.subList(skip, commands.size()));
+		adapter.clear();
+		int start = Math.max(0, Math.min(skip, commands.size()));
+		adapter.addAll(new ArrayList<>(commands.subList(start, commands.size())));
 		return popup;
 	}
 

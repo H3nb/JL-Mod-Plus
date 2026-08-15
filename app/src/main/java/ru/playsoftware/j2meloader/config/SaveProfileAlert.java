@@ -21,117 +21,112 @@ import static ru.playsoftware.j2meloader.util.Constants.KEY_CONFIG_PATH;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_DEFAULT_PROFILE;
 
 import android.app.Dialog;
-import android.content.DialogInterface;
+import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.text.InputFilter;
-import android.widget.Button;
-import android.widget.EditText;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
+import androidx.compose.ui.platform.ComposeView;
 import androidx.fragment.app.DialogFragment;
 import androidx.preference.PreferenceManager;
 
-import java.io.File;
-import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.databinding.DialogSaveProfileBinding;
 
+/** Compose presentation with filename filtering and overwrite confirmation preserved. */
 public class SaveProfileAlert extends DialogFragment {
-	private DialogSaveProfileBinding binding;
 	private String configPath;
 
 	@NonNull
 	public static SaveProfileAlert getInstance(String parent) {
-		SaveProfileAlert saveProfileAlert = new SaveProfileAlert();
-		Bundle bundleSave = new Bundle();
-		bundleSave.putString(KEY_CONFIG_PATH, parent);
-		saveProfileAlert.setArguments(bundleSave);
-		return saveProfileAlert;
+		SaveProfileAlert fragment = new SaveProfileAlert();
+		Bundle args = new Bundle();
+		args.putString(KEY_CONFIG_PATH, parent);
+		fragment.setArguments(args);
+		return fragment;
 	}
 
 	@NonNull
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
 		configPath = requireArguments().getString(KEY_CONFIG_PATH);
-		binding = DialogSaveProfileBinding.inflate(getLayoutInflater());
-		binding.editText.setFilters(new InputFilter[]{new FileNameInputFilter()});
-		return new AlertDialog.Builder(requireActivity())
-				.setTitle(R.string.save_profile)
-				.setView(binding.getRoot())
-				.setNegativeButton(android.R.string.cancel, null)
-				.setPositiveButton(android.R.string.ok, null)
-				.create();
+		Set<String> existingConfigNames = new HashSet<>();
+		for (Profile profile : ProfilesManager.getProfiles()) {
+			if (profile.getConfig().exists()) {
+				existingConfigNames.add(profile.getName());
+			}
+		}
+		ComposeView composeView = new ComposeView(requireContext());
+		ConfigDialogComposeBridge.setSaveProfileContent(
+				composeView,
+				existingConfigNames,
+				new ConfigDialogComposeBridge.SaveProfileCallbacks() {
+					@Override
+					public void onDismiss() {
+						dismiss();
+					}
+
+					@Override
+					public void onError() {
+						Context context = getContext();
+						if (context != null) {
+							Toast.makeText(context, R.string.error, Toast.LENGTH_SHORT).show();
+						}
+					}
+
+					@Override
+					public void onConfirm(String name, boolean config, boolean keyboard, boolean asDefault) {
+						Context context = getContext();
+						if (context == null) {
+							return;
+						}
+						try {
+							ProfilesManager.save(new Profile(name), configPath, config, keyboard);
+							if (asDefault) {
+								PreferenceManager.getDefaultSharedPreferences(context)
+										.edit().putString(PREF_DEFAULT_PROFILE, name).apply();
+							}
+							Toast.makeText(context, getString(R.string.saved, name), Toast.LENGTH_SHORT).show();
+							dismiss();
+						} catch (Exception e) {
+							e.printStackTrace();
+							Toast.makeText(context, R.string.error, Toast.LENGTH_SHORT).show();
+						}
+					}
+				});
+
+		Dialog dialog = new Dialog(requireContext());
+		dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+		dialog.setContentView(composeView);
+		dialog.setCanceledOnTouchOutside(true);
+		return dialog;
 	}
 
 	@Override
 	public void onStart() {
 		super.onStart();
-		Button btPositive = ((AlertDialog) requireDialog()).getButton(AlertDialog.BUTTON_POSITIVE);
-		btPositive.setOnClickListener(v -> {
-			DialogSaveProfileBinding binding = this.binding;
-			if (binding == null) {
-				return;
-			}
-			EditText editText = binding.editText;
-			String name = editText.getText().toString().trim();
-			if (name.isEmpty()) {
-				editText.requestFocus();
-				Toast.makeText(requireActivity(), R.string.error_name, Toast.LENGTH_SHORT).show();
-				return;
-			}
-
-			final File config = new File(Config.getProfilesDir(), name + Config.MIDLET_CONFIG_FILE);
-			if (config.exists()) {
-				alertRewriteExists(name);
-				return;
-			}
-			save(name);
-		});
-	}
-
-	@Override
-	public void onDismiss(@NonNull DialogInterface dialog) {
-		super.onDismiss(dialog);
-		binding = null;
-	}
-
-	private void alertRewriteExists(String name) {
-		new AlertDialog.Builder(requireContext())
-				.setMessage(getString(R.string.alert_rewrite_profile, name))
-				.setPositiveButton(android.R.string.ok, (dialog, which) -> save(name))
-				.setNegativeButton(android.R.string.cancel, (dialog, which) -> {
-					DialogSaveProfileBinding binding = this.binding;
-					if (binding == null) {
-						return;
-					}
-					binding.editText.setText(name);
-					binding.editText.requestFocus();
-					binding.editText.setSelection(0, binding.editText.getText().length());
-				})
-				.show();
-	}
-
-	private void save(String name) {
-		DialogSaveProfileBinding binding = this.binding;
-		if (binding == null) {
+		Dialog dialog = getDialog();
+		if (dialog == null || dialog.getWindow() == null) {
 			return;
 		}
-		try {
-			Profile profile = new Profile(name);
-			ProfilesManager.save(profile, this.configPath,
-					binding.cbConfig.isChecked(), binding.cbKeyboard.isChecked());
-			if (binding.cbDefault.isChecked()) {
-				PreferenceManager.getDefaultSharedPreferences(requireContext())
-						.edit().putString(PREF_DEFAULT_PROFILE, name).apply();
-			}
-			Toast.makeText(requireContext(), getString(R.string.saved, name), Toast.LENGTH_SHORT).show();
-			dismiss();
-		} catch (IOException e) {
-			e.printStackTrace();
-			Toast.makeText(requireActivity(), R.string.error, Toast.LENGTH_SHORT).show();
-		}
+		Window window = dialog.getWindow();
+		window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+		window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+		WindowManager.LayoutParams attributes = window.getAttributes();
+		attributes.dimAmount = 0.32f;
+		window.setAttributes(attributes);
+		int width = Math.min(getResources().getDisplayMetrics().widthPixels - dp(32), dp(560));
+		int height = Math.min((int) (getResources().getDisplayMetrics().heightPixels * 0.84f), dp(680));
+		window.setLayout(Math.max(width, dp(280)), Math.max(height, dp(320)));
+	}
+
+	private int dp(int value) {
+		return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
 	}
 }

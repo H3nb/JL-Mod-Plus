@@ -75,11 +75,37 @@ class KeyMapperComposeTest {
         assertTrue(dismissed)
     }
 
+    @Test
+    fun missingMenuWarningOffersSaveAndCancelWithoutChangingDispatchState() {
+        var saved = false
+        var dismissed = false
+        composeRule.setContent {
+            JLModPlusTheme {
+                KeyMapperScreen(
+                    state = KeyMapperUiState(warningVisible = true),
+                    actions = recordingActions(
+                        onDismissWarning = { dismissed = true },
+                        onSave = { saved = true },
+                    ),
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Warning").assertIsDisplayed()
+        composeRule.onNodeWithText("Save").performClick()
+        assertTrue(saved)
+        assertTrue(!dismissed)
+    }
+
     private fun recordingActions(
         onVirtualKey: (Int) -> Unit = {},
         onDismiss: () -> Unit = {},
+        onDismissWarning: () -> Unit = {},
+        onSave: () -> Unit = {},
     ) = object : KeyMapperActions {
         override fun onVirtualKey(canvasKey: Int) = onVirtualKey(canvasKey)
         override fun onDismissMapping() = onDismiss()
+        override fun onDismissWarning() = onDismissWarning()
+        override fun onSaveAndExit() = onSave()
     }
 }

@@ -85,7 +85,6 @@ import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import kotlinx.coroutines.delay
@@ -404,12 +403,16 @@ private fun LibraryContent(
     onOpenApp: (Int) -> Unit,
     onOpenActions: (LibraryAppUiItem) -> Unit,
 ) {
+    val loadingDescription = stringResource(R.string.loading_apps)
+
     Box(modifier = modifier.fillMaxSize()) {
         when {
             state.loading -> CircularProgressIndicator(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .semantics { contentDescription = "Loading apps" },
+                    .semantics {
+                        contentDescription = loadingDescription
+                    },
             )
 
             state.apps.isEmpty() -> Text(
@@ -472,8 +475,7 @@ private fun LibraryGridItem(
             Text(
                 text = app.title,
                 modifier = Modifier.padding(top = 4.dp, start = 2.dp, end = 2.dp),
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
@@ -504,8 +506,7 @@ private fun LibraryListItem(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = app.title,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -514,14 +515,14 @@ private fun LibraryListItem(
                     text = app.author,
                     modifier = Modifier.weight(1f),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 12.sp,
+                    style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = app.version,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 12.sp,
+                    style = MaterialTheme.typography.bodySmall,
                 )
             }
         }

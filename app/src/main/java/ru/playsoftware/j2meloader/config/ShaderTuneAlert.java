@@ -18,31 +18,25 @@ package ru.playsoftware.j2meloader.config;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.widget.SeekBar;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
+import androidx.annotation.Nullable;
+import androidx.compose.ui.platform.ComposeView;
 import androidx.fragment.app.DialogFragment;
 
-import java.text.DecimalFormat;
-import java.util.Arrays;
-
 import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.config.ShaderInfo.Setting;
-import ru.playsoftware.j2meloader.databinding.DialogShaderTuneBinding;
-import ru.playsoftware.j2meloader.databinding.DialogShaderTuneItemBinding;
 
+/** Compose shader tuning surface; shader values and callback ownership remain unchanged. */
 public class ShaderTuneAlert extends DialogFragment {
 	private static final String SHADER_KEY = "shader";
-
-	private final SeekBar[] seekBars = new SeekBar[4];
 	private ShaderInfo shader;
 	private Callback callback;
-	private float[] values;
 
 	static ShaderTuneAlert newInstance(ShaderInfo shader) {
 		ShaderTuneAlert fragment = new ShaderTuneAlert();
@@ -57,100 +51,67 @@ public class ShaderTuneAlert extends DialogFragment {
 	public void onAttach(@NonNull Context context) {
 		super.onAttach(context);
 		if (context instanceof Callback) {
-			callback = ((Callback) context);
+			callback = (Callback) context;
 		}
-		Bundle bundle = requireArguments();
-		shader = bundle.getParcelable(SHADER_KEY);
+		shader = requireArguments().getParcelable(SHADER_KEY);
 		if (shader == null) {
 			Toast.makeText(context, R.string.error, Toast.LENGTH_SHORT).show();
 			dismiss();
-			return;
 		}
-		values = shader.values;
 	}
 
 	@NonNull
 	@Override
-	public Dialog onCreateDialog(Bundle savedInstanceState) {
-		LayoutInflater inflater = getLayoutInflater();
-		DialogShaderTuneBinding binding = DialogShaderTuneBinding.inflate(inflater);
-		Setting[] settings = shader.settings;
-		DecimalFormat format = new DecimalFormat("#.######");
-		for (int i = 0; i < 4; i++) {
-			Setting setting = settings[i];
-			if (setting == null) {
-				continue;
-			}
-			DialogShaderTuneItemBinding itemBinding = DialogShaderTuneItemBinding.inflate(inflater, binding.getRoot(), true);
-			SeekBar seekBar = itemBinding.sbShaderSettingValue;
-			seekBars[i] = seekBar;
-			float value = values != null ? values[i] : setting.def;
-			itemBinding.tvShaderSettingName.setText(getString(R.string.shader_setting, setting.name, format.format(value)));
-			if (setting.step <= 0.0f) {
-				setting.step = (setting.max - setting.min) / 100.0f;
-			}
-			seekBar.setMax((int) ((setting.max - setting.min) / setting.step));
-			int progress = (int) ((value - setting.min) / setting.step);
-			seekBar.setProgress(progress);
-			seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-				@Override
-				public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-					String value = format.format(setting.min + (progress * setting.step));
-					itemBinding.tvShaderSettingName.setText(getString(R.string.shader_setting, setting.name, value));
-				}
-
-				@Override
-				public void onStartTrackingTouch(SeekBar seekBar) {
-				}
-
-				@Override
-				public void onStopTrackingTouch(SeekBar seekBar) {
-				}
-			});
+	public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+		ComposeView composeView = new ComposeView(requireContext());
+		if (shader == null) {
+			return new Dialog(requireContext());
 		}
-		return new AlertDialog.Builder(requireActivity())
-				.setTitle(R.string.shader_tuning)
-				.setView(binding.getRoot())
-				.setPositiveButton(android.R.string.ok, (d, w) -> onClickOk())
-				.setNegativeButton(android.R.string.cancel, null)
-				.setNeutralButton(R.string.reset, null)
-				.create();
+		ConfigDialogComposeBridge.setShaderContent(
+				composeView,
+				shader,
+				new ConfigDialogComposeBridge.ShaderCallbacks() {
+					@Override
+					public void onDismiss() {
+						dismiss();
+					}
+
+					@Override
+					public void onConfirm(@NonNull float[] values) {
+						if (callback != null) {
+							callback.onTuneComplete(values);
+						}
+						dismiss();
+					}
+				});
+		Dialog dialog = new Dialog(requireContext());
+		dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+		dialog.setContentView(composeView);
+		// The legacy dialog is non-cancelable; only Cancel/OK in the Compose surface may close it.
+		dialog.setCancelable(false);
+		return dialog;
 	}
 
 	@Override
 	public void onStart() {
 		super.onStart();
-		AlertDialog dialog = (AlertDialog) requireDialog();
-		dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> onClickReset());
-	}
-
-	@Override
-	public void onDismiss(@NonNull DialogInterface dialog) {
-		super.onDismiss(dialog);
-		Arrays.fill(seekBars, null);
-	}
-
-	private void onClickReset() {
-		for (int i = 0; i < 4; i++) {
-			SeekBar seekBar = seekBars[i];
-			if (seekBar != null) {
-				Setting s = shader.settings[i];
-				int progress = (int) ((s.def - s.min) / s.step);
-				seekBar.setProgress(progress);
-			}
+		Dialog dialog = getDialog();
+		if (dialog == null || dialog.getWindow() == null) {
+			return;
 		}
+		Window window = dialog.getWindow();
+		window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+		window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+		WindowManager.LayoutParams attributes = window.getAttributes();
+		attributes.dimAmount = 0.32f;
+		window.setAttributes(attributes);
+		int width = Math.min(getResources().getDisplayMetrics().widthPixels - dp(32), dp(620));
+		int height = Math.min((int) (getResources().getDisplayMetrics().heightPixels * 0.84f), dp(720));
+		window.setLayout(Math.max(width, dp(280)), Math.max(height, dp(320)));
 	}
 
-	private void onClickOk() {
-		float[] values = new float[4];
-		for (int i = 0, sbValuesLength = seekBars.length; i < sbValuesLength; i++) {
-			SeekBar bar = seekBars[i];
-			if (bar != null) {
-				Setting setting = shader.settings[i];
-				values[i] = bar.getProgress() * setting.step + setting.min;
-			}
-		}
-		callback.onTuneComplete(values);
+	private int dp(int value) {
+		return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
 	}
 
 	interface Callback {

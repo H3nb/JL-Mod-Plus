@@ -46,6 +46,13 @@ public class GlesView extends GLSurfaceView {
 	}
 
 	@Override
+	public boolean onCheckIsTextEditor() {
+		// Keep the GLES Canvas on the same Android IME contract as CanvasView. The backing
+		// InputConnection forwards key events; it is not a text editor with persistent content.
+		return true;
+	}
+
+	@Override
 	public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
 		if (mPublicInputConnection == null) {
 			mPublicInputConnection = new DelKeyWorkaround(this, false);

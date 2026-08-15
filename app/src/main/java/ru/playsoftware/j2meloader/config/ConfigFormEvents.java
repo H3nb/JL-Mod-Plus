@@ -34,7 +34,15 @@ public interface ConfigFormEvents {
 
 	void onEncodingPicker();
 
+	/** Called after the Compose charset picker confirms a charset. */
+	default void onEncodingSelected(String charset) {
+	}
+
 	void onShaderTuning();
+
+	/** Called after the Compose shader editor confirms its four-slot value array. */
+	default void onShaderTuningComplete(float[] values) {
+	}
 
 	enum ColorField {
 		SCREEN_BACKGROUND,

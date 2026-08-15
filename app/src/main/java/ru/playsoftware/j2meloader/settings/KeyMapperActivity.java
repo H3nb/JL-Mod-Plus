@@ -21,17 +21,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.SparseIntArray;
 import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.compose.ui.platform.ComposeView;
 
@@ -69,10 +64,8 @@ public class KeyMapperActivity extends AppCompatActivity {
 		ComposeView composeView = new ComposeView(this);
 		setContentView(composeView);
 		EdgeToEdgeCompat.protectHostContent(this);
-		ActionBar actionBar = getSupportActionBar();
-		if (actionBar != null) {
-			actionBar.setDisplayHomeAsUpEnabled(true);
-			actionBar.setTitle(R.string.pref_map_keys);
+		if (getSupportActionBar() != null) {
+			getSupportActionBar().hide();
 		}
 		params = ProfilesManager.loadConfig(new File(path));
 
@@ -103,12 +96,34 @@ public class KeyMapperActivity extends AppCompatActivity {
 			public void onDismissMapping() {
 				dismissMappingDialog();
 			}
+
+			@Override
+			public void onBack() {
+				getOnBackPressedDispatcher().onBackPressed();
+			}
+
+			@Override
+			public void onResetMapping() {
+				androidToMIDP = defaultKeyMap.clone();
+			}
+
+			@Override
+			public void onSaveAndExit() {
+				composeController.hideMenuKeyWarning();
+				save();
+				finish();
+			}
+
+			@Override
+			public void onDismissWarning() {
+				composeController.hideMenuKeyWarning();
+			}
 		});
 		getOnBackPressedDispatcher().addCallback(new OnBackPressedCallback(true) {
 			@Override
 			public void handleOnBackPressed() {
 				if (!KeyMapperMappingRules.containsValue(androidToMIDP, KeyMapper.KEY_OPTIONS_MENU)) {
-					alertMenuKey();
+					composeController.showMenuKeyWarning();
 					return;
 				}
 				save();
@@ -151,23 +166,6 @@ public class KeyMapperActivity extends AppCompatActivity {
 		composeController.hideMappingDialog();
 	}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.keymapper, menu);
-		return super.onCreateOptionsMenu(menu);
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		int itemId = item.getItemId();
-		if (itemId == android.R.id.home) {
-			getOnBackPressedDispatcher().onBackPressed();
-		} else if (itemId == R.id.action_reset_mapping) {
-			androidToMIDP = defaultKeyMap.clone();
-		}
-		return super.onOptionsItemSelected(item);
-	}
 
 	private void save() {
 		SparseIntArray newMap = androidToMIDP;
@@ -179,18 +177,6 @@ public class KeyMapperActivity extends AppCompatActivity {
 			params.keyMappings = newMap;
 			ProfilesManager.saveConfig(params);
 		}
-	}
-
-	private void alertMenuKey() {
-		new AlertDialog.Builder(this)
-				.setTitle(R.string.warning)
-				.setMessage(R.string.alert_map_menu)
-				.setNegativeButton(R.string.save, (d, w) -> {
-					save();
-					finish();
-				})
-				.setPositiveButton(R.string.CANCEL_CMD, null)
-				.show();
 	}
 
 	@Override
