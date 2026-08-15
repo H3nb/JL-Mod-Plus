@@ -121,6 +121,24 @@ class LibraryIconPresentationTest {
     }
 
     @Test
+    fun framedBackplateWinsOverCoverHeuristics() {
+        val decision = decideLibraryIconPresentation(
+            input(
+                transparentRatio = 0f,
+                boundsCoverage = 1f,
+                occupancy = 1f,
+                hasFramedCrop = true,
+                hasBackingColor = true,
+                highColorDiversity = true,
+                sourceAspectRatio = 1f,
+            ),
+        )
+
+        assertEquals(LibraryIconPresentationMode.Backed, decision.mode)
+        assertEquals(0.74f, decision.visualScale, 0.0001f)
+    }
+
+    @Test
     fun opaqueHighDiversityCoverCanCropToFill() {
         val decision = decideLibraryIconPresentation(
             input(
@@ -136,7 +154,7 @@ class LibraryIconPresentationTest {
     }
 
     @Test
-    fun coverWinsOverBackingEvidence() {
+    fun coverWinsOverBackingEvidenceWithoutFramedSubject() {
         val decision = decideLibraryIconPresentation(
             input(
                 transparentRatio = 0.01f,
