@@ -25,11 +25,15 @@
 
 package org.microemu.cldc.socket;
 
+import org.microemu.cldc.GcfIoExceptionMapper;
+import org.microemu.cldc.NetworkAddressUtil;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 
 import javax.microedition.io.Connector;
@@ -37,7 +41,7 @@ import javax.microedition.io.Connector;
 public class SocketConnection implements javax.microedition.io.SocketConnection {
 
 	protected Socket socket;
-	private int mode = Connector.READ_WRITE;
+	private boolean timeouts;
 	private boolean connectionClosed;
 	private boolean inputOpened;
 	private boolean inputClosed;
@@ -48,30 +52,52 @@ public class SocketConnection implements javax.microedition.io.SocketConnection 
 	}
 
 	public SocketConnection(String host, int port) throws IOException {
-		this(host, port, Connector.READ_WRITE);
+		this(host, port, Connector.READ_WRITE, false);
 	}
 
 	public SocketConnection(String host, int port, int mode) throws IOException {
-		initialize(new Socket(host, port), mode);
+		this(host, port, mode, false);
+	}
+
+	public SocketConnection(String host, int port, int mode, boolean timeouts) throws IOException {
+		validateMode(mode);
+		Socket created = new Socket();
+		try {
+			created.connect(new InetSocketAddress(host, port));
+			initialize(created, mode, timeouts);
+		} catch (IOException ex) {
+			try {
+				created.close();
+			} catch (IOException ignored) {
+				// Preserve the original connection failure.
+			}
+			throw translate(ex, timeouts);
+		}
 	}
 
 	public SocketConnection(Socket socket) {
-		this(socket, Connector.READ_WRITE);
+		this(socket, Connector.READ_WRITE, false);
 	}
 
 	public SocketConnection(Socket socket, int mode) {
-		initialize(socket, mode);
+		this(socket, mode, false);
+	}
+
+	public SocketConnection(Socket socket, int mode, boolean timeouts) {
+		initialize(socket, mode, timeouts);
 	}
 
 	protected final void initialize(Socket socket, int mode) {
-		if (mode != Connector.READ && mode != Connector.WRITE && mode != Connector.READ_WRITE) {
-			throw new IllegalArgumentException("Invalid connection mode: " + mode);
-		}
+		initialize(socket, mode, false);
+	}
+
+	protected final void initialize(Socket socket, int mode, boolean timeouts) {
+		validateMode(mode);
 		if (socket == null) {
 			throw new NullPointerException("socket");
 		}
 		this.socket = socket;
-		this.mode = mode;
+		this.timeouts = timeouts;
 		connectionClosed = false;
 		inputOpened = false;
 		inputClosed = false;
@@ -82,13 +108,13 @@ public class SocketConnection implements javax.microedition.io.SocketConnection 
 	@Override
 	public String getAddress() throws IOException {
 		ensureConnectionOpen();
-		return socket.getInetAddress().getHostAddress();
+		return NetworkAddressUtil.format(socket.getInetAddress());
 	}
 
 	@Override
 	public String getLocalAddress() throws IOException {
 		ensureConnectionOpen();
-		return socket.getLocalAddress().getHostAddress();
+		return NetworkAddressUtil.format(socket.getLocalAddress());
 	}
 
 	@Override
@@ -168,15 +194,16 @@ public class SocketConnection implements javax.microedition.io.SocketConnection 
 	@Override
 	public synchronized InputStream openInputStream() throws IOException {
 		ensureConnectionOpen();
-		if (mode == Connector.WRITE) {
-			throw new IOException("Connection is write-only");
-		}
 		if (inputOpened) {
 			throw new IOException("Input stream already opened");
 		}
-		InputStream input = socket.getInputStream();
-		inputOpened = true;
-		return new ManagedInputStream(input);
+		try {
+			InputStream input = socket.getInputStream();
+			inputOpened = true;
+			return new ManagedInputStream(input);
+		} catch (IOException ex) {
+			throw translate(ex);
+		}
 	}
 
 	@Override
@@ -187,15 +214,16 @@ public class SocketConnection implements javax.microedition.io.SocketConnection 
 	@Override
 	public synchronized OutputStream openOutputStream() throws IOException {
 		ensureConnectionOpen();
-		if (mode == Connector.READ) {
-			throw new IOException("Connection is read-only");
-		}
 		if (outputOpened) {
 			throw new IOException("Output stream already opened");
 		}
-		OutputStream output = socket.getOutputStream();
-		outputOpened = true;
-		return new ManagedOutputStream(output);
+		try {
+			OutputStream output = socket.getOutputStream();
+			outputOpened = true;
+			return new ManagedOutputStream(output);
+		} catch (IOException ex) {
+			throw translate(ex);
+		}
 	}
 
 	@Override
@@ -209,15 +237,37 @@ public class SocketConnection implements javax.microedition.io.SocketConnection 
 		}
 	}
 
+	protected void shutdownInputDirection() throws IOException {
+		socket.shutdownInput();
+	}
+
+	protected void shutdownOutputDirection() throws IOException {
+		// Keep half-close provider-owned. SSLSocket overrides this transport path
+		// without requiring JL-Mod Plus to implement TLS shutdown itself.
+		socket.shutdownOutput();
+	}
+
 	private synchronized void onInputClosed() throws IOException {
 		if (inputClosed) {
 			return;
 		}
 		inputClosed = true;
+		IOException failure = null;
 		if (!socket.isClosed() && !socket.isInputShutdown()) {
-			socket.shutdownInput();
+			try {
+				shutdownInputDirection();
+			} catch (IOException ex) {
+				failure = translate(ex);
+			}
 		}
-		closeSocketIfUnused();
+		try {
+			closeSocketIfUnused();
+		} catch (IOException ex) {
+			failure = merge(failure, translate(ex));
+		}
+		if (failure != null) {
+			throw failure;
+		}
 	}
 
 	private synchronized void onOutputClosed() throws IOException {
@@ -225,10 +275,22 @@ public class SocketConnection implements javax.microedition.io.SocketConnection 
 			return;
 		}
 		outputClosed = true;
+		IOException failure = null;
 		if (!socket.isClosed() && !socket.isOutputShutdown()) {
-			socket.shutdownOutput();
+			try {
+				shutdownOutputDirection();
+			} catch (IOException ex) {
+				failure = translate(ex);
+			}
 		}
-		closeSocketIfUnused();
+		try {
+			closeSocketIfUnused();
+		} catch (IOException ex) {
+			failure = merge(failure, translate(ex));
+		}
+		if (failure != null) {
+			throw failure;
+		}
 	}
 
 	private void closeSocketIfUnused() throws IOException {
@@ -242,9 +304,33 @@ public class SocketConnection implements javax.microedition.io.SocketConnection 
 		}
 	}
 
+	private IOException translate(IOException exception) {
+		return translate(exception, timeouts);
+	}
+
+	private static IOException translate(IOException exception, boolean timeouts) {
+		return GcfIoExceptionMapper.translate(exception, timeouts);
+	}
+
+	private static IOException merge(IOException first, IOException second) {
+		if (first == null) {
+			return second;
+		}
+		if (second != null && second != first) {
+			first.addSuppressed(second);
+		}
+		return first;
+	}
+
+	private static void validateMode(int mode) {
+		if (mode != Connector.READ && mode != Connector.WRITE && mode != Connector.READ_WRITE) {
+			throw new IllegalArgumentException("Invalid connection mode: " + mode);
+		}
+	}
+
 	private final class ManagedInputStream extends InputStream {
 		private final InputStream input;
-		private boolean closed;
+		private volatile boolean closed;
 
 		ManagedInputStream(InputStream input) {
 			this.input = input;
@@ -253,25 +339,41 @@ public class SocketConnection implements javax.microedition.io.SocketConnection 
 		@Override
 		public int read() throws IOException {
 			ensureStreamOpen();
-			return input.read();
+			try {
+				return input.read();
+			} catch (IOException ex) {
+				throw translate(ex);
+			}
 		}
 
 		@Override
 		public int read(byte[] buffer, int offset, int length) throws IOException {
 			ensureStreamOpen();
-			return input.read(buffer, offset, length);
+			try {
+				return input.read(buffer, offset, length);
+			} catch (IOException ex) {
+				throw translate(ex);
+			}
 		}
 
 		@Override
 		public long skip(long count) throws IOException {
 			ensureStreamOpen();
-			return input.skip(count);
+			try {
+				return input.skip(count);
+			} catch (IOException ex) {
+				throw translate(ex);
+			}
 		}
 
 		@Override
 		public int available() throws IOException {
 			ensureStreamOpen();
-			return input.available();
+			try {
+				return input.available();
+			} catch (IOException ex) {
+				throw translate(ex);
+			}
 		}
 
 		@Override
@@ -292,7 +394,7 @@ public class SocketConnection implements javax.microedition.io.SocketConnection 
 
 	private final class ManagedOutputStream extends OutputStream {
 		private final OutputStream output;
-		private boolean closed;
+		private volatile boolean closed;
 
 		ManagedOutputStream(OutputStream output) {
 			this.output = output;
@@ -301,19 +403,31 @@ public class SocketConnection implements javax.microedition.io.SocketConnection 
 		@Override
 		public void write(int value) throws IOException {
 			ensureStreamOpen();
-			output.write(value);
+			try {
+				output.write(value);
+			} catch (IOException ex) {
+				throw translate(ex);
+			}
 		}
 
 		@Override
 		public void write(byte[] buffer, int offset, int length) throws IOException {
 			ensureStreamOpen();
-			output.write(buffer, offset, length);
+			try {
+				output.write(buffer, offset, length);
+			} catch (IOException ex) {
+				throw translate(ex);
+			}
 		}
 
 		@Override
 		public void flush() throws IOException {
 			ensureStreamOpen();
-			output.flush();
+			try {
+				output.flush();
+			} catch (IOException ex) {
+				throw translate(ex);
+			}
 		}
 
 		@Override
@@ -321,9 +435,21 @@ public class SocketConnection implements javax.microedition.io.SocketConnection 
 			if (closed) {
 				return;
 			}
-			output.flush();
 			closed = true;
-			onOutputClosed();
+			IOException failure = null;
+			try {
+				output.flush();
+			} catch (IOException ex) {
+				failure = translate(ex);
+			}
+			try {
+				onOutputClosed();
+			} catch (IOException ex) {
+				failure = merge(failure, ex);
+			}
+			if (failure != null) {
+				throw failure;
+			}
 		}
 
 		private void ensureStreamOpen() throws IOException {

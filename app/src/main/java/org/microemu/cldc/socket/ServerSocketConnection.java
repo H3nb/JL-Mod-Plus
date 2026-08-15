@@ -25,9 +25,12 @@
 
 package org.microemu.cldc.socket;
 
+import org.microemu.cldc.GcfIoExceptionMapper;
+import org.microemu.cldc.NetworkAddressUtil;
+
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.net.Socket;
 
 import javax.microedition.io.Connector;
 import javax.microedition.io.StreamConnection;
@@ -35,30 +38,31 @@ import javax.microedition.io.StreamConnection;
 public class ServerSocketConnection implements javax.microedition.io.ServerSocketConnection {
 
 	private final ServerSocket serverSocket;
-	private final int mode;
-	private boolean closed;
+	private final boolean timeouts;
+	private volatile boolean closed;
 
 	public ServerSocketConnection() throws IOException {
-		this(0, Connector.READ_WRITE);
+		this(0, Connector.READ_WRITE, false);
 	}
 
 	public ServerSocketConnection(int port) throws IOException {
-		this(port, Connector.READ_WRITE);
+		this(port, Connector.READ_WRITE, false);
 	}
 
 	public ServerSocketConnection(int port, int mode) throws IOException {
-		if (mode != Connector.READ && mode != Connector.WRITE && mode != Connector.READ_WRITE) {
-			throw new IllegalArgumentException("Invalid connection mode: " + mode);
-		}
+		this(port, mode, false);
+	}
+
+	public ServerSocketConnection(int port, int mode, boolean timeouts) throws IOException {
+		validateMode(mode);
 		serverSocket = new ServerSocket(port);
-		this.mode = mode;
+		this.timeouts = timeouts;
 	}
 
 	@Override
 	public String getLocalAddress() throws IOException {
 		ensureOpen();
-		InetAddress localHost = InetAddress.getLocalHost();
-		return localHost.getHostAddress();
+		return NetworkAddressUtil.getServerLocalAddress(serverSocket);
 	}
 
 	@Override
@@ -70,7 +74,20 @@ public class ServerSocketConnection implements javax.microedition.io.ServerSocke
 	@Override
 	public StreamConnection acceptAndOpen() throws IOException {
 		ensureOpen();
-		return new SocketConnection(serverSocket.accept(), mode);
+		Socket accepted = null;
+		try {
+			accepted = serverSocket.accept();
+			return new SocketConnection(accepted, Connector.READ_WRITE, timeouts);
+		} catch (IOException ex) {
+			if (accepted != null) {
+				try {
+					accepted.close();
+				} catch (IOException ignored) {
+					// Preserve the original accept failure.
+				}
+			}
+			throw GcfIoExceptionMapper.translate(ex, timeouts);
+		}
 	}
 
 	@Override
@@ -85,6 +102,12 @@ public class ServerSocketConnection implements javax.microedition.io.ServerSocke
 	private void ensureOpen() throws IOException {
 		if (closed || serverSocket.isClosed()) {
 			throw new IOException("Connection is closed");
+		}
+	}
+
+	private static void validateMode(int mode) {
+		if (mode != Connector.READ && mode != Connector.WRITE && mode != Connector.READ_WRITE) {
+			throw new IllegalArgumentException("Invalid connection mode: " + mode);
 		}
 	}
 }

@@ -50,13 +50,13 @@ public class Connection implements ConnectionImplementation {
 			if (port <= 0) {
 				throw new IllegalArgumentException("Port missing");
 			}
-			return new SocketConnection(host, port, mode);
+			return new SocketConnection(host, port, mode, timeouts);
 		}
 
 		if (port == -1) {
-			return new ServerSocketConnection(0, mode);
+			return new ServerSocketConnection(0, mode, timeouts);
 		}
-		return new ServerSocketConnection(port, mode);
+		return new ServerSocketConnection(port, mode, timeouts);
 	}
 
 	private static void validateMode(int mode) {

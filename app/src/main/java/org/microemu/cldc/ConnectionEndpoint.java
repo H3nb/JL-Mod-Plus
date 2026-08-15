@@ -65,13 +65,17 @@ public final class ConnectionEndpoint {
 				portText = endpoint.substring(closingBracket + 2);
 			}
 		} else {
-			int portSeparator = endpoint.lastIndexOf(':');
-			if (portSeparator < 0) {
+			int firstColon = endpoint.indexOf(':');
+			int lastColon = endpoint.lastIndexOf(':');
+			if (firstColon != lastColon) {
+				throw new IllegalArgumentException("IPv6 addresses must be enclosed in []");
+			}
+			if (lastColon < 0) {
 				host = endpoint;
 				portText = "";
 			} else {
-				host = endpoint.substring(0, portSeparator);
-				portText = endpoint.substring(portSeparator + 1);
+				host = endpoint.substring(0, lastColon);
+				portText = endpoint.substring(lastColon + 1);
 			}
 		}
 

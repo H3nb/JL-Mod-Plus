@@ -1,7 +1,7 @@
-/**
- * MicroEmulator
- * Copyright (C) 2006-2007 Bartek Teodorczyk <barteo@barteo.net>
- * Copyright (C) 2006-2007 Vlad Skarzhevskyy
+/*
+ *  MicroEmulator
+ *  Copyright (C) 2006-2007 Bartek Teodorczyk <barteo@barteo.net>
+ *  Copyright (C) 2006-2007 Vlad Skarzhevskyy
  * <p>
  * It is licensed under the following two licenses as alternatives:
  * 1. GNU Lesser General Public License (the "LGPL") version 2.1 or any newer version
@@ -59,14 +59,12 @@ public abstract class ConnectorAdapter implements ConnectorDelegate {
 
 	@Override
 	public DataInputStream openDataInputStream(String name) throws IOException {
-		InputConnection connection;
+		Connection connection = open(name, Connector.READ, false);
 		try {
-			connection = (InputConnection) open(name, Connector.READ, false);
-		} catch (ClassCastException ex) {
-			throw new IOException("Connection does not support input");
-		}
-		try {
-			return connection.openDataInputStream();
+			if (!(connection instanceof InputConnection)) {
+				throw new IOException("Connection does not support input");
+			}
+			return ((InputConnection) connection).openDataInputStream();
 		} finally {
 			connection.close();
 		}
@@ -74,14 +72,12 @@ public abstract class ConnectorAdapter implements ConnectorDelegate {
 
 	@Override
 	public DataOutputStream openDataOutputStream(String name) throws IOException {
-		OutputConnection connection;
+		Connection connection = open(name, Connector.WRITE, false);
 		try {
-			connection = (OutputConnection) open(name, Connector.WRITE, false);
-		} catch (ClassCastException ex) {
-			throw new IOException("Connection does not support output");
-		}
-		try {
-			return connection.openDataOutputStream();
+			if (!(connection instanceof OutputConnection)) {
+				throw new IOException("Connection does not support output");
+			}
+			return ((OutputConnection) connection).openDataOutputStream();
 		} finally {
 			connection.close();
 		}
@@ -89,12 +85,27 @@ public abstract class ConnectorAdapter implements ConnectorDelegate {
 
 	@Override
 	public InputStream openInputStream(String name) throws IOException {
-		return openDataInputStream(name);
+		Connection connection = open(name, Connector.READ, false);
+		try {
+			if (!(connection instanceof InputConnection)) {
+				throw new IOException("Connection does not support input");
+			}
+			return ((InputConnection) connection).openInputStream();
+		} finally {
+			connection.close();
+		}
 	}
 
 	@Override
 	public OutputStream openOutputStream(String name) throws IOException {
-		return openDataOutputStream(name);
+		Connection connection = open(name, Connector.WRITE, false);
+		try {
+			if (!(connection instanceof OutputConnection)) {
+				throw new IOException("Connection does not support output");
+			}
+			return ((OutputConnection) connection).openOutputStream();
+		} finally {
+			connection.close();
+		}
 	}
-
 }
