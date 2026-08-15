@@ -19,14 +19,18 @@ package ru.woesss.j2me.installer;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.Window;
+import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.compose.ui.platform.ComposeView;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -105,10 +109,24 @@ public class InstallerDialog extends DialogFragment {
 				composeView,
 				createActions(),
 				new InstallerUiState.Loading(installerTitle, getString(R.string.loading_info)));
-		return new AlertDialog.Builder(requireActivity(), getTheme())
-				.setView(composeView)
-				.setCancelable(false)
-				.create();
+		Dialog dialog = new Dialog(requireContext(), getTheme());
+		dialog.setContentView(composeView);
+		dialog.setCancelable(false);
+		dialog.setCanceledOnTouchOutside(false);
+		dialog.setOnShowListener(ignored -> {
+			Window window = dialog.getWindow();
+			if (window == null) {
+				return;
+			}
+			window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+			int margin = (int) TypedValue.applyDimension(
+					TypedValue.COMPLEX_UNIT_DIP, 32, getResources().getDisplayMetrics());
+			int maxWidth = (int) TypedValue.applyDimension(
+					TypedValue.COMPLEX_UNIT_DIP, 480, getResources().getDisplayMetrics());
+			int width = Math.min(maxWidth, getResources().getDisplayMetrics().widthPixels - margin);
+			window.setLayout(Math.max(width, 1), WindowManager.LayoutParams.WRAP_CONTENT);
+		});
+		return dialog;
 	}
 
 	@Override

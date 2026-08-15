@@ -73,6 +73,29 @@ fun KeyMapperMappingPromptScreenshot() {
 
 @PreviewTest
 @Preview(
+    name = "Key mapper mapping prompt dark",
+    widthDp = 360,
+    heightDp = 640,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    showBackground = true,
+)
+@Composable
+fun KeyMapperMappingPromptDarkScreenshot() {
+    JLModPlusTheme(darkTheme = true) {
+        KeyMapperScreen(
+            state = KeyMapperUiState(
+                mappingDialog = KeyMapperMappingDialog(
+                    canvasKey = 0,
+                    currentKeyName = "KEYCODE_BACK",
+                ),
+            ),
+            actions = NoOpKeyMapperActions,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(
     name = "Key mapper large font",
     widthDp = 360,
     heightDp = 640,

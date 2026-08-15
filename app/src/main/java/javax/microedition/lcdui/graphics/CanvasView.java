@@ -52,6 +52,14 @@ public class CanvasView extends SurfaceView {
 	}
 
 	@Override
+	public boolean onCheckIsTextEditor() {
+		// Canvas input is intentionally exposed as a lightweight editor so Android asks for the
+		// existing key-event InputConnection when the host opens the IME. The connection does not
+		// store text; it translates IME delete/key events back into the MIDP Canvas dispatch path.
+		return true;
+	}
+
+	@Override
 	public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
 		if (mPublicInputConnection == null) {
 			mPublicInputConnection = new DelKeyWorkaround(this, false);

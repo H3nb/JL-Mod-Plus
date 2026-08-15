@@ -127,14 +127,27 @@ public class PlatformCompatBehaviorTest {
 	}
 
 	@Test
-	public void adbLongPressMenuKeyRetainsExitConfirmation() throws Exception {
+	public void adbLongPressMenuKeyOpensMenuWithoutExiting() throws Exception {
 		launchFixture(context, appDir);
 		awaitMarker(marker, "shown");
 		executeShellCommand("input keyevent --longpress KEYCODE_MENU");
-		awaitAccessibilityText(context.getString(R.string.FORCE_CLOSE_CONFIRMATION));
+		awaitAccessibilityText(context.getString(R.string.exit));
 		invokeGlobalBack();
-		awaitAccessibilityTextAbsent(context.getString(R.string.FORCE_CLOSE_CONFIRMATION));
-		assertTrue("Long-press confirmation must not stop the MIDlet process",
+		awaitAccessibilityTextAbsent(context.getString(R.string.exit));
+		assertTrue("Long-press menu must not stop the MIDlet process",
+				processPid(context, midletProcessName) != 0);
+	}
+
+	@Test
+	public void canvasMenuImeActionRestoresCanvasInputConnection() throws Exception {
+		launchFixture(context, appDir);
+		awaitMarker(marker, "shown");
+		invokeGlobalBack();
+		String keyboardLabel = context.getString(R.string.action_keyboard_ime);
+		awaitAccessibilityText(keyboardLabel);
+		clickAccessibilityText(keyboardLabel);
+		awaitImeShown();
+		assertTrue("Opening the runtime IME must keep the MIDlet process alive",
 				processPid(context, midletProcessName) != 0);
 	}
 
@@ -282,6 +295,22 @@ public class PlatformCompatBehaviorTest {
 		Rect bounds = new Rect();
 		node.getBoundsInScreen(bounds);
 		executeShellCommand("input tap " + bounds.centerX() + " " + bounds.centerY());
+	}
+
+	private static void clickAccessibilityText(String expected) {
+		long deadline = SystemClock.uptimeMillis() + BACK_TIMEOUT_MILLIS;
+		do {
+			AccessibilityNodeInfo root = InstrumentationRegistry.getInstrumentation()
+					.getUiAutomation().getRootInActiveWindow();
+			AccessibilityNodeInfo node = root == null ? null : findText(root, expected);
+			if (node != null && node.isClickable()
+					&& node.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
+				InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+				return;
+			}
+			SystemClock.sleep(100L);
+		} while (SystemClock.uptimeMillis() < deadline);
+		fail("Unable to click accessibility node: " + expected);
 	}
 
 	private static boolean containsText(AccessibilityNodeInfo root, String expected) {
