@@ -35,6 +35,22 @@ class LibraryIconPresentationTest {
     }
 
     @Test
+    fun circularObjectWithDominantColorIsNotPromotedToBackplate() {
+        val decision = decideLibraryIconPresentation(
+            input(
+                transparentRatio = 0.21f,
+                boundsCoverage = 1f,
+                occupancy = 0.79f,
+                aspectFill = 1f,
+                hasBackingColor = true,
+            ),
+        )
+
+        assertEquals(LibraryIconPresentationMode.Subject, decision.mode)
+        assertTrue(decision.visualScale < 0.66f)
+    }
+
+    @Test
     fun elongatedSubjectGetsMoreRoomThanDenseRoundSubject() {
         val denseRound = decideLibraryIconPresentation(
             input(
@@ -78,9 +94,9 @@ class LibraryIconPresentationTest {
     fun detectedSelfBackedArtworkUsesBackedPresentation() {
         val decision = decideLibraryIconPresentation(
             input(
-                transparentRatio = 0.18f,
-                boundsCoverage = 0.82f,
-                occupancy = 0.78f,
+                transparentRatio = 0.12f,
+                boundsCoverage = 0.88f,
+                occupancy = 0.91f,
                 hasBackingColor = true,
             ),
         )
