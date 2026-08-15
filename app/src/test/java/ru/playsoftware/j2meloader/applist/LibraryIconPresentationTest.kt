@@ -51,6 +51,22 @@ class LibraryIconPresentationTest {
     }
 
     @Test
+    fun roundedBackplateOccupancyCanPromoteDominantColorToBacked() {
+        val decision = decideLibraryIconPresentation(
+            input(
+                transparentRatio = 0.16f,
+                boundsCoverage = 0.94f,
+                occupancy = 0.84f,
+                aspectFill = 1f,
+                hasBackingColor = true,
+            ),
+        )
+
+        assertEquals(LibraryIconPresentationMode.Backed, decision.mode)
+        assertEquals(0.86f, decision.visualScale, 0.0001f)
+    }
+
+    @Test
     fun elongatedSubjectGetsMoreRoomThanDenseRoundSubject() {
         val denseRound = decideLibraryIconPresentation(
             input(
