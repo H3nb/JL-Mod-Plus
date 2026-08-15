@@ -19,6 +19,9 @@
 package ru.playsoftware.j2meloader.applist;
 
 import static ru.playsoftware.j2meloader.util.Constants.KEY_APP_URI;
+import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_GRID_SPACING;
+import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_HIDE_GRID_TITLES;
+import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_ICON_RATIO;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_VIEW;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APP_SORT;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_LAST_PATH;
@@ -66,6 +69,11 @@ import ru.woesss.j2me.installer.InstallerDialog;
 public class AppsListFragment extends Fragment {
 	private static final int LAYOUT_TYPE_LIST = 0;
 	private static final int LAYOUT_TYPE_GRID = 1;
+	private static final int ICON_RATIO_SQUARE = 0;
+	private static final int ICON_RATIO_PORTRAIT = 1;
+	private static final int GRID_SPACING_COMPACT = 0;
+	private static final int GRID_SPACING_STANDARD = 1;
+	private static final int GRID_SPACING_SPACIOUS = 2;
 
 	private final ActivityResultLauncher<Void> openFileLauncher = registerForActivityResult(
 			new ActivityResultContract<Void, Uri>() {
@@ -134,11 +142,33 @@ public class AppsListFragment extends Fragment {
 		int storedLayout = preferences.getInt(PREF_APPS_VIEW, LAYOUT_TYPE_LIST);
 		LibraryLayout layout = storedLayout == LAYOUT_TYPE_LIST
 				? LibraryLayout.List : LibraryLayout.Grid;
+		int storedIconRatio = preferences.getInt(PREF_APPS_ICON_RATIO, ICON_RATIO_SQUARE);
+		LibraryIconRatio iconRatio = storedIconRatio == ICON_RATIO_PORTRAIT
+				? LibraryIconRatio.Portrait : LibraryIconRatio.Square;
+		int storedGridSpacing = preferences.getInt(
+				PREF_APPS_GRID_SPACING,
+				GRID_SPACING_STANDARD);
+		LibraryGridSpacing gridSpacing;
+		switch (storedGridSpacing) {
+			case GRID_SPACING_COMPACT:
+				gridSpacing = LibraryGridSpacing.Compact;
+				break;
+			case GRID_SPACING_SPACIOUS:
+				gridSpacing = LibraryGridSpacing.Spacious;
+				break;
+			case GRID_SPACING_STANDARD:
+			default:
+				gridSpacing = LibraryGridSpacing.Standard;
+				break;
+		}
 		composeController = new LibraryComposeController(
 				(ComposeView) view,
 				createActions(),
 				layout,
 				preferences.getInt(PREF_APP_SORT, 0),
+				iconRatio,
+				preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false),
+				gridSpacing,
 				ShortcutManagerCompat.isRequestPinShortcutSupported(requireContext()));
 		appListViewModel.getAppList().observe(getViewLifecycleOwner(), this::onDbUpdated);
 	}
@@ -164,6 +194,48 @@ public class AppsListFragment extends Fragment {
 				LibraryComposeController controller = composeController;
 				if (controller != null) {
 					controller.updateLayout(layout);
+				}
+			}
+
+			@Override
+			public void onIconRatioChange(@NonNull LibraryIconRatio iconRatio) {
+				int value = iconRatio == LibraryIconRatio.Portrait
+						? ICON_RATIO_PORTRAIT : ICON_RATIO_SQUARE;
+				preferences.edit().putInt(PREF_APPS_ICON_RATIO, value).apply();
+				LibraryComposeController controller = composeController;
+				if (controller != null) {
+					controller.updateIconRatio(iconRatio);
+				}
+			}
+
+			@Override
+			public void onHideGridTitlesChange(boolean hide) {
+				preferences.edit().putBoolean(PREF_APPS_HIDE_GRID_TITLES, hide).apply();
+				LibraryComposeController controller = composeController;
+				if (controller != null) {
+					controller.updateHideGridTitles(hide);
+				}
+			}
+
+			@Override
+			public void onGridSpacingChange(@NonNull LibraryGridSpacing spacing) {
+				int value;
+				switch (spacing) {
+					case Compact:
+						value = GRID_SPACING_COMPACT;
+						break;
+					case Spacious:
+						value = GRID_SPACING_SPACIOUS;
+						break;
+					case Standard:
+					default:
+						value = GRID_SPACING_STANDARD;
+						break;
+				}
+				preferences.edit().putInt(PREF_APPS_GRID_SPACING, value).apply();
+				LibraryComposeController controller = composeController;
+				if (controller != null) {
+					controller.updateGridSpacing(spacing);
 				}
 			}
 

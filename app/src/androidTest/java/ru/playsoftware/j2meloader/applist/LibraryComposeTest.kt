@@ -123,6 +123,27 @@ class LibraryComposeTest {
     }
 
     @Test
+    fun gridOptionsExposeTitleVisibilitySpacingAndIconRatio() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                layout = LibraryLayout.Grid,
+            ),
+            actions = actions,
+        )
+
+        composeRule.onNodeWithText("Options").performClick()
+        composeRule.onNodeWithText("3:4").performClick()
+        composeRule.onNodeWithText("Compact (4 dp)").performClick()
+        composeRule.onNodeWithContentDescription("Hide titles in grid").performClick()
+
+        assertEquals(LibraryIconRatio.Portrait, actions.iconRatio)
+        assertEquals(LibraryGridSpacing.Compact, actions.gridSpacing)
+        assertTrue(actions.hideGridTitles)
+    }
+
+    @Test
     fun destinationsAndDeferredFilterShellAreVisible() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
@@ -131,6 +152,8 @@ class LibraryComposeTest {
         composeRule.onAllNodesWithText("Recently added").assertCountEquals(1)
         composeRule.onAllNodesWithText("Favorites").assertCountEquals(1)
         composeRule.onNodeWithContentDescription("Favorite (coming soon)").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Favorite (coming soon)").performClick()
+        composeRule.onNodeWithContentDescription("Remove favorite (coming soon)").assertIsDisplayed()
 
         composeRule.onNodeWithText("Collections").performClick()
         composeRule.onNodeWithText("Collections and folders will be available in a future update.")
@@ -161,6 +184,44 @@ class LibraryComposeTest {
     }
 
     @Test
+    fun descriptionToggleOnlyAppearsWhenDescriptionOverflows() {
+        val actions = RecordingLibraryActions()
+        val longDescription = "A MIDlet description that is long enough to require an expandable preview. ".repeat(8)
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                apps = listOf(
+                    LibraryAppUiItem(
+                        id = 7,
+                        title = "Long description",
+                        author = "Example Vendor",
+                        version = "1.0",
+                        iconPath = null,
+                        canReinstall = true,
+                        description = longDescription,
+                    ),
+                    LibraryAppUiItem(
+                        id = 8,
+                        title = "Short description",
+                        author = "Example Vendor",
+                        version = "1.0",
+                        iconPath = null,
+                        canReinstall = true,
+                        description = "Short description.",
+                    ),
+                ),
+            ),
+            actions = actions,
+        )
+
+        composeRule.onAllNodesWithContentDescription("Expand description").assertCountEquals(1)
+        composeRule.onNodeWithContentDescription("Expand description").performClick()
+        composeRule.onNodeWithContentDescription("Collapse description").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Collapse description").performClick()
+        composeRule.onNodeWithContentDescription("Expand description").assertIsDisplayed()
+    }
+
+    @Test
     fun installFabFollowsListScrollDirection() {
         val actions = RecordingLibraryActions()
         val apps = (0..24).map { index ->
@@ -175,10 +236,16 @@ class LibraryComposeTest {
         composeRule.onNodeWithText("Demo MIDlet 0").performTouchInput { swipeUp() }
         composeRule.waitForIdle()
         composeRule.onAllNodesWithContentDescription("Install").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Apps").assertCountEquals(0)
+        composeRule.onAllNodesWithText("JL-Mod Plus Debug").assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription("App Sort Order").assertCountEquals(0)
 
         composeRule.onNodeWithText("Demo MIDlet 1").performTouchInput { swipeDown() }
         composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription("Install").assertIsDisplayed()
+        composeRule.onNodeWithText("Apps").assertIsDisplayed()
+        composeRule.onNodeWithText("JL-Mod Plus Debug").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("App Sort Order").assertIsDisplayed()
     }
 
     @Test
@@ -242,6 +309,9 @@ class LibraryComposeTest {
     private class RecordingLibraryActions : LibraryActions {
         val searches = mutableListOf<String>()
         var layout: LibraryLayout? = null
+        var iconRatio: LibraryIconRatio? = null
+        var gridSpacing: LibraryGridSpacing? = null
+        var hideGridTitles = false
         var sortIndex: Int? = null
         var installCount = 0
         var openedId: Int? = null
@@ -250,6 +320,9 @@ class LibraryComposeTest {
 
         override fun onSearch(query: String) { searches += query }
         override fun onLayoutChange(layout: LibraryLayout) { this.layout = layout }
+        override fun onIconRatioChange(iconRatio: LibraryIconRatio) { this.iconRatio = iconRatio }
+        override fun onHideGridTitlesChange(hide: Boolean) { hideGridTitles = hide }
+        override fun onGridSpacingChange(spacing: LibraryGridSpacing) { gridSpacing = spacing }
         override fun onSort(sortIndex: Int) { this.sortIndex = sortIndex }
         override fun onInstall() { installCount++ }
         override fun onOpenApp(appId: Int) { openedId = appId }

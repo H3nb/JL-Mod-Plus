@@ -22,7 +22,7 @@ import android.graphics.Rect
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -48,7 +49,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -75,6 +75,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -128,6 +129,21 @@ enum class LibraryLayout {
     Grid,
 }
 
+enum class LibraryIconRatio(
+    val widthToHeight: Float,
+) {
+    Square(1f),
+    Portrait(3f / 4f),
+}
+
+enum class LibraryGridSpacing(
+    val value: Dp,
+) {
+    Compact(4.dp),
+    Standard(8.dp),
+    Spacious(12.dp),
+}
+
 private enum class LibraryDestination {
     Apps,
     Collections,
@@ -141,6 +157,8 @@ data class LibraryAppUiItem(
     val version: String,
     val iconPath: String?,
     val canReinstall: Boolean,
+    // Kept at the UI boundary until the library model exposes MIDlet descriptions.
+    val description: String = "",
 )
 
 data class LibraryUiState(
@@ -148,6 +166,9 @@ data class LibraryUiState(
     val apps: List<LibraryAppUiItem> = emptyList(),
     val appliedFilter: String = "",
     val layout: LibraryLayout = LibraryLayout.List,
+    val iconRatio: LibraryIconRatio = LibraryIconRatio.Square,
+    val hideGridTitles: Boolean = false,
+    val gridSpacing: LibraryGridSpacing = LibraryGridSpacing.Standard,
     val sortVariant: Int = 0,
     val canAddShortcut: Boolean = true,
 )
@@ -155,6 +176,9 @@ data class LibraryUiState(
 interface LibraryActions {
     fun onSearch(query: String)
     fun onLayoutChange(layout: LibraryLayout)
+    fun onIconRatioChange(iconRatio: LibraryIconRatio) = Unit
+    fun onHideGridTitlesChange(hide: Boolean) = Unit
+    fun onGridSpacingChange(spacing: LibraryGridSpacing) = Unit
     fun onSort(sortIndex: Int)
     fun onInstall()
     fun onOpenApp(appId: Int)
@@ -175,11 +199,17 @@ class LibraryComposeController(
     private val actions: LibraryActions,
     initialLayout: LibraryLayout,
     initialSortVariant: Int,
+    initialIconRatio: LibraryIconRatio,
+    initialHideGridTitles: Boolean,
+    initialGridSpacing: LibraryGridSpacing,
     canAddShortcut: Boolean,
 ) {
     private var state by mutableStateOf(
         LibraryUiState(
             layout = initialLayout,
+            iconRatio = initialIconRatio,
+            hideGridTitles = initialHideGridTitles,
+            gridSpacing = initialGridSpacing,
             sortVariant = initialSortVariant,
             canAddShortcut = canAddShortcut,
         ),
@@ -208,6 +238,7 @@ class LibraryComposeController(
                     version = item.version,
                     iconPath = item.imagePathExt,
                     canReinstall = File(item.pathExt + ru.playsoftware.j2meloader.config.Config.MIDLET_RES_FILE).exists(),
+                    description = "",
                 )
             },
             appliedFilter = appliedFilter,
@@ -216,6 +247,18 @@ class LibraryComposeController(
 
     fun updateLayout(layout: LibraryLayout) {
         state = state.copy(layout = layout)
+    }
+
+    fun updateIconRatio(iconRatio: LibraryIconRatio) {
+        state = state.copy(iconRatio = iconRatio)
+    }
+
+    fun updateHideGridTitles(hide: Boolean) {
+        state = state.copy(hideGridTitles = hide)
+    }
+
+    fun updateGridSpacing(spacing: LibraryGridSpacing) {
+        state = state.copy(gridSpacing = spacing)
     }
 
     fun updateSort(sortVariant: Int) {
@@ -238,7 +281,6 @@ fun LibraryScreen(
     state: LibraryUiState,
     actions: LibraryActions,
     modifier: Modifier = Modifier,
-    enableIdleTitleMarquee: Boolean = true,
 ) {
     var selectedDestinationIndex by rememberSaveable { mutableStateOf(0) }
     val destination = when (selectedDestinationIndex) {
@@ -247,6 +289,7 @@ fun LibraryScreen(
         else -> LibraryDestination.Apps
     }
     var showInstallFab by rememberSaveable { mutableStateOf(true) }
+    var showNavigationBar by rememberSaveable { mutableStateOf(true) }
     var appActions by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var renameTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var deleteTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
@@ -255,6 +298,7 @@ fun LibraryScreen(
     LaunchedEffect(destination) {
         if (destination != LibraryDestination.Apps) {
             showInstallFab = true
+            showNavigationBar = true
             appActions = null
         }
     }
@@ -263,10 +307,12 @@ fun LibraryScreen(
         modifier = modifier.fillMaxSize(),
         contentWindowInsets = LibraryScaffoldInsets,
         bottomBar = {
-            LibraryNavigationBar(
-                selected = destination,
-                onSelected = { selectedDestinationIndex = it.ordinal },
-            )
+            if (showNavigationBar) {
+                LibraryNavigationBar(
+                    selected = destination,
+                    onSelected = { selectedDestinationIndex = it.ordinal },
+                )
+            }
         },
         floatingActionButton = {
             if (destination == LibraryDestination.Apps && showInstallFab) {
@@ -288,13 +334,16 @@ fun LibraryScreen(
                 onSearch = actions::onSearch,
                 onSort = actions::onSort,
                 onFabVisibilityChanged = { showInstallFab = it },
-                enableIdleTitleMarquee = enableIdleTitleMarquee,
+                onNavigationVisibilityChanged = { showNavigationBar = it },
             )
             LibraryDestination.Collections -> LibraryCollectionsDestination(padding)
             LibraryDestination.Options -> LibraryOptionsDestination(
                 state = state,
                 scaffoldPadding = padding,
                 onLayoutChange = actions::onLayoutChange,
+                onIconRatioChange = actions::onIconRatioChange,
+                onHideGridTitlesChange = actions::onHideGridTitlesChange,
+                onGridSpacingChange = actions::onGridSpacingChange,
                 onAbout = { infoDialog = LibraryInfoDialog.About },
                 onSettings = actions::onOpenSettings,
                 onProfiles = actions::onOpenProfiles,
@@ -419,10 +468,11 @@ private fun LibraryAppsDestination(
     onSearch: (String) -> Unit,
     onSort: (Int) -> Unit,
     onFabVisibilityChanged: (Boolean) -> Unit,
-    enableIdleTitleMarquee: Boolean,
+    onNavigationVisibilityChanged: (Boolean) -> Unit,
 ) {
     var query by rememberSaveable { mutableStateOf(state.appliedFilter) }
     var sortVisible by remember { mutableStateOf(false) }
+    var showHeader by rememberSaveable { mutableStateOf(true) }
     val listState = rememberLazyListState()
     val gridState = rememberLazyGridState()
 
@@ -433,6 +483,8 @@ private fun LibraryAppsDestination(
 
     LaunchedEffect(state.layout) {
         onFabVisibilityChanged(true)
+        onNavigationVisibilityChanged(true)
+        showHeader = true
         var previousIndex = 0
         var previousOffset = 0
         snapshotFlow {
@@ -446,8 +498,13 @@ private fun LibraryAppsDestination(
                     (index == previousIndex && offset > previousOffset)
             if (index == 0 && offset == 0) {
                 onFabVisibilityChanged(true)
+                onNavigationVisibilityChanged(true)
+                showHeader = true
             } else {
-                onFabVisibilityChanged(!movingDown)
+                val shouldShowChrome = !movingDown
+                onFabVisibilityChanged(shouldShowChrome)
+                onNavigationVisibilityChanged(shouldShowChrome)
+                showHeader = shouldShowChrome
             }
             previousIndex = index
             previousOffset = offset
@@ -458,68 +515,66 @@ private fun LibraryAppsDestination(
         .fillMaxSize()
         .imePadding()
         .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
-    if (state.layout == LibraryLayout.Grid) {
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 80.dp),
-            contentPadding = scaffoldPadding,
-            modifier = listModifier,
-            state = gridState,
-        ) {
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                LibraryAppsHeader(
-                    query = query,
-                    onQueryChange = { query = it },
-                    state = state,
-                    sortVisible = sortVisible,
-                    onSortVisibilityChanged = { sortVisible = it },
-                    onSort = onSort,
-                )
-            }
-            if (state.loading) {
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    LibraryLoadingState()
-                }
-            } else if (state.apps.isEmpty()) {
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    LibraryEmptyState(state.appliedFilter)
-                }
-            } else {
-                items(state.apps, key = { it.id }) { app ->
-                    LibraryGridItem(
-                        app = app,
-                        onOpenApp = onOpenApp,
-                        onOpenActions = onOpenActions,
-                        marqueeEnabled = enableIdleTitleMarquee && !gridState.isScrollInProgress,
-                    )
-                }
-            }
+    Column(
+        modifier = listModifier.padding(scaffoldPadding),
+    ) {
+        if (showHeader) {
+            LibraryAppsHeader(
+                query = query,
+                onQueryChange = { query = it },
+                state = state,
+                sortVisible = sortVisible,
+                onSortVisibilityChanged = { sortVisible = it },
+                onSort = onSort,
+            )
         }
-    } else {
-        LazyColumn(
-            contentPadding = scaffoldPadding,
-            modifier = listModifier,
-            state = listState,
-        ) {
-            item {
-                LibraryAppsHeader(
-                    query = query,
-                    onQueryChange = { query = it },
-                    state = state,
-                    sortVisible = sortVisible,
-                    onSortVisibilityChanged = { sortVisible = it },
-                    onSort = onSort,
-                )
+        if (state.layout == LibraryLayout.Grid) {
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 80.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                state = gridState,
+            ) {
+                if (state.loading) {
+                    item {
+                        LibraryLoadingState()
+                    }
+                } else if (state.apps.isEmpty()) {
+                    item {
+                        LibraryEmptyState(state.appliedFilter)
+                    }
+                } else {
+                    items(state.apps, key = { it.id }) { app ->
+                        LibraryGridItem(
+                            app = app,
+                            iconRatio = state.iconRatio,
+                            hideTitle = state.hideGridTitles,
+                            gridSpacing = state.gridSpacing.value,
+                            onOpenApp = onOpenApp,
+                            onOpenActions = onOpenActions,
+                        )
+                    }
+                }
             }
-            when {
-                state.loading -> item { LibraryLoadingState() }
-                state.apps.isEmpty() -> item { LibraryEmptyState(state.appliedFilter) }
-                else -> items(state.apps, key = { it.id }) { app ->
-                    LibraryListItem(
-                        app = app,
-                        onOpenApp = onOpenApp,
-                        onOpenActions = onOpenActions,
-                        marqueeEnabled = enableIdleTitleMarquee && !listState.isScrollInProgress,
-                    )
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                state = listState,
+            ) {
+                when {
+                    state.loading -> item { LibraryLoadingState() }
+                    state.apps.isEmpty() -> item { LibraryEmptyState(state.appliedFilter) }
+                    else -> items(state.apps, key = { it.id }) { app ->
+                        LibraryListItem(
+                            app = app,
+                            iconRatio = state.iconRatio,
+                            onOpenApp = onOpenApp,
+                            onOpenActions = onOpenActions,
+                        )
+                    }
                 }
             }
         }
@@ -697,6 +752,9 @@ internal fun LibraryOptionsDestination(
     state: LibraryUiState,
     scaffoldPadding: PaddingValues,
     onLayoutChange: (LibraryLayout) -> Unit,
+    onIconRatioChange: (LibraryIconRatio) -> Unit,
+    onHideGridTitlesChange: (Boolean) -> Unit,
+    onGridSpacingChange: (LibraryGridSpacing) -> Unit,
     onAbout: () -> Unit,
     onSettings: () -> Unit,
     onProfiles: () -> Unit,
@@ -705,6 +763,7 @@ internal fun LibraryOptionsDestination(
     onSaveLog: () -> Unit,
     onExit: () -> Unit,
 ) {
+    val hideGridTitlesLabel = stringResource(R.string.library_hide_grid_titles)
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -753,6 +812,96 @@ internal fun LibraryOptionsDestination(
                                 label = { Text(stringResource(R.string.library_view_grid)) },
                             )
                         }
+                        Text(
+                            text = stringResource(R.string.library_icon_ratio_title),
+                            modifier = Modifier.padding(top = 16.dp),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp)
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            FilterChip(
+                                selected = state.iconRatio == LibraryIconRatio.Square,
+                                onClick = { onIconRatioChange(LibraryIconRatio.Square) },
+                                label = { Text(stringResource(R.string.library_icon_ratio_square)) },
+                            )
+                            FilterChip(
+                                selected = state.iconRatio == LibraryIconRatio.Portrait,
+                                onClick = { onIconRatioChange(LibraryIconRatio.Portrait) },
+                                label = { Text(stringResource(R.string.library_icon_ratio_portrait)) },
+                            )
+                        }
+                        if (state.layout == LibraryLayout.Grid) {
+                            Text(
+                                text = stringResource(R.string.library_grid_spacing_title),
+                                modifier = Modifier.padding(top = 16.dp),
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp)
+                                    .horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                FilterChip(
+                                    selected = state.gridSpacing == LibraryGridSpacing.Compact,
+                                    onClick = {
+                                        onGridSpacingChange(LibraryGridSpacing.Compact)
+                                    },
+                                    label = {
+                                        Text(stringResource(R.string.library_grid_spacing_compact))
+                                    },
+                                )
+                                FilterChip(
+                                    selected = state.gridSpacing == LibraryGridSpacing.Standard,
+                                    onClick = {
+                                        onGridSpacingChange(LibraryGridSpacing.Standard)
+                                    },
+                                    label = {
+                                        Text(stringResource(R.string.library_grid_spacing_standard))
+                                    },
+                                )
+                                FilterChip(
+                                    selected = state.gridSpacing == LibraryGridSpacing.Spacious,
+                                    onClick = {
+                                        onGridSpacingChange(LibraryGridSpacing.Spacious)
+                                    },
+                                    label = {
+                                        Text(stringResource(R.string.library_grid_spacing_spacious))
+                                    },
+                                )
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = stringResource(R.string.library_hide_grid_titles),
+                                        style = MaterialTheme.typography.titleMedium,
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.library_hide_grid_titles_summary),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                }
+                                Switch(
+                                    checked = state.hideGridTitles,
+                                    onCheckedChange = onHideGridTitlesChange,
+                                    modifier = Modifier.semantics {
+                                        contentDescription = hideGridTitlesLabel
+                                    },
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -773,34 +922,43 @@ private fun LibraryGridItem(
     app: LibraryAppUiItem,
     onOpenApp: (Int) -> Unit,
     onOpenActions: (LibraryAppUiItem) -> Unit,
-    marqueeEnabled: Boolean,
+    iconRatio: LibraryIconRatio,
+    hideTitle: Boolean,
+    gridSpacing: Dp,
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 6.dp)
+            .padding(horizontal = gridSpacing / 2, vertical = gridSpacing / 2)
             .combinedClickable(
                 onClick = { onOpenApp(app.id) },
                 onLongClick = { onOpenActions(app) },
             ),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        LibraryIconSlot(app = app, slotSize = 64.dp, contentSize = 48.dp)
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(28.dp)
-                .padding(top = 6.dp),
-            contentAlignment = Alignment.TopCenter,
-        ) {
-            Text(
-                text = app.title,
-                modifier = Modifier.libraryTitleMarquee(marqueeEnabled),
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-            )
+        LibraryIconSlot(
+            app = app,
+            slotSize = 64.dp,
+            contentSize = 48.dp,
+            iconRatio = iconRatio,
+        )
+        if (!hideTitle) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 46.dp)
+                    .padding(top = 6.dp),
+                contentAlignment = Alignment.TopCenter,
+            ) {
+                Text(
+                    text = app.title,
+                    modifier = Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
+                )
+            }
         }
     }
 }
@@ -811,7 +969,7 @@ private fun LibraryListItem(
     app: LibraryAppUiItem,
     onOpenApp: (Int) -> Unit,
     onOpenActions: (LibraryAppUiItem) -> Unit,
-    marqueeEnabled: Boolean,
+    iconRatio: LibraryIconRatio,
 ) {
     Card(
         modifier = Modifier
@@ -827,54 +985,158 @@ private fun LibraryListItem(
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Top,
         ) {
-            LibraryIconSlot(app = app, slotSize = 48.dp, contentSize = 36.dp)
+            LibraryIconSlot(
+                app = app,
+                slotSize = 48.dp,
+                contentSize = 36.dp,
+                iconRatio = iconRatio,
+            )
             Spacer(Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(top = 1.dp),
+            ) {
                 Text(
                     text = app.title,
-                    modifier = Modifier.libraryTitleMarquee(marqueeEnabled),
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = app.author,
+                    text = stringResource(
+                        R.string.library_vendor_version,
+                        app.author,
+                        app.version,
+                    ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+                LibraryDescription(app.description, app.id)
             }
+            Spacer(Modifier.width(8.dp))
             Column(
                 horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.padding(top = 1.dp),
             ) {
-                Text(
-                    text = app.version,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                LibraryFavoritePlaceholder()
+                LibraryFavoritePlaceholder(app.id)
             }
         }
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
-private fun Modifier.libraryTitleMarquee(enabled: Boolean): Modifier {
-    return if (enabled) basicMarquee() else this
+@Composable
+private fun LibraryDescription(descriptionValue: String, appId: Int) {
+    val description = descriptionValue.trim()
+    if (description.isEmpty()) return
+
+    val collapsedMaxLines = 2
+    var expanded by rememberSaveable(appId, description) { mutableStateOf(false) }
+    var overflows by remember(appId, description) {
+        mutableStateOf(description.length > LIBRARY_DESCRIPTION_OVERFLOW_FALLBACK_LENGTH)
+    }
+    val expandDescriptionLabel = stringResource(R.string.library_expand_description)
+    val collapseDescriptionLabel = stringResource(R.string.library_collapse_description)
+    val markerVisible = !expanded && overflows
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = description,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(
+                    enabled = expanded || overflows,
+                    role = Role.Button,
+                    onClick = { expanded = !expanded },
+                )
+                .then(
+                    if (expanded) {
+                        Modifier.semantics {
+                            contentDescription = collapseDescriptionLabel
+                        }
+                    } else {
+                        Modifier
+                    },
+                ),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodySmall,
+            maxLines = if (expanded) Int.MAX_VALUE else collapsedMaxLines,
+            overflow = if (expanded || markerVisible) {
+                TextOverflow.Clip
+            } else {
+                TextOverflow.Ellipsis
+            },
+            onTextLayout = { result ->
+                if (!expanded) {
+                    val lastLineEnd = if (result.lineCount > 0) {
+                        result.getLineEnd(result.lineCount - 1)
+                    } else {
+                        0
+                    }
+                    val lineIsEllipsized = result.lineCount > 0 &&
+                        result.isLineEllipsized(result.lineCount - 1)
+                    overflows = overflows || result.didOverflowHeight || result.didOverflowWidth ||
+                        result.hasVisualOverflow || lineIsEllipsized ||
+                        result.lineCount >= collapsedMaxLines && lastLineEnd < description.length
+                }
+            },
+        )
+        if (markerVisible) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .width(32.dp)
+                    .height(28.dp)
+                    .clip(MaterialTheme.shapes.small)
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .clickable(role = Role.Button) { expanded = true }
+                    .semantics {
+                        contentDescription = expandDescriptionLabel
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "...",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            }
+        }
+    }
 }
 
+private const val LIBRARY_DESCRIPTION_OVERFLOW_FALLBACK_LENGTH = 120
+
 @Composable
-private fun LibraryFavoritePlaceholder(modifier: Modifier = Modifier) {
-    Icon(
-        painter = painterResource(R.drawable.ic_star),
-        contentDescription = stringResource(R.string.library_favorite_coming_soon),
-        modifier = modifier.size(28.dp),
-        tint = MaterialTheme.colorScheme.primary,
-    )
+private fun LibraryFavoritePlaceholder(appId: Int) {
+    var favorite by rememberSaveable(appId) { mutableStateOf(false) }
+    IconButton(
+        onClick = { favorite = !favorite },
+        modifier = Modifier.size(32.dp),
+    ) {
+        Icon(
+            painter = painterResource(
+                if (favorite) R.drawable.ic_star_filled else R.drawable.ic_star,
+            ),
+            contentDescription = stringResource(
+                if (favorite) {
+                    R.string.library_remove_favorite_coming_soon
+                } else {
+                    R.string.library_favorite_coming_soon
+                },
+            ),
+            modifier = Modifier.size(28.dp),
+            tint = if (favorite) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+        )
+    }
 }
 
 private data class LibraryNormalizedIcon(
@@ -887,6 +1149,7 @@ private fun loadLibraryIcon(
     context: Context,
     iconPath: String?,
     fallbackSizePx: Int,
+    normalizeSquareIcon: Boolean,
 ): LibraryNormalizedIcon? {
     val source = iconPath
         ?.takeIf(String::isNotBlank)
@@ -901,7 +1164,11 @@ private fun loadLibraryIcon(
             ?.toBitmap(fallbackSizePx, fallbackSizePx)
         ?: return null
 
-    val contentBounds = runCatching { source.findAlphaContentBounds() }.getOrNull()
+    val contentBounds = if (normalizeSquareIcon) {
+        runCatching { source.findAlphaContentBounds() }.getOrNull()
+    } else {
+        null
+    }
     val normalized = if (contentBounds == null ||
         (contentBounds.left == 0 &&
             contentBounds.top == 0 &&
@@ -928,7 +1195,11 @@ private fun loadLibraryIcon(
         } else {
             FilterQuality.Medium
         },
-        representativeColor = runCatching { normalized.findRepresentativeColor() }.getOrNull(),
+        representativeColor = if (normalizeSquareIcon) {
+            runCatching { normalized.findRepresentativeColor() }.getOrNull()
+        } else {
+            null
+        },
     )
 }
 
@@ -963,11 +1234,17 @@ private fun Bitmap.findRepresentativeColor(): Color? {
     if (width <= 0 || height <= 0) return null
 
     val step = maxOf(1, maxOf(width, height) / 32)
-    var red = 0.0
-    var green = 0.0
-    var blue = 0.0
-    var weight = 0.0
+    val hueWeights = DoubleArray(LIBRARY_HUE_BUCKETS)
+    val hueRed = DoubleArray(LIBRARY_HUE_BUCKETS)
+    val hueGreen = DoubleArray(LIBRARY_HUE_BUCKETS)
+    val hueBlue = DoubleArray(LIBRARY_HUE_BUCKETS)
+    var neutralRed = 0.0
+    var neutralGreen = 0.0
+    var neutralBlue = 0.0
+    var neutralWeight = 0.0
+    var sampledWeight = 0.0
     val row = IntArray(width)
+    val hsv = FloatArray(3)
     for (y in 0 until height step step) {
         getPixels(row, 0, width, 0, y, width, 1)
         for (x in 0 until width step step) {
@@ -976,31 +1253,90 @@ private fun Bitmap.findRepresentativeColor(): Color? {
             if (alpha < 16) continue
 
             val alphaWeight = alpha / 255.0
-            red += AndroidColor.red(pixel) * alphaWeight
-            green += AndroidColor.green(pixel) * alphaWeight
-            blue += AndroidColor.blue(pixel) * alphaWeight
-            weight += alphaWeight
+            sampledWeight += alphaWeight
+            AndroidColor.colorToHSV(pixel, hsv)
+            if (hsv[1] >= LIBRARY_MIN_COLOR_SATURATION && hsv[2] >= LIBRARY_MIN_COLOR_VALUE) {
+                val hueBucket = (hsv[0] / 360f * LIBRARY_HUE_BUCKETS)
+                    .toInt()
+                    .coerceIn(0, LIBRARY_HUE_BUCKETS - 1)
+                val colorWeight = alphaWeight * (0.5 + hsv[1]) * (0.35 + hsv[2])
+                hueWeights[hueBucket] += colorWeight
+                hueRed[hueBucket] += AndroidColor.red(pixel) * colorWeight
+                hueGreen[hueBucket] += AndroidColor.green(pixel) * colorWeight
+                hueBlue[hueBucket] += AndroidColor.blue(pixel) * colorWeight
+            } else {
+                neutralRed += AndroidColor.red(pixel) * alphaWeight
+                neutralGreen += AndroidColor.green(pixel) * alphaWeight
+                neutralBlue += AndroidColor.blue(pixel) * alphaWeight
+                neutralWeight += alphaWeight
+            }
         }
     }
-    if (weight == 0.0) return null
+
+    if (sampledWeight == 0.0) return null
+
+    val dominantHueBucket = hueWeights.indices.maxByOrNull { hueWeights[it] }
+    val dominantHueWeight = dominantHueBucket?.let { hueWeights[it] } ?: 0.0
+    if (dominantHueBucket != null && dominantHueWeight / sampledWeight >= LIBRARY_MIN_DOMINANT_COLOR_RATIO) {
+        return Color(
+            red = (hueRed[dominantHueBucket] / dominantHueWeight / 255.0).toFloat().coerceIn(0f, 1f),
+            green = (hueGreen[dominantHueBucket] / dominantHueWeight / 255.0).toFloat().coerceIn(0f, 1f),
+            blue = (hueBlue[dominantHueBucket] / dominantHueWeight / 255.0).toFloat().coerceIn(0f, 1f),
+        )
+    }
+
+    if (neutralWeight == 0.0) return null
 
     return Color(
-        red = (red / weight / 255.0).toFloat().coerceIn(0f, 1f),
-        green = (green / weight / 255.0).toFloat().coerceIn(0f, 1f),
-        blue = (blue / weight / 255.0).toFloat().coerceIn(0f, 1f),
+        red = (neutralRed / neutralWeight / 255.0).toFloat().coerceIn(0f, 1f),
+        green = (neutralGreen / neutralWeight / 255.0).toFloat().coerceIn(0f, 1f),
+        blue = (neutralBlue / neutralWeight / 255.0).toFloat().coerceIn(0f, 1f),
     )
 }
 
 private const val MIN_VISIBLE_ALPHA = 16
-private const val LIBRARY_SLOT_TINT_AMOUNT = 0.12f
+private const val LIBRARY_HUE_BUCKETS = 12
+private const val LIBRARY_MIN_COLOR_SATURATION = 0.28f
+private const val LIBRARY_MIN_COLOR_VALUE = 0.16f
+private const val LIBRARY_MIN_DOMINANT_COLOR_RATIO = 0.08
+private const val LIBRARY_LIGHT_SLOT_TINT_AMOUNT = 0.34f
+private const val LIBRARY_DARK_SLOT_TINT_AMOUNT = 0.45f
 
 /**
- * Gives the slot a restrained adaptive-icon-like tint without touching the
- * bitmap foreground. Keeping the theme surface dominant prevents bright or
- * dark source icons from losing contrast against their own background.
+ * Gives the slot a soft adaptive-icon-like tint without touching the bitmap
+ * foreground. A saturated seed is first softened into a theme-appropriate
+ * pastel/deep tone, then blended with the Material surface. This keeps the
+ * slot visibly related to the icon without allowing a dark or vivid bitmap to
+ * erase the foreground contrast.
  */
 private fun adaptiveLibrarySlotColor(base: Color, accent: Color): Color {
-    return blendLibrarySlotColor(base, accent, amount = LIBRARY_SLOT_TINT_AMOUNT)
+    val brightness = base.red * 0.2126f + base.green * 0.7152f + base.blue * 0.0722f
+    val hsv = FloatArray(3)
+    AndroidColor.RGBToHSV(
+        (accent.red * 255f).toInt(),
+        (accent.green * 255f).toInt(),
+        (accent.blue * 255f).toInt(),
+        hsv,
+    )
+    if (hsv[1] < LIBRARY_MIN_COLOR_SATURATION) {
+        return blendLibrarySlotColor(base, accent, amount = 0.06f)
+    }
+
+    val isLightSurface = brightness >= 0.5f
+    val softenedAccent = Color.hsv(
+        hue = hsv[0],
+        saturation = hsv[1].coerceIn(0.35f, 0.72f),
+        value = if (isLightSurface) 0.96f else 0.26f,
+    )
+    return blendLibrarySlotColor(
+        base,
+        softenedAccent,
+        amount = if (isLightSurface) {
+            LIBRARY_LIGHT_SLOT_TINT_AMOUNT
+        } else {
+            LIBRARY_DARK_SLOT_TINT_AMOUNT
+        },
+    )
 }
 
 private fun blendLibrarySlotColor(base: Color, accent: Color, amount: Float): Color {
@@ -1017,11 +1353,17 @@ private fun blendLibrarySlotColor(base: Color, accent: Color, amount: Float): Co
 private fun rememberLibraryIcon(
     app: LibraryAppUiItem,
     contentSize: Dp,
+    iconRatio: LibraryIconRatio,
 ): LibraryNormalizedIcon? {
     val context = LocalContext.current
     val contentSizePx = with(LocalDensity.current) { contentSize.roundToPx() }
-    return remember(app.iconPath, contentSizePx) {
-        loadLibraryIcon(context, app.iconPath, contentSizePx)
+    return remember(app.iconPath, contentSizePx, iconRatio) {
+        loadLibraryIcon(
+            context = context,
+            iconPath = app.iconPath,
+            fallbackSizePx = contentSizePx,
+            normalizeSquareIcon = iconRatio == LibraryIconRatio.Square,
+        )
     }
 }
 
@@ -1030,15 +1372,22 @@ private fun LibraryIconSlot(
     app: LibraryAppUiItem,
     slotSize: Dp,
     contentSize: Dp,
+    iconRatio: LibraryIconRatio,
 ) {
-    val icon = rememberLibraryIcon(app, contentSize)
+    val icon = rememberLibraryIcon(app, contentSize, iconRatio)
     val baseContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
-    val containerColor = icon?.representativeColor?.let { representativeColor ->
-        adaptiveLibrarySlotColor(baseContainerColor, representativeColor)
-    } ?: baseContainerColor
+    val containerColor = if (iconRatio == LibraryIconRatio.Square) {
+        icon?.representativeColor?.let { representativeColor ->
+            adaptiveLibrarySlotColor(baseContainerColor, representativeColor)
+        } ?: baseContainerColor
+    } else {
+        baseContainerColor
+    }
 
     Card(
-        modifier = Modifier.size(slotSize),
+        modifier = Modifier
+            .width(slotSize)
+            .aspectRatio(iconRatio.widthToHeight),
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = containerColor),
         border = BorderStroke(
@@ -1050,20 +1399,35 @@ private fun LibraryIconSlot(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
         ) {
-            LibraryIconArtwork(icon = icon, contentSize = contentSize)
+            LibraryIconArtwork(
+                icon = icon,
+                contentSize = contentSize,
+                iconRatio = iconRatio,
+            )
         }
     }
 }
 
 @Composable
-private fun LibraryIconArtwork(icon: LibraryNormalizedIcon?, contentSize: Dp) {
+private fun LibraryIconArtwork(
+    icon: LibraryNormalizedIcon?,
+    contentSize: Dp,
+    iconRatio: LibraryIconRatio,
+) {
     if (icon != null) {
         Image(
             bitmap = icon.bitmap,
             contentDescription = null,
-            modifier = Modifier
-                .size(contentSize)
-                .clip(MaterialTheme.shapes.small),
+            modifier = if (iconRatio == LibraryIconRatio.Square) {
+                Modifier
+                    .size(contentSize)
+                    .clip(MaterialTheme.shapes.small)
+            } else {
+                Modifier
+                    .fillMaxSize()
+                    .padding(4.dp)
+                    .clip(MaterialTheme.shapes.small)
+            },
             contentScale = ContentScale.Fit,
             filterQuality = icon.filterQuality,
         )

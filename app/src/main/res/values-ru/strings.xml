@@ -76,6 +76,15 @@
     <string name="pref_app_sort_title">Сортировка приложений</string>
     <string name="pref_app_sort_vendor">Поставщик</string>
     <string name="pref_apps_view">вид</string>
+    <string name="library_icon_ratio_title">Пропорции значков</string>
+    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">3:4</string>
+    <string name="library_grid_spacing_title">Интервал сетки</string>
+    <string name="library_grid_spacing_compact">Компактный (4 dp)</string>
+    <string name="library_grid_spacing_standard">Стандартный (8 dp)</string>
+    <string name="library_grid_spacing_spacious">Свободный (12 dp)</string>
+    <string name="library_hide_grid_titles">Скрыть названия в сетке</string>
+    <string name="library_hide_grid_titles_summary">Показывать только значки приложений</string>
     <string name="pref_audio_title">Аудио</string>
     <string name="PREF_BACKGROUND">Фон</string>
     <string name="pref_button_shape_oval">Овальные</string>
