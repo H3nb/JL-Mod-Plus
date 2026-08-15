@@ -1223,6 +1223,7 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		protected void onCommandsChanged(List<Command> list) {
+			closeMenu();
 			List<Command> commands = this.commands;
 			commands.clear();
 			commands.addAll(list);

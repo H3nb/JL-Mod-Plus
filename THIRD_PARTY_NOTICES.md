@@ -21,13 +21,14 @@ This ledger is a provenance/notice inventory for the current project state, not 
 
 ## Material Symbols assets
 
-The Compose host UI uses eleven official Material Symbols Android VectorDrawable assets. They
+The Compose host UI uses thirteen official Material Symbols Android VectorDrawable assets. They
 were downloaded with `scripts/material-symbols.py` as developer-time inputs and are committed locally;
 Gradle and CI do not access the network to obtain them.
 
 | Local resources | Source | Variant | Revision / SHA-256 | License |
 | --- | --- | --- | --- | --- |
 | `ic_arrow_back.xml`, `ic_check.xml`, `ic_content_copy.xml`, `ic_share.xml`, `ic_delete_report.xml`, `ic_file_picker_folder.xml`, `ic_file_picker_file.xml`, `ic_file_picker_storage.xml`, `ic_arrow_downward.xml`, `ic_arrow_upward.xml`, `ic_palette.xml` | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | All assets are pinned to their recorded source revisions; check SHA-256 `b38c518aa15e88cb9f2eda91aa5617427530ae9359a1b2c8ab96f7d16bffabe7`, arrow downward `eac1ec84bb5251dfd1dec10a3db387363594eb20247bacaddf1c033ff954094d`, arrow upward `b398faf24ea12a63b2c4f708d8be24c8ae3714d277ea82da8f405cd066873d0a`, and palette `77da392d239862f1c1a4f736d698debcffe9477eacb49947b41210360af23b92`, all revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
+| `ic_action_keyboard.xml`, `ic_action_screenshot.xml` | `https://github.com/google/material-design-icons` | rounded, fill 0, weight 400, grade 0, optical size 24 | SHA-256 `d3d83c5f827ad0e17b7a525194d3f4f6499c63afe5791dd253dea9846fb05435` and `4c7e957173d1c89b8a12a25d3e46150acdca1ba73fc0037a8dc1da439550e683`; revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 
 ### `third_party/` audit
 
@@ -39,9 +40,8 @@ The table below covers direct runtime dependencies and license-significant trans
 
 | Runtime component / coordinates | Origin | License / notice |
 | --- | --- | --- |
-| `androidx.*` (Activity, Core, AppCompat, Fragment, Lifecycle, Room, Preference, ConstraintLayout, Transition and transitives) | Android Open Source Project / AndroidX | Apache-2.0 |
+| `androidx.*` (Activity, Core, AppCompat, Compose, Fragment, Lifecycle, Navigation, Room, Preference, Transition and transitives) | Android Open Source Project / AndroidX | Apache-2.0 |
 | Kotlin stdlib and `kotlinx-coroutines-*`, plus `org.jetbrains:annotations` | JetBrains Kotlin projects | Apache-2.0 |
-| `com.google.android.material:material` | Material Components for Android | Apache-2.0 |
 | `com.google.code.gson:gson` | Google Gson | Apache-2.0 |
 | `com.google.oboe:oboe` | Google Oboe | Apache-2.0 |
 | `ch.acra:acra-core` | ACRA | Apache-2.0 |
@@ -56,12 +56,6 @@ The table below covers direct runtime dependencies and license-significant trans
 | `org.reactivestreams:reactive-streams` | Reactive Streams JVM API | MIT-0 |
 | `net.lingala.zip4j:zip4j:2.11.6` | `https://github.com/srikanth-lingala/zip4j` | Apache-2.0 |
 | `org.ow2.asm:asm:9.6` | OW2 ASM | BSD-3-Clause |
-
-`androidx.constraintlayout:constraintlayout:2.0.1` is present only as a
-transitive dependency of `com.google.android.material:material:1.11.0` in the
-current runtime graph. It has no direct Gradle alias or source XML consumer;
-the direct dependency was removed after the mapper migration and must not be
-reintroduced solely because the transitive artifact remains.
 
 ## Source availability for reciprocal-license components
 
