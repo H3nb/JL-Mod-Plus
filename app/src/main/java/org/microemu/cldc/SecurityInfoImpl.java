@@ -1,6 +1,7 @@
 /*
  *  MicroEmulator
  *  Copyright (C) 2006 Bartek Teodorczyk <barteo@barteo.net>
+ *  Modified for JL-Mod Plus to report negotiated host TLS versions when available.
  *
  *  It is licensed under the following two licenses as alternatives:
  *    1. GNU Lesser General Public License (the "LGPL") version 2.1 or any newer version
@@ -29,13 +30,13 @@ import javax.microedition.pki.Certificate;
 
 public class SecurityInfoImpl implements SecurityInfo {
 
-	private String cipherSuite;
-	private String protocolName;
-	private Certificate certificate;
+	private final String cipherSuite;
+	private final String protocolName;
+	private final Certificate certificate;
 
 	public SecurityInfoImpl(String cipherSuite, String protocolName, Certificate certificate) {
 		this.cipherSuite = cipherSuite;
-		this.protocolName = protocolName;
+		this.protocolName = protocolName == null ? "" : protocolName;
 		this.certificate = certificate;
 	}
 
@@ -48,39 +49,38 @@ public class SecurityInfoImpl implements SecurityInfo {
 	public String getProtocolName() {
 		if (protocolName.startsWith("TLS")) {
 			return "TLS";
-		} else if (protocolName.startsWith("SSL")) {
-			return "SSL";
-		} else {
-			// TODO Auto-generated method stub
-			try {
-				throw new RuntimeException();
-			} catch (RuntimeException ex) {
-				ex.printStackTrace();
-				throw ex;
-			}
 		}
+		if (protocolName.startsWith("SSL")) {
+			return "SSL";
+		}
+		return protocolName;
 	}
 
 	@Override
 	public String getProtocolVersion() {
-		if (protocolName.startsWith("TLS")) {
-			return "3.1";
-		} else if (getProtocolName().equals("SSL")) {
-			return "3.0";
-		} else {
-			// TODO Auto-generated method stub
-			try {
-				throw new RuntimeException();
-			} catch (RuntimeException ex) {
-				ex.printStackTrace();
-				throw ex;
-			}
+		if ("TLSv1.3".equals(protocolName)) {
+			return "3.4";
 		}
+		if ("TLSv1.2".equals(protocolName)) {
+			return "3.3";
+		}
+		if ("TLSv1.1".equals(protocolName)) {
+			return "3.2";
+		}
+		if ("TLSv1".equals(protocolName) || "TLSv1.0".equals(protocolName)
+				|| "TLS".equals(protocolName)) {
+			return "3.1";
+		}
+		if (protocolName.startsWith("SSL")) {
+			return "3.0";
+		}
+		// Unknown provider protocol names should not crash a MIDlet querying
+		// metadata. "0.0" is a stable sentinel outside the defined MIDP values.
+		return "0.0";
 	}
 
 	@Override
 	public Certificate getServerCertificate() {
 		return certificate;
 	}
-
 }
