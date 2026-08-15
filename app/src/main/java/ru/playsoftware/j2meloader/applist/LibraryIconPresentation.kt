@@ -14,6 +14,8 @@
 
 package ru.playsoftware.j2meloader.applist
 
+import kotlin.math.sqrt
+
 /**
  * Small deterministic decision layer for square library icon presentation.
  *
@@ -52,16 +54,17 @@ internal fun decideLibraryIconPresentation(
                 input.occupancy < LIBRARY_PRESENTATION_FOREGROUND_OCCUPANCY)
 
     if (transparentSubject) {
-        val sparseAmount = (
-            (LIBRARY_PRESENTATION_SUBJECT_REFERENCE_OCCUPANCY - input.occupancy) /
-                LIBRARY_PRESENTATION_SUBJECT_OCCUPANCY_RANGE
-            ).coerceIn(0f, 1f)
-        val elongatedAmount = (
-            (LIBRARY_PRESENTATION_SUBJECT_REFERENCE_ASPECT_FILL - input.aspectFill) /
-                LIBRARY_PRESENTATION_SUBJECT_ASPECT_RANGE
-            ).coerceIn(0f, 1f)
-        val visualScale = LIBRARY_PRESENTATION_SUBJECT_MAX_SCALE -
-            maxOf(sparseAmount, elongatedAmount) * LIBRARY_PRESENTATION_SUBJECT_SCALE_RANGE
+        // After alpha trimming, ContentScale.Fit still makes narrow/tall subjects look much
+        // smaller than a similarly-sized round or square subject. Normalize against estimated
+        // visible area in the enclosing square instead of shrinking elongated artwork further.
+        val visibleArea = (input.occupancy * input.aspectFill)
+            .coerceAtLeast(LIBRARY_PRESENTATION_SUBJECT_MIN_VISIBLE_AREA)
+        val visualScale = sqrt(
+            LIBRARY_PRESENTATION_SUBJECT_TARGET_VISIBLE_AREA / visibleArea,
+        ).coerceIn(
+            LIBRARY_PRESENTATION_SUBJECT_MIN_SCALE,
+            LIBRARY_PRESENTATION_SUBJECT_MAX_SCALE,
+        )
         return LibraryIconPresentationDecision(
             mode = LibraryIconPresentationMode.Subject,
             visualScale = visualScale,
@@ -97,12 +100,10 @@ private const val LIBRARY_PRESENTATION_FOREGROUND_MIN_TRANSPARENT_RATIO = 0.06f
 private const val LIBRARY_PRESENTATION_FOREGROUND_BOUNDS_COVERAGE = 0.88f
 private const val LIBRARY_PRESENTATION_FOREGROUND_OCCUPANCY = 0.80f
 
-private const val LIBRARY_PRESENTATION_SUBJECT_REFERENCE_OCCUPANCY = 0.72f
-private const val LIBRARY_PRESENTATION_SUBJECT_OCCUPANCY_RANGE = 0.62f
-private const val LIBRARY_PRESENTATION_SUBJECT_REFERENCE_ASPECT_FILL = 0.68f
-private const val LIBRARY_PRESENTATION_SUBJECT_ASPECT_RANGE = 0.50f
-private const val LIBRARY_PRESENTATION_SUBJECT_MAX_SCALE = 0.90f
-private const val LIBRARY_PRESENTATION_SUBJECT_SCALE_RANGE = 0.10f
+private const val LIBRARY_PRESENTATION_SUBJECT_TARGET_VISIBLE_AREA = 0.52f
+private const val LIBRARY_PRESENTATION_SUBJECT_MIN_VISIBLE_AREA = 0.01f
+private const val LIBRARY_PRESENTATION_SUBJECT_MIN_SCALE = 0.66f
+private const val LIBRARY_PRESENTATION_SUBJECT_MAX_SCALE = 0.94f
 private const val LIBRARY_PRESENTATION_FRAMED_SUBJECT_SCALE = 0.92f
 
 private const val LIBRARY_PRESENTATION_COVER_MAX_TRANSPARENT_RATIO = 0.025f
