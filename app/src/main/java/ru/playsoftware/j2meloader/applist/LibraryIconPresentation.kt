@@ -77,9 +77,9 @@ internal fun decideLibraryIconPresentation(
     }
 
     // A dominant color alone is not proof of a self-backed icon: a round object such as Bounce
-    // can dominate its bitmap while still needing to remain a smaller floating subject. Requiring
-    // strong rectangular occupancy keeps Backed for actual badge/backplate shapes instead of
-    // accidentally promoting circles and isolated objects.
+    // can dominate its bitmap while still needing to remain a smaller floating subject. A true
+    // rounded-square backplate normally occupies materially more of its bounds than a circle
+    // (~pi/4), so occupancy is the useful discriminator here.
     val selfBacked =
         input.hasBackingColor &&
             input.boundsCoverage >= LIBRARY_PRESENTATION_BACKED_MIN_BOUNDS_COVERAGE &&
@@ -131,7 +131,7 @@ internal fun decideLibraryIconPresentation(
 
 private const val LIBRARY_PRESENTATION_FOREGROUND_MIN_TRANSPARENT_RATIO = 0.06f
 private const val LIBRARY_PRESENTATION_FOREGROUND_BOUNDS_COVERAGE = 0.88f
-private const val LIBRARY_PRESENTATION_FOREGROUND_OCCUPANCY = 0.80f
+private const val LIBRARY_PRESENTATION_FOREGROUND_OCCUPANCY = 0.86f
 
 private const val LIBRARY_PRESENTATION_SUBJECT_BASE_SCALE = 0.66f
 private const val LIBRARY_PRESENTATION_SUBJECT_DENSE_START = 0.55f
@@ -145,7 +145,7 @@ private const val LIBRARY_PRESENTATION_SUBJECT_MAX_SCALE = 0.78f
 private const val LIBRARY_PRESENTATION_FRAMED_SUBJECT_SCALE = 0.74f
 
 private const val LIBRARY_PRESENTATION_BACKED_MIN_BOUNDS_COVERAGE = 0.78f
-private const val LIBRARY_PRESENTATION_BACKED_MIN_OCCUPANCY = 0.86f
+private const val LIBRARY_PRESENTATION_BACKED_MIN_OCCUPANCY = 0.83f
 private const val LIBRARY_PRESENTATION_BACKED_MAX_TRANSPARENT_RATIO = 0.24f
 private const val LIBRARY_PRESENTATION_BACKED_SCALE = 0.86f
 
