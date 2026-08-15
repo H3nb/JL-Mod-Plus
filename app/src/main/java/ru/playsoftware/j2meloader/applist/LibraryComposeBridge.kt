@@ -22,13 +22,11 @@ import android.graphics.Color as AndroidColor
 import android.graphics.Rect
 import android.util.LruCache
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -342,39 +340,12 @@ fun LibraryScreen(
     }
 
     Row(modifier = modifier.fillMaxSize()) {
-        if (isLandscape && !isImeVisible) {
-            AnimatedVisibility(
-                visible = showNavigationBar,
-                enter = fadeIn(
-                    animationSpec = tween(
-                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                        easing = FastOutSlowInEasing,
-                    ),
-                ) + expandHorizontally(
-                    animationSpec = tween(
-                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                        easing = FastOutSlowInEasing,
-                    ),
-                    expandFrom = Alignment.Start,
-                ),
-                exit = fadeOut(
-                    animationSpec = tween(
-                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                        easing = FastOutSlowInEasing,
-                    ),
-                ) + shrinkHorizontally(
-                    animationSpec = tween(
-                        durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                        easing = FastOutSlowInEasing,
-                    ),
-                    shrinkTowards = Alignment.Start,
-                ),
-            ) {
-                LibraryNavigationRail(
-                    selected = destination,
-                    onSelected = { selectedDestinationIndex = it.ordinal },
-                )
-            }
+        if (isLandscape) {
+            // The side rail does not consume vertical content space, so keep it persistent.
+            LibraryNavigationRail(
+                selected = destination,
+                onSelected = { selectedDestinationIndex = it.ordinal },
+            )
         }
 
         Scaffold(
@@ -494,7 +465,9 @@ fun LibraryScreen(
                 onSearch = actions::onSearch,
                 onSort = actions::onSort,
                 onFabVisibilityChanged = { showInstallFab = it },
-                onNavigationVisibilityChanged = { showNavigationBar = it },
+                onNavigationVisibilityChanged = { visible ->
+                    if (!isLandscape) showNavigationBar = visible
+                },
             )
             LibraryDestination.Collections -> LibraryCollectionsDestination(padding)
             LibraryDestination.Options -> LibraryOptionsDestination(
