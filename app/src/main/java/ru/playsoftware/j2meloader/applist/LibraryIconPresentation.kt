@@ -63,7 +63,16 @@ internal fun decideLibraryIconPresentation(
         )
     }
 
-    if (input.hasBackingColor) {
+    // A dominant color alone is not proof of a self-backed icon: a round object such as Bounce
+    // can dominate its bitmap while still needing to remain a smaller floating subject. Requiring
+    // strong rectangular occupancy keeps Backed for actual badge/backplate shapes instead of
+    // accidentally promoting circles and isolated objects.
+    val selfBacked =
+        input.hasBackingColor &&
+            input.boundsCoverage >= LIBRARY_PRESENTATION_BACKED_MIN_BOUNDS_COVERAGE &&
+            input.occupancy >= LIBRARY_PRESENTATION_BACKED_MIN_OCCUPANCY &&
+            input.transparentRatio <= LIBRARY_PRESENTATION_BACKED_MAX_TRANSPARENT_RATIO
+    if (selfBacked) {
         return LibraryIconPresentationDecision(
             mode = LibraryIconPresentationMode.Backed,
             visualScale = LIBRARY_PRESENTATION_BACKED_SCALE,
@@ -128,6 +137,10 @@ private const val LIBRARY_PRESENTATION_SUBJECT_ELONGATED_BONUS = 0.12f
 private const val LIBRARY_PRESENTATION_SUBJECT_MIN_SCALE = 0.58f
 private const val LIBRARY_PRESENTATION_SUBJECT_MAX_SCALE = 0.78f
 private const val LIBRARY_PRESENTATION_FRAMED_SUBJECT_SCALE = 0.74f
+
+private const val LIBRARY_PRESENTATION_BACKED_MIN_BOUNDS_COVERAGE = 0.78f
+private const val LIBRARY_PRESENTATION_BACKED_MIN_OCCUPANCY = 0.86f
+private const val LIBRARY_PRESENTATION_BACKED_MAX_TRANSPARENT_RATIO = 0.24f
 private const val LIBRARY_PRESENTATION_BACKED_SCALE = 0.86f
 
 private const val LIBRARY_PRESENTATION_COVER_MAX_TRANSPARENT_RATIO = 0.025f
