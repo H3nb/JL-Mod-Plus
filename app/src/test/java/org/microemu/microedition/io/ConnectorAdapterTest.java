@@ -10,6 +10,7 @@ package org.microemu.microedition.io;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -29,29 +30,50 @@ import org.junit.Test;
 public class ConnectorAdapterTest {
 	@Test
 	public void inputConvenienceUsesReadModeAndClosesConnectionObject() throws Exception {
-		RecordingAdapter adapter = new RecordingAdapter();
+		RecordingAdapter adapter = new RecordingAdapter(new FakeConnection());
 
 		InputStream input = adapter.openInputStream("test://resource");
 
 		assertEquals(Connector.READ, adapter.lastMode);
-		assertTrue(adapter.connection.closed);
+		assertTrue(((FakeConnection) adapter.connection).closed);
+		assertEquals(1, ((FakeConnection) adapter.connection).rawInputCalls);
+		assertEquals(0, ((FakeConnection) adapter.connection).dataInputCalls);
 		assertEquals(7, input.read());
 	}
 
 	@Test
 	public void outputConvenienceUsesWriteModeAndClosesConnectionObject() throws Exception {
-		RecordingAdapter adapter = new RecordingAdapter();
+		RecordingAdapter adapter = new RecordingAdapter(new FakeConnection());
 
 		OutputStream output = adapter.openOutputStream("test://resource");
 
 		assertEquals(Connector.WRITE, adapter.lastMode);
-		assertTrue(adapter.connection.closed);
+		assertTrue(((FakeConnection) adapter.connection).closed);
+		assertEquals(1, ((FakeConnection) adapter.connection).rawOutputCalls);
+		assertEquals(0, ((FakeConnection) adapter.connection).dataOutputCalls);
 		output.write(7);
+	}
+
+	@Test
+	public void typeMismatchStillClosesOpenedConnection() throws Exception {
+		CloseOnlyConnection connection = new CloseOnlyConnection();
+		RecordingAdapter adapter = new RecordingAdapter(connection);
+
+		try {
+			adapter.openInputStream("test://resource");
+			fail("Expected IOException");
+		} catch (IOException expected) {
+			assertTrue(connection.closed);
+		}
 	}
 
 	private static final class RecordingAdapter extends ConnectorAdapter {
 		int lastMode;
-		final FakeConnection connection = new FakeConnection();
+		final Connection connection;
+
+		RecordingAdapter(Connection connection) {
+			this.connection = connection;
+		}
 
 		@Override
 		public Connection open(String name, int mode, boolean timeouts) {
@@ -60,31 +82,48 @@ public class ConnectorAdapterTest {
 		}
 	}
 
-	private static final class FakeConnection implements InputConnection, OutputConnection {
+	private static final class CloseOnlyConnection implements Connection {
 		boolean closed;
 
 		@Override
+		public void close() {
+			closed = true;
+		}
+	}
+
+	private static final class FakeConnection implements InputConnection, OutputConnection {
+		boolean closed;
+		int rawInputCalls;
+		int dataInputCalls;
+		int rawOutputCalls;
+		int dataOutputCalls;
+
+		@Override
 		public InputStream openInputStream() {
+			rawInputCalls++;
 			return new ByteArrayInputStream(new byte[]{7});
 		}
 
 		@Override
 		public DataInputStream openDataInputStream() {
-			return new DataInputStream(openInputStream());
+			dataInputCalls++;
+			return new DataInputStream(new ByteArrayInputStream(new byte[]{7}));
 		}
 
 		@Override
 		public OutputStream openOutputStream() {
+			rawOutputCalls++;
 			return new ByteArrayOutputStream();
 		}
 
 		@Override
 		public DataOutputStream openDataOutputStream() {
-			return new DataOutputStream(openOutputStream());
+			dataOutputCalls++;
+			return new DataOutputStream(new ByteArrayOutputStream());
 		}
 
 		@Override
-		public void close() throws IOException {
+		public void close() {
 			closed = true;
 		}
 	}

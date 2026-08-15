@@ -9,6 +9,7 @@
 package org.microemu.cldc;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
@@ -28,6 +29,16 @@ public class ConnectionEndpointTest {
 
 		assertEquals("::1", endpoint.getHost());
 		assertEquals(14444, endpoint.getPort());
+	}
+
+	@Test
+	public void rejectsUnbracketedIpv6() {
+		try {
+			ConnectionEndpoint.parse("socket://2001:db8::1:14444", "socket");
+			fail("Expected IllegalArgumentException");
+		} catch (IllegalArgumentException expected) {
+			// MIDP low-level IPv6 addresses use bracketed URL syntax.
+		}
 	}
 
 	@Test

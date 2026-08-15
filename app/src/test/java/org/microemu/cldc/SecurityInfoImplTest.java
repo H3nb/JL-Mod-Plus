@@ -9,10 +9,13 @@
 package org.microemu.cldc;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 
@@ -28,6 +31,14 @@ public class SecurityInfoImplTest {
 		assertVersion("TLSv1.2", "3.3");
 		assertVersion("TLSv1.3", "3.4");
 		assertVersion("SSLv3", "3.0");
+	}
+
+	@Test
+	public void unknownSecureProtocolMetadataDoesNotCrashMidlet() {
+		SecurityInfoImpl info = new SecurityInfoImpl("cipher", "FutureTLS", null);
+
+		assertEquals("FutureTLS", info.getProtocolName());
+		assertEquals("0.0", info.getProtocolVersion());
 	}
 
 	@Test
@@ -61,6 +72,20 @@ public class SecurityInfoImplTest {
 		SocketException failure = new SocketException("connection reset");
 
 		assertSame(failure, TlsExceptionMapper.translate(failure, null));
+	}
+
+	@Test
+	public void timeoutHintControlsOnlyExceptionTypeNotDuration() {
+		SocketTimeoutException timeout = new SocketTimeoutException("timed out");
+
+		IOException enabled = GcfIoExceptionMapper.translate(timeout, true);
+		IOException disabled = GcfIoExceptionMapper.translate(timeout, false);
+
+		assertSame(timeout, enabled);
+		assertTrue(enabled instanceof java.io.InterruptedIOException);
+		assertFalse(disabled instanceof java.io.InterruptedIOException);
+		assertEquals("timed out", disabled.getMessage());
+		assertSame(timeout, disabled.getCause());
 	}
 
 	private static void assertVersion(String hostProtocol, String expected) {

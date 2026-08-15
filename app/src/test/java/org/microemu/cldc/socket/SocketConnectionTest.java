@@ -18,6 +18,9 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
 
 import javax.microedition.io.Connector;
 import javax.microedition.io.ServerSocketConnection;
@@ -45,6 +48,26 @@ public class SocketConnectionTest {
 					false);
 			try (Socket accepted = server.accept()) {
 				assertEquals(server.getLocalPort(), client.getPort());
+			} finally {
+				client.close();
+			}
+		}
+	}
+
+	@Test
+	public void connectorModeDoesNotRestrictSocketDirections() throws Exception {
+		try (ServerSocket server = loopbackServer()) {
+			SocketConnection client = new SocketConnection(
+					"127.0.0.1", server.getLocalPort(), Connector.READ, false);
+			try (Socket accepted = server.accept()) {
+				OutputStream output = client.openOutputStream();
+				output.write(11);
+				output.flush();
+				assertEquals(11, accepted.getInputStream().read());
+
+				accepted.getOutputStream().write(12);
+				accepted.getOutputStream().flush();
+				assertEquals(12, client.openInputStream().read());
 			} finally {
 				client.close();
 			}
@@ -127,6 +150,52 @@ public class SocketConnectionTest {
 		}
 	}
 
+	@Test
+	public void closingInputFromAnotherThreadUnblocksRead() throws Exception {
+		try (ServerSocket server = loopbackServer()) {
+			SocketConnection client = new SocketConnection("127.0.0.1", server.getLocalPort());
+			try (Socket accepted = server.accept()) {
+				InputStream input = client.openInputStream();
+				CountDownLatch started = new CountDownLatch(1);
+				FutureTask<Boolean> readTask = new FutureTask<>(() -> {
+					started.countDown();
+					try {
+						return input.read() == -1;
+					} catch (IOException expected) {
+						return true;
+					}
+				});
+				Thread reader = new Thread(readTask, "j2me-socket-blocked-read");
+				reader.setDaemon(true);
+				reader.start();
+
+				assertTrue(started.await(1, TimeUnit.SECONDS));
+				input.close();
+				assertTrue(readTask.get(2, TimeUnit.SECONDS));
+			} finally {
+				client.close();
+			}
+		}
+	}
+
+	@Test
+	public void outputCloseStillCleansUpWhenFlushFails() throws Exception {
+		TrackingSocket socket = new TrackingSocket();
+		SocketConnection connection = new SocketConnection(socket);
+		OutputStream output = connection.openOutputStream();
+		connection.close();
+
+		try {
+			output.close();
+			fail("Expected IOException");
+		} catch (IOException expected) {
+			assertEquals("flush failed", expected.getMessage());
+		}
+
+		assertTrue(socket.outputShutdown);
+		assertTrue(socket.closed);
+	}
+
 	private static ServerSocket loopbackServer() throws IOException {
 		ServerSocket server = new ServerSocket(0, 1, InetAddress.getLoopbackAddress());
 		server.setSoTimeout(2000);
@@ -144,5 +213,45 @@ public class SocketConnectionTest {
 
 	private interface IoOperation {
 		void run() throws Exception;
+	}
+
+	private static final class TrackingSocket extends Socket {
+		boolean closed;
+		boolean outputShutdown;
+		private final OutputStream output = new OutputStream() {
+			@Override
+			public void write(int value) {
+			}
+
+			@Override
+			public void flush() throws IOException {
+				throw new IOException("flush failed");
+			}
+		};
+
+		@Override
+		public OutputStream getOutputStream() {
+			return output;
+		}
+
+		@Override
+		public boolean isClosed() {
+			return closed;
+		}
+
+		@Override
+		public boolean isOutputShutdown() {
+			return outputShutdown;
+		}
+
+		@Override
+		public void shutdownOutput() {
+			outputShutdown = true;
+		}
+
+		@Override
+		public void close() {
+			closed = true;
+		}
 	}
 }

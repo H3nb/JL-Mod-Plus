@@ -36,7 +36,7 @@ public class HttpConnectionTest {
 	@Test
 	public void outputAndResponseUseOneHttpTransaction() throws Exception {
 		try (ServerSocket server = loopbackServer()) {
-			List<String> requests = new ArrayList<>();
+			List<CapturedRequest> requests = new ArrayList<>();
 			FutureTask<Void> task = startServer(server, requests, 200, "OK");
 
 			Connection connection = new Connection();
@@ -46,6 +46,7 @@ public class HttpConnectionTest {
 					false);
 			assertEquals("world=1", connection.getQuery());
 			assertEquals("identity", connection.getRequestProperty("Accept-Encoding"));
+			connection.setRequestProperty("Content-Length", "3");
 
 			OutputStream output = connection.openOutputStream();
 			output.write("abc".getBytes(StandardCharsets.US_ASCII));
@@ -57,7 +58,101 @@ public class HttpConnectionTest {
 
 			task.get(3, TimeUnit.SECONDS);
 			assertEquals(1, requests.size());
-			assertEquals("POST /login?world=1 HTTP/1.1", requests.get(0));
+			assertEquals("POST /login?world=1 HTTP/1.1", requests.get(0).requestLine);
+			assertEquals("abc", requests.get(0).body);
+		}
+	}
+
+	@Test
+	public void connectorModeDoesNotRestrictHttpDirections() throws Exception {
+		try (ServerSocket server = loopbackServer()) {
+			List<CapturedRequest> requests = new ArrayList<>();
+			FutureTask<Void> task = startServer(server, requests, 200, "reply");
+
+			Connection connection = new Connection();
+			connection.openConnection(
+					"http://127.0.0.1:" + server.getLocalPort() + "/mode",
+					Connector.READ,
+					false);
+			connection.setRequestProperty("Content-Length", "1");
+			OutputStream output = connection.openOutputStream();
+			output.write('x');
+			output.close();
+			assertEquals("reply", readAll(connection.openInputStream()));
+			connection.close();
+
+			task.get(3, TimeUnit.SECONDS);
+			assertEquals("x", requests.get(0).body);
+		}
+	}
+
+	@Test
+	public void outputStateFollowsMidpFlushAndConnectedTransitions() throws Exception {
+		try (ServerSocket server = loopbackServer()) {
+			List<CapturedRequest> requests = new ArrayList<>();
+			FutureTask<Void> task = startServer(server, requests, 200, "done");
+
+			Connection connection = new Connection();
+			connection.openConnection(
+					"http://127.0.0.1:" + server.getLocalPort() + "/state",
+					Connector.READ_WRITE,
+					false);
+			connection.setRequestProperty("Content-Length", "2");
+			OutputStream output = connection.openOutputStream();
+
+			connection.setRequestProperty("X-Ignored", "before-flush");
+			assertEquals(null, connection.getRequestProperty("X-Ignored"));
+
+			output.write('a');
+			output.flush();
+
+			try {
+				connection.setRequestProperty("X-Too-Late", "after-flush");
+				fail("Expected IOException after request parameters are sent");
+			} catch (IOException expected) {
+				// MIDP setters fail after request parameters have been sent.
+			}
+
+			output.write('b');
+			assertEquals(200, connection.getResponseCode());
+			try {
+				output.write('c');
+				fail("Expected output stream to be closed after entering Connected state");
+			} catch (IOException expected) {
+				// Response access finalizes the request and closes the output stream.
+			}
+
+			assertEquals("done", readAll(connection.openInputStream()));
+			connection.close();
+
+			task.get(3, TimeUnit.SECONDS);
+			assertEquals("ab", requests.get(0).body);
+		}
+	}
+
+	@Test
+	public void explicitGetWithOutputUsesAndroidCompatiblePostPromotion() throws Exception {
+		try (ServerSocket server = loopbackServer()) {
+			List<CapturedRequest> requests = new ArrayList<>();
+			FutureTask<Void> task = startServer(server, requests, 200, "");
+
+			Connection connection = new Connection();
+			connection.openConnection(
+					"http://127.0.0.1:" + server.getLocalPort() + "/get-body",
+					Connector.READ_WRITE,
+					false);
+			connection.setRequestMethod(HttpConnection.GET);
+			connection.setRequestProperty("Content-Length", "1");
+			OutputStream output = connection.openOutputStream();
+			output.write('g');
+			output.close();
+			connection.getResponseCode();
+			assertEquals(HttpConnection.POST, connection.getRequestMethod());
+			connection.close();
+
+			task.get(3, TimeUnit.SECONDS);
+			assertEquals("POST /get-body HTTP/1.1", requests.get(0).requestLine);
+			assertEquals("g", requests.get(0).body);
 		}
 	}
 
@@ -108,7 +203,7 @@ public class HttpConnectionTest {
 	@Test
 	public void redirectIsExposedToMidletInsteadOfFollowed() throws Exception {
 		try (ServerSocket server = loopbackServer()) {
-			List<String> requests = new ArrayList<>();
+			List<CapturedRequest> requests = new ArrayList<>();
 			FutureTask<Void> task = startServer(server, requests, 302, "");
 
 			Connection connection = new Connection();
@@ -127,7 +222,7 @@ public class HttpConnectionTest {
 	@Test
 	public void errorResponseBodyRemainsReadable() throws Exception {
 		try (ServerSocket server = loopbackServer()) {
-			List<String> requests = new ArrayList<>();
+			List<CapturedRequest> requests = new ArrayList<>();
 			FutureTask<Void> task = startServer(server, requests, 404, "missing");
 
 			Connection connection = new Connection();
@@ -143,7 +238,7 @@ public class HttpConnectionTest {
 	}
 
 	private static FutureTask<Void> startServer(
-			ServerSocket server, List<String> requests, int status, String body) {
+			ServerSocket server, List<CapturedRequest> requests, int status, String body) {
 		FutureTask<Void> task = new FutureTask<>(() -> {
 			handleRequest(server.accept(), requests, status, body);
 			server.setSoTimeout(300);
@@ -168,7 +263,7 @@ public class HttpConnectionTest {
 						new InputStreamReader(connection.getInputStream(), StandardCharsets.US_ASCII));
 				String line;
 				while ((line = reader.readLine()) != null && line.length() > 0) {
-					// Consume the request headers before sending the response.
+					// Consume request headers before sending response.
 				}
 
 				String headers = "HTTP/1.1 200 OK\r\n"
@@ -187,13 +282,12 @@ public class HttpConnectionTest {
 	}
 
 	private static void handleRequest(
-			Socket socket, List<String> requests, int status, String body) throws IOException {
+			Socket socket, List<CapturedRequest> requests, int status, String body) throws IOException {
 		try (Socket connection = socket) {
 			connection.setSoTimeout(2000);
 			BufferedReader reader = new BufferedReader(
 					new InputStreamReader(connection.getInputStream(), StandardCharsets.US_ASCII));
 			String requestLine = reader.readLine();
-			requests.add(requestLine);
 
 			int contentLength = 0;
 			String line;
@@ -202,9 +296,15 @@ public class HttpConnectionTest {
 					contentLength = Integer.parseInt(line.substring("Content-Length:".length()).trim());
 				}
 			}
+			StringBuilder requestBody = new StringBuilder(contentLength);
 			for (int i = 0; i < contentLength; i++) {
-				reader.read();
+				int value = reader.read();
+				if (value == -1) {
+					break;
+				}
+				requestBody.append((char) value);
 			}
+			requests.add(new CapturedRequest(requestLine, requestBody.toString()));
 
 			byte[] payload = body.getBytes(StandardCharsets.US_ASCII);
 			String reason = status == 200 ? "OK" : status == 302 ? "Found" : "Not Found";
@@ -233,6 +333,16 @@ public class HttpConnectionTest {
 				output.write(buffer, 0, read);
 			}
 			return output.toString(StandardCharsets.US_ASCII.name());
+		}
+	}
+
+	private static final class CapturedRequest {
+		final String requestLine;
+		final String body;
+
+		CapturedRequest(String requestLine, String body) {
+			this.requestLine = requestLine;
+			this.body = body;
 		}
 	}
 }

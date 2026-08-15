@@ -30,11 +30,48 @@ public class CertificateImplTest {
 		assertEquals("0C:56:FA:80", certificate.getSerialNumber());
 	}
 
+	@Test
+	public void versionUsesRfc2459EncodedValue() {
+		CertificateImpl certificate = new CertificateImpl(
+				new StubX509Certificate(BigInteger.ONE));
+
+		assertEquals("2", certificate.getVersion());
+	}
+
+	@Test
+	public void subjectAndIssuerUseStrictMidpPrintableDn() {
+		X500Principal subject = new X500Principal(
+				"CN=www.anycompany.com,O=Any Company\\, Inc.,C=US");
+		X500Principal issuer = new X500Principal(
+				"CN=Example Root,O=Example CA,C=GB");
+		CertificateImpl certificate = new CertificateImpl(
+				new StubX509Certificate(BigInteger.ONE, issuer, subject));
+
+		assertEquals(
+				"C=US;O=Any Company, Inc.;CN=www.anycompany.com",
+				certificate.getSubject());
+		assertEquals(
+				"C=GB;O=Example CA;CN=Example Root",
+				certificate.getIssuer());
+	}
+
 	private static final class StubX509Certificate extends X509Certificate {
 		private final BigInteger serialNumber;
+		private final X500Principal issuer;
+		private final X500Principal subject;
 
 		StubX509Certificate(BigInteger serialNumber) {
+			this(
+					serialNumber,
+					new X500Principal("CN=Issuer"),
+					new X500Principal("CN=Subject"));
+		}
+
+		StubX509Certificate(
+				BigInteger serialNumber, X500Principal issuer, X500Principal subject) {
 			this.serialNumber = serialNumber;
+			this.issuer = issuer;
+			this.subject = subject;
 		}
 
 		@Override
@@ -57,12 +94,22 @@ public class CertificateImplTest {
 
 		@Override
 		public Principal getIssuerDN() {
-			return new X500Principal("CN=Issuer");
+			return issuer;
 		}
 
 		@Override
 		public Principal getSubjectDN() {
-			return new X500Principal("CN=Subject");
+			return subject;
+		}
+
+		@Override
+		public X500Principal getIssuerX500Principal() {
+			return issuer;
+		}
+
+		@Override
+		public X500Principal getSubjectX500Principal() {
+			return subject;
 		}
 
 		@Override
