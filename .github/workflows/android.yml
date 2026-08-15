@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: android-ci-${{ github.workflow }}-${{ github.ref }}
@@ -16,15 +16,35 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     steps:
-      - name: Check out PR head
+      - name: Check out sources
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          persist-credentials: true
+          persist-credentials: false
           submodules: recursive
+
+      - name: Restore shared debug keystore
+        shell: bash
+        env:
+          ANDROID_DEBUG_KEYSTORE_BASE64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REPOSITORY_NAME: ${{ github.repository }}
+          PR_HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$ANDROID_DEBUG_KEYSTORE_BASE64" ]]; then
+            if [[ "$GITHUB_EVENT_NAME" == "pull_request" && "$PR_HEAD_REPOSITORY" != "$GITHUB_REPOSITORY_NAME" ]]; then
+              echo 'Shared debug keystore secret is unavailable to fork pull requests; using the runner debug key.'
+              exit 0
+            fi
+            echo 'ANDROID_DEBUG_KEYSTORE_BASE64 is required for this workflow.' >&2
+            exit 1
+          fi
+          printf '%s' "$ANDROID_DEBUG_KEYSTORE_BASE64" | base64 --decode > debug.keystore
+          chmod 600 debug.keystore
+          keytool -list -keystore debug.keystore -storepass android -alias androiddebugkey >/dev/null
 
       - name: Set up JDK 21
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
@@ -34,27 +54,39 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
-        with:
-          cache-read-only: true
 
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x gradlew
 
-      - name: Refresh screenshot references
-        run: ./gradlew --no-daemon :app:updateEmulatorDebugScreenshotTest
+      - name: Lint, test, and assemble
+        run: >-
+          ./gradlew --no-daemon --stacktrace
+          :app:lintEmulatorDebug
+          :dexlib:lintDebug
+          :app:testEmulatorDebugUnitTest
+          :app:validateEmulatorDebugScreenshotTest
+          :app:assembleEmulatorDebug
+          :app:assembleEmulatorDebugAndroidTest
 
-      - name: Commit refreshed screenshot references
-        shell: bash
-        env:
-          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add app/src/screenshotTestEmulatorDebug/reference
-          if git diff --cached --quiet; then
-            echo 'No screenshot reference changes to commit.'
-            exit 0
-          fi
-          git commit -m 'test(ui): refresh library screenshot baselines'
-          git push origin "HEAD:$HEAD_BRANCH"
+      - name: Upload lint reports
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: JL-Mod-Plus-lint-reports
+          path: |
+            app/build/reports/lint-results-*.html
+            app/build/reports/lint-results-*.xml
+            app/build/reports/lint-results-*.sarif
+            dexlib/build/reports/lint-results-*.html
+            dexlib/build/reports/lint-results-*.xml
+            dexlib/build/reports/lint-results-*.sarif
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload arm64 emulator debug APK
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: JL-Mod-Plus-emulator-debug-arm64-v8a
+          path: app/build/outputs/apk/emulator/debug/app-emulator-arm64-v8a-debug.apk
+          if-no-files-found: error
+          retention-days: 7
