@@ -23,11 +23,21 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 4
           persist-credentials: true
           submodules: recursive
 
+      - name: Detect persisted refinement
+        id: detect
+        shell: bash
+        run: |
+          if [[ "$(git log -1 --pretty=%s)" == "fix(ui): refine adaptive library chrome and icons" ]]; then
+            echo 'skip=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'skip=false' >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Restore shared debug keystore
+        if: steps.detect.outputs.skip != 'true'
         shell: bash
         env:
           ANDROID_DEBUG_KEYSTORE_BASE64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 }}
@@ -38,30 +48,37 @@ jobs:
           keytool -list -keystore debug.keystore -storepass android -alias androiddebugkey >/dev/null
 
       - name: Set up JDK 21
+        if: steps.detect.outputs.skip != 'true'
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           java-version: '21'
           distribution: temurin
 
       - name: Set up Gradle
+        if: steps.detect.outputs.skip != 'true'
         uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
         with:
           cache-read-only: true
 
       - name: Grant execute permission for Gradle wrapper
+        if: steps.detect.outputs.skip != 'true'
         run: chmod +x gradlew
 
       - name: Apply library refinements
+        if: steps.detect.outputs.skip != 'true'
         run: python .github/scripts/apply_library_refinements.py
 
       - name: Tighten refinement details
+        if: steps.detect.outputs.skip != 'true'
         run: >-
           python -c "from pathlib import Path; p=Path('app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryComposeBridge.kt'); s=p.read_text(); old='val headerScrollConnection = remember(\n        chromeHysteresis,\n        onFabVisibilityChanged,'; new='val headerScrollConnection = remember(\n        chromeHysteresis,\n        state.layout,\n        onFabVisibilityChanged,'; assert old in s; s=s.replace(old,new,1); assert 'normalized.findLibraryLetterboxColor()' in s; s=s.replace('normalized.findLibraryLetterboxColor()','fileSource.findLibraryLetterboxColor()',1); p.write_text(s)"
 
       - name: Refresh screenshot references
+        if: steps.detect.outputs.skip != 'true'
         run: ./gradlew --no-daemon :app:updateEmulatorDebugScreenshotTest
 
       - name: Validate refined library
+        if: steps.detect.outputs.skip != 'true'
         run: >-
           ./gradlew --no-daemon --stacktrace
           :app:lintEmulatorDebug
@@ -71,16 +88,15 @@ jobs:
           :app:assembleEmulatorDebug
           :app:assembleEmulatorDebugAndroidTest
 
-      - name: Commit refinements and restore CI workflow
+      - name: Commit refined source and screenshots
+        if: steps.detect.outputs.skip != 'true'
         shell: bash
         env:
           HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
           set -euo pipefail
-          git show HEAD~3:.github/workflows/android.yml > .github/workflows/android.yml
-          git rm .github/scripts/apply_library_refinements.py
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add .github/workflows/android.yml app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryComposeBridge.kt app/src/androidTest/java/ru/playsoftware/j2meloader/applist/LibraryComposeTest.kt app/src/screenshotTestEmulatorDebug/reference
+          git add app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryComposeBridge.kt app/src/androidTest/java/ru/playsoftware/j2meloader/applist/LibraryComposeTest.kt app/src/screenshotTestEmulatorDebug/reference
           git commit -m 'fix(ui): refine adaptive library chrome and icons'
           git push origin "HEAD:$HEAD_BRANCH"
