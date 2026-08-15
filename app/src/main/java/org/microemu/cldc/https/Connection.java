@@ -91,13 +91,16 @@ public class Connection extends org.microemu.cldc.http.Connection implements Htt
 	@Override
 	protected IOException translateException(IOException exception) {
 		javax.microedition.pki.Certificate certificate = getPeerCertificate(sslSession);
+		IOException translated;
 		if (hostnameVerificationFailed) {
-			return new CertificateException(
+			translated = new CertificateException(
 					exception.getMessage(),
 					certificate,
 					CertificateException.SITENAME_MISMATCH);
+		} else {
+			translated = TlsExceptionMapper.translate(exception, certificate);
 		}
-		return TlsExceptionMapper.translate(exception, certificate);
+		return super.translateException(translated);
 	}
 
 	@Override
@@ -107,7 +110,7 @@ public class Connection extends org.microemu.cldc.http.Connection implements Htt
 
 	@Override
 	public int getPort() {
-		if (cn == null) {
+		if (isConnectionClosed() || cn == null) {
 			return -1;
 		}
 		int port = cn.getURL().getPort();

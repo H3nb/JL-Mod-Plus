@@ -28,6 +28,7 @@ package org.microemu.cldc.ssl;
 
 import org.microemu.cldc.CertificateImpl;
 import org.microemu.cldc.ConnectionEndpoint;
+import org.microemu.cldc.GcfIoExceptionMapper;
 import org.microemu.cldc.SecurityInfoImpl;
 import org.microemu.cldc.TlsExceptionMapper;
 import org.microemu.microedition.io.ConnectionImplementation;
@@ -55,9 +56,7 @@ public class Connection extends org.microemu.cldc.socket.SocketConnection
 		if (!org.microemu.cldc.http.Connection.isAllowNetworkConnection()) {
 			throw new IOException("No network");
 		}
-		if (mode != Connector.READ && mode != Connector.WRITE && mode != Connector.READ_WRITE) {
-			throw new IllegalArgumentException("Invalid connection mode: " + mode);
-		}
+		validateMode(mode);
 
 		ConnectionEndpoint endpoint = ConnectionEndpoint.parse(name, "ssl");
 		String host = endpoint.getHost();
@@ -87,7 +86,7 @@ public class Connection extends org.microemu.cldc.socket.SocketConnection
 						CertificateException.SITENAME_MISMATCH);
 			}
 
-			initialize(sslSocket, mode);
+			initialize(sslSocket, mode, timeouts);
 			securityInfo = new SecurityInfoImpl(
 					session.getCipherSuite(), session.getProtocol(), midpCertificate);
 			return this;
@@ -99,7 +98,8 @@ public class Connection extends org.microemu.cldc.socket.SocketConnection
 					// Preserve the original connection failure.
 				}
 			}
-			throw TlsExceptionMapper.translate(ex, midpCertificate);
+			IOException translated = TlsExceptionMapper.translate(ex, midpCertificate);
+			throw GcfIoExceptionMapper.translate(translated, timeouts);
 		}
 	}
 
@@ -110,5 +110,11 @@ public class Connection extends org.microemu.cldc.socket.SocketConnection
 			throw new IOException("Security information is unavailable");
 		}
 		return securityInfo;
+	}
+
+	private static void validateMode(int mode) {
+		if (mode != Connector.READ && mode != Connector.WRITE && mode != Connector.READ_WRITE) {
+			throw new IllegalArgumentException("Invalid connection mode: " + mode);
+		}
 	}
 }

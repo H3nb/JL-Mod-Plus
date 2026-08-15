@@ -36,7 +36,7 @@ public class SecurityInfoImpl implements SecurityInfo {
 
 	public SecurityInfoImpl(String cipherSuite, String protocolName, Certificate certificate) {
 		this.cipherSuite = cipherSuite;
-		this.protocolName = protocolName;
+		this.protocolName = protocolName == null ? "" : protocolName;
 		this.certificate = certificate;
 	}
 
@@ -53,7 +53,7 @@ public class SecurityInfoImpl implements SecurityInfo {
 		if (protocolName.startsWith("SSL")) {
 			return "SSL";
 		}
-		throw new IllegalStateException("Unsupported secure protocol: " + protocolName);
+		return protocolName;
 	}
 
 	@Override
@@ -67,13 +67,16 @@ public class SecurityInfoImpl implements SecurityInfo {
 		if ("TLSv1.1".equals(protocolName)) {
 			return "3.2";
 		}
-		if (protocolName.startsWith("TLS")) {
+		if ("TLSv1".equals(protocolName) || "TLSv1.0".equals(protocolName)
+				|| "TLS".equals(protocolName)) {
 			return "3.1";
 		}
 		if (protocolName.startsWith("SSL")) {
 			return "3.0";
 		}
-		throw new IllegalStateException("Unsupported secure protocol: " + protocolName);
+		// Unknown provider protocol names should not crash a MIDlet querying
+		// metadata. "0.0" is a stable sentinel outside the defined MIDP values.
+		return "0.0";
 	}
 
 	@Override

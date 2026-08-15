@@ -17,6 +17,7 @@ package org.microemu.cldc;
 import java.io.IOException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
+import java.security.cert.CertPathValidatorException;
 
 import javax.microedition.pki.Certificate;
 import javax.microedition.pki.CertificateException;
@@ -42,10 +43,15 @@ public final class TlsExceptionMapper {
 				return new CertificateException(exception.getMessage(), certificate, CertificateException.NOT_YET_VALID);
 			}
 			if (cause instanceof java.security.cert.CertificateException
+					|| cause instanceof CertPathValidatorException
 					|| cause instanceof SSLPeerUnverifiedException) {
 				certificateFailure = true;
 			}
-			cause = cause.getCause();
+			Throwable next = cause.getCause();
+			if (next == cause) {
+				break;
+			}
+			cause = next;
 		}
 
 		if (certificateFailure) {
