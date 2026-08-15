@@ -1,6 +1,7 @@
 /*
  *  MicroEmulator
  *  Copyright (C) 2006 Bartek Teodorczyk <barteo@barteo.net>
+ *  Modified for JL-Mod Plus to align certificate metadata with the MIDP contract.
  *
  *  It is licensed under the following two licenses as alternatives:
  *    1. GNU Lesser General Public License (the "LGPL") version 2.1 or any newer version
@@ -30,15 +31,20 @@ import javax.microedition.pki.Certificate;
 
 public class CertificateImpl implements Certificate {
 
-	private X509Certificate cert;
+	private static final char[] HEX = "0123456789ABCDEF".toCharArray();
+
+	private final X509Certificate cert;
 
 	public CertificateImpl(X509Certificate cert) {
+		if (cert == null) {
+			throw new NullPointerException("cert");
+		}
 		this.cert = cert;
 	}
 
 	@Override
 	public String getIssuer() {
-		return cert.getIssuerDN().getName();
+		return X500NameFormatter.format(cert.getIssuerX500Principal());
 	}
 
 	@Override
@@ -53,7 +59,17 @@ public class CertificateImpl implements Certificate {
 
 	@Override
 	public String getSerialNumber() {
-		return cert.getSerialNumber().toString();
+		byte[] serial = cert.getSerialNumber().toByteArray();
+		StringBuilder result = new StringBuilder(serial.length == 0 ? 0 : serial.length * 3 - 1);
+		for (int i = 0; i < serial.length; i++) {
+			if (i != 0) {
+				result.append(':');
+			}
+			int value = serial[i] & 0xff;
+			result.append(HEX[value >>> 4]);
+			result.append(HEX[value & 0x0f]);
+		}
+		return result.toString();
 	}
 
 	@Override
@@ -63,7 +79,7 @@ public class CertificateImpl implements Certificate {
 
 	@Override
 	public String getSubject() {
-		return cert.getSubjectDN().getName();
+		return X500NameFormatter.format(cert.getSubjectX500Principal());
 	}
 
 	@Override
@@ -73,7 +89,8 @@ public class CertificateImpl implements Certificate {
 
 	@Override
 	public String getVersion() {
-		return Integer.toString(cert.getVersion());
+		// java.security.cert.X509Certificate reports logical versions 1..3.
+		// MIDP exposes the RFC 2459 ASN.1 value, where X.509 v3 is "2".
+		return Integer.toString(Math.max(0, cert.getVersion() - 1));
 	}
-
 }
