@@ -16,6 +16,7 @@ package ru.playsoftware.j2meloader.applist
 
 import android.content.res.Configuration
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.tooling.preview.Preview
 import com.android.tools.screenshot.PreviewTest
 import ru.playsoftware.j2meloader.config.ProfileActionsDialog
@@ -27,7 +28,15 @@ import ru.playsoftware.j2meloader.config.ProfilesUiState
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 
 private val PreviewApps = listOf(
-    LibraryAppUiItem(1, "Demo MIDlet", "Example Vendor", "1.0", null, true),
+    LibraryAppUiItem(
+        id = 1,
+        title = "Demo MIDlet",
+        author = "Example Vendor",
+        version = "1.0",
+        iconPath = null,
+        canReinstall = true,
+        description = "This MIDlet description is intentionally long enough to show how a compact preview expands to the complete text without using a marquee. It remains readable in both portrait and landscape layouts.",
+    ),
     LibraryAppUiItem(2, "Mascot Capsule 3D", "Sample Studio", "2.4", null, false),
     LibraryAppUiItem(3, "Long application title for wrapping", "Vendor", "0.9", null, true),
     LibraryAppUiItem(4, "Utility", "Open Source", "3.1", null, false),
@@ -47,7 +56,47 @@ private val PreviewProfiles = listOf(
 fun LibraryGridScreenshot() {
     JLModPlusTheme(darkTheme = false) {
         LibraryScreen(
-            state = LibraryUiState(loading = false, apps = PreviewApps),
+            state = LibraryUiState(
+                loading = false,
+                apps = PreviewApps,
+                layout = LibraryLayout.Grid,
+            ),
+            actions = NoOpLibraryActions,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Library grid portrait icons", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun LibraryGridPortraitScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryScreen(
+            state = LibraryUiState(
+                loading = false,
+                apps = PreviewApps,
+                layout = LibraryLayout.Grid,
+                iconRatio = LibraryIconRatio.Portrait,
+                hideGridTitles = true,
+                gridSpacing = LibraryGridSpacing.Spacious,
+            ),
+            actions = NoOpLibraryActions,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Library list portrait icons", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun LibraryListPortraitScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryScreen(
+            state = LibraryUiState(
+                loading = false,
+                apps = PreviewApps,
+                layout = LibraryLayout.List,
+                iconRatio = LibraryIconRatio.Portrait,
+            ),
             actions = NoOpLibraryActions,
         )
     }
@@ -60,6 +109,22 @@ fun LibraryLandscapeScreenshot() {
     JLModPlusTheme(darkTheme = false) {
         LibraryScreen(
             state = LibraryUiState(loading = false, apps = PreviewApps),
+            actions = NoOpLibraryActions,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Library grid landscape", widthDp = 640, heightDp = 360, showBackground = true)
+@Composable
+fun LibraryGridLandscapeScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryScreen(
+            state = LibraryUiState(
+                loading = false,
+                apps = PreviewApps,
+                layout = LibraryLayout.Grid,
+            ),
             actions = NoOpLibraryActions,
         )
     }
@@ -81,6 +146,46 @@ fun LibraryListDarkScreenshot() {
                 loading = false,
                 apps = PreviewApps,
                 layout = LibraryLayout.List,
+            ),
+            actions = NoOpLibraryActions,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(
+    name = "Library landscape dark",
+    widthDp = 640,
+    heightDp = 360,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    showBackground = true,
+)
+@Composable
+fun LibraryLandscapeDarkScreenshot() {
+    JLModPlusTheme(darkTheme = true) {
+        LibraryScreen(
+            state = LibraryUiState(loading = false, apps = PreviewApps),
+            actions = NoOpLibraryActions,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(
+    name = "Library grid landscape dark",
+    widthDp = 640,
+    heightDp = 360,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    showBackground = true,
+)
+@Composable
+fun LibraryGridLandscapeDarkScreenshot() {
+    JLModPlusTheme(darkTheme = true) {
+        LibraryScreen(
+            state = LibraryUiState(
+                loading = false,
+                apps = PreviewApps,
+                layout = LibraryLayout.Grid,
             ),
             actions = NoOpLibraryActions,
         )
@@ -121,12 +226,21 @@ fun LibraryAppActionsScreenshot() {
 }
 
 @PreviewTest
-@Preview(name = "Library overflow dialog", widthDp = 360, heightDp = 640, showBackground = true)
+@Preview(name = "Library options", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
-fun LibraryOverflowDialogScreenshot() {
-    JLModPlusTheme {
-        LibraryOverflowDialog(
-            onDismiss = {},
+fun LibraryOptionsScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryOptionsDestination(
+            state = LibraryUiState(
+                loading = false,
+                apps = PreviewApps,
+                layout = LibraryLayout.Grid,
+            ),
+            scaffoldPadding = PaddingValues(),
+            onLayoutChange = {},
+            onIconRatioChange = {},
+            onHideGridTitlesChange = {},
+            onGridSpacingChange = {},
             onAbout = {},
             onSettings = {},
             onProfiles = {},
@@ -240,6 +354,9 @@ fun LicensesDialogScreenshot() {
 private object NoOpLibraryActions : LibraryActions {
     override fun onSearch(query: String) = Unit
     override fun onLayoutChange(layout: LibraryLayout) = Unit
+    override fun onIconRatioChange(iconRatio: LibraryIconRatio) = Unit
+    override fun onHideGridTitlesChange(hide: Boolean) = Unit
+    override fun onGridSpacingChange(spacing: LibraryGridSpacing) = Unit
     override fun onSort(sortIndex: Int) = Unit
     override fun onInstall() = Unit
     override fun onOpenApp(appId: Int) = Unit
