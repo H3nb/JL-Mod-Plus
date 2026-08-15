@@ -352,141 +352,141 @@ fun LibraryScreen(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxSize(),
-        contentWindowInsets = LibraryScaffoldInsets,
-        bottomBar = {
-            // Remove the slot while the IME is open. Scaffold includes the slot's measured
-            // height in its content padding; animating it out would leave a blank strip above
-            // the keyboard and make the list appear clipped.
-            if (!isLandscape && !isImeVisible) {
-                AnimatedVisibility(
-                    visible = showNavigationBar,
-                    enter = fadeIn(
-                        animationSpec = tween(
-                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                            easing = FastOutSlowInEasing,
+            contentWindowInsets = LibraryScaffoldInsets,
+            bottomBar = {
+                // Remove the slot while the IME is open. Scaffold includes the slot's measured
+                // height in its content padding; animating it out would leave a blank strip above
+                // the keyboard and make the list appear clipped.
+                if (!isLandscape && !isImeVisible) {
+                    AnimatedVisibility(
+                        visible = showNavigationBar,
+                        enter = fadeIn(
+                            animationSpec = tween(
+                                durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                                easing = FastOutSlowInEasing,
+                            ),
+                        ) + expandVertically(
+                            animationSpec = tween(
+                                durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                                easing = FastOutSlowInEasing,
+                            ),
+                            expandFrom = Alignment.Bottom,
+                        ) + slideInVertically(
+                            animationSpec = tween(
+                                durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                                easing = FastOutSlowInEasing,
+                            ),
+                            initialOffsetY = { it / 2 },
                         ),
-                    ) + expandVertically(
-                        animationSpec = tween(
-                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                            easing = FastOutSlowInEasing,
+                        exit = fadeOut(
+                            animationSpec = tween(
+                                durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                                easing = FastOutSlowInEasing,
+                            ),
+                        ) + shrinkVertically(
+                            animationSpec = tween(
+                                durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                                easing = FastOutSlowInEasing,
+                            ),
+                            shrinkTowards = Alignment.Bottom,
+                        ) + slideOutVertically(
+                            animationSpec = tween(
+                                durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                                easing = FastOutSlowInEasing,
+                            ),
+                            targetOffsetY = { it / 2 },
                         ),
-                        expandFrom = Alignment.Bottom,
-                    ) + slideInVertically(
-                        animationSpec = tween(
-                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                            easing = FastOutSlowInEasing,
-                        ),
-                        initialOffsetY = { it / 2 },
-                    ),
-                    exit = fadeOut(
-                        animationSpec = tween(
-                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                            easing = FastOutSlowInEasing,
-                        ),
-                    ) + shrinkVertically(
-                        animationSpec = tween(
-                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                            easing = FastOutSlowInEasing,
-                        ),
-                        shrinkTowards = Alignment.Bottom,
-                    ) + slideOutVertically(
-                        animationSpec = tween(
-                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                            easing = FastOutSlowInEasing,
-                        ),
-                        targetOffsetY = { it / 2 },
-                    ),
-                ) {
-                    LibraryNavigationBar(
-                        selected = destination,
-                        onSelected = { selectedDestinationIndex = it.ordinal },
-                    )
-                }
-            }
-        },
-        floatingActionButton = {
-            // The FAB is part of the same transient chrome and must not compete with the IME.
-            if (!isImeVisible && destination == LibraryDestination.Apps) {
-                AnimatedVisibility(
-                    visible = showInstallFab,
-                    enter = fadeIn(
-                        animationSpec = tween(
-                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                            easing = FastOutSlowInEasing,
-                        ),
-                    ) + scaleIn(
-                        initialScale = 0.86f,
-                        animationSpec = tween(
-                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                            easing = FastOutSlowInEasing,
-                        ),
-                    ) + slideInVertically(
-                        animationSpec = tween(
-                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                            easing = FastOutSlowInEasing,
-                        ),
-                        initialOffsetY = { it / 2 },
-                    ),
-                    exit = fadeOut(
-                        animationSpec = tween(
-                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                            easing = FastOutSlowInEasing,
-                        ),
-                    ) + scaleOut(
-                        targetScale = 0.86f,
-                        animationSpec = tween(
-                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                            easing = FastOutSlowInEasing,
-                        ),
-                    ) + slideOutVertically(
-                        animationSpec = tween(
-                            durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                            easing = FastOutSlowInEasing,
-                        ),
-                        targetOffsetY = { it / 2 },
-                    ),
-                ) {
-                    FloatingActionButton(onClick = actions::onInstall) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_add),
-                            contentDescription = stringResource(R.string.install),
+                    ) {
+                        LibraryNavigationBar(
+                            selected = destination,
+                            onSelected = { selectedDestinationIndex = it.ordinal },
                         )
                     }
                 }
+            },
+            floatingActionButton = {
+                // The FAB is part of the same transient chrome and must not compete with the IME.
+                if (!isImeVisible && destination == LibraryDestination.Apps) {
+                    AnimatedVisibility(
+                        visible = showInstallFab,
+                        enter = fadeIn(
+                            animationSpec = tween(
+                                durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                                easing = FastOutSlowInEasing,
+                            ),
+                        ) + scaleIn(
+                            initialScale = 0.86f,
+                            animationSpec = tween(
+                                durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                                easing = FastOutSlowInEasing,
+                            ),
+                        ) + slideInVertically(
+                            animationSpec = tween(
+                                durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                                easing = FastOutSlowInEasing,
+                            ),
+                            initialOffsetY = { it / 2 },
+                        ),
+                        exit = fadeOut(
+                            animationSpec = tween(
+                                durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                                easing = FastOutSlowInEasing,
+                            ),
+                        ) + scaleOut(
+                            targetScale = 0.86f,
+                            animationSpec = tween(
+                                durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                                easing = FastOutSlowInEasing,
+                            ),
+                        ) + slideOutVertically(
+                            animationSpec = tween(
+                                durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
+                                easing = FastOutSlowInEasing,
+                            ),
+                            targetOffsetY = { it / 2 },
+                        ),
+                    ) {
+                        FloatingActionButton(onClick = actions::onInstall) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_add),
+                                contentDescription = stringResource(R.string.install),
+                            )
+                        }
+                    }
+                }
+            },
+        ) { padding ->
+            when (destination) {
+                LibraryDestination.Apps -> LibraryAppsDestination(
+                    state = state,
+                    scaffoldPadding = padding,
+                    onOpenApp = actions::onOpenApp,
+                    onOpenActions = { appActions = it },
+                    onSearch = actions::onSearch,
+                    onSort = actions::onSort,
+                    onFabVisibilityChanged = { showInstallFab = it },
+                    onNavigationVisibilityChanged = { visible ->
+                        if (!isLandscape) showNavigationBar = visible
+                    },
+                )
+                LibraryDestination.Collections -> LibraryCollectionsDestination(padding)
+                LibraryDestination.Options -> LibraryOptionsDestination(
+                    state = state,
+                    scaffoldPadding = padding,
+                    onLayoutChange = actions::onLayoutChange,
+                    onIconRatioChange = actions::onIconRatioChange,
+                    onHideGridTitlesChange = actions::onHideGridTitlesChange,
+                    onGridSpacingChange = actions::onGridSpacingChange,
+                    onAbout = { infoDialog = LibraryInfoDialog.About },
+                    onSettings = actions::onOpenSettings,
+                    onProfiles = actions::onOpenProfiles,
+                    onHelp = { infoDialog = LibraryInfoDialog.Help },
+                    onCrashReports = actions::onOpenCrashReports,
+                    onSaveLog = actions::onSaveLog,
+                    onExit = actions::onExit,
+                )
             }
-        },
-    ) { padding ->
-        when (destination) {
-            LibraryDestination.Apps -> LibraryAppsDestination(
-                state = state,
-                scaffoldPadding = padding,
-                onOpenApp = actions::onOpenApp,
-                onOpenActions = { appActions = it },
-                onSearch = actions::onSearch,
-                onSort = actions::onSort,
-                onFabVisibilityChanged = { showInstallFab = it },
-                onNavigationVisibilityChanged = { visible ->
-                    if (!isLandscape) showNavigationBar = visible
-                },
-            )
-            LibraryDestination.Collections -> LibraryCollectionsDestination(padding)
-            LibraryDestination.Options -> LibraryOptionsDestination(
-                state = state,
-                scaffoldPadding = padding,
-                onLayoutChange = actions::onLayoutChange,
-                onIconRatioChange = actions::onIconRatioChange,
-                onHideGridTitlesChange = actions::onHideGridTitlesChange,
-                onGridSpacingChange = actions::onGridSpacingChange,
-                onAbout = { infoDialog = LibraryInfoDialog.About },
-                onSettings = actions::onOpenSettings,
-                onProfiles = actions::onOpenProfiles,
-                onHelp = { infoDialog = LibraryInfoDialog.Help },
-                onCrashReports = actions::onOpenCrashReports,
-                onSaveLog = actions::onSaveLog,
-                onExit = actions::onExit,
-            )
         }
-    }
     }
 
     appActions?.let { app ->
@@ -1554,18 +1554,11 @@ private fun LibraryFavoritePlaceholder(appId: Int) {
     }
 }
 
-private enum class LibraryIconKind {
-    Foreground,
-    Artwork,
-    Fallback,
-}
-
 private data class LibraryIconAnalysis(
     val contentBounds: Rect,
     val framedCropBounds: Rect?,
-    val kind: LibraryIconKind,
-    val occupancy: Float,
-    val aspectFill: Float,
+    val stableBackgroundColor: Int?,
+    val presentation: LibraryIconPresentationDecision,
     val foregroundLuminance: Float,
     val pixelArt: Boolean,
 )
@@ -1574,13 +1567,14 @@ private data class LibraryNormalizedIcon(
     val bitmap: ImageBitmap,
     val filterQuality: FilterQuality,
     val representativeColor: Color?,
-    val kind: LibraryIconKind,
+    val presentationMode: LibraryIconPresentationMode,
     val visualScale: Float,
     val foregroundLuminance: Float,
-    val letterboxColor: Color? = null,
+    val tileColor: Color? = null,
 )
 
 private const val LIBRARY_ICON_CACHE_BYTES = 4 * 1024 * 1024
+private const val LIBRARY_ICON_PRESENTATION_VERSION = 2
 private val LibraryIconCache = object : LruCache<String, LibraryNormalizedIcon>(LIBRARY_ICON_CACHE_BYTES) {
     override fun sizeOf(key: String, value: LibraryNormalizedIcon): Int {
         return (value.bitmap.width.toLong() * value.bitmap.height.toLong() * 4L)
@@ -1602,26 +1596,23 @@ private fun loadLibraryIcon(
         ?.let { path -> decodeLibraryBitmap(path, requestedSizePx) }
 
     if (fileSource != null) {
-        val analysis = if (normalizeSquareIcon) {
-            fileSource.analyzeLibraryIcon()
-        } else {
-            null
-        }
         if (!normalizeSquareIcon) {
             return LibraryNormalizedIcon(
                 bitmap = fileSource.asImageBitmap(),
                 filterQuality = fileSource.libraryFilterQuality(),
                 representativeColor = null,
-                kind = LibraryIconKind.Artwork,
+                presentationMode = LibraryIconPresentationMode.SafeFit,
                 visualScale = 1f,
                 foregroundLuminance = 0.5f,
             )
         }
+
+        val analysis = fileSource.analyzeLibraryIcon()
         if (analysis != null) {
-            val cropBounds = when (analysis.kind) {
-                LibraryIconKind.Foreground -> analysis.contentBounds
-                LibraryIconKind.Artwork -> analysis.framedCropBounds
-                LibraryIconKind.Fallback -> null
+            val cropBounds = if (analysis.presentation.mode == LibraryIconPresentationMode.Subject) {
+                analysis.framedCropBounds ?: analysis.contentBounds
+            } else {
+                null
             }
             val normalized = if (
                 cropBounds != null &&
@@ -1631,30 +1622,27 @@ private fun loadLibraryIcon(
             } else {
                 fileSource
             }
-            val visualScale = if (analysis.kind == LibraryIconKind.Foreground) {
-                val sparseAmount = ((0.72f - analysis.occupancy) / 0.62f).coerceIn(0f, 1f)
-                val elongatedAmount = ((0.68f - analysis.aspectFill) / 0.50f).coerceIn(0f, 1f)
-                LIBRARY_FOREGROUND_BASE_SCALE +
-                    maxOf(sparseAmount, elongatedAmount) * LIBRARY_FOREGROUND_SCALE_RANGE
+            val representativeColor =
+                normalized.findRepresentativeColor() ?: normalized.findAverageVisibleColor()
+            val stableBackgroundColor = analysis.stableBackgroundColor?.toComposeLibraryColor()
+            val tileColor = if (analysis.presentation.mode == LibraryIconPresentationMode.Cover) {
+                null
             } else {
-                1f
+                stableBackgroundColor ?: representativeColor?.let { accent ->
+                    contentDerivedLibrarySlotColor(
+                        accent = accent,
+                        foregroundLuminance = analysis.foregroundLuminance,
+                    )
+                }
             }
             return LibraryNormalizedIcon(
                 bitmap = normalized.asImageBitmap(),
                 filterQuality = if (analysis.pixelArt) FilterQuality.None else FilterQuality.Medium,
-                representativeColor = if (analysis.kind == LibraryIconKind.Foreground) {
-                    normalized.findRepresentativeColor() ?: normalized.findAverageVisibleColor()
-                } else {
-                    null
-                },
-                kind = analysis.kind,
-                visualScale = visualScale,
+                representativeColor = representativeColor,
+                presentationMode = analysis.presentation.mode,
+                visualScale = analysis.presentation.visualScale,
                 foregroundLuminance = analysis.foregroundLuminance,
-                letterboxColor = if (analysis.kind == LibraryIconKind.Artwork) {
-                    fileSource.findLibraryLetterboxColor()
-                } else {
-                    null
-                },
+                tileColor = tileColor,
             )
         }
     }
@@ -1686,7 +1674,7 @@ private fun loadLibraryIcon(
         bitmap = fallback.asImageBitmap(),
         filterQuality = fallback.libraryFilterQuality(),
         representativeColor = if (normalizeSquareIcon) fallback.findAverageVisibleColor() else null,
-        kind = LibraryIconKind.Fallback,
+        presentationMode = LibraryIconPresentationMode.Fallback,
         visualScale = LIBRARY_FALLBACK_VISUAL_SCALE,
         foregroundLuminance = fallback.averageVisibleLuminance(),
     )
@@ -1749,7 +1737,8 @@ private fun Bitmap.analyzeLibraryIcon(): LibraryIconAnalysis? {
     var visiblePixels = 0L
     var semiTransparentPixels = 0L
     var luminanceSum = 0.0
-    val quantizedColors = HashSet<Int>(LIBRARY_PIXEL_ART_MAX_COLORS + 1)
+    var visibleWeight = 0.0
+    val quantizedColors = HashSet<Int>(LIBRARY_COLOR_SAMPLE_MAX_BINS + 1)
 
     for (y in 0 until height) {
         getPixels(row, 0, width, 0, y, width, 1)
@@ -1767,12 +1756,13 @@ private fun Bitmap.analyzeLibraryIcon(): LibraryIconAnalysis? {
 
             val alphaWeight = alpha / 255.0
             luminanceSum += pixelLibraryLuminance(pixel) * alphaWeight
-            if (quantizedColors.size <= LIBRARY_PIXEL_ART_MAX_COLORS) {
+            visibleWeight += alphaWeight
+            if (quantizedColors.size <= LIBRARY_COLOR_SAMPLE_MAX_BINS) {
                 quantizedColors += quantizeLibraryColor(pixel)
             }
         }
     }
-    if (right < left || bottom < top || visiblePixels == 0L) return null
+    if (right < left || bottom < top || visiblePixels == 0L || visibleWeight <= 0.0) return null
 
     val contentBounds = Rect(left, top, right + 1, bottom + 1)
     val canvasArea = width.toLong() * height.toLong()
@@ -1784,43 +1774,40 @@ private fun Bitmap.analyzeLibraryIcon(): LibraryIconAnalysis? {
     } else {
         1f - visiblePixels.toFloat() / canvasArea.toFloat()
     }
-    val kind = if (
-        transparentRatio >= LIBRARY_FOREGROUND_MIN_TRANSPARENT_RATIO &&
-        (boundsCoverage < LIBRARY_FOREGROUND_BOUNDS_COVERAGE ||
-            occupancy < LIBRARY_FOREGROUND_OCCUPANCY)
-    ) {
-        LibraryIconKind.Foreground
-    } else {
-        LibraryIconKind.Artwork
-    }
     val maxContentDimension = maxOf(contentBounds.width(), contentBounds.height()).coerceAtLeast(1)
     val aspectFill = minOf(contentBounds.width(), contentBounds.height()).toFloat() /
         maxContentDimension.toFloat()
-    val framedCropBounds = if (kind == LibraryIconKind.Artwork) {
-        findFramedArtworkCropBounds()
-    } else {
-        null
-    }
+    val stableBackgroundColor = findUniformCornerBackgroundColor()
+    val framedCropBounds = stableBackgroundColor?.let(::findFramedArtworkCropBounds)
+    val presentation = decideLibraryIconPresentation(
+        LibraryIconPresentationInput(
+            transparentRatio = transparentRatio,
+            boundsCoverage = boundsCoverage,
+            occupancy = occupancy,
+            aspectFill = aspectFill,
+            hasFramedCrop = framedCropBounds != null,
+            highColorDiversity = quantizedColors.size > LIBRARY_PIXEL_ART_MAX_COLORS,
+            sourceAspectRatio = width.toFloat() / height.toFloat(),
+        ),
+    )
     val semiTransparentRatio = semiTransparentPixels.toFloat() / visiblePixels.toFloat()
     val pixelArt = maxOf(width, height) <= LIBRARY_PIXEL_ART_MAX_DIMENSION &&
         quantizedColors.size <= LIBRARY_PIXEL_ART_MAX_COLORS &&
         semiTransparentRatio <= LIBRARY_PIXEL_ART_MAX_SEMI_TRANSPARENT_RATIO
-    val foregroundLuminance = (luminanceSum / visiblePixels.toDouble()).toFloat().coerceIn(0f, 1f)
+    val foregroundLuminance = (luminanceSum / visibleWeight).toFloat().coerceIn(0f, 1f)
 
     return LibraryIconAnalysis(
         contentBounds = contentBounds,
         framedCropBounds = framedCropBounds,
-        kind = kind,
-        occupancy = occupancy,
-        aspectFill = aspectFill,
+        stableBackgroundColor = stableBackgroundColor,
+        presentation = presentation,
         foregroundLuminance = foregroundLuminance,
         pixelArt = pixelArt,
     )
 }
 
-private fun Bitmap.findFramedArtworkCropBounds(): Rect? {
+private fun Bitmap.findFramedArtworkCropBounds(backgroundColor: Int): Rect? {
     if (width < 6 || height < 6) return null
-    val backgroundColor = findUniformCornerBackgroundColor() ?: return null
     val distanceLimit = LIBRARY_BACKGROUND_FOREGROUND_DISTANCE *
         LIBRARY_BACKGROUND_FOREGROUND_DISTANCE * 3
     val row = IntArray(width)
@@ -2059,19 +2046,6 @@ private fun Bitmap.findRepresentativeColor(): Color? {
     )
 }
 
-private fun Bitmap.findLibraryLetterboxColor(): Color? {
-    if (width <= 0 || height <= 0) return null
-    val aspectRatio = width.toFloat() / height.toFloat()
-    if (kotlin.math.abs(aspectRatio - 1f) < LIBRARY_LETTERBOX_MIN_ASPECT_DELTA) return null
-    val edgeColor = findUniformCornerBackgroundColor() ?: return null
-    return Color(
-        red = AndroidColor.red(edgeColor) / 255f,
-        green = AndroidColor.green(edgeColor) / 255f,
-        blue = AndroidColor.blue(edgeColor) / 255f,
-        alpha = 1f,
-    )
-}
-
 private fun Bitmap.findAverageVisibleColor(): Color? {
     if (width <= 0 || height <= 0) return null
     val row = IntArray(width)
@@ -2130,6 +2104,15 @@ private fun quantizeLibraryColor(pixel: Int): Int {
         (AndroidColor.blue(pixel) shr 4)
 }
 
+private fun Int.toComposeLibraryColor(): Color {
+    return Color(
+        red = AndroidColor.red(this) / 255f,
+        green = AndroidColor.green(this) / 255f,
+        blue = AndroidColor.blue(this) / 255f,
+        alpha = 1f,
+    )
+}
+
 private const val MIN_VISIBLE_ALPHA = 16
 private const val LIBRARY_HUE_BUCKETS = 12
 private const val LIBRARY_MIN_COLOR_SATURATION = 0.28f
@@ -2138,15 +2121,8 @@ private const val LIBRARY_MIN_DOMINANT_COLOR_RATIO = 0.10
 private const val LIBRARY_LIGHT_SLOT_TINT_AMOUNT = 0.12f
 private const val LIBRARY_DARK_SLOT_TINT_AMOUNT = 0.14f
 private const val LIBRARY_NEUTRAL_SLOT_TINT_AMOUNT = 0.06f
-private const val LIBRARY_FOREGROUND_TINT_SCALE = 0.60f
-private const val LIBRARY_FOREGROUND_MIN_TRANSPARENT_RATIO = 0.06f
-private const val LIBRARY_FOREGROUND_BOUNDS_COVERAGE = 0.88f
-private const val LIBRARY_FOREGROUND_OCCUPANCY = 0.80f
-private const val LIBRARY_FOREGROUND_BASE_SCALE = 1.04f
-private const val LIBRARY_FOREGROUND_SCALE_RANGE = 0.20f
 private const val LIBRARY_FALLBACK_VISUAL_SCALE = 0.86f
 private const val LIBRARY_FALLBACK_TINT_SCALE = 0.60f
-private const val LIBRARY_LETTERBOX_MIN_ASPECT_DELTA = 0.18f
 private const val LIBRARY_BACKGROUND_SAMPLE_ALPHA = 240
 private const val LIBRARY_BACKGROUND_MIN_CORNER_SAMPLES = 8
 private const val LIBRARY_BACKGROUND_MIN_DOMINANT_BIN_RATIO = 0.16f
@@ -2162,23 +2138,59 @@ private const val LIBRARY_FRAMED_MAX_ZOOM = 1.30f
 private const val LIBRARY_FRAMED_MAX_CROP_COVERAGE = 0.94
 private const val LIBRARY_PIXEL_ART_MAX_DIMENSION = 160
 private const val LIBRARY_PIXEL_ART_MAX_COLORS = 48
+private const val LIBRARY_COLOR_SAMPLE_MAX_BINS = 64
 private const val LIBRARY_PIXEL_ART_OPAQUE_ALPHA = 240
 private const val LIBRARY_PIXEL_ART_MAX_SEMI_TRANSPARENT_RATIO = 0.06f
 private const val LIBRARY_DARK_FOREGROUND_LUMINANCE = 0.20f
 private const val LIBRARY_LIGHT_FOREGROUND_LUMINANCE = 0.82f
 private const val LIBRARY_DARK_CONTRAST_LIFT = 0.18f
 private const val LIBRARY_LIGHT_CONTRAST_DROP = 0.08f
+private const val LIBRARY_SOURCE_FILL_LIGHT_NEUTRAL = 0.84f
+private const val LIBRARY_SOURCE_FILL_DARK_NEUTRAL = 0.23f
+private const val LIBRARY_SOURCE_FILL_COLOR_AMOUNT = 0.38f
+private const val LIBRARY_SOURCE_FILL_NEUTRAL_AMOUNT = 0.18f
+private const val LIBRARY_SOURCE_FILL_MIN_CHROMA = 0.08f
+private const val LIBRARY_SOURCE_FILL_LIGHT_FOREGROUND_THRESHOLD = 0.52f
 
 /**
- * Gives transparent foreground artwork a restrained adaptive-style surface while leaving
- * already-framed artwork on the neutral Material container. Contrast correction only shifts
- * the neutral base when a nearly black/white foreground would otherwise disappear into it.
+ * Derives a stable real-icon tile color from source artwork rather than the current app theme.
+ * The fixed neutral anchor keeps legacy icon palettes restrained while the source accent remains
+ * visible enough to preserve identity. Foreground luminance chooses the opposite contrast side.
  */
-private fun adaptiveLibrarySlotColor(
+private fun contentDerivedLibrarySlotColor(
+    accent: Color,
+    foregroundLuminance: Float,
+): Color {
+    val neutral = if (foregroundLuminance < LIBRARY_SOURCE_FILL_LIGHT_FOREGROUND_THRESHOLD) {
+        Color(
+            LIBRARY_SOURCE_FILL_LIGHT_NEUTRAL,
+            LIBRARY_SOURCE_FILL_LIGHT_NEUTRAL,
+            LIBRARY_SOURCE_FILL_LIGHT_NEUTRAL,
+        )
+    } else {
+        Color(
+            LIBRARY_SOURCE_FILL_DARK_NEUTRAL,
+            LIBRARY_SOURCE_FILL_DARK_NEUTRAL,
+            LIBRARY_SOURCE_FILL_DARK_NEUTRAL,
+        )
+    }
+    val chroma = maxOf(accent.red, accent.green, accent.blue) -
+        minOf(accent.red, accent.green, accent.blue)
+    val amount = if (chroma >= LIBRARY_SOURCE_FILL_MIN_CHROMA) {
+        LIBRARY_SOURCE_FILL_COLOR_AMOUNT
+    } else {
+        LIBRARY_SOURCE_FILL_NEUTRAL_AMOUNT
+    }
+    return blendLibrarySlotColor(neutral, accent.copy(alpha = 1f), amount)
+}
+
+/**
+ * Preserves the existing theme-aware fallback treatment. Real icon tiles do not use this path.
+ */
+private fun adaptiveLibraryFallbackSlotColor(
     base: Color,
     accent: Color,
     foregroundLuminance: Float,
-    tintStrength: Float = 1f,
 ): Color {
     val brightness = base.red * 0.2126f + base.green * 0.7152f + base.blue * 0.0722f
     val isLightSurface = brightness >= 0.5f
@@ -2196,12 +2208,11 @@ private fun adaptiveLibrarySlotColor(
         (accent.blue * 255f).toInt(),
         hsv,
     )
-    val strength = tintStrength.coerceIn(0f, 1f)
     if (hsv[1] < LIBRARY_MIN_COLOR_SATURATION) {
         return blendLibrarySlotColor(
             contrastBase,
             accent,
-            amount = LIBRARY_NEUTRAL_SLOT_TINT_AMOUNT * strength,
+            amount = LIBRARY_NEUTRAL_SLOT_TINT_AMOUNT * LIBRARY_FALLBACK_TINT_SCALE,
         )
     }
 
@@ -2214,9 +2225,9 @@ private fun adaptiveLibrarySlotColor(
         contrastBase,
         softenedAccent,
         amount = if (isLightSurface) {
-            LIBRARY_LIGHT_SLOT_TINT_AMOUNT * strength
+            LIBRARY_LIGHT_SLOT_TINT_AMOUNT * LIBRARY_FALLBACK_TINT_SCALE
         } else {
-            LIBRARY_DARK_SLOT_TINT_AMOUNT * strength
+            LIBRARY_DARK_SLOT_TINT_AMOUNT * LIBRARY_FALLBACK_TINT_SCALE
         },
     )
 }
@@ -2265,7 +2276,7 @@ private fun libraryIconCacheKey(
     val file = File(iconPath)
     val modified = runCatching { file.lastModified() }.getOrDefault(0L)
     val length = runCatching { file.length() }.getOrDefault(0L)
-    return "$iconPath:$modified:$length:$targetSizePx:${iconRatio.name}"
+    return "real:$LIBRARY_ICON_PRESENTATION_VERSION:$iconPath:$modified:$length:$targetSizePx:${iconRatio.name}"
 }
 
 @Composable
@@ -2285,25 +2296,18 @@ private fun LibraryIconSlot(
         val icon = rememberLibraryIcon(app, artworkSize, iconRatio)
         val baseContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
         val containerColor = when {
-            iconRatio == LibraryIconRatio.Square &&
-                icon?.kind == LibraryIconKind.Artwork &&
-                icon.letterboxColor != null -> icon.letterboxColor
-            iconRatio == LibraryIconRatio.Square &&
-                icon?.kind != LibraryIconKind.Artwork -> {
-                icon?.representativeColor?.let { representativeColor ->
-                    adaptiveLibrarySlotColor(
+            iconRatio != LibraryIconRatio.Square -> baseContainerColor
+            icon?.presentationMode == LibraryIconPresentationMode.Fallback -> {
+                icon.representativeColor?.let { representativeColor ->
+                    adaptiveLibraryFallbackSlotColor(
                         base = baseContainerColor,
                         accent = representativeColor,
                         foregroundLuminance = icon.foregroundLuminance,
-                        tintStrength = if (icon.kind == LibraryIconKind.Fallback) {
-                            LIBRARY_FALLBACK_TINT_SCALE
-                        } else {
-                            LIBRARY_FOREGROUND_TINT_SCALE
-                        },
                     )
                 } ?: baseContainerColor
             }
-            else -> baseContainerColor
+            icon?.presentationMode == LibraryIconPresentationMode.Cover -> baseContainerColor
+            else -> icon?.tileColor ?: baseContainerColor
         }
 
         Card(
@@ -2335,16 +2339,24 @@ private fun LibraryIconArtwork(
 
     val artworkModifier = when {
         iconRatio != LibraryIconRatio.Square -> Modifier.fillMaxSize()
-        icon.kind == LibraryIconKind.Artwork -> Modifier.fillMaxSize()
-        else -> Modifier
-            .size(contentSize * icon.visualScale)
-            .clip(MaterialTheme.shapes.small)
+        icon.presentationMode == LibraryIconPresentationMode.Subject ||
+            icon.presentationMode == LibraryIconPresentationMode.Fallback ->
+            Modifier.size(contentSize * icon.visualScale)
+        else -> Modifier.fillMaxSize()
+    }
+    val contentScale = if (
+        iconRatio == LibraryIconRatio.Square &&
+        icon.presentationMode == LibraryIconPresentationMode.Cover
+    ) {
+        ContentScale.Crop
+    } else {
+        ContentScale.Fit
     }
     Image(
         bitmap = icon.bitmap,
         contentDescription = null,
         modifier = artworkModifier,
-        contentScale = ContentScale.Fit,
+        contentScale = contentScale,
         filterQuality = icon.filterQuality,
     )
 }
