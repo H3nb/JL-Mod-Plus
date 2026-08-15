@@ -1574,7 +1574,7 @@ private data class LibraryNormalizedIcon(
 )
 
 private const val LIBRARY_ICON_CACHE_BYTES = 4 * 1024 * 1024
-private const val LIBRARY_ICON_PRESENTATION_VERSION = 2
+private const val LIBRARY_ICON_PRESENTATION_VERSION = 3
 private val LibraryIconCache = object : LruCache<String, LibraryNormalizedIcon>(LIBRARY_ICON_CACHE_BYTES) {
     override fun sizeOf(key: String, value: LibraryNormalizedIcon): Int {
         return (value.bitmap.width.toLong() * value.bitmap.height.toLong() * 4L)
@@ -1625,15 +1625,8 @@ private fun loadLibraryIcon(
             val representativeColor =
                 normalized.findRepresentativeColor() ?: normalized.findAverageVisibleColor()
             val stableBackgroundColor = analysis.stableBackgroundColor?.toComposeLibraryColor()
-            val tileColor = if (analysis.presentation.mode == LibraryIconPresentationMode.Cover) {
-                null
-            } else {
-                stableBackgroundColor ?: representativeColor?.let { accent ->
-                    contentDerivedLibrarySlotColor(
-                        accent = accent,
-                        foregroundLuminance = analysis.foregroundLuminance,
-                    )
-                }
+            val tileColor = stableBackgroundColor.takeIf {
+                analysis.presentation.mode == LibraryIconPresentationMode.Subject
             }
             return LibraryNormalizedIcon(
                 bitmap = normalized.asImageBitmap(),
@@ -2153,10 +2146,11 @@ private const val LIBRARY_SOURCE_FILL_MIN_CHROMA = 0.08f
 private const val LIBRARY_SOURCE_FILL_LIGHT_FOREGROUND_THRESHOLD = 0.52f
 
 /**
- * Derives a stable real-icon tile color from source artwork rather than the current app theme.
- * The fixed neutral anchor keeps legacy icon palettes restrained while the source accent remains
- * visible enough to preserve identity. Foreground luminance chooses the opposite contrast side.
+ * Retained for source compatibility with the first adaptive-tile pass. Real icon rendering now
+ * prefers the theme surface and only keeps a detected self-backed color when that background is
+ * part of a framed Subject icon.
  */
+@Suppress("unused")
 private fun contentDerivedLibrarySlotColor(
     accent: Color,
     foregroundLuminance: Float,
@@ -2182,6 +2176,55 @@ private fun contentDerivedLibrarySlotColor(
         LIBRARY_SOURCE_FILL_NEUTRAL_AMOUNT
     }
     return blendLibrarySlotColor(neutral, accent.copy(alpha = 1f), amount)
+}
+
+/**
+ * Gives an alpha-trimmed Subject only a restrained hint of its source color. SafeFit stays on the
+ * neutral Material surface, while a detected self-backed color is handled separately via tileColor.
+ */
+private fun adaptiveLibrarySubjectSlotColor(
+    base: Color,
+    accent: Color,
+    foregroundLuminance: Float,
+): Color {
+    val brightness = base.red * 0.2126f + base.green * 0.7152f + base.blue * 0.0722f
+    val isLightSurface = brightness >= 0.5f
+    val contrastBase = when {
+        isLightSurface && foregroundLuminance >= LIBRARY_LIGHT_FOREGROUND_LUMINANCE ->
+            blendLibrarySlotColor(base, Color.Black, LIBRARY_LIGHT_CONTRAST_DROP)
+        !isLightSurface && foregroundLuminance <= LIBRARY_DARK_FOREGROUND_LUMINANCE ->
+            blendLibrarySlotColor(base, Color.White, LIBRARY_DARK_CONTRAST_LIFT)
+        else -> base
+    }
+    val hsv = FloatArray(3)
+    AndroidColor.RGBToHSV(
+        (accent.red * 255f).toInt(),
+        (accent.green * 255f).toInt(),
+        (accent.blue * 255f).toInt(),
+        hsv,
+    )
+    if (hsv[1] < LIBRARY_MIN_COLOR_SATURATION) {
+        return blendLibrarySlotColor(
+            contrastBase,
+            accent,
+            amount = LIBRARY_NEUTRAL_SLOT_TINT_AMOUNT,
+        )
+    }
+
+    val softenedAccent = Color.hsv(
+        hue = hsv[0],
+        saturation = hsv[1].coerceIn(0.28f, 0.58f),
+        value = if (isLightSurface) 0.95f else 0.32f,
+    )
+    return blendLibrarySlotColor(
+        contrastBase,
+        softenedAccent,
+        amount = if (isLightSurface) {
+            LIBRARY_LIGHT_SLOT_TINT_AMOUNT
+        } else {
+            LIBRARY_DARK_SLOT_TINT_AMOUNT
+        },
+    )
 }
 
 /**
@@ -2306,8 +2349,16 @@ private fun LibraryIconSlot(
                     )
                 } ?: baseContainerColor
             }
-            icon?.presentationMode == LibraryIconPresentationMode.Cover -> baseContainerColor
-            else -> icon?.tileColor ?: baseContainerColor
+            icon?.presentationMode == LibraryIconPresentationMode.Subject -> {
+                icon.tileColor ?: icon.representativeColor?.let { representativeColor ->
+                    adaptiveLibrarySubjectSlotColor(
+                        base = baseContainerColor,
+                        accent = representativeColor,
+                        foregroundLuminance = icon.foregroundLuminance,
+                    )
+                } ?: baseContainerColor
+            }
+            else -> baseContainerColor
         }
 
         Card(
