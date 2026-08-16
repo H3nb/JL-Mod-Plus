@@ -92,6 +92,7 @@ public final class CrashReporter {
 	);
 
 	private static boolean mainProcess;
+	private static volatile boolean processExitEvidenceReady;
 
 	private CrashReporter() {}
 
@@ -115,6 +116,7 @@ public final class CrashReporter {
 		String processName = EmulatorApplication.getProcessName();
 		String processRole = classifyProcess(application.getPackageName(), processName);
 		mainProcess = ROLE_MAIN.equals(processRole);
+		processExitEvidenceReady = !mainProcess;
 		boolean reporterProcess = ROLE_REPORTER.equals(processRole) || ACRA.isACRASenderServiceProcess();
 		if (reporterProcess) {
 			return true;
@@ -134,6 +136,7 @@ public final class CrashReporter {
 	/** Schedules one best-effort main-process maintenance pass after Application startup. */
 	public static void scheduleMaintenance(Application application) {
 		if (!mainProcess) {
+			processExitEvidenceReady = true;
 			return;
 		}
 		try {
@@ -141,14 +144,27 @@ public final class CrashReporter {
 				try {
 					Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 				} catch (Throwable ignored) {}
+
+				// Reconcile both legacy and API30+ process-death evidence before allowing startup UI
+				// to inspect pending exits. Both steps are API-gated internally and remain fail-open.
+				runMaintenanceStep("legacy process-exit reconciliation",
+						() -> LegacyProcessExitFallback.ingest(application));
 				runMaintenanceStep("process-exit ingestion", () -> ProcessExitStore.ingest(application));
+				processExitEvidenceReady = true;
+
 				runMaintenanceStep("local crash report pruning", () -> LocalCrashReportStore.prune(application));
 				runMaintenanceStep("MIDlet session journal pruning", () -> MidletSessionJournal.prune(application));
 			}, "jlmod-diagnostics-maintenance");
 			maintenance.start();
 		} catch (Throwable error) {
+			processExitEvidenceReady = true;
 			logMaintenanceFailure("Unable to schedule diagnostics maintenance", error);
 		}
+	}
+
+	/** True once startup-safe background reconciliation has either completed or failed open. */
+	public static boolean isProcessExitEvidenceReady() {
+		return processExitEvidenceReady;
 	}
 
 	private static void runMaintenanceStep(String label, Runnable step) {
