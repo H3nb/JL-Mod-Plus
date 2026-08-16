@@ -1562,6 +1562,7 @@ private data class LibraryDominantColorSample(
 private data class LibraryIconAnalysis(
     val contentBounds: Rect,
     val framedCropBounds: Rect?,
+    val edgeFillColor: Int?,
     val backingColor: Int?,
     val dominantColor: Int?,
     val presentation: LibraryIconPresentationDecision,
@@ -1580,7 +1581,7 @@ private data class LibraryNormalizedIcon(
 )
 
 private const val LIBRARY_ICON_CACHE_BYTES = 4 * 1024 * 1024
-private const val LIBRARY_ICON_PRESENTATION_VERSION = 4
+private const val LIBRARY_ICON_PRESENTATION_VERSION = 5
 private val LibraryIconCache = object : LruCache<String, LibraryNormalizedIcon>(LIBRARY_ICON_CACHE_BYTES) {
     override fun sizeOf(key: String, value: LibraryNormalizedIcon): Int {
         return (value.bitmap.width.toLong() * value.bitmap.height.toLong() * 4L)
@@ -1618,8 +1619,9 @@ private fun loadLibraryIcon(
             val cropBounds = when (analysis.presentation.mode) {
                 LibraryIconPresentationMode.Subject ->
                     analysis.framedCropBounds ?: analysis.contentBounds
-                LibraryIconPresentationMode.Backed ->
-                    analysis.framedCropBounds ?: analysis.contentBounds
+                // Keep self-backed artwork intact. Its own badge/background proportions are part
+                // of the icon identity; the generated tile only completes the remaining corners.
+                LibraryIconPresentationMode.Backed -> null
                 else -> null
             }
             val normalized = if (
@@ -1632,15 +1634,23 @@ private fun loadLibraryIcon(
             }
             val representativeColor =
                 normalized.findRepresentativeColor() ?: normalized.findAverageVisibleColor()
+            val edgeFillColor = analysis.edgeFillColor?.toComposeLibraryColor()
+            val backingTileColor = analysis.backingColor?.toComposeLibraryColor()
             val fillSourceColor = analysis.dominantColor?.toComposeLibraryColor() ?: representativeColor
             val tileColor = when (analysis.presentation.mode) {
                 LibraryIconPresentationMode.Cover -> null
                 LibraryIconPresentationMode.Backed ->
-                    analysis.backingColor?.toComposeLibraryColor()
-                        ?: fillSourceColor?.let { smartLibraryTileColor(it, analysis.foregroundLuminance) }
+                    edgeFillColor
+                        ?: backingTileColor
+                        ?: fillSourceColor?.let {
+                            syntheticLibraryTileColor(it, analysis.foregroundLuminance)
+                        }
                 LibraryIconPresentationMode.Subject,
                 LibraryIconPresentationMode.SafeFit ->
-                    fillSourceColor?.let { smartLibraryTileColor(it, analysis.foregroundLuminance) }
+                    edgeFillColor
+                        ?: fillSourceColor?.let {
+                            syntheticLibraryTileColor(it, analysis.foregroundLuminance)
+                        }
                 LibraryIconPresentationMode.Fallback -> null
             }
             return LibraryNormalizedIcon(
@@ -1821,6 +1831,7 @@ private fun Bitmap.analyzeLibraryIcon(): LibraryIconAnalysis? {
     return LibraryIconAnalysis(
         contentBounds = contentBounds,
         framedCropBounds = framedCropBounds,
+        edgeFillColor = cornerBackgroundColor,
         backingColor = backingColor,
         dominantColor = dominantColor?.color,
         presentation = presentation,
@@ -2233,18 +2244,17 @@ private const val LIBRARY_BACKING_MAX_TRANSPARENT_RATIO = 0.30f
 private const val LIBRARY_MATTE_MAX_SATURATION = 0.08f
 private const val LIBRARY_MATTE_LIGHT_VALUE = 0.92f
 private const val LIBRARY_MATTE_DARK_VALUE = 0.10f
-private const val LIBRARY_SMART_FILL_MIN_SATURATION = 0.34f
-private const val LIBRARY_SMART_FILL_MAX_SATURATION = 0.62f
-private const val LIBRARY_SMART_FILL_LIGHT_VALUE = 0.86f
-private const val LIBRARY_SMART_FILL_DARK_VALUE = 0.30f
-private const val LIBRARY_SMART_FILL_BRIGHT_FOREGROUND = 0.68f
+private const val LIBRARY_SYNTHETIC_FILL_MIN_SATURATION = 0.12f
+private const val LIBRARY_SYNTHETIC_FILL_MAX_SATURATION = 0.30f
+private const val LIBRARY_SYNTHETIC_FILL_LIGHT_VALUE = 0.88f
+private const val LIBRARY_SYNTHETIC_FILL_DARK_VALUE = 0.30f
+private const val LIBRARY_SYNTHETIC_FILL_BRIGHT_FOREGROUND = 0.68f
 
 /**
- * Builds a theme-independent adaptive tile color from the icon itself. The exact hue is not a UI
- * contract; the goal is to complete transparent/letterboxed legacy artwork into a coherent tile
- * while keeping enough luminance separation for the subject to remain readable.
+ * Builds a restrained, theme-independent tile only when the source does not expose a stable edge
+ * or backplate color to extend. Hue may follow the subject, but the fill must not dominate it.
  */
-private fun smartLibraryTileColor(
+private fun syntheticLibraryTileColor(
     source: Color,
     foregroundLuminance: Float,
 ): Color {
@@ -2255,18 +2265,26 @@ private fun smartLibraryTileColor(
         (source.blue * 255f).toInt().coerceIn(0, 255),
         hsv,
     )
-    val darkTile = foregroundLuminance >= LIBRARY_SMART_FILL_BRIGHT_FOREGROUND
+    val darkTile = foregroundLuminance >= LIBRARY_SYNTHETIC_FILL_BRIGHT_FOREGROUND
     if (hsv[1] < LIBRARY_MATTE_MAX_SATURATION) {
-        val value = if (darkTile) LIBRARY_SMART_FILL_DARK_VALUE else LIBRARY_SMART_FILL_LIGHT_VALUE
+        val value = if (darkTile) {
+            LIBRARY_SYNTHETIC_FILL_DARK_VALUE
+        } else {
+            LIBRARY_SYNTHETIC_FILL_LIGHT_VALUE
+        }
         return Color(value, value, value)
     }
     return Color.hsv(
         hue = hsv[0],
         saturation = hsv[1].coerceIn(
-            LIBRARY_SMART_FILL_MIN_SATURATION,
-            LIBRARY_SMART_FILL_MAX_SATURATION,
+            LIBRARY_SYNTHETIC_FILL_MIN_SATURATION,
+            LIBRARY_SYNTHETIC_FILL_MAX_SATURATION,
         ),
-        value = if (darkTile) LIBRARY_SMART_FILL_DARK_VALUE else LIBRARY_SMART_FILL_LIGHT_VALUE,
+        value = if (darkTile) {
+            LIBRARY_SYNTHETIC_FILL_DARK_VALUE
+        } else {
+            LIBRARY_SYNTHETIC_FILL_LIGHT_VALUE
+        },
     )
 }
 
@@ -2427,7 +2445,7 @@ private fun LibraryIconArtwork(
         iconRatio != LibraryIconRatio.Square -> Modifier.fillMaxSize()
         icon.presentationMode == LibraryIconPresentationMode.Subject ||
             icon.presentationMode == LibraryIconPresentationMode.Backed ->
-            Modifier.size(contentSize * icon.visualScale)
+            Modifier.fillMaxSize(icon.visualScale)
         icon.presentationMode == LibraryIconPresentationMode.Fallback ->
             Modifier
                 .size(contentSize * icon.visualScale)
