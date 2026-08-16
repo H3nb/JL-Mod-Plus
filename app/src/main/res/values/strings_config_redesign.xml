@@ -19,4 +19,9 @@
     <string name="profile_builtin_default_summary">Built-in emulator settings</string>
     <string name="config_lock_custom_resolution_ratio">Keep width/height ratio while editing</string>
     <string name="config_swap_screen_size">Swap width and height</string>
+    <string name="profile_manage_templates">Manage templates</string>
+    <string name="profile_builtin_settings">Built-in settings</string>
+    <string name="profile_builtin_settings_summary">JL-Mod Plus factory configuration</string>
+    <string name="profile_default_template_summary">Default template for new games</string>
+    <string name="profile_default_badge_short">Default</string>
 </resources>

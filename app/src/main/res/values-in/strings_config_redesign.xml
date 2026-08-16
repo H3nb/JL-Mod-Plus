@@ -33,4 +33,9 @@
     <string name="profile_builtin_default_summary">Pengaturan bawaan emulator</string>
     <string name="config_lock_custom_resolution_ratio">Pertahankan rasio lebar/tinggi saat mengedit</string>
     <string name="config_swap_screen_size">Tukar lebar dan tinggi</string>
+    <string name="profile_manage_templates">Kelola templat</string>
+    <string name="profile_builtin_settings">Pengaturan bawaan</string>
+    <string name="profile_builtin_settings_summary">Konfigurasi pabrik JL-Mod Plus</string>
+    <string name="profile_default_template_summary">Templat default untuk game baru</string>
+    <string name="profile_default_badge_short">Default</string>
 </resources>

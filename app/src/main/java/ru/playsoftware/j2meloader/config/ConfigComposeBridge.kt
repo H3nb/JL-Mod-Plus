@@ -255,8 +255,8 @@ internal fun ConfigScreen(
                     .padding(padding)
                     .consumeWindowInsets(padding)
                     .verticalScroll(scrollState)
-                    .padding(horizontal = 12.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
@@ -325,7 +325,7 @@ private fun ConfigDestinationContent(
     onRequestAction: (ConfigAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
         when (destination) {
             ConfigDestination.General -> GeneralDestination(
                 state = state,
@@ -484,46 +484,62 @@ private fun ProfileStatusCard(status: ConfigUiState.ProfileStatus, events: Confi
     val matched = active != null || status.builtInDefault
     val title = when {
         active != null -> active
-        status.builtInDefault -> stringResource(R.string.profile_builtin_default)
+        status.builtInDefault -> stringResource(R.string.profile_builtin_settings)
         else -> stringResource(R.string.profile_custom)
     }
     val summary = when {
         active != null -> stringResource(R.string.profile_active_summary)
-        status.builtInDefault -> stringResource(R.string.profile_builtin_default_summary)
+        status.builtInDefault -> stringResource(R.string.profile_builtin_settings_summary)
         else -> stringResource(R.string.profile_custom_summary)
     }
 
-    Card(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        colors = androidx.compose.material3.CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.profiles),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                text = summary,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Button(onClick = events::onUseProfile, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(if (matched) R.string.profile_change else R.string.profile_use))
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = events::onUseProfile)
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                    Text(
+                        text = stringResource(R.string.profiles),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = summary,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Text(
+                    text = stringResource(if (matched) R.string.profile_change else R.string.profile_use),
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.labelLarge,
+                )
             }
-            if (!matched) {
-                OutlinedButton(onClick = events::onSaveAsProfile, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.profile_save_as))
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 2.dp),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                if (!matched) {
+                    TextButton(onClick = events::onSaveAsProfile) {
+                        Text(stringResource(R.string.profile_save_as))
+                    }
+                }
+                TextButton(onClick = events::onManageProfiles) {
+                    Text(stringResource(R.string.profile_manage_templates))
                 }
             }
         }
@@ -1022,7 +1038,10 @@ private fun FontSection(
 ) {
     var advancedExpanded by rememberSaveable { mutableStateOf(false) }
     ConfigCard(title = stringResource(R.string.PREF_FONT_OPTIONS)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp),
+        ) {
             CompactTextField(
                 value = form.fontSizeSmall,
                 label = stringResource(R.string.PREF_FONT_SMALL),
@@ -1108,13 +1127,10 @@ private fun InputSection(
                 onSelected = { index -> onFormChanged(form.toBuilder().keyCodesLayout(index).build()) },
             )
         }
-        OutlinedButton(
+        SettingActionRow(
+            title = stringResource(R.string.pref_map_keys),
             onClick = events::onKeyMappings,
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium,
-        ) {
-            Text(stringResource(R.string.pref_map_keys))
-        }
+        )
         SwitchRow(
             title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
             checked = form.showKeyboard,
@@ -1194,13 +1210,11 @@ private fun InputSection(
                 )
             }
         }
-        OutlinedButton(
+        SettingActionRow(
+            title = stringResource(R.string.RESET_LAYOUT_CMD),
+            destructive = true,
             onClick = { onRequestAction(ConfigAction.ResetLayout) },
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium,
-        ) {
-            Text(stringResource(R.string.RESET_LAYOUT_CMD))
-        }
+        )
     }
 }
 
@@ -1254,21 +1268,18 @@ private fun SystemSection(
     onRequestAction: (ConfigAction) -> Unit,
 ) {
     ConfigCard(title = stringResource(R.string.PREF_SYS_PROPS)) {
-        OutlinedButton(
+        SettingActionRow(
+            title = stringResource(R.string.pref_encoding_title),
             onClick = events::onEncodingPicker,
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium,
-        ) {
-            Text(stringResource(R.string.pref_encoding_title))
-        }
+        )
         OutlinedTextField(
             value = form.systemProperties,
             onValueChange = { value ->
                 onFormChanged(form.toBuilder().systemProperties(value).build())
             },
-            modifier = Modifier.fillMaxWidth(),
-            minLines = 8,
-            maxLines = 12,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            minLines = 5,
+            maxLines = 8,
             textStyle = MaterialTheme.typography.bodyMedium.copy(
                 color = MaterialTheme.colorScheme.onSurface,
                 fontFamily = FontFamily.Monospace,
@@ -1284,37 +1295,64 @@ private fun SystemSection(
     }
 
     ConfigCard(title = stringResource(R.string.config_maintenance)) {
-        OutlinedButton(
+        SettingActionRow(
+            title = stringResource(R.string.config_reset_all_settings),
+            summary = stringResource(R.string.config_reset_all_settings_summary),
+            destructive = true,
             onClick = { onRequestAction(ConfigAction.ResetSettings) },
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium,
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-        ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.config_reset_all_settings))
-                Text(
-                    stringResource(R.string.config_reset_all_settings_summary),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-        }
+        )
         if (showClearData) {
-            Button(
+            SettingActionRow(
+                title = stringResource(R.string.config_delete_game_data),
+                summary = stringResource(R.string.config_delete_game_data_summary),
+                destructive = true,
+                emphasized = true,
                 onClick = { onRequestAction(ConfigAction.ClearData) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                ),
-            ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.config_delete_game_data))
-                    Text(
-                        stringResource(R.string.config_delete_game_data_summary),
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun SettingActionRow(
+    title: String,
+    summary: String? = null,
+    destructive: Boolean = false,
+    emphasized: Boolean = false,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = if (emphasized) MaterialTheme.colorScheme.errorContainer else Color.Transparent,
+        shape = MaterialTheme.shapes.medium,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 52.dp)
+                .clickable(onClick = onClick)
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = when {
+                    emphasized -> MaterialTheme.colorScheme.onErrorContainer
+                    destructive -> MaterialTheme.colorScheme.error
+                    else -> MaterialTheme.colorScheme.onSurface
+                },
+            )
+            if (summary != null) {
+                Text(
+                    text = summary,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (emphasized) {
+                        MaterialTheme.colorScheme.onErrorContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                )
             }
         }
     }
@@ -1361,17 +1399,19 @@ private fun AdvancedSettingsRow(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
-            .clickable { onExpandedChange(!expanded) },
+            .clickable { onExpandedChange(!expanded) }
+            .padding(horizontal = 14.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = stringResource(R.string.config_advanced_settings),
             modifier = Modifier.weight(1f),
             color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.bodyMedium,
         )
         Text(
             text = if (expanded) "−" else "+",
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
         )
     }
@@ -1382,26 +1422,20 @@ private fun ConfigCard(
     title: String,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = androidx.compose.material3.CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            content = {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                content()
-            },
+    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 4.dp),
         )
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+        ) {
+            Column(content = content)
+        }
     }
 }
 
@@ -1411,19 +1445,20 @@ private fun ConfigRow(
     content: @Composable () -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 52.dp)
+            .padding(horizontal = 14.dp, vertical = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(
             text = label,
-            modifier = Modifier
-                .weight(0.38f)
-                .widthIn(min = 72.dp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f),
+            color = MaterialTheme.colorScheme.onSurface,
+            style = MaterialTheme.typography.bodyLarge,
         )
-        Box(modifier = Modifier.weight(0.62f)) {
+        Box(modifier = Modifier.weight(0.9f), contentAlignment = Alignment.CenterEnd) {
             content()
         }
     }
@@ -1441,51 +1476,35 @@ private fun CompactTextField(
     onValueChange: (String) -> Unit,
 ) {
     var dialogVisible by remember(value) { mutableStateOf(false) }
+    val shownValue = buildString {
+        append(value.ifEmpty { label })
+        if (value.isNotEmpty() && valueSuffix != null) append(" ").append(valueSuffix)
+    }
 
-    Surface(
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .clickable {
-                dialogVisible = true
-            },
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            .heightIn(min = 36.dp)
+            .clickable { dialogVisible = true },
+        horizontalAlignment = Alignment.End,
+        verticalArrangement = Arrangement.Center,
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            if (showLabel) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = value.ifEmpty { label },
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = if (value.isEmpty()) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    },
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (value.isNotEmpty() && valueSuffix != null) {
-                    Text(
-                        text = valueSuffix,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
+        if (showLabel) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
+        Text(
+            text = shownValue,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 
     if (dialogVisible) {
@@ -1552,31 +1571,19 @@ private fun SliderField(
     onSelected: (Int) -> Unit,
 ) {
     var dialogVisible by remember(value) { mutableStateOf(false) }
-
-    Surface(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-                dialogVisible = true
-            },
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            .heightIn(min = 36.dp)
+            .clickable { dialogVisible = true },
+        contentAlignment = Alignment.CenterEnd,
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(
-                text = value.toString(),
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.bodyLarge,
-            )
-        }
+        Text(
+            text = value.toString(),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+        )
     }
-
     if (dialogVisible) {
         ConfigSliderDialog(
             title = stringResource(R.string.PREF_VK_ALPHA),
@@ -1675,40 +1682,21 @@ private fun ChoiceField(
 ) {
     var dialogVisible by remember(selected, options) { mutableStateOf(false) }
     val enabled = options.isNotEmpty()
-    val surfaceColor = if (enabled) {
-        MaterialTheme.colorScheme.surfaceContainerHigh
-    } else {
-        MaterialTheme.colorScheme.surfaceContainerHighest
-    }
-
-    Surface(
+    Box(
         modifier = modifier
             .fillMaxWidth()
+            .heightIn(min = 36.dp)
             .clickable(enabled = enabled) { dialogVisible = true },
-        shape = MaterialTheme.shapes.medium,
-        color = surfaceColor,
+        contentAlignment = Alignment.CenterEnd,
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(
-                text = selected,
-                modifier = Modifier.weight(1f),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                color = if (enabled) {
-                    MaterialTheme.colorScheme.onSurface
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
-            )
-        }
+        Text(
+            text = selected,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodyMedium,
+        )
     }
-
     if (dialogVisible) {
         ConfigChoiceDialog(
             title = dialogTitle,
@@ -1775,11 +1763,16 @@ private fun SwitchRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 48.dp)
-            .clickable { onCheckedChange(!checked) },
+            .heightIn(min = 52.dp)
+            .clickable { onCheckedChange(!checked) }
+            .padding(horizontal = 14.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = title, modifier = Modifier.weight(1f))
+        Text(
+            text = title,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyLarge,
+        )
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
@@ -1790,48 +1783,31 @@ private fun ColorRow(
     value: String,
     onPick: () -> Unit,
 ) {
-    Surface(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(role = Role.Button, onClick = onPick),
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            .heightIn(min = 54.dp)
+            .clickable(role = Role.Button, onClick = onPick)
+            .padding(horizontal = 14.dp, vertical = 5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Row(
+        Text(
+            text = label,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyLarge,
+        )
+        Text(
+            text = value.ifEmpty { "—" },
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(parseColor(value)),
-            )
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = value.ifEmpty { "—" },
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            Icon(
-                painter = painterResource(R.drawable.ic_palette),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+                .size(28.dp)
+                .clip(RoundedCornerShape(7.dp))
+                .background(parseColor(value)),
+        )
     }
 }
 

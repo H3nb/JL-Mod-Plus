@@ -67,12 +67,27 @@ class ProfilesComposeTest {
         assertEquals("Empty", actions.deleted)
     }
 
+    @Test
+    fun builtInSettingsAreDistinctFromDefaultTemplatePolicy() {
+        val actions = RecordingProfilesActions()
+        setProfilesContent(actions)
+
+        composeRule.onNodeWithText("Built-in settings").performClick()
+        composeRule.onNodeWithText("Set As Default").performClick()
+        assertEquals(1, actions.builtInDefaultCalls)
+
+        composeRule.onNodeWithText("Built-in settings").performClick()
+        composeRule.onNodeWithText("Rename").assertDoesNotExist()
+        composeRule.onNodeWithText("Delete").assertDoesNotExist()
+    }
+
     private fun setProfilesContent(actions: RecordingProfilesActions) {
         composeRule.setContent {
             JLModPlusTheme {
                 ProfilesScreen(
                     state = ProfilesUiState(
                         profiles = listOf(
+                            ProfileUiItem("", isDefault = false, canEdit = false, isBuiltIn = true),
                             ProfileUiItem("Playable", isDefault = false, canEdit = true),
                             ProfileUiItem("Empty", isDefault = false, canEdit = false),
                         ),
@@ -85,6 +100,7 @@ class ProfilesComposeTest {
 
     private class RecordingProfilesActions : ProfilesActions {
         var created: String? = null
+        var builtInDefaultCalls = 0
         var defaulted: String? = null
         var edited: String? = null
         var renamed: Pair<String, String>? = null
@@ -92,6 +108,7 @@ class ProfilesComposeTest {
 
         override fun onBack() = Unit
         override fun onCreate(name: String) { created = name }
+        override fun onSetBuiltInDefault() { builtInDefaultCalls++ }
         override fun onSetDefault(name: String) { defaulted = name }
         override fun onEdit(name: String) { edited = name }
         override fun onRename(oldName: String, newName: String) { renamed = oldName to newName }

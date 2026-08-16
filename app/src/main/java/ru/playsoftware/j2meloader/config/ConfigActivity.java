@@ -152,6 +152,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			showSaveProfile();
 		}
 
+		@Override
+		public void onManageProfiles() {
+			startActivity(new Intent(ConfigActivity.this, ProfilesActivity.class));
+		}
+
 	};
 
 	@Override

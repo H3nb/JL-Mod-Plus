@@ -94,6 +94,12 @@ public class ProfilesActivity extends AppCompatActivity {
 			}
 
 			@Override
+			public void onSetBuiltInDefault() {
+				preferences.edit().remove(PREF_DEFAULT_PROFILE).apply();
+				refreshProfiles();
+			}
+
+			@Override
 			public void onSetDefault(@NonNull String name) {
 				if (profilesByName.containsKey(name)) {
 					preferences.edit().putString(PREF_DEFAULT_PROFILE, name).apply();

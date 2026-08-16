@@ -375,6 +375,7 @@ private object NoOpLibraryActions : LibraryActions {
 private object NoOpProfilesActions : ProfilesActions {
     override fun onBack() = Unit
     override fun onCreate(name: String) = Unit
+    override fun onSetBuiltInDefault() = Unit
     override fun onSetDefault(name: String) = Unit
     override fun onEdit(name: String) = Unit
     override fun onRename(oldName: String, newName: String) = Unit

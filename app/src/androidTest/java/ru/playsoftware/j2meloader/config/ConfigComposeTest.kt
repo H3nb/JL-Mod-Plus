@@ -118,7 +118,7 @@ class ConfigComposeTest {
 
         composeRule.onNodeWithText("Use profile").performClick()
         composeRule.onNodeWithText("Save as profile").performClick()
-        composeRule.onNodeWithText("Manage profiles").assertDoesNotExist()
+        composeRule.onNodeWithText("Manage templates").assertExists()
 
         assertEquals(1, events.useProfileCalls)
         assertEquals(1, events.saveAsProfileCalls)

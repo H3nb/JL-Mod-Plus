@@ -63,11 +63,11 @@ class SettingsComposeTest {
         composeRule.onNodeWithText("Language").performClick()
         composeRule.onNodeWithText("English").performClick()
         composeRule.onNodeWithText("Keep screen on").performClick()
-        composeRule.onNodeWithText("Profiles").performClick()
+        composeRule.onNodeWithText("Profiles").assertDoesNotExist()
         composeRule.onNodeWithText("Working directory").performClick()
 
         assertEquals(listOf("light", "en", "pref_wakelock_switch"), actions.changes)
-        assertEquals(1, actions.profileClicks)
+        assertEquals(0, actions.profileClicks)
         assertEquals(1, actions.directoryClicks)
     }
 
