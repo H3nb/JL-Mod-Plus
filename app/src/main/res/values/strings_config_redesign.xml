@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="config_destination_general">General</string>
+    <string name="config_general_settings">Essential settings</string>
+    <string name="config_maintenance">Reset &amp; data</string>
+    <string name="config_reset_all_settings">Reset all settings</string>
+    <string name="config_reset_all_settings_summary">Restore emulator settings to their defaults</string>
+    <string name="config_delete_game_data">Delete game data</string>
+    <string name="config_delete_game_data_summary">Permanently delete saves and data created by this game</string>
+    <string name="config_message_reset_settings">Reset all emulator settings for this game to their defaults? Game data and the custom button layout will not be deleted.</string>
+    <string name="config_message_reset_profile_settings">Reset all settings in this profile to their defaults? The profile can be edited again before leaving this page.</string>
+    <string name="config_message_delete_game_data">Permanently delete all saves and data created by this game? Emulator settings will not be deleted.</string>
+    <string name="profile_choose_template">Choose profile</string>
+    <string name="profile_choose_template_summary">Apply a saved configuration template. You can start immediately or change any setting afterward.</string>
+    <string name="profile_default_badge">Default for new games</string>
+    <string name="profile_save_template">Save as profile</string>
+    <string name="profile_save_template_summary">Save the current configuration as a reusable template.</string>
+    <string name="config_swap_screen_size">Swap width and height</string>
+</resources>
