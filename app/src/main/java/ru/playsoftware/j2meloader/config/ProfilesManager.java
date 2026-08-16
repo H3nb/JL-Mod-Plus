@@ -73,9 +73,9 @@ public class ProfilesManager {
 		try {
 			if (config) {
 				File source = from.getConfig();
-				if (source.exists())
+				if (source.exists()) {
 					FileUtils.copyFileUsingChannel(source, dstConfig);
-				else {
+				} else {
 					ProfileModel params = loadConfig(from.getDir());
 					if (params != null) {
 						params.dir = dstConfig.getParentFile();
@@ -83,7 +83,9 @@ public class ProfilesManager {
 					}
 				}
 			}
-			if (keyboard) FileUtils.copyFileUsingChannel(from.getKeyLayout(), dstKeyLayout);
+			if (keyboard) {
+				FileUtils.copyFileUsingChannel(from.getKeyLayout(), dstKeyLayout);
+			}
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -102,6 +104,20 @@ public class ProfilesManager {
 			if (keyboard) FileUtils.copyFileUsingChannel(srcKeyLayout, profile.getKeyLayout());
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
+		}
+	}
+
+	/** Saves the current MIDlet configuration as one reusable template snapshot. */
+	static void saveSnapshot(Profile profile, String fromPath) throws IOException {
+		profile.create();
+		File srcConfig = new File(fromPath, Config.MIDLET_CONFIG_FILE);
+		File srcKeyLayout = new File(fromPath, Config.MIDLET_KEY_LAYOUT_FILE);
+		File dstKeyLayout = profile.getKeyLayout();
+		FileUtils.copyFileUsingChannel(srcConfig, profile.getConfig());
+		if (srcKeyLayout.isFile()) {
+			FileUtils.copyFileUsingChannel(srcKeyLayout, dstKeyLayout);
+		} else if (dstKeyLayout.exists() && !dstKeyLayout.delete()) {
+			Log.w(TAG, "saveSnapshot: could not remove stale key layout " + dstKeyLayout);
 		}
 	}
 
