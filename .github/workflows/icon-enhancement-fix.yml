@@ -1,4 +1,5 @@
 name: Icon enhancement portrait fix
+# Temporary self-removing workflow for one surgical source correction.
 
 on:
   push:
