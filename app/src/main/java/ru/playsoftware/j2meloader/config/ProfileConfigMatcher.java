@@ -14,6 +14,7 @@
 
 package ru.playsoftware.j2meloader.config;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.google.gson.Gson;
@@ -21,8 +22,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -35,6 +36,78 @@ final class ProfileConfigMatcher {
 	private ProfileConfigMatcher() {
 	}
 
+	static final class Candidate {
+		final Profile profile;
+		final ProfileModel config;
+		@Nullable final byte[] keyboard;
+
+		Candidate(@NonNull Profile profile, @NonNull ProfileModel config, @Nullable byte[] keyboard) {
+			this.profile = profile;
+			this.config = config;
+			this.keyboard = keyboard;
+		}
+	}
+
+	@NonNull
+	static List<Candidate> loadCandidates(@Nullable List<Profile> profiles) {
+		if (profiles == null || profiles.isEmpty()) {
+			return Collections.emptyList();
+		}
+		ArrayList<Candidate> candidates = new ArrayList<>();
+		for (Profile profile : profiles) {
+			if (!profile.hasConfig() && !profile.hasOldConfig()) {
+				continue;
+			}
+			ProfileModel config = ProfilesManager.loadConfig(profile.getDir(), false);
+			if (config == null) {
+				continue;
+			}
+			byte[] keyboard = profile.hasKeyLayout() ? readKeyboard(profile.getKeyLayout()) : null;
+			candidates.add(new Candidate(profile, config, keyboard));
+		}
+		return candidates;
+	}
+
+	@Nullable
+	static byte[] readKeyboard(@Nullable File file) {
+		if (file == null || !file.isFile()) {
+			return null;
+		}
+		try {
+			return Files.readAllBytes(file.toPath());
+		} catch (IOException e) {
+			return null;
+		}
+	}
+
+	@Nullable
+	static Profile findMatchCached(
+			ProfileModel current,
+			ConfigFormState draft,
+			List<Candidate> candidates,
+			@Nullable String defaultProfile,
+			@Nullable byte[] currentKeyboard) {
+		if (current == null || draft == null || candidates == null || candidates.isEmpty()) {
+			return null;
+		}
+
+		ProfileModel effective = copy(current);
+		draft.applyTo(effective);
+		ArrayList<Profile> matches = new ArrayList<>();
+		for (Candidate candidate : candidates) {
+			if (!sameConfig(effective, candidate.config)) {
+				continue;
+			}
+			// Keyboard state is part of a profile only when that profile explicitly owns a
+			// keyboard artifact. Config-only profiles intentionally ignore keyboard differences.
+			if (candidate.keyboard != null && !sameKeyboardBytes(currentKeyboard, candidate.keyboard)) {
+				continue;
+			}
+			matches.add(candidate.profile);
+		}
+		return selectMatch(matches, defaultProfile);
+	}
+
 	@Nullable
 	static Profile findMatch(
 			ProfileModel current,
@@ -42,31 +115,12 @@ final class ProfileConfigMatcher {
 			List<Profile> profiles,
 			@Nullable String defaultProfile,
 			@Nullable File currentKeyLayout) {
-		if (current == null || draft == null || profiles == null || profiles.isEmpty()) {
-			return null;
-		}
-
-		ProfileModel effective = copy(current);
-		draft.applyTo(effective);
-		ArrayList<Profile> matches = new ArrayList<>();
-		for (Profile profile : profiles) {
-			// Do not invoke legacy XML migration from a render-time status refresh.
-			if (!profile.hasConfig()) {
-				continue;
-			}
-			ProfileModel candidate = ProfilesManager.loadConfig(profile.getDir(), false);
-			if (candidate == null || !sameConfig(effective, candidate)) {
-				continue;
-			}
-			// Keyboard state is part of a profile only when that profile explicitly owns a
-			// keyboard artifact. Config-only profiles intentionally ignore keyboard differences.
-			if (profile.hasKeyLayout() && !sameKeyboardFile(currentKeyLayout, profile.getKeyLayout())) {
-				continue;
-			}
-			matches.add(profile);
-		}
-
-		return selectMatch(matches, defaultProfile);
+		return findMatchCached(
+				current,
+				draft,
+				loadCandidates(profiles),
+				defaultProfile,
+				readKeyboard(currentKeyLayout));
 	}
 
 	@Nullable
@@ -115,21 +169,22 @@ final class ProfileConfigMatcher {
 		return copy;
 	}
 
-	static boolean sameKeyboardFile(@Nullable File left, File right) {
-		if (left == null || !left.isFile() || !right.isFile() || left.length() != right.length()) {
+	static boolean sameKeyboardBytes(@Nullable byte[] left, @Nullable byte[] right) {
+		if (left == right) {
+			return true;
+		}
+		if (left == null || right == null || left.length != right.length) {
 			return false;
 		}
-		try (FileInputStream leftStream = new FileInputStream(left);
-				 FileInputStream rightStream = new FileInputStream(right)) {
-			int leftByte;
-			while ((leftByte = leftStream.read()) != -1) {
-				if (leftByte != rightStream.read()) {
-					return false;
-				}
+		for (int i = 0; i < left.length; i++) {
+			if (left[i] != right[i]) {
+				return false;
 			}
-			return rightStream.read() == -1;
-		} catch (IOException e) {
-			return false;
 		}
+		return true;
+	}
+
+	static boolean sameKeyboardFile(@Nullable File left, File right) {
+		return sameKeyboardBytes(readKeyboard(left), readKeyboard(right));
 	}
 }
