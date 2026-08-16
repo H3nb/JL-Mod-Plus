@@ -91,11 +91,11 @@ public final class CrashReporter {
 			THREAD_DETAILS
 	);
 
-	private static final Object PROCESS_EXIT_REFRESH_LOCK = new Object();
+	private static final Object DIAGNOSTIC_REFRESH_LOCK = new Object();
 	private static boolean mainProcess;
-	private static boolean processExitRefreshRunning;
-	private static boolean processExitRefreshPending;
-	private static volatile boolean processExitEvidenceReady;
+	private static boolean diagnosticRefreshRunning;
+	private static boolean diagnosticRefreshPending;
+	private static volatile boolean diagnosticRefreshReady;
 
 	private CrashReporter() {}
 
@@ -119,9 +119,9 @@ public final class CrashReporter {
 		String processName = EmulatorApplication.getProcessName();
 		String processRole = classifyProcess(application.getPackageName(), processName);
 		mainProcess = ROLE_MAIN.equals(processRole);
-		processExitRefreshRunning = false;
-		processExitRefreshPending = false;
-		processExitEvidenceReady = !mainProcess;
+		diagnosticRefreshRunning = false;
+		diagnosticRefreshPending = false;
+		diagnosticRefreshReady = !mainProcess;
 		boolean reporterProcess = ROLE_REPORTER.equals(processRole) || ACRA.isACRASenderServiceProcess();
 		if (reporterProcess) {
 			return true;
@@ -138,109 +138,102 @@ public final class CrashReporter {
 		return false;
 	}
 
-	/** Schedules one best-effort main-process maintenance pass after Application startup. */
+	/** Schedules one best-effort main-process diagnostics refresh after Application startup. */
 	public static void scheduleMaintenance(Application application) {
 		if (!mainProcess) {
-			processExitEvidenceReady = true;
+			diagnosticRefreshReady = true;
 			return;
 		}
-		if (!beginProcessExitRefresh(false)) {
-			return;
-		}
-		try {
-			Thread maintenance = new Thread(() -> {
-				setBackgroundThreadPriority();
-				runProcessExitRefreshLoop(application);
-				runMaintenanceStep("local crash report pruning", () -> LocalCrashReportStore.prune(application));
-				runMaintenanceStep("MIDlet session journal pruning", () -> MidletSessionJournal.prune(application));
-			}, "jlmod-diagnostics-maintenance");
-			maintenance.start();
-		} catch (Throwable error) {
-			finishProcessExitRefresh();
-			logMaintenanceFailure("Unable to schedule diagnostics maintenance", error);
-		}
+		startDiagnosticRefresh(application, false, "jlmod-diagnostics-maintenance");
 	}
 
 	/**
-	 * Refreshes process-exit evidence after the main window regains focus without blocking the UI.
+	 * Refreshes durable diagnostics after the main window regains focus without blocking the UI.
 	 * A focus callback arriving during an active pass queues one follow-up pass instead of spawning
 	 * another thread, so a just-finished MIDlet process cannot be missed by an older system snapshot.
 	 */
-	public static void requestProcessExitRefresh(Application application) {
+	public static void requestDiagnosticRefresh(Application application) {
 		if (!mainProcess) {
-			processExitEvidenceReady = true;
+			diagnosticRefreshReady = true;
 			return;
 		}
-		if (!beginProcessExitRefresh(true)) {
+		startDiagnosticRefresh(application, true, "jlmod-diagnostics-focus-refresh");
+	}
+
+	/** True once the latest requested background reconciliation and retention pass has finished. */
+	public static boolean isDiagnosticRefreshReady() {
+		return diagnosticRefreshReady;
+	}
+
+	private static void startDiagnosticRefresh(Application application, boolean queueIfRunning,
+			String threadName) {
+		if (!beginDiagnosticRefresh(queueIfRunning)) {
 			return;
 		}
 		try {
 			Thread refresh = new Thread(() -> {
 				setBackgroundThreadPriority();
-				runProcessExitRefreshLoop(application);
-			}, "jlmod-diagnostics-exit-refresh");
+				runDiagnosticRefreshLoop(application);
+			}, threadName);
 			refresh.start();
 		} catch (Throwable error) {
-			finishProcessExitRefresh();
-			logMaintenanceFailure("Unable to schedule process-exit refresh", error);
+			finishDiagnosticRefresh();
+			logMaintenanceFailure("Unable to schedule diagnostics refresh", error);
 		}
 	}
 
-	/** True once the latest requested process-exit reconciliation completed or failed open. */
-	public static boolean isProcessExitEvidenceReady() {
-		return processExitEvidenceReady;
-	}
-
-	private static boolean beginProcessExitRefresh(boolean queueIfRunning) {
-		synchronized (PROCESS_EXIT_REFRESH_LOCK) {
-			if (processExitRefreshRunning) {
+	private static boolean beginDiagnosticRefresh(boolean queueIfRunning) {
+		synchronized (DIAGNOSTIC_REFRESH_LOCK) {
+			if (diagnosticRefreshRunning) {
 				if (queueIfRunning) {
-					processExitRefreshPending = true;
-					processExitEvidenceReady = false;
+					diagnosticRefreshPending = true;
+					diagnosticRefreshReady = false;
 				}
 				return false;
 			}
-			processExitRefreshRunning = true;
-			processExitRefreshPending = false;
-			processExitEvidenceReady = false;
+			diagnosticRefreshRunning = true;
+			diagnosticRefreshPending = false;
+			diagnosticRefreshReady = false;
 			return true;
 		}
 	}
 
-	private static void runProcessExitRefreshLoop(Application application) {
+	private static void runDiagnosticRefreshLoop(Application application) {
 		try {
 			while (true) {
-				reconcileProcessExitEvidence(application);
-				synchronized (PROCESS_EXIT_REFRESH_LOCK) {
-					if (processExitRefreshPending) {
-						processExitRefreshPending = false;
+				refreshDiagnostics(application);
+				synchronized (DIAGNOSTIC_REFRESH_LOCK) {
+					if (diagnosticRefreshPending) {
+						diagnosticRefreshPending = false;
 						continue;
 					}
-					processExitRefreshRunning = false;
-					processExitEvidenceReady = true;
+					diagnosticRefreshRunning = false;
+					diagnosticRefreshReady = true;
 					return;
 				}
 			}
 		} catch (Throwable error) {
-			finishProcessExitRefresh();
-			logMaintenanceFailure("Unexpected process-exit refresh failure", error);
+			finishDiagnosticRefresh();
+			logMaintenanceFailure("Unexpected diagnostics refresh failure", error);
 		}
 	}
 
-	private static void finishProcessExitRefresh() {
-		synchronized (PROCESS_EXIT_REFRESH_LOCK) {
-			processExitRefreshRunning = false;
-			processExitRefreshPending = false;
-			processExitEvidenceReady = true;
+	private static void finishDiagnosticRefresh() {
+		synchronized (DIAGNOSTIC_REFRESH_LOCK) {
+			diagnosticRefreshRunning = false;
+			diagnosticRefreshPending = false;
+			diagnosticRefreshReady = true;
 		}
 	}
 
-	private static void reconcileProcessExitEvidence(Application application) {
-		// Both paths are API-gated internally: legacy reconciliation is active only on API23-29,
-		// while ApplicationExitInfo ingestion is active only on API30+.
+	private static void refreshDiagnostics(Application application) {
+		// Both exit paths are API-gated internally. Keep retention in the same background pass so
+		// recovery UI never performs report/journal pruning from its window-focus callback.
 		runMaintenanceStep("legacy process-exit reconciliation",
 				() -> LegacyProcessExitFallback.ingest(application));
 		runMaintenanceStep("process-exit ingestion", () -> ProcessExitStore.ingest(application));
+		runMaintenanceStep("local crash report pruning", () -> LocalCrashReportStore.prune(application));
+		runMaintenanceStep("MIDlet session journal pruning", () -> MidletSessionJournal.prune(application));
 	}
 
 	private static void setBackgroundThreadPriority() {
