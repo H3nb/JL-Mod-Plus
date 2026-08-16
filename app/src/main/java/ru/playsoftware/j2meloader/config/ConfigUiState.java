@@ -15,6 +15,7 @@
 package ru.playsoftware.j2meloader.config;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,6 +45,8 @@ public final class ConfigUiState {
 	public final List<String> soundBanks;
 	@NonNull
 	public final List<ShaderInfo> shaders;
+	@NonNull
+	public final ProfileStatus profileStatus;
 
 	public ConfigUiState(
 			@NonNull ConfigFormState form,
@@ -53,7 +56,7 @@ public final class ConfigUiState {
 			@NonNull List<String> soundBanks,
 			@NonNull List<ShaderInfo> shaders) {
 		this(form, screenPresets, fontPresets, skins, soundBanks, shaders,
-				Collections.emptyList());
+				Collections.emptyList(), ProfileStatus.custom(null));
 	}
 
 	public ConfigUiState(
@@ -64,6 +67,19 @@ public final class ConfigUiState {
 			@NonNull List<String> soundBanks,
 			@NonNull List<ShaderInfo> shaders,
 			@NonNull List<Size> removableScreenPresets) {
+		this(form, screenPresets, fontPresets, skins, soundBanks, shaders,
+				removableScreenPresets, ProfileStatus.custom(null));
+	}
+
+	public ConfigUiState(
+			@NonNull ConfigFormState form,
+			@NonNull List<Size> screenPresets,
+			@NonNull List<FontPreset> fontPresets,
+			@NonNull List<String> skins,
+			@NonNull List<String> soundBanks,
+			@NonNull List<ShaderInfo> shaders,
+			@NonNull List<Size> removableScreenPresets,
+			@NonNull ProfileStatus profileStatus) {
 		this.form = form;
 		this.screenPresets = immutableCopy(screenPresets);
 		this.removableScreenPresets = immutableCopy(removableScreenPresets);
@@ -71,6 +87,7 @@ public final class ConfigUiState {
 		this.skins = immutableCopy(skins);
 		this.soundBanks = immutableCopy(soundBanks);
 		this.shaders = immutableCopy(shaders);
+		this.profileStatus = profileStatus;
 	}
 
 	private static <T> List<T> immutableCopy(List<T> values) {
@@ -90,6 +107,30 @@ public final class ConfigUiState {
 			this.small = small;
 			this.medium = medium;
 			this.large = large;
+		}
+	}
+
+	/** Profile matching result used by the MIDlet Quick destination. */
+	public static final class ProfileStatus {
+		@Nullable
+		public final String activeProfile;
+		@Nullable
+		public final String defaultProfile;
+
+		private ProfileStatus(@Nullable String activeProfile, @Nullable String defaultProfile) {
+			this.activeProfile = activeProfile;
+			this.defaultProfile = defaultProfile;
+		}
+
+		@NonNull
+		public static ProfileStatus custom(@Nullable String defaultProfile) {
+			return new ProfileStatus(null, defaultProfile);
+		}
+
+		@NonNull
+		public static ProfileStatus active(@NonNull String activeProfile,
+				@Nullable String defaultProfile) {
+			return new ProfileStatus(activeProfile, defaultProfile);
 		}
 	}
 }

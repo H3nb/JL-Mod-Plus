@@ -37,23 +37,44 @@ class ConfigComposeTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun configRendersAllSectionsAndKeyboardDependency() {
+    fun configRendersQuickAndAdaptiveDestinations() {
         composeRule.setContent {
             JLModPlusTheme {
                 ConfigScreen(sampleState(), RecordingConfigEvents())
             }
         }
 
+        composeRule.onNodeWithText("Custom").assertExists()
+        composeRule.onNodeWithText("Screen size").assertExists()
+        composeRule.onNodeWithContentDescription("Start").assertExists()
+
+        composeRule.onNodeWithContentDescription("Graphics").performClick()
         composeRule.onNodeWithText("Screen options").assertExists()
         composeRule.onNodeWithText("Font options").assertExists()
-        composeRule.onNodeWithText("Input devices").assertExists()
-        composeRule.onNodeWithText("Emulation").assertExists()
-        composeRule.onNodeWithText("Audio").assertExists()
-        composeRule.onNodeWithText("System properties").assertExists()
-        composeRule.onNodeWithText("Opacity").assertExists()
 
-        composeRule.onNodeWithText("Virtual keyboard").performClick()
-        composeRule.onNodeWithText("Opacity").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription("Controls").performClick()
+        composeRule.onNodeWithText("Input devices").assertExists()
+        composeRule.onNodeWithText("Audio").assertDoesNotExist()
+
+        composeRule.onNodeWithContentDescription("Media").performClick()
+        composeRule.onNodeWithText("Multimedia settings will be added here in a future update.").assertExists()
+
+        composeRule.onNodeWithContentDescription("System").performClick()
+        composeRule.onNodeWithText("System properties").assertExists()
+    }
+
+    @Test
+    fun profileEditorStartsOnGraphicsWithoutQuickWorkflow() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), RecordingConfigEvents(), isProfile = true)
+            }
+        }
+
+        composeRule.onNodeWithText("Screen options").assertExists()
+        composeRule.onNodeWithContentDescription("Quick").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription("Start").assertDoesNotExist()
+        composeRule.onNodeWithText("Use profile").assertDoesNotExist()
     }
 
     @Test
@@ -61,11 +82,12 @@ class ConfigComposeTest {
         val events = RecordingConfigEvents()
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(sampleState(), events)
+                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.Graphics)
             }
         }
 
         composeRule.onNodeWithText("Filter").performClick()
+        composeRule.onNodeWithContentDescription("Controls").performClick()
         composeRule.onNodeWithText("Touch input").performClick()
 
         assertTrue(events.lastForm?.screenFilter == true)
@@ -74,11 +96,57 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun configurationDropdownsExposeTheirOptionsAndUpdateTheDraft() {
+    fun quickProfileActionsUseTheExistingHostFlows() {
         val events = RecordingConfigEvents()
         composeRule.setContent {
             JLModPlusTheme {
                 ConfigScreen(sampleState(), events)
+            }
+        }
+
+        composeRule.onNodeWithText("Use profile").performClick()
+        composeRule.onNodeWithText("Save as profile").performClick()
+        composeRule.onNodeWithText("Manage profiles").performClick()
+
+        assertEquals(1, events.useProfileCalls)
+        assertEquals(1, events.saveAsProfileCalls)
+        assertEquals(1, events.manageProfilesCalls)
+    }
+
+    @Test
+    fun activeProfileUsesChangeAndManageActions() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form,
+            base.screenPresets,
+            base.fontPresets,
+            base.skins,
+            base.soundBanks,
+            base.shaders,
+            base.removableScreenPresets,
+            ConfigUiState.ProfileStatus.active("Nokia Classic", "Nokia Classic"),
+        )
+        val events = RecordingConfigEvents()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(state, events)
+            }
+        }
+
+        composeRule.onNodeWithText("Change profile").performClick()
+        composeRule.onNodeWithText("Manage profiles").performClick()
+        composeRule.onNodeWithText("Save as profile").assertDoesNotExist()
+
+        assertEquals(1, events.useProfileCalls)
+        assertEquals(1, events.manageProfilesCalls)
+    }
+
+    @Test
+    fun configurationDropdownsExposeTheirOptionsAndUpdateTheDraft() {
+        val events = RecordingConfigEvents()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.Graphics)
             }
         }
 
@@ -94,7 +162,7 @@ class ConfigComposeTest {
         val events = RecordingConfigEvents()
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(sampleState(), events)
+                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.Graphics)
             }
         }
 
@@ -104,6 +172,8 @@ class ConfigComposeTest {
         composeRule.onNodeWithText("OK").performClick()
         assertEquals("360", events.lastForm?.screenWidth)
 
+        composeRule.onNodeWithContentDescription("Controls").performClick()
+        composeRule.onNodeWithText("Advanced settings").performClick()
         composeRule.onNodeWithText("64").performClick()
         composeRule.onNodeWithText("Opacity").assertExists()
         composeRule.onNode(hasSetTextAction()).performTextReplacement("128")
@@ -119,6 +189,7 @@ class ConfigComposeTest {
                 ConfigScreen(
                     state = sampleState(),
                     events = RecordingConfigEvents(),
+                    initialDestination = ConfigDestination.Graphics,
                     colorPicker = ColorPickerRequest(
                         ConfigFormEvents.ColorField.SCREEN_BACKGROUND,
                         "D0D0D0",
@@ -156,7 +227,7 @@ class ConfigComposeTest {
         val events = RecordingConfigEvents()
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(sampleState(), events)
+                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.Graphics)
             }
         }
 
@@ -170,7 +241,7 @@ class ConfigComposeTest {
         val events = RecordingConfigEvents()
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(sampleState(), events)
+                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.Graphics)
             }
         }
 
@@ -195,10 +266,11 @@ class ConfigComposeTest {
         )
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(state, events)
+                ConfigScreen(state, events, initialDestination = ConfigDestination.Controls)
             }
         }
 
+        composeRule.onNodeWithText("Advanced settings").performClick()
         composeRule.onNodeWithText("ms").assertExists()
         composeRule.onNodeWithText("Edit").performClick()
         composeRule.onNode(hasSetTextAction()).performTextReplacement("microedition.platform: updated\n")
@@ -268,5 +340,20 @@ class ConfigComposeTest {
 
         var removed: Size? = null
         var colorPickerField: ConfigFormEvents.ColorField? = null
+        var useProfileCalls = 0
+        var saveAsProfileCalls = 0
+        var manageProfilesCalls = 0
+
+        override fun onUseProfile() {
+            useProfileCalls++
+        }
+
+        override fun onSaveAsProfile() {
+            saveAsProfileCalls++
+        }
+
+        override fun onManageProfiles() {
+            manageProfilesCalls++
+        }
     }
 }

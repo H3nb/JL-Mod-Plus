@@ -129,6 +129,9 @@ public class ProfilesActivity extends AppCompatActivity {
 				Profile profile = profilesByName.get(name);
 				if (profile != null) {
 					profile.delete();
+					if (name.equals(preferences.getString(PREF_DEFAULT_PROFILE, null))) {
+						preferences.edit().remove(PREF_DEFAULT_PROFILE).apply();
+					}
 					refreshProfiles();
 				}
 			}

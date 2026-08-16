@@ -44,6 +44,18 @@ public interface ConfigFormEvents {
 	default void onShaderTuningComplete(float[] values) {
 	}
 
+	/** Opens the existing profile-load flow from the Quick destination. */
+	default void onUseProfile() {
+	}
+
+	/** Opens the existing profile-save flow from the Quick destination. */
+	default void onSaveAsProfile() {
+	}
+
+	/** Opens profile management without changing profile persistence ownership. */
+	default void onManageProfiles() {
+	}
+
 	enum ColorField {
 		SCREEN_BACKGROUND,
 		VIRTUAL_KEYBOARD_BACKGROUND,

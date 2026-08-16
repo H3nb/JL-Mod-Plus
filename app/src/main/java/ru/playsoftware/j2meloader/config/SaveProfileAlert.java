@@ -92,6 +92,9 @@ public class SaveProfileAlert extends DialogFragment {
 								PreferenceManager.getDefaultSharedPreferences(context)
 										.edit().putString(PREF_DEFAULT_PROFILE, name).apply();
 							}
+							if (context instanceof ConfigActivity) {
+								((ConfigActivity) context).onProfileDataChanged();
+							}
 							Toast.makeText(context, getString(R.string.saved, name), Toast.LENGTH_SHORT).show();
 							dismiss();
 						} catch (Exception e) {

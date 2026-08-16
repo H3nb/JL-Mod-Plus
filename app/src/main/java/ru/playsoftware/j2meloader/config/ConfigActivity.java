@@ -88,7 +88,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private final ConfigFormEvents formEvents = new ConfigFormEvents() {
 		@Override
 		public void onFormChanged(@NonNull ConfigFormState state) {
-			currentForm = state;
+			updateForm(state);
 		}
 
 		@Override
@@ -137,12 +137,27 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		public void onShaderTuningComplete(@NonNull float[] values) {
 			onTuneComplete(values);
 		}
+
+		@Override
+		public void onUseProfile() {
+			showLoadProfile();
+		}
+
+		@Override
+		public void onSaveAsProfile() {
+			showSaveProfile();
+		}
+
+		@Override
+		public void onManageProfiles() {
+			saveParams();
+			startActivity(new Intent(ConfigActivity.this, ProfilesActivity.class));
+		}
 	};
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		EdgeToEdgeCompat.enableIfSupported(this);
 		Intent intent = getIntent();
 		String action = intent.getAction();
 		isProfile = ACTION_EDIT_PROFILE.equals(action);
@@ -179,6 +194,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 					}
 				}
 				ComposeView errorView = new ComposeView(this);
+				EdgeToEdgeCompat.enableIfSupported(this);
 				setContentView(errorView);
 				EdgeToEdgeCompat.protectHostContent(this);
 				ConfigErrorComposeBridge.install(errorView,
@@ -205,9 +221,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			return;
 		}
 		loadKeyLayout();
+		EdgeToEdgeCompat.enableForComposeSurface(this);
 		ComposeView composeView = new ComposeView(this);
 		setContentView(composeView);
-		EdgeToEdgeCompat.protectHostContent(this);
 		if (getSupportActionBar() != null) {
 			getSupportActionBar().hide();
 		}
@@ -263,23 +279,19 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 							keylayoutFile.delete();
 						}
 						loadKeyLayout();
+						if (composeController != null) {
+							composeController.update(createUiState());
+						}
 					}
 
 					@Override
 					public void onLoadProfile() {
-						if (keylayoutFile != null) {
-							LoadProfileAlert.newInstance(keylayoutFile.getParent())
-									.show(getSupportFragmentManager(), "load_profile");
-						}
+						showLoadProfile();
 					}
 
 					@Override
 					public void onSaveProfile() {
-						if (keylayoutFile != null) {
-							saveParams();
-							SaveProfileAlert.getInstance(keylayoutFile.getParent())
-									.show(getSupportFragmentManager(), "save_profile");
-						}
+						showSaveProfile();
 					}
 				},
 				getTitle() == null ? "" : getTitle().toString(),
@@ -323,6 +335,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	}
 
 	void loadConfig() {
+		defProfile = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
+				.getString(PREF_DEFAULT_PROFILE, null);
 		params = ProfilesManager.loadConfig(configDir);
 		if (params == null && defProfile != null) {
 			FileUtils.copyFiles(new File(Config.getProfilesDir(), defProfile), configDir, null);
@@ -576,6 +590,32 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		startActivity(i);
 	}
 
+	private void showLoadProfile() {
+		if (keylayoutFile == null) {
+			return;
+		}
+		saveParams();
+		LoadProfileAlert.newInstance(keylayoutFile.getParent())
+				.show(getSupportFragmentManager(), "load_profile");
+	}
+
+	private void showSaveProfile() {
+		if (keylayoutFile == null) {
+			return;
+		}
+		// Save the effective draft before entering the existing optional config/keyboard flow.
+		saveParams();
+		SaveProfileAlert.getInstance(keylayoutFile.getParent())
+				.show(getSupportFragmentManager(), "save_profile");
+	}
+
+	/** Called by the existing save dialog after a profile artifact is written. */
+	void onProfileDataChanged() {
+		if (composeController != null) {
+			composeController.update(createUiState());
+		}
+	}
+
 	private void showColorPicker(ColorField field) {
 		if (composeController != null && currentForm != null) {
 			composeController.showColorPicker(field, colorValue(currentForm, field));
@@ -656,8 +696,15 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		ConfigFormState state = currentForm == null
 				? ConfigFormState.fromProfile(params, normalizedSystemProperties())
 				: currentForm;
+		String defaultProfile = PreferenceManager.getDefaultSharedPreferences(this)
+				.getString(PREF_DEFAULT_PROFILE, null);
+		Profile activeProfile = isProfile ? null : ProfileConfigMatcher.findMatch(
+				params, state, ProfilesManager.getProfiles(), defaultProfile, keylayoutFile);
+		ConfigUiState.ProfileStatus profileStatus = activeProfile == null
+				? ConfigUiState.ProfileStatus.custom(defaultProfile)
+				: ConfigUiState.ProfileStatus.active(activeProfile.getName(), defaultProfile);
 		return new ConfigUiState(state, screenPresets, fontPresets, skinOptions, soundBankOptions,
-				shaders == null ? Collections.emptyList() : shaders, removableScreenPresets);
+				shaders == null ? Collections.emptyList() : shaders, removableScreenPresets, profileStatus);
 	}
 
 	private String normalizedSystemProperties() {

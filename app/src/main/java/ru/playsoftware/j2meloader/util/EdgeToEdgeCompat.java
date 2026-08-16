@@ -42,6 +42,11 @@ public final class EdgeToEdgeCompat {
 	 * padded as a conventional View host.
 	 */
 	public static void enableForComposeLibrary(Activity activity) {
+		enableForComposeSurface(activity);
+	}
+
+	/** Enables the shared edge-to-edge contract for a Compose-owned host surface. */
+	public static void enableForComposeSurface(Activity activity) {
 		WindowCompat.enableEdgeToEdge(activity.getWindow());
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 			activity.getWindow().setNavigationBarContrastEnforced(false);

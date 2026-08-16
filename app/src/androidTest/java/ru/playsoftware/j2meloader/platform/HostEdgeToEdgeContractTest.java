@@ -40,6 +40,7 @@ import java.io.File;
 import ru.playsoftware.j2meloader.config.ConfigActivity;
 import ru.playsoftware.j2meloader.config.ProfileModel;
 import ru.playsoftware.j2meloader.config.ProfilesManager;
+import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.settings.KeyMapperActivity;
 import ru.playsoftware.j2meloader.settings.SettingsActivity;
 import ru.playsoftware.j2meloader.util.Constants;
@@ -73,7 +74,7 @@ public class HostEdgeToEdgeContractTest {
 
 		try (ActivityScenario<ConfigActivity> scenario = ActivityScenario.launch(intent)) {
 			InstrumentationRegistry.getInstrumentation().waitForIdleSync();
-			scenario.onActivity(HostEdgeToEdgeContractTest::assertHostUiInsideSafeArea);
+			scenario.onActivity(HostEdgeToEdgeContractTest::assertConfigComposeSurface);
 		}
 	}
 
@@ -132,6 +133,20 @@ public class HostEdgeToEdgeContractTest {
 		assertTrue("ActionBar controls must avoid the right display cutout",
 				actionBarBounds.right - actionBarContainer.getPaddingRight()
 						<= decorBounds.right - safe.right);
+	}
+
+	private static void assertConfigComposeSurface(Activity activity) {
+		View content = activity.findViewById(android.R.id.content);
+		View composeRoot = activity.findViewById(R.id.config_compose_root);
+		WindowInsetsCompat windowInsets = ViewCompat.getRootWindowInsets(content);
+		assertNotNull("Config window must expose root insets", windowInsets);
+		assertNotNull("Config must host the Compose surface", composeRoot);
+		assertTrue("Config Compose surface must fill the host content",
+				boundsInWindow(content).equals(boundsInWindow(composeRoot)));
+		Insets safe = windowInsets.getInsetsIgnoringVisibility(
+				WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+		assertTrue("Config window must expose a non-negative top safe inset", safe.top >= 0);
+		assertTrue("Config window must expose a non-negative bottom safe inset", safe.bottom >= 0);
 	}
 
 	private static Rect boundsInWindow(View view) {

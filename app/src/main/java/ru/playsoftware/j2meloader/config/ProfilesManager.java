@@ -107,6 +107,12 @@ public class ProfilesManager {
 
 	@Nullable
 	public static ProfileModel loadConfig(File dir) {
+		return loadConfig(dir, true);
+	}
+
+	/** Loads a profile and optionally persists legacy-format migrations. */
+	@Nullable
+	static ProfileModel loadConfig(File dir, boolean persistMigrations) {
 		File file = new File(dir, Config.MIDLET_CONFIG_FILE);
 		ProfileModel params = null;
 		if (file.exists()) {
@@ -119,7 +125,7 @@ public class ProfilesManager {
 		}
 		if (params == null) {
 			File oldFile = new File(dir, "config.xml");
-			if (oldFile.exists()) {
+			if (oldFile.exists() && persistMigrations) {
 				try (FileInputStream in = new FileInputStream(oldFile)) {
 					HashMap<String, Object> map = XmlUtils.readMapXml(in);
 					JsonElement json = gson.toJsonTree(map);
@@ -167,7 +173,9 @@ public class ProfilesManager {
 				params.screenGravity = 1;
 
 				params.version = ProfileModel.VERSION;
-				ProfilesManager.saveConfig(params);
+				if (persistMigrations) {
+					ProfilesManager.saveConfig(params);
+				}
 				break;
 		}
 		return params;

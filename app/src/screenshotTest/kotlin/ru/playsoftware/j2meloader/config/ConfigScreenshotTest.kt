@@ -69,7 +69,7 @@ private val PreviewConfigState = ConfigUiState(
 @Composable
 fun ConfigLightPhoneScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        ConfigScreen(PreviewConfigState, NoOpConfigEvents)
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Graphics)
     }
 }
 
@@ -84,7 +84,7 @@ fun ConfigLightPhoneScreenshot() {
 @Composable
 fun ConfigDarkPhoneScreenshot() {
     JLModPlusTheme(darkTheme = true) {
-        ConfigScreen(PreviewConfigState, NoOpConfigEvents)
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Graphics)
     }
 }
 
@@ -99,7 +99,40 @@ fun ConfigDarkPhoneScreenshot() {
 @Composable
 fun ConfigLargeFontFormScreenshot() {
     JLModPlusTheme {
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Graphics)
+    }
+}
+
+@PreviewTest
+@Preview(name = "Config quick light", widthDp = 360, heightDp = 800, showBackground = true)
+@Composable
+fun ConfigQuickScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
         ConfigScreen(PreviewConfigState, NoOpConfigEvents)
+    }
+}
+
+@PreviewTest
+@Preview(
+    name = "Config quick dark",
+    widthDp = 360,
+    heightDp = 800,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    showBackground = true,
+)
+@Composable
+fun ConfigQuickDarkScreenshot() {
+    JLModPlusTheme(darkTheme = true) {
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents)
+    }
+}
+
+@PreviewTest
+@Preview(name = "Config media empty", widthDp = 360, heightDp = 800, showBackground = true)
+@Composable
+fun ConfigMediaEmptyScreenshot() {
+    JLModPlusTheme {
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Media)
     }
 }
 
@@ -140,7 +173,7 @@ fun ConfigColorPickerDarkScreenshot() {
 @Composable
 fun ConfigLandscapeScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        ConfigScreen(PreviewConfigState, NoOpConfigEvents)
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Graphics)
     }
 }
 
@@ -220,6 +253,7 @@ fun ConfigScreenPresetDialogScreenshot() {
             selectedPreset = Size(240, 320),
             onDismissRequest = {},
             onSelected = {},
+            onAdd = {},
             onRemove = {},
         )
     }
