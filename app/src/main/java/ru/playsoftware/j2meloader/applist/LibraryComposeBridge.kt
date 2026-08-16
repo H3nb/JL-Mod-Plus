@@ -129,6 +129,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -2397,21 +2398,21 @@ private fun LibraryIconSlot(
             maxWidth * LIBRARY_GRID_ARTWORK_FRACTION,
             LibraryGridMaxArtworkSize,
         )
-        val icon = rememberLibraryIcon(app, artworkSize, iconRatio)
+        // Missing icons are UI chrome, not legacy artwork. Keep them out of the bitmap
+        // analysis/cache pipeline so the vector stays crisp at every density.
+        val icon = if (app.iconPath.isNullOrBlank()) {
+            null
+        } else {
+            rememberLibraryIcon(app, artworkSize, iconRatio)
+        }
+        val isFallback = icon == null ||
+            icon.presentationMode == LibraryIconPresentationMode.Fallback
         val baseContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
         val containerColor = when {
+            isFallback -> colorResource(R.color.library_default_icon_background)
             iconRatio != LibraryIconRatio.Square -> baseContainerColor
-            icon?.presentationMode == LibraryIconPresentationMode.Fallback -> {
-                icon.representativeColor?.let { representativeColor ->
-                    adaptiveLibraryFallbackSlotColor(
-                        base = baseContainerColor,
-                        accent = representativeColor,
-                        foregroundLuminance = icon.foregroundLuminance,
-                    )
-                } ?: baseContainerColor
-            }
-            icon?.presentationMode == LibraryIconPresentationMode.Cover -> baseContainerColor
-            else -> icon?.tileColor ?: baseContainerColor
+            icon.presentationMode == LibraryIconPresentationMode.Cover -> baseContainerColor
+            else -> icon.tileColor ?: baseContainerColor
         }
 
         Card(
@@ -2423,15 +2424,38 @@ private fun LibraryIconSlot(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) {
-                LibraryIconArtwork(
-                    icon = icon,
-                    contentSize = artworkSize,
-                    iconRatio = iconRatio,
-                )
+                if (isFallback) {
+                    LibraryFallbackIconArtwork(iconRatio)
+                } else {
+                    LibraryIconArtwork(
+                        icon = icon,
+                        contentSize = artworkSize,
+                        iconRatio = iconRatio,
+                    )
+                }
             }
         }
     }
 }
+
+@Composable
+private fun LibraryFallbackIconArtwork(iconRatio: LibraryIconRatio) {
+    Icon(
+        painter = painterResource(R.drawable.ic_default_midlet),
+        contentDescription = null,
+        modifier = Modifier.fillMaxSize(
+            if (iconRatio == LibraryIconRatio.Square) {
+                LIBRARY_FALLBACK_VECTOR_SCALE
+            } else {
+                LIBRARY_FALLBACK_VECTOR_PORTRAIT_SCALE
+            },
+        ),
+        tint = colorResource(R.color.library_default_icon),
+    )
+}
+
+private const val LIBRARY_FALLBACK_VECTOR_SCALE = 0.70f
+private const val LIBRARY_FALLBACK_VECTOR_PORTRAIT_SCALE = 0.62f
 
 @Composable
 private fun LibraryIconArtwork(
