@@ -154,5 +154,7 @@ private object NoOpDetailActions : CrashReportDetailsActions {
 
     override fun onShare() = Unit
 
+    override fun onReportGitHub() = Unit
+
     override fun onDelete() = Unit
 }
