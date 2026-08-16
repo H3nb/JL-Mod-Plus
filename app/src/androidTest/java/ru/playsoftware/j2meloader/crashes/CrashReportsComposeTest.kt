@@ -130,7 +130,7 @@ class CrashReportsComposeTest {
     }
 
     @Test
-    fun detailActionsInvokeCopyShareAndDeleteCallbacks() {
+    fun detailActionsInvokeCopyShareGitHubAndDeleteCallbacks() {
         val actions = RecordingDetailActions()
         composeRule.setContent {
             JLModPlusTheme {
@@ -147,6 +147,9 @@ class CrashReportsComposeTest {
         composeRule.onNodeWithContentDescription("Share Report").performClick()
         composeRule.onAllNodesWithText("Share Report").get(1).performClick()
         assertEquals(1, actions.shareCount)
+
+        composeRule.onNodeWithText("Report on GitHub").performClick()
+        assertEquals(1, actions.githubCount)
 
         composeRule.onNodeWithContentDescription("Delete Report").performClick()
         composeRule.onAllNodesWithText("Delete Report").get(0).performClick()
@@ -181,6 +184,7 @@ class CrashReportsComposeTest {
     private class RecordingDetailActions : CrashReportDetailsActions {
         var copyCount = 0
         var shareCount = 0
+        var githubCount = 0
         var deleteCount = 0
 
         override fun onBack() = Unit
@@ -191,6 +195,10 @@ class CrashReportsComposeTest {
 
         override fun onShare() {
             shareCount++
+        }
+
+        override fun onReportGitHub() {
+            githubCount++
         }
 
         override fun onDelete() {
