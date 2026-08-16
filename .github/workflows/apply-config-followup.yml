@@ -1,0 +1,435 @@
+name: Apply config follow-up
+
+on:
+  push:
+    branches:
+      - ui/redesign-config
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ui/redesign-config
+          submodules: recursive
+
+      - name: Apply focused follow-up
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one match, found {count}: {old[:80]!r}")
+              p.write_text(text.replace(old, new, 1))
+
+          compose = "app/src/main/java/ru/playsoftware/j2meloader/config/ConfigComposeBridge.kt"
+          replace_once(
+              compose,
+              "import androidx.compose.foundation.background\nimport androidx.compose.foundation.clickable\n",
+              "import androidx.compose.foundation.BorderStroke\nimport androidx.compose.foundation.background\nimport androidx.compose.foundation.clickable\n",
+          )
+          replace_once(
+              compose,
+              "import androidx.compose.foundation.layout.heightIn\nimport androidx.compose.foundation.layout.padding\n",
+              "import androidx.compose.foundation.layout.heightIn\nimport androidx.compose.foundation.layout.ime\nimport androidx.compose.foundation.layout.padding\n",
+          )
+          replace_once(
+              compose,
+              "import androidx.compose.ui.platform.LocalConfiguration\nimport androidx.compose.ui.platform.ViewCompositionStrategy\n",
+              "import androidx.compose.ui.platform.LocalConfiguration\nimport androidx.compose.ui.platform.LocalDensity\nimport androidx.compose.ui.platform.ViewCompositionStrategy\n",
+          )
+          replace_once(
+              compose,
+              "    val selectedDestination = destinations.getOrElse(selectedDestinationIndex) { destinations.first() }\n    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE\n",
+              "    val selectedDestination = destinations.getOrElse(selectedDestinationIndex) { destinations.first() }\n    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE\n    val density = LocalDensity.current\n    val imeVisible = WindowInsets.ime.getBottom(density) > 0\n",
+          )
+          replace_once(
+              compose,
+              "                if (!isLandscape) {\n                    ConfigNavigationBar(\n",
+              "                // Do not let the destination bar ride above the IME while editing text.\n                if (!isLandscape && !imeVisible) {\n                    ConfigNavigationBar(\n",
+          )
+
+          general_scale_type = '''        ConfigRow(stringResource(R.string.pref_screen_scale_type)) {
+            val options = stringArrayResource(R.array.pref_scale_type_entries).toList()
+            ChoiceField(
+                selected = options.getOrElse(form.screenScaleType) { options.firstOrNull().orEmpty() },
+                options = options,
+                dialogTitle = stringResource(R.string.pref_screen_scale_type),
+                onSelected = { index -> onFormChanged(form.toBuilder().screenScaleType(index).build()) },
+            )
+        }
+'''
+          general_scale_ratio = '''        ConfigRow(stringResource(R.string.PREF_SCALE_RATIO)) {
+            CompactTextField(
+                value = form.screenScaleRatio,
+                label = "100",
+                keyboardType = KeyboardType.Number,
+                dialogTitle = stringResource(R.string.PREF_SCALE_RATIO),
+                showLabel = false,
+                onValueChange = { value ->
+                    onFormChanged(form.toBuilder().screenScaleRatio(normalizeScaleRatio(value)).build())
+                },
+            )
+        }
+'''
+          # The first occurrence belongs to General. Add Scale (%) there.
+          p = Path(compose)
+          text = p.read_text()
+          idx = text.index(general_scale_type)
+          text = text[:idx] + general_scale_type + general_scale_ratio + text[idx + len(general_scale_type):]
+          p.write_text(text)
+
+          # Remove the duplicated General-level controls from Graphics. The second occurrences
+          # of orientation and scale type, plus the only remaining Scale (%) block, belong there.
+          p = Path(compose)
+          text = p.read_text()
+          if text.count(general_scale_ratio) != 2:
+              raise SystemExit(f"unexpected Scale (%) block count: {text.count(general_scale_ratio)}")
+          text = text.replace(general_scale_ratio, "", 1)  # removes the Graphics copy (earlier in ScreenSection)
+          orientation_block = '''        ConfigRow(stringResource(R.string.PREF_ORIENTATION)) {
+            val options = stringArrayResource(R.array.PREF_ORIENTATION_ENTRIES).toList()
+            ChoiceField(
+                selected = options.getOrElse(form.orientation) { options.firstOrNull().orEmpty() },
+                options = options,
+                dialogTitle = stringResource(R.string.PREF_ORIENTATION),
+                onSelected = { index -> onFormChanged(form.toBuilder().orientation(index).build()) },
+            )
+        }
+'''
+          if text.count(orientation_block) != 2:
+              raise SystemExit(f"unexpected orientation block count: {text.count(orientation_block)}")
+          first = text.index(orientation_block)
+          second = text.index(orientation_block, first + len(orientation_block))
+          text = text[:second] + text[second + len(orientation_block):]
+          if text.count(general_scale_type) != 2:
+              raise SystemExit(f"unexpected scale type block count: {text.count(general_scale_type)}")
+          first = text.index(general_scale_type)
+          second = text.index(general_scale_type, first + len(general_scale_type))
+          text = text[:second] + text[second + len(general_scale_type):]
+          p.write_text(text)
+
+          profile_old = '''@Composable
+private fun ProfileStatusCard(status: ConfigUiState.ProfileStatus, events: ConfigFormEvents) {
+    val active = status.activeProfile
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = androidx.compose.material3.CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+        ),
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.profiles),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+            Text(
+                text = active ?: stringResource(R.string.profile_custom),
+                style = MaterialTheme.typography.titleLarge,
+            )
+            Text(
+                text = stringResource(
+                    if (active == null) R.string.profile_custom_summary else R.string.profile_active_summary,
+                ),
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+            OutlinedButton(onClick = events::onUseProfile, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    stringResource(
+                        if (active == null) R.string.profile_use else R.string.profile_change,
+                    ),
+                )
+            }
+            if (active == null) {
+                OutlinedButton(onClick = events::onSaveAsProfile, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.profile_save_as))
+                }
+            }
+        }
+    }
+}
+'''
+          profile_new = '''@Composable
+private fun ProfileStatusCard(status: ConfigUiState.ProfileStatus, events: ConfigFormEvents) {
+    val active = status.activeProfile
+    val matched = active != null || status.builtInDefault
+    val title = when {
+        active != null -> active
+        status.builtInDefault -> stringResource(R.string.profile_builtin_default)
+        else -> stringResource(R.string.profile_custom)
+    }
+    val summary = when {
+        active != null -> stringResource(R.string.profile_active_summary)
+        status.builtInDefault -> stringResource(R.string.profile_builtin_default_summary)
+        else -> stringResource(R.string.profile_custom_summary)
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = androidx.compose.material3.CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.profiles),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = summary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Button(onClick = events::onUseProfile, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(if (matched) R.string.profile_change else R.string.profile_use))
+            }
+            if (!matched) {
+                OutlinedButton(onClick = events::onSaveAsProfile, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.profile_save_as))
+                }
+            }
+        }
+    }
+}
+'''
+          replace_once(compose, profile_old, profile_new)
+          replace_once(
+              compose,
+              "                    title = stringResource(R.string.PREF_KEEP_ASPECT_RATIO),\n",
+              "                    title = stringResource(R.string.config_lock_custom_resolution_ratio),\n",
+          )
+
+          ui_state = "app/src/main/java/ru/playsoftware/j2meloader/config/ConfigUiState.java"
+          old_status = '''\t/** Profile matching result used by the MIDlet Quick destination. */
+\tpublic static final class ProfileStatus {
+\t\t@Nullable
+\t\tpublic final String activeProfile;
+\t\t@Nullable
+\t\tpublic final String defaultProfile;
+
+\t\tprivate ProfileStatus(@Nullable String activeProfile, @Nullable String defaultProfile) {
+\t\t\tthis.activeProfile = activeProfile;
+\t\t\tthis.defaultProfile = defaultProfile;
+\t\t}
+
+\t\t@NonNull
+\t\tpublic static ProfileStatus custom(@Nullable String defaultProfile) {
+\t\t\treturn new ProfileStatus(null, defaultProfile);
+\t\t}
+
+\t\t@NonNull
+\t\tpublic static ProfileStatus active(@NonNull String activeProfile,
+\t\t\t\t@Nullable String defaultProfile) {
+\t\t\treturn new ProfileStatus(activeProfile, defaultProfile);
+\t\t}
+\t}
+'''
+          new_status = '''\t/** Profile matching result used by the MIDlet General destination. */
+\tpublic static final class ProfileStatus {
+\t\t@Nullable
+\t\tpublic final String activeProfile;
+\t\t@Nullable
+\t\tpublic final String defaultProfile;
+\t\tpublic final boolean builtInDefault;
+
+\t\tprivate ProfileStatus(@Nullable String activeProfile, @Nullable String defaultProfile,
+\t\t\t\tboolean builtInDefault) {
+\t\t\tthis.activeProfile = activeProfile;
+\t\t\tthis.defaultProfile = defaultProfile;
+\t\t\tthis.builtInDefault = builtInDefault;
+\t\t}
+
+\t\t@NonNull
+\t\tpublic static ProfileStatus custom(@Nullable String defaultProfile) {
+\t\t\treturn new ProfileStatus(null, defaultProfile, false);
+\t\t}
+
+\t\t@NonNull
+\t\tpublic static ProfileStatus builtInDefault(@Nullable String defaultProfile) {
+\t\t\treturn new ProfileStatus(null, defaultProfile, true);
+\t\t}
+
+\t\t@NonNull
+\t\tpublic static ProfileStatus active(@NonNull String activeProfile,
+\t\t\t\t@Nullable String defaultProfile) {
+\t\t\treturn new ProfileStatus(activeProfile, defaultProfile, false);
+\t\t}
+\t}
+'''
+          replace_once(ui_state, old_status, new_status)
+
+          activity = "app/src/main/java/ru/playsoftware/j2meloader/config/ConfigActivity.java"
+          replace_once(
+              activity,
+              "\tprivate ConfigComposeController composeController;\n\tprivate List<ProfileConfigMatcher.Candidate> profileCandidates = Collections.emptyList();\n",
+              "\tprivate ConfigComposeController composeController;\n\tprivate ProfileModel builtInDefaultParams;\n\tprivate List<ProfileConfigMatcher.Candidate> profileCandidates = Collections.emptyList();\n",
+          )
+          replace_once(
+              activity,
+              "\t\tconfigDir.mkdirs();\n\n\t\tdefProfile = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())\n",
+              "\t\tconfigDir.mkdirs();\n\t\tbuiltInDefaultParams = new ProfileModel(configDir);\n\n\t\tdefProfile = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())\n",
+          )
+          old_profile_state = '''\t\tProfile activeProfile = isProfile ? null : ProfileConfigMatcher.findMatchCached(
+\t\t\t\tparams, state, profileCandidates, defaultProfile, currentKeyLayoutSnapshot);
+\t\tConfigUiState.ProfileStatus profileStatus = activeProfile == null
+\t\t\t\t? ConfigUiState.ProfileStatus.custom(defaultProfile)
+\t\t\t\t: ConfigUiState.ProfileStatus.active(activeProfile.getName(), defaultProfile);
+'''
+          new_profile_state = '''\t\tProfile activeProfile = isProfile ? null : ProfileConfigMatcher.findMatchCached(
+\t\t\t\tparams, state, profileCandidates, defaultProfile, currentKeyLayoutSnapshot);
+\t\tConfigUiState.ProfileStatus profileStatus;
+\t\tif (activeProfile != null) {
+\t\t\tprofileStatus = ConfigUiState.ProfileStatus.active(activeProfile.getName(), defaultProfile);
+\t\t} else if (!isProfile && builtInDefaultParams != null
+\t\t\t\t&& ProfileConfigMatcher.sameEffectiveConfig(params, state, builtInDefaultParams)) {
+\t\t\tprofileStatus = ConfigUiState.ProfileStatus.builtInDefault(defaultProfile);
+\t\t} else {
+\t\t\tprofileStatus = ConfigUiState.ProfileStatus.custom(defaultProfile);
+\t\t}
+'''
+          replace_once(activity, old_profile_state, new_profile_state)
+
+          strings_en = Path("app/src/main/res/values/strings_config_redesign.xml")
+          text = strings_en.read_text()
+          text = text.replace(
+              '    <string name="profile_save_template_summary">Save the current configuration as a reusable template.</string>\n',
+              '    <string name="profile_save_template_summary">Save the current configuration as a reusable template.</string>\n'
+              '    <string name="profile_builtin_default">Default</string>\n'
+              '    <string name="profile_builtin_default_summary">Built-in emulator settings</string>\n'
+              '    <string name="config_lock_custom_resolution_ratio">Keep width/height ratio while editing</string>\n',
+          )
+          strings_en.write_text(text)
+
+          strings_in = Path("app/src/main/res/values-in/strings_config_redesign.xml")
+          text = strings_in.read_text()
+          text = text.replace(
+              '    <string name="profile_save_template_summary">Simpan konfigurasi saat ini sebagai templat yang dapat digunakan kembali.</string>\n',
+              '    <string name="profile_save_template_summary">Simpan konfigurasi saat ini sebagai templat yang dapat digunakan kembali.</string>\n'
+              '    <string name="profile_builtin_default">Bawaan</string>\n'
+              '    <string name="profile_builtin_default_summary">Pengaturan bawaan emulator</string>\n'
+              '    <string name="config_lock_custom_resolution_ratio">Pertahankan rasio lebar/tinggi saat mengedit</string>\n',
+          )
+          strings_in.write_text(text)
+
+          test = "app/src/androidTest/java/ru/playsoftware/j2meloader/config/ConfigComposeTest.kt"
+          replace_once(
+              test,
+              '        composeRule.onNodeWithText("Screen size").assertExists()\n        composeRule.onNodeWithContentDescription("Start").assertExists()\n',
+              '        composeRule.onNodeWithText("Screen size").assertExists()\n'
+              '        composeRule.onNodeWithText("Screen Orientation").assertExists()\n'
+              '        composeRule.onNodeWithText("Scale Type").assertExists()\n'
+              '        composeRule.onNodeWithText("Scale (%)").assertExists()\n'
+              '        composeRule.onNodeWithContentDescription("Start").assertExists()\n',
+          )
+          replace_once(
+              test,
+              '        composeRule.onNodeWithText("Screen size").assertDoesNotExist()\n\n        composeRule.onNodeWithContentDescription("Controls").performClick()\n',
+              '        composeRule.onNodeWithText("Screen size").assertDoesNotExist()\n'
+              '        composeRule.onNodeWithText("Screen Orientation").assertDoesNotExist()\n'
+              '        composeRule.onNodeWithText("Scale Type").assertDoesNotExist()\n'
+              '        composeRule.onNodeWithText("Scale (%)").assertDoesNotExist()\n\n'
+              '        composeRule.onNodeWithContentDescription("Controls").performClick()\n',
+          )
+          replace_once(
+              test,
+              '    @Test\n    fun destructiveActionsLiveInSystemAndRequireExplicitConfirmation() {\n',
+              '''    @Test
+    fun builtInDefaultProfileIsNotShownAsCustom() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form,
+            base.screenPresets,
+            base.fontPresets,
+            base.skins,
+            base.soundBanks,
+            base.shaders,
+            base.removableScreenPresets,
+            ConfigUiState.ProfileStatus.builtInDefault(null),
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(state, RecordingConfigEvents())
+            }
+        }
+
+        composeRule.onNodeWithText("Default").assertExists()
+        composeRule.onNodeWithText("Built-in emulator settings").assertExists()
+        composeRule.onNodeWithText("Custom").assertDoesNotExist()
+        composeRule.onNodeWithText("Save as profile").assertDoesNotExist()
+        composeRule.onNodeWithText("Change profile").assertExists()
+    }
+
+    @Test
+    fun destructiveActionsLiveInSystemAndRequireExplicitConfirmation() {
+''',
+          )
+          replace_once(
+              test,
+              '                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.Graphics)\n            }\n        }\n\n        composeRule.onNodeWithText("Screen Orientation").performClick()\n',
+              '                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.General)\n            }\n        }\n\n        composeRule.onNodeWithText("Screen Orientation").performClick()\n',
+          )
+
+          # Ensure the new resource keys were inserted exactly once.
+          for path, key in [
+              (strings_en, 'profile_builtin_default'),
+              (strings_en, 'config_lock_custom_resolution_ratio'),
+              (strings_in, 'profile_builtin_default'),
+              (strings_in, 'config_lock_custom_resolution_ratio'),
+          ]:
+              if path.read_text().count(f'name="{key}"') != 1:
+                  raise SystemExit(f"{path}: bad resource insertion for {key}")
+          PY
+          git diff --check
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
+        with:
+          cache-read-only: true
+
+      - name: Refresh screenshot references
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon :app:updateEmulatorDebugScreenshotTest
+
+      - name: Commit follow-up and remove helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/apply-config-followup.yml
+          git add app/src/main app/src/androidTest app/src/screenshotTestEmulatorDebug/reference
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Refine config general and profile UX'
+          git push origin HEAD:ui/redesign-config
