@@ -31,7 +31,7 @@ class LibraryIconPresentationTest {
         )
 
         assertEquals(LibraryIconPresentationMode.Subject, decision.mode)
-        assertTrue(decision.visualScale in 0.60f..0.63f)
+        assertTrue(decision.visualScale in 0.61f..0.63f)
     }
 
     @Test
@@ -47,7 +47,7 @@ class LibraryIconPresentationTest {
         )
 
         assertEquals(LibraryIconPresentationMode.Subject, decision.mode)
-        assertTrue(decision.visualScale < 0.66f)
+        assertTrue(decision.visualScale in 0.61f..0.63f)
     }
 
     @Test
@@ -63,11 +63,11 @@ class LibraryIconPresentationTest {
         )
 
         assertEquals(LibraryIconPresentationMode.Backed, decision.mode)
-        assertEquals(0.86f, decision.visualScale, 0.0001f)
+        assertEquals(0.92f, decision.visualScale, 0.0001f)
     }
 
     @Test
-    fun elongatedSubjectGetsMoreRoomThanDenseRoundSubject() {
+    fun sparseElongatedSubjectGetsMoreRoomThanDenseRoundSubject() {
         val denseRound = decideLibraryIconPresentation(
             input(
                 transparentRatio = 0.34f,
@@ -87,12 +87,27 @@ class LibraryIconPresentationTest {
 
         assertEquals(LibraryIconPresentationMode.Subject, denseRound.mode)
         assertEquals(LibraryIconPresentationMode.Subject, elongated.mode)
-        assertTrue(elongated.visualScale in 0.72f..0.75f)
+        assertEquals(0.90f, elongated.visualScale, 0.0001f)
         assertTrue(elongated.visualScale > denseRound.visualScale)
     }
 
     @Test
-    fun extremelySparseSubjectNeverInflatesToSlotEdges() {
+    fun moderatelySparseSubjectUsesOpticalAreaInsteadOfFixedScale() {
+        val decision = decideLibraryIconPresentation(
+            input(
+                transparentRatio = 0.45f,
+                boundsCoverage = 0.62f,
+                occupancy = 0.58f,
+                aspectFill = 0.78f,
+            ),
+        )
+
+        assertEquals(LibraryIconPresentationMode.Subject, decision.mode)
+        assertTrue(decision.visualScale in 0.90f..0.90f)
+    }
+
+    @Test
+    fun extremelySparseSubjectNeverInflatesPastConservativeCap() {
         val decision = decideLibraryIconPresentation(
             input(
                 transparentRatio = 0.90f,
@@ -103,7 +118,7 @@ class LibraryIconPresentationTest {
         )
 
         assertEquals(LibraryIconPresentationMode.Subject, decision.mode)
-        assertEquals(0.78f, decision.visualScale, 0.0001f)
+        assertEquals(0.90f, decision.visualScale, 0.0001f)
     }
 
     @Test
@@ -118,7 +133,7 @@ class LibraryIconPresentationTest {
         )
 
         assertEquals(LibraryIconPresentationMode.Backed, decision.mode)
-        assertEquals(0.86f, decision.visualScale, 0.0001f)
+        assertEquals(0.92f, decision.visualScale, 0.0001f)
     }
 
     @Test
@@ -133,7 +148,7 @@ class LibraryIconPresentationTest {
         )
 
         assertEquals(LibraryIconPresentationMode.Subject, decision.mode)
-        assertEquals(0.74f, decision.visualScale, 0.0001f)
+        assertEquals(0.84f, decision.visualScale, 0.0001f)
     }
 
     @Test
@@ -151,7 +166,7 @@ class LibraryIconPresentationTest {
         )
 
         assertEquals(LibraryIconPresentationMode.Backed, decision.mode)
-        assertEquals(0.74f, decision.visualScale, 0.0001f)
+        assertEquals(0.92f, decision.visualScale, 0.0001f)
     }
 
     @Test
