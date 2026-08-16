@@ -81,6 +81,9 @@ public class Graphics implements
 		drawPaint.setStyle(Paint.Style.STROKE);
 		fillPaint.setStyle(Paint.Style.FILL);
 		fillStrokePaint.setStyle(Paint.Style.STROKE);
+		fillStrokePaint.setStrokeWidth(1.0f);
+		fillStrokePaint.setStrokeJoin(Paint.Join.ROUND);
+		fillStrokePaint.setStrokeCap(Paint.Cap.ROUND);
 		drawPaint.setAntiAlias(false);
 		fillPaint.setAntiAlias(false);
 		fillStrokePaint.setAntiAlias(false);
