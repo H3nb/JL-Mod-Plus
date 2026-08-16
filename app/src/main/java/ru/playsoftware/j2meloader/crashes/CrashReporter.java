@@ -172,7 +172,7 @@ public final class CrashReporter {
 		clearSessionContext(reporter);
 		putBounded(reporter, KEY_MIDLET_NAME, name);
 		putBounded(reporter, KEY_MIDLET_VENDOR, vendor);
-		putBounded(reporter, KEY_MIDLET_VERSION, midletVersion);
+		putBounded(reporter, KEY_MIDLET_VERSION, version);
 		putBounded(reporter, KEY_MIDLET_JAR_SIZE, jarSize);
 		putBounded(reporter, KEY_MIDLET_JAR_SHA256, jarSha256);
 	}
