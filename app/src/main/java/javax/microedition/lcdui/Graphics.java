@@ -3,6 +3,8 @@
  * Copyright 2017-2020 Nikita Shakarun
  * Copyright 2019-2023 Yury Kharchenko
  *
+ * Modified for JL-Mod Plus to align fill rasterization boundaries with MIDP 2.0.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -56,6 +58,7 @@ public class Graphics implements
 
 	private final Paint drawPaint = new Paint();
 	private final Paint fillPaint = new Paint();
+	private final Paint fillStrokePaint = new Paint();
 
 	private int translateX;
 	private int translateY;
@@ -77,8 +80,10 @@ public class Graphics implements
 		canvas.getClipBounds(clip);
 		drawPaint.setStyle(Paint.Style.STROKE);
 		fillPaint.setStyle(Paint.Style.FILL);
+		fillStrokePaint.setStyle(Paint.Style.STROKE);
 		drawPaint.setAntiAlias(false);
 		fillPaint.setAntiAlias(false);
+		fillStrokePaint.setAntiAlias(false);
 	}
 
 	public void reset(float cl, float ct, float cr, float cb) {
@@ -101,6 +106,7 @@ public class Graphics implements
 		if (nPoints > 0) {
 			Path path = computePath(xPoints, xOffset, yPoints, yOffset, nPoints);
 			canvas.drawPath(path, fillPaint);
+			canvas.drawPath(path, fillStrokePaint);
 		}
 	}
 
@@ -128,11 +134,13 @@ public class Graphics implements
 	public void setColorAlpha(int color) {
 		drawPaint.setColor(color);
 		fillPaint.setColor(color);
+		fillStrokePaint.setColor(color);
 	}
 
 	public void setColor(int r, int g, int b) {
 		drawPaint.setARGB(255, r, g, b);
 		fillPaint.setARGB(255, r, g, b);
+		fillStrokePaint.setARGB(255, r, g, b);
 	}
 
 	public void setGrayScale(int value) {
@@ -262,6 +270,7 @@ public class Graphics implements
 		if (width <= 0 || height <= 0) return;
 		rectF.set(x, y, x + width, y + height);
 		canvas.drawArc(rectF, -startAngle, -arcAngle, true, fillPaint);
+		canvas.drawArc(rectF, -startAngle, -arcAngle, true, fillStrokePaint);
 	}
 
 	public void drawRect(int x, int y, int width, int height) {
@@ -284,6 +293,7 @@ public class Graphics implements
 		if (width < 0 || height < 0) return;
 		rectF.set(x, y, x + width, y + height);
 		canvas.drawRoundRect(rectF, arcWidth * 0.5f, arcHeight * 0.5f, fillPaint);
+		canvas.drawRoundRect(rectF, arcWidth * 0.5f, arcHeight * 0.5f, fillStrokePaint);
 	}
 
 	public void fillTriangle(int x1, int y1, int x2, int y2, int x3, int y3) {

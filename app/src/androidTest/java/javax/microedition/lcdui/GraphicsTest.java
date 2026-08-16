@@ -250,6 +250,78 @@ public class GraphicsTest {
 		assertTrue(validate(image, spotsToValidate));
 	}
 
+	@Test
+	public void fillTriangle_adjacentTriangles_leaveNoSeams() {
+		Image image = Image.createImage(testWidth, testHeight);
+		Graphics graphics = image.getGraphics();
+
+		graphics.setColor(RED);
+		// Two adjacent triangles forming a 10x10 square [0..10, 0..10]
+		graphics.fillTriangle(0, 0, 10, 0, 0, 10);
+		graphics.fillTriangle(10, 0, 10, 10, 0, 10);
+
+		for (int y = 0; y <= 10; y++) {
+			for (int x = 0; x <= 10; x++) {
+				int pixel = getPixel(image, x, y);
+				if (pixel != RED) {
+					throw new AssertionError(String.format("Unpainted pixel at (%d, %d): expected %06X, got %06X", x, y, RED, pixel));
+				}
+			}
+		}
+	}
+
+	@Test
+	public void fillPolygon_adjacentPolygons_leaveNoSeams() {
+		Image image = Image.createImage(testWidth, testHeight);
+		Graphics graphics = image.getGraphics();
+
+		graphics.setColor(BLUE);
+		// Two adjacent polygons sharing a vertical seam at x=5
+		int[] x1 = {0, 5, 5, 0};
+		int[] y1 = {0, 0, 10, 10};
+		int[] x2 = {5, 10, 10, 5};
+		int[] y2 = {0, 0, 10, 10};
+
+		graphics.fillPolygon(x1, 0, y1, 0, 4);
+		graphics.fillPolygon(x2, 0, y2, 0, 4);
+
+		for (int y = 0; y <= 10; y++) {
+			for (int x = 0; x <= 10; x++) {
+				int pixel = getPixel(image, x, y);
+				if (pixel != BLUE) {
+					throw new AssertionError(String.format("Unpainted pixel at (%d, %d): expected %06X, got %06X", x, y, BLUE, pixel));
+				}
+			}
+		}
+	}
+
+	@Test
+	public void fillArc_adjacentQuarterArcs_leaveNoCenterSeam() {
+		Image image = Image.createImage(testWidth, testHeight);
+		Graphics graphics = image.getGraphics();
+
+		graphics.setColor(RED);
+		// 4 quarter arcs forming a circle from (2, 2) with diameter 16 (center at 10, 10)
+		graphics.fillArc(2, 2, 16, 16, 0, 90);
+		graphics.fillArc(2, 2, 16, 16, 90, 90);
+		graphics.fillArc(2, 2, 16, 16, 180, 90);
+		graphics.fillArc(2, 2, 16, 16, 270, 90);
+
+		// Verify central vertical and horizontal dividing lines are fully filled
+		for (int y = 3; y <= 17; y++) {
+			int pixel = getPixel(image, 10, y);
+			if (pixel != RED) {
+				throw new AssertionError(String.format("Unpainted central vertical pixel at (10, %d): expected %06X, got %06X", y, RED, pixel));
+			}
+		}
+		for (int x = 3; x <= 17; x++) {
+			int pixel = getPixel(image, x, 10);
+			if (pixel != RED) {
+				throw new AssertionError(String.format("Unpainted central horizontal pixel at (%d, 10): expected %06X, got %06X", x, RED, pixel));
+			}
+		}
+	}
+
 	private boolean validate(Image image, final int[] spotsToValidate) {
 		for (int i = 0; i < spotsToValidate.length; i += 3) {
 			int c = getPixel(image, spotsToValidate[i], spotsToValidate[i + 1]);
