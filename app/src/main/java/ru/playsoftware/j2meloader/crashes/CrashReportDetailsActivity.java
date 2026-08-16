@@ -139,8 +139,10 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 				.appendQueryParameter("title", title)
 				.appendQueryParameter("body", body)
 				.build();
+		Intent issueIntent = new Intent(Intent.ACTION_VIEW, issueUri)
+				.addCategory(Intent.CATEGORY_BROWSABLE);
 		try {
-			startActivity(new Intent(Intent.ACTION_VIEW, issueUri));
+			startActivity(issueIntent);
 		} catch (ActivityNotFoundException | SecurityException e) {
 			Toast.makeText(this, R.string.crash_report_github_unavailable, Toast.LENGTH_LONG).show();
 		}
