@@ -16,18 +16,27 @@ package ru.playsoftware.j2meloader.applist
 
 import kotlin.math.roundToInt
 
-internal const val LIBRARY_ICON_ENHANCEMENT_VERSION = 1
+internal const val LIBRARY_ICON_ENHANCEMENT_VERSION = 2
+
+internal enum class LibraryIconEnhancementMode {
+    None,
+    Mmpx2x,
+    RasterSharpen,
+}
 
 internal data class LibraryIconEnhancementDecision(
-    val apply: Boolean,
+    val mode: LibraryIconEnhancementMode,
     val targetWidth: Int,
     val targetHeight: Int,
     val strength: Float,
-)
+) {
+    val apply: Boolean
+        get() = mode != LibraryIconEnhancementMode.None
+}
 
 /**
- * Keeps enhancement intentionally bounded: only low-resolution/general raster artwork is
- * considered, pixel art is a hard bypass, and already-large sources are left untouched.
+ * Keeps enhancement bounded and content-aware. Low-resolution pixel art gets one MMPX 2x pass;
+ * general raster artwork keeps the lightweight target-bounded resize + detail filter path.
  */
 internal fun decideLibraryIconEnhancement(
     enabled: Boolean,
@@ -37,14 +46,37 @@ internal fun decideLibraryIconEnhancement(
     targetSizePx: Int,
     strengthScale: Float = 1f,
 ): LibraryIconEnhancementDecision {
-    if (!enabled || pixelArt || sourceWidth <= 0 || sourceHeight <= 0 || targetSizePx <= 0) {
-        return LibraryIconEnhancementDecision(false, sourceWidth, sourceHeight, 0f)
+    if (
+        !enabled ||
+        sourceWidth <= 0 ||
+        sourceHeight <= 0 ||
+        targetSizePx <= 0 ||
+        strengthScale <= 0f
+    ) {
+        return noLibraryIconEnhancement(sourceWidth, sourceHeight)
     }
 
     val sourceMax = maxOf(sourceWidth, sourceHeight)
     val resolutionRatio = sourceMax.toFloat() / targetSizePx.toFloat()
-    if (resolutionRatio > LIBRARY_ENHANCE_MAX_SOURCE_RATIO || strengthScale <= 0f) {
-        return LibraryIconEnhancementDecision(false, sourceWidth, sourceHeight, 0f)
+
+    if (pixelArt) {
+        if (
+            resolutionRatio > LIBRARY_MMPX_MAX_SOURCE_RATIO ||
+            sourceWidth > Int.MAX_VALUE / 2 ||
+            sourceHeight > Int.MAX_VALUE / 2
+        ) {
+            return noLibraryIconEnhancement(sourceWidth, sourceHeight)
+        }
+        return LibraryIconEnhancementDecision(
+            mode = LibraryIconEnhancementMode.Mmpx2x,
+            targetWidth = sourceWidth * 2,
+            targetHeight = sourceHeight * 2,
+            strength = 0f,
+        )
+    }
+
+    if (resolutionRatio > LIBRARY_ENHANCE_MAX_SOURCE_RATIO) {
+        return noLibraryIconEnhancement(sourceWidth, sourceHeight)
     }
 
     val scale = if (sourceMax < targetSizePx) {
@@ -61,16 +93,26 @@ internal fun decideLibraryIconEnhancement(
         else -> 0.10f
     }
     return LibraryIconEnhancementDecision(
-        apply = true,
+        mode = LibraryIconEnhancementMode.RasterSharpen,
         targetWidth = targetWidth,
         targetHeight = targetHeight,
         strength = (baseStrength * strengthScale).coerceIn(0f, LIBRARY_ENHANCE_MAX_STRENGTH),
     )
 }
 
+private fun noLibraryIconEnhancement(
+    sourceWidth: Int,
+    sourceHeight: Int,
+) = LibraryIconEnhancementDecision(
+    mode = LibraryIconEnhancementMode.None,
+    targetWidth = sourceWidth,
+    targetHeight = sourceHeight,
+    strength = 0f,
+)
+
 /**
- * Small 5-tap detail filter. Transparent/semi-transparent edges are copied verbatim so
- * sharpening cannot create bright/dark fringes around legacy sprites or logos.
+ * Small 5-tap detail filter for non-pixel raster artwork. Transparent/semi-transparent edges are
+ * copied verbatim so sharpening cannot create bright/dark fringes around legacy sprites or logos.
  */
 internal fun sharpenLibraryPixels(
     source: IntArray,
@@ -135,6 +177,7 @@ private fun alpha(pixel: Int): Int = (pixel ushr 24) and 0xff
 
 private fun channel(pixel: Int, shift: Int): Int = (pixel ushr shift) and 0xff
 
+private const val LIBRARY_MMPX_MAX_SOURCE_RATIO = 0.75f
 private const val LIBRARY_ENHANCE_MAX_SOURCE_RATIO = 1.10f
 private const val LIBRARY_ENHANCE_MAX_STRENGTH = 0.22f
 private const val LIBRARY_ENHANCE_OPAQUE_ALPHA = 240
