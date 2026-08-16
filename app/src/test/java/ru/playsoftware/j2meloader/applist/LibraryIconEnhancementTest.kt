@@ -48,6 +48,20 @@ class LibraryIconEnhancementTest {
     }
 
     @Test
+    fun zeroStrengthScaleIsNoOp() {
+        val decision = decideLibraryIconEnhancement(
+            enabled = true,
+            pixelArt = false,
+            sourceWidth = 32,
+            sourceHeight = 32,
+            targetSizePx = 128,
+            strengthScale = 0f,
+        )
+
+        assertFalse(decision.apply)
+    }
+
+    @Test
     fun lowResolutionRasterScalesOnlyToRenderTarget() {
         val decision = decideLibraryIconEnhancement(
             enabled = true,
