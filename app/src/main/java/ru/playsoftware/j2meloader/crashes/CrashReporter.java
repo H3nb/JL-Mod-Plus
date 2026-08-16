@@ -91,7 +91,9 @@ public final class CrashReporter {
 			THREAD_DETAILS
 	);
 
+	private static final Object PROCESS_EXIT_REFRESH_LOCK = new Object();
 	private static boolean mainProcess;
+	private static boolean processExitRefreshRunning;
 	private static volatile boolean processExitEvidenceReady;
 
 	private CrashReporter() {}
@@ -116,6 +118,7 @@ public final class CrashReporter {
 		String processName = EmulatorApplication.getProcessName();
 		String processRole = classifyProcess(application.getPackageName(), processName);
 		mainProcess = ROLE_MAIN.equals(processRole);
+		processExitRefreshRunning = false;
 		processExitEvidenceReady = !mainProcess;
 		boolean reporterProcess = ROLE_REPORTER.equals(processRole) || ACRA.isACRASenderServiceProcess();
 		if (reporterProcess) {
@@ -139,32 +142,94 @@ public final class CrashReporter {
 			processExitEvidenceReady = true;
 			return;
 		}
+		if (!beginProcessExitRefresh()) {
+			return;
+		}
 		try {
 			Thread maintenance = new Thread(() -> {
 				try {
-					Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-				} catch (Throwable ignored) {}
-
-				// Reconcile both legacy and API30+ process-death evidence before allowing startup UI
-				// to inspect pending exits. Both steps are API-gated internally and remain fail-open.
-				runMaintenanceStep("legacy process-exit reconciliation",
-						() -> LegacyProcessExitFallback.ingest(application));
-				runMaintenanceStep("process-exit ingestion", () -> ProcessExitStore.ingest(application));
-				processExitEvidenceReady = true;
-
-				runMaintenanceStep("local crash report pruning", () -> LocalCrashReportStore.prune(application));
-				runMaintenanceStep("MIDlet session journal pruning", () -> MidletSessionJournal.prune(application));
+					setBackgroundThreadPriority();
+					reconcileProcessExitEvidence(application);
+					// Recovery UI can safely read the durable projection now; retention work below must
+					// not delay a useful crash notice.
+					processExitEvidenceReady = true;
+					runMaintenanceStep("local crash report pruning", () -> LocalCrashReportStore.prune(application));
+					runMaintenanceStep("MIDlet session journal pruning", () -> MidletSessionJournal.prune(application));
+				} finally {
+					finishProcessExitRefresh();
+				}
 			}, "jlmod-diagnostics-maintenance");
 			maintenance.start();
 		} catch (Throwable error) {
-			processExitEvidenceReady = true;
+			finishProcessExitRefresh();
 			logMaintenanceFailure("Unable to schedule diagnostics maintenance", error);
 		}
 	}
 
-	/** True once startup-safe background reconciliation has either completed or failed open. */
+	/**
+	 * Refreshes process-exit evidence after the main window regains focus without blocking the UI.
+	 * Repeated focus callbacks are coalesced while a refresh/maintenance pass is already running.
+	 */
+	public static void requestProcessExitRefresh(Application application) {
+		if (!mainProcess) {
+			processExitEvidenceReady = true;
+			return;
+		}
+		if (!beginProcessExitRefresh()) {
+			return;
+		}
+		try {
+			Thread refresh = new Thread(() -> {
+				try {
+					setBackgroundThreadPriority();
+					reconcileProcessExitEvidence(application);
+					processExitEvidenceReady = true;
+				} finally {
+					finishProcessExitRefresh();
+				}
+			}, "jlmod-diagnostics-exit-refresh");
+			refresh.start();
+		} catch (Throwable error) {
+			finishProcessExitRefresh();
+			logMaintenanceFailure("Unable to schedule process-exit refresh", error);
+		}
+	}
+
+	/** True once the latest requested process-exit reconciliation completed or failed open. */
 	public static boolean isProcessExitEvidenceReady() {
 		return processExitEvidenceReady;
+	}
+
+	private static boolean beginProcessExitRefresh() {
+		synchronized (PROCESS_EXIT_REFRESH_LOCK) {
+			if (processExitRefreshRunning) {
+				return false;
+			}
+			processExitRefreshRunning = true;
+			processExitEvidenceReady = false;
+			return true;
+		}
+	}
+
+	private static void finishProcessExitRefresh() {
+		synchronized (PROCESS_EXIT_REFRESH_LOCK) {
+			processExitRefreshRunning = false;
+			processExitEvidenceReady = true;
+		}
+	}
+
+	private static void reconcileProcessExitEvidence(Application application) {
+		// Both paths are API-gated internally: legacy reconciliation is active only on API23-29,
+		// while ApplicationExitInfo ingestion is active only on API30+.
+		runMaintenanceStep("legacy process-exit reconciliation",
+				() -> LegacyProcessExitFallback.ingest(application));
+		runMaintenanceStep("process-exit ingestion", () -> ProcessExitStore.ingest(application));
+	}
+
+	private static void setBackgroundThreadPriority() {
+		try {
+			Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+		} catch (Throwable ignored) {}
 	}
 
 	private static void runMaintenanceStep(String label, Runnable step) {
