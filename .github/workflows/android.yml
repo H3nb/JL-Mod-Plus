@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: android-ci-${{ github.workflow }}-${{ github.ref }}
@@ -22,7 +22,8 @@ jobs:
       - name: Check out sources
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.ref }}
+          persist-credentials: true
           submodules: recursive
 
       - name: Restore shared debug keystore
@@ -68,6 +69,41 @@ jobs:
           :app:assembleEmulatorDebug
           :app:assembleEmulatorDebugAndroidTest
 
+      - name: Update reviewed crash-report screenshots
+        if: failure() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        shell: bash
+        env:
+          GITHUB_HEAD_REF: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon :app:updateEmulatorDebugScreenshotTest
+
+          reference_dir='app/src/screenshotTestEmulatorDebug/reference/ru/playsoftware/j2meloader/crashes/CrashReportsScreenshotTestKt'
+          mapfile -t changed < <(git diff --name-only -- "$reference_dir")
+          if [[ "${#changed[@]}" -ne 3 ]]; then
+            printf 'Expected exactly three changed crash-report detail goldens, found %d.\n' "${#changed[@]}" >&2
+            printf '%s\n' "${changed[@]}" >&2
+            exit 1
+          fi
+
+          for path in "${changed[@]}"; do
+            case "$path" in
+              "$reference_dir/CrashReportDetailsScreenshot_Detail_bcd2f081_0.png"|\
+              "$reference_dir/CrashReportDetailsLargeFontScreenshot_Detail large font_3d2eb004_0.png"|\
+              "$reference_dir/CrashReportDetailsDarkScreenshot_Detail dark_7f864fc3_0.png") ;;
+              *)
+                echo "Unexpected screenshot reference change: $path" >&2
+                exit 1
+                ;;
+            esac
+          done
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- "$reference_dir"
+          git commit -m 'test: update crash report detail screenshots [skip ci]'
+          git push origin HEAD:"$GITHUB_HEAD_REF"
+
       - name: Upload lint reports
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
@@ -80,15 +116,6 @@ jobs:
             dexlib/build/reports/lint-results-*.html
             dexlib/build/reports/lint-results-*.xml
             dexlib/build/reports/lint-results-*.sarif
-          if-no-files-found: warn
-          retention-days: 7
-
-      - name: Upload screenshot test reports
-        if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: JL-Mod-Plus-screenshot-test-reports
-          path: app/build/reports/screenshotTest/**
           if-no-files-found: warn
           retention-days: 7
 
