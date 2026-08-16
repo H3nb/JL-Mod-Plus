@@ -127,6 +127,7 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 				case PROCESS_EXIT -> R.string.crash_report_process_exit;
 			});
 		}
+		subject = DiagnosticExportSanitizer.sanitize(this, subject);
 		String title = getString(R.string.crash_report_github_issue_title, subject);
 		String body = getString(R.string.crash_report_github_intro) + "\n\n" + githubExportText;
 		if (body.length() > MAX_GITHUB_PREFILL_CHARS) {
