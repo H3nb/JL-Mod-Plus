@@ -36,6 +36,7 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 	static final String EXTRA_REPORT_ID = "ru.playsoftware.j2meloader.crashes.REPORT_ID";
 	private static final String GITHUB_NEW_ISSUE_URL =
 			"https://github.com/H3nb/JL-Mod-Plus/issues/new";
+	private static final String GITHUB_ISSUE_TEMPLATE = "issue-template.md";
 	private static final int MAX_GITHUB_PREFILL_CHARS = 16 * 1024;
 
 	private LocalDiagnosticRepository.Record record;
@@ -136,6 +137,7 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 		}
 		Uri issueUri = Uri.parse(GITHUB_NEW_ISSUE_URL)
 				.buildUpon()
+				.appendQueryParameter("template", GITHUB_ISSUE_TEMPLATE)
 				.appendQueryParameter("title", title)
 				.appendQueryParameter("body", body)
 				.build();
