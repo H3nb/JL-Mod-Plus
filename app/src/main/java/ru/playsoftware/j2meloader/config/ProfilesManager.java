@@ -125,13 +125,13 @@ public class ProfilesManager {
 		}
 		if (params == null) {
 			File oldFile = new File(dir, "config.xml");
-			if (oldFile.exists() && persistMigrations) {
+			if (oldFile.exists()) {
 				try (FileInputStream in = new FileInputStream(oldFile)) {
 					HashMap<String, Object> map = XmlUtils.readMapXml(in);
 					JsonElement json = gson.toJsonTree(map);
 					params = gson.fromJson(json, ProfileModel.class);
 					params.dir = dir;
-					if (saveConfig(params) && oldFile.delete()) {
+					if (persistMigrations && saveConfig(params) && oldFile.delete()) {
 						Log.d(TAG, "loadConfig: old config file deleted");
 					}
 				} catch (Exception e) {
