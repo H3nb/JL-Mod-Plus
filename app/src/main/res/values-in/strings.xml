@@ -89,6 +89,8 @@
     <string name="library_icon_ratio_summary">1:1 memakai bingkai adaptif; 3:4 hanya menyesuaikan ukuran ikon.</string>
     <string name="library_icon_ratio_square">1:1</string>
     <string name="library_icon_ratio_portrait">3:4</string>
+    <string name="library_enhance_icons">Tingkatkan ikon</string>
+    <string name="library_enhance_icons_summary">Perjelas artwork beresolusi rendah tanpa merusak pixel art dan tepi transparan.</string>
     <string name="library_grid_spacing_title">Jarak grid</string>
     <string name="library_grid_spacing_summary">Atur jarak antar kotak aplikasi.</string>
     <string name="library_grid_spacing_compact">Rapat (4 dp)</string>

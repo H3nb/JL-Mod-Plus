@@ -126,6 +126,8 @@
     <string name="library_icon_ratio_summary">Square uses adaptive framing; portrait uses fit-only rendering.</string>
     <string name="library_icon_ratio_square">1:1</string>
     <string name="library_icon_ratio_portrait">3:4</string>
+    <string name="library_enhance_icons">Enhance icons</string>
+    <string name="library_enhance_icons_summary">Improve low-resolution artwork while preserving pixel art and transparent edges.</string>
     <string name="library_grid_spacing_title">Grid spacing</string>
     <string name="library_grid_spacing_summary">Adjust the space between app tiles.</string>
     <string name="library_grid_spacing_compact">Compact (4 dp)</string>

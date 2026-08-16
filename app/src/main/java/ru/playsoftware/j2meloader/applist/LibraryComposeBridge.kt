@@ -203,6 +203,7 @@ data class LibraryUiState(
     val iconRatio: LibraryIconRatio = LibraryIconRatio.Square,
     val hideGridTitles: Boolean = false,
     val gridSpacing: LibraryGridSpacing = LibraryGridSpacing.Standard,
+    val enhanceIcons: Boolean = false,
     val sortVariant: Int = 0,
     val canAddShortcut: Boolean = true,
 )
@@ -213,6 +214,7 @@ interface LibraryActions {
     fun onIconRatioChange(iconRatio: LibraryIconRatio) = Unit
     fun onHideGridTitlesChange(hide: Boolean) = Unit
     fun onGridSpacingChange(spacing: LibraryGridSpacing) = Unit
+    fun onEnhanceIconsChange(enhance: Boolean) = Unit
     fun onSort(sortIndex: Int)
     fun onInstall()
     fun onOpenApp(appId: Int)
@@ -236,6 +238,7 @@ class LibraryComposeController(
     initialIconRatio: LibraryIconRatio,
     initialHideGridTitles: Boolean,
     initialGridSpacing: LibraryGridSpacing,
+    initialEnhanceIcons: Boolean,
     canAddShortcut: Boolean,
 ) {
     private var state by mutableStateOf(
@@ -244,6 +247,7 @@ class LibraryComposeController(
             iconRatio = initialIconRatio,
             hideGridTitles = initialHideGridTitles,
             gridSpacing = initialGridSpacing,
+            enhanceIcons = initialEnhanceIcons,
             sortVariant = initialSortVariant,
             canAddShortcut = canAddShortcut,
         ),
@@ -293,6 +297,10 @@ class LibraryComposeController(
 
     fun updateGridSpacing(spacing: LibraryGridSpacing) {
         state = state.copy(gridSpacing = spacing)
+    }
+
+    fun updateEnhanceIcons(enhance: Boolean) {
+        state = state.copy(enhanceIcons = enhance)
     }
 
     fun updateSort(sortVariant: Int) {
@@ -477,6 +485,7 @@ fun LibraryScreen(
                     onIconRatioChange = actions::onIconRatioChange,
                     onHideGridTitlesChange = actions::onHideGridTitlesChange,
                     onGridSpacingChange = actions::onGridSpacingChange,
+                    onEnhanceIconsChange = actions::onEnhanceIconsChange,
                     onAbout = { infoDialog = LibraryInfoDialog.About },
                     onSettings = actions::onOpenSettings,
                     onProfiles = actions::onOpenProfiles,
@@ -1108,6 +1117,7 @@ internal fun LibraryOptionsDestination(
     onIconRatioChange: (LibraryIconRatio) -> Unit,
     onHideGridTitlesChange: (Boolean) -> Unit,
     onGridSpacingChange: (LibraryGridSpacing) -> Unit,
+    onEnhanceIconsChange: (Boolean) -> Unit,
     onAbout: () -> Unit,
     onSettings: () -> Unit,
     onProfiles: () -> Unit,
@@ -1117,6 +1127,7 @@ internal fun LibraryOptionsDestination(
     onExit: () -> Unit,
 ) {
     val hideGridTitlesLabel = stringResource(R.string.library_hide_grid_titles)
+    val enhanceIconsLabel = stringResource(R.string.library_enhance_icons)
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -1180,6 +1191,30 @@ internal fun LibraryOptionsDestination(
                                 label = { Text(stringResource(R.string.library_icon_ratio_portrait)) },
                             )
                         }
+                    }
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(R.string.library_enhance_icons),
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                            Text(
+                                text = stringResource(R.string.library_enhance_icons_summary),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                        Switch(
+                            checked = state.enhanceIcons,
+                            onCheckedChange = onEnhanceIconsChange,
+                            modifier = Modifier.semantics {
+                                contentDescription = enhanceIconsLabel
+                            },
+                        )
                     }
                 }
                 if (state.layout == LibraryLayout.Grid) {

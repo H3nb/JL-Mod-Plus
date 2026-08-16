@@ -25,6 +25,7 @@ public class Constants {
 	public static final String KEY_MIDLET_NAME = "midletName";
 
 	public static final String PREF_APP_SORT = "pref_app_sort";
+	public static final String PREF_APPS_ENHANCE_ICONS = "pref_apps_enhance_icons";
 	public static final String PREF_APPS_GRID_SPACING = "pref_apps_grid_spacing";
 	public static final String PREF_APPS_HIDE_GRID_TITLES = "pref_apps_hide_grid_titles";
 	public static final String PREF_APPS_ICON_RATIO = "pref_apps_icon_ratio";

@@ -19,6 +19,7 @@
 package ru.playsoftware.j2meloader.applist;
 
 import static ru.playsoftware.j2meloader.util.Constants.KEY_APP_URI;
+import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_ENHANCE_ICONS;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_GRID_SPACING;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_HIDE_GRID_TITLES;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_ICON_RATIO;
@@ -169,6 +170,7 @@ public class AppsListFragment extends Fragment {
 				iconRatio,
 				preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false),
 				gridSpacing,
+				preferences.getBoolean(PREF_APPS_ENHANCE_ICONS, false),
 				ShortcutManagerCompat.isRequestPinShortcutSupported(requireContext()));
 		appListViewModel.getAppList().observe(getViewLifecycleOwner(), this::onDbUpdated);
 	}
@@ -236,6 +238,15 @@ public class AppsListFragment extends Fragment {
 				LibraryComposeController controller = composeController;
 				if (controller != null) {
 					controller.updateGridSpacing(spacing);
+				}
+			}
+
+			@Override
+			public void onEnhanceIconsChange(boolean enhance) {
+				preferences.edit().putBoolean(PREF_APPS_ENHANCE_ICONS, enhance).apply();
+				LibraryComposeController controller = composeController;
+				if (controller != null) {
+					controller.updateEnhanceIcons(enhance);
 				}
 			}
 

@@ -241,6 +241,7 @@ fun LibraryOptionsScreenshot() {
             onIconRatioChange = {},
             onHideGridTitlesChange = {},
             onGridSpacingChange = {},
+            onEnhanceIconsChange = {},
             onAbout = {},
             onSettings = {},
             onProfiles = {},
