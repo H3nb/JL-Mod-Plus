@@ -194,9 +194,14 @@ public final class ProcessExitStore {
 		return result;
 	}
 
-	/** Returns one unacknowledged abnormal exit not already represented by a MIDlet failure notice. */
+	/** Refreshes system history, then returns one unacknowledged abnormal exit. */
 	public static PendingExit findPendingExit(Context context) {
 		ingest(context);
+		return findPendingStoredExit(context);
+	}
+
+	/** Returns one pending exit from already-persisted evidence without harvesting system history. */
+	public static PendingExit findPendingStoredExit(Context context) {
 		List<Snapshot> records = loadStored(context);
 		if (records.isEmpty()) {
 			pruneAcknowledgments(context, Collections.emptySet());
@@ -475,12 +480,9 @@ public final class ProcessExitStore {
 			output = atomic.startWrite();
 			properties.store(output, null);
 			atomic.finishWrite(output);
-		} catch (IOException | RuntimeException e) {
+		} catch (Throwable error) {
 			rollback(atomic, output);
-			if (e instanceof IOException) {
-				throw (IOException) e;
-			}
-			throw new IOException("Unable to persist process-exit metadata", e);
+			throw asIOException(error, "Unable to persist process-exit metadata");
 		}
 	}
 
@@ -492,13 +494,20 @@ public final class ProcessExitStore {
 			TraceWriteResult result = copyBounded(input, output, MAX_TRACE_BYTES);
 			atomic.finishWrite(output);
 			return result;
-		} catch (IOException | RuntimeException e) {
+		} catch (Throwable error) {
 			rollback(atomic, output);
-			if (e instanceof IOException) {
-				throw (IOException) e;
-			}
-			throw new IOException("Unable to persist process-exit trace", e);
+			throw asIOException(error, "Unable to persist process-exit trace");
 		}
+	}
+
+	private static IOException asIOException(Throwable error, String message) {
+		if (error instanceof IOException) {
+			return (IOException) error;
+		}
+		if (error instanceof Error) {
+			throw (Error) error;
+		}
+		return new IOException(message, error);
 	}
 
 	/** Copies at most maxBytes and probes one extra byte only to preserve truncation semantics. */
@@ -969,6 +978,11 @@ public final class ProcessExitStore {
 					if (retainedTraceFile != null) {
 						deleteAtomic(retainedTraceFile);
 					}
+				} catch (Error error) {
+					if (retainedTraceFile != null) {
+						deleteAtomic(retainedTraceFile);
+					}
+					throw error;
 				}
 			}
 		}
