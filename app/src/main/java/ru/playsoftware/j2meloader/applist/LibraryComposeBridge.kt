@@ -882,6 +882,7 @@ private fun LibraryAppsDestination(
                         LibraryGridItem(
                             app = app,
                             iconRatio = state.iconRatio,
+                            enhanceIcons = state.enhanceIcons,
                             hideTitle = state.hideGridTitles,
                             gridSpacing = state.gridSpacing.value,
                             onOpenApp = onOpenApp,
@@ -910,6 +911,7 @@ private fun LibraryAppsDestination(
                         LibraryListItem(
                             app = app,
                             iconRatio = state.iconRatio,
+                            enhanceIcons = state.enhanceIcons,
                             onOpenApp = onOpenApp,
                             onOpenActions = onOpenActions,
                         )
@@ -1373,6 +1375,7 @@ private fun LibraryGridItem(
     onOpenApp: (Int) -> Unit,
     onOpenActions: (LibraryAppUiItem) -> Unit,
     iconRatio: LibraryIconRatio,
+    enhanceIcons: Boolean,
     hideTitle: Boolean,
     gridSpacing: Dp,
 ) {
@@ -1391,6 +1394,7 @@ private fun LibraryGridItem(
             modifier = Modifier.fillMaxWidth(),
             contentSize = null,
             iconRatio = iconRatio,
+            enhanceIcons = enhanceIcons,
         )
         if (!hideTitle) {
             Box(
@@ -1420,6 +1424,7 @@ private fun LibraryListItem(
     onOpenApp: (Int) -> Unit,
     onOpenActions: (LibraryAppUiItem) -> Unit,
     iconRatio: LibraryIconRatio,
+    enhanceIcons: Boolean,
 ) {
     Card(
         modifier = Modifier
@@ -1442,6 +1447,7 @@ private fun LibraryListItem(
                 modifier = Modifier.width(48.dp),
                 contentSize = 36.dp,
                 iconRatio = iconRatio,
+                enhanceIcons = enhanceIcons,
             )
             Spacer(Modifier.width(12.dp))
             Column(
@@ -1631,6 +1637,7 @@ private fun loadLibraryIcon(
     iconPath: String?,
     fallbackSizePx: Int,
     normalizeSquareIcon: Boolean,
+    enhanceIcons: Boolean,
 ): LibraryNormalizedIcon? {
     val requestedSizePx = fallbackSizePx.coerceAtLeast(1)
     val fileSource = iconPath
@@ -1639,9 +1646,20 @@ private fun loadLibraryIcon(
 
     if (fileSource != null) {
         if (!normalizeSquareIcon) {
+            val portraitPixelArt = if (enhanceIcons) {
+                fileSource.analyzeLibraryIcon()?.pixelArt ?: false
+            } else {
+                false
+            }
+            val rendered = fileSource.enhanceLibraryIcon(
+                targetSizePx = requestedSizePx,
+                pixelArt = portraitPixelArt,
+                enabled = enhanceIcons,
+                strengthScale = 1f,
+            )
             return LibraryNormalizedIcon(
-                bitmap = fileSource.asImageBitmap(),
-                filterQuality = fileSource.libraryFilterQuality(),
+                bitmap = rendered.asImageBitmap(),
+                filterQuality = if (portraitPixelArt) FilterQuality.None else FilterQuality.Medium,
                 representativeColor = null,
                 presentationMode = LibraryIconPresentationMode.SafeFit,
                 visualScale = 1f,
@@ -1688,8 +1706,21 @@ private fun loadLibraryIcon(
                         }
                 LibraryIconPresentationMode.Fallback -> null
             }
+            val enhancementStrengthScale = when (analysis.presentation.mode) {
+                LibraryIconPresentationMode.Cover,
+                LibraryIconPresentationMode.SafeFit -> 1f
+                LibraryIconPresentationMode.Subject -> 0.80f
+                LibraryIconPresentationMode.Backed -> 0.65f
+                LibraryIconPresentationMode.Fallback -> 0f
+            }
+            val rendered = normalized.enhanceLibraryIcon(
+                targetSizePx = requestedSizePx,
+                pixelArt = analysis.pixelArt,
+                enabled = enhanceIcons,
+                strengthScale = enhancementStrengthScale,
+            )
             return LibraryNormalizedIcon(
-                bitmap = normalized.asImageBitmap(),
+                bitmap = rendered.asImageBitmap(),
                 filterQuality = if (analysis.pixelArt) FilterQuality.None else FilterQuality.Medium,
                 representativeColor = representativeColor,
                 presentationMode = analysis.presentation.mode,
@@ -1731,6 +1762,62 @@ private fun loadLibraryIcon(
         visualScale = LIBRARY_FALLBACK_VISUAL_SCALE,
         foregroundLuminance = fallback.averageVisibleLuminance(),
     )
+}
+
+private fun Bitmap.enhanceLibraryIcon(
+    targetSizePx: Int,
+    pixelArt: Boolean,
+    enabled: Boolean,
+    strengthScale: Float,
+): Bitmap {
+    val decision = decideLibraryIconEnhancement(
+        enabled = enabled,
+        pixelArt = pixelArt,
+        sourceWidth = width,
+        sourceHeight = height,
+        targetSizePx = targetSizePx,
+        strengthScale = strengthScale,
+    )
+    if (!decision.apply) return this
+
+    return try {
+        val working = if (
+            width != decision.targetWidth || height != decision.targetHeight
+        ) {
+            Bitmap.createScaledBitmap(this, decision.targetWidth, decision.targetHeight, true)
+        } else {
+            this
+        }
+        val pixelCount = Math.multiplyExact(working.width, working.height)
+        val sourcePixels = IntArray(pixelCount)
+        working.getPixels(
+            sourcePixels,
+            0,
+            working.width,
+            0,
+            0,
+            working.width,
+            working.height,
+        )
+        val enhancedPixels = sharpenLibraryPixels(
+            source = sourcePixels,
+            width = working.width,
+            height = working.height,
+            strength = decision.strength,
+        )
+        Bitmap.createBitmap(
+            enhancedPixels,
+            working.width,
+            working.height,
+            Bitmap.Config.ARGB_8888,
+        )
+    } catch (_: ArithmeticException) {
+        this
+    } catch (_: OutOfMemoryError) {
+        this
+    } catch (_: RuntimeException) {
+        this
+    }
 }
 
 private fun Bitmap.cropLibraryBounds(bounds: Rect): Bitmap {
@@ -2386,12 +2473,25 @@ private fun rememberLibraryIcon(
     app: LibraryAppUiItem,
     contentSize: Dp,
     iconRatio: LibraryIconRatio,
+    enhanceIcons: Boolean,
 ): LibraryNormalizedIcon? {
     val context = LocalContext.current
     val contentSizePx = with(LocalDensity.current) { contentSize.roundToPx() }.coerceAtLeast(1)
     val fallbackTint = ContextCompat.getColor(context, R.color.library_default_icon)
-    val cacheKey = remember(app.iconPath, contentSizePx, iconRatio, fallbackTint) {
-        libraryIconCacheKey(app.iconPath, contentSizePx, iconRatio, fallbackTint)
+    val cacheKey = remember(
+        app.iconPath,
+        contentSizePx,
+        iconRatio,
+        fallbackTint,
+        enhanceIcons,
+    ) {
+        libraryIconCacheKey(
+            app.iconPath,
+            contentSizePx,
+            iconRatio,
+            fallbackTint,
+            enhanceIcons,
+        )
     }
     return remember(cacheKey) {
         LibraryIconCache.get(cacheKey) ?: loadLibraryIcon(
@@ -2399,6 +2499,7 @@ private fun rememberLibraryIcon(
             iconPath = app.iconPath,
             fallbackSizePx = contentSizePx,
             normalizeSquareIcon = iconRatio == LibraryIconRatio.Square,
+            enhanceIcons = enhanceIcons,
         )?.also { LibraryIconCache.put(cacheKey, it) }
     }
 }
@@ -2408,6 +2509,7 @@ private fun libraryIconCacheKey(
     targetSizePx: Int,
     iconRatio: LibraryIconRatio,
     fallbackTint: Int,
+    enhanceIcons: Boolean,
 ): String {
     if (iconPath.isNullOrBlank()) {
         return "fallback:$fallbackTint:$targetSizePx:${iconRatio.name}"
@@ -2415,7 +2517,8 @@ private fun libraryIconCacheKey(
     val file = File(iconPath)
     val modified = runCatching { file.lastModified() }.getOrDefault(0L)
     val length = runCatching { file.length() }.getOrDefault(0L)
-    return "real:$LIBRARY_ICON_PRESENTATION_VERSION:$iconPath:$modified:$length:$targetSizePx:${iconRatio.name}"
+    return "real:$LIBRARY_ICON_PRESENTATION_VERSION:$LIBRARY_ICON_ENHANCEMENT_VERSION:$enhanceIcons:" +
+        "$iconPath:$modified:$length:$targetSizePx:${iconRatio.name}"
 }
 
 @Composable
@@ -2424,6 +2527,7 @@ private fun LibraryIconSlot(
     modifier: Modifier,
     contentSize: Dp?,
     iconRatio: LibraryIconRatio,
+    enhanceIcons: Boolean,
 ) {
     BoxWithConstraints(
         modifier = modifier.aspectRatio(iconRatio.widthToHeight),
@@ -2432,7 +2536,7 @@ private fun LibraryIconSlot(
             maxWidth * LIBRARY_GRID_ARTWORK_FRACTION,
             LibraryGridMaxArtworkSize,
         )
-        val icon = rememberLibraryIcon(app, artworkSize, iconRatio)
+        val icon = rememberLibraryIcon(app, artworkSize, iconRatio, enhanceIcons)
         val baseContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
         val containerColor = when {
             iconRatio != LibraryIconRatio.Square -> baseContainerColor
