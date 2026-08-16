@@ -14,12 +14,16 @@
 
 package ru.playsoftware.j2meloader.applist
 
+import kotlin.math.sqrt
+
 /**
  * Small deterministic decision layer for square library icon presentation.
  *
  * Bitmap inspection stays in [LibraryComposeBridge.kt]; this type only turns already-computed
  * evidence into a conservative render mode. Keeping the decision free of Android/Compose types
  * makes threshold behavior cheap to verify without introducing another image framework.
+ *
+ * [visualScale] is a fraction of the final rounded-square slot for Subject/Backed rendering.
  */
 internal enum class LibraryIconPresentationMode {
     Subject,
@@ -57,7 +61,11 @@ internal fun decideLibraryIconPresentation(
             } else {
                 LibraryIconPresentationMode.Subject
             },
-            visualScale = LIBRARY_PRESENTATION_FRAMED_SUBJECT_SCALE,
+            visualScale = if (input.hasBackingColor) {
+                LIBRARY_PRESENTATION_BACKED_SCALE
+            } else {
+                LIBRARY_PRESENTATION_FRAMED_SUBJECT_SCALE
+            },
         )
     }
 
@@ -98,22 +106,20 @@ internal fun decideLibraryIconPresentation(
                 input.occupancy < LIBRARY_PRESENTATION_FOREGROUND_OCCUPANCY)
 
     if (transparentSubject) {
-        // Single-object icons should keep breathing room. Elongated artwork gets a modest
-        // compensation because ContentScale.Fit otherwise makes it look much smaller, while dense
-        // round/square subjects (for example a ball) are deliberately reduced instead of inflated.
-        val denseAmount = (
-            (input.occupancy - LIBRARY_PRESENTATION_SUBJECT_DENSE_START) /
-                LIBRARY_PRESENTATION_SUBJECT_DENSE_RANGE
-            ).coerceIn(0f, 1f)
-        val elongatedAmount = (
-            (LIBRARY_PRESENTATION_SUBJECT_ELONGATED_START - input.aspectFill) /
-                LIBRARY_PRESENTATION_SUBJECT_ELONGATED_RANGE
-            ).coerceIn(0f, 1f)
-        val visualScale = (
-            LIBRARY_PRESENTATION_SUBJECT_BASE_SCALE -
-                denseAmount * LIBRARY_PRESENTATION_SUBJECT_DENSE_REDUCTION +
-                elongatedAmount * LIBRARY_PRESENTATION_SUBJECT_ELONGATED_BONUS
-            ).coerceIn(
+        // Normalize the subject's estimated visible area instead of assigning one fixed size.
+        // Dense round/square objects deliberately target less area (Bounce-like balls keep
+        // breathing room), while sparse or elongated artwork can grow until the conservative cap.
+        val visibleArea = (input.occupancy * input.aspectFill)
+            .coerceAtLeast(LIBRARY_PRESENTATION_SUBJECT_MIN_VISIBLE_AREA)
+        val denseRound =
+            input.occupancy >= LIBRARY_PRESENTATION_DENSE_ROUND_MIN_OCCUPANCY &&
+                input.aspectFill >= LIBRARY_PRESENTATION_DENSE_ROUND_MIN_ASPECT_FILL
+        val targetArea = if (denseRound) {
+            LIBRARY_PRESENTATION_DENSE_ROUND_TARGET_VISIBLE_AREA
+        } else {
+            LIBRARY_PRESENTATION_SUBJECT_TARGET_VISIBLE_AREA
+        }
+        val visualScale = sqrt(targetArea / visibleArea).coerceIn(
             LIBRARY_PRESENTATION_SUBJECT_MIN_SCALE,
             LIBRARY_PRESENTATION_SUBJECT_MAX_SCALE,
         )
@@ -133,21 +139,19 @@ private const val LIBRARY_PRESENTATION_FOREGROUND_MIN_TRANSPARENT_RATIO = 0.06f
 private const val LIBRARY_PRESENTATION_FOREGROUND_BOUNDS_COVERAGE = 0.88f
 private const val LIBRARY_PRESENTATION_FOREGROUND_OCCUPANCY = 0.86f
 
-private const val LIBRARY_PRESENTATION_SUBJECT_BASE_SCALE = 0.66f
-private const val LIBRARY_PRESENTATION_SUBJECT_DENSE_START = 0.55f
-private const val LIBRARY_PRESENTATION_SUBJECT_DENSE_RANGE = 0.45f
-private const val LIBRARY_PRESENTATION_SUBJECT_DENSE_REDUCTION = 0.08f
-private const val LIBRARY_PRESENTATION_SUBJECT_ELONGATED_START = 0.72f
-private const val LIBRARY_PRESENTATION_SUBJECT_ELONGATED_RANGE = 0.62f
-private const val LIBRARY_PRESENTATION_SUBJECT_ELONGATED_BONUS = 0.12f
-private const val LIBRARY_PRESENTATION_SUBJECT_MIN_SCALE = 0.58f
-private const val LIBRARY_PRESENTATION_SUBJECT_MAX_SCALE = 0.78f
-private const val LIBRARY_PRESENTATION_FRAMED_SUBJECT_SCALE = 0.74f
+private const val LIBRARY_PRESENTATION_SUBJECT_TARGET_VISIBLE_AREA = 0.38f
+private const val LIBRARY_PRESENTATION_DENSE_ROUND_TARGET_VISIBLE_AREA = 0.30f
+private const val LIBRARY_PRESENTATION_SUBJECT_MIN_VISIBLE_AREA = 0.03f
+private const val LIBRARY_PRESENTATION_DENSE_ROUND_MIN_OCCUPANCY = 0.72f
+private const val LIBRARY_PRESENTATION_DENSE_ROUND_MIN_ASPECT_FILL = 0.82f
+private const val LIBRARY_PRESENTATION_SUBJECT_MIN_SCALE = 0.60f
+private const val LIBRARY_PRESENTATION_SUBJECT_MAX_SCALE = 0.90f
+private const val LIBRARY_PRESENTATION_FRAMED_SUBJECT_SCALE = 0.84f
 
 private const val LIBRARY_PRESENTATION_BACKED_MIN_BOUNDS_COVERAGE = 0.78f
 private const val LIBRARY_PRESENTATION_BACKED_MIN_OCCUPANCY = 0.83f
 private const val LIBRARY_PRESENTATION_BACKED_MAX_TRANSPARENT_RATIO = 0.24f
-private const val LIBRARY_PRESENTATION_BACKED_SCALE = 0.86f
+private const val LIBRARY_PRESENTATION_BACKED_SCALE = 0.92f
 
 private const val LIBRARY_PRESENTATION_COVER_MAX_TRANSPARENT_RATIO = 0.025f
 private const val LIBRARY_PRESENTATION_COVER_MIN_BOUNDS_COVERAGE = 0.985f
