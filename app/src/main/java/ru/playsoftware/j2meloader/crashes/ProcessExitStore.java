@@ -174,6 +174,12 @@ public final class ProcessExitStore {
 		for (File file : files) {
 			try {
 				Snapshot snapshot = read(file);
+				// A user deletion marker outranks a stale/racing local projection. Keep the marker
+				// durable until its source can no longer recreate this exact key.
+				if (ProcessExitDeletionStore.isDeleted(context, snapshot.key)) {
+					delete(context, snapshot);
+					continue;
+				}
 				// The isolated MIDlet process is deliberately killed after a graceful MIDlet exit.
 				// Exact journal outcome keeps that expected SIGKILL out of the crash inbox.
 				if (isIntentionalSessionExit(context, snapshot.sessionId)) {
@@ -910,6 +916,10 @@ public final class ProcessExitStore {
 			}
 			List<ApplicationExitInfo> history = manager.getHistoricalProcessExitReasons(
 					context.getPackageName(), 0, MAX_HISTORY_RESULTS);
+			if (history == null) {
+				history = Collections.emptyList();
+			}
+			HashSet<String> historicalKeys = new HashSet<>(history.size());
 			boolean lmkSupported = ActivityManager.isLowMemoryKillReportSupported();
 			File directory = recordDirectory(context);
 			if (!directory.isDirectory() && !directory.mkdirs()) {
@@ -922,6 +932,11 @@ public final class ProcessExitStore {
 				if (!isOwnedProcess(context.getPackageName(), processName)) {
 					continue;
 				}
+				String key = buildKey(info);
+				historicalKeys.add(key);
+				if (ProcessExitDeletionStore.isDeleted(context, key)) {
+					continue;
+				}
 				String processRole = CrashReporter.classifyProcess(context.getPackageName(), processName);
 				StateSummary state = parseState(info.getProcessStateSummary());
 				if (isIntentionalSessionExit(context, state.sessionId)) {
@@ -932,7 +947,6 @@ public final class ProcessExitStore {
 					continue;
 				}
 
-				String key = buildKey(info);
 				File metadata = recordFile(directory, key);
 				if (atomicExists(metadata)) {
 					continue;
@@ -985,6 +999,7 @@ public final class ProcessExitStore {
 					throw error;
 				}
 			}
+			ProcessExitDeletionStore.pruneAgainstHistoricalKeys(context, historicalKeys);
 		}
 
 		private static boolean isOwnedProcess(String packageName, String processName) {

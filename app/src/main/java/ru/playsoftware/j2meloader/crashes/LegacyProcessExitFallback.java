@@ -72,11 +72,13 @@ public final class LegacyProcessExitFallback {
 			MidletSessionJournal.prune(context);
 			List<File> journals = MidletSessionJournal.journalFiles(context);
 			Set<String> retainedSessions = new HashSet<>(journals.size());
+			Set<String> retainedLegacyKeys = new HashSet<>(journals.size());
 			for (File journalFile : journals) {
 				try {
 					MidletSessionJournal.Snapshot snapshot = MidletSessionJournal.read(journalFile);
 					if (MidletFailureRecovery.isSafeEventId(snapshot.sessionId)) {
 						retainedSessions.add(snapshot.sessionId);
+						retainedLegacyKeys.add(buildKey(snapshot));
 					}
 					if (isProvenOrphan(context, snapshot)) {
 						persist(context, snapshot);
@@ -86,6 +88,7 @@ public final class LegacyProcessExitFallback {
 				}
 			}
 			pruneOrphanRecords(context, retainedSessions);
+			ProcessExitDeletionStore.pruneAgainstLegacyKeys(context, retainedLegacyKeys);
 		} catch (RuntimeException e) {
 			Log.w(TAG, "Legacy process-exit fallback failed open", e);
 		} catch (OutOfMemoryError e) {
@@ -155,6 +158,9 @@ public final class LegacyProcessExitFallback {
 			return;
 		}
 		String key = buildKey(session);
+		if (ProcessExitDeletionStore.isDeleted(context, key)) {
+			return;
+		}
 		File recordFile = new File(directory, key + RECORD_SUFFIX);
 		if (atomicExists(recordFile)) {
 			return;
