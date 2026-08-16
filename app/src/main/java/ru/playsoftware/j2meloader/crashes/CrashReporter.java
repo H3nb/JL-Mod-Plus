@@ -31,6 +31,7 @@ import static org.acra.ReportField.USER_CRASH_DATE;
 
 import android.app.Application;
 import android.os.Process;
+import android.util.Log;
 
 import org.acra.ACRA;
 import org.acra.ErrorReporter;
@@ -56,6 +57,7 @@ public final class CrashReporter {
 	private static final int MAX_CONTEXT_VALUE_LENGTH = 256;
 	private static final int MAX_CONTEXT_MESSAGE_LENGTH = 768;
 
+	private static final String TAG = CrashReporter.class.getSimpleName();
 	private static final String ROLE_MAIN = "main";
 	private static final String ROLE_MIDLET = "midlet";
 	private static final String ROLE_REPORTER = "reporter";
@@ -92,7 +94,8 @@ public final class CrashReporter {
 	private CrashReporter() {}
 
 	/**
-	 * Initializes local-only crash collection.
+	 * Initializes local-only crash collection and publishes only current-process identity/state.
+	 * Historical ingestion and retention maintenance are deliberately deferred until onCreate().
 	 *
 	 * @return true when running in ACRA's private reporter process, where normal app initialization
 	 * should be skipped.
@@ -119,17 +122,44 @@ public final class CrashReporter {
 		putBounded(reporter, KEY_PROCESS_ROLE, processRole);
 		putBounded(reporter, KEY_PROCESS_PID, Integer.toString(Process.myPid()));
 
-		// Android 11+ keeps a small process-owned state summary and a system exit-history ring.
-		// Publish only stable diagnostic identity here; ProcessExitStore snapshots useful prior exits
-		// from the main process and deliberately filters normal process-management noise.
+		// Android 11+ keeps a small process-owned state summary. Publish it synchronously so any
+		// later process death can still be attributed even if deferred maintenance never gets CPU.
 		ProcessExitStore.initializeProcess(application, processRole);
-
-		// The main process owns diagnostic retention so :midlet remains a single-purpose writer.
-		if (ROLE_MAIN.equals(processRole)) {
-			LocalCrashReportStore.prune(application);
-			MidletSessionJournal.prune(application);
-		}
 		return false;
+	}
+
+	/** Schedules one best-effort main-process maintenance pass after Application startup. */
+	public static void scheduleMaintenance(Application application) {
+		String processRole = classifyProcess(application.getPackageName(), EmulatorApplication.getProcessName());
+		if (!ROLE_MAIN.equals(processRole)) {
+			return;
+		}
+		try {
+			Thread maintenance = new Thread(() -> {
+				runMaintenanceStep("process-exit ingestion", () -> ProcessExitStore.ingest(application));
+				runMaintenanceStep("local crash report pruning", () -> LocalCrashReportStore.prune(application));
+				runMaintenanceStep("MIDlet session journal pruning", () -> MidletSessionJournal.prune(application));
+			}, "jlmod-diagnostics-maintenance");
+			maintenance.start();
+		} catch (RuntimeException e) {
+			Log.w(TAG, "Unable to schedule diagnostics maintenance", e);
+		} catch (OutOfMemoryError e) {
+			try {
+				Log.w(TAG, "Diagnostics maintenance skipped under low memory");
+			} catch (Throwable ignored) {}
+		}
+	}
+
+	private static void runMaintenanceStep(String label, Runnable step) {
+		try {
+			step.run();
+		} catch (RuntimeException e) {
+			Log.w(TAG, "Diagnostics maintenance failed open: " + label, e);
+		} catch (OutOfMemoryError e) {
+			try {
+				Log.w(TAG, "Diagnostics maintenance skipped under low memory: " + label);
+			} catch (Throwable ignored) {}
+		}
 	}
 
 	public static void setMidletContext(String name, String vendor, String version,
