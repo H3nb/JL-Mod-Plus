@@ -83,6 +83,15 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
+      - name: Upload screenshot test reports
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: JL-Mod-Plus-screenshot-test-reports
+          path: app/build/reports/screenshotTest/**
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Upload arm64 emulator debug APK
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
