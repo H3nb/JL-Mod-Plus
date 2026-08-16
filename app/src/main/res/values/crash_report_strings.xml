@@ -11,6 +11,7 @@
     <string name="crash_reports_selected_count" translatable="false">%1$d selected</string>
     <string name="copy_report" translatable="false">Copy Report</string>
     <string name="share_report" translatable="false">Share Report</string>
+    <string name="report_on_github" translatable="false">Report on GitHub</string>
     <string name="delete_report" translatable="false">Delete Report</string>
     <string name="copy_selected_reports" translatable="false">Copy selected reports</string>
     <string name="share_selected_reports" translatable="false">Share selected reports</string>
@@ -21,6 +22,10 @@
     <string name="crash_report_share_disclosure" translatable="false">This diagnostic report may contain device information, MIDlet metadata, identifiers used only for crash correlation, Java stack traces, or Android process-exit details. When a raw ANR trace or native tombstone was retained, it will also be attached to this share. Review the report before sharing it.</string>
     <string name="crash_reports_batch_share_title" translatable="false">Share %1$d Diagnostic Reports?</string>
     <string name="crash_reports_batch_share_disclosure" translatable="false">The selected diagnostic reports may contain device information, MIDlet metadata, crash-correlation identifiers, Java stack traces, or Android process-exit details. Retained raw traces will also be attached. Review the reports before sharing them.</string>
+    <string name="crash_report_github_issue_title" translatable="false">Diagnostic report: %1$s</string>
+    <string name="crash_report_github_intro" translatable="false">Before submitting, describe what you were doing when the problem occurred. Review the prefilled diagnostic text and remove anything you do not want to publish.\n\n---\n\nDiagnostic report (sanitized by JL-Mod Plus):</string>
+    <string name="crash_report_github_truncated" translatable="false">\n\n[Diagnostic prefill shortened for the GitHub issue form. Use Share Report in JL-Mod Plus if additional evidence is needed.]</string>
+    <string name="crash_report_github_unavailable" translatable="false">No app is available to open the GitHub issue form</string>
     <string name="crash_report_delete_title" translatable="false">Delete Crash Report?</string>
     <string name="crash_report_delete_message" translatable="false">This permanently removes the selected local diagnostic record from JL-Mod Plus.</string>
     <string name="crash_reports_batch_delete_title" translatable="false">Delete %1$d Crash Reports?</string>
