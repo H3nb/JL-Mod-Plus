@@ -253,12 +253,13 @@ public final class ProcessExitStore {
 		}
 	}
 
-	/** Deletes dependent trace evidence before the metadata that points to it. */
+	/** Deletes canonical trace evidence before the metadata that points to it. */
 	static boolean delete(Context context, Snapshot snapshot) {
-		if (snapshot == null) {
+		if (snapshot == null || snapshot.recordFile == null || !isSafeKey(snapshot.key)) {
 			return false;
 		}
-		if (snapshot.traceFile != null && !deleteAtomic(snapshot.traceFile)) {
+		File directory = snapshot.recordFile.getParentFile();
+		if (directory == null || !deleteAtomic(traceFile(directory, snapshot.key))) {
 			return false;
 		}
 		if (!deleteAtomic(snapshot.recordFile)) {
