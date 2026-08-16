@@ -9,7 +9,8 @@
     <color name="background">#fafafa</color>
     <color name="text_primary">#000000</color>
     <color name="text_secondary">#353535</color>
-    <color name="library_default_icon">#414D55</color>
+    <color name="library_default_icon">#8093B8</color>
+    <color name="library_default_icon_background">#EEF1F5</color>
     <color name="btn_bg_normal">#2e2e2e</color>
     <color name="btn_bg_pressed">#707070</color>
 </resources>
