@@ -14,13 +14,13 @@
 
 package ru.playsoftware.j2meloader.config
 
-import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -37,7 +37,7 @@ class ConfigComposeTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun configRendersQuickAndAdaptiveDestinations() {
+    fun configRendersGeneralAndAdaptiveDestinations() {
         composeRule.setContent {
             JLModPlusTheme {
                 ConfigScreen(sampleState(), RecordingConfigEvents())
@@ -62,21 +62,24 @@ class ConfigComposeTest {
 
         composeRule.onNodeWithContentDescription("System").performClick()
         composeRule.onNodeWithText("System Properties").assertExists()
+        composeRule.onNodeWithText("Reset & data").assertExists()
         composeRule.onNodeWithText("Advanced settings").assertDoesNotExist()
     }
 
     @Test
-    fun profileEditorStartsOnGraphicsWithoutQuickWorkflow() {
+    fun profileEditorKeepsGeneralSettingsWithoutProfileWorkflow() {
         composeRule.setContent {
             JLModPlusTheme {
                 ConfigScreen(sampleState(), RecordingConfigEvents(), isProfile = true)
             }
         }
 
-        composeRule.onNodeWithText("Screen Options").assertExists()
-        composeRule.onNodeWithContentDescription("Quick").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription("General").assertExists()
+        composeRule.onNodeWithText("Screen size").assertExists()
+        composeRule.onNodeWithText("Touch Input").assertExists()
         composeRule.onNodeWithContentDescription("Start").assertDoesNotExist()
         composeRule.onNodeWithText("Use profile").assertDoesNotExist()
+        composeRule.onNodeWithText("Save as profile").assertDoesNotExist()
     }
 
     @Test
@@ -90,7 +93,7 @@ class ConfigComposeTest {
 
         composeRule.onNodeWithText("Filter").performClick()
         composeRule.onNodeWithContentDescription("Controls").performClick()
-        composeRule.onNodeWithContentDescription("Quick").performClick()
+        composeRule.onNodeWithContentDescription("General").performClick()
         composeRule.onNodeWithText("Touch Input").performClick()
 
         assertTrue(events.lastForm?.screenFilter == true)
@@ -99,7 +102,7 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun quickProfileActionsUseTheExistingHostFlows() {
+    fun generalProfileActionsUseTheExistingHostFlows() {
         val events = RecordingConfigEvents()
         composeRule.setContent {
             JLModPlusTheme {
@@ -116,7 +119,7 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun activeProfileUsesChangeAndManageActions() {
+    fun activeProfileShowsChangeWithoutSaveAs() {
         val base = sampleState()
         val state = ConfigUiState(
             base.form,
@@ -137,12 +140,13 @@ class ConfigComposeTest {
 
         composeRule.onNodeWithText("Change profile").performClick()
         composeRule.onNodeWithText("Save as profile").assertDoesNotExist()
+        composeRule.onNodeWithText("Default for new games: Nokia Classic").assertDoesNotExist()
 
         assertEquals(1, events.useProfileCalls)
     }
 
     @Test
-    fun destructiveActionsLiveInTheirDestinationsAndRequireConfirmation() {
+    fun destructiveActionsLiveInSystemAndRequireExplicitConfirmation() {
         val menuActions = RecordingMenuActions()
         composeRule.setContent {
             JLModPlusTheme {
@@ -150,23 +154,67 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("More").assertDoesNotExist()
-        composeRule.onNodeWithText("Reset Settings").performClick()
-        composeRule.onNodeWithText("Reset all configuration settings to their defaults?").assertExists()
-        composeRule.onNodeWithText("OK").performClick()
+        composeRule.onNodeWithText("Reset all settings").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription("System").performClick()
+
+        composeRule.onNodeWithText("Reset all settings").performClick()
+        composeRule.onNodeWithText(
+            "Reset all emulator settings for this game to their defaults? Game data and the custom button layout will not be deleted.",
+        ).assertExists()
+        composeRule.onNodeWithText("Reset all settings", useUnmergedTree = true).performClick()
         assertEquals(1, menuActions.resetSettingsCalls)
 
-        composeRule.onNodeWithContentDescription("System").performClick()
-        composeRule.onNodeWithText("Clear Data").performClick()
-        composeRule.onNodeWithText("Do you really want to clear app data?").assertExists()
-        composeRule.onNodeWithText("OK").performClick()
+        composeRule.onNodeWithText("Delete game data").performClick()
+        composeRule.onNodeWithText(
+            "Permanently delete all saves and data created by this game? Emulator settings will not be deleted.",
+        ).assertExists()
+        composeRule.onNodeWithText("Delete game data", useUnmergedTree = true).performClick()
         assertEquals(1, menuActions.clearDataCalls)
 
         composeRule.onNodeWithContentDescription("Controls").performClick()
         composeRule.onNodeWithText("Reset Keylayout").performClick()
         composeRule.onNodeWithText("Reset the button layout to its default?").assertExists()
-        composeRule.onNodeWithText("OK").performClick()
-        assertEquals(1, menuActions.resetLayoutCalls)
+    }
+
+    @Test
+    fun profileResetUsesProfileSpecificConfirmation() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(
+                    sampleState(),
+                    RecordingConfigEvents(),
+                    isProfile = true,
+                    initialDestination = ConfigDestination.System,
+                    menuActions = RecordingMenuActions(),
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Delete game data").assertDoesNotExist()
+        composeRule.onNodeWithText("Reset all settings").performClick()
+        composeRule.onNodeWithText(
+            "Reset all settings in this profile to their defaults? The profile can be edited again before leaving this page.",
+        ).assertExists()
+    }
+
+    @Test
+    fun screenPresetSelectionCommitsImmediatelyAndSwapIsDirect() {
+        val events = RecordingConfigEvents()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), events)
+            }
+        }
+
+        composeRule.onNodeWithText("Screen size").performClick()
+        composeRule.onNodeWithText("360 x 640").performClick()
+        assertEquals("360", events.lastForm?.screenWidth)
+        assertEquals("640", events.lastForm?.screenHeight)
+        composeRule.onNodeWithText("Select").assertDoesNotExist()
+
+        composeRule.onNodeWithContentDescription("Swap width and height").performClick()
+        assertEquals("320", events.lastForm?.screenWidth)
+        assertEquals("240", events.lastForm?.screenHeight)
     }
 
     @Test
@@ -178,30 +226,21 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Screen orientation").performClick()
-        composeRule.onNodeWithText("Screen orientation").assertExists()
+        composeRule.onNodeWithText("Screen Orientation").performClick()
         composeRule.onNodeWithText("Landscape").performClick()
 
         assertEquals(3, events.lastForm?.orientation)
     }
 
     @Test
-    fun numericAndSliderValuesCommitFromTheirDialogs() {
+    fun sliderValuesCommitFromTheirDialogs() {
         val events = RecordingConfigEvents()
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.Graphics)
+                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.Controls)
             }
         }
 
-        composeRule.onNodeWithContentDescription("Quick").performClick()
-        composeRule.onNodeWithText("Screen size").performClick()
-        composeRule.onNodeWithText("360 x 640").performClick()
-        assertEquals("240", events.lastForm?.screenWidth)
-        composeRule.onNodeWithText("Select").performClick()
-        assertEquals("360", events.lastForm?.screenWidth)
-
-        composeRule.onNodeWithContentDescription("Controls").performClick()
         composeRule.onNodeWithText("Advanced settings").performClick()
         composeRule.onNodeWithText("64").performClick()
         composeRule.onNodeWithText("Opacity").assertExists()
@@ -266,23 +305,22 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun customScreenPresetCanBeRemovedFromPresetMenu() {
+    fun customScreenPresetCanBeRemovedFromPresetDialog() {
         val events = RecordingConfigEvents()
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.Graphics)
+                ConfigScreen(sampleState(), events)
             }
         }
 
-        composeRule.onNodeWithContentDescription("Quick").performClick()
         composeRule.onNodeWithText("Screen size").performClick()
-        composeRule.onNodeWithContentDescription("Remove screen preset").performClick()
+        composeRule.onNodeWithContentDescription("Remove Screen Preset").performClick()
 
         assertEquals(Size(360, 640), events.removed)
     }
 
     @Test
-    fun hideDelayUsesMillisecondsAndSystemPropertiesCommitOnlyOnConfirm() {
+    fun systemPropertiesEditInlineAndHideDelayUsesMilliseconds() {
         val events = RecordingConfigEvents()
         val baseState = sampleState()
         val state = ConfigUiState(
@@ -302,15 +340,11 @@ class ConfigComposeTest {
 
         composeRule.onNodeWithText("Advanced settings").performClick()
         composeRule.onNodeWithText("ms").assertExists()
-        composeRule.onNodeWithText("Edit").performClick()
-        composeRule.onNode(hasSetTextAction()).performTextReplacement("microedition.platform: updated\n")
-        composeRule.onNodeWithText("Cancel").performClick()
-        assertEquals(null, events.lastForm)
 
-        composeRule.onNodeWithText("Edit").performClick()
+        composeRule.onNodeWithContentDescription("System").performClick()
         composeRule.onNode(hasSetTextAction()).performTextReplacement("microedition.platform: updated\n")
-        composeRule.onNodeWithText("OK").performClick()
         assertEquals("microedition.platform: updated\n", events.lastForm?.systemProperties)
+        composeRule.onNodeWithText("Edit").assertDoesNotExist()
     }
 
     private fun sampleState(): ConfigUiState {
@@ -380,7 +414,6 @@ class ConfigComposeTest {
         override fun onSaveAsProfile() {
             saveAsProfileCalls++
         }
-
     }
 
     private class RecordingMenuActions : ConfigMenuActions {
