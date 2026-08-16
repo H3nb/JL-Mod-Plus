@@ -62,6 +62,27 @@ class LibraryIconEnhancementTest {
     }
 
     @Test
+    fun invalidDimensionsAreNoOp() {
+        val invalidWidth = decideLibraryIconEnhancement(
+            enabled = true,
+            pixelArt = false,
+            sourceWidth = 0,
+            sourceHeight = 32,
+            targetSizePx = 128,
+        )
+        val invalidTarget = decideLibraryIconEnhancement(
+            enabled = true,
+            pixelArt = false,
+            sourceWidth = 32,
+            sourceHeight = 32,
+            targetSizePx = 0,
+        )
+
+        assertFalse(invalidWidth.apply)
+        assertFalse(invalidTarget.apply)
+    }
+
+    @Test
     fun lowResolutionRasterScalesOnlyToRenderTarget() {
         val decision = decideLibraryIconEnhancement(
             enabled = true,
