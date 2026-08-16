@@ -64,6 +64,22 @@ class LibraryIconEnhancementTest {
     }
 
     @Test
+    fun targetSizedRasterGetsMildSharpenWithoutResampling() {
+        val decision = decideLibraryIconEnhancement(
+            enabled = true,
+            pixelArt = false,
+            sourceWidth = 128,
+            sourceHeight = 96,
+            targetSizePx = 128,
+        )
+
+        assertTrue(decision.apply)
+        assertEquals(128, decision.targetWidth)
+        assertEquals(96, decision.targetHeight)
+        assertEquals(0.14f, decision.strength, 0.0001f)
+    }
+
+    @Test
     fun alreadyLargeRasterIsLeftUntouched() {
         val decision = decideLibraryIconEnhancement(
             enabled = true,
