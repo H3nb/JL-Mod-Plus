@@ -92,8 +92,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 
 		@Override
-		public void onAddResolutionPreset() {
-			addResolutionToPresets();
+		public void onAddResolutionPreset(@NonNull Size size) {
+			addResolutionToPresets(size);
 		}
 
 		@Override
@@ -148,11 +148,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			showSaveProfile();
 		}
 
-		@Override
-		public void onManageProfiles() {
-			saveParams();
-			startActivity(new Intent(ConfigActivity.this, ProfilesActivity.class));
-		}
 	};
 
 	@Override
@@ -256,11 +251,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 					@Override
 					public void onClearData() {
-						// Compose owns the confirmation surface; the activity performs the side effect.
-					}
-
-					@Override
-					public void onConfirmClearData() {
 						if (dataDir != null) {
 							FileUtils.clearDirectory(dataDir);
 						}
@@ -284,15 +274,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 						}
 					}
 
-					@Override
-					public void onLoadProfile() {
-						showLoadProfile();
-					}
-
-					@Override
-					public void onSaveProfile() {
-						showSaveProfile();
-					}
 				},
 				getTitle() == null ? "" : getTitle().toString(),
 				isProfile);
@@ -622,21 +603,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 	}
 
-	private void addResolutionToPresets() {
-		int w;
-		int h;
-		try {
-			w = Integer.parseInt(currentForm.screenWidth);
-			h = Integer.parseInt(currentForm.screenHeight);
-		} catch (NumberFormatException e) {
+	private void addResolutionToPresets(@NonNull Size size) {
+		if (size.width <= 0 || size.height <= 0) {
 			Toast.makeText(this, R.string.invalid_resolution_not_saved, Toast.LENGTH_SHORT).show();
 			return;
 		}
-		if (w <= 0 || h <= 0) {
-			Toast.makeText(this, R.string.invalid_resolution_not_saved, Toast.LENGTH_SHORT).show();
-			return;
-		}
-		Size size = new Size(w, h);
 		int index = Collections.binarySearch(screenPresets, size);
 		if (index >= 0) {
 			Toast.makeText(this, R.string.not_saved_exists, Toast.LENGTH_SHORT).show();

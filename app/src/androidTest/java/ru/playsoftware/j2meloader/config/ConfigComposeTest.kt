@@ -49,18 +49,20 @@ class ConfigComposeTest {
         composeRule.onNodeWithContentDescription("Start").assertExists()
 
         composeRule.onNodeWithContentDescription("Graphics").performClick()
-        composeRule.onNodeWithText("Screen options").assertExists()
-        composeRule.onNodeWithText("Font options").assertExists()
+        composeRule.onNodeWithText("Screen Options").assertExists()
+        composeRule.onNodeWithText("Font Options").assertExists()
+        composeRule.onNodeWithText("Screen size").assertDoesNotExist()
 
         composeRule.onNodeWithContentDescription("Controls").performClick()
-        composeRule.onNodeWithText("Input devices").assertExists()
+        composeRule.onNodeWithText("Input Devices").assertExists()
         composeRule.onNodeWithText("Audio").assertDoesNotExist()
 
         composeRule.onNodeWithContentDescription("Media").performClick()
         composeRule.onNodeWithText("Multimedia settings will be added here in a future update.").assertExists()
 
         composeRule.onNodeWithContentDescription("System").performClick()
-        composeRule.onNodeWithText("System properties").assertExists()
+        composeRule.onNodeWithText("System Properties").assertExists()
+        composeRule.onNodeWithText("Advanced settings").assertDoesNotExist()
     }
 
     @Test
@@ -71,7 +73,7 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Screen options").assertExists()
+        composeRule.onNodeWithText("Screen Options").assertExists()
         composeRule.onNodeWithContentDescription("Quick").assertDoesNotExist()
         composeRule.onNodeWithContentDescription("Start").assertDoesNotExist()
         composeRule.onNodeWithText("Use profile").assertDoesNotExist()
@@ -88,7 +90,8 @@ class ConfigComposeTest {
 
         composeRule.onNodeWithText("Filter").performClick()
         composeRule.onNodeWithContentDescription("Controls").performClick()
-        composeRule.onNodeWithText("Touch input").performClick()
+        composeRule.onNodeWithContentDescription("Quick").performClick()
+        composeRule.onNodeWithText("Touch Input").performClick()
 
         assertTrue(events.lastForm?.screenFilter == true)
         assertFalse(events.lastForm?.touchInput == true)
@@ -106,11 +109,10 @@ class ConfigComposeTest {
 
         composeRule.onNodeWithText("Use profile").performClick()
         composeRule.onNodeWithText("Save as profile").performClick()
-        composeRule.onNodeWithText("Manage profiles").performClick()
+        composeRule.onNodeWithText("Manage profiles").assertDoesNotExist()
 
         assertEquals(1, events.useProfileCalls)
         assertEquals(1, events.saveAsProfileCalls)
-        assertEquals(1, events.manageProfilesCalls)
     }
 
     @Test
@@ -134,11 +136,37 @@ class ConfigComposeTest {
         }
 
         composeRule.onNodeWithText("Change profile").performClick()
-        composeRule.onNodeWithText("Manage profiles").performClick()
         composeRule.onNodeWithText("Save as profile").assertDoesNotExist()
 
         assertEquals(1, events.useProfileCalls)
-        assertEquals(1, events.manageProfilesCalls)
+    }
+
+    @Test
+    fun destructiveActionsLiveInTheirDestinationsAndRequireConfirmation() {
+        val menuActions = RecordingMenuActions()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), RecordingConfigEvents(), menuActions = menuActions)
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("More").assertDoesNotExist()
+        composeRule.onNodeWithText("Reset Settings").performClick()
+        composeRule.onNodeWithText("Reset all configuration settings to their defaults?").assertExists()
+        composeRule.onNodeWithText("OK").performClick()
+        assertEquals(1, menuActions.resetSettingsCalls)
+
+        composeRule.onNodeWithContentDescription("System").performClick()
+        composeRule.onNodeWithText("Clear Data").performClick()
+        composeRule.onNodeWithText("Do you really want to clear app data?").assertExists()
+        composeRule.onNodeWithText("OK").performClick()
+        assertEquals(1, menuActions.clearDataCalls)
+
+        composeRule.onNodeWithContentDescription("Controls").performClick()
+        composeRule.onNodeWithText("Reset Keylayout").performClick()
+        composeRule.onNodeWithText("Reset the button layout to its default?").assertExists()
+        composeRule.onNodeWithText("OK").performClick()
+        assertEquals(1, menuActions.resetLayoutCalls)
     }
 
     @Test
@@ -166,10 +194,11 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("240").performClick()
-        composeRule.onNodeWithText("Width").assertExists()
-        composeRule.onNode(hasSetTextAction()).performTextReplacement("360")
-        composeRule.onNodeWithText("OK").performClick()
+        composeRule.onNodeWithContentDescription("Quick").performClick()
+        composeRule.onNodeWithText("Screen size").performClick()
+        composeRule.onNodeWithText("360 x 640").performClick()
+        assertEquals("240", events.lastForm?.screenWidth)
+        composeRule.onNodeWithText("Select").performClick()
         assertEquals("360", events.lastForm?.screenWidth)
 
         composeRule.onNodeWithContentDescription("Controls").performClick()
@@ -245,7 +274,8 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("Presets").performClick()
+        composeRule.onNodeWithContentDescription("Quick").performClick()
+        composeRule.onNodeWithText("Screen size").performClick()
         composeRule.onNodeWithContentDescription("Remove screen preset").performClick()
 
         assertEquals(Size(360, 640), events.removed)
@@ -326,7 +356,7 @@ class ConfigComposeTest {
             lastForm = state
         }
 
-        override fun onAddResolutionPreset() = Unit
+        override fun onAddResolutionPreset(size: Size) = Unit
         override fun onRemoveResolutionPreset(size: Size) {
             removed = size
         }
@@ -342,7 +372,6 @@ class ConfigComposeTest {
         var colorPickerField: ConfigFormEvents.ColorField? = null
         var useProfileCalls = 0
         var saveAsProfileCalls = 0
-        var manageProfilesCalls = 0
 
         override fun onUseProfile() {
             useProfileCalls++
@@ -352,8 +381,23 @@ class ConfigComposeTest {
             saveAsProfileCalls++
         }
 
-        override fun onManageProfiles() {
-            manageProfilesCalls++
+    }
+
+    private class RecordingMenuActions : ConfigMenuActions {
+        var clearDataCalls = 0
+        var resetSettingsCalls = 0
+        var resetLayoutCalls = 0
+
+        override fun onBack() = Unit
+        override fun onStart() = Unit
+        override fun onClearData() {
+            clearDataCalls++
+        }
+        override fun onResetSettings() {
+            resetSettingsCalls++
+        }
+        override fun onResetLayout() {
+            resetLayoutCalls++
         }
     }
 }

@@ -24,7 +24,7 @@ import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 
 private val NoOpConfigEvents = object : ConfigFormEvents {
     override fun onFormChanged(state: ConfigFormState) = Unit
-    override fun onAddResolutionPreset() = Unit
+    override fun onAddResolutionPreset(size: Size) = Unit
     override fun onRemoveResolutionPreset(size: Size) = Unit
     override fun onColorPicker(field: ConfigFormEvents.ColorField) = Unit
     override fun onColorPicked(field: ConfigFormEvents.ColorField, value: String) = Unit
@@ -248,26 +248,52 @@ fun ConfigChoiceDialogScreenshot() {
 fun ConfigScreenPresetDialogScreenshot() {
     JLModPlusTheme {
         ScreenPresetDialog(
-            presets = listOf(Size(240, 320), Size(360, 640), Size(640, 360)),
+            presets = listOf(
+                Size(128, 128),
+                Size(128, 160),
+                Size(176, 220),
+                Size(240, 320),
+                Size(352, 416),
+                Size(360, 640),
+                Size(480, 800),
+                Size(640, 360),
+                Size(800, 480),
+                Size(1080, 1920),
+            ),
             removablePresets = listOf(Size(360, 640)),
             selectedPreset = Size(240, 320),
             onDismissRequest = {},
             onSelected = {},
-            onAdd = {},
+            onAdd = { _ -> },
             onRemove = {},
+            useModalBottomSheet = false,
         )
     }
 }
 
 @PreviewTest
-@Preview(name = "Config system properties landscape", widthDp = 640, heightDp = 360, showBackground = true)
+@Preview(name = "Config custom resolution", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
-fun ConfigSystemPropertiesLandscapeScreenshot() {
+fun ConfigCustomResolutionScreenshot() {
     JLModPlusTheme {
-        ConfigSystemPropertiesDialog(
-            initialValue = "microedition.platform: Sony Ericsson C510i\nmicroedition.profiles: MIDP2.0\n",
+        CustomResolutionDialog(
+            initialSize = Size(240, 320),
+            keepAspectRatio = false,
             onDismissRequest = {},
-            onConfirm = {},
+            onSave = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Config system properties", widthDp = 360, heightDp = 800, showBackground = true)
+@Composable
+fun ConfigSystemPropertiesScreenshot() {
+    JLModPlusTheme {
+        ConfigScreen(
+            PreviewConfigState,
+            NoOpConfigEvents,
+            initialDestination = ConfigDestination.System,
         )
     }
 }

@@ -12,6 +12,8 @@
     <string name="action_settings">Pengaturan</string>
     <string name="add_profile_description">Buat Profil Baru</string>
     <string name="add_resolution_preset">Tambahkan Resolusi ke Prasetel</string>
+    <string name="message_reset_settings">Atur ulang semua pengaturan konfigurasi ke bawaan?</string>
+    <string name="message_reset_layout">Atur ulang letak tombol ke bawaan?</string>
     <string name="alert_map_menu">Tombol menu (M) belum ditetapkan!\nIni membuat opsi emulator tidak bisa diakses.</string>
     <string name="alert_msg_workdir_not_exists">Direktori kerja tidak ditemukan di:\n\'%1$s\'.\nApakah Anda ingin membuatnya atau memilih direktori lain?</string>
     <string name="alert_rewrite_profile">Profil bernama \"%1$s\" sudah ada.\n\nTimpa profil ini?</string>
@@ -173,6 +175,10 @@
     <string name="PREF_SHOW_FPS">Tampilkan FPS</string>
     <string name="PREF_SYS_PROPS">Properti Sistem</string>
     <string name="config_system_properties_empty">Tidak ada properti khusus</string>
+    <string name="config_select_screen_size">Pilih ukuran layar</string>
+    <string name="config_current_screen_size">Ukuran saat ini: %1$s</string>
+    <string name="config_custom_resolution">Resolusi kustom</string>
+    <string name="config_select">Pilih</string>
     <string name="pref_theme_auto_battery">Otomatis, Berdasarkan Penghemat Baterai</string>
     <string name="pref_theme_auto_time">Otomatis, Berdasarkan Waktu</string>
     <string name="pref_theme_light">Terang</string>

@@ -15,7 +15,6 @@
     <string name="action_settings">Settings</string>
     <string name="add_profile_description">Create New Profile</string>
     <string name="add_resolution_preset">Add Resolution To Presets</string>
-    <string name="save_current_size">Save current size</string>
     <string name="alert_map_menu">Menu key (M) is not assigned!\nThis may make it impossible to access the emulator options.</string>
     <string name="alert_msg_workdir_not_exists">Working directory was not found at:\n%1$s\nDo you want to create it or choose another one?</string>
     <string name="alert_rewrite_profile">A profile named \"%1$s\" already exists.\nDo you want to overwrite it?</string>
@@ -97,6 +96,8 @@
     <string name="mapping_dialog_message">Current mapping:\n%1$s</string>
     <string name="mapping_dialog_title">Press a Key</string>
     <string name="message_clear_data">Do you really want to clear app data?</string>
+    <string name="message_reset_settings">Reset all configuration settings to their defaults?</string>
+    <string name="message_reset_layout">Reset the button layout to its default?</string>
     <string name="message_delete">Do you really want to delete this app?</string>
     <string name="midlet_name"><b>Name: </b></string>
     <string name="midlet_size"><b>Size: </b></string>
@@ -224,6 +225,10 @@
     <string name="config_destination_system">System</string>
     <string name="config_quick_settings">Essential settings</string>
     <string name="config_screen_size">Screen size</string>
+    <string name="config_select_screen_size">Select screen size</string>
+    <string name="config_current_screen_size">Current size: %1$s</string>
+    <string name="config_custom_resolution">Custom resolution</string>
+    <string name="config_select">Select</string>
     <string name="config_advanced_settings">Advanced settings</string>
     <string name="config_media_empty">Multimedia settings will be added here in a future update.</string>
     <string name="profile_custom">Custom</string>
@@ -234,7 +239,6 @@
     <string name="profile_use">Use profile</string>
     <string name="profile_change">Change profile</string>
     <string name="profile_save_as">Save as profile</string>
-    <string name="profile_manage">Manage profiles</string>
     <string name="pref_theme_auto_battery">Auto, By Battery Saver</string>
     <string name="pref_theme_auto_time">Auto, By Time of Day</string>
     <string name="pref_theme_default" translatable="false">light</string>
