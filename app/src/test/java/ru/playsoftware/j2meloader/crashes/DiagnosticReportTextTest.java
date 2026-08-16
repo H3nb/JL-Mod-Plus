@@ -30,7 +30,7 @@ public class DiagnosticReportTextTest {
 				+ "raw system evidence\n"
 				+ "/data/user/0/example/private.txt";
 
-		String githubDetail = DiagnosticReportText.removeRawSystemTrace(detail);
+		String githubDetail = DiagnosticReportText.removeRawSystemTrace(detail, null);
 
 		assertTrue(githubDetail.contains("System trace: captured, 1024 bytes"));
 		assertTrue(githubDetail.contains("retained locally"));
@@ -39,9 +39,26 @@ public class DiagnosticReportTextTest {
 	}
 
 	@Test
+	public void githubDraftPreservesJavaStackAfterEmbeddedAnrTrace() {
+		String javaStack = "java.lang.IllegalStateException: useful\n\tat example.Game.run(Game.java:42)";
+		String detail = "Type: MIDlet session failure\n"
+				+ "System trace: captured, 1024 bytes (anr-text)\n"
+				+ "\nANR trace:\n"
+				+ "raw system evidence\n"
+				+ "\nStack trace:\n"
+				+ javaStack;
+
+		String githubDetail = DiagnosticReportText.removeRawSystemTrace(detail, javaStack);
+
+		assertFalse(githubDetail.contains("raw system evidence"));
+		assertTrue(githubDetail.contains("retained locally"));
+		assertTrue(githubDetail.contains(javaStack));
+	}
+
+	@Test
 	public void githubDraftLeavesNonTraceDetailUnchanged() {
 		String detail = "Type: Java diagnostic report\nStack trace:\njava.lang.IllegalStateException";
 
-		assertEquals(detail, DiagnosticReportText.removeRawSystemTrace(detail));
+		assertEquals(detail, DiagnosticReportText.removeRawSystemTrace(detail, null));
 	}
 }
