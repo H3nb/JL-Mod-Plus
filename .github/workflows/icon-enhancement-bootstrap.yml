@@ -1,0 +1,631 @@
+name: Icon enhancement bootstrap
+
+on:
+  push:
+    branches:
+      - ui/icon-enhancement
+    paths:
+      - .github/workflows/icon-enhancement-bootstrap.yml
+
+permissions:
+  contents: write
+
+jobs:
+  edit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui/icon-enhancement
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Add preference plumbing
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one match, found {count}: {old[:80]!r}")
+              p.write_text(text.replace(old, new, 1))
+
+          constants = "app/src/main/java/ru/playsoftware/j2meloader/util/Constants.java"
+          replace_once(
+              constants,
+              '\tpublic static final String PREF_APPS_GRID_SPACING = "pref_apps_grid_spacing";\n',
+              '\tpublic static final String PREF_APPS_ENHANCE_ICONS = "pref_apps_enhance_icons";\n'
+              '\tpublic static final String PREF_APPS_GRID_SPACING = "pref_apps_grid_spacing";\n',
+          )
+
+          fragment = "app/src/main/java/ru/playsoftware/j2meloader/applist/AppsListFragment.java"
+          replace_once(
+              fragment,
+              'import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_GRID_SPACING;\n',
+              'import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_ENHANCE_ICONS;\n'
+              'import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_GRID_SPACING;\n',
+          )
+          replace_once(
+              fragment,
+              '\t\t\t\tpreferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false),\n\t\t\t\tgridSpacing,\n',
+              '\t\t\t\tpreferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false),\n'
+              '\t\t\t\tgridSpacing,\n'
+              '\t\t\t\tpreferences.getBoolean(PREF_APPS_ENHANCE_ICONS, false),\n',
+          )
+          replace_once(
+              fragment,
+              '\t\t\t@Override\n\t\t\tpublic void onSort(int sortIndex) {\n',
+              '\t\t\t@Override\n'
+              '\t\t\tpublic void onEnhanceIconsChange(boolean enhance) {\n'
+              '\t\t\t\tpreferences.edit().putBoolean(PREF_APPS_ENHANCE_ICONS, enhance).apply();\n'
+              '\t\t\t\tLibraryComposeController controller = composeController;\n'
+              '\t\t\t\tif (controller != null) {\n'
+              '\t\t\t\t\tcontroller.updateEnhanceIcons(enhance);\n'
+              '\t\t\t\t}\n'
+              '\t\t\t}\n\n'
+              '\t\t\t@Override\n'
+              '\t\t\tpublic void onSort(int sortIndex) {\n',
+          )
+
+          bridge = "app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryComposeBridge.kt"
+          replace_once(
+              bridge,
+              '    val gridSpacing: LibraryGridSpacing = LibraryGridSpacing.Standard,\n    val sortVariant: Int = 0,\n',
+              '    val gridSpacing: LibraryGridSpacing = LibraryGridSpacing.Standard,\n'
+              '    val enhanceIcons: Boolean = false,\n'
+              '    val sortVariant: Int = 0,\n',
+          )
+          replace_once(
+              bridge,
+              '    fun onGridSpacingChange(spacing: LibraryGridSpacing) = Unit\n    fun onSort(sortIndex: Int)\n',
+              '    fun onGridSpacingChange(spacing: LibraryGridSpacing) = Unit\n'
+              '    fun onEnhanceIconsChange(enhance: Boolean) = Unit\n'
+              '    fun onSort(sortIndex: Int)\n',
+          )
+          replace_once(
+              bridge,
+              '    initialHideGridTitles: Boolean,\n    initialGridSpacing: LibraryGridSpacing,\n    canAddShortcut: Boolean,\n',
+              '    initialHideGridTitles: Boolean,\n'
+              '    initialGridSpacing: LibraryGridSpacing,\n'
+              '    initialEnhanceIcons: Boolean,\n'
+              '    canAddShortcut: Boolean,\n',
+          )
+          replace_once(
+              bridge,
+              '            hideGridTitles = initialHideGridTitles,\n            gridSpacing = initialGridSpacing,\n            sortVariant = initialSortVariant,\n',
+              '            hideGridTitles = initialHideGridTitles,\n'
+              '            gridSpacing = initialGridSpacing,\n'
+              '            enhanceIcons = initialEnhanceIcons,\n'
+              '            sortVariant = initialSortVariant,\n',
+          )
+          replace_once(
+              bridge,
+              '    fun updateGridSpacing(spacing: LibraryGridSpacing) {\n        state = state.copy(gridSpacing = spacing)\n    }\n\n    fun updateSort(sortVariant: Int) {\n',
+              '    fun updateGridSpacing(spacing: LibraryGridSpacing) {\n'
+              '        state = state.copy(gridSpacing = spacing)\n'
+              '    }\n\n'
+              '    fun updateEnhanceIcons(enhance: Boolean) {\n'
+              '        state = state.copy(enhanceIcons = enhance)\n'
+              '    }\n\n'
+              '    fun updateSort(sortVariant: Int) {\n',
+          )
+          replace_once(
+              bridge,
+              '                    onHideGridTitlesChange = actions::onHideGridTitlesChange,\n                    onGridSpacingChange = actions::onGridSpacingChange,\n                    onAbout = { infoDialog = LibraryInfoDialog.About },\n',
+              '                    onHideGridTitlesChange = actions::onHideGridTitlesChange,\n'
+              '                    onGridSpacingChange = actions::onGridSpacingChange,\n'
+              '                    onEnhanceIconsChange = actions::onEnhanceIconsChange,\n'
+              '                    onAbout = { infoDialog = LibraryInfoDialog.About },\n',
+          )
+          replace_once(
+              bridge,
+              '    onHideGridTitlesChange: (Boolean) -> Unit,\n    onGridSpacingChange: (LibraryGridSpacing) -> Unit,\n    onAbout: () -> Unit,\n',
+              '    onHideGridTitlesChange: (Boolean) -> Unit,\n'
+              '    onGridSpacingChange: (LibraryGridSpacing) -> Unit,\n'
+              '    onEnhanceIconsChange: (Boolean) -> Unit,\n'
+              '    onAbout: () -> Unit,\n',
+          )
+          replace_once(
+              bridge,
+              ') {\n    val hideGridTitlesLabel = stringResource(R.string.library_hide_grid_titles)\n    LazyColumn(\n',
+              ') {\n'
+              '    val hideGridTitlesLabel = stringResource(R.string.library_hide_grid_titles)\n'
+              '    val enhanceIconsLabel = stringResource(R.string.library_enhance_icons)\n'
+              '    LazyColumn(\n',
+          )
+          replace_once(
+              bridge,
+              '                    LibraryOptionGroup(\n                        label = R.string.library_icon_ratio_title,\n                        summary = R.string.library_icon_ratio_summary,\n                    ) {\n                        FlowRow(\n                            modifier = Modifier.fillMaxWidth(),\n                            horizontalArrangement = Arrangement.spacedBy(8.dp),\n                            verticalArrangement = Arrangement.spacedBy(8.dp),\n                        ) {\n                            FilterChip(\n                                selected = state.iconRatio == LibraryIconRatio.Square,\n                                onClick = { onIconRatioChange(LibraryIconRatio.Square) },\n                                label = { Text(stringResource(R.string.library_icon_ratio_square)) },\n                            )\n                            FilterChip(\n                                selected = state.iconRatio == LibraryIconRatio.Portrait,\n                                onClick = { onIconRatioChange(LibraryIconRatio.Portrait) },\n                                label = { Text(stringResource(R.string.library_icon_ratio_portrait)) },\n                            )\n                        }\n                    }\n                }\n',
+              '                    LibraryOptionGroup(\n'
+              '                        label = R.string.library_icon_ratio_title,\n'
+              '                        summary = R.string.library_icon_ratio_summary,\n'
+              '                    ) {\n'
+              '                        FlowRow(\n'
+              '                            modifier = Modifier.fillMaxWidth(),\n'
+              '                            horizontalArrangement = Arrangement.spacedBy(8.dp),\n'
+              '                            verticalArrangement = Arrangement.spacedBy(8.dp),\n'
+              '                        ) {\n'
+              '                            FilterChip(\n'
+              '                                selected = state.iconRatio == LibraryIconRatio.Square,\n'
+              '                                onClick = { onIconRatioChange(LibraryIconRatio.Square) },\n'
+              '                                label = { Text(stringResource(R.string.library_icon_ratio_square)) },\n'
+              '                            )\n'
+              '                            FilterChip(\n'
+              '                                selected = state.iconRatio == LibraryIconRatio.Portrait,\n'
+              '                                onClick = { onIconRatioChange(LibraryIconRatio.Portrait) },\n'
+              '                                label = { Text(stringResource(R.string.library_icon_ratio_portrait)) },\n'
+              '                            )\n'
+              '                        }\n'
+              '                    }\n'
+              '                    HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))\n'
+              '                    Row(\n'
+              '                        modifier = Modifier.fillMaxWidth(),\n'
+              '                        verticalAlignment = Alignment.CenterVertically,\n'
+              '                    ) {\n'
+              '                        Column(modifier = Modifier.weight(1f)) {\n'
+              '                            Text(\n'
+              '                                text = stringResource(R.string.library_enhance_icons),\n'
+              '                                style = MaterialTheme.typography.titleMedium,\n'
+              '                            )\n'
+              '                            Text(\n'
+              '                                text = stringResource(R.string.library_enhance_icons_summary),\n'
+              '                                color = MaterialTheme.colorScheme.onSurfaceVariant,\n'
+              '                                style = MaterialTheme.typography.bodySmall,\n'
+              '                            )\n'
+              '                        }\n'
+              '                        Switch(\n'
+              '                            checked = state.enhanceIcons,\n'
+              '                            onCheckedChange = onEnhanceIconsChange,\n'
+              '                            modifier = Modifier.semantics {\n'
+              '                                contentDescription = enhanceIconsLabel\n'
+              '                            },\n'
+              '                        )\n'
+              '                    }\n'
+              '                }\n',
+          )
+
+          strings = "app/src/main/res/values/strings.xml"
+          replace_once(
+              strings,
+              '    <string name="library_icon_ratio_portrait">3:4</string>\n',
+              '    <string name="library_icon_ratio_portrait">3:4</string>\n'
+              '    <string name="library_enhance_icons">Enhance icons</string>\n'
+              '    <string name="library_enhance_icons_summary">Improve low-resolution artwork while preserving pixel art and transparent edges.</string>\n',
+          )
+          strings_in = "app/src/main/res/values-in/strings.xml"
+          replace_once(
+              strings_in,
+              '    <string name="library_icon_ratio_portrait">3:4</string>\n',
+              '    <string name="library_icon_ratio_portrait">3:4</string>\n'
+              '    <string name="library_enhance_icons">Tingkatkan ikon</string>\n'
+              '    <string name="library_enhance_icons_summary">Perjelas artwork beresolusi rendah tanpa merusak pixel art dan tepi transparan.</string>\n',
+          )
+
+          preview = "app/src/screenshotTest/kotlin/ru/playsoftware/j2meloader/applist/LibraryProfilesScreenshotTest.kt"
+          replace_once(
+              preview,
+              '            onHideGridTitlesChange = {},\n            onGridSpacingChange = {},\n            onAbout = {},\n',
+              '            onHideGridTitlesChange = {},\n'
+              '            onGridSpacingChange = {},\n'
+              '            onEnhanceIconsChange = {},\n'
+              '            onAbout = {},\n',
+          )
+          PY
+          git add app/src/main/java/ru/playsoftware/j2meloader/util/Constants.java \
+                  app/src/main/java/ru/playsoftware/j2meloader/applist/AppsListFragment.java \
+                  app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryComposeBridge.kt \
+                  app/src/main/res/values/strings.xml \
+                  app/src/main/res/values-in/strings.xml \
+                  app/src/screenshotTest/kotlin/ru/playsoftware/j2meloader/applist/LibraryProfilesScreenshotTest.kt
+          git commit -m "feat(ui): add Enhance icons preference [skip ci]"
+
+      - name: Add bounded enhancement pipeline
+        shell: bash
+        run: |
+          cat > app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryIconEnhancement.kt <<'EOF'
+          /*
+           * Licensed under the Apache License, Version 2.0 (the "License");
+           * you may not use this file except in compliance with the License.
+           * You may obtain a copy of the License at
+           *
+           *     http://www.apache.org/licenses/LICENSE-2.0
+           *
+           * Unless required by applicable law or agreed to in writing, software
+           * distributed under the License is distributed on an "AS IS" BASIS,
+           * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+           * See the License for the specific language governing permissions and
+           * limitations under the License.
+           */
+
+          package ru.playsoftware.j2meloader.applist
+
+          import kotlin.math.roundToInt
+
+          internal const val LIBRARY_ICON_ENHANCEMENT_VERSION = 1
+
+          internal data class LibraryIconEnhancementDecision(
+              val apply: Boolean,
+              val targetWidth: Int,
+              val targetHeight: Int,
+              val strength: Float,
+          )
+
+          /**
+           * Keeps enhancement intentionally bounded: only low-resolution/general raster artwork is
+           * considered, pixel art is a hard bypass, and already-large sources are left untouched.
+           */
+          internal fun decideLibraryIconEnhancement(
+              enabled: Boolean,
+              pixelArt: Boolean,
+              sourceWidth: Int,
+              sourceHeight: Int,
+              targetSizePx: Int,
+              strengthScale: Float = 1f,
+          ): LibraryIconEnhancementDecision {
+              if (!enabled || pixelArt || sourceWidth <= 0 || sourceHeight <= 0 || targetSizePx <= 0) {
+                  return LibraryIconEnhancementDecision(false, sourceWidth, sourceHeight, 0f)
+              }
+
+              val sourceMax = maxOf(sourceWidth, sourceHeight)
+              val resolutionRatio = sourceMax.toFloat() / targetSizePx.toFloat()
+              if (resolutionRatio > LIBRARY_ENHANCE_MAX_SOURCE_RATIO || strengthScale <= 0f) {
+                  return LibraryIconEnhancementDecision(false, sourceWidth, sourceHeight, 0f)
+              }
+
+              val scale = if (sourceMax < targetSizePx) {
+                  targetSizePx.toFloat() / sourceMax.toFloat()
+              } else {
+                  1f
+              }
+              val targetWidth = (sourceWidth * scale).roundToInt().coerceAtLeast(1)
+              val targetHeight = (sourceHeight * scale).roundToInt().coerceAtLeast(1)
+              val baseStrength = when {
+                  resolutionRatio <= 0.50f -> 0.20f
+                  resolutionRatio <= 0.80f -> 0.17f
+                  resolutionRatio <= 1.00f -> 0.14f
+                  else -> 0.10f
+              }
+              return LibraryIconEnhancementDecision(
+                  apply = true,
+                  targetWidth = targetWidth,
+                  targetHeight = targetHeight,
+                  strength = (baseStrength * strengthScale).coerceIn(0f, LIBRARY_ENHANCE_MAX_STRENGTH),
+              )
+          }
+
+          /**
+           * Small 5-tap detail filter. Transparent/semi-transparent edges are copied verbatim so
+           * sharpening cannot create bright/dark fringes around legacy sprites or logos.
+           */
+          internal fun sharpenLibraryPixels(
+              source: IntArray,
+              width: Int,
+              height: Int,
+              strength: Float,
+          ): IntArray {
+              if (width < 3 || height < 3 || source.size < width * height || strength <= 0f) {
+                  return source.copyOf()
+              }
+              val output = source.copyOf()
+              for (y in 1 until height - 1) {
+                  val rowOffset = y * width
+                  for (x in 1 until width - 1) {
+                      val index = rowOffset + x
+                      val center = source[index]
+                      val left = source[index - 1]
+                      val right = source[index + 1]
+                      val up = source[index - width]
+                      val down = source[index + width]
+                      if (
+                          alpha(center) < LIBRARY_ENHANCE_OPAQUE_ALPHA ||
+                          alpha(left) < LIBRARY_ENHANCE_OPAQUE_ALPHA ||
+                          alpha(right) < LIBRARY_ENHANCE_OPAQUE_ALPHA ||
+                          alpha(up) < LIBRARY_ENHANCE_OPAQUE_ALPHA ||
+                          alpha(down) < LIBRARY_ENHANCE_OPAQUE_ALPHA
+                      ) {
+                          continue
+                      }
+
+                      val red = sharpenChannel(center, left, right, up, down, 16, strength)
+                      val green = sharpenChannel(center, left, right, up, down, 8, strength)
+                      val blue = sharpenChannel(center, left, right, up, down, 0, strength)
+                      output[index] = (alpha(center) shl 24) or (red shl 16) or (green shl 8) or blue
+                  }
+              }
+              return output
+          }
+
+          private fun sharpenChannel(
+              centerPixel: Int,
+              leftPixel: Int,
+              rightPixel: Int,
+              upPixel: Int,
+              downPixel: Int,
+              shift: Int,
+              strength: Float,
+          ): Int {
+              val center = channel(centerPixel, shift)
+              val left = channel(leftPixel, shift)
+              val right = channel(rightPixel, shift)
+              val up = channel(upPixel, shift)
+              val down = channel(downPixel, shift)
+              val neighborAverage = (left + right + up + down) / 4f
+              val sharpened = center + (center - neighborAverage) * strength
+              val localMin = minOf(center, left, right, up, down) - LIBRARY_ENHANCE_LOCAL_MARGIN
+              val localMax = maxOf(center, left, right, up, down) + LIBRARY_ENHANCE_LOCAL_MARGIN
+              return sharpened.roundToInt().coerceIn(localMin.coerceAtLeast(0), localMax.coerceAtMost(255))
+          }
+
+          private fun alpha(pixel: Int): Int = (pixel ushr 24) and 0xff
+
+          private fun channel(pixel: Int, shift: Int): Int = (pixel ushr shift) and 0xff
+
+          private const val LIBRARY_ENHANCE_MAX_SOURCE_RATIO = 1.10f
+          private const val LIBRARY_ENHANCE_MAX_STRENGTH = 0.22f
+          private const val LIBRARY_ENHANCE_OPAQUE_ALPHA = 240
+          private const val LIBRARY_ENHANCE_LOCAL_MARGIN = 12
+          EOF
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one match, found {count}: {old[:80]!r}")
+              p.write_text(text.replace(old, new, 1))
+
+          bridge = "app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryComposeBridge.kt"
+          replace_once(
+              bridge,
+              '                            iconRatio = state.iconRatio,\n                            hideTitle = state.hideGridTitles,\n',
+              '                            iconRatio = state.iconRatio,\n'
+              '                            enhanceIcons = state.enhanceIcons,\n'
+              '                            hideTitle = state.hideGridTitles,\n',
+          )
+          replace_once(
+              bridge,
+              '                            app = app,\n                            iconRatio = state.iconRatio,\n                            onOpenApp = onOpenApp,\n',
+              '                            app = app,\n'
+              '                            iconRatio = state.iconRatio,\n'
+              '                            enhanceIcons = state.enhanceIcons,\n'
+              '                            onOpenApp = onOpenApp,\n',
+          )
+          replace_once(
+              bridge,
+              '    iconRatio: LibraryIconRatio,\n    hideTitle: Boolean,\n    gridSpacing: Dp,\n',
+              '    iconRatio: LibraryIconRatio,\n'
+              '    enhanceIcons: Boolean,\n'
+              '    hideTitle: Boolean,\n'
+              '    gridSpacing: Dp,\n',
+          )
+          replace_once(
+              bridge,
+              '            contentSize = null,\n            iconRatio = iconRatio,\n        )\n',
+              '            contentSize = null,\n'
+              '            iconRatio = iconRatio,\n'
+              '            enhanceIcons = enhanceIcons,\n'
+              '        )\n',
+          )
+          replace_once(
+              bridge,
+              '    onOpenActions: (LibraryAppUiItem) -> Unit,\n    iconRatio: LibraryIconRatio,\n) {\n',
+              '    onOpenActions: (LibraryAppUiItem) -> Unit,\n'
+              '    iconRatio: LibraryIconRatio,\n'
+              '    enhanceIcons: Boolean,\n'
+              ') {\n',
+          )
+          replace_once(
+              bridge,
+              '                contentSize = 36.dp,\n                iconRatio = iconRatio,\n            )\n',
+              '                contentSize = 36.dp,\n'
+              '                iconRatio = iconRatio,\n'
+              '                enhanceIcons = enhanceIcons,\n'
+              '            )\n',
+          )
+
+          replace_once(
+              bridge,
+              'private const val LIBRARY_ICON_PRESENTATION_VERSION = 5\n',
+              'private const val LIBRARY_ICON_PRESENTATION_VERSION = 5\n',
+          )
+
+          replace_once(
+              bridge,
+              'private fun loadLibraryIcon(\n    context: Context,\n    iconPath: String?,\n    fallbackSizePx: Int,\n    normalizeSquareIcon: Boolean,\n): LibraryNormalizedIcon? {\n',
+              'private fun loadLibraryIcon(\n'
+              '    context: Context,\n'
+              '    iconPath: String?,\n'
+              '    fallbackSizePx: Int,\n'
+              '    normalizeSquareIcon: Boolean,\n'
+              '    enhanceIcons: Boolean,\n'
+              '): LibraryNormalizedIcon? {\n',
+          )
+          replace_once(
+              bridge,
+              '        if (!normalizeSquareIcon) {\n            return LibraryNormalizedIcon(\n                bitmap = fileSource.asImageBitmap(),\n                filterQuality = fileSource.libraryFilterQuality(),\n                representativeColor = null,\n                presentationMode = LibraryIconPresentationMode.SafeFit,\n                visualScale = 1f,\n                foregroundLuminance = 0.5f,\n            )\n        }\n\n        val analysis = fileSource.analyzeLibraryIcon()\n',
+              '        if (!normalizeSquareIcon) {\n'
+              '            val portraitPixelArt = if (enhanceIcons) {\n'
+              '                fileSource.analyzeLibraryIcon()?.pixelArt ?: false\n'
+              '            } else {\n'
+              '                false\n'
+              '            }\n'
+              '            val rendered = fileSource.enhanceLibraryIcon(\n'
+              '                targetSizePx = requestedSizePx,\n'
+              '                pixelArt = portraitPixelArt,\n'
+              '                enabled = enhanceIcons,\n'
+              '                strengthScale = 1f,\n'
+              '            )\n'
+              '            return LibraryNormalizedIcon(\n'
+              '                bitmap = rendered.asImageBitmap(),\n'
+              '                filterQuality = if (portraitPixelArt) FilterQuality.None else FilterQuality.Medium,\n'
+              '                representativeColor = null,\n'
+              '                presentationMode = LibraryIconPresentationMode.SafeFit,\n'
+              '                visualScale = 1f,\n'
+              '                foregroundLuminance = 0.5f,\n'
+              '            )\n'
+              '        }\n\n'
+              '        val analysis = fileSource.analyzeLibraryIcon()\n',
+          )
+          replace_once(
+              bridge,
+              '            return LibraryNormalizedIcon(\n                bitmap = normalized.asImageBitmap(),\n                filterQuality = if (analysis.pixelArt) FilterQuality.None else FilterQuality.Medium,\n',
+              '            val enhancementStrengthScale = when (analysis.presentation.mode) {\n'
+              '                LibraryIconPresentationMode.Cover,\n'
+              '                LibraryIconPresentationMode.SafeFit -> 1f\n'
+              '                LibraryIconPresentationMode.Subject -> 0.80f\n'
+              '                LibraryIconPresentationMode.Backed -> 0.65f\n'
+              '                LibraryIconPresentationMode.Fallback -> 0f\n'
+              '            }\n'
+              '            val rendered = normalized.enhanceLibraryIcon(\n'
+              '                targetSizePx = requestedSizePx,\n'
+              '                pixelArt = analysis.pixelArt,\n'
+              '                enabled = enhanceIcons,\n'
+              '                strengthScale = enhancementStrengthScale,\n'
+              '            )\n'
+              '            return LibraryNormalizedIcon(\n'
+              '                bitmap = rendered.asImageBitmap(),\n'
+              '                filterQuality = if (analysis.pixelArt) FilterQuality.None else FilterQuality.Medium,\n',
+          )
+          replace_once(
+              bridge,
+              'private fun Bitmap.cropLibraryBounds(bounds: Rect): Bitmap {\n',
+              'private fun Bitmap.enhanceLibraryIcon(\n'
+              '    targetSizePx: Int,\n'
+              '    pixelArt: Boolean,\n'
+              '    enabled: Boolean,\n'
+              '    strengthScale: Float,\n'
+              '): Bitmap {\n'
+              '    val decision = decideLibraryIconEnhancement(\n'
+              '        enabled = enabled,\n'
+              '        pixelArt = pixelArt,\n'
+              '        sourceWidth = width,\n'
+              '        sourceHeight = height,\n'
+              '        targetSizePx = targetSizePx,\n'
+              '        strengthScale = strengthScale,\n'
+              '    )\n'
+              '    if (!decision.apply) return this\n\n'
+              '    return try {\n'
+              '        val working = if (\n'
+              '            width != decision.targetWidth || height != decision.targetHeight\n'
+              '        ) {\n'
+              '            Bitmap.createScaledBitmap(this, decision.targetWidth, decision.targetHeight, true)\n'
+              '        } else {\n'
+              '            this\n'
+              '        }\n'
+              '        val pixelCount = Math.multiplyExact(working.width, working.height)\n'
+              '        val sourcePixels = IntArray(pixelCount)\n'
+              '        working.getPixels(\n'
+              '            sourcePixels,\n'
+              '            0,\n'
+              '            working.width,\n'
+              '            0,\n'
+              '            0,\n'
+              '            working.width,\n'
+              '            working.height,\n'
+              '        )\n'
+              '        val enhancedPixels = sharpenLibraryPixels(\n'
+              '            source = sourcePixels,\n'
+              '            width = working.width,\n'
+              '            height = working.height,\n'
+              '            strength = decision.strength,\n'
+              '        )\n'
+              '        Bitmap.createBitmap(\n'
+              '            enhancedPixels,\n'
+              '            working.width,\n'
+              '            working.height,\n'
+              '            Bitmap.Config.ARGB_8888,\n'
+              '        )\n'
+              '    } catch (_: ArithmeticException) {\n'
+              '        this\n'
+              '    } catch (_: OutOfMemoryError) {\n'
+              '        this\n'
+              '    } catch (_: RuntimeException) {\n'
+              '        this\n'
+              '    }\n'
+              '}\n\n'
+              'private fun Bitmap.cropLibraryBounds(bounds: Rect): Bitmap {\n',
+          )
+
+          replace_once(
+              bridge,
+              'private fun rememberLibraryIcon(\n    app: LibraryAppUiItem,\n    contentSize: Dp,\n    iconRatio: LibraryIconRatio,\n): LibraryNormalizedIcon? {\n',
+              'private fun rememberLibraryIcon(\n'
+              '    app: LibraryAppUiItem,\n'
+              '    contentSize: Dp,\n'
+              '    iconRatio: LibraryIconRatio,\n'
+              '    enhanceIcons: Boolean,\n'
+              '): LibraryNormalizedIcon? {\n',
+          )
+          replace_once(
+              bridge,
+              '    val cacheKey = remember(app.iconPath, contentSizePx, iconRatio, fallbackTint) {\n        libraryIconCacheKey(app.iconPath, contentSizePx, iconRatio, fallbackTint)\n    }\n',
+              '    val cacheKey = remember(\n'
+              '        app.iconPath,\n'
+              '        contentSizePx,\n'
+              '        iconRatio,\n'
+              '        fallbackTint,\n'
+              '        enhanceIcons,\n'
+              '    ) {\n'
+              '        libraryIconCacheKey(\n'
+              '            app.iconPath,\n'
+              '            contentSizePx,\n'
+              '            iconRatio,\n'
+              '            fallbackTint,\n'
+              '            enhanceIcons,\n'
+              '        )\n'
+              '    }\n',
+          )
+          replace_once(
+              bridge,
+              '            fallbackSizePx = contentSizePx,\n            normalizeSquareIcon = iconRatio == LibraryIconRatio.Square,\n        )?.also { LibraryIconCache.put(cacheKey, it) }\n',
+              '            fallbackSizePx = contentSizePx,\n'
+              '            normalizeSquareIcon = iconRatio == LibraryIconRatio.Square,\n'
+              '            enhanceIcons = enhanceIcons,\n'
+              '        )?.also { LibraryIconCache.put(cacheKey, it) }\n',
+          )
+          replace_once(
+              bridge,
+              '    iconRatio: LibraryIconRatio,\n    fallbackTint: Int,\n): String {\n',
+              '    iconRatio: LibraryIconRatio,\n'
+              '    fallbackTint: Int,\n'
+              '    enhanceIcons: Boolean,\n'
+              '): String {\n',
+          )
+          replace_once(
+              bridge,
+              '    return "real:$LIBRARY_ICON_PRESENTATION_VERSION:$iconPath:$modified:$length:$targetSizePx:${iconRatio.name}"\n',
+              '    return "real:$LIBRARY_ICON_PRESENTATION_VERSION:$LIBRARY_ICON_ENHANCEMENT_VERSION:$enhanceIcons:" +\n'
+              '        "$iconPath:$modified:$length:$targetSizePx:${iconRatio.name}"\n',
+          )
+          replace_once(
+              bridge,
+              '    contentSize: Dp?,\n    iconRatio: LibraryIconRatio,\n) {\n',
+              '    contentSize: Dp?,\n'
+              '    iconRatio: LibraryIconRatio,\n'
+              '    enhanceIcons: Boolean,\n'
+              ') {\n',
+          )
+          replace_once(
+              bridge,
+              '        val icon = rememberLibraryIcon(app, artworkSize, iconRatio)\n',
+              '        val icon = rememberLibraryIcon(app, artworkSize, iconRatio, enhanceIcons)\n',
+          )
+          PY
+
+          git add app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryComposeBridge.kt \
+                  app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryIconEnhancement.kt
+          git commit -m "feat(ui): add bounded adaptive icon enhancement [skip ci]"
+
+      - name: Push generated commits
+        run: git push origin HEAD:ui/icon-enhancement
