@@ -21,10 +21,33 @@ import java.util.List;
 /** Formats local diagnostics consistently for detail, clipboard, and explicit sharing surfaces. */
 final class DiagnosticReportText {
 	private static final String BATCH_SEPARATOR = "\n\n====================\n\n";
+	private static final String ANR_TRACE_MARKER = "\nANR trace:\n";
+	private static final String GITHUB_TRACE_NOTICE =
+			"\nANR trace: retained locally; use Share Report in JL-Mod Plus to attach retained trace evidence explicitly.";
 
 	private DiagnosticReportText() {}
 
 	static String build(LocalDiagnosticRepository.Record record) {
+		return build(record, record.getDetailText());
+	}
+
+	/** GitHub drafts never inline retained raw Android trace evidence. */
+	static String buildForGitHub(LocalDiagnosticRepository.Record record) {
+		return build(record, removeRawSystemTrace(record.getDetailText()));
+	}
+
+	static String removeRawSystemTrace(String detailText) {
+		if (detailText == null || detailText.isEmpty()) {
+			return detailText;
+		}
+		int traceStart = detailText.indexOf(ANR_TRACE_MARKER);
+		if (traceStart < 0) {
+			return detailText;
+		}
+		return detailText.substring(0, traceStart) + GITHUB_TRACE_NOTICE;
+	}
+
+	private static String build(LocalDiagnosticRepository.Record record, String detailText) {
 		StringBuilder text = new StringBuilder();
 		text.append("JL-Mod Plus diagnostic report\n");
 		if (record.getTimestampMillis() > 0) {
@@ -33,7 +56,9 @@ final class DiagnosticReportText {
 					.append(dateFormat.format(new Date(record.getTimestampMillis())))
 					.append('\n');
 		}
-		text.append('\n').append(record.getDetailText());
+		if (detailText != null && !detailText.isEmpty()) {
+			text.append('\n').append(detailText);
+		}
 		return text.toString();
 	}
 
