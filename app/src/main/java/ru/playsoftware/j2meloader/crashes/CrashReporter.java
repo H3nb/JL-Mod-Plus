@@ -91,6 +91,8 @@ public final class CrashReporter {
 			THREAD_DETAILS
 	);
 
+	private static boolean mainProcess;
+
 	private CrashReporter() {}
 
 	/**
@@ -112,6 +114,7 @@ public final class CrashReporter {
 
 		String processName = EmulatorApplication.getProcessName();
 		String processRole = classifyProcess(application.getPackageName(), processName);
+		mainProcess = ROLE_MAIN.equals(processRole);
 		boolean reporterProcess = ROLE_REPORTER.equals(processRole) || ACRA.isACRASenderServiceProcess();
 		if (reporterProcess) {
 			return true;
@@ -130,36 +133,36 @@ public final class CrashReporter {
 
 	/** Schedules one best-effort main-process maintenance pass after Application startup. */
 	public static void scheduleMaintenance(Application application) {
-		String processRole = classifyProcess(application.getPackageName(), EmulatorApplication.getProcessName());
-		if (!ROLE_MAIN.equals(processRole)) {
+		if (!mainProcess) {
 			return;
 		}
 		try {
 			Thread maintenance = new Thread(() -> {
+				try {
+					Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+				} catch (Throwable ignored) {}
 				runMaintenanceStep("process-exit ingestion", () -> ProcessExitStore.ingest(application));
 				runMaintenanceStep("local crash report pruning", () -> LocalCrashReportStore.prune(application));
 				runMaintenanceStep("MIDlet session journal pruning", () -> MidletSessionJournal.prune(application));
 			}, "jlmod-diagnostics-maintenance");
 			maintenance.start();
-		} catch (RuntimeException e) {
-			Log.w(TAG, "Unable to schedule diagnostics maintenance", e);
-		} catch (OutOfMemoryError e) {
-			try {
-				Log.w(TAG, "Diagnostics maintenance skipped under low memory");
-			} catch (Throwable ignored) {}
+		} catch (Throwable error) {
+			logMaintenanceFailure("Unable to schedule diagnostics maintenance", error);
 		}
 	}
 
 	private static void runMaintenanceStep(String label, Runnable step) {
 		try {
 			step.run();
-		} catch (RuntimeException e) {
-			Log.w(TAG, "Diagnostics maintenance failed open: " + label, e);
-		} catch (OutOfMemoryError e) {
-			try {
-				Log.w(TAG, "Diagnostics maintenance skipped under low memory: " + label);
-			} catch (Throwable ignored) {}
+		} catch (Throwable error) {
+			logMaintenanceFailure("Diagnostics maintenance failed open: " + label, error);
 		}
+	}
+
+	private static void logMaintenanceFailure(String message, Throwable error) {
+		try {
+			Log.w(TAG, message, error);
+		} catch (Throwable ignored) {}
 	}
 
 	public static void setMidletContext(String name, String vendor, String version,
@@ -169,7 +172,7 @@ public final class CrashReporter {
 		clearSessionContext(reporter);
 		putBounded(reporter, KEY_MIDLET_NAME, name);
 		putBounded(reporter, KEY_MIDLET_VENDOR, vendor);
-		putBounded(reporter, KEY_MIDLET_VERSION, version);
+		putBounded(reporter, KEY_MIDLET_VERSION, midletVersion);
 		putBounded(reporter, KEY_MIDLET_JAR_SIZE, jarSize);
 		putBounded(reporter, KEY_MIDLET_JAR_SHA256, jarSha256);
 	}
