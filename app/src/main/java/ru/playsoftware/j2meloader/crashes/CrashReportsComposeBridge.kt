@@ -76,6 +76,7 @@ interface CrashReportDetailsActions {
     fun onBack()
     fun onCopy()
     fun onShare()
+    fun onReportGitHub()
     fun onDelete()
 }
 
@@ -368,14 +369,20 @@ fun CrashReportDetailsScreen(
             )
         },
     ) { innerPadding ->
-        SelectionContainer {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+        ) {
+            TextButton(
+                onClick = actions::onReportGitHub,
+                modifier = Modifier.align(Alignment.End),
             ) {
+                Text(stringResource(R.string.report_on_github))
+            }
+            SelectionContainer {
                 Text(
                     text = state.displayText,
                     style = MaterialTheme.typography.bodyMedium,
