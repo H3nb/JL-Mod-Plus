@@ -22,6 +22,7 @@ import java.util.List;
 final class DiagnosticReportText {
 	private static final String BATCH_SEPARATOR = "\n\n====================\n\n";
 	private static final String ANR_TRACE_MARKER = "\nANR trace:\n";
+	private static final String JAVA_STACK_MARKER = "\nStack trace:\n";
 	private static final String GITHUB_TRACE_NOTICE =
 			"\nANR trace: retained locally; use Share Report in JL-Mod Plus to attach retained trace evidence explicitly.";
 
@@ -33,10 +34,14 @@ final class DiagnosticReportText {
 
 	/** GitHub drafts never inline retained raw Android trace evidence. */
 	static String buildForGitHub(LocalDiagnosticRepository.Record record) {
-		return build(record, removeRawSystemTrace(record.getDetailText()));
+		String detailText = record.getDetailText();
+		if (record.hasProcessExit()) {
+			detailText = removeRawSystemTrace(detailText, record.getStackTrace());
+		}
+		return build(record, detailText);
 	}
 
-	static String removeRawSystemTrace(String detailText) {
+	static String removeRawSystemTrace(String detailText, String javaStackTrace) {
 		if (detailText == null || detailText.isEmpty()) {
 			return detailText;
 		}
@@ -44,7 +49,16 @@ final class DiagnosticReportText {
 		if (traceStart < 0) {
 			return detailText;
 		}
-		return detailText.substring(0, traceStart) + GITHUB_TRACE_NOTICE;
+
+		String retainedSuffix = "";
+		if (javaStackTrace != null && !javaStackTrace.trim().isEmpty()) {
+			String stackSection = JAVA_STACK_MARKER + javaStackTrace.trim();
+			int stackStart = detailText.lastIndexOf(stackSection);
+			if (stackStart > traceStart) {
+				retainedSuffix = detailText.substring(stackStart);
+			}
+		}
+		return detailText.substring(0, traceStart) + GITHUB_TRACE_NOTICE + retainedSuffix;
 	}
 
 	private static String build(LocalDiagnosticRepository.Record record, String detailText) {
