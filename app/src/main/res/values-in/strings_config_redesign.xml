@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="config_destination_general">Umum</string>
+    <string name="config_destination_graphics">Grafis</string>
+    <string name="config_destination_audio">Audio</string>
+    <string name="config_destination_media">Media</string>
+    <string name="config_destination_controls">Kontrol</string>
+    <string name="config_destination_system">Sistem</string>
     <string name="config_general_settings">Pengaturan penting</string>
+    <string name="config_screen_size">Ukuran layar</string>
+    <string name="config_advanced_settings">Pengaturan lanjutan</string>
+    <string name="config_media_empty">Pengaturan multimedia akan ditambahkan di sini pada pembaruan mendatang.</string>
     <string name="config_maintenance">Atur ulang &amp; data</string>
     <string name="config_reset_all_settings">Atur ulang semua pengaturan</string>
     <string name="config_reset_all_settings_summary">Kembalikan pengaturan emulator ke bawaan</string>
@@ -10,6 +18,12 @@
     <string name="config_message_reset_settings">Atur ulang semua pengaturan emulator untuk game ini ke bawaan? Data game dan tata letak tombol kustom tidak akan dihapus.</string>
     <string name="config_message_reset_profile_settings">Atur ulang semua pengaturan di profil ini ke bawaan? Profil masih dapat diubah lagi sebelum meninggalkan halaman ini.</string>
     <string name="config_message_delete_game_data">Hapus permanen semua save dan data yang dibuat game ini? Pengaturan emulator tidak akan dihapus.</string>
+    <string name="profile_custom">Kustom</string>
+    <string name="profile_custom_summary">Pengaturan berbeda dari profil tersimpan</string>
+    <string name="profile_active_summary">Profil aktif</string>
+    <string name="profile_use">Gunakan profil</string>
+    <string name="profile_change">Ganti profil</string>
+    <string name="profile_save_as">Simpan sebagai profil</string>
     <string name="profile_choose_template">Pilih profil</string>
     <string name="profile_choose_template_summary">Terapkan templat konfigurasi tersimpan. Anda bisa langsung memulai atau mengubah pengaturan apa pun setelahnya.</string>
     <string name="profile_default_badge">Bawaan untuk game baru</string>
