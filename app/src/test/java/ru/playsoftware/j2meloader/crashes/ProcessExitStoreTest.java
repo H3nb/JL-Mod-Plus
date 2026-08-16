@@ -29,6 +29,7 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 
@@ -142,6 +143,41 @@ public class ProcessExitStoreTest {
 	}
 
 	@Test
+	public void boundedCopyWithZeroLimitOnlyProbesTruncation() throws IOException {
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+		ProcessExitStore.TraceWriteResult empty = ProcessExitStore.copyBounded(
+				new ByteArrayInputStream(new byte[0]), output, 0);
+		assertEquals(0, empty.bytes);
+		assertFalse(empty.truncated);
+		assertEquals(0, output.size());
+
+		ProcessExitStore.TraceWriteResult nonEmpty = ProcessExitStore.copyBounded(
+				new ByteArrayInputStream(bytes(1)), output, 0);
+		assertEquals(0, nonEmpty.bytes);
+		assertTrue(nonEmpty.truncated);
+		assertEquals(0, output.size());
+	}
+
+	@Test
+	public void boundedCopyPropagatesReadFailure() {
+		InputStream failing = new InputStream() {
+			@Override
+			public int read() throws IOException {
+				throw new IOException("synthetic read failure");
+			}
+
+			@Override
+			public int read(byte[] buffer, int offset, int length) throws IOException {
+				throw new IOException("synthetic read failure");
+			}
+		};
+
+		assertThrows(IOException.class, () -> ProcessExitStore.copyBounded(
+				failing, new ByteArrayOutputStream(), 8));
+	}
+
+	@Test
 	public void boundedCopyPropagatesWriteFailure() {
 		OutputStream failing = new OutputStream() {
 			@Override
@@ -157,6 +193,24 @@ public class ProcessExitStoreTest {
 
 		assertThrows(IOException.class, () -> ProcessExitStore.copyBounded(
 				new ByteArrayInputStream(bytes(4)), failing, 8));
+	}
+
+	@Test
+	public void boundedCopyPropagatesOutOfMemory() {
+		InputStream failing = new InputStream() {
+			@Override
+			public int read() {
+				throw new OutOfMemoryError("synthetic low-memory failure");
+			}
+
+			@Override
+			public int read(byte[] buffer, int offset, int length) {
+				throw new OutOfMemoryError("synthetic low-memory failure");
+			}
+		};
+
+		assertThrows(OutOfMemoryError.class, () -> ProcessExitStore.copyBounded(
+				failing, new ByteArrayOutputStream(), 8));
 	}
 
 	private static byte[] bytes(int count) {
