@@ -149,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
 		if (hasFocus) {
-			CrashReporter.requestProcessExitRefresh(getApplication());
+			CrashReporter.requestDiagnosticRefresh(getApplication());
 			maybeShowDiagnosticRecovery();
 		}
 	}
@@ -165,7 +165,15 @@ public class MainActivity extends AppCompatActivity {
 			return;
 		}
 
-		MidletFailureRecovery.PendingFailure failure = MidletFailureRecovery.findPendingFailure(this);
+		// Historical exit reconciliation and bounded retention run on the diagnostics background
+		// thread. Window focus only polls readiness, then reads the already-maintained projection.
+		if (!CrashReporter.isDiagnosticRefreshReady()) {
+			scheduleDiagnosticRecoveryRetry();
+			return;
+		}
+
+		MidletFailureRecovery.PendingFailure failure =
+				MidletFailureRecovery.findPendingStoredFailure(this);
 		if (failure != null) {
 			String noticeId = "midlet:" + failure.getEventId();
 			if (noticeId.equals(lastRecoveryNoticeId)) {
@@ -181,14 +189,6 @@ public class MainActivity extends AppCompatActivity {
 					: getString(messageRes, midletName);
 
 			mainComposeController.showMidletFailure(message);
-			return;
-		}
-
-		// Historical process-exit reconciliation runs on a diagnostics background thread.
-		// Never make window focus wait on ApplicationExitInfo, trace copying, or legacy
-		// process/journal reconciliation. Recheck shortly once that evidence is ready.
-		if (!CrashReporter.isProcessExitEvidenceReady()) {
-			scheduleDiagnosticRecoveryRetry();
 			return;
 		}
 
