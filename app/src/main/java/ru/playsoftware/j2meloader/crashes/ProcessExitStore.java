@@ -266,10 +266,7 @@ public final class ProcessExitStore {
 			return false;
 		}
 		File marker = new File(acknowledgmentDirectory(context), snapshot.key + ACK_SUFFIX);
-		if (marker.isFile() && !marker.delete()) {
-			Log.w(TAG, "Unable to delete orphan process-exit acknowledgment: " + snapshot.key);
-		}
-		return true;
+		return !marker.exists() || (marker.isFile() && marker.delete());
 	}
 
 	static String reasonLabel(int reason) {
@@ -683,6 +680,7 @@ public final class ProcessExitStore {
 			if ((c < '0' || c > '9') && c != '-') {
 				return false;
 			}
+		}
 		return true;
 	}
 
