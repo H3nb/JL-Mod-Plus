@@ -16,6 +16,7 @@ package ru.playsoftware.j2meloader.config;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.google.gson.Gson;
@@ -26,6 +27,7 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.Collections;
 
 public class ProfileConfigMatcherTest {
 	@Test
@@ -36,7 +38,7 @@ public class ProfileConfigMatcherTest {
 		current.screenHeight = 320;
 		current.screenBackgroundColor = 0xD0D0D0;
 		current.systemProperties = "platform: test\nprofiles: MIDP2.0\n";
-		current.customKeys = java.util.Collections.emptyList();
+		current.customKeys = Collections.emptyList();
 
 		ConfigFormState draft = ConfigFormState.fromProfile(current, current.systemProperties)
 				.toBuilder().screenWidth("360").build();
@@ -60,6 +62,42 @@ public class ProfileConfigMatcherTest {
 				Arrays.asList(caseInsensitiveTie, defaultProfile, caseInsensitiveFirst), "zeta").getName());
 		assertEquals("Alpha", ProfileConfigMatcher.selectMatch(
 				Arrays.asList(caseInsensitiveTie, defaultProfile, caseInsensitiveFirst), null).getName());
+	}
+
+	@Test
+	public void cachedMatchTreatsKeyboardAsPartOfProfilesThatOwnIt() {
+		ProfileModel current = new ProfileModel();
+		current.version = ProfileModel.VERSION;
+		current.screenWidth = 240;
+		current.screenHeight = 320;
+		current.systemProperties = "platform: test\n";
+		ConfigFormState draft = ConfigFormState.fromProfile(current, current.systemProperties);
+
+		Profile withKeyboard = new Profile("with-keyboard");
+		Profile configOnly = new Profile("config-only");
+		ProfileConfigMatcher.Candidate keyboardCandidate = new ProfileConfigMatcher.Candidate(
+				withKeyboard, current, "keys".getBytes(StandardCharsets.UTF_8));
+		ProfileConfigMatcher.Candidate configOnlyCandidate = new ProfileConfigMatcher.Candidate(
+				configOnly, current, null);
+
+		assertEquals("with-keyboard", ProfileConfigMatcher.findMatchCached(
+				current,
+				draft,
+				Arrays.asList(configOnlyCandidate, keyboardCandidate),
+				"with-keyboard",
+				"keys".getBytes(StandardCharsets.UTF_8)).getName());
+		assertEquals("config-only", ProfileConfigMatcher.findMatchCached(
+				current,
+				draft,
+				Arrays.asList(configOnlyCandidate, keyboardCandidate),
+				"with-keyboard",
+				"different".getBytes(StandardCharsets.UTF_8)).getName());
+		assertNull(ProfileConfigMatcher.findMatchCached(
+				current,
+				draft,
+				Collections.singletonList(keyboardCandidate),
+				null,
+				null));
 	}
 
 	@Test
