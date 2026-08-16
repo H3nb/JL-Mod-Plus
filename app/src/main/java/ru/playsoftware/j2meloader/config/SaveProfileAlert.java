@@ -18,7 +18,6 @@
 package ru.playsoftware.j2meloader.config;
 
 import static ru.playsoftware.j2meloader.util.Constants.KEY_CONFIG_PATH;
-import static ru.playsoftware.j2meloader.util.Constants.PREF_DEFAULT_PROFILE;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -32,7 +31,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.compose.ui.platform.ComposeView;
 import androidx.fragment.app.DialogFragment;
-import androidx.preference.PreferenceManager;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -58,7 +56,7 @@ public class SaveProfileAlert extends DialogFragment {
 		configPath = requireArguments().getString(KEY_CONFIG_PATH);
 		Set<String> existingConfigNames = new HashSet<>();
 		for (Profile profile : ProfilesManager.getProfiles()) {
-			if (profile.getConfig().exists()) {
+			if (profile.getConfig().exists() || profile.hasOldConfig()) {
 				existingConfigNames.add(profile.getName());
 			}
 		}
@@ -87,11 +85,7 @@ public class SaveProfileAlert extends DialogFragment {
 							return;
 						}
 						try {
-							ProfilesManager.save(new Profile(name), configPath, config, keyboard);
-							if (asDefault) {
-								PreferenceManager.getDefaultSharedPreferences(context)
-										.edit().putString(PREF_DEFAULT_PROFILE, name).apply();
-							}
+							ProfilesManager.saveSnapshot(new Profile(name), configPath);
 							if (context instanceof ConfigActivity) {
 								((ConfigActivity) context).onProfileDataChanged();
 							}
