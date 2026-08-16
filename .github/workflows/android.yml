@@ -90,24 +90,3 @@ jobs:
           path: app/build/outputs/apk/emulator/debug/app-emulator-arm64-v8a-debug.apk
           if-no-files-found: error
           retention-days: 7
-
-      - name: Stage emulator debug androidTest APK
-        shell: bash
-        run: |
-          set -euo pipefail
-          mapfile -t android_test_apks < <(find app/build/outputs/apk -type f -name '*androidTest.apk' -print)
-          if [[ "${#android_test_apks[@]}" -ne 1 ]]; then
-            printf 'Expected exactly one androidTest APK, found %d. APK outputs were:\n' "${#android_test_apks[@]}" >&2
-            find app/build/outputs/apk -type f -name '*.apk' -print >&2
-            exit 1
-          fi
-          mkdir -p artifacts/androidTest
-          cp "${android_test_apks[0]}" artifacts/androidTest/
-
-      - name: Upload emulator debug androidTest APK
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: JL-Mod-Plus-emulator-debug-androidTest-arm64-v8a
-          path: artifacts/androidTest/*.apk
-          if-no-files-found: error
-          retention-days: 7
