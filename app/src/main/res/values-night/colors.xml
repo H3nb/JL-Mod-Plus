@@ -7,7 +7,7 @@
     <color name="background">#000000</color>
     <color name="text_primary">#ffffff</color>
     <color name="text_secondary">#dedede</color>
-    <color name="library_default_icon">#BBC6CD</color>
+    <color name="library_default_icon">#CCDAF5</color>
     <color name="btn_bg_normal">#0099ff</color>
     <color name="btn_bg_pressed">#005D8C</color>
 </resources>
