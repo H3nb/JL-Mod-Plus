@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -52,8 +51,6 @@ import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import java.text.DecimalFormat
 import kotlin.math.roundToInt
 
-private val NoDialogInsets = WindowInsets(left = 0, top = 0, right = 0, bottom = 0)
-
 /** Java-facing callbacks keep persistence, toasts, and activity-result ownership in the host. */
 object ConfigDialogComposeBridge {
     interface LoadProfileCallbacks {
@@ -77,12 +74,12 @@ object ConfigDialogComposeBridge {
     fun setLoadProfileContent(
         view: androidx.compose.ui.platform.ComposeView,
         profiles: List<Profile>,
-        defaultName: String?,
+        @Suppress("UNUSED_PARAMETER") defaultName: String?,
         callbacks: LoadProfileCallbacks,
     ) {
         view.setContent {
             JLModPlusTheme {
-                LoadProfileContent(profiles, defaultName, callbacks)
+                LoadProfileContent(profiles, callbacks)
             }
         }
     }
@@ -117,8 +114,7 @@ object ConfigDialogComposeBridge {
 @Composable
 private fun DialogSurface(content: @Composable ColumnScope.() -> Unit) {
     Surface(
-        modifier = Modifier
-            .widthIn(min = 280.dp, max = 560.dp),
+        modifier = Modifier.widthIn(min = 280.dp, max = 560.dp),
         shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         tonalElevation = 6.dp,
@@ -134,7 +130,6 @@ private fun DialogSurface(content: @Composable ColumnScope.() -> Unit) {
 @Composable
 private fun LoadProfileContent(
     profiles: List<Profile>,
-    defaultName: String?,
     callbacks: ConfigDialogComposeBridge.LoadProfileCallbacks,
 ) {
     DialogSurface {
@@ -157,13 +152,10 @@ private fun LoadProfileContent(
                     val hasKeyboard = profile.hasKeyLayout()
                     val available = hasConfig || hasKeyboard
                     ListItem(
-                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                        colors = ListItemDefaults.colors(
+                            containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                        ),
                         headlineContent = { Text(profile.name) },
-                        supportingContent = if (profile.name == defaultName) {
-                            { Text(stringResource(R.string.profile_default_badge)) }
-                        } else {
-                            null
-                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable(enabled = available) {
