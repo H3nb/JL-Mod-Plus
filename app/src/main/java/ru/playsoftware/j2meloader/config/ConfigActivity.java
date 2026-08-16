@@ -49,6 +49,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import javax.microedition.shell.MicroActivity;
@@ -84,6 +85,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private boolean needShow;
 	private ConfigFormState currentForm;
 	private ConfigComposeController composeController;
+	private List<ProfileConfigMatcher.Candidate> profileCandidates = Collections.emptyList();
+	private byte[] currentKeyLayoutSnapshot;
 
 	private final ConfigFormEvents formEvents = new ConfigFormEvents() {
 		@Override
@@ -216,6 +219,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			return;
 		}
 		loadKeyLayout();
+		refreshProfileMatchCache();
 		EdgeToEdgeCompat.enableForComposeSurface(this);
 		ComposeView composeView = new ComposeView(this);
 		setContentView(composeView);
@@ -269,6 +273,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 							keylayoutFile.delete();
 						}
 						loadKeyLayout();
+						refreshProfileMatchCache();
 						if (composeController != null) {
 							composeController.update(createUiState());
 						}
@@ -538,6 +543,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			loadConfig();
 		}
 		currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
+		refreshProfileMatchCache();
 		if (composeController != null) {
 			composeController.update(createUiState());
 		}
@@ -575,7 +581,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		if (keylayoutFile == null) {
 			return;
 		}
-		saveParams();
 		LoadProfileAlert.newInstance(keylayoutFile.getParent())
 				.show(getSupportFragmentManager(), "load_profile");
 	}
@@ -584,14 +589,15 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		if (keylayoutFile == null) {
 			return;
 		}
-		// Save the effective draft before entering the existing optional config/keyboard flow.
+		// Save the effective draft so the profile becomes a reusable snapshot of this screen.
 		saveParams();
 		SaveProfileAlert.getInstance(keylayoutFile.getParent())
 				.show(getSupportFragmentManager(), "save_profile");
 	}
 
-	/** Called by the existing save dialog after a profile artifact is written. */
+	/** Called by the save dialog after a profile snapshot is written. */
 	void onProfileDataChanged() {
+		refreshProfileMatchCache();
 		if (composeController != null) {
 			composeController.update(createUiState());
 		}
@@ -640,9 +646,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		if (presets.isEmpty()) {
 			editor.remove("ResolutionsPreset");
 		} else {
-			editor.putStringSet("ResolutionsPreset", presets);
+			editor.putStringSet("ResolutionsPreset", presets).apply();
 		}
-		editor.apply();
+		if (presets.isEmpty()) {
+			editor.apply();
+		}
 		fillScreenSizePresets(display.getWidth(), display.getHeight());
 		if (composeController != null) {
 			composeController.update(createUiState());
@@ -663,14 +671,24 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 	}
 
+	private void refreshProfileMatchCache() {
+		if (isProfile) {
+			profileCandidates = Collections.emptyList();
+			currentKeyLayoutSnapshot = null;
+			return;
+		}
+		profileCandidates = ProfileConfigMatcher.loadCandidates(ProfilesManager.getProfiles());
+		currentKeyLayoutSnapshot = ProfileConfigMatcher.readKeyboard(keylayoutFile);
+	}
+
 	private ConfigUiState createUiState() {
 		ConfigFormState state = currentForm == null
 				? ConfigFormState.fromProfile(params, normalizedSystemProperties())
 				: currentForm;
 		String defaultProfile = PreferenceManager.getDefaultSharedPreferences(this)
 				.getString(PREF_DEFAULT_PROFILE, null);
-		Profile activeProfile = isProfile ? null : ProfileConfigMatcher.findMatch(
-				params, state, ProfilesManager.getProfiles(), defaultProfile, keylayoutFile);
+		Profile activeProfile = isProfile ? null : ProfileConfigMatcher.findMatchCached(
+				params, state, profileCandidates, defaultProfile, currentKeyLayoutSnapshot);
 		ConfigUiState.ProfileStatus profileStatus = activeProfile == null
 				? ConfigUiState.ProfileStatus.custom(defaultProfile)
 				: ConfigUiState.ProfileStatus.active(activeProfile.getName(), defaultProfile);
