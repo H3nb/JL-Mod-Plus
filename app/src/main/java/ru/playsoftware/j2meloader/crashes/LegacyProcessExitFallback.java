@@ -201,14 +201,22 @@ public final class LegacyProcessExitFallback {
 			output = atomic.startWrite();
 			p.store(output, null);
 			atomic.finishWrite(output);
-		} catch (IOException | RuntimeException e) {
-			if (output != null) {
-				try {
-					atomic.failWrite(output);
-				} catch (Throwable ignored) {}
+		} catch (Throwable error) {
+			rollback(atomic, output);
+			if (error instanceof Error) {
+				throw (Error) error;
 			}
-			Log.w(TAG, "Unable to persist legacy process-exit diagnostic", e);
+			Log.w(TAG, "Unable to persist legacy process-exit diagnostic", error);
 		}
+	}
+
+	private static void rollback(AtomicFile atomic, FileOutputStream output) {
+		if (output == null) {
+			return;
+		}
+		try {
+			atomic.failWrite(output);
+		} catch (Throwable ignored) {}
 	}
 
 	private static String buildKey(MidletSessionJournal.Snapshot session) {
