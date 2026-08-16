@@ -1659,7 +1659,11 @@ private fun loadLibraryIcon(
             )
             return LibraryNormalizedIcon(
                 bitmap = rendered.asImageBitmap(),
-                filterQuality = if (portraitPixelArt) FilterQuality.None else FilterQuality.Medium,
+                filterQuality = if (portraitPixelArt) {
+                    FilterQuality.None
+                } else {
+                    rendered.libraryFilterQuality()
+                },
                 representativeColor = null,
                 presentationMode = LibraryIconPresentationMode.SafeFit,
                 visualScale = 1f,
