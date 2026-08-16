@@ -182,6 +182,17 @@ class LibraryIconEnhancementTest {
     }
 
     @Test
+    fun mmpxKeepsFlatRegionsExactlyFlat() {
+        val color = 0xff3a6bc2.toInt()
+        val pixels = IntArray(9) { color }
+
+        val enhanced = mmpx2x(pixels, width = 3, height = 3)
+
+        assertEquals(36, enhanced.size)
+        assertTrue(enhanced.all { it == color })
+    }
+
+    @Test
     fun mmpxReconstructsSimpleDiagonalInsteadOfPlainNearestNeighbor() {
         val dark = 0xff000000.toInt()
         val light = 0xffffffff.toInt()
