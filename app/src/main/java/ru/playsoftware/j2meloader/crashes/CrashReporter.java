@@ -31,6 +31,7 @@ import static org.acra.ReportField.USER_CRASH_DATE;
 
 import android.app.Application;
 import android.os.Process;
+import android.util.Log;
 
 import org.acra.ACRA;
 import org.acra.ErrorReporter;
@@ -56,6 +57,7 @@ public final class CrashReporter {
 	private static final int MAX_CONTEXT_VALUE_LENGTH = 256;
 	private static final int MAX_CONTEXT_MESSAGE_LENGTH = 768;
 
+	private static final String TAG = CrashReporter.class.getSimpleName();
 	private static final String ROLE_MAIN = "main";
 	private static final String ROLE_MIDLET = "midlet";
 	private static final String ROLE_REPORTER = "reporter";
@@ -89,10 +91,17 @@ public final class CrashReporter {
 			THREAD_DETAILS
 	);
 
+	private static final Object DIAGNOSTIC_REFRESH_LOCK = new Object();
+	private static boolean mainProcess;
+	private static boolean diagnosticRefreshRunning;
+	private static boolean diagnosticRefreshPending;
+	private static volatile boolean diagnosticRefreshReady;
+
 	private CrashReporter() {}
 
 	/**
-	 * Initializes local-only crash collection.
+	 * Initializes local-only crash collection and publishes only current-process identity/state.
+	 * Historical ingestion and retention maintenance are deliberately deferred until onCreate().
 	 *
 	 * @return true when running in ACRA's private reporter process, where normal app initialization
 	 * should be skipped.
@@ -109,6 +118,10 @@ public final class CrashReporter {
 
 		String processName = EmulatorApplication.getProcessName();
 		String processRole = classifyProcess(application.getPackageName(), processName);
+		mainProcess = ROLE_MAIN.equals(processRole);
+		diagnosticRefreshRunning = false;
+		diagnosticRefreshPending = false;
+		diagnosticRefreshReady = !mainProcess;
 		boolean reporterProcess = ROLE_REPORTER.equals(processRole) || ACRA.isACRASenderServiceProcess();
 		if (reporterProcess) {
 			return true;
@@ -119,17 +132,128 @@ public final class CrashReporter {
 		putBounded(reporter, KEY_PROCESS_ROLE, processRole);
 		putBounded(reporter, KEY_PROCESS_PID, Integer.toString(Process.myPid()));
 
-		// Android 11+ keeps a small process-owned state summary and a system exit-history ring.
-		// Publish only stable diagnostic identity here; ProcessExitStore snapshots useful prior exits
-		// from the main process and deliberately filters normal process-management noise.
+		// Android 11+ keeps a small process-owned state summary. Publish it synchronously so any
+		// later process death can still be attributed even if deferred maintenance never gets CPU.
 		ProcessExitStore.initializeProcess(application, processRole);
-
-		// The main process owns diagnostic retention so :midlet remains a single-purpose writer.
-		if (ROLE_MAIN.equals(processRole)) {
-			LocalCrashReportStore.prune(application);
-			MidletSessionJournal.prune(application);
-		}
 		return false;
+	}
+
+	/** Schedules one best-effort main-process diagnostics refresh after Application startup. */
+	public static void scheduleMaintenance(Application application) {
+		if (!mainProcess) {
+			diagnosticRefreshReady = true;
+			return;
+		}
+		startDiagnosticRefresh(application, false, "jlmod-diagnostics-maintenance");
+	}
+
+	/**
+	 * Refreshes durable diagnostics after the main window regains focus without blocking the UI.
+	 * A focus callback arriving during an active pass queues one follow-up pass instead of spawning
+	 * another thread, so a just-finished MIDlet process cannot be missed by an older system snapshot.
+	 */
+	public static void requestDiagnosticRefresh(Application application) {
+		if (!mainProcess) {
+			diagnosticRefreshReady = true;
+			return;
+		}
+		startDiagnosticRefresh(application, true, "jlmod-diagnostics-focus-refresh");
+	}
+
+	/** True once the latest requested background reconciliation and retention pass has finished. */
+	public static boolean isDiagnosticRefreshReady() {
+		return diagnosticRefreshReady;
+	}
+
+	private static void startDiagnosticRefresh(Application application, boolean queueIfRunning,
+			String threadName) {
+		if (!beginDiagnosticRefresh(queueIfRunning)) {
+			return;
+		}
+		try {
+			Thread refresh = new Thread(() -> {
+				setBackgroundThreadPriority();
+				runDiagnosticRefreshLoop(application);
+			}, threadName);
+			refresh.start();
+		} catch (Throwable error) {
+			finishDiagnosticRefresh();
+			logMaintenanceFailure("Unable to schedule diagnostics refresh", error);
+		}
+	}
+
+	private static boolean beginDiagnosticRefresh(boolean queueIfRunning) {
+		synchronized (DIAGNOSTIC_REFRESH_LOCK) {
+			if (diagnosticRefreshRunning) {
+				if (queueIfRunning) {
+					diagnosticRefreshPending = true;
+					diagnosticRefreshReady = false;
+				}
+				return false;
+			}
+			diagnosticRefreshRunning = true;
+			diagnosticRefreshPending = false;
+			diagnosticRefreshReady = false;
+			return true;
+		}
+	}
+
+	private static void runDiagnosticRefreshLoop(Application application) {
+		try {
+			while (true) {
+				refreshDiagnostics(application);
+				synchronized (DIAGNOSTIC_REFRESH_LOCK) {
+					if (diagnosticRefreshPending) {
+						diagnosticRefreshPending = false;
+						continue;
+					}
+					diagnosticRefreshRunning = false;
+					diagnosticRefreshReady = true;
+					return;
+				}
+			}
+		} catch (Throwable error) {
+			finishDiagnosticRefresh();
+			logMaintenanceFailure("Unexpected diagnostics refresh failure", error);
+		}
+	}
+
+	private static void finishDiagnosticRefresh() {
+		synchronized (DIAGNOSTIC_REFRESH_LOCK) {
+			diagnosticRefreshRunning = false;
+			diagnosticRefreshPending = false;
+			diagnosticRefreshReady = true;
+		}
+	}
+
+	private static void refreshDiagnostics(Application application) {
+		// Both exit paths are API-gated internally. Keep retention in the same background pass so
+		// recovery UI never performs report/journal pruning from its window-focus callback.
+		runMaintenanceStep("legacy process-exit reconciliation",
+				() -> LegacyProcessExitFallback.ingest(application));
+		runMaintenanceStep("process-exit ingestion", () -> ProcessExitStore.ingest(application));
+		runMaintenanceStep("local crash report pruning", () -> LocalCrashReportStore.prune(application));
+		runMaintenanceStep("MIDlet session journal pruning", () -> MidletSessionJournal.prune(application));
+	}
+
+	private static void setBackgroundThreadPriority() {
+		try {
+			Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+		} catch (Throwable ignored) {}
+	}
+
+	private static void runMaintenanceStep(String label, Runnable step) {
+		try {
+			step.run();
+		} catch (Throwable error) {
+			logMaintenanceFailure("Diagnostics maintenance failed open: " + label, error);
+		}
+	}
+
+	private static void logMaintenanceFailure(String message, Throwable error) {
+		try {
+			Log.w(TAG, message, error);
+		} catch (Throwable ignored) {}
 	}
 
 	public static void setMidletContext(String name, String vendor, String version,

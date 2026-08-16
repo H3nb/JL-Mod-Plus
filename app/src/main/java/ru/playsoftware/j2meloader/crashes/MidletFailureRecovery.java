@@ -38,12 +38,17 @@ public final class MidletFailureRecovery {
 
 	private MidletFailureRecovery() {}
 
-	/** Returns the newest unacknowledged unexpected MIDlet session failure, if any. */
+	/** Reapplies retention, then returns the newest unacknowledged MIDlet failure. */
 	public static PendingFailure findPendingFailure(Context context) {
-		// The main process can survive many isolated MIDlet sessions without being re-created. Reapply
-		// retention when the library regains focus so bounded diagnostics do not depend on app restart.
+		// Keep this entry point self-contained for non-startup callers. MainActivity uses the
+		// stored-only variant after CrashReporter has completed background retention maintenance.
 		MidletSessionJournal.prune(context);
 		LocalCrashReportStore.prune(context);
+		return findPendingStoredFailure(context);
+	}
+
+	/** Returns the newest pending failure without running retention maintenance on the caller. */
+	public static PendingFailure findPendingStoredFailure(Context context) {
 		List<MidletSessionJournal.Snapshot> failures = readRetainedFailures(context);
 		Set<String> acknowledged = readAcknowledgedEventIds(context);
 		pruneOrphanAcknowledgments(context, failures);

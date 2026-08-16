@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -79,6 +80,8 @@ public final class ProcessExitStore {
 	private static final int MAX_DISPLAY_TRACE_BYTES = 128 * 1024;
 	private static final int DISPLAY_TRACE_HEAD_BYTES = 96 * 1024;
 
+	private static final Object INGEST_LOCK = new Object();
+
 	private static final String TAG = ProcessExitStore.class.getSimpleName();
 	private static final String RECORD_DIR = "diagnostics/process-exits";
 	private static final String ACK_DIR = "diagnostics/process-exit-acks";
@@ -114,15 +117,13 @@ public final class ProcessExitStore {
 
 	private ProcessExitStore() {}
 
+	/** Publishes only current-process state; historical harvesting is deferred after startup. */
 	static void initializeProcess(Context context, String processRole) {
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
 			return;
 		}
 		try {
 			Api30Impl.setProcessState(context, processRole, null);
-			if ("main".equals(processRole)) {
-				ingest(context);
-			}
 		} catch (RuntimeException e) {
 			Log.w(TAG, "Process-exit diagnostics initialization failed open", e);
 		} catch (OutOfMemoryError e) {
@@ -150,13 +151,17 @@ public final class ProcessExitStore {
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
 			return;
 		}
-		try {
-			Api30Impl.ingest(context);
-			prune(context);
-		} catch (RuntimeException e) {
-			Log.w(TAG, "Unable to ingest Android process-exit diagnostics", e);
-		} catch (OutOfMemoryError e) {
-			logLowMemory("Unable to ingest Android process-exit diagnostics under low memory");
+		// Startup maintenance and on-demand repository loading can enter here concurrently.
+		// Keep serialization local to this store so persisted evidence remains single-writer.
+		synchronized (INGEST_LOCK) {
+			try {
+				Api30Impl.ingest(context);
+				prune(context);
+			} catch (RuntimeException e) {
+				Log.w(TAG, "Unable to ingest Android process-exit diagnostics", e);
+			} catch (OutOfMemoryError e) {
+				logLowMemory("Unable to ingest Android process-exit diagnostics under low memory");
+			}
 		}
 	}
 
@@ -169,6 +174,12 @@ public final class ProcessExitStore {
 		for (File file : files) {
 			try {
 				Snapshot snapshot = read(file);
+				// A user deletion marker outranks a stale/racing local projection. Keep the marker
+				// durable until its source can no longer recreate this exact key.
+				if (ProcessExitDeletionStore.isDeleted(context, snapshot.key)) {
+					delete(context, snapshot);
+					continue;
+				}
 				// The isolated MIDlet process is deliberately killed after a graceful MIDlet exit.
 				// Exact journal outcome keeps that expected SIGKILL out of the crash inbox.
 				if (isIntentionalSessionExit(context, snapshot.sessionId)) {
@@ -189,9 +200,14 @@ public final class ProcessExitStore {
 		return result;
 	}
 
-	/** Returns one unacknowledged abnormal exit not already represented by a MIDlet failure notice. */
+	/** Refreshes system history, then returns one unacknowledged abnormal exit. */
 	public static PendingExit findPendingExit(Context context) {
 		ingest(context);
+		return findPendingStoredExit(context);
+	}
+
+	/** Returns one pending exit from already-persisted evidence without harvesting system history. */
+	public static PendingExit findPendingStoredExit(Context context) {
 		List<Snapshot> records = loadStored(context);
 		if (records.isEmpty()) {
 			pruneAcknowledgments(context, Collections.emptySet());
@@ -237,12 +253,13 @@ public final class ProcessExitStore {
 		}
 	}
 
-	/** Deletes dependent trace evidence before the metadata that points to it. */
+	/** Deletes canonical trace evidence before the metadata that points to it. */
 	static boolean delete(Context context, Snapshot snapshot) {
-		if (snapshot == null) {
+		if (snapshot == null || snapshot.recordFile == null || !isSafeKey(snapshot.key)) {
 			return false;
 		}
-		if (snapshot.traceFile != null && !deleteAtomic(snapshot.traceFile)) {
+		File directory = snapshot.recordFile.getParentFile();
+		if (directory == null || !deleteAtomic(traceFile(directory, snapshot.key))) {
 			return false;
 		}
 		if (!deleteAtomic(snapshot.recordFile)) {
@@ -470,29 +487,57 @@ public final class ProcessExitStore {
 			output = atomic.startWrite();
 			properties.store(output, null);
 			atomic.finishWrite(output);
-		} catch (IOException | RuntimeException e) {
+		} catch (Throwable error) {
 			rollback(atomic, output);
-			if (e instanceof IOException) {
-				throw (IOException) e;
-			}
-			throw new IOException("Unable to persist process-exit metadata", e);
+			throw asIOException(error, "Unable to persist process-exit metadata");
 		}
 	}
 
-	private static void writeBytes(File file, byte[] data) throws IOException {
+	private static TraceWriteResult writeTrace(File file, InputStream input) throws IOException {
 		AtomicFile atomic = new AtomicFile(file);
 		FileOutputStream output = null;
 		try {
 			output = atomic.startWrite();
-			output.write(data);
+			TraceWriteResult result = copyBounded(input, output, MAX_TRACE_BYTES);
 			atomic.finishWrite(output);
-		} catch (IOException | RuntimeException e) {
+			return result;
+		} catch (Throwable error) {
 			rollback(atomic, output);
-			if (e instanceof IOException) {
-				throw (IOException) e;
-			}
-			throw new IOException("Unable to persist process-exit trace", e);
+			throw asIOException(error, "Unable to persist process-exit trace");
 		}
+	}
+
+	private static IOException asIOException(Throwable error, String message) {
+		if (error instanceof IOException) {
+			return (IOException) error;
+		}
+		if (error instanceof Error) {
+			throw (Error) error;
+		}
+		return new IOException(message, error);
+	}
+
+	/** Copies at most maxBytes and probes one extra byte only to preserve truncation semantics. */
+	static TraceWriteResult copyBounded(InputStream input, OutputStream output, int maxBytes)
+			throws IOException {
+		if (maxBytes < 0) {
+			throw new IllegalArgumentException("maxBytes < 0");
+		}
+		byte[] buffer = new byte[Math.min(8192, Math.max(1, maxBytes))];
+		int total = 0;
+		while (total < maxBytes) {
+			int count = input.read(buffer, 0, Math.min(buffer.length, maxBytes - total));
+			if (count < 0) {
+				break;
+			}
+			if (count == 0) {
+				continue;
+			}
+			output.write(buffer, 0, count);
+			total += count;
+		}
+		boolean truncated = total == maxBytes && input.read() >= 0;
+		return new TraceWriteResult(total, truncated);
 	}
 
 	private static void rollback(AtomicFile atomic, FileOutputStream output) {
@@ -810,12 +855,22 @@ public final class ProcessExitStore {
 		}
 	}
 
+	static final class TraceWriteResult {
+		final int bytes;
+		final boolean truncated;
+
+		TraceWriteResult(int bytes, boolean truncated) {
+			this.bytes = bytes;
+			this.truncated = truncated;
+		}
+	}
+
 	private static final class TraceCapture {
-		final byte[] bytes;
+		final int bytes;
 		final String kind;
 		final boolean truncated;
 
-		TraceCapture(byte[] bytes, String kind, boolean truncated) {
+		TraceCapture(int bytes, String kind, boolean truncated) {
 			this.bytes = bytes;
 			this.kind = kind;
 			this.truncated = truncated;
@@ -862,6 +917,10 @@ public final class ProcessExitStore {
 			}
 			List<ApplicationExitInfo> history = manager.getHistoricalProcessExitReasons(
 					context.getPackageName(), 0, MAX_HISTORY_RESULTS);
+			if (history == null) {
+				history = Collections.emptyList();
+			}
+			HashSet<String> historicalKeys = new HashSet<>(history.size());
 			boolean lmkSupported = ActivityManager.isLowMemoryKillReportSupported();
 			File directory = recordDirectory(context);
 			if (!directory.isDirectory() && !directory.mkdirs()) {
@@ -874,6 +933,11 @@ public final class ProcessExitStore {
 				if (!isOwnedProcess(context.getPackageName(), processName)) {
 					continue;
 				}
+				String key = buildKey(info);
+				historicalKeys.add(key);
+				if (ProcessExitDeletionStore.isDeleted(context, key)) {
+					continue;
+				}
 				String processRole = CrashReporter.classifyProcess(context.getPackageName(), processName);
 				StateSummary state = parseState(info.getProcessStateSummary());
 				if (isIntentionalSessionExit(context, state.sessionId)) {
@@ -884,30 +948,22 @@ public final class ProcessExitStore {
 					continue;
 				}
 
-				String key = buildKey(info);
 				File metadata = recordFile(directory, key);
 				if (atomicExists(metadata)) {
 					continue;
 				}
 
-				TraceCapture trace = captureTrace(info);
-				File traceFile = null;
-				long traceBytes = 0;
-				if (trace != null && trace.bytes.length > 0) {
-					traceFile = traceFile(directory, key);
-					try {
-						writeBytes(traceFile, trace.bytes);
-						traceBytes = trace.bytes.length;
-					} catch (IOException e) {
-						Log.w(TAG, "Unable to persist process-exit trace: " + key);
-						traceFile = null;
-					}
+				File candidateTraceFile = traceFile(directory, key);
+				TraceCapture trace = captureTrace(info, candidateTraceFile);
+				File retainedTraceFile = trace != null && trace.bytes > 0 ? candidateTraceFile : null;
+				if (retainedTraceFile == null) {
+					deleteAtomic(candidateTraceFile);
 				}
 
 				String primaryAbi = Build.SUPPORTED_ABIS.length == 0 ? null : Build.SUPPORTED_ABIS[0];
 				Snapshot snapshot = new Snapshot(
 						metadata,
-						traceFile,
+						retainedTraceFile,
 						key,
 						info.getTimestamp(),
 						bound(processName, MAX_PROCESS_NAME_LENGTH),
@@ -927,18 +983,24 @@ public final class ProcessExitStore {
 						bound(Build.MODEL, MAX_DEVICE_VALUE_LENGTH),
 						primaryAbi,
 						trace == null ? null : trace.kind,
-						traceBytes,
+						trace == null ? 0 : trace.bytes,
 						trace != null && trace.truncated
 				);
 				try {
 					writeRecord(snapshot);
 				} catch (IOException e) {
 					Log.w(TAG, "Unable to persist process-exit record: " + key);
-					if (traceFile != null) {
-						deleteAtomic(traceFile);
+					if (retainedTraceFile != null) {
+						deleteAtomic(retainedTraceFile);
 					}
+				} catch (Error error) {
+					if (retainedTraceFile != null) {
+						deleteAtomic(retainedTraceFile);
+					}
+					throw error;
 				}
 			}
+			ProcessExitDeletionStore.pruneAgainstHistoricalKeys(context, historicalKeys);
 		}
 
 		private static boolean isOwnedProcess(String packageName, String processName) {
@@ -981,34 +1043,24 @@ public final class ProcessExitStore {
 			return new StateSummary(versionCode, sdk, sessionId);
 		}
 
-		private static TraceCapture captureTrace(ApplicationExitInfo info) {
+		private static TraceCapture captureTrace(ApplicationExitInfo info, File destination) {
+			String kind;
+			if (info.getReason() == ApplicationExitInfo.REASON_ANR) {
+				kind = "anr-text";
+			} else if (info.getReason() == ApplicationExitInfo.REASON_CRASH_NATIVE
+					&& Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+				kind = "native-tombstone-protobuf";
+			} else {
+				kind = "system-trace";
+			}
 			try (InputStream input = info.getTraceInputStream()) {
 				if (input == null) {
 					return null;
 				}
-				ByteArrayOutputStream output = new ByteArrayOutputStream(16 * 1024);
-				byte[] buffer = new byte[8192];
-				int total = 0;
-				while (total < MAX_TRACE_BYTES) {
-					int count = input.read(buffer, 0, Math.min(buffer.length, MAX_TRACE_BYTES - total));
-					if (count < 0) {
-						break;
-					}
-					output.write(buffer, 0, count);
-					total += count;
-				}
-				boolean truncated = total == MAX_TRACE_BYTES && input.read() >= 0;
-				String kind;
-				if (info.getReason() == ApplicationExitInfo.REASON_ANR) {
-					kind = "anr-text";
-				} else if (info.getReason() == ApplicationExitInfo.REASON_CRASH_NATIVE
-						&& Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-					kind = "native-tombstone-protobuf";
-				} else {
-					kind = "system-trace";
-				}
-				return new TraceCapture(output.toByteArray(), kind, truncated);
+				TraceWriteResult result = writeTrace(destination, input);
+				return new TraceCapture(result.bytes, kind, result.truncated);
 			} catch (IOException | RuntimeException | OutOfMemoryError e) {
+				deleteAtomic(destination);
 				return null;
 			}
 		}

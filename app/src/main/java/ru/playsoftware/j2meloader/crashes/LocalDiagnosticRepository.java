@@ -59,11 +59,16 @@ public final class LocalDiagnosticRepository {
 
 	private LocalDiagnosticRepository() {}
 
+	/** Self-contained load for background/non-UI callers that also snapshots framework history. */
 	public static List<Record> load(Context context) {
 		// Snapshot system exit history before reading the local projection; Android keeps it in a
 		// bounded ring and traces can be overwritten independently of our app-private records.
 		ProcessExitStore.ingest(context);
+		return loadStored(context);
+	}
 
+	/** Reads only the already-maintained durable projection without historical ingestion. */
+	public static List<Record> loadStored(Context context) {
 		ArrayList<SessionRecord> sessions = readSessionRecords(context);
 		Map<String, SessionRecord> allSessions = new HashMap<>();
 		ArrayList<MutableRecord> journalRecords = new ArrayList<>();
@@ -128,7 +133,23 @@ public final class LocalDiagnosticRepository {
 		return null;
 	}
 
-	/** Deletes exactly the selected logical record, preserving metadata if dependent evidence fails. */
+	public static Record findStored(Context context, String id) {
+		if (id == null) {
+			return null;
+		}
+		for (Record record : loadStored(context)) {
+			if (id.equals(record.id)) {
+				return record;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Deletes exactly the selected logical record. The durable suppression marker is created only
+	 * immediately before process-exit evidence is removed, so an earlier dependent-file failure does
+	 * not hide evidence that the failed delete left behind.
+	 */
 	public static boolean delete(Context context, Record record) {
 		if (record == null) {
 			return false;
@@ -139,10 +160,6 @@ public final class LocalDiagnosticRepository {
 				return false;
 			}
 		}
-		if (record.processExit != null && !ProcessExitStore.delete(context, record.processExit)) {
-			Log.w(TAG, "Unable to delete process-exit diagnostic: " + record.processExit.key);
-			return false;
-		}
 		if (record.journalFile != null) {
 			if (!MidletSessionJournal.delete(record.journalFile)) {
 				Log.w(TAG, "Unable to delete MIDlet session journal: " + record.journalFile.getName());
@@ -150,6 +167,16 @@ public final class LocalDiagnosticRepository {
 			}
 			// Do not drop the recovery acknowledgment until the durable journal is gone.
 			MidletFailureRecovery.deleteAcknowledgment(context, record.eventId);
+		}
+		if (record.processExit != null) {
+			if (!ProcessExitDeletionStore.markDeleted(context, record.processExit.key)) {
+				Log.w(TAG, "Unable to persist process-exit deletion marker: " + record.processExit.key);
+				return false;
+			}
+			if (!ProcessExitStore.delete(context, record.processExit)) {
+				Log.w(TAG, "Unable to delete process-exit diagnostic: " + record.processExit.key);
+				return false;
+			}
 		}
 		return true;
 	}

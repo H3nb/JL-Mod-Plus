@@ -17,10 +17,12 @@ package ru.playsoftware.j2meloader.crashes
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -84,6 +86,50 @@ class CrashReportsComposeTest {
     }
 
     @Test
+    fun listLongPressEntersBatchSelectionAndInvokesActions() {
+        val actions = RecordingListActions()
+        composeRule.setContent {
+            JLModPlusTheme {
+                CrashReportsScreen(
+                    state = CrashReportsListState(
+                        loading = false,
+                        records = listOf(
+                            CrashReportListItem(
+                                id = "report-1",
+                                title = "Demo MIDlet",
+                                subtitle = "MIDlet session failure · today",
+                            ),
+                            CrashReportListItem(
+                                id = "report-2",
+                                title = "Other MIDlet",
+                                subtitle = "Process exit diagnostic · today",
+                            ),
+                        ),
+                    ),
+                    actions = actions,
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Demo MIDlet").performTouchInput { longClick() }
+        composeRule.onNodeWithText("1 selected").assertIsDisplayed()
+
+        composeRule.onNodeWithContentDescription("Copy selected reports").performClick()
+        assertEquals(listOf("report-1"), actions.copiedIds)
+
+        composeRule.onNodeWithText("Other MIDlet").performClick()
+        composeRule.onNodeWithText("2 selected").assertIsDisplayed()
+
+        composeRule.onNodeWithContentDescription("Share selected reports").performClick()
+        composeRule.onNodeWithText("Share selected reports").performClick()
+        assertEquals(listOf("report-1", "report-2"), actions.sharedIds)
+
+        composeRule.onNodeWithContentDescription("Delete selected reports").performClick()
+        composeRule.onNodeWithText("Delete selected reports").performClick()
+        assertEquals(listOf("report-1", "report-2"), actions.deletedIds)
+    }
+
+    @Test
     fun detailActionsInvokeCopyShareAndDeleteCallbacks() {
         val actions = RecordingDetailActions()
         composeRule.setContent {
@@ -95,25 +141,40 @@ class CrashReportsComposeTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("Copy report").performClick()
+        composeRule.onNodeWithContentDescription("Copy Report").performClick()
         assertEquals(1, actions.copyCount)
 
-        composeRule.onNodeWithContentDescription("Share report").performClick()
-        composeRule.onAllNodesWithText("Share report").get(1).performClick()
+        composeRule.onNodeWithContentDescription("Share Report").performClick()
+        composeRule.onAllNodesWithText("Share Report").get(1).performClick()
         assertEquals(1, actions.shareCount)
 
-        composeRule.onNodeWithContentDescription("Delete report").performClick()
-        composeRule.onAllNodesWithText("Delete report").get(0).performClick()
+        composeRule.onNodeWithContentDescription("Delete Report").performClick()
+        composeRule.onAllNodesWithText("Delete Report").get(0).performClick()
         assertEquals(1, actions.deleteCount)
     }
 
     private class RecordingListActions : CrashReportsActions {
         var openedId: String? = null
+        var copiedIds: List<String> = emptyList()
+        var sharedIds: List<String> = emptyList()
+        var deletedIds: List<String> = emptyList()
 
         override fun onBack() = Unit
 
         override fun onOpen(reportId: String) {
             openedId = reportId
+        }
+
+        override fun onCopySelected(reportIds: List<String>) {
+            copiedIds = reportIds
+        }
+
+        override fun onShareSelected(reportIds: List<String>) {
+            sharedIds = reportIds
+        }
+
+        override fun onDeleteSelected(reportIds: List<String>) {
+            deletedIds = reportIds
         }
     }
 

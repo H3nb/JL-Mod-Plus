@@ -26,9 +26,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.compose.ui.platform.ComposeView;
 
-import java.text.DateFormat;
-import java.util.Date;
-
 import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 
@@ -49,14 +46,16 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 		setContentView(composeView);
 		EdgeToEdgeCompat.protectHostContent(this);
 		String recordId = getIntent().getStringExtra(EXTRA_REPORT_ID);
-		record = LocalDiagnosticRepository.find(this, recordId);
+		// Historical reconciliation is owned by CrashReporter in the background. Opening a report
+		// must never copy framework traces or run maintenance on the UI thread.
+		record = LocalDiagnosticRepository.findStored(this, recordId);
 		if (record == null) {
 			Toast.makeText(this, R.string.crash_report_unavailable, Toast.LENGTH_SHORT).show();
 			finish();
 			return;
 		}
 
-		String displayText = buildReportText(record);
+		String displayText = DiagnosticReportText.build(record);
 		exportText = DiagnosticExportSanitizer.sanitize(this, displayText);
 		CrashReportsComposeBridge.installDetails(composeView, displayText,
 				new CrashReportDetailsActions() {
@@ -112,18 +111,5 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 		} else {
 			Toast.makeText(this, R.string.crash_report_delete_failed, Toast.LENGTH_LONG).show();
 		}
-	}
-
-	private String buildReportText(LocalDiagnosticRepository.Record record) {
-		StringBuilder text = new StringBuilder();
-		text.append("JL-Mod Plus diagnostic report\n");
-		if (record.getTimestampMillis() > 0) {
-			DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
-			text.append("Time: ")
-					.append(dateFormat.format(new Date(record.getTimestampMillis())))
-					.append('\n');
-		}
-		text.append('\n').append(record.getDetailText());
-		return text.toString();
 	}
 }
