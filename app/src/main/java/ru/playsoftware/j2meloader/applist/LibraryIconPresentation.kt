@@ -1,0 +1,160 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package ru.playsoftware.j2meloader.applist
+
+import kotlin.math.sqrt
+
+/**
+ * Small deterministic decision layer for square library icon presentation.
+ *
+ * Bitmap inspection stays in [LibraryComposeBridge.kt]; this type only turns already-computed
+ * evidence into a conservative render mode. Keeping the decision free of Android/Compose types
+ * makes threshold behavior cheap to verify without introducing another image framework.
+ *
+ * [visualScale] is a fraction of the final rounded-square slot for Subject/Backed rendering.
+ */
+internal enum class LibraryIconPresentationMode {
+    Subject,
+    Backed,
+    Cover,
+    SafeFit,
+    Fallback,
+}
+
+internal data class LibraryIconPresentationInput(
+    val transparentRatio: Float,
+    val boundsCoverage: Float,
+    val occupancy: Float,
+    val aspectFill: Float,
+    val hasFramedCrop: Boolean,
+    val hasBackingColor: Boolean,
+    val highColorDiversity: Boolean,
+    val sourceAspectRatio: Float,
+)
+
+internal data class LibraryIconPresentationDecision(
+    val mode: LibraryIconPresentationMode,
+    val visualScale: Float,
+)
+
+internal fun decideLibraryIconPresentation(
+    input: LibraryIconPresentationInput,
+): LibraryIconPresentationDecision {
+    // Uniform matte/backplate plus a smaller detected foreground is stronger evidence than raw
+    // color diversity that the bitmap is a contained icon rather than full-bleed cover art.
+    if (input.hasFramedCrop) {
+        return LibraryIconPresentationDecision(
+            mode = if (input.hasBackingColor) {
+                LibraryIconPresentationMode.Backed
+            } else {
+                LibraryIconPresentationMode.Subject
+            },
+            visualScale = if (input.hasBackingColor) {
+                LIBRARY_PRESENTATION_BACKED_SCALE
+            } else {
+                LIBRARY_PRESENTATION_FRAMED_SUBJECT_SCALE
+            },
+        )
+    }
+
+    val highConfidenceCover =
+        input.transparentRatio <= LIBRARY_PRESENTATION_COVER_MAX_TRANSPARENT_RATIO &&
+            input.boundsCoverage >= LIBRARY_PRESENTATION_COVER_MIN_BOUNDS_COVERAGE &&
+            input.occupancy >= LIBRARY_PRESENTATION_COVER_MIN_OCCUPANCY &&
+            input.highColorDiversity &&
+            input.sourceAspectRatio in
+                LIBRARY_PRESENTATION_COVER_MIN_ASPECT..LIBRARY_PRESENTATION_COVER_MAX_ASPECT
+
+    if (highConfidenceCover) {
+        return LibraryIconPresentationDecision(
+            mode = LibraryIconPresentationMode.Cover,
+            visualScale = 1f,
+        )
+    }
+
+    // A dominant color alone is not proof of a self-backed icon: a round object such as Bounce
+    // can dominate its bitmap while still needing to remain a smaller floating subject. A true
+    // rounded-square backplate normally occupies materially more of its bounds than a circle
+    // (~pi/4), so occupancy is the useful discriminator here.
+    val selfBacked =
+        input.hasBackingColor &&
+            input.boundsCoverage >= LIBRARY_PRESENTATION_BACKED_MIN_BOUNDS_COVERAGE &&
+            input.occupancy >= LIBRARY_PRESENTATION_BACKED_MIN_OCCUPANCY &&
+            input.transparentRatio <= LIBRARY_PRESENTATION_BACKED_MAX_TRANSPARENT_RATIO
+    if (selfBacked) {
+        return LibraryIconPresentationDecision(
+            mode = LibraryIconPresentationMode.Backed,
+            visualScale = LIBRARY_PRESENTATION_BACKED_SCALE,
+        )
+    }
+
+    val transparentSubject =
+        input.transparentRatio >= LIBRARY_PRESENTATION_FOREGROUND_MIN_TRANSPARENT_RATIO &&
+            (input.boundsCoverage < LIBRARY_PRESENTATION_FOREGROUND_BOUNDS_COVERAGE ||
+                input.occupancy < LIBRARY_PRESENTATION_FOREGROUND_OCCUPANCY)
+
+    if (transparentSubject) {
+        // Normalize the subject's estimated visible area instead of assigning one fixed size.
+        // Dense round/square objects deliberately target less area (Bounce-like balls keep
+        // breathing room), while sparse or elongated artwork can grow until the conservative cap.
+        val visibleArea = (input.occupancy * input.aspectFill)
+            .coerceAtLeast(LIBRARY_PRESENTATION_SUBJECT_MIN_VISIBLE_AREA)
+        val denseRound =
+            input.occupancy >= LIBRARY_PRESENTATION_DENSE_ROUND_MIN_OCCUPANCY &&
+                input.aspectFill >= LIBRARY_PRESENTATION_DENSE_ROUND_MIN_ASPECT_FILL
+        val targetArea = if (denseRound) {
+            LIBRARY_PRESENTATION_DENSE_ROUND_TARGET_VISIBLE_AREA
+        } else {
+            LIBRARY_PRESENTATION_SUBJECT_TARGET_VISIBLE_AREA
+        }
+        val visualScale = sqrt(targetArea / visibleArea).coerceIn(
+            LIBRARY_PRESENTATION_SUBJECT_MIN_SCALE,
+            LIBRARY_PRESENTATION_SUBJECT_MAX_SCALE,
+        )
+        return LibraryIconPresentationDecision(
+            mode = LibraryIconPresentationMode.Subject,
+            visualScale = visualScale,
+        )
+    }
+
+    return LibraryIconPresentationDecision(
+        mode = LibraryIconPresentationMode.SafeFit,
+        visualScale = 1f,
+    )
+}
+
+private const val LIBRARY_PRESENTATION_FOREGROUND_MIN_TRANSPARENT_RATIO = 0.06f
+private const val LIBRARY_PRESENTATION_FOREGROUND_BOUNDS_COVERAGE = 0.88f
+private const val LIBRARY_PRESENTATION_FOREGROUND_OCCUPANCY = 0.86f
+
+private const val LIBRARY_PRESENTATION_SUBJECT_TARGET_VISIBLE_AREA = 0.38f
+private const val LIBRARY_PRESENTATION_DENSE_ROUND_TARGET_VISIBLE_AREA = 0.30f
+private const val LIBRARY_PRESENTATION_SUBJECT_MIN_VISIBLE_AREA = 0.03f
+private const val LIBRARY_PRESENTATION_DENSE_ROUND_MIN_OCCUPANCY = 0.72f
+private const val LIBRARY_PRESENTATION_DENSE_ROUND_MIN_ASPECT_FILL = 0.82f
+private const val LIBRARY_PRESENTATION_SUBJECT_MIN_SCALE = 0.60f
+private const val LIBRARY_PRESENTATION_SUBJECT_MAX_SCALE = 0.90f
+private const val LIBRARY_PRESENTATION_FRAMED_SUBJECT_SCALE = 0.84f
+
+private const val LIBRARY_PRESENTATION_BACKED_MIN_BOUNDS_COVERAGE = 0.78f
+private const val LIBRARY_PRESENTATION_BACKED_MIN_OCCUPANCY = 0.83f
+private const val LIBRARY_PRESENTATION_BACKED_MAX_TRANSPARENT_RATIO = 0.24f
+private const val LIBRARY_PRESENTATION_BACKED_SCALE = 0.92f
+
+private const val LIBRARY_PRESENTATION_COVER_MAX_TRANSPARENT_RATIO = 0.025f
+private const val LIBRARY_PRESENTATION_COVER_MIN_BOUNDS_COVERAGE = 0.985f
+private const val LIBRARY_PRESENTATION_COVER_MIN_OCCUPANCY = 0.94f
+private const val LIBRARY_PRESENTATION_COVER_MIN_ASPECT = 0.62f
+private const val LIBRARY_PRESENTATION_COVER_MAX_ASPECT = 1.62f
