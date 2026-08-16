@@ -31,27 +31,46 @@ class LibraryIconEnhancementTest {
         )
 
         assertFalse(decision.apply)
+        assertEquals(LibraryIconEnhancementMode.None, decision.mode)
         assertEquals(0f, decision.strength, 0f)
     }
 
     @Test
-    fun pixelArtIsHardBypass() {
+    fun lowResolutionPixelArtUsesSingleMmpxPass() {
         val decision = decideLibraryIconEnhancement(
             enabled = true,
             pixelArt = true,
             sourceWidth = 32,
-            sourceHeight = 32,
+            sourceHeight = 24,
+            targetSizePx = 128,
+        )
+
+        assertTrue(decision.apply)
+        assertEquals(LibraryIconEnhancementMode.Mmpx2x, decision.mode)
+        assertEquals(64, decision.targetWidth)
+        assertEquals(48, decision.targetHeight)
+        assertEquals(0f, decision.strength, 0f)
+    }
+
+    @Test
+    fun pixelArtAlreadyNearRenderTargetIsNotNeedlesslyMagnified() {
+        val decision = decideLibraryIconEnhancement(
+            enabled = true,
+            pixelArt = true,
+            sourceWidth = 100,
+            sourceHeight = 80,
             targetSizePx = 128,
         )
 
         assertFalse(decision.apply)
+        assertEquals(LibraryIconEnhancementMode.None, decision.mode)
     }
 
     @Test
     fun zeroStrengthScaleIsNoOp() {
         val decision = decideLibraryIconEnhancement(
             enabled = true,
-            pixelArt = false,
+            pixelArt = true,
             sourceWidth = 32,
             sourceHeight = 32,
             targetSizePx = 128,
@@ -93,6 +112,7 @@ class LibraryIconEnhancementTest {
         )
 
         assertTrue(decision.apply)
+        assertEquals(LibraryIconEnhancementMode.RasterSharpen, decision.mode)
         assertEquals(128, decision.targetWidth)
         assertEquals(64, decision.targetHeight)
         assertEquals(0.20f, decision.strength, 0.0001f)
@@ -109,6 +129,7 @@ class LibraryIconEnhancementTest {
         )
 
         assertTrue(decision.apply)
+        assertEquals(LibraryIconEnhancementMode.RasterSharpen, decision.mode)
         assertEquals(128, decision.targetWidth)
         assertEquals(96, decision.targetHeight)
         assertEquals(0.14f, decision.strength, 0.0001f)
@@ -128,7 +149,7 @@ class LibraryIconEnhancementTest {
     }
 
     @Test
-    fun presentationStrengthScaleCanRestrainBadgeEnhancement() {
+    fun presentationStrengthScaleCanRestrainRasterBadgeEnhancement() {
         val decision = decideLibraryIconEnhancement(
             enabled = true,
             pixelArt = false,
@@ -139,11 +160,46 @@ class LibraryIconEnhancementTest {
         )
 
         assertTrue(decision.apply)
+        assertEquals(LibraryIconEnhancementMode.RasterSharpen, decision.mode)
         assertEquals(0.13f, decision.strength, 0.0001f)
     }
 
     @Test
-    fun transparentNeighborPreservesCenterPixelExactly() {
+    fun mmpxPreservesPaletteAndOutputArea() {
+        val transparent = 0x00000000
+        val red = 0xffff0000.toInt()
+        val blue = 0xff0000ff.toInt()
+        val pixels = intArrayOf(
+            transparent, red,
+            blue, red,
+        )
+
+        val enhanced = mmpx2x(pixels, width = 2, height = 2)
+        val palette = pixels.toSet()
+
+        assertEquals(16, enhanced.size)
+        assertTrue(enhanced.all { it in palette })
+    }
+
+    @Test
+    fun mmpxReconstructsSimpleDiagonalInsteadOfPlainNearestNeighbor() {
+        val dark = 0xff000000.toInt()
+        val light = 0xffffffff.toInt()
+        val pixels = intArrayOf(
+            light, dark, light,
+            dark, light, light,
+            light, light, light,
+        )
+
+        val enhanced = mmpx2x(pixels, width = 3, height = 3)
+        val outputWidth = 6
+        val centerTopLeft = enhanced[2 * outputWidth + 2]
+
+        assertEquals(dark, centerTopLeft)
+    }
+
+    @Test
+    fun transparentNeighborPreservesCenterPixelExactlyDuringRasterSharpen() {
         val gray = 0xff808080.toInt()
         val transparent = 0x00808080
         val pixels = intArrayOf(
