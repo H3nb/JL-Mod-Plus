@@ -94,6 +94,7 @@ public final class CrashReporter {
 	private static final Object PROCESS_EXIT_REFRESH_LOCK = new Object();
 	private static boolean mainProcess;
 	private static boolean processExitRefreshRunning;
+	private static boolean processExitRefreshPending;
 	private static volatile boolean processExitEvidenceReady;
 
 	private CrashReporter() {}
@@ -119,6 +120,7 @@ public final class CrashReporter {
 		String processRole = classifyProcess(application.getPackageName(), processName);
 		mainProcess = ROLE_MAIN.equals(processRole);
 		processExitRefreshRunning = false;
+		processExitRefreshPending = false;
 		processExitEvidenceReady = !mainProcess;
 		boolean reporterProcess = ROLE_REPORTER.equals(processRole) || ACRA.isACRASenderServiceProcess();
 		if (reporterProcess) {
@@ -142,22 +144,15 @@ public final class CrashReporter {
 			processExitEvidenceReady = true;
 			return;
 		}
-		if (!beginProcessExitRefresh()) {
+		if (!beginProcessExitRefresh(false)) {
 			return;
 		}
 		try {
 			Thread maintenance = new Thread(() -> {
-				try {
-					setBackgroundThreadPriority();
-					reconcileProcessExitEvidence(application);
-					// Recovery UI can safely read the durable projection now; retention work below must
-					// not delay a useful crash notice.
-					processExitEvidenceReady = true;
-					runMaintenanceStep("local crash report pruning", () -> LocalCrashReportStore.prune(application));
-					runMaintenanceStep("MIDlet session journal pruning", () -> MidletSessionJournal.prune(application));
-				} finally {
-					finishProcessExitRefresh();
-				}
+				setBackgroundThreadPriority();
+				runProcessExitRefreshLoop(application);
+				runMaintenanceStep("local crash report pruning", () -> LocalCrashReportStore.prune(application));
+				runMaintenanceStep("MIDlet session journal pruning", () -> MidletSessionJournal.prune(application));
 			}, "jlmod-diagnostics-maintenance");
 			maintenance.start();
 		} catch (Throwable error) {
@@ -168,25 +163,21 @@ public final class CrashReporter {
 
 	/**
 	 * Refreshes process-exit evidence after the main window regains focus without blocking the UI.
-	 * Repeated focus callbacks are coalesced while a refresh/maintenance pass is already running.
+	 * A focus callback arriving during an active pass queues one follow-up pass instead of spawning
+	 * another thread, so a just-finished MIDlet process cannot be missed by an older system snapshot.
 	 */
 	public static void requestProcessExitRefresh(Application application) {
 		if (!mainProcess) {
 			processExitEvidenceReady = true;
 			return;
 		}
-		if (!beginProcessExitRefresh()) {
+		if (!beginProcessExitRefresh(true)) {
 			return;
 		}
 		try {
 			Thread refresh = new Thread(() -> {
-				try {
-					setBackgroundThreadPriority();
-					reconcileProcessExitEvidence(application);
-					processExitEvidenceReady = true;
-				} finally {
-					finishProcessExitRefresh();
-				}
+				setBackgroundThreadPriority();
+				runProcessExitRefreshLoop(application);
 			}, "jlmod-diagnostics-exit-refresh");
 			refresh.start();
 		} catch (Throwable error) {
@@ -200,20 +191,46 @@ public final class CrashReporter {
 		return processExitEvidenceReady;
 	}
 
-	private static boolean beginProcessExitRefresh() {
+	private static boolean beginProcessExitRefresh(boolean queueIfRunning) {
 		synchronized (PROCESS_EXIT_REFRESH_LOCK) {
 			if (processExitRefreshRunning) {
+				if (queueIfRunning) {
+					processExitRefreshPending = true;
+					processExitEvidenceReady = false;
+				}
 				return false;
 			}
 			processExitRefreshRunning = true;
+			processExitRefreshPending = false;
 			processExitEvidenceReady = false;
 			return true;
+		}
+	}
+
+	private static void runProcessExitRefreshLoop(Application application) {
+		try {
+			while (true) {
+				reconcileProcessExitEvidence(application);
+				synchronized (PROCESS_EXIT_REFRESH_LOCK) {
+					if (processExitRefreshPending) {
+						processExitRefreshPending = false;
+						continue;
+					}
+					processExitRefreshRunning = false;
+					processExitEvidenceReady = true;
+					return;
+				}
+			}
+		} catch (Throwable error) {
+			finishProcessExitRefresh();
+			logMaintenanceFailure("Unexpected process-exit refresh failure", error);
 		}
 	}
 
 	private static void finishProcessExitRefresh() {
 		synchronized (PROCESS_EXIT_REFRESH_LOCK) {
 			processExitRefreshRunning = false;
+			processExitRefreshPending = false;
 			processExitEvidenceReady = true;
 		}
 	}
