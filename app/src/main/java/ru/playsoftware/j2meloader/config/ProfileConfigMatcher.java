@@ -21,9 +21,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -73,8 +74,15 @@ final class ProfileConfigMatcher {
 		if (file == null || !file.isFile()) {
 			return null;
 		}
-		try {
-			return Files.readAllBytes(file.toPath());
+		int initialCapacity = (int) Math.min(file.length(), 16 * 1024L);
+		try (FileInputStream input = new FileInputStream(file);
+			 ByteArrayOutputStream output = new ByteArrayOutputStream(Math.max(initialCapacity, 32))) {
+			byte[] buffer = new byte[8192];
+			int count;
+			while ((count = input.read(buffer)) != -1) {
+				output.write(buffer, 0, count);
+			}
+			return output.toByteArray();
 		} catch (IOException e) {
 			return null;
 		}
