@@ -1785,36 +1785,58 @@ private fun Bitmap.enhanceLibraryIcon(
     if (!decision.apply) return this
 
     return try {
-        val working = if (
-            width != decision.targetWidth || height != decision.targetHeight
-        ) {
-            Bitmap.createScaledBitmap(this, decision.targetWidth, decision.targetHeight, true)
-        } else {
-            this
+        when (decision.mode) {
+            LibraryIconEnhancementMode.None -> this
+            LibraryIconEnhancementMode.Mmpx2x -> {
+                val pixelCount = Math.multiplyExact(width, height)
+                val sourcePixels = IntArray(pixelCount)
+                getPixels(sourcePixels, 0, width, 0, 0, width, height)
+                val enhancedPixels = mmpx2x(sourcePixels, width, height)
+                Bitmap.createBitmap(
+                    enhancedPixels,
+                    decision.targetWidth,
+                    decision.targetHeight,
+                    Bitmap.Config.ARGB_8888,
+                )
+            }
+            LibraryIconEnhancementMode.RasterSharpen -> {
+                val working = if (
+                    width != decision.targetWidth || height != decision.targetHeight
+                ) {
+                    Bitmap.createScaledBitmap(
+                        this,
+                        decision.targetWidth,
+                        decision.targetHeight,
+                        true,
+                    )
+                } else {
+                    this
+                }
+                val pixelCount = Math.multiplyExact(working.width, working.height)
+                val sourcePixels = IntArray(pixelCount)
+                working.getPixels(
+                    sourcePixels,
+                    0,
+                    working.width,
+                    0,
+                    0,
+                    working.width,
+                    working.height,
+                )
+                val enhancedPixels = sharpenLibraryPixels(
+                    source = sourcePixels,
+                    width = working.width,
+                    height = working.height,
+                    strength = decision.strength,
+                )
+                Bitmap.createBitmap(
+                    enhancedPixels,
+                    working.width,
+                    working.height,
+                    Bitmap.Config.ARGB_8888,
+                )
+            }
         }
-        val pixelCount = Math.multiplyExact(working.width, working.height)
-        val sourcePixels = IntArray(pixelCount)
-        working.getPixels(
-            sourcePixels,
-            0,
-            working.width,
-            0,
-            0,
-            working.width,
-            working.height,
-        )
-        val enhancedPixels = sharpenLibraryPixels(
-            source = sourcePixels,
-            width = working.width,
-            height = working.height,
-            strength = decision.strength,
-        )
-        Bitmap.createBitmap(
-            enhancedPixels,
-            working.width,
-            working.height,
-            Bitmap.Config.ARGB_8888,
-        )
     } catch (_: ArithmeticException) {
         this
     } catch (_: OutOfMemoryError) {
