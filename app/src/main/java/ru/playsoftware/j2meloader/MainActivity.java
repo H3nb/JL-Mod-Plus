@@ -149,6 +149,7 @@ public class MainActivity extends AppCompatActivity {
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
 		if (hasFocus) {
+			CrashReporter.requestProcessExitRefresh(getApplication());
 			maybeShowDiagnosticRecovery();
 		}
 	}
@@ -183,8 +184,8 @@ public class MainActivity extends AppCompatActivity {
 			return;
 		}
 
-		// Historical process-exit reconciliation runs on the diagnostics maintenance thread.
-		// Never make first-window focus wait on ApplicationExitInfo, trace copying, or legacy
+		// Historical process-exit reconciliation runs on a diagnostics background thread.
+		// Never make window focus wait on ApplicationExitInfo, trace copying, or legacy
 		// process/journal reconciliation. Recheck shortly once that evidence is ready.
 		if (!CrashReporter.isProcessExitEvidenceReady()) {
 			scheduleDiagnosticRecoveryRetry();
