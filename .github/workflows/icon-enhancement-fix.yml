@@ -1,0 +1,40 @@
+name: Icon enhancement portrait fix
+
+on:
+  push:
+    branches:
+      - ui/icon-enhancement
+    paths:
+      - .github/workflows/icon-enhancement-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  edit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui/icon-enhancement
+          fetch-depth: 0
+      - name: Preserve disabled-state portrait filtering
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryComposeBridge.kt")
+          text = path.read_text()
+          old = """                filterQuality = if (portraitPixelArt) FilterQuality.None else FilterQuality.Medium,\n"""
+          new = """                filterQuality = if (portraitPixelArt) {\n                    FilterQuality.None\n                } else {\n                    rendered.libraryFilterQuality()\n                },\n"""
+          if text.count(old) != 1:
+              raise SystemExit(f"expected exactly one portrait filter match, found {text.count(old)}")
+          path.write_text(text.replace(old, new, 1))
+          PY
+          rm .github/workflows/icon-enhancement-fix.yml
+          git add app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryComposeBridge.kt .github/workflows/icon-enhancement-fix.yml
+          git commit -m "fix(ui): preserve portrait icon filtering"
+          git push origin HEAD:ui/icon-enhancement
