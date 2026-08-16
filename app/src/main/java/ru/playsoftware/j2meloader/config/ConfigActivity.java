@@ -85,6 +85,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private boolean needShow;
 	private ConfigFormState currentForm;
 	private ConfigComposeController composeController;
+	private ProfileModel builtInDefaultParams;
 	private List<ProfileConfigMatcher.Candidate> profileCandidates = Collections.emptyList();
 	private byte[] currentKeyLayoutSnapshot;
 
@@ -210,6 +211,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			configDir = new File(workDir + Config.MIDLET_CONFIGS_DIR + appDir.getName());
 		}
 		configDir.mkdirs();
+		builtInDefaultParams = new ProfileModel(configDir);
 
 		defProfile = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
 				.getString(PREF_DEFAULT_PROFILE, null);
@@ -689,9 +691,15 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				.getString(PREF_DEFAULT_PROFILE, null);
 		Profile activeProfile = isProfile ? null : ProfileConfigMatcher.findMatchCached(
 				params, state, profileCandidates, defaultProfile, currentKeyLayoutSnapshot);
-		ConfigUiState.ProfileStatus profileStatus = activeProfile == null
-				? ConfigUiState.ProfileStatus.custom(defaultProfile)
-				: ConfigUiState.ProfileStatus.active(activeProfile.getName(), defaultProfile);
+		ConfigUiState.ProfileStatus profileStatus;
+		if (activeProfile != null) {
+			profileStatus = ConfigUiState.ProfileStatus.active(activeProfile.getName(), defaultProfile);
+		} else if (!isProfile && builtInDefaultParams != null
+				&& ProfileConfigMatcher.sameEffectiveConfig(params, state, builtInDefaultParams)) {
+			profileStatus = ConfigUiState.ProfileStatus.builtInDefault(defaultProfile);
+		} else {
+			profileStatus = ConfigUiState.ProfileStatus.custom(defaultProfile);
+		}
 		return new ConfigUiState(state, screenPresets, fontPresets, skinOptions, soundBankOptions,
 				shaders == null ? Collections.emptyList() : shaders, removableScreenPresets, profileStatus);
 	}

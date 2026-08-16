@@ -15,5 +15,8 @@
     <string name="profile_default_badge">Default for new games</string>
     <string name="profile_save_template">Save as profile</string>
     <string name="profile_save_template_summary">Save the current configuration as a reusable template.</string>
+    <string name="profile_builtin_default">Default</string>
+    <string name="profile_builtin_default_summary">Built-in emulator settings</string>
+    <string name="config_lock_custom_resolution_ratio">Keep width/height ratio while editing</string>
     <string name="config_swap_screen_size">Swap width and height</string>
 </resources>

@@ -46,12 +46,18 @@ class ConfigComposeTest {
 
         composeRule.onNodeWithText("Custom").assertExists()
         composeRule.onNodeWithText("Screen size").assertExists()
+        composeRule.onNodeWithText("Screen Orientation").assertExists()
+        composeRule.onNodeWithText("Scale Type").assertExists()
+        composeRule.onNodeWithText("Scale (%)").assertExists()
         composeRule.onNodeWithContentDescription("Start").assertExists()
 
         composeRule.onNodeWithContentDescription("Graphics").performClick()
         composeRule.onNodeWithText("Screen Options").assertExists()
         composeRule.onNodeWithText("Font Options").assertExists()
         composeRule.onNodeWithText("Screen size").assertDoesNotExist()
+        composeRule.onNodeWithText("Screen Orientation").assertDoesNotExist()
+        composeRule.onNodeWithText("Scale Type").assertDoesNotExist()
+        composeRule.onNodeWithText("Scale (%)").assertDoesNotExist()
 
         composeRule.onNodeWithContentDescription("Controls").performClick()
         composeRule.onNodeWithText("Input Devices").assertExists()
@@ -146,6 +152,32 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun builtInDefaultProfileIsNotShownAsCustom() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form,
+            base.screenPresets,
+            base.fontPresets,
+            base.skins,
+            base.soundBanks,
+            base.shaders,
+            base.removableScreenPresets,
+            ConfigUiState.ProfileStatus.builtInDefault(null),
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(state, RecordingConfigEvents())
+            }
+        }
+
+        composeRule.onNodeWithText("Default").assertExists()
+        composeRule.onNodeWithText("Built-in emulator settings").assertExists()
+        composeRule.onNodeWithText("Custom").assertDoesNotExist()
+        composeRule.onNodeWithText("Save as profile").assertDoesNotExist()
+        composeRule.onNodeWithText("Change profile").assertExists()
+    }
+
+    @Test
     fun destructiveActionsLiveInSystemAndRequireExplicitConfirmation() {
         val menuActions = RecordingMenuActions()
         composeRule.setContent {
@@ -222,7 +254,7 @@ class ConfigComposeTest {
         val events = RecordingConfigEvents()
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.Graphics)
+                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.General)
             }
         }
 

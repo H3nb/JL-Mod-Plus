@@ -29,5 +29,8 @@
     <string name="profile_default_badge">Bawaan untuk game baru</string>
     <string name="profile_save_template">Simpan sebagai profil</string>
     <string name="profile_save_template_summary">Simpan konfigurasi saat ini sebagai templat yang dapat digunakan kembali.</string>
+    <string name="profile_builtin_default">Bawaan</string>
+    <string name="profile_builtin_default_summary">Pengaturan bawaan emulator</string>
+    <string name="config_lock_custom_resolution_ratio">Pertahankan rasio lebar/tinggi saat mengedit</string>
     <string name="config_swap_screen_size">Tukar lebar dan tinggi</string>
 </resources>

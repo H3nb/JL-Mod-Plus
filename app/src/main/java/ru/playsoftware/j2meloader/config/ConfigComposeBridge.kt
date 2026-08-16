@@ -15,6 +15,7 @@
 package ru.playsoftware.j2meloader.config
 
 import android.content.res.Configuration
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +29,7 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -79,6 +81,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
@@ -208,6 +211,8 @@ internal fun ConfigScreen(
     }
     val selectedDestination = destinations.getOrElse(selectedDestinationIndex) { destinations.first() }
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val density = LocalDensity.current
+    val imeVisible = WindowInsets.ime.getBottom(density) > 0
 
     LaunchedEffect(selectedDestination) {
         scrollState.scrollTo(0)
@@ -234,7 +239,8 @@ internal fun ConfigScreen(
                 )
             },
             bottomBar = {
-                if (!isLandscape) {
+                // Keep the destination bar from floating above the IME while editing text.
+                if (!isLandscape && !imeVisible) {
                     ConfigNavigationBar(
                         destinations = destinations,
                         selected = selectedDestination,
@@ -447,6 +453,18 @@ private fun GeneralDestination(
                 onSelected = { index -> onFormChanged(form.toBuilder().screenScaleType(index).build()) },
             )
         }
+        ConfigRow(stringResource(R.string.PREF_SCALE_RATIO)) {
+            CompactTextField(
+                value = form.screenScaleRatio,
+                label = "100",
+                keyboardType = KeyboardType.Number,
+                dialogTitle = stringResource(R.string.PREF_SCALE_RATIO),
+                showLabel = false,
+                onValueChange = { value ->
+                    onFormChanged(form.toBuilder().screenScaleRatio(normalizeScaleRatio(value)).build())
+                },
+            )
+        }
         SwitchRow(
             title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
             checked = form.showKeyboard,
@@ -463,11 +481,24 @@ private fun GeneralDestination(
 @Composable
 private fun ProfileStatusCard(status: ConfigUiState.ProfileStatus, events: ConfigFormEvents) {
     val active = status.activeProfile
+    val matched = active != null || status.builtInDefault
+    val title = when {
+        active != null -> active
+        status.builtInDefault -> stringResource(R.string.profile_builtin_default)
+        else -> stringResource(R.string.profile_custom)
+    }
+    val summary = when {
+        active != null -> stringResource(R.string.profile_active_summary)
+        status.builtInDefault -> stringResource(R.string.profile_builtin_default_summary)
+        else -> stringResource(R.string.profile_custom_summary)
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = androidx.compose.material3.CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
@@ -476,26 +507,21 @@ private fun ProfileStatusCard(status: ConfigUiState.ProfileStatus, events: Confi
             Text(
                 text = stringResource(R.string.profiles),
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = MaterialTheme.colorScheme.primary,
             )
             Text(
-                text = active ?: stringResource(R.string.profile_custom),
+                text = title,
                 style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
-                text = stringResource(
-                    if (active == null) R.string.profile_custom_summary else R.string.profile_active_summary,
-                ),
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                text = summary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            OutlinedButton(onClick = events::onUseProfile, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    stringResource(
-                        if (active == null) R.string.profile_use else R.string.profile_change,
-                    ),
-                )
+            Button(onClick = events::onUseProfile, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(if (matched) R.string.profile_change else R.string.profile_use))
             }
-            if (active == null) {
+            if (!matched) {
                 OutlinedButton(onClick = events::onSaveAsProfile, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.profile_save_as))
                 }
@@ -635,27 +661,6 @@ private fun ScreenSection(
                 },
             )
         }
-        ConfigRow(stringResource(R.string.PREF_SCALE_RATIO)) {
-            CompactTextField(
-                value = form.screenScaleRatio,
-                label = "100",
-                keyboardType = KeyboardType.Number,
-                dialogTitle = stringResource(R.string.PREF_SCALE_RATIO),
-                showLabel = false,
-                onValueChange = { value ->
-                    onFormChanged(form.toBuilder().screenScaleRatio(normalizeScaleRatio(value)).build())
-                },
-            )
-        }
-        ConfigRow(stringResource(R.string.PREF_ORIENTATION)) {
-            val options = stringArrayResource(R.array.PREF_ORIENTATION_ENTRIES).toList()
-            ChoiceField(
-                selected = options.getOrElse(form.orientation) { options.firstOrNull().orEmpty() },
-                options = options,
-                dialogTitle = stringResource(R.string.PREF_ORIENTATION),
-                onSelected = { index -> onFormChanged(form.toBuilder().orientation(index).build()) },
-            )
-        }
         ConfigRow(stringResource(R.string.pref_screen_gravity)) {
             val options = stringArrayResource(R.array.pref_screen_gravity_entries).toList()
             ChoiceField(
@@ -673,15 +678,6 @@ private fun ScreenSection(
                 dialogTitle = stringResource(R.string.pref_screen_padding_title),
                 showLabel = false,
                 onValueChange = { value -> onFormChanged(form.toBuilder().screenPadding(value).build()) },
-            )
-        }
-        ConfigRow(stringResource(R.string.pref_screen_scale_type)) {
-            val options = stringArrayResource(R.array.pref_scale_type_entries).toList()
-            ChoiceField(
-                selected = options.getOrElse(form.screenScaleType) { options.firstOrNull().orEmpty() },
-                options = options,
-                dialogTitle = stringResource(R.string.pref_screen_scale_type),
-                onSelected = { index -> onFormChanged(form.toBuilder().screenScaleType(index).build()) },
             )
         }
         SwitchRow(
@@ -771,7 +767,6 @@ internal fun ScreenPresetDialog(
     selectedPreset: Size?,
     onDismissRequest: () -> Unit,
     onSelected: (Size) -> Unit,
-    keepAspectRatio: Boolean = false,
     onAdd: (Size) -> Unit,
     onRemove: (Size) -> Unit,
     useModalBottomSheet: Boolean = true,
@@ -902,7 +897,6 @@ internal fun ScreenPresetDialog(
     if (customResolutionVisible) {
         CustomResolutionDialog(
             initialSize = selectedPreset,
-            keepAspectRatio = keepAspectRatio,
             onDismissRequest = { customResolutionVisible = false },
             onSave = { size ->
                 customResolutionVisible = false
@@ -916,7 +910,6 @@ internal fun ScreenPresetDialog(
 @Composable
 internal fun CustomResolutionDialog(
     initialSize: Size?,
-    keepAspectRatio: Boolean = false,
     onDismissRequest: () -> Unit,
     onSave: (Size) -> Unit,
 ) {
@@ -927,7 +920,7 @@ internal fun CustomResolutionDialog(
     var height by rememberSaveable(fallback.width, fallback.height) {
         mutableStateOf(fallback.height.toString())
     }
-    var lockAspect by rememberSaveable(fallback.width, fallback.height) { mutableStateOf(keepAspectRatio) }
+    var lockAspect by rememberSaveable(fallback.width, fallback.height) { mutableStateOf(false) }
     var aspectWidth by rememberSaveable(fallback.width, fallback.height) { mutableStateOf(fallback.width) }
     var aspectHeight by rememberSaveable(fallback.width, fallback.height) { mutableStateOf(fallback.height) }
     val validWidth = width.toIntOrNull()?.takeIf { it > 0 }
@@ -993,7 +986,7 @@ internal fun CustomResolutionDialog(
                     )
                 }
                 SwitchRow(
-                    title = stringResource(R.string.PREF_KEEP_ASPECT_RATIO),
+                    title = stringResource(R.string.config_lock_custom_resolution_ratio),
                     checked = lockAspect,
                     onCheckedChange = { checked ->
                         if (checked) {

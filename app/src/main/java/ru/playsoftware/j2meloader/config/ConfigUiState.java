@@ -110,27 +110,35 @@ public final class ConfigUiState {
 		}
 	}
 
-	/** Profile matching result used by the MIDlet Quick destination. */
+	/** Profile matching result used by the MIDlet General destination. */
 	public static final class ProfileStatus {
 		@Nullable
 		public final String activeProfile;
 		@Nullable
 		public final String defaultProfile;
+		public final boolean builtInDefault;
 
-		private ProfileStatus(@Nullable String activeProfile, @Nullable String defaultProfile) {
+		private ProfileStatus(@Nullable String activeProfile, @Nullable String defaultProfile,
+				boolean builtInDefault) {
 			this.activeProfile = activeProfile;
 			this.defaultProfile = defaultProfile;
+			this.builtInDefault = builtInDefault;
 		}
 
 		@NonNull
 		public static ProfileStatus custom(@Nullable String defaultProfile) {
-			return new ProfileStatus(null, defaultProfile);
+			return new ProfileStatus(null, defaultProfile, false);
+		}
+
+		@NonNull
+		public static ProfileStatus builtInDefault(@Nullable String defaultProfile) {
+			return new ProfileStatus(null, defaultProfile, true);
 		}
 
 		@NonNull
 		public static ProfileStatus active(@NonNull String activeProfile,
 				@Nullable String defaultProfile) {
-			return new ProfileStatus(activeProfile, defaultProfile);
+			return new ProfileStatus(activeProfile, defaultProfile, false);
 		}
 	}
 }

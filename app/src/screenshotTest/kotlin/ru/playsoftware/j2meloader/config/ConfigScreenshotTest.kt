@@ -278,7 +278,6 @@ fun ConfigCustomResolutionScreenshot() {
     JLModPlusTheme {
         CustomResolutionDialog(
             initialSize = Size(240, 320),
-            keepAspectRatio = false,
             onDismissRequest = {},
             onSave = {},
         )
