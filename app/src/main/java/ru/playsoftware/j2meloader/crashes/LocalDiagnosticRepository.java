@@ -21,6 +21,7 @@ import static org.acra.ReportField.CUSTOM_DATA;
 import static org.acra.ReportField.PHONE_MODEL;
 import static org.acra.ReportField.REPORT_ID;
 import static org.acra.ReportField.STACK_TRACE;
+import static org.acra.ReportField.STACK_TRACE_HASH;
 import static org.acra.ReportField.THREAD_DETAILS;
 
 import android.app.ApplicationExitInfo;
@@ -40,22 +41,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-/** Reads, correlates, renders, and deletes the bounded local diagnostic records. */
+/** Reads, correlates, and projects bounded local evidence into actionable logical incidents. */
 public final class LocalDiagnosticRepository {
 	private static final String TAG = LocalDiagnosticRepository.class.getSimpleName();
-	private static final String KEY_PROCESS_NAME = "jlmod.process.name";
-	private static final String KEY_PROCESS_ROLE = "jlmod.process.role";
-	private static final String KEY_PROCESS_PID = "jlmod.process.pid";
-	private static final String KEY_MIDLET_NAME = "jlmod.midlet.name";
-	private static final String KEY_MIDLET_VENDOR = "jlmod.midlet.vendor";
-	private static final String KEY_MIDLET_VERSION = "jlmod.midlet.version";
-	private static final String KEY_MIDLET_JAR_SIZE = "jlmod.midlet.jar.size";
-	private static final String KEY_MIDLET_JAR_SHA256 = "jlmod.midlet.jar.sha256";
-	private static final String KEY_MIDLET_MAIN_CLASS = "jlmod.midlet.mainClass";
-	private static final String KEY_SESSION_ID = "jlmod.session.id";
 
 	private LocalDiagnosticRepository() {}
 
@@ -99,8 +91,6 @@ public final class LocalDiagnosticRepository {
 		for (ProcessExitStore.Snapshot exit : ProcessExitStore.loadStored(context)) {
 			MutableRecord journal = failuresBySession.get(exit.sessionId);
 			if (journal != null) {
-				// Process state summary carries the exact immutable session ID. No timestamp/PID
-				// heuristic is needed to enrich the existing MIDlet failure logical record.
 				journal.attach(exit);
 			} else {
 				standaloneReports.add(Record.fromProcessExit(exit, allSessions.get(exit.sessionId)));
@@ -165,7 +155,6 @@ public final class LocalDiagnosticRepository {
 				Log.w(TAG, "Unable to delete MIDlet session journal: " + record.journalFile.getName());
 				return false;
 			}
-			// Do not drop the recovery acknowledgment until the durable journal is gone.
 			MidletFailureRecovery.deleteAcknowledgment(context, record.eventId);
 		}
 		if (record.processExit != null) {
@@ -188,6 +177,36 @@ public final class LocalDiagnosticRepository {
 				&& MidletFailureRecovery.isSafeEventId(eventId)
 				&& stackTrace != null
 				&& stackTrace.contains("eventId=" + eventId + ";");
+	}
+
+	static String failureHeadline(String stackTrace) {
+		if (stackTrace == null) {
+			return null;
+		}
+		for (String line : stackTrace.split("\\r?\\n")) {
+			String trimmed = line.trim();
+			if (trimmed.isEmpty() || trimmed.startsWith("eventId=")) {
+				continue;
+			}
+			if (!trimmed.startsWith("at ") && !trimmed.startsWith("...")
+					&& !trimmed.startsWith("Caused by:")) {
+				return trimmed;
+			}
+		}
+		return null;
+	}
+
+	static String topAppFrame(String stackTrace) {
+		if (stackTrace == null) {
+			return null;
+		}
+		for (String line : stackTrace.split("\\r?\\n")) {
+			String trimmed = line.trim();
+			if (trimmed.startsWith("at ru.playsoftware.j2meloader.")) {
+				return trimmed.substring(3);
+			}
+		}
+		return null;
 	}
 
 	private static ArrayList<SessionRecord> readSessionRecords(Context context) {
@@ -217,7 +236,7 @@ public final class LocalDiagnosticRepository {
 			}
 			try {
 				CrashReportData data = persister.load(file);
-				reports.add(RawJavaReport.from(file, data));
+				reports.add(RawJavaReport.from(context, file, data));
 			} catch (Exception e) {
 				Log.w(TAG, "Ignoring unreadable local Java crash report: " + file.getName(), e);
 			}
@@ -243,76 +262,159 @@ public final class LocalDiagnosticRepository {
 		}
 	}
 
-	private static void appendPositiveKb(StringBuilder text, String label, long value) {
-		if (value > 0) {
-			text.append(label).append(": ").append(value).append(" kB\n");
-		}
-	}
-
-	private static void appendSessionDetails(StringBuilder detail, MidletSessionJournal.Snapshot snapshot) {
+	private static void appendSessionSummary(StringBuilder detail, MidletSessionJournal.Snapshot snapshot) {
 		if (snapshot == null) {
 			return;
 		}
-		appendLine(detail, "Session ID", snapshot.sessionId);
 		appendLine(detail, "Lifecycle stage", snapshot.stage == null ? null : snapshot.stage.name());
-		appendLine(detail, "Session outcome", snapshot.outcome == null ? null : snapshot.outcome.name());
 		appendLine(detail, "MIDlet", snapshot.midletName);
-		appendLine(detail, "Vendor", snapshot.midletVendor);
-		appendLine(detail, "Version", snapshot.midletVersion);
+		appendLine(detail, "MIDlet version", snapshot.midletVersion);
 		appendLine(detail, "Entrypoint", snapshot.mainClass);
-		appendLine(detail, "JAR size", snapshot.jarSize);
-		appendLine(detail, "JAR SHA-256", snapshot.jarSha256);
+		appendLine(detail, "JAR fingerprint", shortFingerprint(snapshot.jarSha256));
 	}
 
-	private static void appendProcessExitDetails(StringBuilder detail, ProcessExitStore.Snapshot exit) {
+	private static void appendJavaFailureSummary(StringBuilder detail, RawJavaReport raw) {
+		appendLine(detail, "Failure", failureHeadline(raw.stackTrace));
+		appendLine(detail, "Top app frame", topAppFrame(raw.stackTrace));
+		appendLine(detail, "Thread", raw.threadDetails);
+		appendLine(detail, "Fingerprint", raw.stackTraceHash);
+	}
+
+	private static void appendProcessExitSummary(StringBuilder detail, ProcessExitStore.Snapshot exit) {
 		if (exit == null) {
 			return;
 		}
-		appendLine(detail, "Exit reason", ProcessExitStore.reasonLabel(exit.reason)
-				+ " (" + exit.reason + ")");
-		appendLine(detail, "Process role", exit.processRole);
-		appendLine(detail, "Process name", exit.processName);
-		if (exit.pid > 0) {
-			detail.append("Process PID: ").append(exit.pid).append('\n');
+		String status = ProcessExitStore.statusLabel(exit);
+		String mechanism = ProcessExitStore.reasonLabel(exit.reason);
+		if ((exit.reason == ApplicationExitInfo.REASON_SIGNALED
+				|| exit.reason == ApplicationExitInfo.REASON_CRASH_NATIVE) && status != null) {
+			mechanism = mechanism + " · " + status;
 		}
-		if (exit.reason == ApplicationExitInfo.REASON_SIGNALED
-				|| exit.reason == ApplicationExitInfo.REASON_CRASH_NATIVE || exit.status != 0) {
-			appendLine(detail, "Exit status", ProcessExitStore.statusLabel(exit));
+		appendLine(detail, "Failure", mechanism);
+		if (exit.reason == ApplicationExitInfo.REASON_SIGNALED && exit.status == OsConstants.SIGKILL
+				&& exit.lowMemoryKillReportSupported) {
+			appendLine(detail, "Cause", "unknown (dedicated low-memory classification was available)");
 		}
-		appendLine(detail, "Process importance", ProcessExitStore.importanceLabel(exit.importance));
-		appendPositiveKb(detail, "Last PSS sample", exit.pssKb);
-		appendPositiveKb(detail, "Last RSS sample", exit.rssKb);
+		appendAppContext(detail, exit.appContext, exit.timestampMillis);
+		appendBuild(detail, exit.appContext, null);
+		appendEnvironment(detail, exit.stateSdk, joinDevice(exit.deviceBrand, exit.deviceModel), null);
+		if (shouldShowMemory(exit)) {
+			String memory = memorySample(exit.pssKb, exit.rssKb);
+			appendLine(detail, "Memory sample", memory);
+		}
 		appendLine(detail, "System description", exit.description);
-		if (exit.stateVersionCode >= 0) {
-			detail.append("App version code at exit: ").append(exit.stateVersionCode).append('\n');
-		}
-		if (exit.stateSdk >= 0) {
-			detail.append("Android SDK at exit: ").append(exit.stateSdk).append('\n');
-		}
-		appendLine(detail, "Device", joinDevice(exit.deviceBrand, exit.deviceModel));
-		appendLine(detail, "Primary ABI", exit.primaryAbi);
-		if (exit.reason == ApplicationExitInfo.REASON_LOW_MEMORY
-				|| (exit.reason == ApplicationExitInfo.REASON_SIGNALED && exit.status == OsConstants.SIGKILL)) {
-			detail.append("Dedicated low-memory kill classification supported: ")
-					.append(exit.lowMemoryKillReportSupported ? "yes" : "no")
-					.append('\n');
-		}
 		if (exit.traceBytes > 0) {
-			String label = "native-tombstone-protobuf".equals(exit.traceKind)
-					? "Native tombstone" : "System trace";
-			detail.append(label).append(": captured, ").append(exit.traceBytes).append(" bytes");
-			if (exit.traceKind != null) {
-				detail.append(" (").append(exit.traceKind).append(')');
-			}
+			String evidence = "native-tombstone-protobuf".equals(exit.traceKind)
+					? "native tombstone retained" : "system trace retained";
 			if (exit.traceTruncated) {
-				detail.append(" [retention limit reached]");
+				evidence += " (truncated at retention limit)";
 			}
-			detail.append('\n');
+			appendLine(detail, "Evidence", evidence);
 		}
 		String trace = ProcessExitStore.readDisplayTrace(exit);
 		if (trace != null && !trace.trim().isEmpty()) {
 			detail.append("\nANR trace:\n").append(trace.trim()).append('\n');
 		}
+	}
+
+	private static boolean shouldShowMemory(ProcessExitStore.Snapshot exit) {
+		return exit.reason == ApplicationExitInfo.REASON_LOW_MEMORY
+				|| exit.reason == ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE
+				|| (exit.reason == ApplicationExitInfo.REASON_SIGNALED && exit.status == OsConstants.SIGKILL);
+	}
+
+	private static String memorySample(long pssKb, long rssKb) {
+		StringBuilder value = new StringBuilder();
+		if (pssKb > 0) {
+			value.append("PSS ").append(pssKb).append(" kB");
+		}
+		if (rssKb > 0) {
+			if (value.length() > 0) value.append(" · ");
+			value.append("RSS ").append(rssKb).append(" kB");
+		}
+		return value.length() == 0 ? null : value.toString();
+	}
+
+	private static void appendBuild(StringBuilder detail, CrashContextStore.Snapshot context,
+			String fallbackVersion) {
+		if (context != null) {
+			String commit = shortFingerprint(context.buildCommit);
+			if (commit != null || context.buildVariant != null) {
+				StringBuilder value = new StringBuilder();
+				if (commit != null) value.append(commit);
+				if (context.buildVariant != null) {
+					if (value.length() > 0) value.append(" · ");
+					value.append(context.buildVariant);
+				}
+				appendLine(detail, "Build", value.toString());
+				return;
+			}
+		}
+		appendLine(detail, "App version", fallbackVersion);
+	}
+
+	private static void appendEnvironment(StringBuilder detail, int sdk, String device,
+			String androidVersion) {
+		StringBuilder value = new StringBuilder();
+		if (sdk >= 0) {
+			value.append("Android SDK ").append(sdk);
+		} else if (androidVersion != null) {
+			value.append("Android ").append(androidVersion);
+		}
+		if (device != null) {
+			if (value.length() > 0) value.append(" · ");
+			value.append(device);
+		}
+		appendLine(detail, "Environment", value.length() == 0 ? null : value.toString());
+	}
+
+	private static void appendAppContext(StringBuilder detail, CrashContextStore.Snapshot context,
+			long failureTimeMillis) {
+		if (context == null || context.location == null) {
+			return;
+		}
+		detail.append("\nLast app context\n");
+		appendLine(detail, "Location", context.location);
+		appendLine(detail, "Previous", context.previousLocation);
+		appendLine(detail, "Action", context.action);
+		appendLine(detail, "Phase", context.phase);
+		appendLine(detail, "Context age", relativeAge(failureTimeMillis, context.updatedWallTimeMillis));
+		if (!context.breadcrumbs.isEmpty()) {
+			detail.append("Recent transitions:\n");
+			for (CrashContextStore.Breadcrumb breadcrumb : context.breadcrumbs) {
+				detail.append("- ");
+				String age = relativeAge(failureTimeMillis, breadcrumb.wallTimeMillis);
+				if (age != null) {
+					detail.append(age).append(" · ");
+				}
+				detail.append(breadcrumb.location);
+				if (breadcrumb.action != null) detail.append(" · ").append(breadcrumb.action);
+				if (breadcrumb.phase != null) detail.append(" · ").append(breadcrumb.phase);
+				detail.append('\n');
+			}
+		}
+	}
+
+	private static String relativeAge(long failureTimeMillis, long contextTimeMillis) {
+		if (failureTimeMillis <= 0 || contextTimeMillis <= 0 || failureTimeMillis < contextTimeMillis) {
+			return null;
+		}
+		long delta = failureTimeMillis - contextTimeMillis;
+		if (delta < 1000) {
+			return delta + " ms before failure";
+		}
+		if (delta < 60_000) {
+			return String.format(Locale.US, "%.1f s before failure", delta / 1000.0);
+		}
+		return (delta / 60_000) + " min before failure";
+	}
+
+	private static String shortFingerprint(String value) {
+		if (value == null || value.trim().isEmpty()) {
+			return null;
+		}
+		String trimmed = value.trim();
+		return trimmed.length() <= 12 ? trimmed : trimmed.substring(0, 12);
 	}
 
 	public enum Kind {
@@ -353,23 +455,18 @@ public final class LocalDiagnosticRepository {
 		}
 
 		private static Record fromRaw(RawJavaReport raw) {
-			StringBuilder detail = new StringBuilder();
-			detail.append("Type: Java diagnostic report\n");
-			appendLine(detail, "Report ID", raw.reportId);
-			appendLine(detail, "Session ID", raw.sessionId);
-			appendLine(detail, "Process role", raw.processRole);
-			appendLine(detail, "Process name", raw.processName);
-			appendLine(detail, "Process PID", raw.processPid);
-			appendLine(detail, "MIDlet", raw.midletName);
-			appendLine(detail, "Vendor", raw.midletVendor);
-			appendLine(detail, "Version", raw.midletVersion);
-			appendLine(detail, "Entrypoint", raw.mainClass);
-			appendLine(detail, "JAR size", raw.jarSize);
-			appendLine(detail, "JAR SHA-256", raw.jarSha256);
-			appendLine(detail, "App version", raw.appVersion);
-			appendLine(detail, "Android", raw.androidVersion);
-			appendLine(detail, "Device", joinDevice(raw.brand, raw.phoneModel));
-			appendLine(detail, "Thread", raw.threadDetails);
+			StringBuilder detail = new StringBuilder("Type: Java diagnostic report\n");
+			appendJavaFailureSummary(detail, raw);
+			appendAppContext(detail, raw.appContext, raw.timestampMillis);
+			appendBuild(detail, raw.appContext, raw.appVersion);
+			appendEnvironment(detail, -1, joinDevice(raw.brand, raw.phoneModel), raw.androidVersion);
+			if (raw.midletName != null) {
+				detail.append('\n');
+				appendLine(detail, "MIDlet", raw.midletName);
+				appendLine(detail, "MIDlet version", raw.midletVersion);
+				appendLine(detail, "Entrypoint", raw.mainClass);
+				appendLine(detail, "JAR fingerprint", shortFingerprint(raw.jarSha256));
+			}
 			if (raw.stackTrace != null) {
 				detail.append("\nStack trace:\n").append(raw.stackTrace.trim()).append('\n');
 			}
@@ -391,12 +488,11 @@ public final class LocalDiagnosticRepository {
 		}
 
 		private static Record fromProcessExit(ProcessExitStore.Snapshot exit, SessionRecord session) {
-			StringBuilder detail = new StringBuilder();
-			detail.append("Type: Process exit diagnostic\n");
-			appendProcessExitDetails(detail, exit);
+			StringBuilder detail = new StringBuilder("Type: Process exit diagnostic\n");
+			appendProcessExitSummary(detail, exit);
 			if (session != null) {
 				detail.append('\n');
-				appendSessionDetails(detail, session.snapshot);
+				appendSessionSummary(detail, session.snapshot);
 			}
 			return new Record(
 					exit.id,
@@ -414,49 +510,17 @@ public final class LocalDiagnosticRepository {
 			);
 		}
 
-		public String getId() {
-			return id;
-		}
-
-		public Kind getKind() {
-			return kind;
-		}
-
-		public long getTimestampMillis() {
-			return timestampMillis;
-		}
-
-		public String getEventId() {
-			return eventId;
-		}
-
-		public String getSessionId() {
-			return sessionId;
-		}
-
-		public String getMidletName() {
-			return midletName;
-		}
-
-		public String getProcessRole() {
-			return processRole;
-		}
-
-		public String getStackTrace() {
-			return stackTrace;
-		}
-
-		public String getDetailText() {
-			return detailText;
-		}
-
-		public boolean hasJavaReport() {
-			return !rawFiles.isEmpty();
-		}
-
-		public boolean hasProcessExit() {
-			return processExit != null;
-		}
+		public String getId() { return id; }
+		public Kind getKind() { return kind; }
+		public long getTimestampMillis() { return timestampMillis; }
+		public String getEventId() { return eventId; }
+		public String getSessionId() { return sessionId; }
+		public String getMidletName() { return midletName; }
+		public String getProcessRole() { return processRole; }
+		public String getStackTrace() { return stackTrace; }
+		public String getDetailText() { return detailText; }
+		public boolean hasJavaReport() { return !rawFiles.isEmpty(); }
+		public boolean hasProcessExit() { return processExit != null; }
 	}
 
 	private static final class SessionRecord {
@@ -491,44 +555,41 @@ public final class LocalDiagnosticRepository {
 		}
 
 		private void attach(ProcessExitStore.Snapshot exit) {
-			// There should be at most one terminal ApplicationExitInfo for one process/session.
-			// If malformed history yields duplicates, retain the newest rather than multiplying UI noise.
 			if (processExit == null || exit.timestampMillis > processExit.timestampMillis) {
 				processExit = exit;
 			}
 		}
 
 		private Record freeze() {
-			StringBuilder detail = new StringBuilder();
-			detail.append("Type: MIDlet session failure\n");
-			appendLine(detail, "Event ID", eventId);
-			appendSessionDetails(detail, snapshot);
+			StringBuilder detail = new StringBuilder("Type: MIDlet session failure\n");
 			appendLine(detail, "Failure boundary", snapshot.failureBoundary == null
 					? null : snapshot.failureBoundary.name());
-			appendLine(detail, "Process name", snapshot.processName);
-			detail.append("Process PID: ").append(snapshot.processPid).append('\n');
-			detail.append("Java report attached: ").append(rawReports.isEmpty() ? "no" : "yes").append('\n');
-			detail.append("Process-exit evidence attached: ").append(processExit == null ? "no" : "yes").append('\n');
+			appendSessionSummary(detail, snapshot);
 
 			String stackTrace = null;
 			String processRole = "midlet";
 			ArrayList<File> rawFiles = new ArrayList<>();
+			RawJavaReport primaryRaw = null;
 			for (RawJavaReport raw : rawReports) {
 				rawFiles.add(raw.file);
-				if (stackTrace == null && raw.stackTrace != null) {
+				if (primaryRaw == null && raw.stackTrace != null) {
+					primaryRaw = raw;
 					stackTrace = raw.stackTrace;
 				}
 				if (raw.processRole != null) {
 					processRole = raw.processRole;
 				}
-				appendLine(detail, "ACRA report ID", raw.reportId);
-				appendLine(detail, "Android", raw.androidVersion);
-				appendLine(detail, "Device", joinDevice(raw.brand, raw.phoneModel));
-				appendLine(detail, "Thread", raw.threadDetails);
+			}
+			if (primaryRaw != null) {
+				appendJavaFailureSummary(detail, primaryRaw);
+				appendAppContext(detail, primaryRaw.appContext, primaryRaw.timestampMillis);
+				appendBuild(detail, primaryRaw.appContext, primaryRaw.appVersion);
+				appendEnvironment(detail, -1,
+						joinDevice(primaryRaw.brand, primaryRaw.phoneModel), primaryRaw.androidVersion);
 			}
 			if (processExit != null) {
 				detail.append('\n');
-				appendProcessExitDetails(detail, processExit);
+				appendProcessExitSummary(detail, processExit);
 				if (processExit.processRole != null) {
 					processRole = processExit.processRole;
 				}
@@ -560,13 +621,9 @@ public final class LocalDiagnosticRepository {
 		private final String reportId;
 		private final String sessionId;
 		private final String processRole;
-		private final String processName;
-		private final String processPid;
 		private final String midletName;
-		private final String midletVendor;
 		private final String midletVersion;
 		private final String mainClass;
-		private final String jarSize;
 		private final String jarSha256;
 		private final String appVersion;
 		private final String androidVersion;
@@ -574,24 +631,22 @@ public final class LocalDiagnosticRepository {
 		private final String phoneModel;
 		private final String threadDetails;
 		private final String stackTrace;
+		private final String stackTraceHash;
+		private final CrashContextStore.Snapshot appContext;
 
 		private RawJavaReport(File file, long timestampMillis, String reportId, String sessionId,
-				String processRole, String processName, String processPid, String midletName,
-				String midletVendor, String midletVersion, String mainClass, String jarSize,
+				String processRole, String midletName, String midletVersion, String mainClass,
 				String jarSha256, String appVersion, String androidVersion, String brand,
-				String phoneModel, String threadDetails, String stackTrace) {
+				String phoneModel, String threadDetails, String stackTrace, String stackTraceHash,
+				CrashContextStore.Snapshot appContext) {
 			this.file = file;
 			this.timestampMillis = timestampMillis;
 			this.reportId = reportId;
 			this.sessionId = sessionId;
 			this.processRole = processRole;
-			this.processName = processName;
-			this.processPid = processPid;
 			this.midletName = midletName;
-			this.midletVendor = midletVendor;
 			this.midletVersion = midletVersion;
 			this.mainClass = mainClass;
-			this.jarSize = jarSize;
 			this.jarSha256 = jarSha256;
 			this.appVersion = appVersion;
 			this.androidVersion = androidVersion;
@@ -599,42 +654,69 @@ public final class LocalDiagnosticRepository {
 			this.phoneModel = phoneModel;
 			this.threadDetails = threadDetails;
 			this.stackTrace = stackTrace;
+			this.stackTraceHash = stackTraceHash;
+			this.appContext = appContext;
 		}
 
-		private static RawJavaReport from(File file, CrashReportData data) {
+		private static RawJavaReport from(Context context, File file, CrashReportData data) {
 			Object customValue = data.get(CUSTOM_DATA.toString());
 			JSONObject custom = customValue instanceof JSONObject ? (JSONObject) customValue : null;
+			String runId = custom(custom, CrashReporter.KEY_RUN_ID);
+			CrashContextStore.Snapshot appContext = CrashContextStore.readForRun(context, runId);
+			if (appContext == null && CrashContextStore.isSafeRunId(runId)) {
+				appContext = new CrashContextStore.Snapshot(
+						runId,
+						custom(custom, CrashReporter.KEY_PROCESS_ROLE),
+						custom(custom, CrashReporter.KEY_BUILD_COMMIT),
+						custom(custom, CrashReporter.KEY_BUILD_VARIANT),
+						CrashContextStore.normalizeToken(custom(custom, CrashReporter.KEY_CONTEXT_LOCATION),
+								CrashContextStore.MAX_LOCATION_LENGTH),
+						CrashContextStore.normalizeToken(custom(custom, CrashReporter.KEY_CONTEXT_PREVIOUS),
+								CrashContextStore.MAX_LOCATION_LENGTH),
+						CrashContextStore.normalizeToken(custom(custom, CrashReporter.KEY_CONTEXT_ACTION),
+								CrashContextStore.MAX_ACTION_LENGTH),
+						CrashContextStore.normalizeToken(custom(custom, CrashReporter.KEY_CONTEXT_PHASE),
+								CrashContextStore.MAX_PHASE_LENGTH),
+						parseLong(custom(custom, CrashReporter.KEY_CONTEXT_UPDATED)),
+						Collections.emptyList()
+				);
+			}
 			return new RawJavaReport(
 					file,
 					file.lastModified(),
 					stringValue(data.get(REPORT_ID.toString())),
-					custom(custom, KEY_SESSION_ID),
-					custom(custom, KEY_PROCESS_ROLE),
-					custom(custom, KEY_PROCESS_NAME),
-					custom(custom, KEY_PROCESS_PID),
-					custom(custom, KEY_MIDLET_NAME),
-					custom(custom, KEY_MIDLET_VENDOR),
-					custom(custom, KEY_MIDLET_VERSION),
-					custom(custom, KEY_MIDLET_MAIN_CLASS),
-					custom(custom, KEY_MIDLET_JAR_SIZE),
-					custom(custom, KEY_MIDLET_JAR_SHA256),
+					custom(custom, CrashReporter.KEY_SESSION_ID),
+					custom(custom, CrashReporter.KEY_PROCESS_ROLE),
+					custom(custom, CrashReporter.KEY_MIDLET_NAME),
+					custom(custom, CrashReporter.KEY_MIDLET_VERSION),
+					custom(custom, CrashReporter.KEY_MIDLET_MAIN_CLASS),
+					custom(custom, CrashReporter.KEY_MIDLET_JAR_SHA256),
 					stringValue(data.get(APP_VERSION_NAME.toString())),
 					stringValue(data.get(ANDROID_VERSION.toString())),
 					stringValue(data.get(BRAND.toString())),
 					stringValue(data.get(PHONE_MODEL.toString())),
 					stringValue(data.get(THREAD_DETAILS.toString())),
-					stringValue(data.get(STACK_TRACE.toString()))
+					stringValue(data.get(STACK_TRACE.toString())),
+					stringValue(data.get(STACK_TRACE_HASH.toString())),
+					appContext
 			);
 		}
 	}
 
+	private static long parseLong(String value) {
+		if (value == null) {
+			return 0;
+		}
+		try {
+			return Long.parseLong(value);
+		} catch (NumberFormatException ignored) {
+			return 0;
+		}
+	}
+
 	private static String joinDevice(String brand, String model) {
-		if (brand == null) {
-			return model;
-		}
-		if (model == null) {
-			return brand;
-		}
+		if (brand == null) return model;
+		if (model == null) return brand;
 		return brand + " " + model;
 	}
 }
