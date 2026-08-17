@@ -40,8 +40,21 @@ class LibraryBootstrapper(
         onProgress: ((Progress) -> Unit)? = null,
     ): Result {
         val dao = database.libraryDao()
-        if (dao.getLibraryState()?.bootstrapState == LibraryBootstrapState.READY) {
-            return Result(alreadyReady = true, indexedCount = 0, failures = emptyList())
+        when (val bootstrapState = dao.getLibraryState()?.bootstrapState) {
+            LibraryBootstrapState.READY -> {
+                return Result(alreadyReady = true, indexedCount = 0, failures = emptyList())
+            }
+            LibraryBootstrapState.CREATING,
+            LibraryBootstrapState.INDEXING -> Unit
+            null -> {
+                // A brand-new schema has no singleton row and no user-owned Library data. If data
+                // exists without the state row, treat it as an established/corrupt catalog instead
+                // of silently clearing metadata that cannot be reconstructed from converted/.
+                check(!dao.hasPersistentLibraryData()) {
+                    "Library bootstrap state is missing while persistent Library data exists"
+                }
+            }
+            else -> error("Unsupported Library bootstrap state: $bootstrapState")
         }
 
         dao.setLibraryState(LibraryStateEntity(bootstrapState = LibraryBootstrapState.INDEXING))
@@ -49,7 +62,7 @@ class LibraryBootstrapper(
         val scan = withContext(Dispatchers.IO) {
             val scanContext = currentCoroutineContext()
             scanner.scan(emulatorDir) { completed, total, storageKey ->
-                // flatMapLatest/workdir switching can cancel an obsolete bootstrap between apps.
+                // latest-wins workdir switching can cancel an obsolete bootstrap between apps.
                 scanContext.ensureActive()
                 onProgress?.invoke(Progress(completed, total, storageKey))
             }
