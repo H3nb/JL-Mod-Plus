@@ -59,6 +59,7 @@ data class ProfileUiItem(
     val name: String,
     val isDefault: Boolean,
     val canEdit: Boolean,
+    val isBuiltIn: Boolean = false,
 )
 
 data class ProfilesUiState(
@@ -71,6 +72,7 @@ private val NoWindowInsets = WindowInsets(left = 0, top = 0, right = 0, bottom =
 interface ProfilesActions {
     fun onBack()
     fun onCreate(name: String)
+    fun onSetBuiltInDefault()
     fun onSetDefault(name: String)
     fun onEdit(name: String)
     fun onRename(oldName: String, newName: String)
@@ -97,7 +99,14 @@ class ProfilesComposeController(
 
     fun updateProfiles(profiles: List<Profile>, defaultName: String?) {
         state = ProfilesUiState(
-            profiles = profiles.sorted().map { profile ->
+            profiles = listOf(
+                ProfileUiItem(
+                    name = "",
+                    isDefault = defaultName == null,
+                    canEdit = false,
+                    isBuiltIn = true,
+                ),
+            ) + profiles.sorted().map { profile ->
                 ProfileUiItem(
                     name = profile.name,
                     isDefault = profile.name == defaultName,
@@ -178,7 +187,9 @@ fun ProfilesScreen(
         ProfileActionsDialog(
             profile = profile,
             onDismiss = { selectedProfile = null },
-            onDefault = { actions.onSetDefault(profile.name) },
+            onDefault = {
+                if (profile.isBuiltIn) actions.onSetBuiltInDefault() else actions.onSetDefault(profile.name)
+            },
             onEdit = { actions.onEdit(profile.name) },
             onRename = { nameDialog = ProfileNameDialog.Rename(profile) },
             onDelete = { deleteTarget = profile },
@@ -220,24 +231,46 @@ fun ProfilesScreen(
 
 @Composable
 private fun ProfileRow(profile: ProfileUiItem, onClick: () -> Unit) {
+    val displayName = if (profile.isBuiltIn) {
+        stringResource(R.string.profile_builtin_settings)
+    } else {
+        profile.name
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 16.dp),
+            .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = if (profile.isDefault) {
-                stringResource(R.string.default_label, profile.name)
-            } else {
-                profile.name
-            },
-            modifier = Modifier.weight(1f),
-            fontWeight = if (profile.isDefault) FontWeight.SemiBold else FontWeight.Normal,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = displayName,
+                fontWeight = if (profile.isDefault) FontWeight.SemiBold else FontWeight.Normal,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (profile.isBuiltIn || profile.isDefault) {
+                Text(
+                    text = stringResource(
+                        if (profile.isBuiltIn) R.string.profile_builtin_settings_summary
+                        else R.string.profile_default_template_summary,
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+        if (profile.isDefault) {
+            Text(
+                text = stringResource(R.string.profile_default_badge_short),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(horizontal = 8.dp),
+            )
+        }
         Icon(
             painter = painterResource(R.drawable.ic_more_vert),
             contentDescription = stringResource(R.string.more),
@@ -255,17 +288,26 @@ internal fun ProfileActionsDialog(
     onRename: () -> Unit,
     onDelete: () -> Unit,
 ) {
+    val displayName = if (profile.isBuiltIn) {
+        stringResource(R.string.profile_builtin_settings)
+    } else {
+        profile.name
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(profile.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        title = { Text(displayName, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         text = {
             Column {
-                if (profile.canEdit) {
+                if (!profile.isDefault) {
                     ProfileDialogAction(R.string.set_as_default, onDismiss, onDefault)
+                }
+                if (!profile.isBuiltIn && profile.canEdit) {
                     ProfileDialogAction(R.string.edit, onDismiss, onEdit)
                 }
-                ProfileDialogAction(R.string.action_context_rename, onDismiss, onRename)
-                ProfileDialogAction(R.string.action_context_delete, onDismiss, onDelete)
+                if (!profile.isBuiltIn) {
+                    ProfileDialogAction(R.string.action_context_rename, onDismiss, onRename)
+                    ProfileDialogAction(R.string.action_context_delete, onDismiss, onDelete)
+                }
             }
         },
         confirmButton = {},

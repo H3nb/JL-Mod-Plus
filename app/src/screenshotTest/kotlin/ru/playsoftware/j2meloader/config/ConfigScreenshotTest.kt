@@ -15,6 +15,7 @@
 package ru.playsoftware.j2meloader.config
 
 import android.content.res.Configuration
+import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.input.KeyboardType
@@ -24,7 +25,7 @@ import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 
 private val NoOpConfigEvents = object : ConfigFormEvents {
     override fun onFormChanged(state: ConfigFormState) = Unit
-    override fun onAddResolutionPreset() = Unit
+    override fun onAddResolutionPreset(size: Size) = Unit
     override fun onRemoveResolutionPreset(size: Size) = Unit
     override fun onColorPicker(field: ConfigFormEvents.ColorField) = Unit
     override fun onColorPicked(field: ConfigFormEvents.ColorField, value: String) = Unit
@@ -69,7 +70,7 @@ private val PreviewConfigState = ConfigUiState(
 @Composable
 fun ConfigLightPhoneScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        ConfigScreen(PreviewConfigState, NoOpConfigEvents)
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Graphics)
     }
 }
 
@@ -84,7 +85,7 @@ fun ConfigLightPhoneScreenshot() {
 @Composable
 fun ConfigDarkPhoneScreenshot() {
     JLModPlusTheme(darkTheme = true) {
-        ConfigScreen(PreviewConfigState, NoOpConfigEvents)
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Graphics)
     }
 }
 
@@ -99,7 +100,70 @@ fun ConfigDarkPhoneScreenshot() {
 @Composable
 fun ConfigLargeFontFormScreenshot() {
     JLModPlusTheme {
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Graphics)
+    }
+}
+
+@PreviewTest
+@Preview(name = "Config quick light", widthDp = 360, heightDp = 800, showBackground = true)
+@Composable
+fun ConfigQuickScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
         ConfigScreen(PreviewConfigState, NoOpConfigEvents)
+    }
+}
+
+@PreviewTest
+@Preview(
+    name = "Config quick dark",
+    widthDp = 360,
+    heightDp = 800,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    showBackground = true,
+)
+@Composable
+fun ConfigQuickDarkScreenshot() {
+    JLModPlusTheme(darkTheme = true) {
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents)
+    }
+}
+
+@PreviewTest
+@Preview(name = "Config preference components", widthDp = 360, heightDp = 520, showBackground = true)
+@Composable
+fun ConfigPreferenceComponentsScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        Column {
+            ConfigSection(title = "Virtual keyboard") {
+                ConfigColorPreference(
+                    title = "Foreground",
+                    description = "Color used for virtual-key labels.",
+                    value = "000080",
+                    onClick = {},
+                )
+                ConfigDisclosurePreference(
+                    title = "Advanced settings",
+                    description = "Less common controls for compatibility and appearance.",
+                    expanded = false,
+                    onExpandedChange = {},
+                )
+                ConfigDisclosurePreference(
+                    title = "Advanced settings",
+                    description = "Less common controls for compatibility and appearance.",
+                    expanded = true,
+                    onExpandedChange = {},
+                )
+            }
+        }
+    }
+}
+
+@PreviewTest
+@Preview(name = "Config media empty", widthDp = 360, heightDp = 800, showBackground = true)
+@Composable
+fun ConfigMediaEmptyScreenshot() {
+    JLModPlusTheme {
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Media)
     }
 }
 
@@ -140,7 +204,7 @@ fun ConfigColorPickerDarkScreenshot() {
 @Composable
 fun ConfigLandscapeScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        ConfigScreen(PreviewConfigState, NoOpConfigEvents)
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Graphics)
     }
 }
 
@@ -210,30 +274,121 @@ fun ConfigChoiceDialogScreenshot() {
 }
 
 @PreviewTest
-@Preview(name = "Config screen presets", widthDp = 360, heightDp = 640, showBackground = true)
+@Preview(name = "Config font sizes landscape", widthDp = 640, heightDp = 360, showBackground = true)
 @Composable
-fun ConfigScreenPresetDialogScreenshot() {
+fun ConfigFontSizesLandscapeScreenshot() {
     JLModPlusTheme {
-        ScreenPresetDialog(
-            presets = listOf(Size(240, 320), Size(360, 640), Size(640, 360)),
-            removablePresets = listOf(Size(360, 640)),
-            selectedPreset = Size(240, 320),
+        FontSizesDialog(
+            small = "18",
+            medium = "22",
+            large = "26",
             onDismissRequest = {},
-            onSelected = {},
-            onRemove = {},
+            onConfirm = { _, _, _ -> },
         )
     }
 }
 
 @PreviewTest
-@Preview(name = "Config system properties landscape", widthDp = 640, heightDp = 360, showBackground = true)
+@Preview(
+    name = "Config font sizes landscape large font",
+    widthDp = 640,
+    heightDp = 360,
+    fontScale = 1.35f,
+    showBackground = true,
+)
 @Composable
-fun ConfigSystemPropertiesLandscapeScreenshot() {
+fun ConfigFontSizesLandscapeLargeFontScreenshot() {
     JLModPlusTheme {
-        ConfigSystemPropertiesDialog(
-            initialValue = "microedition.platform: Sony Ericsson C510i\nmicroedition.profiles: MIDP2.0\n",
+        FontSizesDialog(
+            small = "18",
+            medium = "22",
+            large = "26",
             onDismissRequest = {},
-            onConfirm = {},
+            onConfirm = { _, _, _ -> },
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Config choice dialog landscape", widthDp = 640, heightDp = 360, showBackground = true)
+@Composable
+fun ConfigChoiceDialogLandscapeScreenshot() {
+    JLModPlusTheme {
+        ConfigChoiceDialog(
+            title = "Screen Orientation",
+            description = "Determines the requested display orientation while the application is running.",
+            selected = "Automatic",
+            options = listOf("Automatic", "Landscape", "Reverse Landscape", "Portrait", "Reverse Portrait"),
+            onDismissRequest = {},
+            onSelected = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Config screen presets", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun ConfigScreenPresetDialogScreenshot() {
+    JLModPlusTheme {
+        ScreenPresetDialog(
+            presets = listOf(
+                Size(128, 128),
+                Size(128, 160),
+                Size(176, 220),
+                Size(240, 320),
+                Size(352, 416),
+                Size(360, 640),
+                Size(480, 800),
+                Size(640, 360),
+                Size(800, 480),
+                Size(1080, 1920),
+            ),
+            removablePresets = listOf(Size(360, 640)),
+            selectedPreset = Size(240, 320),
+            onDismissRequest = {},
+            onSelected = {},
+            onAdd = { _ -> },
+            onRemove = {},
+            useModalBottomSheet = false,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Config custom resolution", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun ConfigCustomResolutionScreenshot() {
+    JLModPlusTheme {
+        CustomResolutionDialog(
+            initialSize = Size(240, 320),
+            onDismissRequest = {},
+            onSave = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Config system properties editor", widthDp = 360, heightDp = 800, showBackground = true)
+@Composable
+fun ConfigSystemPropertiesEditorScreenshot() {
+    JLModPlusTheme {
+        ConfigSystemPropertiesPage(
+            value = "microedition.platform: Sony Ericsson C510i\nmicroedition.profiles: MIDP2.0\n",
+            onBack = {},
+            onSave = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Config system properties", widthDp = 360, heightDp = 800, showBackground = true)
+@Composable
+fun ConfigSystemPropertiesScreenshot() {
+    JLModPlusTheme {
+        ConfigScreen(
+            PreviewConfigState,
+            NoOpConfigEvents,
+            initialDestination = ConfigDestination.System,
         )
     }
 }

@@ -73,9 +73,9 @@ public class ProfilesManager {
 		try {
 			if (config) {
 				File source = from.getConfig();
-				if (source.exists())
+				if (source.exists()) {
 					FileUtils.copyFileUsingChannel(source, dstConfig);
-				else {
+				} else {
 					ProfileModel params = loadConfig(from.getDir());
 					if (params != null) {
 						params.dir = dstConfig.getParentFile();
@@ -83,7 +83,9 @@ public class ProfilesManager {
 					}
 				}
 			}
-			if (keyboard) FileUtils.copyFileUsingChannel(from.getKeyLayout(), dstKeyLayout);
+			if (keyboard) {
+				FileUtils.copyFileUsingChannel(from.getKeyLayout(), dstKeyLayout);
+			}
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -105,8 +107,28 @@ public class ProfilesManager {
 		}
 	}
 
+	/** Saves the current MIDlet configuration as one reusable template snapshot. */
+	static void saveSnapshot(Profile profile, String fromPath) throws IOException {
+		profile.create();
+		File srcConfig = new File(fromPath, Config.MIDLET_CONFIG_FILE);
+		File srcKeyLayout = new File(fromPath, Config.MIDLET_KEY_LAYOUT_FILE);
+		File dstKeyLayout = profile.getKeyLayout();
+		FileUtils.copyFileUsingChannel(srcConfig, profile.getConfig());
+		if (srcKeyLayout.isFile()) {
+			FileUtils.copyFileUsingChannel(srcKeyLayout, dstKeyLayout);
+		} else if (dstKeyLayout.exists() && !dstKeyLayout.delete()) {
+			Log.w(TAG, "saveSnapshot: could not remove stale key layout " + dstKeyLayout);
+		}
+	}
+
 	@Nullable
 	public static ProfileModel loadConfig(File dir) {
+		return loadConfig(dir, true);
+	}
+
+	/** Loads a profile and optionally persists legacy-format migrations. */
+	@Nullable
+	static ProfileModel loadConfig(File dir, boolean persistMigrations) {
 		File file = new File(dir, Config.MIDLET_CONFIG_FILE);
 		ProfileModel params = null;
 		if (file.exists()) {
@@ -125,7 +147,7 @@ public class ProfilesManager {
 					JsonElement json = gson.toJsonTree(map);
 					params = gson.fromJson(json, ProfileModel.class);
 					params.dir = dir;
-					if (saveConfig(params) && oldFile.delete()) {
+					if (persistMigrations && saveConfig(params) && oldFile.delete()) {
 						Log.d(TAG, "loadConfig: old config file deleted");
 					}
 				} catch (Exception e) {
@@ -167,7 +189,9 @@ public class ProfilesManager {
 				params.screenGravity = 1;
 
 				params.version = ProfileModel.VERSION;
-				ProfilesManager.saveConfig(params);
+				if (persistMigrations) {
+					ProfilesManager.saveConfig(params);
+				}
 				break;
 		}
 		return params;

@@ -14,6 +14,9 @@
 
 package ru.playsoftware.j2meloader.config;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import ru.playsoftware.j2meloader.config.model.Size;
 
 /** Presentation events emitted by the Compose form to its host activity. */
@@ -21,7 +24,7 @@ public interface ConfigFormEvents {
 	/** Called for every presentation-only draft edit; persistence remains owned by ConfigActivity. */
 	void onFormChanged(ConfigFormState state);
 
-	void onAddResolutionPreset();
+	void onAddResolutionPreset(@NonNull Size size);
 
 	void onRemoveResolutionPreset(Size size);
 
@@ -42,6 +45,39 @@ public interface ConfigFormEvents {
 
 	/** Called after the Compose shader editor confirms its four-slot value array. */
 	default void onShaderTuningComplete(float[] values) {
+	}
+
+	/** Opens the existing profile-load flow from the General destination. */
+	default void onUseProfile() {
+	}
+
+	/** Opens the existing profile-save flow from the General destination. */
+	default void onSaveAsProfile() {
+	}
+
+	/** Opens profile template management from the General destination. */
+	default void onManageProfiles() {
+	}
+
+	default void onApplyBuiltInTemplate() {
+	}
+
+	default void onApplyTemplate(@NonNull String name) {
+	}
+
+	default void onSaveTemplate(@NonNull String name) {
+	}
+
+	default void onUpdateTemplate(@NonNull String name) {
+	}
+
+	default void onRenameTemplate(@NonNull String oldName, @NonNull String newName) {
+	}
+
+	default void onDeleteTemplate(@NonNull String name) {
+	}
+
+	default void onSetDefaultTemplate(@Nullable String name) {
 	}
 
 	enum ColorField {
