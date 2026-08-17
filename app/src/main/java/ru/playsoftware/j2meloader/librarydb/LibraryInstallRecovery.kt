@@ -82,10 +82,17 @@ object LibraryInstallRecovery {
         return removed
     }
 
-    /** Remove a recovery backup when an explicit user delete has already removed the app. */
+    /**
+     * Remove a recovery backup when an explicit user delete has already removed the app. Failing
+     * closed is intentional: the catalog row must remain until every authoritative converted copy
+     * is absent, otherwise startup recovery could resurrect an app the user explicitly deleted.
+     */
     @JvmStatic
+    @Throws(IOException::class)
     fun discardBackupForDelete(emulatorDir: File, storageKey: String) {
-        discardBackup(emulatorDir, storageKey)
+        if (!discardBackup(emulatorDir, storageKey)) {
+            throw IOException("Unable to delete Library install recovery backup for: $storageKey")
+        }
     }
 
     /**
