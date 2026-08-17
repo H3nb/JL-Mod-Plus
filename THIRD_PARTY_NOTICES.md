@@ -21,7 +21,7 @@ This ledger is a provenance/notice inventory for the current project state, not 
 
 ## Material Symbols assets
 
-The Compose host UI uses nineteen official Material Symbols Android VectorDrawable assets. They
+The Compose host UI uses twenty-six official Material Symbols Android VectorDrawable assets. They
 were downloaded with `scripts/material-symbols.py` as developer-time inputs and are committed locally;
 Gradle and CI do not access the network to obtain them.
 
@@ -32,6 +32,7 @@ Gradle and CI do not access the network to obtain them.
 | `ic_apps.xml`, `ic_collections.xml`, `ic_options.xml`, `ic_star.xml` | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | SHA-256 `6d16e921a41841590351fef37fb40fcba3b92a8846699ec6ab52d23e74e33fb3`, `527c6a7dd741753f91cd8f33894aa2cfac375138c852b1ebfc2b43195ebaa313`, `7f350bff4766520d4011185658a0c05e517aa2729e7b8113b8b28d2a8a5d45fb`, and `49d8cf2a439f18bcafc0c9e765ac04cf52edc7105f82c637c50b4e8890fd00b2`; revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 | `ic_star_filled.xml` | `https://github.com/google/material-design-icons` | rounded, fill 1, weight 500, grade 0, optical size 24 | SHA-256 `cd856fbefa8393b8b9d7dcf84ddbe37f506eadf282637d3fa3469e0a7049eed1`; revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 | `ic_default_midlet.xml` (source symbol: `widgets`) | `https://github.com/google/material-design-icons` | rounded, fill 0, weight 500, grade 0, optical size 48 | SHA-256 `fba03b38b04bc32237fc12237df02795971b2d5cec1261cdc6dc18f32cf81f13`; revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
+| `ic_config_quick.xml` (`bolt`), `ic_config_graphics.xml` (`tune`), `ic_config_audio.xml` (`volume_up`), `ic_config_media.xml` (`image`), `ic_config_controls.xml` (`gamepad`), `ic_config_system.xml` (`settings`), `ic_play.xml` (`play_arrow`) | `https://github.com/google/material-design-icons` | outlined, fill 0, weight 400, grade 0, optical size 24 | SHA-256 `143ab3540dd135c4d7637bd2220bcb04ff76a4b0858de2851c91678161cfbfae`, `7620ffcecd323ed28d0479a615129efd1202701bc66e58dd3b8b28d2a8a5d45fb`, `cf6148478dc7965dad942a5f35ab1a613450f56f991e7e75129c2049f687a4d4`, `17313b4cd878f62bd13e21e2c96cc6d1023f23295349a3d33d94e67ecb862254`, `4ece323d53aee9d233ffd0a067353d8580ccfcee0b9a7d499584a0493de5812d`, `7f350bff4766520d4011185658a0c05e517aa2729e7b8113b8b28d2a8a5d45fb`, and `4cfe5685d7c22230c1263f85efd46dee0e06103b01402a9863c7f15ab0ea32c0`; revision `e083cc60a0828fdd3b404cea0cb8a5b900e9c23e` | Apache-2.0 |
 
 ### `third_party/` audit
 

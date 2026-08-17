@@ -173,14 +173,6 @@ fun SettingsScreen(
                         actions.onToggle(setting.key, checked)
                     })
                 }
-                if (state.showProfiles) {
-                    item {
-                        SettingsActionRow(
-                            title = stringResource(R.string.profiles),
-                            onClick = actions::onOpenProfiles,
-                        )
-                    }
-                }
                 item {
                     HorizontalDivider()
                     SettingsActionRow(
