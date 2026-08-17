@@ -64,11 +64,16 @@ data class LibraryAppEntity(
     val iconRevision: Long = 0,
 )
 
-@Entity(tableName = "collections")
+@Entity(
+    tableName = "collections",
+    indices = [Index(value = ["normalized_name"], unique = true)],
+)
 data class LibraryCollectionEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val name: String,
+    @ColumnInfo(name = "normalized_name")
+    val normalizedName: String = LibraryCollectionNames.normalize(name),
     @ColumnInfo(name = "created_at")
     val createdAt: Long,
     @ColumnInfo(name = "sort_order")
