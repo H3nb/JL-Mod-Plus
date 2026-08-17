@@ -14,31 +14,33 @@
 
 package ru.playsoftware.j2meloader.librarydb
 
+import androidx.room3.ColumnInfo
 import androidx.room3.Dao
 import androidx.room3.Insert
 import androidx.room3.OnConflictStrategy
 import androidx.room3.Query
+import androidx.room3.Transaction
 import kotlinx.coroutines.flow.Flow
 
 data class LibraryAppRow(
     val id: Long,
-    @androidx.room3.ColumnInfo(name = "storage_key")
+    @ColumnInfo(name = "storage_key")
     val storageKey: String,
     val title: String,
     val vendor: String,
     val version: String,
     val description: String,
     val favorite: Boolean,
-    @androidx.room3.ColumnInfo(name = "added_at")
+    @ColumnInfo(name = "added_at")
     val addedAt: Long?,
-    @androidx.room3.ColumnInfo(name = "last_played_at")
+    @ColumnInfo(name = "last_played_at")
     val lastPlayedAt: Long?,
-    @androidx.room3.ColumnInfo(name = "icon_revision")
+    @ColumnInfo(name = "icon_revision")
     val iconRevision: Long,
 )
 
 @Dao
-interface LibraryDao {
+abstract class LibraryDao {
     @Query(
         """
         SELECT
@@ -56,13 +58,13 @@ interface LibraryDao {
         ORDER BY title COLLATE NOCASE ASC, id ASC
         """,
     )
-    fun observeApps(): Flow<List<LibraryAppRow>>
+    abstract fun observeApps(): Flow<List<LibraryAppRow>>
 
     @Query("SELECT * FROM apps WHERE id = :id LIMIT 1")
-    suspend fun getApp(id: Long): LibraryAppEntity?
+    abstract suspend fun getApp(id: Long): LibraryAppEntity?
 
     @Query("SELECT * FROM apps WHERE storage_key = :storageKey LIMIT 1")
-    suspend fun getAppByStorageKey(storageKey: String): LibraryAppEntity?
+    abstract suspend fun getAppByStorageKey(storageKey: String): LibraryAppEntity?
 
     @Query(
         """
@@ -71,16 +73,19 @@ interface LibraryDao {
         ORDER BY id ASC
         """,
     )
-    suspend fun findAppsBySourceIdentity(
+    abstract suspend fun findAppsBySourceIdentity(
         sourceTitle: String,
         sourceVendor: String,
     ): List<LibraryAppEntity>
 
     @Query("SELECT storage_key FROM apps")
-    suspend fun getStorageKeys(): List<String>
+    abstract suspend fun getStorageKeys(): List<String>
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun insertApp(app: LibraryAppEntity): Long
+    abstract suspend fun insertApp(app: LibraryAppEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    abstract suspend fun insertApps(apps: List<LibraryAppEntity>)
 
     /**
      * Installer/reinstall source update. This deliberately leaves all Library-owned/user state
@@ -97,7 +102,7 @@ interface LibraryDao {
         WHERE id = :appId
         """,
     )
-    suspend fun updateSourceMetadata(
+    abstract suspend fun updateSourceMetadata(
         appId: Long,
         sourceTitle: String,
         sourceVendor: String,
@@ -107,20 +112,43 @@ interface LibraryDao {
     ): Int
 
     @Query("DELETE FROM apps WHERE storage_key = :storageKey")
-    suspend fun deleteAppByStorageKey(storageKey: String): Int
+    abstract suspend fun deleteAppByStorageKey(storageKey: String): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun setLibraryState(state: LibraryStateEntity)
+    abstract suspend fun setLibraryState(state: LibraryStateEntity)
 
     @Query("SELECT * FROM library_state WHERE id = 1 LIMIT 1")
-    suspend fun getLibraryState(): LibraryStateEntity?
+    abstract suspend fun getLibraryState(): LibraryStateEntity?
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertPlayStatReceipt(receipt: PlayStatReceiptEntity): Long
+    abstract suspend fun insertPlayStatReceipt(receipt: PlayStatReceiptEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun insertCollection(collection: LibraryCollectionEntity): Long
+    abstract suspend fun insertCollection(collection: LibraryCollectionEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertCollectionMembership(membership: LibraryCollectionAppEntity): Long
+    abstract suspend fun insertCollectionMembership(membership: LibraryCollectionAppEntity): Long
+
+    @Query("DELETE FROM collection_apps")
+    abstract suspend fun clearCollectionMemberships()
+
+    @Query("DELETE FROM collections")
+    abstract suspend fun clearCollections()
+
+    @Query("DELETE FROM apps")
+    abstract suspend fun clearApps()
+
+    /**
+     * Atomically publishes the first indexed catalog. Callers must only invoke this while the
+     * workdir database has not reached READY; an established Library contains user-owned state
+     * that must never be destroyed and reconstructed from the filesystem.
+     */
+    @Transaction
+    open suspend fun replaceIncompleteCatalog(apps: List<LibraryAppEntity>) {
+        clearCollectionMemberships()
+        clearCollections()
+        clearApps()
+        insertApps(apps)
+        setLibraryState(LibraryStateEntity(bootstrapState = LibraryBootstrapState.READY))
+    }
 }
