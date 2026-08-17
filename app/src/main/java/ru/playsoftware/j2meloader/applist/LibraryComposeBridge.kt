@@ -64,6 +64,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -149,6 +150,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.delay
@@ -518,15 +520,23 @@ fun LibraryScreen(
         )
     }
     deleteTarget?.let { app ->
+        val layout = libraryDialogLayout()
         AlertDialog(
+            modifier = layout.modifier,
+            properties = layout.properties,
             onDismissRequest = { deleteTarget = null },
-            title = { Text(stringResource(android.R.string.dialog_alert_title)) },
+            title = { Text(stringResource(R.string.action_context_delete)) },
             text = { Text(stringResource(R.string.message_delete)) },
             confirmButton = {
                 TextButton(onClick = {
                     deleteTarget = null
                     actions.onDelete(app.id)
-                }) { Text(stringResource(android.R.string.ok)) }
+                }) {
+                    Text(
+                        text = stringResource(R.string.action_context_delete),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
             },
             dismissButton = {
                 TextButton(onClick = { deleteTarget = null }) {
@@ -1101,35 +1111,49 @@ private fun LibraryEmptyState(appliedFilter: String) {
 
 @Composable
 private fun LibraryCollectionsDestination(scaffoldPadding: PaddingValues) {
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(scaffoldPadding)
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
-            .padding(24.dp),
-        contentAlignment = Alignment.Center,
+            .padding(horizontal = 16.dp, vertical = 16.dp),
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+        Text(
+            text = stringResource(R.string.library_destination_collections),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            contentAlignment = Alignment.Center,
         ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_collections),
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.primary,
-            )
-            Text(
-                text = stringResource(R.string.library_collections_empty_title),
-                style = MaterialTheme.typography.titleLarge,
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                text = stringResource(R.string.library_collections_empty_message),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
+            Column(
+                modifier = Modifier.widthIn(max = 560.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_collections),
+                    contentDescription = null,
+                    modifier = Modifier.size(56.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = stringResource(R.string.library_collections_empty_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    text = stringResource(R.string.library_collections_empty_message),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                )
+            }
         }
     }
 }
@@ -1403,7 +1427,7 @@ private fun LibraryGridItem(
                 Text(
                     text = app.title,
                     modifier = Modifier.fillMaxWidth(),
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center,
@@ -1421,61 +1445,56 @@ private fun LibraryListItem(
     onOpenActions: (LibraryAppUiItem) -> Unit,
     iconRatio: LibraryIconRatio,
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .combinedClickable(
-                onClick = { onOpenApp(app.id) },
-                onLongClick = { onOpenActions(app) },
-            ),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.Top,
-        ) {
-            LibraryIconSlot(
-                app = app,
-                modifier = Modifier.width(48.dp),
-                contentSize = 36.dp,
-                iconRatio = iconRatio,
-            )
-            Spacer(Modifier.width(12.dp))
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(top = 1.dp),
-            ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        ListItem(
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+            headlineContent = {
                 Text(
                     text = app.title,
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(
-                    text = stringResource(
-                        R.string.library_vendor_version,
-                        app.author,
-                        app.version,
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+            },
+            supportingContent = {
+                Column {
+                    Text(
+                        text = stringResource(
+                            R.string.library_vendor_version,
+                            app.author,
+                            app.version,
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    LibraryDescription(app.description, app.id)
+                }
+            },
+            leadingContent = {
+                LibraryIconSlot(
+                    app = app,
+                    modifier = Modifier.width(52.dp),
+                    contentSize = 40.dp,
+                    iconRatio = iconRatio,
                 )
-                LibraryDescription(app.description, app.id)
-            }
-            Spacer(Modifier.width(8.dp))
-            Column(
-                horizontalAlignment = Alignment.End,
-                modifier = Modifier.padding(top = 1.dp),
-            ) {
+            },
+            trailingContent = {
                 LibraryFavoritePlaceholder(app.id)
-            }
-        }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .combinedClickable(
+                    onClick = { onOpenApp(app.id) },
+                    onLongClick = { onOpenActions(app) },
+                ),
+        )
+        HorizontalDivider(
+            modifier = Modifier.padding(start = 84.dp, end = 16.dp),
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+        )
     }
 }
 
@@ -2605,6 +2624,34 @@ internal fun LibrarySortMenu(
     }
 }
 
+private data class LibraryDialogLayout(
+    val modifier: Modifier,
+    val properties: DialogProperties,
+)
+
+@Composable
+private fun libraryDialogLayout(): LibraryDialogLayout {
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    return LibraryDialogLayout(
+        modifier = if (landscape) {
+            Modifier
+                .fillMaxWidth(0.94f)
+                .widthIn(max = 760.dp)
+        } else {
+            Modifier.widthIn(max = 560.dp)
+        },
+        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
+    )
+}
+
+@Composable
+private fun libraryDialogListHeight(maxHeight: Int = 420) =
+    LocalConfiguration.current.screenHeightDp
+        .minus(220)
+        .coerceAtLeast(120)
+        .coerceAtMost(maxHeight)
+        .dp
+
 @Composable
 internal fun AppActionsDialog(
     app: LibraryAppUiItem,
@@ -2615,20 +2662,74 @@ internal fun AppActionsDialog(
     onReinstall: () -> Unit,
     onDelete: () -> Unit,
 ) {
+    val layout = libraryDialogLayout()
     AlertDialog(
+        modifier = layout.modifier,
+        properties = layout.properties,
         onDismissRequest = onDismiss,
-        title = { Text(app.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        text = {
+        title = {
             Column {
+                Text(
+                    text = app.title,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = stringResource(R.string.library_vendor_version, app.author, app.version),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        },
+        text = {
+            LazyColumn(modifier = Modifier.heightIn(max = libraryDialogListHeight())) {
                 if (onShortcut != null) {
-                    DialogAction(R.string.action_context_shortcut, onDismiss, onShortcut)
+                    item {
+                        DialogAction(
+                            label = R.string.action_context_shortcut,
+                            icon = R.drawable.ic_add,
+                            onDismiss = onDismiss,
+                            action = onShortcut,
+                        )
+                    }
                 }
-                DialogAction(R.string.action_context_rename, onDismiss, onRename)
-                DialogAction(R.string.action_settings, onDismiss, onSettings)
+                item {
+                    DialogAction(
+                        label = R.string.action_context_rename,
+                        icon = null,
+                        onDismiss = onDismiss,
+                        action = onRename,
+                    )
+                }
+                item {
+                    DialogAction(
+                        label = R.string.action_settings,
+                        icon = R.drawable.ic_options,
+                        onDismiss = onDismiss,
+                        action = onSettings,
+                    )
+                }
                 if (app.canReinstall) {
-                    DialogAction(R.string.action_reinstall, onDismiss, onReinstall)
+                    item {
+                        DialogAction(
+                            label = R.string.action_reinstall,
+                            icon = R.drawable.ic_swap,
+                            onDismiss = onDismiss,
+                            action = onReinstall,
+                        )
+                    }
                 }
-                DialogAction(R.string.action_context_delete, onDismiss, onDelete)
+                item {
+                    DialogAction(
+                        label = R.string.action_context_delete,
+                        icon = R.drawable.ic_delete_report,
+                        destructive = true,
+                        onDismiss = onDismiss,
+                        action = onDelete,
+                    )
+                }
             }
         },
         confirmButton = {},
@@ -2636,10 +2737,39 @@ internal fun AppActionsDialog(
 }
 
 @Composable
-private fun DialogAction(label: Int, onDismiss: () -> Unit, action: () -> Unit) {
+private fun DialogAction(
+    label: Int,
+    icon: Int?,
+    destructive: Boolean = false,
+    onDismiss: () -> Unit,
+    action: () -> Unit,
+) {
+    val contentColor = if (destructive) {
+        MaterialTheme.colorScheme.error
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
     ListItem(
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        headlineContent = { Text(stringResource(label)) },
+        headlineContent = {
+            Text(
+                text = stringResource(label),
+                color = contentColor,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+            )
+        },
+        leadingContent = {
+            if (icon != null) {
+                Icon(
+                    painter = painterResource(icon),
+                    contentDescription = null,
+                    tint = contentColor,
+                )
+            } else {
+                Spacer(Modifier.size(24.dp))
+            }
+        },
         modifier = Modifier
             .fillMaxWidth()
             .clickable(
@@ -2667,7 +2797,10 @@ private fun RenameAppDialog(
         )
     }
     val valid = value.text.trim().isNotEmpty()
+    val layout = libraryDialogLayout()
     AlertDialog(
+        modifier = layout.modifier,
+        properties = layout.properties,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.action_context_rename)) },
         text = {
