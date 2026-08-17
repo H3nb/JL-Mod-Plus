@@ -53,8 +53,6 @@ public final class LocalDiagnosticRepository {
 
 	/** Self-contained load for background/non-UI callers that also snapshots framework history. */
 	public static List<Record> load(Context context) {
-		// Snapshot system exit history before reading the local projection; Android keeps it in a
-		// bounded ring and traces can be overwritten independently of our app-private records.
 		ProcessExitStore.ingest(context);
 		return loadStored(context);
 	}
@@ -277,7 +275,7 @@ public final class LocalDiagnosticRepository {
 		appendLine(detail, "Failure", failureHeadline(raw.stackTrace));
 		appendLine(detail, "Top app frame", topAppFrame(raw.stackTrace));
 		appendLine(detail, "Thread", raw.threadDetails);
-		appendLine(detail, "Fingerprint", raw.stackTraceHash);
+		appendLine(detail, "Fingerprint", shortFingerprint(raw.stackTraceHash));
 	}
 
 	private static void appendProcessExitSummary(StringBuilder detail, ProcessExitStore.Snapshot exit) {
@@ -293,14 +291,13 @@ public final class LocalDiagnosticRepository {
 		appendLine(detail, "Failure", mechanism);
 		if (exit.reason == ApplicationExitInfo.REASON_SIGNALED && exit.status == OsConstants.SIGKILL
 				&& exit.lowMemoryKillReportSupported) {
-			appendLine(detail, "Cause", "unknown (dedicated low-memory classification was available)");
+			appendLine(detail, "Cause", "unknown");
 		}
 		appendAppContext(detail, exit.appContext, exit.timestampMillis);
 		appendBuild(detail, exit.appContext, null);
 		appendEnvironment(detail, exit.stateSdk, joinDevice(exit.deviceBrand, exit.deviceModel), null);
 		if (shouldShowMemory(exit)) {
-			String memory = memorySample(exit.pssKb, exit.rssKb);
-			appendLine(detail, "Memory sample", memory);
+			appendLine(detail, "Memory sample", memorySample(exit.pssKb, exit.rssKb));
 		}
 		appendLine(detail, "System description", exit.description);
 		if (exit.traceBytes > 0) {
@@ -410,11 +407,15 @@ public final class LocalDiagnosticRepository {
 	}
 
 	private static String shortFingerprint(String value) {
-		if (value == null || value.trim().isEmpty()) {
+		if (value == null || value.trim().isEmpty() || "unknown".equalsIgnoreCase(value.trim())) {
 			return null;
 		}
 		String trimmed = value.trim();
 		return trimmed.length() <= 12 ? trimmed : trimmed.substring(0, 12);
+	}
+
+	private static boolean same(String left, String right) {
+		return left == null ? right == null : left.equals(right);
 	}
 
 	public enum Kind {
@@ -662,22 +663,34 @@ public final class LocalDiagnosticRepository {
 			Object customValue = data.get(CUSTOM_DATA.toString());
 			JSONObject custom = customValue instanceof JSONObject ? (JSONObject) customValue : null;
 			String runId = custom(custom, CrashReporter.KEY_RUN_ID);
+			String capturedLocation = CrashContextStore.normalizeToken(
+					custom(custom, CrashReporter.KEY_CONTEXT_LOCATION), CrashContextStore.MAX_LOCATION_LENGTH);
+			String capturedPrevious = CrashContextStore.normalizeToken(
+					custom(custom, CrashReporter.KEY_CONTEXT_PREVIOUS), CrashContextStore.MAX_LOCATION_LENGTH);
+			String capturedAction = CrashContextStore.normalizeToken(
+					custom(custom, CrashReporter.KEY_CONTEXT_ACTION), CrashContextStore.MAX_ACTION_LENGTH);
+			String capturedPhase = CrashContextStore.normalizeToken(
+					custom(custom, CrashReporter.KEY_CONTEXT_PHASE), CrashContextStore.MAX_PHASE_LENGTH);
+			long capturedUpdated = parseLong(custom(custom, CrashReporter.KEY_CONTEXT_UPDATED));
+
 			CrashContextStore.Snapshot appContext = CrashContextStore.readForRun(context, runId);
-			if (appContext == null && CrashContextStore.isSafeRunId(runId)) {
+			boolean exactStoredSnapshot = appContext != null
+					&& appContext.updatedWallTimeMillis == capturedUpdated
+					&& same(appContext.location, capturedLocation)
+					&& same(appContext.previousLocation, capturedPrevious)
+					&& same(appContext.action, capturedAction)
+					&& same(appContext.phase, capturedPhase);
+			if (!exactStoredSnapshot && CrashContextStore.isSafeRunId(runId)) {
 				appContext = new CrashContextStore.Snapshot(
 						runId,
 						custom(custom, CrashReporter.KEY_PROCESS_ROLE),
 						custom(custom, CrashReporter.KEY_BUILD_COMMIT),
 						custom(custom, CrashReporter.KEY_BUILD_VARIANT),
-						CrashContextStore.normalizeToken(custom(custom, CrashReporter.KEY_CONTEXT_LOCATION),
-								CrashContextStore.MAX_LOCATION_LENGTH),
-						CrashContextStore.normalizeToken(custom(custom, CrashReporter.KEY_CONTEXT_PREVIOUS),
-								CrashContextStore.MAX_LOCATION_LENGTH),
-						CrashContextStore.normalizeToken(custom(custom, CrashReporter.KEY_CONTEXT_ACTION),
-								CrashContextStore.MAX_ACTION_LENGTH),
-						CrashContextStore.normalizeToken(custom(custom, CrashReporter.KEY_CONTEXT_PHASE),
-								CrashContextStore.MAX_PHASE_LENGTH),
-						parseLong(custom(custom, CrashReporter.KEY_CONTEXT_UPDATED)),
+						capturedLocation,
+						capturedPrevious,
+						capturedAction,
+						capturedPhase,
+						capturedUpdated,
 						Collections.emptyList()
 				);
 			}
