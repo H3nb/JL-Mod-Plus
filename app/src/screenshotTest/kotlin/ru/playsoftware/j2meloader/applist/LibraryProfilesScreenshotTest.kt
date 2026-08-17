@@ -253,6 +253,15 @@ fun LibraryOptionsScreenshot() {
 }
 
 @PreviewTest
+@Preview(name = "Library collections", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun LibraryCollectionsScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryCollectionsDestination(scaffoldPadding = PaddingValues())
+    }
+}
+
+@PreviewTest
 @Preview(name = "Profiles content", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
 fun ProfilesContentScreenshot() {

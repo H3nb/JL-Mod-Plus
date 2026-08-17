@@ -1110,7 +1110,7 @@ private fun LibraryEmptyState(appliedFilter: String) {
 }
 
 @Composable
-private fun LibraryCollectionsDestination(scaffoldPadding: PaddingValues) {
+internal fun LibraryCollectionsDestination(scaffoldPadding: PaddingValues) {
     Column(
         modifier = Modifier
             .fillMaxSize()
