@@ -43,9 +43,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import android.content.res.Configuration
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import java.text.DecimalFormat
@@ -113,8 +115,15 @@ object ConfigDialogComposeBridge {
 
 @Composable
 private fun DialogSurface(content: @Composable ColumnScope.() -> Unit) {
+    val configuration = LocalConfiguration.current
+    val landscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val maxHeight = (configuration.screenHeightDp.dp * if (landscape) 0.86f else 0.90f)
+        .coerceAtLeast(180.dp)
     Surface(
-        modifier = Modifier.widthIn(min = 280.dp, max = 560.dp),
+        modifier = Modifier
+            .fillMaxWidth(if (landscape) 0.96f else 1f)
+            .widthIn(min = 280.dp, max = if (landscape) 840.dp else 560.dp)
+            .heightIn(max = maxHeight),
         shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         tonalElevation = 6.dp,
@@ -132,6 +141,7 @@ private fun LoadProfileContent(
     profiles: List<Profile>,
     callbacks: ConfigDialogComposeBridge.LoadProfileCallbacks,
 ) {
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     DialogSurface {
         Text(stringResource(R.string.profile_choose_template), style = MaterialTheme.typography.headlineSmall)
         Text(
@@ -146,7 +156,7 @@ private fun LoadProfileContent(
                 modifier = Modifier.padding(vertical = 20.dp),
             )
         } else {
-            LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
+            LazyColumn(modifier = Modifier.heightIn(max = if (landscape) 180.dp else 420.dp)) {
                 itemsIndexed(profiles) { _, profile ->
                     val hasConfig = profile.hasConfig() || profile.hasOldConfig()
                     val hasKeyboard = profile.hasKeyLayout()
@@ -291,10 +301,11 @@ private fun ShaderContent(
     }
     var values by remember(shader) { mutableStateOf(initial) }
     val format = remember { DecimalFormat("#.######") }
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     DialogSurface {
         Text(stringResource(R.string.shader_tuning), style = MaterialTheme.typography.headlineSmall)
-        LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
+        LazyColumn(modifier = Modifier.heightIn(max = if (landscape) 180.dp else 420.dp)) {
             itemsIndexed(settings) { _, setting ->
                 val value = values[setting.index].coerceIn(setting.min, setting.max)
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
