@@ -21,6 +21,7 @@ final class GitHubIssueDraft {
 	// GitHub documents 414 for an oversized issue URL but does not publish the server limit. Keep
 	// a conservative client-side ceiling on the final encoded URI rather than on the raw body text.
 	static final int MAX_URL_CHARS = 4096;
+	private static final int MAX_TITLE_ENCODED_CHARS = 768;
 
 	private static final char[] HEX = "0123456789ABCDEF".toCharArray();
 
@@ -32,11 +33,12 @@ final class GitHubIssueDraft {
 				+ "?template=" + encode(value(template))
 				+ "&title=";
 		String bodySeparator = "&body=";
-		int titleBudget = MAX_URL_CHARS - fixedPrefix.length() - bodySeparator.length();
-		if (titleBudget <= 0) {
+		int availableTitleBudget = MAX_URL_CHARS - fixedPrefix.length() - bodySeparator.length();
+		if (availableTitleBudget <= 0) {
 			return value(baseUrl);
 		}
 
+		int titleBudget = Math.min(MAX_TITLE_ENCODED_CHARS, availableTitleBudget);
 		Encoded titleEncoded = encodeBounded(value(title), titleBudget);
 		String prefix = fixedPrefix + titleEncoded.text + bodySeparator;
 		int bodyBudget = MAX_URL_CHARS - prefix.length();
