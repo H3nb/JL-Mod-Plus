@@ -68,9 +68,12 @@ class LibraryRepository(
     }
 
     fun setEmulatorDirectory(emulatorDir: File) {
-        request(normalizeWorkdir(emulatorDir))
+        val normalized = normalizeWorkdir(emulatorDir)
+        if (workdirRequests.value?.emulatorDir == normalized) return
+        request(normalized)
     }
 
+    /** Explicitly creates a new generation for the current workdir after a recoverable failure. */
     fun retry() {
         val current = workdirRequests.value?.emulatorDir ?: return
         request(current)
