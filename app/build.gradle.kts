@@ -23,6 +23,7 @@ require(runtimeTestAbi == null || runtimeTestAbi == "arm64-v8a" || runtimeTestAb
 }
 val diagnosticBuildCommit = (
     providers.gradleProperty("jlmodBuildCommit").orNull
+        ?: System.getenv("JLMOD_BUILD_COMMIT")
         ?: System.getenv("GITHUB_SHA")
         ?: "unknown"
 ).trim().let { value ->
@@ -229,7 +230,7 @@ dependencies {
 
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-    screenshotTestImplementation(libs.compose.ui.tooling)
+    screenshotTestImplementation(libs.androidx.compose.ui.tooling)
     screenshotTestImplementation(libs.screenshot.validation.api)
 
     testImplementation(libs.junit)
