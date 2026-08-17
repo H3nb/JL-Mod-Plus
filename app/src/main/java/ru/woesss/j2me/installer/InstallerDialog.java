@@ -19,6 +19,7 @@ package ru.woesss.j2me.installer;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
@@ -121,9 +122,11 @@ public class InstallerDialog extends DialogFragment {
 			window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 			int margin = (int) TypedValue.applyDimension(
 					TypedValue.COMPLEX_UNIT_DIP, 32, getResources().getDisplayMetrics());
-			int maxWidth = (int) TypedValue.applyDimension(
-					TypedValue.COMPLEX_UNIT_DIP, 480, getResources().getDisplayMetrics());
-			int width = Math.min(maxWidth, getResources().getDisplayMetrics().widthPixels - margin);
+            int maxWidthDp = getResources().getConfiguration().orientation
+                    == Configuration.ORIENTATION_LANDSCAPE ? 760 : 480;
+            int maxWidth = (int) TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP, maxWidthDp, getResources().getDisplayMetrics());
+            int width = Math.min(maxWidth, getResources().getDisplayMetrics().widthPixels - margin);
 			window.setLayout(Math.max(width, 1), WindowManager.LayoutParams.WRAP_CONTENT);
 		});
 		return dialog;

@@ -14,6 +14,7 @@
 
 package ru.woesss.j2me.installer
 
+import android.content.res.Configuration
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.horizontalScroll
@@ -43,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -182,11 +184,13 @@ fun InstallerScreen(
     val icon = remember(iconPath) {
         iconPath?.let(BitmapFactory::decodeFile)
     }
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val maxDialogWidth = if (landscape) 720.dp else 480.dp
 
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .widthIn(min = 280.dp, max = 480.dp),
+            .widthIn(min = 280.dp, max = maxDialogWidth),
         shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.surface,
     ) {
@@ -268,11 +272,16 @@ private fun InstallerProgressMessage(status: String) {
 
 @Composable
 private fun InstallerMessage(message: String) {
+    val maxMessageHeight = LocalConfiguration.current.screenHeightDp
+        .minus(280)
+        .coerceAtLeast(120)
+        .coerceAtMost(360)
+        .dp
     Text(
         text = message,
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(max = 240.dp)
+            .heightIn(max = maxMessageHeight)
             .verticalScroll(rememberScrollState()),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
