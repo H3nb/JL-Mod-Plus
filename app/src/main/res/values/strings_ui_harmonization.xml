@@ -5,4 +5,16 @@
     <string name="settings_section_storage">Storage</string>
     <string name="pref_use_display_cutout_title">Use Display Cutout In MIDlet</string>
     <string name="pref_use_display_cutout_summary">Allow compatible MIDlet Canvas content to use the display-cutout area when the runtime can do so safely.</string>
+
+    <string name="library_options_library_title">Library View</string>
+    <string name="library_options_application_title">Application</string>
+    <string name="library_options_diagnostics_title">Diagnostics</string>
+    <string name="library_options_information_title">Help &amp; Information</string>
+    <string name="library_options_session_title">Session</string>
+    <string name="library_action_settings_summary">Configure global behavior and appearance.</string>
+    <string name="library_action_crash_reports_summary">Review retained crash reports and diagnostic evidence.</string>
+    <string name="library_action_save_log_summary">Save the current application log for troubleshooting.</string>
+    <string name="library_action_about_summary">Version, project, and maintainer information.</string>
+    <string name="library_action_help_summary">Usage guidance and common controls.</string>
+    <string name="library_action_exit_summary">Close JL-Mod Plus.</string>
 </resources>

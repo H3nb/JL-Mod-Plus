@@ -18,17 +18,16 @@ final class GuestWindowPolicy {
 	private GuestWindowPolicy() {
 	}
 
-	static boolean canUseDisplayCutout(boolean canvas, boolean skinLayerAvailable,
+	static boolean canUseDisplayCutout(boolean canvas,
 			boolean statusBarEnabled, boolean actionBarEnabled, boolean userAllowsCutout) {
-		return userAllowsCutout && canvas && skinLayerAvailable
-				&& !statusBarEnabled && !actionBarEnabled;
+		return userAllowsCutout && canvas && !statusBarEnabled && !actionBarEnabled;
 	}
 
-	static Padding calculate(boolean canvas, boolean skinLayerAvailable, boolean statusBarEnabled,
+	static Padding calculate(boolean canvas, boolean statusBarEnabled,
 			boolean actionBarEnabled, boolean userAllowsCutout,
 			int systemLeft, int statusTop, int systemRight, int navigationBottom,
 			int cutoutLeft, int cutoutTop, int cutoutRight, int cutoutBottom, int imeBottom) {
-		boolean canUseCutout = canUseDisplayCutout(canvas, skinLayerAvailable,
+		boolean canUseCutout = canUseDisplayCutout(canvas,
 				statusBarEnabled, actionBarEnabled, userAllowsCutout);
 		if (canvas) {
 			return new Padding(

@@ -175,8 +175,10 @@ public class MicroActivity extends AppCompatActivity {
 		if (skinLayer != null) {
 			skinLayerAvailable = true;
 			binding.overlay.addLayer(skinLayer);
-			configureDisplayCutoutWindow();
 		}
+		// SkinLayer is optional. Window cutout eligibility is a Canvas/window policy and
+		// must be configured even when no decorative skin is active.
+		configureDisplayCutoutWindow();
 		VirtualKeyboard vk = ContextHolder.getVk();
 		int orientation = microLoader.getOrientation();
 		if (vk != null) {
@@ -519,7 +521,7 @@ public class MicroActivity extends AppCompatActivity {
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
 			return;
 		}
-		boolean allowWindowCutout = displayCutoutEnabled && skinLayerAvailable
+		boolean allowWindowCutout = displayCutoutEnabled
 				&& !statusBarEnabled && !actionBarEnabled;
 		WindowManager.LayoutParams attributes = getWindow().getAttributes();
 		if (allowWindowCutout) {
@@ -550,7 +552,7 @@ public class MicroActivity extends AppCompatActivity {
 			Insets ime = lastWindowInsets.getInsets(WindowInsetsCompat.Type.ime());
 			boolean canvas = displayable instanceof Canvas;
 			GuestWindowPolicy.Padding guestPadding = GuestWindowPolicy.calculate(canvas,
-					skinLayerAvailable, statusBarEnabled, actionBarEnabled, displayCutoutEnabled,
+					statusBarEnabled, actionBarEnabled, displayCutoutEnabled,
 					systemBars.left, statusBars.top, systemBars.right, navigationBars.bottom,
 					cutout.left, cutout.top, cutout.right, cutout.bottom, ime.bottom);
 			left += guestPadding.left;
