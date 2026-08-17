@@ -21,6 +21,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+          submodules: recursive
 
       - name: Restore shared debug keystore
         shell: bash
@@ -56,6 +57,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin alpha
           git merge --no-ff --no-commit origin/alpha
+          git submodule update --init --recursive
 
       - name: Apply user QA refinements
         shell: bash
