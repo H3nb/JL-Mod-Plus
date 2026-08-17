@@ -86,6 +86,8 @@ public class CrashContextStoreTest {
 	public void tokensAreBoundedAndCannotCarryFreeFormText() {
 		assertEquals("config.graphics_tab",
 				CrashContextStore.normalizeToken("Config.Graphics Tab", 48));
+		assertEquals("config_graphics_tab",
+				CrashContextStore.normalizeToken("config|graphics=tab", 48));
 		assertNull(CrashContextStore.normalizeToken("   ", 48));
 		assertTrue(CrashContextStore.normalizeToken("abcdefghijklmnopqrstuvwxyz", 8).length() <= 8);
 	}
