@@ -218,13 +218,7 @@ dependencies {
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.preference.ktx)
 
-    // Legacy Room 2 Library persistence remains temporarily while the new Room 3 backend is
-    // introduced in parallel. Remove these only after existing Library consumers are cut over.
-    annotationProcessor(libs.androidx.room.compiler)
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.rxjava2)
-
-    // Library Architecture v2 foundation (H3nb/JL-Mod-Plus#92).
+    // Library Architecture v2 (H3nb/JL-Mod-Plus#92).
     implementation(libs.androidx.room3.runtime)
     implementation(libs.androidx.sqlite.framework)
     implementation(libs.kotlinx.coroutines.android)
