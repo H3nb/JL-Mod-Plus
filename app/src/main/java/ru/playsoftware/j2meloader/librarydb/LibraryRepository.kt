@@ -34,25 +34,40 @@ class LibraryRepository(
 ) : AutoCloseable {
     sealed interface State {
         data object Idle : State
-        data class Opening(val emulatorDir: File) : State
+        data class Opening(
+            val generation: Long,
+            val emulatorDir: File,
+        ) : State
         data class Indexing(
+            val generation: Long,
             val emulatorDir: File,
             val completed: Int,
             val total: Int,
             val storageKey: String,
         ) : State
         data class Ready(
+            val generation: Long,
             val emulatorDir: File,
             val apps: List<LibraryAppRow>,
             val bootstrapFailures: List<LibraryScanner.Failure> = emptyList(),
             val legacyImportFailure: String? = null,
             val reconciliationFailures: List<LibraryScanner.Failure> = emptyList(),
         ) : State
-        data class Error(val emulatorDir: File, val message: String) : State
+        data class Error(
+            val generation: Long,
+            val emulatorDir: File,
+            val message: String,
+        ) : State
     }
 
-    private data class WorkdirRequest(val generation: Long, val emulatorDir: File)
-    private data class ActiveDatabase(val emulatorDir: File, val database: LibraryDatabase)
+    private data class WorkdirRequest(val generation: Long, val emulatorDir: File) {
+        fun token() = LibraryGenerationToken(generation, emulatorDir)
+    }
+
+    private data class ActiveDatabase(
+        val token: LibraryGenerationToken,
+        val database: LibraryDatabase,
+    )
 
     private val nextGeneration = AtomicLong()
     private val workdirRequests = MutableStateFlow<WorkdirRequest?>(null)
@@ -63,7 +78,7 @@ class LibraryRepository(
 
     private val worker = scope.launch {
         workdirRequests.filterNotNull().collectLatest { request ->
-            runWorkdir(request.emulatorDir)
+            runWorkdir(request)
         }
     }
 
@@ -84,16 +99,33 @@ class LibraryRepository(
         request(current)
     }
 
-    fun currentApp(appId: Long): LibraryAppRow? =
-        (mutableState.value as? State.Ready)?.apps?.firstOrNull { it.id == appId }
-
-    fun findBySourceIdentity(sourceTitle: String, sourceVendor: String): List<LibraryAppRow> =
-        (mutableState.value as? State.Ready)?.apps.orEmpty().filter {
-            it.sourceTitle == sourceTitle && it.sourceVendor == sourceVendor
+    fun currentReadyToken(): LibraryGenerationToken? =
+        (mutableState.value as? State.Ready)?.let {
+            LibraryGenerationToken(it.generation, it.emulatorDir)
         }
 
-    suspend fun setCustomTitle(expectedWorkdir: File, appId: Long, title: String?) {
-        withActiveDatabase(expectedWorkdir) { dao ->
+    fun currentApp(expected: LibraryGenerationToken, appId: Long): LibraryAppRow? {
+        val ready = requireReadyGeneration(expected)
+        return ready.apps.firstOrNull { it.id == appId }
+    }
+
+    fun findBySourceIdentity(
+        expected: LibraryGenerationToken,
+        sourceTitle: String,
+        sourceVendor: String,
+    ): List<LibraryAppRow> {
+        val ready = requireReadyGeneration(expected)
+        return ready.apps.filter {
+            it.sourceTitle == sourceTitle && it.sourceVendor == sourceVendor
+        }
+    }
+
+    suspend fun setCustomTitle(
+        expected: LibraryGenerationToken,
+        appId: Long,
+        title: String?,
+    ) {
+        withActiveDatabase(expected) { dao ->
             val app = dao.getApp(appId) ?: error("Library app disappeared: $appId")
             val normalized = title?.trim()?.takeIf { it.isNotEmpty() && it != app.sourceTitle }
             check(dao.updateCustomTitle(appId, normalized) == 1) {
@@ -103,18 +135,23 @@ class LibraryRepository(
     }
 
     suspend fun recordInstalledApp(
-        expectedWorkdir: File,
+        expected: LibraryGenerationToken,
         existingId: Long?,
         metadata: InstalledAppMetadata,
-    ): Long = withActiveDatabase(expectedWorkdir) { dao ->
+    ): Long = withActiveDatabase(expected) { dao ->
         dao.recordInstalledApp(existingId, metadata)
     }
 
     /** Call only after the authoritative filesystem delete has succeeded. */
-    suspend fun removeCatalogApp(expectedWorkdir: File, storageKey: String) {
-        withActiveDatabase(expectedWorkdir) { dao ->
+    suspend fun removeCatalogApp(expected: LibraryGenerationToken, storageKey: String) {
+        withActiveDatabase(expected) { dao ->
             dao.deleteAppByStorageKey(storageKey)
         }
+    }
+
+    fun isReadyGeneration(expected: LibraryGenerationToken): Boolean {
+        val ready = mutableState.value as? State.Ready ?: return false
+        return ready.generation == expected.generation && ready.emulatorDir == expected.emulatorDir
     }
 
     override fun close() {
@@ -128,20 +165,26 @@ class LibraryRepository(
         )
     }
 
-    private suspend fun runWorkdir(emulatorDir: File) {
-        mutableState.value = State.Opening(emulatorDir)
+    private suspend fun runWorkdir(request: WorkdirRequest) {
+        val emulatorDir = request.emulatorDir
+        publishIfCurrent(request, State.Opening(request.generation, emulatorDir))
         var database: LibraryDatabase? = null
         try {
             database = databaseFactory(emulatorDir)
             val bootstrap = bootstrapper.ensureReady(database, emulatorDir) { progress ->
-                mutableState.value = State.Indexing(
-                    emulatorDir = emulatorDir,
-                    completed = progress.completed,
-                    total = progress.total,
-                    storageKey = progress.storageKey,
+                publishIfCurrent(
+                    request,
+                    State.Indexing(
+                        generation = request.generation,
+                        emulatorDir = emulatorDir,
+                        completed = progress.completed,
+                        total = progress.total,
+                        storageKey = progress.storageKey,
+                    ),
                 )
             }
             currentCoroutineContext().ensureActive()
+            ensureCurrent(request)
 
             val reconciliation = if (bootstrap.alreadyReady) {
                 reconciler.reconcile(database, emulatorDir)
@@ -149,15 +192,19 @@ class LibraryRepository(
                 LibraryReconciler.Result(0, 0, emptyList())
             }
             currentCoroutineContext().ensureActive()
+            ensureCurrent(request)
 
             activeMutex.withLock {
                 currentCoroutineContext().ensureActive()
-                activeDatabase = ActiveDatabase(emulatorDir, database)
+                ensureCurrent(request)
+                activeDatabase = ActiveDatabase(request.token(), database)
             }
 
             database.libraryDao().observeApps().collect { apps ->
                 currentCoroutineContext().ensureActive()
+                ensureCurrent(request)
                 mutableState.value = State.Ready(
+                    generation = request.generation,
                     emulatorDir = emulatorDir,
                     apps = apps,
                     bootstrapFailures = bootstrap.failures,
@@ -168,7 +215,13 @@ class LibraryRepository(
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (error: Exception) {
-            mutableState.value = State.Error(emulatorDir, boundedMessage(error))
+            if (isCurrent(request)) {
+                mutableState.value = State.Error(
+                    generation = request.generation,
+                    emulatorDir = emulatorDir,
+                    message = boundedMessage(error),
+                )
+            }
         } finally {
             database?.let { closing ->
                 withContext(NonCancellable) {
@@ -183,16 +236,44 @@ class LibraryRepository(
         }
     }
 
+    private fun publishIfCurrent(request: WorkdirRequest, state: State) {
+        if (isCurrent(request)) mutableState.value = state
+    }
+
+    private fun ensureCurrent(request: WorkdirRequest) {
+        check(isCurrent(request)) {
+            "Stale Library generation ${request.generation} for ${request.emulatorDir.absolutePath}"
+        }
+    }
+
+    private fun isCurrent(request: WorkdirRequest): Boolean =
+        workdirRequests.value?.generation == request.generation
+
+    private fun requireReadyGeneration(expected: LibraryGenerationToken): State.Ready {
+        val ready = mutableState.value as? State.Ready
+            ?: error("Library is not READY")
+        check(ready.generation == expected.generation && ready.emulatorDir == expected.emulatorDir) {
+            "Stale Library snapshot generation=${expected.generation} workdir=${expected.emulatorDir.absolutePath}; " +
+                "active=${ready.generation}:${ready.emulatorDir.absolutePath}"
+        }
+        return ready
+    }
+
     private suspend fun <T> withActiveDatabase(
-        expectedWorkdir: File,
+        expected: LibraryGenerationToken,
         block: suspend (LibraryDao) -> T,
     ): T {
-        val normalized = normalizeWorkdir(expectedWorkdir)
+        val normalized = LibraryGenerationToken(
+            expected.generation,
+            normalizeWorkdir(expected.emulatorDir),
+        )
         return activeMutex.withLock {
             val active = activeDatabase
                 ?: error("Library database is not READY")
-            check(active.emulatorDir == normalized) {
-                "Stale Library mutation for ${normalized.absolutePath}; active=${active.emulatorDir.absolutePath}"
+            check(active.token == normalized) {
+                "Stale Library mutation generation=${normalized.generation} " +
+                    "workdir=${normalized.emulatorDir.absolutePath}; " +
+                    "active=${active.token.generation}:${active.token.emulatorDir.absolutePath}"
             }
             block(active.database.libraryDao())
         }
