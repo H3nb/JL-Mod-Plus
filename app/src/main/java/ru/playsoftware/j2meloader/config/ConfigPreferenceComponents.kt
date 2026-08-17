@@ -230,6 +230,38 @@ internal fun ConfigNumberPreference(
 }
 
 @Composable
+internal fun ConfigSliderPreference(
+    title: String,
+    description: String,
+    value: Int,
+    valueRange: IntRange,
+    onSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var dialogVisible by remember(value) { mutableStateOf(false) }
+    ConfigValuePreference(
+        title = title,
+        description = description,
+        value = value.toString(),
+        modifier = modifier,
+        onClick = { dialogVisible = true },
+    )
+    if (dialogVisible) {
+        ConfigSliderDialog(
+            title = title,
+            description = description,
+            initialValue = value,
+            valueRange = valueRange,
+            onDismissRequest = { dialogVisible = false },
+            onConfirm = { next ->
+                dialogVisible = false
+                onSelected(next)
+            },
+        )
+    }
+}
+
+@Composable
 internal fun ConfigColorPreference(
     title: String,
     description: String,

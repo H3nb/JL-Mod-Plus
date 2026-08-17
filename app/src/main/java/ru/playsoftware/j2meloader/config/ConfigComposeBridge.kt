@@ -942,75 +942,142 @@ private fun FontSection(
     onFormChanged: (ConfigFormState) -> Unit,
 ) {
     var advancedExpanded by rememberSaveable { mutableStateOf(false) }
-    ConfigCard(title = stringResource(R.string.PREF_FONT_OPTIONS)) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp),
-        ) {
-            CompactTextField(
-                value = form.fontSizeSmall,
-                label = stringResource(R.string.PREF_FONT_SMALL),
-                keyboardType = KeyboardType.Number,
-                modifier = Modifier.weight(1f),
-                onValueChange = { value -> onFormChanged(form.toBuilder().fontSizeSmall(value).build()) },
-            )
-            CompactTextField(
-                value = form.fontSizeMedium,
-                label = stringResource(R.string.PREF_FONT_MEDIUM),
-                keyboardType = KeyboardType.Number,
-                modifier = Modifier.weight(1f),
-                onValueChange = { value -> onFormChanged(form.toBuilder().fontSizeMedium(value).build()) },
-            )
-            CompactTextField(
-                value = form.fontSizeLarge,
-                label = stringResource(R.string.PREF_FONT_LARGE),
-                keyboardType = KeyboardType.Number,
-                modifier = Modifier.weight(1f),
-                onValueChange = { value -> onFormChanged(form.toBuilder().fontSizeLarge(value).build()) },
-            )
-        }
-        ConfigRow(stringResource(R.string.SIZE_PRESETS)) {
-            val selectedPreset = state.fontPresets.firstOrNull { preset ->
-                preset.small.toString() == form.fontSizeSmall &&
-                    preset.medium.toString() == form.fontSizeMedium &&
-                    preset.large.toString() == form.fontSizeLarge
-            }?.title ?: stringResource(R.string.SIZE_PRESETS)
-            ChoiceField(
-                selected = selectedPreset,
-                options = state.fontPresets.map { it.title },
-                dialogTitle = stringResource(R.string.SIZE_PRESETS),
-                onSelected = { index ->
-                    state.fontPresets.getOrNull(index)?.let { preset ->
-                        onFormChanged(
-                            form.toBuilder()
-                                .fontSizeSmall(preset.small.toString())
-                                .fontSizeMedium(preset.medium.toString())
-                                .fontSizeLarge(preset.large.toString())
-                                .build(),
-                        )
-                    }
-                },
-            )
-        }
-        AdvancedSettingsRow(
+    var fontSizesVisible by rememberSaveable { mutableStateOf(false) }
+    ConfigSection(title = stringResource(R.string.PREF_FONT_OPTIONS)) {
+        ConfigValuePreference(
+            title = stringResource(R.string.config_font_sizes),
+            description = stringResource(R.string.config_help_font_sizes),
+            value = stringResource(
+                R.string.config_font_sizes_value,
+                form.fontSizeSmall,
+                form.fontSizeMedium,
+                form.fontSizeLarge,
+            ),
+            onClick = { fontSizesVisible = true },
+        )
+        val selectedPreset = state.fontPresets.firstOrNull { preset ->
+            preset.small.toString() == form.fontSizeSmall &&
+                preset.medium.toString() == form.fontSizeMedium &&
+                preset.large.toString() == form.fontSizeLarge
+        }?.title ?: stringResource(R.string.profile_custom)
+        ConfigChoicePreference(
+            title = stringResource(R.string.SIZE_PRESETS),
+            description = stringResource(R.string.config_help_font_presets),
+            selected = selectedPreset,
+            options = state.fontPresets.map { it.title },
+            onSelected = { index ->
+                state.fontPresets.getOrNull(index)?.let { preset ->
+                    onFormChanged(
+                        form.toBuilder()
+                            .fontSizeSmall(preset.small.toString())
+                            .fontSizeMedium(preset.medium.toString())
+                            .fontSizeLarge(preset.large.toString())
+                            .build(),
+                    )
+                }
+            },
+        )
+        ConfigDisclosurePreference(
+            title = stringResource(R.string.config_advanced_settings),
+            description = stringResource(R.string.config_help_advanced_font),
             expanded = advancedExpanded,
             onExpandedChange = { advancedExpanded = it },
         )
         if (advancedExpanded) {
-            SwitchRow(
+            ConfigSwitchPreference(
                 title = stringResource(R.string.PREF_FONT_SIZE_IN_SP),
+                description = stringResource(R.string.config_help_font_dimensions),
                 checked = form.fontApplyDimensions,
                 onCheckedChange = { checked ->
                     onFormChanged(form.toBuilder().fontApplyDimensions(checked).build())
                 },
             )
-            SwitchRow(
+            ConfigSwitchPreference(
                 title = stringResource(R.string.PREF_FONT_ANTI_ALIASING),
+                description = stringResource(R.string.config_help_font_aa),
                 checked = form.fontAA,
                 onCheckedChange = { checked -> onFormChanged(form.toBuilder().fontAA(checked).build()) },
             )
         }
     }
+    if (fontSizesVisible) {
+        FontSizesDialog(
+            small = form.fontSizeSmall,
+            medium = form.fontSizeMedium,
+            large = form.fontSizeLarge,
+            onDismissRequest = { fontSizesVisible = false },
+            onConfirm = { small, medium, large ->
+                fontSizesVisible = false
+                onFormChanged(
+                    form.toBuilder()
+                        .fontSizeSmall(small)
+                        .fontSizeMedium(medium)
+                        .fontSizeLarge(large)
+                        .build(),
+                )
+            },
+        )
+    }
+}
+
+@Composable
+private fun FontSizesDialog(
+    small: String,
+    medium: String,
+    large: String,
+    onDismissRequest: () -> Unit,
+    onConfirm: (String, String, String) -> Unit,
+) {
+    var smallDraft by remember(small) { mutableStateOf(small) }
+    var mediumDraft by remember(medium) { mutableStateOf(medium) }
+    var largeDraft by remember(large) { mutableStateOf(large) }
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = { Text(stringResource(R.string.config_font_sizes)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = stringResource(R.string.config_help_font_sizes_long),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                OutlinedTextField(
+                    value = smallDraft,
+                    onValueChange = { smallDraft = it },
+                    label = { Text(stringResource(R.string.PREF_FONT_SMALL)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = mediumDraft,
+                    onValueChange = { mediumDraft = it },
+                    label = { Text(stringResource(R.string.PREF_FONT_MEDIUM)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = largeDraft,
+                    onValueChange = { largeDraft = it },
+                    label = { Text(stringResource(R.string.PREF_FONT_LARGE)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) { Text(stringResource(android.R.string.cancel)) }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = smallDraft.toIntOrNull() != null &&
+                    mediumDraft.toIntOrNull() != null && largeDraft.toIntOrNull() != null,
+                onClick = { onConfirm(smallDraft, mediumDraft, largeDraft) },
+            ) { Text(stringResource(android.R.string.ok)) }
+        },
+    )
 }
 
 @Composable
@@ -1022,101 +1089,105 @@ private fun InputSection(
     onRequestAction: (ConfigAction) -> Unit,
 ) {
     var advancedExpanded by rememberSaveable { mutableStateOf(false) }
-    ConfigCard(title = stringResource(R.string.pref_input_devices_title)) {
-        ConfigRow(stringResource(R.string.PREF_LAYOUT)) {
-            val options = stringArrayResource(R.array.PREF_LAYOUT_ENTRIES).toList()
-            ChoiceField(
-                selected = options.getOrElse(form.keyCodesLayout) { options.firstOrNull().orEmpty() },
-                options = options,
-                dialogTitle = stringResource(R.string.PREF_LAYOUT),
-                onSelected = { index -> onFormChanged(form.toBuilder().keyCodesLayout(index).build()) },
-            )
-        }
-        SettingActionRow(
+    ConfigSection(title = stringResource(R.string.pref_input_devices_title)) {
+        val layoutOptions = stringArrayResource(R.array.PREF_LAYOUT_ENTRIES).toList()
+        ConfigChoicePreference(
+            title = stringResource(R.string.PREF_LAYOUT),
+            description = stringResource(R.string.config_help_key_layout),
+            selected = layoutOptions.getOrElse(form.keyCodesLayout) { layoutOptions.firstOrNull().orEmpty() },
+            options = layoutOptions,
+            onSelected = { index -> onFormChanged(form.toBuilder().keyCodesLayout(index).build()) },
+        )
+        ConfigActionPreference(
             title = stringResource(R.string.pref_map_keys),
+            description = stringResource(R.string.config_help_key_mapping),
             onClick = events::onKeyMappings,
         )
-        SwitchRow(
+        ConfigSwitchPreference(
             title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
+            description = stringResource(R.string.config_help_virtual_keyboard_controls),
             checked = form.showKeyboard,
             onCheckedChange = { checked -> onFormChanged(form.toBuilder().showKeyboard(checked).build()) },
         )
         if (form.showKeyboard) {
-            AdvancedSettingsRow(
+            ConfigDisclosurePreference(
+                title = stringResource(R.string.config_advanced_settings),
+                description = stringResource(R.string.config_help_advanced_controls),
                 expanded = advancedExpanded,
                 onExpandedChange = { advancedExpanded = it },
             )
             if (advancedExpanded) {
-                ConfigRow(stringResource(R.string.pref_button_shape_title)) {
-                    val options = stringArrayResource(R.array.pref_button_shape_entries).toList()
-                    ChoiceField(
-                        selected = options.getOrElse(form.vkButtonShape) { options.firstOrNull().orEmpty() },
-                        options = options,
-                        dialogTitle = stringResource(R.string.pref_button_shape_title),
-                        onSelected = { index -> onFormChanged(form.toBuilder().vkButtonShape(index).build()) },
-                    )
-                }
-                SwitchRow(
+                val shapeOptions = stringArrayResource(R.array.pref_button_shape_entries).toList()
+                ConfigChoicePreference(
+                    title = stringResource(R.string.pref_button_shape_title),
+                    description = stringResource(R.string.config_help_vk_button_shape),
+                    selected = shapeOptions.getOrElse(form.vkButtonShape) { shapeOptions.firstOrNull().orEmpty() },
+                    options = shapeOptions,
+                    onSelected = { index -> onFormChanged(form.toBuilder().vkButtonShape(index).build()) },
+                )
+                ConfigSwitchPreference(
                     title = stringResource(R.string.PREF_VK_FEEDBACK),
+                    description = stringResource(R.string.config_help_vk_feedback),
                     checked = form.vkFeedback,
                     onCheckedChange = { checked -> onFormChanged(form.toBuilder().vkFeedback(checked).build()) },
                 )
-                ConfigRow(stringResource(R.string.PREF_VK_ALPHA)) {
-                    SliderField(
-                        value = form.vkAlpha,
-                        valueRange = 0..255,
-                        onSelected = { value -> onFormChanged(form.toBuilder().vkAlpha(value).build()) },
-                    )
-                }
-                SwitchRow(
+                ConfigSliderPreference(
+                    title = stringResource(R.string.PREF_VK_ALPHA),
+                    description = stringResource(R.string.config_help_vk_alpha),
+                    value = form.vkAlpha,
+                    valueRange = 0..255,
+                    onSelected = { value -> onFormChanged(form.toBuilder().vkAlpha(value).build()) },
+                )
+                ConfigSwitchPreference(
                     title = stringResource(R.string.PREF_VK_FORCE_OPACITY),
+                    description = stringResource(R.string.config_help_vk_force_opacity),
                     checked = form.vkForceOpacity,
                     onCheckedChange = { checked -> onFormChanged(form.toBuilder().vkForceOpacity(checked).build()) },
                 )
-                ConfigRow(stringResource(R.string.PREF_VK_HIDE_DELAY)) {
-                    CompactTextField(
-                        value = form.vkHideDelay,
-                        label = stringResource(R.string.pref_vk_hide_hint),
-                        keyboardType = KeyboardType.Number,
-                        dialogTitle = stringResource(R.string.PREF_VK_HIDE_DELAY),
-                        showLabel = false,
-                        valueSuffix = stringResource(R.string.PREF_UNIT_MS),
-                        onValueChange = { value -> onFormChanged(form.toBuilder().vkHideDelay(value).build()) },
-                    )
-                }
-                ColorRow(
-                    label = stringResource(R.string.PREF_VK_FORE),
+                ConfigNumberPreference(
+                    title = stringResource(R.string.PREF_VK_HIDE_DELAY),
+                    description = stringResource(R.string.config_help_vk_hide_delay),
+                    value = form.vkHideDelay,
+                    fallbackLabel = stringResource(R.string.pref_vk_hide_hint),
+                    valueSuffix = stringResource(R.string.PREF_UNIT_MS),
+                    keyboardType = KeyboardType.Number,
+                    onValueChange = { value -> onFormChanged(form.toBuilder().vkHideDelay(value).build()) },
+                )
+                ConfigColorPreference(
+                    title = stringResource(R.string.PREF_VK_FORE),
+                    description = stringResource(R.string.config_help_vk_foreground),
                     value = form.vkForeground,
-                    onPick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_FOREGROUND) },
+                    onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_FOREGROUND) },
                 )
-                ColorRow(
-                    label = stringResource(R.string.PREF_VK_BACK),
+                ConfigColorPreference(
+                    title = stringResource(R.string.PREF_VK_BACK),
+                    description = stringResource(R.string.config_help_vk_background),
                     value = form.vkBackground,
-                    onPick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_BACKGROUND) },
+                    onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_BACKGROUND) },
                 )
-                ColorRow(
-                    label = stringResource(R.string.PREF_VK_SEL_FORE),
+                ConfigColorPreference(
+                    title = stringResource(R.string.PREF_VK_SEL_FORE),
+                    description = stringResource(R.string.config_help_vk_selected_foreground),
                     value = form.vkSelectedForeground,
-                    onPick = {
-                        events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_FOREGROUND)
-                    },
+                    onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_FOREGROUND) },
                 )
-                ColorRow(
-                    label = stringResource(R.string.PREF_VK_SEL_BACK),
+                ConfigColorPreference(
+                    title = stringResource(R.string.PREF_VK_SEL_BACK),
+                    description = stringResource(R.string.config_help_vk_selected_background),
                     value = form.vkSelectedBackground,
-                    onPick = {
-                        events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_BACKGROUND)
-                    },
+                    onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_BACKGROUND) },
                 )
-                ColorRow(
-                    label = stringResource(R.string.PREF_VK_OUTLINE),
+                ConfigColorPreference(
+                    title = stringResource(R.string.PREF_VK_OUTLINE),
+                    description = stringResource(R.string.config_help_vk_outline),
                     value = form.vkOutline,
-                    onPick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_OUTLINE) },
+                    onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_OUTLINE) },
                 )
             }
         }
-        SettingActionRow(
+        ConfigActionPreference(
             title = stringResource(R.string.RESET_LAYOUT_CMD),
+            description = stringResource(R.string.config_help_reset_layout),
             destructive = true,
             onClick = { onRequestAction(ConfigAction.ResetLayout) },
         )
@@ -1128,9 +1199,10 @@ private fun EmulationSection(
     form: ConfigFormState,
     onFormChanged: (ConfigFormState) -> Unit,
 ) {
-    ConfigCard(title = stringResource(R.string.pref_title_emulation)) {
-        SwitchRow(
+    ConfigSection(title = stringResource(R.string.pref_title_emulation)) {
+        ConfigSwitchPreference(
             title = stringResource(R.string.pref_skip_resume_call),
+            description = stringResource(R.string.config_help_skip_resume),
             checked = form.skipResumeCall,
             onCheckedChange = { checked -> onFormChanged(form.toBuilder().skipResumeCall(checked).build()) },
         )
@@ -1143,24 +1215,23 @@ private fun AudioSection(
     state: ConfigUiState,
     onFormChanged: (ConfigFormState) -> Unit,
 ) {
-    ConfigCard(title = stringResource(R.string.pref_audio_title)) {
-        ConfigRow(stringResource(R.string.pref_soundbank_title)) {
-            val selected = state.soundBanks.indexOfFirst { option ->
-                form.soundBank != null && option == form.soundBank
-            }.let { if (it < 0) 0 else it }
-            ChoiceField(
-                selected = state.soundBanks.getOrElse(selected) { "" },
-                options = state.soundBanks,
-                dialogTitle = stringResource(R.string.pref_soundbank_title),
-                onSelected = { index ->
-                    onFormChanged(
-                        form.toBuilder()
-                            .soundBank(if (index == 0) null else state.soundBanks.getOrNull(index))
-                            .build(),
-                    )
-                },
-            )
-        }
+    ConfigSection(title = stringResource(R.string.pref_audio_title)) {
+        val selected = state.soundBanks.indexOfFirst { option ->
+            form.soundBank != null && option == form.soundBank
+        }.let { if (it < 0) 0 else it }
+        ConfigChoicePreference(
+            title = stringResource(R.string.pref_soundbank_title),
+            description = stringResource(R.string.config_help_soundbank),
+            selected = state.soundBanks.getOrElse(selected) { "" },
+            options = state.soundBanks,
+            onSelected = { index ->
+                onFormChanged(
+                    form.toBuilder()
+                        .soundBank(if (index == 0) null else state.soundBanks.getOrNull(index))
+                        .build(),
+                )
+            },
+        )
     }
 }
 
@@ -1493,6 +1564,7 @@ private fun SliderField(
 @OptIn(ExperimentalMaterial3Api::class)
 internal fun ConfigSliderDialog(
     title: String,
+    description: String? = null,
     initialValue: Int,
     valueRange: IntRange,
     onDismissRequest: () -> Unit,
@@ -1506,6 +1578,13 @@ internal fun ConfigSliderDialog(
         title = { Text(title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (description != null) {
+                    Text(
+                        text = description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 val draftValue = draftText.toIntOrNull()
                 val sliderValue = (draftValue ?: initialValue).coerceIn(valueRange)
                 OutlinedTextField(
