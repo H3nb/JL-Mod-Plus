@@ -1,6 +1,7 @@
 /*
  * Copyright 2017-2018 Nikita Shakarun
  * Copyright 2020-2024 Yury Kharchenko
+ * Modifications for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +56,12 @@ public class EmulatorApplication extends Application implements OnSharedPreferen
 		sp.registerOnSharedPreferenceChangeListener(this);
 		setNightMode(sp.getString(Constants.PREF_THEME, null));
 		AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+	}
+
+	@Override
+	public void onCreate() {
+		super.onCreate();
+		CrashReporter.scheduleMaintenance(this);
 	}
 
 	@NonNull

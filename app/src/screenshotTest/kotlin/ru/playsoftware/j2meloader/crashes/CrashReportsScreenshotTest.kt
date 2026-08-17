@@ -139,6 +139,12 @@ private object NoOpListActions : CrashReportsActions {
     override fun onBack() = Unit
 
     override fun onOpen(reportId: String) = Unit
+
+    override fun onCopySelected(reportIds: List<String>) = Unit
+
+    override fun onShareSelected(reportIds: List<String>) = Unit
+
+    override fun onDeleteSelected(reportIds: List<String>) = Unit
 }
 
 private object NoOpDetailActions : CrashReportDetailsActions {
@@ -147,6 +153,8 @@ private object NoOpDetailActions : CrashReportDetailsActions {
     override fun onCopy() = Unit
 
     override fun onShare() = Unit
+
+    override fun onReportGitHub() = Unit
 
     override fun onDelete() = Unit
 }
