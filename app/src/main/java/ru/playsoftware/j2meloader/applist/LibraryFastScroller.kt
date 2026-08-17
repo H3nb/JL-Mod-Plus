@@ -68,7 +68,9 @@ internal fun buildLibraryFastScrollBuckets(
     val buckets = LinkedHashMap<String, Int>()
     apps.forEachIndexed { index, app ->
         val label = libraryFastScrollLabel(selector(app), locale)
-        buckets.putIfAbsent(label, index)
+        if (!buckets.containsKey(label)) {
+            buckets[label] = index
+        }
     }
     return buckets.map { (label, index) -> LibraryFastScrollBucket(label, index) }
 }
