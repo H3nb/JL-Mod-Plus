@@ -80,8 +80,10 @@ class LibraryRepositoryTest {
         repository.setEmulatorDirectory(root.canonicalFile)
         delay(200)
 
+        val ready = repository.state.value as LibraryRepository.State.Ready
         assertEquals(1, openCount.get())
-        assertEquals(root.canonicalFile, (repository.state.value as LibraryRepository.State.Ready).emulatorDir)
+        assertEquals(root.canonicalFile, ready.emulatorDir)
+        assertEquals(listOf("game"), ready.apps.map { it.storageKey })
     }
 
     @Test fun sameWorkdirSetAfterErrorStartsRecoveryGeneration() = runBlocking {
