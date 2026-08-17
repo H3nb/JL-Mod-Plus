@@ -7,40 +7,146 @@
 package ru.playsoftware.j2meloader.librarydb
 
 import android.app.Application
+import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.preference.PreferenceManager
 import java.io.File
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import ru.playsoftware.j2meloader.config.Config
+import kotlinx.coroutines.withContext
+import ru.playsoftware.j2meloader.util.Constants.PREF_APP_SORT
+import ru.playsoftware.j2meloader.util.Constants.PREF_EMULATOR_DIR
 
-/** Activity-scoped Library facade with Java-friendly non-blocking mutation callbacks. */
-class LibraryViewModel(application: Application) : AndroidViewModel(application) {
+/** Activity-scoped Room 3 Library facade with Java-friendly observation/mutation boundaries. */
+@OptIn(ExperimentalCoroutinesApi::class)
+class LibraryViewModel(application: Application) : AndroidViewModel(application),
+    SharedPreferences.OnSharedPreferenceChangeListener {
+
+    sealed interface DisplayState {
+        data object Idle : DisplayState
+        data class Loading(val emulatorDir: File) : DisplayState
+        data class Indexing(
+            val emulatorDir: File,
+            val completed: Int,
+            val total: Int,
+            val storageKey: String,
+        ) : DisplayState
+        data class Ready(
+            val emulatorDir: File,
+            val apps: List<LibraryAppRow>,
+            val filter: String,
+            val sortVariant: Int,
+            val bootstrapFailures: List<LibraryScanner.Failure>,
+            val legacyImportFailure: String?,
+            val reconciliationFailures: List<LibraryScanner.Failure>,
+        ) : DisplayState
+        data class Error(val emulatorDir: File, val message: String) : DisplayState
+    }
+
+    fun interface StateObserver {
+        fun onState(state: DisplayState)
+    }
+
     fun interface MutationCallback<T> {
         fun complete(value: T?, error: Throwable?)
     }
 
+    private val preferences = PreferenceManager.getDefaultSharedPreferences(application)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val repository = LibraryRepository(scope) { emulatorDir ->
         LibraryDatabase.open(application, emulatorDir)
     }
+    private val filter = MutableStateFlow("")
+    private val sortVariant = MutableStateFlow(readSortPreference(preferences))
 
-    val state: StateFlow<LibraryRepository.State> = repository.state
+    val displayState: StateFlow<DisplayState> = combine(
+        repository.state,
+        filter,
+        sortVariant,
+    ) { repositoryState, activeFilter, activeSort ->
+        Triple(repositoryState, activeFilter, activeSort)
+    }.mapLatest { (repositoryState, activeFilter, activeSort) ->
+        when (repositoryState) {
+            LibraryRepository.State.Idle -> DisplayState.Idle
+            is LibraryRepository.State.Opening -> DisplayState.Loading(repositoryState.emulatorDir)
+            is LibraryRepository.State.Indexing -> DisplayState.Indexing(
+                emulatorDir = repositoryState.emulatorDir,
+                completed = repositoryState.completed,
+                total = repositoryState.total,
+                storageKey = repositoryState.storageKey,
+            )
+            is LibraryRepository.State.Error -> DisplayState.Error(
+                repositoryState.emulatorDir,
+                repositoryState.message,
+            )
+            is LibraryRepository.State.Ready -> {
+                val projected = withContext(Dispatchers.Default) {
+                    LibraryListProjection.project(
+                        rows = repositoryState.apps,
+                        filter = activeFilter,
+                        sortVariant = activeSort,
+                    )
+                }
+                DisplayState.Ready(
+                    emulatorDir = repositoryState.emulatorDir,
+                    apps = projected,
+                    filter = activeFilter,
+                    sortVariant = activeSort,
+                    bootstrapFailures = repositoryState.bootstrapFailures,
+                    legacyImportFailure = repositoryState.legacyImportFailure,
+                    reconciliationFailures = repositoryState.reconciliationFailures,
+                )
+            }
+        }
+    }.stateIn(scope, SharingStarted.Eagerly, DisplayState.Idle)
 
     init {
-        repository.setEmulatorDirectory(File(Config.getEmulatorDir()))
+        preferences.registerOnSharedPreferenceChangeListener(this)
     }
 
+    /** Start/open only after MainActivity has established storage permission/workdir access. */
     fun setEmulatorDirectory(path: String) {
         repository.setEmulatorDirectory(File(path))
     }
 
     fun retry() = repository.retry()
 
-    /** Returns only the current in-memory projection; no database/filesystem I/O occurs here. */
+    fun setFilter(value: String) {
+        filter.value = value.trim()
+    }
+
+    fun getFilter(): String = filter.value
+
+    fun setSort(value: Int) {
+        if (sortVariant.value == value) return
+        sortVariant.value = value
+        preferences.edit().putInt(PREF_APP_SORT, value).apply()
+    }
+
+    fun observe(owner: LifecycleOwner, observer: StateObserver) {
+        owner.lifecycleScope.launch {
+            owner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                displayState.collect(observer::onState)
+            }
+        }
+    }
+
+    /** Current snapshot only; no Room/filesystem work. */
     fun getApp(appId: Long): LibraryAppRow? = repository.currentApp(appId)
 
     /** Source identity is intentionally non-unique; installer callers must handle 0/1/many. */
@@ -48,7 +154,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         repository.findBySourceIdentity(sourceTitle, sourceVendor)
 
     fun readyWorkdir(): File? =
-        (state.value as? LibraryRepository.State.Ready)?.emulatorDir
+        (repository.state.value as? LibraryRepository.State.Ready)?.emulatorDir
 
     fun renameApp(appId: Long, title: String?, callback: MutationCallback<Unit>) {
         val workdir = readyWorkdir()
@@ -100,7 +206,17 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
+        when (key) {
+            PREF_APP_SORT -> sortVariant.value = readSortPreference(sharedPreferences)
+            PREF_EMULATOR_DIR -> sharedPreferences.getString(PREF_EMULATOR_DIR, null)?.let {
+                setEmulatorDirectory(it)
+            }
+        }
+    }
+
     override fun onCleared() {
+        preferences.unregisterOnSharedPreferenceChangeListener(this)
         repository.close()
         scope.cancel()
     }
@@ -109,9 +225,21 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         scope.launch {
             try {
                 callback.complete(block(), null)
-            } catch (error: Throwable) {
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
                 callback.complete(null, error)
             }
         }
+    }
+
+    private fun readSortPreference(sharedPreferences: SharedPreferences): Int = try {
+        sharedPreferences.getInt(PREF_APP_SORT, LibraryListProjection.SORT_TITLE)
+    } catch (_: ClassCastException) {
+        val legacy = sharedPreferences.getString(PREF_APP_SORT, "name")
+        val migrated = if (legacy == "name") LibraryListProjection.SORT_TITLE
+        else LibraryListProjection.SORT_DATE
+        sharedPreferences.edit().putInt(PREF_APP_SORT, migrated).apply()
+        migrated
     }
 }
