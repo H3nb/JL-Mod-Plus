@@ -49,9 +49,8 @@ import ru.playsoftware.j2meloader.EmulatorApplication;
  * Fatal failures are captured at process/lifecycle boundaries. Non-fatal collection is deliberately
  * allowlisted: only actionable emulator-owned incidents get a dedicated reporting method. Do not
  * report arbitrary caught MIDlet/vendor exceptions here; those are often compatibility behavior,
- * can be high-frequency, and observability must not perturb emulator hot paths. The current
- * allowlisted non-fatal incident is an installer failure, where the emulator owns the operation and
- * the retained context is directly useful for diagnosis.
+ * can be high-frequency, and observability must not perturb emulator hot paths. Current allowlisted
+ * caught incidents are installer failures and app-repository operation failures.
  */
 public final class CrashReporter {
 	private static final int MAX_CONTEXT_VALUE_LENGTH = 256;
@@ -291,7 +290,26 @@ public final class CrashReporter {
 												  String midletVersion, String jarSize) {
 		String message = buildInstallerContext(sourceScheme, midletName, midletVendor,
 				midletVersion, jarSize);
-		ACRA.getErrorReporter().handleException(new InstallerFailureException(message, error), false);
+		try {
+			ACRA.getErrorReporter().handleException(new InstallerFailureException(message, error), false);
+		} catch (Throwable reportingFailure) {
+			logMaintenanceFailure("Unable to persist installer failure diagnostic", reportingFailure);
+		}
+	}
+
+	/**
+	 * Allowlisted non-fatal incident: a Room/filesystem operation owned by the app repository failed.
+	 * Keep this narrow API instead of exposing arbitrary caught-exception reporting to callers.
+	 */
+	public static void reportAppRepositoryFailure(Throwable error) {
+		if (error == null) {
+			return;
+		}
+		try {
+			ACRA.getErrorReporter().handleException(error, false);
+		} catch (Throwable reportingFailure) {
+			logMaintenanceFailure("Unable to persist app-repository failure diagnostic", reportingFailure);
+		}
 	}
 
 	static String classifyProcess(String packageName, String processName) {
