@@ -232,6 +232,9 @@ public class InstallerDialog extends DialogFragment {
 	private void onProgress(@NonNull Integer status) {
 		if (!isAdded() || composeController == null) return;
 		if (status == AppInstaller.STATUS_SUCCESS) {
+			// The filesystem + Room commit is the durable consumption point. A process death while the
+			// success screen is visible must not replay the same external install request.
+			acknowledgeExternalRequest();
 			composeController.showSuccess(
 					currentTitle,
 					getString(R.string.install_done),
