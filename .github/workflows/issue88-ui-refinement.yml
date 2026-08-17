@@ -54,7 +54,14 @@ jobs:
           git merge --no-ff --no-commit origin/alpha
 
       - name: Apply user QA refinements
-        run: python3 .github/scripts/issue88_ui_refine.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The first script previously ended with a narrow Toast guard. The post pass now
+          # migrates all remaining runtime notices and owns the final guard.
+          sed -i '/# Guard against leaving the two user-reported Toast paths behind\./,$d' .github/scripts/issue88_ui_refine.py
+          python3 .github/scripts/issue88_ui_refine.py
+          python3 .github/scripts/issue88_ui_refine_post.py
 
       - name: Refresh intended screenshot references
         run: ./gradlew --no-daemon --stacktrace :app:updateEmulatorDebugScreenshotTest
@@ -77,8 +84,9 @@ jobs:
           set -euo pipefail
           rm .github/workflows/issue88-ui-refinement.yml
           rm .github/scripts/issue88_ui_refine.py
+          rm .github/scripts/issue88_ui_refine_post.py
           git diff --check
-          if git grep -n "Toast.makeText" -- app/src/main/java/javax/microedition/shell/MicroActivity.java app/src/main/java/ru/playsoftware/j2meloader/applist/AppsListFragment.java; then
+          if git grep -n "Toast.makeText\|android.widget.Toast" -- app/src/main/java/javax/microedition/shell/MicroActivity.java app/src/main/java/ru/playsoftware/j2meloader/applist/AppsListFragment.java; then
             echo 'Legacy Toast remained in a migrated notification path.' >&2
             exit 1
           fi
