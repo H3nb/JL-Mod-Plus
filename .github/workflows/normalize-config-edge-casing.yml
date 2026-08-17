@@ -1,0 +1,48 @@
+name: Normalize config edge casing
+
+on:
+  push:
+    branches:
+      - ui/redesign-config
+
+permissions:
+  contents: write
+
+jobs:
+  normalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ui/redesign-config
+      - name: Normalize Config edge-case labels
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              'app/src/main/res/values-in/strings.xml': {
+                  '<string name="shader_tuning">Setelan Shader</string>': '<string name="shader_tuning">Setelan shader</string>',
+                  '<string name="pref_skin_not_set">Belum Diatur</string>': '<string name="pref_skin_not_set">Belum diatur</string>',
+              },
+              'app/src/main/res/values/strings.xml': {
+                  '<string name="shader_tuning">Shader Settings</string>': '<string name="shader_tuning">Shader tuning</string>',
+              },
+          }
+          for filename, pairs in replacements.items():
+              path = Path(filename)
+              text = path.read_text()
+              for old, new in pairs.items():
+                  if text.count(old) != 1:
+                      raise SystemExit(f'{filename}: expected one match for {old!r}')
+                  text = text.replace(old, new, 1)
+              path.write_text(text)
+          PY
+          rm .github/workflows/normalize-config-edge-casing.yml
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Normalize final config casing edge cases"
+          git push origin HEAD:ui/redesign-config
