@@ -42,9 +42,7 @@ replace(
     "\t}\n",
 )
 
-# The first-pass script intentionally replaces the old body GitHub button, but its broad
-# insertion target can land in the batch-selection toolbar. Keep Report on GitHub exclusively
-# in the crash-detail app bar where it belongs.
+# Keep Report on GitHub exclusively in the crash-detail app bar.
 crash = Path("app/src/main/java/ru/playsoftware/j2meloader/crashes/CrashReportsComposeBridge.kt")
 text = crash.read_text(encoding="utf-8")
 github_block = """                    IconButton(onClick = actions::onReportGitHub) {
@@ -65,14 +63,15 @@ if delete_button not in detail:
 detail = detail.replace(delete_button, github_block + delete_button, 1)
 crash.write_text(head + marker + detail, encoding="utf-8")
 
-# RowScope supplies Modifier.weight; an explicit import is not needed and may resolve to the
-# restricted layout extension on some Compose versions.
+# RowScope supplies Modifier.weight; an explicit import is not needed.
 installer = Path("app/src/main/java/ru/woesss/j2me/installer/InstallerComposeBridge.kt")
-installer_text = installer.read_text(encoding="utf-8").replace(
-    "import androidx.compose.foundation.layout.weight\n",
-    "",
+installer.write_text(
+    installer.read_text(encoding="utf-8").replace(
+        "import androidx.compose.foundation.layout.weight\n",
+        "",
+    ),
+    encoding="utf-8",
 )
-installer.write_text(installer_text, encoding="utf-8")
 
 # The transient notice on the Library is above the app navigation rather than underneath it.
 library = "app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryComposeBridge.kt"
@@ -92,6 +91,20 @@ replace(
     "                            .padding(bottom = noticeBottomPadding),\n"
     "                    )\n",
 )
+
+# Official Material Symbols warning icon used by harmonized error/recovery dialogs.
+Path("app/src/main/res/drawable/ic_warning.xml").write_text('''<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+    <group android:translateY="960">
+        <path
+            android:fillColor="#FF000000"
+            android:pathData="M40-120 480-880l440 760H40Zm138-80h604L480-720 178-200Zm302-40q17 0 28.5-11.5T520-280q0-17-11.5-28.5T480-320q-17 0-28.5 11.5T440-280q0 17 11.5 28.5T480-240Zm-40-120h80v-200h-80v200Z" />
+    </group>
+</vector>
+''', encoding="utf-8")
 
 # No Toast remains in the runtime or main Library notification paths covered by this pass.
 for path in (
