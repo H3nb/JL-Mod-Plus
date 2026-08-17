@@ -18,51 +18,25 @@ import java.io.File
 import java.io.IOException
 import ru.woesss.j2me.jar.Descriptor
 
-/**
- * Read-only view of one emulator work directory's installed converted applications.
- *
- * This intentionally does not reuse AppUtils.getApps(): the legacy helper may repair icons or
- * delete malformed/incomplete application directories. Library indexing must preserve filesystem
- * evidence so a later retry can recover an application whose descriptor was temporarily invalid.
- */
+/** Read-only view of one emulator work directory's installed converted applications. */
 class LibraryScanner {
-    data class Failure(
-        val storageKey: String,
-        val reason: String,
-    )
+    data class Failure(val storageKey: String, val reason: String)
+    data class Result(val apps: List<LibraryAppEntity>, val failures: List<Failure>)
 
-    data class Result(
-        val apps: List<LibraryAppEntity>,
-        val failures: List<Failure>,
-    )
-
-    /**
-     * Scans metadata only. A failure for one installed directory is isolated to that directory.
-     * Failure to establish the converted directory itself is fatal so callers cannot mistake an
-     * unreadable filesystem for an empty Library.
-     */
     @Throws(IOException::class)
     fun scan(
         emulatorDir: File,
         onProgress: ((completed: Int, total: Int, storageKey: String) -> Unit)? = null,
     ): Result = scanDirectories(installedDirectories(emulatorDir), onProgress)
 
-    /**
-     * Parses only requested storage keys. This is used by normal reconciliation after a cheap
-     * directory-name diff so unchanged applications never pay descriptor parsing cost again.
-     */
     @Throws(IOException::class)
     fun scanStorageKeys(emulatorDir: File, storageKeys: Set<String>): Result {
-        if (storageKeys.isEmpty()) {
-            return Result(emptyList(), emptyList())
-        }
+        if (storageKeys.isEmpty()) return Result(emptyList(), emptyList())
         val requested = storageKeys.toHashSet()
         val installed = installedDirectories(emulatorDir)
         val matching = installed.filter { it.name in requested }
         val result = scanDirectories(matching, null)
-        if (matching.size == requested.size) {
-            return result
-        }
+        if (matching.size == requested.size) return result
 
         val found = matching.mapTo(HashSet()) { it.name }
         val missing = requested.minus(found).sorted().map { storageKey ->
@@ -71,11 +45,6 @@ class LibraryScanner {
         return Result(result.apps, result.failures + missing)
     }
 
-    /**
-     * Cheap O(n) snapshot for normal-startup reconciliation. No descriptor/package contents are
-     * parsed. A root-listing failure throws instead of returning an empty set, preventing accidental
-     * mass removal of catalog rows when storage is unavailable.
-     */
     @Throws(IOException::class)
     fun storageKeys(emulatorDir: File): Set<String> =
         installedDirectories(emulatorDir).mapTo(LinkedHashSet()) { it.name }
@@ -93,8 +62,6 @@ class LibraryScanner {
             } catch (error: Exception) {
                 failures += Failure(storageKey, boundedReason(error))
             } catch (error: LinkageError) {
-                // Keep a broken converted package from aborting indexing, but do not catch OOM or
-                // other VM-wide failures that should abort the operation.
                 failures += Failure(storageKey, boundedReason(error))
             } finally {
                 onProgress?.invoke(index + 1, directories.size, storageKey)
@@ -107,9 +74,7 @@ class LibraryScanner {
     private fun parseDirectory(appDir: File): LibraryAppEntity {
         requireConvertedPayload(appDir)
         val descriptorFile = File(appDir, MANIFEST_FILE)
-        if (!descriptorFile.isFile) {
-            throw IOException("Missing $MANIFEST_FILE")
-        }
+        if (!descriptorFile.isFile) throw IOException("Missing $MANIFEST_FILE")
         val descriptor = Descriptor(descriptorFile, false)
         return LibraryAppEntity(
             storageKey = appDir.name,
@@ -117,15 +82,14 @@ class LibraryScanner {
             sourceVendor = descriptor.vendor,
             sourceVersion = descriptor.version,
             sourceDescription = descriptor.attrs[Descriptor.MIDLET_DESCRIPTION],
+            iconRevision = LibraryIconRevision.fromFile(File(appDir, ICON_FILE)),
         )
     }
 
     @Throws(IOException::class)
     private fun installedDirectories(emulatorDir: File): List<File> {
         val convertedDir = File(emulatorDir, CONVERTED_DIR)
-        if (!convertedDir.exists()) {
-            return emptyList()
-        }
+        if (!convertedDir.exists()) return emptyList()
         if (!convertedDir.isDirectory) {
             throw IOException("Converted path is not a directory: ${convertedDir.absolutePath}")
         }
@@ -157,6 +121,7 @@ class LibraryScanner {
         const val DEX_ARCHIVE = "converted.zip"
         const val DEX_FILE = "converted.dex"
         const val MANIFEST_FILE = "converted.dex.conf"
+        const val ICON_FILE = "icon.png"
         const val MAX_FAILURE_REASON_LENGTH = 512
     }
 }
