@@ -15,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.preference.PreferenceManager
 import java.io.File
+import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,6 +48,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             val storageKey: String,
         ) : DisplayState
         data class Ready(
+            val generation: Long,
             val emulatorDir: File,
             val apps: List<LibraryAppRow>,
             val filter: String,
@@ -104,6 +106,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                     )
                 }
                 DisplayState.Ready(
+                    generation = repositoryState.generation,
                     emulatorDir = repositoryState.emulatorDir,
                     apps = projected,
                     filter = activeFilter,
@@ -146,48 +149,77 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun getApp(appId: Long): LibraryAppRow? = repository.currentApp(appId)
+    fun readyGeneration(): LibraryGenerationToken? = repository.currentReadyToken()
 
-    fun findBySourceIdentity(sourceTitle: String, sourceVendor: String): List<LibraryAppRow> =
-        repository.findBySourceIdentity(sourceTitle, sourceVendor)
+    fun readyWorkdir(): File? = readyGeneration()?.emulatorDir
 
-    fun readyWorkdir(): File? =
-        (repository.state.value as? LibraryRepository.State.Ready)?.emulatorDir
+    fun getApp(appId: Long): LibraryAppRow? {
+        val generation = readyGeneration() ?: return null
+        return repository.currentApp(generation, appId)
+    }
+
+    fun getApp(expectedGeneration: Long, expectedWorkdir: File, appId: Long): LibraryAppRow? =
+        repository.currentApp(token(expectedGeneration, expectedWorkdir), appId)
+
+    fun findBySourceIdentity(
+        expectedGeneration: Long,
+        expectedWorkdir: File,
+        sourceTitle: String,
+        sourceVendor: String,
+    ): List<LibraryAppRow> = repository.findBySourceIdentity(
+        token(expectedGeneration, expectedWorkdir),
+        sourceTitle,
+        sourceVendor,
+    )
+
+    fun isReadyGeneration(expectedGeneration: Long, expectedWorkdir: File): Boolean =
+        repository.isReadyGeneration(token(expectedGeneration, expectedWorkdir))
 
     fun renameApp(appId: Long, title: String?, callback: MutationCallback<Unit>) {
-        val workdir = readyWorkdir()
-        if (workdir == null) {
+        val generation = readyGeneration()
+        if (generation == null) {
             callback.complete(null, IllegalStateException("Library is not READY"))
             return
         }
+        val app = repository.currentApp(generation, appId)
+        if (app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available"))
+            return
+        }
         launchMutation(callback) {
-            repository.setCustomTitle(workdir, appId, title)
+            repository.setCustomTitle(generation, app.id, title)
         }
     }
 
     /** Resolve the retained-JAR action state only after the user chooses Reinstall. */
     fun resolveReinstallAvailability(appId: Long, callback: MutationCallback<Boolean>) {
-        val workdir = readyWorkdir()
-        val app = getApp(appId)
-        if (workdir == null || app == null) {
+        val generation = readyGeneration()
+        val app = generation?.let { repository.currentApp(it, appId) }
+        if (generation == null || app == null) {
             callback.complete(
                 null,
-                IllegalStateException("Library app is not available in the active READY workdir"),
+                IllegalStateException("Library app is not available in the active READY generation"),
             )
             return
         }
         launchMutation(callback) {
-            val available = LibraryFileOperations.hasRetainedJar(workdir, app.storageKey)
-            val currentWorkdir = readyWorkdir()
-            val currentApp = getApp(appId)
-            check(currentWorkdir == workdir && currentApp?.storageKey == app.storageKey) {
-                "Library workdir changed while resolving reinstall availability"
+            val available = LibraryFileOperations.hasRetainedJar(
+                generation.emulatorDir,
+                app.storageKey,
+            )
+            check(repository.isReadyGeneration(generation)) {
+                "Library generation changed while resolving reinstall availability"
+            }
+            val currentApp = repository.currentApp(generation, appId)
+            check(currentApp?.storageKey == app.storageKey) {
+                "Library reinstall target changed while resolving availability"
             }
             available
         }
     }
 
     fun recordInstalledApp(
+        expectedGeneration: Long,
         expectedWorkdir: File,
         existingId: Long?,
         storageKey: String,
@@ -199,9 +231,10 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         addedAt: Long,
         callback: MutationCallback<Long>,
     ) {
+        val generation = token(expectedGeneration, expectedWorkdir)
         launchMutation(callback) {
             repository.recordInstalledApp(
-                expectedWorkdir = expectedWorkdir,
+                expected = generation,
                 existingId = existingId,
                 metadata = InstalledAppMetadata(
                     storageKey = storageKey,
@@ -218,30 +251,35 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
 
     /** Deletes authoritative installed files first; the Room row is removed only after that succeeds. */
     fun deleteInstalledApp(appId: Long, callback: MutationCallback<LibraryFileOperations.DeleteResult>) {
-        val workdir = readyWorkdir()
-        val app = getApp(appId)
-        if (workdir == null || app == null) {
-            callback.complete(null, IllegalStateException("Library app is not available in the active READY workdir"))
+        val generation = readyGeneration()
+        val app = generation?.let { repository.currentApp(it, appId) }
+        if (generation == null || app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available in the active READY generation"))
             return
         }
         launchMutation(callback) {
+            check(repository.isReadyGeneration(generation)) {
+                "Library generation changed before delete"
+            }
             val result = LibraryFileOperations.deleteInstalledApp(
                 context = getApplication(),
-                emulatorDir = workdir,
+                emulatorDir = generation.emulatorDir,
                 storageKey = app.storageKey,
             )
-            repository.removeCatalogApp(workdir, app.storageKey)
+            repository.removeCatalogApp(generation, app.storageKey)
             result
         }
     }
 
     fun removeCatalogApp(
+        expectedGeneration: Long,
         expectedWorkdir: File,
         storageKey: String,
         callback: MutationCallback<Unit>,
     ) {
+        val generation = token(expectedGeneration, expectedWorkdir)
         launchMutation(callback) {
-            repository.removeCatalogApp(expectedWorkdir, storageKey)
+            repository.removeCatalogApp(generation, storageKey)
         }
     }
 
@@ -258,6 +296,17 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         preferences.unregisterOnSharedPreferenceChangeListener(this)
         repository.close()
         scope.cancel()
+    }
+
+    private fun token(generation: Long, emulatorDir: File): LibraryGenerationToken =
+        LibraryGenerationToken(generation, normalizeWorkdir(emulatorDir))
+
+    private fun normalizeWorkdir(file: File): File = try {
+        file.canonicalFile
+    } catch (_: IOException) {
+        file.absoluteFile
+    } catch (_: SecurityException) {
+        file.absoluteFile
     }
 
     private fun <T> launchMutation(callback: MutationCallback<T>, block: suspend () -> T) {
