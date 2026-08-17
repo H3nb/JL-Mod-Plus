@@ -94,7 +94,7 @@
     <string name="log_saved">Log has been saved</string>
     <string name="mapping_dialog_key_not_specified">Not specified</string>
     <string name="mapping_dialog_message">Current mapping:\n%1$s</string>
-    <string name="mapping_dialog_title">Press a Key</string>
+    <string name="mapping_dialog_title">Press a key</string>
     <string name="message_clear_data">Do you really want to clear app data?</string>
     <string name="message_reset_settings">Reset all configuration settings to their defaults?</string>
     <string name="message_reset_layout">Reset the button layout to its default?</string>

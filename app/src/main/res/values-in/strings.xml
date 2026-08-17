@@ -60,7 +60,7 @@
     <string name="log_saved">Log telah disimpan</string>
     <string name="mapping_dialog_key_not_specified">Tak ditentukan</string>
     <string name="mapping_dialog_message">Pemetaan saat ini:\n%1$s</string>
-    <string name="mapping_dialog_title">Tekan Tombol</string>
+    <string name="mapping_dialog_title">Tekan tombol</string>
     <string name="message_clear_data">Apakah Anda yakin ingin menghapus data aplikasi?</string>
     <string name="message_delete">Apakah Anda yakin ingin menghapus aplikasi ini?</string>
     <string name="midlet_name"><b>Nama: </b></string>
@@ -146,7 +146,7 @@
     <string name="PREF_IMMEDIATE">Mode pemrosesan langsung</string>
     <string name="pref_input_devices_title">Perangkat input</string>
     <string name="PREF_KEEP_ASPECT_RATIO">Pertahankan Rasio Aspek</string>
-    <string name="PREF_LAYOUT">Tata Letak</string>
+    <string name="PREF_LAYOUT">Tata letak</string>
     <string name="PREF_LIMIT_FPS">Batasi FPS</string>
     <string name="pref_map_keys">Pemetaan tombol</string>
     <string name="pref_mascot_summary">Tampilkan pesan saat digunakan</string>
@@ -168,7 +168,7 @@
     <string name="pref_screen_scale_type">Jenis skala</string>
     <string name="pref_screen_scale_type_fill">Layar penuh (abaikan rasio aspek)</string>
     <string name="pref_screen_scale_type_fit">Sesuaikan dengan layar</string>
-    <string name="pref_screen_scale_type_none">Ukuran Asli</string>
+    <string name="pref_screen_scale_type_none">Ukuran asli</string>
     <string name="pref_screenshot_summary">Nonaktifkan penskalaan dan penyaringan tangkapan layar</string>
     <string name="pref_screenshot_title">Tangkapan Layar</string>
     <string name="PREF_SHADER_FILTER">Shader</string>
@@ -190,7 +190,7 @@
     <string name="PREF_UNIT_MS">ms</string>
     <string name="pref_vibration_title">Aktifkan Getaran</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Papan ketik virtual</string>
-    <string name="PREF_VK_ALPHA">Opasitas: </string>
+    <string name="PREF_VK_ALPHA">Opasitas</string>
     <string name="PREF_VK_BACK">Tombol</string>
     <string name="PREF_VK_FEEDBACK">Umpan balik haptik</string>
     <string name="PREF_VK_FORCE_OPACITY">Paksa opasitas tombol di luar layar</string>
