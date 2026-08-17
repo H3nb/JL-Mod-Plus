@@ -15,6 +15,7 @@
 package ru.playsoftware.j2meloader.crashes;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -87,5 +88,13 @@ public class CrashContextStoreTest {
 				CrashContextStore.normalizeToken("Config.Graphics Tab", 48));
 		assertNull(CrashContextStore.normalizeToken("   ", 48));
 		assertTrue(CrashContextStore.normalizeToken("abcdefghijklmnopqrstuvwxyz", 8).length() <= 8);
+	}
+
+	@Test
+	public void runIdsRejectPathsAndFreeFormValues() {
+		assertTrue(CrashContextStore.isSafeRunId("rabc123-9z"));
+		assertFalse(CrashContextStore.isSafeRunId("../rabc123"));
+		assertFalse(CrashContextStore.isSafeRunId("run id"));
+		assertFalse(CrashContextStore.isSafeRunId("r123456789012345678901"));
 	}
 }
