@@ -14,7 +14,10 @@
 
 package ru.playsoftware.j2meloader.crashes;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import android.app.ActivityManager;
@@ -22,6 +25,13 @@ import android.app.ApplicationExitInfo;
 import android.system.OsConstants;
 
 import org.junit.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Arrays;
 
 public class ProcessExitStoreTest {
 	private static final int FOREGROUND = ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
@@ -79,5 +89,135 @@ public class ProcessExitStoreTest {
 				ApplicationExitInfo.REASON_EXIT_SELF, 0, FOREGROUND, true));
 		assertTrue(ProcessExitStore.shouldRetain(
 				ApplicationExitInfo.REASON_EXIT_SELF, 1, FOREGROUND, true));
+	}
+
+	@Test
+	public void boundedCopyPreservesEmptyInput() throws IOException {
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+		ProcessExitStore.TraceWriteResult result = ProcessExitStore.copyBounded(
+				new ByteArrayInputStream(new byte[0]), output, 8);
+
+		assertEquals(0, result.bytes);
+		assertFalse(result.truncated);
+		assertEquals(0, output.size());
+	}
+
+	@Test
+	public void boundedCopyPreservesInputBelowLimit() throws IOException {
+		byte[] input = bytes(7);
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+		ProcessExitStore.TraceWriteResult result = ProcessExitStore.copyBounded(
+				new ByteArrayInputStream(input), output, 8);
+
+		assertEquals(input.length, result.bytes);
+		assertFalse(result.truncated);
+		assertArrayEquals(input, output.toByteArray());
+	}
+
+	@Test
+	public void boundedCopyDoesNotMarkExactLimitAsTruncated() throws IOException {
+		byte[] input = bytes(8);
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+		ProcessExitStore.TraceWriteResult result = ProcessExitStore.copyBounded(
+				new ByteArrayInputStream(input), output, 8);
+
+		assertEquals(8, result.bytes);
+		assertFalse(result.truncated);
+		assertArrayEquals(input, output.toByteArray());
+	}
+
+	@Test
+	public void boundedCopyCapsAndMarksInputOverLimit() throws IOException {
+		byte[] input = bytes(9);
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+		ProcessExitStore.TraceWriteResult result = ProcessExitStore.copyBounded(
+				new ByteArrayInputStream(input), output, 8);
+
+		assertEquals(8, result.bytes);
+		assertTrue(result.truncated);
+		assertArrayEquals(Arrays.copyOf(input, 8), output.toByteArray());
+	}
+
+	@Test
+	public void boundedCopyWithZeroLimitOnlyProbesTruncation() throws IOException {
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+		ProcessExitStore.TraceWriteResult empty = ProcessExitStore.copyBounded(
+				new ByteArrayInputStream(new byte[0]), output, 0);
+		assertEquals(0, empty.bytes);
+		assertFalse(empty.truncated);
+		assertEquals(0, output.size());
+
+		ProcessExitStore.TraceWriteResult nonEmpty = ProcessExitStore.copyBounded(
+				new ByteArrayInputStream(bytes(1)), output, 0);
+		assertEquals(0, nonEmpty.bytes);
+		assertTrue(nonEmpty.truncated);
+		assertEquals(0, output.size());
+	}
+
+	@Test
+	public void boundedCopyPropagatesReadFailure() {
+		InputStream failing = new InputStream() {
+			@Override
+			public int read() throws IOException {
+				throw new IOException("synthetic read failure");
+			}
+
+			@Override
+			public int read(byte[] buffer, int offset, int length) throws IOException {
+				throw new IOException("synthetic read failure");
+			}
+		};
+
+		assertThrows(IOException.class, () -> ProcessExitStore.copyBounded(
+				failing, new ByteArrayOutputStream(), 8));
+	}
+
+	@Test
+	public void boundedCopyPropagatesWriteFailure() {
+		OutputStream failing = new OutputStream() {
+			@Override
+			public void write(int value) throws IOException {
+				throw new IOException("synthetic write failure");
+			}
+
+			@Override
+			public void write(byte[] buffer, int offset, int length) throws IOException {
+				throw new IOException("synthetic write failure");
+			}
+		};
+
+		assertThrows(IOException.class, () -> ProcessExitStore.copyBounded(
+				new ByteArrayInputStream(bytes(4)), failing, 8));
+	}
+
+	@Test
+	public void boundedCopyPropagatesOutOfMemory() {
+		InputStream failing = new InputStream() {
+			@Override
+			public int read() {
+				throw new OutOfMemoryError("synthetic low-memory failure");
+			}
+
+			@Override
+			public int read(byte[] buffer, int offset, int length) {
+				throw new OutOfMemoryError("synthetic low-memory failure");
+			}
+		};
+
+		assertThrows(OutOfMemoryError.class, () -> ProcessExitStore.copyBounded(
+				failing, new ByteArrayOutputStream(), 8));
+	}
+
+	private static byte[] bytes(int count) {
+		byte[] data = new byte[count];
+		for (int i = 0; i < count; i++) {
+			data[i] = (byte) (i + 1);
+		}
+		return data;
 	}
 }

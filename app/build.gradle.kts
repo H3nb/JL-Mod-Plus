@@ -21,6 +21,14 @@ val runtimeTestAbi = providers.gradleProperty("jlmodRuntimeTestAbi").orNull
 require(runtimeTestAbi == null || runtimeTestAbi == "arm64-v8a" || runtimeTestAbi == "x86_64") {
     "jlmodRuntimeTestAbi must be arm64-v8a or x86_64"
 }
+val diagnosticBuildCommit = (
+    providers.gradleProperty("jlmodBuildCommit").orNull
+        ?: System.getenv("JLMOD_BUILD_COMMIT")
+        ?: System.getenv("GITHUB_SHA")
+        ?: "unknown"
+).trim().let { value ->
+    if (value.matches(Regex("[0-9a-fA-F]{7,40}"))) value.lowercase(Locale.ROOT) else "unknown"
+}
 
 android {
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
@@ -150,6 +158,22 @@ androidComponents {
                 type = "boolean",
                 value = fullEmulator.toString(),
                 comment = "Whether this is the full emulator flavor"
+            )
+        )
+        variant.buildConfigFields?.put(
+            "JLMOD_BUILD_COMMIT",
+            BuildConfigField(
+                type = "String",
+                value = "\"$diagnosticBuildCommit\"",
+                comment = "Source commit embedded for local diagnostic reproduction"
+            )
+        )
+        variant.buildConfigFields?.put(
+            "JLMOD_BUILD_VARIANT",
+            BuildConfigField(
+                type = "String",
+                value = "\"${variant.name}\"",
+                comment = "Android variant embedded for local diagnostic reproduction"
             )
         )
 

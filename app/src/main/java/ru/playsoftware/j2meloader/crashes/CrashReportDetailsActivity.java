@@ -15,10 +15,12 @@
 
 package ru.playsoftware.j2meloader.crashes;
 
+import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -26,18 +28,19 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.compose.ui.platform.ComposeView;
 
-import java.text.DateFormat;
-import java.util.Date;
-
 import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 
-/** Read-only diagnostic detail view with explicit copy/share/delete actions. */
+/** Read-only diagnostic detail view with explicit copy/share/report/delete actions. */
 public class CrashReportDetailsActivity extends AppCompatActivity {
 	static final String EXTRA_REPORT_ID = "ru.playsoftware.j2meloader.crashes.REPORT_ID";
+	private static final String GITHUB_NEW_ISSUE_URL =
+			"https://github.com/H3nb/JL-Mod-Plus/issues/new";
+	private static final String GITHUB_ISSUE_TEMPLATE = "issue-template.md";
 
 	private LocalDiagnosticRepository.Record record;
 	private String exportText;
+	private String githubExportText;
 	private ComposeView composeView;
 
 	@Override
@@ -49,15 +52,19 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 		setContentView(composeView);
 		EdgeToEdgeCompat.protectHostContent(this);
 		String recordId = getIntent().getStringExtra(EXTRA_REPORT_ID);
-		record = LocalDiagnosticRepository.find(this, recordId);
+		// Historical reconciliation is owned by CrashReporter in the background. Opening a report
+		// must never copy framework traces or run maintenance on the UI thread.
+		record = LocalDiagnosticRepository.findStored(this, recordId);
 		if (record == null) {
 			Toast.makeText(this, R.string.crash_report_unavailable, Toast.LENGTH_SHORT).show();
 			finish();
 			return;
 		}
 
-		String displayText = buildReportText(record);
+		String displayText = DiagnosticReportText.build(record);
 		exportText = DiagnosticExportSanitizer.sanitize(this, displayText);
+		githubExportText = DiagnosticExportSanitizer.sanitize(
+				this, DiagnosticReportText.buildForGitHub(record));
 		CrashReportsComposeBridge.installDetails(composeView, displayText,
 				new CrashReportDetailsActions() {
 					@Override
@@ -73,6 +80,11 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 					@Override
 					public void onShare() {
 						shareReport();
+					}
+
+					@Override
+					public void onReportGitHub() {
+						reportOnGitHub();
 					}
 
 					@Override
@@ -106,24 +118,38 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 		startActivity(Intent.createChooser(share, getString(R.string.crash_report_share_title)));
 	}
 
+	private void reportOnGitHub() {
+		String subject = record.getMidletName();
+		if (subject == null || subject.trim().isEmpty()) {
+			subject = getString(switch (record.getKind()) {
+				case MIDLET_FAILURE -> R.string.crash_report_midlet_failure;
+				case JAVA_REPORT -> R.string.crash_report_java_report;
+				case PROCESS_EXIT -> R.string.crash_report_process_exit;
+			});
+		}
+		subject = DiagnosticExportSanitizer.sanitize(this, subject);
+		String title = getString(R.string.crash_report_github_issue_title, subject);
+		String body = getString(R.string.crash_report_github_intro) + "\n\n" + githubExportText;
+		String issueUrl = GitHubIssueDraft.buildUrl(
+				GITHUB_NEW_ISSUE_URL,
+				GITHUB_ISSUE_TEMPLATE,
+				title,
+				body,
+				getString(R.string.crash_report_github_truncated));
+		Intent issueIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(issueUrl))
+				.addCategory(Intent.CATEGORY_BROWSABLE);
+		try {
+			startActivity(issueIntent);
+		} catch (ActivityNotFoundException | SecurityException e) {
+			Toast.makeText(this, R.string.crash_report_github_unavailable, Toast.LENGTH_LONG).show();
+		}
+	}
+
 	private void deleteReport() {
 		if (LocalDiagnosticRepository.delete(this, record)) {
 			finish();
 		} else {
 			Toast.makeText(this, R.string.crash_report_delete_failed, Toast.LENGTH_LONG).show();
 		}
-	}
-
-	private String buildReportText(LocalDiagnosticRepository.Record record) {
-		StringBuilder text = new StringBuilder();
-		text.append("JL-Mod Plus diagnostic report\n");
-		if (record.getTimestampMillis() > 0) {
-			DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
-			text.append("Time: ")
-					.append(dateFormat.format(new Date(record.getTimestampMillis())))
-					.append('\n');
-		}
-		text.append('\n').append(record.getDetailText());
-		return text.toString();
 	}
 }
