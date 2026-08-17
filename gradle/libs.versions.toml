@@ -13,7 +13,6 @@ androidx-fragment = "1.8.9"
 androidx-junit = "1.1.5"
 androidx-lifecycle = "2.6.2"
 androidx-preference = "1.2.1"
-androidx-room = "2.8.4"
 androidx-room3 = "3.0.1"
 androidx-sqlite = "2.7.0"
 asm = "9.6"
@@ -44,13 +43,9 @@ androidx-lifecycle-common = { module = "androidx.lifecycle:lifecycle-common", ve
 androidx-lifecycle-livedata-ktx = { module = "androidx.lifecycle:lifecycle-livedata-ktx", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "androidx-lifecycle" }
 androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "androidx-preference" }
-androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "androidx-room" }
-androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "androidx-room" }
-androidx-room-rxjava2 = { module = "androidx.room:room-rxjava2", version.ref = "androidx-room" }
 androidx-room3-compiler = { module = "androidx.room3:room3-compiler", version.ref = "androidx-room3" }
 androidx-room3-runtime = { module = "androidx.room3:room3-runtime", version.ref = "androidx-room3" }
 androidx-room3-testing = { module = "androidx.room3:room3-testing", version.ref = "androidx-room3" }
-androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "androidx-sqlite" }
 androidx-sqlite-framework = { module = "androidx.sqlite:sqlite-framework", version.ref = "androidx-sqlite" }
 asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
