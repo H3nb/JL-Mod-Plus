@@ -165,6 +165,28 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    /** Resolve the retained-JAR action state only after the user chooses Reinstall. */
+    fun resolveReinstallAvailability(appId: Long, callback: MutationCallback<Boolean>) {
+        val workdir = readyWorkdir()
+        val app = getApp(appId)
+        if (workdir == null || app == null) {
+            callback.complete(
+                null,
+                IllegalStateException("Library app is not available in the active READY workdir"),
+            )
+            return
+        }
+        launchMutation(callback) {
+            val available = LibraryFileOperations.hasRetainedJar(workdir, app.storageKey)
+            val currentWorkdir = readyWorkdir()
+            val currentApp = getApp(appId)
+            check(currentWorkdir == workdir && currentApp?.storageKey == app.storageKey) {
+                "Library workdir changed while resolving reinstall availability"
+            }
+            available
+        }
+    }
+
     fun recordInstalledApp(
         expectedWorkdir: File,
         existingId: Long?,
