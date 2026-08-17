@@ -19,24 +19,8 @@ jobs:
           ref: ui/harmonize-app-wide
           fetch-depth: 0
 
-      - name: Normalize installer marker in temporary patcher
-        shell: python
-        run: |
-          from pathlib import Path
-          path = Path('.github/scripts/issue88_remaining_dialogs.py')
-          text = path.read_text()
-          old = '''            int maxWidth = (int) TypedValue.applyDimension(
-                    TypedValue.COMPLEX_UNIT_DIP, 480, getResources().getDisplayMetrics());
-            int width = Math.min(maxWidth, getResources().getDisplayMetrics().widthPixels - margin);'''
-          new = '''\t\t\tint maxWidth = (int) TypedValue.applyDimension(
-\t\t\t\t\tTypedValue.COMPLEX_UNIT_DIP, 480, getResources().getDisplayMetrics());
-\t\t\tint width = Math.min(maxWidth, getResources().getDisplayMetrics().widthPixels - margin);'''
-          if text.count(old) != 1:
-              raise SystemExit(f'Expected one temporary installer marker, found {text.count(old)}')
-          path.write_text(text.replace(old, new, 1))
-
       - name: Harmonize remaining dialogs
-        run: python .github/scripts/issue88_remaining_dialogs.py
+        run: python .github/scripts/issue88_remaining_dialogs_wrapper.py
 
       - name: Commit patch
         run: |
