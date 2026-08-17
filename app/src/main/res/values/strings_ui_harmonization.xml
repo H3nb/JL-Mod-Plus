@@ -3,4 +3,6 @@
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_midlet_runtime">MIDlet Runtime</string>
     <string name="settings_section_storage">Storage</string>
+    <string name="pref_use_display_cutout_title">Use Display Cutout In MIDlet</string>
+    <string name="pref_use_display_cutout_summary">Allow compatible MIDlet Canvas content to use the display-cutout area when the runtime can do so safely.</string>
 </resources>

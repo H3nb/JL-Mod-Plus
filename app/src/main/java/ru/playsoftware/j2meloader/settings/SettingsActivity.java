@@ -22,6 +22,7 @@ import static ru.playsoftware.j2meloader.util.Constants.PREF_SCREENSHOT_SWITCH;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_STATUSBAR;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_THEME;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_TOOLBAR;
+import static ru.playsoftware.j2meloader.util.Constants.PREF_USE_DISPLAY_CUTOUT;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_VIBRATION;
 
 import android.annotation.SuppressLint;
@@ -30,6 +31,7 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -155,32 +157,40 @@ public class SettingsActivity extends AppCompatActivity {
 			selectedLanguage = languages.get(0);
 		}
 
-		List<SettingsSwitch> switches = Arrays.asList(
-				new SettingsSwitch(
-						PREF_TOOLBAR,
-						getString(R.string.pref_enable_actionbar_title),
-						getString(R.string.pref_enable_actionbar_summary),
-						preferences.getBoolean(PREF_TOOLBAR, false)),
-				new SettingsSwitch(
-						PREF_STATUSBAR,
-						getString(R.string.pref_enable_statusbar_title),
-						getString(R.string.pref_enable_actionbar_summary),
-						preferences.getBoolean(PREF_STATUSBAR, false)),
-				new SettingsSwitch(
-						PREF_KEEP_SCREEN,
-						getString(R.string.pref_wakelock_title),
-						null,
-						preferences.getBoolean(PREF_KEEP_SCREEN, false)),
-				new SettingsSwitch(
-						PREF_SCREENSHOT_SWITCH,
-						getString(R.string.pref_screenshot_title),
-						getString(R.string.pref_screenshot_summary),
-						preferences.getBoolean(PREF_SCREENSHOT_SWITCH, false)),
-				new SettingsSwitch(
-						PREF_VIBRATION,
-						getString(R.string.pref_vibration_title),
-						null,
-						preferences.getBoolean(PREF_VIBRATION, true)));
+		List<SettingsSwitch> switches = new ArrayList<>();
+		switches.add(new SettingsSwitch(
+				PREF_TOOLBAR,
+				getString(R.string.pref_enable_actionbar_title),
+				getString(R.string.pref_enable_actionbar_summary),
+				preferences.getBoolean(PREF_TOOLBAR, false)));
+		switches.add(new SettingsSwitch(
+				PREF_STATUSBAR,
+				getString(R.string.pref_enable_statusbar_title),
+				getString(R.string.pref_enable_actionbar_summary),
+				preferences.getBoolean(PREF_STATUSBAR, false)));
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+			switches.add(new SettingsSwitch(
+					PREF_USE_DISPLAY_CUTOUT,
+					getString(R.string.pref_use_display_cutout_title),
+					getString(R.string.pref_use_display_cutout_summary),
+					preferences.getBoolean(PREF_USE_DISPLAY_CUTOUT, true)));
+		}
+		switches.add(new SettingsSwitch(
+				PREF_KEEP_SCREEN,
+				getString(R.string.pref_wakelock_title),
+				null,
+				preferences.getBoolean(PREF_KEEP_SCREEN, false)));
+		switches.add(new SettingsSwitch(
+				PREF_SCREENSHOT_SWITCH,
+				getString(R.string.pref_screenshot_title),
+				getString(R.string.pref_screenshot_summary),
+				preferences.getBoolean(PREF_SCREENSHOT_SWITCH, false)));
+		switches.add(new SettingsSwitch(
+				PREF_VIBRATION,
+				getString(R.string.pref_vibration_title),
+				null,
+				preferences.getBoolean(PREF_VIBRATION, true)));
+
 		List<SettingsSwitch> experimentalSwitches = Arrays.asList(
 				new SettingsSwitch(
 						"micro3d_using_message",

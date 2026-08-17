@@ -3,4 +3,6 @@
     <string name="settings_section_appearance">Tampilan</string>
     <string name="settings_section_midlet_runtime">Runtime MIDlet</string>
     <string name="settings_section_storage">Penyimpanan</string>
+    <string name="pref_use_display_cutout_title">Gunakan Area Cutout Di MIDlet</string>
+    <string name="pref_use_display_cutout_summary">Izinkan konten Canvas MIDlet yang kompatibel menggunakan area cutout layar ketika runtime dapat melakukannya dengan aman.</string>
 </resources>
