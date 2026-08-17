@@ -78,7 +78,10 @@ class LibraryScaleCharacterizationTest {
                 val elapsedMs = (System.nanoTime() - start) / 1_000_000.0
                 println("Library Room publish count=$count elapsedMs=${"%.3f".format(Locale.US, elapsedMs)}")
                 assertEquals(count, firstProjection.size)
-                assertEquals(LibraryBootstrapState.READY, database.libraryDao().getLibraryState()?.bootstrapState)
+                assertEquals(
+                    LibraryBootstrapState.READY,
+                    database.libraryDao().getLibraryState()?.bootstrapState,
+                )
             } finally {
                 database.close()
             }
