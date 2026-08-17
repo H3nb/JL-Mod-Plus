@@ -21,6 +21,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -65,6 +66,7 @@ class LibraryRepositoryTest {
         val secondReady = awaitReady(second)
         assertEquals(listOf("two"), secondReady.apps.map { it.storageKey })
         assertEquals(second.canonicalFile, secondReady.emulatorDir)
+        assertNotEquals(firstReady.generation, secondReady.generation)
         assertTrue(File(first, LibraryDatabase.FILE_NAME).isFile)
         assertTrue(File(second, LibraryDatabase.FILE_NAME).isFile)
     }
@@ -73,7 +75,7 @@ class LibraryRepositoryTest {
         val root = temporaryFolder.newFolder("dedupe")
         createConvertedApp(root, "game", "Game")
         repository.setEmulatorDirectory(root)
-        awaitReady(root)
+        val initial = awaitReady(root)
         assertEquals(1, openCount.get())
 
         repository.setEmulatorDirectory(root.absoluteFile)
@@ -82,6 +84,7 @@ class LibraryRepositoryTest {
 
         val ready = repository.state.value as LibraryRepository.State.Ready
         assertEquals(1, openCount.get())
+        assertEquals(initial.generation, ready.generation)
         assertEquals(root.canonicalFile, ready.emulatorDir)
         assertEquals(listOf("game"), ready.apps.map { it.storageKey })
     }
@@ -91,7 +94,7 @@ class LibraryRepositoryTest {
         val invalidConverted = File(root, "converted").apply { writeText("not a directory") }
 
         repository.setEmulatorDirectory(root)
-        withTimeout(10_000) {
+        val firstError = withTimeout(10_000) {
             repository.state.filterIsInstance<LibraryRepository.State.Error>().first()
         }
         assertEquals(1, openCount.get())
@@ -102,6 +105,7 @@ class LibraryRepositoryTest {
 
         val ready = awaitReady(root)
         assertEquals(listOf("fixed"), ready.apps.map { it.storageKey })
+        assertNotEquals(firstError.generation, ready.generation)
         assertEquals(2, openCount.get())
     }
 
@@ -122,6 +126,7 @@ class LibraryRepositoryTest {
 
         val ready = awaitReady(root)
         assertEquals(listOf("fixed"), ready.apps.map { it.storageKey })
+        assertNotEquals(error.generation, ready.generation)
         assertEquals(2, openCount.get())
     }
 
@@ -130,9 +135,10 @@ class LibraryRepositoryTest {
         createConvertedApp(root, "game", "Original")
         repository.setEmulatorDirectory(root)
         val ready = awaitReady(root)
+        val token = ready.token()
         val id = ready.apps.single().id
 
-        repository.setCustomTitle(root, id, "Renamed")
+        repository.setCustomTitle(token, id, "Renamed")
 
         val renamed = withTimeout(10_000) {
             repository.state.filterIsInstance<LibraryRepository.State.Ready>()
@@ -148,12 +154,14 @@ class LibraryRepositoryTest {
         createConvertedApp(first, "one", "First")
         createConvertedApp(second, "two", "Second")
         repository.setEmulatorDirectory(first)
-        val firstId = awaitReady(first).apps.single().id
+        val firstReady = awaitReady(first)
+        val firstToken = firstReady.token()
+        val firstId = firstReady.apps.single().id
         repository.setEmulatorDirectory(second)
         awaitReady(second)
 
         try {
-            repository.setCustomTitle(first, firstId, "Must not publish")
+            repository.setCustomTitle(firstToken, firstId, "Must not publish")
             throw AssertionError("Expected stale-workdir mutation rejection")
         } catch (_: IllegalStateException) {
             assertEquals(listOf("two"), repository.state.value.let { state ->
@@ -162,12 +170,63 @@ class LibraryRepositoryTest {
         }
     }
 
-    private suspend fun awaitReady(root: File): LibraryRepository.State.Ready = withTimeout(10_000) {
+    @Test fun staleGenerationForSamePathIsRejectedAfterAtoBtoA() = runBlocking {
+        val first = temporaryFolder.newFolder("aba-first")
+        val second = temporaryFolder.newFolder("aba-second")
+        createConvertedApp(first, "one", "First")
+        createConvertedApp(second, "two", "Second")
+
+        repository.setEmulatorDirectory(first)
+        val firstOpening = awaitReady(first)
+        val staleToken = firstOpening.token()
+        val staleId = firstOpening.apps.single().id
+
+        repository.setEmulatorDirectory(second)
+        awaitReady(second)
+        repository.setEmulatorDirectory(first)
+        val reopened = awaitReady(first) { it.generation != staleToken.generation }
+        assertNotEquals(staleToken.generation, reopened.generation)
+
+        try {
+            repository.setCustomTitle(staleToken, staleId, "Must not cross generations")
+            throw AssertionError("Expected stale same-path generation rejection")
+        } catch (_: IllegalStateException) {
+            val current = repository.state.value as LibraryRepository.State.Ready
+            assertEquals("First", current.apps.single().title)
+        }
+    }
+
+    @Test fun sourceIdentityLookupIsGenerationBound() = runBlocking {
+        val first = temporaryFolder.newFolder("identity-first")
+        val second = temporaryFolder.newFolder("identity-second")
+        createConvertedApp(first, "one", "Same")
+        createConvertedApp(second, "two", "Same")
+
+        repository.setEmulatorDirectory(first)
+        val stale = awaitReady(first).token()
+        repository.setEmulatorDirectory(second)
+        awaitReady(second)
+
+        try {
+            repository.findBySourceIdentity(stale, "Same", "Vendor")
+            throw AssertionError("Expected stale source-identity lookup rejection")
+        } catch (_: IllegalStateException) {
+            // Expected: installer matching must not silently read a different generation snapshot.
+        }
+    }
+
+    private suspend fun awaitReady(
+        root: File,
+        predicate: (LibraryRepository.State.Ready) -> Boolean = { true },
+    ): LibraryRepository.State.Ready = withTimeout(10_000) {
         val canonical = root.canonicalFile
         repository.state
             .filterIsInstance<LibraryRepository.State.Ready>()
-            .first { it.emulatorDir == canonical }
+            .first { it.emulatorDir == canonical && predicate(it) }
     }
+
+    private fun LibraryRepository.State.Ready.token() =
+        LibraryGenerationToken(generation, emulatorDir)
 
     private fun openDatabase(root: File): LibraryDatabase =
         Room.databaseBuilder<LibraryDatabase>(File(root, LibraryDatabase.FILE_NAME).absolutePath)
