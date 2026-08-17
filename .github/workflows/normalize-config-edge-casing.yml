@@ -27,7 +27,7 @@ jobs:
                   '<string name="pref_skin_not_set">Belum Diatur</string>': '<string name="pref_skin_not_set">Belum diatur</string>',
               },
               'app/src/main/res/values/strings.xml': {
-                  '<string name="shader_tuning">Shader Settings</string>': '<string name="shader_tuning">Shader tuning</string>',
+                  '<string name="shader_tuning">Shader Tuning</string>': '<string name="shader_tuning">Shader tuning</string>',
               },
           }
           for filename, pairs in replacements.items():
