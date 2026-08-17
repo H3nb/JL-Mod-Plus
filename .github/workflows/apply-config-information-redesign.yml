@@ -1,0 +1,1749 @@
+name: Apply config information redesign
+
+on:
+  push:
+    branches:
+      - ui/redesign-config
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ui/redesign-config
+          submodules: recursive
+
+      - name: Apply integrated profile and preference redesign
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one match, found {count}: {old[:120]!r}")
+              p.write_text(text.replace(old, new, 1))
+
+          def sub_once(path, pattern, repl, flags=0):
+              p = Path(path)
+              text = p.read_text()
+              out, count = re.subn(pattern, repl, text, count=1, flags=flags)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one regex match, found {count}: {pattern[:120]!r}")
+              p.write_text(out)
+
+          pref = Path("app/src/main/java/ru/playsoftware/j2meloader/config/ConfigPreferenceComponents.kt")
+          pref.write_text(r'''/*
+           * Licensed under the Apache License, Version 2.0 (the "License");
+           */
+          package ru.playsoftware.j2meloader.config
+
+          import androidx.compose.foundation.background
+          import androidx.compose.foundation.clickable
+          import androidx.compose.foundation.layout.Arrangement
+          import androidx.compose.foundation.layout.Box
+          import androidx.compose.foundation.layout.Column
+          import androidx.compose.foundation.layout.ColumnScope
+          import androidx.compose.foundation.layout.Row
+          import androidx.compose.foundation.layout.Spacer
+          import androidx.compose.foundation.layout.fillMaxWidth
+          import androidx.compose.foundation.layout.heightIn
+          import androidx.compose.foundation.layout.padding
+          import androidx.compose.foundation.layout.size
+          import androidx.compose.foundation.layout.width
+          import androidx.compose.foundation.shape.RoundedCornerShape
+          import androidx.compose.foundation.text.KeyboardOptions
+          import androidx.compose.material3.MaterialTheme
+          import androidx.compose.material3.Surface
+          import androidx.compose.material3.Switch
+          import androidx.compose.material3.Text
+          import androidx.compose.runtime.Composable
+          import androidx.compose.runtime.getValue
+          import androidx.compose.runtime.mutableStateOf
+          import androidx.compose.runtime.remember
+          import androidx.compose.runtime.setValue
+          import androidx.compose.ui.Alignment
+          import androidx.compose.ui.Modifier
+          import androidx.compose.ui.draw.clip
+          import androidx.compose.ui.graphics.Color
+          import androidx.compose.ui.semantics.Role
+          import androidx.compose.ui.text.font.FontWeight
+          import androidx.compose.ui.text.input.KeyboardType
+          import androidx.compose.ui.text.style.TextOverflow
+          import androidx.compose.ui.unit.dp
+
+          internal enum class ConfigMessageLevel { Info, Warning, Danger }
+
+          @Composable
+          internal fun ConfigSection(
+              title: String,
+              content: @Composable ColumnScope.() -> Unit,
+          ) {
+              Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                  Text(
+                      text = title,
+                      style = MaterialTheme.typography.labelLarge,
+                      color = MaterialTheme.colorScheme.primary,
+                      modifier = Modifier.padding(horizontal = 6.dp),
+                  )
+                  Surface(
+                      modifier = Modifier.fillMaxWidth(),
+                      shape = RoundedCornerShape(18.dp),
+                      color = MaterialTheme.colorScheme.surfaceContainerLow,
+                  ) {
+                      Column(content = content)
+                  }
+              }
+          }
+
+          @Composable
+          internal fun ConfigValuePreference(
+              title: String,
+              description: String,
+              value: String,
+              onClick: () -> Unit,
+              modifier: Modifier = Modifier,
+              enabled: Boolean = true,
+              message: String? = null,
+              messageLevel: ConfigMessageLevel = ConfigMessageLevel.Info,
+          ) {
+              Column(
+                  modifier = modifier
+                      .fillMaxWidth()
+                      .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+                      .padding(horizontal = 16.dp, vertical = 11.dp),
+                  verticalArrangement = Arrangement.spacedBy(4.dp),
+              ) {
+                  Text(
+                      text = title,
+                      style = MaterialTheme.typography.bodyLarge,
+                      color = if (enabled) MaterialTheme.colorScheme.onSurface
+                      else MaterialTheme.colorScheme.onSurfaceVariant,
+                  )
+                  Text(
+                      text = description,
+                      style = MaterialTheme.typography.bodySmall,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
+                  )
+                  if (message != null) {
+                      ConfigInlineMessage(message, messageLevel)
+                  }
+                  Row(
+                      modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+                      verticalAlignment = Alignment.CenterVertically,
+                  ) {
+                      Text(
+                          text = value,
+                          modifier = Modifier.weight(1f),
+                          style = MaterialTheme.typography.labelLarge,
+                          fontWeight = FontWeight.SemiBold,
+                          color = if (enabled) MaterialTheme.colorScheme.primary
+                          else MaterialTheme.colorScheme.onSurfaceVariant,
+                          maxLines = 2,
+                          overflow = TextOverflow.Ellipsis,
+                      )
+                      if (enabled) {
+                          Text(
+                              text = "›",
+                              style = MaterialTheme.typography.titleLarge,
+                              color = MaterialTheme.colorScheme.onSurfaceVariant,
+                          )
+                      }
+                  }
+              }
+          }
+
+          @Composable
+          internal fun ConfigSwitchPreference(
+              title: String,
+              description: String,
+              checked: Boolean,
+              onCheckedChange: (Boolean) -> Unit,
+              modifier: Modifier = Modifier,
+              message: String? = null,
+              messageLevel: ConfigMessageLevel = ConfigMessageLevel.Info,
+          ) {
+              Row(
+                  modifier = modifier
+                      .fillMaxWidth()
+                      .heightIn(min = 64.dp)
+                      .clickable { onCheckedChange(!checked) }
+                      .padding(horizontal = 16.dp, vertical = 10.dp),
+                  verticalAlignment = Alignment.CenterVertically,
+                  horizontalArrangement = Arrangement.spacedBy(12.dp),
+              ) {
+                  Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                      Text(text = title, style = MaterialTheme.typography.bodyLarge)
+                      Text(
+                          text = description,
+                          style = MaterialTheme.typography.bodySmall,
+                          color = MaterialTheme.colorScheme.onSurfaceVariant,
+                      )
+                      if (message != null) {
+                          ConfigInlineMessage(message, messageLevel)
+                      }
+                  }
+                  Switch(checked = checked, onCheckedChange = onCheckedChange)
+              }
+          }
+
+          @Composable
+          internal fun ConfigChoicePreference(
+              title: String,
+              description: String,
+              selected: String,
+              options: List<String>,
+              onSelected: (Int) -> Unit,
+              modifier: Modifier = Modifier,
+              message: String? = null,
+              messageLevel: ConfigMessageLevel = ConfigMessageLevel.Info,
+          ) {
+              var dialogVisible by remember(selected, options) { mutableStateOf(false) }
+              ConfigValuePreference(
+                  title = title,
+                  description = description,
+                  value = selected,
+                  enabled = options.isNotEmpty(),
+                  message = message,
+                  messageLevel = messageLevel,
+                  modifier = modifier,
+                  onClick = { dialogVisible = true },
+              )
+              if (dialogVisible) {
+                  ConfigChoiceDialog(
+                      title = title,
+                      description = description,
+                      selected = selected,
+                      options = options,
+                      onDismissRequest = { dialogVisible = false },
+                      onSelected = { index ->
+                          dialogVisible = false
+                          onSelected(index)
+                      },
+                  )
+              }
+          }
+
+          @Composable
+          internal fun ConfigNumberPreference(
+              title: String,
+              description: String,
+              value: String,
+              fallbackLabel: String,
+              keyboardType: KeyboardType,
+              onValueChange: (String) -> Unit,
+              modifier: Modifier = Modifier,
+              valueSuffix: String? = null,
+          ) {
+              var dialogVisible by remember(value) { mutableStateOf(false) }
+              val display = buildString {
+                  append(value.ifEmpty { fallbackLabel })
+                  if (value.isNotEmpty() && valueSuffix != null) append(" ").append(valueSuffix)
+              }
+              ConfigValuePreference(
+                  title = title,
+                  description = description,
+                  value = display,
+                  modifier = modifier,
+                  onClick = { dialogVisible = true },
+              )
+              if (dialogVisible) {
+                  ConfigNumberDialog(
+                      title = title,
+                      description = description,
+                      initialValue = value,
+                      label = null,
+                      keyboardType = keyboardType,
+                      valueSuffix = valueSuffix,
+                      onDismissRequest = { dialogVisible = false },
+                      onConfirm = { next ->
+                          dialogVisible = false
+                          onValueChange(next)
+                      },
+                  )
+              }
+          }
+
+          @Composable
+          internal fun ConfigColorPreference(
+              title: String,
+              description: String,
+              value: String,
+              onClick: () -> Unit,
+          ) {
+              Column(
+                  modifier = Modifier
+                      .fillMaxWidth()
+                      .clickable(role = Role.Button, onClick = onClick)
+                      .padding(horizontal = 16.dp, vertical = 11.dp),
+                  verticalArrangement = Arrangement.spacedBy(4.dp),
+              ) {
+                  Text(text = title, style = MaterialTheme.typography.bodyLarge)
+                  Text(
+                      text = description,
+                      style = MaterialTheme.typography.bodySmall,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
+                  )
+                  Row(
+                      modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+                      verticalAlignment = Alignment.CenterVertically,
+                      horizontalArrangement = Arrangement.spacedBy(8.dp),
+                  ) {
+                      Box(
+                          modifier = Modifier
+                              .size(24.dp)
+                              .clip(RoundedCornerShape(6.dp))
+                              .background(configColor(value)),
+                      )
+                      Text(
+                          text = "#${value.ifEmpty { "000000" }}",
+                          modifier = Modifier.weight(1f),
+                          style = MaterialTheme.typography.labelLarge,
+                          fontWeight = FontWeight.SemiBold,
+                          color = MaterialTheme.colorScheme.primary,
+                      )
+                      Text("›", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                  }
+              }
+          }
+
+          @Composable
+          internal fun ConfigActionPreference(
+              title: String,
+              description: String,
+              onClick: () -> Unit,
+              destructive: Boolean = false,
+              emphasized: Boolean = false,
+          ) {
+              Surface(
+                  modifier = Modifier.fillMaxWidth(),
+                  color = if (emphasized) MaterialTheme.colorScheme.errorContainer else Color.Transparent,
+                  shape = RoundedCornerShape(12.dp),
+              ) {
+                  Column(
+                      modifier = Modifier
+                          .fillMaxWidth()
+                          .clickable(role = Role.Button, onClick = onClick)
+                          .padding(horizontal = 16.dp, vertical = 11.dp),
+                      verticalArrangement = Arrangement.spacedBy(3.dp),
+                  ) {
+                      Text(
+                          text = title,
+                          style = MaterialTheme.typography.bodyLarge,
+                          color = when {
+                              emphasized -> MaterialTheme.colorScheme.onErrorContainer
+                              destructive -> MaterialTheme.colorScheme.error
+                              else -> MaterialTheme.colorScheme.onSurface
+                          },
+                      )
+                      Text(
+                          text = description,
+                          style = MaterialTheme.typography.bodySmall,
+                          color = if (emphasized) MaterialTheme.colorScheme.onErrorContainer
+                          else MaterialTheme.colorScheme.onSurfaceVariant,
+                      )
+                  }
+              }
+          }
+
+          @Composable
+          internal fun ConfigDisclosurePreference(
+              title: String,
+              description: String,
+              expanded: Boolean,
+              onExpandedChange: (Boolean) -> Unit,
+          ) {
+              Row(
+                  modifier = Modifier
+                      .fillMaxWidth()
+                      .clickable { onExpandedChange(!expanded) }
+                      .padding(horizontal = 16.dp, vertical = 10.dp),
+                  verticalAlignment = Alignment.CenterVertically,
+              ) {
+                  Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                      Text(text = title, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+                      Text(text = description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                  }
+                  Text(
+                      text = if (expanded) "⌃" else "⌄",
+                      style = MaterialTheme.typography.titleMedium,
+                      color = MaterialTheme.colorScheme.primary,
+                  )
+              }
+          }
+
+          @Composable
+          internal fun ConfigMessageBlock(text: String, level: ConfigMessageLevel = ConfigMessageLevel.Info) {
+              Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                  ConfigInlineMessage(text, level)
+              }
+          }
+
+          @Composable
+          private fun ConfigInlineMessage(text: String, level: ConfigMessageLevel) {
+              val container = when (level) {
+                  ConfigMessageLevel.Info -> MaterialTheme.colorScheme.primaryContainer
+                  ConfigMessageLevel.Warning -> MaterialTheme.colorScheme.tertiaryContainer
+                  ConfigMessageLevel.Danger -> MaterialTheme.colorScheme.errorContainer
+              }
+              val content = when (level) {
+                  ConfigMessageLevel.Info -> MaterialTheme.colorScheme.onPrimaryContainer
+                  ConfigMessageLevel.Warning -> MaterialTheme.colorScheme.onTertiaryContainer
+                  ConfigMessageLevel.Danger -> MaterialTheme.colorScheme.onErrorContainer
+              }
+              val prefix = when (level) {
+                  ConfigMessageLevel.Info -> "ⓘ "
+                  ConfigMessageLevel.Warning -> "⚠ "
+                  ConfigMessageLevel.Danger -> "⚠ "
+              }
+              Surface(shape = RoundedCornerShape(10.dp), color = container) {
+                  Text(
+                      text = prefix + text,
+                      modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
+                      style = MaterialTheme.typography.bodySmall,
+                      color = content,
+                  )
+              }
+          }
+
+          private fun configColor(value: String): Color {
+              return try {
+                  Color((0xFF000000L or value.trim().removePrefix("#").toLong(16)).toULong())
+              } catch (_: Throwable) {
+                  Color.Black
+              }
+          }
+          '''.replace("          ", ""))
+
+          profile_ui = Path("app/src/main/java/ru/playsoftware/j2meloader/config/ConfigProfilePanel.kt")
+          profile_ui.write_text(r'''/*
+           * Licensed under the Apache License, Version 2.0 (the "License");
+           */
+          package ru.playsoftware.j2meloader.config
+
+          import androidx.compose.foundation.clickable
+          import androidx.compose.foundation.layout.Arrangement
+          import androidx.compose.foundation.layout.Box
+          import androidx.compose.foundation.layout.Column
+          import androidx.compose.foundation.layout.Row
+          import androidx.compose.foundation.layout.fillMaxSize
+          import androidx.compose.foundation.layout.fillMaxWidth
+          import androidx.compose.foundation.layout.heightIn
+          import androidx.compose.foundation.layout.padding
+          import androidx.compose.foundation.layout.weight
+          import androidx.compose.foundation.layout.widthIn
+          import androidx.compose.foundation.lazy.LazyColumn
+          import androidx.compose.foundation.lazy.items
+          import androidx.compose.material3.AlertDialog
+          import androidx.compose.material3.Icon
+          import androidx.compose.material3.IconButton
+          import androidx.compose.material3.MaterialTheme
+          import androidx.compose.material3.OutlinedTextField
+          import androidx.compose.material3.Surface
+          import androidx.compose.material3.Text
+          import androidx.compose.material3.TextButton
+          import androidx.compose.runtime.Composable
+          import androidx.compose.runtime.getValue
+          import androidx.compose.runtime.mutableStateOf
+          import androidx.compose.runtime.remember
+          import androidx.compose.runtime.saveable.rememberSaveable
+          import androidx.compose.runtime.setValue
+          import androidx.compose.ui.Alignment
+          import androidx.compose.ui.Modifier
+          import androidx.compose.ui.res.painterResource
+          import androidx.compose.ui.res.stringResource
+          import androidx.compose.ui.text.font.FontWeight
+          import androidx.compose.ui.text.style.TextOverflow
+          import androidx.compose.ui.unit.dp
+          import androidx.compose.ui.window.Dialog
+          import androidx.compose.ui.window.DialogProperties
+          import ru.playsoftware.j2meloader.R
+
+          private sealed interface TemplateNameRequest {
+              data object Create : TemplateNameRequest
+              data class Rename(val oldName: String) : TemplateNameRequest
+          }
+
+          @Composable
+          internal fun ConfigProfilePanel(
+              status: ConfigUiState.ProfileStatus,
+              templates: List<ConfigUiState.ProfileTemplate>,
+              events: ConfigFormEvents,
+          ) {
+              var managerVisible by rememberSaveable { mutableStateOf(false) }
+              var nameRequest by remember { mutableStateOf<TemplateNameRequest?>(null) }
+              val currentTitle = when {
+                  status.modified && status.sourceProfile != null -> status.sourceProfile
+                  status.activeProfile != null -> status.activeProfile
+                  status.builtInDefault -> stringResource(R.string.profile_builtin_settings)
+                  else -> stringResource(R.string.profile_custom)
+              }
+              val currentSummary = when {
+                  status.modified -> stringResource(R.string.profile_modified_summary)
+                  status.activeProfile != null -> stringResource(R.string.profile_active_summary)
+                  status.builtInDefault -> stringResource(R.string.profile_builtin_settings_summary)
+                  else -> stringResource(R.string.profile_custom_summary)
+              }
+              val defaultSuffix = when {
+                  status.builtInDefault && status.defaultProfile == null -> stringResource(R.string.profile_default_badge)
+                  status.activeProfile != null && status.activeProfile == status.defaultProfile -> stringResource(R.string.profile_default_badge)
+                  status.modified && status.sourceProfile == status.defaultProfile -> stringResource(R.string.profile_default_badge)
+                  else -> null
+              }
+              val summary = if (defaultSuffix == null) currentSummary else "$currentSummary · $defaultSuffix"
+
+              ConfigSection(title = stringResource(R.string.profiles)) {
+                  ConfigValuePreference(
+                      title = currentTitle,
+                      description = summary,
+                      value = stringResource(R.string.profile_choose_or_manage),
+                      onClick = { managerVisible = true },
+                  )
+                  if (status.modified && status.sourceProfile != null) {
+                      ConfigActionPreference(
+                          title = stringResource(R.string.profile_update_template),
+                          description = stringResource(R.string.profile_update_template_summary, status.sourceProfile),
+                          onClick = { events.onUpdateTemplate(status.sourceProfile) },
+                      )
+                      ConfigActionPreference(
+                          title = stringResource(R.string.profile_save_as_new_template),
+                          description = stringResource(R.string.profile_save_as_new_template_summary),
+                          onClick = { nameRequest = TemplateNameRequest.Create },
+                      )
+                  } else if (status.activeProfile == null && !status.builtInDefault) {
+                      ConfigActionPreference(
+                          title = stringResource(R.string.profile_save_as_new_template),
+                          description = stringResource(R.string.profile_save_as_new_template_summary),
+                          onClick = { nameRequest = TemplateNameRequest.Create },
+                      )
+                  }
+              }
+
+              if (managerVisible) {
+                  ConfigTemplateManagerDialog(
+                      status = status,
+                      templates = templates,
+                      events = events,
+                      onDismissRequest = { managerVisible = false },
+                      onCreate = { nameRequest = TemplateNameRequest.Create },
+                      onRename = { name -> nameRequest = TemplateNameRequest.Rename(name) },
+                  )
+              }
+
+              nameRequest?.let { request ->
+                  ConfigTemplateNameDialog(
+                      title = stringResource(
+                          if (request is TemplateNameRequest.Rename) R.string.action_context_rename
+                          else R.string.profile_save_as_new_template,
+                      ),
+                      initialName = (request as? TemplateNameRequest.Rename)?.oldName.orEmpty(),
+                      existingNames = templates.map { it.name },
+                      onDismissRequest = { nameRequest = null },
+                      onConfirm = { name ->
+                          nameRequest = null
+                          when (request) {
+                              TemplateNameRequest.Create -> events.onSaveTemplate(name)
+                              is TemplateNameRequest.Rename -> events.onRenameTemplate(request.oldName, name)
+                          }
+                      },
+                  )
+              }
+          }
+
+          @Composable
+          private fun ConfigTemplateManagerDialog(
+              status: ConfigUiState.ProfileStatus,
+              templates: List<ConfigUiState.ProfileTemplate>,
+              events: ConfigFormEvents,
+              onDismissRequest: () -> Unit,
+              onCreate: () -> Unit,
+              onRename: (String) -> Unit,
+          ) {
+              var actionTarget by remember { mutableStateOf<ConfigUiState.ProfileTemplate?>(null) }
+              var deleteTarget by remember { mutableStateOf<ConfigUiState.ProfileTemplate?>(null) }
+              Dialog(
+                  onDismissRequest = onDismissRequest,
+                  properties = DialogProperties(usePlatformDefaultWidth = false),
+              ) {
+                  Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                      Surface(
+                          modifier = Modifier.fillMaxWidth(0.94f).widthIn(max = 560.dp).heightIn(max = 680.dp),
+                          shape = MaterialTheme.shapes.extraLarge,
+                          color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                          tonalElevation = 6.dp,
+                      ) {
+                          Column(modifier = Modifier.padding(vertical = 12.dp)) {
+                              Text(
+                                  text = stringResource(R.string.profile_templates_title),
+                                  style = MaterialTheme.typography.titleLarge,
+                                  modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
+                              )
+                              Text(
+                                  text = stringResource(R.string.profile_templates_summary),
+                                  style = MaterialTheme.typography.bodyMedium,
+                                  color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                  modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
+                              )
+                              LazyColumn(modifier = Modifier.weight(1f, fill = false).fillMaxWidth()) {
+                                  item(key = "__built_in__") {
+                                      TemplateRow(
+                                          name = stringResource(R.string.profile_builtin_settings),
+                                          summary = stringResource(R.string.profile_builtin_settings_summary),
+                                          isActive = status.builtInDefault,
+                                          isModifiedSource = false,
+                                          isDefault = status.defaultProfile == null,
+                                          onClick = {
+                                              events.onApplyBuiltInTemplate()
+                                              onDismissRequest()
+                                          },
+                                          onMore = if (status.defaultProfile == null) null else ({ events.onSetDefaultTemplate(null) }),
+                                          builtIn = true,
+                                      )
+                                  }
+                                  items(templates, key = { it.name }) { template ->
+                                      TemplateRow(
+                                          name = template.name,
+                                          summary = stringResource(R.string.profile_template_summary),
+                                          isActive = status.activeProfile == template.name,
+                                          isModifiedSource = status.modified && status.sourceProfile == template.name,
+                                          isDefault = template.isDefault,
+                                          onClick = {
+                                              events.onApplyTemplate(template.name)
+                                              onDismissRequest()
+                                          },
+                                          onMore = { actionTarget = template },
+                                      )
+                                  }
+                              }
+                              Row(
+                                  modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                                  horizontalArrangement = Arrangement.End,
+                              ) {
+                                  TextButton(onClick = onCreate) { Text(stringResource(R.string.profile_save_current_template)) }
+                                  TextButton(onClick = onDismissRequest) { Text(stringResource(android.R.string.cancel)) }
+                              }
+                          }
+                      }
+                  }
+              }
+
+              actionTarget?.let { template ->
+                  AlertDialog(
+                      onDismissRequest = { actionTarget = null },
+                      title = { Text(template.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                      text = {
+                          Column {
+                              if (!template.isDefault) {
+                                  TextButton(
+                                      modifier = Modifier.fillMaxWidth(),
+                                      onClick = {
+                                          actionTarget = null
+                                          events.onSetDefaultTemplate(template.name)
+                                      },
+                                  ) { Text(stringResource(R.string.set_as_default), modifier = Modifier.fillMaxWidth()) }
+                              }
+                              if (status.modified && status.sourceProfile == template.name) {
+                                  TextButton(
+                                      modifier = Modifier.fillMaxWidth(),
+                                      onClick = {
+                                          actionTarget = null
+                                          events.onUpdateTemplate(template.name)
+                                      },
+                                  ) { Text(stringResource(R.string.profile_update_template), modifier = Modifier.fillMaxWidth()) }
+                              }
+                              TextButton(
+                                  modifier = Modifier.fillMaxWidth(),
+                                  onClick = {
+                                      actionTarget = null
+                                      onRename(template.name)
+                                  },
+                              ) { Text(stringResource(R.string.action_context_rename), modifier = Modifier.fillMaxWidth()) }
+                              TextButton(
+                                  modifier = Modifier.fillMaxWidth(),
+                                  onClick = {
+                                      actionTarget = null
+                                      deleteTarget = template
+                                  },
+                              ) { Text(stringResource(R.string.action_context_delete), modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.error) }
+                          }
+                      },
+                      confirmButton = {},
+                  )
+              }
+
+              deleteTarget?.let { template ->
+                  AlertDialog(
+                      onDismissRequest = { deleteTarget = null },
+                      title = { Text(stringResource(R.string.action_context_delete)) },
+                      text = { Text(stringResource(R.string.profile_delete_template_message, template.name)) },
+                      dismissButton = {
+                          TextButton(onClick = { deleteTarget = null }) { Text(stringResource(android.R.string.cancel)) }
+                      },
+                      confirmButton = {
+                          TextButton(
+                              onClick = {
+                                  deleteTarget = null
+                                  events.onDeleteTemplate(template.name)
+                              },
+                          ) { Text(stringResource(R.string.action_context_delete), color = MaterialTheme.colorScheme.error) }
+                      },
+                  )
+              }
+          }
+
+          @Composable
+          private fun TemplateRow(
+              name: String,
+              summary: String,
+              isActive: Boolean,
+              isModifiedSource: Boolean,
+              isDefault: Boolean,
+              onClick: () -> Unit,
+              onMore: (() -> Unit)?,
+              builtIn: Boolean = false,
+          ) {
+              Row(
+                  modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 20.dp, vertical = 10.dp),
+                  verticalAlignment = Alignment.CenterVertically,
+                  horizontalArrangement = Arrangement.spacedBy(8.dp),
+              ) {
+                  Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                      Text(text = name, style = MaterialTheme.typography.bodyLarge, fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal)
+                      Text(
+                          text = buildString {
+                              append(summary)
+                              if (isActive) append(" · ").append(stringResource(R.string.profile_active_badge))
+                              else if (isModifiedSource) append(" · ").append(stringResource(R.string.profile_modified_badge))
+                          },
+                          style = MaterialTheme.typography.bodySmall,
+                          color = MaterialTheme.colorScheme.onSurfaceVariant,
+                      )
+                  }
+                  if (isDefault) {
+                      Text(
+                          text = stringResource(R.string.profile_default_badge_short),
+                          style = MaterialTheme.typography.labelMedium,
+                          color = MaterialTheme.colorScheme.primary,
+                      )
+                  }
+                  if (onMore != null) {
+                      if (builtIn) {
+                          TextButton(onClick = onMore) { Text(stringResource(R.string.set_as_default)) }
+                      } else {
+                          IconButton(onClick = onMore) {
+                              Icon(
+                                  painter = painterResource(R.drawable.ic_more_vert),
+                                  contentDescription = stringResource(R.string.more),
+                              )
+                          }
+                      }
+                  }
+              }
+          }
+
+          @Composable
+          private fun ConfigTemplateNameDialog(
+              title: String,
+              initialName: String,
+              existingNames: List<String>,
+              onDismissRequest: () -> Unit,
+              onConfirm: (String) -> Unit,
+          ) {
+              var value by rememberSaveable(initialName) { mutableStateOf(initialName) }
+              val trimmed = value.trim()
+              val duplicate = existingNames.any { it.equals(trimmed, ignoreCase = true) && !it.equals(initialName, ignoreCase = false) }
+              val valid = trimmed.isNotEmpty() && !duplicate && trimmed != initialName
+              AlertDialog(
+                  onDismissRequest = onDismissRequest,
+                  title = { Text(title) },
+                  text = {
+                      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                          OutlinedTextField(
+                              value = value,
+                              onValueChange = { value = it },
+                              singleLine = true,
+                              modifier = Modifier.fillMaxWidth(),
+                              label = { Text(stringResource(R.string.profile_name_label)) },
+                              isError = duplicate,
+                          )
+                          if (duplicate) {
+                              Text(
+                                  text = stringResource(R.string.profile_name_exists),
+                                  color = MaterialTheme.colorScheme.error,
+                                  style = MaterialTheme.typography.bodySmall,
+                              )
+                          }
+                      }
+                  },
+                  dismissButton = { TextButton(onClick = onDismissRequest) { Text(stringResource(android.R.string.cancel)) } },
+                  confirmButton = {
+                      TextButton(enabled = valid, onClick = { onConfirm(trimmed) }) { Text(stringResource(R.string.save)) }
+                  },
+              )
+          }
+          '''.replace("          ", ""))
+
+          state = "app/src/main/java/ru/playsoftware/j2meloader/config/ConfigUiState.java"
+          replace_once(
+              state,
+              '''\t@NonNull\n\tpublic final ProfileStatus profileStatus;\n''',
+              '''\t@NonNull\n\tpublic final ProfileStatus profileStatus;\n\t@NonNull\n\tpublic final List<ProfileTemplate> profileTemplates;\n''',
+          )
+          replace_once(
+              state,
+              '''\tpublic ConfigUiState(\n\t\t\t@NonNull ConfigFormState form,\n\t\t\t@NonNull List<Size> screenPresets,\n\t\t\t@NonNull List<FontPreset> fontPresets,\n\t\t\t@NonNull List<String> skins,\n\t\t\t@NonNull List<String> soundBanks,\n\t\t\t@NonNull List<ShaderInfo> shaders,\n\t\t\t@NonNull List<Size> removableScreenPresets,\n\t\t\t@NonNull ProfileStatus profileStatus) {\n\t\tthis.form = form;\n\t\tthis.screenPresets = immutableCopy(screenPresets);\n\t\tthis.removableScreenPresets = immutableCopy(removableScreenPresets);\n\t\tthis.fontPresets = immutableCopy(fontPresets);\n\t\tthis.skins = immutableCopy(skins);\n\t\tthis.soundBanks = immutableCopy(soundBanks);\n\t\tthis.shaders = immutableCopy(shaders);\n\t\tthis.profileStatus = profileStatus;\n\t}\n''',
+              '''\tpublic ConfigUiState(\n\t\t\t@NonNull ConfigFormState form,\n\t\t\t@NonNull List<Size> screenPresets,\n\t\t\t@NonNull List<FontPreset> fontPresets,\n\t\t\t@NonNull List<String> skins,\n\t\t\t@NonNull List<String> soundBanks,\n\t\t\t@NonNull List<ShaderInfo> shaders,\n\t\t\t@NonNull List<Size> removableScreenPresets,\n\t\t\t@NonNull ProfileStatus profileStatus) {\n\t\tthis(form, screenPresets, fontPresets, skins, soundBanks, shaders, removableScreenPresets,\n\t\t\t\tprofileStatus, Collections.emptyList());\n\t}\n\n\tpublic ConfigUiState(\n\t\t\t@NonNull ConfigFormState form,\n\t\t\t@NonNull List<Size> screenPresets,\n\t\t\t@NonNull List<FontPreset> fontPresets,\n\t\t\t@NonNull List<String> skins,\n\t\t\t@NonNull List<String> soundBanks,\n\t\t\t@NonNull List<ShaderInfo> shaders,\n\t\t\t@NonNull List<Size> removableScreenPresets,\n\t\t\t@NonNull ProfileStatus profileStatus,\n\t\t\t@NonNull List<ProfileTemplate> profileTemplates) {\n\t\tthis.form = form;\n\t\tthis.screenPresets = immutableCopy(screenPresets);\n\t\tthis.removableScreenPresets = immutableCopy(removableScreenPresets);\n\t\tthis.fontPresets = immutableCopy(fontPresets);\n\t\tthis.skins = immutableCopy(skins);\n\t\tthis.soundBanks = immutableCopy(soundBanks);\n\t\tthis.shaders = immutableCopy(shaders);\n\t\tthis.profileStatus = profileStatus;\n\t\tthis.profileTemplates = immutableCopy(profileTemplates);\n\t}\n''',
+          )
+          replace_once(
+              state,
+              '''\t/** Profile matching result used by the MIDlet General destination. */\n\tpublic static final class ProfileStatus {\n''',
+              '''\tpublic static final class ProfileTemplate {\n\t\t@NonNull public final String name;\n\t\tpublic final boolean isDefault;\n\n\t\tpublic ProfileTemplate(@NonNull String name, boolean isDefault) {\n\t\t\tthis.name = name;\n\t\t\tthis.isDefault = isDefault;\n\t\t}\n\t}\n\n\t/** Profile matching result used by the MIDlet General destination. */\n\tpublic static final class ProfileStatus {\n''',
+          )
+          replace_once(
+              state,
+              '''\t\t@Nullable\n\t\tpublic final String defaultProfile;\n\t\tpublic final boolean builtInDefault;\n\n\t\tprivate ProfileStatus(@Nullable String activeProfile, @Nullable String defaultProfile,\n\t\t\t\tboolean builtInDefault) {\n\t\t\tthis.activeProfile = activeProfile;\n\t\t\tthis.defaultProfile = defaultProfile;\n\t\t\tthis.builtInDefault = builtInDefault;\n\t\t}\n''',
+              '''\t\t@Nullable\n\t\tpublic final String sourceProfile;\n\t\t@Nullable\n\t\tpublic final String defaultProfile;\n\t\tpublic final boolean builtInDefault;\n\t\tpublic final boolean modified;\n\n\t\tprivate ProfileStatus(@Nullable String activeProfile, @Nullable String sourceProfile,\n\t\t\t\t@Nullable String defaultProfile, boolean builtInDefault, boolean modified) {\n\t\t\tthis.activeProfile = activeProfile;\n\t\t\tthis.sourceProfile = sourceProfile;\n\t\t\tthis.defaultProfile = defaultProfile;\n\t\t\tthis.builtInDefault = builtInDefault;\n\t\t\tthis.modified = modified;\n\t\t}\n''',
+          )
+          replace_once(state, 'return new ProfileStatus(null, defaultProfile, false);', 'return new ProfileStatus(null, null, defaultProfile, false, false);')
+          replace_once(state, 'return new ProfileStatus(null, defaultProfile, true);', 'return new ProfileStatus(null, null, defaultProfile, true, false);')
+          replace_once(state, 'return new ProfileStatus(activeProfile, defaultProfile, false);', 'return new ProfileStatus(activeProfile, activeProfile, defaultProfile, false, false);')
+          replace_once(
+              state,
+              '''\t\t@NonNull\n\t\tpublic static ProfileStatus active(@NonNull String activeProfile,\n\t\t\t\t@Nullable String defaultProfile) {\n\t\t\treturn new ProfileStatus(activeProfile, activeProfile, defaultProfile, false, false);\n\t\t}\n''',
+              '''\t\t@NonNull\n\t\tpublic static ProfileStatus active(@NonNull String activeProfile,\n\t\t\t\t@Nullable String defaultProfile) {\n\t\t\treturn new ProfileStatus(activeProfile, activeProfile, defaultProfile, false, false);\n\t\t}\n\n\t\t@NonNull\n\t\tpublic static ProfileStatus modified(@NonNull String sourceProfile,\n\t\t\t\t@Nullable String defaultProfile) {\n\t\t\treturn new ProfileStatus(null, sourceProfile, defaultProfile, false, true);\n\t\t}\n''',
+          )
+
+          events = "app/src/main/java/ru/playsoftware/j2meloader/config/ConfigFormEvents.java"
+          replace_once(events, 'import androidx.annotation.NonNull;\n', 'import androidx.annotation.NonNull;\nimport androidx.annotation.Nullable;\n')
+          replace_once(
+              events,
+              '''\t/** Opens profile template management from the General destination. */\n\tdefault void onManageProfiles() {\n\t}\n''',
+              '''\t/** Opens profile template management from the General destination. */\n\tdefault void onManageProfiles() {\n\t}\n\n\tdefault void onApplyBuiltInTemplate() {\n\t}\n\n\tdefault void onApplyTemplate(@NonNull String name) {\n\t}\n\n\tdefault void onSaveTemplate(@NonNull String name) {\n\t}\n\n\tdefault void onUpdateTemplate(@NonNull String name) {\n\t}\n\n\tdefault void onRenameTemplate(@NonNull String oldName, @NonNull String newName) {\n\t}\n\n\tdefault void onDeleteTemplate(@NonNull String name) {\n\t}\n\n\tdefault void onSetDefaultTemplate(@Nullable String name) {\n\t}\n''',
+          )
+
+          activity = "app/src/main/java/ru/playsoftware/j2meloader/config/ConfigActivity.java"
+          replace_once(
+              activity,
+              '''\tprivate byte[] currentKeyLayoutSnapshot;\n''',
+              '''\tprivate byte[] currentKeyLayoutSnapshot;\n\t@Nullable private String profileOrigin;\n''',
+          )
+          replace_once(
+              activity,
+              '''\t\t@Override\n\t\tpublic void onManageProfiles() {\n\t\t\tstartActivity(new Intent(ConfigActivity.this, ProfilesActivity.class));\n\t\t}\n\n\t};\n''',
+              '''\t\t@Override\n\t\tpublic void onManageProfiles() {\n\t\t\tstartActivity(new Intent(ConfigActivity.this, ProfilesActivity.class));\n\t\t}\n\n\t\t@Override\n\t\tpublic void onApplyBuiltInTemplate() {\n\t\t\tapplyBuiltInTemplate();\n\t\t}\n\n\t\t@Override\n\t\tpublic void onApplyTemplate(@NonNull String name) {\n\t\t\tapplyTemplate(name);\n\t\t}\n\n\t\t@Override\n\t\tpublic void onSaveTemplate(@NonNull String name) {\n\t\t\tsaveTemplate(name);\n\t\t}\n\n\t\t@Override\n\t\tpublic void onUpdateTemplate(@NonNull String name) {\n\t\t\tupdateTemplate(name);\n\t\t}\n\n\t\t@Override\n\t\tpublic void onRenameTemplate(@NonNull String oldName, @NonNull String newName) {\n\t\t\trenameTemplate(oldName, newName);\n\t\t}\n\n\t\t@Override\n\t\tpublic void onDeleteTemplate(@NonNull String name) {\n\t\t\tdeleteTemplate(name);\n\t\t}\n\n\t\t@Override\n\t\tpublic void onSetDefaultTemplate(@Nullable String name) {\n\t\t\tsetDefaultTemplate(name);\n\t\t}\n\n\t};\n''',
+          )
+          replace_once(
+              activity,
+              '''\t\tconfigDir.mkdirs();\n\t\tbuiltInDefaultParams = new ProfileModel(configDir);\n''',
+              '''\t\tconfigDir.mkdirs();\n\t\tprofileOrigin = readProfileOrigin();\n\t\tbuiltInDefaultParams = new ProfileModel(configDir);\n''',
+          )
+          replace_once(
+              activity,
+              '''\t\t\t\t\t@Override\n\t\t\t\t\tpublic void onResetSettings() {\n\t\t\t\t\t\tparams = new ProfileModel(configDir);\n\t\t\t\t\t\tloadParams(false);\n\t\t\t\t\t}\n''',
+              '''\t\t\t\t\t@Override\n\t\t\t\t\tpublic void onResetSettings() {\n\t\t\t\t\t\tsetProfileOrigin(null);\n\t\t\t\t\t\tparams = new ProfileModel(configDir);\n\t\t\t\t\t\tloadParams(false);\n\t\t\t\t\t}\n''',
+          )
+          marker = '''\tprivate void showLoadProfile() {\n'''
+          helper = r'''\tprivate void applyBuiltInTemplate() {
+\t\tsetProfileOrigin(null);
+\t\tparams = new ProfileModel(configDir);
+\t\tcurrentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
+\t\trefreshProfileMatchCache();
+\t\tif (composeController != null) {
+\t\t\tcomposeController.update(createUiState());
+\t\t}
+\t}
+
+\tprivate void applyTemplate(@NonNull String name) {
+\t\tProfile profile = findProfile(name);
+\t\tif (profile == null) return;
+\t\ttry {
+\t\t\tProfilesManager.load(profile, configDir.getPath(), true, profile.hasKeyLayout());
+\t\t\tsetProfileOrigin(profile.getName());
+\t\t\tloadParams(true);
+\t\t} catch (IOException e) {
+\t\t\tLog.e(TAG, "applyTemplate: " + name, e);
+\t\t\tToast.makeText(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT).show();
+\t\t}
+\t}
+
+\tprivate void saveTemplate(@NonNull String rawName) {
+\t\tString name = rawName.trim();
+\t\tif (name.isEmpty() || findProfile(name) != null) {
+\t\t\tToast.makeText(this, R.string.profile_name_exists, Toast.LENGTH_SHORT).show();
+\t\t\treturn;
+\t\t}
+\t\ttry {
+\t\t\tsaveParams();
+\t\t\tProfile profile = new Profile(name);
+\t\t\tProfilesManager.saveSnapshot(profile, configDir.getPath());
+\t\t\tsetProfileOrigin(name);
+\t\t\trefreshProfileMatchCache();
+\t\t\tcomposeController.update(createUiState());
+\t\t} catch (IOException e) {
+\t\t\tLog.e(TAG, "saveTemplate: " + name, e);
+\t\t\tToast.makeText(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT).show();
+\t\t}
+\t}
+
+\tprivate void updateTemplate(@NonNull String name) {
+\t\tProfile profile = findProfile(name);
+\t\tif (profile == null) return;
+\t\ttry {
+\t\t\tsaveParams();
+\t\t\tProfilesManager.saveSnapshot(profile, configDir.getPath());
+\t\t\tsetProfileOrigin(name);
+\t\t\trefreshProfileMatchCache();
+\t\t\tcomposeController.update(createUiState());
+\t\t} catch (IOException e) {
+\t\t\tLog.e(TAG, "updateTemplate: " + name, e);
+\t\t\tToast.makeText(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT).show();
+\t\t}
+\t}
+
+\tprivate void renameTemplate(@NonNull String oldName, @NonNull String rawNewName) {
+\t\tString newName = rawNewName.trim();
+\t\tProfile profile = findProfile(oldName);
+\t\tif (profile == null || newName.isEmpty() || findProfile(newName) != null) return;
+\t\tif (!profile.renameTo(newName)) {
+\t\t\tToast.makeText(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT).show();
+\t\t\treturn;
+\t\t}
+\t\tSharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+\t\tif (oldName.equals(preferences.getString(PREF_DEFAULT_PROFILE, null))) {
+\t\t\tpreferences.edit().putString(PREF_DEFAULT_PROFILE, newName).apply();
+\t\t}
+\t\tif (oldName.equals(profileOrigin)) setProfileOrigin(newName);
+\t\trefreshProfileMatchCache();
+\t\tcomposeController.update(createUiState());
+\t}
+
+\tprivate void deleteTemplate(@NonNull String name) {
+\t\tProfile profile = findProfile(name);
+\t\tif (profile == null) return;
+\t\tprofile.delete();
+\t\tSharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+\t\tif (name.equals(preferences.getString(PREF_DEFAULT_PROFILE, null))) {
+\t\t\tpreferences.edit().remove(PREF_DEFAULT_PROFILE).apply();
+\t\t}
+\t\tif (name.equals(profileOrigin)) setProfileOrigin(null);
+\t\trefreshProfileMatchCache();
+\t\tcomposeController.update(createUiState());
+\t}
+
+\tprivate void setDefaultTemplate(@Nullable String name) {
+\t\tSharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
+\t\tif (name == null) editor.remove(PREF_DEFAULT_PROFILE);
+\t\telse if (findProfile(name) != null) editor.putString(PREF_DEFAULT_PROFILE, name);
+\t\telse return;
+\t\teditor.apply();
+\t\tif (composeController != null) composeController.update(createUiState());
+\t}
+
+\t@Nullable
+\tprivate Profile findProfile(@NonNull String name) {
+\t\tfor (Profile profile : ProfilesManager.getProfiles()) {
+\t\t\tif (profile.getName().equals(name)) return profile;
+\t\t}
+\t\treturn null;
+\t}
+
+\tprivate String profileOriginKey() {
+\t\treturn "config_profile_origin:" + configDir.getAbsolutePath();
+\t}
+
+\t@Nullable
+\tprivate String readProfileOrigin() {
+\t\tif (isProfile || configDir == null) return null;
+\t\treturn PreferenceManager.getDefaultSharedPreferences(this).getString(profileOriginKey(), null);
+\t}
+
+\tprivate void setProfileOrigin(@Nullable String name) {
+\t\tprofileOrigin = name;
+\t\tif (isProfile || configDir == null) return;
+\t\tSharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
+\t\tif (name == null) editor.remove(profileOriginKey());
+\t\telse editor.putString(profileOriginKey(), name);
+\t\teditor.apply();
+\t}
+
+'''.replace('\\t','\t').replace('\\n','\n')
+          p = Path(activity)
+          text = p.read_text()
+          if marker not in text:
+              raise SystemExit("ConfigActivity helper marker missing")
+          p.write_text(text.replace(marker, helper + marker, 1))
+
+          sub_once(
+              activity,
+              r'''\tprivate ConfigUiState createUiState\(\) \{.*?\n\t\}\n\n\tprivate String normalizedSystemProperties''',
+              r'''\tprivate ConfigUiState createUiState() {
+\t\tConfigFormState state = currentForm == null
+\t\t\t\t? ConfigFormState.fromProfile(params, normalizedSystemProperties())
+\t\t\t\t: currentForm;
+\t\tString defaultProfile = PreferenceManager.getDefaultSharedPreferences(this)
+\t\t\t\t.getString(PREF_DEFAULT_PROFILE, null);
+\t\tProfile activeProfile = isProfile ? null : ProfileConfigMatcher.findMatchCached(
+\t\t\t\tparams, state, profileCandidates, defaultProfile, currentKeyLayoutSnapshot);
+\t\tConfigUiState.ProfileStatus profileStatus;
+\t\tif (activeProfile != null) {
+\t\t\tif (!activeProfile.getName().equals(profileOrigin)) setProfileOrigin(activeProfile.getName());
+\t\t\tprofileStatus = ConfigUiState.ProfileStatus.active(activeProfile.getName(), defaultProfile);
+\t\t} else if (!isProfile && builtInDefaultParams != null
+\t\t\t\t&& ProfileConfigMatcher.sameEffectiveConfig(params, state, builtInDefaultParams)) {
+\t\t\tif (profileOrigin != null) setProfileOrigin(null);
+\t\t\tprofileStatus = ConfigUiState.ProfileStatus.builtInDefault(defaultProfile);
+\t\t} else if (!isProfile && profileOrigin != null && findProfileCandidate(profileOrigin) != null) {
+\t\t\tprofileStatus = ConfigUiState.ProfileStatus.modified(profileOrigin, defaultProfile);
+\t\t} else {
+\t\t\tif (!isProfile && profileOrigin != null) setProfileOrigin(null);
+\t\t\tprofileStatus = ConfigUiState.ProfileStatus.custom(defaultProfile);
+\t\t}
+\t\tArrayList<ConfigUiState.ProfileTemplate> templates = new ArrayList<>();
+\t\tfor (ProfileConfigMatcher.Candidate candidate : profileCandidates) {
+\t\t\tString name = candidate.profile.getName();
+\t\t\ttemplates.add(new ConfigUiState.ProfileTemplate(name, name.equals(defaultProfile)));
+\t\t}
+\t\treturn new ConfigUiState(state, screenPresets, fontPresets, skinOptions, soundBankOptions,
+\t\t\t\tshaders == null ? Collections.emptyList() : shaders, removableScreenPresets,
+\t\t\t\tprofileStatus, templates);
+\t}
+
+\t@Nullable
+\tprivate ProfileConfigMatcher.Candidate findProfileCandidate(@NonNull String name) {
+\t\tfor (ProfileConfigMatcher.Candidate candidate : profileCandidates) {
+\t\t\tif (candidate.profile.getName().equals(name)) return candidate;
+\t\t}
+\t\treturn null;
+\t}
+
+\tprivate String normalizedSystemProperties'''.replace('\\t','\t').replace('\\n','\n'),
+              flags=re.S,
+          )
+
+          compose = "app/src/main/java/ru/playsoftware/j2meloader/config/ConfigComposeBridge.kt"
+          replace_once(compose, 'import androidx.compose.ui.text.input.KeyboardType\n', 'import androidx.compose.ui.text.font.FontWeight\nimport androidx.compose.ui.text.input.KeyboardType\n')
+          replace_once(
+              compose,
+              '''    if (showProfileStatus) {\n        ProfileStatusCard(state.profileStatus, events)\n    }\n''',
+              '''    if (showProfileStatus) {\n        ConfigProfilePanel(state.profileStatus, state.profileTemplates, events)\n    }\n''',
+          )
+
+          sub_once(
+              compose,
+              r'''@Composable\nprivate fun GeneralDestination\(.*?\n\}\n\n@Composable\nprivate fun ProfileStatusCard''',
+              r'''@Composable
+private fun GeneralDestination(
+    state: ConfigUiState,
+    form: ConfigFormState,
+    onFormChanged: (ConfigFormState) -> Unit,
+    events: ConfigFormEvents,
+    showProfileStatus: Boolean,
+) {
+    if (showProfileStatus) {
+        ConfigProfilePanel(state.profileStatus, state.profileTemplates, events)
+    }
+    var presetsDialogVisible by rememberSaveable { mutableStateOf(false) }
+    ConfigSection(title = stringResource(R.string.config_general_settings)) {
+        ConfigValuePreference(
+            title = stringResource(R.string.config_screen_size),
+            description = stringResource(R.string.config_help_screen_size),
+            value = "${form.screenWidth} × ${form.screenHeight}",
+            onClick = { presetsDialogVisible = true },
+        )
+        val orientationOptions = stringArrayResource(R.array.PREF_ORIENTATION_ENTRIES).toList()
+        ConfigChoicePreference(
+            title = stringResource(R.string.PREF_ORIENTATION),
+            description = stringResource(R.string.config_help_orientation),
+            selected = orientationOptions.getOrElse(form.orientation) { orientationOptions.firstOrNull().orEmpty() },
+            options = orientationOptions,
+            onSelected = { index -> onFormChanged(form.toBuilder().orientation(index).build()) },
+        )
+        val scaleOptions = stringArrayResource(R.array.pref_scale_type_entries).toList()
+        ConfigChoicePreference(
+            title = stringResource(R.string.pref_screen_scale_type),
+            description = stringResource(R.string.config_help_scale_type),
+            selected = scaleOptions.getOrElse(form.screenScaleType) { scaleOptions.firstOrNull().orEmpty() },
+            options = scaleOptions,
+            onSelected = { index -> onFormChanged(form.toBuilder().screenScaleType(index).build()) },
+        )
+        ConfigNumberPreference(
+            title = stringResource(R.string.PREF_SCALE_RATIO),
+            description = stringResource(R.string.config_help_scale_ratio),
+            value = form.screenScaleRatio,
+            fallbackLabel = "100",
+            valueSuffix = "%",
+            keyboardType = KeyboardType.Number,
+            onValueChange = { value ->
+                onFormChanged(form.toBuilder().screenScaleRatio(normalizeScaleRatio(value)).build())
+            },
+        )
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
+            description = stringResource(R.string.config_help_virtual_keyboard),
+            checked = form.showKeyboard,
+            onCheckedChange = { checked -> onFormChanged(form.toBuilder().showKeyboard(checked).build()) },
+        )
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_TOUCH_INPUT),
+            description = stringResource(R.string.config_help_touch_input),
+            checked = form.touchInput,
+            onCheckedChange = { checked -> onFormChanged(form.toBuilder().touchInput(checked).build()) },
+        )
+    }
+    if (presetsDialogVisible) {
+        val selectedPreset = form.screenWidth.toIntOrNull()?.let { width ->
+            form.screenHeight.toIntOrNull()?.let { height -> Size(width, height) }
+        }
+        ScreenPresetDialog(
+            presets = state.screenPresets,
+            removablePresets = state.removableScreenPresets,
+            selectedPreset = selectedPreset,
+            onDismissRequest = { presetsDialogVisible = false },
+            onSelected = { preset ->
+                presetsDialogVisible = false
+                onFormChanged(
+                    form.toBuilder().screenWidth(preset.width.toString()).screenHeight(preset.height.toString()).build(),
+                )
+            },
+            onSwap = {
+                presetsDialogVisible = false
+                onFormChanged(
+                    form.toBuilder().screenWidth(form.screenHeight).screenHeight(form.screenWidth).build(),
+                )
+            },
+            onAdd = events::onAddResolutionPreset,
+            onRemove = events::onRemoveResolutionPreset,
+        )
+    }
+}
+
+@Composable
+private fun ProfileStatusCard''',
+              flags=re.S,
+          )
+          # Remove the obsolete profile card implementation while keeping the next function marker.
+          sub_once(
+              compose,
+              r'''@Composable\nprivate fun ProfileStatusCard\(.*?\n\}\n\n@Composable\nprivate fun MediaDestination''',
+              '''@Composable\nprivate fun MediaDestination''',
+              flags=re.S,
+          )
+
+          sub_once(
+              compose,
+              r'''@Composable\nprivate fun ScreenSection\(.*?\n\}\n\n@Composable\ninternal fun ScreenPresetDialog''',
+              r'''@Composable
+private fun ScreenSection(
+    form: ConfigFormState,
+    state: ConfigUiState,
+    onFormChanged: (ConfigFormState) -> Unit,
+    events: ConfigFormEvents,
+) {
+    var advancedExpanded by rememberSaveable { mutableStateOf(false) }
+    ConfigSection(title = stringResource(R.string.PREF_SCREEN_OPTIONS)) {
+        ConfigColorPreference(
+            title = stringResource(R.string.PREF_BACKGROUND),
+            description = stringResource(R.string.config_help_background),
+            value = form.screenBackground,
+            onClick = { events.onColorPicker(ConfigFormEvents.ColorField.SCREEN_BACKGROUND) },
+        )
+        val skinIndex = state.skins.indexOfFirst { it == form.screenBackgroundImage }.coerceAtLeast(0)
+        ConfigChoicePreference(
+            title = stringResource(R.string.pref_skin_title),
+            description = stringResource(R.string.config_help_skin),
+            selected = state.skins.getOrElse(skinIndex) { "" },
+            options = state.skins,
+            onSelected = { index ->
+                onFormChanged(
+                    form.toBuilder().screenBackgroundImage(if (index == 0) null else state.skins.getOrNull(index)).build(),
+                )
+            },
+        )
+        val gravityOptions = stringArrayResource(R.array.pref_screen_gravity_entries).toList()
+        ConfigChoicePreference(
+            title = stringResource(R.string.pref_screen_gravity),
+            description = stringResource(R.string.config_help_screen_gravity),
+            selected = gravityOptions.getOrElse(form.screenGravity) { gravityOptions.firstOrNull().orEmpty() },
+            options = gravityOptions,
+            onSelected = { index -> onFormChanged(form.toBuilder().screenGravity(index).build()) },
+        )
+        ConfigNumberPreference(
+            title = stringResource(R.string.pref_screen_padding_title),
+            description = stringResource(R.string.config_help_screen_padding),
+            value = form.screenPadding,
+            fallbackLabel = "0",
+            keyboardType = KeyboardType.Number,
+            onValueChange = { value -> onFormChanged(form.toBuilder().screenPadding(value).build()) },
+        )
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_FILTER),
+            description = stringResource(R.string.config_help_filter),
+            checked = form.screenFilter,
+            onCheckedChange = { checked -> onFormChanged(form.toBuilder().screenFilter(checked).build()) },
+        )
+        ConfigDisclosurePreference(
+            title = stringResource(R.string.config_advanced_settings),
+            description = stringResource(R.string.config_help_advanced_graphics),
+            expanded = advancedExpanded,
+            onExpandedChange = { advancedExpanded = it },
+        )
+        if (advancedExpanded) {
+            ConfigSwitchPreference(
+                title = stringResource(R.string.PREF_IMMEDIATE),
+                description = stringResource(R.string.config_help_immediate),
+                checked = form.immediateMode,
+                onCheckedChange = { checked -> onFormChanged(form.toBuilder().immediateMode(checked).build()) },
+            )
+            val graphicsOptions = stringArrayResource(R.array.pref_graphics_mode_entries).toList()
+            ConfigChoicePreference(
+                title = stringResource(R.string.pref_graphics_mode_title),
+                description = stringResource(R.string.config_help_graphics_mode),
+                selected = graphicsOptions.getOrElse(form.graphicsMode) { graphicsOptions.firstOrNull().orEmpty() },
+                options = graphicsOptions,
+                onSelected = { index -> onFormChanged(form.toBuilder().graphicsMode(index).build()) },
+            )
+            if (form.graphicsMode == 1) {
+                val shaderIndex = state.shaders.indexOfFirst { it == form.shader }.coerceAtLeast(0)
+                ConfigChoicePreference(
+                    title = stringResource(R.string.PREF_SHADER_FILTER),
+                    description = stringResource(R.string.config_help_shader),
+                    selected = state.shaders.getOrElse(shaderIndex) { "" }.toString(),
+                    options = state.shaders.map { it.toString() },
+                    onSelected = { index ->
+                        onFormChanged(form.toBuilder().shader(if (index == 0) null else state.shaders.getOrNull(index)).build())
+                    },
+                )
+                val selectedShader = state.shaders.getOrNull(shaderIndex)
+                if (selectedShader?.hasTunableSettings() == true) {
+                    ConfigActionPreference(
+                        title = stringResource(R.string.shader_tuning),
+                        description = stringResource(R.string.config_help_shader_tuning),
+                        onClick = events::onShaderTuning,
+                    )
+                }
+            }
+            if (form.graphicsMode == 0 || form.graphicsMode == 3) {
+                ConfigSwitchPreference(
+                    title = stringResource(R.string.parallel_screen_redrawing),
+                    description = stringResource(R.string.config_help_parallel_redraw),
+                    checked = form.parallelRedrawScreen,
+                    onCheckedChange = { checked -> onFormChanged(form.toBuilder().parallelRedrawScreen(checked).build()) },
+                )
+            }
+            ConfigSwitchPreference(
+                title = stringResource(R.string.PREF_FORCE_FULLSCREEN),
+                description = stringResource(R.string.config_help_force_fullscreen),
+                checked = form.forceFullscreen,
+                onCheckedChange = { checked -> onFormChanged(form.toBuilder().forceFullscreen(checked).build()) },
+            )
+            ConfigSwitchPreference(
+                title = stringResource(R.string.PREF_SHOW_FPS),
+                description = stringResource(R.string.config_help_show_fps),
+                checked = form.showFps,
+                onCheckedChange = { checked -> onFormChanged(form.toBuilder().showFps(checked).build()) },
+            )
+            ConfigNumberPreference(
+                title = stringResource(R.string.PREF_LIMIT_FPS),
+                description = stringResource(R.string.config_help_fps_limit),
+                value = form.fpsLimit,
+                fallbackLabel = stringResource(R.string.unlimited),
+                keyboardType = KeyboardType.Number,
+                onValueChange = { value -> onFormChanged(form.toBuilder().fpsLimit(value).build()) },
+            )
+        }
+    }
+}
+
+@Composable
+internal fun ScreenPresetDialog''',
+              flags=re.S,
+          )
+          replace_once(
+              compose,
+              '''    onSelected: (Size) -> Unit,\n    onAdd: (Size) -> Unit,\n''',
+              '''    onSelected: (Size) -> Unit,\n    onSwap: (() -> Unit)? = null,\n    onAdd: (Size) -> Unit,\n''',
+          )
+          replace_once(
+              compose,
+              '''                HorizontalDivider()\n                Row(\n                    modifier = Modifier\n                        .fillMaxWidth()\n                        .clickable { customResolutionVisible = true }\n''',
+              '''                HorizontalDivider()\n                if (onSwap != null) {\n                    Row(\n                        modifier = Modifier\n                            .fillMaxWidth()\n                            .clickable(onClick = onSwap)\n                            .padding(horizontal = 8.dp, vertical = 12.dp),\n                        verticalAlignment = Alignment.CenterVertically,\n                    ) {\n                        Icon(\n                            painter = painterResource(R.drawable.ic_swap),\n                            contentDescription = null,\n                            tint = MaterialTheme.colorScheme.primary,\n                        )\n                        Spacer(Modifier.width(8.dp))\n                        Text(\n                            text = stringResource(R.string.config_swap_screen_size),\n                            color = MaterialTheme.colorScheme.primary,\n                        )\n                    }\n                }\n                Row(\n                    modifier = Modifier\n                        .fillMaxWidth()\n                        .clickable { customResolutionVisible = true }\n''',
+          )
+
+          # Improve all remaining generic switches/colors/actions without forcing a full migration at once.
+          sub_once(
+              compose,
+              r'''@Composable\nprivate fun SwitchRow\(.*?\n\}\n\n@Composable\nprivate fun ColorRow''',
+              r'''@Composable
+private fun SwitchRow(
+    title: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    ConfigSwitchPreference(
+        title = title,
+        description = stringResource(R.string.config_help_generic_toggle),
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+    )
+}
+
+@Composable
+private fun ColorRow''',
+              flags=re.S,
+          )
+          sub_once(
+              compose,
+              r'''@Composable\nprivate fun ColorRow\(.*?\n\}\n\nprivate fun normalizeScaleRatio''',
+              r'''@Composable
+private fun ColorRow(
+    label: String,
+    value: String,
+    onPick: () -> Unit,
+) {
+    ConfigColorPreference(
+        title = label,
+        description = stringResource(R.string.config_help_generic_color),
+        value = value,
+        onClick = onPick,
+    )
+}
+
+private fun normalizeScaleRatio''',
+              flags=re.S,
+          )
+          sub_once(
+              compose,
+              r'''@Composable\nprivate fun AdvancedSettingsRow\(.*?\n\}\n\n@Composable\nprivate fun ConfigCard''',
+              r'''@Composable
+private fun AdvancedSettingsRow(
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+) {
+    ConfigDisclosurePreference(
+        title = stringResource(R.string.config_advanced_settings),
+        description = stringResource(R.string.config_help_advanced_generic),
+        expanded = expanded,
+        onExpandedChange = onExpandedChange,
+    )
+}
+
+@Composable
+private fun ConfigCard''',
+              flags=re.S,
+          )
+          sub_once(
+              compose,
+              r'''@Composable\nprivate fun ConfigCard\(.*?\n\}\n\n@Composable\nprivate fun ConfigRow''',
+              r'''@Composable
+private fun ConfigCard(
+    title: String,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    ConfigSection(title = title, content = content)
+}
+
+@Composable
+private fun ConfigRow''',
+              flags=re.S,
+          )
+          # Dialog descriptions: keep old callers source-compatible through default parameters.
+          replace_once(
+              compose,
+              '''internal fun ConfigNumberDialog(\n    title: String,\n    initialValue: String,\n''',
+              '''internal fun ConfigNumberDialog(\n    title: String,\n    description: String? = null,\n    initialValue: String,\n''',
+          )
+          replace_once(
+              compose,
+              '''        text = {\n            OutlinedTextField(\n                value = draft,\n''',
+              '''        text = {\n            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {\n                if (description != null) {\n                    Text(\n                        text = description,\n                        style = MaterialTheme.typography.bodyMedium,\n                        color = MaterialTheme.colorScheme.onSurfaceVariant,\n                    )\n                }\n                OutlinedTextField(\n                    value = draft,\n''',
+          )
+          replace_once(
+              compose,
+              '''                keyboardOptions = KeyboardOptions(keyboardType = keyboardType),\n            )\n        },\n        dismissButton = {\n''',
+              '''                    keyboardOptions = KeyboardOptions(keyboardType = keyboardType),\n                )\n            }\n        },\n        dismissButton = {\n''',
+          )
+          replace_once(
+              compose,
+              '''internal fun ConfigChoiceDialog(\n    title: String,\n    selected: String,\n''',
+              '''internal fun ConfigChoiceDialog(\n    title: String,\n    description: String? = null,\n    selected: String,\n''',
+          )
+          replace_once(
+              compose,
+              '''        text = {\n            LazyColumn(modifier = Modifier.heightIn(max = 360.dp)) {\n''',
+              '''        text = {\n            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {\n                if (description != null) {\n                    Text(\n                        text = description,\n                        style = MaterialTheme.typography.bodyMedium,\n                        color = MaterialTheme.colorScheme.onSurfaceVariant,\n                    )\n                }\n                LazyColumn(modifier = Modifier.heightIn(max = 360.dp)) {\n''',
+          )
+          # Close the extra Column in ConfigChoiceDialog before text lambda ends.
+          replace_once(
+              compose,
+              '''                    )\n                }\n            }\n        },\n        confirmButton = {},\n''',
+              '''                    )\n                }\n                }\n            }\n        },\n        confirmButton = {},\n''',
+          )
+
+          # Replace inline System Properties with a focused editor dialog.
+          sub_once(
+              compose,
+              r'''@Composable\nprivate fun SystemSection\(.*?\n\}\n\n@Composable\nprivate fun SettingActionRow''',
+              r'''@Composable
+private fun SystemSection(
+    form: ConfigFormState,
+    onFormChanged: (ConfigFormState) -> Unit,
+    events: ConfigFormEvents,
+    showClearData: Boolean,
+    onRequestAction: (ConfigAction) -> Unit,
+) {
+    ConfigSection(title = stringResource(R.string.PREF_SYS_PROPS)) {
+        ConfigActionPreference(
+            title = stringResource(R.string.pref_encoding_title),
+            description = stringResource(R.string.config_help_encoding),
+            onClick = events::onEncodingPicker,
+        )
+        ConfigSystemPropertiesPreference(
+            value = form.systemProperties,
+            onValueChange = { value -> onFormChanged(form.toBuilder().systemProperties(value).build()) },
+        )
+    }
+
+    ConfigSection(title = stringResource(R.string.config_maintenance)) {
+        ConfigActionPreference(
+            title = stringResource(R.string.config_reset_all_settings),
+            description = stringResource(R.string.config_reset_all_settings_summary),
+            destructive = true,
+            onClick = { onRequestAction(ConfigAction.ResetSettings) },
+        )
+        if (showClearData) {
+            ConfigActionPreference(
+                title = stringResource(R.string.config_delete_game_data),
+                description = stringResource(R.string.config_delete_game_data_summary),
+                destructive = true,
+                emphasized = true,
+                onClick = { onRequestAction(ConfigAction.ClearData) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ConfigSystemPropertiesPreference(
+    value: String,
+    onValueChange: (String) -> Unit,
+) {
+    var visible by rememberSaveable { mutableStateOf(false) }
+    ConfigValuePreference(
+        title = stringResource(R.string.config_edit_system_properties),
+        description = stringResource(R.string.config_help_system_properties),
+        value = stringResource(R.string.config_system_properties_value, value.lineSequence().count { it.isNotBlank() }),
+        message = stringResource(R.string.config_system_properties_info),
+        onClick = { visible = true },
+    )
+    if (visible) {
+        var draft by remember(value) { mutableStateOf(value) }
+        AlertDialog(
+            onDismissRequest = { visible = false },
+            title = { Text(stringResource(R.string.config_edit_system_properties)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = stringResource(R.string.config_help_system_properties_long),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    OutlinedTextField(
+                        value = draft,
+                        onValueChange = { draft = it },
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 220.dp, max = 420.dp),
+                        minLines = 8,
+                        maxLines = 16,
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                    )
+                }
+            },
+            dismissButton = { TextButton(onClick = { visible = false }) { Text(stringResource(android.R.string.cancel)) } },
+            confirmButton = {
+                TextButton(onClick = {
+                    visible = false
+                    onValueChange(draft)
+                }) { Text(stringResource(android.R.string.ok)) }
+            },
+        )
+    }
+}
+
+@Composable
+private fun SettingActionRow''',
+              flags=re.S,
+          )
+          sub_once(
+              compose,
+              r'''@Composable\nprivate fun SettingActionRow\(.*?\n\}\n\n@Composable\nprivate fun ConfigActionConfirmationDialog''',
+              r'''@Composable
+private fun SettingActionRow(
+    title: String,
+    summary: String? = null,
+    destructive: Boolean = false,
+    emphasized: Boolean = false,
+    onClick: () -> Unit,
+) {
+    ConfigActionPreference(
+        title = title,
+        description = summary ?: stringResource(R.string.config_help_action_generic),
+        destructive = destructive,
+        emphasized = emphasized,
+        onClick = onClick,
+    )
+}
+
+@Composable
+private fun ConfigActionConfirmationDialog''',
+              flags=re.S,
+          )
+
+          # Resource strings.
+          en = Path("app/src/main/res/values/strings_config_redesign.xml")
+          en_text = en.read_text().replace('</resources>', r'''    <string name="profile_modified_summary">Modified from this template</string>
+              <string name="profile_choose_or_manage">Choose or manage templates</string>
+              <string name="profile_update_template">Update template</string>
+              <string name="profile_update_template_summary">Replace %1$s with the current configuration.</string>
+              <string name="profile_save_as_new_template">Save as new template</string>
+              <string name="profile_save_as_new_template_summary">Keep the current configuration as a reusable template.</string>
+              <string name="profile_templates_title">Configuration templates</string>
+              <string name="profile_templates_summary">Tap a template to apply it. Use the menu to rename, delete, or make it the default for new games.</string>
+              <string name="profile_template_summary">Saved configuration template</string>
+              <string name="profile_active_badge">Active</string>
+              <string name="profile_modified_badge">Modified</string>
+              <string name="profile_save_current_template">Save current</string>
+              <string name="profile_name_label">Template name</string>
+              <string name="profile_name_exists">A template with this name already exists.</string>
+              <string name="profile_delete_template_message">Delete template “%1$s”? This does not delete any game data.</string>
+              <string name="profile_template_operation_failed">Could not update the configuration template.</string>
+              <string name="config_help_screen_size">Resolution reported to the J2ME application.</string>
+              <string name="config_help_orientation">Controls the screen orientation requested while the game is running.</string>
+              <string name="config_help_scale_type">Determines how the game screen fits into the available display area.</string>
+              <string name="config_help_scale_ratio">Adjusts display size without changing the game’s internal screen resolution.</string>
+              <string name="config_help_virtual_keyboard">Shows the J2ME keypad over the game screen.</string>
+              <string name="config_help_touch_input">Allows compatible games to receive direct touchscreen input.</string>
+              <string name="config_help_background">Color shown around the game screen when it does not fill the display.</string>
+              <string name="config_help_skin">Optional image or frame rendered around the game screen.</string>
+              <string name="config_help_screen_gravity">Positions the game screen when unused space remains.</string>
+              <string name="config_help_screen_padding">Adds space between the game screen and the edge of the display area.</string>
+              <string name="config_help_filter">Smooths the image when the J2ME screen is scaled.</string>
+              <string name="config_help_advanced_graphics">Renderer, shader, frame-rate, and compatibility controls.</string>
+              <string name="config_help_immediate">Changes when drawing operations are presented. Enable only when a game needs it.</string>
+              <string name="config_help_graphics_mode">Selects the rendering path used to draw J2ME graphics.</string>
+              <string name="config_help_shader">Applies a post-processing shader to the rendered game screen.</string>
+              <string name="config_help_shader_tuning">Adjust parameters exposed by the selected shader.</string>
+              <string name="config_help_parallel_redraw">Allows screen redraw work to run in parallel when supported.</string>
+              <string name="config_help_force_fullscreen">Forces the game surface to use the full available display area.</string>
+              <string name="config_help_show_fps">Displays the current frame rate while the game is running.</string>
+              <string name="config_help_fps_limit">Caps the maximum frame rate. Leave empty for no limit.</string>
+              <string name="config_help_generic_toggle">Enable or disable this behavior for the current game.</string>
+              <string name="config_help_generic_color">Choose the color used by this visual element.</string>
+              <string name="config_help_advanced_generic">Less common controls for compatibility and fine tuning.</string>
+              <string name="config_help_action_generic">Open this configuration tool.</string>
+              <string name="config_help_encoding">Select the character encoding exposed to the J2ME application.</string>
+              <string name="config_edit_system_properties">Edit system properties</string>
+              <string name="config_help_system_properties">Advanced Java ME properties reported to the application.</string>
+              <string name="config_help_system_properties_long">Edit one property per line using “name: value”. Incorrect values can change application behavior, so modify these only when a game requires it.</string>
+              <string name="config_system_properties_info">Most games do not need changes here.</string>
+              <string name="config_system_properties_value">%1$d properties</string>
+          </resources>'''.replace('              ', ''))
+          en.write_text(en_text)
+
+          ind = Path("app/src/main/res/values-in/strings_config_redesign.xml")
+          ind_text = ind.read_text().replace('</resources>', r'''    <string name="profile_modified_summary">Diubah dari template ini</string>
+              <string name="profile_choose_or_manage">Pilih atau kelola template</string>
+              <string name="profile_update_template">Perbarui template</string>
+              <string name="profile_update_template_summary">Ganti isi %1$s dengan konfigurasi saat ini.</string>
+              <string name="profile_save_as_new_template">Simpan sebagai template baru</string>
+              <string name="profile_save_as_new_template_summary">Simpan konfigurasi saat ini sebagai template yang dapat digunakan kembali.</string>
+              <string name="profile_templates_title">Template konfigurasi</string>
+              <string name="profile_templates_summary">Ketuk template untuk menerapkannya. Gunakan menu untuk mengganti nama, menghapus, atau menjadikannya default untuk game baru.</string>
+              <string name="profile_template_summary">Template konfigurasi tersimpan</string>
+              <string name="profile_active_badge">Aktif</string>
+              <string name="profile_modified_badge">Diubah</string>
+              <string name="profile_save_current_template">Simpan saat ini</string>
+              <string name="profile_name_label">Nama template</string>
+              <string name="profile_name_exists">Template dengan nama ini sudah ada.</string>
+              <string name="profile_delete_template_message">Hapus template “%1$s”? Tindakan ini tidak menghapus data game.</string>
+              <string name="profile_template_operation_failed">Template konfigurasi tidak dapat diperbarui.</string>
+              <string name="config_help_screen_size">Resolusi layar yang dilaporkan ke aplikasi J2ME.</string>
+              <string name="config_help_orientation">Menentukan orientasi layar yang diminta saat game berjalan.</string>
+              <string name="config_help_scale_type">Menentukan bagaimana layar game disesuaikan dengan area tampilan yang tersedia.</string>
+              <string name="config_help_scale_ratio">Menyesuaikan ukuran tampilan tanpa mengubah resolusi layar internal game.</string>
+              <string name="config_help_virtual_keyboard">Menampilkan keypad J2ME di atas layar game.</string>
+              <string name="config_help_touch_input">Mengizinkan game yang kompatibel menerima input langsung dari layar sentuh.</string>
+              <string name="config_help_background">Warna area di sekitar layar game ketika game tidak memenuhi seluruh tampilan.</string>
+              <string name="config_help_skin">Gambar atau bingkai opsional yang ditampilkan di sekitar layar game.</string>
+              <string name="config_help_screen_gravity">Menentukan posisi layar game ketika masih ada ruang kosong.</string>
+              <string name="config_help_screen_padding">Menambahkan jarak antara layar game dan tepi area tampilan.</string>
+              <string name="config_help_filter">Menghaluskan gambar ketika layar J2ME diperbesar atau diperkecil.</string>
+              <string name="config_help_advanced_graphics">Kontrol renderer, shader, frame rate, dan kompatibilitas.</string>
+              <string name="config_help_immediate">Mengubah kapan operasi gambar ditampilkan. Aktifkan hanya jika game membutuhkannya.</string>
+              <string name="config_help_graphics_mode">Memilih jalur rendering yang digunakan untuk menggambar grafis J2ME.</string>
+              <string name="config_help_shader">Menerapkan shader pascaproses pada tampilan game.</string>
+              <string name="config_help_shader_tuning">Menyesuaikan parameter yang disediakan oleh shader yang dipilih.</string>
+              <string name="config_help_parallel_redraw">Mengizinkan proses gambar ulang layar berjalan paralel jika didukung.</string>
+              <string name="config_help_force_fullscreen">Memaksa permukaan game menggunakan seluruh area tampilan yang tersedia.</string>
+              <string name="config_help_show_fps">Menampilkan frame rate saat game berjalan.</string>
+              <string name="config_help_fps_limit">Membatasi frame rate maksimum. Kosongkan untuk tanpa batas.</string>
+              <string name="config_help_generic_toggle">Aktifkan atau nonaktifkan perilaku ini untuk game saat ini.</string>
+              <string name="config_help_generic_color">Pilih warna yang digunakan oleh elemen visual ini.</string>
+              <string name="config_help_advanced_generic">Kontrol yang lebih jarang dipakai untuk kompatibilitas dan penyesuaian.</string>
+              <string name="config_help_action_generic">Buka alat konfigurasi ini.</string>
+              <string name="config_help_encoding">Pilih encoding karakter yang dilaporkan ke aplikasi J2ME.</string>
+              <string name="config_edit_system_properties">Edit properti sistem</string>
+              <string name="config_help_system_properties">Properti Java ME lanjutan yang dilaporkan ke aplikasi.</string>
+              <string name="config_help_system_properties_long">Edit satu properti per baris dengan format “nama: nilai”. Nilai yang salah dapat mengubah perilaku aplikasi, jadi ubah hanya jika game membutuhkannya.</string>
+              <string name="config_system_properties_info">Sebagian besar game tidak memerlukan perubahan di sini.</string>
+              <string name="config_system_properties_value">%1$d properti</string>
+          </resources>'''.replace('              ', ''))
+          ind.write_text(ind_text)
+
+          # Update behavior tests for the integrated profile flow and dialog-based system properties.
+          test = "app/src/androidTest/java/ru/playsoftware/j2meloader/config/ConfigComposeTest.kt"
+          sub_once(
+              test,
+              r'''    @Test\n    fun generalProfileActionsUseTheExistingHostFlows\(\) \{.*?\n    \}\n\n    @Test\n    fun activeProfileShowsChangeWithoutSaveAs''',
+              r'''    @Test
+    fun generalProfileActionsUseIntegratedTemplateFlow() {
+        val events = RecordingConfigEvents()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), events)
+            }
+        }
+
+        composeRule.onNodeWithText("Choose or manage templates").performClick()
+        composeRule.onNodeWithText("Configuration templates").assertExists()
+        composeRule.onNodeWithText("Built-in settings").performClick()
+        assertEquals(1, events.applyBuiltInCalls)
+    }
+
+    @Test
+    fun activeProfileShowsChangeWithoutSaveAs''',
+              flags=re.S,
+          )
+          sub_once(
+              test,
+              r'''    @Test\n    fun activeProfileShowsChangeWithoutSaveAs\(\) \{.*?\n    \}\n\n    @Test\n    fun builtInDefaultProfileIsNotShownAsCustom''',
+              r'''    @Test
+    fun activeProfileShowsIntegratedManagerAndDefaultStatus() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form,
+            base.screenPresets,
+            base.fontPresets,
+            base.skins,
+            base.soundBanks,
+            base.shaders,
+            base.removableScreenPresets,
+            ConfigUiState.ProfileStatus.active("Nokia Classic", "Nokia Classic"),
+            listOf(ConfigUiState.ProfileTemplate("Nokia Classic", true)),
+        )
+        composeRule.setContent {
+            JLModPlusTheme { ConfigScreen(state, RecordingConfigEvents()) }
+        }
+        composeRule.onNodeWithText("Nokia Classic").assertExists()
+        composeRule.onNodeWithText("Choose or manage templates").performClick()
+        composeRule.onNodeWithText("Configuration templates").assertExists()
+        composeRule.onNodeWithText("Default").assertExists()
+    }
+
+    @Test
+    fun builtInDefaultProfileIsNotShownAsCustom''',
+              flags=re.S,
+          )
+          replace_once(test, 'composeRule.onNodeWithText("Change profile").assertExists()', 'composeRule.onNodeWithText("Choose or manage templates").assertExists()')
+          replace_once(test, 'composeRule.onNodeWithText("Save as profile").assertDoesNotExist()', 'composeRule.onNodeWithText("Save as new template").assertDoesNotExist()')
+          # Screen swap moved into the screen-size editor.
+          replace_once(
+              test,
+              '''        composeRule.onNodeWithText("Select").assertDoesNotExist()\n\n        composeRule.onNodeWithContentDescription("Swap width and height").performClick()\n        assertEquals("320", events.lastForm?.screenWidth)\n        assertEquals("240", events.lastForm?.screenHeight)\n''',
+              '''        composeRule.onNodeWithText("Select").assertDoesNotExist()\n\n        composeRule.onNodeWithText("Screen size").performClick()\n        composeRule.onNodeWithText("Swap width and height").performClick()\n        assertEquals("320", events.lastForm?.screenWidth)\n        assertEquals("240", events.lastForm?.screenHeight)\n''',
+          )
+          sub_once(
+              test,
+              r'''    @Test\n    fun systemPropertiesEditInlineAndHideDelayUsesMilliseconds\(\) \{.*?\n    \}\n\n    private fun sampleState''',
+              r'''    @Test
+    fun systemPropertiesUseFocusedEditorAndHideDelayUsesMilliseconds() {
+        val events = RecordingConfigEvents()
+        val baseState = sampleState()
+        val state = ConfigUiState(
+            baseState.form.toBuilder().vkHideDelay("250").build(),
+            baseState.screenPresets,
+            baseState.fontPresets,
+            baseState.skins,
+            baseState.soundBanks,
+            baseState.shaders,
+            baseState.removableScreenPresets,
+        )
+        composeRule.setContent {
+            JLModPlusTheme { ConfigScreen(state, events, initialDestination = ConfigDestination.Controls) }
+        }
+        composeRule.onNodeWithText("Advanced settings").performClick()
+        composeRule.onNodeWithText("ms").assertExists()
+        composeRule.onNodeWithContentDescription("System").performClick()
+        composeRule.onNodeWithText("Edit system properties").performClick()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("microedition.platform: updated\n")
+        composeRule.onNodeWithText("OK").performClick()
+        assertEquals("microedition.platform: updated\n", events.lastForm?.systemProperties)
+    }
+
+    private fun sampleState''',
+              flags=re.S,
+          )
+          replace_once(
+              test,
+              '''        var useProfileCalls = 0\n        var saveAsProfileCalls = 0\n''',
+              '''        var useProfileCalls = 0\n        var saveAsProfileCalls = 0\n        var applyBuiltInCalls = 0\n''',
+          )
+          replace_once(
+              test,
+              '''        override fun onSaveAsProfile() {\n            saveAsProfileCalls++\n        }\n''',
+              '''        override fun onSaveAsProfile() {\n            saveAsProfileCalls++\n        }\n\n        override fun onApplyBuiltInTemplate() {\n            applyBuiltInCalls++\n        }\n''',
+          )
+
+          PY
+
+          git diff --check
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
+        with:
+          cache-read-only: true
+
+      - name: Update screenshots and validate
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon :app:updateEmulatorDebugScreenshotTest
+          ./gradlew --no-daemon --stacktrace :app:lintEmulatorDebug :dexlib:lintDebug :app:testEmulatorDebugUnitTest :app:validateEmulatorDebugScreenshotTest :app:assembleEmulatorDebug :app:assembleEmulatorDebugAndroidTest
+
+      - name: Commit redesign and remove helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/apply-config-information-redesign.yml
+          git add app/src/main app/src/androidTest app/src/screenshotTest app/src/screenshotTestEmulatorDebug/reference
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Integrate profiles and explain config options'
+          git push origin HEAD:ui/redesign-config
