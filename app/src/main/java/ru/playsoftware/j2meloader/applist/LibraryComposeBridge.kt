@@ -14,7 +14,6 @@
 
 package ru.playsoftware.j2meloader.applist
 
-import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -33,8 +32,6 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -76,6 +73,8 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -108,6 +107,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -154,17 +154,16 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
-import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.toBitmap
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ru.playsoftware.j2meloader.BuildConfig
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.TransientNoticeHost
 import ru.playsoftware.j2meloader.ui.TransientNoticeState
-import java.io.File
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -201,8 +200,8 @@ data class LibraryAppUiItem(
     val version: String,
     val iconPath: String?,
     val canReinstall: Boolean,
-    // Kept at the UI boundary until the library model exposes MIDlet descriptions.
     val description: String = "",
+    val iconRevision: Long = 0L,
 )
 
 data class LibraryUiState(
@@ -215,6 +214,10 @@ data class LibraryUiState(
     val gridSpacing: LibraryGridSpacing = LibraryGridSpacing.Standard,
     val sortVariant: Int = 0,
     val canAddShortcut: Boolean = true,
+    val loadingCompleted: Int = 0,
+    val loadingTotal: Int = 0,
+    val loadingStorageKey: String = "",
+    val errorMessage: String? = null,
 )
 
 interface LibraryActions {
@@ -236,6 +239,7 @@ interface LibraryActions {
     fun onOpenCrashReports()
     fun onSaveLog()
     fun onExit()
+    fun onRetryLibrary()
 }
 
 class LibraryComposeController(
@@ -283,21 +287,45 @@ class LibraryComposeController(
         }
     }
 
-    fun updateApps(items: List<AppItem>, appliedFilter: String) {
+    fun updateApps(items: List<LibraryAppUiItem>, appliedFilter: String) {
         state = state.copy(
             loading = false,
-            apps = items.map { item ->
-                LibraryAppUiItem(
-                    id = item.id,
-                    title = item.title,
-                    author = item.author,
-                    version = item.version,
-                    iconPath = item.imagePathExt,
-                    canReinstall = File(item.pathExt + ru.playsoftware.j2meloader.config.Config.MIDLET_RES_FILE).exists(),
-                    description = "",
-                )
-            },
+            apps = items,
             appliedFilter = appliedFilter,
+            loadingCompleted = 0,
+            loadingTotal = 0,
+            loadingStorageKey = "",
+            errorMessage = null,
+        )
+    }
+
+    fun showLoading() {
+        state = state.copy(
+            loading = true,
+            apps = emptyList(),
+            loadingCompleted = 0,
+            loadingTotal = 0,
+            loadingStorageKey = "",
+            errorMessage = null,
+        )
+    }
+
+    fun showIndexing(completed: Int, total: Int, storageKey: String) {
+        state = state.copy(
+            loading = true,
+            apps = emptyList(),
+            loadingCompleted = completed,
+            loadingTotal = total,
+            loadingStorageKey = storageKey,
+            errorMessage = null,
+        )
+    }
+
+    fun showError(message: String) {
+        state = state.copy(
+            loading = false,
+            apps = emptyList(),
+            errorMessage = message,
         )
     }
 
@@ -363,7 +391,6 @@ fun LibraryScreen(
 
     Row(modifier = modifier.fillMaxSize()) {
         if (isLandscape) {
-            // The side rail does not consume vertical content space, so keep it persistent.
             LibraryNavigationRail(
                 selected = destination,
                 onSelected = { section ->
@@ -378,9 +405,6 @@ fun LibraryScreen(
                 .fillMaxSize(),
             contentWindowInsets = LibraryScaffoldInsets,
             bottomBar = {
-                // Remove the slot while the IME is open. Scaffold includes the slot's measured
-                // height in its content padding; animating it out would leave a blank strip above
-                // the keyboard and make the list appear clipped.
                 if (!isLandscape && !isImeVisible) {
                     AnimatedVisibility(
                         visible = showNavigationBar,
@@ -431,7 +455,6 @@ fun LibraryScreen(
                 }
             },
             floatingActionButton = {
-                // The FAB is part of the same transient chrome and must not compete with the IME.
                 if (!isImeVisible && destination == LibraryDestination.Apps) {
                     AnimatedVisibility(
                         visible = showInstallFab,
@@ -495,6 +518,7 @@ fun LibraryScreen(
                         onOpenActions = { appActions = it },
                         onSearch = actions::onSearch,
                         onSort = actions::onSort,
+                        onRetry = actions::onRetryLibrary,
                         onFabVisibilityChanged = { showInstallFab = it },
                         onNavigationVisibilityChanged = { visible ->
                             if (!isLandscape) showNavigationBar = visible
@@ -760,6 +784,7 @@ private fun LibraryAppsDestination(
     onOpenActions: (LibraryAppUiItem) -> Unit,
     onSearch: (String) -> Unit,
     onSort: (Int) -> Unit,
+    onRetry: () -> Unit,
     onFabVisibilityChanged: (Boolean) -> Unit,
     onNavigationVisibilityChanged: (Boolean) -> Unit,
 ) {
@@ -903,16 +928,17 @@ private fun LibraryAppsDestination(
                         false,
                     )
                 }
-                if (state.loading) {
-                    item {
-                        LibraryLoadingState()
+                when {
+                    state.errorMessage != null -> item(span = { GridItemSpan(maxLineSpan) }) {
+                        LibraryErrorState(state.errorMessage, onRetry)
                     }
-                } else if (state.apps.isEmpty()) {
-                    item {
+                    state.loading -> item(span = { GridItemSpan(maxLineSpan) }) {
+                        LibraryLoadingState(state)
+                    }
+                    state.apps.isEmpty() -> item(span = { GridItemSpan(maxLineSpan) }) {
                         LibraryEmptyState(state.appliedFilter)
                     }
-                } else {
-                    items(state.apps, key = { it.id }) { app ->
+                    else -> items(state.apps, key = { it.id }) { app ->
                         LibraryGridItem(
                             app = app,
                             iconRatio = state.iconRatio,
@@ -938,7 +964,8 @@ private fun LibraryAppsDestination(
                     )
                 }
                 when {
-                    state.loading -> item { LibraryLoadingState() }
+                    state.errorMessage != null -> item { LibraryErrorState(state.errorMessage, onRetry) }
+                    state.loading -> item { LibraryLoadingState(state) }
                     state.apps.isEmpty() -> item { LibraryEmptyState(state.appliedFilter) }
                     else -> items(state.apps, key = { it.id }) { app ->
                         LibraryListItem(
@@ -963,7 +990,6 @@ private fun LibraryAppsDestination(
         ) {
             renderHeader(Modifier, true)
         }
-
     }
 }
 
@@ -1123,19 +1149,77 @@ private fun LibraryQuickFilter(
 }
 
 @Composable
-private fun LibraryLoadingState() {
+private fun LibraryLoadingState(state: LibraryUiState) {
     val loadingDescription = stringResource(R.string.loading_apps)
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 180.dp),
-        contentAlignment = Alignment.Center,
+            .heightIn(min = 180.dp)
+            .padding(horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
     ) {
         CircularProgressIndicator(
             modifier = Modifier.semantics {
                 contentDescription = loadingDescription
             },
         )
+        Text(
+            text = if (state.loadingTotal > 0) {
+                stringResource(
+                    R.string.library_indexing_progress,
+                    state.loadingCompleted,
+                    state.loadingTotal,
+                )
+            } else {
+                loadingDescription
+            },
+            modifier = Modifier.padding(top = 12.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (state.loadingStorageKey.isNotBlank()) {
+            Text(
+                text = stringResource(R.string.library_indexing_current, state.loadingStorageKey),
+                modifier = Modifier.padding(top = 4.dp),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+@Composable
+private fun LibraryErrorState(message: String, onRetry: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 180.dp)
+            .padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = stringResource(R.string.library_load_error_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text = message,
+            modifier = Modifier.padding(top = 6.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        TextButton(
+            onClick = onRetry,
+            modifier = Modifier.padding(top = 8.dp),
+        ) {
+            Text(stringResource(R.string.library_retry))
+        }
     }
 }
 
@@ -1725,7 +1809,7 @@ private data class LibraryNormalizedIcon(
 )
 
 private const val LIBRARY_ICON_CACHE_BYTES = 4 * 1024 * 1024
-private const val LIBRARY_ICON_PRESENTATION_VERSION = 5
+private const val LIBRARY_ICON_PRESENTATION_VERSION = 6
 private val LibraryIconCache = object : LruCache<String, LibraryNormalizedIcon>(LIBRARY_ICON_CACHE_BYTES) {
     override fun sizeOf(key: String, value: LibraryNormalizedIcon): Int {
         return (value.bitmap.width.toLong() * value.bitmap.height.toLong() * 4L)
@@ -1735,110 +1819,65 @@ private val LibraryIconCache = object : LruCache<String, LibraryNormalizedIcon>(
     }
 }
 
-private fun loadLibraryIcon(
-    context: Context,
-    iconPath: String?,
-    fallbackSizePx: Int,
+private fun normalizeLibraryIcon(
+    fileSource: Bitmap,
     normalizeSquareIcon: Boolean,
 ): LibraryNormalizedIcon? {
-    val requestedSizePx = fallbackSizePx.coerceAtLeast(1)
-    val fileSource = iconPath
-        ?.takeIf(String::isNotBlank)
-        ?.let { path -> decodeLibraryBitmap(path, requestedSizePx) }
-
-    if (fileSource != null) {
-        if (!normalizeSquareIcon) {
-            return LibraryNormalizedIcon(
-                bitmap = fileSource.asImageBitmap(),
-                filterQuality = fileSource.libraryFilterQuality(),
-                representativeColor = null,
-                presentationMode = LibraryIconPresentationMode.SafeFit,
-                visualScale = 1f,
-                foregroundLuminance = 0.5f,
-            )
-        }
-
-        val analysis = fileSource.analyzeLibraryIcon()
-        if (analysis != null) {
-            val cropBounds = when (analysis.presentation.mode) {
-                LibraryIconPresentationMode.Subject ->
-                    analysis.framedCropBounds ?: analysis.contentBounds
-                // Keep self-backed artwork intact. Its own badge/background proportions are part
-                // of the icon identity; the generated tile only completes the remaining corners.
-                LibraryIconPresentationMode.Backed -> null
-                else -> null
-            }
-            val normalized = if (
-                cropBounds != null &&
-                !cropBounds.isFullBitmap(fileSource)
-            ) {
-                fileSource.cropLibraryBounds(cropBounds)
-            } else {
-                fileSource
-            }
-            val representativeColor =
-                normalized.findRepresentativeColor() ?: normalized.findAverageVisibleColor()
-            val edgeFillColor = analysis.edgeFillColor?.toComposeLibraryColor()
-            val backingTileColor = analysis.backingColor?.toComposeLibraryColor()
-            val fillSourceColor = analysis.dominantColor?.toComposeLibraryColor() ?: representativeColor
-            val tileColor = when (analysis.presentation.mode) {
-                LibraryIconPresentationMode.Cover -> null
-                LibraryIconPresentationMode.Backed ->
-                    edgeFillColor
-                        ?: backingTileColor
-                        ?: fillSourceColor?.let {
-                            syntheticLibraryTileColor(it, analysis.foregroundLuminance)
-                        }
-                LibraryIconPresentationMode.Subject,
-                LibraryIconPresentationMode.SafeFit ->
-                    edgeFillColor
-                        ?: fillSourceColor?.let {
-                            syntheticLibraryTileColor(it, analysis.foregroundLuminance)
-                        }
-                LibraryIconPresentationMode.Fallback -> null
-            }
-            return LibraryNormalizedIcon(
-                bitmap = normalized.asImageBitmap(),
-                filterQuality = if (analysis.pixelArt) FilterQuality.None else FilterQuality.Medium,
-                representativeColor = representativeColor,
-                presentationMode = analysis.presentation.mode,
-                visualScale = analysis.presentation.visualScale,
-                foregroundLuminance = analysis.foregroundLuminance,
-                tileColor = tileColor,
-            )
-        }
+    if (!normalizeSquareIcon) {
+        return LibraryNormalizedIcon(
+            bitmap = fileSource.asImageBitmap(),
+            filterQuality = fileSource.libraryFilterQuality(),
+            representativeColor = null,
+            presentationMode = LibraryIconPresentationMode.SafeFit,
+            visualScale = 1f,
+            foregroundLuminance = 0.5f,
+        )
     }
 
-    val fallbackSource = ContextCompat.getDrawable(context, R.drawable.ic_default_midlet)
-        ?.mutate()
-        ?.also { drawable ->
-            drawable.setTint(
-                ContextCompat.getColor(context, R.color.library_default_icon),
-            )
-        }
-        ?.toBitmap(requestedSizePx, requestedSizePx)
-        ?: return null
-    val fallbackBounds = if (normalizeSquareIcon) {
-        fallbackSource.analyzeLibraryIcon()?.contentBounds
+    val analysis = fileSource.analyzeLibraryIcon()
+        ?: return LibraryNormalizedIcon(
+            bitmap = fileSource.asImageBitmap(),
+            filterQuality = fileSource.libraryFilterQuality(),
+            representativeColor = null,
+            presentationMode = LibraryIconPresentationMode.SafeFit,
+            visualScale = 1f,
+            foregroundLuminance = 0.5f,
+        )
+    val cropBounds = when (analysis.presentation.mode) {
+        LibraryIconPresentationMode.Subject -> analysis.framedCropBounds ?: analysis.contentBounds
+        LibraryIconPresentationMode.Backed -> null
+        else -> null
+    }
+    val normalized = if (cropBounds != null && !cropBounds.isFullBitmap(fileSource)) {
+        fileSource.cropLibraryBounds(cropBounds)
     } else {
-        null
+        fileSource
     }
-    val fallback = if (
-        fallbackBounds != null &&
-        !fallbackBounds.isFullBitmap(fallbackSource)
-    ) {
-        fallbackSource.cropLibraryBounds(fallbackBounds)
-    } else {
-        fallbackSource
+    val representativeColor = normalized.findRepresentativeColor() ?: normalized.findAverageVisibleColor()
+    val edgeFillColor = analysis.edgeFillColor?.toComposeLibraryColor()
+    val backingTileColor = analysis.backingColor?.toComposeLibraryColor()
+    val fillSourceColor = analysis.dominantColor?.toComposeLibraryColor() ?: representativeColor
+    val tileColor = when (analysis.presentation.mode) {
+        LibraryIconPresentationMode.Cover -> null
+        LibraryIconPresentationMode.Backed ->
+            edgeFillColor ?: backingTileColor ?: fillSourceColor?.let {
+                syntheticLibraryTileColor(it, analysis.foregroundLuminance)
+            }
+        LibraryIconPresentationMode.Subject,
+        LibraryIconPresentationMode.SafeFit ->
+            edgeFillColor ?: fillSourceColor?.let {
+                syntheticLibraryTileColor(it, analysis.foregroundLuminance)
+            }
+        LibraryIconPresentationMode.Fallback -> null
     }
-
     return LibraryNormalizedIcon(
-        bitmap = fallback.asImageBitmap(),
-        filterQuality = fallback.libraryFilterQuality(),
-        representativeColor = if (normalizeSquareIcon) fallback.findAverageVisibleColor() else null,
-        presentationMode = LibraryIconPresentationMode.Fallback,
-        visualScale = LIBRARY_FALLBACK_VISUAL_SCALE,
-        foregroundLuminance = fallback.averageVisibleLuminance(),
+        bitmap = normalized.asImageBitmap(),
+        filterQuality = if (analysis.pixelArt) FilterQuality.None else FilterQuality.Medium,
+        representativeColor = representativeColor,
+        presentationMode = analysis.presentation.mode,
+        visualScale = analysis.presentation.visualScale,
+        foregroundLuminance = analysis.foregroundLuminance,
+        tileColor = tileColor,
     )
 }
 
@@ -2394,10 +2433,6 @@ private const val LIBRARY_SYNTHETIC_FILL_LIGHT_VALUE = 0.88f
 private const val LIBRARY_SYNTHETIC_FILL_DARK_VALUE = 0.30f
 private const val LIBRARY_SYNTHETIC_FILL_BRIGHT_FOREGROUND = 0.68f
 
-/**
- * Builds a restrained, theme-independent tile only when the source does not expose a stable edge
- * or backplate color to extend. Hue may follow the subject, but the fill must not dominate it.
- */
 private fun syntheticLibraryTileColor(
     source: Color,
     foregroundLuminance: Float,
@@ -2432,9 +2467,6 @@ private fun syntheticLibraryTileColor(
     )
 }
 
-/**
- * Preserves the existing theme-aware fallback treatment. Real icon tiles do not use this path.
- */
 private fun adaptiveLibraryFallbackSlotColor(
     base: Color,
     accent: Color,
@@ -2496,35 +2528,35 @@ private fun rememberLibraryIcon(
     contentSize: Dp,
     iconRatio: LibraryIconRatio,
 ): LibraryNormalizedIcon? {
-    val context = LocalContext.current
     val contentSizePx = with(LocalDensity.current) { contentSize.roundToPx() }.coerceAtLeast(1)
-    val fallbackTint = ContextCompat.getColor(context, R.color.library_default_icon)
-    val cacheKey = remember(app.iconPath, contentSizePx, iconRatio, fallbackTint) {
-        libraryIconCacheKey(app.iconPath, contentSizePx, iconRatio, fallbackTint)
+    val cacheKey = remember(app.iconPath, app.iconRevision, contentSizePx, iconRatio) {
+        libraryIconCacheKey(app.iconPath, app.iconRevision, contentSizePx, iconRatio)
     }
-    return remember(cacheKey) {
-        LibraryIconCache.get(cacheKey) ?: loadLibraryIcon(
-            context = context,
-            iconPath = app.iconPath,
-            fallbackSizePx = contentSizePx,
-            normalizeSquareIcon = iconRatio == LibraryIconRatio.Square,
-        )?.also { LibraryIconCache.put(cacheKey, it) }
-    }
+    val cached = remember(cacheKey) { LibraryIconCache.get(cacheKey) }
+    return produceState<LibraryNormalizedIcon?>(initialValue = cached, cacheKey) {
+        if (value != null) return@produceState
+        val path = app.iconPath?.takeIf(String::isNotBlank) ?: return@produceState
+        val bitmap = withContext(Dispatchers.IO) {
+            decodeLibraryBitmap(path, contentSizePx)
+        } ?: return@produceState
+        val normalized = withContext(Dispatchers.Default) {
+            normalizeLibraryIcon(
+                fileSource = bitmap,
+                normalizeSquareIcon = iconRatio == LibraryIconRatio.Square,
+            )
+        } ?: return@produceState
+        LibraryIconCache.put(cacheKey, normalized)
+        value = normalized
+    }.value
 }
 
 private fun libraryIconCacheKey(
     iconPath: String?,
+    iconRevision: Long,
     targetSizePx: Int,
     iconRatio: LibraryIconRatio,
-    fallbackTint: Int,
 ): String {
-    if (iconPath.isNullOrBlank()) {
-        return "fallback:$fallbackTint:$targetSizePx:${iconRatio.name}"
-    }
-    val file = File(iconPath)
-    val modified = runCatching { file.lastModified() }.getOrDefault(0L)
-    val length = runCatching { file.length() }.getOrDefault(0L)
-    return "real:$LIBRARY_ICON_PRESENTATION_VERSION:$iconPath:$modified:$length:$targetSizePx:${iconRatio.name}"
+    return "real:$LIBRARY_ICON_PRESENTATION_VERSION:${iconPath.orEmpty()}:$iconRevision:$targetSizePx:${iconRatio.name}"
 }
 
 @Composable
@@ -2541,8 +2573,6 @@ private fun LibraryIconSlot(
             maxWidth * LIBRARY_GRID_ARTWORK_FRACTION,
             LibraryGridMaxArtworkSize,
         )
-        // Missing icons are UI chrome, not legacy artwork. Keep them out of the bitmap
-        // analysis/cache pipeline so the vector stays crisp at every density.
         val icon = if (app.iconPath.isNullOrBlank()) {
             null
         } else {
