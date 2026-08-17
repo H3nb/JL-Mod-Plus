@@ -53,7 +53,7 @@ public class KeyMapperActivity extends AppCompatActivity {
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		EdgeToEdgeCompat.enableIfSupported(this);
+		EdgeToEdgeCompat.enableForComposeSurface(this);
 		Intent intent = getIntent();
 		String path = intent.getDataString();
 		if (path == null) {
@@ -63,7 +63,6 @@ public class KeyMapperActivity extends AppCompatActivity {
 		}
 		ComposeView composeView = new ComposeView(this);
 		setContentView(composeView);
-		EdgeToEdgeCompat.protectHostContent(this);
 		if (getSupportActionBar() != null) {
 			getSupportActionBar().hide();
 		}

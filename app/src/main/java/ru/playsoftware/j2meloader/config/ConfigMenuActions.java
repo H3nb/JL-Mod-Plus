@@ -22,13 +22,8 @@ public interface ConfigMenuActions {
 
 	void onClearData();
 
-	void onConfirmClearData();
-
 	void onResetSettings();
 
 	void onResetLayout();
 
-	void onLoadProfile();
-
-	void onSaveProfile();
 }
