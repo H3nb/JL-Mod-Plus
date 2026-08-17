@@ -14,7 +14,9 @@
 
 package ru.playsoftware.j2meloader.crashes;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -71,5 +73,27 @@ public class LocalDiagnosticRepositoryTest {
 		assertFalse(LocalDiagnosticRepository.isExactEventMatch("session-1", null, "session-1", "eventId=event-1;"));
 		assertFalse(LocalDiagnosticRepository.isExactEventMatch("session-1", "event-1", null, "eventId=event-1;"));
 		assertFalse(LocalDiagnosticRepository.isExactEventMatch("session-1", "event-1", "session-1", null));
+	}
+
+	@Test
+	public void failureHeadlineSkipsCorrelationMarkerAndFrames() {
+		String stack = "eventId=event-1; boundary=UNCAUGHT_THREAD\n"
+				+ "java.lang.IllegalStateException: No destination for config.graphics\n"
+				+ "\tat ru.playsoftware.j2meloader.config.ConfigActivity.openGraphics(ConfigActivity.java:184)";
+
+		assertEquals("java.lang.IllegalStateException: No destination for config.graphics",
+				LocalDiagnosticRepository.failureHeadline(stack));
+	}
+
+	@Test
+	public void topAppFramePrefersFirstJlModFrame() {
+		String stack = "java.lang.IllegalStateException: boom\n"
+				+ "\tat android.app.Activity.performCreate(Activity.java:1)\n"
+				+ "\tat ru.playsoftware.j2meloader.config.ConfigActivity.onCreate(ConfigActivity.java:184)\n"
+				+ "\tat ru.playsoftware.j2meloader.MainActivity.onCreate(MainActivity.java:70)";
+
+		assertEquals("ru.playsoftware.j2meloader.config.ConfigActivity.onCreate(ConfigActivity.java:184)",
+				LocalDiagnosticRepository.topAppFrame(stack));
+		assertNull(LocalDiagnosticRepository.topAppFrame("java.lang.RuntimeException: boom"));
 	}
 }
