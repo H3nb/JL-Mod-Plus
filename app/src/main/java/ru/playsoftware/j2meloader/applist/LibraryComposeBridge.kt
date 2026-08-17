@@ -2724,7 +2724,7 @@ internal fun AppActionsDialog(
                 item {
                     DialogAction(
                         label = R.string.action_context_rename,
-                        icon = null,
+                        icon = R.drawable.ic_edit,
                         onDismiss = onDismiss,
                         action = onRename,
                     )
@@ -2732,7 +2732,7 @@ internal fun AppActionsDialog(
                 item {
                     DialogAction(
                         label = R.string.action_settings,
-                        icon = R.drawable.ic_options,
+                        icon = R.drawable.ic_settings,
                         onDismiss = onDismiss,
                         action = onSettings,
                     )
@@ -2741,7 +2741,7 @@ internal fun AppActionsDialog(
                     item {
                         DialogAction(
                             label = R.string.action_reinstall,
-                            icon = R.drawable.ic_swap,
+                            icon = R.drawable.ic_restart_alt,
                             onDismiss = onDismiss,
                             action = onReinstall,
                         )
@@ -2750,7 +2750,7 @@ internal fun AppActionsDialog(
                 item {
                     DialogAction(
                         label = R.string.action_context_delete,
-                        icon = R.drawable.ic_delete_report,
+                        icon = R.drawable.ic_delete,
                         destructive = true,
                         onDismiss = onDismiss,
                         action = onDelete,
@@ -2858,7 +2858,10 @@ internal fun LibraryInformationDialog(
     val context = LocalContext.current
     val title: String
     val message: AnnotatedString
-    val maxMessageHeight = if (dialog == LibraryInfoDialog.Licenses) 380.dp else 300.dp
+    val layout = libraryDialogLayout()
+    val maxMessageHeight = libraryDialogListHeight(
+        maxHeight = if (dialog == LibraryInfoDialog.Licenses) 520 else 420,
+    )
     when (dialog) {
         LibraryInfoDialog.About -> {
             title = stringResource(R.string.about_product_name)
@@ -2892,6 +2895,8 @@ internal fun LibraryInformationDialog(
         }
     }
     AlertDialog(
+        modifier = layout.modifier,
+        properties = layout.properties,
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
