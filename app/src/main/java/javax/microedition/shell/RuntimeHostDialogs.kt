@@ -30,7 +30,10 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.RadioButton
@@ -46,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
@@ -197,6 +201,13 @@ private fun ErrorDialog(
         modifier = layout.modifier,
         properties = layout.properties,
         onDismissRequest = onAcknowledge,
+        icon = {
+            Icon(
+                painter = painterResource(R.drawable.ic_warning),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+            )
+        },
         title = { Text(stringResource(R.string.error)) },
         text = {
             Text(
@@ -224,6 +235,13 @@ private fun ExitConfirmationDialog(
         modifier = layout.modifier,
         properties = layout.properties,
         onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                painter = painterResource(R.drawable.ic_logout),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+            )
+        },
         title = {
             Text(stringResource(R.string.CONFIRMATION_REQUIRED))
         },
@@ -244,8 +262,14 @@ private fun ExitConfirmationDialog(
                 TextButton(onClick = onDismiss) {
                     Text(stringResource(android.R.string.cancel))
                 }
-                Button(onClick = { onDismiss(); actions.onExitConfirmed(false) }) {
-                    Text(stringResource(android.R.string.ok))
+                Button(
+                    onClick = { onDismiss(); actions.onExitConfirmed(false) },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ),
+                ) {
+                    Text(stringResource(R.string.exit))
                 }
             }
         },

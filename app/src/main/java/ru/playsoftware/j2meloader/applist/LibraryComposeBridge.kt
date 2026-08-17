@@ -33,6 +33,8 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -159,6 +161,8 @@ import kotlinx.coroutines.launch
 import ru.playsoftware.j2meloader.BuildConfig
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.TransientNoticeHost
+import ru.playsoftware.j2meloader.ui.TransientNoticeState
 import java.io.File
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -243,6 +247,7 @@ class LibraryComposeController(
     initialGridSpacing: LibraryGridSpacing,
     canAddShortcut: Boolean,
 ) {
+    private val noticeState = TransientNoticeState()
     private var state by mutableStateOf(
         LibraryUiState(
             layout = initialLayout,
@@ -261,7 +266,18 @@ class LibraryComposeController(
         )
         composeView.setContent {
             JLModPlusTheme {
-                LibraryScreen(state = state, actions = actions)
+                Box(modifier = Modifier.fillMaxSize()) {
+                    LibraryScreen(state = state, actions = actions)
+                    val noticeBottomPadding = if (
+                        LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+                    ) 8.dp else 88.dp
+                    TransientNoticeHost(
+                        state = noticeState,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = noticeBottomPadding),
+                    )
+                }
             }
         }
     }
@@ -303,6 +319,10 @@ class LibraryComposeController(
     fun updateSort(sortVariant: Int) {
         state = state.copy(sortVariant = sortVariant)
     }
+
+    fun showNotice(message: String) {
+        noticeState.show(message)
+    }
 }
 
 internal enum class LibraryInfoDialog {
@@ -314,19 +334,16 @@ internal enum class LibraryInfoDialog {
 
 private val LibraryScaffoldInsets = WindowInsets(left = 0, top = 0, right = 0, bottom = 0)
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
     state: LibraryUiState,
     actions: LibraryActions,
     modifier: Modifier = Modifier,
 ) {
-    var selectedDestinationIndex by rememberSaveable { mutableStateOf(0) }
-    val destination = when (selectedDestinationIndex) {
-        1 -> LibraryDestination.Collections
-        2 -> LibraryDestination.Options
-        else -> LibraryDestination.Apps
-    }
+    val pagerState = rememberPagerState(pageCount = { LibraryDestination.entries.size })
+    val coroutineScope = rememberCoroutineScope()
+    val destination = LibraryDestination.entries[pagerState.currentPage]
     var showInstallFab by rememberSaveable { mutableStateOf(true) }
     var showNavigationBar by rememberSaveable { mutableStateOf(true) }
     var appActions by remember { mutableStateOf<LibraryAppUiItem?>(null) }
@@ -349,7 +366,9 @@ fun LibraryScreen(
             // The side rail does not consume vertical content space, so keep it persistent.
             LibraryNavigationRail(
                 selected = destination,
-                onSelected = { selectedDestinationIndex = it.ordinal },
+                onSelected = { section ->
+                    coroutineScope.launch { pagerState.animateScrollToPage(section.ordinal) }
+                },
             )
         }
 
@@ -404,7 +423,9 @@ fun LibraryScreen(
                     ) {
                         LibraryNavigationBar(
                             selected = destination,
-                            onSelected = { selectedDestinationIndex = it.ordinal },
+                            onSelected = { section ->
+                                coroutineScope.launch { pagerState.animateScrollToPage(section.ordinal) }
+                            },
                         )
                     }
                 }
@@ -461,35 +482,40 @@ fun LibraryScreen(
                 }
             },
         ) { padding ->
-            when (destination) {
-                LibraryDestination.Apps -> LibraryAppsDestination(
-                    state = state,
-                    scaffoldPadding = padding,
-                    onOpenApp = actions::onOpenApp,
-                    onOpenActions = { appActions = it },
-                    onSearch = actions::onSearch,
-                    onSort = actions::onSort,
-                    onFabVisibilityChanged = { showInstallFab = it },
-                    onNavigationVisibilityChanged = { visible ->
-                        if (!isLandscape) showNavigationBar = visible
-                    },
-                )
-                LibraryDestination.Collections -> LibraryCollectionsDestination(padding)
-                LibraryDestination.Options -> LibraryOptionsDestination(
-                    state = state,
-                    scaffoldPadding = padding,
-                    onLayoutChange = actions::onLayoutChange,
-                    onIconRatioChange = actions::onIconRatioChange,
-                    onHideGridTitlesChange = actions::onHideGridTitlesChange,
-                    onGridSpacingChange = actions::onGridSpacingChange,
-                    onAbout = { infoDialog = LibraryInfoDialog.About },
-                    onSettings = actions::onOpenSettings,
-                    onProfiles = actions::onOpenProfiles,
-                    onHelp = { infoDialog = LibraryInfoDialog.Help },
-                    onCrashReports = actions::onOpenCrashReports,
-                    onSaveLog = actions::onSaveLog,
-                    onExit = actions::onExit,
-                )
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.Top,
+            ) { page ->
+                when (LibraryDestination.entries[page]) {
+                    LibraryDestination.Apps -> LibraryAppsDestination(
+                        state = state,
+                        scaffoldPadding = padding,
+                        onOpenApp = actions::onOpenApp,
+                        onOpenActions = { appActions = it },
+                        onSearch = actions::onSearch,
+                        onSort = actions::onSort,
+                        onFabVisibilityChanged = { showInstallFab = it },
+                        onNavigationVisibilityChanged = { visible ->
+                            if (!isLandscape) showNavigationBar = visible
+                        },
+                    )
+                    LibraryDestination.Collections -> LibraryCollectionsDestination(padding)
+                    LibraryDestination.Options -> LibraryOptionsDestination(
+                        state = state,
+                        scaffoldPadding = padding,
+                        onLayoutChange = actions::onLayoutChange,
+                        onIconRatioChange = actions::onIconRatioChange,
+                        onHideGridTitlesChange = actions::onHideGridTitlesChange,
+                        onGridSpacingChange = actions::onGridSpacingChange,
+                        onAbout = { infoDialog = LibraryInfoDialog.About },
+                        onSettings = actions::onOpenSettings,
+                        onHelp = { infoDialog = LibraryInfoDialog.Help },
+                        onCrashReports = actions::onOpenCrashReports,
+                        onSaveLog = actions::onSaveLog,
+                        onExit = actions::onExit,
+                    )
+                }
             }
         }
     }
@@ -737,10 +763,6 @@ private fun LibraryAppsDestination(
     var sortVisible by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val gridState = rememberLazyGridState()
-    val coroutineScope = rememberCoroutineScope()
-    val fastScrollBuckets = remember(state.apps, state.sortVariant) {
-        buildLibraryFastScrollBuckets(state.apps, state.sortVariant)
-    }
     val headerHeightPx = remember { mutableStateOf(0) }
     val headerOffsetPx = remember { mutableStateOf(0f) }
     val hideDistancePx = with(LocalDensity.current) { LIBRARY_CHROME_HIDE_DISTANCE_DP.dp.toPx() }
@@ -938,33 +960,6 @@ private fun LibraryAppsDestination(
             renderHeader(Modifier, true)
         }
 
-        if (fastScrollBuckets.size > 1) {
-            val visibleHeaderHeight = with(LocalDensity.current) {
-                (headerHeightPx.value + headerOffsetPx.value)
-                    .coerceAtLeast(0f)
-                    .toDp()
-            }
-            LibraryFastScroller(
-                buckets = fastScrollBuckets,
-                onBucketSelected = { bucket ->
-                    coroutineScope.launch {
-                        val targetIndex = bucket.appIndex + 1 // Header occupies item zero.
-                        if (state.layout == LibraryLayout.List) {
-                            listState.scrollToItem(targetIndex)
-                        } else {
-                            gridState.scrollToItem(targetIndex)
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(
-                        top = visibleHeaderHeight + 4.dp,
-                        end = 2.dp,
-                        bottom = 4.dp,
-                    ),
-            )
-        }
     }
 }
 
@@ -1169,7 +1164,6 @@ internal fun LibraryOptionsDestination(
     onGridSpacingChange: (LibraryGridSpacing) -> Unit,
     onAbout: () -> Unit,
     onSettings: () -> Unit,
-    onProfiles: () -> Unit,
     onHelp: () -> Unit,
     onCrashReports: () -> Unit,
     onSaveLog: () -> Unit,
@@ -1342,8 +1336,6 @@ internal fun LibraryOptionsDestination(
                     LibraryActionRow(R.string.about, onAbout)
                     HorizontalDivider()
                     LibraryActionRow(R.string.action_settings, onSettings)
-                    HorizontalDivider()
-                    LibraryActionRow(R.string.profiles, onProfiles)
                     HorizontalDivider()
                     LibraryActionRow(R.string.help, onHelp)
                     HorizontalDivider()

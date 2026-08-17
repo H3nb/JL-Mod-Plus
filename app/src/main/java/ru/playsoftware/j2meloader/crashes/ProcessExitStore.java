@@ -17,7 +17,6 @@ package ru.playsoftware.j2meloader.crashes;
 import android.app.ActivityManager;
 import android.app.ApplicationExitInfo;
 import android.content.Context;
-import android.content.pm.PackageInfo;
 import android.os.Build;
 import android.system.OsConstants;
 import android.util.AtomicFile;
@@ -30,6 +29,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -75,9 +75,10 @@ public final class ProcessExitStore {
 	private static final int MAX_DESCRIPTION_LENGTH = 1024;
 	private static final int MAX_DEVICE_VALUE_LENGTH = 128;
 	private static final int MAX_PROCESS_NAME_LENGTH = 256;
-	private static final int MAX_STATE_SUMMARY_BYTES = 128;
 	private static final int MAX_DISPLAY_TRACE_BYTES = 128 * 1024;
 	private static final int DISPLAY_TRACE_HEAD_BYTES = 96 * 1024;
+
+	private static final Object INGEST_LOCK = new Object();
 
 	private static final String TAG = ProcessExitStore.class.getSimpleName();
 	private static final String RECORD_DIR = "diagnostics/process-exits";
@@ -87,7 +88,6 @@ public final class ProcessExitStore {
 	private static final String ACK_SUFFIX = ".ack";
 	private static final String BACKUP_SUFFIX = ".bak";
 	private static final String NEW_SUFFIX = ".new";
-	private static final String STATE_PREFIX = "jlp1";
 
 	private static final String KEY_SCHEMA = "schemaVersion";
 	private static final String KEY_KEY = "key";
@@ -111,18 +111,28 @@ public final class ProcessExitStore {
 	private static final String KEY_TRACE_KIND = "traceKind";
 	private static final String KEY_TRACE_BYTES = "traceBytes";
 	private static final String KEY_TRACE_TRUNCATED = "traceTruncated";
+	private static final String KEY_CONTEXT_RUN_ID = "context.runId";
+	private static final String KEY_CONTEXT_BUILD_COMMIT = "context.buildCommit";
+	private static final String KEY_CONTEXT_BUILD_VARIANT = "context.buildVariant";
+	private static final String KEY_CONTEXT_LOCATION = "context.location";
+	private static final String KEY_CONTEXT_PREVIOUS = "context.previousLocation";
+	private static final String KEY_CONTEXT_ACTION = "context.action";
+	private static final String KEY_CONTEXT_PHASE = "context.phase";
+	private static final String KEY_CONTEXT_UPDATED = "context.updatedWallTimeMillis";
+	private static final String KEY_CONTEXT_BREADCRUMB_COUNT = "context.breadcrumbCount";
+
+	private static volatile String publishedSessionId;
 
 	private ProcessExitStore() {}
 
+	/** Publishes only current-process state; historical harvesting is deferred after startup. */
 	static void initializeProcess(Context context, String processRole) {
+		publishedSessionId = null;
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
 			return;
 		}
 		try {
-			Api30Impl.setProcessState(context, processRole, null);
-			if ("main".equals(processRole)) {
-				ingest(context);
-			}
+			Api30Impl.setProcessState(context, null);
 		} catch (RuntimeException e) {
 			Log.w(TAG, "Process-exit diagnostics initialization failed open", e);
 		} catch (OutOfMemoryError e) {
@@ -132,16 +142,33 @@ public final class ProcessExitStore {
 
 	/** Publishes the immutable MIDlet session ID into Android's <=128-byte process state summary. */
 	static void setMidletSession(Context context, String sessionId) {
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R
-				|| !MidletFailureRecovery.isSafeEventId(sessionId)) {
+		if (!MidletFailureRecovery.isSafeEventId(sessionId)) {
+			return;
+		}
+		publishedSessionId = sessionId;
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
 			return;
 		}
 		try {
-			Api30Impl.setProcessState(context, "midlet", sessionId);
+			Api30Impl.setProcessState(context, sessionId);
 		} catch (RuntimeException e) {
 			Log.w(TAG, "Unable to publish MIDlet process-exit session identity", e);
 		} catch (OutOfMemoryError e) {
 			logLowMemory("Unable to publish MIDlet process-exit identity under low memory");
+		}
+	}
+
+	/** Republishes the last high-level app context without losing a MIDlet session correlation key. */
+	static void updateProcessContext(Context context) {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+			return;
+		}
+		try {
+			Api30Impl.setProcessState(context, publishedSessionId);
+		} catch (RuntimeException e) {
+			Log.w(TAG, "Unable to publish process-exit app context", e);
+		} catch (OutOfMemoryError e) {
+			logLowMemory("Unable to publish process-exit app context under low memory");
 		}
 	}
 
@@ -150,13 +177,17 @@ public final class ProcessExitStore {
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
 			return;
 		}
-		try {
-			Api30Impl.ingest(context);
-			prune(context);
-		} catch (RuntimeException e) {
-			Log.w(TAG, "Unable to ingest Android process-exit diagnostics", e);
-		} catch (OutOfMemoryError e) {
-			logLowMemory("Unable to ingest Android process-exit diagnostics under low memory");
+		// Startup maintenance and on-demand repository loading can enter here concurrently.
+		// Keep serialization local to this store so persisted evidence remains single-writer.
+		synchronized (INGEST_LOCK) {
+			try {
+				Api30Impl.ingest(context);
+				prune(context);
+			} catch (RuntimeException e) {
+				Log.w(TAG, "Unable to ingest Android process-exit diagnostics", e);
+			} catch (OutOfMemoryError e) {
+				logLowMemory("Unable to ingest Android process-exit diagnostics under low memory");
+			}
 		}
 	}
 
@@ -169,6 +200,12 @@ public final class ProcessExitStore {
 		for (File file : files) {
 			try {
 				Snapshot snapshot = read(file);
+				// A user deletion marker outranks a stale/racing local projection. Keep the marker
+				// durable until its source can no longer recreate this exact key.
+				if (ProcessExitDeletionStore.isDeleted(context, snapshot.key)) {
+					delete(context, snapshot);
+					continue;
+				}
 				// The isolated MIDlet process is deliberately killed after a graceful MIDlet exit.
 				// Exact journal outcome keeps that expected SIGKILL out of the crash inbox.
 				if (isIntentionalSessionExit(context, snapshot.sessionId)) {
@@ -189,9 +226,14 @@ public final class ProcessExitStore {
 		return result;
 	}
 
-	/** Returns one unacknowledged abnormal exit not already represented by a MIDlet failure notice. */
+	/** Refreshes system history, then returns one unacknowledged abnormal exit. */
 	public static PendingExit findPendingExit(Context context) {
 		ingest(context);
+		return findPendingStoredExit(context);
+	}
+
+	/** Returns one pending exit from already-persisted evidence without harvesting system history. */
+	public static PendingExit findPendingStoredExit(Context context) {
 		List<Snapshot> records = loadStored(context);
 		if (records.isEmpty()) {
 			pruneAcknowledgments(context, Collections.emptySet());
@@ -237,12 +279,13 @@ public final class ProcessExitStore {
 		}
 	}
 
-	/** Deletes dependent trace evidence before the metadata that points to it. */
+	/** Deletes canonical trace evidence before the metadata that points to it. */
 	static boolean delete(Context context, Snapshot snapshot) {
-		if (snapshot == null) {
+		if (snapshot == null || snapshot.recordFile == null || !isSafeKey(snapshot.key)) {
 			return false;
 		}
-		if (snapshot.traceFile != null && !deleteAtomic(snapshot.traceFile)) {
+		File directory = snapshot.recordFile.getParentFile();
+		if (directory == null || !deleteAtomic(traceFile(directory, snapshot.key))) {
 			return false;
 		}
 		if (!deleteAtomic(snapshot.recordFile)) {
@@ -428,7 +471,8 @@ public final class ProcessExitStore {
 				optional(p, KEY_PRIMARY_ABI),
 				optional(p, KEY_TRACE_KIND),
 				declaredTraceBytes,
-				Boolean.parseBoolean(p.getProperty(KEY_TRACE_TRUNCATED, "false"))
+				Boolean.parseBoolean(p.getProperty(KEY_TRACE_TRUNCATED, "false")),
+				readStoredContext(p)
 		);
 	}
 
@@ -460,7 +504,81 @@ public final class ProcessExitStore {
 		put(p, KEY_TRACE_KIND, snapshot.traceKind);
 		p.setProperty(KEY_TRACE_BYTES, Long.toString(snapshot.traceBytes));
 		p.setProperty(KEY_TRACE_TRUNCATED, Boolean.toString(snapshot.traceTruncated));
+		writeStoredContext(p, snapshot.appContext);
 		writeProperties(snapshot.recordFile, p);
+	}
+
+	private static void writeStoredContext(Properties p, CrashContextStore.Snapshot context) {
+		if (context == null) {
+			return;
+		}
+		put(p, KEY_CONTEXT_RUN_ID, context.runId);
+		put(p, KEY_CONTEXT_BUILD_COMMIT, context.buildCommit);
+		put(p, KEY_CONTEXT_BUILD_VARIANT, context.buildVariant);
+		put(p, KEY_CONTEXT_LOCATION, context.location);
+		put(p, KEY_CONTEXT_PREVIOUS, context.previousLocation);
+		put(p, KEY_CONTEXT_ACTION, context.action);
+		put(p, KEY_CONTEXT_PHASE, context.phase);
+		if (context.updatedWallTimeMillis > 0) {
+			p.setProperty(KEY_CONTEXT_UPDATED, Long.toString(context.updatedWallTimeMillis));
+		}
+		p.setProperty(KEY_CONTEXT_BREADCRUMB_COUNT, Integer.toString(context.breadcrumbs.size()));
+		for (int i = 0; i < context.breadcrumbs.size(); i++) {
+			CrashContextStore.Breadcrumb breadcrumb = context.breadcrumbs.get(i);
+			String prefix = "context.breadcrumb." + i + ".";
+			if (breadcrumb.wallTimeMillis > 0) {
+				p.setProperty(prefix + "time", Long.toString(breadcrumb.wallTimeMillis));
+			}
+			put(p, prefix + "location", breadcrumb.location);
+			put(p, prefix + "action", breadcrumb.action);
+			put(p, prefix + "phase", breadcrumb.phase);
+		}
+	}
+
+	private static CrashContextStore.Snapshot readStoredContext(Properties p) {
+		String runId = optional(p, KEY_CONTEXT_RUN_ID);
+		if (!CrashContextStore.isSafeRunId(runId)) {
+			return null;
+		}
+		try {
+			int count = Math.min(CrashContextStore.MAX_BREADCRUMBS,
+					Math.max(0, parseIntDefault(p, KEY_CONTEXT_BREADCRUMB_COUNT, 0)));
+			ArrayList<CrashContextStore.Breadcrumb> breadcrumbs = new ArrayList<>(count);
+			for (int i = 0; i < count; i++) {
+				String prefix = "context.breadcrumb." + i + ".";
+				String location = CrashContextStore.normalizeToken(
+						optional(p, prefix + "location"), CrashContextStore.MAX_LOCATION_LENGTH);
+				String phase = CrashContextStore.normalizeToken(
+						optional(p, prefix + "phase"), CrashContextStore.MAX_PHASE_LENGTH);
+				if (location != null && phase != null) {
+					breadcrumbs.add(new CrashContextStore.Breadcrumb(
+							parseLongDefault(p, prefix + "time", 0),
+							location,
+							CrashContextStore.normalizeToken(optional(p, prefix + "action"),
+									CrashContextStore.MAX_ACTION_LENGTH),
+							phase
+					));
+				}
+			}
+			return new CrashContextStore.Snapshot(
+					runId,
+					null,
+					bound(optional(p, KEY_CONTEXT_BUILD_COMMIT), 40),
+					bound(optional(p, KEY_CONTEXT_BUILD_VARIANT), 48),
+					CrashContextStore.normalizeToken(optional(p, KEY_CONTEXT_LOCATION),
+							CrashContextStore.MAX_LOCATION_LENGTH),
+					CrashContextStore.normalizeToken(optional(p, KEY_CONTEXT_PREVIOUS),
+							CrashContextStore.MAX_LOCATION_LENGTH),
+					CrashContextStore.normalizeToken(optional(p, KEY_CONTEXT_ACTION),
+							CrashContextStore.MAX_ACTION_LENGTH),
+					CrashContextStore.normalizeToken(optional(p, KEY_CONTEXT_PHASE),
+							CrashContextStore.MAX_PHASE_LENGTH),
+					parseLongDefault(p, KEY_CONTEXT_UPDATED, 0),
+					breadcrumbs
+			);
+		} catch (IOException | RuntimeException e) {
+			return null;
+		}
 	}
 
 	private static void writeProperties(File file, Properties properties) throws IOException {
@@ -470,29 +588,57 @@ public final class ProcessExitStore {
 			output = atomic.startWrite();
 			properties.store(output, null);
 			atomic.finishWrite(output);
-		} catch (IOException | RuntimeException e) {
+		} catch (Throwable error) {
 			rollback(atomic, output);
-			if (e instanceof IOException) {
-				throw (IOException) e;
-			}
-			throw new IOException("Unable to persist process-exit metadata", e);
+			throw asIOException(error, "Unable to persist process-exit metadata");
 		}
 	}
 
-	private static void writeBytes(File file, byte[] data) throws IOException {
+	private static TraceWriteResult writeTrace(File file, InputStream input) throws IOException {
 		AtomicFile atomic = new AtomicFile(file);
 		FileOutputStream output = null;
 		try {
 			output = atomic.startWrite();
-			output.write(data);
+			TraceWriteResult result = copyBounded(input, output, MAX_TRACE_BYTES);
 			atomic.finishWrite(output);
-		} catch (IOException | RuntimeException e) {
+			return result;
+		} catch (Throwable error) {
 			rollback(atomic, output);
-			if (e instanceof IOException) {
-				throw (IOException) e;
-			}
-			throw new IOException("Unable to persist process-exit trace", e);
+			throw asIOException(error, "Unable to persist process-exit trace");
 		}
+	}
+
+	private static IOException asIOException(Throwable error, String message) {
+		if (error instanceof IOException) {
+			return (IOException) error;
+		}
+		if (error instanceof Error) {
+			throw (Error) error;
+		}
+		return new IOException(message, error);
+	}
+
+	/** Copies at most maxBytes and probes one extra byte only to preserve truncation semantics. */
+	static TraceWriteResult copyBounded(InputStream input, OutputStream output, int maxBytes)
+			throws IOException {
+		if (maxBytes < 0) {
+			throw new IllegalArgumentException("maxBytes < 0");
+		}
+		byte[] buffer = new byte[Math.min(8192, Math.max(1, maxBytes))];
+		int total = 0;
+		while (total < maxBytes) {
+			int count = input.read(buffer, 0, Math.min(buffer.length, maxBytes - total));
+			if (count < 0) {
+				break;
+			}
+			if (count == 0) {
+				continue;
+			}
+			output.write(buffer, 0, count);
+			total += count;
+		}
+		boolean truncated = total == maxBytes && input.read() >= 0;
+		return new TraceWriteResult(total, truncated);
 	}
 
 	private static void rollback(AtomicFile atomic, FileOutputStream output) {
@@ -734,13 +880,15 @@ public final class ProcessExitStore {
 		final String traceKind;
 		final long traceBytes;
 		final boolean traceTruncated;
+		final CrashContextStore.Snapshot appContext;
 
 		Snapshot(File recordFile, File traceFile, String key, long timestampMillis,
 				 String processName, String processRole, int pid, int reason, int status,
 				 int importance, long pssKb, long rssKb, String description,
 				 boolean lowMemoryKillReportSupported, long stateVersionCode, int stateSdk,
 				 String sessionId, String deviceBrand, String deviceModel, String primaryAbi,
-				 String traceKind, long traceBytes, boolean traceTruncated) {
+				 String traceKind, long traceBytes, boolean traceTruncated,
+				 CrashContextStore.Snapshot appContext) {
 			this.recordFile = recordFile;
 			this.traceFile = traceFile;
 			this.key = key;
@@ -765,6 +913,7 @@ public final class ProcessExitStore {
 			this.traceKind = traceKind;
 			this.traceBytes = traceBytes;
 			this.traceTruncated = traceTruncated;
+			this.appContext = appContext;
 		}
 	}
 
@@ -798,24 +947,22 @@ public final class ProcessExitStore {
 		}
 	}
 
-	private static final class StateSummary {
-		final long versionCode;
-		final int sdk;
-		final String sessionId;
+	static final class TraceWriteResult {
+		final int bytes;
+		final boolean truncated;
 
-		StateSummary(long versionCode, int sdk, String sessionId) {
-			this.versionCode = versionCode;
-			this.sdk = sdk;
-			this.sessionId = sessionId;
+		TraceWriteResult(int bytes, boolean truncated) {
+			this.bytes = bytes;
+			this.truncated = truncated;
 		}
 	}
 
 	private static final class TraceCapture {
-		final byte[] bytes;
+		final int bytes;
 		final String kind;
 		final boolean truncated;
 
-		TraceCapture(byte[] bytes, String kind, boolean truncated) {
+		TraceCapture(int bytes, String kind, boolean truncated) {
 			this.bytes = bytes;
 			this.kind = kind;
 			this.truncated = truncated;
@@ -826,31 +973,22 @@ public final class ProcessExitStore {
 	private static final class Api30Impl {
 		private Api30Impl() {}
 
-		static void setProcessState(Context context, String processRole, String sessionId) {
+		static void setProcessState(Context context, String sessionId) {
 			ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
 			if (manager == null) {
 				return;
 			}
-			long versionCode = -1;
-			try {
-				PackageInfo info = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
-				versionCode = info.getLongVersionCode();
-			} catch (Exception ignored) {}
-
-			String role = bound(processRole, 16);
-			if (role == null) {
-				role = "other";
-			}
-			StringBuilder text = new StringBuilder(96)
-					.append(STATE_PREFIX)
-					.append("|r=").append(role)
-					.append("|vc=").append(versionCode)
-					.append("|sdk=").append(Build.VERSION.SDK_INT);
-			if (MidletFailureRecovery.isSafeEventId(sessionId)) {
-				text.append("|s=").append(sessionId);
-			}
-			byte[] state = text.toString().getBytes(StandardCharsets.US_ASCII);
-			if (state.length <= MAX_STATE_SUMMARY_BYTES) {
+			CrashContextStore.Snapshot appContext = CrashContextStore.currentSnapshot();
+			byte[] state = ProcessStateSummary.build(
+					appContext == null ? null : appContext.runId,
+					appContext == null ? null : appContext.buildCommit,
+					Build.VERSION.SDK_INT,
+					sessionId,
+					appContext == null ? null : appContext.location,
+					appContext == null ? null : appContext.action,
+					appContext == null ? null : appContext.phase
+			);
+			if (state.length <= ProcessStateSummary.MAX_BYTES) {
 				manager.setProcessStateSummary(state);
 			}
 		}
@@ -862,6 +1000,10 @@ public final class ProcessExitStore {
 			}
 			List<ApplicationExitInfo> history = manager.getHistoricalProcessExitReasons(
 					context.getPackageName(), 0, MAX_HISTORY_RESULTS);
+			if (history == null) {
+				history = Collections.emptyList();
+			}
+			HashSet<String> historicalKeys = new HashSet<>(history.size());
 			boolean lmkSupported = ActivityManager.isLowMemoryKillReportSupported();
 			File directory = recordDirectory(context);
 			if (!directory.isDirectory() && !directory.mkdirs()) {
@@ -874,8 +1016,13 @@ public final class ProcessExitStore {
 				if (!isOwnedProcess(context.getPackageName(), processName)) {
 					continue;
 				}
+				String key = buildKey(info);
+				historicalKeys.add(key);
+				if (ProcessExitDeletionStore.isDeleted(context, key)) {
+					continue;
+				}
 				String processRole = CrashReporter.classifyProcess(context.getPackageName(), processName);
-				StateSummary state = parseState(info.getProcessStateSummary());
+				ProcessStateSummary.Data state = ProcessStateSummary.parse(info.getProcessStateSummary());
 				if (isIntentionalSessionExit(context, state.sessionId)) {
 					continue;
 				}
@@ -884,30 +1031,23 @@ public final class ProcessExitStore {
 					continue;
 				}
 
-				String key = buildKey(info);
 				File metadata = recordFile(directory, key);
 				if (atomicExists(metadata)) {
 					continue;
 				}
 
-				TraceCapture trace = captureTrace(info);
-				File traceFile = null;
-				long traceBytes = 0;
-				if (trace != null && trace.bytes.length > 0) {
-					traceFile = traceFile(directory, key);
-					try {
-						writeBytes(traceFile, trace.bytes);
-						traceBytes = trace.bytes.length;
-					} catch (IOException e) {
-						Log.w(TAG, "Unable to persist process-exit trace: " + key);
-						traceFile = null;
-					}
+				File candidateTraceFile = traceFile(directory, key);
+				TraceCapture trace = captureTrace(info, candidateTraceFile);
+				File retainedTraceFile = trace != null && trace.bytes > 0 ? candidateTraceFile : null;
+				if (retainedTraceFile == null) {
+					deleteAtomic(candidateTraceFile);
 				}
 
+				CrashContextStore.Snapshot appContext = resolveAppContext(context, processRole, state);
 				String primaryAbi = Build.SUPPORTED_ABIS.length == 0 ? null : Build.SUPPORTED_ABIS[0];
 				Snapshot snapshot = new Snapshot(
 						metadata,
-						traceFile,
+						retainedTraceFile,
 						key,
 						info.getTimestamp(),
 						bound(processName, MAX_PROCESS_NAME_LENGTH),
@@ -927,18 +1067,48 @@ public final class ProcessExitStore {
 						bound(Build.MODEL, MAX_DEVICE_VALUE_LENGTH),
 						primaryAbi,
 						trace == null ? null : trace.kind,
-						traceBytes,
-						trace != null && trace.truncated
+						trace == null ? 0 : trace.bytes,
+						trace != null && trace.truncated,
+						appContext
 				);
 				try {
 					writeRecord(snapshot);
 				} catch (IOException e) {
 					Log.w(TAG, "Unable to persist process-exit record: " + key);
-					if (traceFile != null) {
-						deleteAtomic(traceFile);
+					if (retainedTraceFile != null) {
+						deleteAtomic(retainedTraceFile);
 					}
+				} catch (Error error) {
+					if (retainedTraceFile != null) {
+						deleteAtomic(retainedTraceFile);
+					}
+					throw error;
 				}
 			}
+			ProcessExitDeletionStore.pruneAgainstHistoricalKeys(context, historicalKeys);
+		}
+
+		private static CrashContextStore.Snapshot resolveAppContext(Context context, String processRole,
+				ProcessStateSummary.Data state) {
+			CrashContextStore.Snapshot stored = CrashContextStore.readForRun(context, state.runId);
+			if (stored != null) {
+				return stored;
+			}
+			if (state.runId == null) {
+				return null;
+			}
+			return new CrashContextStore.Snapshot(
+					state.runId,
+					processRole,
+					state.buildCommit,
+					null,
+					state.location,
+					null,
+					state.action,
+					state.phase,
+					0,
+					Collections.emptyList()
+			);
 		}
 
 		private static boolean isOwnedProcess(String packageName, String processName) {
@@ -951,64 +1121,24 @@ public final class ProcessExitStore {
 					+ info.getReason() + "-" + info.getStatus();
 		}
 
-		private static StateSummary parseState(byte[] bytes) {
-			if (bytes == null || bytes.length == 0 || bytes.length > MAX_STATE_SUMMARY_BYTES) {
-				return new StateSummary(-1, -1, null);
+		private static TraceCapture captureTrace(ApplicationExitInfo info, File destination) {
+			String kind;
+			if (info.getReason() == ApplicationExitInfo.REASON_ANR) {
+				kind = "anr-text";
+			} else if (info.getReason() == ApplicationExitInfo.REASON_CRASH_NATIVE
+					&& Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+				kind = "native-tombstone-protobuf";
+			} else {
+				kind = "system-trace";
 			}
-			String[] fields = new String(bytes, StandardCharsets.US_ASCII).split("\\|");
-			if (fields.length == 0 || !STATE_PREFIX.equals(fields[0])) {
-				return new StateSummary(-1, -1, null);
-			}
-			long versionCode = -1;
-			int sdk = -1;
-			String sessionId = null;
-			for (int i = 1; i < fields.length; i++) {
-				int equals = fields[i].indexOf('=');
-				if (equals <= 0 || equals == fields[i].length() - 1) {
-					continue;
-				}
-				String key = fields[i].substring(0, equals);
-				String value = fields[i].substring(equals + 1);
-				try {
-					switch (key) {
-						case "vc" -> versionCode = Long.parseLong(value);
-						case "sdk" -> sdk = Integer.parseInt(value);
-						case "s" -> sessionId = MidletFailureRecovery.isSafeEventId(value) ? value : null;
-						default -> { }
-					}
-				} catch (NumberFormatException ignored) {}
-			}
-			return new StateSummary(versionCode, sdk, sessionId);
-		}
-
-		private static TraceCapture captureTrace(ApplicationExitInfo info) {
 			try (InputStream input = info.getTraceInputStream()) {
 				if (input == null) {
 					return null;
 				}
-				ByteArrayOutputStream output = new ByteArrayOutputStream(16 * 1024);
-				byte[] buffer = new byte[8192];
-				int total = 0;
-				while (total < MAX_TRACE_BYTES) {
-					int count = input.read(buffer, 0, Math.min(buffer.length, MAX_TRACE_BYTES - total));
-					if (count < 0) {
-						break;
-					}
-					output.write(buffer, 0, count);
-					total += count;
-				}
-				boolean truncated = total == MAX_TRACE_BYTES && input.read() >= 0;
-				String kind;
-				if (info.getReason() == ApplicationExitInfo.REASON_ANR) {
-					kind = "anr-text";
-				} else if (info.getReason() == ApplicationExitInfo.REASON_CRASH_NATIVE
-						&& Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-					kind = "native-tombstone-protobuf";
-				} else {
-					kind = "system-trace";
-				}
-				return new TraceCapture(output.toByteArray(), kind, truncated);
+				TraceWriteResult result = writeTrace(destination, input);
+				return new TraceCapture(result.bytes, kind, result.truncated);
 			} catch (IOException | RuntimeException | OutOfMemoryError e) {
+				deleteAtomic(destination);
 				return null;
 			}
 		}

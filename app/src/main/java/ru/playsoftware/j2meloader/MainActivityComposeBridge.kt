@@ -21,6 +21,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -30,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -144,6 +147,15 @@ private fun MainHostDialogText(message: String) {
 }
 
 @Composable
+private fun MainHostWarningIcon() {
+    Icon(
+        painter = painterResource(R.drawable.ic_warning),
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.error,
+    )
+}
+
+@Composable
 private fun MainHostDialogs(
     state: MainHostUiState,
     actions: MainHostActions,
@@ -165,6 +177,7 @@ private fun MainHostDialogs(
             modifier = layout.modifier,
             properties = layout.properties,
             onDismissRequest = {},
+            icon = { MainHostWarningIcon() },
             title = { Text(stringResource(R.string.error)) },
             text = { MainHostDialogText(dialog.message) },
             dismissButton = {
@@ -182,6 +195,7 @@ private fun MainHostDialogs(
             modifier = layout.modifier,
             properties = layout.properties,
             onDismissRequest = {},
+            icon = { MainHostWarningIcon() },
             title = { Text(stringResource(android.R.string.dialog_alert_title)) },
             text = { MainHostDialogText(dialog.message) },
             dismissButton = {
@@ -204,6 +218,7 @@ private fun MainHostDialogs(
             modifier = layout.modifier,
             properties = layout.properties,
             onDismissRequest = {},
+            icon = { MainHostWarningIcon() },
             title = { Text(stringResource(android.R.string.dialog_alert_title)) },
             text = { MainHostDialogText(stringResource(R.string.permission_request_failed)) },
             dismissButton = {
@@ -233,6 +248,7 @@ private fun RecoveryDialog(
         modifier = layout.modifier,
         properties = layout.properties,
         onDismissRequest = {},
+        icon = { MainHostWarningIcon() },
         title = { Text(title) },
         text = { MainHostDialogText(message) },
         dismissButton = {
