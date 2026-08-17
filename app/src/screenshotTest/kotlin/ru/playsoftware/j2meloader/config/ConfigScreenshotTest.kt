@@ -274,6 +274,58 @@ fun ConfigChoiceDialogScreenshot() {
 }
 
 @PreviewTest
+@Preview(name = "Config font sizes landscape", widthDp = 640, heightDp = 360, showBackground = true)
+@Composable
+fun ConfigFontSizesLandscapeScreenshot() {
+    JLModPlusTheme {
+        FontSizesDialog(
+            small = "18",
+            medium = "22",
+            large = "26",
+            onDismissRequest = {},
+            onConfirm = { _, _, _ -> },
+        )
+    }
+}
+
+@PreviewTest
+@Preview(
+    name = "Config font sizes landscape large font",
+    widthDp = 640,
+    heightDp = 360,
+    fontScale = 1.35f,
+    showBackground = true,
+)
+@Composable
+fun ConfigFontSizesLandscapeLargeFontScreenshot() {
+    JLModPlusTheme {
+        FontSizesDialog(
+            small = "18",
+            medium = "22",
+            large = "26",
+            onDismissRequest = {},
+            onConfirm = { _, _, _ -> },
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Config choice dialog landscape", widthDp = 640, heightDp = 360, showBackground = true)
+@Composable
+fun ConfigChoiceDialogLandscapeScreenshot() {
+    JLModPlusTheme {
+        ConfigChoiceDialog(
+            title = "Screen Orientation",
+            description = "Determines the requested display orientation while the application is running.",
+            selected = "Automatic",
+            options = listOf("Automatic", "Landscape", "Reverse Landscape", "Portrait", "Reverse Portrait"),
+            onDismissRequest = {},
+            onSelected = {},
+        )
+    }
+}
+
+@PreviewTest
 @Preview(name = "Config screen presets", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
 fun ConfigScreenPresetDialogScreenshot() {

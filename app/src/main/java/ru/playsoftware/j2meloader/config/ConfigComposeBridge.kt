@@ -705,6 +705,8 @@ internal fun ScreenPresetDialog(
     useModalBottomSheet: Boolean = true,
 ) {
     var customResolutionVisible by rememberSaveable { mutableStateOf(false) }
+    val landscape = configDialogLandscape()
+    val dialogMaxHeight = (LocalConfiguration.current.screenHeightDp.dp * 0.88f).coerceAtLeast(180.dp)
     val listedPresets = if (selectedPreset != null && !presets.contains(selectedPreset)) {
         listOf(selectedPreset) + presets
     } else {
@@ -720,9 +722,9 @@ internal fun ScreenPresetDialog(
     val dialogContent: @Composable () -> Unit = {
         Surface(
             modifier = Modifier
-                .fillMaxWidth(0.92f)
-                .widthIn(max = 560.dp)
-                .heightIn(min = 320.dp, max = 640.dp),
+                .fillMaxWidth(if (landscape) 0.90f else 0.92f)
+                .widthIn(max = if (landscape) 840.dp else 560.dp)
+                .heightIn(max = dialogMaxHeight),
             shape = MaterialTheme.shapes.extraLarge,
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = 6.dp,
@@ -861,6 +863,31 @@ internal fun ScreenPresetDialog(
 }
 
 @Composable
+private fun configDialogLandscape(): Boolean =
+    LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+private fun configDialogModifier(landscape: Boolean): Modifier = if (landscape) {
+    Modifier
+        .fillMaxWidth(0.90f)
+        .widthIn(max = 840.dp)
+} else {
+    Modifier.widthIn(max = 560.dp)
+}
+
+@Composable
+private fun configDialogBodyModifier(landscape: Boolean): Modifier {
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val maxBodyHeight = if (landscape) {
+        (screenHeight * 0.48f).coerceAtLeast(120.dp)
+    } else {
+        (screenHeight * 0.62f).coerceAtLeast(220.dp)
+    }
+    return Modifier
+        .heightIn(max = maxBodyHeight)
+        .verticalScroll(rememberScrollState())
+}
+
+@Composable
 internal fun CustomResolutionDialog(
     initialSize: Size?,
     onDismissRequest: () -> Unit,
@@ -879,12 +906,18 @@ internal fun CustomResolutionDialog(
     val validWidth = width.toIntOrNull()?.takeIf { it > 0 }
     val validHeight = height.toIntOrNull()?.takeIf { it > 0 }
     val valid = validWidth != null && validHeight != null
+    val landscape = configDialogLandscape()
 
     AlertDialog(
+        modifier = configDialogModifier(landscape),
+        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(R.string.config_custom_resolution)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(
+                modifier = configDialogBodyModifier(landscape),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -1053,7 +1086,7 @@ private fun FontSection(
 }
 
 @Composable
-private fun FontSizesDialog(
+internal fun FontSizesDialog(
     small: String,
     medium: String,
     large: String,
@@ -1063,40 +1096,36 @@ private fun FontSizesDialog(
     var smallDraft by remember(small) { mutableStateOf(small) }
     var mediumDraft by remember(medium) { mutableStateOf(medium) }
     var largeDraft by remember(large) { mutableStateOf(large) }
+    val landscape = configDialogLandscape()
     AlertDialog(
+        modifier = configDialogModifier(landscape),
+        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(R.string.config_font_sizes)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(
+                modifier = configDialogBodyModifier(landscape),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
                 Text(
                     text = stringResource(R.string.config_help_font_sizes_long),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                OutlinedTextField(
-                    value = smallDraft,
-                    onValueChange = { smallDraft = it },
-                    label = { Text(stringResource(R.string.PREF_FONT_SMALL)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                OutlinedTextField(
-                    value = mediumDraft,
-                    onValueChange = { mediumDraft = it },
-                    label = { Text(stringResource(R.string.PREF_FONT_MEDIUM)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                OutlinedTextField(
-                    value = largeDraft,
-                    onValueChange = { largeDraft = it },
-                    label = { Text(stringResource(R.string.PREF_FONT_LARGE)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                if (landscape) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        FontSizeField(smallDraft, { smallDraft = it }, R.string.PREF_FONT_SMALL, Modifier.weight(1f))
+                        FontSizeField(mediumDraft, { mediumDraft = it }, R.string.PREF_FONT_MEDIUM, Modifier.weight(1f))
+                        FontSizeField(largeDraft, { largeDraft = it }, R.string.PREF_FONT_LARGE, Modifier.weight(1f))
+                    }
+                } else {
+                    FontSizeField(smallDraft, { smallDraft = it }, R.string.PREF_FONT_SMALL)
+                    FontSizeField(mediumDraft, { mediumDraft = it }, R.string.PREF_FONT_MEDIUM)
+                    FontSizeField(largeDraft, { largeDraft = it }, R.string.PREF_FONT_LARGE)
+                }
             }
         },
         dismissButton = {
@@ -1109,6 +1138,23 @@ private fun FontSizesDialog(
                 onClick = { onConfirm(smallDraft, mediumDraft, largeDraft) },
             ) { Text(stringResource(android.R.string.ok)) }
         },
+    )
+}
+
+@Composable
+private fun FontSizeField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    labelRes: Int,
+    modifier: Modifier = Modifier.fillMaxWidth(),
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(stringResource(labelRes)) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        modifier = modifier,
     )
 }
 
@@ -1415,7 +1461,10 @@ private fun ConfigActionConfirmationDialog(
     } else {
         action.message
     }
+    val landscape = configDialogLandscape()
     AlertDialog(
+        modifier = configDialogModifier(landscape),
+        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(action.title)) },
         text = { Text(stringResource(message)) },
@@ -1552,12 +1601,18 @@ internal fun ConfigNumberDialog(
     onConfirm: (String) -> Unit,
 ) {
     var draft by remember(initialValue) { mutableStateOf(initialValue) }
+    val landscape = configDialogLandscape()
 
     AlertDialog(
+        modifier = configDialogModifier(landscape),
+        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(title) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(
+                modifier = configDialogBodyModifier(landscape),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
                 if (description != null) {
                     Text(
                         text = description,
@@ -1637,12 +1692,18 @@ internal fun ConfigSliderDialog(
 ) {
     var draftText by remember(initialValue) { mutableStateOf(initialValue.toString()) }
     val range = valueRange.first.toFloat()..valueRange.last.toFloat()
+    val landscape = configDialogLandscape()
 
     AlertDialog(
+        modifier = configDialogModifier(landscape),
+        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(title) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(
+                modifier = configDialogBodyModifier(landscape),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
                 if (description != null) {
                     Text(
                         text = description,
@@ -1755,7 +1816,10 @@ internal fun ConfigChoiceDialog(
     onDismissRequest: () -> Unit,
     onSelected: (Int) -> Unit,
 ) {
+    val landscape = configDialogLandscape()
     AlertDialog(
+        modifier = configDialogModifier(landscape),
+        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(title) },
         text = {
@@ -1767,7 +1831,7 @@ internal fun ConfigChoiceDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                LazyColumn(modifier = Modifier.heightIn(max = 360.dp)) {
+                LazyColumn(modifier = Modifier.heightIn(max = if (landscape) 180.dp else 360.dp)) {
                 itemsIndexed(options) { index, option ->
                     ListItem(
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
