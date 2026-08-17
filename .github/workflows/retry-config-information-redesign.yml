@@ -1,0 +1,65 @@
+name: Retry config information redesign
+
+on:
+  push:
+    branches:
+      - ui/redesign-config
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ui/redesign-config
+          submodules: recursive
+
+      - name: Extract and run redesign patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          workflow = Path('.github/workflows/apply-config-information-redesign.yml').read_text()
+          body = workflow.split("          python3 - <<'PY'\n", 1)[1].split("\n          PY\n", 1)[0]
+          lines = []
+          for line in body.splitlines():
+              lines.append(line[10:] if line.startswith('          ') else line)
+          code = '\n'.join(lines) + '\n'
+          # Execute only the transform portion; stop before the YAML steps after the Python heredoc.
+          exec(compile(code, 'apply-config-information-redesign.py', 'exec'), {'__name__': '__main__'})
+          PY
+          git diff --check
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
+        with:
+          cache-read-only: true
+
+      - name: Update screenshots and validate
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon :app:updateEmulatorDebugScreenshotTest
+          ./gradlew --no-daemon --stacktrace :app:lintEmulatorDebug :dexlib:lintDebug :app:testEmulatorDebugUnitTest :app:validateEmulatorDebugScreenshotTest :app:assembleEmulatorDebug :app:assembleEmulatorDebugAndroidTest
+
+      - name: Commit redesign and remove helpers
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/apply-config-information-redesign.yml .github/workflows/retry-config-information-redesign.yml
+          git add app/src/main app/src/androidTest app/src/screenshotTest app/src/screenshotTestEmulatorDebug/reference
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Integrate profiles and explain config options'
+          git push origin HEAD:ui/redesign-config
