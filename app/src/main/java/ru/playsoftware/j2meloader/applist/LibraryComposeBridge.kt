@@ -106,6 +106,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -152,6 +153,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import ru.playsoftware.j2meloader.BuildConfig
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
@@ -725,6 +727,10 @@ private fun LibraryAppsDestination(
     var sortVisible by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val gridState = rememberLazyGridState()
+    val coroutineScope = rememberCoroutineScope()
+    val fastScrollBuckets = remember(state.apps, state.sortVariant) {
+        buildLibraryFastScrollBuckets(state.apps, state.sortVariant)
+    }
     val headerHeightPx = remember { mutableStateOf(0) }
     val headerOffsetPx = remember { mutableStateOf(0f) }
     val hideDistancePx = with(LocalDensity.current) { LIBRARY_CHROME_HIDE_DISTANCE_DP.dp.toPx() }
@@ -920,6 +926,34 @@ private fun LibraryAppsDestination(
                 .onSizeChanged { headerHeightPx.value = it.height },
         ) {
             renderHeader(Modifier, true)
+        }
+
+        if (fastScrollBuckets.size > 1) {
+            val visibleHeaderHeight = with(LocalDensity.current) {
+                (headerHeightPx.value + headerOffsetPx.value)
+                    .coerceAtLeast(0f)
+                    .toDp()
+            }
+            LibraryFastScroller(
+                buckets = fastScrollBuckets,
+                onBucketSelected = { bucket ->
+                    coroutineScope.launch {
+                        val targetIndex = bucket.appIndex + 1 // Header occupies item zero.
+                        if (state.layout == LibraryLayout.List) {
+                            listState.scrollToItem(targetIndex)
+                        } else {
+                            gridState.scrollToItem(targetIndex)
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(
+                        top = visibleHeaderHeight + 4.dp,
+                        end = 2.dp,
+                        bottom = 4.dp,
+                    ),
+            )
         }
     }
 }
