@@ -2,20 +2,14 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
-
 package ru.playsoftware.j2meloader.librarydb
 
 import java.io.File
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
 /**
@@ -24,6 +18,7 @@ import kotlinx.coroutines.withContext
  */
 class LibraryBootstrapper(
     private val scanner: LibraryScanner = LibraryScanner(),
+    private val legacyImporter: LegacyLibraryImporter = LegacyLibraryImporter(),
 ) {
     data class Progress(
         val completed: Int,
@@ -35,6 +30,8 @@ class LibraryBootstrapper(
         val alreadyReady: Boolean,
         val indexedCount: Int,
         val failures: List<LibraryScanner.Failure>,
+        val legacyTitlesImported: Int = 0,
+        val legacyImportFailure: String? = null,
     )
 
     suspend fun ensureReady(
@@ -50,20 +47,32 @@ class LibraryBootstrapper(
         dao.setLibraryState(LibraryStateEntity(bootstrapState = LibraryBootstrapState.INDEXING))
 
         val scan = withContext(Dispatchers.IO) {
+            val scanContext = currentCoroutineContext()
             scanner.scan(emulatorDir) { completed, total, storageKey ->
+                // flatMapLatest/workdir switching can cancel an obsolete bootstrap between apps.
+                scanContext.ensureActive()
                 onProgress?.invoke(Progress(completed, total, storageKey))
             }
         }
+        currentCoroutineContext().ensureActive()
 
-        // The scanner runs outside a long-lived transaction. Only the final lightweight catalog
-        // replacement and READY transition are atomic, so a killed/failed bootstrap remains
-        // visibly incomplete and can safely retry on the next launch.
-        dao.replaceIncompleteCatalog(scan.apps)
+        val legacyRead = withContext(Dispatchers.IO) {
+            legacyImporter.read(emulatorDir)
+        }
+        currentCoroutineContext().ensureActive()
+        val merged = legacyImporter.merge(scan.apps, legacyRead.rows)
+
+        // The scanner and optional legacy read run outside a long-lived transaction. Only the final
+        // lightweight catalog replacement and READY transition are atomic, so a killed/failed or
+        // cancelled bootstrap remains visibly incomplete and can safely retry on the next launch.
+        dao.replaceIncompleteCatalog(merged.apps)
 
         return Result(
             alreadyReady = false,
-            indexedCount = scan.apps.size,
+            indexedCount = merged.apps.size,
             failures = scan.failures,
+            legacyTitlesImported = merged.customTitlesImported,
+            legacyImportFailure = legacyRead.failure,
         )
     }
 }
