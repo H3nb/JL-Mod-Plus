@@ -59,11 +59,14 @@ class LibraryReconciler(
         }
 
         // Revalidate the cheap directory-name snapshot immediately before publishing the DB diff.
-        // This protects against an installer or manual filesystem change racing the first snapshot.
+        // A removal must be absent from both snapshots; a directory that disappears only during
+        // this pass is deferred to the next reconciliation instead of losing Library-owned state
+        // after a single observation. Added rows are inserted only when still present at the end.
         val finalFilesystemKeys = withContext(Dispatchers.IO) {
             scanner.storageKeys(emulatorDir)
         }
-        val finalRemoved = databaseKeys - finalFilesystemKeys
+        val stillMissing = databaseKeys - finalFilesystemKeys
+        val finalRemoved = initialDiff.removed.intersect(stillMissing)
         val finalAddedKeys = finalFilesystemKeys - databaseKeys
         val finalAddedApps = scannedAdded.apps.filter { it.storageKey in finalAddedKeys }
 
