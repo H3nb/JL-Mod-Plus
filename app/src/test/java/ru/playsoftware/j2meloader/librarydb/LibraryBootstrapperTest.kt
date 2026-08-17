@@ -129,6 +129,53 @@ class LibraryBootstrapperTest {
     }
 
     @Test
+    fun missingBootstrapStateCannotDestroyPersistentLibraryData() = runBlocking {
+        val preservedId = dao.insertApp(
+            LibraryAppEntity(
+                storageKey = "preserved",
+                sourceTitle = "Source",
+                sourceVendor = "Vendor",
+                sourceVersion = "1.0",
+                customTitle = "User title",
+                favorite = true,
+            ),
+        )
+        createConvertedApp("replacement", "Replacement", "Vendor", "2.0")
+
+        try {
+            LibraryBootstrapper().ensureReady(database, workDir)
+            throw AssertionError("Expected missing established bootstrap state to be rejected")
+        } catch (_: IllegalStateException) {
+            val preserved = requireNotNull(dao.getApp(preservedId))
+            assertEquals("User title", preserved.customTitle)
+            assertTrue(preserved.favorite)
+            assertEquals(listOf("preserved"), dao.getStorageKeys())
+        }
+    }
+
+    @Test
+    fun unknownBootstrapStateCannotBeReinterpretedAsIncomplete() = runBlocking {
+        dao.insertApp(
+            LibraryAppEntity(
+                storageKey = "preserved",
+                sourceTitle = "Source",
+                sourceVendor = "Vendor",
+                sourceVersion = "1.0",
+                favorite = true,
+            ),
+        )
+        dao.setLibraryState(LibraryStateEntity(bootstrapState = "FUTURE_STATE"))
+
+        try {
+            LibraryBootstrapper().ensureReady(database, workDir)
+            throw AssertionError("Expected unknown bootstrap state to be rejected")
+        } catch (_: IllegalStateException) {
+            assertEquals(listOf("preserved"), dao.getStorageKeys())
+            assertTrue(requireNotNull(dao.getAppByStorageKey("preserved")).favorite)
+        }
+    }
+
+    @Test
     fun fatalFilesystemReadLeavesBootstrapIncompleteForRetry() = runBlocking {
         File(workDir, "converted").writeText("not a directory")
 
