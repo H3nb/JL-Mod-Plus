@@ -1,0 +1,97 @@
+name: Finish landscape dialog adaptation
+
+on:
+  push:
+    branches:
+      - ui/redesign-config
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ui/redesign-config
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.0.0
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v5.0.0
+        with:
+          cache-read-only: true
+      - name: Adapt legacy Compose dialogs and validate
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('app/src/main/java/ru/playsoftware/j2meloader/config/ConfigDialogComposeBridge.kt')
+          text = path.read_text()
+
+          def replace_once(old, new, label):
+              global text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 occurrence, found {count}')
+              text = text.replace(old, new, 1)
+
+          replace_once(
+              'import androidx.compose.ui.Modifier\nimport androidx.compose.ui.res.stringResource',
+              'import androidx.compose.ui.Modifier\nimport androidx.compose.ui.platform.LocalConfiguration\nimport androidx.compose.ui.res.stringResource',
+              'LocalConfiguration import',
+          )
+          replace_once(
+              'import androidx.compose.ui.unit.dp\n',
+              'import androidx.compose.ui.unit.dp\nimport android.content.res.Configuration\n',
+              'Configuration import',
+          )
+          old_surface = '''@Composable\nprivate fun DialogSurface(content: @Composable ColumnScope.() -> Unit) {\n    Surface(\n        modifier = Modifier.widthIn(min = 280.dp, max = 560.dp),\n        shape = MaterialTheme.shapes.extraLarge,\n        color = MaterialTheme.colorScheme.surfaceContainerHigh,\n        tonalElevation = 6.dp,\n    ) {\n        Column(\n            modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),\n            verticalArrangement = Arrangement.spacedBy(12.dp),\n            content = content,\n        )\n    }\n}\n'''
+          new_surface = '''@Composable\nprivate fun DialogSurface(content: @Composable ColumnScope.() -> Unit) {\n    val configuration = LocalConfiguration.current\n    val landscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE\n    val maxHeight = (configuration.screenHeightDp.dp * if (landscape) 0.86f else 0.90f)\n        .coerceAtLeast(180.dp)\n    Surface(\n        modifier = Modifier\n            .fillMaxWidth(if (landscape) 0.96f else 1f)\n            .widthIn(min = 280.dp, max = if (landscape) 840.dp else 560.dp)\n            .heightIn(max = maxHeight),\n        shape = MaterialTheme.shapes.extraLarge,\n        color = MaterialTheme.colorScheme.surfaceContainerHigh,\n        tonalElevation = 6.dp,\n    ) {\n        Column(\n            modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),\n            verticalArrangement = Arrangement.spacedBy(12.dp),\n            content = content,\n        )\n    }\n}\n'''
+          replace_once(old_surface, new_surface, 'DialogSurface')
+
+          replace_once(
+              ') {\n    DialogSurface {\n        Text(stringResource(R.string.profile_choose_template),',
+              ') {\n    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE\n    DialogSurface {\n        Text(stringResource(R.string.profile_choose_template),',
+              'load profile landscape state',
+          )
+          replace_once(
+              '            LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {',
+              '            LazyColumn(modifier = Modifier.heightIn(max = if (landscape) 180.dp else 420.dp)) {',
+              'load profile list height',
+          )
+          replace_once(
+              '    val format = remember { DecimalFormat("#.######") }\n\n    DialogSurface {',
+              '    val format = remember { DecimalFormat("#.######") }\n    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE\n\n    DialogSurface {',
+              'shader landscape state',
+          )
+          replace_once(
+              '        LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {',
+              '        LazyColumn(modifier = Modifier.heightIn(max = if (landscape) 180.dp else 420.dp)) {',
+              'shader list height',
+          )
+          path.write_text(text)
+
+          java_path = Path('app/src/main/java/ru/playsoftware/j2meloader/config/ShaderTuneAlert.java')
+          java = java_path.read_text()
+          old = '''\t\tint width = Math.min(getResources().getDisplayMetrics().widthPixels - dp(32), dp(620));\n\t\tint height = Math.min((int) (getResources().getDisplayMetrics().heightPixels * 0.84f), dp(720));\n\t\twindow.setLayout(Math.max(width, dp(280)), Math.max(height, dp(320)));'''
+          new = '''\t\tint availableWidth = Math.max(getResources().getDisplayMetrics().widthPixels - dp(32), 1);\n\t\tint availableHeight = Math.max(getResources().getDisplayMetrics().heightPixels - dp(24), 1);\n\t\tint width = Math.min(availableWidth, dp(840));\n\t\tint height = Math.min(availableHeight, dp(720));\n\t\twindow.setLayout(width, height);'''
+          if java.count(old) != 1:
+              raise SystemExit('ShaderTuneAlert sizing block not found exactly once')
+          java_path.write_text(java.replace(old, new, 1))
+          PY
+
+          chmod +x gradlew
+          ./gradlew --no-daemon :app:compileEmulatorDebugKotlin :app:compileEmulatorDebugJavaWithJavac :app:validateEmulatorDebugScreenshotTest :app:testEmulatorDebugUnitTest
+          rm .github/workflows/apply-config-landscape-dialogs-legacy.yml
+          git update-index --chmod=-x gradlew
+          chmod -x gradlew
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git update-index --chmod=-x gradlew
+          git commit -m "Finish adaptive landscape dialogs"
+          git push origin HEAD:ui/redesign-config
