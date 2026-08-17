@@ -29,9 +29,16 @@ import static org.acra.ReportField.THREAD_DETAILS;
 import static org.acra.ReportField.USER_APP_START_DATE;
 import static org.acra.ReportField.USER_CRASH_DATE;
 
+import android.app.Activity;
 import android.app.Application;
+import android.os.Build;
+import android.os.Bundle;
 import android.os.Process;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import org.acra.ACRA;
 import org.acra.ErrorReporter;
@@ -41,6 +48,7 @@ import org.acra.config.CoreConfigurationBuilder;
 import java.util.Arrays;
 import java.util.List;
 
+import ru.playsoftware.j2meloader.BuildConfig;
 import ru.playsoftware.j2meloader.EmulatorApplication;
 
 /**
@@ -62,16 +70,24 @@ public final class CrashReporter {
 	private static final String ROLE_REPORTER = "reporter";
 	private static final String ROLE_OTHER = "other";
 
-	private static final String KEY_PROCESS_NAME = "jlmod.process.name";
-	private static final String KEY_PROCESS_ROLE = "jlmod.process.role";
-	private static final String KEY_PROCESS_PID = "jlmod.process.pid";
-	private static final String KEY_MIDLET_NAME = "jlmod.midlet.name";
-	private static final String KEY_MIDLET_VENDOR = "jlmod.midlet.vendor";
-	private static final String KEY_MIDLET_VERSION = "jlmod.midlet.version";
-	private static final String KEY_MIDLET_JAR_SIZE = "jlmod.midlet.jar.size";
-	private static final String KEY_MIDLET_JAR_SHA256 = "jlmod.midlet.jar.sha256";
-	private static final String KEY_MIDLET_MAIN_CLASS = "jlmod.midlet.mainClass";
-	private static final String KEY_SESSION_ID = "jlmod.session.id";
+	static final String KEY_PROCESS_NAME = "jlmod.process.name";
+	static final String KEY_PROCESS_ROLE = "jlmod.process.role";
+	static final String KEY_PROCESS_PID = "jlmod.process.pid";
+	static final String KEY_MIDLET_NAME = "jlmod.midlet.name";
+	static final String KEY_MIDLET_VENDOR = "jlmod.midlet.vendor";
+	static final String KEY_MIDLET_VERSION = "jlmod.midlet.version";
+	static final String KEY_MIDLET_JAR_SIZE = "jlmod.midlet.jar.size";
+	static final String KEY_MIDLET_JAR_SHA256 = "jlmod.midlet.jar.sha256";
+	static final String KEY_MIDLET_MAIN_CLASS = "jlmod.midlet.mainClass";
+	static final String KEY_SESSION_ID = "jlmod.session.id";
+	static final String KEY_RUN_ID = "jlmod.run.id";
+	static final String KEY_BUILD_COMMIT = "jlmod.build.commit";
+	static final String KEY_BUILD_VARIANT = "jlmod.build.variant";
+	static final String KEY_CONTEXT_LOCATION = "jlmod.context.location";
+	static final String KEY_CONTEXT_PREVIOUS = "jlmod.context.previous";
+	static final String KEY_CONTEXT_ACTION = "jlmod.context.action";
+	static final String KEY_CONTEXT_PHASE = "jlmod.context.phase";
+	static final String KEY_CONTEXT_UPDATED = "jlmod.context.updated";
 
 	private static final List<ReportField> REPORT_FIELDS = Arrays.asList(
 			REPORT_ID,
@@ -91,10 +107,25 @@ public final class CrashReporter {
 	);
 
 	private static final Object DIAGNOSTIC_REFRESH_LOCK = new Object();
+	private static Application activeApplication;
 	private static boolean mainProcess;
+	private static boolean lifecycleCallbacksRegistered;
 	private static boolean diagnosticRefreshRunning;
 	private static boolean diagnosticRefreshPending;
 	private static volatile boolean diagnosticRefreshReady;
+
+	public enum AppContextPhase {
+		ENTERING("entering"),
+		ACTIVE("active"),
+		EXECUTING("executing"),
+		LEAVING("leaving");
+
+		final String id;
+
+		AppContextPhase(String id) {
+			this.id = id;
+		}
+	}
 
 	private CrashReporter() {}
 
@@ -126,10 +157,16 @@ public final class CrashReporter {
 			return true;
 		}
 
+		activeApplication = application;
 		ErrorReporter reporter = ACRA.getErrorReporter();
 		putBounded(reporter, KEY_PROCESS_NAME, processName);
 		putBounded(reporter, KEY_PROCESS_ROLE, processRole);
 		putBounded(reporter, KEY_PROCESS_PID, Integer.toString(Process.myPid()));
+
+		CrashContextStore.Snapshot context = CrashContextStore.initialize(
+				application, processRole, BuildConfig.JLMOD_BUILD_COMMIT, BuildConfig.JLMOD_BUILD_VARIANT);
+		context = CrashContextStore.update(application, "process.start", "start", AppContextPhase.ACTIVE.id);
+		publishCrashContext(reporter, context);
 
 		// Android 11+ keeps a small process-owned state summary. Publish it synchronously so any
 		// later process death can still be attributed even if deferred maintenance never gets CPU.
@@ -139,11 +176,35 @@ public final class CrashReporter {
 
 	/** Schedules one best-effort main-process diagnostics refresh after Application startup. */
 	public static void scheduleMaintenance(Application application) {
+		registerActivityContextCallbacks(application);
 		if (!mainProcess) {
 			diagnosticRefreshReady = true;
 			return;
 		}
 		startDiagnosticRefresh(application, false, "jlmod-diagnostics-maintenance");
+	}
+
+	/**
+	 * Records one high-level, stable app state. This is intentionally not a generic telemetry API:
+	 * callers should use route/operation IDs such as "config.graphics", never translated labels,
+	 * user-entered values, scroll positions, frames, or recomposition events.
+	 */
+	public static void recordAppContext(String location, String action, AppContextPhase phase) {
+		Application application = activeApplication;
+		if (application == null || phase == null) {
+			return;
+		}
+		try {
+			CrashContextStore.Snapshot snapshot = CrashContextStore.update(
+					application, location, action, phase.id);
+			if (snapshot == null) {
+				return;
+			}
+			publishCrashContext(ACRA.getErrorReporter(), snapshot);
+			ProcessExitStore.updateProcessContext(application);
+		} catch (Throwable error) {
+			logMaintenanceFailure("Unable to update crash context", error);
+		}
 	}
 
 	/**
@@ -233,6 +294,7 @@ public final class CrashReporter {
 		runMaintenanceStep("process-exit ingestion", () -> ProcessExitStore.ingest(application));
 		runMaintenanceStep("local crash report pruning", () -> LocalCrashReportStore.prune(application));
 		runMaintenanceStep("MIDlet session journal pruning", () -> MidletSessionJournal.prune(application));
+		runMaintenanceStep("process context pruning", () -> CrashContextStore.prune(application));
 	}
 
 	private static void setBackgroundThreadPriority() {
@@ -328,6 +390,36 @@ public final class CrashReporter {
 		return ROLE_OTHER;
 	}
 
+	private static void registerActivityContextCallbacks(Application application) {
+		if (lifecycleCallbacksRegistered) {
+			return;
+		}
+		lifecycleCallbacksRegistered = true;
+		Application.ActivityLifecycleCallbacks callbacks = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+				? new Api29ActivityContextCallbacks() : new ActivityContextCallbacks();
+		application.registerActivityLifecycleCallbacks(callbacks);
+	}
+
+	private static String activityLocation(Activity activity) {
+		String simpleName = activity.getClass().getSimpleName();
+		return "activity." + (simpleName == null || simpleName.isEmpty() ? "unknown" : simpleName);
+	}
+
+	private static void publishCrashContext(ErrorReporter reporter, CrashContextStore.Snapshot snapshot) {
+		if (snapshot == null) {
+			return;
+		}
+		putBounded(reporter, KEY_RUN_ID, snapshot.runId);
+		putBounded(reporter, KEY_BUILD_COMMIT, snapshot.buildCommit);
+		putBounded(reporter, KEY_BUILD_VARIANT, snapshot.buildVariant);
+		putBounded(reporter, KEY_CONTEXT_LOCATION, snapshot.location);
+		putBounded(reporter, KEY_CONTEXT_PREVIOUS, snapshot.previousLocation);
+		putBounded(reporter, KEY_CONTEXT_ACTION, snapshot.action);
+		putBounded(reporter, KEY_CONTEXT_PHASE, snapshot.phase);
+		putBounded(reporter, KEY_CONTEXT_UPDATED,
+				snapshot.updatedWallTimeMillis > 0 ? Long.toString(snapshot.updatedWallTimeMillis) : null);
+	}
+
 	private static String buildInstallerContext(String sourceScheme, String midletName,
 												String midletVendor, String midletVersion, String jarSize) {
 		StringBuilder message = new StringBuilder("Installer failure");
@@ -384,6 +476,41 @@ public final class CrashReporter {
 			return normalized.substring(0, MAX_CONTEXT_VALUE_LENGTH);
 		}
 		return normalized;
+	}
+
+	private static class ActivityContextCallbacks implements Application.ActivityLifecycleCallbacks {
+		@Override
+		public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {}
+
+		@Override
+		public void onActivityStarted(@NonNull Activity activity) {}
+
+		@Override
+		public void onActivityResumed(@NonNull Activity activity) {
+			recordAppContext(activityLocation(activity), "open", AppContextPhase.ACTIVE);
+		}
+
+		@Override
+		public void onActivityPaused(@NonNull Activity activity) {
+			recordAppContext(activityLocation(activity), "open", AppContextPhase.LEAVING);
+		}
+
+		@Override
+		public void onActivityStopped(@NonNull Activity activity) {}
+
+		@Override
+		public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState) {}
+
+		@Override
+		public void onActivityDestroyed(@NonNull Activity activity) {}
+	}
+
+	@RequiresApi(Build.VERSION_CODES.Q)
+	private static final class Api29ActivityContextCallbacks extends ActivityContextCallbacks {
+		@Override
+		public void onActivityPreCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
+			recordAppContext(activityLocation(activity), "open", AppContextPhase.ENTERING);
+		}
 	}
 
 	private static final class InstallerFailureException extends RuntimeException {
