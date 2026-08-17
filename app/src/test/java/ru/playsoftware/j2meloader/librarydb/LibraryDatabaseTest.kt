@@ -44,6 +44,20 @@ class LibraryDatabaseTest {
         assertEquals(setOf("game-a", "game-b"), matches.map { it.storageKey }.toSet())
     }
 
+    @Test fun normalizedCollectionNameIsUnique() = runBlocking {
+        val first = LibraryCollectionEntity(name = "  My   Games  ", createdAt = 1L)
+        val duplicate = LibraryCollectionEntity(name = "my games", createdAt = 2L)
+        assertEquals("my games", first.normalizedName)
+        assertEquals(first.normalizedName, duplicate.normalizedName)
+        dao.insertCollection(first)
+        try {
+            dao.insertCollection(duplicate)
+            throw AssertionError("Expected normalized collection-name uniqueness failure")
+        } catch (_: Exception) {
+            // Expected: display casing/spacing differs, normalized identity does not.
+        }
+    }
+
     @Test fun reinstallMutationPreservesAllLibraryOwnedState() = runBlocking {
         val id = dao.insertApp(
             app(
@@ -86,7 +100,6 @@ class LibraryDatabaseTest {
         assertEquals(456L, updated.lastPlayedAt)
         assertEquals(7L, updated.playCount)
         assertEquals(8_000L, updated.totalPlayTimeMs)
-        // Membership survives because reinstall updates the existing row instead of replacing it.
         assertEquals(-1L, dao.insertCollectionMembership(
             LibraryCollectionAppEntity(collectionId = collectionId, appId = id, addedAt = 3L),
         ))
