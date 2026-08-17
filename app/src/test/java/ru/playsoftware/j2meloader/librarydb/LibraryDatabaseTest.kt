@@ -2,16 +2,8 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
-
 package ru.playsoftware.j2meloader.librarydb
 
 import androidx.room3.Room
@@ -29,16 +21,12 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
 class LibraryDatabaseTest {
-    @get:Rule
-    val temporaryFolder = TemporaryFolder()
-
+    @get:Rule val temporaryFolder = TemporaryFolder()
     private lateinit var database: LibraryDatabase
     private lateinit var dao: LibraryDao
 
-    @Before
-    fun setUp() {
+    @Before fun setUp() {
         val file = temporaryFolder.newFile(LibraryDatabase.FILE_NAME)
-        // Room must create the schema itself; the target path only needs to be free.
         assertTrue(file.delete())
         database = Room.databaseBuilder<LibraryDatabase>(file.absolutePath)
             .setDriver(BundledSQLiteDriver())
@@ -46,24 +34,17 @@ class LibraryDatabaseTest {
         dao = database.libraryDao()
     }
 
-    @After
-    fun tearDown() {
-        database.close()
-    }
+    @After fun tearDown() = database.close()
 
-    @Test
-    fun duplicateSourceIdentityIsAllowedButStorageKeyIsDistinct() = runBlocking {
-        dao.insertApp(app(storageKey = "game-a"))
-        dao.insertApp(app(storageKey = "game-b"))
-
+    @Test fun duplicateSourceIdentityIsAllowedButStorageKeyIsDistinct() = runBlocking {
+        dao.insertApp(app("game-a"))
+        dao.insertApp(app("game-b"))
         val matches = dao.findAppsBySourceIdentity("Game", "Vendor")
-
         assertEquals(2, matches.size)
         assertEquals(setOf("game-a", "game-b"), matches.map { it.storageKey }.toSet())
     }
 
-    @Test
-    fun targetedSourceUpdatePreservesLibraryOwnedState() = runBlocking {
+    @Test fun reinstallMutationPreservesAllLibraryOwnedState() = runBlocking {
         val id = dao.insertApp(
             app(
                 storageKey = "game-a",
@@ -75,22 +56,28 @@ class LibraryDatabaseTest {
                 totalPlayTimeMs = 8_000L,
             ),
         )
+        val collectionId = dao.insertCollection(
+            LibraryCollectionEntity(name = "Collection", createdAt = 1L),
+        )
+        dao.insertCollectionMembership(
+            LibraryCollectionAppEntity(collectionId = collectionId, appId = id, addedAt = 2L),
+        )
 
-        assertEquals(
-            1,
-            dao.updateSourceMetadata(
-                appId = id,
+        val returnedId = dao.recordInstalledApp(
+            existingId = id,
+            metadata = InstalledAppMetadata(
+                storageKey = "game-a",
                 sourceTitle = "Game Updated",
                 sourceVendor = "Vendor",
                 sourceVersion = "2.0",
-                sourceDescription = "Updated source description",
-                iconRevision = 2,
+                sourceDescription = "Updated description",
+                iconRevision = 9L,
+                addedAt = 999L,
             ),
         )
 
-        val updated = dao.getApp(id)
-        assertNotNull(updated)
-        requireNotNull(updated)
+        assertEquals(id, returnedId)
+        val updated = requireNotNull(dao.getApp(id))
         assertEquals("Game Updated", updated.sourceTitle)
         assertEquals("2.0", updated.sourceVersion)
         assertEquals("My Game", updated.customTitle)
@@ -99,53 +86,82 @@ class LibraryDatabaseTest {
         assertEquals(456L, updated.lastPlayedAt)
         assertEquals(7L, updated.playCount)
         assertEquals(8_000L, updated.totalPlayTimeMs)
+        // Membership survives because reinstall updates the existing row instead of replacing it.
+        assertEquals(-1L, dao.insertCollectionMembership(
+            LibraryCollectionAppEntity(collectionId = collectionId, appId = id, addedAt = 3L),
+        ))
     }
 
-    @Test
-    fun deletingAppCascadesMembershipButDoesNotDeletePlayReceipt() = runBlocking {
-        val appId = dao.insertApp(app(storageKey = "game-a"))
-        val collectionId = dao.insertCollection(
-            LibraryCollectionEntity(
-                name = "Favorites from school",
-                createdAt = 1L,
+    @Test fun newInstallRecordsActualAddedAt() = runBlocking {
+        val id = dao.recordInstalledApp(
+            existingId = null,
+            metadata = InstalledAppMetadata(
+                storageKey = "new-game",
+                sourceTitle = "New Game",
+                sourceVendor = "Vendor",
+                sourceVersion = "1.0",
+                sourceDescription = null,
+                iconRevision = 1L,
+                addedAt = 42L,
             ),
         )
-        assertTrue(
-            dao.insertCollectionMembership(
-                LibraryCollectionAppEntity(
-                    collectionId = collectionId,
-                    appId = appId,
-                    addedAt = 2L,
+        assertEquals(42L, dao.getApp(id)?.addedAt)
+    }
+
+    @Test fun implicitStorageKeyMigrationIsRejected() = runBlocking {
+        val id = dao.insertApp(app("original"))
+        try {
+            dao.recordInstalledApp(
+                existingId = id,
+                metadata = InstalledAppMetadata(
+                    storageKey = "renamed",
+                    sourceTitle = "Game",
+                    sourceVendor = "Vendor",
+                    sourceVersion = "2.0",
+                    sourceDescription = null,
+                    iconRevision = 1L,
+                    addedAt = 5L,
                 ),
-            ) >= 0,
+            )
+            throw AssertionError("Expected storage-key migration rejection")
+        } catch (_: IllegalStateException) {
+            assertNotNull(dao.getAppByStorageKey("original"))
+            assertNull(dao.getAppByStorageKey("renamed"))
+        }
+    }
+
+    @Test fun customTitleCanBeResetWithoutChangingSourceIdentity() = runBlocking {
+        val id = dao.insertApp(app("game", customTitle = "Renamed"))
+        assertEquals(1, dao.updateCustomTitle(id, null))
+        val row = dao.observeApps().first().single()
+        assertEquals("Game", row.title)
+        assertEquals("Game", row.sourceTitle)
+        assertEquals("Vendor", row.sourceVendor)
+    }
+
+    @Test fun deletingAppCascadesMembershipButDoesNotDeletePlayReceipt() = runBlocking {
+        val appId = dao.insertApp(app("game-a"))
+        val collectionId = dao.insertCollection(
+            LibraryCollectionEntity(name = "Favorites from school", createdAt = 1L),
         )
+        assertTrue(dao.insertCollectionMembership(
+            LibraryCollectionAppEntity(collectionId = collectionId, appId = appId, addedAt = 2L),
+        ) >= 0)
         assertTrue(dao.insertPlayStatReceipt(PlayStatReceiptEntity("session-1")) >= 0)
 
         assertEquals(1, dao.deleteAppByStorageKey("game-a"))
         assertNull(dao.getApp(appId))
-
-        // A stale terminal journal with this session ID must stay deduplicated even after app delete.
         assertEquals(-1L, dao.insertPlayStatReceipt(PlayStatReceiptEntity("session-1")))
     }
 
-    @Test
-    fun listProjectionUsesEffectiveMetadataWithoutFilesystemState() = runBlocking {
-        dao.insertApp(
-            app(
-                storageKey = "game-a",
-                customTitle = "Custom title",
-                favorite = true,
-                addedAt = 100L,
-            ),
-        )
-
-        val rows = dao.observeApps().first()
-
-        assertEquals(1, rows.size)
-        assertEquals("Custom title", rows.single().title)
-        assertEquals("Vendor", rows.single().vendor)
-        assertTrue(rows.single().favorite)
-        assertEquals(100L, rows.single().addedAt)
+    @Test fun listProjectionUsesEffectiveMetadataWithoutFilesystemState() = runBlocking {
+        dao.insertApp(app("game-a", customTitle = "Custom title", favorite = true, addedAt = 100L))
+        val row = dao.observeApps().first().single()
+        assertEquals("Custom title", row.title)
+        assertEquals("Game", row.sourceTitle)
+        assertEquals("Vendor", row.sourceVendor)
+        assertTrue(row.favorite)
+        assertEquals(100L, row.addedAt)
     }
 
     private fun app(
