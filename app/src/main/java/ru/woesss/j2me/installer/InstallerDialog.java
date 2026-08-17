@@ -37,7 +37,6 @@ import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import java.io.File;
-import java.io.IOException;
 
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -45,10 +44,9 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.applist.AppItem;
-import ru.playsoftware.j2meloader.applist.AppListModel;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.crashes.CrashReporter;
+import ru.playsoftware.j2meloader.librarydb.LibraryViewModel;
 import ru.woesss.j2me.jar.Descriptor;
 
 public class InstallerDialog extends DialogFragment {
@@ -56,17 +54,13 @@ public class InstallerDialog extends DialogFragment {
 	private static final String ARG_ID = "InstallerDialog.id";
 	private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
-	private AppListModel appListModel;
+	private LibraryViewModel libraryViewModel;
 	private AppInstaller installer;
 	private InstallerComposeController composeController;
 	private String installerTitle;
 	private String currentTitle;
 	private Runnable primaryAction;
 
-	/**
-	 * @param uri original uri from intent.
-	 * @return A new instance of fragment InstallerDialog.
-	 */
 	public static InstallerDialog newInstance(Uri uri) {
 		InstallerDialog fragment = new InstallerDialog();
 		Bundle args = new Bundle();
@@ -76,10 +70,10 @@ public class InstallerDialog extends DialogFragment {
 		return fragment;
 	}
 
-	public static InstallerDialog newInstance(int id) {
+	public static InstallerDialog newInstance(long id) {
 		InstallerDialog fragment = new InstallerDialog();
 		Bundle args = new Bundle();
-		args.putInt(ARG_ID, id);
+		args.putLong(ARG_ID, id);
 		fragment.setArguments(args);
 		fragment.setCancelable(false);
 		return fragment;
@@ -88,14 +82,13 @@ public class InstallerDialog extends DialogFragment {
 	@Override
 	public void onAttach(@NonNull Context context) {
 		super.onAttach(context);
-		appListModel = new ViewModelProvider(requireActivity()).get(AppListModel.class);
+		libraryViewModel = new ViewModelProvider(requireActivity()).get(LibraryViewModel.class);
 	}
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		if (savedInstanceState != null) {
-			// Preserve the legacy contract: an in-flight installer is not restored after recreation.
 			dismissAllowingStateLoss();
 		}
 	}
@@ -116,17 +109,15 @@ public class InstallerDialog extends DialogFragment {
 		dialog.setCanceledOnTouchOutside(false);
 		dialog.setOnShowListener(ignored -> {
 			Window window = dialog.getWindow();
-			if (window == null) {
-				return;
-			}
+			if (window == null) return;
 			window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 			int margin = (int) TypedValue.applyDimension(
 					TypedValue.COMPLEX_UNIT_DIP, 32, getResources().getDisplayMetrics());
-            int maxWidthDp = getResources().getConfiguration().orientation
-                    == Configuration.ORIENTATION_LANDSCAPE ? 760 : 480;
-            int maxWidth = (int) TypedValue.applyDimension(
-                    TypedValue.COMPLEX_UNIT_DIP, maxWidthDp, getResources().getDisplayMetrics());
-            int width = Math.min(maxWidth, getResources().getDisplayMetrics().widthPixels - margin);
+			int maxWidthDp = getResources().getConfiguration().orientation
+					== Configuration.ORIENTATION_LANDSCAPE ? 760 : 480;
+			int maxWidth = (int) TypedValue.applyDimension(
+					TypedValue.COMPLEX_UNIT_DIP, maxWidthDp, getResources().getDisplayMetrics());
+			int width = Math.min(maxWidth, getResources().getDisplayMetrics().widthPixels - margin);
 			window.setLayout(Math.max(width, 1), WindowManager.LayoutParams.WRAP_CONTENT);
 		});
 		return dialog;
@@ -147,25 +138,21 @@ public class InstallerDialog extends DialogFragment {
 	@Override
 	public void onStart() {
 		super.onStart();
-		if (installer != null || composeController == null) {
-			return;
-		}
+		if (installer != null || composeController == null) return;
 		Bundle args = requireArguments();
 		Uri uri = args.getParcelable(ARG_URI);
 		if (uri != null) {
 			installApp(null, uri);
 			return;
 		}
-		reinstallApp(args.getInt(ARG_ID));
+		reinstallApp(args.getLong(ARG_ID));
 	}
 
 	private InstallerActions createActions() {
 		return new InstallerActions() {
 			@Override
 			public void onInstall() {
-				if (primaryAction != null) {
-					primaryAction.run();
-				}
+				if (primaryAction != null) primaryAction.run();
 			}
 
 			@Override
@@ -186,7 +173,7 @@ public class InstallerDialog extends DialogFragment {
 	}
 
 	private void installApp(File jar, Uri uri) {
-		installer = new AppInstaller(jar, uri, appListModel);
+		installer = new AppInstaller(jar, uri, libraryViewModel);
 		primaryAction = this::convert;
 		showLoading();
 		Disposable disposable = Single.create(installer::loadInfo)
@@ -196,8 +183,8 @@ public class InstallerDialog extends DialogFragment {
 		compositeDisposable.add(disposable);
 	}
 
-	private void reinstallApp(int id) {
-		installer = new AppInstaller(id, appListModel);
+	private void reinstallApp(long id) {
+		installer = new AppInstaller(id, libraryViewModel);
 		primaryAction = this::convert;
 		showLoading();
 		Disposable disposable = Single.create(installer::loadInfo)
@@ -214,9 +201,7 @@ public class InstallerDialog extends DialogFragment {
 	}
 
 	private void convert() {
-		if (installer == null || composeController == null || !isAdded()) {
-			return;
-		}
+		if (installer == null || composeController == null || !isAdded()) return;
 		Descriptor nd = installer.getNewDescriptor();
 		composeController.showConverting(
 				currentTitle,
@@ -230,19 +215,17 @@ public class InstallerDialog extends DialogFragment {
 	}
 
 	private void onProgress(@NonNull Integer status) {
-		if (!isAdded() || composeController == null) {
-			return;
-		}
+		if (!isAdded() || composeController == null) return;
 		if (status == AppInstaller.STATUS_SUCCESS) {
-			AppItem app = installer.getExistsApp();
 			composeController.showSuccess(
 					currentTitle,
 					getString(R.string.install_done),
 					getString(R.string.START_CMD),
 					getString(R.string.close),
-					app.getImagePathExt());
+					installer.getIconPath());
 			return;
 		}
+
 		Descriptor nd = installer.getNewDescriptor();
 		String message;
 		String runLabel = null;
@@ -255,17 +238,13 @@ public class InstallerDialog extends DialogFragment {
 				message = nd.getInfo(requireActivity()).toString();
 			}
 			case AppInstaller.STATUS_OLDER -> message = getString(
-					R.string.reinstall_older,
-					nd.getVersion(),
-					installer.getCurrentVersion());
+					R.string.reinstall_older, nd.getVersion(), installer.getCurrentVersion());
 			case AppInstaller.STATUS_EQUAL -> {
 				message = getString(R.string.reinstall);
 				runLabel = getString(R.string.START_CMD);
 			}
 			case AppInstaller.STATUS_NEWER -> message = getString(
-					R.string.reinstall_newest,
-					nd.getVersion(),
-					installer.getCurrentVersion());
+					R.string.reinstall_newest, nd.getVersion(), installer.getCurrentVersion());
 			case AppInstaller.STATUS_UNMATCHED -> {
 				SpannableStringBuilder info = installer.getManifest().getInfo(requireActivity());
 				info.append(getString(R.string.install_jar_non_matched_jad));
@@ -305,24 +284,19 @@ public class InstallerDialog extends DialogFragment {
 			installer.deleteTemp();
 			installer.clearCache();
 		}
-		if (isAdded()) {
-			dismiss();
-		}
+		if (isAdded()) dismiss();
 	}
 
 	private void launchExistingApp(boolean cleanUp) {
-		if (!isAdded() || installer == null) {
-			return;
-		}
-		AppItem app = installer.getExistsApp();
-		if (app == null) {
-			return;
-		}
+		if (!isAdded() || installer == null) return;
+		String title = installer.getInstalledTitle();
+		String path = installer.getInstalledPath();
+		if (title == null || path == null) return;
 		if (cleanUp) {
 			installer.clearCache();
 			installer.deleteTemp();
 		}
-		Config.startApp(requireContext(), app.getTitle(), app.getPathExt());
+		Config.startApp(requireContext(), title, path);
 		dismiss();
 	}
 
@@ -344,9 +318,7 @@ public class InstallerDialog extends DialogFragment {
 			installer.clearCache();
 			installer.deleteTemp();
 		}
-		if (!isAdded()) {
-			return;
-		}
+		if (!isAdded()) return;
 		dismissAllowingStateLoss();
 	}
 }
