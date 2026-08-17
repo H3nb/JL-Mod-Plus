@@ -178,6 +178,19 @@ public class MainActivity extends AppCompatActivity {
 		maybeShowPendingInstaller();
 	}
 
+	/** Called by InstallerDialog only when an external/file-picker request has reached a terminal UI outcome. */
+	public void completeInstallerRequest(@Nullable Uri uri) {
+		if (uri == null) return;
+		pendingInstallerUris.removeFirstOccurrence(uri);
+		Intent intent = getIntent();
+		if (uri.equals(intent.getData())) {
+			intent.setData(null);
+		}
+		// DialogFragment removal is committed asynchronously. Defer the next queue item until the
+		// current installer tag has actually left FragmentManager.
+		getWindow().getDecorView().post(this::maybeShowPendingInstaller);
+	}
+
 	private void restorePendingInstallerState(@Nullable Bundle savedInstanceState) {
 		if (savedInstanceState != null) {
 			ArrayList<String> pending = savedInstanceState.getStringArrayList(STATE_PENDING_INSTALLERS);
@@ -185,7 +198,6 @@ public class MainActivity extends AppCompatActivity {
 				for (String value : pending) {
 					if (value != null && !value.isEmpty()) pendingInstallerUris.addLast(Uri.parse(value));
 				}
-			}
 			return;
 		}
 		Intent intent = getIntent();
@@ -197,22 +209,16 @@ public class MainActivity extends AppCompatActivity {
 
 	private void maybeShowPendingInstaller() {
 		if (pendingInstallerUris.isEmpty() || isFinishing() || isDestroyed()) return;
-		if (libraryViewModel == null || libraryViewModel.readyWorkdir() == null) return;
+		if (libraryViewModel == null || libraryViewModel.readyGeneration() == null) return;
 		if (getSupportFragmentManager().isStateSaved()) return;
 		if (getSupportFragmentManager().findFragmentByTag(INSTALLER_TAG) != null) return;
 		if (mainComposeController != null && mainComposeController.isDialogVisible()) return;
 
 		Uri uri = pendingInstallerUris.peekFirst();
 		if (uri == null) return;
+		// Do not dequeue here. Presentation is not consumption: process/activity recreation may happen
+		// while the dialog is loading or converting. The dialog acknowledges only a terminal outcome.
 		InstallerDialog.newInstance(uri).show(getSupportFragmentManager(), INSTALLER_TAG);
-		pendingInstallerUris.removeFirst();
-
-		// Keep Intent data durable while bootstrap is pending, then clear it after successful handoff
-		// so process recreation cannot reopen an installer that has already been presented.
-		Intent intent = getIntent();
-		if (uri.equals(intent.getData())) {
-			intent.setData(null);
-		}
 	}
 
 	private void maybeShowDiagnosticRecovery() {
