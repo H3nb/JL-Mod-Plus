@@ -13,6 +13,7 @@ import java.io.IOException
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -62,6 +63,84 @@ class LibraryReconcilerTest {
         assertNull(dao.getAppByStorageKey("missing"))
     }
 
+    @Test fun publishedReinstallWithPendingBackupRefreshesSameKeyMetadataAndPreservesUserState() = runBlocking {
+        val appId = dao.insertApp(
+            LibraryAppEntity(
+                storageKey = "game",
+                sourceTitle = "Old Source",
+                sourceVendor = "Vendor",
+                sourceVersion = "1.0",
+                customTitle = "My Rename",
+                favorite = true,
+                addedAt = 123L,
+                lastPlayedAt = 456L,
+                playCount = 7,
+                totalPlayTimeMs = 8_000L,
+            ),
+        )
+        createConvertedApp("game", "New Source", version = "2.0")
+        createBackupDirectory("game", "Old Source", version = "1.0")
+
+        val result = LibraryReconciler().reconcile(database, workDir)
+
+        assertEquals(0, result.addedCount)
+        assertEquals(0, result.removedCount)
+        assertTrue(result.failures.isEmpty())
+        val recovered = requireNotNull(dao.getApp(appId))
+        assertEquals("New Source", recovered.sourceTitle)
+        assertEquals("2.0", recovered.sourceVersion)
+        assertEquals("My Rename", recovered.customTitle)
+        assertTrue(recovered.favorite)
+        assertEquals(123L, recovered.addedAt)
+        assertEquals(456L, recovered.lastPlayedAt)
+        assertEquals(7L, recovered.playCount)
+        assertEquals(8_000L, recovered.totalPlayTimeMs)
+        assertFalse(backupRoot().exists())
+    }
+
+    @Test fun prePublishReinstallCrashRestoresOldDirectoryInsteadOfDeletingCatalogState() = runBlocking {
+        val appId = dao.insertApp(
+            LibraryAppEntity(
+                storageKey = "game",
+                sourceTitle = "Old Source",
+                sourceVendor = "Vendor",
+                sourceVersion = "1.0",
+                customTitle = "Keep me",
+                favorite = true,
+            ),
+        )
+        createBackupDirectory("game", "Old Source", version = "1.0")
+        val staging = File(File(workDir, "converted"), LibraryInstallRecovery.STAGING_DIR_NAME)
+            .apply { mkdirs() }
+        File(staging, "partial").writeText("replacement")
+
+        val result = LibraryReconciler().reconcile(database, workDir)
+
+        assertEquals(0, result.addedCount)
+        assertEquals(0, result.removedCount)
+        assertTrue(result.failures.isEmpty())
+        val restored = requireNotNull(dao.getApp(appId))
+        assertEquals("Old Source", restored.sourceTitle)
+        assertEquals("Keep me", restored.customTitle)
+        assertTrue(restored.favorite)
+        assertTrue(File(File(workDir, "converted"), "game").isDirectory)
+        assertFalse(staging.exists())
+        assertFalse(backupRoot().exists())
+    }
+
+    @Test fun failedRecoveryEvidenceProtectsCatalogRowFromAutomaticRemoval() = runBlocking {
+        dao.insertApp(app("game", "Preserved"))
+        val invalidBackup = File(backupRoot().apply { mkdirs() }, "game")
+        invalidBackup.writeText("not a directory")
+
+        val result = LibraryReconciler().reconcile(database, workDir)
+
+        assertEquals(0, result.removedCount)
+        assertEquals(listOf("game"), result.failures.map { it.storageKey })
+        assertEquals("Preserved", dao.getAppByStorageKey("game")?.sourceTitle)
+        assertTrue(invalidBackup.isFile)
+    }
+
     @Test fun malformedNewAppIsRetainedForRetry() = runBlocking {
         val broken = File(File(workDir, "converted").apply { mkdir() }, "broken").apply { mkdir() }
         File(broken, "converted.dex").writeText("payload")
@@ -85,6 +164,17 @@ class LibraryReconcilerTest {
         }
     }
 
+    @Test fun removalsAreChunkedBelowLegacySqliteBindLimit() = runBlocking {
+        val count = 1_500
+        dao.insertApps((0 until count).map { index -> app("missing-$index", "Game $index") })
+
+        val result = LibraryReconciler().reconcile(database, workDir)
+
+        assertEquals(count, result.removedCount)
+        assertTrue(result.failures.isEmpty())
+        assertTrue(dao.getStorageKeys().isEmpty())
+    }
+
     @Test fun differenceHandlesFiveThousandRows() {
         val db = (0 until 5_000).mapTo(LinkedHashSet()) { "app-$it" }
         val fs = (2_500 until 7_500).mapTo(LinkedHashSet()) { "app-$it" }
@@ -100,11 +190,24 @@ class LibraryReconcilerTest {
         sourceVersion = "1.0",
     )
 
-    private fun createConvertedApp(key: String, title: String) {
+    private fun createConvertedApp(key: String, title: String, version: String = "1.0") {
         val dir = File(File(workDir, "converted").apply { mkdir() }, key).apply { mkdir() }
         File(dir, "converted.dex").writeText("payload")
         File(dir, "converted.dex.conf").writeText(
-            "MIDlet-Name: $title\nMIDlet-Vendor: Vendor\nMIDlet-Version: 1.0\n",
+            "MIDlet-Name: $title\nMIDlet-Vendor: Vendor\nMIDlet-Version: $version\n",
         )
     }
+
+    private fun createBackupDirectory(key: String, title: String, version: String) {
+        val dir = File(backupRoot().apply { mkdirs() }, key).apply { mkdir() }
+        File(dir, "converted.dex").writeText("old payload")
+        File(dir, "converted.dex.conf").writeText(
+            "MIDlet-Name: $title\nMIDlet-Vendor: Vendor\nMIDlet-Version: $version\n",
+        )
+    }
+
+    private fun backupRoot(): File = File(
+        File(workDir, "converted"),
+        LibraryInstallRecovery.BACKUP_ROOT_NAME,
+    )
 }
