@@ -1,4 +1,4 @@
-name: Refresh Issue 88 Indonesian screenshot
+name: Refresh Issue 88 Settings screenshots
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: issue88-indonesian-screenshot-refresh
+  group: issue88-settings-screenshot-refresh
   cancel-in-progress: true
 
 jobs:
@@ -36,74 +36,65 @@ jobs:
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x gradlew
 
-      - name: Add representative Indonesian Options preview
+      - name: Align Settings screenshot fixture with production state
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
 
-          test = Path('app/src/screenshotTest/kotlin/ru/playsoftware/j2meloader/applist/LibraryProfilesScreenshotTest.kt')
+          test = Path('app/src/screenshotTest/kotlin/ru/playsoftware/j2meloader/settings/SettingsScreenshotTest.kt')
           text = test.read_text()
-          marker = '''@PreviewTest
-          @Preview(name = "Profiles content", widthDp = 360, heightDp = 640, showBackground = true)'''
-          if text.count(marker) != 1:
-              raise SystemExit(f'Expected exactly one Profiles preview marker, found {text.count(marker)}')
 
-          block = '''@PreviewTest
-          @Preview(
-              name = "Library options Indonesian",
-              widthDp = 360,
-              heightDp = 640,
-              locale = "id",
-              showBackground = true,
-          )
-          @Composable
-          fun LibraryOptionsIndonesianScreenshot() {
-              JLModPlusTheme(darkTheme = false) {
-                  LibraryOptionsDestination(
-                      state = LibraryUiState(
-                          loading = false,
-                          apps = PreviewApps,
-                          layout = LibraryLayout.Grid,
-                      ),
-                      scaffoldPadding = PaddingValues(),
-                      onLayoutChange = {},
-                      onIconRatioChange = {},
-                      onHideGridTitlesChange = {},
-                      onGridSpacingChange = {},
-                      onAbout = {},
-                      onSettings = {},
-                      onProfiles = {},
-                      onHelp = {},
-                      onCrashReports = {},
-                      onSaveLog = {},
-                      onExit = {},
-                  )
-              }
+          replacements = {
+              'SettingsOption("system", "Follow system settings")': 'SettingsOption("system", "Follow System Settings")',
+              'language = SettingsOption("", "Follow system settings")': 'language = SettingsOption("", "Follow System Settings")',
+              'SettingsOption("", "Follow system settings")': 'SettingsOption("", "Follow System Settings")',
+              'SettingsSwitch("pref_actionbar_switch", "Enable ActionBar", "In fullscreen applications", true)': 'SettingsSwitch("pref_actionbar_switch", "Enable ActionBar", "For fullscreen applications", true)',
+              'SettingsSwitch("pref_statusbar_switch", "Enable statusbar", "In fullscreen applications", false)': 'SettingsSwitch("pref_statusbar_switch", "Enable Statusbar", "For fullscreen applications", false)',
+              'SettingsSwitch("pref_wakelock_switch", "Keep screen on", null, false)': 'SettingsSwitch("pref_wakelock_switch", "Keep Screen On", null, false)',
+              'SettingsSwitch("pref_screenshot_switch", "Raw screenshot", "Disable scaling and filtering for screenshots", false)': 'SettingsSwitch("pref_screenshot_switch", "Raw Screenshot", "Disable scaling and filtering for screenshots", false)',
+              'SettingsSwitch("pref_vibration_switch", "Enable vibration", null, true)': 'SettingsSwitch("pref_vibration_switch", "Enable Vibration", null, true)',
+              'SettingsSwitch("micro3d_using_message", "Detect Mascot Capsule 3D", "Show message when using", false)': 'SettingsSwitch("micro3d_using_message", "Detect Mascot Capsule 3D", "Show a message when used", false)',
           }
+          for old, new in replacements.items():
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'Expected exactly one fixture marker {old!r}, found {count}')
+              text = text.replace(old, new, 1)
 
-          '''
-          test.write_text(text.replace(marker, block + marker, 1))
+          status = 'SettingsSwitch("pref_statusbar_switch", "Enable Statusbar", "For fullscreen applications", false),'
+          cutout = '''SettingsSwitch(
+              "pref_use_display_cutout",
+              "Use Display Cutout In MIDlet",
+              "Allow compatible MIDlet Canvas content to use the display-cutout area when the runtime can do so safely.",
+              true,
+          ),'''
+          if text.count(status) != 1:
+              raise SystemExit(f'Expected exactly one normalized status-bar fixture, found {text.count(status)}')
+          if '"pref_use_display_cutout"' in text:
+              raise SystemExit('Cutout fixture already exists unexpectedly')
+          text = text.replace(status, status + '\n        ' + cutout, 1)
+          test.write_text(text)
           PY
 
       - name: Refresh screenshot references
         run: ./gradlew --no-daemon --stacktrace :app:updateEmulatorDebugScreenshotTest
 
-      - name: Commit Indonesian coverage and reference
+      - name: Commit corrected Settings fixture and references
         shell: bash
         run: |
           set -euo pipefail
           git add \
-            app/src/screenshotTest/kotlin/ru/playsoftware/j2meloader/applist/LibraryProfilesScreenshotTest.kt \
+            app/src/screenshotTest/kotlin/ru/playsoftware/j2meloader/settings/SettingsScreenshotTest.kt \
             app/src/screenshotTestEmulatorDebug
 
           if git diff --cached --quiet; then
-            echo 'No screenshot reference changes were produced.' >&2
+            echo 'No Settings screenshot reference changes were produced.' >&2
             exit 1
           fi
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'test: add Indonesian Options screenshot coverage'
+          git commit -m 'test: align Settings screenshot fixture with production'
           git push origin HEAD:ui/harmonize-app-wide
