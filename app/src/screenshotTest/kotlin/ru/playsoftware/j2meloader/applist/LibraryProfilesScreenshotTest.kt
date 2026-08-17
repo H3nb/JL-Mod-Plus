@@ -262,6 +262,39 @@ fun LibraryCollectionsScreenshot() {
 }
 
 @PreviewTest
+@Preview(
+    name = "Library options Indonesian",
+    widthDp = 360,
+    heightDp = 640,
+    locale = "id",
+    showBackground = true,
+)
+@Composable
+fun LibraryOptionsIndonesianScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryOptionsDestination(
+            state = LibraryUiState(
+                loading = false,
+                apps = PreviewApps,
+                layout = LibraryLayout.Grid,
+            ),
+            scaffoldPadding = PaddingValues(),
+            onLayoutChange = {},
+            onIconRatioChange = {},
+            onHideGridTitlesChange = {},
+            onGridSpacingChange = {},
+            onAbout = {},
+            onSettings = {},
+            onProfiles = {},
+            onHelp = {},
+            onCrashReports = {},
+            onSaveLog = {},
+            onExit = {},
+        )
+    }
+}
+
+@PreviewTest
 @Preview(name = "Profiles content", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
 fun ProfilesContentScreenshot() {
