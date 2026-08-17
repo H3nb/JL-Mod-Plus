@@ -16,6 +16,7 @@
 
 package ru.woesss.j2me.installer;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -43,6 +44,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import ru.playsoftware.j2meloader.MainActivity;
 import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.crashes.CrashReporter;
@@ -52,8 +54,10 @@ import ru.woesss.j2me.jar.Descriptor;
 public class InstallerDialog extends DialogFragment {
 	private static final String ARG_URI = "InstallerDialog.uri";
 	private static final String ARG_ID = "InstallerDialog.id";
+	private static final String ARG_GENERATION = "InstallerDialog.generation";
 	private static final String ARG_WORKDIR = "InstallerDialog.workdir";
 	private static final String ARG_STORAGE_KEY = "InstallerDialog.storageKey";
+	private static final long NO_GENERATION = Long.MIN_VALUE;
 	private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
 	private LibraryViewModel libraryViewModel;
@@ -72,10 +76,12 @@ public class InstallerDialog extends DialogFragment {
 		return fragment;
 	}
 
-	public static InstallerDialog newInstance(long id, String expectedWorkdirPath, String storageKey) {
+	public static InstallerDialog newInstance(long id, long expectedGeneration,
+			String expectedWorkdirPath, String storageKey) {
 		InstallerDialog fragment = new InstallerDialog();
 		Bundle args = new Bundle();
 		args.putLong(ARG_ID, id);
+		args.putLong(ARG_GENERATION, expectedGeneration);
 		args.putString(ARG_WORKDIR, expectedWorkdirPath);
 		args.putString(ARG_STORAGE_KEY, storageKey);
 		fragment.setArguments(args);
@@ -87,14 +93,6 @@ public class InstallerDialog extends DialogFragment {
 	public void onAttach(@NonNull Context context) {
 		super.onAttach(context);
 		libraryViewModel = new ViewModelProvider(requireActivity()).get(LibraryViewModel.class);
-	}
-
-	@Override
-	public void onCreate(@Nullable Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		if (savedInstanceState != null) {
-			dismissAllowingStateLoss();
-		}
 	}
 
 	@NonNull
@@ -149,13 +147,14 @@ public class InstallerDialog extends DialogFragment {
 			installApp(null, uri);
 			return;
 		}
+		long generation = args.getLong(ARG_GENERATION, NO_GENERATION);
 		String workdir = args.getString(ARG_WORKDIR);
 		String storageKey = args.getString(ARG_STORAGE_KEY);
-		if (workdir == null || storageKey == null) {
+		if (generation == NO_GENERATION || workdir == null || storageKey == null) {
 			onError(new IllegalStateException("Explicit reinstall target is incomplete"));
 			return;
 		}
-		reinstallApp(args.getLong(ARG_ID), new File(workdir), storageKey);
+		reinstallApp(args.getLong(ARG_ID), generation, new File(workdir), storageKey);
 	}
 
 	private InstallerActions createActions() {
@@ -193,8 +192,14 @@ public class InstallerDialog extends DialogFragment {
 		compositeDisposable.add(disposable);
 	}
 
-	private void reinstallApp(long id, File expectedWorkdir, String storageKey) {
-		installer = new AppInstaller(id, expectedWorkdir, storageKey, libraryViewModel);
+	private void reinstallApp(long id, long expectedGeneration, File expectedWorkdir,
+			String storageKey) {
+		installer = new AppInstaller(
+				id,
+				expectedGeneration,
+				expectedWorkdir,
+				storageKey,
+				libraryViewModel);
 		primaryAction = this::convert;
 		showLoading();
 		Disposable disposable = Single.create(installer::loadInfo)
@@ -294,6 +299,7 @@ public class InstallerDialog extends DialogFragment {
 			installer.deleteTemp();
 			installer.clearCache();
 		}
+		acknowledgeExternalRequest();
 		if (isAdded()) dismiss();
 	}
 
@@ -306,8 +312,19 @@ public class InstallerDialog extends DialogFragment {
 			installer.clearCache();
 			installer.deleteTemp();
 		}
+		acknowledgeExternalRequest();
 		Config.startApp(requireContext(), title, path);
 		dismiss();
+	}
+
+	private void acknowledgeExternalRequest() {
+		Bundle args = getArguments();
+		Uri uri = args == null ? null : args.getParcelable(ARG_URI);
+		if (uri == null) return;
+		Activity activity = getActivity();
+		if (activity instanceof MainActivity) {
+			((MainActivity) activity).completeInstallerRequest(uri);
+		}
 	}
 
 	private void onError(Throwable e) {
@@ -328,6 +345,7 @@ public class InstallerDialog extends DialogFragment {
 			installer.clearCache();
 			installer.deleteTemp();
 		}
+		acknowledgeExternalRequest();
 		if (!isAdded()) return;
 		dismissAllowingStateLoss();
 	}
