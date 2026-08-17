@@ -41,6 +41,22 @@ final class DiagnosticReportText {
 		return build(record, detailText);
 	}
 
+	static String withNativeSummary(String reportText, String nativeSummary) {
+		if (reportText == null || reportText.isEmpty() || nativeSummary == null
+				|| nativeSummary.trim().isEmpty()) {
+			return reportText;
+		}
+		String block = "\n\n" + nativeSummary.trim();
+		int failureStart = reportText.indexOf("\nFailure:");
+		if (failureStart >= 0) {
+			int failureEnd = reportText.indexOf('\n', failureStart + 1);
+			if (failureEnd >= 0) {
+				return reportText.substring(0, failureEnd) + block + reportText.substring(failureEnd);
+			}
+		}
+		return reportText + block;
+	}
+
 	static String removeRawSystemTrace(String detailText, String javaStackTrace) {
 		if (detailText == null || detailText.isEmpty()) {
 			return detailText;

@@ -3,4 +3,7 @@
     <files-path
         name="process_exit_diagnostics"
         path="diagnostics/process-exits/" />
+    <cache-path
+        name="diagnostic_share"
+        path="diagnostics-share/" />
 </paths>
