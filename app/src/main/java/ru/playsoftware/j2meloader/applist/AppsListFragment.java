@@ -273,10 +273,34 @@ public class AppsListFragment extends Fragment {
 			@Override
 			public void onReinstall(int appId) {
 				LibraryAppRow app = findRow(appId);
-				if (app != null) {
-					InstallerDialog.newInstance(app.getId())
+				File workdir = activeWorkdir;
+				if (app == null || workdir == null) return;
+				libraryViewModel.resolveReinstallAvailability(app.getId(), (available, error) -> {
+					if (error != null) {
+						showError(error);
+						return;
+					}
+					if (!isAdded()) return;
+					if (!Boolean.TRUE.equals(available)) {
+						LibraryComposeController controller = composeController;
+						if (controller != null) {
+							controller.showNotice(getString(R.string.library_reinstall_source_missing));
+						}
+						return;
+					}
+					LibraryAppRow current = findRow(appId);
+					if (activeWorkdir == null || !activeWorkdir.equals(workdir) ||
+							current == null || current.getId() != app.getId() ||
+							!current.getStorageKey().equals(app.getStorageKey())) {
+						showError(new IllegalStateException("Library reinstall target changed"));
+						return;
+					}
+					InstallerDialog.newInstance(
+							app.getId(),
+							workdir.getAbsolutePath(),
+							app.getStorageKey())
 							.show(getParentFragmentManager(), "installer");
-				}
+				});
 			}
 
 			@Override
