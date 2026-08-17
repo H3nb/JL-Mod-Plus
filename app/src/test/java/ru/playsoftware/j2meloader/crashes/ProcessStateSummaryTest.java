@@ -63,6 +63,26 @@ public class ProcessStateSummaryTest {
 	}
 
 	@Test
+	public void oversizedOptionalContextCannotEvictCorrelationIdentity() {
+		String sessionId = "123e4567-e89b-12d3-a456-426614174000";
+		byte[] state = ProcessStateSummary.build(
+				"rabc123-9z",
+				"5d609c102358286669b81468f1e0b61960703fa9",
+				36,
+				sessionId,
+				"x".repeat(120),
+				"y".repeat(120),
+				"executing"
+		);
+
+		assertTrue(state.length <= ProcessStateSummary.MAX_BYTES);
+		ProcessStateSummary.Data parsed = ProcessStateSummary.parse(state);
+		assertEquals("rabc123-9z", parsed.runId);
+		assertEquals(36, parsed.sdk);
+		assertEquals(sessionId, parsed.sessionId);
+	}
+
+	@Test
 	public void legacyV1RemainsReadable() {
 		byte[] legacy = ("jlp1|r=main|vc=7|sdk=35|s="
 				+ "123e4567-e89b-12d3-a456-426614174000").getBytes(StandardCharsets.US_ASCII);
