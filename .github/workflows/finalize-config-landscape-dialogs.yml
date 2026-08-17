@@ -1,0 +1,53 @@
+name: Finalize landscape dialog hosts
+
+on:
+  push:
+    branches:
+      - ui/redesign-config
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ui/redesign-config
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.0.0
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v5.0.0
+        with:
+          cache-read-only: true
+      - name: Remove legacy minimum-height traps
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          old = '''\t\tint width = Math.min(getResources().getDisplayMetrics().widthPixels - dp(32), dp(560));\n\t\tint height = Math.min((int) (getResources().getDisplayMetrics().heightPixels * 0.84f), dp(680));\n\t\twindow.setLayout(Math.max(width, dp(280)), Math.max(height, dp(320)));'''
+          new = '''\t\tint availableWidth = Math.max(getResources().getDisplayMetrics().widthPixels - dp(32), 1);\n\t\tint availableHeight = Math.max(getResources().getDisplayMetrics().heightPixels - dp(24), 1);\n\t\tint width = Math.min(availableWidth, dp(840));\n\t\tint height = Math.min(availableHeight, dp(680));\n\t\twindow.setLayout(width, height);'''
+
+          for filename in ('LoadProfileAlert.java', 'SaveProfileAlert.java'):
+              path = Path('app/src/main/java/ru/playsoftware/j2meloader/config') / filename
+              text = path.read_text()
+              if text.count(old) != 1:
+                  raise SystemExit(f'{filename}: expected legacy sizing block exactly once')
+              path.write_text(text.replace(old, new, 1))
+          PY
+
+          chmod +x gradlew
+          ./gradlew --no-daemon :app:compileEmulatorDebugKotlin :app:compileEmulatorDebugJavaWithJavac :app:validateEmulatorDebugScreenshotTest :app:testEmulatorDebugUnitTest
+          rm .github/workflows/finalize-config-landscape-dialogs.yml
+          git update-index --chmod=-x gradlew
+          chmod -x gradlew
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git update-index --chmod=-x gradlew
+          git commit -m "Remove remaining landscape dialog height traps"
+          git push origin HEAD:ui/redesign-config
