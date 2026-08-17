@@ -54,7 +54,7 @@ class LibraryRepositoryTest {
         repository.setEmulatorDirectory(second)
         val secondReady = awaitReady(second)
         assertEquals(listOf("two"), secondReady.apps.map { it.storageKey })
-        assertEquals(second.absoluteFile, secondReady.emulatorDir)
+        assertEquals(second.canonicalFile, secondReady.emulatorDir)
         assertTrue(File(first, LibraryDatabase.FILE_NAME).isFile)
         assertTrue(File(second, LibraryDatabase.FILE_NAME).isFile)
     }
@@ -67,7 +67,7 @@ class LibraryRepositoryTest {
         val error = withTimeout(10_000) {
             repository.state.filterIsInstance<LibraryRepository.State.Error>().first()
         }
-        assertEquals(root.absoluteFile, error.emulatorDir)
+        assertEquals(root.canonicalFile, error.emulatorDir)
 
         assertTrue(invalidConverted.delete())
         createConvertedApp(root, "fixed", "Fixed Game")
@@ -77,10 +77,48 @@ class LibraryRepositoryTest {
         assertEquals(listOf("fixed"), ready.apps.map { it.storageKey })
     }
 
+    @Test fun mutationPublishesThroughActiveRoomFlow() = runBlocking {
+        val root = temporaryFolder.newFolder("mutation")
+        createConvertedApp(root, "game", "Original")
+        repository.setEmulatorDirectory(root)
+        val ready = awaitReady(root)
+        val id = ready.apps.single().id
+
+        repository.setCustomTitle(root, id, "Renamed")
+
+        val renamed = withTimeout(10_000) {
+            repository.state.filterIsInstance<LibraryRepository.State.Ready>()
+                .first { state -> state.apps.singleOrNull()?.title == "Renamed" }
+        }
+        assertEquals("Original", renamed.apps.single().sourceTitle)
+        assertEquals("Renamed", renamed.apps.single().title)
+    }
+
+    @Test fun staleWorkdirMutationIsRejectedAfterSwitch() = runBlocking {
+        val first = temporaryFolder.newFolder("stale-first")
+        val second = temporaryFolder.newFolder("stale-second")
+        createConvertedApp(first, "one", "First")
+        createConvertedApp(second, "two", "Second")
+        repository.setEmulatorDirectory(first)
+        val firstId = awaitReady(first).apps.single().id
+        repository.setEmulatorDirectory(second)
+        awaitReady(second)
+
+        try {
+            repository.setCustomTitle(first, firstId, "Must not publish")
+            throw AssertionError("Expected stale-workdir mutation rejection")
+        } catch (_: IllegalStateException) {
+            assertEquals(listOf("two"), repository.state.value.let { state ->
+                (state as LibraryRepository.State.Ready).apps.map { it.storageKey }
+            })
+        }
+    }
+
     private suspend fun awaitReady(root: File): LibraryRepository.State.Ready = withTimeout(10_000) {
+        val canonical = root.canonicalFile
         repository.state
             .filterIsInstance<LibraryRepository.State.Ready>()
-            .first { it.emulatorDir == root.absoluteFile }
+            .first { it.emulatorDir == canonical }
     }
 
     private fun openDatabase(root: File): LibraryDatabase =
