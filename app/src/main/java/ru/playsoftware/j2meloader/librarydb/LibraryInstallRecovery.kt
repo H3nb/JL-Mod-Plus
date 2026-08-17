@@ -27,7 +27,10 @@ import ru.playsoftware.j2meloader.util.FileUtils
  * an interrupted replacement without guessing.
  */
 object LibraryInstallRecovery {
-    const val STAGING_DIR_NAME = ".tmp"
+    // ':' is removed by the installer's storage-key sanitization, so a normal MIDlet can never be
+    // assigned this exact directory name. Keep the legacy .tmp name recognized for old leftovers.
+    const val STAGING_DIR_NAME = ".jl:library-tmp"
+    const val LEGACY_STAGING_DIR_NAME = ".tmp"
     const val BACKUP_ROOT_NAME = ".library-install-backup"
 
     data class Failure(val storageKey: String, val reason: String)
@@ -37,7 +40,8 @@ object LibraryInstallRecovery {
     )
 
     @JvmStatic
-    fun isReservedStorageKey(storageKey: String): Boolean = storageKey == STAGING_DIR_NAME
+    fun isReservedStorageKey(storageKey: String): Boolean =
+        storageKey == STAGING_DIR_NAME || storageKey == LEGACY_STAGING_DIR_NAME
 
     /** Move the current installed directory aside before replacing it. */
     @JvmStatic
@@ -148,14 +152,18 @@ object LibraryInstallRecovery {
             }
         }
 
-        // A global .tmp can only be stale at Library startup. If a backup had to be restored, the
-        // replacement never became authoritative, so discard the corresponding unfinished staging.
         if (restoredAny) {
-            val staging = File(converted, STAGING_DIR_NAME)
-            if (staging.exists()) FileUtils.deleteDirectory(staging)
+            discardStaging(converted)
         }
         removeRootIfEmpty(root)
         return RecoveryResult(refresh, failures)
+    }
+
+    fun discardStaging(convertedDir: File) {
+        for (name in arrayOf(STAGING_DIR_NAME, LEGACY_STAGING_DIR_NAME)) {
+            val staging = File(convertedDir, name)
+            if (staging.exists()) FileUtils.deleteDirectory(staging)
+        }
     }
 
     private fun backupRoot(emulatorDir: File): File = File(emulatorDir, BACKUP_ROOT_NAME)
