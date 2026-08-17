@@ -52,6 +52,8 @@ import ru.woesss.j2me.jar.Descriptor;
 public class InstallerDialog extends DialogFragment {
 	private static final String ARG_URI = "InstallerDialog.uri";
 	private static final String ARG_ID = "InstallerDialog.id";
+	private static final String ARG_WORKDIR = "InstallerDialog.workdir";
+	private static final String ARG_STORAGE_KEY = "InstallerDialog.storageKey";
 	private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
 	private LibraryViewModel libraryViewModel;
@@ -70,10 +72,12 @@ public class InstallerDialog extends DialogFragment {
 		return fragment;
 	}
 
-	public static InstallerDialog newInstance(long id) {
+	public static InstallerDialog newInstance(long id, String expectedWorkdirPath, String storageKey) {
 		InstallerDialog fragment = new InstallerDialog();
 		Bundle args = new Bundle();
 		args.putLong(ARG_ID, id);
+		args.putString(ARG_WORKDIR, expectedWorkdirPath);
+		args.putString(ARG_STORAGE_KEY, storageKey);
 		fragment.setArguments(args);
 		fragment.setCancelable(false);
 		return fragment;
@@ -145,7 +149,13 @@ public class InstallerDialog extends DialogFragment {
 			installApp(null, uri);
 			return;
 		}
-		reinstallApp(args.getLong(ARG_ID));
+		String workdir = args.getString(ARG_WORKDIR);
+		String storageKey = args.getString(ARG_STORAGE_KEY);
+		if (workdir == null || storageKey == null) {
+			onError(new IllegalStateException("Explicit reinstall target is incomplete"));
+			return;
+		}
+		reinstallApp(args.getLong(ARG_ID), new File(workdir), storageKey);
 	}
 
 	private InstallerActions createActions() {
@@ -183,8 +193,8 @@ public class InstallerDialog extends DialogFragment {
 		compositeDisposable.add(disposable);
 	}
 
-	private void reinstallApp(long id) {
-		installer = new AppInstaller(id, libraryViewModel);
+	private void reinstallApp(long id, File expectedWorkdir, String storageKey) {
+		installer = new AppInstaller(id, expectedWorkdir, storageKey, libraryViewModel);
 		primaryAction = this::convert;
 		showLoading();
 		Disposable disposable = Single.create(installer::loadInfo)
