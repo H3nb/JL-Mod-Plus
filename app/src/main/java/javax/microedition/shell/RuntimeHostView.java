@@ -15,6 +15,7 @@
 package javax.microedition.shell;
 
 import android.content.Context;
+import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -32,6 +33,7 @@ public final class RuntimeHostView {
 	public final ComposeView toolbar;
 	public final FrameLayout displayableContainer;
 	public final OverlayView overlay;
+	public final ComposeView notices;
 
 	public RuntimeHostView(Context context) {
 		root = new FrameLayout(context);
@@ -58,6 +60,11 @@ public final class RuntimeHostView {
 		overlay.setId(R.id.overlay);
 		root.addView(overlay, new FrameLayout.LayoutParams(
 				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+		notices = new ComposeView(context);
+		FrameLayout.LayoutParams noticeParams = new FrameLayout.LayoutParams(
+				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM);
+		root.addView(notices, noticeParams);
 	}
 
 	public FrameLayout getRoot() {

@@ -14,7 +14,15 @@
 
 package ru.playsoftware.j2meloader
 
+import android.content.res.Configuration
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -22,8 +30,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 
 /** Actions stay in MainActivity so permission, picker, recovery, and Fragment contracts remain host-owned. */
@@ -96,6 +108,53 @@ internal class MainActivityComposeController(
     }
 }
 
+private data class MainHostDialogLayout(
+    val modifier: androidx.compose.ui.Modifier,
+    val properties: DialogProperties,
+)
+
+@Composable
+private fun mainHostDialogLayout(): MainHostDialogLayout {
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    return MainHostDialogLayout(
+        modifier = if (landscape) {
+            androidx.compose.ui.Modifier
+                .fillMaxWidth(0.94f)
+                .widthIn(max = 760.dp)
+        } else {
+            androidx.compose.ui.Modifier.widthIn(max = 560.dp)
+        },
+        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
+    )
+}
+
+@Composable
+private fun MainHostDialogText(message: String) {
+    val maxHeight = LocalConfiguration.current.screenHeightDp
+        .minus(220)
+        .coerceAtLeast(120)
+        .coerceAtMost(420)
+        .dp
+    Text(
+        text = message,
+        modifier = androidx.compose.ui.Modifier
+            .fillMaxWidth()
+            .heightIn(max = maxHeight)
+            .verticalScroll(rememberScrollState()),
+        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+    )
+}
+
+@Composable
+private fun MainHostWarningIcon() {
+    Icon(
+        painter = painterResource(R.drawable.ic_warning),
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.error,
+    )
+}
+
 @Composable
 private fun MainHostDialogs(
     state: MainHostUiState,
@@ -114,10 +173,13 @@ private fun MainHostDialogs(
             onViewReports = actions::onViewProcessReports,
             onClose = actions::onCloseProcessNotice,
         )
-        is MainHostDialog.DirectoryFailure -> AlertDialog(
+        is MainHostDialog.DirectoryFailure -> mainHostDialogLayout().let { layout -> AlertDialog(
+            modifier = layout.modifier,
+            properties = layout.properties,
             onDismissRequest = {},
+            icon = { MainHostWarningIcon() },
             title = { Text(stringResource(R.string.error)) },
-            text = { Text(dialog.message) },
+            text = { MainHostDialogText(dialog.message) },
             dismissButton = {
                 TextButton(onClick = actions::onExit) {
                     Text(stringResource(R.string.exit))
@@ -128,11 +190,14 @@ private fun MainHostDialogs(
                     Text(stringResource(R.string.choose))
                 }
             },
-        )
-        is MainHostDialog.DirectoryMissing -> AlertDialog(
+        ) }
+        is MainHostDialog.DirectoryMissing -> mainHostDialogLayout().let { layout -> AlertDialog(
+            modifier = layout.modifier,
+            properties = layout.properties,
             onDismissRequest = {},
+            icon = { MainHostWarningIcon() },
             title = { Text(stringResource(android.R.string.dialog_alert_title)) },
-            text = { Text(dialog.message) },
+            text = { MainHostDialogText(dialog.message) },
             dismissButton = {
                 androidx.compose.foundation.layout.Row {
                     TextButton(onClick = actions::onExit) {
@@ -148,11 +213,14 @@ private fun MainHostDialogs(
                     Text(stringResource(R.string.create))
                 }
             },
-        )
-        MainHostDialog.PermissionFailure -> AlertDialog(
+        ) }
+        MainHostDialog.PermissionFailure -> mainHostDialogLayout().let { layout -> AlertDialog(
+            modifier = layout.modifier,
+            properties = layout.properties,
             onDismissRequest = {},
+            icon = { MainHostWarningIcon() },
             title = { Text(stringResource(android.R.string.dialog_alert_title)) },
-            text = { Text(stringResource(R.string.permission_request_failed)) },
+            text = { MainHostDialogText(stringResource(R.string.permission_request_failed)) },
             dismissButton = {
                 TextButton(onClick = actions::onRetryPermission) {
                     Text(stringResource(R.string.retry))
@@ -163,7 +231,7 @@ private fun MainHostDialogs(
                     Text(stringResource(R.string.exit))
                 }
             },
-        )
+        ) }
         null -> Unit
     }
 }
@@ -175,10 +243,14 @@ private fun RecoveryDialog(
     onViewReports: () -> Unit,
     onClose: () -> Unit,
 ) {
+    val layout = mainHostDialogLayout()
     AlertDialog(
+        modifier = layout.modifier,
+        properties = layout.properties,
         onDismissRequest = {},
+        icon = { MainHostWarningIcon() },
         title = { Text(title) },
-        text = { Text(message) },
+        text = { MainHostDialogText(message) },
         dismissButton = {
             TextButton(onClick = onViewReports) {
                 Text(stringResource(R.string.view_reports))

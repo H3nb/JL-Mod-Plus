@@ -14,6 +14,7 @@
 
 package javax.microedition.shell
 
+import android.content.res.Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -26,9 +27,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.RadioButton
@@ -44,10 +49,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import ru.playsoftware.j2meloader.R
 
 /** Callbacks for host-owned runtime dialogs. MIDP state and rendering remain in Java. */
@@ -115,6 +122,26 @@ internal fun RuntimeHostDialogs(
     }
 }
 
+private data class RuntimeDialogLayout(
+    val modifier: Modifier,
+    val properties: DialogProperties,
+)
+
+@Composable
+private fun runtimeDialogLayout(): RuntimeDialogLayout {
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    return RuntimeDialogLayout(
+        modifier = if (landscape) {
+            Modifier
+                .fillMaxWidth(0.94f)
+                .widthIn(max = 760.dp)
+        } else {
+            Modifier.widthIn(max = 560.dp)
+        },
+        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
+    )
+}
+
 @Composable
 private fun runtimeDialogListHeight(maxHeight: Int = 420) =
     LocalConfiguration.current.screenHeightDp
@@ -129,8 +156,10 @@ private fun MidletSelectionDialog(
     actions: RuntimeHostDialogActions,
     onDismiss: () -> Unit,
 ) {
+    val layout = runtimeDialogLayout()
     AlertDialog(
-        modifier = Modifier.widthIn(max = 560.dp),
+        modifier = layout.modifier,
+        properties = layout.properties,
         onDismissRequest = {
             onDismiss()
             actions.onMidletCancelled()
@@ -167,10 +196,27 @@ private fun ErrorDialog(
     message: String,
     onAcknowledge: () -> Unit,
 ) {
+    val layout = runtimeDialogLayout()
     AlertDialog(
+        modifier = layout.modifier,
+        properties = layout.properties,
         onDismissRequest = onAcknowledge,
+        icon = {
+            Icon(
+                painter = painterResource(R.drawable.ic_warning),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+            )
+        },
         title = { Text(stringResource(R.string.error)) },
-        text = { Text(message) },
+        text = {
+            Text(
+                text = message,
+                modifier = Modifier
+                    .heightIn(max = runtimeDialogListHeight(300))
+                    .verticalScroll(rememberScrollState()),
+            )
+        },
         confirmButton = {
             TextButton(onClick = onAcknowledge) {
                 Text(stringResource(android.R.string.ok))
@@ -184,8 +230,18 @@ private fun ExitConfirmationDialog(
     actions: RuntimeHostDialogActions,
     onDismiss: () -> Unit,
 ) {
+    val layout = runtimeDialogLayout()
     AlertDialog(
+        modifier = layout.modifier,
+        properties = layout.properties,
         onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                painter = painterResource(R.drawable.ic_logout),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+            )
+        },
         title = {
             Text(stringResource(R.string.CONFIRMATION_REQUIRED))
         },
@@ -206,8 +262,14 @@ private fun ExitConfirmationDialog(
                 TextButton(onClick = onDismiss) {
                     Text(stringResource(android.R.string.cancel))
                 }
-                Button(onClick = { onDismiss(); actions.onExitConfirmed(false) }) {
-                    Text(stringResource(android.R.string.ok))
+                Button(
+                    onClick = { onDismiss(); actions.onExitConfirmed(false) },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ),
+                ) {
+                    Text(stringResource(R.string.exit))
                 }
             }
         },
@@ -221,7 +283,10 @@ private fun HideButtonsDialog(
     onDismiss: () -> Unit,
 ) {
     var checked by remember(state) { mutableStateOf(state.checked.copyOf()) }
+    val layout = runtimeDialogLayout()
     AlertDialog(
+        modifier = layout.modifier,
+        properties = layout.properties,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.hide_buttons)) },
         text = {
@@ -265,13 +330,20 @@ private fun SaveVirtualKeyboardDialog(
     onDismiss: () -> Unit,
 ) {
     var saveScreenParams by remember(state) { mutableStateOf(state.keepScreenPreferred) }
+    val layout = runtimeDialogLayout()
     AlertDialog(
+        modifier = layout.modifier,
+        properties = layout.properties,
         onDismissRequest = onDismiss,
         title = {
             Text(stringResource(R.string.CONFIRMATION_REQUIRED))
         },
         text = {
-            Column {
+            Column(
+                modifier = Modifier
+                    .heightIn(max = runtimeDialogListHeight(360))
+                    .verticalScroll(rememberScrollState()),
+            ) {
                 Text(stringResource(R.string.pref_vk_save_alert))
                 if (state.phone) {
                     ListItem(
@@ -314,7 +386,10 @@ private fun LayoutSelectionDialog(
     onDismiss: () -> Unit,
 ) {
     var selected by remember(state) { mutableIntStateOf(state.selected) }
+    val layout = runtimeDialogLayout()
     AlertDialog(
+        modifier = layout.modifier,
+        properties = layout.properties,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.layout_switch)) },
         text = {

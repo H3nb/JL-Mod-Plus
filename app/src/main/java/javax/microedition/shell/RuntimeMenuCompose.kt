@@ -51,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -201,6 +202,34 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     }
 }
 
+private data class RuntimeMenuDialogLayout(
+    val modifier: Modifier,
+    val properties: DialogProperties,
+)
+
+@Composable
+private fun runtimeMenuDialogLayout(): RuntimeMenuDialogLayout {
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    return RuntimeMenuDialogLayout(
+        modifier = if (landscape) {
+            Modifier
+                .fillMaxWidth(0.94f)
+                .widthIn(max = 760.dp)
+        } else {
+            Modifier.widthIn(max = 560.dp)
+        },
+        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
+    )
+}
+
+@Composable
+private fun runtimeMenuDialogContentHeight(maxHeight: Int = 420) =
+    LocalConfiguration.current.screenHeightDp
+        .minus(220)
+        .coerceAtLeast(120)
+        .coerceAtMost(maxHeight)
+        .dp
+
 @Composable
 internal fun RuntimeLimitFpsDialog(
     onDismiss: () -> Unit,
@@ -208,7 +237,10 @@ internal fun RuntimeLimitFpsDialog(
     onReset: () -> Unit,
 ) {
     var value by remember { mutableStateOf("") }
+    val layout = runtimeMenuDialogLayout()
     AlertDialog(
+        modifier = layout.modifier,
+        properties = layout.properties,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.PREF_LIMIT_FPS)) },
         text = {
@@ -347,16 +379,10 @@ private fun RuntimeMenuDialog(
     onDismiss: () -> Unit,
 ) {
     var virtualKeyboardPage by remember { mutableStateOf(false) }
-    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val layout = runtimeMenuDialogLayout()
     AlertDialog(
-        modifier = if (landscape) {
-            Modifier
-                .fillMaxWidth(0.94f)
-                .widthIn(max = 760.dp)
-        } else {
-            Modifier.widthIn(max = 560.dp)
-        },
-        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
+        modifier = layout.modifier,
+        properties = layout.properties,
         onDismissRequest = onDismiss,
         title = {
             Text(
@@ -370,7 +396,7 @@ private fun RuntimeMenuDialog(
             )
         },
         text = {
-            LazyColumn(modifier = Modifier.heightIn(max = if (landscape) 220.dp else 420.dp)) {
+            LazyColumn(modifier = Modifier.heightIn(max = runtimeMenuDialogContentHeight())) {
                 runtimeMenuItems(
                     state = state,
                     includeCanvasShortcuts = true,
@@ -404,7 +430,7 @@ private fun LazyListScope.runtimeMenuItems(
             )
         }
         item {
-            RuntimeActionItem(R.string.layout_edit_mode, onDismiss, actions::onEditVirtualKeyboardLayout)
+            RuntimeActionItem(R.string.layout_edit_mode, onDismiss, actions::onEditVirtualKeyboardLayout, leadingIcon = R.drawable.ic_edit)
         }
         item {
             RuntimeActionItem(R.string.layout_scale_mode, onDismiss, actions::onResizeVirtualKeyboardLayout)
@@ -419,7 +445,7 @@ private fun LazyListScope.runtimeMenuItems(
             }
         }
         item {
-            RuntimeActionItem(R.string.layout_switch, onDismiss, actions::onSwitchVirtualKeyboardLayout)
+            RuntimeActionItem(R.string.layout_switch, onDismiss, actions::onSwitchVirtualKeyboardLayout, leadingIcon = R.drawable.ic_restart_alt)
         }
         item {
             RuntimeActionItem(R.string.hide_buttons, onDismiss, actions::onHideVirtualKeyboardButtons)
@@ -428,15 +454,16 @@ private fun LazyListScope.runtimeMenuItems(
     }
 
     item {
-        RuntimeActionItem(R.string.exit, onDismiss, actions::onExit)
+        RuntimeActionItem(R.string.exit, onDismiss, actions::onExit, leadingIcon = R.drawable.ic_logout)
     }
     item {
-        RuntimeActionItem(R.string.save_log, onDismiss, actions::onSaveLog)
+        RuntimeActionItem(R.string.save_log, onDismiss, actions::onSaveLog, leadingIcon = R.drawable.ic_save)
     }
     item {
         RuntimeToggleItem(
             label = R.string.action_lock_orientation,
             checked = state.orientationLocked,
+            leadingIcon = R.drawable.ic_screen_lock_rotation,
             onClick = {
                 onDismiss()
                 actions.onToggleOrientationLock()
@@ -448,6 +475,7 @@ private fun LazyListScope.runtimeMenuItems(
             item {
                 RuntimeMenuItem(
                     label = R.string.action_keyboard_ime,
+                    leadingIcon = R.drawable.ic_action_keyboard,
                     onClick = {
                         onDismiss()
                         actions.onOpenImeKeyboard()
@@ -459,6 +487,7 @@ private fun LazyListScope.runtimeMenuItems(
             item {
                 RuntimeMenuItem(
                     label = R.string.take_screenshot,
+                    leadingIcon = R.drawable.ic_action_screenshot,
                     onClick = {
                         onDismiss()
                         actions.onTakeScreenshot()
@@ -467,12 +496,13 @@ private fun LazyListScope.runtimeMenuItems(
             }
         }
         item {
-            RuntimeActionItem(R.string.PREF_LIMIT_FPS, onDismiss, actions::onLimitFps)
+            RuntimeActionItem(R.string.PREF_LIMIT_FPS, onDismiss, actions::onLimitFps, leadingIcon = R.drawable.ic_speed)
         }
         if (state.virtualKeyboardAvailable) {
             item {
                 RuntimeMenuItem(
                     label = R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS,
+                    leadingIcon = R.drawable.ic_action_keyboard,
                     onClick = onOpenVirtualKeyboardPage,
                 )
             }
@@ -485,8 +515,9 @@ private fun RuntimeActionItem(
     label: Int,
     onDismiss: () -> Unit,
     action: () -> Unit,
+    leadingIcon: Int? = null,
 ) {
-    RuntimeMenuItem(label = label) {
+    RuntimeMenuItem(label = label, leadingIcon = leadingIcon) {
         onDismiss()
         action()
     }
@@ -496,11 +527,27 @@ private fun RuntimeActionItem(
 private fun RuntimeToggleItem(
     label: Int,
     checked: Boolean,
+    leadingIcon: Int? = null,
     onClick: () -> Unit,
 ) {
     ListItem(
         colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-        headlineContent = { Text(stringResource(label)) },
+        headlineContent = {
+            Text(
+                text = stringResource(label),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+            )
+        },
+        leadingContent = leadingIcon?.let { icon ->
+            {
+                Icon(
+                    painter = painterResource(icon),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
         trailingContent = {
             Switch(
                 checked = checked,
@@ -525,12 +572,19 @@ private fun RuntimeMenuItem(
 ) {
     ListItem(
         colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-        headlineContent = { Text(stringResource(label)) },
+        headlineContent = {
+            Text(
+                text = stringResource(label),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+            )
+        },
         leadingContent = leadingIcon?.let { icon ->
             {
                 Icon(
                     painter = painterResource(icon),
                     contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         },

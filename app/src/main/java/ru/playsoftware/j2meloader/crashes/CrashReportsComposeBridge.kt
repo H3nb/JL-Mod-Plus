@@ -35,8 +35,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -47,6 +49,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -56,6 +59,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import ru.playsoftware.j2meloader.R
@@ -213,6 +217,29 @@ fun CrashReportsScreen(
                 },
                 actions = {
                     if (selectionMode) {
+                        val allSelected = selectedIds.size == state.records.size
+                        IconButton(
+                            onClick = {
+                                selectedIds = if (allSelected) {
+                                    arrayListOf()
+                                } else {
+                                    ArrayList(state.records.map { it.id })
+                                }
+                            },
+                        ) {
+                            Icon(
+                                painter = painterResource(
+                                    if (allSelected) R.drawable.ic_deselect else R.drawable.ic_select_all,
+                                ),
+                                contentDescription = stringResource(
+                                    if (allSelected) {
+                                        R.string.clear_report_selection
+                                    } else {
+                                        R.string.select_all_reports
+                                    },
+                                ),
+                            )
+                        }
                         IconButton(onClick = { actions.onCopySelected(selectedIds.toList()) }) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_content_copy),
@@ -270,9 +297,38 @@ fun CrashReportsScreen(
             ) {
                 items(state.records, key = { it.id }) { record ->
                     val selected = record.id in selectedIds
+                    val rowContentColor = if (selected) {
+                        MaterialTheme.colorScheme.onSecondaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    }
                     ListItem(
-                        headlineContent = { Text(record.title) },
-                        supportingContent = { Text(record.subtitle) },
+                        colors = ListItemDefaults.colors(
+                            containerColor = if (selected) {
+                                MaterialTheme.colorScheme.secondaryContainer
+                            } else {
+                                Color.Transparent
+                            },
+                        ),
+                        headlineContent = {
+                            Text(
+                                text = record.title,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium,
+                                color = rowContentColor,
+                            )
+                        },
+                        supportingContent = {
+                            Text(
+                                text = record.subtitle,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (selected) {
+                                    MaterialTheme.colorScheme.onSecondaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                            )
+                        },
                         trailingContent = if (selectionMode) {
                             {
                                 Checkbox(
@@ -300,7 +356,10 @@ fun CrashReportsScreen(
                                 },
                             ),
                     )
-                    HorizontalDivider()
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                    )
                 }
             }
         }
@@ -364,6 +423,12 @@ fun CrashReportDetailsScreen(
                             contentDescription = stringResource(R.string.share_report),
                         )
                     }
+                    IconButton(onClick = actions::onReportGitHub) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_bug_report),
+                            contentDescription = stringResource(R.string.report_on_github),
+                        )
+                    }
                     IconButton(onClick = { confirmation = CrashReportConfirmation.Delete }) {
                         Icon(
                             painter = painterResource(R.drawable.ic_delete_report),
@@ -381,19 +446,20 @@ fun CrashReportDetailsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
         ) {
-            TextButton(
-                onClick = actions::onReportGitHub,
-                modifier = Modifier.align(Alignment.End),
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
             ) {
-                Text(stringResource(R.string.report_on_github))
-            }
-            SelectionContainer {
-                Text(
-                    text = state.displayText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontFamily = FontFamily.Monospace,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
+                SelectionContainer {
+                    Text(
+                        text = state.displayText,
+                        modifier = Modifier.padding(16.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontFamily = FontFamily.Monospace,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
             }
         }
     }
@@ -470,6 +536,13 @@ fun CrashReportConfirmationDialog(
 
         CrashReportConfirmation.Delete -> AlertDialog(
             onDismissRequest = onDismiss,
+            icon = {
+                Icon(
+                    painter = painterResource(R.drawable.ic_delete_report),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                )
+            },
             title = {
                 Text(
                     if (batchSelection) {
@@ -502,13 +575,14 @@ fun CrashReportConfirmationDialog(
             confirmButton = {
                 TextButton(onClick = onConfirm) {
                     Text(
-                        stringResource(
+                        text = stringResource(
                             if (batchSelection) {
                                 R.string.delete_selected_reports
                             } else {
                                 R.string.delete_report
                             },
                         ),
+                        color = MaterialTheme.colorScheme.error,
                     )
                 }
             },
