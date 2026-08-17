@@ -14,8 +14,8 @@
 
 package ru.playsoftware.j2meloader.applist
 
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -150,21 +150,19 @@ internal fun LibraryFastScroller(
                 .fillMaxHeight()
                 .onSizeChanged { heightPx = it.height }
                 .pointerInput(buckets, heightPx) {
-                    detectTapGestures(
-                        onPress = { position ->
-                            selectAt(position.y)
-                            tryAwaitRelease()
-                            activeIndex = -1
-                        },
-                    )
-                }
-                .pointerInput(buckets, heightPx) {
-                    detectVerticalDragGestures(
-                        onDragStart = { position -> selectAt(position.y) },
-                        onVerticalDrag = { change, _ -> selectAt(change.position.y) },
-                        onDragEnd = { activeIndex = -1 },
-                        onDragCancel = { activeIndex = -1 },
-                    )
+                    awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        selectAt(down.position.y)
+                        down.consume()
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                            if (!change.pressed) break
+                            selectAt(change.position.y)
+                            change.consume()
+                        }
+                        activeIndex = -1
+                    }
                 },
             verticalAlignment = Alignment.CenterVertically,
         ) {
