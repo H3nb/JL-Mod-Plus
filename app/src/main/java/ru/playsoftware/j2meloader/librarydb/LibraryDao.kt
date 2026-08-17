@@ -93,14 +93,23 @@ abstract class LibraryDao {
     @Query("SELECT storage_key FROM apps")
     abstract suspend fun getStorageKeys(): List<String>
 
+    @Query(
+        """
+        SELECT (
+            EXISTS(SELECT 1 FROM apps LIMIT 1) OR
+            EXISTS(SELECT 1 FROM collections LIMIT 1) OR
+            EXISTS(SELECT 1 FROM collection_apps LIMIT 1) OR
+            EXISTS(SELECT 1 FROM play_stat_receipts LIMIT 1)
+        )
+        """,
+    )
+    abstract suspend fun hasPersistentLibraryData(): Boolean
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     abstract suspend fun insertApp(app: LibraryAppEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     abstract suspend fun insertApps(apps: List<LibraryAppEntity>)
-
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    abstract suspend fun insertAppsIgnoringExisting(apps: List<LibraryAppEntity>): List<Long>
 
     @Query(
         """
@@ -129,7 +138,7 @@ abstract class LibraryDao {
     abstract suspend fun deleteAppByStorageKey(storageKey: String): Int
 
     @Query("DELETE FROM apps WHERE storage_key IN (:storageKeys)")
-    abstract suspend fun deleteAppsByStorageKeys(storageKeys: Set<String>): Int
+    abstract suspend fun deleteAppsByStorageKeys(storageKeys: List<String>): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract suspend fun setLibraryState(state: LibraryStateEntity)
@@ -164,16 +173,36 @@ abstract class LibraryDao {
         setLibraryState(LibraryStateEntity(bootstrapState = LibraryBootstrapState.READY))
     }
 
+    /**
+     * Publish one conservative filesystem repair transaction.
+     *
+     * [scannedApps] contains newly discovered keys and any same-key reinstall targets selected by
+     * the crash-recovery journal. Updating an existing key refreshes source metadata only, preserving
+     * all Library-owned state. Removals are chunked below the API-23 SQLite bind-variable ceiling.
+     */
     @Transaction
     open suspend fun applyFilesystemReconciliation(
-        addedApps: List<LibraryAppEntity>,
+        scannedApps: List<LibraryAppEntity>,
         removedStorageKeys: Set<String>,
     ) {
-        if (removedStorageKeys.isNotEmpty()) {
-            deleteAppsByStorageKeys(removedStorageKeys)
+        removedStorageKeys.toList().chunked(SAFE_DELETE_BIND_COUNT).forEach { chunk ->
+            deleteAppsByStorageKeys(chunk)
         }
-        if (addedApps.isNotEmpty()) {
-            insertAppsIgnoringExisting(addedApps)
+        scannedApps.forEach { scanned ->
+            val existing = getAppByStorageKey(scanned.storageKey)
+            if (existing == null) {
+                insertApp(scanned)
+            } else {
+                val updated = updateSourceMetadata(
+                    appId = existing.id,
+                    sourceTitle = scanned.sourceTitle,
+                    sourceVendor = scanned.sourceVendor,
+                    sourceVersion = scanned.sourceVersion,
+                    sourceDescription = scanned.sourceDescription,
+                    iconRevision = scanned.iconRevision,
+                )
+                check(updated == 1) { "Filesystem reconciliation lost app ${existing.id}" }
+            }
         }
     }
 
@@ -215,5 +244,11 @@ abstract class LibraryDao {
                 iconRevision = metadata.iconRevision,
             ),
         )
+    }
+
+    private companion object {
+        // SQLite on the API-23 baseline may expose the historical 999-variable ceiling. Leave room
+        // for any statement-internal binds and keep the transaction atomic across chunks.
+        const val SAFE_DELETE_BIND_COUNT = 900
     }
 }
