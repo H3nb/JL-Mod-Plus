@@ -1,0 +1,123 @@
+name: Format config redesign sources
+
+on:
+  push:
+    branches:
+      - ui/redesign-config
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ui/redesign-config
+
+      - name: Normalize Kotlin indentation
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          paths = [
+              Path('app/src/main/java/ru/playsoftware/j2meloader/config/ConfigPreferenceComponents.kt'),
+              Path('app/src/main/java/ru/playsoftware/j2meloader/config/ConfigProfilePanel.kt'),
+          ]
+
+          def structural_code(line: str) -> str:
+              out = []
+              quote = None
+              escaped = False
+              i = 0
+              while i < len(line):
+                  ch = line[i]
+                  if quote is not None:
+                      if escaped:
+                          escaped = False
+                      elif ch == '\\':
+                          escaped = True
+                      elif ch == quote:
+                          quote = None
+                      out.append(' ')
+                      i += 1
+                      continue
+                  if ch in ('"', "'"):
+                      quote = ch
+                      out.append(' ')
+                      i += 1
+                      continue
+                  if ch == '/' and i + 1 < len(line) and line[i + 1] == '/':
+                      break
+                  out.append(ch)
+                  i += 1
+              return ''.join(out)
+
+          def format_file(path: Path) -> None:
+              brace_depth = 0
+              paren_depth = 0
+              formatted = []
+              in_block_comment = False
+              for raw in path.read_text().splitlines():
+                  stripped = raw.strip()
+                  if not stripped:
+                      formatted.append('')
+                      continue
+
+                  # Keep block-comment interior readable without treating punctuation as Kotlin structure.
+                  comment_only = in_block_comment or stripped.startswith('/*') or stripped.startswith('*')
+                  if stripped.startswith('/*') and '*/' not in stripped:
+                      in_block_comment = True
+                  if in_block_comment and '*/' in stripped:
+                      closes_comment = True
+                  else:
+                      closes_comment = False
+
+                  code = '' if comment_only else structural_code(stripped)
+                  leading_braces = 1 if stripped.startswith('}') else 0
+                  leading_paren = 1 if stripped.startswith((')', ']')) else 0
+                  effective_brace = max(0, brace_depth - leading_braces)
+                  continuation = 1 if max(0, paren_depth - leading_paren) > 0 else 0
+                  if stripped.startswith('.'):
+                      continuation += 1
+                  indent = ' ' * (4 * (effective_brace + continuation))
+                  formatted.append(indent + stripped)
+
+                  if not comment_only:
+                      brace_depth += code.count('{') - code.count('}')
+                      paren_depth += code.count('(') + code.count('[') - code.count(')') - code.count(']')
+                      brace_depth = max(0, brace_depth)
+                      paren_depth = max(0, paren_depth)
+
+                  if closes_comment:
+                      in_block_comment = False
+
+              path.write_text('\n'.join(formatted) + '\n')
+
+          for path in paths:
+              format_file(path)
+          PY
+
+          git diff --check
+          # Formatting must not change any token/content, only whitespace.
+          git diff -w --exit-code -- \
+            app/src/main/java/ru/playsoftware/j2meloader/config/ConfigPreferenceComponents.kt \
+            app/src/main/java/ru/playsoftware/j2meloader/config/ConfigProfilePanel.kt
+
+      - name: Commit formatting and remove helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/format-config-redesign.yml
+          git add app/src/main/java/ru/playsoftware/j2meloader/config/ConfigPreferenceComponents.kt \
+                  app/src/main/java/ru/playsoftware/j2meloader/config/ConfigProfilePanel.kt
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Format config redesign sources'
+          git push origin HEAD:ui/redesign-config
