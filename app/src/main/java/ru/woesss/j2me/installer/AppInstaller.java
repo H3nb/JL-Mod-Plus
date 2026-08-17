@@ -66,6 +66,8 @@ public class AppInstaller {
 
 	private final long id;
 	private final LibraryViewModel libraryViewModel;
+	private final File requestedWorkdir;
+	private final String requestedStorageKey;
 	private final File cacheDir = new File(EmulatorApplication.getInstance().getCacheDir(), "installer");
 
 	private Uri uri;
@@ -84,6 +86,8 @@ public class AppInstaller {
 
 	AppInstaller(File jar, Uri uri, LibraryViewModel libraryViewModel) {
 		id = NO_ID;
+		requestedWorkdir = null;
+		requestedStorageKey = null;
 		this.libraryViewModel = libraryViewModel;
 		if (jar != null) {
 			srcFile = jar;
@@ -91,8 +95,11 @@ public class AppInstaller {
 		this.uri = uri;
 	}
 
-	public AppInstaller(long id, LibraryViewModel libraryViewModel) {
+	public AppInstaller(long id, File requestedWorkdir, String requestedStorageKey,
+			LibraryViewModel libraryViewModel) {
 		this.id = id;
+		this.requestedWorkdir = requestedWorkdir;
+		this.requestedStorageKey = requestedStorageKey;
 		this.libraryViewModel = libraryViewModel;
 	}
 
@@ -112,13 +119,20 @@ public class AppInstaller {
 	void loadInfo(SingleEmitter<Integer> emitter) throws IOException, ConverterException {
 		bindReadyWorkdir();
 		if (id != NO_ID) {
+			verifyRequestedWorkdir();
 			currentApp = libraryViewModel.getApp(id);
 			if (currentApp == null) {
 				throw new IOException("Library app no longer exists: " + id);
 			}
+			if (requestedStorageKey == null || !requestedStorageKey.equals(currentApp.getStorageKey())) {
+				throw new IOException("Library reinstall target changed before opening installer");
+			}
 			appDirName = currentApp.getStorageKey();
 			targetDir = new File(appsDir(), appDirName);
 			srcJar = child(targetDir, Config.MIDLET_RES_FILE);
+			if (!srcJar.isFile()) {
+				throw new IOException("Retained JAR is unavailable for reinstall: " + appDirName);
+			}
 			newDesc = new Descriptor(child(targetDir, Config.MIDLET_MANIFEST_FILE), false);
 			emitter.onSuccess(STATUS_EQUAL);
 			return;
@@ -174,7 +188,14 @@ public class AppInstaller {
 		if (workdir == null) {
 			throw new IOException("Library is not READY for installation");
 		}
-		expectedWorkdir = workdir;
+		expectedWorkdir = workdir.getCanonicalFile();
+	}
+
+	private void verifyRequestedWorkdir() throws IOException {
+		if (requestedWorkdir == null ||
+				!requestedWorkdir.getCanonicalFile().equals(expectedWorkdir)) {
+			throw new IOException("Library workdir changed before opening reinstall target");
+		}
 	}
 
 	private void parseKjx() throws ConverterException {
