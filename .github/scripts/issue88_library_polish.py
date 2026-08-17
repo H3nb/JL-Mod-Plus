@@ -1,0 +1,408 @@
+from pathlib import Path
+
+path = Path("app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryComposeBridge.kt")
+text = path.read_text()
+
+
+def replace_once(old: str, new: str) -> None:
+    global text
+    count = text.count(old)
+    if count != 1:
+        raise SystemExit(f"Expected exactly one marker, found {count}: {old[:100]!r}")
+    text = text.replace(old, new, 1)
+
+
+def replace_block(start: str, end: str, replacement: str) -> None:
+    global text
+    if text.count(start) != 1 or text.count(end) < 1:
+        raise SystemExit(f"Block markers not unique/available: {start!r} -> {end!r}")
+    start_index = text.index(start)
+    end_index = text.index(end, start_index)
+    text = text[:start_index] + replacement + text[end_index:]
+
+
+replace_once(
+    "import androidx.compose.foundation.layout.width\nimport androidx.compose.foundation.layout.windowInsetsPadding",
+    "import androidx.compose.foundation.layout.width\nimport androidx.compose.foundation.layout.widthIn\nimport androidx.compose.foundation.layout.windowInsetsPadding",
+)
+replace_once(
+    "import androidx.compose.ui.unit.dp\nimport androidx.core.content.ContextCompat",
+    "import androidx.compose.ui.unit.dp\nimport androidx.compose.ui.window.DialogProperties\nimport androidx.core.content.ContextCompat",
+)
+replace_once(
+    "style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)",
+    "style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)",
+)
+
+replace_block(
+    "@Composable\nprivate fun LibraryCollectionsDestination(scaffoldPadding: PaddingValues) {",
+    "@OptIn(ExperimentalLayoutApi::class)",
+    """@Composable
+private fun LibraryCollectionsDestination(scaffoldPadding: PaddingValues) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(scaffoldPadding)
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.library_destination_collections),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                modifier = Modifier.widthIn(max = 560.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_collections),
+                    contentDescription = null,
+                    modifier = Modifier.size(56.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = stringResource(R.string.library_collections_empty_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    text = stringResource(R.string.library_collections_empty_message),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+    }
+}
+
+""",
+)
+
+replace_block(
+    "@OptIn(ExperimentalFoundationApi::class)\n@Composable\nprivate fun LibraryListItem(",
+    "@Composable\nprivate fun LibraryDescription(",
+    """@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun LibraryListItem(
+    app: LibraryAppUiItem,
+    onOpenApp: (Int) -> Unit,
+    onOpenActions: (LibraryAppUiItem) -> Unit,
+    iconRatio: LibraryIconRatio,
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        ListItem(
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+            headlineContent = {
+                Text(
+                    text = app.title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            },
+            supportingContent = {
+                Column {
+                    Text(
+                        text = stringResource(
+                            R.string.library_vendor_version,
+                            app.author,
+                            app.version,
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    LibraryDescription(app.description, app.id)
+                }
+            },
+            leadingContent = {
+                LibraryIconSlot(
+                    app = app,
+                    modifier = Modifier.width(52.dp),
+                    contentSize = 40.dp,
+                    iconRatio = iconRatio,
+                )
+            },
+            trailingContent = {
+                LibraryFavoritePlaceholder(app.id)
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .combinedClickable(
+                    onClick = { onOpenApp(app.id) },
+                    onLongClick = { onOpenActions(app) },
+                ),
+        )
+        HorizontalDivider(
+            modifier = Modifier.padding(start = 84.dp, end = 16.dp),
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+        )
+    }
+}
+
+""",
+)
+
+replace_once(
+    """    deleteTarget?.let { app ->
+        AlertDialog(
+            onDismissRequest = { deleteTarget = null },
+            title = { Text(stringResource(android.R.string.dialog_alert_title)) },
+            text = { Text(stringResource(R.string.message_delete)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    deleteTarget = null
+                    actions.onDelete(app.id)
+                }) { Text(stringResource(android.R.string.ok)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteTarget = null }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
+    }""",
+    """    deleteTarget?.let { app ->
+        val layout = libraryDialogLayout()
+        AlertDialog(
+            modifier = layout.modifier,
+            properties = layout.properties,
+            onDismissRequest = { deleteTarget = null },
+            title = { Text(stringResource(R.string.action_context_delete)) },
+            text = { Text(stringResource(R.string.message_delete)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    deleteTarget = null
+                    actions.onDelete(app.id)
+                }) {
+                    Text(
+                        text = stringResource(R.string.action_context_delete),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteTarget = null }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
+    }""",
+)
+
+replace_block(
+    "@Composable\ninternal fun AppActionsDialog(",
+    "@Composable\nprivate fun RenameAppDialog(",
+    """private data class LibraryDialogLayout(
+    val modifier: Modifier,
+    val properties: DialogProperties,
+)
+
+@Composable
+private fun libraryDialogLayout(): LibraryDialogLayout {
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    return LibraryDialogLayout(
+        modifier = if (landscape) {
+            Modifier
+                .fillMaxWidth(0.94f)
+                .widthIn(max = 760.dp)
+        } else {
+            Modifier.widthIn(max = 560.dp)
+        },
+        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
+    )
+}
+
+@Composable
+private fun libraryDialogListHeight(maxHeight: Int = 420) =
+    LocalConfiguration.current.screenHeightDp
+        .minus(220)
+        .coerceAtLeast(120)
+        .coerceAtMost(maxHeight)
+        .dp
+
+@Composable
+internal fun AppActionsDialog(
+    app: LibraryAppUiItem,
+    onDismiss: () -> Unit,
+    onShortcut: (() -> Unit)?,
+    onRename: () -> Unit,
+    onSettings: () -> Unit,
+    onReinstall: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    val layout = libraryDialogLayout()
+    AlertDialog(
+        modifier = layout.modifier,
+        properties = layout.properties,
+        onDismissRequest = onDismiss,
+        title = {
+            Column {
+                Text(
+                    text = app.title,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = stringResource(R.string.library_vendor_version, app.author, app.version),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        },
+        text = {
+            LazyColumn(modifier = Modifier.heightIn(max = libraryDialogListHeight())) {
+                if (onShortcut != null) {
+                    item {
+                        DialogAction(
+                            label = R.string.action_context_shortcut,
+                            icon = R.drawable.ic_add,
+                            onDismiss = onDismiss,
+                            action = onShortcut,
+                        )
+                    }
+                }
+                item {
+                    DialogAction(
+                        label = R.string.action_context_rename,
+                        icon = null,
+                        onDismiss = onDismiss,
+                        action = onRename,
+                    )
+                }
+                item {
+                    DialogAction(
+                        label = R.string.action_settings,
+                        icon = R.drawable.ic_options,
+                        onDismiss = onDismiss,
+                        action = onSettings,
+                    )
+                }
+                if (app.canReinstall) {
+                    item {
+                        DialogAction(
+                            label = R.string.action_reinstall,
+                            icon = R.drawable.ic_swap,
+                            onDismiss = onDismiss,
+                            action = onReinstall,
+                        )
+                    }
+                }
+                item {
+                    DialogAction(
+                        label = R.string.action_context_delete,
+                        icon = R.drawable.ic_delete_report,
+                        destructive = true,
+                        onDismiss = onDismiss,
+                        action = onDelete,
+                    )
+                }
+            }
+        },
+        confirmButton = {},
+    )
+}
+
+@Composable
+private fun DialogAction(
+    label: Int,
+    icon: Int?,
+    destructive: Boolean = false,
+    onDismiss: () -> Unit,
+    action: () -> Unit,
+) {
+    val contentColor = if (destructive) {
+        MaterialTheme.colorScheme.error
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+    ListItem(
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        headlineContent = {
+            Text(
+                text = stringResource(label),
+                color = contentColor,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+            )
+        },
+        leadingContent = {
+            if (icon != null) {
+                Icon(
+                    painter = painterResource(icon),
+                    contentDescription = null,
+                    tint = contentColor,
+                )
+            } else {
+                Spacer(Modifier.size(24.dp))
+            }
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                role = Role.Button,
+                onClick = {
+                    onDismiss()
+                    action()
+                },
+            ),
+    )
+}
+
+""",
+)
+
+replace_once(
+    """    val valid = value.text.trim().isNotEmpty()
+    AlertDialog(
+        onDismissRequest = onDismiss,""",
+    """    val valid = value.text.trim().isNotEmpty()
+    val layout = libraryDialogLayout()
+    AlertDialog(
+        modifier = layout.modifier,
+        properties = layout.properties,
+        onDismissRequest = onDismiss,""",
+)
+
+path.write_text(text)
+
+for strings_path, replacements in {
+    Path("app/src/main/res/values/strings.xml"): {
+        '<string name="library_filter_recently_opened">Recently opened</string>': '<string name="library_filter_recently_opened">Recently Opened</string>',
+        '<string name="library_filter_recently_added">Recently added</string>': '<string name="library_filter_recently_added">Recently Added</string>',
+        '<string name="library_icon_ratio_title">Icon ratio</string>': '<string name="library_icon_ratio_title">Icon Ratio</string>',
+        '<string name="library_grid_spacing_title">Grid spacing</string>': '<string name="library_grid_spacing_title">Grid Spacing</string>',
+        '<string name="library_hide_grid_titles">Hide titles in grid</string>': '<string name="library_hide_grid_titles">Hide Titles In Grid</string>',
+        '<string name="library_collections_empty_title">Collections</string>': '<string name="library_collections_empty_title">No Collections Yet</string>',
+    },
+    Path("app/src/main/res/values-in/strings.xml"): {
+        '<string name="library_filter_recently_opened">Baru dibuka</string>': '<string name="library_filter_recently_opened">Baru Dibuka</string>',
+        '<string name="library_filter_recently_added">Baru ditambahkan</string>': '<string name="library_filter_recently_added">Baru Ditambahkan</string>',
+        '<string name="library_icon_ratio_title">Rasio ikon</string>': '<string name="library_icon_ratio_title">Rasio Ikon</string>',
+        '<string name="library_grid_spacing_title">Jarak grid</string>': '<string name="library_grid_spacing_title">Jarak Grid</string>',
+        '<string name="library_hide_grid_titles">Sembunyikan judul di grid</string>': '<string name="library_hide_grid_titles">Sembunyikan Judul Di Grid</string>',
+        '<string name="library_collections_empty_title">Koleksi</string>': '<string name="library_collections_empty_title">Belum Ada Koleksi</string>',
+    },
+}.items():
+    strings = strings_path.read_text()
+    for old, new in replacements.items():
+        count = strings.count(old)
+        if count != 1:
+            raise SystemExit(f"Expected one string marker in {strings_path}, found {count}: {old}")
+        strings = strings.replace(old, new, 1)
+    strings_path.write_text(strings)
