@@ -14,6 +14,8 @@ androidx-junit = "1.1.5"
 androidx-lifecycle = "2.6.2"
 androidx-preference = "1.2.1"
 androidx-room = "2.6.1"
+androidx-room3 = "3.0.1"
+androidx-sqlite = "2.7.0"
 asm = "9.6"
 compose-bom = "2026.06.01"
 compose-screenshot = "0.0.1-alpha15"
@@ -23,6 +25,8 @@ ffmpeg-kit = "6.0.LTS"
 google-gson = "2.9.1"
 google-oboe = "1.10.0"
 junit = "4.13.2"
+kotlinx-coroutines = "1.11.0"
+ksp = "2.3.10"
 pngj = "2.2.3"
 rx-android = "2.1.1"
 zip4j = "2.11.6"
@@ -43,6 +47,11 @@ androidx-preference-ktx = { module = "androidx.preference:preference-ktx", versi
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "androidx-room" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "androidx-room" }
 androidx-room-rxjava2 = { module = "androidx.room:room-rxjava2", version.ref = "androidx-room" }
+androidx-room3-compiler = { module = "androidx.room3:room3-compiler", version.ref = "androidx-room3" }
+androidx-room3-runtime = { module = "androidx.room3:room3-runtime", version.ref = "androidx-room3" }
+androidx-room3-testing = { module = "androidx.room3:room3-testing", version.ref = "androidx-room3" }
+androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "androidx-sqlite" }
+androidx-sqlite-framework = { module = "androidx.sqlite:sqlite-framework", version.ref = "androidx-sqlite" }
 asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
 androidx-compose-foundation = { module = "androidx.compose.foundation:foundation" }
@@ -60,6 +69,7 @@ ffmpeg-kit = { module = "io.github.nikita36078:ffmpeg-kit", version.ref = "ffmpe
 google-gson = { module = "com.google.code.gson:gson", version.ref = "google-gson" }
 google-oboe = { module = "com.google.oboe:oboe", version.ref = "google-oboe" }
 junit = { module = "junit:junit", version.ref = "junit" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
 pngj = { module = "com.github.nikita36078:pngj", version.ref = "pngj" }
 rx-android = { module = "io.reactivex.rxjava2:rxandroid", version.ref = "rx-android" }
 zip4j = { module = "net.lingala.zip4j:zip4j", version.ref = "zip4j" }
@@ -67,5 +77,7 @@ zip4j = { module = "net.lingala.zip4j:zip4j", version.ref = "zip4j" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
+androidx-room3 = { id = "androidx.room3", version.ref = "androidx-room3" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version = "2.2.10" }
 compose-screenshot = { id = "com.android.compose.screenshot", version.ref = "compose-screenshot" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
