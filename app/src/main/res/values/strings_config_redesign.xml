@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="config_destination_general">General</string>
-    <string name="config_general_settings">Essential settings</string>
-    <string name="config_maintenance">Reset &amp; data</string>
-    <string name="config_reset_all_settings">Reset all settings</string>
+    <string name="config_general_settings">Essential Settings</string>
+    <string name="config_maintenance">Reset &amp; Data</string>
+    <string name="config_reset_all_settings">Reset All Settings</string>
     <string name="config_reset_all_settings_summary">Restore emulator settings to their defaults</string>
-    <string name="config_delete_game_data">Delete app data</string>
+    <string name="config_delete_game_data">Delete App Data</string>
     <string name="config_delete_game_data_summary">Permanently delete saves and data created by this app</string>
     <string name="config_message_reset_settings">Reset all emulator settings for this app to their defaults? App data and the custom button layout will not be deleted.</string>
     <string name="config_message_reset_profile_settings">Reset all settings in this profile to their defaults? The profile can be edited again before leaving this page.</string>
@@ -17,7 +17,7 @@
     <string name="profile_save_template_summary">Save the current configuration as a reusable template.</string>
     <string name="profile_builtin_default">Default</string>
     <string name="profile_builtin_default_summary">Built-in emulator settings</string>
-    <string name="config_lock_custom_resolution_ratio">Keep width/height ratio while editing</string>
+    <string name="config_lock_custom_resolution_ratio">Keep Width/Height Ratio While Editing</string>
     <string name="config_swap_screen_size">Swap width and height</string>
     <string name="profile_manage_templates">Manage templates</string>
     <string name="profile_builtin_settings">Built-in settings</string>
@@ -65,12 +65,12 @@
     <string name="config_help_advanced_generic">Less common controls for compatibility and fine tuning.</string>
     <string name="config_help_action_generic">Open this configuration tool.</string>
     <string name="config_help_encoding">Select the character encoding exposed to the J2ME application.</string>
-    <string name="config_edit_system_properties">Edit system properties</string>
+    <string name="config_edit_system_properties">Edit System Properties</string>
     <string name="config_help_system_properties">Advanced Java ME properties reported to the application.</string>
     <string name="config_help_system_properties_long">Edit one property per line using “name: value”. Incorrect values can change application behavior, so modify these only when compatibility requires it.</string>
     <string name="config_system_properties_info">Most apps do not need changes here.</string>
     <string name="config_system_properties_value">%1$d properties</string>
-    <string name="config_font_sizes">Font sizes</string>
+    <string name="config_font_sizes">Font Sizes</string>
     <string name="config_help_font_sizes">Sizes used for Java ME small, medium, and large logical fonts.</string>
     <string name="config_help_font_sizes_long">These values map Java ME logical font sizes to pixels. Change them together so text remains visually balanced across applications.</string>
     <string name="config_font_sizes_value">Small %1$s · Medium %2$s · Large %3$s</string>
