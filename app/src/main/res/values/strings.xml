@@ -288,7 +288,7 @@
     <string name="select_dialog_title">Select MIDlet</string>
     <string name="set_as_default">Set As Default</string>
     <string name="shader_setting" translatable="false">%1$s: %2$s</string>
-    <string name="shader_tuning">Shader Tuning</string>
+    <string name="shader_tuning">Shader tuning</string>
     <string name="SIZE_PRESETS">Presets</string>
     <string name="START_CMD">Start</string>
     <string name="SWAP_SIZES">Swap Sizes</string>

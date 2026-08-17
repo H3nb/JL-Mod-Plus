@@ -209,7 +209,7 @@
     <string name="pref_vk_type_phone">Ponsel (Numerik)</string>
     <string name="pref_vk_type_phone_arrows">Ponsel (Arah Panah)</string>
     <string name="pref_wakelock_title">Layar Tetap Menyala</string>
-    <string name="pref_skin_not_set">Belum Diatur</string>
+    <string name="pref_skin_not_set">Belum diatur</string>
     <string name="pref_skin_title">Skin</string>
     <string name="pref_skip_resume_call">Lewati callback resume</string>
     <string name="pref_soundbank_title">Soundbank</string>
@@ -230,7 +230,7 @@
     <string name="search">Cari</string>
     <string name="select_dialog_title">Pilih MIDlet</string>
     <string name="set_as_default">Atur Sebagai Bawaan</string>
-    <string name="shader_tuning">Setelan Shader</string>
+    <string name="shader_tuning">Setelan shader</string>
     <string name="SIZE_PRESETS">Prasetel</string>
     <string name="START_CMD">Mulai</string>
     <string name="SWAP_SIZES">Tukar Ukuran</string>
