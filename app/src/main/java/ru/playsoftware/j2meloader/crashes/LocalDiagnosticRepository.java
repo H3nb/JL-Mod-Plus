@@ -128,6 +128,7 @@ public final class LocalDiagnosticRepository {
 			if (id.equals(record.id)) {
 				return record;
 			}
+		}
 		return null;
 	}
 
