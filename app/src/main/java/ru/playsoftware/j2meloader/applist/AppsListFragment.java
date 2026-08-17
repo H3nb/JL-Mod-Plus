@@ -63,14 +63,13 @@ import ru.playsoftware.j2meloader.crashes.CrashReportsActivity;
 import ru.playsoftware.j2meloader.filepicker.FilePickerContract;
 import ru.playsoftware.j2meloader.filepicker.FilteredFilePickerActivity;
 import ru.playsoftware.j2meloader.librarydb.LibraryAppRow;
-import ru.playsoftware.j2meloader.librarydb.LibraryFileOperations;
 import ru.playsoftware.j2meloader.librarydb.LibraryViewModel;
 import ru.playsoftware.j2meloader.settings.SettingsActivity;
 import ru.playsoftware.j2meloader.util.AppUtils;
 import ru.playsoftware.j2meloader.util.LogUtils;
 import ru.woesss.j2me.installer.InstallerDialog;
 
-/** Room 3 Library host. AppItem remains only a temporary DTO for the existing Compose bridge. */
+/** Room 3 Library host. AppItem remains only a temporary DTO for explicit shortcut creation. */
 public class AppsListFragment extends Fragment {
 	private static final String TAG = AppsListFragment.class.getSimpleName();
 	private static final int LAYOUT_TYPE_LIST = 0;
@@ -325,6 +324,11 @@ public class AppsListFragment extends Fragment {
 			public void onExit() {
 				requireActivity().finish();
 			}
+
+			@Override
+			public void onRetryLibrary() {
+				libraryViewModel.retry();
+			}
 		};
 	}
 
@@ -342,23 +346,29 @@ public class AppsListFragment extends Fragment {
 	}
 
 	private void onLibraryState(LibraryViewModel.DisplayState state) {
+		LibraryComposeController controller = composeController;
 		if (state instanceof LibraryViewModel.DisplayState.Ready) {
 			publishReady((LibraryViewModel.DisplayState.Ready) state);
 			return;
 		}
-		if (state instanceof LibraryViewModel.DisplayState.Error) {
-			clearUiRows();
-			LibraryComposeController controller = composeController;
-			if (controller != null) {
-				controller.updateApps(new ArrayList<>(), libraryViewModel.getFilter());
-				controller.showNotice(getString(R.string.error));
-			}
+
+		// Never expose rows from an older workdir generation while the next generation opens/indexes.
+		clearUiRows();
+		if (controller == null) return;
+		if (state instanceof LibraryViewModel.DisplayState.Indexing) {
+			LibraryViewModel.DisplayState.Indexing indexing =
+					(LibraryViewModel.DisplayState.Indexing) state;
+			controller.showIndexing(
+					indexing.getCompleted(),
+					indexing.getTotal(),
+					indexing.getStorageKey());
 			return;
 		}
-		// Opening/Indexing/Idle never expose stale rows from the previous workdir generation.
-		clearUiRows();
-		LibraryComposeController controller = composeController;
-		if (controller != null) controller.updateApps(new ArrayList<>(), libraryViewModel.getFilter());
+		if (state instanceof LibraryViewModel.DisplayState.Error) {
+			controller.showError(((LibraryViewModel.DisplayState.Error) state).getMessage());
+			return;
+		}
+		controller.showLoading();
 	}
 
 	private void publishReady(LibraryViewModel.DisplayState.Ready state) {
@@ -372,11 +382,22 @@ public class AppsListFragment extends Fragment {
 			rowsByUiId.clear();
 		}
 
-		List<AppItem> uiItems = new ArrayList<>(state.getApps().size());
+		List<LibraryAppUiItem> uiItems = new ArrayList<>(state.getApps().size());
 		for (LibraryAppRow row : state.getApps()) {
 			int uiId = uiIdFor(row.getId());
 			rowsByUiId.put(uiId, row);
-			uiItems.add(toAppItem(row, uiId));
+			String iconPath = row.getIconRevision() == 0L
+					? null
+					: new File(appPath(row) + Config.MIDLET_ICON_FILE).getAbsolutePath();
+			uiItems.add(new LibraryAppUiItem(
+					uiId,
+					row.getTitle(),
+					row.getVendor(),
+					row.getVersion(),
+					iconPath,
+					true,
+					row.getDescription(),
+					row.getIconRevision()));
 		}
 		LibraryComposeController controller = composeController;
 		if (controller != null) {
@@ -403,6 +424,7 @@ public class AppsListFragment extends Fragment {
 				row.getVendor(),
 				row.getVersion());
 		item.setId(uiId);
+		item.setIconRevision(row.getIconRevision());
 		return item;
 	}
 
