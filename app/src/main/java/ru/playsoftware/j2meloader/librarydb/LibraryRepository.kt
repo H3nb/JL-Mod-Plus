@@ -7,11 +7,11 @@
 package ru.playsoftware.j2meloader.librarydb
 
 import java.io.File
+import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,13 +19,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Owns one active workdir Library at a time.
  *
- * `collectLatest` is the generation boundary: a new workdir request cancels the previous bootstrap,
+ * `collectLatest` is the generation boundary: a new request cancels the previous bootstrap,
  * reconciliation, and Room observation; the old database is closed in `finally` before the new
  * request body proceeds. No caller should keep a LibraryDatabase outside this owner.
  */
@@ -38,9 +38,7 @@ class LibraryRepository(
     sealed interface State {
         data object Idle : State
 
-        data class Opening(
-            val emulatorDir: File,
-        ) : State
+        data class Opening(val emulatorDir: File) : State
 
         data class Indexing(
             val emulatorDir: File,
@@ -63,22 +61,41 @@ class LibraryRepository(
         ) : State
     }
 
-    private val workdirRequests = MutableStateFlow<File?>(null)
+    private data class WorkdirRequest(
+        val generation: Long,
+        val emulatorDir: File,
+    )
+
+    private val nextGeneration = AtomicLong()
+    private val workdirRequests = MutableStateFlow<WorkdirRequest?>(null)
     private val mutableState = MutableStateFlow<State>(State.Idle)
     val state: StateFlow<State> = mutableState.asStateFlow()
 
     private val worker = scope.launch {
         workdirRequests
             .filterNotNull()
-            .collectLatest(::runWorkdir)
+            .collectLatest { request -> runWorkdir(request.emulatorDir) }
     }
 
     fun setEmulatorDirectory(emulatorDir: File) {
-        workdirRequests.value = emulatorDir.absoluteFile
+        request(emulatorDir.absoluteFile)
+    }
+
+    /** Re-runs the current workdir after a recoverable open/storage/bootstrap failure. */
+    fun retry() {
+        val current = workdirRequests.value?.emulatorDir ?: return
+        request(current)
     }
 
     override fun close() {
         worker.cancel()
+    }
+
+    private fun request(emulatorDir: File) {
+        workdirRequests.value = WorkdirRequest(
+            generation = nextGeneration.incrementAndGet(),
+            emulatorDir = emulatorDir,
+        )
     }
 
     private suspend fun runWorkdir(emulatorDir: File) {
@@ -121,8 +138,7 @@ class LibraryRepository(
                 message = boundedMessage(error),
             )
         } finally {
-            val closing = database
-            if (closing != null) {
+            database?.let { closing ->
                 withContext(NonCancellable + Dispatchers.IO) {
                     closing.close()
                 }
