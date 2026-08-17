@@ -130,6 +130,31 @@ class CrashReportsComposeTest {
     }
 
     @Test
+    fun batchSelectionCanSelectAllAndClearSelection() {
+        val actions = RecordingListActions()
+        composeRule.setContent {
+            JLModPlusTheme {
+                CrashReportsScreen(
+                    state = CrashReportsListState(
+                        loading = false,
+                        records = listOf(
+                            CrashReportListItem("report-1", "Demo MIDlet", "MIDlet failure"),
+                            CrashReportListItem("report-2", "Other MIDlet", "Process exit"),
+                        ),
+                    ),
+                    actions = actions,
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Demo MIDlet").performTouchInput { longClick() }
+        composeRule.onNodeWithContentDescription("Select all reports").performClick()
+        composeRule.onNodeWithText("2 selected").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Clear report selection").performClick()
+        composeRule.onNodeWithText("Crash Reports").assertIsDisplayed()
+    }
+
+    @Test
     fun detailActionsInvokeCopyShareGitHubAndDeleteCallbacks() {
         val actions = RecordingDetailActions()
         composeRule.setContent {

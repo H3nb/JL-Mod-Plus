@@ -484,7 +484,10 @@ private fun ConfigNavigationBar(
     selected: ConfigDestination,
     onSelected: (ConfigDestination) -> Unit,
 ) {
-    NavigationBar {
+    NavigationBar(
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        tonalElevation = 0.dp,
+    ) {
         destinations.forEach { destination ->
             val label = stringResource(destination.label)
             NavigationBarItem(
@@ -511,7 +514,7 @@ private fun ConfigNavigationRail(
     selected: ConfigDestination,
     onSelected: (ConfigDestination) -> Unit,
 ) {
-    NavigationRail {
+    NavigationRail(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
         destinations.forEach { destination ->
             val label = stringResource(destination.label)
             NavigationRailItem(

@@ -36,7 +36,6 @@ import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContract;
@@ -315,11 +314,12 @@ public class AppsListFragment extends Fragment {
 
 			@Override
 			public void onSaveLog() {
+				LibraryComposeController controller = composeController;
 				try {
 					LogUtils.writeLog();
-					Toast.makeText(requireActivity(), R.string.log_saved, Toast.LENGTH_SHORT).show();
+					if (controller != null) controller.showNotice(getString(R.string.log_saved));
 				} catch (IOException e) {
-					Toast.makeText(requireActivity(), R.string.error, Toast.LENGTH_SHORT).show();
+					if (controller != null) controller.showNotice(getString(R.string.error));
 				}
 			}
 
