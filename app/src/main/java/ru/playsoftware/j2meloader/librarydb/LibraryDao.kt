@@ -24,19 +24,28 @@ import kotlinx.coroutines.flow.Flow
 
 data class LibraryAppRow(
     val id: Long,
-    @ColumnInfo(name = "storage_key")
-    val storageKey: String,
+    @ColumnInfo(name = "storage_key") val storageKey: String,
+    @ColumnInfo(name = "source_title") val sourceTitle: String,
+    @ColumnInfo(name = "source_vendor") val sourceVendor: String,
+    @ColumnInfo(name = "source_version") val sourceVersion: String,
     val title: String,
     val vendor: String,
     val version: String,
     val description: String,
     val favorite: Boolean,
-    @ColumnInfo(name = "added_at")
-    val addedAt: Long?,
-    @ColumnInfo(name = "last_played_at")
-    val lastPlayedAt: Long?,
-    @ColumnInfo(name = "icon_revision")
+    @ColumnInfo(name = "added_at") val addedAt: Long?,
+    @ColumnInfo(name = "last_played_at") val lastPlayedAt: Long?,
+    @ColumnInfo(name = "icon_revision") val iconRevision: Long,
+)
+
+data class InstalledAppMetadata(
+    val storageKey: String,
+    val sourceTitle: String,
+    val sourceVendor: String,
+    val sourceVersion: String,
+    val sourceDescription: String?,
     val iconRevision: Long,
+    val addedAt: Long,
 )
 
 @Dao
@@ -46,6 +55,9 @@ abstract class LibraryDao {
         SELECT
             id,
             storage_key,
+            source_title,
+            source_vendor,
+            source_version,
             COALESCE(custom_title, source_title) AS title,
             COALESCE(custom_vendor, source_vendor) AS vendor,
             COALESCE(custom_version, source_version) AS version,
@@ -90,10 +102,6 @@ abstract class LibraryDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     abstract suspend fun insertAppsIgnoringExisting(apps: List<LibraryAppEntity>): List<Long>
 
-    /**
-     * Installer/reinstall source update. This deliberately leaves all Library-owned/user state
-     * untouched instead of replacing the entire entity with default values.
-     */
     @Query(
         """
         UPDATE apps SET
@@ -113,6 +121,9 @@ abstract class LibraryDao {
         sourceDescription: String?,
         iconRevision: Long,
     ): Int
+
+    @Query("UPDATE apps SET custom_title = :customTitle WHERE id = :appId")
+    abstract suspend fun updateCustomTitle(appId: Long, customTitle: String?): Int
 
     @Query("DELETE FROM apps WHERE storage_key = :storageKey")
     abstract suspend fun deleteAppByStorageKey(storageKey: String): Int
@@ -144,11 +155,6 @@ abstract class LibraryDao {
     @Query("DELETE FROM apps")
     abstract suspend fun clearApps()
 
-    /**
-     * Atomically publishes the first indexed catalog. Callers must only invoke this while the
-     * workdir database has not reached READY; an established Library contains user-owned state
-     * that must never be destroyed and reconstructed from the filesystem.
-     */
     @Transaction
     open suspend fun replaceIncompleteCatalog(apps: List<LibraryAppEntity>) {
         clearCollectionMemberships()
@@ -158,7 +164,6 @@ abstract class LibraryDao {
         setLibraryState(LibraryStateEntity(bootstrapState = LibraryBootstrapState.READY))
     }
 
-    /** Applies one confident filesystem-name diff without touching unchanged rows. */
     @Transaction
     open suspend fun applyFilesystemReconciliation(
         addedApps: List<LibraryAppEntity>,
@@ -168,9 +173,47 @@ abstract class LibraryDao {
             deleteAppsByStorageKeys(removedStorageKeys)
         }
         if (addedApps.isNotEmpty()) {
-            // IGNORE makes a racing direct installer update win rather than turning a recovery pass
-            // into a duplicate-key failure. Normal app installation still uses explicit mutations.
             insertAppsIgnoringExisting(addedApps)
         }
+    }
+
+    /**
+     * Commits the catalog side of a successful filesystem install/reinstall without replacing
+     * Library-owned state. Existing rows keep overrides, favorites, added_at, stats and collection
+     * memberships. A storage-key change requires a separate intentional migration path.
+     */
+    @Transaction
+    open suspend fun recordInstalledApp(existingId: Long?, metadata: InstalledAppMetadata): Long {
+        val existing = when {
+            existingId != null -> getApp(existingId)
+                ?: error("Installed app id disappeared during catalog update: $existingId")
+            else -> getAppByStorageKey(metadata.storageKey)
+        }
+        if (existing != null) {
+            check(existing.storageKey == metadata.storageKey) {
+                "Refusing implicit storage-key migration from ${existing.storageKey} to ${metadata.storageKey}"
+            }
+            val updated = updateSourceMetadata(
+                appId = existing.id,
+                sourceTitle = metadata.sourceTitle,
+                sourceVendor = metadata.sourceVendor,
+                sourceVersion = metadata.sourceVersion,
+                sourceDescription = metadata.sourceDescription,
+                iconRevision = metadata.iconRevision,
+            )
+            check(updated == 1) { "Installed app catalog update lost row ${existing.id}" }
+            return existing.id
+        }
+        return insertApp(
+            LibraryAppEntity(
+                storageKey = metadata.storageKey,
+                sourceTitle = metadata.sourceTitle,
+                sourceVendor = metadata.sourceVendor,
+                sourceVersion = metadata.sourceVersion,
+                sourceDescription = metadata.sourceDescription,
+                addedAt = metadata.addedAt,
+                iconRevision = metadata.iconRevision,
+            ),
+        )
     }
 }
