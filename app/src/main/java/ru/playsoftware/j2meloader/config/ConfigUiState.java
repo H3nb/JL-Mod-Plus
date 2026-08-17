@@ -47,6 +47,8 @@ public final class ConfigUiState {
 	public final List<ShaderInfo> shaders;
 	@NonNull
 	public final ProfileStatus profileStatus;
+	@NonNull
+	public final List<ProfileTemplate> profileTemplates;
 
 	public ConfigUiState(
 			@NonNull ConfigFormState form,
@@ -80,6 +82,20 @@ public final class ConfigUiState {
 			@NonNull List<ShaderInfo> shaders,
 			@NonNull List<Size> removableScreenPresets,
 			@NonNull ProfileStatus profileStatus) {
+		this(form, screenPresets, fontPresets, skins, soundBanks, shaders, removableScreenPresets,
+				profileStatus, Collections.emptyList());
+	}
+
+	public ConfigUiState(
+			@NonNull ConfigFormState form,
+			@NonNull List<Size> screenPresets,
+			@NonNull List<FontPreset> fontPresets,
+			@NonNull List<String> skins,
+			@NonNull List<String> soundBanks,
+			@NonNull List<ShaderInfo> shaders,
+			@NonNull List<Size> removableScreenPresets,
+			@NonNull ProfileStatus profileStatus,
+			@NonNull List<ProfileTemplate> profileTemplates) {
 		this.form = form;
 		this.screenPresets = immutableCopy(screenPresets);
 		this.removableScreenPresets = immutableCopy(removableScreenPresets);
@@ -88,6 +104,7 @@ public final class ConfigUiState {
 		this.soundBanks = immutableCopy(soundBanks);
 		this.shaders = immutableCopy(shaders);
 		this.profileStatus = profileStatus;
+		this.profileTemplates = immutableCopy(profileTemplates);
 	}
 
 	private static <T> List<T> immutableCopy(List<T> values) {
@@ -110,35 +127,56 @@ public final class ConfigUiState {
 		}
 	}
 
+	public static final class ProfileTemplate {
+		@NonNull public final String name;
+		public final boolean isDefault;
+
+		public ProfileTemplate(@NonNull String name, boolean isDefault) {
+			this.name = name;
+			this.isDefault = isDefault;
+		}
+	}
+
 	/** Profile matching result used by the MIDlet General destination. */
 	public static final class ProfileStatus {
 		@Nullable
 		public final String activeProfile;
 		@Nullable
+		public final String sourceProfile;
+		@Nullable
 		public final String defaultProfile;
 		public final boolean builtInDefault;
+		public final boolean modified;
 
-		private ProfileStatus(@Nullable String activeProfile, @Nullable String defaultProfile,
-				boolean builtInDefault) {
+		private ProfileStatus(@Nullable String activeProfile, @Nullable String sourceProfile,
+				@Nullable String defaultProfile, boolean builtInDefault, boolean modified) {
 			this.activeProfile = activeProfile;
+			this.sourceProfile = sourceProfile;
 			this.defaultProfile = defaultProfile;
 			this.builtInDefault = builtInDefault;
+			this.modified = modified;
 		}
 
 		@NonNull
 		public static ProfileStatus custom(@Nullable String defaultProfile) {
-			return new ProfileStatus(null, defaultProfile, false);
+			return new ProfileStatus(null, null, defaultProfile, false, false);
 		}
 
 		@NonNull
 		public static ProfileStatus builtInDefault(@Nullable String defaultProfile) {
-			return new ProfileStatus(null, defaultProfile, true);
+			return new ProfileStatus(null, null, defaultProfile, true, false);
 		}
 
 		@NonNull
 		public static ProfileStatus active(@NonNull String activeProfile,
 				@Nullable String defaultProfile) {
-			return new ProfileStatus(activeProfile, defaultProfile, false);
+			return new ProfileStatus(activeProfile, activeProfile, defaultProfile, false, false);
+		}
+
+		@NonNull
+		public static ProfileStatus modified(@NonNull String sourceProfile,
+				@Nullable String defaultProfile) {
+			return new ProfileStatus(null, sourceProfile, defaultProfile, false, true);
 		}
 	}
 }

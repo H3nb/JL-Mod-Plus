@@ -88,6 +88,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private ProfileModel builtInDefaultParams;
 	private List<ProfileConfigMatcher.Candidate> profileCandidates = Collections.emptyList();
 	private byte[] currentKeyLayoutSnapshot;
+	@Nullable private String profileOrigin;
 
 	private final ConfigFormEvents formEvents = new ConfigFormEvents() {
 		@Override
@@ -157,6 +158,41 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			startActivity(new Intent(ConfigActivity.this, ProfilesActivity.class));
 		}
 
+		@Override
+		public void onApplyBuiltInTemplate() {
+			applyBuiltInTemplate();
+		}
+
+		@Override
+		public void onApplyTemplate(@NonNull String name) {
+			applyTemplate(name);
+		}
+
+		@Override
+		public void onSaveTemplate(@NonNull String name) {
+			saveTemplate(name);
+		}
+
+		@Override
+		public void onUpdateTemplate(@NonNull String name) {
+			updateTemplate(name);
+		}
+
+		@Override
+		public void onRenameTemplate(@NonNull String oldName, @NonNull String newName) {
+			renameTemplate(oldName, newName);
+		}
+
+		@Override
+		public void onDeleteTemplate(@NonNull String name) {
+			deleteTemplate(name);
+		}
+
+		@Override
+		public void onSetDefaultTemplate(@Nullable String name) {
+			setDefaultTemplate(name);
+		}
+
 	};
 
 	@Override
@@ -216,6 +252,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			configDir = new File(workDir + Config.MIDLET_CONFIGS_DIR + appDir.getName());
 		}
 		configDir.mkdirs();
+		profileOrigin = readProfileOrigin();
 		builtInDefaultParams = new ProfileModel(configDir);
 
 		defProfile = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
@@ -269,6 +306,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 					@Override
 					public void onResetSettings() {
+						setProfileOrigin(null);
 						params = new ProfileModel(configDir);
 						loadParams(false);
 					}
@@ -584,6 +622,129 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		startActivity(i);
 	}
 
+	private void applyBuiltInTemplate() {
+		setProfileOrigin(null);
+		params = new ProfileModel(configDir);
+		currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
+		refreshProfileMatchCache();
+		if (composeController != null) {
+			composeController.update(createUiState());
+		}
+	}
+
+	private void applyTemplate(@NonNull String name) {
+		Profile profile = findProfile(name);
+		if (profile == null) return;
+		try {
+			ProfilesManager.load(profile, configDir.getPath(), true, profile.hasKeyLayout());
+			setProfileOrigin(profile.getName());
+			loadParams(true);
+		} catch (IOException e) {
+			Log.e(TAG, "applyTemplate: " + name, e);
+			Toast.makeText(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT).show();
+		}
+	}
+
+	private void saveTemplate(@NonNull String rawName) {
+		String name = rawName.trim();
+		if (name.isEmpty() || findProfile(name) != null) {
+			Toast.makeText(this, R.string.profile_name_exists, Toast.LENGTH_SHORT).show();
+			return;
+		}
+		try {
+			saveParams();
+			Profile profile = new Profile(name);
+			ProfilesManager.saveSnapshot(profile, configDir.getPath());
+			setProfileOrigin(name);
+			refreshProfileMatchCache();
+			composeController.update(createUiState());
+		} catch (IOException e) {
+			Log.e(TAG, "saveTemplate: " + name, e);
+			Toast.makeText(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT).show();
+		}
+	}
+
+	private void updateTemplate(@NonNull String name) {
+		Profile profile = findProfile(name);
+		if (profile == null) return;
+		try {
+			saveParams();
+			ProfilesManager.saveSnapshot(profile, configDir.getPath());
+			setProfileOrigin(name);
+			refreshProfileMatchCache();
+			composeController.update(createUiState());
+		} catch (IOException e) {
+			Log.e(TAG, "updateTemplate: " + name, e);
+			Toast.makeText(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT).show();
+		}
+	}
+
+	private void renameTemplate(@NonNull String oldName, @NonNull String rawNewName) {
+		String newName = rawNewName.trim();
+		Profile profile = findProfile(oldName);
+		if (profile == null || newName.isEmpty() || findProfile(newName) != null) return;
+		if (!profile.renameTo(newName)) {
+			Toast.makeText(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT).show();
+			return;
+		}
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		if (oldName.equals(preferences.getString(PREF_DEFAULT_PROFILE, null))) {
+			preferences.edit().putString(PREF_DEFAULT_PROFILE, newName).apply();
+		}
+		if (oldName.equals(profileOrigin)) setProfileOrigin(newName);
+		refreshProfileMatchCache();
+		composeController.update(createUiState());
+	}
+
+	private void deleteTemplate(@NonNull String name) {
+		Profile profile = findProfile(name);
+		if (profile == null) return;
+		profile.delete();
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		if (name.equals(preferences.getString(PREF_DEFAULT_PROFILE, null))) {
+			preferences.edit().remove(PREF_DEFAULT_PROFILE).apply();
+		}
+		if (name.equals(profileOrigin)) setProfileOrigin(null);
+		refreshProfileMatchCache();
+		composeController.update(createUiState());
+	}
+
+	private void setDefaultTemplate(@Nullable String name) {
+		SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
+		if (name == null) editor.remove(PREF_DEFAULT_PROFILE);
+		else if (findProfile(name) != null) editor.putString(PREF_DEFAULT_PROFILE, name);
+		else return;
+		editor.apply();
+		if (composeController != null) composeController.update(createUiState());
+	}
+
+	@Nullable
+	private Profile findProfile(@NonNull String name) {
+		for (Profile profile : ProfilesManager.getProfiles()) {
+			if (profile.getName().equals(name)) return profile;
+		}
+		return null;
+	}
+
+	private String profileOriginKey() {
+		return "config_profile_origin:" + configDir.getAbsolutePath();
+	}
+
+	@Nullable
+	private String readProfileOrigin() {
+		if (isProfile || configDir == null) return null;
+		return PreferenceManager.getDefaultSharedPreferences(this).getString(profileOriginKey(), null);
+	}
+
+	private void setProfileOrigin(@Nullable String name) {
+		profileOrigin = name;
+		if (isProfile || configDir == null) return;
+		SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
+		if (name == null) editor.remove(profileOriginKey());
+		else editor.putString(profileOriginKey(), name);
+		editor.apply();
+	}
+
 	private void showLoadProfile() {
 		if (keylayoutFile == null) {
 			return;
@@ -698,15 +859,34 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				params, state, profileCandidates, defaultProfile, currentKeyLayoutSnapshot);
 		ConfigUiState.ProfileStatus profileStatus;
 		if (activeProfile != null) {
+			if (!activeProfile.getName().equals(profileOrigin)) setProfileOrigin(activeProfile.getName());
 			profileStatus = ConfigUiState.ProfileStatus.active(activeProfile.getName(), defaultProfile);
 		} else if (!isProfile && builtInDefaultParams != null
 				&& ProfileConfigMatcher.sameEffectiveConfig(params, state, builtInDefaultParams)) {
+			if (profileOrigin != null) setProfileOrigin(null);
 			profileStatus = ConfigUiState.ProfileStatus.builtInDefault(defaultProfile);
+		} else if (!isProfile && profileOrigin != null && findProfileCandidate(profileOrigin) != null) {
+			profileStatus = ConfigUiState.ProfileStatus.modified(profileOrigin, defaultProfile);
 		} else {
+			if (!isProfile && profileOrigin != null) setProfileOrigin(null);
 			profileStatus = ConfigUiState.ProfileStatus.custom(defaultProfile);
 		}
+		ArrayList<ConfigUiState.ProfileTemplate> templates = new ArrayList<>();
+		for (ProfileConfigMatcher.Candidate candidate : profileCandidates) {
+			String name = candidate.profile.getName();
+			templates.add(new ConfigUiState.ProfileTemplate(name, name.equals(defaultProfile)));
+		}
 		return new ConfigUiState(state, screenPresets, fontPresets, skinOptions, soundBankOptions,
-				shaders == null ? Collections.emptyList() : shaders, removableScreenPresets, profileStatus);
+				shaders == null ? Collections.emptyList() : shaders, removableScreenPresets,
+				profileStatus, templates);
+	}
+
+	@Nullable
+	private ProfileConfigMatcher.Candidate findProfileCandidate(@NonNull String name) {
+		for (ProfileConfigMatcher.Candidate candidate : profileCandidates) {
+			if (candidate.profile.getName().equals(name)) return candidate;
+		}
+		return null;
 	}
 
 	private String normalizedSystemProperties() {

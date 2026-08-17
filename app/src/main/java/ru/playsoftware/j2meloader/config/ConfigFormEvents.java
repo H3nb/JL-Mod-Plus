@@ -15,6 +15,7 @@
 package ru.playsoftware.j2meloader.config;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import ru.playsoftware.j2meloader.config.model.Size;
 
@@ -56,6 +57,27 @@ public interface ConfigFormEvents {
 
 	/** Opens profile template management from the General destination. */
 	default void onManageProfiles() {
+	}
+
+	default void onApplyBuiltInTemplate() {
+	}
+
+	default void onApplyTemplate(@NonNull String name) {
+	}
+
+	default void onSaveTemplate(@NonNull String name) {
+	}
+
+	default void onUpdateTemplate(@NonNull String name) {
+	}
+
+	default void onRenameTemplate(@NonNull String oldName, @NonNull String newName) {
+	}
+
+	default void onDeleteTemplate(@NonNull String name) {
+	}
+
+	default void onSetDefaultTemplate(@Nullable String name) {
 	}
 
 	enum ColorField {
