@@ -107,16 +107,14 @@ android {
 
     flavorDimensions += "default"
     productFlavors {
-        create("emulator") { // variant dimension for create emulator
+        create("emulator") {
             versionNameSuffix = System.getenv("VERSION_SUFFIX")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
-        create("midlet") { // variant dimension for create android port from J2ME app source
-            // configure midlet's port project params here, as default it read from app manifest,
-            // placed to 'app/src/midlet/resources/MIDLET-META-INF/MANIFEST.MF'
+        create("midlet") {
             val props = getMidletManifestProperties()
             val midletName = props.getValue("MIDlet-Name")?.trim() ?: "Demo MIDlet"
             val apkName = midletName.replace("[/\\\\:*?\"<>|]".toRegex(), "").replace(" ", "_")
@@ -149,8 +147,6 @@ room3 {
     schemaDirectory("$projectDir/schemas")
 }
 
-// Keep the legacy standalone MIDlet-to-APK source set available as reference, but do not
-// create build variants for it unless porting support is intentionally re-enabled.
 androidComponents {
     beforeVariants(selector().withFlavor("default" to "midlet")) { variantBuilder ->
         variantBuilder.enable = false
@@ -251,7 +247,10 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.androidx.room3.testing)
-    testImplementation(libs.androidx.sqlite.bundled)
+    // Android local-unit-test configurations otherwise resolve sqlite-bundled's Android variant,
+    // whose JNI binaries cannot load on the Linux host. Pin the dedicated JVM artifact only for
+    // host DB execution; production continues to use AndroidSQLiteDriver/sqlite-framework.
+    testImplementation("androidx.sqlite:sqlite-bundled-jvm:2.7.0")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }
