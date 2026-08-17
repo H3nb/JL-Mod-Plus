@@ -260,6 +260,22 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun advancedControlsRenderColorPreferencesWithoutCrashing() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), RecordingConfigEvents(), initialDestination = ConfigDestination.Controls)
+            }
+        }
+
+        composeRule.onNodeWithText("Advanced settings").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Foreground").assertExists()
+        composeRule.onNodeWithText("#000080").assertExists()
+        composeRule.onNodeWithText("Background").assertExists()
+        composeRule.onNodeWithText("Outline").assertExists()
+    }
+
+    @Test
     fun sliderValuesCommitFromTheirDialogs() {
         val events = RecordingConfigEvents()
         composeRule.setContent {

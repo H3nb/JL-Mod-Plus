@@ -15,6 +15,7 @@
 package ru.playsoftware.j2meloader.config
 
 import android.content.res.Configuration
+import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.input.KeyboardType
@@ -124,6 +125,36 @@ fun ConfigQuickScreenshot() {
 fun ConfigQuickDarkScreenshot() {
     JLModPlusTheme(darkTheme = true) {
         ConfigScreen(PreviewConfigState, NoOpConfigEvents)
+    }
+}
+
+@PreviewTest
+@Preview(name = "Config preference components", widthDp = 360, heightDp = 520, showBackground = true)
+@Composable
+fun ConfigPreferenceComponentsScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        Column {
+            ConfigSection(title = "Virtual keyboard") {
+                ConfigColorPreference(
+                    title = "Foreground",
+                    description = "Color used for virtual-key labels.",
+                    value = "000080",
+                    onClick = {},
+                )
+                ConfigDisclosurePreference(
+                    title = "Advanced settings",
+                    description = "Less common controls for compatibility and appearance.",
+                    expanded = false,
+                    onExpandedChange = {},
+                )
+                ConfigDisclosurePreference(
+                    title = "Advanced settings",
+                    description = "Less common controls for compatibility and appearance.",
+                    expanded = true,
+                    onExpandedChange = {},
+                )
+            }
+        }
     }
 }
 
