@@ -45,39 +45,30 @@ class LibraryScanner {
     fun scan(
         emulatorDir: File,
         onProgress: ((completed: Int, total: Int, storageKey: String) -> Unit)? = null,
-    ): Result {
-        val directories = installedDirectories(emulatorDir)
-        val apps = ArrayList<LibraryAppEntity>(directories.size)
-        val failures = ArrayList<Failure>()
+    ): Result = scanDirectories(installedDirectories(emulatorDir), onProgress)
 
-        directories.forEachIndexed { index, appDir ->
-            val storageKey = appDir.name
-            try {
-                requireConvertedPayload(appDir)
-                val descriptorFile = File(appDir, MANIFEST_FILE)
-                if (!descriptorFile.isFile) {
-                    throw IOException("Missing $MANIFEST_FILE")
-                }
-                val descriptor = Descriptor(descriptorFile, false)
-                apps += LibraryAppEntity(
-                    storageKey = storageKey,
-                    sourceTitle = descriptor.name,
-                    sourceVendor = descriptor.vendor,
-                    sourceVersion = descriptor.version,
-                    sourceDescription = descriptor.attrs[Descriptor.MIDLET_DESCRIPTION],
-                )
-            } catch (error: Exception) {
-                failures += Failure(storageKey, boundedReason(error))
-            } catch (error: LinkageError) {
-                // Keep a broken converted package from aborting indexing, but do not catch OOM or
-                // other VM-wide failures that should abort the operation.
-                failures += Failure(storageKey, boundedReason(error))
-            } finally {
-                onProgress?.invoke(index + 1, directories.size, storageKey)
-            }
+    /**
+     * Parses only requested storage keys. This is used by normal reconciliation after a cheap
+     * directory-name diff so unchanged applications never pay descriptor parsing cost again.
+     */
+    @Throws(IOException::class)
+    fun scanStorageKeys(emulatorDir: File, storageKeys: Set<String>): Result {
+        if (storageKeys.isEmpty()) {
+            return Result(emptyList(), emptyList())
+        }
+        val requested = storageKeys.toHashSet()
+        val installed = installedDirectories(emulatorDir)
+        val matching = installed.filter { it.name in requested }
+        val result = scanDirectories(matching, null)
+        if (matching.size == requested.size) {
+            return result
         }
 
-        return Result(apps, failures)
+        val found = matching.mapTo(HashSet()) { it.name }
+        val missing = requested.minus(found).sorted().map { storageKey ->
+            Failure(storageKey, "Installed directory disappeared during reconciliation")
+        }
+        return Result(result.apps, result.failures + missing)
     }
 
     /**
@@ -88,6 +79,46 @@ class LibraryScanner {
     @Throws(IOException::class)
     fun storageKeys(emulatorDir: File): Set<String> =
         installedDirectories(emulatorDir).mapTo(LinkedHashSet()) { it.name }
+
+    private fun scanDirectories(
+        directories: List<File>,
+        onProgress: ((completed: Int, total: Int, storageKey: String) -> Unit)?,
+    ): Result {
+        val apps = ArrayList<LibraryAppEntity>(directories.size)
+        val failures = ArrayList<Failure>()
+        directories.forEachIndexed { index, appDir ->
+            val storageKey = appDir.name
+            try {
+                apps += parseDirectory(appDir)
+            } catch (error: Exception) {
+                failures += Failure(storageKey, boundedReason(error))
+            } catch (error: LinkageError) {
+                // Keep a broken converted package from aborting indexing, but do not catch OOM or
+                // other VM-wide failures that should abort the operation.
+                failures += Failure(storageKey, boundedReason(error))
+            } finally {
+                onProgress?.invoke(index + 1, directories.size, storageKey)
+            }
+        }
+        return Result(apps, failures)
+    }
+
+    @Throws(IOException::class)
+    private fun parseDirectory(appDir: File): LibraryAppEntity {
+        requireConvertedPayload(appDir)
+        val descriptorFile = File(appDir, MANIFEST_FILE)
+        if (!descriptorFile.isFile) {
+            throw IOException("Missing $MANIFEST_FILE")
+        }
+        val descriptor = Descriptor(descriptorFile, false)
+        return LibraryAppEntity(
+            storageKey = appDir.name,
+            sourceTitle = descriptor.name,
+            sourceVendor = descriptor.vendor,
+            sourceVersion = descriptor.version,
+            sourceDescription = descriptor.attrs[Descriptor.MIDLET_DESCRIPTION],
+        )
+    }
 
     @Throws(IOException::class)
     private fun installedDirectories(emulatorDir: File): List<File> {
