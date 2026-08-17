@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_section_appearance">Tampilan</string>
+    <string name="settings_section_midlet_runtime">Runtime MIDlet</string>
+    <string name="settings_section_storage">Penyimpanan</string>
+</resources>

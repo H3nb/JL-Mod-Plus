@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_midlet_runtime">MIDlet Runtime</string>
+    <string name="settings_section_storage">Storage</string>
+</resources>
