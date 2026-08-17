@@ -150,7 +150,8 @@ public class CrashReportsActivity extends AppCompatActivity {
 		ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
 		if (clipboard != null) {
 			clipboard.setPrimaryClip(ClipData.newPlainText(getString(R.string.crash_reports), exportText));
-			Toast.makeText(this, getString(R.string.crash_reports_copied, records.size()),
+			Toast.makeText(this, getResources().getQuantityString(
+					R.plurals.crash_reports_copied, records.size(), records.size()),
 					Toast.LENGTH_SHORT).show();
 		}
 	}
