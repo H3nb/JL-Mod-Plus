@@ -9,10 +9,12 @@ package ru.playsoftware.j2meloader.librarydb
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -30,10 +32,18 @@ class LibraryRepositoryTest {
 
     private lateinit var repositoryScope: CoroutineScope
     private lateinit var repository: LibraryRepository
+    private lateinit var openCount: AtomicInteger
 
     @Before fun setUp() {
         repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-        repository = LibraryRepository(repositoryScope, ::openDatabase)
+        openCount = AtomicInteger()
+        repository = LibraryRepository(
+            scope = repositoryScope,
+            databaseFactory = { root ->
+                openCount.incrementAndGet()
+                openDatabase(root)
+            },
+        )
     }
 
     @After fun tearDown() {
@@ -59,6 +69,21 @@ class LibraryRepositoryTest {
         assertTrue(File(second, LibraryDatabase.FILE_NAME).isFile)
     }
 
+    @Test fun duplicateSetForSameWorkdirDoesNotCreateAnotherGeneration() = runBlocking {
+        val root = temporaryFolder.newFolder("dedupe")
+        createConvertedApp(root, "game", "Game")
+        repository.setEmulatorDirectory(root)
+        awaitReady(root)
+        assertEquals(1, openCount.get())
+
+        repository.setEmulatorDirectory(root.absoluteFile)
+        repository.setEmulatorDirectory(root.canonicalFile)
+        delay(200)
+
+        assertEquals(1, openCount.get())
+        assertEquals(root.canonicalFile, (repository.state.value as LibraryRepository.State.Ready).emulatorDir)
+    }
+
     @Test fun retryReopensSameWorkdirAfterRecoverableStorageFailure() = runBlocking {
         val root = temporaryFolder.newFolder("retry")
         val invalidConverted = File(root, "converted").apply { writeText("not a directory") }
@@ -68,6 +93,7 @@ class LibraryRepositoryTest {
             repository.state.filterIsInstance<LibraryRepository.State.Error>().first()
         }
         assertEquals(root.canonicalFile, error.emulatorDir)
+        assertEquals(1, openCount.get())
 
         assertTrue(invalidConverted.delete())
         createConvertedApp(root, "fixed", "Fixed Game")
@@ -75,6 +101,7 @@ class LibraryRepositoryTest {
 
         val ready = awaitReady(root)
         assertEquals(listOf("fixed"), ready.apps.map { it.storageKey })
+        assertEquals(2, openCount.get())
     }
 
     @Test fun mutationPublishesThroughActiveRoomFlow() = runBlocking {
