@@ -22,6 +22,7 @@ import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -146,6 +147,30 @@ class LibraryRepositoryTest {
         }
         assertEquals("Original", renamed.apps.single().sourceTitle)
         assertEquals("Renamed", renamed.apps.single().title)
+    }
+
+    @Test fun workdirRequestInvalidatesOldGenerationBeforeWorkerClosesDatabase() = runBlocking {
+        val first = temporaryFolder.newFolder("sync-first")
+        val second = temporaryFolder.newFolder("sync-second")
+        createConvertedApp(first, "one", "First")
+        createConvertedApp(second, "two", "Second")
+        repository.setEmulatorDirectory(first)
+        val firstReady = awaitReady(first)
+        val staleToken = firstReady.token()
+        val firstId = firstReady.apps.single().id
+
+        repository.setEmulatorDirectory(second)
+
+        // No await/yield here. The request itself must synchronously invalidate A even if the
+        // collectLatest worker has not yet entered Opening(B) or closed DB A.
+        assertNull(repository.currentReadyToken())
+        try {
+            repository.setCustomTitle(staleToken, firstId, "Must reject immediately")
+            throw AssertionError("Expected immediate old-generation mutation rejection")
+        } catch (_: IllegalStateException) {
+            // Expected.
+        }
+        awaitReady(second)
     }
 
     @Test fun staleWorkdirMutationIsRejectedAfterSwitch() = runBlocking {
