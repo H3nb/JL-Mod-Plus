@@ -87,6 +87,9 @@ abstract class LibraryDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     abstract suspend fun insertApps(apps: List<LibraryAppEntity>)
 
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    abstract suspend fun insertAppsIgnoringExisting(apps: List<LibraryAppEntity>): List<Long>
+
     /**
      * Installer/reinstall source update. This deliberately leaves all Library-owned/user state
      * untouched instead of replacing the entire entity with default values.
@@ -113,6 +116,9 @@ abstract class LibraryDao {
 
     @Query("DELETE FROM apps WHERE storage_key = :storageKey")
     abstract suspend fun deleteAppByStorageKey(storageKey: String): Int
+
+    @Query("DELETE FROM apps WHERE storage_key IN (:storageKeys)")
+    abstract suspend fun deleteAppsByStorageKeys(storageKeys: Set<String>): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract suspend fun setLibraryState(state: LibraryStateEntity)
@@ -150,5 +156,21 @@ abstract class LibraryDao {
         clearApps()
         insertApps(apps)
         setLibraryState(LibraryStateEntity(bootstrapState = LibraryBootstrapState.READY))
+    }
+
+    /** Applies one confident filesystem-name diff without touching unchanged rows. */
+    @Transaction
+    open suspend fun applyFilesystemReconciliation(
+        addedApps: List<LibraryAppEntity>,
+        removedStorageKeys: Set<String>,
+    ) {
+        if (removedStorageKeys.isNotEmpty()) {
+            deleteAppsByStorageKeys(removedStorageKeys)
+        }
+        if (addedApps.isNotEmpty()) {
+            // IGNORE makes a racing direct installer update win rather than turning a recovery pass
+            // into a duplicate-key failure. Normal app installation still uses explicit mutations.
+            insertAppsIgnoringExisting(addedApps)
+        }
     }
 }
