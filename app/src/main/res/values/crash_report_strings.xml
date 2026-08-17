@@ -1,39 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="crash_reports" translatable="false">Crash Reports</string>
-    <string name="view_reports" translatable="false">View Reports</string>
-    <string name="crash_reports_empty" translatable="false">No local crash reports</string>
-    <string name="crash_reports_loading" translatable="false">Loading crash reports</string>
-    <string name="crash_report_midlet_failure" translatable="false">MIDlet session failure</string>
-    <string name="crash_report_java_report" translatable="false">Java diagnostic report</string>
-    <string name="crash_report_process_exit" translatable="false">Process exit diagnostic</string>
-    <string name="crash_report_list_subtitle" translatable="false">%1$s · %2$s</string>
-    <string name="crash_reports_selected_count" translatable="false">%1$d selected</string>
-    <string name="copy_report" translatable="false">Copy Report</string>
-    <string name="share_report" translatable="false">Share Report</string>
-    <string name="report_on_github" translatable="false">Report on GitHub</string>
-    <string name="delete_report" translatable="false">Delete Report</string>
-    <string name="copy_selected_reports" translatable="false">Copy selected reports</string>
-    <string name="share_selected_reports" translatable="false">Share selected reports</string>
-    <string name="delete_selected_reports" translatable="false">Delete selected reports</string>
-    <string name="crash_report_copied" translatable="false">Report copied</string>
-    <string name="crash_reports_copied" translatable="false">%1$d reports copied</string>
-    <string name="crash_report_share_title" translatable="false">Share Diagnostic Report</string>
-    <string name="crash_report_share_disclosure" translatable="false">This diagnostic report may contain device information, MIDlet metadata, identifiers used only for crash correlation, Java stack traces, or Android process-exit details. When a raw ANR trace or native tombstone was retained, it will also be attached to this share. Review the report before sharing it.</string>
-    <string name="crash_reports_batch_share_title" translatable="false">Share %1$d Diagnostic Reports?</string>
-    <string name="crash_reports_batch_share_disclosure" translatable="false">The selected diagnostic reports may contain device information, MIDlet metadata, crash-correlation identifiers, Java stack traces, or Android process-exit details. Retained raw traces will also be attached. Review the reports before sharing them.</string>
-    <string name="crash_report_github_issue_title" translatable="false">Diagnostic report: %1$s</string>
-    <string name="crash_report_github_intro" translatable="false">Before submitting, describe what you were doing when the problem occurred. Review the prefilled diagnostic text and remove anything you do not want to publish.\n\n---\n\nDiagnostic report (sanitized by JL-Mod Plus):</string>
-    <string name="crash_report_github_truncated" translatable="false">\n\n[Diagnostic prefill shortened for the GitHub issue form. Use Share Report in JL-Mod Plus if additional evidence is needed.]</string>
-    <string name="crash_report_github_unavailable" translatable="false">No app is available to open the GitHub issue form</string>
-    <string name="crash_report_delete_title" translatable="false">Delete Crash Report?</string>
-    <string name="crash_report_delete_message" translatable="false">This permanently removes the selected local diagnostic record from JL-Mod Plus.</string>
-    <string name="crash_reports_batch_delete_title" translatable="false">Delete %1$d Crash Reports?</string>
-    <string name="crash_reports_batch_delete_message" translatable="false">This permanently removes the selected local diagnostic records from JL-Mod Plus.</string>
-    <string name="crash_report_delete_failed" translatable="false">Could not delete the complete report</string>
-    <string name="crash_report_unavailable" translatable="false">This report is no longer available</string>
-    <string name="process_exit_recovery_title" translatable="false">Unexpected process exit detected</string>
-    <string name="process_exit_recovery_message" translatable="false">JL-Mod Plus previously ended unexpectedly (%1$s). Diagnostic details were saved locally.</string>
-    <string name="process_exit_recovery_message_midlet" translatable="false">A MIDlet process previously ended unexpectedly (%1$s). Diagnostic details were saved locally.</string>
-    <string name="process_exit_recovery_message_named" translatable="false">%1$s previously ended unexpectedly (%2$s). Diagnostic details were saved locally.</string>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="crash_reports">Crash Reports</string>
+    <string name="view_reports">View Reports</string>
+    <string name="crash_reports_empty">No local crash reports</string>
+    <string name="crash_reports_loading">Loading crash reports</string>
+    <string name="crash_report_midlet_failure">MIDlet session failure</string>
+    <string name="crash_report_java_report">Java diagnostic report</string>
+    <string name="crash_report_process_exit">Process exit diagnostic</string>
+    <string name="crash_report_list_subtitle">%1$s · %2$s</string>
+    <plurals name="crash_reports_selected_count">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <string name="copy_report">Copy Report</string>
+    <string name="share_report">Share Report</string>
+    <string name="report_on_github">Report on GitHub</string>
+    <string name="delete_report">Delete Report</string>
+    <string name="copy_selected_reports">Copy selected reports</string>
+    <string name="share_selected_reports">Share selected reports</string>
+    <string name="delete_selected_reports">Delete selected reports</string>
+    <string name="crash_report_copied">Report copied</string>
+    <plurals name="crash_reports_copied">
+        <item quantity="one">%1$d report copied</item>
+        <item quantity="other">%1$d reports copied</item>
+    </plurals>
+    <string name="crash_report_share_title">Share Diagnostic Report</string>
+    <string name="crash_report_share_disclosure">This diagnostic report may contain device information, MIDlet metadata, identifiers used only for crash correlation, Java stack traces, or Android process-exit details. When a raw ANR trace or native tombstone was retained, it will also be attached to this share. Review the report before sharing it.</string>
+    <plurals name="crash_reports_batch_share_title">
+        <item quantity="one">Share %1$d Diagnostic Report?</item>
+        <item quantity="other">Share %1$d Diagnostic Reports?</item>
+    </plurals>
+    <string name="crash_reports_batch_share_disclosure">The selected diagnostic reports may contain device information, MIDlet metadata, crash-correlation identifiers, Java stack traces, or Android process-exit details. Retained raw traces will also be attached. Review the reports before sharing them.</string>
+    <string name="crash_report_github_issue_title">Diagnostic report: %1$s</string>
+    <string name="crash_report_github_intro">Before submitting, describe what you were doing when the problem occurred. Review the prefilled diagnostic text and remove anything you do not want to publish.\n\n---\n\nDiagnostic report (sanitized by JL-Mod Plus):</string>
+    <string name="crash_report_github_truncated">\n\n[Diagnostic prefill shortened for the GitHub issue form. Use Share Report in JL-Mod Plus if additional evidence is needed.]</string>
+    <string name="crash_report_github_unavailable">No app is available to open the GitHub issue form</string>
+    <string name="crash_report_delete_title">Delete Crash Report?</string>
+    <string name="crash_report_delete_message">This permanently removes the selected local diagnostic record from JL-Mod Plus.</string>
+    <plurals name="crash_reports_batch_delete_title">
+        <item quantity="one">Delete %1$d Crash Report?</item>
+        <item quantity="other">Delete %1$d Crash Reports?</item>
+    </plurals>
+    <string name="crash_reports_batch_delete_message">This permanently removes the selected local diagnostic records from JL-Mod Plus.</string>
+    <string name="crash_report_delete_failed">Could not delete the complete report</string>
+    <string name="crash_report_unavailable">This report is no longer available</string>
+    <string name="process_exit_recovery_title">Unexpected process exit detected</string>
+    <string name="process_exit_recovery_message">JL-Mod Plus previously ended unexpectedly (%1$s). Diagnostic details were saved locally.</string>
+    <string name="process_exit_recovery_message_midlet">A MIDlet process previously ended unexpectedly (%1$s). Diagnostic details were saved locally.</string>
+    <string name="process_exit_recovery_message_named">%1$s previously ended unexpectedly (%2$s). Diagnostic details were saved locally.</string>
 </resources>
