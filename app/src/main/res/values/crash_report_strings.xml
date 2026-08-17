@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <!-- Crash-report UI remains translatable; locales without coverage fall back to default English. -->
     <string name="crash_reports">Crash Reports</string>
     <string name="view_reports">View Reports</string>
     <string name="crash_reports_empty">No local crash reports</string>
