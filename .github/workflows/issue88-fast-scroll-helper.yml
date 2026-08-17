@@ -1,0 +1,68 @@
+name: Issue 88 fast-scroll helper
+
+on:
+  push:
+    branches:
+      - ui/harmonize-app-wide
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[issue88-fast-scroll-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: ui/harmonize-app-wide
+          fetch-depth: 0
+
+      - name: Wire fast scroller
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path("app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryComposeBridge.kt")
+          text = path.read_text()
+
+          replacements = [
+              (
+                  "import androidx.compose.runtime.remember\nimport androidx.compose.runtime.saveable.rememberSaveable",
+                  "import androidx.compose.runtime.remember\nimport androidx.compose.runtime.rememberCoroutineScope\nimport androidx.compose.runtime.saveable.rememberSaveable",
+              ),
+              (
+                  "import kotlinx.coroutines.flow.collectLatest\n",
+                  "import kotlinx.coroutines.flow.collectLatest\nimport kotlinx.coroutines.launch\n",
+              ),
+              (
+                  "    val listState = rememberLazyListState()\n    val gridState = rememberLazyGridState()\n    val headerHeightPx = remember { mutableStateOf(0) }",
+                  "    val listState = rememberLazyListState()\n    val gridState = rememberLazyGridState()\n    val coroutineScope = rememberCoroutineScope()\n    val fastScrollBuckets = remember(state.apps, state.sortVariant) {\n        buildLibraryFastScrollBuckets(state.apps, state.sortVariant)\n    }\n    val headerHeightPx = remember { mutableStateOf(0) }",
+              ),
+              (
+                  "        ) {\n            renderHeader(Modifier, true)\n        }\n    }\n}\n\n@OptIn(ExperimentalMaterial3Api::class)\n@Composable\nprivate fun LibraryAppsHeader(",
+                  "        ) {\n            renderHeader(Modifier, true)\n        }\n\n        if (fastScrollBuckets.size > 1) {\n            val visibleHeaderHeight = with(LocalDensity.current) {\n                (headerHeightPx.value + headerOffsetPx.value)\n                    .coerceAtLeast(0f)\n                    .toDp()\n            }\n            LibraryFastScroller(\n                buckets = fastScrollBuckets,\n                onBucketSelected = { bucket ->\n                    coroutineScope.launch {\n                        val targetIndex = bucket.appIndex + 1 // Header occupies item zero.\n                        if (state.layout == LibraryLayout.List) {\n                            listState.scrollToItem(targetIndex)\n                        } else {\n                            gridState.scrollToItem(targetIndex)\n                        }\n                    }\n                },\n                modifier = Modifier\n                    .align(Alignment.CenterEnd)\n                    .padding(\n                        top = visibleHeaderHeight + 4.dp,\n                        end = 2.dp,\n                        bottom = 4.dp,\n                    ),\n            )\n        }\n    }\n}\n\n@OptIn(ExperimentalMaterial3Api::class)\n@Composable\nprivate fun LibraryAppsHeader(",
+              ),
+          ]
+
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"Expected exactly one source marker, found {count}: {old[:80]!r}")
+              text = text.replace(old, new, 1)
+
+          path.write_text(text)
+
+      - name: Commit patch
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "No changes produced" >&2
+            exit 1
+          fi
+          git config user.name "H3nb"
+          git config user.email "93023716+H3nb@users.noreply.github.com"
+          git add app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryComposeBridge.kt
+          git commit -m "Wire library fast scroller [issue88-fast-scroll-applied] [skip ci]"
+          git push origin HEAD:ui/harmonize-app-wide
