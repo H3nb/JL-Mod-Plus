@@ -28,6 +28,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.compose.ui.platform.ComposeView;
 
+import java.util.ArrayList;
+
 import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 
@@ -37,11 +39,13 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 	private static final String GITHUB_NEW_ISSUE_URL =
 			"https://github.com/H3nb/JL-Mod-Plus/issues/new";
 	private static final String GITHUB_ISSUE_TEMPLATE = "issue-template.md";
+	private static final String NATIVE_TOMBSTONE_MIME_TYPE = "application/x-protobuf";
 
 	private LocalDiagnosticRepository.Record record;
 	private String exportText;
 	private String githubExportText;
 	private ComposeView composeView;
+	private DiagnosticTraceAttachment.Attachment traceAttachment;
 
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -61,10 +65,15 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 			return;
 		}
 
+		traceAttachment = DiagnosticTraceAttachment.find(this, record.getId(), record.getSessionId());
 		String displayText = DiagnosticReportText.build(record);
-		exportText = DiagnosticExportSanitizer.sanitize(this, displayText);
-		githubExportText = DiagnosticExportSanitizer.sanitize(
-				this, DiagnosticReportText.buildForGitHub(record));
+		String githubText = DiagnosticReportText.buildForGitHub(record);
+		applyReportText(displayText, githubText);
+		renderDetails(displayText);
+		loadNativeSummaryAsync(displayText, githubText);
+	}
+
+	private void renderDetails(String displayText) {
 		CrashReportsComposeBridge.installDetails(composeView, displayText,
 				new CrashReportDetailsActions() {
 					@Override
@@ -94,6 +103,32 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 				});
 	}
 
+	private void loadNativeSummaryAsync(String baseDisplayText, String baseGithubText) {
+		if (traceAttachment == null || !NATIVE_TOMBSTONE_MIME_TYPE.equals(traceAttachment.mimeType)) {
+			return;
+		}
+		Uri traceUri = traceAttachment.uri;
+		Thread parser = new Thread(() -> {
+			String nativeSummary = NativeTombstoneSummary.summarize(this, traceUri);
+			if (nativeSummary == null) return;
+			runOnUiThread(() -> {
+				if (isFinishing() || isDestroyed()) return;
+				String displayText = DiagnosticReportText.withNativeSummary(
+						baseDisplayText, nativeSummary);
+				String githubText = DiagnosticReportText.withNativeSummary(
+						baseGithubText, nativeSummary);
+				applyReportText(displayText, githubText);
+				renderDetails(displayText);
+			});
+		}, "JLP-native-diagnostic");
+		parser.start();
+	}
+
+	private void applyReportText(String displayText, String githubText) {
+		exportText = DiagnosticExportSanitizer.sanitize(this, displayText);
+		githubExportText = DiagnosticExportSanitizer.sanitize(this, githubText);
+	}
+
 	private void copyReport() {
 		ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
 		if (clipboard != null) {
@@ -103,18 +138,50 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 	}
 
 	private void shareReport() {
-		DiagnosticTraceAttachment.Attachment attachment = DiagnosticTraceAttachment.find(
-				this, record.getId(), record.getSessionId());
-		Intent share = new Intent(Intent.ACTION_SEND);
-		share.setType(attachment == null ? "text/plain" : attachment.mimeType);
+		if (traceAttachment == null) {
+			shareTextOnly();
+			return;
+		}
+		DiagnosticSummaryAttachment.Attachment summaryAttachment = DiagnosticSummaryAttachment.create(
+				this, record.getId(), exportText);
+		if (summaryAttachment == null) {
+			shareSingleTrace();
+			return;
+		}
+
+		ArrayList<Uri> streams = new ArrayList<>(2);
+		streams.add(summaryAttachment.uri);
+		streams.add(traceAttachment.uri);
+		Intent share = new Intent(Intent.ACTION_SEND_MULTIPLE);
+		share.setType("*/*");
 		share.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crash_reports));
 		share.putExtra(Intent.EXTRA_TEXT, exportText);
-		if (attachment != null) {
-			share.putExtra(Intent.EXTRA_STREAM, attachment.uri);
-			share.setClipData(ClipData.newUri(
-					getContentResolver(), getString(R.string.crash_reports), attachment.uri));
-			share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-		}
+		share.putParcelableArrayListExtra(Intent.EXTRA_STREAM, streams);
+		ClipData clipData = ClipData.newUri(
+				getContentResolver(), getString(R.string.crash_reports), summaryAttachment.uri);
+		clipData.addItem(new ClipData.Item(traceAttachment.uri));
+		share.setClipData(clipData);
+		share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+		startActivity(Intent.createChooser(share, getString(R.string.crash_report_share_title)));
+	}
+
+	private void shareTextOnly() {
+		Intent share = new Intent(Intent.ACTION_SEND);
+		share.setType("text/plain");
+		share.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crash_reports));
+		share.putExtra(Intent.EXTRA_TEXT, exportText);
+		startActivity(Intent.createChooser(share, getString(R.string.crash_report_share_title)));
+	}
+
+	private void shareSingleTrace() {
+		Intent share = new Intent(Intent.ACTION_SEND);
+		share.setType(traceAttachment.mimeType);
+		share.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crash_reports));
+		share.putExtra(Intent.EXTRA_TEXT, exportText);
+		share.putExtra(Intent.EXTRA_STREAM, traceAttachment.uri);
+		share.setClipData(ClipData.newUri(
+				getContentResolver(), getString(R.string.crash_reports), traceAttachment.uri));
+		share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 		startActivity(Intent.createChooser(share, getString(R.string.crash_report_share_title)));
 	}
 
