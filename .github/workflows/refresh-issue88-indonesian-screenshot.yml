@@ -1,0 +1,109 @@
+name: Refresh Issue 88 Indonesian screenshot
+
+on:
+  push:
+    branches:
+      - ui/harmonize-app-wide
+
+permissions:
+  contents: write
+
+concurrency:
+  group: issue88-indonesian-screenshot-refresh
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: true
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
+
+      - name: Grant execute permission for Gradle wrapper
+        run: chmod +x gradlew
+
+      - name: Add representative Indonesian Options preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          test = Path('app/src/screenshotTest/kotlin/ru/playsoftware/j2meloader/applist/LibraryProfilesScreenshotTest.kt')
+          text = test.read_text()
+          marker = '''@PreviewTest
+          @Preview(name = "Profiles content", widthDp = 360, heightDp = 640, showBackground = true)'''
+          if text.count(marker) != 1:
+              raise SystemExit(f'Expected exactly one Profiles preview marker, found {text.count(marker)}')
+
+          block = '''@PreviewTest
+          @Preview(
+              name = "Library options Indonesian",
+              widthDp = 360,
+              heightDp = 640,
+              locale = "id",
+              showBackground = true,
+          )
+          @Composable
+          fun LibraryOptionsIndonesianScreenshot() {
+              JLModPlusTheme(darkTheme = false) {
+                  LibraryOptionsDestination(
+                      state = LibraryUiState(
+                          loading = false,
+                          apps = PreviewApps,
+                          layout = LibraryLayout.Grid,
+                      ),
+                      scaffoldPadding = PaddingValues(),
+                      onLayoutChange = {},
+                      onIconRatioChange = {},
+                      onHideGridTitlesChange = {},
+                      onGridSpacingChange = {},
+                      onAbout = {},
+                      onSettings = {},
+                      onProfiles = {},
+                      onHelp = {},
+                      onCrashReports = {},
+                      onSaveLog = {},
+                      onExit = {},
+                  )
+              }
+          }
+
+          '''
+          test.write_text(text.replace(marker, block + marker, 1))
+          PY
+
+      - name: Refresh screenshot references
+        run: ./gradlew --no-daemon --stacktrace :app:updateEmulatorDebugScreenshotTest
+
+      - name: Commit Indonesian coverage and reference
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add \
+            app/src/screenshotTest/kotlin/ru/playsoftware/j2meloader/applist/LibraryProfilesScreenshotTest.kt \
+            app/src/screenshotTestEmulatorDebug
+
+          if git diff --cached --quiet; then
+            echo 'No screenshot reference changes were produced.' >&2
+            exit 1
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'test: add Indonesian Options screenshot coverage'
+          git push origin HEAD:ui/harmonize-app-wide
