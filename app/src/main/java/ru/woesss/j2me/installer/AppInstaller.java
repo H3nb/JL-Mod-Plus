@@ -120,13 +120,7 @@ public class AppInstaller {
 		bindReadyWorkdir();
 		if (id != NO_ID) {
 			verifyRequestedWorkdir();
-			currentApp = libraryViewModel.getApp(id);
-			if (currentApp == null) {
-				throw new IOException("Library app no longer exists: " + id);
-			}
-			if (requestedStorageKey == null || !requestedStorageKey.equals(currentApp.getStorageKey())) {
-				throw new IOException("Library reinstall target changed before opening installer");
-			}
+			currentApp = requireRequestedAppIdentity();
 			appDirName = currentApp.getStorageKey();
 			targetDir = new File(appsDir(), appDirName);
 			srcJar = child(targetDir, Config.MIDLET_RES_FILE);
@@ -196,6 +190,24 @@ public class AppInstaller {
 				!requestedWorkdir.getCanonicalFile().equals(expectedWorkdir)) {
 			throw new IOException("Library workdir changed before opening reinstall target");
 		}
+	}
+
+	private void verifyActiveWorkdir() throws IOException {
+		File activeWorkdir = libraryViewModel.readyWorkdir();
+		if (activeWorkdir == null || !activeWorkdir.getCanonicalFile().equals(expectedWorkdir)) {
+			throw new IOException("Library workdir changed while installer was running");
+		}
+	}
+
+	private LibraryAppRow requireRequestedAppIdentity() throws IOException {
+		LibraryAppRow app = libraryViewModel.getApp(id);
+		if (app == null) {
+			throw new IOException("Library app no longer exists: " + id);
+		}
+		if (requestedStorageKey == null || !requestedStorageKey.equals(app.getStorageKey())) {
+			throw new IOException("Library reinstall target changed while installer was running");
+		}
+		return app;
 	}
 
 	private void parseKjx() throws ConverterException {
@@ -334,6 +346,13 @@ public class AppInstaller {
 		}
 		newDesc.writeTo(child(tmpDir, Config.MIDLET_MANIFEST_FILE));
 
+		// Workdir switches are allowed while conversion runs, but the old generation must never
+		// publish a filesystem result after the user has moved to another Library root.
+		verifyActiveWorkdir();
+		if (id != NO_ID) {
+			verifyRequestedWorkdir();
+			requireRequestedAppIdentity();
+		}
 		FileUtils.deleteDirectory(targetDir);
 		if (!tmpDir.renameTo(targetDir)) {
 			throw new ConverterException("Can't move '" + tmpDir + "' to '" + targetDir + "'");
