@@ -15,6 +15,7 @@
 package ru.playsoftware.j2meloader.crashes;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -80,6 +81,17 @@ public class ProcessStateSummaryTest {
 		assertEquals("rabc123-9z", parsed.runId);
 		assertEquals(36, parsed.sdk);
 		assertEquals(sessionId, parsed.sessionId);
+	}
+
+	@Test
+	public void unknownBuildIdentityDoesNotConsumeStateBudget() {
+		byte[] state = ProcessStateSummary.build(
+				"rabc123-9z", "unknown", 36, null,
+				"config.graphics", "open", "entering");
+		String encoded = new String(state, StandardCharsets.US_ASCII);
+
+		assertFalse(encoded.contains("|b=unknown"));
+		assertNull(ProcessStateSummary.parse(state).buildCommit);
 	}
 
 	@Test
