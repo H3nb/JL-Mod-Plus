@@ -316,6 +316,19 @@ fun ConfigCustomResolutionScreenshot() {
 }
 
 @PreviewTest
+@Preview(name = "Config system properties editor", widthDp = 360, heightDp = 800, showBackground = true)
+@Composable
+fun ConfigSystemPropertiesEditorScreenshot() {
+    JLModPlusTheme {
+        ConfigSystemPropertiesPage(
+            value = "microedition.platform: Sony Ericsson C510i\nmicroedition.profiles: MIDP2.0\n",
+            onBack = {},
+            onSave = {},
+        )
+    }
+}
+
+@PreviewTest
 @Preview(name = "Config system properties", widthDp = 360, heightDp = 800, showBackground = true)
 @Composable
 fun ConfigSystemPropertiesScreenshot() {

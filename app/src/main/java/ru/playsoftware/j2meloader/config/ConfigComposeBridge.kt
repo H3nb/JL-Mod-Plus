@@ -15,8 +15,12 @@
 package ru.playsoftware.j2meloader.config
 
 import android.content.res.Configuration
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -69,10 +73,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -82,6 +87,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
@@ -94,6 +100,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import kotlinx.coroutines.launch
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.config.model.Size
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
@@ -198,81 +205,105 @@ internal fun ConfigScreen(
 ) {
     val form = state.form
     var pendingAction by remember { mutableStateOf<ConfigAction?>(null) }
-    val scrollState = rememberScrollState()
+    var systemPropertiesEditorVisible by rememberSaveable { mutableStateOf(false) }
     val updateForm: (ConfigFormState) -> Unit = { next ->
         events.onFormChanged(next)
     }
 
     val destinations = ConfigDestination.values().toList()
-    var selectedDestinationIndex by rememberSaveable(isProfile, initialDestination) {
-        mutableStateOf(
-            initialDestination?.let { destinations.indexOf(it).takeIf { index -> index >= 0 } }
-                ?: 0,
-        )
+    val initialDestinationIndex = initialDestination
+        ?.let { destinations.indexOf(it).takeIf { index -> index >= 0 } }
+        ?: 0
+    val pagerState = rememberPagerState(
+        initialPage = initialDestinationIndex,
+        pageCount = { destinations.size },
+    )
+    val pagerScope = rememberCoroutineScope()
+    val selectedDestination = destinations.getOrElse(pagerState.currentPage) { destinations.first() }
+    val selectDestination: (ConfigDestination) -> Unit = { destination ->
+        val index = destinations.indexOf(destination)
+        if (index >= 0 && index != pagerState.currentPage) {
+            pagerScope.launch { pagerState.animateScrollToPage(index) }
+        }
     }
-    val selectedDestination = destinations.getOrElse(selectedDestinationIndex) { destinations.first() }
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val density = LocalDensity.current
     val imeVisible = WindowInsets.ime.getBottom(density) > 0
 
-    LaunchedEffect(selectedDestination) {
-        scrollState.scrollTo(0)
-    }
-
-    Row(modifier = modifier.fillMaxSize()) {
-        if (isLandscape) {
-            ConfigNavigationRail(
-                destinations = destinations,
-                selected = selectedDestination,
-                onSelected = { selectedDestinationIndex = destinations.indexOf(it) },
-            )
-        }
-
-        Scaffold(
-            modifier = Modifier.weight(1f).fillMaxSize(),
-            contentWindowInsets = WindowInsets.safeDrawing,
-            topBar = {
-                ConfigTopBar(
-                    title = title,
-                    isProfile = isProfile,
-                    onBack = { menuActions?.onBack() },
-                    onStart = { menuActions?.onStart() },
+    if (systemPropertiesEditorVisible) {
+        ConfigSystemPropertiesPage(
+            value = form.systemProperties,
+            onBack = { systemPropertiesEditorVisible = false },
+            onSave = { value ->
+                systemPropertiesEditorVisible = false
+                updateForm(form.toBuilder().systemProperties(value).build())
+            },
+            modifier = modifier,
+        )
+    } else {
+        Row(modifier = modifier.fillMaxSize()) {
+            if (isLandscape) {
+                ConfigNavigationRail(
+                    destinations = destinations,
+                    selected = selectedDestination,
+                    onSelected = selectDestination,
                 )
-            },
-            bottomBar = {
-                // Keep the destination bar from floating above the IME while editing text.
-                if (!isLandscape && !imeVisible) {
-                    ConfigNavigationBar(
-                        destinations = destinations,
-                        selected = selectedDestination,
-                        onSelected = { selectedDestinationIndex = destinations.indexOf(it) },
-                    )
-                }
-            },
-        ) { padding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .consumeWindowInsets(padding)
-                    .verticalScroll(scrollState)
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.TopCenter,
-                ) {
-                    ConfigDestinationContent(
-                        destination = selectedDestination,
-                        state = state,
-                        form = form,
-                        onFormChanged = updateForm,
-                        events = events,
+            }
+
+            Scaffold(
+                modifier = Modifier.weight(1f).fillMaxSize(),
+                contentWindowInsets = WindowInsets.safeDrawing,
+                topBar = {
+                    ConfigTopBar(
+                        title = title,
                         isProfile = isProfile,
-                        onRequestAction = { pendingAction = it },
-                        modifier = Modifier.widthIn(max = 880.dp),
+                        onBack = { menuActions?.onBack() },
+                        onStart = { menuActions?.onStart() },
                     )
+                },
+                bottomBar = {
+                    // Keep the destination bar from floating above the IME while editing text.
+                    if (!isLandscape && !imeVisible) {
+                        ConfigNavigationBar(
+                            destinations = destinations,
+                            selected = selectedDestination,
+                            onSelected = selectDestination,
+                        )
+                    }
+                },
+            ) { padding ->
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .consumeWindowInsets(padding),
+                ) { page ->
+                    val pageScrollState = rememberScrollState()
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(pageScrollState)
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.TopCenter,
+                        ) {
+                            ConfigDestinationContent(
+                                destination = destinations[page],
+                                state = state,
+                                form = form,
+                                onFormChanged = updateForm,
+                                events = events,
+                                isProfile = isProfile,
+                                onRequestAction = { pendingAction = it },
+                                onEditSystemProperties = { systemPropertiesEditorVisible = true },
+                                modifier = Modifier.widthIn(max = 880.dp),
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -324,6 +355,7 @@ private fun ConfigDestinationContent(
     events: ConfigFormEvents,
     isProfile: Boolean,
     onRequestAction: (ConfigAction) -> Unit,
+    onEditSystemProperties: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -344,7 +376,7 @@ private fun ConfigDestinationContent(
             ConfigDestination.Controls -> InputSection(form, state, onFormChanged, events, onRequestAction)
             ConfigDestination.System -> {
                 EmulationSection(form, onFormChanged)
-                SystemSection(form, onFormChanged, events, !isProfile, onRequestAction)
+                SystemSection(form, onFormChanged, events, !isProfile, onRequestAction, onEditSystemProperties)
             }
         }
     }
@@ -1242,6 +1274,7 @@ private fun SystemSection(
     events: ConfigFormEvents,
     showClearData: Boolean,
     onRequestAction: (ConfigAction) -> Unit,
+    onEditSystemProperties: () -> Unit,
 ) {
     ConfigSection(title = stringResource(R.string.PREF_SYS_PROPS)) {
         ConfigActionPreference(
@@ -1251,7 +1284,7 @@ private fun SystemSection(
         )
         ConfigSystemPropertiesPreference(
   value = form.systemProperties,
-  onValueChange = { value -> onFormChanged(form.toBuilder().systemProperties(value).build()) },
+  onClick = onEditSystemProperties,
         )
     }
 
@@ -1277,47 +1310,79 @@ private fun SystemSection(
 @Composable
 private fun ConfigSystemPropertiesPreference(
     value: String,
-    onValueChange: (String) -> Unit,
+    onClick: () -> Unit,
 ) {
-    var visible by rememberSaveable { mutableStateOf(false) }
     ConfigValuePreference(
         title = stringResource(R.string.config_edit_system_properties),
         description = stringResource(R.string.config_help_system_properties),
         value = stringResource(R.string.config_system_properties_value, value.lineSequence().count { it.isNotBlank() }),
         message = stringResource(R.string.config_system_properties_info),
-        onClick = { visible = true },
+        onClick = onClick,
     )
-    if (visible) {
-        var draft by remember(value) { mutableStateOf(value) }
-        AlertDialog(
-  onDismissRequest = { visible = false },
-  title = { Text(stringResource(R.string.config_edit_system_properties)) },
-  text = {
-      Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-          Text(
-              text = stringResource(R.string.config_help_system_properties_long),
-              style = MaterialTheme.typography.bodyMedium,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-          OutlinedTextField(
-              value = draft,
-              onValueChange = { draft = it },
-              modifier = Modifier.fillMaxWidth().heightIn(min = 220.dp, max = 420.dp),
-              minLines = 8,
-              maxLines = 16,
-              textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-              keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-          )
-      }
-  },
-  dismissButton = { TextButton(onClick = { visible = false }) { Text(stringResource(android.R.string.cancel)) } },
-  confirmButton = {
-      TextButton(onClick = {
-          visible = false
-          onValueChange(draft)
-      }) { Text(stringResource(android.R.string.ok)) }
-  },
-        )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun ConfigSystemPropertiesPage(
+    value: String,
+    onBack: () -> Unit,
+    onSave: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var draft by rememberSaveable(value) { mutableStateOf(value) }
+    val hostView = LocalView.current
+    DisposableEffect(hostView, onBack) {
+        val callback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() = onBack()
+        }
+        (hostView.context as? AppCompatActivity)?.onBackPressedDispatcher?.addCallback(callback)
+        onDispose { callback.remove() }
+    }
+
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        contentWindowInsets = WindowInsets.safeDrawing,
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.PREF_SYS_PROPS)) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_arrow_back),
+                            contentDescription = stringResource(androidx.appcompat.R.string.abc_action_bar_up_description),
+                        )
+                    }
+                },
+                actions = {
+                    TextButton(onClick = { onSave(draft) }) {
+                        Text(stringResource(R.string.save))
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .consumeWindowInsets(padding)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.config_help_system_properties_long),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            ConfigMessageBlock(stringResource(R.string.config_system_properties_info))
+            OutlinedTextField(
+                value = draft,
+                onValueChange = { draft = it },
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+            )
+        }
     }
 }
 

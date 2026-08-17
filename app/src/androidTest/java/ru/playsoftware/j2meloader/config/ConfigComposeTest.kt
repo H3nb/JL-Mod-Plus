@@ -19,8 +19,12 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -46,30 +50,48 @@ class ConfigComposeTest {
 
         composeRule.onNodeWithText("Custom").assertExists()
         composeRule.onNodeWithText("Screen size").assertExists()
-        composeRule.onNodeWithText("Screen Orientation").assertExists()
-        composeRule.onNodeWithText("Scale Type").assertExists()
+        composeRule.onNodeWithText("Screen orientation").assertExists()
+        composeRule.onNodeWithText("Scale type").assertExists()
         composeRule.onNodeWithText("Scale (%)").assertExists()
         composeRule.onNodeWithContentDescription("Start").assertExists()
 
         composeRule.onNodeWithContentDescription("Graphics").performClick()
-        composeRule.onNodeWithText("Screen Options").assertExists()
-        composeRule.onNodeWithText("Font Options").assertExists()
+        composeRule.onNodeWithText("Screen settings").assertExists()
+        composeRule.onNodeWithText("Font").assertExists()
         composeRule.onNodeWithText("Screen size").assertDoesNotExist()
-        composeRule.onNodeWithText("Screen Orientation").assertDoesNotExist()
-        composeRule.onNodeWithText("Scale Type").assertDoesNotExist()
+        composeRule.onNodeWithText("Screen orientation").assertDoesNotExist()
+        composeRule.onNodeWithText("Scale type").assertDoesNotExist()
         composeRule.onNodeWithText("Scale (%)").assertDoesNotExist()
 
         composeRule.onNodeWithContentDescription("Controls").performClick()
-        composeRule.onNodeWithText("Input Devices").assertExists()
+        composeRule.onNodeWithText("Input devices").assertExists()
         composeRule.onNodeWithText("Audio").assertDoesNotExist()
 
         composeRule.onNodeWithContentDescription("Media").performClick()
         composeRule.onNodeWithText("Multimedia settings will be added here in a future update.").assertExists()
 
         composeRule.onNodeWithContentDescription("System").performClick()
-        composeRule.onNodeWithText("System Properties").assertExists()
+        composeRule.onNodeWithText("System properties").assertExists()
         composeRule.onNodeWithText("Reset & data").assertExists()
         composeRule.onNodeWithText("Advanced settings").assertDoesNotExist()
+    }
+
+    @Test
+    fun configDestinationsSupportHorizontalSwipe() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), RecordingConfigEvents())
+            }
+        }
+
+        composeRule.onNodeWithText("Essential settings").assertExists()
+        composeRule.onRoot().performTouchInput { swipeLeft() }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Screen settings").assertExists()
+
+        composeRule.onRoot().performTouchInput { swipeRight() }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Essential settings").assertExists()
     }
 
     @Test
@@ -82,7 +104,7 @@ class ConfigComposeTest {
 
         composeRule.onNodeWithContentDescription("General").assertExists()
         composeRule.onNodeWithText("Screen size").assertExists()
-        composeRule.onNodeWithText("Touch Input").assertExists()
+        composeRule.onNodeWithText("Touch input").assertExists()
         composeRule.onNodeWithContentDescription("Start").assertDoesNotExist()
         composeRule.onNodeWithText("Use profile").assertDoesNotExist()
         composeRule.onNodeWithText("Save as new template").assertDoesNotExist()
@@ -100,7 +122,7 @@ class ConfigComposeTest {
         composeRule.onNodeWithText("Filter").performClick()
         composeRule.onNodeWithContentDescription("Controls").performClick()
         composeRule.onNodeWithContentDescription("General").performClick()
-        composeRule.onNodeWithText("Touch Input").performClick()
+        composeRule.onNodeWithText("Touch input").performClick()
 
         assertTrue(events.lastForm?.screenFilter == true)
         assertFalse(events.lastForm?.touchInput == true)
@@ -165,7 +187,7 @@ class ConfigComposeTest {
         }
 
         composeRule.onNodeWithText("Built-in settings").assertExists()
-        composeRule.onNodeWithText("JL-Mod Plus factory configuration · Default for new games").assertExists()
+        composeRule.onNodeWithText("JL-Mod Plus factory configuration · Default for new apps").assertExists()
         composeRule.onNodeWithText("Custom").assertDoesNotExist()
         composeRule.onNodeWithText("Save as new template").assertDoesNotExist()
         composeRule.onNodeWithText("Choose or manage templates").assertExists()
@@ -185,20 +207,20 @@ class ConfigComposeTest {
 
         composeRule.onNodeWithText("Reset all settings").performClick()
         composeRule.onNodeWithText(
-            "Reset all emulator settings for this game to their defaults? Game data and the custom button layout will not be deleted.",
+            "Reset all emulator settings for this app to their defaults? App data and the custom button layout will not be deleted.",
         ).assertExists()
         composeRule.onNodeWithText("Reset all settings", useUnmergedTree = true).performClick()
         assertEquals(1, menuActions.resetSettingsCalls)
 
-        composeRule.onNodeWithText("Delete game data").performClick()
+        composeRule.onNodeWithText("Delete app data").performClick()
         composeRule.onNodeWithText(
-            "Permanently delete all saves and data created by this game? Emulator settings will not be deleted.",
+            "Permanently delete all saves and data created by this app? Emulator settings will not be deleted.",
         ).assertExists()
-        composeRule.onNodeWithText("Delete game data", useUnmergedTree = true).performClick()
+        composeRule.onNodeWithText("Delete app data", useUnmergedTree = true).performClick()
         assertEquals(1, menuActions.clearDataCalls)
 
         composeRule.onNodeWithContentDescription("Controls").performClick()
-        composeRule.onNodeWithText("Reset Keylayout").performClick()
+        composeRule.onNodeWithText("Reset key layout").performClick()
         composeRule.onNodeWithText("Reset the button layout to its default?").assertExists()
     }
 
@@ -216,7 +238,7 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Delete game data").assertDoesNotExist()
+        composeRule.onNodeWithText("Delete app data").assertDoesNotExist()
         composeRule.onNodeWithText("Reset all settings").performClick()
         composeRule.onNodeWithText(
             "Reset all settings in this profile to their defaults? The profile can be edited again before leaving this page.",
@@ -253,7 +275,7 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Screen Orientation").performClick()
+        composeRule.onNodeWithText("Screen orientation").performClick()
         composeRule.onNodeWithText("Landscape").performClick()
 
         assertEquals(3, events.lastForm?.orientation)
@@ -382,8 +404,9 @@ class ConfigComposeTest {
         composeRule.onNodeWithText("ms").assertExists()
         composeRule.onNodeWithContentDescription("System").performClick()
         composeRule.onNodeWithText("Edit system properties").performClick()
+        composeRule.onNodeWithText("System properties").assertExists()
         composeRule.onNode(hasSetTextAction()).performTextReplacement("microedition.platform: updated\n")
-        composeRule.onNodeWithText("OK").performClick()
+        composeRule.onNodeWithText("Save").performClick()
         assertEquals("microedition.platform: updated\n", events.lastForm?.systemProperties)
     }
 
