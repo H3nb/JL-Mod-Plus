@@ -24,7 +24,6 @@ import static org.acra.ReportField.STACK_TRACE;
 import static org.acra.ReportField.STACK_TRACE_HASH;
 import static org.acra.ReportField.THREAD_DETAILS;
 
-import android.app.ApplicationExitInfo;
 import android.content.Context;
 import android.system.OsConstants;
 import android.util.Log;
@@ -129,7 +128,6 @@ public final class LocalDiagnosticRepository {
 			if (id.equals(record.id)) {
 				return record;
 			}
-		}
 		return null;
 	}
 
@@ -284,12 +282,12 @@ public final class LocalDiagnosticRepository {
 		}
 		String status = ProcessExitStore.statusLabel(exit);
 		String mechanism = ProcessExitStore.reasonLabel(exit.reason);
-		if ((exit.reason == ApplicationExitInfo.REASON_SIGNALED
-				|| exit.reason == ApplicationExitInfo.REASON_CRASH_NATIVE) && status != null) {
+		if ((exit.reason == ProcessExitStore.REASON_SIGNALED
+				|| exit.reason == ProcessExitStore.REASON_CRASH_NATIVE) && status != null) {
 			mechanism = mechanism + " · " + status;
 		}
 		appendLine(detail, "Failure", mechanism);
-		if (exit.reason == ApplicationExitInfo.REASON_SIGNALED && exit.status == OsConstants.SIGKILL
+		if (exit.reason == ProcessExitStore.REASON_SIGNALED && exit.status == OsConstants.SIGKILL
 				&& exit.lowMemoryKillReportSupported) {
 			appendLine(detail, "Cause", "unknown");
 		}
@@ -315,9 +313,9 @@ public final class LocalDiagnosticRepository {
 	}
 
 	private static boolean shouldShowMemory(ProcessExitStore.Snapshot exit) {
-		return exit.reason == ApplicationExitInfo.REASON_LOW_MEMORY
-				|| exit.reason == ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE
-				|| (exit.reason == ApplicationExitInfo.REASON_SIGNALED && exit.status == OsConstants.SIGKILL);
+		return exit.reason == ProcessExitStore.REASON_LOW_MEMORY
+				|| exit.reason == ProcessExitStore.REASON_EXCESSIVE_RESOURCE_USAGE
+				|| (exit.reason == ProcessExitStore.REASON_SIGNALED && exit.status == OsConstants.SIGKILL);
 	}
 
 	private static String memorySample(long pssKb, long rssKb) {
