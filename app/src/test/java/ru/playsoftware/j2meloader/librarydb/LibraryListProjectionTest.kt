@@ -18,8 +18,8 @@ class LibraryListProjectionTest {
     )
 
     @Test fun filterMatchesEffectiveTitleOrVendorIgnoringCase() {
-        assertEquals(listOf(2L), project("ALP", 0).map { it.id })
-        assertEquals(listOf(3L), project("alpha", 0).map { it.id })
+        assertEquals(listOf(2L, 3L), project("ALP", 0).map { it.id })
+        assertEquals(listOf(2L, 3L), project("alpha", 0).map { it.id })
     }
 
     @Test fun titleSortPreservesLegacySecondaryVendorOrdering() {
