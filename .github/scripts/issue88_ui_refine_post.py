@@ -92,6 +92,21 @@ replace(
     "                    )\n",
 )
 
+# Profiles is no longer a top-level Options action; keep screenshot fixtures in sync.
+options_screenshots = Path(
+    "app/src/screenshotTest/kotlin/ru/playsoftware/j2meloader/applist/LibraryProfilesScreenshotTest.kt"
+)
+options_text = options_screenshots.read_text(encoding="utf-8")
+expected_profiles_callbacks = options_text.count("            onProfiles = {},\n")
+if expected_profiles_callbacks != 2:
+    raise RuntimeError(
+        f"Expected exactly two Options screenshot onProfiles callbacks, found {expected_profiles_callbacks}"
+    )
+options_screenshots.write_text(
+    options_text.replace("            onProfiles = {},\n", ""),
+    encoding="utf-8",
+)
+
 # Official Material Symbols warning icon used by harmonized error/recovery dialogs.
 Path("app/src/main/res/drawable/ic_warning.xml").write_text('''<vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
