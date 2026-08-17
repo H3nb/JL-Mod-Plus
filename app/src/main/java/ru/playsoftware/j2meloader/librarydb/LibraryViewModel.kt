@@ -68,9 +68,10 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
 
     private val preferences = PreferenceManager.getDefaultSharedPreferences(application)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    private val repository = LibraryRepository(scope) { emulatorDir ->
-        LibraryDatabase.open(application, emulatorDir)
-    }
+    private val repository = LibraryRepository(
+        scope = scope,
+        databaseFactory = { emulatorDir -> LibraryDatabase.open(application, emulatorDir) },
+    )
     private val filter = MutableStateFlow("")
     private val sortVariant = MutableStateFlow(readSortPreference(preferences))
 
@@ -119,7 +120,6 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         preferences.registerOnSharedPreferenceChangeListener(this)
     }
 
-    /** Start/open only after MainActivity has established storage permission/workdir access. */
     fun setEmulatorDirectory(path: String) {
         repository.setEmulatorDirectory(File(path))
     }
@@ -146,10 +146,8 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    /** Current snapshot only; no Room/filesystem work. */
     fun getApp(appId: Long): LibraryAppRow? = repository.currentApp(appId)
 
-    /** Source identity is intentionally non-unique; installer callers must handle 0/1/many. */
     fun findBySourceIdentity(sourceTitle: String, sourceVendor: String): List<LibraryAppRow> =
         repository.findBySourceIdentity(sourceTitle, sourceVendor)
 
