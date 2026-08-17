@@ -99,14 +99,18 @@ class LibraryFastScrollerTest {
     }
 
     @Test
-    fun dateSortHasNoAlphabetIndex() {
-        assertTrue(
-            buildLibraryFastScrollBuckets(
-                listOf(app(1, "Alpha", "Vendor")),
-                sortVariant = 1,
-                locale = locale,
-            ).isEmpty(),
-        )
+    fun dateSortHasNoAlphabetIndexInEitherDirection() {
+        val apps = listOf(app(1, "Alpha", "Vendor"))
+
+        listOf(1, Int.MIN_VALUE or 1).forEach { sortVariant ->
+            assertTrue(
+                buildLibraryFastScrollBuckets(
+                    apps,
+                    sortVariant = sortVariant,
+                    locale = locale,
+                ).isEmpty(),
+            )
+        }
     }
 
     @Test
