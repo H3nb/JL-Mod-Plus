@@ -15,8 +15,8 @@
 
 package ru.playsoftware.j2meloader.crashes
 
-import android.content.Context
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -29,17 +29,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -49,12 +51,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import java.text.DateFormat
@@ -64,6 +67,9 @@ import java.util.Date
 interface CrashReportsActions {
     fun onBack()
     fun onOpen(reportId: String)
+    fun onCopySelected(reportIds: List<String>)
+    fun onShareSelected(reportIds: List<String>)
+    fun onDeleteSelected(reportIds: List<String>)
 }
 
 /** Java-callable event boundary for the detail screen. */
@@ -71,6 +77,7 @@ interface CrashReportDetailsActions {
     fun onBack()
     fun onCopy()
     fun onShare()
+    fun onReportGitHub()
     fun onDelete()
 }
 
@@ -96,7 +103,7 @@ enum class CrashReportConfirmation {
 
 /** Keeps list data observable without reinstalling the Activity's Compose content. */
 class CrashReportsListController internal constructor(
-    private val context: Context,
+    private val context: android.content.Context,
 ) {
     var state by mutableStateOf(
         CrashReportsListState(loading = true, records = emptyList()),
@@ -140,13 +147,33 @@ private fun LocalDiagnosticRepository.Record.toComposeListItem(
 
 private val NoWindowInsets = WindowInsets(left = 0, top = 0, right = 0, bottom = 0)
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun CrashReportsScreen(
     state: CrashReportsListState,
     actions: CrashReportsActions,
 ) {
     val loadingDescription = stringResource(R.string.crash_reports_loading)
+    var selectedIds by rememberSaveable { mutableStateOf(arrayListOf<String>()) }
+    var confirmation by rememberSaveable { mutableStateOf<CrashReportConfirmation?>(null) }
+
+    LaunchedEffect(state.records) {
+        val retainedIds = state.records.mapTo(HashSet()) { it.id }
+        val retainedSelection = ArrayList(selectedIds.filter { it in retainedIds })
+        if (retainedSelection != selectedIds) {
+            selectedIds = retainedSelection
+        }
+    }
+
+    val selectionMode = selectedIds.isNotEmpty()
+    fun toggleSelection(reportId: String) {
+        val updated = ArrayList(selectedIds)
+        if (!updated.remove(reportId)) {
+            updated.add(reportId)
+        }
+        selectedIds = updated
+    }
+
     Scaffold(
         contentWindowInsets = NoWindowInsets,
         topBar = {
@@ -154,17 +181,56 @@ fun CrashReportsScreen(
                 windowInsets = NoWindowInsets,
                 title = {
                     Text(
-                        text = stringResource(R.string.crash_reports),
+                        text = if (selectionMode) {
+                            pluralStringResource(
+                                R.plurals.crash_reports_selected_count,
+                                selectedIds.size,
+                                selectedIds.size,
+                            )
+                        } else {
+                            stringResource(R.string.crash_reports)
+                        },
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = actions::onBack) {
+                    IconButton(
+                        onClick = {
+                            if (selectionMode) {
+                                confirmation = null
+                                selectedIds = arrayListOf()
+                            } else {
+                                actions.onBack()
+                            }
+                        },
+                    ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_arrow_back),
                             contentDescription = stringResource(R.string.close),
                         )
+                    }
+                },
+                actions = {
+                    if (selectionMode) {
+                        IconButton(onClick = { actions.onCopySelected(selectedIds.toList()) }) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_content_copy),
+                                contentDescription = stringResource(R.string.copy_selected_reports),
+                            )
+                        }
+                        IconButton(onClick = { confirmation = CrashReportConfirmation.Share }) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_share),
+                                contentDescription = stringResource(R.string.share_selected_reports),
+                            )
+                        }
+                        IconButton(onClick = { confirmation = CrashReportConfirmation.Delete }) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_delete_report),
+                                contentDescription = stringResource(R.string.delete_selected_reports),
+                            )
+                        }
                     }
                 },
             )
@@ -203,17 +269,57 @@ fun CrashReportsScreen(
                     .padding(innerPadding),
             ) {
                 items(state.records, key = { it.id }) { record ->
+                    val selected = record.id in selectedIds
                     ListItem(
                         headlineContent = { Text(record.title) },
                         supportingContent = { Text(record.subtitle) },
+                        trailingContent = if (selectionMode) {
+                            {
+                                Checkbox(
+                                    checked = selected,
+                                    onCheckedChange = { toggleSelection(record.id) },
+                                )
+                            }
+                        } else {
+                            null
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { actions.onOpen(record.id) },
+                            .combinedClickable(
+                                onClick = {
+                                    if (selectionMode) {
+                                        toggleSelection(record.id)
+                                    } else {
+                                        actions.onOpen(record.id)
+                                    }
+                                },
+                                onLongClick = {
+                                    if (!selected) {
+                                        toggleSelection(record.id)
+                                    }
+                                },
+                            ),
                     )
                     HorizontalDivider()
                 }
             }
         }
+    }
+
+    confirmation?.let { pendingConfirmation ->
+        CrashReportConfirmationDialog(
+            confirmation = pendingConfirmation,
+            onDismiss = { confirmation = null },
+            onConfirm = {
+                confirmation = null
+                when (pendingConfirmation) {
+                    CrashReportConfirmation.Share -> actions.onShareSelected(selectedIds.toList())
+                    CrashReportConfirmation.Delete -> actions.onDeleteSelected(selectedIds.toList())
+                }
+            },
+            batchSelection = true,
+            reportCount = selectedIds.size,
+        )
     }
 }
 
@@ -268,14 +374,20 @@ fun CrashReportDetailsScreen(
             )
         },
     ) { innerPadding ->
-        SelectionContainer {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+        ) {
+            TextButton(
+                onClick = actions::onReportGitHub,
+                modifier = Modifier.align(Alignment.End),
             ) {
+                Text(stringResource(R.string.report_on_github))
+            }
+            SelectionContainer {
                 Text(
                     text = state.displayText,
                     style = MaterialTheme.typography.bodyMedium,
@@ -306,12 +418,36 @@ fun CrashReportConfirmationDialog(
     confirmation: CrashReportConfirmation,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
+    batchSelection: Boolean = false,
+    reportCount: Int = 1,
 ) {
     when (confirmation) {
         CrashReportConfirmation.Share -> AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text(stringResource(R.string.share_report)) },
-            text = { Text(stringResource(R.string.crash_report_share_disclosure)) },
+            title = {
+                Text(
+                    if (batchSelection) {
+                        pluralStringResource(
+                            R.plurals.crash_reports_batch_share_title,
+                            reportCount,
+                            reportCount,
+                        )
+                    } else {
+                        stringResource(R.string.share_report)
+                    },
+                )
+            },
+            text = {
+                Text(
+                    stringResource(
+                        if (batchSelection) {
+                            R.string.crash_reports_batch_share_disclosure
+                        } else {
+                            R.string.crash_report_share_disclosure
+                        },
+                    ),
+                )
+            },
             dismissButton = {
                 TextButton(onClick = onDismiss) {
                     Text(stringResource(android.R.string.cancel))
@@ -319,15 +455,45 @@ fun CrashReportConfirmationDialog(
             },
             confirmButton = {
                 TextButton(onClick = onConfirm) {
-                    Text(stringResource(R.string.share_report))
+                    Text(
+                        stringResource(
+                            if (batchSelection) {
+                                R.string.share_selected_reports
+                            } else {
+                                R.string.share_report
+                            },
+                        ),
+                    )
                 }
             },
         )
 
         CrashReportConfirmation.Delete -> AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text(stringResource(R.string.crash_report_delete_title)) },
-            text = { Text(stringResource(R.string.crash_report_delete_message)) },
+            title = {
+                Text(
+                    if (batchSelection) {
+                        pluralStringResource(
+                            R.plurals.crash_reports_batch_delete_title,
+                            reportCount,
+                            reportCount,
+                        )
+                    } else {
+                        stringResource(R.string.crash_report_delete_title)
+                    },
+                )
+            },
+            text = {
+                Text(
+                    stringResource(
+                        if (batchSelection) {
+                            R.string.crash_reports_batch_delete_message
+                        } else {
+                            R.string.crash_report_delete_message
+                        },
+                    ),
+                )
+            },
             dismissButton = {
                 TextButton(onClick = onDismiss) {
                     Text(stringResource(android.R.string.cancel))
@@ -335,7 +501,15 @@ fun CrashReportConfirmationDialog(
             },
             confirmButton = {
                 TextButton(onClick = onConfirm) {
-                    Text(stringResource(R.string.delete_report))
+                    Text(
+                        stringResource(
+                            if (batchSelection) {
+                                R.string.delete_selected_reports
+                            } else {
+                                R.string.delete_report
+                            },
+                        ),
+                    )
                 }
             },
         )

@@ -29,8 +29,16 @@ import static org.acra.ReportField.THREAD_DETAILS;
 import static org.acra.ReportField.USER_APP_START_DATE;
 import static org.acra.ReportField.USER_CRASH_DATE;
 
+import android.app.Activity;
 import android.app.Application;
+import android.os.Build;
+import android.os.Bundle;
 import android.os.Process;
+import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import org.acra.ACRA;
 import org.acra.ErrorReporter;
@@ -40,6 +48,7 @@ import org.acra.config.CoreConfigurationBuilder;
 import java.util.Arrays;
 import java.util.List;
 
+import ru.playsoftware.j2meloader.BuildConfig;
 import ru.playsoftware.j2meloader.EmulatorApplication;
 
 /**
@@ -48,29 +57,37 @@ import ru.playsoftware.j2meloader.EmulatorApplication;
  * Fatal failures are captured at process/lifecycle boundaries. Non-fatal collection is deliberately
  * allowlisted: only actionable emulator-owned incidents get a dedicated reporting method. Do not
  * report arbitrary caught MIDlet/vendor exceptions here; those are often compatibility behavior,
- * can be high-frequency, and observability must not perturb emulator hot paths. The current
- * allowlisted non-fatal incident is an installer failure, where the emulator owns the operation and
- * the retained context is directly useful for diagnosis.
+ * can be high-frequency, and observability must not perturb emulator hot paths. Current allowlisted
+ * caught incidents are installer failures and app-repository operation failures.
  */
 public final class CrashReporter {
 	private static final int MAX_CONTEXT_VALUE_LENGTH = 256;
 	private static final int MAX_CONTEXT_MESSAGE_LENGTH = 768;
 
+	private static final String TAG = CrashReporter.class.getSimpleName();
 	private static final String ROLE_MAIN = "main";
 	private static final String ROLE_MIDLET = "midlet";
 	private static final String ROLE_REPORTER = "reporter";
 	private static final String ROLE_OTHER = "other";
 
-	private static final String KEY_PROCESS_NAME = "jlmod.process.name";
-	private static final String KEY_PROCESS_ROLE = "jlmod.process.role";
-	private static final String KEY_PROCESS_PID = "jlmod.process.pid";
-	private static final String KEY_MIDLET_NAME = "jlmod.midlet.name";
-	private static final String KEY_MIDLET_VENDOR = "jlmod.midlet.vendor";
-	private static final String KEY_MIDLET_VERSION = "jlmod.midlet.version";
-	private static final String KEY_MIDLET_JAR_SIZE = "jlmod.midlet.jar.size";
-	private static final String KEY_MIDLET_JAR_SHA256 = "jlmod.midlet.jar.sha256";
-	private static final String KEY_MIDLET_MAIN_CLASS = "jlmod.midlet.mainClass";
-	private static final String KEY_SESSION_ID = "jlmod.session.id";
+	static final String KEY_PROCESS_NAME = "jlmod.process.name";
+	static final String KEY_PROCESS_ROLE = "jlmod.process.role";
+	static final String KEY_PROCESS_PID = "jlmod.process.pid";
+	static final String KEY_MIDLET_NAME = "jlmod.midlet.name";
+	static final String KEY_MIDLET_VENDOR = "jlmod.midlet.vendor";
+	static final String KEY_MIDLET_VERSION = "jlmod.midlet.version";
+	static final String KEY_MIDLET_JAR_SIZE = "jlmod.midlet.jar.size";
+	static final String KEY_MIDLET_JAR_SHA256 = "jlmod.midlet.jar.sha256";
+	static final String KEY_MIDLET_MAIN_CLASS = "jlmod.midlet.mainClass";
+	static final String KEY_SESSION_ID = "jlmod.session.id";
+	static final String KEY_RUN_ID = "jlmod.run.id";
+	static final String KEY_BUILD_COMMIT = "jlmod.build.commit";
+	static final String KEY_BUILD_VARIANT = "jlmod.build.variant";
+	static final String KEY_CONTEXT_LOCATION = "jlmod.context.location";
+	static final String KEY_CONTEXT_PREVIOUS = "jlmod.context.previous";
+	static final String KEY_CONTEXT_ACTION = "jlmod.context.action";
+	static final String KEY_CONTEXT_PHASE = "jlmod.context.phase";
+	static final String KEY_CONTEXT_UPDATED = "jlmod.context.updated";
 
 	private static final List<ReportField> REPORT_FIELDS = Arrays.asList(
 			REPORT_ID,
@@ -89,10 +106,32 @@ public final class CrashReporter {
 			THREAD_DETAILS
 	);
 
+	private static final Object DIAGNOSTIC_REFRESH_LOCK = new Object();
+	private static Application activeApplication;
+	private static boolean mainProcess;
+	private static boolean lifecycleCallbacksRegistered;
+	private static boolean diagnosticRefreshRunning;
+	private static boolean diagnosticRefreshPending;
+	private static volatile boolean diagnosticRefreshReady;
+
+	public enum AppContextPhase {
+		ENTERING("entering"),
+		ACTIVE("active"),
+		EXECUTING("executing"),
+		LEAVING("leaving");
+
+		final String id;
+
+		AppContextPhase(String id) {
+			this.id = id;
+		}
+	}
+
 	private CrashReporter() {}
 
 	/**
-	 * Initializes local-only crash collection.
+	 * Initializes local-only crash collection and publishes only current-process identity/state.
+	 * Historical ingestion and retention maintenance are deliberately deferred until onCreate().
 	 *
 	 * @return true when running in ACRA's private reporter process, where normal app initialization
 	 * should be skipped.
@@ -109,27 +148,173 @@ public final class CrashReporter {
 
 		String processName = EmulatorApplication.getProcessName();
 		String processRole = classifyProcess(application.getPackageName(), processName);
+		mainProcess = ROLE_MAIN.equals(processRole);
+		diagnosticRefreshRunning = false;
+		diagnosticRefreshPending = false;
+		diagnosticRefreshReady = !mainProcess;
 		boolean reporterProcess = ROLE_REPORTER.equals(processRole) || ACRA.isACRASenderServiceProcess();
 		if (reporterProcess) {
 			return true;
 		}
 
+		activeApplication = application;
 		ErrorReporter reporter = ACRA.getErrorReporter();
 		putBounded(reporter, KEY_PROCESS_NAME, processName);
 		putBounded(reporter, KEY_PROCESS_ROLE, processRole);
 		putBounded(reporter, KEY_PROCESS_PID, Integer.toString(Process.myPid()));
 
-		// Android 11+ keeps a small process-owned state summary and a system exit-history ring.
-		// Publish only stable diagnostic identity here; ProcessExitStore snapshots useful prior exits
-		// from the main process and deliberately filters normal process-management noise.
-		ProcessExitStore.initializeProcess(application, processRole);
+		CrashContextStore.Snapshot context = CrashContextStore.initialize(
+				application, processRole, BuildConfig.JLMOD_BUILD_COMMIT, BuildConfig.JLMOD_BUILD_VARIANT);
+		context = CrashContextStore.update(application, "process.start", "start", AppContextPhase.ACTIVE.id);
+		publishCrashContext(reporter, context);
 
-		// The main process owns diagnostic retention so :midlet remains a single-purpose writer.
-		if (ROLE_MAIN.equals(processRole)) {
-			LocalCrashReportStore.prune(application);
-			MidletSessionJournal.prune(application);
-		}
+		// Android 11+ keeps a small process-owned state summary. Publish it synchronously so any
+		// later process death can still be attributed even if deferred maintenance never gets CPU.
+		ProcessExitStore.initializeProcess(application, processRole);
 		return false;
+	}
+
+	/** Schedules one best-effort main-process diagnostics refresh after Application startup. */
+	public static void scheduleMaintenance(Application application) {
+		registerActivityContextCallbacks(application);
+		if (!mainProcess) {
+			diagnosticRefreshReady = true;
+			return;
+		}
+		startDiagnosticRefresh(application, false, "jlmod-diagnostics-maintenance");
+	}
+
+	/**
+	 * Records one high-level, stable app state. This is intentionally not a generic telemetry API:
+	 * callers should use route/operation IDs such as "config.graphics", never translated labels,
+	 * user-entered values, scroll positions, frames, or recomposition events.
+	 */
+	public static void recordAppContext(String location, String action, AppContextPhase phase) {
+		Application application = activeApplication;
+		if (application == null || phase == null) {
+			return;
+		}
+		try {
+			CrashContextStore.Snapshot snapshot = CrashContextStore.update(
+					application, location, action, phase.id);
+			if (snapshot == null) {
+				return;
+			}
+			publishCrashContext(ACRA.getErrorReporter(), snapshot);
+			ProcessExitStore.updateProcessContext(application);
+		} catch (Throwable error) {
+			logMaintenanceFailure("Unable to update crash context", error);
+		}
+	}
+
+	/**
+	 * Refreshes durable diagnostics after the main window regains focus without blocking the UI.
+	 * A focus callback arriving during an active pass queues one follow-up pass instead of spawning
+	 * another thread, so a just-finished MIDlet process cannot be missed by an older system snapshot.
+	 */
+	public static void requestDiagnosticRefresh(Application application) {
+		if (!mainProcess) {
+			diagnosticRefreshReady = true;
+			return;
+		}
+		startDiagnosticRefresh(application, true, "jlmod-diagnostics-focus-refresh");
+	}
+
+	/** True once the latest requested background reconciliation and retention pass has finished. */
+	public static boolean isDiagnosticRefreshReady() {
+		return diagnosticRefreshReady;
+	}
+
+	private static void startDiagnosticRefresh(Application application, boolean queueIfRunning,
+			String threadName) {
+		if (!beginDiagnosticRefresh(queueIfRunning)) {
+			return;
+		}
+		try {
+			Thread refresh = new Thread(() -> {
+				setBackgroundThreadPriority();
+				runDiagnosticRefreshLoop(application);
+			}, threadName);
+			refresh.start();
+		} catch (Throwable error) {
+			finishDiagnosticRefresh();
+			logMaintenanceFailure("Unable to schedule diagnostics refresh", error);
+		}
+	}
+
+	private static boolean beginDiagnosticRefresh(boolean queueIfRunning) {
+		synchronized (DIAGNOSTIC_REFRESH_LOCK) {
+			if (diagnosticRefreshRunning) {
+				if (queueIfRunning) {
+					diagnosticRefreshPending = true;
+					diagnosticRefreshReady = false;
+				}
+				return false;
+			}
+			diagnosticRefreshRunning = true;
+			diagnosticRefreshPending = false;
+			diagnosticRefreshReady = false;
+			return true;
+		}
+	}
+
+	private static void runDiagnosticRefreshLoop(Application application) {
+		try {
+			while (true) {
+				refreshDiagnostics(application);
+				synchronized (DIAGNOSTIC_REFRESH_LOCK) {
+					if (diagnosticRefreshPending) {
+						diagnosticRefreshPending = false;
+						continue;
+					}
+					diagnosticRefreshRunning = false;
+					diagnosticRefreshReady = true;
+					return;
+				}
+			}
+		} catch (Throwable error) {
+			finishDiagnosticRefresh();
+			logMaintenanceFailure("Unexpected diagnostics refresh failure", error);
+		}
+	}
+
+	private static void finishDiagnosticRefresh() {
+		synchronized (DIAGNOSTIC_REFRESH_LOCK) {
+			diagnosticRefreshRunning = false;
+			diagnosticRefreshPending = false;
+			diagnosticRefreshReady = true;
+		}
+	}
+
+	private static void refreshDiagnostics(Application application) {
+		// Both exit paths are API-gated internally. Keep retention in the same background pass so
+		// recovery UI never performs report/journal pruning from its window-focus callback.
+		runMaintenanceStep("legacy process-exit reconciliation",
+				() -> LegacyProcessExitFallback.ingest(application));
+		runMaintenanceStep("process-exit ingestion", () -> ProcessExitStore.ingest(application));
+		runMaintenanceStep("local crash report pruning", () -> LocalCrashReportStore.prune(application));
+		runMaintenanceStep("MIDlet session journal pruning", () -> MidletSessionJournal.prune(application));
+		runMaintenanceStep("process context pruning", () -> CrashContextStore.prune(application));
+	}
+
+	private static void setBackgroundThreadPriority() {
+		try {
+			Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+		} catch (Throwable ignored) {}
+	}
+
+	private static void runMaintenanceStep(String label, Runnable step) {
+		try {
+			step.run();
+		} catch (Throwable error) {
+			logMaintenanceFailure("Diagnostics maintenance failed open: " + label, error);
+		}
+	}
+
+	private static void logMaintenanceFailure(String message, Throwable error) {
+		try {
+			Log.w(TAG, message, error);
+		} catch (Throwable ignored) {}
 	}
 
 	public static void setMidletContext(String name, String vendor, String version,
@@ -167,7 +352,26 @@ public final class CrashReporter {
 												  String midletVersion, String jarSize) {
 		String message = buildInstallerContext(sourceScheme, midletName, midletVendor,
 				midletVersion, jarSize);
-		ACRA.getErrorReporter().handleException(new InstallerFailureException(message, error), false);
+		try {
+			ACRA.getErrorReporter().handleException(new InstallerFailureException(message, error), false);
+		} catch (Throwable reportingFailure) {
+			logMaintenanceFailure("Unable to persist installer failure diagnostic", reportingFailure);
+		}
+	}
+
+	/**
+	 * Allowlisted non-fatal incident: a Room/filesystem operation owned by the app repository failed.
+	 * Keep this narrow API instead of exposing arbitrary caught-exception reporting to callers.
+	 */
+	public static void reportAppRepositoryFailure(Throwable error) {
+		if (error == null) {
+			return;
+		}
+		try {
+			ACRA.getErrorReporter().handleException(error, false);
+		} catch (Throwable reportingFailure) {
+			logMaintenanceFailure("Unable to persist app-repository failure diagnostic", reportingFailure);
+		}
 	}
 
 	static String classifyProcess(String packageName, String processName) {
@@ -184,6 +388,36 @@ public final class CrashReporter {
 			return ROLE_REPORTER;
 		}
 		return ROLE_OTHER;
+	}
+
+	private static void registerActivityContextCallbacks(Application application) {
+		if (lifecycleCallbacksRegistered) {
+			return;
+		}
+		lifecycleCallbacksRegistered = true;
+		Application.ActivityLifecycleCallbacks callbacks = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+				? new Api29ActivityContextCallbacks() : new ActivityContextCallbacks();
+		application.registerActivityLifecycleCallbacks(callbacks);
+	}
+
+	private static String activityLocation(Activity activity) {
+		String simpleName = activity.getClass().getSimpleName();
+		return "activity." + (simpleName == null || simpleName.isEmpty() ? "unknown" : simpleName);
+	}
+
+	private static void publishCrashContext(ErrorReporter reporter, CrashContextStore.Snapshot snapshot) {
+		if (snapshot == null) {
+			return;
+		}
+		putBounded(reporter, KEY_RUN_ID, snapshot.runId);
+		putBounded(reporter, KEY_BUILD_COMMIT, snapshot.buildCommit);
+		putBounded(reporter, KEY_BUILD_VARIANT, snapshot.buildVariant);
+		putBounded(reporter, KEY_CONTEXT_LOCATION, snapshot.location);
+		putBounded(reporter, KEY_CONTEXT_PREVIOUS, snapshot.previousLocation);
+		putBounded(reporter, KEY_CONTEXT_ACTION, snapshot.action);
+		putBounded(reporter, KEY_CONTEXT_PHASE, snapshot.phase);
+		putBounded(reporter, KEY_CONTEXT_UPDATED,
+				snapshot.updatedWallTimeMillis > 0 ? Long.toString(snapshot.updatedWallTimeMillis) : null);
 	}
 
 	private static String buildInstallerContext(String sourceScheme, String midletName,
@@ -242,6 +476,41 @@ public final class CrashReporter {
 			return normalized.substring(0, MAX_CONTEXT_VALUE_LENGTH);
 		}
 		return normalized;
+	}
+
+	private static class ActivityContextCallbacks implements Application.ActivityLifecycleCallbacks {
+		@Override
+		public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {}
+
+		@Override
+		public void onActivityStarted(@NonNull Activity activity) {}
+
+		@Override
+		public void onActivityResumed(@NonNull Activity activity) {
+			recordAppContext(activityLocation(activity), "open", AppContextPhase.ACTIVE);
+		}
+
+		@Override
+		public void onActivityPaused(@NonNull Activity activity) {
+			recordAppContext(activityLocation(activity), "open", AppContextPhase.LEAVING);
+		}
+
+		@Override
+		public void onActivityStopped(@NonNull Activity activity) {}
+
+		@Override
+		public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState) {}
+
+		@Override
+		public void onActivityDestroyed(@NonNull Activity activity) {}
+	}
+
+	@RequiresApi(Build.VERSION_CODES.Q)
+	private static final class Api29ActivityContextCallbacks extends ActivityContextCallbacks {
+		@Override
+		public void onActivityPreCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
+			recordAppContext(activityLocation(activity), "open", AppContextPhase.ENTERING);
+		}
 	}
 
 	private static final class InstallerFailureException extends RuntimeException {

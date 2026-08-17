@@ -2,6 +2,7 @@
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2020 Nikita Shakarun
  * Copyright 2020-2024 Yury Kharchenko
+ * Modifications for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +39,8 @@ import java.io.File;
 import ru.playsoftware.j2meloader.applist.AppListModel;
 import ru.playsoftware.j2meloader.applist.AppsListFragment;
 import ru.playsoftware.j2meloader.config.Config;
+import ru.playsoftware.j2meloader.crashes.CrashReporter;
 import ru.playsoftware.j2meloader.crashes.CrashReportsActivity;
-import ru.playsoftware.j2meloader.crashes.LegacyProcessExitFallback;
 import ru.playsoftware.j2meloader.crashes.MidletFailureRecovery;
 import ru.playsoftware.j2meloader.crashes.ProcessExitStore;
 import ru.playsoftware.j2meloader.util.Constants;
@@ -50,6 +51,7 @@ import ru.playsoftware.j2meloader.util.StoragePermissionHelper;
 import ru.woesss.j2me.installer.InstallerDialog;
 
 public class MainActivity extends AppCompatActivity {
+	private static final long DIAGNOSTIC_RECOVERY_RETRY_MILLIS = 200L;
 
 	private final StoragePermissionHelper storagePermissionHelper = new StoragePermissionHelper(this, this::onPermissionResult);
 
@@ -61,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
 	private AppListModel appListModel;
 	private MainActivityComposeController mainComposeController;
 	private String lastRecoveryNoticeId;
+	private boolean diagnosticRecoveryRetryScheduled;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -146,6 +149,7 @@ public class MainActivity extends AppCompatActivity {
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
 		if (hasFocus) {
+			CrashReporter.requestDiagnosticRefresh(getApplication());
 			maybeShowDiagnosticRecovery();
 		}
 	}
@@ -161,7 +165,15 @@ public class MainActivity extends AppCompatActivity {
 			return;
 		}
 
-		MidletFailureRecovery.PendingFailure failure = MidletFailureRecovery.findPendingFailure(this);
+		// Historical exit reconciliation and bounded retention run on the diagnostics background
+		// thread. Window focus only polls readiness, then reads the already-maintained projection.
+		if (!CrashReporter.isDiagnosticRefreshReady()) {
+			scheduleDiagnosticRecoveryRetry();
+			return;
+		}
+
+		MidletFailureRecovery.PendingFailure failure =
+				MidletFailureRecovery.findPendingStoredFailure(this);
 		if (failure != null) {
 			String noticeId = "midlet:" + failure.getEventId();
 			if (noticeId.equals(lastRecoveryNoticeId)) {
@@ -180,11 +192,7 @@ public class MainActivity extends AppCompatActivity {
 			return;
 		}
 
-		// Android 6-10 has no ApplicationExitInfo. Reconcile an unfinished, no-longer-running
-		// isolated MIDlet session into the same ProcessExitStore schema before looking for notices.
-		// The fallback records only UNKNOWN cause; it never guesses ANR/native/LMK classifications.
-		LegacyProcessExitFallback.ingest(this);
-		ProcessExitStore.PendingExit exit = ProcessExitStore.findPendingExit(this);
+		ProcessExitStore.PendingExit exit = ProcessExitStore.findPendingStoredExit(this);
 		if (exit == null || exit.getId().equals(lastRecoveryNoticeId)) {
 			return;
 		}
@@ -201,6 +209,19 @@ public class MainActivity extends AppCompatActivity {
 		}
 
 		mainComposeController.showProcessExit(message);
+	}
+
+	private void scheduleDiagnosticRecoveryRetry() {
+		if (diagnosticRecoveryRetryScheduled || isFinishing() || isDestroyed()) {
+			return;
+		}
+		diagnosticRecoveryRetryScheduled = true;
+		getWindow().getDecorView().postDelayed(() -> {
+			diagnosticRecoveryRetryScheduled = false;
+			if (!isFinishing() && !isDestroyed() && hasWindowFocus()) {
+				maybeShowDiagnosticRecovery();
+			}
+		}, DIAGNOSTIC_RECOVERY_RETRY_MILLIS);
 	}
 
 	private void checkAndCreateDirs() {

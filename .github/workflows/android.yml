@@ -59,6 +59,8 @@ jobs:
         run: chmod +x gradlew
 
       - name: Lint, test, and assemble
+        env:
+          JLMOD_BUILD_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
         run: >-
           ./gradlew --no-daemon --stacktrace
           :app:lintEmulatorDebug

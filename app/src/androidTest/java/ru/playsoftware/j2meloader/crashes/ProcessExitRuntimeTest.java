@@ -80,6 +80,21 @@ public class ProcessExitRuntimeTest {
 				assertFalse(record.getDetailText().contains("ANR"));
 				assertFalse(record.getDetailText().contains("Low-memory kill"));
 			}
+
+			// Explicit user deletion must survive immediate historical reconciliation. On API30+
+			// ApplicationExitInfo still contains this exact death; on API23-29 the fallback journal
+			// is the source. Neither path may resurrect the report or make it pending again.
+			String deletedId = record.getId();
+			assertTrue(LocalDiagnosticRepository.delete(context, record));
+			for (int attempt = 0; attempt < 3; attempt++) {
+				LegacyProcessExitFallback.ingest(context);
+				ProcessExitStore.ingest(context);
+				assertFalse(recordIds(LocalDiagnosticRepository.loadStored(context)).contains(deletedId));
+				ProcessExitStore.PendingExit pending = ProcessExitStore.findPendingStoredExit(context);
+				assertTrue(pending == null || !deletedId.equals(pending.getId()));
+				SystemClock.sleep(50L);
+			}
+			assertFalse(recordIds(LocalDiagnosticRepository.load(context)).contains(deletedId));
 		} finally {
 			cleanupSignalDiagnostics(context, baselineIds);
 		}
