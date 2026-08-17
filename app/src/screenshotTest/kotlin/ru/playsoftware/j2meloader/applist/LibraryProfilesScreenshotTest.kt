@@ -243,7 +243,47 @@ fun LibraryOptionsScreenshot() {
             onGridSpacingChange = {},
             onAbout = {},
             onSettings = {},
-            onProfiles = {},
+            onHelp = {},
+            onCrashReports = {},
+            onSaveLog = {},
+            onExit = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Library collections", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun LibraryCollectionsScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryCollectionsDestination(scaffoldPadding = PaddingValues())
+    }
+}
+
+@PreviewTest
+@Preview(
+    name = "Library options Indonesian",
+    widthDp = 360,
+    heightDp = 640,
+    locale = "id",
+    showBackground = true,
+)
+@Composable
+fun LibraryOptionsIndonesianScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryOptionsDestination(
+            state = LibraryUiState(
+                loading = false,
+                apps = PreviewApps,
+                layout = LibraryLayout.Grid,
+            ),
+            scaffoldPadding = PaddingValues(),
+            onLayoutChange = {},
+            onIconRatioChange = {},
+            onHideGridTitlesChange = {},
+            onGridSpacingChange = {},
+            onAbout = {},
+            onSettings = {},
             onHelp = {},
             onCrashReports = {},
             onSaveLog = {},

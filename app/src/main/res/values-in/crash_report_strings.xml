@@ -44,4 +44,6 @@
     <string name="process_exit_recovery_message">JL-Mod Plus sebelumnya berhenti secara tak terduga (%1$s). Detail diagnostik disimpan secara lokal.</string>
     <string name="process_exit_recovery_message_midlet">Proses MIDlet sebelumnya berhenti secara tak terduga (%1$s). Detail diagnostik disimpan secara lokal.</string>
     <string name="process_exit_recovery_message_named">%1$s sebelumnya berhenti secara tak terduga (%2$s). Detail diagnostik disimpan secara lokal.</string>
+    <string name="select_all_reports">Pilih semua laporan</string>
+    <string name="clear_report_selection">Batalkan semua pilihan laporan</string>
 </resources>

@@ -49,4 +49,6 @@
     <string name="process_exit_recovery_message">JL-Mod Plus previously ended unexpectedly (%1$s). Diagnostic details were saved locally.</string>
     <string name="process_exit_recovery_message_midlet">A MIDlet process previously ended unexpectedly (%1$s). Diagnostic details were saved locally.</string>
     <string name="process_exit_recovery_message_named">%1$s previously ended unexpectedly (%2$s). Diagnostic details were saved locally.</string>
+    <string name="select_all_reports">Select all reports</string>
+    <string name="clear_report_selection">Clear report selection</string>
 </resources>

@@ -40,7 +40,6 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -77,6 +76,7 @@ import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 import ru.playsoftware.j2meloader.util.LogUtils;
+import ru.playsoftware.j2meloader.ui.TransientNoticeComposeController;
 
 public class MicroActivity extends AppCompatActivity {
 	private static final int ORIENTATION_DEFAULT = 0;
@@ -87,6 +87,7 @@ public class MicroActivity extends AppCompatActivity {
 	private Displayable current;
 	private boolean actionBarEnabled;
 	private boolean statusBarEnabled;
+	private boolean displayCutoutEnabled;
 	private boolean orientationLocked;
 	private MicroLoader microLoader;
 	private String appName;
@@ -96,6 +97,7 @@ public class MicroActivity extends AppCompatActivity {
 	private String appPath;
 	private RuntimeHostView binding;
 	private RuntimeMenuComposeController runtimeMenuController;
+	private TransientNoticeComposeController runtimeNoticeController;
 	private WindowInsetsCompat lastWindowInsets;
 	private boolean skinLayerAvailable;
 	private int virtualDisplayPaddingLeft;
@@ -115,6 +117,7 @@ public class MicroActivity extends AppCompatActivity {
 		ContextHolder.setCurrentActivity(this);
 		binding = new RuntimeHostView(this);
 		setContentView(binding.getRoot());
+		runtimeNoticeController = new TransientNoticeComposeController(binding.notices);
 		virtualDisplayPaddingLeft = binding.virtualDisplay.getPaddingLeft();
 		virtualDisplayPaddingTop = binding.virtualDisplay.getPaddingTop();
 		virtualDisplayPaddingRight = binding.virtualDisplay.getPaddingRight();
@@ -134,6 +137,7 @@ public class MicroActivity extends AppCompatActivity {
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		actionBarEnabled = sp.getBoolean(PREF_TOOLBAR, false);
 		statusBarEnabled = sp.getBoolean(PREF_STATUSBAR, false);
+		displayCutoutEnabled = sp.getBoolean(PREF_USE_DISPLAY_CUTOUT, true);
 		if (sp.getBoolean(PREF_KEEP_SCREEN, false)) {
 			getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		}
@@ -171,8 +175,10 @@ public class MicroActivity extends AppCompatActivity {
 		if (skinLayer != null) {
 			skinLayerAvailable = true;
 			binding.overlay.addLayer(skinLayer);
-			configureDisplayCutoutWindow();
 		}
+		// SkinLayer is optional. Window cutout eligibility is a Canvas/window policy and
+		// must be configured even when no decorative skin is active.
+		configureDisplayCutoutWindow();
 		VirtualKeyboard vk = ContextHolder.getVk();
 		int orientation = microLoader.getOrientation();
 		if (vk != null) {
@@ -512,17 +518,25 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void configureDisplayCutoutWindow() {
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P || !skinLayerAvailable
-				|| statusBarEnabled || actionBarEnabled) {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
 			return;
 		}
+		boolean allowWindowCutout = displayCutoutEnabled
+				&& !statusBarEnabled && !actionBarEnabled;
 		WindowManager.LayoutParams attributes = getWindow().getAttributes();
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-			attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+		if (allowWindowCutout) {
+			attributes.layoutInDisplayCutoutMode = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+					? WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+					: WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
 		} else {
-			attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+			// Android 15+ may force the window edge-to-edge regardless of this mode. GuestWindowPolicy
+			// remains authoritative there and reserves the cutout inset when the user disables it.
+			attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
 		}
 		getWindow().setAttributes(attributes);
+		if (binding != null) {
+			ViewCompat.requestApplyInsets(binding.getRoot());
+		}
 	}
 
 	private void applyGuestInsets(@Nullable Displayable displayable) {
@@ -538,7 +552,7 @@ public class MicroActivity extends AppCompatActivity {
 			Insets ime = lastWindowInsets.getInsets(WindowInsetsCompat.Type.ime());
 			boolean canvas = displayable instanceof Canvas;
 			GuestWindowPolicy.Padding guestPadding = GuestWindowPolicy.calculate(canvas,
-					skinLayerAvailable, statusBarEnabled, actionBarEnabled,
+					statusBarEnabled, actionBarEnabled, displayCutoutEnabled,
 					systemBars.left, statusBars.top, systemBars.right, navigationBars.bottom,
 					cutout.left, cutout.top, cutout.right, cutout.bottom, ime.bottom);
 			left += guestPadding.left;
@@ -709,7 +723,7 @@ public class MicroActivity extends AppCompatActivity {
 			return;
 		}
 		vk.setLayoutEditMode(mode);
-		Toast.makeText(this, toastMessage, Toast.LENGTH_SHORT).show();
+		toast(toastMessage);
 		updateRuntimeMenuState(current);
 	}
 
@@ -719,7 +733,7 @@ public class MicroActivity extends AppCompatActivity {
 			return;
 		}
 		vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_EOF);
-		Toast.makeText(this, R.string.layout_edit_finished, Toast.LENGTH_SHORT).show();
+		toast(R.string.layout_edit_finished);
 		updateRuntimeMenuState(current);
 		showSaveVkAlert(false);
 	}
@@ -733,15 +747,14 @@ public class MicroActivity extends AppCompatActivity {
 
 			@Override
 			public void onSuccess(@NonNull String s) {
-				Toast.makeText(MicroActivity.this, getString(R.string.screenshot_saved)
-						+ " " + s, Toast.LENGTH_LONG).show();
+				toast(getString(R.string.screenshot_saved) + " " + s);
 				MediaScannerConnection.scanFile(MicroActivity.this, new String[]{s}, null, null);
 			}
 
 			@Override
 			public void onError(@NonNull Throwable e) {
 				e.printStackTrace();
-				Toast.makeText(MicroActivity.this, R.string.error, Toast.LENGTH_SHORT).show();
+				toast(R.string.error);
 			}
 		});
 	}
@@ -749,10 +762,10 @@ public class MicroActivity extends AppCompatActivity {
 	private void saveLog() {
 		try {
 			LogUtils.writeLog();
-			Toast.makeText(this, R.string.log_saved, Toast.LENGTH_SHORT).show();
+			toast(R.string.log_saved);
 		} catch (IOException e) {
 			e.printStackTrace();
-			Toast.makeText(this, R.string.error, Toast.LENGTH_SHORT).show();
+			toast(R.string.error);
 		}
 	}
 
@@ -838,7 +851,15 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	public void toast(@StringRes int message) {
-		runOnUiThread(() -> Toast.makeText(this, message, Toast.LENGTH_LONG).show());
+		toast(getString(message));
+	}
+
+	private void toast(String message) {
+		runOnUiThread(() -> {
+			if (runtimeNoticeController != null) {
+				runtimeNoticeController.show(message);
+			}
+		});
 	}
 
 	private class SetCurrentEvent extends SimpleEvent {

@@ -33,6 +33,8 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -64,6 +66,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -106,6 +109,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -147,14 +151,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import ru.playsoftware.j2meloader.BuildConfig
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.TransientNoticeHost
+import ru.playsoftware.j2meloader.ui.TransientNoticeState
 import java.io.File
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -239,6 +248,7 @@ class LibraryComposeController(
     initialGridSpacing: LibraryGridSpacing,
     canAddShortcut: Boolean,
 ) {
+    private val noticeState = TransientNoticeState()
     private var state by mutableStateOf(
         LibraryUiState(
             layout = initialLayout,
@@ -257,7 +267,18 @@ class LibraryComposeController(
         )
         composeView.setContent {
             JLModPlusTheme {
-                LibraryScreen(state = state, actions = actions)
+                Box(modifier = Modifier.fillMaxSize()) {
+                    LibraryScreen(state = state, actions = actions)
+                    val noticeBottomPadding = if (
+                        LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+                    ) 8.dp else 88.dp
+                    TransientNoticeHost(
+                        state = noticeState,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = noticeBottomPadding),
+                    )
+                }
             }
         }
     }
@@ -299,30 +320,30 @@ class LibraryComposeController(
     fun updateSort(sortVariant: Int) {
         state = state.copy(sortVariant = sortVariant)
     }
+
+    fun showNotice(message: String) {
+        noticeState.show(message)
+    }
 }
 
 internal enum class LibraryInfoDialog {
     About,
-    More,
     Help,
     Licenses,
 }
 
 private val LibraryScaffoldInsets = WindowInsets(left = 0, top = 0, right = 0, bottom = 0)
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
     state: LibraryUiState,
     actions: LibraryActions,
     modifier: Modifier = Modifier,
 ) {
-    var selectedDestinationIndex by rememberSaveable { mutableStateOf(0) }
-    val destination = when (selectedDestinationIndex) {
-        1 -> LibraryDestination.Collections
-        2 -> LibraryDestination.Options
-        else -> LibraryDestination.Apps
-    }
+    val pagerState = rememberPagerState(pageCount = { LibraryDestination.entries.size })
+    val coroutineScope = rememberCoroutineScope()
+    val destination = LibraryDestination.entries[pagerState.currentPage]
     var showInstallFab by rememberSaveable { mutableStateOf(true) }
     var showNavigationBar by rememberSaveable { mutableStateOf(true) }
     var appActions by remember { mutableStateOf<LibraryAppUiItem?>(null) }
@@ -345,7 +366,9 @@ fun LibraryScreen(
             // The side rail does not consume vertical content space, so keep it persistent.
             LibraryNavigationRail(
                 selected = destination,
-                onSelected = { selectedDestinationIndex = it.ordinal },
+                onSelected = { section ->
+                    coroutineScope.launch { pagerState.animateScrollToPage(section.ordinal) }
+                },
             )
         }
 
@@ -400,7 +423,9 @@ fun LibraryScreen(
                     ) {
                         LibraryNavigationBar(
                             selected = destination,
-                            onSelected = { selectedDestinationIndex = it.ordinal },
+                            onSelected = { section ->
+                                coroutineScope.launch { pagerState.animateScrollToPage(section.ordinal) }
+                            },
                         )
                     }
                 }
@@ -457,35 +482,40 @@ fun LibraryScreen(
                 }
             },
         ) { padding ->
-            when (destination) {
-                LibraryDestination.Apps -> LibraryAppsDestination(
-                    state = state,
-                    scaffoldPadding = padding,
-                    onOpenApp = actions::onOpenApp,
-                    onOpenActions = { appActions = it },
-                    onSearch = actions::onSearch,
-                    onSort = actions::onSort,
-                    onFabVisibilityChanged = { showInstallFab = it },
-                    onNavigationVisibilityChanged = { visible ->
-                        if (!isLandscape) showNavigationBar = visible
-                    },
-                )
-                LibraryDestination.Collections -> LibraryCollectionsDestination(padding)
-                LibraryDestination.Options -> LibraryOptionsDestination(
-                    state = state,
-                    scaffoldPadding = padding,
-                    onLayoutChange = actions::onLayoutChange,
-                    onIconRatioChange = actions::onIconRatioChange,
-                    onHideGridTitlesChange = actions::onHideGridTitlesChange,
-                    onGridSpacingChange = actions::onGridSpacingChange,
-                    onAbout = { infoDialog = LibraryInfoDialog.About },
-                    onSettings = actions::onOpenSettings,
-                    onProfiles = actions::onOpenProfiles,
-                    onHelp = { infoDialog = LibraryInfoDialog.Help },
-                    onCrashReports = actions::onOpenCrashReports,
-                    onSaveLog = actions::onSaveLog,
-                    onExit = actions::onExit,
-                )
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.Top,
+            ) { page ->
+                when (LibraryDestination.entries[page]) {
+                    LibraryDestination.Apps -> LibraryAppsDestination(
+                        state = state,
+                        scaffoldPadding = padding,
+                        onOpenApp = actions::onOpenApp,
+                        onOpenActions = { appActions = it },
+                        onSearch = actions::onSearch,
+                        onSort = actions::onSort,
+                        onFabVisibilityChanged = { showInstallFab = it },
+                        onNavigationVisibilityChanged = { visible ->
+                            if (!isLandscape) showNavigationBar = visible
+                        },
+                    )
+                    LibraryDestination.Collections -> LibraryCollectionsDestination(padding)
+                    LibraryDestination.Options -> LibraryOptionsDestination(
+                        state = state,
+                        scaffoldPadding = padding,
+                        onLayoutChange = actions::onLayoutChange,
+                        onIconRatioChange = actions::onIconRatioChange,
+                        onHideGridTitlesChange = actions::onHideGridTitlesChange,
+                        onGridSpacingChange = actions::onGridSpacingChange,
+                        onAbout = { infoDialog = LibraryInfoDialog.About },
+                        onSettings = actions::onOpenSettings,
+                        onHelp = { infoDialog = LibraryInfoDialog.Help },
+                        onCrashReports = actions::onOpenCrashReports,
+                        onSaveLog = actions::onSaveLog,
+                        onExit = actions::onExit,
+                    )
+                }
             }
         }
     }
@@ -516,15 +546,23 @@ fun LibraryScreen(
         )
     }
     deleteTarget?.let { app ->
+        val layout = libraryDialogLayout()
         AlertDialog(
+            modifier = layout.modifier,
+            properties = layout.properties,
             onDismissRequest = { deleteTarget = null },
-            title = { Text(stringResource(android.R.string.dialog_alert_title)) },
+            title = { Text(stringResource(R.string.action_context_delete)) },
             text = { Text(stringResource(R.string.message_delete)) },
             confirmButton = {
                 TextButton(onClick = {
                     deleteTarget = null
                     actions.onDelete(app.id)
-                }) { Text(stringResource(android.R.string.ok)) }
+                }) {
+                    Text(
+                        text = stringResource(R.string.action_context_delete),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
             },
             dismissButton = {
                 TextButton(onClick = { deleteTarget = null }) {
@@ -610,7 +648,7 @@ private fun LibraryNavigationRail(
     selected: LibraryDestination,
     onSelected: (LibraryDestination) -> Unit,
 ) {
-    NavigationRail {
+    NavigationRail(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
         LibraryNavigationRailItem(
             destination = LibraryDestination.Apps,
             selected = selected,
@@ -663,7 +701,10 @@ private fun LibraryNavigationBar(
     selected: LibraryDestination,
     onSelected: (LibraryDestination) -> Unit,
 ) {
-    NavigationBar {
+    NavigationBar(
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        tonalElevation = 0.dp,
+    ) {
         LibraryNavigationItem(
             destination = LibraryDestination.Apps,
             selected = selected,
@@ -707,6 +748,7 @@ private fun RowScope.LibraryNavigationItem(
             )
         },
         label = { Text(labelText) },
+        alwaysShowLabel = false,
     )
 }
 
@@ -921,6 +963,7 @@ private fun LibraryAppsDestination(
         ) {
             renderHeader(Modifier, true)
         }
+
     }
 }
 
@@ -936,6 +979,23 @@ private fun LibraryAppsHeader(
     onSort: (Int) -> Unit,
     interactive: Boolean = true,
 ) {
+    val sortEntries = stringArrayResource(R.array.pref_app_sort_entries).toList()
+    val selectedSort = state.sortVariant and Int.MAX_VALUE
+    val ascending = state.sortVariant >= 0
+    val quickControlsPagerBoundary = remember {
+        object : NestedScrollConnection {
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource,
+            ): Offset = Offset(x = available.x, y = 0f)
+
+            override suspend fun onPostFling(
+                consumed: Velocity,
+                available: Velocity,
+            ): Velocity = Velocity(x = available.x, y = 0f)
+        }
+    }
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -949,65 +1009,93 @@ private fun LibraryAppsHeader(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            OutlinedTextField(
-                value = query,
-                onValueChange = onQueryChange,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(54.dp),
-                enabled = interactive,
-                singleLine = true,
-                shape = RoundedCornerShape(18.dp),
-                placeholder = { Text(stringResource(R.string.library_search_placeholder)) },
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_search),
-                        contentDescription = stringResource(R.string.search),
-                    )
-                },
-            )
-            if (interactive) {
-                Box {
-                    IconButton(onClick = { onSortVisibilityChanged(true) }) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_sort),
-                            contentDescription = stringResource(R.string.pref_app_sort_title),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    LibrarySortMenu(
-                        expanded = sortVisible,
-                        entries = stringArrayResource(R.array.pref_app_sort_entries).toList(),
-                        selectedSort = state.sortVariant and Int.MAX_VALUE,
-                        ascending = state.sortVariant >= 0,
-                        onDismissRequest = { onSortVisibilityChanged(false) },
-                        onSelected = { index ->
-                            onSortVisibilityChanged(false)
-                            onSort(index)
-                        },
-                    )
-                }
-            } else {
-                Spacer(Modifier.size(48.dp))
-            }
-        }
-        Row(
+        OutlinedTextField(
+            value = query,
+            onValueChange = onQueryChange,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 12.dp)
+                .height(54.dp),
+            enabled = interactive,
+            singleLine = true,
+            shape = RoundedCornerShape(18.dp),
+            placeholder = { Text(stringResource(R.string.library_search_placeholder)) },
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(R.drawable.ic_search),
+                    contentDescription = stringResource(R.string.search),
+                )
+            },
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 10.dp)
+                .nestedScroll(quickControlsPagerBoundary)
                 .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            LibraryQuickFilter(R.string.library_filter_all, selected = true, enabled = true)
-            LibraryQuickFilter(R.string.library_filter_recently_opened)
-            LibraryQuickFilter(R.string.library_filter_recently_added)
-            LibraryQuickFilter(R.string.library_filter_favorites)
+            Box {
+                FilterChip(
+                    selected = false,
+                    onClick = { onSortVisibilityChanged(true) },
+                    enabled = interactive,
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_sort),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    },
+                    label = {
+                        Text(
+                            sortEntries.getOrElse(selectedSort) {
+                                stringResource(R.string.pref_app_sort_title)
+                            },
+                        )
+                    },
+                    trailingIcon = {
+                        Icon(
+                            painter = painterResource(
+                                if (ascending) R.drawable.ic_arrow_upward else R.drawable.ic_arrow_downward,
+                            ),
+                            contentDescription = stringResource(
+                                if (ascending) R.string.pref_app_sort_ascending else R.string.pref_app_sort_descending,
+                            ),
+                            modifier = Modifier.size(18.dp),
+                        )
+                    },
+                )
+                LibrarySortMenu(
+                    expanded = sortVisible && interactive,
+                    entries = sortEntries,
+                    selectedSort = selectedSort,
+                    ascending = ascending,
+                    onDismissRequest = { onSortVisibilityChanged(false) },
+                    onSelected = { index ->
+                        onSortVisibilityChanged(false)
+                        onSort(index)
+                    },
+                )
+            }
+            LibraryQuickFilter(
+                label = R.string.library_filter_all,
+                icon = R.drawable.ic_apps,
+                selected = true,
+                enabled = true,
+            )
+            LibraryQuickFilter(
+                label = R.string.library_filter_favorites,
+                icon = R.drawable.ic_star,
+            )
+            LibraryQuickFilter(
+                label = R.string.library_filter_recently_added,
+                icon = R.drawable.ic_add,
+            )
+            LibraryQuickFilter(
+                label = R.string.library_filter_recently_opened,
+                icon = R.drawable.ic_play,
+            )
         }
     }
 }
@@ -1015,6 +1103,7 @@ private fun LibraryAppsHeader(
 @Composable
 private fun LibraryQuickFilter(
     label: Int,
+    icon: Int,
     selected: Boolean = false,
     enabled: Boolean = false,
 ) {
@@ -1022,6 +1111,13 @@ private fun LibraryQuickFilter(
         selected = selected,
         onClick = {},
         enabled = enabled,
+        leadingIcon = {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
+        },
         label = { Text(stringResource(label)) },
     )
 }
@@ -1066,36 +1162,50 @@ private fun LibraryEmptyState(appliedFilter: String) {
 }
 
 @Composable
-private fun LibraryCollectionsDestination(scaffoldPadding: PaddingValues) {
-    Box(
+internal fun LibraryCollectionsDestination(scaffoldPadding: PaddingValues) {
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(scaffoldPadding)
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
-            .padding(24.dp),
-        contentAlignment = Alignment.Center,
+            .padding(horizontal = 16.dp, vertical = 16.dp),
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+        Text(
+            text = stringResource(R.string.library_destination_collections),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            contentAlignment = Alignment.Center,
         ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_collections),
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.primary,
-            )
-            Text(
-                text = stringResource(R.string.library_collections_empty_title),
-                style = MaterialTheme.typography.titleLarge,
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                text = stringResource(R.string.library_collections_empty_message),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
+            Column(
+                modifier = Modifier.widthIn(max = 560.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_collections),
+                    contentDescription = null,
+                    modifier = Modifier.size(56.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = stringResource(R.string.library_collections_empty_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    text = stringResource(R.string.library_collections_empty_message),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                )
+            }
         }
     }
 }
@@ -1111,7 +1221,6 @@ internal fun LibraryOptionsDestination(
     onGridSpacingChange: (LibraryGridSpacing) -> Unit,
     onAbout: () -> Unit,
     onSettings: () -> Unit,
-    onProfiles: () -> Unit,
     onHelp: () -> Unit,
     onCrashReports: () -> Unit,
     onSaveLog: () -> Unit,
@@ -1125,159 +1234,192 @@ internal fun LibraryOptionsDestination(
         contentPadding = scaffoldPadding,
     ) {
         item {
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)),
             ) {
-                Text(
-                    text = stringResource(R.string.library_destination_options),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                LibraryOptionsSection(
+                Column(
                     modifier = Modifier
+                        .align(Alignment.TopCenter)
                         .fillMaxWidth()
-                        .padding(top = 16.dp),
-                    title = R.string.library_options_display_title,
+                        .widthIn(max = 840.dp)
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    LibraryOptionGroup(label = R.string.pref_apps_view) {
-                        FlowRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            FilterChip(
-                                selected = state.layout == LibraryLayout.List,
-                                onClick = { onLayoutChange(LibraryLayout.List) },
-                                label = { Text(stringResource(R.string.library_view_list)) },
-                            )
-                            FilterChip(
-                                selected = state.layout == LibraryLayout.Grid,
-                                onClick = { onLayoutChange(LibraryLayout.Grid) },
-                                label = { Text(stringResource(R.string.library_view_grid)) },
-                            )
-                        }
-                    }
-                    Spacer(Modifier.height(16.dp))
-                    LibraryOptionGroup(
-                        label = R.string.library_icon_ratio_title,
-                        summary = R.string.library_icon_ratio_summary,
-                    ) {
-                        FlowRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            FilterChip(
-                                selected = state.iconRatio == LibraryIconRatio.Square,
-                                onClick = { onIconRatioChange(LibraryIconRatio.Square) },
-                                label = { Text(stringResource(R.string.library_icon_ratio_square)) },
-                            )
-                            FilterChip(
-                                selected = state.iconRatio == LibraryIconRatio.Portrait,
-                                onClick = { onIconRatioChange(LibraryIconRatio.Portrait) },
-                                label = { Text(stringResource(R.string.library_icon_ratio_portrait)) },
-                            )
-                        }
-                    }
-                }
-                if (state.layout == LibraryLayout.Grid) {
+                    Text(
+                        text = stringResource(R.string.library_destination_options),
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                    )
                     LibraryOptionsSection(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp),
-                        title = R.string.library_options_grid_title,
+                        modifier = Modifier.fillMaxWidth(),
+                        title = R.string.library_options_library_title,
                     ) {
+                        LibraryOptionGroup(label = R.string.pref_apps_view) {
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                FilterChip(
+                                    selected = state.layout == LibraryLayout.List,
+                                    onClick = { onLayoutChange(LibraryLayout.List) },
+                                    label = { Text(stringResource(R.string.library_view_list)) },
+                                    leadingIcon = {
+                                        Icon(
+                                            painter = painterResource(R.drawable.ic_library_list),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                        )
+                                    },
+                                )
+                                FilterChip(
+                                    selected = state.layout == LibraryLayout.Grid,
+                                    onClick = { onLayoutChange(LibraryLayout.Grid) },
+                                    label = { Text(stringResource(R.string.library_view_grid)) },
+                                    leadingIcon = {
+                                        Icon(
+                                            painter = painterResource(R.drawable.ic_library_grid),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                        )
+                                    },
+                                )
+                            }
+                        }
                         LibraryOptionGroup(
-                            label = R.string.library_grid_spacing_title,
-                            summary = R.string.library_grid_spacing_summary,
+                            label = R.string.library_icon_ratio_title,
+                            summary = R.string.library_icon_ratio_summary,
                         ) {
                             FlowRow(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
                                 FilterChip(
-                                    selected = state.gridSpacing == LibraryGridSpacing.Compact,
-                                    onClick = {
-                                        onGridSpacingChange(LibraryGridSpacing.Compact)
-                                    },
-                                    label = {
-                                        Text(stringResource(R.string.library_grid_spacing_compact))
-                                    },
+                                    selected = state.iconRatio == LibraryIconRatio.Square,
+                                    onClick = { onIconRatioChange(LibraryIconRatio.Square) },
+                                    label = { Text(stringResource(R.string.library_icon_ratio_square)) },
                                 )
                                 FilterChip(
-                                    selected = state.gridSpacing == LibraryGridSpacing.Standard,
-                                    onClick = {
-                                        onGridSpacingChange(LibraryGridSpacing.Standard)
-                                    },
-                                    label = {
-                                        Text(stringResource(R.string.library_grid_spacing_standard))
-                                    },
-                                )
-                                FilterChip(
-                                    selected = state.gridSpacing == LibraryGridSpacing.Spacious,
-                                    onClick = {
-                                        onGridSpacingChange(LibraryGridSpacing.Spacious)
-                                    },
-                                    label = {
-                                        Text(stringResource(R.string.library_grid_spacing_spacious))
-                                    },
+                                    selected = state.iconRatio == LibraryIconRatio.Portrait,
+                                    onClick = { onIconRatioChange(LibraryIconRatio.Portrait) },
+                                    label = { Text(stringResource(R.string.library_icon_ratio_portrait)) },
                                 )
                             }
                         }
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = stringResource(R.string.library_hide_grid_titles),
-                                    style = MaterialTheme.typography.titleMedium,
-                                )
-                                Text(
-                                    text = stringResource(R.string.library_hide_grid_titles_summary),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    style = MaterialTheme.typography.bodySmall,
+                        if (state.layout == LibraryLayout.Grid) {
+                            LibraryOptionGroup(
+                                label = R.string.library_grid_spacing_title,
+                                summary = R.string.library_grid_spacing_summary,
+                            ) {
+                                FlowRow(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    LibraryGridSpacing.entries.forEach { spacing ->
+                                        val label = when (spacing) {
+                                            LibraryGridSpacing.Compact -> R.string.library_grid_spacing_compact
+                                            LibraryGridSpacing.Standard -> R.string.library_grid_spacing_standard
+                                            LibraryGridSpacing.Spacious -> R.string.library_grid_spacing_spacious
+                                        }
+                                        FilterChip(
+                                            selected = state.gridSpacing == spacing,
+                                            onClick = { onGridSpacingChange(spacing) },
+                                            label = { Text(stringResource(label)) },
+                                        )
+                                    }
+                                }
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 52.dp)
+                                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = hideGridTitlesLabel,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Medium,
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.library_hide_grid_titles_summary),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                }
+                                Switch(
+                                    checked = state.hideGridTitles,
+                                    onCheckedChange = onHideGridTitlesChange,
+                                    modifier = Modifier.semantics {
+                                        contentDescription = hideGridTitlesLabel
+                                    },
                                 )
                             }
-                            Switch(
-                                checked = state.hideGridTitles,
-                                onCheckedChange = onHideGridTitlesChange,
-                                modifier = Modifier.semantics {
-                                    contentDescription = hideGridTitlesLabel
-                                },
-                            )
                         }
                     }
-                }
-                Text(
-                    text = stringResource(R.string.library_options_actions_title),
-                    modifier = Modifier.padding(start = 4.dp, top = 24.dp, bottom = 4.dp),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.large,
-                    color = MaterialTheme.colorScheme.surfaceContainerLow,
-                ) {
-                    Column {
-                        LibraryActionRow(R.string.about, onAbout)
-                        HorizontalDivider()
-                        LibraryActionRow(R.string.action_settings, onSettings)
-                        HorizontalDivider()
-                        LibraryActionRow(R.string.profiles, onProfiles)
-                        HorizontalDivider()
-                        LibraryActionRow(R.string.help, onHelp)
-                        HorizontalDivider()
-                        LibraryActionRow(R.string.crash_reports, onCrashReports)
-                        HorizontalDivider()
-                        LibraryActionRow(R.string.save_log, onSaveLog)
-                        HorizontalDivider()
-                        LibraryActionRow(R.string.exit, onExit)
+                    LibraryOptionsSection(
+                        modifier = Modifier.fillMaxWidth(),
+                        title = R.string.library_options_application_title,
+                    ) {
+                        LibraryActionRow(
+                            label = R.string.action_settings,
+                            summary = R.string.library_action_settings_summary,
+                            icon = R.drawable.ic_settings,
+                            action = onSettings,
+                        )
+                    }
+                    LibraryOptionsSection(
+                        modifier = Modifier.fillMaxWidth(),
+                        title = R.string.library_options_diagnostics_title,
+                    ) {
+                        LibraryActionRow(
+                            label = R.string.crash_reports,
+                            summary = R.string.library_action_crash_reports_summary,
+                            icon = R.drawable.ic_bug_report,
+                            action = onCrashReports,
+                        )
+                        LibraryActionRow(
+                            label = R.string.save_log,
+                            summary = R.string.library_action_save_log_summary,
+                            icon = R.drawable.ic_save,
+                            action = onSaveLog,
+                        )
+                    }
+                    LibraryOptionsSection(
+                        modifier = Modifier.fillMaxWidth(),
+                        title = R.string.library_options_information_title,
+                    ) {
+                        LibraryActionRow(
+                            label = R.string.about,
+                            summary = R.string.library_action_about_summary,
+                            icon = R.drawable.ic_info,
+                            action = onAbout,
+                        )
+                        LibraryActionRow(
+                            label = R.string.help,
+                            summary = R.string.library_action_help_summary,
+                            icon = R.drawable.ic_help,
+                            action = onHelp,
+                        )
+                    }
+                    LibraryOptionsSection(
+                        modifier = Modifier.fillMaxWidth(),
+                        title = R.string.library_options_session_title,
+                    ) {
+                        LibraryActionRow(
+                            label = R.string.exit,
+                            summary = R.string.library_action_exit_summary,
+                            icon = R.drawable.ic_logout,
+                            destructive = true,
+                            action = onExit,
+                        )
                     }
                 }
             }
@@ -1291,19 +1433,20 @@ private fun LibraryOptionsSection(
     title: Int,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Surface(
-        modifier = modifier,
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = stringResource(title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Spacer(Modifier.height(12.dp))
-            content()
+    Column(modifier = modifier) {
+        Text(
+            text = stringResource(title),
+            modifier = Modifier.padding(start = 10.dp, end = 10.dp, bottom = 4.dp),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+        ) {
+            Column(content = content)
         }
     }
 }
@@ -1314,20 +1457,25 @@ private fun LibraryOptionGroup(
     summary: Int? = null,
     content: @Composable () -> Unit,
 ) {
-    Column {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 9.dp),
+    ) {
         Text(
             text = stringResource(label),
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
         )
         summary?.let {
             Text(
                 text = stringResource(it),
-                modifier = Modifier.padding(top = 2.dp),
+                modifier = Modifier.padding(top = 1.dp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
             )
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(5.dp))
         content()
     }
 }
@@ -1369,7 +1517,7 @@ private fun LibraryGridItem(
                 Text(
                     text = app.title,
                     modifier = Modifier.fillMaxWidth(),
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center,
@@ -1387,61 +1535,56 @@ private fun LibraryListItem(
     onOpenActions: (LibraryAppUiItem) -> Unit,
     iconRatio: LibraryIconRatio,
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .combinedClickable(
-                onClick = { onOpenApp(app.id) },
-                onLongClick = { onOpenActions(app) },
-            ),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.Top,
-        ) {
-            LibraryIconSlot(
-                app = app,
-                modifier = Modifier.width(48.dp),
-                contentSize = 36.dp,
-                iconRatio = iconRatio,
-            )
-            Spacer(Modifier.width(12.dp))
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(top = 1.dp),
-            ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        ListItem(
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+            headlineContent = {
                 Text(
                     text = app.title,
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(
-                    text = stringResource(
-                        R.string.library_vendor_version,
-                        app.author,
-                        app.version,
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+            },
+            supportingContent = {
+                Column {
+                    Text(
+                        text = stringResource(
+                            R.string.library_vendor_version,
+                            app.author,
+                            app.version,
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    LibraryDescription(app.description, app.id)
+                }
+            },
+            leadingContent = {
+                LibraryIconSlot(
+                    app = app,
+                    modifier = Modifier.width(52.dp),
+                    contentSize = 40.dp,
+                    iconRatio = iconRatio,
                 )
-                LibraryDescription(app.description, app.id)
-            }
-            Spacer(Modifier.width(8.dp))
-            Column(
-                horizontalAlignment = Alignment.End,
-                modifier = Modifier.padding(top = 1.dp),
-            ) {
+            },
+            trailingContent = {
                 LibraryFavoritePlaceholder(app.id)
-            }
-        }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .combinedClickable(
+                    onClick = { onOpenApp(app.id) },
+                    onLongClick = { onOpenActions(app) },
+                ),
+        )
+        HorizontalDivider(
+            modifier = Modifier.padding(start = 84.dp, end = 16.dp),
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+        )
     }
 }
 
@@ -2494,14 +2637,51 @@ private fun LibraryIconArtwork(
 }
 
 @Composable
-private fun LibraryActionRow(label: Int, action: () -> Unit) {
-    ListItem(
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        headlineContent = { Text(stringResource(label)) },
+private fun LibraryActionRow(
+    label: Int,
+    action: () -> Unit,
+    icon: Int? = null,
+    summary: Int? = null,
+    destructive: Boolean = false,
+) {
+    val contentColor = if (destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(role = Role.Button, onClick = action),
-    )
+            .heightIn(min = 52.dp)
+            .clickable(role = Role.Button, onClick = action)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        if (icon != null) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                modifier = Modifier.size(22.dp),
+                tint = contentColor,
+            )
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(label),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = contentColor,
+            )
+            if (summary != null) {
+                Text(
+                    text = stringResource(summary),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (destructive) {
+                        MaterialTheme.colorScheme.error.copy(alpha = 0.82f)
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -2571,6 +2751,34 @@ internal fun LibrarySortMenu(
     }
 }
 
+private data class LibraryDialogLayout(
+    val modifier: Modifier,
+    val properties: DialogProperties,
+)
+
+@Composable
+private fun libraryDialogLayout(): LibraryDialogLayout {
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    return LibraryDialogLayout(
+        modifier = if (landscape) {
+            Modifier
+                .fillMaxWidth(0.94f)
+                .widthIn(max = 760.dp)
+        } else {
+            Modifier.widthIn(max = 560.dp)
+        },
+        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
+    )
+}
+
+@Composable
+private fun libraryDialogListHeight(maxHeight: Int = 420) =
+    LocalConfiguration.current.screenHeightDp
+        .minus(220)
+        .coerceAtLeast(120)
+        .coerceAtMost(maxHeight)
+        .dp
+
 @Composable
 internal fun AppActionsDialog(
     app: LibraryAppUiItem,
@@ -2581,20 +2789,74 @@ internal fun AppActionsDialog(
     onReinstall: () -> Unit,
     onDelete: () -> Unit,
 ) {
+    val layout = libraryDialogLayout()
     AlertDialog(
+        modifier = layout.modifier,
+        properties = layout.properties,
         onDismissRequest = onDismiss,
-        title = { Text(app.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        text = {
+        title = {
             Column {
+                Text(
+                    text = app.title,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = stringResource(R.string.library_vendor_version, app.author, app.version),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        },
+        text = {
+            LazyColumn(modifier = Modifier.heightIn(max = libraryDialogListHeight())) {
                 if (onShortcut != null) {
-                    DialogAction(R.string.action_context_shortcut, onDismiss, onShortcut)
+                    item {
+                        DialogAction(
+                            label = R.string.action_context_shortcut,
+                            icon = R.drawable.ic_add,
+                            onDismiss = onDismiss,
+                            action = onShortcut,
+                        )
+                    }
                 }
-                DialogAction(R.string.action_context_rename, onDismiss, onRename)
-                DialogAction(R.string.action_settings, onDismiss, onSettings)
+                item {
+                    DialogAction(
+                        label = R.string.action_context_rename,
+                        icon = R.drawable.ic_edit,
+                        onDismiss = onDismiss,
+                        action = onRename,
+                    )
+                }
+                item {
+                    DialogAction(
+                        label = R.string.action_settings,
+                        icon = R.drawable.ic_settings,
+                        onDismiss = onDismiss,
+                        action = onSettings,
+                    )
+                }
                 if (app.canReinstall) {
-                    DialogAction(R.string.action_reinstall, onDismiss, onReinstall)
+                    item {
+                        DialogAction(
+                            label = R.string.action_reinstall,
+                            icon = R.drawable.ic_restart_alt,
+                            onDismiss = onDismiss,
+                            action = onReinstall,
+                        )
+                    }
                 }
-                DialogAction(R.string.action_context_delete, onDismiss, onDelete)
+                item {
+                    DialogAction(
+                        label = R.string.action_context_delete,
+                        icon = R.drawable.ic_delete,
+                        destructive = true,
+                        onDismiss = onDismiss,
+                        action = onDelete,
+                    )
+                }
             }
         },
         confirmButton = {},
@@ -2602,10 +2864,39 @@ internal fun AppActionsDialog(
 }
 
 @Composable
-private fun DialogAction(label: Int, onDismiss: () -> Unit, action: () -> Unit) {
+private fun DialogAction(
+    label: Int,
+    icon: Int?,
+    destructive: Boolean = false,
+    onDismiss: () -> Unit,
+    action: () -> Unit,
+) {
+    val contentColor = if (destructive) {
+        MaterialTheme.colorScheme.error
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
     ListItem(
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        headlineContent = { Text(stringResource(label)) },
+        headlineContent = {
+            Text(
+                text = stringResource(label),
+                color = contentColor,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+            )
+        },
+        leadingContent = {
+            if (icon != null) {
+                Icon(
+                    painter = painterResource(icon),
+                    contentDescription = null,
+                    tint = contentColor,
+                )
+            } else {
+                Spacer(Modifier.size(24.dp))
+            }
+        },
         modifier = Modifier
             .fillMaxWidth()
             .clickable(
@@ -2633,7 +2924,10 @@ private fun RenameAppDialog(
         )
     }
     val valid = value.text.trim().isNotEmpty()
+    val layout = libraryDialogLayout()
     AlertDialog(
+        modifier = layout.modifier,
+        properties = layout.properties,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.action_context_rename)) },
         text = {
@@ -2663,65 +2957,163 @@ internal fun LibraryInformationDialog(
     onOpen: (LibraryInfoDialog) -> Unit,
 ) {
     val context = LocalContext.current
-    val title: String
-    val message: AnnotatedString
-    val maxMessageHeight = if (dialog == LibraryInfoDialog.Licenses) 380.dp else 300.dp
-    when (dialog) {
-        LibraryInfoDialog.About -> {
-            title = stringResource(R.string.about_product_name)
-            message = buildAnnotatedString {
+    val title = when (dialog) {
+        LibraryInfoDialog.About -> stringResource(R.string.about)
+        LibraryInfoDialog.Help -> stringResource(R.string.help)
+        LibraryInfoDialog.Licenses -> stringResource(R.string.licenses)
+    }
+    val icon = when (dialog) {
+        LibraryInfoDialog.About -> R.drawable.ic_info
+        LibraryInfoDialog.Help -> R.drawable.ic_help
+        LibraryInfoDialog.Licenses -> R.drawable.ic_list
+    }
+    val layout = libraryDialogLayout()
+    val maxMessageHeight = libraryDialogListHeight(
+        maxHeight = if (dialog == LibraryInfoDialog.Licenses) 520 else 420,
+    )
+    val message = when (dialog) {
+        LibraryInfoDialog.About -> AnnotatedString(stringResource(R.string.about_message))
+        LibraryInfoDialog.Help -> AnnotatedString.fromHtml(stringResource(R.string.help_message))
+        LibraryInfoDialog.Licenses -> try {
+            AnnotatedString.fromHtml(
+                context.assets.open("licenses.html").bufferedReader().use { it.readText() },
+            )
+        } catch (_: Exception) {
+            AnnotatedString(stringResource(R.string.licenses_unavailable))
+        }
+    }
+
+    AlertDialog(
+        modifier = layout.modifier,
+        properties = layout.properties,
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Icon(
+                    painter = painterResource(icon),
+                    contentDescription = null,
+                    modifier = Modifier.size(26.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Text(title)
+            }
+        },
+        text = {
+            when (dialog) {
+                LibraryInfoDialog.About -> LibraryAboutBody(
+                    onLicenses = { onOpen(LibraryInfoDialog.Licenses) },
+                )
+                LibraryInfoDialog.Help -> LibraryHelpBody(
+                    message = message,
+                    maxHeight = maxMessageHeight,
+                )
+                LibraryInfoDialog.Licenses -> Text(
+                    text = message,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxMessageHeight)
+                        .verticalScroll(rememberScrollState()),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) }
+        },
+    )
+}
+
+@Composable
+private fun LibraryAboutBody(
+    onLicenses: () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = stringResource(R.string.about_product_name),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(
+            text = buildString {
                 append(stringResource(R.string.version))
                 append(' ')
                 append(BuildConfig.VERSION_NAME)
-                append('\n')
-                append(AnnotatedString.fromHtml(stringResource(R.string.about_github)))
-                append('\n')
-                append(stringResource(R.string.about_maintainer))
-            }
-        }
-        LibraryInfoDialog.More -> {
-            title = stringResource(R.string.app_name)
-            message = AnnotatedString(stringResource(R.string.about_message))
-        }
-        LibraryInfoDialog.Help -> {
-            title = stringResource(R.string.help)
-            message = AnnotatedString.fromHtml(stringResource(R.string.help_message))
-        }
-        LibraryInfoDialog.Licenses -> {
-            title = stringResource(R.string.licenses)
-            message = try {
-                AnnotatedString.fromHtml(
-                    context.assets.open("licenses.html").bufferedReader().use { it.readText() },
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = AnnotatedString.fromHtml(stringResource(R.string.about_github)),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Text(
+            text = stringResource(R.string.about_maintainer),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = stringResource(R.string.about_message).trim(),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        HorizontalDivider(modifier = Modifier.padding(top = 2.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            TextButton(onClick = onLicenses) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_list),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
                 )
-            } catch (_: Exception) {
-                AnnotatedString(stringResource(R.string.licenses_unavailable))
+                Spacer(Modifier.width(6.dp))
+                Text(stringResource(R.string.licenses))
             }
         }
     }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            Text(
-                text = message,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = maxMessageHeight)
-                    .verticalScroll(rememberScrollState()),
-            )
-        },
-        confirmButton = {
-            Row {
-                if (dialog == LibraryInfoDialog.About) {
-                    TextButton(onClick = { onOpen(LibraryInfoDialog.Licenses) }) {
-                        Text(stringResource(R.string.licenses))
-                    }
-                    TextButton(onClick = { onOpen(LibraryInfoDialog.More) }) {
-                        Text(stringResource(R.string.more))
-                    }
-                }
-                TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) }
+}
+
+@Composable
+private fun LibraryHelpBody(
+    message: AnnotatedString,
+    maxHeight: Dp,
+) {
+    val items = remember(message.text) {
+        message.text
+            .split('•')
+            .map(String::trim)
+            .filter(String::isNotEmpty)
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = maxHeight)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        items.forEach { item ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                Text(
+                    text = "•",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = item,
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
-        },
-    )
+        }
+    }
 }
