@@ -1,0 +1,141 @@
+name: Complete config information redesign
+
+on:
+  push:
+    branches:
+      - ui/redesign-config
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ui/redesign-config
+          submodules: recursive
+
+      - name: Complete informative setting rows
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          def sub_once(path, pattern, repl, flags=0):
+              p = Path(path)
+              text = p.read_text()
+              out, count = re.subn(pattern, repl, text, count=1, flags=flags)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one regex match, got {count}: {pattern[:100]!r}")
+              p.write_text(out)
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one match, got {count}: {old[:100]!r}")
+              p.write_text(text.replace(old, new, 1))
+
+          components = "app/src/main/java/ru/playsoftware/j2meloader/config/ConfigPreferenceComponents.kt"
+          marker = '''@Composable\ninternal fun ConfigColorPreference(\n'''
+          slider_pref = '''@Composable\ninternal fun ConfigSliderPreference(\n    title: String,\n    description: String,\n    value: Int,\n    valueRange: IntRange,\n    onSelected: (Int) -> Unit,\n    modifier: Modifier = Modifier,\n) {\n    var dialogVisible by remember(value) { mutableStateOf(false) }\n    ConfigValuePreference(\n        title = title,\n        description = description,\n        value = value.toString(),\n        modifier = modifier,\n        onClick = { dialogVisible = true },\n    )\n    if (dialogVisible) {\n        ConfigSliderDialog(\n            title = title,\n            description = description,\n            initialValue = value,\n            valueRange = valueRange,\n            onDismissRequest = { dialogVisible = false },\n            onConfirm = { next ->\n                dialogVisible = false\n                onSelected(next)\n            },\n        )\n    }\n}\n\n'''
+          p = Path(components)
+          text = p.read_text()
+          if marker not in text:
+              raise SystemExit("slider insertion marker missing")
+          p.write_text(text.replace(marker, slider_pref + marker, 1))
+
+          compose = "app/src/main/java/ru/playsoftware/j2meloader/config/ConfigComposeBridge.kt"
+
+          # Font becomes one readable setting row + focused editor, rather than three tiny fields in the page.
+          sub_once(
+              compose,
+              r'''@Composable\nprivate fun FontSection\(.*?\n\}\n\n@Composable\nprivate fun InputSection''',
+              '''@Composable\nprivate fun FontSection(\n    form: ConfigFormState,\n    state: ConfigUiState,\n    onFormChanged: (ConfigFormState) -> Unit,\n) {\n    var advancedExpanded by rememberSaveable { mutableStateOf(false) }\n    var fontSizesVisible by rememberSaveable { mutableStateOf(false) }\n    ConfigSection(title = stringResource(R.string.PREF_FONT_OPTIONS)) {\n        ConfigValuePreference(\n            title = stringResource(R.string.config_font_sizes),\n            description = stringResource(R.string.config_help_font_sizes),\n            value = stringResource(\n                R.string.config_font_sizes_value,\n                form.fontSizeSmall,\n                form.fontSizeMedium,\n                form.fontSizeLarge,\n            ),\n            onClick = { fontSizesVisible = true },\n        )\n        val selectedPreset = state.fontPresets.firstOrNull { preset ->\n            preset.small.toString() == form.fontSizeSmall &&\n                preset.medium.toString() == form.fontSizeMedium &&\n                preset.large.toString() == form.fontSizeLarge\n        }?.title ?: stringResource(R.string.profile_custom)\n        ConfigChoicePreference(\n            title = stringResource(R.string.SIZE_PRESETS),\n            description = stringResource(R.string.config_help_font_presets),\n            selected = selectedPreset,\n            options = state.fontPresets.map { it.title },\n            onSelected = { index ->\n                state.fontPresets.getOrNull(index)?.let { preset ->\n                    onFormChanged(\n                        form.toBuilder()\n                            .fontSizeSmall(preset.small.toString())\n                            .fontSizeMedium(preset.medium.toString())\n                            .fontSizeLarge(preset.large.toString())\n                            .build(),\n                    )\n                }\n            },\n        )\n        ConfigDisclosurePreference(\n            title = stringResource(R.string.config_advanced_settings),\n            description = stringResource(R.string.config_help_advanced_font),\n            expanded = advancedExpanded,\n            onExpandedChange = { advancedExpanded = it },\n        )\n        if (advancedExpanded) {\n            ConfigSwitchPreference(\n                title = stringResource(R.string.PREF_FONT_SIZE_IN_SP),\n                description = stringResource(R.string.config_help_font_dimensions),\n                checked = form.fontApplyDimensions,\n                onCheckedChange = { checked ->\n                    onFormChanged(form.toBuilder().fontApplyDimensions(checked).build())\n                },\n            )\n            ConfigSwitchPreference(\n                title = stringResource(R.string.PREF_FONT_ANTI_ALIASING),\n                description = stringResource(R.string.config_help_font_aa),\n                checked = form.fontAA,\n                onCheckedChange = { checked -> onFormChanged(form.toBuilder().fontAA(checked).build()) },\n            )\n        }\n    }\n    if (fontSizesVisible) {\n        FontSizesDialog(\n            small = form.fontSizeSmall,\n            medium = form.fontSizeMedium,\n            large = form.fontSizeLarge,\n            onDismissRequest = { fontSizesVisible = false },\n            onConfirm = { small, medium, large ->\n                fontSizesVisible = false\n                onFormChanged(\n                    form.toBuilder()\n                        .fontSizeSmall(small)\n                        .fontSizeMedium(medium)\n                        .fontSizeLarge(large)\n                        .build(),\n                )\n            },\n        )\n    }\n}\n\n@Composable\nprivate fun FontSizesDialog(\n    small: String,\n    medium: String,\n    large: String,\n    onDismissRequest: () -> Unit,\n    onConfirm: (String, String, String) -> Unit,\n) {\n    var smallDraft by remember(small) { mutableStateOf(small) }\n    var mediumDraft by remember(medium) { mutableStateOf(medium) }\n    var largeDraft by remember(large) { mutableStateOf(large) }\n    AlertDialog(\n        onDismissRequest = onDismissRequest,\n        title = { Text(stringResource(R.string.config_font_sizes)) },\n        text = {\n            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {\n                Text(\n                    text = stringResource(R.string.config_help_font_sizes_long),\n                    style = MaterialTheme.typography.bodyMedium,\n                    color = MaterialTheme.colorScheme.onSurfaceVariant,\n                )\n                OutlinedTextField(\n                    value = smallDraft,\n                    onValueChange = { smallDraft = it },\n                    label = { Text(stringResource(R.string.PREF_FONT_SMALL)) },\n                    singleLine = true,\n                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),\n                    modifier = Modifier.fillMaxWidth(),\n                )\n                OutlinedTextField(\n                    value = mediumDraft,\n                    onValueChange = { mediumDraft = it },\n                    label = { Text(stringResource(R.string.PREF_FONT_MEDIUM)) },\n                    singleLine = true,\n                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),\n                    modifier = Modifier.fillMaxWidth(),\n                )\n                OutlinedTextField(\n                    value = largeDraft,\n                    onValueChange = { largeDraft = it },\n                    label = { Text(stringResource(R.string.PREF_FONT_LARGE)) },\n                    singleLine = true,\n                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),\n                    modifier = Modifier.fillMaxWidth(),\n                )\n            }\n        },\n        dismissButton = {\n            TextButton(onClick = onDismissRequest) { Text(stringResource(android.R.string.cancel)) }\n        },\n        confirmButton = {\n            TextButton(\n                enabled = smallDraft.toIntOrNull() != null &&\n                    mediumDraft.toIntOrNull() != null && largeDraft.toIntOrNull() != null,\n                onClick = { onConfirm(smallDraft, mediumDraft, largeDraft) },\n            ) { Text(stringResource(android.R.string.ok)) }\n        },\n    )\n}\n\n@Composable\nprivate fun InputSection''',
+              flags=re.S,
+          )
+
+          # Controls now use the same title/description/current-value language as General/Graphics.
+          sub_once(
+              compose,
+              r'''@Composable\nprivate fun InputSection\(.*?\n\}\n\n@Composable\nprivate fun EmulationSection''',
+              '''@Composable\nprivate fun InputSection(\n    form: ConfigFormState,\n    state: ConfigUiState,\n    onFormChanged: (ConfigFormState) -> Unit,\n    events: ConfigFormEvents,\n    onRequestAction: (ConfigAction) -> Unit,\n) {\n    var advancedExpanded by rememberSaveable { mutableStateOf(false) }\n    ConfigSection(title = stringResource(R.string.pref_input_devices_title)) {\n        val layoutOptions = stringArrayResource(R.array.PREF_LAYOUT_ENTRIES).toList()\n        ConfigChoicePreference(\n            title = stringResource(R.string.PREF_LAYOUT),\n            description = stringResource(R.string.config_help_key_layout),\n            selected = layoutOptions.getOrElse(form.keyCodesLayout) { layoutOptions.firstOrNull().orEmpty() },\n            options = layoutOptions,\n            onSelected = { index -> onFormChanged(form.toBuilder().keyCodesLayout(index).build()) },\n        )\n        ConfigActionPreference(\n            title = stringResource(R.string.pref_map_keys),\n            description = stringResource(R.string.config_help_key_mapping),\n            onClick = events::onKeyMappings,\n        )\n        ConfigSwitchPreference(\n            title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),\n            description = stringResource(R.string.config_help_virtual_keyboard_controls),\n            checked = form.showKeyboard,\n            onCheckedChange = { checked -> onFormChanged(form.toBuilder().showKeyboard(checked).build()) },\n        )\n        if (form.showKeyboard) {\n            ConfigDisclosurePreference(\n                title = stringResource(R.string.config_advanced_settings),\n                description = stringResource(R.string.config_help_advanced_controls),\n                expanded = advancedExpanded,\n                onExpandedChange = { advancedExpanded = it },\n            )\n            if (advancedExpanded) {\n                val shapeOptions = stringArrayResource(R.array.pref_button_shape_entries).toList()\n                ConfigChoicePreference(\n                    title = stringResource(R.string.pref_button_shape_title),\n                    description = stringResource(R.string.config_help_vk_button_shape),\n                    selected = shapeOptions.getOrElse(form.vkButtonShape) { shapeOptions.firstOrNull().orEmpty() },\n                    options = shapeOptions,\n                    onSelected = { index -> onFormChanged(form.toBuilder().vkButtonShape(index).build()) },\n                )\n                ConfigSwitchPreference(\n                    title = stringResource(R.string.PREF_VK_FEEDBACK),\n                    description = stringResource(R.string.config_help_vk_feedback),\n                    checked = form.vkFeedback,\n                    onCheckedChange = { checked -> onFormChanged(form.toBuilder().vkFeedback(checked).build()) },\n                )\n                ConfigSliderPreference(\n                    title = stringResource(R.string.PREF_VK_ALPHA),\n                    description = stringResource(R.string.config_help_vk_alpha),\n                    value = form.vkAlpha,\n                    valueRange = 0..255,\n                    onSelected = { value -> onFormChanged(form.toBuilder().vkAlpha(value).build()) },\n                )\n                ConfigSwitchPreference(\n                    title = stringResource(R.string.PREF_VK_FORCE_OPACITY),\n                    description = stringResource(R.string.config_help_vk_force_opacity),\n                    checked = form.vkForceOpacity,\n                    onCheckedChange = { checked -> onFormChanged(form.toBuilder().vkForceOpacity(checked).build()) },\n                )\n                ConfigNumberPreference(\n                    title = stringResource(R.string.PREF_VK_HIDE_DELAY),\n                    description = stringResource(R.string.config_help_vk_hide_delay),\n                    value = form.vkHideDelay,\n                    fallbackLabel = stringResource(R.string.pref_vk_hide_hint),\n                    valueSuffix = stringResource(R.string.PREF_UNIT_MS),\n                    keyboardType = KeyboardType.Number,\n                    onValueChange = { value -> onFormChanged(form.toBuilder().vkHideDelay(value).build()) },\n                )\n                ConfigColorPreference(\n                    title = stringResource(R.string.PREF_VK_FORE),\n                    description = stringResource(R.string.config_help_vk_foreground),\n                    value = form.vkForeground,\n                    onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_FOREGROUND) },\n                )\n                ConfigColorPreference(\n                    title = stringResource(R.string.PREF_VK_BACK),\n                    description = stringResource(R.string.config_help_vk_background),\n                    value = form.vkBackground,\n                    onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_BACKGROUND) },\n                )\n                ConfigColorPreference(\n                    title = stringResource(R.string.PREF_VK_SEL_FORE),\n                    description = stringResource(R.string.config_help_vk_selected_foreground),\n                    value = form.vkSelectedForeground,\n                    onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_FOREGROUND) },\n                )\n                ConfigColorPreference(\n                    title = stringResource(R.string.PREF_VK_SEL_BACK),\n                    description = stringResource(R.string.config_help_vk_selected_background),\n                    value = form.vkSelectedBackground,\n                    onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_BACKGROUND) },\n                )\n                ConfigColorPreference(\n                    title = stringResource(R.string.PREF_VK_OUTLINE),\n                    description = stringResource(R.string.config_help_vk_outline),\n                    value = form.vkOutline,\n                    onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_OUTLINE) },\n                )\n            }\n        }\n        ConfigActionPreference(\n            title = stringResource(R.string.RESET_LAYOUT_CMD),\n            description = stringResource(R.string.config_help_reset_layout),\n            destructive = true,\n            onClick = { onRequestAction(ConfigAction.ResetLayout) },\n        )\n    }\n}\n\n@Composable\nprivate fun EmulationSection''',
+              flags=re.S,
+          )
+
+          sub_once(
+              compose,
+              r'''@Composable\nprivate fun EmulationSection\(.*?\n\}\n\n@Composable\nprivate fun AudioSection''',
+              '''@Composable\nprivate fun EmulationSection(\n    form: ConfigFormState,\n    onFormChanged: (ConfigFormState) -> Unit,\n) {\n    ConfigSection(title = stringResource(R.string.pref_title_emulation)) {\n        ConfigSwitchPreference(\n            title = stringResource(R.string.pref_skip_resume_call),\n            description = stringResource(R.string.config_help_skip_resume),\n            checked = form.skipResumeCall,\n            onCheckedChange = { checked -> onFormChanged(form.toBuilder().skipResumeCall(checked).build()) },\n        )\n    }\n}\n\n@Composable\nprivate fun AudioSection''',
+              flags=re.S,
+          )
+
+          sub_once(
+              compose,
+              r'''@Composable\nprivate fun AudioSection\(.*?\n\}\n\n@Composable\nprivate fun SystemSection''',
+              '''@Composable\nprivate fun AudioSection(\n    form: ConfigFormState,\n    state: ConfigUiState,\n    onFormChanged: (ConfigFormState) -> Unit,\n) {\n    ConfigSection(title = stringResource(R.string.pref_audio_title)) {\n        val selected = state.soundBanks.indexOfFirst { option ->\n            form.soundBank != null && option == form.soundBank\n        }.let { if (it < 0) 0 else it }\n        ConfigChoicePreference(\n            title = stringResource(R.string.pref_soundbank_title),\n            description = stringResource(R.string.config_help_soundbank),\n            selected = state.soundBanks.getOrElse(selected) { "" },\n            options = state.soundBanks,\n            onSelected = { index ->\n                onFormChanged(\n                    form.toBuilder()\n                        .soundBank(if (index == 0) null else state.soundBanks.getOrNull(index))\n                        .build(),\n                )\n            },\n        )\n    }\n}\n\n@Composable\nprivate fun SystemSection''',
+              flags=re.S,
+          )
+
+          # Slider editor also carries the explanation, matching other focused editors.
+          replace_once(
+              compose,
+              '''internal fun ConfigSliderDialog(\n    title: String,\n    initialValue: Int,\n''',
+              '''internal fun ConfigSliderDialog(\n    title: String,\n    description: String? = null,\n    initialValue: Int,\n''',
+          )
+          replace_once(
+              compose,
+              '''        text = {\n            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {\n                val draftValue = draftText.toIntOrNull()\n''',
+              '''        text = {\n            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {\n                if (description != null) {\n                    Text(\n                        text = description,\n                        style = MaterialTheme.typography.bodyMedium,\n                        color = MaterialTheme.colorScheme.onSurfaceVariant,\n                    )\n                }\n                val draftValue = draftText.toIntOrNull()\n''',
+          )
+
+          # New help text is resource-backed in both supported languages.
+          additions = {
+              "app/src/main/res/values/strings_config_redesign.xml": '''    <string name="config_font_sizes">Font sizes</string>\n    <string name="config_help_font_sizes">Sizes used for Java ME small, medium, and large logical fonts.</string>\n    <string name="config_help_font_sizes_long">These values map Java ME logical font sizes to pixels. Change them together so text remains visually balanced across applications.</string>\n    <string name="config_font_sizes_value">Small %1$s · Medium %2$s · Large %3$s</string>\n    <string name="config_help_font_presets">Apply a balanced set of font sizes designed for a common J2ME screen resolution.</string>\n    <string name="config_help_advanced_font">Less common font rendering and compatibility controls.</string>\n    <string name="config_help_font_dimensions">Use Android scaled-pixel dimensions when calculating Java ME font sizes.</string>\n    <string name="config_help_font_aa">Smooth font edges when rendering text.</string>\n    <string name="config_help_key_layout">Select the device key-code layout exposed to the J2ME application.</string>\n    <string name="config_help_key_mapping">Assign Android buttons or keys to J2ME keypad actions.</string>\n    <string name="config_help_virtual_keyboard_controls">Show the on-screen J2ME keypad and expose its appearance controls below.</string>\n    <string name="config_help_advanced_controls">Appearance, feedback, timing, and color controls for the virtual keypad.</string>\n    <string name="config_help_vk_button_shape">Choose the shape used to draw virtual keypad buttons.</string>\n    <string name="config_help_vk_feedback">Provide feedback when a virtual keypad button is pressed.</string>\n    <string name="config_help_vk_alpha">Controls the overall transparency of the virtual keypad.</string>\n    <string name="config_help_vk_force_opacity">Keep keypad buttons opaque even when transparency is configured.</string>\n    <string name="config_help_vk_hide_delay">How long the virtual keypad waits before auto-hiding.</string>\n    <string name="config_help_vk_foreground">Color used for labels and symbols on virtual keypad buttons.</string>\n    <string name="config_help_vk_background">Base color of virtual keypad buttons.</string>\n    <string name="config_help_vk_selected_foreground">Label color while a virtual keypad button is pressed.</string>\n    <string name="config_help_vk_selected_background">Button color while a virtual keypad button is pressed.</string>\n    <string name="config_help_vk_outline">Outline color drawn around virtual keypad buttons.</string>\n    <string name="config_help_reset_layout">Restore the virtual keypad layout without resetting the game’s other emulator settings.</string>\n    <string name="config_help_skip_resume">Skip the Java ME resume callback when returning to the game. Use this only for compatibility with titles that misbehave after resume.</string>\n    <string name="config_help_soundbank">Select the instrument soundbank used for MIDI playback.</string>\n''',
+              "app/src/main/res/values-in/strings_config_redesign.xml": '''    <string name="config_font_sizes">Ukuran font</string>\n    <string name="config_help_font_sizes">Ukuran yang digunakan untuk font logis kecil, sedang, dan besar Java ME.</string>\n    <string name="config_help_font_sizes_long">Nilai ini memetakan ukuran font logis Java ME ke piksel. Ubah secara bersamaan agar teks tetap seimbang di berbagai aplikasi.</string>\n    <string name="config_font_sizes_value">Kecil %1$s · Sedang %2$s · Besar %3$s</string>\n    <string name="config_help_font_presets">Terapkan kumpulan ukuran font seimbang yang dirancang untuk resolusi layar J2ME umum.</string>\n    <string name="config_help_advanced_font">Kontrol rendering dan kompatibilitas font yang lebih jarang digunakan.</string>\n    <string name="config_help_font_dimensions">Gunakan dimensi scaled-pixel Android saat menghitung ukuran font Java ME.</string>\n    <string name="config_help_font_aa">Haluskan tepi font saat merender teks.</string>\n    <string name="config_help_key_layout">Pilih tata kode tombol perangkat yang dilaporkan ke aplikasi J2ME.</string>\n    <string name="config_help_key_mapping">Tetapkan tombol Android ke aksi keypad J2ME.</string>\n    <string name="config_help_virtual_keyboard_controls">Tampilkan keypad J2ME di layar dan buka pengaturan tampilannya di bawah.</string>\n    <string name="config_help_advanced_controls">Kontrol tampilan, umpan balik, waktu, dan warna keypad virtual.</string>\n    <string name="config_help_vk_button_shape">Pilih bentuk yang digunakan untuk menggambar tombol keypad virtual.</string>\n    <string name="config_help_vk_feedback">Berikan umpan balik saat tombol keypad virtual ditekan.</string>\n    <string name="config_help_vk_alpha">Mengatur tingkat transparansi keseluruhan keypad virtual.</string>\n    <string name="config_help_vk_force_opacity">Pertahankan tombol keypad tetap buram meskipun transparansi dikonfigurasi.</string>\n    <string name="config_help_vk_hide_delay">Lama keypad virtual menunggu sebelum tersembunyi otomatis.</string>\n    <string name="config_help_vk_foreground">Warna label dan simbol pada tombol keypad virtual.</string>\n    <string name="config_help_vk_background">Warna dasar tombol keypad virtual.</string>\n    <string name="config_help_vk_selected_foreground">Warna label ketika tombol keypad virtual ditekan.</string>\n    <string name="config_help_vk_selected_background">Warna tombol ketika tombol keypad virtual ditekan.</string>\n    <string name="config_help_vk_outline">Warna garis tepi di sekitar tombol keypad virtual.</string>\n    <string name="config_help_reset_layout">Pulihkan tata letak keypad virtual tanpa mengatur ulang pengaturan emulator game lainnya.</string>\n    <string name="config_help_skip_resume">Lewati callback resume Java ME saat kembali ke game. Gunakan hanya untuk kompatibilitas game yang bermasalah setelah resume.</string>\n    <string name="config_help_soundbank">Pilih soundbank instrumen yang digunakan untuk pemutaran MIDI.</string>\n''',
+          }
+          for path, block in additions.items():
+              p = Path(path)
+              text = p.read_text()
+              if 'name="config_font_sizes"' in text:
+                  raise SystemExit(f"{path}: strings already inserted")
+              p.write_text(text.replace('</resources>', block + '</resources>', 1))
+
+          PY
+          git diff --check
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
+        with:
+          cache-read-only: true
+
+      - name: Update screenshots and validate
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon :app:updateEmulatorDebugScreenshotTest
+          ./gradlew --no-daemon --stacktrace :app:lintEmulatorDebug :dexlib:lintDebug :app:testEmulatorDebugUnitTest :app:validateEmulatorDebugScreenshotTest :app:assembleEmulatorDebug :app:assembleEmulatorDebugAndroidTest
+
+      - name: Commit completion and remove helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/complete-config-information-redesign.yml
+          git add app/src/main app/src/androidTest app/src/screenshotTest app/src/screenshotTestEmulatorDebug/reference
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Complete informative config rows'
+          git push origin HEAD:ui/redesign-config
