@@ -95,7 +95,7 @@ final class ProcessStateSummary {
 	private static String shortCommit(String value) {
 		String safe = safeToken(value, 40);
 		if (safe == null || "unknown".equals(safe)) {
-			return safe;
+			return null;
 		}
 		return safe.length() <= 8 ? safe : safe.substring(0, 8);
 	}
