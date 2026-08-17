@@ -1183,12 +1183,18 @@ internal fun LibraryOptionsDestination(
         contentPadding = scaffoldPadding,
     ) {
         item {
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)),
             ) {
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                        .widthIn(max = 840.dp)
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                ) {
                 Text(
                     text = stringResource(R.string.library_destination_options),
                     style = MaterialTheme.typography.headlineMedium,
@@ -1210,11 +1216,25 @@ internal fun LibraryOptionsDestination(
                                 selected = state.layout == LibraryLayout.List,
                                 onClick = { onLayoutChange(LibraryLayout.List) },
                                 label = { Text(stringResource(R.string.library_view_list)) },
+                                leadingIcon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_library_list),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                },
                             )
                             FilterChip(
                                 selected = state.layout == LibraryLayout.Grid,
                                 onClick = { onLayoutChange(LibraryLayout.Grid) },
                                 label = { Text(stringResource(R.string.library_view_grid)) },
+                                leadingIcon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_library_grid),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                },
                             )
                         }
                     }
@@ -1294,7 +1314,8 @@ internal fun LibraryOptionsDestination(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = stringResource(R.string.library_hide_grid_titles),
-                                    style = MaterialTheme.typography.titleMedium,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium,
                                 )
                                 Text(
                                     text = stringResource(R.string.library_hide_grid_titles_summary),
@@ -1312,31 +1333,26 @@ internal fun LibraryOptionsDestination(
                         }
                     }
                 }
-                Text(
-                    text = stringResource(R.string.library_options_actions_title),
-                    modifier = Modifier.padding(start = 4.dp, top = 24.dp, bottom = 4.dp),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.large,
-                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                LibraryOptionsSection(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    title = R.string.library_options_actions_title,
                 ) {
-                    Column {
-                        LibraryActionRow(R.string.about, onAbout)
-                        HorizontalDivider()
-                        LibraryActionRow(R.string.action_settings, onSettings)
-                        HorizontalDivider()
-                        LibraryActionRow(R.string.profiles, onProfiles)
-                        HorizontalDivider()
-                        LibraryActionRow(R.string.help, onHelp)
-                        HorizontalDivider()
-                        LibraryActionRow(R.string.crash_reports, onCrashReports)
-                        HorizontalDivider()
-                        LibraryActionRow(R.string.save_log, onSaveLog)
-                        HorizontalDivider()
-                        LibraryActionRow(R.string.exit, onExit)
-                    }
+                    LibraryActionRow(R.string.about, onAbout)
+                    HorizontalDivider()
+                    LibraryActionRow(R.string.action_settings, onSettings)
+                    HorizontalDivider()
+                    LibraryActionRow(R.string.profiles, onProfiles)
+                    HorizontalDivider()
+                    LibraryActionRow(R.string.help, onHelp)
+                    HorizontalDivider()
+                    LibraryActionRow(R.string.crash_reports, onCrashReports)
+                    HorizontalDivider()
+                    LibraryActionRow(R.string.save_log, onSaveLog)
+                    HorizontalDivider()
+                    LibraryActionRow(R.string.exit, onExit)
+                }
                 }
             }
         }
@@ -1349,19 +1365,22 @@ private fun LibraryOptionsSection(
     title: Int,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Surface(
-        modifier = modifier,
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = stringResource(title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Spacer(Modifier.height(12.dp))
-            content()
+    Column(modifier = modifier) {
+        Text(
+            text = stringResource(title),
+            modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 6.dp),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                content()
+            }
         }
     }
 }
@@ -1375,7 +1394,8 @@ private fun LibraryOptionGroup(
     Column {
         Text(
             text = stringResource(label),
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
         )
         summary?.let {
             Text(
@@ -2550,7 +2570,13 @@ private fun LibraryIconArtwork(
 private fun LibraryActionRow(label: Int, action: () -> Unit) {
     ListItem(
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        headlineContent = { Text(stringResource(label)) },
+        headlineContent = {
+            Text(
+                text = stringResource(label),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+            )
+        },
         modifier = Modifier
             .fillMaxWidth()
             .clickable(role = Role.Button, onClick = action),
