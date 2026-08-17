@@ -80,6 +80,25 @@ class LibraryFastScrollerTest {
     }
 
     @Test
+    fun descendingVendorSortKeepsRepositoryOrder() {
+        val apps = listOf(
+            app(1, "Alpha App", "Zulu Works"),
+            app(2, "Beta App", "Delta Studio"),
+            app(3, "Gamma App", "Beta Labs"),
+            app(4, "Delta App", "1 Vendor"),
+        )
+
+        assertEquals(
+            listOf("Z", "D", "B", "#"),
+            buildLibraryFastScrollBuckets(
+                apps,
+                sortVariant = Int.MIN_VALUE or 2,
+                locale = locale,
+            ).map(LibraryFastScrollBucket::label),
+        )
+    }
+
+    @Test
     fun dateSortHasNoAlphabetIndex() {
         assertTrue(
             buildLibraryFastScrollBuckets(
