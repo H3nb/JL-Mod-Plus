@@ -44,6 +44,9 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
 
+      - name: Prepare Gradle wrapper
+        run: chmod +x gradlew
+
       - name: Merge latest alpha
         shell: bash
         run: |
@@ -57,8 +60,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # The first script previously ended with a narrow Toast guard. The post pass now
-          # migrates all remaining runtime notices and owns the final guard.
           sed -i '/# Guard against leaving the two user-reported Toast paths behind\./,$d' .github/scripts/issue88_ui_refine.py
           python3 .github/scripts/issue88_ui_refine.py
           python3 .github/scripts/issue88_ui_refine_post.py
