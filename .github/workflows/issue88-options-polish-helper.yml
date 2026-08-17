@@ -1,0 +1,36 @@
+name: Issue 88 Options polish helper
+
+on:
+  push:
+    branches:
+      - ui/harmonize-app-wide
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[issue88-options-polish-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: ui/harmonize-app-wide
+          fetch-depth: 0
+
+      - name: Harmonize Options
+        run: python .github/scripts/issue88_options_polish.py
+
+      - name: Commit patch
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "No changes produced" >&2
+            exit 1
+          fi
+          git config user.name "H3nb"
+          git config user.email "93023716+H3nb@users.noreply.github.com"
+          git add app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryComposeBridge.kt
+          git commit -m "Harmonize Options hierarchy [issue88-options-polish-applied] [skip ci]"
+          git push origin HEAD:ui/harmonize-app-wide
