@@ -22,6 +22,19 @@ class LibraryListProjectionTest {
         assertEquals(listOf(2L, 3L), project("alpha", 0).map { it.id })
     }
 
+    @Test fun wildcardCharactersAreTreatedAsLiteralSearchText() {
+        val specialRows = listOf(
+            row(10, "100% Fun", "Vendor"),
+            row(11, "Under_score", "Vendor"),
+            row(12, "Ordinary", "Vendor"),
+        )
+        val percent = LibraryListProjection.project(specialRows, "%", 0, Locale.US)
+        val underscore = LibraryListProjection.project(specialRows, "_", 0, Locale.US)
+
+        assertEquals(listOf(10L), percent.map { it.id })
+        assertEquals(listOf(11L), underscore.map { it.id })
+    }
+
     @Test fun titleSortPreservesLegacySecondaryVendorOrdering() {
         val duplicate = row(4, "alpha", "Alpha")
         val result = LibraryListProjection.project(
