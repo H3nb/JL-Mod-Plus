@@ -35,7 +35,7 @@ object LibraryListProjection {
         }
         val sortIndex = sortVariant and Int.MAX_VALUE
         val descending = sortVariant < 0
-        val comparator = when (sortIndex) {
+        val primaryComparator = when (sortIndex) {
             SORT_DATE -> Comparator<LibraryAppRow> { left, right ->
                 val primary = left.id.compareTo(right.id)
                 if (descending) -primary else primary
@@ -52,7 +52,13 @@ object LibraryListProjection {
                 if (orderedPrimary != 0) orderedPrimary
                 else collator.compare(left.vendor, right.vendor)
             }
-        }.thenComparingLong { it.id }
+        }
+        // Keep the stable database-id tie-breaker API-23-safe instead of using
+        // java.util.Comparator.thenComparingLong(), which was added in API 24.
+        val comparator = Comparator<LibraryAppRow> { left, right ->
+            val primary = primaryComparator.compare(left, right)
+            if (primary != 0) primary else left.id.compareTo(right.id)
+        }
 
         return filtered.sortedWith(comparator)
     }
