@@ -30,7 +30,9 @@ jobs:
           for line in body.splitlines():
               lines.append(line[10:] if line.startswith('          ') else line)
           code = '\n'.join(lines) + '\n'
-          # Execute only the transform portion; stop before the YAML steps after the Python heredoc.
+          old = '''replace_once(test, 'composeRule.onNodeWithText("Save as profile").assertDoesNotExist()', 'composeRule.onNodeWithText("Save as new template").assertDoesNotExist()')'''
+          new = '''p = Path(test)\np.write_text(p.read_text().replace('composeRule.onNodeWithText("Save as profile").assertDoesNotExist()', 'composeRule.onNodeWithText("Save as new template").assertDoesNotExist()'))'''
+          code = code.replace(old, new)
           exec(compile(code, 'apply-config-information-redesign.py', 'exec'), {'__name__': '__main__'})
           PY
           git diff --check
