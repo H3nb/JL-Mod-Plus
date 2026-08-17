@@ -37,7 +37,6 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 	private static final String GITHUB_NEW_ISSUE_URL =
 			"https://github.com/H3nb/JL-Mod-Plus/issues/new";
 	private static final String GITHUB_ISSUE_TEMPLATE = "issue-template.md";
-	private static final int MAX_GITHUB_PREFILL_CHARS = 16 * 1024;
 
 	private LocalDiagnosticRepository.Record record;
 	private String exportText;
@@ -131,17 +130,13 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 		subject = DiagnosticExportSanitizer.sanitize(this, subject);
 		String title = getString(R.string.crash_report_github_issue_title, subject);
 		String body = getString(R.string.crash_report_github_intro) + "\n\n" + githubExportText;
-		if (body.length() > MAX_GITHUB_PREFILL_CHARS) {
-			body = body.substring(0, MAX_GITHUB_PREFILL_CHARS)
-					+ getString(R.string.crash_report_github_truncated);
-		}
-		Uri issueUri = Uri.parse(GITHUB_NEW_ISSUE_URL)
-				.buildUpon()
-				.appendQueryParameter("template", GITHUB_ISSUE_TEMPLATE)
-				.appendQueryParameter("title", title)
-				.appendQueryParameter("body", body)
-				.build();
-		Intent issueIntent = new Intent(Intent.ACTION_VIEW, issueUri)
+		String issueUrl = GitHubIssueDraft.buildUrl(
+				GITHUB_NEW_ISSUE_URL,
+				GITHUB_ISSUE_TEMPLATE,
+				title,
+				body,
+				getString(R.string.crash_report_github_truncated));
+		Intent issueIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(issueUrl))
 				.addCategory(Intent.CATEGORY_BROWSABLE);
 		try {
 			startActivity(issueIntent);
