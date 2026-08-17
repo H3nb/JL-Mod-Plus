@@ -35,6 +35,10 @@ object LibraryInstallRecovery {
         val failures: List<Failure>,
     )
 
+    @JvmStatic
+    fun isReservedStorageKey(storageKey: String): Boolean =
+        storageKey == STAGING_DIR_NAME || storageKey == BACKUP_ROOT_NAME
+
     /** Move the current installed directory aside before replacing it. */
     @JvmStatic
     @Throws(IOException::class)
@@ -163,9 +167,7 @@ object LibraryInstallRecovery {
         require(!storageKey.contains('/') && !storageKey.contains('\\')) {
             "Unsafe storageKey: $storageKey"
         }
-        require(storageKey != STAGING_DIR_NAME && storageKey != BACKUP_ROOT_NAME) {
-            "Reserved storageKey: $storageKey"
-        }
+        require(!isReservedStorageKey(storageKey)) { "Reserved storageKey: $storageKey" }
     }
 
     private fun boundedReason(error: Throwable): String {
