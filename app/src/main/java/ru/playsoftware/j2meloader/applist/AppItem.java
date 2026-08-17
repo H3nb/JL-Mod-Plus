@@ -2,37 +2,26 @@
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2018 Nikita Shakarun
  * Copyright 2020-2024 Yury Kharchenko
+ * Modifications for JL-Mod Plus.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
-
 package ru.playsoftware.j2meloader.applist;
-
-import androidx.room.Entity;
-import androidx.room.Index;
-import androidx.room.PrimaryKey;
 
 import ru.playsoftware.j2meloader.config.Config;
 
-@Entity(tableName = "apps", indices = {@Index(value = {"path"}, unique = true)})
+/** Temporary display/shortcut DTO; Library persistence lives in the Room 3 model. */
 public class AppItem {
-	@PrimaryKey(autoGenerate = true)
 	private int id;
 	private String imagePath;
 	private String title;
 	private final String author;
 	private final String version;
 	private final String path;
+	private long iconRevision;
 
 	public AppItem(String path, String title, String author, String version) {
 		this.path = path;
@@ -41,47 +30,17 @@ public class AppItem {
 		this.version = version;
 	}
 
-	public int getId() {
-		return id;
-	}
-
-	public void setId(int id) {
-		this.id = id;
-	}
-
-	public String getPath() {
-		return path;
-	}
-
-	public String getTitle() {
-		return title;
-	}
-
-	public void setTitle(String title) {
-		this.title = title;
-	}
-
-	public String getImagePath() {
-		return imagePath;
-	}
-
-	public void setImagePath(String imagePath) {
-		this.imagePath = imagePath;
-	}
-
-	public String getAuthor() {
-		return author;
-	}
-
-	public String getVersion() {
-		return version;
-	}
-
-	public String getPathExt() {
-		return Config.getAppDir() + path;
-	}
-
-	public String getImagePathExt() {
-		return Config.getAppDir() + path + Config.MIDLET_ICON_FILE;
-	}
+	public int getId() { return id; }
+	public void setId(int id) { this.id = id; }
+	public String getPath() { return path; }
+	public String getTitle() { return title; }
+	public void setTitle(String title) { this.title = title; }
+	public String getImagePath() { return imagePath; }
+	public void setImagePath(String imagePath) { this.imagePath = imagePath; }
+	public String getAuthor() { return author; }
+	public String getVersion() { return version; }
+	public long getIconRevision() { return iconRevision; }
+	public void setIconRevision(long iconRevision) { this.iconRevision = iconRevision; }
+	public String getPathExt() { return Config.getAppDir() + path; }
+	public String getImagePathExt() { return Config.getAppDir() + path + Config.MIDLET_ICON_FILE; }
 }
