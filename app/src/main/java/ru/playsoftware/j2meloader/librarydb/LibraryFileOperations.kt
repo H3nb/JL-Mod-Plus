@@ -52,6 +52,12 @@ object LibraryFileOperations {
         )
     }
 
+    /** Resolve volatile reinstall availability only when the user requests that action. */
+    suspend fun hasRetainedJar(emulatorDir: File, storageKey: String): Boolean =
+        withContext(Dispatchers.IO) {
+            retainedJar(emulatorDir, storageKey).isFile
+        }
+
     fun retainedJar(emulatorDir: File, storageKey: String): File {
         requireSafeStorageKey(storageKey)
         return File(File(File(emulatorDir, "converted"), storageKey), "res.jar")
