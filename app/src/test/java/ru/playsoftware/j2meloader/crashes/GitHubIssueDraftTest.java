@@ -42,6 +42,25 @@ public class GitHubIssueDraftTest {
 	}
 
 	@Test
+	public void pathologicalTitleDoesNotStarveBodyBudget() {
+		StringBuilder title = new StringBuilder();
+		for (int i = 0; i < 1000; i++) {
+			title.append("🚀 & ");
+		}
+
+		String url = GitHubIssueDraft.buildUrl(
+				BASE_URL,
+				"issue-template.md",
+				title.toString(),
+				"important body",
+				"\n[shortened]");
+
+		assertTrue(url.length() <= GitHubIssueDraft.MAX_URL_CHARS);
+		assertTrue(queryValue(url, "title").length() < title.length());
+		assertEquals("important body", queryValue(url, "body"));
+	}
+
+	@Test
 	public void longEncodedBodyIsBoundedAndCarriesNotice() {
 		StringBuilder body = new StringBuilder();
 		for (int i = 0; i < 2000; i++) {
