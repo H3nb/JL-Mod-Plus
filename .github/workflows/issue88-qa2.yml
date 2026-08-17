@@ -62,7 +62,21 @@ jobs:
           fi
 
       - name: Apply physical-device QA refinements
-        run: python3 .github/scripts/issue88_qa2.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/issue88_qa2.py
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryComposeBridge.kt')
+          text = path.read_text(encoding='utf-8')
+          malformed = "append('\n')"
+          corrected = "append('\\n')"
+          count = text.count(malformed)
+          if count != 2:
+              raise SystemExit(f'expected two malformed generated newline literals, found {count}')
+          path.write_text(text.replace(malformed, corrected), encoding='utf-8')
+          PY
 
       - name: Refresh screenshot references
         run: ./gradlew --no-daemon --stacktrace :app:updateEmulatorDebugScreenshotTest
