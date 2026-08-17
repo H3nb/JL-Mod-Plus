@@ -99,10 +99,11 @@ class LibraryRepository(
         request(current)
     }
 
-    fun currentReadyToken(): LibraryGenerationToken? =
-        (mutableState.value as? State.Ready)?.let {
-            LibraryGenerationToken(it.generation, it.emulatorDir)
-        }
+    fun currentReadyToken(): LibraryGenerationToken? {
+        val ready = mutableState.value as? State.Ready ?: return null
+        if (workdirRequests.value?.generation != ready.generation) return null
+        return LibraryGenerationToken(ready.generation, ready.emulatorDir)
+    }
 
     fun currentApp(expected: LibraryGenerationToken, appId: Long): LibraryAppRow? {
         val ready = requireReadyGeneration(expected)
@@ -150,6 +151,7 @@ class LibraryRepository(
     }
 
     fun isReadyGeneration(expected: LibraryGenerationToken): Boolean {
+        if (workdirRequests.value?.generation != expected.generation) return false
         val ready = mutableState.value as? State.Ready ?: return false
         return ready.generation == expected.generation && ready.emulatorDir == expected.emulatorDir
     }
@@ -159,6 +161,8 @@ class LibraryRepository(
     }
 
     private fun request(emulatorDir: File) {
+        // Publishing the new request is the synchronous invalidation boundary. Old-generation reads
+        // and mutations reject immediately even if collectLatest has not reached DB close yet.
         workdirRequests.value = WorkdirRequest(
             generation = nextGeneration.incrementAndGet(),
             emulatorDir = emulatorDir,
@@ -250,6 +254,9 @@ class LibraryRepository(
         workdirRequests.value?.generation == request.generation
 
     private fun requireReadyGeneration(expected: LibraryGenerationToken): State.Ready {
+        check(workdirRequests.value?.generation == expected.generation) {
+            "Stale Library request generation=${expected.generation}"
+        }
         val ready = mutableState.value as? State.Ready
             ?: error("Library is not READY")
         check(ready.generation == expected.generation && ready.emulatorDir == expected.emulatorDir) {
@@ -270,6 +277,9 @@ class LibraryRepository(
         return activeMutex.withLock {
             val active = activeDatabase
                 ?: error("Library database is not READY")
+            check(workdirRequests.value?.generation == active.token.generation) {
+                "Library mutation belongs to an invalidated generation ${active.token.generation}"
+            }
             check(active.token == normalized) {
                 "Stale Library mutation generation=${normalized.generation} " +
                     "workdir=${normalized.emulatorDir.absolutePath}; " +
