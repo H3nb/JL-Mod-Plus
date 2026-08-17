@@ -16,14 +16,16 @@ package ru.playsoftware.j2meloader.librarydb
 
 import java.io.File
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
 /**
  * Conservative repair path for manual filesystem changes and interrupted installs.
  *
  * Normal installer/delete/reinstall flows should mutate the Library DB directly. This reconciler
- * exists to recover the catalog from confident converted-directory name differences without
- * re-reading metadata for unchanged applications.
+ * exists to recover the catalog from confident converted-directory differences and the small
+ * reinstall recovery journal without re-reading metadata for unchanged applications.
  */
 class LibraryReconciler(
     private val scanner: LibraryScanner = LibraryScanner(),
@@ -45,37 +47,75 @@ class LibraryReconciler(
             "Library reconciliation requires a READY database"
         }
 
+        val recovery = withContext(Dispatchers.IO) {
+            LibraryInstallRecovery.recoverFilesystem(emulatorDir)
+        }
+        currentCoroutineContext().ensureActive()
+        val recoveryFailures = recovery.failures.map {
+            LibraryScanner.Failure(it.storageKey, it.reason)
+        }
+        val protectedRecoveryKeys = recovery.failures.mapTo(HashSet()) { it.storageKey }
+
         val initialFilesystemKeys = withContext(Dispatchers.IO) {
             scanner.storageKeys(emulatorDir)
         }
+        currentCoroutineContext().ensureActive()
         val databaseKeys = dao.getStorageKeys().toSet()
         val initialDiff = difference(databaseKeys, initialFilesystemKeys)
-        if (initialDiff.added.isEmpty() && initialDiff.removed.isEmpty()) {
-            return Result(0, 0, emptyList())
+        val keysToScan = initialDiff.added + recovery.refreshStorageKeys
+        if (keysToScan.isEmpty() && initialDiff.removed.isEmpty()) {
+            return Result(0, 0, recoveryFailures)
         }
 
-        val scannedAdded = withContext(Dispatchers.IO) {
-            scanner.scanStorageKeys(emulatorDir, initialDiff.added)
+        val scanned = withContext(Dispatchers.IO) {
+            val scanContext = currentCoroutineContext()
+            scanner.scanStorageKeys(emulatorDir, keysToScan) { _, _, _ ->
+                scanContext.ensureActive()
+            }
         }
+        currentCoroutineContext().ensureActive()
 
         // Revalidate the cheap directory-name snapshot immediately before publishing the DB diff.
-        // A removal must be absent from both snapshots; a directory that disappears only during
-        // this pass is deferred to the next reconciliation instead of losing Library-owned state
-        // after a single observation. Added rows are inserted only when still present at the end.
+        // A removal must be absent from both snapshots. Keys with failed recovery evidence are never
+        // removed automatically because doing so could erase Library-owned state while a backup is
+        // still the only surviving copy of the installed directory.
         val finalFilesystemKeys = withContext(Dispatchers.IO) {
             scanner.storageKeys(emulatorDir)
         }
+        currentCoroutineContext().ensureActive()
         val stillMissing = databaseKeys - finalFilesystemKeys
-        val finalRemoved = initialDiff.removed.intersect(stillMissing)
+        val finalRemoved = initialDiff.removed
+            .intersect(stillMissing)
+            .minus(protectedRecoveryKeys)
         val finalAddedKeys = finalFilesystemKeys - databaseKeys
-        val finalAddedApps = scannedAdded.apps.filter { it.storageKey in finalAddedKeys }
+        val finalRefreshKeys = recovery.refreshStorageKeys.intersect(finalFilesystemKeys)
+        val publishKeys = finalAddedKeys + finalRefreshKeys
+        val scannedForPublish = scanned.apps.filter { it.storageKey in publishKeys }
 
-        dao.applyFilesystemReconciliation(finalAddedApps, finalRemoved)
+        dao.applyFilesystemReconciliation(scannedForPublish, finalRemoved)
+        currentCoroutineContext().ensureActive()
+
+        val publishedRecoveryKeys = scannedForPublish.asSequence()
+            .map { it.storageKey }
+            .filter { it in finalRefreshKeys }
+            .toSet()
+        val cleanupFailures = withContext(Dispatchers.IO) {
+            publishedRecoveryKeys.mapNotNull { storageKey ->
+                if (LibraryInstallRecovery.discardBackup(emulatorDir, storageKey)) {
+                    null
+                } else {
+                    LibraryScanner.Failure(
+                        storageKey,
+                        "Reinstall metadata recovered but backup cleanup failed",
+                    )
+                }
+            }
+        }
 
         return Result(
-            addedCount = finalAddedApps.size,
+            addedCount = scannedForPublish.count { it.storageKey in finalAddedKeys },
             removedCount = finalRemoved.size,
-            failures = scannedAdded.failures,
+            failures = recoveryFailures + scanned.failures + cleanupFailures,
         )
     }
 
