@@ -4,4 +4,5 @@
     <string name="library_indexing_current">Scanning %1$s</string>
     <string name="library_load_error_title">Library unavailable</string>
     <string name="library_retry">Retry</string>
+    <string name="library_reinstall_source_missing">The retained JAR is unavailable for reinstall.</string>
 </resources>
