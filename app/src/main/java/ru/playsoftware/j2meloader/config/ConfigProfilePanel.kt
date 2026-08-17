@@ -1,6 +1,6 @@
 /*
- * Licensed under the Apache License, Version 2.0 (the "License");
- */
+* Licensed under the Apache License, Version 2.0 (the "License");
+*/
 package ru.playsoftware.j2meloader.config
 
 import androidx.compose.foundation.clickable
@@ -75,58 +75,58 @@ internal fun ConfigProfilePanel(
 
     ConfigSection(title = stringResource(R.string.profiles)) {
         ConfigValuePreference(
-  title = currentTitle,
-  description = summary,
-  value = stringResource(R.string.profile_choose_or_manage),
-  onClick = { managerVisible = true },
+            title = currentTitle,
+            description = summary,
+            value = stringResource(R.string.profile_choose_or_manage),
+            onClick = { managerVisible = true },
         )
         if (status.modified && status.sourceProfile != null) {
-  ConfigActionPreference(
-      title = stringResource(R.string.profile_update_template),
-      description = stringResource(R.string.profile_update_template_summary, status.sourceProfile),
-      onClick = { events.onUpdateTemplate(status.sourceProfile) },
-  )
-  ConfigActionPreference(
-      title = stringResource(R.string.profile_save_as_new_template),
-      description = stringResource(R.string.profile_save_as_new_template_summary),
-      onClick = { nameRequest = TemplateNameRequest.Create },
-  )
+            ConfigActionPreference(
+                title = stringResource(R.string.profile_update_template),
+                description = stringResource(R.string.profile_update_template_summary, status.sourceProfile),
+                onClick = { events.onUpdateTemplate(status.sourceProfile) },
+            )
+            ConfigActionPreference(
+                title = stringResource(R.string.profile_save_as_new_template),
+                description = stringResource(R.string.profile_save_as_new_template_summary),
+                onClick = { nameRequest = TemplateNameRequest.Create },
+            )
         } else if (status.activeProfile == null && !status.builtInDefault) {
-  ConfigActionPreference(
-      title = stringResource(R.string.profile_save_as_new_template),
-      description = stringResource(R.string.profile_save_as_new_template_summary),
-      onClick = { nameRequest = TemplateNameRequest.Create },
-  )
+            ConfigActionPreference(
+                title = stringResource(R.string.profile_save_as_new_template),
+                description = stringResource(R.string.profile_save_as_new_template_summary),
+                onClick = { nameRequest = TemplateNameRequest.Create },
+            )
         }
     }
 
     if (managerVisible) {
         ConfigTemplateManagerDialog(
-  status = status,
-  templates = templates,
-  events = events,
-  onDismissRequest = { managerVisible = false },
-  onCreate = { nameRequest = TemplateNameRequest.Create },
-  onRename = { name -> nameRequest = TemplateNameRequest.Rename(name) },
+            status = status,
+            templates = templates,
+            events = events,
+            onDismissRequest = { managerVisible = false },
+            onCreate = { nameRequest = TemplateNameRequest.Create },
+            onRename = { name -> nameRequest = TemplateNameRequest.Rename(name) },
         )
     }
 
     nameRequest?.let { request ->
         ConfigTemplateNameDialog(
-  title = stringResource(
-      if (request is TemplateNameRequest.Rename) R.string.action_context_rename
-      else R.string.profile_save_as_new_template,
-  ),
-  initialName = (request as? TemplateNameRequest.Rename)?.oldName.orEmpty(),
-  existingNames = templates.map { it.name },
-  onDismissRequest = { nameRequest = null },
-  onConfirm = { name ->
-      nameRequest = null
-      when (request) {
-TemplateNameRequest.Create -> events.onSaveTemplate(name)
-is TemplateNameRequest.Rename -> events.onRenameTemplate(request.oldName, name)
-      }
-  },
+            title = stringResource(
+            if (request is TemplateNameRequest.Rename) R.string.action_context_rename
+            else R.string.profile_save_as_new_template,
+            ),
+            initialName = (request as? TemplateNameRequest.Rename)?.oldName.orEmpty(),
+            existingNames = templates.map { it.name },
+            onDismissRequest = { nameRequest = null },
+            onConfirm = { name ->
+                nameRequest = null
+                when (request) {
+                    TemplateNameRequest.Create -> events.onSaveTemplate(name)
+                    is TemplateNameRequest.Rename -> events.onRenameTemplate(request.oldName, name)
+                }
+            },
         )
     }
 }
@@ -147,127 +147,127 @@ private fun ConfigTemplateManagerDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-  Surface(
-      modifier = Modifier.fillMaxWidth(0.94f).widthIn(max = 560.dp).heightIn(max = 680.dp),
-      shape = MaterialTheme.shapes.extraLarge,
-      color = MaterialTheme.colorScheme.surfaceContainerHigh,
-      tonalElevation = 6.dp,
-  ) {
-      Column(modifier = Modifier.padding(vertical = 12.dp)) {
-Text(
-    text = stringResource(R.string.profile_templates_title),
-    style = MaterialTheme.typography.titleLarge,
-    modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
-)
-Text(
-    text = stringResource(R.string.profile_templates_summary),
-    style = MaterialTheme.typography.bodyMedium,
-    color = MaterialTheme.colorScheme.onSurfaceVariant,
-    modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
-)
-LazyColumn(modifier = Modifier.weight(1f, fill = false).fillMaxWidth()) {
-    item(key = "__built_in__") {
-        TemplateRow(
-  name = stringResource(R.string.profile_builtin_settings),
-  summary = stringResource(R.string.profile_builtin_settings_summary),
-  isActive = status.builtInDefault,
-  isModifiedSource = false,
-  isDefault = status.defaultProfile == null,
-  onClick = {
-      events.onApplyBuiltInTemplate()
-      onDismissRequest()
-  },
-  onMore = if (status.defaultProfile == null) null else ({ events.onSetDefaultTemplate(null) }),
-  builtIn = true,
-        )
-    }
-    items(templates, key = { it.name }) { template ->
-        TemplateRow(
-  name = template.name,
-  summary = stringResource(R.string.profile_template_summary),
-  isActive = status.activeProfile == template.name,
-  isModifiedSource = status.modified && status.sourceProfile == template.name,
-  isDefault = template.isDefault,
-  onClick = {
-      events.onApplyTemplate(template.name)
-      onDismissRequest()
-  },
-  onMore = { actionTarget = template },
-        )
-    }
-}
-Row(
-    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-    horizontalArrangement = Arrangement.End,
-) {
-    TextButton(onClick = onCreate) { Text(stringResource(R.string.profile_save_current_template)) }
-    TextButton(onClick = onDismissRequest) { Text(stringResource(android.R.string.cancel)) }
-}
-      }
-  }
+            Surface(
+                modifier = Modifier.fillMaxWidth(0.94f).widthIn(max = 560.dp).heightIn(max = 680.dp),
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                tonalElevation = 6.dp,
+            ) {
+                Column(modifier = Modifier.padding(vertical = 12.dp)) {
+                    Text(
+                        text = stringResource(R.string.profile_templates_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
+                    )
+                    Text(
+                        text = stringResource(R.string.profile_templates_summary),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
+                    )
+                    LazyColumn(modifier = Modifier.weight(1f, fill = false).fillMaxWidth()) {
+                        item(key = "__built_in__") {
+                            TemplateRow(
+                                name = stringResource(R.string.profile_builtin_settings),
+                                summary = stringResource(R.string.profile_builtin_settings_summary),
+                                isActive = status.builtInDefault,
+                                isModifiedSource = false,
+                                isDefault = status.defaultProfile == null,
+                                onClick = {
+                                    events.onApplyBuiltInTemplate()
+                                    onDismissRequest()
+                                },
+                                onMore = if (status.defaultProfile == null) null else ({ events.onSetDefaultTemplate(null) }),
+                                builtIn = true,
+                            )
+                        }
+                        items(templates, key = { it.name }) { template ->
+                            TemplateRow(
+                                name = template.name,
+                                summary = stringResource(R.string.profile_template_summary),
+                                isActive = status.activeProfile == template.name,
+                                isModifiedSource = status.modified && status.sourceProfile == template.name,
+                                isDefault = template.isDefault,
+                                onClick = {
+                                    events.onApplyTemplate(template.name)
+                                    onDismissRequest()
+                                },
+                                onMore = { actionTarget = template },
+                            )
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        TextButton(onClick = onCreate) { Text(stringResource(R.string.profile_save_current_template)) }
+                        TextButton(onClick = onDismissRequest) { Text(stringResource(android.R.string.cancel)) }
+                    }
+                }
+            }
         }
     }
 
     actionTarget?.let { template ->
         AlertDialog(
-  onDismissRequest = { actionTarget = null },
-  title = { Text(template.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-  text = {
-      Column {
-if (!template.isDefault) {
-    TextButton(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = {
-  actionTarget = null
-  events.onSetDefaultTemplate(template.name)
-        },
-    ) { Text(stringResource(R.string.set_as_default), modifier = Modifier.fillMaxWidth()) }
-}
-if (status.modified && status.sourceProfile == template.name) {
-    TextButton(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = {
-  actionTarget = null
-  events.onUpdateTemplate(template.name)
-        },
-    ) { Text(stringResource(R.string.profile_update_template), modifier = Modifier.fillMaxWidth()) }
-}
-TextButton(
-    modifier = Modifier.fillMaxWidth(),
-    onClick = {
-        actionTarget = null
-        onRename(template.name)
-    },
-) { Text(stringResource(R.string.action_context_rename), modifier = Modifier.fillMaxWidth()) }
-TextButton(
-    modifier = Modifier.fillMaxWidth(),
-    onClick = {
-        actionTarget = null
-        deleteTarget = template
-    },
-) { Text(stringResource(R.string.action_context_delete), modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.error) }
-      }
-  },
-  confirmButton = {},
+            onDismissRequest = { actionTarget = null },
+            title = { Text(template.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+            text = {
+                Column {
+                    if (!template.isDefault) {
+                        TextButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            actionTarget = null
+                            events.onSetDefaultTemplate(template.name)
+                        },
+                        ) { Text(stringResource(R.string.set_as_default), modifier = Modifier.fillMaxWidth()) }
+                    }
+                    if (status.modified && status.sourceProfile == template.name) {
+                        TextButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            actionTarget = null
+                            events.onUpdateTemplate(template.name)
+                        },
+                        ) { Text(stringResource(R.string.profile_update_template), modifier = Modifier.fillMaxWidth()) }
+                    }
+                    TextButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        actionTarget = null
+                        onRename(template.name)
+                    },
+                    ) { Text(stringResource(R.string.action_context_rename), modifier = Modifier.fillMaxWidth()) }
+                    TextButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        actionTarget = null
+                        deleteTarget = template
+                    },
+                    ) { Text(stringResource(R.string.action_context_delete), modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.error) }
+                }
+            },
+            confirmButton = {},
         )
     }
 
     deleteTarget?.let { template ->
         AlertDialog(
-  onDismissRequest = { deleteTarget = null },
-  title = { Text(stringResource(R.string.action_context_delete)) },
-  text = { Text(stringResource(R.string.profile_delete_template_message, template.name)) },
-  dismissButton = {
-      TextButton(onClick = { deleteTarget = null }) { Text(stringResource(android.R.string.cancel)) }
-  },
-  confirmButton = {
-      TextButton(
-onClick = {
-    deleteTarget = null
-    events.onDeleteTemplate(template.name)
-},
-      ) { Text(stringResource(R.string.action_context_delete), color = MaterialTheme.colorScheme.error) }
-  },
+            onDismissRequest = { deleteTarget = null },
+            title = { Text(stringResource(R.string.action_context_delete)) },
+            text = { Text(stringResource(R.string.profile_delete_template_message, template.name)) },
+            dismissButton = {
+                TextButton(onClick = { deleteTarget = null }) { Text(stringResource(android.R.string.cancel)) }
+            },
+            confirmButton = {
+                TextButton(
+                onClick = {
+                    deleteTarget = null
+                    events.onDeleteTemplate(template.name)
+                },
+                ) { Text(stringResource(R.string.action_context_delete), color = MaterialTheme.colorScheme.error) }
+            },
         )
     }
 }
@@ -289,35 +289,35 @@ private fun TemplateRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-  Text(text = name, style = MaterialTheme.typography.bodyLarge, fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal)
-  Text(
-      text = buildString {
-append(summary)
-if (isActive) append(" · ").append(stringResource(R.string.profile_active_badge))
-else if (isModifiedSource) append(" · ").append(stringResource(R.string.profile_modified_badge))
-      },
-      style = MaterialTheme.typography.bodySmall,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-  )
+            Text(text = name, style = MaterialTheme.typography.bodyLarge, fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal)
+            Text(
+                text = buildString {
+                    append(summary)
+                    if (isActive) append(" · ").append(stringResource(R.string.profile_active_badge))
+                    else if (isModifiedSource) append(" · ").append(stringResource(R.string.profile_modified_badge))
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
         if (isDefault) {
-  Text(
-      text = stringResource(R.string.profile_default_badge_short),
-      style = MaterialTheme.typography.labelMedium,
-      color = MaterialTheme.colorScheme.primary,
-  )
+            Text(
+                text = stringResource(R.string.profile_default_badge_short),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
         }
         if (onMore != null) {
-  if (builtIn) {
-      TextButton(onClick = onMore) { Text(stringResource(R.string.set_as_default)) }
-  } else {
-      IconButton(onClick = onMore) {
-Icon(
-    painter = painterResource(R.drawable.ic_more_vert),
-    contentDescription = stringResource(R.string.more),
-)
-      }
-  }
+            if (builtIn) {
+                TextButton(onClick = onMore) { Text(stringResource(R.string.set_as_default)) }
+            } else {
+                IconButton(onClick = onMore) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_more_vert),
+                        contentDescription = stringResource(R.string.more),
+                    )
+                }
+            }
         }
     }
 }
@@ -338,27 +338,27 @@ private fun ConfigTemplateNameDialog(
         onDismissRequest = onDismissRequest,
         title = { Text(title) },
         text = {
-  Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-      OutlinedTextField(
-value = value,
-onValueChange = { value = it },
-singleLine = true,
-modifier = Modifier.fillMaxWidth(),
-label = { Text(stringResource(R.string.profile_name_label)) },
-isError = duplicate,
-      )
-      if (duplicate) {
-Text(
-    text = stringResource(R.string.profile_name_exists),
-    color = MaterialTheme.colorScheme.error,
-    style = MaterialTheme.typography.bodySmall,
-)
-      }
-  }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                value = value,
+                onValueChange = { value = it },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(stringResource(R.string.profile_name_label)) },
+                isError = duplicate,
+                )
+                if (duplicate) {
+                    Text(
+                    text = stringResource(R.string.profile_name_exists),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
         },
         dismissButton = { TextButton(onClick = onDismissRequest) { Text(stringResource(android.R.string.cancel)) } },
         confirmButton = {
-  TextButton(enabled = valid, onClick = { onConfirm(trimmed) }) { Text(stringResource(R.string.save)) }
+            TextButton(enabled = valid, onClick = { onConfirm(trimmed) }) { Text(stringResource(R.string.save)) }
         },
     )
 }

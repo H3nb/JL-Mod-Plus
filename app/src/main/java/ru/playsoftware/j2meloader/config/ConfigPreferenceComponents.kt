@@ -1,6 +1,6 @@
 /*
- * Licensed under the Apache License, Version 2.0 (the "License");
- */
+* Licensed under the Apache License, Version 2.0 (the "License");
+*/
 package ru.playsoftware.j2meloader.config
 
 import androidx.compose.foundation.background
@@ -46,17 +46,17 @@ internal fun ConfigSection(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
-  text = title,
-  style = MaterialTheme.typography.labelLarge,
-  color = MaterialTheme.colorScheme.primary,
-  modifier = Modifier.padding(horizontal = 6.dp),
+            text = title,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(horizontal = 6.dp),
         )
         Surface(
-  modifier = Modifier.fillMaxWidth(),
-  shape = RoundedCornerShape(18.dp),
-  color = MaterialTheme.colorScheme.surfaceContainerLow,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
         ) {
-  Column(content = content)
+            Column(content = content)
         }
     }
 }
@@ -74,46 +74,46 @@ internal fun ConfigValuePreference(
 ) {
     Column(
         modifier = modifier
-  .fillMaxWidth()
-  .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-  .padding(horizontal = 16.dp, vertical = 11.dp),
+            .fillMaxWidth()
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 11.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(
-  text = title,
-  style = MaterialTheme.typography.bodyLarge,
-  color = if (enabled) MaterialTheme.colorScheme.onSurface
-  else MaterialTheme.colorScheme.onSurfaceVariant,
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            color = if (enabled) MaterialTheme.colorScheme.onSurface
+            else MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-  text = description,
-  style = MaterialTheme.typography.bodySmall,
-  color = MaterialTheme.colorScheme.onSurfaceVariant,
+            text = description,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         if (message != null) {
-  ConfigInlineMessage(message, messageLevel)
+            ConfigInlineMessage(message, messageLevel)
         }
         Row(
-  modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-  verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-  Text(
-      text = value,
-      modifier = Modifier.weight(1f),
-      style = MaterialTheme.typography.labelLarge,
-      fontWeight = FontWeight.SemiBold,
-      color = if (enabled) MaterialTheme.colorScheme.primary
-      else MaterialTheme.colorScheme.onSurfaceVariant,
-      maxLines = 2,
-      overflow = TextOverflow.Ellipsis,
-  )
-  if (enabled) {
-      Text(
-text = "›",
-style = MaterialTheme.typography.titleLarge,
-color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-  }
+            Text(
+                text = value,
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = if (enabled) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (enabled) {
+                Text(
+                    text = "›",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
@@ -130,23 +130,23 @@ internal fun ConfigSwitchPreference(
 ) {
     Row(
         modifier = modifier
-  .fillMaxWidth()
-  .heightIn(min = 64.dp)
-  .clickable { onCheckedChange(!checked) }
-  .padding(horizontal = 16.dp, vertical = 10.dp),
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .clickable { onCheckedChange(!checked) }
+            .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-  Text(text = title, style = MaterialTheme.typography.bodyLarge)
-  Text(
-      text = description,
-      style = MaterialTheme.typography.bodySmall,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-  )
-  if (message != null) {
-      ConfigInlineMessage(message, messageLevel)
-  }
+            Text(text = title, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (message != null) {
+                ConfigInlineMessage(message, messageLevel)
+            }
         }
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
@@ -176,15 +176,15 @@ internal fun ConfigChoicePreference(
     )
     if (dialogVisible) {
         ConfigChoiceDialog(
-  title = title,
-  description = description,
-  selected = selected,
-  options = options,
-  onDismissRequest = { dialogVisible = false },
-  onSelected = { index ->
-      dialogVisible = false
-      onSelected(index)
-  },
+            title = title,
+            description = description,
+            selected = selected,
+            options = options,
+            onDismissRequest = { dialogVisible = false },
+            onSelected = { index ->
+                dialogVisible = false
+                onSelected(index)
+            },
         )
     }
 }
@@ -214,17 +214,17 @@ internal fun ConfigNumberPreference(
     )
     if (dialogVisible) {
         ConfigNumberDialog(
-  title = title,
-  description = description,
-  initialValue = value,
-  label = null,
-  keyboardType = keyboardType,
-  valueSuffix = valueSuffix,
-  onDismissRequest = { dialogVisible = false },
-  onConfirm = { next ->
-      dialogVisible = false
-      onValueChange(next)
-  },
+            title = title,
+            description = description,
+            initialValue = value,
+            label = null,
+            keyboardType = keyboardType,
+            valueSuffix = valueSuffix,
+            onDismissRequest = { dialogVisible = false },
+            onConfirm = { next ->
+                dialogVisible = false
+                onValueChange(next)
+            },
         )
     }
 }
@@ -238,36 +238,36 @@ internal fun ConfigColorPreference(
 ) {
     Column(
         modifier = Modifier
-  .fillMaxWidth()
-  .clickable(role = Role.Button, onClick = onClick)
-  .padding(horizontal = 16.dp, vertical = 11.dp),
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 11.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(text = title, style = MaterialTheme.typography.bodyLarge)
         Text(
-  text = description,
-  style = MaterialTheme.typography.bodySmall,
-  color = MaterialTheme.colorScheme.onSurfaceVariant,
+            text = description,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Row(
-  modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-  verticalAlignment = Alignment.CenterVertically,
-  horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-  Box(
-      modifier = Modifier
-.size(24.dp)
-.clip(RoundedCornerShape(6.dp))
-.background(configColor(value)),
-  )
-  Text(
-      text = "#${value.ifEmpty { "000000" }}",
-      modifier = Modifier.weight(1f),
-      style = MaterialTheme.typography.labelLarge,
-      fontWeight = FontWeight.SemiBold,
-      color = MaterialTheme.colorScheme.primary,
-  )
-  Text("›", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(configColor(value)),
+            )
+            Text(
+                text = "#${value.ifEmpty { "000000" }}",
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            Text("›", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -286,27 +286,27 @@ internal fun ConfigActionPreference(
         shape = RoundedCornerShape(12.dp),
     ) {
         Column(
-  modifier = Modifier
-      .fillMaxWidth()
-      .clickable(role = Role.Button, onClick = onClick)
-      .padding(horizontal = 16.dp, vertical = 11.dp),
-  verticalArrangement = Arrangement.spacedBy(3.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(role = Role.Button, onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 11.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
         ) {
-  Text(
-      text = title,
-      style = MaterialTheme.typography.bodyLarge,
-      color = when {
-emphasized -> MaterialTheme.colorScheme.onErrorContainer
-destructive -> MaterialTheme.colorScheme.error
-else -> MaterialTheme.colorScheme.onSurface
-      },
-  )
-  Text(
-      text = description,
-      style = MaterialTheme.typography.bodySmall,
-      color = if (emphasized) MaterialTheme.colorScheme.onErrorContainer
-      else MaterialTheme.colorScheme.onSurfaceVariant,
-  )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = when {
+                    emphasized -> MaterialTheme.colorScheme.onErrorContainer
+                    destructive -> MaterialTheme.colorScheme.error
+                    else -> MaterialTheme.colorScheme.onSurface
+                },
+            )
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (emphasized) MaterialTheme.colorScheme.onErrorContainer
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -320,19 +320,19 @@ internal fun ConfigDisclosurePreference(
 ) {
     Row(
         modifier = Modifier
-  .fillMaxWidth()
-  .clickable { onExpandedChange(!expanded) }
-  .padding(horizontal = 16.dp, vertical = 10.dp),
+            .fillMaxWidth()
+            .clickable { onExpandedChange(!expanded) }
+            .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-  Text(text = title, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
-  Text(text = description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text = title, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+            Text(text = description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Text(
-  text = if (expanded) "⌃" else "⌄",
-  style = MaterialTheme.typography.titleMedium,
-  color = MaterialTheme.colorScheme.primary,
+            text = if (expanded) "⌃" else "⌄",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
         )
     }
 }
@@ -363,10 +363,10 @@ private fun ConfigInlineMessage(text: String, level: ConfigMessageLevel) {
     }
     Surface(shape = RoundedCornerShape(10.dp), color = container) {
         Text(
-  text = prefix + text,
-  modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
-  style = MaterialTheme.typography.bodySmall,
-  color = content,
+            text = prefix + text,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = content,
         )
     }
 }
