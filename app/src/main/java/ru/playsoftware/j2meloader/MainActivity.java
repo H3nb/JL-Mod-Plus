@@ -27,6 +27,7 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.compose.ui.platform.ComposeView;
@@ -35,14 +36,16 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 
 import java.io.File;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 
-import ru.playsoftware.j2meloader.applist.AppListModel;
 import ru.playsoftware.j2meloader.applist.AppsListFragment;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.crashes.CrashReporter;
 import ru.playsoftware.j2meloader.crashes.CrashReportsActivity;
 import ru.playsoftware.j2meloader.crashes.MidletFailureRecovery;
 import ru.playsoftware.j2meloader.crashes.ProcessExitStore;
+import ru.playsoftware.j2meloader.librarydb.LibraryViewModel;
 import ru.playsoftware.j2meloader.util.Constants;
 import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 import ru.playsoftware.j2meloader.util.FileUtils;
@@ -52,15 +55,18 @@ import ru.woesss.j2me.installer.InstallerDialog;
 
 public class MainActivity extends AppCompatActivity {
 	private static final long DIAGNOSTIC_RECOVERY_RETRY_MILLIS = 200L;
+	private static final String STATE_PENDING_INSTALLERS = "MainActivity.pendingInstallers";
+	private static final String INSTALLER_TAG = "installer";
 
-	private final StoragePermissionHelper storagePermissionHelper = new StoragePermissionHelper(this, this::onPermissionResult);
-
+	private final StoragePermissionHelper storagePermissionHelper =
+			new StoragePermissionHelper(this, this::onPermissionResult);
 	private final ActivityResultLauncher<String> openDirLauncher = registerForActivityResult(
 			new PickDirResultContract(),
 			this::onPickDirResult
 	);
+	private final ArrayDeque<Uri> pendingInstallerUris = new ArrayDeque<>();
 
-	private AppListModel appListModel;
+	private LibraryViewModel libraryViewModel;
 	private MainActivityComposeController mainComposeController;
 	private String lastRecoveryNoticeId;
 	private boolean diagnosticRecoveryRetryScheduled;
@@ -79,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
 		root.addView(overlay, new FrameLayout.LayoutParams(
 				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 		setContentView(root);
+
 		mainComposeController = new MainActivityComposeController(overlay, new MainHostActions() {
 			@Override
 			public void onViewMidletReports() {
@@ -130,43 +137,89 @@ public class MainActivity extends AppCompatActivity {
 				finish();
 			}
 		});
-		storagePermissionHelper.launch(this);
-		appListModel = new ViewModelProvider(this).get(AppListModel.class);
+
+		libraryViewModel = new ViewModelProvider(this).get(LibraryViewModel.class);
+		libraryViewModel.observe(this, ignored -> maybeShowPendingInstaller());
+		restorePendingInstallerState(savedInstanceState);
+
 		if (savedInstanceState == null) {
-			Intent intent = getIntent();
-			Uri uri = null;
-			if ((intent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0) {
-				uri = intent.getData();
-			}
-			AppsListFragment fragment = AppsListFragment.newInstance(uri);
 			getSupportFragmentManager().beginTransaction()
-					.replace(R.id.container, fragment).commit();
+					.replace(R.id.container, AppsListFragment.newInstance(null)).commit();
 		}
+
+		storagePermissionHelper.launch(this);
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
+	}
+
+	@Override
+	protected void onSaveInstanceState(@NonNull Bundle outState) {
+		ArrayList<String> pending = new ArrayList<>(pendingInstallerUris.size());
+		for (Uri uri : pendingInstallerUris) {
+			pending.add(uri.toString());
+		}
+		outState.putStringArrayList(STATE_PENDING_INSTALLERS, pending);
+		super.onSaveInstanceState(outState);
 	}
 
 	@Override
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
 		if (hasFocus) {
+			maybeShowPendingInstaller();
 			CrashReporter.requestDiagnosticRefresh(getApplication());
 			maybeShowDiagnosticRecovery();
 		}
 	}
 
-	private void maybeShowDiagnosticRecovery() {
-		if (isFinishing() || isDestroyed()) {
-			return;
-		}
-		if (mainComposeController != null && mainComposeController.isDialogVisible()) {
-			return;
-		}
-		if (getSupportFragmentManager().findFragmentByTag("installer") != null) {
-			return;
-		}
+	/** Single READY gate used by initial intents, onNewIntent(), and the app-owned file picker. */
+	public void requestInstaller(@Nullable Uri uri) {
+		if (uri == null) return;
+		pendingInstallerUris.addLast(uri);
+		maybeShowPendingInstaller();
+	}
 
-		// Historical exit reconciliation and bounded retention run on the diagnostics background
-		// thread. Window focus only polls readiness, then reads the already-maintained projection.
+	private void restorePendingInstallerState(@Nullable Bundle savedInstanceState) {
+		if (savedInstanceState != null) {
+			ArrayList<String> pending = savedInstanceState.getStringArrayList(STATE_PENDING_INSTALLERS);
+			if (pending != null) {
+				for (String value : pending) {
+					if (value != null && !value.isEmpty()) pendingInstallerUris.addLast(Uri.parse(value));
+				}
+			}
+			return;
+		}
+		Intent intent = getIntent();
+		if ((intent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0) {
+			Uri uri = intent.getData();
+			if (uri != null) pendingInstallerUris.addLast(uri);
+		}
+	}
+
+	private void maybeShowPendingInstaller() {
+		if (pendingInstallerUris.isEmpty() || isFinishing() || isDestroyed()) return;
+		if (libraryViewModel == null || libraryViewModel.readyWorkdir() == null) return;
+		if (getSupportFragmentManager().isStateSaved()) return;
+		if (getSupportFragmentManager().findFragmentByTag(INSTALLER_TAG) != null) return;
+		if (mainComposeController != null && mainComposeController.isDialogVisible()) return;
+
+		Uri uri = pendingInstallerUris.peekFirst();
+		if (uri == null) return;
+		InstallerDialog.newInstance(uri).show(getSupportFragmentManager(), INSTALLER_TAG);
+		pendingInstallerUris.removeFirst();
+
+		// Keep Intent data durable while bootstrap is pending, then clear it after successful handoff
+		// so process recreation cannot reopen an installer that has already been presented.
+		Intent intent = getIntent();
+		if (uri.equals(intent.getData())) {
+			intent.setData(null);
+		}
+	}
+
+	private void maybeShowDiagnosticRecovery() {
+		if (isFinishing() || isDestroyed()) return;
+		if (mainComposeController != null && mainComposeController.isDialogVisible()) return;
+		if (getSupportFragmentManager().findFragmentByTag(INSTALLER_TAG) != null) return;
+
 		if (!CrashReporter.isDiagnosticRefreshReady()) {
 			scheduleDiagnosticRecoveryRetry();
 			return;
@@ -176,9 +229,7 @@ public class MainActivity extends AppCompatActivity {
 				MidletFailureRecovery.findPendingStoredFailure(this);
 		if (failure != null) {
 			String noticeId = "midlet:" + failure.getEventId();
-			if (noticeId.equals(lastRecoveryNoticeId)) {
-				return;
-			}
+			if (noticeId.equals(lastRecoveryNoticeId)) return;
 			lastRecoveryNoticeId = noticeId;
 			String midletName = failure.getMidletName();
 			int messageRes = midletName == null || midletName.trim().isEmpty()
@@ -187,15 +238,12 @@ public class MainActivity extends AppCompatActivity {
 			String message = messageRes == R.string.midlet_failure_recovery_message
 					? getString(messageRes)
 					: getString(messageRes, midletName);
-
 			mainComposeController.showMidletFailure(message);
 			return;
 		}
 
 		ProcessExitStore.PendingExit exit = ProcessExitStore.findPendingStoredExit(this);
-		if (exit == null || exit.getId().equals(lastRecoveryNoticeId)) {
-			return;
-		}
+		if (exit == null || exit.getId().equals(lastRecoveryNoticeId)) return;
 		lastRecoveryNoticeId = exit.getId();
 		String midletName = exit.getMidletName();
 		String message;
@@ -207,14 +255,11 @@ public class MainActivity extends AppCompatActivity {
 		} else {
 			message = getString(R.string.process_exit_recovery_message, exit.getReason());
 		}
-
 		mainComposeController.showProcessExit(message);
 	}
 
 	private void scheduleDiagnosticRecoveryRetry() {
-		if (diagnosticRecoveryRetryScheduled || isFinishing() || isDestroyed()) {
-			return;
-		}
+		if (diagnosticRecoveryRetryScheduled || isFinishing() || isDestroyed()) return;
 		diagnosticRecoveryRetryScheduled = true;
 		getWindow().getDecorView().postDelayed(() -> {
 			diagnosticRecoveryRetryScheduled = false;
@@ -229,7 +274,7 @@ public class MainActivity extends AppCompatActivity {
 		File dir = new File(emulatorDir);
 		if (dir.isDirectory() && dir.canWrite()) {
 			FileUtils.initWorkDir(dir);
-			appListModel.setEmulatorDirectory(emulatorDir);
+			libraryViewModel.setEmulatorDirectory(emulatorDir);
 			return;
 		}
 		if (dir.exists() || dir.getParentFile() == null || !dir.getParentFile().isDirectory()
@@ -254,14 +299,11 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void onPickDirResult(Uri uri) {
-		// PickDirResultContract is backed by the app's raw-path picker. Keep this
-		// boundary explicit: external content URIs are installer inputs, not workdir paths.
 		if (uri == null || !"file".equals(uri.getScheme()) || uri.getPath() == null) {
 			checkAndCreateDirs();
 			return;
 		}
-		File file = new File(uri.getPath());
-		applyWorkDir(file);
+		applyWorkDir(new File(uri.getPath()));
 	}
 
 	private void alertCreateDir() {
@@ -280,15 +322,14 @@ public class MainActivity extends AppCompatActivity {
 				.edit()
 				.putString(Constants.PREF_EMULATOR_DIR, path)
 				.apply();
+		// Do not wait for the SharedPreferences listener to establish the new generation.
+		libraryViewModel.setEmulatorDirectory(path);
 	}
 
 	@Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
 		setIntent(intent);
-		Uri uri = intent.getData();
-		if (uri != null) {
-			InstallerDialog.newInstance(uri).show(getSupportFragmentManager(), "installer");
-		}
+		requestInstaller(intent.getData());
 	}
 }
