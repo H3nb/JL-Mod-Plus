@@ -26,7 +26,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
@@ -193,7 +192,14 @@ final class CrashContextStore {
 				bases.add(base);
 			}
 		}
-		bases.sort(Comparator.comparingLong(CrashContextStore::atomicLastModified).reversed());
+		Collections.sort(bases, (left, right) -> {
+			long leftModified = atomicLastModified(left);
+			long rightModified = atomicLastModified(right);
+			if (leftModified == rightModified) {
+				return 0;
+			}
+			return leftModified < rightModified ? 1 : -1;
+		});
 		long now = System.currentTimeMillis();
 		String currentRun = currentRunId();
 		int kept = 0;
