@@ -74,7 +74,7 @@ text = replace_once(text, more_button, "", "More About action")
 LIBRARY.write_text(text, encoding="utf-8")
 
 # Remove the no-longer-reachable More preview and its stale reference image.
-test = SCREENSHOT_TEST.read_text(encoding="utf-8")n
+test = SCREENSHOT_TEST.read_text(encoding="utf-8")
 more_preview = '''@PreviewTest\n@Preview(name = "More dialog", widthDp = 360, heightDp = 640, showBackground = true)\n@Composable\nfun MoreDialogScreenshot() {\n    JLModPlusTheme(darkTheme = false) {\n        LibraryInformationDialog(\n            dialog = LibraryInfoDialog.More,\n            onDismiss = {},\n            onOpen = {},\n        )\n    }\n}\n\n'''
 test = replace_once(test, more_preview, "", "More screenshot preview")
 SCREENSHOT_TEST.write_text(test, encoding="utf-8")
