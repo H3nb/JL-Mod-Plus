@@ -70,16 +70,6 @@ jobs:
           :app:assembleEmulatorDebug
           :app:assembleEmulatorDebugAndroidTest
 
-      # Temporary until the compiler-produced Room v1 schema is checked into this PR.
-      - name: Upload Room schemas
-        if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: JL-Mod-Plus-room-schemas
-          path: app/schemas/
-          if-no-files-found: warn
-          retention-days: 1
-
       - name: Upload lint reports
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
