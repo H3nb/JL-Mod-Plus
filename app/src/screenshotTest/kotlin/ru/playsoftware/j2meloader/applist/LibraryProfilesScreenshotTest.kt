@@ -379,19 +379,6 @@ fun HelpDialogScreenshot() {
 }
 
 @PreviewTest
-@Preview(name = "More dialog", widthDp = 360, heightDp = 640, showBackground = true)
-@Composable
-fun MoreDialogScreenshot() {
-    JLModPlusTheme(darkTheme = false) {
-        LibraryInformationDialog(
-            dialog = LibraryInfoDialog.More,
-            onDismiss = {},
-            onOpen = {},
-        )
-    }
-}
-
-@PreviewTest
 @Preview(name = "Licenses dialog", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
 fun LicensesDialogScreenshot() {

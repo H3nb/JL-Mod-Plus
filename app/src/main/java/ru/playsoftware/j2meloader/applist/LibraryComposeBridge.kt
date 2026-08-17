@@ -328,7 +328,6 @@ class LibraryComposeController(
 
 internal enum class LibraryInfoDialog {
     About,
-    More,
     Help,
     Licenses,
 }
@@ -1290,7 +1289,6 @@ internal fun LibraryOptionsDestination(
                                 )
                             }
                         }
-                        HorizontalDivider()
                         LibraryOptionGroup(
                             label = R.string.library_icon_ratio_title,
                             summary = R.string.library_icon_ratio_summary,
@@ -1313,7 +1311,6 @@ internal fun LibraryOptionsDestination(
                             }
                         }
                         if (state.layout == LibraryLayout.Grid) {
-                            HorizontalDivider()
                             LibraryOptionGroup(
                                 label = R.string.library_grid_spacing_title,
                                 summary = R.string.library_grid_spacing_summary,
@@ -1337,7 +1334,6 @@ internal fun LibraryOptionsDestination(
                                     }
                                 }
                             }
-                            HorizontalDivider()
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -1389,7 +1385,6 @@ internal fun LibraryOptionsDestination(
                             icon = R.drawable.ic_bug_report,
                             action = onCrashReports,
                         )
-                        HorizontalDivider(modifier = Modifier.padding(start = 46.dp))
                         LibraryActionRow(
                             label = R.string.save_log,
                             summary = R.string.library_action_save_log_summary,
@@ -1407,7 +1402,6 @@ internal fun LibraryOptionsDestination(
                             icon = R.drawable.ic_info,
                             action = onAbout,
                         )
-                        HorizontalDivider(modifier = Modifier.padding(start = 46.dp))
                         LibraryActionRow(
                             label = R.string.help,
                             summary = R.string.library_action_help_summary,
@@ -2965,12 +2959,11 @@ internal fun LibraryInformationDialog(
     val context = LocalContext.current
     val title = when (dialog) {
         LibraryInfoDialog.About -> stringResource(R.string.about)
-        LibraryInfoDialog.More -> stringResource(R.string.more)
         LibraryInfoDialog.Help -> stringResource(R.string.help)
         LibraryInfoDialog.Licenses -> stringResource(R.string.licenses)
     }
     val icon = when (dialog) {
-        LibraryInfoDialog.About, LibraryInfoDialog.More -> R.drawable.ic_info
+        LibraryInfoDialog.About -> R.drawable.ic_info
         LibraryInfoDialog.Help -> R.drawable.ic_help
         LibraryInfoDialog.Licenses -> R.drawable.ic_list
     }
@@ -2980,7 +2973,6 @@ internal fun LibraryInformationDialog(
     )
     val message = when (dialog) {
         LibraryInfoDialog.About -> AnnotatedString(stringResource(R.string.about_message))
-        LibraryInfoDialog.More -> AnnotatedString(stringResource(R.string.about_message))
         LibraryInfoDialog.Help -> AnnotatedString.fromHtml(stringResource(R.string.help_message))
         LibraryInfoDialog.Licenses -> try {
             AnnotatedString.fromHtml(
@@ -3013,14 +3005,12 @@ internal fun LibraryInformationDialog(
             when (dialog) {
                 LibraryInfoDialog.About -> LibraryAboutBody(
                     onLicenses = { onOpen(LibraryInfoDialog.Licenses) },
-                    onMore = { onOpen(LibraryInfoDialog.More) },
                 )
                 LibraryInfoDialog.Help -> LibraryHelpBody(
                     message = message,
                     maxHeight = maxMessageHeight,
                 )
-                LibraryInfoDialog.Licenses,
-                LibraryInfoDialog.More -> Text(
+                LibraryInfoDialog.Licenses -> Text(
                     text = message,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -3040,7 +3030,6 @@ internal fun LibraryInformationDialog(
 @Composable
 private fun LibraryAboutBody(
     onLicenses: () -> Unit,
-    onMore: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
@@ -3084,15 +3073,6 @@ private fun LibraryAboutBody(
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(stringResource(R.string.licenses))
-            }
-            TextButton(onClick = onMore) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_more_vert),
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(stringResource(R.string.more))
             }
         }
     }
