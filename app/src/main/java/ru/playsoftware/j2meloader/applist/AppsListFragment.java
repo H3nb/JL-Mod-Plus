@@ -18,7 +18,6 @@
 
 package ru.playsoftware.j2meloader.applist;
 
-import static ru.playsoftware.j2meloader.util.Constants.KEY_APP_URI;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_GRID_SPACING;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_HIDE_GRID_TITLES;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_ICON_RATIO;
@@ -33,6 +32,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,22 +50,29 @@ import androidx.preference.PreferenceManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import ru.playsoftware.j2meloader.MainActivity;
 import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.config.ProfilesActivity;
 import ru.playsoftware.j2meloader.crashes.CrashReportsActivity;
 import ru.playsoftware.j2meloader.filepicker.FilePickerContract;
 import ru.playsoftware.j2meloader.filepicker.FilteredFilePickerActivity;
+import ru.playsoftware.j2meloader.librarydb.LibraryAppRow;
+import ru.playsoftware.j2meloader.librarydb.LibraryFileOperations;
+import ru.playsoftware.j2meloader.librarydb.LibraryViewModel;
 import ru.playsoftware.j2meloader.settings.SettingsActivity;
 import ru.playsoftware.j2meloader.util.AppUtils;
 import ru.playsoftware.j2meloader.util.LogUtils;
 import ru.woesss.j2me.installer.InstallerDialog;
 
+/** Room 3 Library host. AppItem remains only a temporary DTO for the existing Compose bridge. */
 public class AppsListFragment extends Fragment {
+	private static final String TAG = AppsListFragment.class.getSimpleName();
 	private static final int LAYOUT_TYPE_LIST = 0;
 	private static final int LAYOUT_TYPE_GRID = 1;
 	private static final int ICON_RATIO_SQUARE = 0;
@@ -87,9 +94,7 @@ public class AppsListFragment extends Fragment {
 					String path = preferences.getString(PREF_LAST_PATH, null);
 					if (path == null) {
 						File dir = Environment.getExternalStorageDirectory();
-						if (dir.canRead()) {
-							path = dir.getAbsolutePath();
-						}
+						if (dir.canRead()) path = dir.getAbsolutePath();
 					}
 					intent.putExtra(FilePickerContract.EXTRA_START_PATH, path);
 					return intent;
@@ -97,37 +102,31 @@ public class AppsListFragment extends Fragment {
 
 				@Override
 				public Uri parseResult(int resultCode, @Nullable Intent intent) {
-					if (resultCode == Activity.RESULT_OK && intent != null) {
-						return intent.getData();
-					}
+					if (resultCode == Activity.RESULT_OK && intent != null) return intent.getData();
 					return null;
 				}
 			},
 			this::onFilePicked);
 
-	private final Map<Integer, AppItem> appsById = new HashMap<>();
-	private Uri appUri;
+	private final Map<Integer, LibraryAppRow> rowsByUiId = new HashMap<>();
+	private final Map<Long, Integer> uiIdsByDatabaseId = new HashMap<>();
+	private int nextUiId = 1;
+	private File activeWorkdir;
 	private SharedPreferences preferences;
-	private AppListModel appListViewModel;
+	private LibraryViewModel libraryViewModel;
 	private LibraryComposeController composeController;
 
-	public static AppsListFragment newInstance(Uri data) {
-		AppsListFragment fragment = new AppsListFragment();
-		Bundle args = new Bundle();
-		args.putParcelable(KEY_APP_URI, data);
-		fragment.setArguments(args);
-		return fragment;
+	/** Kept temporarily for source compatibility; installer URI ownership moved to MainActivity. */
+	public static AppsListFragment newInstance(@Nullable Uri ignored) {
+		return new AppsListFragment();
 	}
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		Bundle args = requireArguments();
-		appUri = args.getParcelable(KEY_APP_URI);
-		args.remove(KEY_APP_URI);
 		FragmentActivity activity = requireActivity();
 		preferences = PreferenceManager.getDefaultSharedPreferences(activity);
-		appListViewModel = new ViewModelProvider(activity).get(AppListModel.class);
+		libraryViewModel = new ViewModelProvider(activity).get(LibraryViewModel.class);
 	}
 
 	@Override
@@ -144,9 +143,7 @@ public class AppsListFragment extends Fragment {
 		int storedIconRatio = preferences.getInt(PREF_APPS_ICON_RATIO, ICON_RATIO_SQUARE);
 		LibraryIconRatio iconRatio = storedIconRatio == ICON_RATIO_PORTRAIT
 				? LibraryIconRatio.Portrait : LibraryIconRatio.Square;
-		int storedGridSpacing = preferences.getInt(
-				PREF_APPS_GRID_SPACING,
-				GRID_SPACING_STANDARD);
+		int storedGridSpacing = preferences.getInt(PREF_APPS_GRID_SPACING, GRID_SPACING_STANDARD);
 		LibraryGridSpacing gridSpacing;
 		switch (storedGridSpacing) {
 			case GRID_SPACING_COMPACT:
@@ -169,13 +166,13 @@ public class AppsListFragment extends Fragment {
 				preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false),
 				gridSpacing,
 				ShortcutManagerCompat.isRequestPinShortcutSupported(requireContext()));
-		appListViewModel.getAppList().observe(getViewLifecycleOwner(), this::onDbUpdated);
+		libraryViewModel.observe(getViewLifecycleOwner(), this::onLibraryState);
 	}
 
 	@Override
 	public void onDestroyView() {
 		composeController = null;
-		appsById.clear();
+		clearUiRows();
 		super.onDestroyView();
 	}
 
@@ -183,7 +180,7 @@ public class AppsListFragment extends Fragment {
 		return new LibraryActions() {
 			@Override
 			public void onSearch(@NonNull String query) {
-				appListViewModel.setAppListFilter(query);
+				libraryViewModel.setFilter(query);
 			}
 
 			@Override
@@ -191,9 +188,7 @@ public class AppsListFragment extends Fragment {
 				int value = layout == LibraryLayout.Grid ? LAYOUT_TYPE_GRID : LAYOUT_TYPE_LIST;
 				preferences.edit().putInt(PREF_APPS_VIEW, value).apply();
 				LibraryComposeController controller = composeController;
-				if (controller != null) {
-					controller.updateLayout(layout);
-				}
+				if (controller != null) controller.updateLayout(layout);
 			}
 
 			@Override
@@ -202,18 +197,14 @@ public class AppsListFragment extends Fragment {
 						? ICON_RATIO_PORTRAIT : ICON_RATIO_SQUARE;
 				preferences.edit().putInt(PREF_APPS_ICON_RATIO, value).apply();
 				LibraryComposeController controller = composeController;
-				if (controller != null) {
-					controller.updateIconRatio(iconRatio);
-				}
+				if (controller != null) controller.updateIconRatio(iconRatio);
 			}
 
 			@Override
 			public void onHideGridTitlesChange(boolean hide) {
 				preferences.edit().putBoolean(PREF_APPS_HIDE_GRID_TITLES, hide).apply();
 				LibraryComposeController controller = composeController;
-				if (controller != null) {
-					controller.updateHideGridTitles(hide);
-				}
+				if (controller != null) controller.updateHideGridTitles(hide);
 			}
 
 			@Override
@@ -233,9 +224,7 @@ public class AppsListFragment extends Fragment {
 				}
 				preferences.edit().putInt(PREF_APPS_GRID_SPACING, value).apply();
 				LibraryComposeController controller = composeController;
-				if (controller != null) {
-					controller.updateGridSpacing(spacing);
-				}
+				if (controller != null) controller.updateGridSpacing(spacing);
 			}
 
 			@Override
@@ -250,51 +239,60 @@ public class AppsListFragment extends Fragment {
 
 			@Override
 			public void onOpenApp(int appId) {
-				AppItem app = findApp(appId);
-				if (app != null) {
-					Config.startApp(requireContext(), app.getTitle(), app.getPathExt());
+				LibraryAppRow app = findRow(appId);
+				if (app != null && activeWorkdir != null) {
+					Config.startApp(requireContext(), app.getTitle(), appPath(app));
 				}
 			}
 
 			@Override
 			public void onAddShortcut(int appId) {
-				AppItem app = findApp(appId);
-				if (app != null && ShortcutManagerCompat.isRequestPinShortcutSupported(requireContext())) {
-					AppUtils.addShortcut(requireActivity(), app);
+				LibraryAppRow row = findRow(appId);
+				if (row != null && ShortcutManagerCompat.isRequestPinShortcutSupported(requireContext())) {
+					// Shortcut creation is explicit user action, so bounded icon/file work is acceptable.
+					AppUtils.addShortcut(requireActivity(), toAppItem(row, appId));
 				}
 			}
 
 			@Override
 			public void onRename(int appId, @NonNull String title) {
-				AppItem app = findApp(appId);
-				if (app != null) {
-					app.setTitle(title);
-					appListViewModel.updateApp(app);
-				}
+				LibraryAppRow row = findRow(appId);
+				if (row == null) return;
+				libraryViewModel.renameApp(row.getId(), title, (ignored, error) -> {
+					if (error != null) showError(error);
+				});
 			}
 
 			@Override
 			public void onOpenAppSettings(int appId) {
-				AppItem app = findApp(appId);
-				if (app != null) {
-					Config.openSettings(requireActivity(), app.getTitle(), app.getPathExt());
+				LibraryAppRow app = findRow(appId);
+				if (app != null && activeWorkdir != null) {
+					Config.openSettings(requireActivity(), app.getTitle(), appPath(app));
 				}
 			}
 
 			@Override
 			public void onReinstall(int appId) {
-				if (findApp(appId) != null) {
-					InstallerDialog.newInstance(appId)
+				LibraryAppRow app = findRow(appId);
+				if (app != null) {
+					InstallerDialog.newInstance(app.getId())
 							.show(getParentFragmentManager(), "installer");
 				}
 			}
 
 			@Override
 			public void onDelete(int appId) {
-				AppItem app = findApp(appId);
-				if (app != null) {
-					appListViewModel.deleteApp(app);
-				}
+				LibraryAppRow app = findRow(appId);
+				if (app == null) return;
+				libraryViewModel.deleteInstalledApp(app.getId(), (result, error) -> {
+					if (error != null) {
+						showError(error);
+						return;
+					}
+					if (result != null && (result.getLeftoverConfig() || result.getLeftoverSaveData())) {
+						Log.w(TAG, "App removed with leftover config/save data: " + result.getAppPath());
+					}
+				});
 			}
 
 			@Override
@@ -330,41 +328,111 @@ public class AppsListFragment extends Fragment {
 		};
 	}
 
-	private AppItem findApp(int id) {
-		return appsById.get(id);
+	private LibraryAppRow findRow(int uiId) {
+		return rowsByUiId.get(uiId);
 	}
 
 	private void setSort(int sortVariant) {
 		if (preferences.getInt(PREF_APP_SORT, 0) == sortVariant) {
-			sortVariant |= 0x80000000;
+			sortVariant |= Integer.MIN_VALUE;
 		}
-		preferences.edit().putInt(PREF_APP_SORT, sortVariant).apply();
+		libraryViewModel.setSort(sortVariant);
+		LibraryComposeController controller = composeController;
+		if (controller != null) controller.updateSort(sortVariant);
+	}
+
+	private void onLibraryState(LibraryViewModel.DisplayState state) {
+		if (state instanceof LibraryViewModel.DisplayState.Ready) {
+			publishReady((LibraryViewModel.DisplayState.Ready) state);
+			return;
+		}
+		if (state instanceof LibraryViewModel.DisplayState.Error) {
+			clearUiRows();
+			LibraryComposeController controller = composeController;
+			if (controller != null) {
+				controller.updateApps(new ArrayList<>(), libraryViewModel.getFilter());
+				controller.showNotice(getString(R.string.error));
+			}
+			return;
+		}
+		// Opening/Indexing/Idle never expose stale rows from the previous workdir generation.
+		clearUiRows();
+		LibraryComposeController controller = composeController;
+		if (controller != null) controller.updateApps(new ArrayList<>(), libraryViewModel.getFilter());
+	}
+
+	private void publishReady(LibraryViewModel.DisplayState.Ready state) {
+		File workdir = state.getEmulatorDir();
+		if (activeWorkdir == null || !activeWorkdir.equals(workdir)) {
+			activeWorkdir = workdir;
+			rowsByUiId.clear();
+			uiIdsByDatabaseId.clear();
+			nextUiId = 1;
+		} else {
+			rowsByUiId.clear();
+		}
+
+		List<AppItem> uiItems = new ArrayList<>(state.getApps().size());
+		for (LibraryAppRow row : state.getApps()) {
+			int uiId = uiIdFor(row.getId());
+			rowsByUiId.put(uiId, row);
+			uiItems.add(toAppItem(row, uiId));
+		}
 		LibraryComposeController controller = composeController;
 		if (controller != null) {
-			controller.updateSort(sortVariant);
+			controller.updateSort(state.getSortVariant());
+			controller.updateApps(uiItems, state.getFilter());
 		}
 	}
 
-	private void onDbUpdated(List<AppItem> items) {
-		appsById.clear();
-		for (AppItem item : items) {
-			appsById.put(item.getId(), item);
+	private int uiIdFor(long databaseId) {
+		Integer existing = uiIdsByDatabaseId.get(databaseId);
+		if (existing != null) return existing;
+		if (nextUiId == Integer.MAX_VALUE) {
+			throw new IllegalStateException("Library UI id space exhausted");
 		}
+		int uiId = nextUiId++;
+		uiIdsByDatabaseId.put(databaseId, uiId);
+		return uiId;
+	}
+
+	private AppItem toAppItem(LibraryAppRow row, int uiId) {
+		AppItem item = new AppItem(
+				row.getStorageKey(),
+				row.getTitle(),
+				row.getVendor(),
+				row.getVersion());
+		item.setId(uiId);
+		return item;
+	}
+
+	private String appPath(LibraryAppRow row) {
+		File root = activeWorkdir;
+		if (root == null) throw new IllegalStateException("Library workdir is not READY");
+		return new File(new File(root, "converted"), row.getStorageKey()).getAbsolutePath();
+	}
+
+	private void clearUiRows() {
+		rowsByUiId.clear();
+		activeWorkdir = null;
+		uiIdsByDatabaseId.clear();
+		nextUiId = 1;
+	}
+
+	private void showError(Throwable error) {
+		Log.e(TAG, "Library operation failed", error);
 		LibraryComposeController controller = composeController;
-		if (controller != null) {
-			controller.updateApps(items, appListViewModel.getAppFilter());
-		}
-		if (appUri != null) {
-			InstallerDialog.newInstance(appUri).show(getParentFragmentManager(), "installer");
-			appUri = null;
-		}
+		if (controller != null && isAdded()) controller.showNotice(getString(R.string.error));
 	}
 
 	private void onFilePicked(Uri uri) {
-		if (uri == null) {
+		if (uri == null) return;
+		preferences.edit().putString(PREF_LAST_PATH, uri.getPath()).apply();
+		Activity activity = requireActivity();
+		if (activity instanceof MainActivity) {
+			((MainActivity) activity).requestInstaller(uri);
 			return;
 		}
-		preferences.edit().putString(PREF_LAST_PATH, uri.getPath()).apply();
-		InstallerDialog.newInstance(uri).show(getParentFragmentManager(), "installer");
+		throw new IllegalStateException("AppsListFragment requires MainActivity host");
 	}
 }
