@@ -100,11 +100,7 @@ class LibraryScanner {
         val entries = convertedDir.listFiles()
             ?: throw IOException("Unable to list converted directory: ${convertedDir.absolutePath}")
         return entries.asSequence()
-            .filter {
-                it.isDirectory &&
-                    it.name != LibraryInstallRecovery.STAGING_DIR_NAME &&
-                    it.name != LibraryInstallRecovery.BACKUP_ROOT_NAME
-            }
+            .filter { it.isDirectory && it.name != LibraryInstallRecovery.STAGING_DIR_NAME }
             .sortedBy { it.name }
             .toList()
     }
