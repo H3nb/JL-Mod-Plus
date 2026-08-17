@@ -38,6 +38,10 @@ object LibraryFileOperations {
             throw IOException("Unable to delete installed app directory: $appPath")
         }
 
+        // An explicit user delete wins over any leftover reinstall recovery evidence. Otherwise a
+        // later startup could restore an app the user intentionally removed.
+        LibraryInstallRecovery.discardBackupForDelete(emulatorDir, storageKey)
+
         // Once converted/<key> is gone, installed-app existence is gone. Config/save cleanup remains
         // best-effort so a leftover side directory cannot make the catalog falsely claim the app is
         // still installed; a later user/manual cleanup can remove those remnants safely.
