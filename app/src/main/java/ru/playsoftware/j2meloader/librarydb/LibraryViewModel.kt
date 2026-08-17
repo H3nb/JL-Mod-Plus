@@ -194,6 +194,25 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    /** Deletes authoritative installed files first; the Room row is removed only after that succeeds. */
+    fun deleteInstalledApp(appId: Long, callback: MutationCallback<LibraryFileOperations.DeleteResult>) {
+        val workdir = readyWorkdir()
+        val app = getApp(appId)
+        if (workdir == null || app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available in the active READY workdir"))
+            return
+        }
+        launchMutation(callback) {
+            val result = LibraryFileOperations.deleteInstalledApp(
+                context = getApplication(),
+                emulatorDir = workdir,
+                storageKey = app.storageKey,
+            )
+            repository.removeCatalogApp(workdir, app.storageKey)
+            result
+        }
+    }
+
     fun removeCatalogApp(
         expectedWorkdir: File,
         storageKey: String,
