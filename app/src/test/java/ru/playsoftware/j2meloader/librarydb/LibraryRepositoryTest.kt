@@ -84,6 +84,25 @@ class LibraryRepositoryTest {
         assertEquals(root.canonicalFile, (repository.state.value as LibraryRepository.State.Ready).emulatorDir)
     }
 
+    @Test fun sameWorkdirSetAfterErrorStartsRecoveryGeneration() = runBlocking {
+        val root = temporaryFolder.newFolder("error-set-retry")
+        val invalidConverted = File(root, "converted").apply { writeText("not a directory") }
+
+        repository.setEmulatorDirectory(root)
+        withTimeout(10_000) {
+            repository.state.filterIsInstance<LibraryRepository.State.Error>().first()
+        }
+        assertEquals(1, openCount.get())
+
+        assertTrue(invalidConverted.delete())
+        createConvertedApp(root, "fixed", "Fixed Game")
+        repository.setEmulatorDirectory(root)
+
+        val ready = awaitReady(root)
+        assertEquals(listOf("fixed"), ready.apps.map { it.storageKey })
+        assertEquals(2, openCount.get())
+    }
+
     @Test fun retryReopensSameWorkdirAfterRecoverableStorageFailure() = runBlocking {
         val root = temporaryFolder.newFolder("retry")
         val invalidConverted = File(root, "converted").apply { writeText("not a directory") }
