@@ -43,7 +43,9 @@ import io.reactivex.SingleEmitter;
 import ru.playsoftware.j2meloader.EmulatorApplication;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.librarydb.LibraryAppRow;
+import ru.playsoftware.j2meloader.librarydb.LibraryGenerationToken;
 import ru.playsoftware.j2meloader.librarydb.LibraryIconRevision;
+import ru.playsoftware.j2meloader.librarydb.LibraryInstallRecovery;
 import ru.playsoftware.j2meloader.librarydb.LibraryViewModel;
 import ru.playsoftware.j2meloader.util.ConverterException;
 import ru.playsoftware.j2meloader.util.FileUtils;
@@ -56,6 +58,7 @@ import ru.woesss.util.zip.ZipFile;
 public class AppInstaller {
 	private static final String TAG = AppInstaller.class.getSimpleName();
 	private static final long NO_ID = -1L;
+	private static final long NO_GENERATION = Long.MIN_VALUE;
 	static final int STATUS_OLDER = -1;
 	static final int STATUS_EQUAL = 0;
 	static final int STATUS_NEWER = 1;
@@ -66,6 +69,7 @@ public class AppInstaller {
 
 	private final long id;
 	private final LibraryViewModel libraryViewModel;
+	private final long requestedGeneration;
 	private final File requestedWorkdir;
 	private final String requestedStorageKey;
 	private final File cacheDir = new File(EmulatorApplication.getInstance().getCacheDir(), "installer");
@@ -79,6 +83,7 @@ public class AppInstaller {
 	private File tmpDir;
 	private LibraryAppRow currentApp;
 	private File srcFile;
+	private long expectedGeneration = NO_GENERATION;
 	private File expectedWorkdir;
 	private long installedId = NO_ID;
 	private String installedTitle;
@@ -86,6 +91,7 @@ public class AppInstaller {
 
 	AppInstaller(File jar, Uri uri, LibraryViewModel libraryViewModel) {
 		id = NO_ID;
+		requestedGeneration = NO_GENERATION;
 		requestedWorkdir = null;
 		requestedStorageKey = null;
 		this.libraryViewModel = libraryViewModel;
@@ -95,9 +101,10 @@ public class AppInstaller {
 		this.uri = uri;
 	}
 
-	public AppInstaller(long id, File requestedWorkdir, String requestedStorageKey,
-			LibraryViewModel libraryViewModel) {
+	public AppInstaller(long id, long requestedGeneration, File requestedWorkdir,
+			String requestedStorageKey, LibraryViewModel libraryViewModel) {
 		this.id = id;
+		this.requestedGeneration = requestedGeneration;
 		this.requestedWorkdir = requestedWorkdir;
 		this.requestedStorageKey = requestedStorageKey;
 		this.libraryViewModel = libraryViewModel;
@@ -115,11 +122,11 @@ public class AppInstaller {
 		return manifest;
 	}
 
-	/** Load and check app info from source against one captured READY workdir generation. */
+	/** Load and check app info from source against one captured READY Library generation. */
 	void loadInfo(SingleEmitter<Integer> emitter) throws IOException, ConverterException {
-		bindReadyWorkdir();
+		bindReadyGeneration();
 		if (id != NO_ID) {
-			verifyRequestedWorkdir();
+			verifyRequestedGeneration();
 			currentApp = requireRequestedAppIdentity();
 			appDirName = currentApp.getStorageKey();
 			targetDir = new File(appsDir(), appDirName);
@@ -177,30 +184,36 @@ public class AppInstaller {
 		emitter.onSuccess(checkDescriptor());
 	}
 
-	private void bindReadyWorkdir() throws IOException {
-		File workdir = libraryViewModel.readyWorkdir();
-		if (workdir == null) {
+	private void bindReadyGeneration() throws IOException {
+		LibraryGenerationToken generation = libraryViewModel.readyGeneration();
+		if (generation == null) {
 			throw new IOException("Library is not READY for installation");
 		}
-		expectedWorkdir = workdir.getCanonicalFile();
+		expectedGeneration = generation.getGeneration();
+		expectedWorkdir = generation.getEmulatorDir().getCanonicalFile();
 	}
 
-	private void verifyRequestedWorkdir() throws IOException {
-		if (requestedWorkdir == null ||
+	private void verifyRequestedGeneration() throws IOException {
+		if (requestedGeneration == NO_GENERATION || requestedGeneration != expectedGeneration ||
+				requestedWorkdir == null ||
 				!requestedWorkdir.getCanonicalFile().equals(expectedWorkdir)) {
-			throw new IOException("Library workdir changed before opening reinstall target");
+			throw new IOException("Library generation changed before opening reinstall target");
 		}
 	}
 
-	private void verifyActiveWorkdir() throws IOException {
-		File activeWorkdir = libraryViewModel.readyWorkdir();
-		if (activeWorkdir == null || !activeWorkdir.getCanonicalFile().equals(expectedWorkdir)) {
-			throw new IOException("Library workdir changed while installer was running");
+	private void verifyActiveGeneration() throws IOException {
+		if (!libraryViewModel.isReadyGeneration(expectedGeneration, expectedWorkdir)) {
+			throw new IOException("Library generation changed while installer was running");
 		}
 	}
 
 	private LibraryAppRow requireRequestedAppIdentity() throws IOException {
-		LibraryAppRow app = libraryViewModel.getApp(id);
+		LibraryAppRow app;
+		try {
+			app = libraryViewModel.getApp(expectedGeneration, expectedWorkdir, id);
+		} catch (IllegalStateException e) {
+			throw new IOException("Library generation changed while resolving reinstall target", e);
+		}
 		if (app == null) {
 			throw new IOException("Library app no longer exists: " + id);
 		}
@@ -302,14 +315,16 @@ public class AppInstaller {
 		throw new ConverterException("Can't download jad", exception);
 	}
 
-	/** Finalize converted files first, then publish a targeted Room3 mutation asynchronously. */
+	/** Finalize converted files first, then publish a generation-bound Room3 mutation asynchronously. */
 	void install(SingleEmitter<Integer> emitter) throws ConverterException, IOException {
 		if (!cacheDir.exists() && !cacheDir.mkdirs()) {
 			throw new ConverterException("Can't create cache dir");
 		}
-		tmpDir = new File(appsDir(), ".tmp");
-		if (!tmpDir.isDirectory() && !tmpDir.mkdirs()) {
-			throw new ConverterException("Can't create directory: '" + targetDir + "'");
+		tmpDir = new File(appsDir(), LibraryInstallRecovery.STAGING_DIR_NAME);
+		// Never mix a stale interrupted conversion with the next attempt.
+		if (tmpDir.exists()) FileUtils.deleteDirectory(tmpDir);
+		if (!tmpDir.mkdirs()) {
+			throw new ConverterException("Can't create staging directory: '" + tmpDir + "'");
 		}
 		if (srcJar == null) {
 			srcJar = new File(cacheDir, "tmp.jar");
@@ -346,15 +361,26 @@ public class AppInstaller {
 		}
 		newDesc.writeTo(child(tmpDir, Config.MIDLET_MANIFEST_FILE));
 
-		// Workdir switches are allowed while conversion runs, but the old generation must never
-		// publish a filesystem result after the user has moved to another Library root.
-		verifyActiveWorkdir();
+		// Conversion may outlive multiple A -> B -> A workdir switches. Path equality is not enough:
+		// only the exact READY generation captured by loadInfo() may publish filesystem or DB state.
+		verifyActiveGeneration();
 		if (id != NO_ID) {
-			verifyRequestedWorkdir();
+			verifyRequestedGeneration();
 			requireRequestedAppIdentity();
 		}
-		FileUtils.deleteDirectory(targetDir);
+
+		File replacementBackup = null;
+		if (targetDir.exists()) {
+			replacementBackup = LibraryInstallRecovery.createBackup(
+					expectedWorkdir,
+					appDirName,
+					targetDir);
+		}
 		if (!tmpDir.renameTo(targetDir)) {
+			if (replacementBackup != null &&
+					!LibraryInstallRecovery.restoreBackup(targetDir, replacementBackup)) {
+				Log.e(TAG, "Replacement publish failed and immediate backup rollback also failed: " + appDirName);
+			}
 			throw new ConverterException("Can't move '" + tmpDir + "' to '" + targetDir + "'");
 		}
 
@@ -366,10 +392,12 @@ public class AppInstaller {
 		installedTitle = currentApp == null ? sourceTitle : currentApp.getTitle();
 		installedPath = targetDir.getAbsolutePath();
 		long iconRevision = LibraryIconRevision.fromFile(child(targetDir, Config.MIDLET_ICON_FILE));
+		final File recoveryBackup = replacementBackup;
 
 		clearCache();
 		deleteTemp();
 		libraryViewModel.recordInstalledApp(
+				expectedGeneration,
 				expectedWorkdir,
 				existingId,
 				appDirName,
@@ -380,17 +408,25 @@ public class AppInstaller {
 				iconRevision,
 				System.currentTimeMillis(),
 				(value, error) -> {
-					if (emitter.isDisposed()) return;
 					if (error != null) {
-						emitter.onError(error);
+						// Keep recoveryBackup. Startup reconciliation will refresh this exact storage key
+						// without deleting the successfully published replacement.
+						if (!emitter.isDisposed()) emitter.onError(error);
 						return;
 					}
 					if (value == null) {
-						emitter.onError(new IllegalStateException("Library install mutation returned no app id"));
+						if (!emitter.isDisposed()) {
+							emitter.onError(new IllegalStateException(
+									"Library install mutation returned no app id"));
+						}
 						return;
 					}
 					installedId = value;
-					emitter.onSuccess(STATUS_SUCCESS);
+					if (recoveryBackup != null &&
+							!LibraryInstallRecovery.discardBackup(expectedWorkdir, appDirName)) {
+						Log.w(TAG, "Installed app committed but recovery backup cleanup failed: " + appDirName);
+					}
+					if (!emitter.isDisposed()) emitter.onSuccess(STATUS_SUCCESS);
 				}
 		);
 	}
@@ -430,10 +466,19 @@ public class AppInstaller {
 		return manifest.equals(newDesc);
 	}
 
-	private int checkDescriptor() {
+	private int checkDescriptor() throws IOException {
 		String name = newDesc.getName();
 		String vendor = newDesc.getVendor();
-		List<LibraryAppRow> candidates = libraryViewModel.findBySourceIdentity(name, vendor);
+		List<LibraryAppRow> candidates;
+		try {
+			candidates = libraryViewModel.findBySourceIdentity(
+					expectedGeneration,
+					expectedWorkdir,
+					name,
+					vendor);
+		} catch (IllegalStateException e) {
+			throw new IOException("Library generation changed while matching installer identity", e);
+		}
 		currentApp = candidates.size() == 1 ? candidates.get(0) : null;
 		if (currentApp == null) {
 			generatePathName(name.replaceAll(FileUtils.ILLEGAL_FILENAME_CHARS, "").trim());
