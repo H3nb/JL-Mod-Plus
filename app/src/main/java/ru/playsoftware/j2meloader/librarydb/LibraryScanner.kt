@@ -30,12 +30,16 @@ class LibraryScanner {
     ): Result = scanDirectories(installedDirectories(emulatorDir), onProgress)
 
     @Throws(IOException::class)
-    fun scanStorageKeys(emulatorDir: File, storageKeys: Set<String>): Result {
+    fun scanStorageKeys(
+        emulatorDir: File,
+        storageKeys: Set<String>,
+        onProgress: ((completed: Int, total: Int, storageKey: String) -> Unit)? = null,
+    ): Result {
         if (storageKeys.isEmpty()) return Result(emptyList(), emptyList())
         val requested = storageKeys.toHashSet()
         val installed = installedDirectories(emulatorDir)
         val matching = installed.filter { it.name in requested }
-        val result = scanDirectories(matching, null)
+        val result = scanDirectories(matching, onProgress)
         if (matching.size == requested.size) return result
 
         val found = matching.mapTo(HashSet()) { it.name }
@@ -96,7 +100,11 @@ class LibraryScanner {
         val entries = convertedDir.listFiles()
             ?: throw IOException("Unable to list converted directory: ${convertedDir.absolutePath}")
         return entries.asSequence()
-            .filter { it.isDirectory && it.name != INSTALL_STAGING_DIR }
+            .filter {
+                it.isDirectory &&
+                    it.name != LibraryInstallRecovery.STAGING_DIR_NAME &&
+                    it.name != LibraryInstallRecovery.BACKUP_ROOT_NAME
+            }
             .sortedBy { it.name }
             .toList()
     }
@@ -117,7 +125,6 @@ class LibraryScanner {
 
     private companion object {
         const val CONVERTED_DIR = "converted"
-        const val INSTALL_STAGING_DIR = ".tmp"
         const val DEX_ARCHIVE = "converted.zip"
         const val DEX_FILE = "converted.dex"
         const val MANIFEST_FILE = "converted.dex.conf"
