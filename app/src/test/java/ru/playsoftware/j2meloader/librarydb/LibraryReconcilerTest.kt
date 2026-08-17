@@ -206,8 +206,5 @@ class LibraryReconcilerTest {
         )
     }
 
-    private fun backupRoot(): File = File(
-        File(workDir, "converted"),
-        LibraryInstallRecovery.BACKUP_ROOT_NAME,
-    )
+    private fun backupRoot(): File = File(workDir, LibraryInstallRecovery.BACKUP_ROOT_NAME)
 }
