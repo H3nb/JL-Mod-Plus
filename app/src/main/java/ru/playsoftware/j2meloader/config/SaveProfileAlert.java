@@ -118,9 +118,11 @@ public class SaveProfileAlert extends DialogFragment {
 		WindowManager.LayoutParams attributes = window.getAttributes();
 		attributes.dimAmount = 0.32f;
 		window.setAttributes(attributes);
-		int width = Math.min(getResources().getDisplayMetrics().widthPixels - dp(32), dp(560));
-		int height = Math.min((int) (getResources().getDisplayMetrics().heightPixels * 0.84f), dp(680));
-		window.setLayout(Math.max(width, dp(280)), Math.max(height, dp(320)));
+		int availableWidth = Math.max(getResources().getDisplayMetrics().widthPixels - dp(32), 1);
+		int availableHeight = Math.max(getResources().getDisplayMetrics().heightPixels - dp(24), 1);
+		int width = Math.min(availableWidth, dp(840));
+		int height = Math.min(availableHeight, dp(680));
+		window.setLayout(width, height);
 	}
 
 	private int dp(int value) {
