@@ -34,6 +34,18 @@ jobs:
           new = '''p = Path(test)\np.write_text(p.read_text().replace('composeRule.onNodeWithText("Save as profile").assertDoesNotExist()', 'composeRule.onNodeWithText("Save as new template").assertDoesNotExist()'))'''
           code = code.replace(old, new)
           exec(compile(code, 'apply-config-information-redesign.py', 'exec'), {'__name__': '__main__'})
+
+          # Compose exposes RowScope.weight without a standalone public import.
+          panel = Path('app/src/main/java/ru/playsoftware/j2meloader/config/ConfigProfilePanel.kt')
+          text = panel.read_text().replace('import androidx.compose.foundation.layout.weight\n', '')
+          panel.write_text(text)
+
+          # Update legacy built-in assertions to the new explicit Built-in-vs-Default wording.
+          test = Path('app/src/androidTest/java/ru/playsoftware/j2meloader/config/ConfigComposeTest.kt')
+          text = test.read_text()
+          text = text.replace('composeRule.onNodeWithText("Default").assertExists()\n        composeRule.onNodeWithText("Built-in emulator settings").assertExists()',
+                              'composeRule.onNodeWithText("Built-in settings").assertExists()\n        composeRule.onNodeWithText("JL-Mod Plus factory configuration · Default for new games").assertExists()')
+          test.write_text(text)
           PY
           git diff --check
 
