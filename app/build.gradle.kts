@@ -7,8 +7,10 @@ import java.util.jar.Manifest
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.androidx.room3)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.compose.screenshot)
+    alias(libs.plugins.ksp)
 }
 
 val secret = Properties().also { properties ->
@@ -143,6 +145,10 @@ android {
     }
 }
 
+room3 {
+    schemaDirectory("$projectDir/schemas")
+}
+
 // Keep the legacy standalone MIDlet-to-APK source set available as reference, but do not
 // create build variants for it unless porting support is intentionally re-enabled.
 androidComponents {
@@ -215,9 +221,19 @@ dependencies {
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.preference.ktx)
+
+    // Legacy Room 2 Library persistence remains temporarily while the new Room 3 backend is
+    // introduced in parallel. Remove these only after existing Library consumers are cut over.
     annotationProcessor(libs.androidx.room.compiler)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.rxjava2)
+
+    // Library Architecture v2 foundation (H3nb/JL-Mod-Plus#92).
+    implementation(libs.androidx.room3.runtime)
+    implementation(libs.androidx.sqlite.framework)
+    implementation(libs.kotlinx.coroutines.android)
+    ksp(libs.androidx.room3.compiler)
+
     implementation(libs.google.gson)
     implementation(libs.google.oboe)
 
@@ -234,6 +250,8 @@ dependencies {
     screenshotTestImplementation(libs.screenshot.validation.api)
 
     testImplementation(libs.junit)
+    testImplementation(libs.androidx.room3.testing)
+    testImplementation(libs.androidx.sqlite.bundled)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }
