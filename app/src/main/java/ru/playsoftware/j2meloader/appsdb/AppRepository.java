@@ -13,6 +13,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications for JL-Mod Plus: route repository diagnostics through the project crash policy boundary.
  */
 
 package ru.playsoftware.j2meloader.appsdb;
@@ -22,7 +24,6 @@ import android.util.Log;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import org.acra.ACRA;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.flowables.ConnectableFlowable;
 import io.reactivex.schedulers.Schedulers;
 import ru.playsoftware.j2meloader.applist.AppItem;
+import ru.playsoftware.j2meloader.crashes.CrashReporter;
 import ru.playsoftware.j2meloader.util.AppUtils;
 
 public class AppRepository {
@@ -167,7 +169,7 @@ public class AppRepository {
 		@Override
 		public void onError(@NotNull Throwable e) {
 			Log.e("AppRepository", e.toString(), e);
-			ACRA.getErrorReporter().handleException(e);
+			CrashReporter.reportAppRepositoryFailure(e);
 		}
 	}
 }
