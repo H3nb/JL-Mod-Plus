@@ -20,10 +20,11 @@ import ru.playsoftware.j2meloader.util.FileUtils
 /**
  * Small filesystem journal for reinstall replacement.
  *
- * A reinstall first moves the old converted directory into [BACKUP_ROOT_NAME], then publishes the
- * newly converted directory at the original storage key. The backup is intentionally retained until
- * the Room mutation succeeds. If the process dies in either half of that sequence, startup can
- * either restore the old directory or re-index the already-published new directory without guessing.
+ * A reinstall first moves the old converted directory into a workdir-sibling recovery directory,
+ * then publishes the newly converted directory at the original storage key. Keeping recovery state
+ * outside converted/ means it can never collide with or masquerade as an installed application.
+ * The backup is retained until the Room mutation succeeds so startup can restore or targeted-reindex
+ * an interrupted replacement without guessing.
  */
 object LibraryInstallRecovery {
     const val STAGING_DIR_NAME = ".tmp"
@@ -36,8 +37,7 @@ object LibraryInstallRecovery {
     )
 
     @JvmStatic
-    fun isReservedStorageKey(storageKey: String): Boolean =
-        storageKey == STAGING_DIR_NAME || storageKey == BACKUP_ROOT_NAME
+    fun isReservedStorageKey(storageKey: String): Boolean = storageKey == STAGING_DIR_NAME
 
     /** Move the current installed directory aside before replacing it. */
     @JvmStatic
@@ -158,8 +158,7 @@ object LibraryInstallRecovery {
         return RecoveryResult(refresh, failures)
     }
 
-    private fun backupRoot(emulatorDir: File): File =
-        File(File(emulatorDir, "converted"), BACKUP_ROOT_NAME)
+    private fun backupRoot(emulatorDir: File): File = File(emulatorDir, BACKUP_ROOT_NAME)
 
     private fun removeRootIfEmpty(root: File) {
         if (root.isDirectory && root.listFiles()?.isEmpty() == true) {
