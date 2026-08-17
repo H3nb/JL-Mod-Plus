@@ -87,6 +87,7 @@ public class MicroActivity extends AppCompatActivity {
 	private Displayable current;
 	private boolean actionBarEnabled;
 	private boolean statusBarEnabled;
+	private boolean displayCutoutEnabled;
 	private boolean orientationLocked;
 	private MicroLoader microLoader;
 	private String appName;
@@ -134,6 +135,7 @@ public class MicroActivity extends AppCompatActivity {
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		actionBarEnabled = sp.getBoolean(PREF_TOOLBAR, false);
 		statusBarEnabled = sp.getBoolean(PREF_STATUSBAR, false);
+		displayCutoutEnabled = sp.getBoolean(PREF_USE_DISPLAY_CUTOUT, true);
 		if (sp.getBoolean(PREF_KEEP_SCREEN, false)) {
 			getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		}
@@ -512,7 +514,7 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void configureDisplayCutoutWindow() {
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P || !skinLayerAvailable
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P || !displayCutoutEnabled || !skinLayerAvailable
 				|| statusBarEnabled || actionBarEnabled) {
 			return;
 		}
@@ -538,7 +540,7 @@ public class MicroActivity extends AppCompatActivity {
 			Insets ime = lastWindowInsets.getInsets(WindowInsetsCompat.Type.ime());
 			boolean canvas = displayable instanceof Canvas;
 			GuestWindowPolicy.Padding guestPadding = GuestWindowPolicy.calculate(canvas,
-					skinLayerAvailable, statusBarEnabled, actionBarEnabled,
+					skinLayerAvailable, statusBarEnabled, actionBarEnabled, displayCutoutEnabled,
 					systemBars.left, statusBars.top, systemBars.right, navigationBars.bottom,
 					cutout.left, cutout.top, cutout.right, cutout.bottom, ime.bottom);
 			left += guestPadding.left;
