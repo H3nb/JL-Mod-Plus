@@ -63,6 +63,7 @@ import ru.playsoftware.j2meloader.crashes.CrashReportsActivity;
 import ru.playsoftware.j2meloader.filepicker.FilePickerContract;
 import ru.playsoftware.j2meloader.filepicker.FilteredFilePickerActivity;
 import ru.playsoftware.j2meloader.librarydb.LibraryAppRow;
+import ru.playsoftware.j2meloader.librarydb.LibraryGenerationToken;
 import ru.playsoftware.j2meloader.librarydb.LibraryViewModel;
 import ru.playsoftware.j2meloader.settings.SettingsActivity;
 import ru.playsoftware.j2meloader.util.AppUtils;
@@ -79,6 +80,7 @@ public class AppsListFragment extends Fragment {
 	private static final int GRID_SPACING_COMPACT = 0;
 	private static final int GRID_SPACING_STANDARD = 1;
 	private static final int GRID_SPACING_SPACIOUS = 2;
+	private static final long NO_GENERATION = Long.MIN_VALUE;
 
 	private final ActivityResultLauncher<Void> openFileLauncher = registerForActivityResult(
 			new ActivityResultContract<Void, Uri>() {
@@ -110,6 +112,7 @@ public class AppsListFragment extends Fragment {
 	private final Map<Integer, LibraryAppRow> rowsByUiId = new HashMap<>();
 	private final Map<Long, Integer> uiIdsByDatabaseId = new HashMap<>();
 	private int nextUiId = 1;
+	private long activeGeneration = NO_GENERATION;
 	private File activeWorkdir;
 	private SharedPreferences preferences;
 	private LibraryViewModel libraryViewModel;
@@ -274,7 +277,13 @@ public class AppsListFragment extends Fragment {
 			public void onReinstall(int appId) {
 				LibraryAppRow app = findRow(appId);
 				File workdir = activeWorkdir;
-				if (app == null || workdir == null) return;
+				LibraryGenerationToken generation = libraryViewModel.readyGeneration();
+				if (app == null || workdir == null || generation == null ||
+						activeGeneration != generation.getGeneration() ||
+						!workdir.equals(generation.getEmulatorDir())) {
+					return;
+				}
+				long generationId = generation.getGeneration();
 				libraryViewModel.resolveReinstallAvailability(app.getId(), (available, error) -> {
 					if (error != null) {
 						showError(error);
@@ -289,7 +298,9 @@ public class AppsListFragment extends Fragment {
 						return;
 					}
 					LibraryAppRow current = findRow(appId);
-					if (activeWorkdir == null || !activeWorkdir.equals(workdir) ||
+					if (activeGeneration != generationId || activeWorkdir == null ||
+							!activeWorkdir.equals(workdir) ||
+							!libraryViewModel.isReadyGeneration(generationId, workdir) ||
 							current == null || current.getId() != app.getId() ||
 							!current.getStorageKey().equals(app.getStorageKey())) {
 						showError(new IllegalStateException("Library reinstall target changed"));
@@ -297,6 +308,7 @@ public class AppsListFragment extends Fragment {
 					}
 					InstallerDialog.newInstance(
 							app.getId(),
+							generationId,
 							workdir.getAbsolutePath(),
 							app.getStorageKey())
 							.show(getParentFragmentManager(), "installer");
@@ -396,8 +408,10 @@ public class AppsListFragment extends Fragment {
 	}
 
 	private void publishReady(LibraryViewModel.DisplayState.Ready state) {
+		long generation = state.getGeneration();
 		File workdir = state.getEmulatorDir();
-		if (activeWorkdir == null || !activeWorkdir.equals(workdir)) {
+		if (activeGeneration != generation || activeWorkdir == null || !activeWorkdir.equals(workdir)) {
+			activeGeneration = generation;
 			activeWorkdir = workdir;
 			rowsByUiId.clear();
 			uiIdsByDatabaseId.clear();
@@ -460,6 +474,7 @@ public class AppsListFragment extends Fragment {
 
 	private void clearUiRows() {
 		rowsByUiId.clear();
+		activeGeneration = NO_GENERATION;
 		activeWorkdir = null;
 		uiIdsByDatabaseId.clear();
 		nextUiId = 1;
