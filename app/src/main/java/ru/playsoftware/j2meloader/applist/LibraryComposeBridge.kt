@@ -151,6 +151,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
@@ -982,6 +983,20 @@ private fun LibraryAppsHeader(
     val sortEntries = stringArrayResource(R.array.pref_app_sort_entries).toList()
     val selectedSort = state.sortVariant and Int.MAX_VALUE
     val ascending = state.sortVariant >= 0
+    val quickControlsPagerBoundary = remember {
+        object : NestedScrollConnection {
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource,
+            ): Offset = Offset(x = available.x, y = 0f)
+
+            override suspend fun onPostFling(
+                consumed: Velocity,
+                available: Velocity,
+            ): Velocity = Velocity(x = available.x, y = 0f)
+        }
+    }
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -1017,6 +1032,7 @@ private fun LibraryAppsHeader(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 10.dp)
+                .nestedScroll(quickControlsPagerBoundary)
                 .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -1229,24 +1245,24 @@ internal fun LibraryOptionsDestination(
                         .align(Alignment.TopCenter)
                         .fillMaxWidth()
                         .widthIn(max = 840.dp)
-                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text(
                         text = stringResource(R.string.library_destination_options),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
                     )
                     LibraryOptionsSection(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 16.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         title = R.string.library_options_library_title,
                     ) {
                         LibraryOptionGroup(label = R.string.pref_apps_view) {
                             FlowRow(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
                                 FilterChip(
                                     selected = state.layout == LibraryLayout.List,
@@ -1274,15 +1290,15 @@ internal fun LibraryOptionsDestination(
                                 )
                             }
                         }
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+                        HorizontalDivider()
                         LibraryOptionGroup(
                             label = R.string.library_icon_ratio_title,
                             summary = R.string.library_icon_ratio_summary,
                         ) {
                             FlowRow(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
                                 FilterChip(
                                     selected = state.iconRatio == LibraryIconRatio.Square,
@@ -1297,15 +1313,15 @@ internal fun LibraryOptionsDestination(
                             }
                         }
                         if (state.layout == LibraryLayout.Grid) {
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+                            HorizontalDivider()
                             LibraryOptionGroup(
                                 label = R.string.library_grid_spacing_title,
                                 summary = R.string.library_grid_spacing_summary,
                             ) {
                                 FlowRow(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp),
                                 ) {
                                     LibraryGridSpacing.entries.forEach { spacing ->
                                         val label = when (spacing) {
@@ -1321,10 +1337,14 @@ internal fun LibraryOptionsDestination(
                                     }
                                 }
                             }
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+                            HorizontalDivider()
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 52.dp)
+                                    .padding(horizontal = 12.dp, vertical = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
@@ -1349,9 +1369,7 @@ internal fun LibraryOptionsDestination(
                         }
                     }
                     LibraryOptionsSection(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         title = R.string.library_options_application_title,
                     ) {
                         LibraryActionRow(
@@ -1362,9 +1380,7 @@ internal fun LibraryOptionsDestination(
                         )
                     }
                     LibraryOptionsSection(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         title = R.string.library_options_diagnostics_title,
                     ) {
                         LibraryActionRow(
@@ -1373,7 +1389,7 @@ internal fun LibraryOptionsDestination(
                             icon = R.drawable.ic_bug_report,
                             action = onCrashReports,
                         )
-                        HorizontalDivider()
+                        HorizontalDivider(modifier = Modifier.padding(start = 46.dp))
                         LibraryActionRow(
                             label = R.string.save_log,
                             summary = R.string.library_action_save_log_summary,
@@ -1382,9 +1398,7 @@ internal fun LibraryOptionsDestination(
                         )
                     }
                     LibraryOptionsSection(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         title = R.string.library_options_information_title,
                     ) {
                         LibraryActionRow(
@@ -1393,7 +1407,7 @@ internal fun LibraryOptionsDestination(
                             icon = R.drawable.ic_info,
                             action = onAbout,
                         )
-                        HorizontalDivider()
+                        HorizontalDivider(modifier = Modifier.padding(start = 46.dp))
                         LibraryActionRow(
                             label = R.string.help,
                             summary = R.string.library_action_help_summary,
@@ -1402,9 +1416,7 @@ internal fun LibraryOptionsDestination(
                         )
                     }
                     LibraryOptionsSection(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         title = R.string.library_options_session_title,
                     ) {
                         LibraryActionRow(
@@ -1430,8 +1442,8 @@ private fun LibraryOptionsSection(
     Column(modifier = modifier) {
         Text(
             text = stringResource(title),
-            modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 6.dp),
-            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(start = 10.dp, end = 10.dp, bottom = 4.dp),
+            style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary,
         )
@@ -1440,9 +1452,7 @@ private fun LibraryOptionsSection(
             shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surfaceContainerLow,
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                content()
-            }
+            Column(content = content)
         }
     }
 }
@@ -1453,7 +1463,11 @@ private fun LibraryOptionGroup(
     summary: Int? = null,
     content: @Composable () -> Unit,
 ) {
-    Column {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 9.dp),
+    ) {
         Text(
             text = stringResource(label),
             style = MaterialTheme.typography.bodyLarge,
@@ -1462,12 +1476,12 @@ private fun LibraryOptionGroup(
         summary?.let {
             Text(
                 text = stringResource(it),
-                modifier = Modifier.padding(top = 2.dp),
+                modifier = Modifier.padding(top = 1.dp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
             )
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(5.dp))
         content()
     }
 }
@@ -2637,18 +2651,31 @@ private fun LibraryActionRow(
     destructive: Boolean = false,
 ) {
     val contentColor = if (destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-    ListItem(
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        headlineContent = {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 52.dp)
+            .clickable(role = Role.Button, onClick = action)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        if (icon != null) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                modifier = Modifier.size(22.dp),
+                tint = contentColor,
+            )
+        }
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = stringResource(label),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
                 color = contentColor,
             )
-        },
-        supportingContent = if (summary != null) {
-            {
+            if (summary != null) {
                 Text(
                     text = stringResource(summary),
                     style = MaterialTheme.typography.bodySmall,
@@ -2659,24 +2686,8 @@ private fun LibraryActionRow(
                     },
                 )
             }
-        } else {
-            null
-        },
-        leadingContent = if (icon != null) {
-            {
-                Icon(
-                    painter = painterResource(icon),
-                    contentDescription = null,
-                    tint = contentColor,
-                )
-            }
-        } else {
-            null
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(role = Role.Button, onClick = action),
-    )
+        }
+    }
 }
 
 @Composable
@@ -2952,8 +2963,12 @@ internal fun LibraryInformationDialog(
     onOpen: (LibraryInfoDialog) -> Unit,
 ) {
     val context = LocalContext.current
-    val title: String
-    val message: AnnotatedString
+    val title = when (dialog) {
+        LibraryInfoDialog.About -> stringResource(R.string.about)
+        LibraryInfoDialog.More -> stringResource(R.string.more)
+        LibraryInfoDialog.Help -> stringResource(R.string.help)
+        LibraryInfoDialog.Licenses -> stringResource(R.string.licenses)
+    }
     val icon = when (dialog) {
         LibraryInfoDialog.About, LibraryInfoDialog.More -> R.drawable.ic_info
         LibraryInfoDialog.Help -> R.drawable.ic_help
@@ -2963,89 +2978,57 @@ internal fun LibraryInformationDialog(
     val maxMessageHeight = libraryDialogListHeight(
         maxHeight = if (dialog == LibraryInfoDialog.Licenses) 520 else 420,
     )
-    when (dialog) {
-        LibraryInfoDialog.About -> {
-            title = stringResource(R.string.about_product_name)
-            message = buildAnnotatedString {
-                append(stringResource(R.string.version))
-                append(' ')
-                append(BuildConfig.VERSION_NAME)
-                append('\n')
-                append(AnnotatedString.fromHtml(stringResource(R.string.about_github)))
-                append('\n')
-                append(stringResource(R.string.about_maintainer))
-            }
-        }
-        LibraryInfoDialog.More -> {
-            title = stringResource(R.string.more)
-            message = AnnotatedString(stringResource(R.string.about_message))
-        }
-        LibraryInfoDialog.Help -> {
-            title = stringResource(R.string.help)
-            message = AnnotatedString.fromHtml(stringResource(R.string.help_message))
-        }
-        LibraryInfoDialog.Licenses -> {
-            title = stringResource(R.string.licenses)
-            message = try {
-                AnnotatedString.fromHtml(
-                    context.assets.open("licenses.html").bufferedReader().use { it.readText() },
-                )
-            } catch (_: Exception) {
-                AnnotatedString(stringResource(R.string.licenses_unavailable))
-            }
+    val message = when (dialog) {
+        LibraryInfoDialog.About -> AnnotatedString(stringResource(R.string.about_message))
+        LibraryInfoDialog.More -> AnnotatedString(stringResource(R.string.about_message))
+        LibraryInfoDialog.Help -> AnnotatedString.fromHtml(stringResource(R.string.help_message))
+        LibraryInfoDialog.Licenses -> try {
+            AnnotatedString.fromHtml(
+                context.assets.open("licenses.html").bufferedReader().use { it.readText() },
+            )
+        } catch (_: Exception) {
+            AnnotatedString(stringResource(R.string.licenses_unavailable))
         }
     }
+
     AlertDialog(
         modifier = layout.modifier,
         properties = layout.properties,
         onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                painter = painterResource(icon),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-            )
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Icon(
+                    painter = painterResource(icon),
+                    contentDescription = null,
+                    modifier = Modifier.size(26.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Text(title)
+            }
         },
-        title = { Text(title) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.large,
-                    color = MaterialTheme.colorScheme.surfaceContainerLow,
-                ) {
-                    Text(
-                        text = message,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = maxMessageHeight)
-                            .verticalScroll(rememberScrollState())
-                            .padding(16.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                if (dialog == LibraryInfoDialog.About) {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.large,
-                        color = MaterialTheme.colorScheme.surfaceContainerLow,
-                    ) {
-                        Column {
-                            LibraryInformationActionRow(
-                                label = R.string.licenses,
-                                icon = R.drawable.ic_list,
-                                onClick = { onOpen(LibraryInfoDialog.Licenses) },
-                            )
-                            HorizontalDivider()
-                            LibraryInformationActionRow(
-                                label = R.string.more,
-                                icon = R.drawable.ic_more_vert,
-                                onClick = { onOpen(LibraryInfoDialog.More) },
-                            )
-                        }
-                    }
-                }
+            when (dialog) {
+                LibraryInfoDialog.About -> LibraryAboutBody(
+                    onLicenses = { onOpen(LibraryInfoDialog.Licenses) },
+                    onMore = { onOpen(LibraryInfoDialog.More) },
+                )
+                LibraryInfoDialog.Help -> LibraryHelpBody(
+                    message = message,
+                    maxHeight = maxMessageHeight,
+                )
+                LibraryInfoDialog.Licenses,
+                LibraryInfoDialog.More -> Text(
+                    text = message,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxMessageHeight)
+                        .verticalScroll(rememberScrollState()),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         },
         confirmButton = {
@@ -3055,29 +3038,102 @@ internal fun LibraryInformationDialog(
 }
 
 @Composable
-private fun LibraryInformationActionRow(
-    label: Int,
-    icon: Int,
-    onClick: () -> Unit,
+private fun LibraryAboutBody(
+    onLicenses: () -> Unit,
+    onMore: () -> Unit,
 ) {
-    ListItem(
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        leadingContent = {
-            Icon(
-                painter = painterResource(icon),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        },
-        headlineContent = {
-            Text(
-                text = stringResource(label),
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-            )
-        },
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = stringResource(R.string.about_product_name),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(
+            text = buildString {
+                append(stringResource(R.string.version))
+                append(' ')
+                append(BuildConfig.VERSION_NAME)
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = AnnotatedString.fromHtml(stringResource(R.string.about_github)),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Text(
+            text = stringResource(R.string.about_maintainer),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = stringResource(R.string.about_message).trim(),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        HorizontalDivider(modifier = Modifier.padding(top = 2.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            TextButton(onClick = onLicenses) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_list),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(stringResource(R.string.licenses))
+            }
+            TextButton(onClick = onMore) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_more_vert),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(stringResource(R.string.more))
+            }
+        }
+    }
+}
+
+@Composable
+private fun LibraryHelpBody(
+    message: AnnotatedString,
+    maxHeight: Dp,
+) {
+    val items = remember(message.text) {
+        message.text
+            .split('•')
+            .map(String::trim)
+            .filter(String::isNotEmpty)
+    }
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(role = Role.Button, onClick = onClick),
-    )
+            .heightIn(max = maxHeight)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        items.forEach { item ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                Text(
+                    text = "•",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = item,
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
 }
