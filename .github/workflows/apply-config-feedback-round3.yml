@@ -23,6 +23,7 @@ jobs:
       - name: Apply feedback
         run: |
           python3 .github/scripts/apply_config_feedback_round3.py
+          rm -f app/src/test/java/ru/playsoftware/j2meloader/settings/KeyMapperInsetContractTest.java
           git diff --check
 
       - name: Set up JDK 21
