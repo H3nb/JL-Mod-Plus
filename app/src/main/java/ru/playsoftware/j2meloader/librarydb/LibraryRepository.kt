@@ -69,7 +69,12 @@ class LibraryRepository(
 
     fun setEmulatorDirectory(emulatorDir: File) {
         val normalized = normalizeWorkdir(emulatorDir)
-        if (workdirRequests.value?.emulatorDir == normalized) return
+        if (
+            workdirRequests.value?.emulatorDir == normalized &&
+            mutableState.value !is State.Error
+        ) {
+            return
+        }
         request(normalized)
     }
 
