@@ -45,14 +45,16 @@ class LibraryBootstrapper(
                 return Result(alreadyReady = true, indexedCount = 0, failures = emptyList())
             }
             LibraryBootstrapState.CREATING,
-            LibraryBootstrapState.INDEXING,
+            LibraryBootstrapState.INDEXING -> {
+                // Explicit incomplete states are retryable by contract. Any rows here belong to an
+                // initialization that never published READY and may be replaced atomically below.
+            }
             null -> {
-                // A fresh/incomplete bootstrap cannot contain durable Library-owned rows: the
-                // initial catalog and READY transition are published together in one transaction.
-                // If any persistent data exists here, this is an established/corrupt catalog whose
-                // state marker is inconsistent. Fail closed instead of clearing user-owned data.
+                // A missing state row is different: if durable Library data exists we cannot prove
+                // this database never reached READY, so fail closed instead of silently rebuilding
+                // potentially user-owned metadata, collections, stats, or receipts.
                 check(!dao.hasPersistentLibraryData()) {
-                    "Library bootstrap state is incomplete or missing while persistent Library data exists"
+                    "Library bootstrap state is missing while persistent Library data exists"
                 }
             }
             else -> error("Unsupported Library bootstrap state: $bootstrapState")
