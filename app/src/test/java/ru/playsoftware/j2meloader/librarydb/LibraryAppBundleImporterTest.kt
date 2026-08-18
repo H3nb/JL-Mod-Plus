@@ -62,12 +62,17 @@ class LibraryAppBundleImporterTest {
     }
 
     @Test fun restoreReplacesOnlyNamespacesPresentInBundle() {
+        val descriptor = """
+            MIDlet-Name: Game
+            MIDlet-Vendor: Vendor
+            MIDlet-Version: 1.0
+        """.trimIndent() + "\n"
         val workdir = temporaryFolder.newFolder("workdir")
         val converted = File(File(workdir, "converted"), "game").apply { mkdirs() }
         val config = File(File(workdir, "configs"), "game").apply { mkdirs() }
         val data = File(File(workdir, "data"), "game").apply { mkdirs() }
         File(converted, "res.jar").writeBytes(byteArrayOf(7))
-        File(converted, "converted.dex.conf").writeText("old converted")
+        File(converted, "converted.dex.conf").writeText(descriptor)
         File(config, "old.cfg").writeText("old config")
         File(data, "keep.sav").writeText("existing save")
 
@@ -75,7 +80,7 @@ class LibraryAppBundleImporterTest {
         val prepared = LibraryAppBundleImporter.extractToStaging(
             bundle(
                 "app/res.jar" to byteArrayOf(1),
-                "app/converted.dex.conf" to "new converted".toByteArray(),
+                "app/converted.dex.conf" to descriptor.toByteArray(),
                 "config/new.cfg" to "new config".toByteArray(),
             ),
             staging,
@@ -85,7 +90,7 @@ class LibraryAppBundleImporterTest {
 
         assertFalse(File(config, "old.cfg").exists())
         assertEquals("new config", File(config, "new.cfg").readText())
-        assertEquals("new converted", File(converted, "converted.dex.conf").readText())
+        assertEquals(descriptor, File(converted, "converted.dex.conf").readText())
         assertEquals("existing save", File(data, "keep.sav").readText())
         assertTrue(File(converted, "res.jar").isFile)
     }
