@@ -110,6 +110,9 @@ class LibraryRepository(
         return ready.apps.firstOrNull { it.id == appId }
     }
 
+    fun currentStorageKeys(expected: LibraryGenerationToken): Set<String> =
+        requireReadyGeneration(expected).apps.mapTo(LinkedHashSet()) { it.storageKey }
+
     fun findBySourceIdentity(
         expected: LibraryGenerationToken,
         sourceTitle: String,
