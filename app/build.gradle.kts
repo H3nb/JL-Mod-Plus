@@ -7,8 +7,10 @@ import java.util.jar.Manifest
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.androidx.room3)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.compose.screenshot)
+    alias(libs.plugins.ksp)
 }
 
 val secret = Properties().also { properties ->
@@ -105,16 +107,14 @@ android {
 
     flavorDimensions += "default"
     productFlavors {
-        create("emulator") { // variant dimension for create emulator
+        create("emulator") {
             versionNameSuffix = System.getenv("VERSION_SUFFIX")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
-        create("midlet") { // variant dimension for create android port from J2ME app source
-            // configure midlet's port project params here, as default it read from app manifest,
-            // placed to 'app/src/midlet/resources/MIDLET-META-INF/MANIFEST.MF'
+        create("midlet") {
             val props = getMidletManifestProperties()
             val midletName = props.getValue("MIDlet-Name")?.trim() ?: "Demo MIDlet"
             val apkName = midletName.replace("[/\\\\:*?\"<>|]".toRegex(), "").replace(" ", "_")
@@ -143,8 +143,10 @@ android {
     }
 }
 
-// Keep the legacy standalone MIDlet-to-APK source set available as reference, but do not
-// create build variants for it unless porting support is intentionally re-enabled.
+room3 {
+    schemaDirectory("$projectDir/schemas")
+}
+
 androidComponents {
     beforeVariants(selector().withFlavor("default" to "midlet")) { variantBuilder ->
         variantBuilder.enable = false
@@ -215,9 +217,13 @@ dependencies {
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.preference.ktx)
-    annotationProcessor(libs.androidx.room.compiler)
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.rxjava2)
+
+    // Library Architecture v2 (H3nb/JL-Mod-Plus#92).
+    implementation(libs.androidx.room3.runtime)
+    implementation(libs.androidx.sqlite.framework)
+    implementation(libs.kotlinx.coroutines.android)
+    ksp(libs.androidx.room3.compiler)
+
     implementation(libs.google.gson)
     implementation(libs.google.oboe)
 
@@ -234,6 +240,11 @@ dependencies {
     screenshotTestImplementation(libs.screenshot.validation.api)
 
     testImplementation(libs.junit)
+    testImplementation(libs.androidx.room3.testing)
+    // Android local-unit-test configurations otherwise resolve sqlite-bundled's Android variant,
+    // whose JNI binaries cannot load on the Linux host. Pin the dedicated JVM artifact only for
+    // host DB execution; production continues to use AndroidSQLiteDriver/sqlite-framework.
+    testImplementation("androidx.sqlite:sqlite-bundled-jvm:2.7.0")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }

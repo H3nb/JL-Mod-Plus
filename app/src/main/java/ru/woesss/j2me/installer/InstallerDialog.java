@@ -16,6 +16,7 @@
 
 package ru.woesss.j2me.installer;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -37,49 +38,60 @@ import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import java.io.File;
-import java.io.IOException;
 
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import ru.playsoftware.j2meloader.MainActivity;
 import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.applist.AppItem;
-import ru.playsoftware.j2meloader.applist.AppListModel;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.crashes.CrashReporter;
+import ru.playsoftware.j2meloader.librarydb.LibraryViewModel;
 import ru.woesss.j2me.jar.Descriptor;
 
 public class InstallerDialog extends DialogFragment {
 	private static final String ARG_URI = "InstallerDialog.uri";
+	private static final String ARG_REQUEST_ID = "InstallerDialog.requestId";
 	private static final String ARG_ID = "InstallerDialog.id";
+	private static final String ARG_GENERATION = "InstallerDialog.generation";
+	private static final String ARG_WORKDIR = "InstallerDialog.workdir";
+	private static final String ARG_STORAGE_KEY = "InstallerDialog.storageKey";
+	private static final long NO_GENERATION = Long.MIN_VALUE;
 	private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
-	private AppListModel appListModel;
+	private LibraryViewModel libraryViewModel;
 	private AppInstaller installer;
 	private InstallerComposeController composeController;
 	private String installerTitle;
 	private String currentTitle;
 	private Runnable primaryAction;
+	private boolean restoredInstance;
 
-	/**
-	 * @param uri original uri from intent.
-	 * @return A new instance of fragment InstallerDialog.
-	 */
+	/** Compatibility entry point for callers that do not participate in MainActivity request restore. */
 	public static InstallerDialog newInstance(Uri uri) {
+		return newExternalRequest(null, uri);
+	}
+
+	public static InstallerDialog newExternalRequest(@Nullable String requestId, Uri uri) {
 		InstallerDialog fragment = new InstallerDialog();
 		Bundle args = new Bundle();
 		args.putParcelable(ARG_URI, uri);
+		if (requestId != null) args.putString(ARG_REQUEST_ID, requestId);
 		fragment.setArguments(args);
 		fragment.setCancelable(false);
 		return fragment;
 	}
 
-	public static InstallerDialog newInstance(int id) {
+	public static InstallerDialog newInstance(long id, long expectedGeneration,
+			String expectedWorkdirPath, String storageKey) {
 		InstallerDialog fragment = new InstallerDialog();
 		Bundle args = new Bundle();
-		args.putInt(ARG_ID, id);
+		args.putLong(ARG_ID, id);
+		args.putLong(ARG_GENERATION, expectedGeneration);
+		args.putString(ARG_WORKDIR, expectedWorkdirPath);
+		args.putString(ARG_STORAGE_KEY, storageKey);
 		fragment.setArguments(args);
 		fragment.setCancelable(false);
 		return fragment;
@@ -88,14 +100,18 @@ public class InstallerDialog extends DialogFragment {
 	@Override
 	public void onAttach(@NonNull Context context) {
 		super.onAttach(context);
-		appListModel = new ViewModelProvider(requireActivity()).get(AppListModel.class);
+		libraryViewModel = new ViewModelProvider(requireActivity()).get(LibraryViewModel.class);
 	}
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		if (savedInstanceState != null) {
-			// Preserve the legacy contract: an in-flight installer is not restored after recreation.
+		restoredInstance = savedInstanceState != null;
+		if (restoredInstance) {
+			// MainActivity owns durable external-request state and the Library READY gate. Never resume
+			// an installer Fragment directly after Activity/process recreation: a pending request remains
+			// in MainActivity's queue and will be presented again only after the active generation is READY.
+			// A request that already committed was ACKed at STATUS_SUCCESS, so it will not replay.
 			dismissAllowingStateLoss();
 		}
 	}
@@ -116,17 +132,15 @@ public class InstallerDialog extends DialogFragment {
 		dialog.setCanceledOnTouchOutside(false);
 		dialog.setOnShowListener(ignored -> {
 			Window window = dialog.getWindow();
-			if (window == null) {
-				return;
-			}
+			if (window == null) return;
 			window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 			int margin = (int) TypedValue.applyDimension(
 					TypedValue.COMPLEX_UNIT_DIP, 32, getResources().getDisplayMetrics());
-            int maxWidthDp = getResources().getConfiguration().orientation
-                    == Configuration.ORIENTATION_LANDSCAPE ? 760 : 480;
-            int maxWidth = (int) TypedValue.applyDimension(
-                    TypedValue.COMPLEX_UNIT_DIP, maxWidthDp, getResources().getDisplayMetrics());
-            int width = Math.min(maxWidth, getResources().getDisplayMetrics().widthPixels - margin);
+			int maxWidthDp = getResources().getConfiguration().orientation
+					== Configuration.ORIENTATION_LANDSCAPE ? 760 : 480;
+			int maxWidth = (int) TypedValue.applyDimension(
+					TypedValue.COMPLEX_UNIT_DIP, maxWidthDp, getResources().getDisplayMetrics());
+			int width = Math.min(maxWidth, getResources().getDisplayMetrics().widthPixels - margin);
 			window.setLayout(Math.max(width, 1), WindowManager.LayoutParams.WRAP_CONTENT);
 		});
 		return dialog;
@@ -136,6 +150,10 @@ public class InstallerDialog extends DialogFragment {
 	public void onDismiss(@NonNull DialogInterface dialog) {
 		super.onDismiss(dialog);
 		composeController = null;
+		Activity activity = getActivity();
+		if (activity instanceof MainActivity) {
+			((MainActivity) activity).onInstallerDialogDismissed();
+		}
 	}
 
 	@Override
@@ -147,25 +165,28 @@ public class InstallerDialog extends DialogFragment {
 	@Override
 	public void onStart() {
 		super.onStart();
-		if (installer != null || composeController == null) {
-			return;
-		}
+		if (restoredInstance || installer != null || composeController == null) return;
 		Bundle args = requireArguments();
 		Uri uri = args.getParcelable(ARG_URI);
 		if (uri != null) {
 			installApp(null, uri);
 			return;
 		}
-		reinstallApp(args.getInt(ARG_ID));
+		long generation = args.getLong(ARG_GENERATION, NO_GENERATION);
+		String workdir = args.getString(ARG_WORKDIR);
+		String storageKey = args.getString(ARG_STORAGE_KEY);
+		if (generation == NO_GENERATION || workdir == null || storageKey == null) {
+			onError(new IllegalStateException("Explicit reinstall target is incomplete"));
+			return;
+		}
+		reinstallApp(args.getLong(ARG_ID), generation, new File(workdir), storageKey);
 	}
 
 	private InstallerActions createActions() {
 		return new InstallerActions() {
 			@Override
 			public void onInstall() {
-				if (primaryAction != null) {
-					primaryAction.run();
-				}
+				if (primaryAction != null) primaryAction.run();
 			}
 
 			@Override
@@ -186,7 +207,7 @@ public class InstallerDialog extends DialogFragment {
 	}
 
 	private void installApp(File jar, Uri uri) {
-		installer = new AppInstaller(jar, uri, appListModel);
+		installer = new AppInstaller(jar, uri, libraryViewModel);
 		primaryAction = this::convert;
 		showLoading();
 		Disposable disposable = Single.create(installer::loadInfo)
@@ -196,8 +217,14 @@ public class InstallerDialog extends DialogFragment {
 		compositeDisposable.add(disposable);
 	}
 
-	private void reinstallApp(int id) {
-		installer = new AppInstaller(id, appListModel);
+	private void reinstallApp(long id, long expectedGeneration, File expectedWorkdir,
+			String storageKey) {
+		installer = new AppInstaller(
+				id,
+				expectedGeneration,
+				expectedWorkdir,
+				storageKey,
+				libraryViewModel);
 		primaryAction = this::convert;
 		showLoading();
 		Disposable disposable = Single.create(installer::loadInfo)
@@ -214,9 +241,7 @@ public class InstallerDialog extends DialogFragment {
 	}
 
 	private void convert() {
-		if (installer == null || composeController == null || !isAdded()) {
-			return;
-		}
+		if (installer == null || composeController == null || !isAdded()) return;
 		Descriptor nd = installer.getNewDescriptor();
 		composeController.showConverting(
 				currentTitle,
@@ -230,19 +255,20 @@ public class InstallerDialog extends DialogFragment {
 	}
 
 	private void onProgress(@NonNull Integer status) {
-		if (!isAdded() || composeController == null) {
-			return;
-		}
+		if (!isAdded() || composeController == null) return;
 		if (status == AppInstaller.STATUS_SUCCESS) {
-			AppItem app = installer.getExistsApp();
+			// The filesystem + Room commit is the durable consumption point. A process death while the
+			// success screen is visible must not replay the same external install request.
+			acknowledgeExternalRequest();
 			composeController.showSuccess(
 					currentTitle,
 					getString(R.string.install_done),
 					getString(R.string.START_CMD),
 					getString(R.string.close),
-					app.getImagePathExt());
+					installer.getIconPath());
 			return;
 		}
+
 		Descriptor nd = installer.getNewDescriptor();
 		String message;
 		String runLabel = null;
@@ -255,17 +281,13 @@ public class InstallerDialog extends DialogFragment {
 				message = nd.getInfo(requireActivity()).toString();
 			}
 			case AppInstaller.STATUS_OLDER -> message = getString(
-					R.string.reinstall_older,
-					nd.getVersion(),
-					installer.getCurrentVersion());
+					R.string.reinstall_older, nd.getVersion(), installer.getCurrentVersion());
 			case AppInstaller.STATUS_EQUAL -> {
 				message = getString(R.string.reinstall);
 				runLabel = getString(R.string.START_CMD);
 			}
 			case AppInstaller.STATUS_NEWER -> message = getString(
-					R.string.reinstall_newest,
-					nd.getVersion(),
-					installer.getCurrentVersion());
+					R.string.reinstall_newest, nd.getVersion(), installer.getCurrentVersion());
 			case AppInstaller.STATUS_UNMATCHED -> {
 				SpannableStringBuilder info = installer.getManifest().getInfo(requireActivity());
 				info.append(getString(R.string.install_jar_non_matched_jad));
@@ -305,25 +327,33 @@ public class InstallerDialog extends DialogFragment {
 			installer.deleteTemp();
 			installer.clearCache();
 		}
-		if (isAdded()) {
-			dismiss();
-		}
+		acknowledgeExternalRequest();
+		if (isAdded()) dismiss();
 	}
 
 	private void launchExistingApp(boolean cleanUp) {
-		if (!isAdded() || installer == null) {
-			return;
-		}
-		AppItem app = installer.getExistsApp();
-		if (app == null) {
-			return;
-		}
+		if (!isAdded() || installer == null) return;
+		String title = installer.getInstalledTitle();
+		String path = installer.getInstalledPath();
+		if (title == null || path == null) return;
 		if (cleanUp) {
 			installer.clearCache();
 			installer.deleteTemp();
 		}
-		Config.startApp(requireContext(), app.getTitle(), app.getPathExt());
+		acknowledgeExternalRequest();
+		Config.startApp(requireContext(), title, path);
 		dismiss();
+	}
+
+	private void acknowledgeExternalRequest() {
+		Bundle args = getArguments();
+		Uri uri = args == null ? null : args.getParcelable(ARG_URI);
+		if (uri == null) return;
+		String requestId = args.getString(ARG_REQUEST_ID);
+		Activity activity = getActivity();
+		if (activity instanceof MainActivity) {
+			((MainActivity) activity).completeInstallerRequest(requestId, uri);
+		}
 	}
 
 	private void onError(Throwable e) {
@@ -344,9 +374,8 @@ public class InstallerDialog extends DialogFragment {
 			installer.clearCache();
 			installer.deleteTemp();
 		}
-		if (!isAdded()) {
-			return;
-		}
+		acknowledgeExternalRequest();
+		if (!isAdded()) return;
 		dismissAllowingStateLoss();
 	}
 }

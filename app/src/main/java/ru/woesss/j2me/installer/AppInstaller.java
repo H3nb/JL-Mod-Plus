@@ -36,14 +36,20 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.jar.JarFile;
 
 import io.reactivex.SingleEmitter;
 import ru.playsoftware.j2meloader.EmulatorApplication;
-import ru.playsoftware.j2meloader.applist.AppItem;
-import ru.playsoftware.j2meloader.applist.AppListModel;
 import ru.playsoftware.j2meloader.config.Config;
+import ru.playsoftware.j2meloader.librarydb.LibraryAppRow;
+import ru.playsoftware.j2meloader.librarydb.LibraryGenerationLease;
+import ru.playsoftware.j2meloader.librarydb.LibraryGenerationToken;
+import ru.playsoftware.j2meloader.librarydb.LibraryIconRevision;
+import ru.playsoftware.j2meloader.librarydb.LibraryInstallRecovery;
+import ru.playsoftware.j2meloader.librarydb.LibraryViewModel;
 import ru.playsoftware.j2meloader.util.ConverterException;
 import ru.playsoftware.j2meloader.util.FileUtils;
 import ru.playsoftware.j2meloader.util.IOUtils;
@@ -54,6 +60,8 @@ import ru.woesss.util.zip.ZipFile;
 
 public class AppInstaller {
 	private static final String TAG = AppInstaller.class.getSimpleName();
+	private static final long NO_ID = -1L;
+	private static final long NO_GENERATION = Long.MIN_VALUE;
 	static final int STATUS_OLDER = -1;
 	static final int STATUS_EQUAL = 0;
 	static final int STATUS_NEWER = 1;
@@ -62,8 +70,11 @@ public class AppInstaller {
 	static final int STATUS_SUCCESS = 4;
 	static final int STATUS_SAME = 5;
 
-	private final int id;
-	private final AppListModel appListModel;
+	private final long id;
+	private final LibraryViewModel libraryViewModel;
+	private final long requestedGeneration;
+	private final File requestedWorkdir;
+	private final String requestedStorageKey;
 	private final File cacheDir = new File(EmulatorApplication.getInstance().getCacheDir(), "installer");
 
 	private Uri uri;
@@ -73,21 +84,33 @@ public class AppInstaller {
 	private File targetDir;
 	private File srcJar;
 	private File tmpDir;
-	private AppItem currentApp;
+	private LibraryAppRow currentApp;
 	private File srcFile;
+	private long expectedGeneration = NO_GENERATION;
+	private File expectedWorkdir;
+	private long installedId = NO_ID;
+	private String installedTitle;
+	private String installedPath;
 
-	AppInstaller(File jar, Uri uri, AppListModel appListModel) {
-		id = -1;
-		this.appListModel = appListModel;
+	AppInstaller(File jar, Uri uri, LibraryViewModel libraryViewModel) {
+		id = NO_ID;
+		requestedGeneration = NO_GENERATION;
+		requestedWorkdir = null;
+		requestedStorageKey = null;
+		this.libraryViewModel = libraryViewModel;
 		if (jar != null) {
 			srcFile = jar;
 		}
 		this.uri = uri;
 	}
 
-	public AppInstaller(int id, AppListModel appListModel) {
+	public AppInstaller(long id, long requestedGeneration, File requestedWorkdir,
+			String requestedStorageKey, LibraryViewModel libraryViewModel) {
 		this.id = id;
-		this.appListModel = appListModel;
+		this.requestedGeneration = requestedGeneration;
+		this.requestedWorkdir = requestedWorkdir;
+		this.requestedStorageKey = requestedStorageKey;
+		this.libraryViewModel = libraryViewModel;
 	}
 
 	Descriptor getNewDescriptor() {
@@ -95,24 +118,30 @@ public class AppInstaller {
 	}
 
 	String getCurrentVersion() {
-		return currentApp.getVersion();
+		return currentApp == null ? null : currentApp.getSourceVersion();
 	}
 
 	Descriptor getManifest() {
 		return manifest;
 	}
 
-	/** Load and check app info from source */
+	/** Load and check app info from source against one captured READY Library generation. */
 	void loadInfo(SingleEmitter<Integer> emitter) throws IOException, ConverterException {
-		if (id != -1) {
-			currentApp = appListModel.getApp(id);
-			srcJar = new File(currentApp.getPathExt(), Config.MIDLET_RES_FILE);
-			newDesc = new Descriptor(new File(currentApp.getPathExt(), Config.MIDLET_MANIFEST_FILE), false);
-			appDirName = currentApp.getPath();
-			targetDir = new File(Config.getAppDir(), appDirName);
+		bindReadyGeneration();
+		if (id != NO_ID) {
+			verifyRequestedGeneration();
+			currentApp = requireRequestedAppIdentity();
+			appDirName = currentApp.getStorageKey();
+			targetDir = new File(appsDir(), appDirName);
+			srcJar = child(targetDir, Config.MIDLET_RES_FILE);
+			if (!srcJar.isFile()) {
+				throw new IOException("Retained JAR is unavailable for reinstall: " + appDirName);
+			}
+			newDesc = new Descriptor(child(targetDir, Config.MIDLET_MANIFEST_FILE), false);
 			emitter.onSuccess(STATUS_EQUAL);
 			return;
 		}
+
 		boolean isLocal = srcFile != null;
 		if (!isLocal && uri != null && ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme()))) {
 			downloadJad();
@@ -125,16 +154,15 @@ public class AppInstaller {
 		}
 
 		String name = srcFile.getName();
-
 		if (TextUtils.endsWithIgnoreCase(name, ".jad")) {
 			newDesc = new Descriptor(srcFile, true);
 			String url = newDesc.getJarUrl();
 			if (url == null) {
 				throw new ConverterException("Jad not have " + Descriptor.MIDLET_JAR_URL);
 			}
-			Uri uri = Uri.parse(url);
-			String scheme = uri.getScheme();
-			String host = uri.getHost();
+			Uri jarUri = Uri.parse(url);
+			String scheme = jarUri.getScheme();
+			String host = jarUri.getHost();
 			if (isLocal && scheme == null && host == null) {
 				boolean matches = this.uri != null && "content".equals(this.uri.getScheme())
 						? checkContentUriJar(this.uri, srcFile)
@@ -150,15 +178,52 @@ public class AppInstaller {
 				}
 			}
 		} else if (TextUtils.endsWithIgnoreCase(name, ".kjx")) {
-			// Load kjx file
 			parseKjx();
 			newDesc = new Descriptor(srcFile, true);
 		} else {
 			srcJar = srcFile;
 			newDesc = loadManifest(srcFile);
 		}
-		int result = checkDescriptor();
-		emitter.onSuccess(result);
+		emitter.onSuccess(checkDescriptor());
+	}
+
+	private void bindReadyGeneration() throws IOException {
+		LibraryGenerationToken generation = libraryViewModel.readyGeneration();
+		if (generation == null) {
+			throw new IOException("Library is not READY for installation");
+		}
+		expectedGeneration = generation.getGeneration();
+		expectedWorkdir = generation.getEmulatorDir().getCanonicalFile();
+	}
+
+	private void verifyRequestedGeneration() throws IOException {
+		if (requestedGeneration == NO_GENERATION || requestedGeneration != expectedGeneration ||
+				requestedWorkdir == null ||
+				!requestedWorkdir.getCanonicalFile().equals(expectedWorkdir)) {
+			throw new IOException("Library generation changed before opening reinstall target");
+		}
+	}
+
+	private void verifyActiveGeneration() throws IOException {
+		if (!libraryViewModel.isReadyGeneration(expectedGeneration, expectedWorkdir)) {
+			throw new IOException("Library generation changed while installer was running");
+		}
+	}
+
+	private LibraryAppRow requireRequestedAppIdentity() throws IOException {
+		LibraryAppRow app;
+		try {
+			app = libraryViewModel.getApp(expectedGeneration, expectedWorkdir, id);
+		} catch (IllegalStateException e) {
+			throw new IOException("Library generation changed while resolving reinstall target", e);
+		}
+		if (app == null) {
+			throw new IOException("Library app no longer exists: " + id);
+		}
+		if (requestedStorageKey == null || !requestedStorageKey.equals(app.getStorageKey())) {
+			throw new IOException("Library reinstall target changed while installer was running");
+		}
+		return app;
 	}
 
 	private void parseKjx() throws ConverterException {
@@ -171,8 +236,7 @@ public class AppInstaller {
 			if (!Arrays.equals(magic, "KJX".getBytes())) {
 				throw new ConverterException("Magic KJX does not match: " + new String(magic));
 			}
-
-			/*byte startJadPos = */dis.readByte();
+			dis.readByte();
 			byte lenKjxFileName = dis.readByte();
 			dis.skipBytes(lenKjxFileName);
 			int lenJadFileContent = dis.readUnsignedShort();
@@ -183,7 +247,6 @@ public class AppInstaller {
 
 			int bufSize = 2048;
 			byte[] buf = new byte[bufSize];
-
 			File jadFile = new File(cacheDir, strJadFileName);
 			try (FileOutputStream fos = new FileOutputStream(jadFile)) {
 				int restSize = lenJadFileContent;
@@ -201,7 +264,6 @@ public class AppInstaller {
 					fos.write(buf, 0, length);
 				}
 			}
-
 			srcFile = jadFile;
 			srcJar = jarFile;
 		} catch (FileNotFoundException e) {
@@ -226,8 +288,7 @@ public class AppInstaller {
 			connection.setReadTimeout(3 * 60 * 1000);
 			connection.setConnectTimeout(15000);
 			int code = connection.getResponseCode();
-			if (code == HttpURLConnection.HTTP_MOVED_PERM ||
-				code == HttpURLConnection.HTTP_MOVED_TEMP) {
+			if (code == HttpURLConnection.HTTP_MOVED_PERM || code == HttpURLConnection.HTTP_MOVED_TEMP) {
 				String urlStr = connection.getHeaderField("Location");
 				connection.disconnect();
 				connection = (HttpURLConnection) new URL(urlStr).openConnection();
@@ -246,29 +307,26 @@ public class AppInstaller {
 			connection.disconnect();
 			Log.d(TAG, "Download complete");
 			return;
-		} catch (MalformedURLException e) {
-			exception = e;
-		} catch (FileNotFoundException e) {
+		} catch (MalformedURLException | FileNotFoundException e) {
 			exception = e;
 		} catch (IOException e) {
 			exception = e;
 		} finally {
-			if (connection != null) {
-				connection.disconnect();
-			}
+			if (connection != null) connection.disconnect();
 		}
 		deleteTemp();
 		throw new ConverterException("Can't download jad", exception);
 	}
 
-	/** Install app */
+	/** Finalize converted files first, then publish a generation-bound Room3 mutation asynchronously. */
 	void install(SingleEmitter<Integer> emitter) throws ConverterException, IOException {
 		if (!cacheDir.exists() && !cacheDir.mkdirs()) {
 			throw new ConverterException("Can't create cache dir");
 		}
-		tmpDir = new File(targetDir.getParent(), ".tmp");
-		if (!tmpDir.isDirectory() && !tmpDir.mkdirs()) {
-			throw new ConverterException("Can't create directory: '" + targetDir + "'");
+		LibraryInstallRecovery.discardStaging(expectedWorkdir);
+		tmpDir = LibraryInstallRecovery.stagingDirectory(expectedWorkdir);
+		if (!tmpDir.mkdirs()) {
+			throw new ConverterException("Can't create staging directory: '" + tmpDir + "'");
 		}
 		if (srcJar == null) {
 			srcJar = new File(cacheDir, "tmp.jar");
@@ -280,8 +338,7 @@ public class AppInstaller {
 			}
 		}
 		try {
-			Main.main(new String[]{"--no-optimize",
-					"--output=" + tmpDir + Config.MIDLET_DEX_ARCH,
+			Main.main(new String[]{"--no-optimize", "--output=" + tmpDir + Config.MIDLET_DEX_ARCH,
 					srcJar.getAbsolutePath()});
 		} catch (Throwable e) {
 			throw new ConverterException("Dexing error", e);
@@ -290,10 +347,11 @@ public class AppInstaller {
 			manifest.merge(newDesc);
 			newDesc = manifest;
 		}
-		File resJar = new File(tmpDir, Config.MIDLET_RES_FILE);
+
+		File resJar = child(tmpDir, Config.MIDLET_RES_FILE);
 		FileUtils.copyFileUsingChannel(srcJar, resJar);
 		String icon = newDesc.getIcon();
-		File iconFile = new File(tmpDir, Config.MIDLET_ICON_FILE);
+		File iconFile = child(tmpDir, Config.MIDLET_ICON_FILE);
 		if (icon != null) {
 			try {
 				ZipUtils.unzipEntry(resJar, icon, iconFile);
@@ -303,56 +361,96 @@ public class AppInstaller {
 				iconFile.delete();
 			}
 		}
-		newDesc.writeTo(new File(tmpDir, Config.MIDLET_MANIFEST_FILE));
-		FileUtils.deleteDirectory(targetDir);
-		if (!tmpDir.renameTo(targetDir)) {
-			throw new ConverterException("Can't move '" + tmpDir + "' to '" + targetDir + "'");
+		newDesc.writeTo(child(tmpDir, Config.MIDLET_MANIFEST_FILE));
+
+		// Conversion may outlive multiple A -> B -> A workdir switches. Path equality is not enough:
+		// only the exact READY generation captured by loadInfo() may publish filesystem or DB state.
+		verifyActiveGeneration();
+		if (id != NO_ID) {
+			verifyRequestedGeneration();
+			requireRequestedAppIdentity();
 		}
-		String name = newDesc.getName();
-		String vendor = newDesc.getVendor();
-		AppItem app = new AppItem(appDirName, name, vendor, newDesc.getVersion());
-		if (currentApp != null) {
-			app.setId(currentApp.getId());
-			app.setTitle(currentApp.getTitle());
-			String path = currentApp.getPath();
-			if (!path.equals(appDirName)) {
-				File rms = new File(Config.getDataDir(), path);
-				if (rms.exists()) {
-					File newRms = new File(Config.getDataDir(), appDirName);
-					FileUtils.deleteDirectory(newRms);
-					rms.renameTo(newRms);
+
+		File replacementBackup = null;
+		// The lease is deliberately limited to the two rename operations. Workdir switching cannot
+		// invalidate the generation between backup and replacement publish, while dexing/copying and
+		// the asynchronous Room mutation remain outside the lock.
+		try (LibraryGenerationLease ignored = libraryViewModel.acquireGenerationLease(
+				expectedGeneration,
+				expectedWorkdir)) {
+			if (targetDir.exists()) {
+				replacementBackup = LibraryInstallRecovery.createBackup(
+						expectedWorkdir,
+						appDirName,
+						targetDir);
+			}
+			if (!tmpDir.renameTo(targetDir)) {
+				if (replacementBackup != null &&
+						!LibraryInstallRecovery.restoreBackup(targetDir, replacementBackup)) {
+					Log.e(TAG,
+							"Replacement publish failed and immediate backup rollback also failed: " + appDirName);
 				}
-				File config = new File(Config.getConfigsDir(), path);
-				if (config.exists()) {
-					File newConfig = new File(Config.getConfigsDir(), appDirName);
-					FileUtils.deleteDirectory(newConfig);
-					config.renameTo(newConfig);
-				}
-				File appDir = new File(Config.getAppDir(), path);
-				FileUtils.deleteDirectory(appDir);
+				throw new ConverterException("Can't move '" + tmpDir + "' to '" + targetDir + "'");
 			}
 		}
-		currentApp = app;
-		appListModel.addApp(app);
+
+		String sourceTitle = newDesc.getName();
+		String sourceVendor = newDesc.getVendor();
+		String sourceVersion = newDesc.getVersion();
+		String sourceDescription = newDesc.getAttrs().get(Descriptor.MIDLET_DESCRIPTION);
+		Long existingId = currentApp == null ? null : currentApp.getId();
+		installedTitle = currentApp == null ? sourceTitle : currentApp.getTitle();
+		installedPath = targetDir.getAbsolutePath();
+		long iconRevision = LibraryIconRevision.fromFile(child(targetDir, Config.MIDLET_ICON_FILE));
+		final File recoveryBackup = replacementBackup;
+
 		clearCache();
 		deleteTemp();
-		emitter.onSuccess(STATUS_SUCCESS);
+		libraryViewModel.recordInstalledApp(
+				expectedGeneration,
+				expectedWorkdir,
+				existingId,
+				appDirName,
+				sourceTitle,
+				sourceVendor,
+				sourceVersion,
+				sourceDescription,
+				iconRevision,
+				System.currentTimeMillis(),
+				(value, error) -> {
+					if (error != null) {
+						// Keep recoveryBackup. Startup reconciliation will refresh this exact storage key
+						// without deleting the successfully published replacement.
+						if (!emitter.isDisposed()) emitter.onError(error);
+						return;
+					}
+					if (value == null) {
+						if (!emitter.isDisposed()) {
+							emitter.onError(new IllegalStateException(
+									"Library install mutation returned no app id"));
+						}
+						return;
+					}
+					installedId = value;
+					if (recoveryBackup != null &&
+							!LibraryInstallRecovery.discardBackup(expectedWorkdir, appDirName)) {
+						Log.w(TAG, "Installed app committed but recovery backup cleanup failed: " + appDirName);
+					}
+					if (!emitter.isDisposed()) emitter.onSuccess(STATUS_SUCCESS);
+				}
+		);
 	}
 
 	private Descriptor loadManifest(File jar) throws IOException {
 		try (ZipFile zip = new ZipFile(jar)) {
 			FileHeader manifest = zip.getFileHeader(JarFile.MANIFEST_NAME);
-			if (manifest == null) {
-				throw new IOException("JAR not have " + JarFile.MANIFEST_NAME);
-			}
+			if (manifest == null) throw new IOException("JAR not have " + JarFile.MANIFEST_NAME);
 			try (ZipInputStream is = zip.getInputStream(manifest)) {
-				String text = new String(IOUtils.toByteArray(is));
-				return new Descriptor(text, false);
+				return new Descriptor(new String(IOUtils.toByteArray(is)), false);
 			}
 		}
 	}
 
-	/** return true if JAR exists and matches JAD **/
 	private boolean checkJarFile(File jad) throws IOException, ConverterException {
 		File dir = jad.getParentFile();
 		String jarUrl = newDesc.getJarUrl();
@@ -360,9 +458,7 @@ public class AppInstaller {
 		if (!jar.exists()) {
 			String name = jad.getName();
 			jar = new File(dir, name.substring(0, name.length() - 4) + ".jar");
-			if (!jar.exists()) {
-				throw new ConverterException("Jar-file not found for url: " + jarUrl);
-			}
+			if (!jar.exists()) throw new ConverterException("Jar-file not found for url: " + jarUrl);
 		}
 		srcJar = jar;
 		manifest = loadManifest(jar);
@@ -371,55 +467,57 @@ public class AppInstaller {
 
 	private boolean checkContentUriJar(Uri jadUri, File jadFile) throws IOException, ConverterException {
 		Uri jarUri = Uri.parse(newDesc.getJarUrl());
-		if (jarUri.getScheme() == null) {
-			jarUri = FileUtils.resolveSiblingUri(jadUri, jarUri);
-		}
-		if (jarUri == null || !"content".equals(jarUri.getScheme())) {
-			return checkJarFile(jadFile);
-		}
+		if (jarUri.getScheme() == null) jarUri = FileUtils.resolveSiblingUri(jadUri, jarUri);
+		if (jarUri == null || !"content".equals(jarUri.getScheme())) return checkJarFile(jadFile);
 		File jar = FileUtils.getFileForUri(jarUri);
-		if (!jar.exists()) {
-			throw new ConverterException("Jar-file not found for uri: " + jarUri);
-		}
+		if (!jar.exists()) throw new ConverterException("Jar-file not found for uri: " + jarUri);
 		srcJar = jar;
 		manifest = loadManifest(jar);
 		return manifest.equals(newDesc);
 	}
 
-	private int checkDescriptor() {
-		// Remove invalid characters from app path
+	private int checkDescriptor() throws IOException {
 		String name = newDesc.getName();
 		String vendor = newDesc.getVendor();
-		currentApp = appListModel.getApp(name, vendor);
+		List<LibraryAppRow> candidates;
+		try {
+			candidates = libraryViewModel.findBySourceIdentity(
+					expectedGeneration,
+					expectedWorkdir,
+					name,
+					vendor);
+		} catch (IllegalStateException e) {
+			throw new IOException("Library generation changed while matching installer identity", e);
+		}
+		currentApp = candidates.size() == 1 ? candidates.get(0) : null;
 		if (currentApp == null) {
-			generatePathName(name.replaceAll(FileUtils.ILLEGAL_FILENAME_CHARS, "").trim());
+			Set<String> indexedStorageKeys;
+			try {
+				indexedStorageKeys = libraryViewModel.storageKeys(expectedGeneration, expectedWorkdir);
+			} catch (IllegalStateException e) {
+				throw new IOException("Library generation changed while selecting installer storage key", e);
+			}
+			generatePathName(
+					name.replaceAll(FileUtils.ILLEGAL_FILENAME_CHARS, "").trim(),
+					indexedStorageKeys);
 			return STATUS_NEW;
 		}
-		appDirName = currentApp.getPath();
-		targetDir = new File(Config.getAppDir(), appDirName);
-		int result = newDesc.compareVersion(currentApp.getVersion());
-		if (result != 0) {
-			return result;
-		}
-		if (srcJar == null || !srcJar.exists()) {
-			return STATUS_EQUAL;
-		}
+
+		appDirName = currentApp.getStorageKey();
+		targetDir = new File(appsDir(), appDirName);
+		int result = newDesc.compareVersion(currentApp.getSourceVersion());
+		if (result != 0) return result;
+		if (srcJar == null || !srcJar.exists()) return STATUS_EQUAL;
 		try {
-			Descriptor oldDesc = new Descriptor(new File(targetDir, Config.MIDLET_MANIFEST_FILE), false);
-			if (!oldDesc.containsAllAttributes(newDesc)) {
-				return STATUS_EQUAL;
-			}
+			Descriptor oldDesc = new Descriptor(child(targetDir, Config.MIDLET_MANIFEST_FILE), false);
+			if (!oldDesc.containsAllAttributes(newDesc)) return STATUS_EQUAL;
 		} catch (IOException e) {
 			Log.e(TAG, "checkDescriptor: error read exists app manifest", e);
 		}
-		File targetJar = new File(targetDir, Config.MIDLET_RES_FILE);
-		if (targetJar.exists() && targetJar.length() == srcJar.length()) {
-			try (FileInputStream one = new FileInputStream(srcJar);
-				 FileInputStream two = new FileInputStream(targetJar)) {
-				if (one.read() != two.read()) {
-					return STATUS_EQUAL;
-				}
-				return STATUS_SAME;
+		File targetJar = child(targetDir, Config.MIDLET_RES_FILE);
+		if (targetJar.exists()) {
+			try {
+				if (filesHaveSameContents(srcJar, targetJar)) return STATUS_SAME;
 			} catch (IOException e) {
 				Log.e(TAG, "checkDescriptor: io error when compare files", e);
 			}
@@ -427,14 +525,45 @@ public class AppInstaller {
 		return STATUS_EQUAL;
 	}
 
-	private void generatePathName(String name) {
-		String appsDir = Config.getAppDir();
-		File dir = new File(appsDir, name);
-		for (int i = 1; dir.exists(); i++) {
-			dir = new File(appsDir, name + "_" + i);
+	static boolean filesHaveSameContents(File first, File second) throws IOException {
+		if (!first.isFile() || !second.isFile() || first.length() != second.length()) return false;
+		try (FileInputStream one = new FileInputStream(first);
+			 FileInputStream two = new FileInputStream(second)) {
+			byte[] oneBuffer = new byte[8192];
+			byte[] twoBuffer = new byte[8192];
+			while (true) {
+				int oneRead = one.read(oneBuffer);
+				int twoRead = two.read(twoBuffer);
+				if (oneRead != twoRead) return false;
+				if (oneRead < 0) return true;
+				for (int i = 0; i < oneRead; i++) {
+					if (oneBuffer[i] != twoBuffer[i]) return false;
+				}
+			}
 		}
+	}
+
+	private void generatePathName(String name, Set<String> indexedStorageKeys) {
+		File dir = chooseTargetDirectory(appsDir(), name, indexedStorageKeys);
 		appDirName = dir.getName();
 		targetDir = dir;
+	}
+
+	/** Compatibility helper retained for focused path-selection unit tests. */
+	static File chooseTargetDirectory(File appsDir, String name) {
+		return chooseTargetDirectory(appsDir, name, Collections.emptySet());
+	}
+
+	/** Pure path selection boundary: neither recovery names nor indexed identities may be reused. */
+	static File chooseTargetDirectory(File appsDir, String name, Set<String> indexedStorageKeys) {
+		File dir = new File(appsDir, name);
+		for (int i = 1;
+				LibraryInstallRecovery.isReservedStorageKey(dir.getName()) ||
+						dir.exists() || indexedStorageKeys.contains(dir.getName());
+				i++) {
+			dir = new File(appsDir, name + "_" + i);
+		}
+		return dir;
 	}
 
 	private void downloadJar() throws ConverterException {
@@ -444,9 +573,7 @@ public class AppInstaller {
 			if ("http".equals(schemeOfJadSource) || "https".equals(schemeOfJadSource)) {
 				List<String> pathSegments = uri.getPathSegments();
 				StringBuilder path = new StringBuilder(pathSegments.get(0));
-				for (int i = 1; i < pathSegments.size() - 1; i++) {
-					path.append('/').append(pathSegments.get(i));
-				}
+				for (int i = 1; i < pathSegments.size() - 1; i++) path.append('/').append(pathSegments.get(i));
 				path.append('/').append(jarUri.getPath());
 				jarUri = uri.buildUpon().path(path.toString()).build();
 			} else {
@@ -463,8 +590,7 @@ public class AppInstaller {
 			connection.setReadTimeout(3 * 60 * 1000);
 			connection.setConnectTimeout(15000);
 			int code = connection.getResponseCode();
-			if (code == HttpURLConnection.HTTP_MOVED_PERM ||
-				code == HttpURLConnection.HTTP_MOVED_TEMP) {
+			if (code == HttpURLConnection.HTTP_MOVED_PERM || code == HttpURLConnection.HTTP_MOVED_TEMP) {
 				String urlStr = connection.getHeaderField("Location");
 				connection.disconnect();
 				connection = (HttpURLConnection) new URL(urlStr).openConnection();
@@ -476,32 +602,24 @@ public class AppInstaller {
 				 OutputStream outputStream = new FileOutputStream(srcJar)) {
 				byte[] buffer = new byte[2048];
 				int length;
-				while ((length = inputStream.read(buffer)) > 0) {
-					outputStream.write(buffer, 0, length);
-				}
+				while ((length = inputStream.read(buffer)) > 0) outputStream.write(buffer, 0, length);
 			}
 			connection.disconnect();
 			Log.d(TAG, "Download complete");
 			return;
-		} catch (MalformedURLException e) {
-			exception = e;
-		} catch (FileNotFoundException e) {
+		} catch (MalformedURLException | FileNotFoundException e) {
 			exception = e;
 		} catch (IOException e) {
 			exception = e;
 		} finally {
-			if (connection != null) {
-				connection.disconnect();
-			}
+			if (connection != null) connection.disconnect();
 		}
 		deleteTemp();
 		throw new ConverterException("Can't download jar", exception);
 	}
 
 	void deleteTemp() {
-		if (tmpDir != null) {
-			FileUtils.deleteDirectory(tmpDir);
-		}
+		if (tmpDir != null) FileUtils.deleteDirectory(tmpDir);
 	}
 
 	public File getJar() {
@@ -513,10 +631,28 @@ public class AppInstaller {
 	}
 
 	String getIconPath() {
-		return targetDir.getAbsolutePath() + Config.MIDLET_ICON_FILE;
+		return targetDir == null ? null : child(targetDir, Config.MIDLET_ICON_FILE).getAbsolutePath();
 	}
 
-	public AppItem getExistsApp() {
-		return currentApp;
+	String getInstalledTitle() {
+		return installedTitle != null ? installedTitle : currentApp == null ? null : currentApp.getTitle();
+	}
+
+	String getInstalledPath() {
+		if (installedPath != null) return installedPath;
+		return targetDir == null ? null : targetDir.getAbsolutePath();
+	}
+
+	long getInstalledId() {
+		return installedId != NO_ID ? installedId : currentApp == null ? NO_ID : currentApp.getId();
+	}
+
+	private File appsDir() {
+		if (expectedWorkdir == null) throw new IllegalStateException("Installer workdir is not bound");
+		return new File(expectedWorkdir, "converted");
+	}
+
+	private static File child(File directory, String suffix) {
+		return new File(directory.getAbsolutePath() + suffix);
 	}
 }
