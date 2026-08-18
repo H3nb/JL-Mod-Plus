@@ -6,6 +6,7 @@
  */
 package ru.playsoftware.j2meloader.applist
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,6 +41,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -52,11 +54,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import java.text.Collator
+import java.util.Locale
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.librarydb.LibraryCollectionRow
+import ru.playsoftware.j2meloader.librarydb.LibraryQuickView
 
 data class LibraryCollectionUiItem(
     val id: Long,
@@ -64,16 +71,9 @@ data class LibraryCollectionUiItem(
     val appCount: Int,
 )
 
-data class LibraryCollectionMemberUiItem(
-    val id: Long,
-    val title: String,
-    val author: String,
-    val version: String,
-)
-
 data class LibraryCollectionMembersUi(
     val collectionId: Long,
-    val members: List<LibraryCollectionMemberUiItem>,
+    val members: List<LibraryAppUiItem>,
 )
 
 data class LibraryCollectionAppTargetUi(
@@ -88,15 +88,13 @@ data class LibraryCollectionsUiState(
     val addTarget: LibraryCollectionAppTargetUi? = null,
 )
 
-/** Activity/Fragment-owned state bridge; no Room or filesystem access happens from Compose. */
+/** Fragment-owned presentation bridge; Compose never reaches Room or filesystem directly. */
 class LibraryCollectionsUiStore {
     private val mutableState = MutableStateFlow(LibraryCollectionsUiState())
     val state: StateFlow<LibraryCollectionsUiState> = mutableState.asStateFlow()
 
     fun publishCollections(rows: List<LibraryCollectionRow>) {
-        val collections = rows.map { row ->
-            LibraryCollectionUiItem(row.id, row.name, row.appCount)
-        }
+        val collections = rows.map { row -> LibraryCollectionUiItem(row.id, row.name, row.appCount) }
         val current = mutableState.value
         mutableState.value = current.copy(
             ready = true,
@@ -111,12 +109,14 @@ class LibraryCollectionsUiStore {
         mutableState.value = LibraryCollectionsUiState()
     }
 
-    fun showMembers(collectionId: Long, members: List<LibraryCollectionMemberUiItem>) {
+    fun showMembers(collectionId: Long, members: List<LibraryAppUiItem>) {
         if (mutableState.value.collections.none { it.id == collectionId }) return
         mutableState.value = mutableState.value.copy(
             members = LibraryCollectionMembersUi(collectionId, members),
         )
     }
+
+    fun activeCollectionId(): Long? = mutableState.value.members?.collectionId
 
     fun dismissMembers() {
         mutableState.value = mutableState.value.copy(members = null)
@@ -144,18 +144,65 @@ interface LibraryCollectionsHost : LibraryActions {
     fun onRequestAddToCollection(appId: Int)
     fun onDismissAddToCollection()
     fun onAddAppToCollection(appId: Int, collectionId: Long)
-    fun onRemoveAppFromCollection(appId: Long, collectionId: Long)
+    fun onRemoveAppFromCollection(appId: Int, collectionId: Long)
 }
 
-/** READY Collections destination. The existing one-argument function remains the deferred shell. */
+/** READY Collections destination. Opening a collection reuses the main Library browser. */
 @Composable
 internal fun LibraryCollectionsDestination(
     host: LibraryCollectionsHost,
+    libraryState: LibraryUiState,
     scaffoldPadding: PaddingValues,
+    onOpenActions: (LibraryAppUiItem, Long) -> Unit,
 ) {
     val state by host.collectionsStore().state.collectAsState()
     if (!state.ready) {
         LibraryCollectionsDestination(scaffoldPadding)
+        return
+    }
+
+    val members = state.members
+    val openCollection = members?.let { current ->
+        state.collections.firstOrNull { it.id == current.collectionId }
+    }
+    if (members != null && openCollection != null) {
+        BackHandler(onBack = host::onDismissCollectionMembers)
+        var query by rememberSaveable(openCollection.id) { mutableStateOf("") }
+        val projectedMembers by produceState(
+            initialValue = members.members,
+            members.members,
+            query,
+            libraryState.sortVariant,
+        ) {
+            value = withContext(Dispatchers.Default) {
+                projectCollectionMembers(members.members, query, libraryState.sortVariant)
+            }
+        }
+        val browserState = libraryState.copy(
+            loading = false,
+            apps = projectedMembers,
+            appliedFilter = query,
+            quickView = LibraryQuickView.All,
+            databaseControlsReady = true,
+            errorMessage = null,
+        )
+        LibraryAppsDestination(
+            state = browserState,
+            scaffoldPadding = scaffoldPadding,
+            onOpenApp = host::onOpenApp,
+            onOpenActions = { app -> onOpenActions(app, openCollection.id) },
+            onSearch = { query = it },
+            onQuickView = {},
+            onFavorite = host::onFavorite,
+            onSort = host::onSort,
+            onRetry = {},
+            onFabVisibilityChanged = {},
+            onNavigationVisibilityChanged = {},
+            title = openCollection.name,
+            onBack = host::onDismissCollectionMembers,
+            showQuickViews = false,
+            queryStateKey = openCollection.id,
+        )
         return
     }
 
@@ -343,7 +390,7 @@ internal fun LibraryCollectionsDestination(
     }
 }
 
-/** Collection dialogs live at LibraryScreen scope so Add-to-Collection also works from Apps. */
+/** Collection dialogs live at LibraryScreen scope so Add-to-Collection works from any app browser. */
 @Composable
 internal fun LibraryCollectionsDialogHost(host: LibraryCollectionsHost) {
     val state by host.collectionsStore().state.collectAsState()
@@ -374,20 +421,56 @@ internal fun LibraryCollectionsDialogHost(host: LibraryCollectionsHost) {
             },
         )
     }
+}
 
-    val members = state.members
-    val collection = members?.let { current ->
-        state.collections.firstOrNull { it.id == current.collectionId }
+private fun projectCollectionMembers(
+    rows: List<LibraryAppUiItem>,
+    filter: String,
+    sortVariant: Int,
+    locale: Locale = Locale.getDefault(),
+): List<LibraryAppUiItem> {
+    val needle = filter.trim().lowercase(Locale.ROOT)
+    val ranked = rows.mapNotNull { row ->
+        val rank = if (needle.isEmpty()) {
+            0
+        } else {
+            collectionSearchRank(row, needle) ?: return@mapNotNull null
+        }
+        rank to row
     }
-    if (members != null && collection != null) {
-        CollectionMembersDialog(
-            collection = collection,
-            members = members.members,
-            onDismiss = host::onDismissCollectionMembers,
-            onRemove = { appId ->
-                host.onRemoveAppFromCollection(appId, collection.id)
-            },
-        )
+    if (ranked.size < 2) return ranked.map { it.second }
+
+    val collator = Collator.getInstance(locale).apply { strength = Collator.SECONDARY }
+    val sortIndex = sortVariant and Int.MAX_VALUE
+    val descending = sortVariant < 0
+    val fallback = Comparator<LibraryAppUiItem> { left, right ->
+        val primary = when (sortIndex) {
+            1 -> left.id.compareTo(right.id)
+            2 -> collator.compare(left.author, right.author)
+            else -> collator.compare(left.title, right.title)
+        }
+        val ordered = if (descending) -primary else primary
+        if (ordered != 0) ordered else left.id.compareTo(right.id)
+    }
+    return ranked.sortedWith { left, right ->
+        val rankOrder = left.first.compareTo(right.first)
+        if (rankOrder != 0) rankOrder else fallback.compare(left.second, right.second)
+    }.map { it.second }
+}
+
+private fun collectionSearchRank(row: LibraryAppUiItem, needle: String): Int? {
+    val title = row.title.lowercase(Locale.ROOT)
+    val vendor = row.author.lowercase(Locale.ROOT)
+    val version = row.version.lowercase(Locale.ROOT)
+    val description = row.description.lowercase(Locale.ROOT)
+    return when {
+        title == needle -> 0
+        title.startsWith(needle) -> 1
+        title.contains(needle) -> 2
+        vendor.contains(needle) -> 3
+        version.contains(needle) -> 4
+        description.contains(needle) -> 5
+        else -> null
     }
 }
 
@@ -555,81 +638,6 @@ private fun CollectionNameDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(stringResource(android.R.string.cancel))
-            }
-        },
-    )
-}
-
-@Composable
-private fun CollectionMembersDialog(
-    collection: LibraryCollectionUiItem,
-    members: List<LibraryCollectionMemberUiItem>,
-    onDismiss: () -> Unit,
-    onRemove: (Long) -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Column {
-                Text(
-                    text = collection.name,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = stringResource(R.string.library_collection_member_count, members.size),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        },
-        text = {
-            if (members.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.library_collection_members_empty),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            } else {
-                LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
-                    items(members, key = { it.id }) { member ->
-                        ListItem(
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                            headlineContent = {
-                                Text(
-                                    text = member.title,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            },
-                            supportingContent = {
-                                Text(
-                                    text = stringResource(
-                                        R.string.library_vendor_version,
-                                        member.author,
-                                        member.version,
-                                    ),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            },
-                            trailingContent = {
-                                IconButton(onClick = { onRemove(member.id) }) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_delete),
-                                        contentDescription = stringResource(
-                                            R.string.library_collection_remove,
-                                        ),
-                                    )
-                                }
-                            },
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.close))
             }
         },
     )
