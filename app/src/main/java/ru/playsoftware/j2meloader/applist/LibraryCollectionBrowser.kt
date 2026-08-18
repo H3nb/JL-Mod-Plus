@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -32,11 +34,12 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -52,27 +55,40 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import java.text.Collator
 import java.util.Locale
+import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.withContext
 import ru.playsoftware.j2meloader.R
 
 /**
- * Collection-specific browser. It mirrors the Library list/grid presentation but owns
- * collection membership controls instead of Favorites/quick views.
+ * Collection-specific browser. It mirrors Library List/Grid chrome while membership controls replace
+ * Favorites and quick views.
  */
 @Composable
 internal fun LibraryCollectionBrowser(
@@ -87,9 +103,20 @@ internal fun LibraryCollectionBrowser(
     onRemove: (Int) -> Unit,
     onSetMembership: (Int, Boolean) -> Unit,
     onSort: (Int) -> Unit,
+    onNavigationVisibilityChanged: (Boolean) -> Unit,
 ) {
     var manageApps by rememberSaveable(collection.id) { mutableStateOf(false) }
-    BackHandler(onBack = { if (manageApps) manageApps = false else onBack() })
+    BackHandler {
+        if (manageApps) {
+            manageApps = false
+            onNavigationVisibilityChanged(true)
+        } else {
+            onBack()
+        }
+    }
+    LaunchedEffect(manageApps) {
+        onNavigationVisibilityChanged(!manageApps)
+    }
 
     if (manageApps) {
         LibraryCollectionAppPicker(
@@ -117,14 +144,89 @@ internal fun LibraryCollectionBrowser(
             projectCollectionApps(members, query, libraryState.sortVariant)
         }
     }
+    val listState = rememberLazyListState()
+    val gridState = rememberLazyGridState()
+    val headerHeightPx = remember { mutableStateOf(0) }
+    val headerOffsetPx = remember { mutableStateOf(0f) }
+    val density = LocalDensity.current
+    val hideDistancePx = with(density) { 10.dp.toPx() }
+    val revealDistancePx = with(density) { 18.dp.toPx() }
+    val chromeHysteresis = remember(hideDistancePx, revealDistancePx) {
+        LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx)
+    }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(scaffoldPadding)
-            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
+    LaunchedEffect(libraryState.layout, collection.id) {
+        headerOffsetPx.value = 0f
+        chromeHysteresis.reset()
+        onNavigationVisibilityChanged(true)
+        snapshotFlow {
+            if (libraryState.layout == LibraryLayout.List) {
+                Triple(
+                    listState.firstVisibleItemIndex,
+                    listState.firstVisibleItemScrollOffset,
+                    listState.canScrollForward || listState.canScrollBackward,
+                )
+            } else {
+                Triple(
+                    gridState.firstVisibleItemIndex,
+                    gridState.firstVisibleItemScrollOffset,
+                    gridState.canScrollForward || gridState.canScrollBackward,
+                )
+            }
+        }.collectLatest { (index, offset, canScroll) ->
+            if (!canScroll || (index == 0 && offset == 0)) {
+                headerOffsetPx.value = 0f
+                chromeHysteresis.reset()
+                onNavigationVisibilityChanged(true)
+            }
+        }
+    }
+
+    val scrollConnection = remember(
+        chromeHysteresis,
+        libraryState.layout,
+        onNavigationVisibilityChanged,
     ) {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                val delta = available.y
+                val height = headerHeightPx.value
+                if (delta == 0f || height <= 0) return Offset.Zero
+
+                val canScroll = if (libraryState.layout == LibraryLayout.List) {
+                    listState.canScrollForward || listState.canScrollBackward
+                } else {
+                    gridState.canScrollForward || gridState.canScrollBackward
+                }
+                if (!canScroll) {
+                    if (headerOffsetPx.value != 0f || !chromeHysteresis.chromeVisible) {
+                        headerOffsetPx.value = 0f
+                        chromeHysteresis.reset()
+                        onNavigationVisibilityChanged(true)
+                    }
+                    return Offset.Zero
+                }
+
+                val fullyHidden = headerOffsetPx.value <= -height.toFloat() + 0.5f
+                var visibilityChange = chromeHysteresis.onScrollDelta(delta)
+                val shouldMoveHeader =
+                    delta < 0f || !fullyHidden || chromeHysteresis.chromeVisible || visibilityChange == true
+                if (shouldMoveHeader) {
+                    headerOffsetPx.value =
+                        (headerOffsetPx.value + delta).coerceIn(-height.toFloat(), 0f)
+                }
+                if (delta > 0f && headerOffsetPx.value >= -0.5f && !chromeHysteresis.chromeVisible) {
+                    visibilityChange = chromeHysteresis.revealNow()
+                }
+                visibilityChange?.let(onNavigationVisibilityChanged)
+                return Offset.Zero
+            }
+        }
+    }
+
+    val renderHeader: @Composable (Modifier, Boolean) -> Unit = { modifier, interactive ->
         LibraryCollectionHeader(
+            modifier = modifier,
             title = collection.name,
             query = query,
             sortVariant = libraryState.sortVariant,
@@ -134,61 +236,107 @@ internal fun LibraryCollectionBrowser(
             onSortVisibilityChanged = { sortVisible = it },
             onSort = onSort,
             onManageApps = { manageApps = true },
+            interactive = interactive,
         )
+    }
 
-        if (projected.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(28.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = if (query.isBlank()) {
-                        stringResource(R.string.library_collection_members_empty)
-                    } else {
-                        stringResource(R.string.library_no_matches, query)
-                    },
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        } else if (libraryState.layout == LibraryLayout.Grid) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .imePadding()
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+            .padding(scaffoldPadding)
+            .clipToBounds()
+            .nestedScroll(scrollConnection),
+    ) {
+        if (libraryState.layout == LibraryLayout.Grid) {
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 88.dp),
                 modifier = Modifier.fillMaxSize(),
+                state = gridState,
             ) {
-                items(projected, key = { it.id }) { app ->
-                    LibraryCollectionGridItem(
-                        app = app,
-                        iconRatio = libraryState.iconRatio,
-                        hideTitle = libraryState.hideGridTitles,
-                        gridSpacing = libraryState.gridSpacing.value,
-                        onOpenApp = onOpenApp,
-                        onOpenActions = onOpenActions,
-                        onRemove = onRemove,
-                    )
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    renderHeader(Modifier.alpha(0f).clearAndSetSemantics { }, false)
+                }
+                if (projected.isEmpty()) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        LibraryCollectionEmptyState(query)
+                    }
+                } else {
+                    items(projected, key = { it.id }) { app ->
+                        LibraryCollectionGridItem(
+                            app = app,
+                            iconRatio = libraryState.iconRatio,
+                            hideTitle = libraryState.hideGridTitles,
+                            gridSpacing = libraryState.gridSpacing.value,
+                            onOpenApp = onOpenApp,
+                            onOpenActions = onOpenActions,
+                            onRemove = onRemove,
+                        )
+                    }
                 }
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(projected, key = { it.id }) { app ->
-                    LibraryCollectionListItem(
-                        app = app,
-                        iconRatio = libraryState.iconRatio,
-                        onOpenApp = onOpenApp,
-                        onOpenActions = onOpenActions,
-                        onRemove = onRemove,
-                    )
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                state = listState,
+            ) {
+                item {
+                    renderHeader(Modifier.alpha(0f).clearAndSetSemantics { }, false)
+                }
+                if (projected.isEmpty()) {
+                    item { LibraryCollectionEmptyState(query) }
+                } else {
+                    items(projected, key = { it.id }) { app ->
+                        LibraryCollectionListItem(
+                            app = app,
+                            iconRatio = libraryState.iconRatio,
+                            onOpenApp = onOpenApp,
+                            onOpenActions = onOpenActions,
+                            onRemove = onRemove,
+                        )
+                    }
                 }
             }
+        }
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .offset { IntOffset(0, headerOffsetPx.value.roundToInt()) }
+                .background(MaterialTheme.colorScheme.background)
+                .onSizeChanged { headerHeightPx.value = it.height },
+        ) {
+            renderHeader(Modifier, true)
         }
     }
 }
 
 @Composable
+private fun LibraryCollectionEmptyState(query: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 180.dp)
+            .padding(28.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = if (query.isBlank()) {
+                stringResource(R.string.library_collection_members_empty)
+            } else {
+                stringResource(R.string.library_no_matches, query)
+            },
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
 private fun LibraryCollectionHeader(
+    modifier: Modifier = Modifier,
     title: String,
     query: String,
     sortVariant: Int,
@@ -198,14 +346,16 @@ private fun LibraryCollectionHeader(
     onSortVisibilityChanged: (Boolean) -> Unit,
     onSort: (Int) -> Unit,
     onManageApps: () -> Unit,
+    interactive: Boolean,
 ) {
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val sortEntries = stringArrayResource(R.array.pref_app_sort_entries).toList()
     val selectedSort = sortVariant and Int.MAX_VALUE
+    val ascending = sortVariant >= 0
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
             .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -214,7 +364,7 @@ private fun LibraryCollectionHeader(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = onBack) {
+            IconButton(onClick = onBack, enabled = interactive) {
                 Icon(
                     painter = painterResource(R.drawable.ic_arrow_back),
                     contentDescription = stringResource(R.string.library_back),
@@ -228,7 +378,7 @@ private fun LibraryCollectionHeader(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            TextButton(onClick = onManageApps) {
+            TextButton(onClick = onManageApps, enabled = interactive) {
                 Icon(
                     painter = painterResource(R.drawable.ic_add),
                     contentDescription = null,
@@ -251,6 +401,7 @@ private fun LibraryCollectionHeader(
                 modifier = Modifier
                     .weight(1f)
                     .height(54.dp),
+                enabled = interactive,
                 singleLine = true,
                 placeholder = { Text(stringResource(R.string.library_search_placeholder)) },
                 leadingIcon = {
@@ -260,11 +411,14 @@ private fun LibraryCollectionHeader(
                             contentDescription = stringResource(R.string.search),
                         )
                     } else {
-                        IconButton(onClick = {
-                            onQueryChange("")
-                            focusManager.clearFocus()
-                            keyboardController?.hide()
-                        }) {
+                        IconButton(
+                            enabled = interactive,
+                            onClick = {
+                                onQueryChange("")
+                                focusManager.clearFocus()
+                                keyboardController?.hide()
+                            },
+                        ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_arrow_back),
                                 contentDescription = stringResource(R.string.library_search_clear),
@@ -274,35 +428,26 @@ private fun LibraryCollectionHeader(
                 },
             )
             Box {
-                IconButton(onClick = { onSortVisibilityChanged(true) }) {
+                IconButton(
+                    enabled = interactive,
+                    onClick = { onSortVisibilityChanged(true) },
+                ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_sort),
                         contentDescription = stringResource(R.string.library_sort),
                     )
                 }
-                DropdownMenu(
-                    expanded = sortVisible,
+                LibrarySortMenu(
+                    expanded = sortVisible && interactive,
+                    entries = sortEntries,
+                    selectedSort = selectedSort,
+                    ascending = ascending,
                     onDismissRequest = { onSortVisibilityChanged(false) },
-                ) {
-                    sortEntries.forEachIndexed { index, label ->
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = label,
-                                    fontWeight = if (index == selectedSort) {
-                                        FontWeight.SemiBold
-                                    } else {
-                                        FontWeight.Normal
-                                    },
-                                )
-                            },
-                            onClick = {
-                                onSortVisibilityChanged(false)
-                                onSort(index)
-                            },
-                        )
-                    }
-                }
+                    onSelected = { index ->
+                        onSortVisibilityChanged(false)
+                        onSort(index)
+                    },
+                )
             }
         }
     }
@@ -317,15 +462,18 @@ private fun LibraryCollectionListItem(
     onOpenActions: (LibraryAppUiItem) -> Unit,
     onRemove: (Int) -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = { onOpenApp(app.id) },
+                onLongClick = { onOpenActions(app) },
+            ),
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .combinedClickable(
-                    onClick = { onOpenApp(app.id) },
-                    onLongClick = { onOpenActions(app) },
-                )
-                .padding(start = 16.dp, end = 12.dp, top = 10.dp, bottom = 10.dp),
+                .padding(start = 16.dp, end = 12.dp, top = 10.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             LibraryIconSlot(
@@ -350,7 +498,6 @@ private fun LibraryCollectionListItem(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                LibraryDescription(app.description, app.id)
             }
             Spacer(Modifier.width(6.dp))
             IconButton(
@@ -362,6 +509,11 @@ private fun LibraryCollectionListItem(
                     contentDescription = stringResource(R.string.library_collection_remove),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+        }
+        if (app.description.isNotBlank()) {
+            Box(modifier = Modifier.padding(start = 80.dp, end = 16.dp, bottom = 10.dp)) {
+                LibraryDescription(app.description, app.id)
             }
         }
         HorizontalDivider(
@@ -469,6 +621,7 @@ internal fun LibraryCollectionAppPicker(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .imePadding()
             .padding(scaffoldPadding)
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
     ) {
