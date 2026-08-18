@@ -1755,29 +1755,17 @@ private fun LibraryDescription(descriptionValue: String, appId: Int) {
 private const val LIBRARY_DESCRIPTION_OVERFLOW_FALLBACK_LENGTH = 120
 
 @Composable
-private fun LibraryFavoritePlaceholder(appId: Int) {
-    var favorite by rememberSaveable(appId) { mutableStateOf(false) }
+private fun LibraryFavoritePlaceholder(@Suppress("UNUSED_PARAMETER") appId: Int) {
     IconButton(
-        onClick = { favorite = !favorite },
+        onClick = {},
+        enabled = false,
         modifier = Modifier.size(32.dp),
     ) {
         Icon(
-            painter = painterResource(
-                if (favorite) R.drawable.ic_star_filled else R.drawable.ic_star,
-            ),
-            contentDescription = stringResource(
-                if (favorite) {
-                    R.string.library_remove_favorite_coming_soon
-                } else {
-                    R.string.library_favorite_coming_soon
-                },
-            ),
+            painter = painterResource(R.drawable.ic_star),
+            contentDescription = stringResource(R.string.library_favorite_coming_soon),
             modifier = Modifier.size(28.dp),
-            tint = if (favorite) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
