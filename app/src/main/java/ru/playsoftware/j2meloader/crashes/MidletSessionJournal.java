@@ -207,8 +207,23 @@ public final class MidletSessionJournal {
 		if (journals.isEmpty()) {
 			return;
 		}
+		ArrayList<File> safeToPrune = new ArrayList<>(journals.size());
+		for (File journal : journals) {
+			try {
+				Snapshot snapshot = read(journal);
+				// Schema-v2 journals carry durable play stats. Retention must never delete them before
+				// the main process has committed (or observed) the exactly-once Room receipt and acked it.
+				if (snapshot.schemaVersion < 2
+						|| MidletSessionStatsAckStore.isAcknowledged(context, snapshot.sessionId)) {
+					safeToPrune.add(journal);
+				}
+			} catch (IOException | RuntimeException error) {
+				// Preserve unreadable/newer evidence rather than guessing that it is safe to discard.
+				Log.w(TAG, "Preserving unreadable MIDlet session journal during pruning", error);
+			}
+		}
 		pruneFiles(
-				journals,
+				safeToPrune,
 				System.currentTimeMillis(),
 				MAX_JOURNAL_COUNT,
 				MAX_JOURNAL_AGE_MILLIS,
