@@ -202,6 +202,10 @@ data class LibraryAppUiItem(
     val description: String = "",
     val iconRevision: Long = 0L,
     val favorite: Boolean = false,
+    val sourceTitle: String = title,
+    val sourceAuthor: String = author,
+    val sourceVersion: String = version,
+    val sourceDescription: String = description,
 )
 
 data class LibraryUiState(
@@ -226,6 +230,13 @@ interface LibraryActions {
     fun onSearch(query: String)
     fun onQuickView(quickView: LibraryQuickView) = Unit
     fun onFavorite(appId: Int, favorite: Boolean) = Unit
+    fun onUpdateMetadata(
+        appId: Int,
+        title: String,
+        vendor: String,
+        version: String,
+        description: String,
+    ) = Unit
     fun onLayoutChange(layout: LibraryLayout)
     fun onIconRatioChange(iconRatio: LibraryIconRatio) = Unit
     fun onHideGridTitlesChange(hide: Boolean) = Unit
@@ -389,6 +400,7 @@ fun LibraryScreen(
     var showNavigationBar by rememberSaveable { mutableStateOf(true) }
     var appActions by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var renameTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
+    var metadataTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var deleteTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var infoDialog by remember { mutableStateOf<LibraryInfoDialog?>(null) }
     val isImeVisible = WindowInsets.isImeVisible
@@ -572,6 +584,11 @@ fun LibraryScreen(
             onSettings = { actions.onOpenAppSettings(app.id) },
             onReinstall = { actions.onReinstall(app.id) },
             onDelete = { deleteTarget = app },
+            onEditMetadata = if (state.databaseControlsReady) {
+                { metadataTarget = app }
+            } else {
+                null
+            },
         )
     }
     renameTarget?.let { app ->
@@ -581,6 +598,16 @@ fun LibraryScreen(
             onConfirm = { title ->
                 renameTarget = null
                 actions.onRename(app.id, title)
+            },
+        )
+    }
+    metadataTarget?.let { app ->
+        LibraryMetadataEditorDialog(
+            app = app,
+            onDismiss = { metadataTarget = null },
+            onConfirm = { title, vendor, version, description ->
+                metadataTarget = null
+                actions.onUpdateMetadata(app.id, title, vendor, version, description)
             },
         )
     }
@@ -2865,6 +2892,7 @@ internal fun AppActionsDialog(
     onSettings: () -> Unit,
     onReinstall: () -> Unit,
     onDelete: () -> Unit,
+    onEditMetadata: (() -> Unit)? = null,
 ) {
     val layout = libraryDialogLayout()
     AlertDialog(
@@ -2900,12 +2928,21 @@ internal fun AppActionsDialog(
                     }
                 }
                 item {
-                    DialogAction(
-                        label = R.string.action_context_rename,
-                        icon = R.drawable.ic_edit,
-                        onDismiss = onDismiss,
-                        action = onRename,
-                    )
+                    if (onEditMetadata != null) {
+                        DialogAction(
+                            label = R.string.library_metadata_edit_title,
+                            icon = R.drawable.ic_edit,
+                            onDismiss = onDismiss,
+                            action = onEditMetadata,
+                        )
+                    } else {
+                        DialogAction(
+                            label = R.string.action_context_rename,
+                            icon = R.drawable.ic_edit,
+                            onDismiss = onDismiss,
+                            action = onRename,
+                        )
+                    }
                 }
                 item {
                     DialogAction(

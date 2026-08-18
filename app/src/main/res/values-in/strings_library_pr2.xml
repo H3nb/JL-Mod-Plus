@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_metadata_edit_title">Edit Metadata</string>
+    <string name="library_metadata_name">Nama</string>
+    <string name="library_metadata_vendor">Vendor</string>
+    <string name="library_metadata_version">Versi</string>
+    <string name="library_metadata_description">Deskripsi</string>
+    <string name="library_metadata_reset_to_original">Kembalikan ke Asli</string>
+</resources>

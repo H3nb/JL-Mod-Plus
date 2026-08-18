@@ -201,6 +201,19 @@ public class AppsListFragment extends Fragment {
 			}
 
 			@Override
+			public void onUpdateMetadata(int appId, @NonNull String title,
+									 @NonNull String vendor, @NonNull String version,
+									 @NonNull String description) {
+				LibraryAppRow row = findRow(appId);
+				if (row == null) return;
+				libraryViewModel.updateMetadata(
+						row.getId(), title, vendor, version, description,
+						(ignored, error) -> {
+							if (error != null) showError(error);
+						});
+			}
+
+			@Override
 			public void onLayoutChange(@NonNull LibraryLayout layout) {
 				int value = layout == LibraryLayout.Grid ? LAYOUT_TYPE_GRID : LAYOUT_TYPE_LIST;
 				preferences.edit().putInt(PREF_APPS_VIEW, value).apply();
@@ -451,7 +464,11 @@ public class AppsListFragment extends Fragment {
 					true,
 					row.getDescription(),
 					row.getIconRevision(),
-					row.getFavorite()));
+					row.getFavorite(),
+					row.getSourceTitle(),
+					row.getSourceVendor(),
+					row.getSourceVersion(),
+					row.getSourceDescription()));
 		}
 		LibraryComposeController controller = composeController;
 		if (controller != null) {
