@@ -32,6 +32,7 @@ class LibraryRepository(
     private val databaseFactory: (File) -> LibraryDatabase,
     private val bootstrapper: LibraryBootstrapper = LibraryBootstrapper(),
     private val reconciler: LibraryReconciler = LibraryReconciler(),
+    private val playStatReconciler: LibraryPlayStatReconciler = LibraryPlayStatReconciler(),
 ) : AutoCloseable {
     sealed interface State {
         data object Idle : State
@@ -275,6 +276,13 @@ class LibraryRepository(
         withActiveDatabase(expected) { dao ->
             dao.deleteAppByStorageKey(storageKey)
         }
+    }
+
+    suspend fun reconcilePlayStats(
+        expected: LibraryGenerationToken,
+        records: List<LibraryPlayStatRecord>,
+    ): LibraryPlayStatReconciler.Result = withActiveDatabase(expected) { dao ->
+        playStatReconciler.reconcile(dao, expected.emulatorDir, records)
     }
 
     fun isReadyGeneration(expected: LibraryGenerationToken): Boolean {

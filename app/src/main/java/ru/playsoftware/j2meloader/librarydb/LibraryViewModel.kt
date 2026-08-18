@@ -28,11 +28,18 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import ru.playsoftware.j2meloader.crashes.MidletSessionStatsHandoff
 import ru.playsoftware.j2meloader.util.Constants.PREF_APP_SORT
 import ru.playsoftware.j2meloader.util.Constants.PREF_EMULATOR_DIR
 
@@ -90,6 +97,15 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     private val filter = MutableStateFlow("")
     private val sortVariant = MutableStateFlow(readSortPreference(preferences))
     private val quickView = MutableStateFlow(LibraryQuickView.All)
+    private val playStatRefreshMutex = Mutex()
+
+    private val playStatReadyWorker = scope.launch {
+        repository.state
+            .filterIsInstance<LibraryRepository.State.Ready>()
+            .map { LibraryGenerationToken(it.generation, it.emulatorDir) }
+            .distinctUntilChanged()
+            .collectLatest { generation -> reconcilePlayStats(generation) }
+    }
 
     val displayState: StateFlow<DisplayState> = combine(
         repository.state,
@@ -177,11 +193,21 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 displayState.collect(observer::onState)
             }
         }
+        owner.lifecycleScope.launch {
+            owner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                refreshPlayStats()
+            }
+        }
     }
 
     fun readyGeneration(): LibraryGenerationToken? = repository.currentReadyToken()
 
     fun readyWorkdir(): File? = readyGeneration()?.emulatorDir
+
+    fun refreshPlayStats() {
+        val generation = readyGeneration() ?: return
+        scope.launch { reconcilePlayStats(generation) }
+    }
 
     fun getApp(appId: Long): LibraryAppRow? {
         val generation = readyGeneration() ?: return null
@@ -586,6 +612,37 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         preferences.unregisterOnSharedPreferenceChangeListener(this)
         repository.close()
         scope.cancel()
+    }
+
+    private suspend fun reconcilePlayStats(expected: LibraryGenerationToken) {
+        playStatRefreshMutex.withLock {
+            if (!repository.isReadyGeneration(expected)) return@withLock
+            val application = getApplication<Application>()
+            val records = withContext(Dispatchers.IO) {
+                MidletSessionStatsHandoff.loadTerminalRecords(application).map { record ->
+                    LibraryPlayStatRecord(
+                        sessionId = record.sessionId,
+                        workdirLocator = record.workdirLocator,
+                        storageKey = record.storageKey,
+                        reachedRunning = record.reachedRunning,
+                        firstRunningWallTimeMillis = record.firstRunningWallTimeMillis,
+                        accumulatedActiveMillis = record.accumulatedActiveMillis,
+                    )
+                }
+            }
+            if (records.isEmpty()) return@withLock
+            val result = try {
+                repository.reconcilePlayStats(expected, records)
+            } catch (error: IllegalStateException) {
+                if (!repository.isReadyGeneration(expected)) return@withLock
+                throw error
+            }
+            withContext(Dispatchers.IO) {
+                result.reconciledSessionIds.forEach { sessionId ->
+                    MidletSessionStatsHandoff.markReconciled(application, sessionId)
+                }
+            }
+        }
     }
 
     private fun token(generation: Long, emulatorDir: File): LibraryGenerationToken =
