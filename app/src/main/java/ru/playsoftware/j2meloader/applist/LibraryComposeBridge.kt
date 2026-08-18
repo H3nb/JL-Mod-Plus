@@ -155,16 +155,15 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ru.playsoftware.j2meloader.BuildConfig
 import ru.playsoftware.j2meloader.R
+import ru.playsoftware.j2meloader.librarydb.LibraryQuickView
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.TransientNoticeHost
 import ru.playsoftware.j2meloader.ui.TransientNoticeState
-import java.util.Locale
 import kotlin.math.roundToInt
 
 enum class LibraryLayout {
@@ -202,6 +201,7 @@ data class LibraryAppUiItem(
     val canReinstall: Boolean,
     val description: String = "",
     val iconRevision: Long = 0L,
+    val favorite: Boolean = false,
 )
 
 data class LibraryUiState(
@@ -213,6 +213,8 @@ data class LibraryUiState(
     val hideGridTitles: Boolean = false,
     val gridSpacing: LibraryGridSpacing = LibraryGridSpacing.Standard,
     val sortVariant: Int = 0,
+    val quickView: LibraryQuickView = LibraryQuickView.All,
+    val databaseControlsReady: Boolean = false,
     val canAddShortcut: Boolean = true,
     val loadingCompleted: Int = 0,
     val loadingTotal: Int = 0,
@@ -222,6 +224,8 @@ data class LibraryUiState(
 
 interface LibraryActions {
     fun onSearch(query: String)
+    fun onQuickView(quickView: LibraryQuickView) = Unit
+    fun onFavorite(appId: Int, favorite: Boolean) = Unit
     fun onLayoutChange(layout: LibraryLayout)
     fun onIconRatioChange(iconRatio: LibraryIconRatio) = Unit
     fun onHideGridTitlesChange(hide: Boolean) = Unit
@@ -287,11 +291,17 @@ class LibraryComposeController(
         }
     }
 
-    fun updateApps(items: List<LibraryAppUiItem>, appliedFilter: String) {
+    fun updateApps(
+        items: List<LibraryAppUiItem>,
+        appliedFilter: String,
+        quickView: LibraryQuickView,
+    ) {
         state = state.copy(
             loading = false,
             apps = items,
             appliedFilter = appliedFilter,
+            quickView = quickView,
+            databaseControlsReady = true,
             loadingCompleted = 0,
             loadingTotal = 0,
             loadingStorageKey = "",
@@ -303,6 +313,7 @@ class LibraryComposeController(
         state = state.copy(
             loading = true,
             apps = emptyList(),
+            databaseControlsReady = false,
             loadingCompleted = 0,
             loadingTotal = 0,
             loadingStorageKey = "",
@@ -314,6 +325,7 @@ class LibraryComposeController(
         state = state.copy(
             loading = true,
             apps = emptyList(),
+            databaseControlsReady = false,
             loadingCompleted = completed,
             loadingTotal = total,
             loadingStorageKey = storageKey,
@@ -325,6 +337,7 @@ class LibraryComposeController(
         state = state.copy(
             loading = false,
             apps = emptyList(),
+            databaseControlsReady = false,
             errorMessage = message,
         )
     }
@@ -517,6 +530,8 @@ fun LibraryScreen(
                         onOpenApp = actions::onOpenApp,
                         onOpenActions = { appActions = it },
                         onSearch = actions::onSearch,
+                        onQuickView = actions::onQuickView,
+                        onFavorite = actions::onFavorite,
                         onSort = actions::onSort,
                         onRetry = actions::onRetryLibrary,
                         onFabVisibilityChanged = { showInstallFab = it },
@@ -783,6 +798,8 @@ private fun LibraryAppsDestination(
     onOpenApp: (Int) -> Unit,
     onOpenActions: (LibraryAppUiItem) -> Unit,
     onSearch: (String) -> Unit,
+    onQuickView: (LibraryQuickView) -> Unit,
+    onFavorite: (Int, Boolean) -> Unit,
     onSort: (Int) -> Unit,
     onRetry: () -> Unit,
     onFabVisibilityChanged: (Boolean) -> Unit,
@@ -801,8 +818,7 @@ private fun LibraryAppsDestination(
     }
 
     LaunchedEffect(query) {
-        delay(300)
-        onSearch(query.lowercase(Locale.getDefault()))
+        onSearch(query)
     }
 
     LaunchedEffect(state.layout) {
@@ -846,6 +862,7 @@ private fun LibraryAppsDestination(
             state = state,
             sortVisible = sortVisible,
             onSortVisibilityChanged = { sortVisible = it },
+            onQuickView = onQuickView,
             onSort = onSort,
             interactive = interactive,
         )
@@ -973,6 +990,8 @@ private fun LibraryAppsDestination(
                             iconRatio = state.iconRatio,
                             onOpenApp = onOpenApp,
                             onOpenActions = onOpenActions,
+                            onFavorite = onFavorite,
+                            favoriteEnabled = state.databaseControlsReady,
                         )
                     }
                 }
@@ -1002,6 +1021,7 @@ private fun LibraryAppsHeader(
     state: LibraryUiState,
     sortVisible: Boolean,
     onSortVisibilityChanged: (Boolean) -> Unit,
+    onQuickView: (LibraryQuickView) -> Unit,
     onSort: (Int) -> Unit,
     interactive: Boolean = true,
 ) {
@@ -1107,20 +1127,30 @@ private fun LibraryAppsHeader(
             LibraryQuickFilter(
                 label = R.string.library_filter_all,
                 icon = R.drawable.ic_apps,
-                selected = true,
-                enabled = true,
+                selected = state.quickView == LibraryQuickView.All,
+                enabled = interactive,
+                onClick = { onQuickView(LibraryQuickView.All) },
             )
             LibraryQuickFilter(
                 label = R.string.library_filter_favorites,
                 icon = R.drawable.ic_star,
+                selected = state.quickView == LibraryQuickView.Favorites,
+                enabled = interactive && state.databaseControlsReady,
+                onClick = { onQuickView(LibraryQuickView.Favorites) },
             )
             LibraryQuickFilter(
                 label = R.string.library_filter_recently_added,
                 icon = R.drawable.ic_add,
+                selected = state.quickView == LibraryQuickView.RecentlyAdded,
+                enabled = interactive && state.databaseControlsReady,
+                onClick = { onQuickView(LibraryQuickView.RecentlyAdded) },
             )
             LibraryQuickFilter(
                 label = R.string.library_filter_recently_opened,
                 icon = R.drawable.ic_play,
+                selected = false,
+                enabled = false,
+                onClick = {},
             )
         }
     }
@@ -1130,12 +1160,13 @@ private fun LibraryAppsHeader(
 private fun LibraryQuickFilter(
     label: Int,
     icon: Int,
-    selected: Boolean = false,
-    enabled: Boolean = false,
+    selected: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
 ) {
     FilterChip(
         selected = selected,
-        onClick = {},
+        onClick = onClick,
         enabled = enabled,
         leadingIcon = {
             Icon(
@@ -1617,6 +1648,8 @@ private fun LibraryListItem(
     app: LibraryAppUiItem,
     onOpenApp: (Int) -> Unit,
     onOpenActions: (LibraryAppUiItem) -> Unit,
+    onFavorite: (Int, Boolean) -> Unit,
+    favoriteEnabled: Boolean,
     iconRatio: LibraryIconRatio,
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -1656,7 +1689,11 @@ private fun LibraryListItem(
                 )
             },
             trailingContent = {
-                LibraryFavoritePlaceholder(app.id)
+                if (favoriteEnabled) {
+                    LibraryFavoriteButton(app, onFavorite)
+                } else {
+                    LibraryFavoritePlaceholder(app.id)
+                }
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -1753,6 +1790,28 @@ private fun LibraryDescription(descriptionValue: String, appId: Int) {
 }
 
 private const val LIBRARY_DESCRIPTION_OVERFLOW_FALLBACK_LENGTH = 120
+
+@Composable
+private fun LibraryFavoriteButton(
+    app: LibraryAppUiItem,
+    onFavorite: (Int, Boolean) -> Unit,
+) {
+    IconButton(
+        onClick = { onFavorite(app.id, !app.favorite) },
+        modifier = Modifier.size(32.dp),
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_star),
+            contentDescription = stringResource(R.string.library_filter_favorites),
+            modifier = Modifier.size(28.dp),
+            tint = if (app.favorite) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+        )
+    }
+}
 
 @Composable
 private fun LibraryFavoritePlaceholder(@Suppress("UNUSED_PARAMETER") appId: Int) {

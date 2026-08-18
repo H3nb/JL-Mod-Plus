@@ -64,6 +64,7 @@ import ru.playsoftware.j2meloader.filepicker.FilePickerContract;
 import ru.playsoftware.j2meloader.filepicker.FilteredFilePickerActivity;
 import ru.playsoftware.j2meloader.librarydb.LibraryAppRow;
 import ru.playsoftware.j2meloader.librarydb.LibraryGenerationToken;
+import ru.playsoftware.j2meloader.librarydb.LibraryQuickView;
 import ru.playsoftware.j2meloader.librarydb.LibraryViewModel;
 import ru.playsoftware.j2meloader.settings.SettingsActivity;
 import ru.playsoftware.j2meloader.util.AppUtils;
@@ -183,6 +184,20 @@ public class AppsListFragment extends Fragment {
 			@Override
 			public void onSearch(@NonNull String query) {
 				libraryViewModel.setFilter(query);
+			}
+
+			@Override
+			public void onQuickView(@NonNull LibraryQuickView quickView) {
+				libraryViewModel.setQuickView(quickView);
+			}
+
+			@Override
+			public void onFavorite(int appId, boolean favorite) {
+				LibraryAppRow row = findRow(appId);
+				if (row == null) return;
+				libraryViewModel.setFavorite(row.getId(), favorite, (ignored, error) -> {
+					if (error != null) showError(error);
+				});
 			}
 
 			@Override
@@ -435,12 +450,13 @@ public class AppsListFragment extends Fragment {
 					iconPath,
 					true,
 					row.getDescription(),
-					row.getIconRevision()));
+					row.getIconRevision(),
+					row.getFavorite()));
 		}
 		LibraryComposeController controller = composeController;
 		if (controller != null) {
 			controller.updateSort(state.getSortVariant());
-			controller.updateApps(uiItems, state.getFilter());
+			controller.updateApps(uiItems, state.getFilter(), state.getQuickView());
 		}
 	}
 
