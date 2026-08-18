@@ -30,25 +30,50 @@ object LibraryListProjection {
             LibraryQuickView.RecentlyAdded -> rows.filter { it.addedAt != null }
         }
         val query = filter.trim()
-        val filtered = if (query.isEmpty()) {
-            quickRows
+        val ranked = if (query.isEmpty()) {
+            quickRows.map { RankedRow(it, NO_SEARCH_RANK) }
         } else {
-            quickRows.filter { row ->
-                row.title.contains(query, ignoreCase = true) ||
-                    row.vendor.contains(query, ignoreCase = true)
+            quickRows.mapNotNull { row ->
+                searchRank(row, query)?.let { rank -> RankedRow(row, rank) }
             }
         }
-        if (filtered.size < 2) {
-            return filtered
+        if (ranked.size < 2) {
+            return ranked.map(RankedRow::row)
         }
 
-        if (quickView == LibraryQuickView.RecentlyAdded) {
-            return filtered.sortedWith { left, right ->
+        val fallbackComparator = if (quickView == LibraryQuickView.RecentlyAdded) {
+            Comparator<LibraryAppRow> { left, right ->
                 val primary = requireNotNull(right.addedAt).compareTo(requireNotNull(left.addedAt))
                 if (primary != 0) primary else right.id.compareTo(left.id)
             }
+        } else {
+            sortComparator(sortVariant, locale)
         }
+        val comparator = Comparator<RankedRow> { left, right ->
+            val rankOrder = left.rank.compareTo(right.rank)
+            if (rankOrder != 0) rankOrder else fallbackComparator.compare(left.row, right.row)
+        }
+        return ranked.sortedWith(comparator).map(RankedRow::row)
+    }
 
+    private fun searchRank(row: LibraryAppRow, query: String): Int? {
+        val needle = query.lowercase(Locale.ROOT)
+        val title = row.title.lowercase(Locale.ROOT)
+        val vendor = row.vendor.lowercase(Locale.ROOT)
+        val version = row.version.lowercase(Locale.ROOT)
+        val description = row.description.lowercase(Locale.ROOT)
+        return when {
+            title == needle -> 0
+            title.startsWith(needle) -> 1
+            title.contains(needle) -> 2
+            vendor.contains(needle) -> 3
+            version.contains(needle) -> 4
+            description.contains(needle) -> 5
+            else -> null
+        }
+    }
+
+    private fun sortComparator(sortVariant: Int, locale: Locale): Comparator<LibraryAppRow> {
         val collator = Collator.getInstance(locale).apply {
             strength = Collator.SECONDARY
         }
@@ -74,14 +99,15 @@ object LibraryListProjection {
         }
         // Keep the stable database-id tie-breaker API-23-safe instead of using
         // java.util.Comparator.thenComparingLong(), which was added in API 24.
-        val comparator = Comparator<LibraryAppRow> { left, right ->
+        return Comparator { left, right ->
             val primary = primaryComparator.compare(left, right)
             if (primary != 0) primary else left.id.compareTo(right.id)
         }
-
-        return filtered.sortedWith(comparator)
     }
 
+    private data class RankedRow(val row: LibraryAppRow, val rank: Int)
+
+    private const val NO_SEARCH_RANK = 0
     const val SORT_TITLE = 0
     const val SORT_DATE = 1
     const val SORT_VENDOR = 2
