@@ -110,8 +110,7 @@ class LibraryReconcilerTest {
             ),
         )
         createBackupDirectory("game", "Old Source", version = "1.0")
-        val staging = File(File(workDir, "converted"), LibraryInstallRecovery.STAGING_DIR_NAME)
-            .apply { mkdirs() }
+        val staging = LibraryInstallRecovery.stagingDirectory(workDir).apply { mkdirs() }
         File(staging, "partial").writeText("replacement")
 
         val result = LibraryReconciler().reconcile(database, workDir)
