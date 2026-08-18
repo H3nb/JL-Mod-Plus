@@ -101,6 +101,8 @@ object LibraryInstallRecovery {
 
     /**
      * Recover only interrupted replacement evidence; this is deliberately not a general scanner.
+     * Any leftover current/legacy staging directory is an interrupted conversion at this point:
+     * the READY gate has not yet opened an installer for this generation.
      *
      * - backup exists + target missing: restore the old installed directory (replacement never
      *   published completely);
@@ -109,6 +111,9 @@ object LibraryInstallRecovery {
      */
     @Throws(IOException::class)
     fun recoverFilesystem(emulatorDir: File): RecoveryResult {
+        val converted = File(emulatorDir, "converted")
+        discardStaging(converted)
+
         val root = backupRoot(emulatorDir)
         if (!root.exists()) return RecoveryResult(emptySet(), emptyList())
         if (!root.isDirectory) {
@@ -121,10 +126,8 @@ object LibraryInstallRecovery {
             return RecoveryResult(emptySet(), emptyList())
         }
 
-        val converted = File(emulatorDir, "converted")
         val refresh = LinkedHashSet<String>()
         val failures = ArrayList<Failure>()
-        var restoredAny = false
         entries.sortedBy { it.name }.forEach { backup ->
             val storageKey = backup.name
             if (!backup.isDirectory) {
@@ -141,9 +144,7 @@ object LibraryInstallRecovery {
             val target = File(converted, storageKey)
             when {
                 !target.exists() -> {
-                    if (backup.renameTo(target)) {
-                        restoredAny = true
-                    } else {
+                    if (!backup.renameTo(target)) {
                         failures += Failure(storageKey, "Unable to restore interrupted reinstall backup")
                     }
                 }
@@ -152,9 +153,6 @@ object LibraryInstallRecovery {
             }
         }
 
-        if (restoredAny) {
-            discardStaging(converted)
-        }
         removeRootIfEmpty(root)
         return RecoveryResult(refresh, failures)
     }
