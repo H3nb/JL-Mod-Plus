@@ -138,6 +138,55 @@ class LibraryRepository(
         }
     }
 
+    suspend fun setMetadataOverrides(
+        expected: LibraryGenerationToken,
+        appId: Long,
+        title: String,
+        vendor: String,
+        version: String,
+        description: String,
+    ) {
+        withActiveDatabase(expected) { dao ->
+            val app = dao.getApp(appId) ?: error("Library app disappeared: $appId")
+            val customTitle = normalizeOverride(title, app.sourceTitle, requireNonBlank = true)
+            val customVendor = normalizeOverride(vendor, app.sourceVendor)
+            val customVersion = normalizeOverride(version, app.sourceVersion)
+            val customDescription = normalizeOverride(description, app.sourceDescription.orEmpty())
+            check(
+                dao.updateCustomMetadata(
+                    appId = appId,
+                    customTitle = customTitle,
+                    customVendor = customVendor,
+                    customVersion = customVersion,
+                    customDescription = customDescription,
+                ) == 1,
+            ) { "Unable to update Library metadata for app $appId" }
+        }
+    }
+
+    suspend fun resetMetadataOverrides(expected: LibraryGenerationToken, appId: Long) {
+        withActiveDatabase(expected) { dao ->
+            check(dao.getApp(appId) != null) { "Library app disappeared: $appId" }
+            check(dao.resetCustomMetadata(appId) == 1) {
+                "Unable to reset Library metadata for app $appId"
+            }
+        }
+    }
+
+    suspend fun setFavorite(
+        expected: LibraryGenerationToken,
+        appId: Long,
+        favorite: Boolean,
+    ) {
+        withActiveDatabase(expected) { dao ->
+            val app = dao.getApp(appId) ?: error("Library app disappeared: $appId")
+            if (app.favorite == favorite) return@withActiveDatabase
+            check(dao.updateFavorite(appId, favorite) == 1) {
+                "Unable to update favorite state for app $appId"
+            }
+        }
+    }
+
     suspend fun recordInstalledApp(
         expected: LibraryGenerationToken,
         existingId: Long?,
@@ -300,6 +349,12 @@ class LibraryRepository(
             }
             block(active.database.libraryDao())
         }
+    }
+
+    private fun normalizeOverride(value: String, source: String, requireNonBlank: Boolean = false): String? {
+        val normalized = value.trim()
+        require(!requireNonBlank || normalized.isNotEmpty()) { "Library title must not be blank" }
+        return normalized.takeUnless { it == source }
     }
 
     private fun normalizeWorkdir(file: File): File = try {
