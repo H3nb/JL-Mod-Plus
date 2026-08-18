@@ -232,6 +232,68 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun updateMetadata(
+        appId: Long,
+        title: String,
+        vendor: String,
+        version: String,
+        description: String,
+        callback: MutationCallback<Unit>,
+    ) {
+        val generation = readyGeneration()
+        val app = try {
+            generation?.let { repository.currentApp(it, appId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available"))
+            return
+        }
+        launchMutation(callback) {
+            repository.setMetadataOverrides(
+                expected = generation,
+                appId = app.id,
+                title = title,
+                vendor = vendor,
+                version = version,
+                description = description,
+            )
+        }
+    }
+
+    fun resetMetadata(appId: Long, callback: MutationCallback<Unit>) {
+        val generation = readyGeneration()
+        val app = try {
+            generation?.let { repository.currentApp(it, appId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available"))
+            return
+        }
+        launchMutation(callback) {
+            repository.resetMetadataOverrides(generation, app.id)
+        }
+    }
+
+    fun setFavorite(appId: Long, favorite: Boolean, callback: MutationCallback<Unit>) {
+        val generation = readyGeneration()
+        val app = try {
+            generation?.let { repository.currentApp(it, appId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available"))
+            return
+        }
+        launchMutation(callback) {
+            repository.setFavorite(generation, app.id, favorite)
+        }
+    }
+
     /** Resolve the retained-JAR action state only after the user chooses Reinstall. */
     fun resolveReinstallAvailability(appId: Long, callback: MutationCallback<Boolean>) {
         val generation = readyGeneration()
