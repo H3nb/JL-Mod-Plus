@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_collection_new">Koleksi Baru</string>
+    <string name="library_collection_ready_empty_message">Buat koleksi untuk mengelompokkan aplikasi tanpa memindahkan filenya.</string>
+    <string name="library_collection_member_count">%1$d aplikasi</string>
+    <string name="library_collection_add_app">Tambahkan ke Koleksi</string>
+    <string name="library_collection_name">Nama koleksi</string>
+    <string name="library_collection_members_empty">Belum ada aplikasi dalam koleksi ini.</string>
+    <string name="library_collection_remove">Hapus dari koleksi</string>
+    <string name="library_collection_remove_from_current">Hapus dari Koleksi</string>
+</resources>
