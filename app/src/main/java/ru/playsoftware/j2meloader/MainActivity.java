@@ -20,6 +20,7 @@
 package ru.playsoftware.j2meloader;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -38,6 +39,10 @@ import androidx.preference.PreferenceManager;
 import java.io.File;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.UUID;
 
 import ru.playsoftware.j2meloader.applist.AppsListFragment;
 import ru.playsoftware.j2meloader.config.Config;
@@ -55,8 +60,21 @@ import ru.woesss.j2me.installer.InstallerDialog;
 
 public class MainActivity extends AppCompatActivity {
 	private static final long DIAGNOSTIC_RECOVERY_RETRY_MILLIS = 200L;
-	private static final String STATE_PENDING_INSTALLERS = "MainActivity.pendingInstallers";
+	private static final String STATE_PENDING_INSTALLER_IDS = "MainActivity.pendingInstallerIds";
+	private static final String STATE_PENDING_INSTALLER_URIS = "MainActivity.pendingInstallerUris";
+	private static final String PREF_ACKED_INSTALLER_REQUEST_IDS =
+			"MainActivity.ackedInstallerRequestIds";
 	private static final String INSTALLER_TAG = "installer";
+
+	private static final class PendingInstallerRequest {
+		final String id;
+		final Uri uri;
+
+		PendingInstallerRequest(String id, Uri uri) {
+			this.id = id;
+			this.uri = uri;
+		}
+	}
 
 	private final StoragePermissionHelper storagePermissionHelper =
 			new StoragePermissionHelper(this, this::onPermissionResult);
@@ -64,12 +82,13 @@ public class MainActivity extends AppCompatActivity {
 			new PickDirResultContract(),
 			this::onPickDirResult
 	);
-	private final ArrayDeque<Uri> pendingInstallerUris = new ArrayDeque<>();
+	private final ArrayDeque<PendingInstallerRequest> pendingInstallerRequests = new ArrayDeque<>();
 
 	private LibraryViewModel libraryViewModel;
 	private MainActivityComposeController mainComposeController;
 	private String lastRecoveryNoticeId;
 	private boolean diagnosticRecoveryRetryScheduled;
+	private boolean installerStateSnapshotExists;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -153,11 +172,19 @@ public class MainActivity extends AppCompatActivity {
 
 	@Override
 	protected void onSaveInstanceState(@NonNull Bundle outState) {
-		ArrayList<String> pending = new ArrayList<>(pendingInstallerUris.size());
-		for (Uri uri : pendingInstallerUris) {
-			pending.add(uri.toString());
+		ArrayList<String> ids = new ArrayList<>(pendingInstallerRequests.size());
+		ArrayList<String> uris = new ArrayList<>(pendingInstallerRequests.size());
+		for (PendingInstallerRequest request : pendingInstallerRequests) {
+			ids.add(request.id);
+			uris.add(request.uri.toString());
 		}
-		outState.putStringArrayList(STATE_PENDING_INSTALLERS, pending);
+		outState.putStringArrayList(STATE_PENDING_INSTALLER_IDS, ids);
+		outState.putStringArrayList(STATE_PENDING_INSTALLER_URIS, uris);
+
+		// This snapshot now reflects every ACK that happened before this callback. Only ACKs that
+		// happen after the snapshot need a durable tombstone to suppress stale-state replay.
+		installerStateSnapshotExists = true;
+		installerPreferences().edit().remove(PREF_ACKED_INSTALLER_REQUEST_IDS).apply();
 		super.onSaveInstanceState(outState);
 	}
 
@@ -174,16 +201,32 @@ public class MainActivity extends AppCompatActivity {
 	/** Single READY gate used by initial intents, onNewIntent(), and the app-owned file picker. */
 	public void requestInstaller(@Nullable Uri uri) {
 		if (uri == null) return;
-		pendingInstallerUris.addLast(uri);
+		pendingInstallerRequests.addLast(
+				new PendingInstallerRequest(UUID.randomUUID().toString(), uri));
 		maybeShowPendingInstaller();
 	}
 
 	/** Called by InstallerDialog only when an external/file-picker request has reached a terminal UI outcome. */
-	public void completeInstallerRequest(@Nullable Uri uri) {
-		if (uri == null) return;
-		pendingInstallerUris.removeFirstOccurrence(uri);
+	public void completeInstallerRequest(@Nullable String requestId, @Nullable Uri uri) {
+		PendingInstallerRequest completed = null;
+		Iterator<PendingInstallerRequest> iterator = pendingInstallerRequests.iterator();
+		while (iterator.hasNext()) {
+			PendingInstallerRequest candidate = iterator.next();
+			boolean matches = requestId != null
+					? requestId.equals(candidate.id)
+					: uri != null && uri.equals(candidate.uri);
+			if (matches) {
+				completed = candidate;
+				iterator.remove();
+				break;
+			}
+		}
+		if (completed != null && installerStateSnapshotExists) {
+			recordAcknowledgedInstallerRequest(completed.id);
+		}
+
 		Intent intent = getIntent();
-		if (uri.equals(intent.getData())) {
+		if (uri != null && uri.equals(intent.getData())) {
 			intent.setData(null);
 		}
 	}
@@ -194,36 +237,66 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	private void restorePendingInstallerState(@Nullable Bundle savedInstanceState) {
+		SharedPreferences preferences = installerPreferences();
 		if (savedInstanceState != null) {
-			ArrayList<String> pending = savedInstanceState.getStringArrayList(STATE_PENDING_INSTALLERS);
-			if (pending != null) {
-				for (String value : pending) {
-					if (value != null && !value.isEmpty()) {
-						pendingInstallerUris.addLast(Uri.parse(value));
+			installerStateSnapshotExists = true;
+			ArrayList<String> ids = savedInstanceState.getStringArrayList(STATE_PENDING_INSTALLER_IDS);
+			ArrayList<String> uris = savedInstanceState.getStringArrayList(STATE_PENDING_INSTALLER_URIS);
+			Set<String> acknowledged = preferences.getStringSet(
+					PREF_ACKED_INSTALLER_REQUEST_IDS,
+					new HashSet<>());
+			if (ids != null && uris != null) {
+				int count = Math.min(ids.size(), uris.size());
+				for (int i = 0; i < count; i++) {
+					String id = ids.get(i);
+					String value = uris.get(i);
+					if (id != null && !id.isEmpty() && value != null && !value.isEmpty()
+							&& !acknowledged.contains(id)) {
+						pendingInstallerRequests.addLast(
+								new PendingInstallerRequest(id, Uri.parse(value)));
 					}
 				}
 			}
 			return;
 		}
+
+		// A genuinely fresh Activity cannot consume an old saved-state snapshot, so ACK tombstones
+		// from an earlier Activity lifetime are no longer useful and must not suppress a new request.
+		installerStateSnapshotExists = false;
+		preferences.edit().remove(PREF_ACKED_INSTALLER_REQUEST_IDS).apply();
 		Intent intent = getIntent();
 		if ((intent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0) {
-			Uri uri = intent.getData();
-			if (uri != null) pendingInstallerUris.addLast(uri);
+			requestInstaller(intent.getData());
 		}
 	}
 
 	private void maybeShowPendingInstaller() {
-		if (pendingInstallerUris.isEmpty() || isFinishing() || isDestroyed()) return;
+		if (pendingInstallerRequests.isEmpty() || isFinishing() || isDestroyed()) return;
 		if (libraryViewModel == null || libraryViewModel.readyGeneration() == null) return;
 		if (getSupportFragmentManager().isStateSaved()) return;
 		if (getSupportFragmentManager().findFragmentByTag(INSTALLER_TAG) != null) return;
 		if (mainComposeController != null && mainComposeController.isDialogVisible()) return;
 
-		Uri uri = pendingInstallerUris.peekFirst();
-		if (uri == null) return;
+		PendingInstallerRequest request = pendingInstallerRequests.peekFirst();
+		if (request == null) return;
 		// Do not dequeue here. Presentation is not consumption: process/activity recreation may happen
 		// while the dialog is loading or converting. The dialog acknowledges only a terminal outcome.
-		InstallerDialog.newInstance(uri).show(getSupportFragmentManager(), INSTALLER_TAG);
+		InstallerDialog.newExternalRequest(request.id, request.uri)
+				.show(getSupportFragmentManager(), INSTALLER_TAG);
+	}
+
+	private void recordAcknowledgedInstallerRequest(String requestId) {
+		SharedPreferences preferences = installerPreferences();
+		Set<String> existing = preferences.getStringSet(
+				PREF_ACKED_INSTALLER_REQUEST_IDS,
+				new HashSet<>());
+		HashSet<String> updated = new HashSet<>(existing);
+		updated.add(requestId);
+		preferences.edit().putStringSet(PREF_ACKED_INSTALLER_REQUEST_IDS, updated).apply();
+	}
+
+	private SharedPreferences installerPreferences() {
+		return PreferenceManager.getDefaultSharedPreferences(this);
 	}
 
 	private void maybeShowDiagnosticRecovery() {
