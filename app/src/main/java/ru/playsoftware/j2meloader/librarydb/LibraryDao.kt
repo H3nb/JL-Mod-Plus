@@ -134,6 +134,39 @@ abstract class LibraryDao {
     @Query("UPDATE apps SET custom_title = :customTitle WHERE id = :appId")
     abstract suspend fun updateCustomTitle(appId: Long, customTitle: String?): Int
 
+    @Query(
+        """
+        UPDATE apps SET
+            custom_title = :customTitle,
+            custom_vendor = :customVendor,
+            custom_version = :customVersion,
+            custom_description = :customDescription
+        WHERE id = :appId
+        """,
+    )
+    abstract suspend fun updateCustomMetadata(
+        appId: Long,
+        customTitle: String?,
+        customVendor: String?,
+        customVersion: String?,
+        customDescription: String?,
+    ): Int
+
+    @Query(
+        """
+        UPDATE apps SET
+            custom_title = NULL,
+            custom_vendor = NULL,
+            custom_version = NULL,
+            custom_description = NULL
+        WHERE id = :appId
+        """,
+    )
+    abstract suspend fun resetCustomMetadata(appId: Long): Int
+
+    @Query("UPDATE apps SET favorite = :favorite WHERE id = :appId")
+    abstract suspend fun updateFavorite(appId: Long, favorite: Boolean): Int
+
     @Query("DELETE FROM apps WHERE storage_key = :storageKey")
     abstract suspend fun deleteAppByStorageKey(storageKey: String): Int
 
