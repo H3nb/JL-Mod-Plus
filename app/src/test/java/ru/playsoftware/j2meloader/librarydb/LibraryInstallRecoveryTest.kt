@@ -70,6 +70,22 @@ class LibraryInstallRecoveryTest {
         assertFalse(LibraryInstallRecovery.STAGING_DIR_NAME.contains(':'))
     }
 
+    @Test fun orphanNewInstallStagingIsRemovedWithoutTouchingInstalledApps() {
+        val root = temporaryFolder.newFolder("orphan-staging")
+        val converted = File(root, "converted").apply { mkdir() }
+        val installed = File(converted, "existing").apply { mkdir() }
+        File(installed, "marker").writeText("keep")
+        val staging = LibraryInstallRecovery.stagingDirectory(root).apply { mkdir() }
+        File(staging, "partial").writeText("unfinished new install")
+
+        val recovery = LibraryInstallRecovery.recoverFilesystem(root)
+
+        assertTrue(recovery.refreshStorageKeys.isEmpty())
+        assertTrue(recovery.failures.isEmpty())
+        assertFalse(staging.exists())
+        assertTrue(File(installed, "marker").isFile)
+    }
+
     @Test fun startupRecoveryCleansSiblingAndLegacyStagingAfterRollback() {
         val root = temporaryFolder.newFolder("staging")
         val converted = File(root, "converted").apply { mkdir() }
