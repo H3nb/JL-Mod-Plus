@@ -174,6 +174,9 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     fun getApp(expectedGeneration: Long, expectedWorkdir: File, appId: Long): LibraryAppRow? =
         repository.currentApp(token(expectedGeneration, expectedWorkdir), appId)
 
+    fun storageKeys(expectedGeneration: Long, expectedWorkdir: File): Set<String> =
+        repository.currentStorageKeys(token(expectedGeneration, expectedWorkdir))
+
     fun findBySourceIdentity(
         expectedGeneration: Long,
         expectedWorkdir: File,
