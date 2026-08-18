@@ -96,17 +96,20 @@ class LibraryScannerTest {
     }
 
     @Test
-    fun stagingDirectoryIsIgnored() {
+    fun currentAndLegacyStagingDirectoriesAreIgnored() {
         val root = temporaryFolder.newFolder("workdir")
         val converted = File(root, "converted").apply { mkdir() }
-        val staging = File(converted, ".tmp").apply { mkdir() }
-        File(staging, "converted.dex").writeText("partial")
+        val current = File(converted, LibraryInstallRecovery.STAGING_DIR_NAME).apply { mkdir() }
+        val legacy = File(converted, LibraryInstallRecovery.LEGACY_STAGING_DIR_NAME).apply { mkdir() }
+        File(current, "converted.dex").writeText("partial")
+        File(legacy, "converted.dex").writeText("legacy partial")
 
         val result = scanner.scan(root)
 
         assertTrue(result.apps.isEmpty())
         assertTrue(result.failures.isEmpty())
-        assertTrue(staging.isDirectory)
+        assertTrue(current.isDirectory)
+        assertTrue(legacy.isDirectory)
     }
 
     @Test
@@ -115,7 +118,8 @@ class LibraryScannerTest {
         val converted = File(root, "converted").apply { mkdir() }
         File(converted, "One").mkdir()
         File(converted, "Two").mkdir()
-        File(converted, ".tmp").mkdir()
+        File(converted, LibraryInstallRecovery.STAGING_DIR_NAME).mkdir()
+        File(converted, LibraryInstallRecovery.LEGACY_STAGING_DIR_NAME).mkdir()
 
         assertEquals(linkedSetOf("One", "Two"), scanner.storageKeys(root))
     }
