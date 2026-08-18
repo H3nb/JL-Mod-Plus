@@ -14,6 +14,8 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /** Prepares a retained source JAR for read-only sharing through the app's narrow FileProvider. */
@@ -23,6 +25,7 @@ object LibraryShareManager {
     private const val MIME_TYPE = "application/java-archive"
     private const val MAX_FILE_STEM_LENGTH = 80
     private const val COPY_BUFFER_SIZE = 64 * 1024
+    private val prepareMutex = Mutex()
 
     data class PreparedShare(
         val uri: Uri,
@@ -35,39 +38,41 @@ object LibraryShareManager {
         emulatorDir: File,
         storageKey: String,
         displayTitle: String,
-    ): PreparedShare = withContext(Dispatchers.IO) {
-        val root = emulatorDir.canonicalFile
-        val source = LibraryFileOperations.retainedJar(emulatorDir, storageKey).canonicalFile
-        if (!insideRoot(root, source)) {
-            throw IOException("Retained source JAR resolves outside the active workdir")
-        }
-        if (!source.isFile) {
-            throw IOException("Retained source JAR is unavailable")
-        }
+    ): PreparedShare = prepareMutex.withLock {
+        withContext(Dispatchers.IO) {
+            val root = emulatorDir.canonicalFile
+            val source = LibraryFileOperations.retainedJar(emulatorDir, storageKey).canonicalFile
+            if (!insideRoot(root, source)) {
+                throw IOException("Retained source JAR resolves outside the active workdir")
+            }
+            if (!source.isFile) {
+                throw IOException("Retained source JAR is unavailable")
+            }
 
-        val directory = File(File(context.cacheDir, SHARE_DIR), storageKey)
-        if (!directory.isDirectory && !directory.mkdirs()) {
-            throw IOException("Unable to create app-share cache directory")
-        }
-        val fileName = safeFileName(displayTitle)
-        val target = File(directory, fileName)
-        val staging = File(directory, "$fileName.tmp")
-        try {
-            copyFile(source, staging)
-            if (target.exists() && !target.delete()) {
-                throw IOException("Unable to replace previous app-share cache file")
+            val directory = File(File(context.cacheDir, SHARE_DIR), storageKey)
+            if (!directory.isDirectory && !directory.mkdirs()) {
+                throw IOException("Unable to create app-share cache directory")
             }
-            if (!staging.renameTo(target)) {
-                throw IOException("Unable to publish app-share cache file")
+            val fileName = safeFileName(displayTitle)
+            val target = File(directory, fileName)
+            val staging = File(directory, "$fileName.tmp")
+            try {
+                copyFile(source, staging)
+                if (target.exists() && !target.delete()) {
+                    throw IOException("Unable to replace previous app-share cache file")
+                }
+                if (!staging.renameTo(target)) {
+                    throw IOException("Unable to publish app-share cache file")
+                }
+                val uri = FileProvider.getUriForFile(
+                    context,
+                    context.packageName + PROVIDER_SUFFIX,
+                    target,
+                )
+                PreparedShare(uri = uri, fileName = fileName)
+            } finally {
+                if (staging.exists()) staging.delete()
             }
-            val uri = FileProvider.getUriForFile(
-                context,
-                context.packageName + PROVIDER_SUFFIX,
-                target,
-            )
-            PreparedShare(uri = uri, fileName = fileName)
-        } finally {
-            if (staging.exists()) staging.delete()
         }
     }
 
