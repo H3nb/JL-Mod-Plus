@@ -53,6 +53,7 @@ import ru.woesss.j2me.jar.Descriptor;
 
 public class InstallerDialog extends DialogFragment {
 	private static final String ARG_URI = "InstallerDialog.uri";
+	private static final String ARG_REQUEST_ID = "InstallerDialog.requestId";
 	private static final String ARG_ID = "InstallerDialog.id";
 	private static final String ARG_GENERATION = "InstallerDialog.generation";
 	private static final String ARG_WORKDIR = "InstallerDialog.workdir";
@@ -68,10 +69,16 @@ public class InstallerDialog extends DialogFragment {
 	private Runnable primaryAction;
 	private boolean restoredInstance;
 
+	/** Compatibility entry point for callers that do not participate in MainActivity request restore. */
 	public static InstallerDialog newInstance(Uri uri) {
+		return newExternalRequest(null, uri);
+	}
+
+	public static InstallerDialog newExternalRequest(@Nullable String requestId, Uri uri) {
 		InstallerDialog fragment = new InstallerDialog();
 		Bundle args = new Bundle();
 		args.putParcelable(ARG_URI, uri);
+		if (requestId != null) args.putString(ARG_REQUEST_ID, requestId);
 		fragment.setArguments(args);
 		fragment.setCancelable(false);
 		return fragment;
@@ -102,8 +109,8 @@ public class InstallerDialog extends DialogFragment {
 		restoredInstance = savedInstanceState != null;
 		if (restoredInstance) {
 			// MainActivity owns durable external-request state and the Library READY gate. Never resume
-			// an installer Fragment directly after Activity/process recreation: a pending URI remains in
-			// MainActivity's queue and will be presented again only after the active generation is READY.
+			// an installer Fragment directly after Activity/process recreation: a pending request remains
+			// in MainActivity's queue and will be presented again only after the active generation is READY.
 			// A request that already committed was ACKed at STATUS_SUCCESS, so it will not replay.
 			dismissAllowingStateLoss();
 		}
@@ -342,9 +349,10 @@ public class InstallerDialog extends DialogFragment {
 		Bundle args = getArguments();
 		Uri uri = args == null ? null : args.getParcelable(ARG_URI);
 		if (uri == null) return;
+		String requestId = args.getString(ARG_REQUEST_ID);
 		Activity activity = getActivity();
 		if (activity instanceof MainActivity) {
-			((MainActivity) activity).completeInstallerRequest(uri);
+			((MainActivity) activity).completeInstallerRequest(requestId, uri);
 		}
 	}
 
