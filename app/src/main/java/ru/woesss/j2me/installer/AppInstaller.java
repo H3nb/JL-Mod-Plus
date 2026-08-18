@@ -515,16 +515,32 @@ public class AppInstaller {
 			Log.e(TAG, "checkDescriptor: error read exists app manifest", e);
 		}
 		File targetJar = child(targetDir, Config.MIDLET_RES_FILE);
-		if (targetJar.exists() && targetJar.length() == srcJar.length()) {
-			try (FileInputStream one = new FileInputStream(srcJar);
-				 FileInputStream two = new FileInputStream(targetJar)) {
-				if (one.read() != two.read()) return STATUS_EQUAL;
-				return STATUS_SAME;
+		if (targetJar.exists()) {
+			try {
+				if (filesHaveSameContents(srcJar, targetJar)) return STATUS_SAME;
 			} catch (IOException e) {
 				Log.e(TAG, "checkDescriptor: io error when compare files", e);
 			}
 		}
 		return STATUS_EQUAL;
+	}
+
+	static boolean filesHaveSameContents(File first, File second) throws IOException {
+		if (!first.isFile() || !second.isFile() || first.length() != second.length()) return false;
+		try (FileInputStream one = new FileInputStream(first);
+			 FileInputStream two = new FileInputStream(second)) {
+			byte[] oneBuffer = new byte[8192];
+			byte[] twoBuffer = new byte[8192];
+			while (true) {
+				int oneRead = one.read(oneBuffer);
+				int twoRead = two.read(twoBuffer);
+				if (oneRead != twoRead) return false;
+				if (oneRead < 0) return true;
+				for (int i = 0; i < oneRead; i++) {
+					if (oneBuffer[i] != twoBuffer[i]) return false;
+				}
+			}
+		}
 	}
 
 	private void generatePathName(String name, Set<String> indexedStorageKeys) {
