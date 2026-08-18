@@ -1467,7 +1467,7 @@ internal fun LibraryOptionsDestination(
     onIconRatioChange: (LibraryIconRatio) -> Unit,
     onHideGridTitlesChange: (Boolean) -> Unit,
     onGridSpacingChange: (LibraryGridSpacing) -> Unit,
-    onImportAppBundle: () -> Unit,
+    onImportAppBundle: () -> Unit = {},
     onAbout: () -> Unit,
     onSettings: () -> Unit,
     onHelp: () -> Unit,

@@ -103,7 +103,7 @@ internal fun LibraryCollectionBrowser(
     onRemove: (Int) -> Unit,
     onSetMembership: (Int, Boolean) -> Unit,
     onSort: (Int) -> Unit,
-    onNavigationVisibilityChanged: (Boolean) -> Unit,
+    onNavigationVisibilityChanged: (Boolean) -> Unit = {},
 ) {
     var manageApps by rememberSaveable(collection.id) { mutableStateOf(false) }
     BackHandler {

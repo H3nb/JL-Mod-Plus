@@ -40,6 +40,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -168,7 +169,7 @@ internal fun LibraryCollectionsDestination(
     libraryState: LibraryUiState,
     scaffoldPadding: PaddingValues,
     onOpenActions: (LibraryAppUiItem, Long) -> Unit,
-    onNavigationVisibilityChanged: (Boolean) -> Unit,
+    onNavigationVisibilityChanged: (Boolean) -> Unit = {},
 ) {
     val state by host.collectionsStore().state.collectAsState()
     if (!state.ready) {

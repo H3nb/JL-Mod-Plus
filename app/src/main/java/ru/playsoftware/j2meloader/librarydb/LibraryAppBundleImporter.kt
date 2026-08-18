@@ -170,12 +170,18 @@ object LibraryAppBundleImporter {
         }
 
         publishReplacements(replacements)
-        val iconRevision = if (prepared.configDir != null) {
-            LibraryIconOverride.reapplyPersistedOverride(emulatorDir, storageKey)
-        } else {
-            null
+        return try {
+            val iconRevision = if (prepared.configDir != null) {
+                LibraryIconOverride.reapplyPersistedOverride(emulatorDir, storageKey)
+            } else {
+                null
+            }
+            discardReplacements(replacements)
+            RestoreResult(iconRevision)
+        } catch (error: Throwable) {
+            replacements.asReversed().forEach(::rollbackReplacement)
+            throw error
         }
-        return RestoreResult(iconRevision)
     }
 
     @JvmStatic
@@ -244,7 +250,13 @@ object LibraryAppBundleImporter {
             replacements.asReversed().forEach(::rollbackReplacement)
             throw error
         }
-        replacements.forEach { replacement -> replacement.backup?.deleteRecursively() }
+    }
+
+    private fun discardReplacements(replacements: List<Replacement>) {
+        replacements.forEach { replacement ->
+            replacement.backup?.deleteRecursively()
+            replacement.staged.deleteRecursively()
+        }
     }
 
     private fun rollbackReplacement(replacement: Replacement) {
