@@ -1,0 +1,1838 @@
+name: PR2 correction patch
+
+on:
+  push:
+    branches:
+      - agent/library-pr2-features
+    paths:
+      - .github/workflows/agent-pr2-correction.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/library-pr2-features
+          fetch-depth: 0
+      - name: Apply PR2 UX corrections
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          ROOT = Path('.')
+
+          def read(path):
+              return (ROOT / path).read_text()
+
+          def write(path, text):
+              target = ROOT / path
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_text(text)
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 match, found {count}')
+              return text.replace(old, new, 1)
+
+          def replace_between(text, start, end, replacement, label):
+              start_index = text.find(start)
+              if start_index < 0:
+                  raise SystemExit(f'{label}: start marker not found')
+              end_index = text.find(end, start_index + len(start))
+              if end_index < 0:
+                  raise SystemExit(f'{label}: end marker not found')
+              return text[:start_index] + replacement + text[end_index:]
+
+          bridge_path = 'app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryComposeBridge.kt'
+          bridge = read(bridge_path)
+
+          bridge = replace_once(
+              bridge,
+              '    var metadataTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }\n    var deleteTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }',
+              '    var metadataTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }\n    var appActionsCollectionId by remember { mutableStateOf<Long?>(null) }\n    var deleteTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }',
+              'app action collection state',
+          )
+
+          bridge = replace_once(
+              bridge,
+              '    val collectionsHost = actions as? LibraryCollectionsHost\n\n    LaunchedEffect(destination) {',
+              '''    val collectionsHost = actions as? LibraryCollectionsHost
+
+    val metadataApp = metadataTarget?.let { target ->
+        state.apps.firstOrNull { it.id == target.id } ?: target
+    }
+    if (metadataApp != null) {
+        LibraryMetadataEditorScreen(
+            app = metadataApp,
+            onBack = { metadataTarget = null },
+            onSave = { title, vendor, description ->
+                metadataTarget = null
+                actions.onUpdateMetadata(
+                    metadataApp.id,
+                    title,
+                    vendor,
+                    metadataApp.version,
+                    description,
+                )
+            },
+            onPickIcon = { actions.onPickIcon(metadataApp.id) },
+            onResetIcon = { actions.onResetIcon(metadataApp.id) },
+        )
+        return
+    }
+
+    LaunchedEffect(destination) {''',
+              'metadata page branch',
+          )
+
+          bridge = replace_once(
+              bridge,
+              '            appActions = null\n        }',
+              '            appActions = null\n            appActionsCollectionId = null\n        }',
+              'destination action reset',
+          )
+
+          bridge = replace_once(
+              bridge,
+              '                        onOpenActions = { appActions = it },',
+              '''                        onOpenActions = {
+                            appActions = it
+                            appActionsCollectionId = null
+                        },''',
+              'main app action context',
+          )
+
+          bridge = replace_once(
+              bridge,
+              '''                    LibraryDestination.Collections -> if (collectionsHost != null) {
+                        LibraryCollectionsDestination(collectionsHost, padding)
+                    } else {
+                        LibraryCollectionsDestination(padding)
+                    }''',
+              '''                    LibraryDestination.Collections -> if (collectionsHost != null) {
+                        LibraryCollectionsDestination(
+                            host = collectionsHost,
+                            libraryState = state,
+                            scaffoldPadding = padding,
+                            onOpenActions = { app, collectionId ->
+                                appActions = app
+                                appActionsCollectionId = collectionId
+                            },
+                        )
+                    } else {
+                        LibraryCollectionsDestination(padding)
+                    }''',
+              'collections destination route',
+          )
+
+          bridge = replace_once(
+              bridge,
+              '            onDismiss = { appActions = null },',
+              '''            onDismiss = {
+                appActions = null
+                appActionsCollectionId = null
+            },''',
+              'app action dismiss',
+          )
+
+          bridge = replace_once(
+              bridge,
+              '''            onAddToCollection = if (state.databaseControlsReady && collectionsHost != null) {
+                { collectionsHost.onRequestAddToCollection(app.id) }
+            } else {
+                null
+            },
+            onShareApp = if (state.databaseControlsReady) {''',
+              '''            onAddToCollection = if (state.databaseControlsReady && collectionsHost != null) {
+                { collectionsHost.onRequestAddToCollection(app.id) }
+            } else {
+                null
+            },
+            onRemoveFromCollection = if (
+                state.databaseControlsReady && collectionsHost != null && appActionsCollectionId != null
+            ) {
+                {
+                    collectionsHost.onRemoveAppFromCollection(
+                        app.id,
+                        requireNotNull(appActionsCollectionId),
+                    )
+                }
+            } else {
+                null
+            },
+            onShareApp = if (state.databaseControlsReady) {''',
+              'remove membership app action',
+          )
+
+          bridge = replace_between(
+              bridge,
+              '    metadataTarget?.let { target ->\n',
+              '    deleteTarget?.let { app ->\n',
+              '',
+              'remove metadata dialog block',
+          )
+
+          bridge = replace_once(
+              bridge,
+              '''private fun LibraryAppsDestination(
+    state: LibraryUiState,''',
+              '''internal fun LibraryAppsDestination(
+    state: LibraryUiState,''',
+              'browser visibility',
+          )
+
+          bridge = replace_once(
+              bridge,
+              '''    onRetry: () -> Unit,
+    onFabVisibilityChanged: (Boolean) -> Unit,
+    onNavigationVisibilityChanged: (Boolean) -> Unit,
+) {
+    var query by rememberSaveable { mutableStateOf(state.appliedFilter) }''',
+              '''    onRetry: () -> Unit,
+    onFabVisibilityChanged: (Boolean) -> Unit,
+    onNavigationVisibilityChanged: (Boolean) -> Unit,
+    title: String? = null,
+    onBack: (() -> Unit)? = null,
+    showQuickViews: Boolean = true,
+    queryStateKey: Any? = Unit,
+) {
+    var query by rememberSaveable(queryStateKey) { mutableStateOf(state.appliedFilter) }''',
+              'browser optional collection params',
+          )
+
+          bridge = replace_once(
+              bridge,
+              '''            state = state,
+            sortVisible = sortVisible,
+            onSortVisibilityChanged = { sortVisible = it },
+            onQuickView = onQuickView,
+            onSort = onSort,
+            interactive = interactive,''',
+              '''            state = state,
+            sortVisible = sortVisible,
+            onSortVisibilityChanged = { sortVisible = it },
+            onQuickView = onQuickView,
+            onSort = onSort,
+            title = title,
+            onBack = onBack,
+            showQuickViews = showQuickViews,
+            interactive = interactive,''',
+              'browser header params',
+          )
+
+          header_start = '@OptIn(ExperimentalMaterial3Api::class)\n@Composable\nprivate fun LibraryAppsHeader('
+          header_end = '\n@Composable\nprivate fun LibraryQuickFilter('
+          new_header = r'''@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LibraryAppsHeader(
+    modifier: Modifier = Modifier,
+    query: String,
+    onQueryChange: (String) -> Unit,
+    state: LibraryUiState,
+    sortVisible: Boolean,
+    onSortVisibilityChanged: (Boolean) -> Unit,
+    onQuickView: (LibraryQuickView) -> Unit,
+    onSort: (Int) -> Unit,
+    title: String? = null,
+    onBack: (() -> Unit)? = null,
+    showQuickViews: Boolean = true,
+    interactive: Boolean = true,
+) {
+    val sortEntries = stringArrayResource(R.array.pref_app_sort_entries).toList()
+    val selectedSort = state.sortVariant and Int.MAX_VALUE
+    val ascending = state.sortVariant >= 0
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+    val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+    val quickControlsPagerBoundary = remember {
+        object : NestedScrollConnection {
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource,
+            ): Offset = Offset(x = available.x, y = 0f)
+
+            override suspend fun onPostFling(
+                consumed: Velocity,
+                available: Velocity,
+            ): Velocity = Velocity(x = available.x, y = 0f)
+        }
+    }
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (onBack != null) {
+                IconButton(onClick = onBack, enabled = interactive) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_arrow_back),
+                        contentDescription = stringResource(android.R.string.cancel),
+                    )
+                }
+                Spacer(Modifier.width(4.dp))
+            }
+            Text(
+                text = title ?: stringResource(R.string.app_name),
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            OutlinedTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(54.dp),
+                enabled = interactive,
+                singleLine = true,
+                shape = RoundedCornerShape(18.dp),
+                placeholder = { Text(stringResource(R.string.library_search_placeholder)) },
+                leadingIcon = {
+                    if (query.isEmpty()) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_search),
+                            contentDescription = stringResource(R.string.search),
+                        )
+                    } else {
+                        IconButton(
+                            onClick = {
+                                onQueryChange("")
+                                focusManager.clearFocus()
+                                keyboardController?.hide()
+                            },
+                            enabled = interactive,
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_arrow_back),
+                                contentDescription = stringResource(R.string.library_search_clear),
+                            )
+                        }
+                    }
+                },
+            )
+            Box {
+                IconButton(
+                    onClick = { onSortVisibilityChanged(true) },
+                    enabled = interactive,
+                    modifier = Modifier.size(48.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_sort),
+                        contentDescription = stringResource(R.string.pref_app_sort_title),
+                    )
+                }
+                LibrarySortMenu(
+                    expanded = sortVisible && interactive,
+                    entries = sortEntries,
+                    selectedSort = selectedSort,
+                    ascending = ascending,
+                    onDismissRequest = { onSortVisibilityChanged(false) },
+                    onSelected = { index ->
+                        onSortVisibilityChanged(false)
+                        onSort(index)
+                    },
+                )
+            }
+        }
+        if (showQuickViews) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+                    .nestedScroll(quickControlsPagerBoundary)
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                LibraryQuickFilter(
+                    label = R.string.library_filter_all,
+                    icon = R.drawable.ic_apps,
+                    selected = state.quickView == LibraryQuickView.All,
+                    enabled = interactive,
+                    onClick = { onQuickView(LibraryQuickView.All) },
+                )
+                LibraryQuickFilter(
+                    label = R.string.library_filter_favorites,
+                    icon = R.drawable.ic_star,
+                    selected = state.quickView == LibraryQuickView.Favorites,
+                    enabled = interactive && state.databaseControlsReady,
+                    onClick = { onQuickView(LibraryQuickView.Favorites) },
+                )
+                LibraryQuickFilter(
+                    label = R.string.library_filter_recently_added,
+                    icon = R.drawable.ic_add,
+                    selected = state.quickView == LibraryQuickView.RecentlyAdded,
+                    enabled = interactive && state.databaseControlsReady,
+                    onClick = { onQuickView(LibraryQuickView.RecentlyAdded) },
+                )
+                LibraryQuickFilter(
+                    label = R.string.library_filter_recently_opened,
+                    icon = R.drawable.ic_history,
+                    selected = state.quickView == LibraryQuickView.RecentlyPlayed,
+                    enabled = interactive && state.databaseControlsReady,
+                    onClick = { onQuickView(LibraryQuickView.RecentlyPlayed) },
+                )
+            }
+        }
+    }
+}
+'''
+          bridge = replace_between(bridge, header_start, header_end, new_header, 'apps header')
+
+          list_start = '@OptIn(ExperimentalFoundationApi::class)\n@Composable\nprivate fun LibraryListItem('
+          list_end = '\nprivate const val LIBRARY_DESCRIPTION_OVERFLOW_FALLBACK_LENGTH = 120'
+          new_list = r'''@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun LibraryListItem(
+    app: LibraryAppUiItem,
+    onOpenApp: (Int) -> Unit,
+    onOpenActions: (LibraryAppUiItem) -> Unit,
+    onFavorite: (Int, Boolean) -> Unit,
+    favoriteEnabled: Boolean,
+    iconRatio: LibraryIconRatio,
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .combinedClickable(
+                    onClick = { onOpenApp(app.id) },
+                    onLongClick = { onOpenActions(app) },
+                )
+                .padding(start = 16.dp, end = 12.dp, top = 10.dp, bottom = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            LibraryIconSlot(
+                app = app,
+                modifier = Modifier.width(52.dp),
+                contentSize = 40.dp,
+                iconRatio = iconRatio,
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = app.title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = stringResource(
+                        R.string.library_vendor_version,
+                        app.author,
+                        app.version,
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                LibraryDescription(app.description, app.id)
+            }
+            Spacer(Modifier.width(6.dp))
+            if (favoriteEnabled) {
+                LibraryFavoriteButton(app, onFavorite)
+            } else {
+                LibraryFavoritePlaceholder(app.id)
+            }
+        }
+        HorizontalDivider(
+            modifier = Modifier.padding(start = 80.dp, end = 16.dp),
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+        )
+    }
+}
+
+@Composable
+private fun LibraryDescription(descriptionValue: String, appId: Int) {
+    val description = descriptionValue.trim()
+    if (description.isEmpty()) return
+
+    var expanded by rememberSaveable(appId, description) { mutableStateOf(false) }
+    var overflows by remember(appId, description) { mutableStateOf(false) }
+    val expandDescriptionLabel = stringResource(R.string.library_expand_description)
+    val collapseDescriptionLabel = stringResource(R.string.library_collapse_description)
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = description,
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = if (expanded) Int.MAX_VALUE else 2,
+                overflow = if (expanded) TextOverflow.Clip else TextOverflow.Ellipsis,
+                onTextLayout = { result ->
+                    if (!expanded) {
+                        overflows = result.didOverflowHeight || result.didOverflowWidth ||
+                            result.hasVisualOverflow ||
+                            (result.lineCount > 0 && result.isLineEllipsized(result.lineCount - 1))
+                    }
+                },
+            )
+            if (!expanded && overflows) {
+                Text(
+                    text = stringResource(R.string.library_description_more),
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .background(MaterialTheme.colorScheme.background)
+                        .clickable(role = Role.Button) { expanded = true }
+                        .padding(start = 6.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                )
+            }
+        }
+        if (expanded) {
+            Text(
+                text = stringResource(R.string.library_description_less),
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .clickable(role = Role.Button) { expanded = false }
+                    .semantics { contentDescription = collapseDescriptionLabel }
+                    .padding(top = 2.dp),
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+            )
+        } else if (overflows) {
+            Spacer(
+                modifier = Modifier
+                    .size(0.dp)
+                    .semantics { contentDescription = expandDescriptionLabel },
+            )
+        }
+    }
+}
+'''
+          bridge = replace_between(bridge, list_start, list_end, new_list, 'list row and description')
+          bridge = bridge.replace('\nprivate const val LIBRARY_DESCRIPTION_OVERFLOW_FALLBACK_LENGTH = 120', '', 1)
+
+          fav_start = '@Composable\nprivate fun LibraryFavoriteButton('
+          fav_end = '\n@Composable\nprivate fun LibraryFavoritePlaceholder('
+          new_fav = r'''@Composable
+private fun LibraryFavoriteButton(
+    app: LibraryAppUiItem,
+    onFavorite: (Int, Boolean) -> Unit,
+) {
+    IconButton(
+        onClick = { onFavorite(app.id, !app.favorite) },
+        modifier = Modifier.size(36.dp),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            AnimatedVisibility(
+                visible = app.favorite,
+                enter = fadeIn(tween(140)) + scaleIn(tween(180), initialScale = 0.55f),
+                exit = fadeOut(tween(100)) + scaleOut(tween(120), targetScale = 0.7f),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_star_filled),
+                    contentDescription = stringResource(R.string.library_filter_favorites),
+                    modifier = Modifier.size(28.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
+            AnimatedVisibility(
+                visible = !app.favorite,
+                enter = fadeIn(tween(120)) + scaleIn(tween(150), initialScale = 0.7f),
+                exit = fadeOut(tween(100)) + scaleOut(tween(120), targetScale = 0.55f),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_star),
+                    contentDescription = stringResource(R.string.library_filter_favorites),
+                    modifier = Modifier.size(28.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+'''
+          bridge = replace_between(bridge, fav_start, fav_end, new_fav, 'favorite animation')
+
+          bridge = replace_once(
+              bridge,
+              '    onAddToCollection: (() -> Unit)? = null,\n    onShareApp: (() -> Unit)? = null,',
+              '    onAddToCollection: (() -> Unit)? = null,\n    onRemoveFromCollection: (() -> Unit)? = null,\n    onShareApp: (() -> Unit)? = null,',
+              'app action remove signature',
+          )
+          bridge = replace_once(
+              bridge,
+              '''                if (onShareApp != null) {
+                    item {''',
+              '''                if (onRemoveFromCollection != null) {
+                    item {
+                        DialogAction(
+                            label = R.string.library_collection_remove_from_current,
+                            icon = R.drawable.ic_delete,
+                            onDismiss = onDismiss,
+                            action = onRemoveFromCollection,
+                        )
+                    }
+                }
+                if (onShareApp != null) {
+                    item {''',
+              'app action remove body',
+          )
+
+          write(bridge_path, bridge)
+
+          metadata = r'''/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ */
+package ru.playsoftware.j2meloader.applist
+
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import ru.playsoftware.j2meloader.R
+
+/** Full-page presentation metadata editor. Source descriptor values remain immutable. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun LibraryMetadataEditorScreen(
+    app: LibraryAppUiItem,
+    onBack: () -> Unit,
+    onSave: (title: String, vendor: String, description: String) -> Unit,
+    onPickIcon: () -> Unit = {},
+    onResetIcon: () -> Unit = {},
+) {
+    var title by rememberSaveable(app.id) { mutableStateOf(app.title) }
+    var vendor by rememberSaveable(app.id) { mutableStateOf(app.author) }
+    var description by rememberSaveable(app.id) { mutableStateOf(app.description) }
+    val valid = title.trim().isNotEmpty()
+
+    BackHandler(onBack = onBack)
+    Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing,
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.library_metadata_edit_title)) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_arrow_back),
+                            contentDescription = stringResource(android.R.string.cancel),
+                        )
+                    }
+                },
+                actions = {
+                    TextButton(
+                        enabled = valid,
+                        onClick = {
+                            onSave(
+                                title.trim(),
+                                vendor.trim(),
+                                description.trim(),
+                            )
+                        },
+                    ) {
+                        Text(stringResource(R.string.library_metadata_save))
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .imePadding(),
+        ) {
+            val wide = maxWidth >= 700.dp
+            if (wide) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 32.dp, vertical = 20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(32.dp),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    LibraryMetadataIconPanel(
+                        app = app,
+                        onPickIcon = onPickIcon,
+                        onResetIcon = onResetIcon,
+                        modifier = Modifier.width(220.dp),
+                    )
+                    LibraryMetadataFields(
+                        title = title,
+                        vendor = vendor,
+                        description = description,
+                        app = app,
+                        onTitleChange = { title = it },
+                        onVendorChange = { vendor = it },
+                        onDescriptionChange = { description = it },
+                        modifier = Modifier
+                            .weight(1f)
+                            .widthIn(max = 760.dp),
+                    )
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp),
+                ) {
+                    LibraryMetadataIconPanel(
+                        app = app,
+                        onPickIcon = onPickIcon,
+                        onResetIcon = onResetIcon,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    LibraryMetadataFields(
+                        title = title,
+                        vendor = vendor,
+                        description = description,
+                        app = app,
+                        onTitleChange = { title = it },
+                        onVendorChange = { vendor = it },
+                        onDescriptionChange = { description = it },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(20.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LibraryMetadataIconPanel(
+    app: LibraryAppUiItem,
+    onPickIcon: () -> Unit,
+    onResetIcon: () -> Unit,
+    modifier: Modifier,
+) {
+    val iconBitmap by produceState<ImageBitmap?>(
+        initialValue = null,
+        app.iconPath,
+        app.iconRevision,
+    ) {
+        val path = app.iconPath?.takeIf(String::isNotBlank)
+        value = if (path == null) null else withContext(Dispatchers.IO) {
+            decodeMetadataIcon(path)?.asImageBitmap()
+        }
+    }
+
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Surface(
+            modifier = Modifier.size(132.dp),
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                if (iconBitmap != null) {
+                    Image(
+                        bitmap = iconBitmap!!,
+                        contentDescription = null,
+                        modifier = Modifier.size(112.dp),
+                        contentScale = ContentScale.Fit,
+                    )
+                } else {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_default_midlet),
+                        contentDescription = null,
+                        modifier = Modifier.size(84.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+        Text(
+            text = stringResource(R.string.library_metadata_icon),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Medium,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            TextButton(onClick = onPickIcon) {
+                Text(stringResource(R.string.library_metadata_change_icon))
+            }
+            TextButton(onClick = onResetIcon) {
+                Text(stringResource(R.string.library_metadata_reset_to_original))
+            }
+        }
+    }
+}
+
+@Composable
+private fun LibraryMetadataFields(
+    title: String,
+    vendor: String,
+    description: String,
+    app: LibraryAppUiItem,
+    onTitleChange: (String) -> Unit,
+    onVendorChange: (String) -> Unit,
+    onDescriptionChange: (String) -> Unit,
+    modifier: Modifier,
+) {
+    Column(
+        modifier = modifier.verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        LibraryMetadataField(
+            label = R.string.library_metadata_name,
+            value = title,
+            source = app.sourceTitle,
+            onValueChange = onTitleChange,
+            singleLine = true,
+            required = true,
+        )
+        LibraryMetadataField(
+            label = R.string.library_metadata_vendor,
+            value = vendor,
+            source = app.sourceAuthor,
+            onValueChange = onVendorChange,
+            singleLine = true,
+        )
+        LibraryMetadataField(
+            label = R.string.library_metadata_description,
+            value = description,
+            source = app.sourceDescription,
+            onValueChange = onDescriptionChange,
+            singleLine = false,
+        )
+    }
+}
+
+private fun decodeMetadataIcon(path: String): Bitmap? = try {
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeFile(path, bounds)
+    if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
+        null
+    } else {
+        var sample = 1
+        while (bounds.outWidth / sample > 256 || bounds.outHeight / sample > 256) sample *= 2
+        BitmapFactory.decodeFile(
+            path,
+            BitmapFactory.Options().apply {
+                inSampleSize = sample.coerceAtLeast(1)
+                inPreferredConfig = Bitmap.Config.ARGB_8888
+            },
+        )
+    }
+} catch (_: OutOfMemoryError) {
+    null
+} catch (_: RuntimeException) {
+    null
+}
+
+@Composable
+private fun LibraryMetadataField(
+    label: Int,
+    value: String,
+    source: String,
+    onValueChange: (String) -> Unit,
+    singleLine: Boolean,
+    required: Boolean = false,
+) {
+    val changed = value.trim() != source
+    Column(modifier = Modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(label)) },
+            singleLine = singleLine,
+            minLines = if (singleLine) 1 else 5,
+            maxLines = if (singleLine) 1 else 12,
+            isError = required && value.trim().isEmpty(),
+        )
+        TextButton(
+            enabled = changed,
+            onClick = { onValueChange(source) },
+            modifier = Modifier.align(Alignment.End),
+        ) {
+            Text(stringResource(R.string.library_metadata_reset_to_original))
+        }
+    }
+}
+'''
+          write('app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryMetadataEditor.kt', metadata)
+
+          collections = r'''/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ */
+package ru.playsoftware.j2meloader.applist
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import java.text.Collator
+import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
+import ru.playsoftware.j2meloader.R
+import ru.playsoftware.j2meloader.librarydb.LibraryCollectionRow
+import ru.playsoftware.j2meloader.librarydb.LibraryQuickView
+
+data class LibraryCollectionUiItem(
+    val id: Long,
+    val name: String,
+    val appCount: Int,
+)
+
+data class LibraryCollectionMembersUi(
+    val collectionId: Long,
+    val members: List<LibraryAppUiItem>,
+)
+
+data class LibraryCollectionAppTargetUi(
+    val appId: Int,
+    val title: String,
+)
+
+data class LibraryCollectionsUiState(
+    val ready: Boolean = false,
+    val collections: List<LibraryCollectionUiItem> = emptyList(),
+    val members: LibraryCollectionMembersUi? = null,
+    val addTarget: LibraryCollectionAppTargetUi? = null,
+)
+
+class LibraryCollectionsUiStore {
+    private val mutableState = MutableStateFlow(LibraryCollectionsUiState())
+    val state: StateFlow<LibraryCollectionsUiState> = mutableState.asStateFlow()
+
+    fun publishCollections(rows: List<LibraryCollectionRow>) {
+        val collections = rows.map { row -> LibraryCollectionUiItem(row.id, row.name, row.appCount) }
+        val current = mutableState.value
+        mutableState.value = current.copy(
+            ready = true,
+            collections = collections,
+            members = current.members?.takeIf { members ->
+                collections.any { it.id == members.collectionId }
+            },
+        )
+    }
+
+    fun clear() {
+        mutableState.value = LibraryCollectionsUiState()
+    }
+
+    fun showMembers(collectionId: Long, members: List<LibraryAppUiItem>) {
+        if (mutableState.value.collections.none { it.id == collectionId }) return
+        mutableState.value = mutableState.value.copy(
+            members = LibraryCollectionMembersUi(collectionId, members),
+        )
+    }
+
+    fun activeCollectionId(): Long? = mutableState.value.members?.collectionId
+
+    fun dismissMembers() {
+        mutableState.value = mutableState.value.copy(members = null)
+    }
+
+    fun showAddTarget(appId: Int, title: String) {
+        mutableState.value = mutableState.value.copy(
+            addTarget = LibraryCollectionAppTargetUi(appId, title),
+        )
+    }
+
+    fun dismissAddTarget() {
+        mutableState.value = mutableState.value.copy(addTarget = null)
+    }
+}
+
+interface LibraryCollectionsHost : LibraryActions {
+    fun collectionsStore(): LibraryCollectionsUiStore
+    fun onCreateCollection(name: String)
+    fun onRenameCollection(collectionId: Long, name: String)
+    fun onDeleteCollection(collectionId: Long)
+    fun onOpenCollection(collectionId: Long)
+    fun onDismissCollectionMembers()
+    fun onRequestAddToCollection(appId: Int)
+    fun onDismissAddToCollection()
+    fun onAddAppToCollection(appId: Int, collectionId: Long)
+    fun onRemoveAppFromCollection(appId: Int, collectionId: Long)
+}
+
+@Composable
+internal fun LibraryCollectionsDestination(
+    host: LibraryCollectionsHost,
+    libraryState: LibraryUiState,
+    scaffoldPadding: PaddingValues,
+    onOpenActions: (LibraryAppUiItem, Long) -> Unit,
+) {
+    val state by host.collectionsStore().state.collectAsState()
+    if (!state.ready) {
+        LibraryCollectionsDestination(scaffoldPadding)
+        return
+    }
+
+    val members = state.members
+    val openCollection = members?.let { current ->
+        state.collections.firstOrNull { it.id == current.collectionId }
+    }
+    if (members != null && openCollection != null) {
+        BackHandler(onBack = host::onDismissCollectionMembers)
+        var query by rememberSaveable(openCollection.id) { mutableStateOf("") }
+        val projectedMembers by produceState(
+            initialValue = members.members,
+            members.members,
+            query,
+            libraryState.sortVariant,
+        ) {
+            value = withContext(Dispatchers.Default) {
+                projectCollectionMembers(members.members, query, libraryState.sortVariant)
+            }
+        }
+        val browserState = libraryState.copy(
+            loading = false,
+            apps = projectedMembers,
+            appliedFilter = query,
+            quickView = LibraryQuickView.All,
+            databaseControlsReady = true,
+            errorMessage = null,
+        )
+        LibraryAppsDestination(
+            state = browserState,
+            scaffoldPadding = scaffoldPadding,
+            onOpenApp = host::onOpenApp,
+            onOpenActions = { app -> onOpenActions(app, openCollection.id) },
+            onSearch = { query = it },
+            onQuickView = {},
+            onFavorite = host::onFavorite,
+            onSort = host::onSort,
+            onRetry = {},
+            onFabVisibilityChanged = {},
+            onNavigationVisibilityChanged = {},
+            title = openCollection.name,
+            onBack = host::onDismissCollectionMembers,
+            showQuickViews = false,
+            queryStateKey = openCollection.id,
+        )
+        return
+    }
+
+    var createDialog by rememberSaveable { mutableStateOf(false) }
+    var actionsTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
+    var renameTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
+    var deleteTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(scaffoldPadding)
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
+    ) {
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.library_destination_collections),
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                TextButton(onClick = { createDialog = true }) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_add),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.library_collection_new))
+                }
+            }
+        }
+
+        if (state.collections.isEmpty()) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 240.dp)
+                        .padding(horizontal = 28.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_collections),
+                            contentDescription = null,
+                            modifier = Modifier.size(52.dp),
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                        Text(
+                            text = stringResource(R.string.library_collections_empty_title),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center,
+                        )
+                        Text(
+                            text = stringResource(R.string.library_collection_ready_empty_message),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
+            }
+        } else {
+            items(state.collections, key = { it.id }) { collection ->
+                ListItem(
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    headlineContent = {
+                        Text(
+                            text = collection.name,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    },
+                    supportingContent = {
+                        Text(
+                            text = stringResource(R.string.library_collection_member_count, collection.appCount),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    },
+                    leadingContent = {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_collections),
+                            contentDescription = null,
+                        )
+                    },
+                    trailingContent = {
+                        IconButton(onClick = { actionsTarget = collection }) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_edit),
+                                contentDescription = stringResource(R.string.edit),
+                            )
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { host.onOpenCollection(collection.id) },
+                )
+                HorizontalDivider(
+                    modifier = Modifier.padding(start = 64.dp, end = 16.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                )
+            }
+        }
+    }
+
+    if (createDialog) {
+        CollectionNameDialog(
+            title = stringResource(R.string.library_collection_new),
+            initialName = "",
+            confirmLabel = stringResource(R.string.create),
+            onDismiss = { createDialog = false },
+            onConfirm = { name ->
+                createDialog = false
+                host.onCreateCollection(name)
+            },
+        )
+    }
+
+    actionsTarget?.let { collection ->
+        CollectionActionsDialog(
+            collection = collection,
+            onDismiss = { actionsTarget = null },
+            onRename = {
+                actionsTarget = null
+                renameTarget = collection
+            },
+            onDelete = {
+                actionsTarget = null
+                deleteTarget = collection
+            },
+        )
+    }
+
+    renameTarget?.let { collection ->
+        CollectionNameDialog(
+            title = stringResource(R.string.action_context_rename),
+            initialName = collection.name,
+            confirmLabel = stringResource(R.string.action_context_rename),
+            onDismiss = { renameTarget = null },
+            onConfirm = { name ->
+                renameTarget = null
+                host.onRenameCollection(collection.id, name)
+            },
+        )
+    }
+
+    deleteTarget?.let { collection ->
+        AlertDialog(
+            onDismissRequest = { deleteTarget = null },
+            title = { Text(stringResource(R.string.action_context_delete)) },
+            text = { Text(collection.name) },
+            confirmButton = {
+                TextButton(onClick = {
+                    deleteTarget = null
+                    host.onDeleteCollection(collection.id)
+                }) {
+                    Text(
+                        text = stringResource(R.string.action_context_delete),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteTarget = null }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
+    }
+}
+
+@Composable
+internal fun LibraryCollectionsDialogHost(host: LibraryCollectionsHost) {
+    val state by host.collectionsStore().state.collectAsState()
+    var createForAdd by rememberSaveable { mutableStateOf(false) }
+
+    state.addTarget?.let { target ->
+        AddToCollectionDialog(
+            target = target,
+            collections = state.collections,
+            onDismiss = host::onDismissAddToCollection,
+            onCreate = { createForAdd = true },
+            onSelected = { collectionId ->
+                host.onAddAppToCollection(target.appId, collectionId)
+                host.onDismissAddToCollection()
+            },
+        )
+    }
+
+    if (createForAdd) {
+        CollectionNameDialog(
+            title = stringResource(R.string.library_collection_new),
+            initialName = "",
+            confirmLabel = stringResource(R.string.create),
+            onDismiss = { createForAdd = false },
+            onConfirm = { name ->
+                createForAdd = false
+                host.onCreateCollection(name)
+            },
+        )
+    }
+}
+
+private fun projectCollectionMembers(
+    rows: List<LibraryAppUiItem>,
+    filter: String,
+    sortVariant: Int,
+    locale: Locale = Locale.getDefault(),
+): List<LibraryAppUiItem> {
+    val needle = filter.trim().lowercase(Locale.ROOT)
+    val ranked = rows.mapNotNull { row ->
+        val rank = if (needle.isEmpty()) 0 else collectionSearchRank(row, needle) ?: return@mapNotNull null
+        rank to row
+    }
+    if (ranked.size < 2) return ranked.map { it.second }
+
+    val collator = Collator.getInstance(locale).apply { strength = Collator.SECONDARY }
+    val sortIndex = sortVariant and Int.MAX_VALUE
+    val descending = sortVariant < 0
+    val fallback = Comparator<LibraryAppUiItem> { left, right ->
+        val primary = when (sortIndex) {
+            1 -> left.id.compareTo(right.id)
+            2 -> collator.compare(left.author, right.author)
+            else -> collator.compare(left.title, right.title)
+        }
+        val ordered = if (descending) -primary else primary
+        if (ordered != 0) ordered else left.id.compareTo(right.id)
+    }
+    return ranked.sortedWith { left, right ->
+        val rankOrder = left.first.compareTo(right.first)
+        if (rankOrder != 0) rankOrder else fallback.compare(left.second, right.second)
+    }.map { it.second }
+}
+
+private fun collectionSearchRank(row: LibraryAppUiItem, needle: String): Int? {
+    val title = row.title.lowercase(Locale.ROOT)
+    val vendor = row.author.lowercase(Locale.ROOT)
+    val version = row.version.lowercase(Locale.ROOT)
+    val description = row.description.lowercase(Locale.ROOT)
+    return when {
+        title == needle -> 0
+        title.startsWith(needle) -> 1
+        title.contains(needle) -> 2
+        vendor.contains(needle) -> 3
+        version.contains(needle) -> 4
+        description.contains(needle) -> 5
+        else -> null
+    }
+}
+
+@Composable
+private fun AddToCollectionDialog(
+    target: LibraryCollectionAppTargetUi,
+    collections: List<LibraryCollectionUiItem>,
+    onDismiss: () -> Unit,
+    onCreate: () -> Unit,
+    onSelected: (Long) -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.library_collection_add_app)) },
+        text = {
+            Column {
+                Text(
+                    text = target.title,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (collections.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.library_collection_ready_empty_message),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    LazyColumn(modifier = Modifier.heightIn(max = 380.dp)) {
+                        items(collections, key = { it.id }) { collection ->
+                            ListItem(
+                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                                headlineContent = {
+                                    Text(
+                                        text = collection.name,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                },
+                                supportingContent = {
+                                    Text(stringResource(R.string.library_collection_member_count, collection.appCount))
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onSelected(collection.id) },
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            if (collections.isEmpty()) {
+                TextButton(onClick = onCreate) {
+                    Text(stringResource(R.string.library_collection_new))
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        },
+    )
+}
+
+@Composable
+private fun CollectionActionsDialog(
+    collection: LibraryCollectionUiItem,
+    onDismiss: () -> Unit,
+    onRename: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = collection.name,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        text = {
+            Column {
+                CollectionDialogAction(
+                    label = R.string.action_context_rename,
+                    icon = R.drawable.ic_edit,
+                    onClick = onRename,
+                )
+                CollectionDialogAction(
+                    label = R.string.action_context_delete,
+                    icon = R.drawable.ic_delete,
+                    destructive = true,
+                    onClick = onDelete,
+                )
+            }
+        },
+        confirmButton = {},
+    )
+}
+
+@Composable
+private fun CollectionDialogAction(
+    label: Int,
+    icon: Int,
+    destructive: Boolean = false,
+    onClick: () -> Unit,
+) {
+    val contentColor = if (destructive) MaterialTheme.colorScheme.error
+    else MaterialTheme.colorScheme.onSurface
+    ListItem(
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        headlineContent = { Text(stringResource(label), color = contentColor) },
+        leadingContent = {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = contentColor,
+            )
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+    )
+}
+
+@Composable
+private fun CollectionNameDialog(
+    title: String,
+    initialName: String,
+    confirmLabel: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+) {
+    var name by rememberSaveable(initialName) { mutableStateOf(initialName) }
+    val normalized = name.trim()
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                label = { Text(stringResource(R.string.library_collection_name)) },
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(normalized) },
+                enabled = normalized.isNotEmpty(),
+            ) {
+                Text(confirmLabel)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        },
+    )
+}
+'''
+          write('app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryCollectionsUi.kt', collections)
+
+          fragment_path = 'app/src/main/java/ru/playsoftware/j2meloader/applist/AppsListFragment.java'
+          fragment = read(fragment_path)
+          fragment = replace_once(
+              fragment,
+              ' * Copyright 2019-2026 Yury Kharchenko\n *\n * Licensed under the Apache License',
+              ' * Copyright 2019-2026 Yury Kharchenko\n *\n * Modified by JL-Mod Plus contributors; original upstream attribution is retained.\n *\n * Licensed under the Apache License',
+              'fragment neutral attribution',
+          )
+          fragment = replace_once(
+              fragment,
+              '''			@Override
+			public void onRemoveAppFromCollection(long appId, long collectionId) {
+				libraryViewModel.setCollectionMembership(
+						collectionId,
+						appId,''',
+              '''			@Override
+			public void onRemoveAppFromCollection(int appId, long collectionId) {
+				LibraryAppRow app = findRow(appId);
+				if (app == null) return;
+				libraryViewModel.setCollectionMembership(
+						collectionId,
+						app.getId(),''',
+              'fragment remove collection signature',
+          )
+
+          old_load = '''	private void loadCollectionMembers(long collectionId) {
+		libraryViewModel.getCollectionAppIds(collectionId, (appIds, error) -> {
+			if (error != null) {
+				showError(error);
+				return;
+			}
+			if (!isAdded() || appIds == null) return;
+			List<LibraryCollectionMemberUiItem> members = new ArrayList<>(appIds.size());
+			for (Long appId : appIds) {
+				LibraryAppRow app = libraryViewModel.getApp(appId);
+				if (app == null) continue;
+				members.add(new LibraryCollectionMemberUiItem(
+						app.getId(),
+						app.getTitle(),
+						app.getVendor(),
+						app.getVersion()));
+			}
+			collectionsUiStore.showMembers(collectionId, members);
+		});
+	}
+'''
+          new_load = '''	private void loadCollectionMembers(long collectionId) {
+		libraryViewModel.getCollectionAppIds(collectionId, (appIds, error) -> {
+			if (error != null) {
+				showError(error);
+				return;
+			}
+			if (!isAdded() || appIds == null) return;
+			List<LibraryAppRow> rows = libraryViewModel.getApps(appIds);
+			List<LibraryAppUiItem> members = new ArrayList<>(rows.size());
+			for (LibraryAppRow row : rows) {
+				members.add(toLibraryUiItem(row));
+			}
+			collectionsUiStore.showMembers(collectionId, members);
+		});
+	}
+'''
+          fragment = replace_once(fragment, old_load, new_load, 'collection member bulk lookup')
+
+          old_publish_loop = '''		List<LibraryAppUiItem> uiItems = new ArrayList<>(state.getApps().size());
+		for (LibraryAppRow row : state.getApps()) {
+			int uiId = uiIdFor(row.getId());
+			rowsByUiId.put(uiId, row);
+			String iconPath = row.getIconRevision() == 0L
+					? null
+					: new File(appPath(row) + Config.MIDLET_ICON_FILE).getAbsolutePath();
+			uiItems.add(new LibraryAppUiItem(
+					uiId,
+					row.getTitle(),
+					row.getVendor(),
+					row.getVersion(),
+					iconPath,
+					true,
+					row.getDescription(),
+					row.getIconRevision(),
+					row.getFavorite(),
+					row.getSourceTitle(),
+					row.getSourceVendor(),
+					row.getSourceVersion(),
+					row.getSourceDescription(),
+					row.getPlayCount(),
+					row.getTotalPlayTimeMs()));
+		}
+'''
+          new_publish_loop = '''		List<LibraryAppUiItem> uiItems = new ArrayList<>(state.getApps().size());
+		for (LibraryAppRow row : state.getApps()) {
+			uiItems.add(toLibraryUiItem(row));
+		}
+		Long activeCollectionId = collectionsUiStore.activeCollectionId();
+		if (activeCollectionId != null) loadCollectionMembers(activeCollectionId);
+'''
+          fragment = replace_once(fragment, old_publish_loop, new_publish_loop, 'publish ready mapping')
+
+          insert_before = '\n\tprivate int uiIdFor(long databaseId) {'
+          helper = '''
+	private LibraryAppUiItem toLibraryUiItem(LibraryAppRow row) {
+		int uiId = uiIdFor(row.getId());
+		rowsByUiId.put(uiId, row);
+		String iconPath = row.getIconRevision() == 0L
+				? null
+				: new File(appPath(row) + Config.MIDLET_ICON_FILE).getAbsolutePath();
+		return new LibraryAppUiItem(
+				uiId,
+				row.getTitle(),
+				row.getVendor(),
+				row.getVersion(),
+				iconPath,
+				true,
+				row.getDescription(),
+				row.getIconRevision(),
+				row.getFavorite(),
+				row.getSourceTitle(),
+				row.getSourceVendor(),
+				row.getSourceVersion(),
+				row.getSourceDescription(),
+				row.getPlayCount(),
+				row.getTotalPlayTimeMs());
+	}
+'''
+          if insert_before not in fragment:
+              raise SystemExit('ui item helper insertion marker missing')
+          fragment = fragment.replace(insert_before, helper + insert_before, 1)
+          write(fragment_path, fragment)
+
+          view_model_path = 'app/src/main/java/ru/playsoftware/j2meloader/librarydb/LibraryViewModel.kt'
+          view_model = read(view_model_path)
+          view_model = replace_once(
+              view_model,
+              '''    fun getApp(expectedGeneration: Long, expectedWorkdir: File, appId: Long): LibraryAppRow? =
+        repository.currentApp(token(expectedGeneration, expectedWorkdir), appId)
+
+    fun storageKeys''',
+              '''    fun getApp(expectedGeneration: Long, expectedWorkdir: File, appId: Long): LibraryAppRow? =
+        repository.currentApp(token(expectedGeneration, expectedWorkdir), appId)
+
+    fun getApps(appIds: Set<Long>): List<LibraryAppRow> {
+        val generation = readyGeneration() ?: return emptyList()
+        return try {
+            repository.currentApps(generation, appIds)
+        } catch (_: IllegalStateException) {
+            emptyList()
+        }
+    }
+
+    fun storageKeys''',
+              'viewmodel bulk app lookup',
+          )
+          write(view_model_path, view_model)
+
+          repository_path = 'app/src/main/java/ru/playsoftware/j2meloader/librarydb/LibraryRepository.kt'
+          repository = read(repository_path)
+          repository = replace_once(
+              repository,
+              '''    fun currentApp(expected: LibraryGenerationToken, appId: Long): LibraryAppRow? =
+        requireReadyGeneration(expected).apps.firstOrNull { it.id == appId }
+
+    fun currentCollection''',
+              '''    fun currentApp(expected: LibraryGenerationToken, appId: Long): LibraryAppRow? =
+        requireReadyGeneration(expected).apps.firstOrNull { it.id == appId }
+
+    fun currentApps(expected: LibraryGenerationToken, appIds: Set<Long>): List<LibraryAppRow> {
+        if (appIds.isEmpty()) return emptyList()
+        return requireReadyGeneration(expected).apps.filter { it.id in appIds }
+    }
+
+    fun currentCollection''',
+              'repository bulk app lookup',
+          )
+          write(repository_path, repository)
+
+          write('app/src/main/res/drawable/ic_history.xml', '''<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M13,3a9,9 0,0 0,-9,9H1l4,4 4,-4H6a7,7 0,1 1,2.05,4.95l-1.42,1.42A9,9 0,1 0,13,3zM12,8v5l4.25,2.52 0.77,-1.28 -3.52,-2.09V8z" />
+</vector>
+''')
+
+          write('app/src/main/res/values/strings_library_pr2.xml', '''<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_metadata_edit_title">Edit Metadata</string>
+    <string name="library_metadata_icon">Icon</string>
+    <string name="library_metadata_change_icon">Change Icon</string>
+    <string name="library_metadata_name">Name</string>
+    <string name="library_metadata_vendor">Vendor</string>
+    <string name="library_metadata_description">Description</string>
+    <string name="library_metadata_reset_to_original">Reset to Original</string>
+    <string name="library_metadata_save">Save</string>
+</resources>
+''')
+          write('app/src/main/res/values-in/strings_library_pr2.xml', '''<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_metadata_edit_title">Edit Metadata</string>
+    <string name="library_metadata_icon">Ikon</string>
+    <string name="library_metadata_change_icon">Ganti Ikon</string>
+    <string name="library_metadata_name">Nama</string>
+    <string name="library_metadata_vendor">Vendor</string>
+    <string name="library_metadata_description">Deskripsi</string>
+    <string name="library_metadata_reset_to_original">Kembalikan ke Asli</string>
+    <string name="library_metadata_save">Simpan</string>
+</resources>
+''')
+
+          strings_path = 'app/src/main/res/values/library_pr2_strings.xml'
+          strings = read(strings_path)
+          strings = replace_once(
+              strings,
+              '</resources>',
+              '''    <string name="library_search_clear">Clear search</string>
+    <string name="library_description_more">More</string>
+    <string name="library_description_less">Less</string>
+</resources>''',
+              'pr2 ui strings',
+          )
+          write(strings_path, strings)
+
+          collections_strings_path = 'app/src/main/res/values/library_collections_strings.xml'
+          collection_strings = read(collections_strings_path)
+          collection_strings = replace_once(
+              collection_strings,
+              '</resources>',
+              '    <string name="library_collection_remove_from_current">Remove from Collection</string>\n</resources>',
+              'collection remove string',
+          )
+          write(collections_strings_path, collection_strings)
+
+          test_path = 'app/src/androidTest/java/ru/playsoftware/j2meloader/applist/LibraryComposeTest.kt'
+          test = read(test_path)
+          old_test = '''    @Test
+    fun searchIsLowercasedAndDebouncedForThreeHundredMilliseconds() {
+        val actions = RecordingLibraryActions()
+        composeRule.mainClock.autoAdvance = false
+        setLibraryContent(actions = actions)
+        composeRule.mainClock.advanceTimeBy(301)
+        composeRule.waitForIdle()
+        actions.searches.clear()
+
+        composeRule.onNode(hasSetTextAction()).performTextInput("Demo")
+        composeRule.mainClock.advanceTimeBy(299)
+        composeRule.waitForIdle()
+        assertTrue(actions.searches.isEmpty())
+
+        composeRule.mainClock.advanceTimeBy(2)
+        composeRule.waitForIdle()
+        assertEquals(listOf("demo"), actions.searches)
+    }
+'''
+          new_test = '''    @Test
+    fun searchDispatchesCurrentTextWithoutArtificialDebounce() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(actions = actions)
+        composeRule.waitForIdle()
+        actions.searches.clear()
+
+        composeRule.onNode(hasSetTextAction()).performTextInput("Demo")
+        composeRule.waitForIdle()
+
+        assertEquals(listOf("Demo"), actions.searches)
+    }
+'''
+          test = replace_once(test, old_test, new_test, 'stale search androidTest')
+          write(test_path, test)
+          PY
+          git diff --check
+          git status --short
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main app/src/androidTest
+          git commit -m "Refine Library PR2 UX"
+          git push origin HEAD:agent/library-pr2-features
