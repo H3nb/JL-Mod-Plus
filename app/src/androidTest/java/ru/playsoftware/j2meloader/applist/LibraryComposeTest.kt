@@ -16,6 +16,7 @@ package ru.playsoftware.j2meloader.applist
 
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.longClick
@@ -186,8 +187,8 @@ class LibraryComposeTest {
         composeRule.onAllNodesWithText("Recently added").assertCountEquals(1)
         composeRule.onAllNodesWithText("Favorites").assertCountEquals(1)
         composeRule.onNodeWithContentDescription("Favorite (coming soon)").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Favorite (coming soon)").performClick()
-        composeRule.onNodeWithContentDescription("Remove favorite (coming soon)").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Favorite (coming soon)").assertIsNotEnabled()
+        composeRule.onAllNodesWithContentDescription("Remove favorite (coming soon)").assertCountEquals(0)
 
         composeRule.onNodeWithText("Collections").performClick()
         composeRule.onNodeWithText("Collections and folders will be available in a future update.")
