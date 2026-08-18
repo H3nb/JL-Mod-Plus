@@ -32,14 +32,20 @@ class LibraryMigrationTest {
         assertTrue(transitions.all { (start, end) -> end == start + 1 })
     }
 
+    @Test fun everyHistoricalSchemaMigratesAndValidatesAgainstLatest() {
+        for (version in LibraryMigrations.FIRST_SUPPORTED_VERSION until LibraryDatabase.SCHEMA_VERSION) {
+            val helper = helper("schema-$version.db")
+            helper.createDatabase(version).close()
+            helper.runMigrationsAndValidate(
+                LibraryDatabase.SCHEMA_VERSION,
+                LibraryMigrations.ALL.toList(),
+            ).close()
+        }
+    }
+
     @Test fun schema1MigratesToLatestWithoutLosingLibraryOwnedState() = runBlocking {
-        val databasePath = File(temporaryFolder.root, "migration.db").toPath()
-        val helper = MigrationTestHelper(
-            schemaDirectoryPath = schemaDirectory().toPath(),
-            databasePath = databasePath,
-            driver = BundledSQLiteDriver(),
-            databaseClass = LibraryDatabase::class,
-        )
+        val databasePath = File(temporaryFolder.root, "preserve-state.db").toPath()
+        val helper = helper(databasePath.toFile().name)
 
         helper.createDatabase(1).use { connection ->
             connection.execSQL(
@@ -102,6 +108,13 @@ class LibraryMigrationTest {
             database.close()
         }
     }
+
+    private fun helper(fileName: String): MigrationTestHelper = MigrationTestHelper(
+        schemaDirectoryPath = schemaDirectory().toPath(),
+        databasePath = File(temporaryFolder.root, fileName).toPath(),
+        driver = BundledSQLiteDriver(),
+        databaseClass = LibraryDatabase::class,
+    )
 
     private fun schemaDirectory(): File {
         val relative = "schemas/${LibraryDatabase::class.qualifiedName}"
