@@ -30,7 +30,7 @@ object LibraryAppBundleImporter {
     private const val MAX_ENTRY_BYTES = 512L * 1024L * 1024L
     private const val MAX_TOTAL_BYTES = 1024L * 1024L * 1024L
 
-    data class PreparedImport internal constructor(
+    class PreparedImport internal constructor(
         val stagingDir: File,
         val jarFile: File,
         internal val convertedConfigFile: File?,
@@ -170,7 +170,11 @@ object LibraryAppBundleImporter {
         }
 
         publishReplacements(replacements)
-        val iconRevision = LibraryIconOverride.reapplyPersistedOverride(emulatorDir, storageKey)
+        val iconRevision = if (prepared.configDir != null) {
+            LibraryIconOverride.reapplyPersistedOverride(emulatorDir, storageKey)
+        } else {
+            null
+        }
         return RestoreResult(iconRevision)
     }
 
