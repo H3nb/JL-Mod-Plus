@@ -201,6 +201,7 @@ public class MainActivity extends AppCompatActivity {
 					if (value != null && !value.isEmpty()) {
 						pendingInstallerUris.addLast(Uri.parse(value));
 					}
+				}
 			}
 			return;
 		}
