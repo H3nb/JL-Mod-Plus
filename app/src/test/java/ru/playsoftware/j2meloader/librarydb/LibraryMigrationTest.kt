@@ -10,7 +10,6 @@ import androidx.room3.Room
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
-import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import java.io.File
 import kotlinx.coroutines.runBlocking
@@ -117,9 +116,12 @@ class LibraryMigrationTest {
         BundledSQLiteDriver().open(file.absolutePath).use { connection ->
             databaseJson.getAsJsonArray("entities").forEach { element ->
                 val entity = element.asJsonObject
-                connection.execSnapshotSql(entity, "createSql")
+                val tableName = entity.get("tableName").asString
+                connection.execSQL(entity.get("createSql").asString.replace("${'$'}{TABLE_NAME}", tableName))
                 entity.getAsJsonArray("indices")?.forEach { index ->
-                    connection.execSnapshotSql(index.asJsonObject, "createSql")
+                    connection.execSQL(
+                        index.asJsonObject.get("createSql").asString.replace("${'$'}{TABLE_NAME}", tableName),
+                    )
                 }
             }
             databaseJson.getAsJsonArray("setupQueries").forEach { query ->
@@ -127,12 +129,6 @@ class LibraryMigrationTest {
             }
             connection.execSQL("PRAGMA user_version = $version")
         }
-    }
-
-    private fun SQLiteConnection.execSnapshotSql(node: JsonObject, field: String) {
-        val tableName = node.get("tableName")?.asString
-        val sql = node.get(field)?.asString ?: return
-        execSQL(if (tableName == null) sql else sql.replace("${'$'}{TABLE_NAME}", tableName))
     }
 
     private fun schemaFile(version: Int): File {
