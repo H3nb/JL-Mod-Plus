@@ -125,6 +125,7 @@ public class AppsListFragment extends Fragment {
 	private final Map<Integer, LibraryAppRow> rowsByUiId = new HashMap<>();
 	private final Map<Long, Integer> uiIdsByDatabaseId = new HashMap<>();
 	private final LibraryCollectionsUiStore collectionsUiStore = new LibraryCollectionsUiStore();
+	private List<LibraryAppRow> cachedAllReadyRows;
 	private int nextUiId = 1;
 	private long activeGeneration = NO_GENERATION;
 	private File activeWorkdir;
@@ -615,29 +616,38 @@ public class AppsListFragment extends Fragment {
 	private void publishReady(LibraryViewModel.DisplayState.Ready state) {
 		long generation = state.getGeneration();
 		File workdir = state.getEmulatorDir();
-		if (activeGeneration != generation || activeWorkdir == null || !activeWorkdir.equals(workdir)) {
+		boolean generationChanged = activeGeneration != generation || activeWorkdir == null ||
+				!activeWorkdir.equals(workdir);
+		if (generationChanged) {
 			activeGeneration = generation;
 			activeWorkdir = workdir;
 			rowsByUiId.clear();
 			uiIdsByDatabaseId.clear();
 			nextUiId = 1;
-		} else {
-			rowsByUiId.clear();
+			cachedAllReadyRows = null;
 		}
 
 		collectionsUiStore.publishCollections(state.getCollections());
 		List<LibraryAppRow> allRows = libraryViewModel.getAllApps();
-		List<LibraryAppUiItem> allUiItems = new ArrayList<>(allRows.size());
-		for (LibraryAppRow row : allRows) {
-			allUiItems.add(toLibraryUiItem(row));
+		boolean allAppsChanged = allRows != cachedAllReadyRows;
+		if (allAppsChanged) {
+			rowsByUiId.clear();
+			List<LibraryAppUiItem> allUiItems = new ArrayList<>(allRows.size());
+			for (LibraryAppRow row : allRows) {
+				allUiItems.add(toLibraryUiItem(row));
+			}
+			collectionsUiStore.publishAllApps(allUiItems);
+			cachedAllReadyRows = allRows;
 		}
-		collectionsUiStore.publishAllApps(allUiItems);
+
 		List<LibraryAppUiItem> uiItems = new ArrayList<>(state.getApps().size());
 		for (LibraryAppRow row : state.getApps()) {
 			uiItems.add(toLibraryUiItem(row));
 		}
 		Long activeCollectionId = collectionsUiStore.activeCollectionId();
-		if (activeCollectionId != null) loadCollectionMembers(activeCollectionId);
+		if (activeCollectionId != null && (generationChanged || allAppsChanged)) {
+			loadCollectionMembers(activeCollectionId);
+		}
 		LibraryComposeController controller = composeController;
 		if (controller != null) {
 			controller.updateSort(state.getSortVariant());
@@ -703,6 +713,7 @@ public class AppsListFragment extends Fragment {
 		activeWorkdir = null;
 		uiIdsByDatabaseId.clear();
 		nextUiId = 1;
+		cachedAllReadyRows = null;
 		pendingIconUiId = NO_UI_ID;
 		collectionsUiStore.clear();
 	}

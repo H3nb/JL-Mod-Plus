@@ -1834,7 +1834,7 @@ private fun LibraryListItem(
 }
 
 @Composable
-private fun LibraryDescription(descriptionValue: String, appId: Int) {
+internal fun LibraryDescription(descriptionValue: String, appId: Int) {
     val description = descriptionValue.trim()
     if (description.isEmpty()) return
 
@@ -2722,7 +2722,7 @@ private fun libraryIconCacheKey(
 }
 
 @Composable
-private fun LibraryIconSlot(
+internal fun LibraryIconSlot(
     app: LibraryAppUiItem,
     modifier: Modifier,
     contentSize: Dp?,

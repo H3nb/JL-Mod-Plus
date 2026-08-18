@@ -6,12 +6,8 @@
  */
 package ru.playsoftware.j2meloader.applist
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,7 +18,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -46,7 +41,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -59,17 +53,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -108,6 +96,7 @@ internal fun LibraryCollectionBrowser(
             allApps = allApps,
             memberIds = members.mapTo(LinkedHashSet()) { it.id },
             sortVariant = libraryState.sortVariant,
+            iconRatio = libraryState.iconRatio,
             scaffoldPadding = scaffoldPadding,
             onBack = { manageApps = false },
             onSetMembership = onSetMembership,
@@ -338,11 +327,11 @@ private fun LibraryCollectionListItem(
                 .padding(start = 16.dp, end = 12.dp, top = 10.dp, bottom = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            LibraryCollectionIcon(
+            LibraryIconSlot(
                 app = app,
-                iconRatio = iconRatio,
                 modifier = Modifier.width(52.dp),
                 contentSize = 40.dp,
+                iconRatio = iconRatio,
             )
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -360,7 +349,7 @@ private fun LibraryCollectionListItem(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                LibraryCollectionDescription(app.description, app.id)
+                LibraryDescription(app.description, app.id)
             }
             Spacer(Modifier.width(6.dp))
             IconButton(
@@ -403,11 +392,11 @@ private fun LibraryCollectionGridItem(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
-            LibraryCollectionIcon(
+            LibraryIconSlot(
                 app = app,
-                iconRatio = iconRatio,
                 modifier = Modifier.fillMaxWidth(),
                 contentSize = null,
+                iconRatio = iconRatio,
             )
             IconButton(
                 onClick = { onRemove(app.id) },
@@ -453,6 +442,7 @@ private fun LibraryCollectionAppPicker(
     allApps: List<LibraryAppUiItem>,
     memberIds: Set<Int>,
     sortVariant: Int,
+    iconRatio: LibraryIconRatio,
     scaffoldPadding: PaddingValues,
     onBack: () -> Unit,
     onSetMembership: (Int, Boolean) -> Unit,
@@ -560,11 +550,11 @@ private fun LibraryCollectionAppPicker(
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    LibraryCollectionIcon(
+                    LibraryIconSlot(
                         app = app,
-                        iconRatio = LibraryIconRatio.Square,
                         modifier = Modifier.width(48.dp),
                         contentSize = 40.dp,
+                        iconRatio = iconRatio,
                     )
                     Spacer(Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
@@ -598,131 +588,6 @@ private fun LibraryCollectionAppPicker(
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun LibraryCollectionIcon(
-    app: LibraryAppUiItem,
-    iconRatio: LibraryIconRatio,
-    modifier: Modifier,
-    contentSize: Dp?,
-) {
-    val bitmap by produceState<ImageBitmap?>(
-        initialValue = null,
-        app.iconPath,
-        app.iconRevision,
-    ) {
-        val path = app.iconPath?.takeIf(String::isNotBlank)
-        value = if (path == null) null else withContext(Dispatchers.IO) {
-            decodeCollectionIcon(path)?.asImageBitmap()
-        }
-    }
-    val sizedModifier = if (contentSize == null) {
-        modifier.aspectRatio(iconRatio.widthToHeight)
-    } else {
-        modifier.height(contentSize)
-    }
-    Surface(
-        modifier = sizedModifier,
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            if (bitmap != null) {
-                Image(
-                    bitmap = bitmap!!,
-                    contentDescription = null,
-                    modifier = if (contentSize == null) Modifier.fillMaxSize() else Modifier.size(contentSize),
-                    contentScale = ContentScale.Fit,
-                )
-            } else {
-                Icon(
-                    painter = painterResource(R.drawable.ic_default_midlet),
-                    contentDescription = null,
-                    modifier = if (contentSize == null) Modifier.fillMaxSize().padding(8.dp) else Modifier.size(contentSize),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-    }
-}
-
-private fun decodeCollectionIcon(path: String): Bitmap? = try {
-    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-    BitmapFactory.decodeFile(path, bounds)
-    if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
-        null
-    } else {
-        var sample = 1
-        while (bounds.outWidth / sample > 256 || bounds.outHeight / sample > 256) sample *= 2
-        BitmapFactory.decodeFile(
-            path,
-            BitmapFactory.Options().apply {
-                inSampleSize = sample.coerceAtLeast(1)
-                inPreferredConfig = Bitmap.Config.ARGB_8888
-            },
-        )
-    }
-} catch (_: OutOfMemoryError) {
-    null
-} catch (_: RuntimeException) {
-    null
-}
-
-@Composable
-private fun LibraryCollectionDescription(descriptionValue: String, appId: Int) {
-    val description = descriptionValue.trim()
-    if (description.isEmpty()) return
-
-    var expanded by rememberSaveable(appId, description, "collection") { mutableStateOf(false) }
-    var overflows by remember(appId, description) { mutableStateOf(false) }
-    val expandLabel = stringResource(R.string.library_expand_description)
-    val collapseLabel = stringResource(R.string.library_collapse_description)
-
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = description,
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = if (expanded) Int.MAX_VALUE else 2,
-                overflow = if (expanded) TextOverflow.Clip else TextOverflow.Ellipsis,
-                onTextLayout = { result ->
-                    if (!expanded) {
-                        overflows = result.didOverflowHeight || result.didOverflowWidth ||
-                            result.hasVisualOverflow ||
-                            (result.lineCount > 0 && result.isLineEllipsized(result.lineCount - 1))
-                    }
-                },
-            )
-            if (!expanded && overflows) {
-                Text(
-                    text = stringResource(R.string.library_description_more),
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .background(MaterialTheme.colorScheme.background)
-                        .clickable(role = Role.Button) { expanded = true }
-                        .semantics { contentDescription = expandLabel }
-                        .padding(start = 6.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-                )
-            }
-        }
-        if (expanded) {
-            Text(
-                text = stringResource(R.string.library_description_less),
-                modifier = Modifier
-                    .align(Alignment.End)
-                    .clickable(role = Role.Button) { expanded = false }
-                    .semantics { contentDescription = collapseLabel }
-                    .padding(top = 2.dp),
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-            )
         }
     }
 }
