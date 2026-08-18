@@ -7,4 +7,5 @@
     <string name="library_collection_name">Collection name</string>
     <string name="library_collection_members_empty">No apps in this collection.</string>
     <string name="library_collection_remove">Remove from collection</string>
+    <string name="library_collection_remove_from_current">Remove from Collection</string>
 </resources>
