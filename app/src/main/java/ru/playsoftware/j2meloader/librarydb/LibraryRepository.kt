@@ -180,6 +180,19 @@ class LibraryRepository(
         }
     }
 
+    suspend fun setIconRevision(
+        expected: LibraryGenerationToken,
+        appId: Long,
+        iconRevision: Long,
+    ) {
+        withActiveDatabase(expected) { dao ->
+            check(dao.getApp(appId) != null) { "Library app disappeared: $appId" }
+            check(dao.updateIconRevision(appId, iconRevision) == 1) {
+                "Unable to update Library icon revision for app $appId"
+            }
+        }
+    }
+
     suspend fun setFavorite(
         expected: LibraryGenerationToken,
         appId: Long,

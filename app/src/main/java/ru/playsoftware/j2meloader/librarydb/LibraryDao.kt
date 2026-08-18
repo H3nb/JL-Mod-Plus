@@ -163,6 +163,9 @@ abstract class LibraryDao {
         iconRevision: Long,
     ): Int
 
+    @Query("UPDATE apps SET icon_revision = :iconRevision WHERE id = :appId")
+    abstract suspend fun updateIconRevision(appId: Long, iconRevision: Long): Int
+
     @Query("UPDATE apps SET custom_title = :customTitle WHERE id = :appId")
     abstract suspend fun updateCustomTitle(appId: Long, customTitle: String?): Int
 
