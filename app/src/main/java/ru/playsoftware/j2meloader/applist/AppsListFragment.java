@@ -122,6 +122,7 @@ public class AppsListFragment extends Fragment {
 
 	private final Map<Integer, LibraryAppRow> rowsByUiId = new HashMap<>();
 	private final Map<Long, Integer> uiIdsByDatabaseId = new HashMap<>();
+	private final LibraryCollectionsUiStore collectionsUiStore = new LibraryCollectionsUiStore();
 	private int nextUiId = 1;
 	private long activeGeneration = NO_GENERATION;
 	private File activeWorkdir;
@@ -190,7 +191,13 @@ public class AppsListFragment extends Fragment {
 	}
 
 	private LibraryActions createActions() {
-		return new LibraryActions() {
+		return new LibraryCollectionsHost() {
+			@NonNull
+			@Override
+			public LibraryCollectionsUiStore collectionsStore() {
+				return collectionsUiStore;
+			}
+
 			@Override
 			public void onSearch(@NonNull String query) {
 				libraryViewModel.setFilter(query);
@@ -305,7 +312,6 @@ public class AppsListFragment extends Fragment {
 			public void onAddShortcut(int appId) {
 				LibraryAppRow row = findRow(appId);
 				if (row != null && ShortcutManagerCompat.isRequestPinShortcutSupported(requireContext())) {
-					// Shortcut creation is explicit user action, so bounded icon/file work is acceptable.
 					AppUtils.addShortcut(requireActivity(), toAppItem(row, appId));
 				}
 			}
@@ -375,6 +381,77 @@ public class AppsListFragment extends Fragment {
 							} catch (ActivityNotFoundException | SecurityException exception) {
 								showTransferError(exception);
 							}
+						});
+			}
+
+			@Override
+			public void onCreateCollection(@NonNull String name) {
+				libraryViewModel.createCollection(name, (ignored, error) -> {
+					if (error != null) showError(error);
+				});
+			}
+
+			@Override
+			public void onRenameCollection(long collectionId, @NonNull String name) {
+				libraryViewModel.renameCollection(collectionId, name, (ignored, error) -> {
+					if (error != null) showError(error);
+				});
+			}
+
+			@Override
+			public void onDeleteCollection(long collectionId) {
+				collectionsUiStore.dismissMembers();
+				libraryViewModel.deleteCollection(collectionId, (ignored, error) -> {
+					if (error != null) showError(error);
+				});
+			}
+
+			@Override
+			public void onOpenCollection(long collectionId) {
+				loadCollectionMembers(collectionId);
+			}
+
+			@Override
+			public void onDismissCollectionMembers() {
+				collectionsUiStore.dismissMembers();
+			}
+
+			@Override
+			public void onRequestAddToCollection(int appId) {
+				LibraryAppRow app = findRow(appId);
+				if (app != null) collectionsUiStore.showAddTarget(appId, app.getTitle());
+			}
+
+			@Override
+			public void onDismissAddToCollection() {
+				collectionsUiStore.dismissAddTarget();
+			}
+
+			@Override
+			public void onAddAppToCollection(int appId, long collectionId) {
+				LibraryAppRow app = findRow(appId);
+				if (app == null) return;
+				libraryViewModel.setCollectionMembership(
+						collectionId,
+						app.getId(),
+						true,
+						(ignored, error) -> {
+							if (error != null) showError(error);
+						});
+			}
+
+			@Override
+			public void onRemoveAppFromCollection(long appId, long collectionId) {
+				libraryViewModel.setCollectionMembership(
+						collectionId,
+						appId,
+						false,
+						(ignored, error) -> {
+							if (error != null) {
+								showError(error);
+								return;
+							}
+							loadCollectionMembers(collectionId);
 						});
 			}
 
@@ -477,6 +554,27 @@ public class AppsListFragment extends Fragment {
 		return rowsByUiId.get(uiId);
 	}
 
+	private void loadCollectionMembers(long collectionId) {
+		libraryViewModel.getCollectionAppIds(collectionId, (appIds, error) -> {
+			if (error != null) {
+				showError(error);
+				return;
+			}
+			if (!isAdded() || appIds == null) return;
+			List<LibraryCollectionMemberUiItem> members = new ArrayList<>(appIds.size());
+			for (Long appId : appIds) {
+				LibraryAppRow app = libraryViewModel.getApp(appId);
+				if (app == null) continue;
+				members.add(new LibraryCollectionMemberUiItem(
+						app.getId(),
+						app.getTitle(),
+						app.getVendor(),
+						app.getVersion()));
+			}
+			collectionsUiStore.showMembers(collectionId, members);
+		});
+	}
+
 	private void setSort(int sortVariant) {
 		if (preferences.getInt(PREF_APP_SORT, 0) == sortVariant) {
 			sortVariant |= Integer.MIN_VALUE;
@@ -493,7 +591,6 @@ public class AppsListFragment extends Fragment {
 			return;
 		}
 
-		// Never expose rows from an older workdir generation while the next generation opens/indexes.
 		clearUiRows();
 		if (controller == null) return;
 		if (state instanceof LibraryViewModel.DisplayState.Indexing) {
@@ -525,6 +622,7 @@ public class AppsListFragment extends Fragment {
 			rowsByUiId.clear();
 		}
 
+		collectionsUiStore.publishCollections(state.getCollections());
 		List<LibraryAppUiItem> uiItems = new ArrayList<>(state.getApps().size());
 		for (LibraryAppRow row : state.getApps()) {
 			int uiId = uiIdFor(row.getId());
@@ -591,6 +689,7 @@ public class AppsListFragment extends Fragment {
 		uiIdsByDatabaseId.clear();
 		nextUiId = 1;
 		pendingIconUiId = NO_UI_ID;
+		collectionsUiStore.clear();
 	}
 
 	private void showError(Throwable error) {

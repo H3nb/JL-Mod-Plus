@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_collection_new">New Collection</string>
+    <string name="library_collection_ready_empty_message">Create collections to organize apps without moving their files.</string>
+    <string name="library_collection_member_count">%1$d apps</string>
+    <string name="library_collection_add_app">Add to Collection</string>
+    <string name="library_collection_name">Collection name</string>
+    <string name="library_collection_members_empty">No apps in this collection.</string>
+    <string name="library_collection_remove">Remove from collection</string>
+</resources>
