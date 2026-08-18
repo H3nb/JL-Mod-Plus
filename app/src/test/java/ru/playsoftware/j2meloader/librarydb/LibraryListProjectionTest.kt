@@ -35,6 +35,40 @@ class LibraryListProjectionTest {
         assertEquals(listOf(11L), underscore.map { it.id })
     }
 
+    @Test fun favoritesViewFiltersBeforeSearchAndPreservesSelectedSort() {
+        val favoriteRows = listOf(
+            row(10, "Zulu favorite", "Vendor", favorite = true),
+            row(11, "Alpha favorite", "Vendor", favorite = true),
+            row(12, "Alpha ordinary", "Vendor", favorite = false),
+        )
+        val result = LibraryListProjection.project(
+            rows = favoriteRows,
+            filter = "favorite",
+            sortVariant = LibraryListProjection.SORT_TITLE,
+            locale = Locale.US,
+            quickView = LibraryQuickView.Favorites,
+        )
+        assertEquals(listOf(11L, 10L), result.map { it.id })
+    }
+
+    @Test fun recentlyAddedUsesKnownAddedTimeNewestFirstAndExcludesUnknownLegacyRows() {
+        val recentRows = listOf(
+            row(10, "Old known", "Vendor", addedAt = 100L),
+            row(11, "Legacy unknown", "Vendor", addedAt = null),
+            row(12, "Newest", "Vendor", addedAt = 300L),
+            row(13, "Middle", "Vendor", addedAt = 200L),
+            row(14, "Same timestamp newer id", "Vendor", addedAt = 300L),
+        )
+        val result = LibraryListProjection.project(
+            rows = recentRows,
+            filter = "",
+            sortVariant = LibraryListProjection.SORT_VENDOR,
+            locale = Locale.US,
+            quickView = LibraryQuickView.RecentlyAdded,
+        )
+        assertEquals(listOf(14L, 12L, 13L, 10L), result.map { it.id })
+    }
+
     @Test fun titleSortPreservesLegacySecondaryVendorOrdering() {
         val duplicate = row(4, "alpha", "Alpha")
         val result = LibraryListProjection.project(
@@ -77,7 +111,13 @@ class LibraryListProjectionTest {
     private fun project(filter: String, sort: Int) =
         LibraryListProjection.project(rows, filter, sort, Locale.US)
 
-    private fun row(id: Long, title: String, vendor: String) = LibraryAppRow(
+    private fun row(
+        id: Long,
+        title: String,
+        vendor: String,
+        favorite: Boolean = false,
+        addedAt: Long? = null,
+    ) = LibraryAppRow(
         id = id,
         storageKey = "app-$id",
         sourceTitle = title,
@@ -87,8 +127,8 @@ class LibraryListProjectionTest {
         vendor = vendor,
         version = "1.0",
         description = "",
-        favorite = false,
-        addedAt = null,
+        favorite = favorite,
+        addedAt = addedAt,
         lastPlayedAt = null,
         iconRevision = 0,
     )
