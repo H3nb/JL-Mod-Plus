@@ -186,8 +186,10 @@ public class MainActivity extends AppCompatActivity {
 		if (uri.equals(intent.getData())) {
 			intent.setData(null);
 		}
-		// DialogFragment removal is committed asynchronously. Defer the next queue item until the
-		// current installer tag has actually left FragmentManager.
+	}
+
+	/** Called after the installer Fragment is dismissed so the next queued request cannot miss the tag-removal boundary. */
+	public void onInstallerDialogDismissed() {
 		getWindow().getDecorView().post(this::maybeShowPendingInstaller);
 	}
 
