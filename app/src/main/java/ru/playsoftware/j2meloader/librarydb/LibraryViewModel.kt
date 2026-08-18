@@ -55,6 +55,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             val apps: List<LibraryAppRow>,
             val filter: String,
             val sortVariant: Int,
+            val quickView: LibraryQuickView,
             val bootstrapFailures: List<LibraryScanner.Failure>,
             val legacyImportFailure: String?,
             val reconciliationFailures: List<LibraryScanner.Failure>,
@@ -70,6 +71,13 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         fun complete(value: T?, error: Throwable?)
     }
 
+    private data class DisplayInputs(
+        val repositoryState: LibraryRepository.State,
+        val filter: String,
+        val sortVariant: Int,
+        val quickView: LibraryQuickView,
+    )
+
     private val preferences = PreferenceManager.getDefaultSharedPreferences(application)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val generationCommitLock = ReentrantLock()
@@ -79,15 +87,17 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     )
     private val filter = MutableStateFlow("")
     private val sortVariant = MutableStateFlow(readSortPreference(preferences))
+    private val quickView = MutableStateFlow(LibraryQuickView.All)
 
     val displayState: StateFlow<DisplayState> = combine(
         repository.state,
         filter,
         sortVariant,
-    ) { repositoryState, activeFilter, activeSort ->
-        Triple(repositoryState, activeFilter, activeSort)
-    }.mapLatest { (repositoryState, activeFilter, activeSort) ->
-        when (repositoryState) {
+        quickView,
+    ) { repositoryState, activeFilter, activeSort, activeQuickView ->
+        DisplayInputs(repositoryState, activeFilter, activeSort, activeQuickView)
+    }.mapLatest { input ->
+        when (val repositoryState = input.repositoryState) {
             LibraryRepository.State.Idle -> DisplayState.Idle
             is LibraryRepository.State.Opening -> DisplayState.Loading(repositoryState.emulatorDir)
             is LibraryRepository.State.Indexing -> DisplayState.Indexing(
@@ -104,16 +114,18 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 val projected = withContext(Dispatchers.Default) {
                     LibraryListProjection.project(
                         rows = repositoryState.apps,
-                        filter = activeFilter,
-                        sortVariant = activeSort,
+                        filter = input.filter,
+                        sortVariant = input.sortVariant,
+                        quickView = input.quickView,
                     )
                 }
                 DisplayState.Ready(
                     generation = repositoryState.generation,
                     emulatorDir = repositoryState.emulatorDir,
                     apps = projected,
-                    filter = activeFilter,
-                    sortVariant = activeSort,
+                    filter = input.filter,
+                    sortVariant = input.sortVariant,
+                    quickView = input.quickView,
                     bootstrapFailures = repositoryState.bootstrapFailures,
                     legacyImportFailure = repositoryState.legacyImportFailure,
                     reconciliationFailures = repositoryState.reconciliationFailures,
@@ -143,6 +155,12 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun getFilter(): String = filter.value
+
+    fun setQuickView(value: LibraryQuickView) {
+        quickView.value = value
+    }
+
+    fun getQuickView(): LibraryQuickView = quickView.value
 
     fun setSort(value: Int) {
         if (sortVariant.value == value) return
