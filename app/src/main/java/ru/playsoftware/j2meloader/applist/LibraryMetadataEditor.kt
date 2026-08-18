@@ -6,6 +6,7 @@
  */
 package ru.playsoftware.j2meloader.applist
 
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
@@ -17,7 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.weight
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -38,10 +39,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.playsoftware.j2meloader.R
@@ -59,19 +62,27 @@ internal fun LibraryMetadataEditorDialog(
     var vendor by rememberSaveable(app.id, app.author) { mutableStateOf(app.author) }
     var version by rememberSaveable(app.id, app.version) { mutableStateOf(app.version) }
     var description by rememberSaveable(app.id, app.description) { mutableStateOf(app.description) }
+    val configuration = LocalConfiguration.current
+    val landscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val maxContentHeight = (configuration.screenHeightDp - 220).coerceAtLeast(180).dp
     val valid = title.trim().isNotEmpty()
-    val layout = metadataDialogLayout()
 
     AlertDialog(
-        modifier = layout.modifier,
-        properties = layout.properties,
+        modifier = if (landscape) {
+            Modifier
+                .fillMaxWidth(0.94f)
+                .widthIn(max = 760.dp)
+        } else {
+            Modifier.widthIn(max = 560.dp)
+        },
+        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.library_metadata_edit_title)) },
         text = {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 520.dp)
+                    .heightIn(max = maxContentHeight)
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -208,23 +219,28 @@ private fun LibraryMetadataIconField(
     }
 }
 
-private fun decodeMetadataIcon(path: String): Bitmap? = try {
-    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-    BitmapFactory.decodeFile(path, bounds)
-    if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
-    var sample = 1
-    while (bounds.outWidth / sample > 256 || bounds.outHeight / sample > 256) sample *= 2
-    BitmapFactory.decodeFile(
-        path,
-        BitmapFactory.Options().apply {
-            inSampleSize = sample.coerceAtLeast(1)
-            inPreferredConfig = Bitmap.Config.ARGB_8888
-        },
-    )
-} catch (_: OutOfMemoryError) {
-    null
-} catch (_: RuntimeException) {
-    null
+private fun decodeMetadataIcon(path: String): Bitmap? {
+    return try {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(path, bounds)
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
+            null
+        } else {
+            var sample = 1
+            while (bounds.outWidth / sample > 256 || bounds.outHeight / sample > 256) sample *= 2
+            BitmapFactory.decodeFile(
+                path,
+                BitmapFactory.Options().apply {
+                    inSampleSize = sample.coerceAtLeast(1)
+                    inPreferredConfig = Bitmap.Config.ARGB_8888
+                },
+            )
+        }
+    } catch (_: OutOfMemoryError) {
+        null
+    } catch (_: RuntimeException) {
+        null
+    }
 }
 
 @Composable
