@@ -19,6 +19,8 @@ import java.util.HashSet
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /** Streams an app-owned backup bundle without loading retained packages or save trees into memory. */
@@ -28,6 +30,7 @@ object LibraryAppBundleExporter {
     private const val MIME_TYPE = "application/zip"
     private const val COPY_BUFFER_SIZE = 64 * 1024
     private const val MAX_FILE_STEM_LENGTH = 72
+    private val prepareMutex = Mutex()
 
     data class Progress(
         val completedEntries: Int,
@@ -49,33 +52,35 @@ object LibraryAppBundleExporter {
         storageKey: String,
         displayTitle: String,
         onProgress: ((Progress) -> Unit)? = null,
-    ): PreparedExport = withContext(Dispatchers.IO) {
-        requireSafeStorageKey(storageKey)
-        val directory = File(File(context.cacheDir, EXPORT_DIR), storageKey)
-        if (!directory.isDirectory && !directory.mkdirs()) {
-            throw IOException("Unable to create app-bundle cache directory")
-        }
-        val fileName = safeFileName(displayTitle)
-        val target = File(directory, fileName)
-        val staging = File(directory, "$fileName.tmp")
-        try {
-            exportToZip(emulatorDir, storageKey, staging, onProgress)
-            if (target.exists() && !target.delete()) {
-                throw IOException("Unable to replace previous app bundle")
+    ): PreparedExport = prepareMutex.withLock {
+        withContext(Dispatchers.IO) {
+            requireSafeStorageKey(storageKey)
+            val directory = File(File(context.cacheDir, EXPORT_DIR), storageKey)
+            if (!directory.isDirectory && !directory.mkdirs()) {
+                throw IOException("Unable to create app-bundle cache directory")
             }
-            if (!staging.renameTo(target)) {
-                throw IOException("Unable to publish app bundle")
+            val fileName = safeFileName(displayTitle)
+            val target = File(directory, fileName)
+            val staging = File(directory, "$fileName.tmp")
+            try {
+                exportToZip(emulatorDir, storageKey, staging, onProgress)
+                if (target.exists() && !target.delete()) {
+                    throw IOException("Unable to replace previous app bundle")
+                }
+                if (!staging.renameTo(target)) {
+                    throw IOException("Unable to publish app bundle")
+                }
+                PreparedExport(
+                    uri = FileProvider.getUriForFile(
+                        context,
+                        context.packageName + PROVIDER_SUFFIX,
+                        target,
+                    ),
+                    fileName = fileName,
+                )
+            } finally {
+                if (staging.exists()) staging.delete()
             }
-            PreparedExport(
-                uri = FileProvider.getUriForFile(
-                    context,
-                    context.packageName + PROVIDER_SUFFIX,
-                    target,
-                ),
-                fileName = fileName,
-            )
-        } finally {
-            if (staging.exists()) staging.delete()
         }
     }
 
