@@ -38,6 +38,14 @@ data class LibraryAppRow(
     @ColumnInfo(name = "icon_revision") val iconRevision: Long,
 )
 
+data class LibraryCollectionRow(
+    val id: Long,
+    val name: String,
+    @ColumnInfo(name = "sort_order") val sortOrder: Int,
+    @ColumnInfo(name = "created_at") val createdAt: Long,
+    @ColumnInfo(name = "app_count") val appCount: Int,
+)
+
 data class InstalledAppMetadata(
     val storageKey: String,
     val sourceTitle: String,
@@ -72,11 +80,33 @@ abstract class LibraryDao {
     )
     abstract fun observeApps(): Flow<List<LibraryAppRow>>
 
+    @Query(
+        """
+        SELECT
+            c.id,
+            c.name,
+            c.sort_order,
+            c.created_at,
+            COUNT(ca.app_id) AS app_count
+        FROM collections AS c
+        LEFT JOIN collection_apps AS ca ON ca.collection_id = c.id
+        GROUP BY c.id, c.name, c.sort_order, c.created_at
+        ORDER BY c.sort_order ASC, c.name COLLATE NOCASE ASC, c.id ASC
+        """,
+    )
+    abstract fun observeCollections(): Flow<List<LibraryCollectionRow>>
+
     @Query("SELECT * FROM apps WHERE id = :id LIMIT 1")
     abstract suspend fun getApp(id: Long): LibraryAppEntity?
 
     @Query("SELECT * FROM apps WHERE storage_key = :storageKey LIMIT 1")
     abstract suspend fun getAppByStorageKey(storageKey: String): LibraryAppEntity?
+
+    @Query("SELECT * FROM collections WHERE id = :id LIMIT 1")
+    abstract suspend fun getCollection(id: Long): LibraryCollectionEntity?
+
+    @Query("SELECT app_id FROM collection_apps WHERE collection_id = :collectionId ORDER BY added_at DESC, app_id ASC")
+    abstract suspend fun getCollectionAppIds(collectionId: Long): List<Long>
 
     @Query(
         """
@@ -185,8 +215,31 @@ abstract class LibraryDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     abstract suspend fun insertCollection(collection: LibraryCollectionEntity): Long
 
+    @Query("SELECT MAX(sort_order) FROM collections")
+    abstract suspend fun getMaxCollectionSortOrder(): Int?
+
+    @Query(
+        """
+        UPDATE collections SET
+            name = :name,
+            normalized_name = :normalizedName
+        WHERE id = :collectionId
+        """,
+    )
+    abstract suspend fun updateCollectionName(
+        collectionId: Long,
+        name: String,
+        normalizedName: String,
+    ): Int
+
+    @Query("DELETE FROM collections WHERE id = :collectionId")
+    abstract suspend fun deleteCollection(collectionId: Long): Int
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     abstract suspend fun insertCollectionMembership(membership: LibraryCollectionAppEntity): Long
+
+    @Query("DELETE FROM collection_apps WHERE collection_id = :collectionId AND app_id = :appId")
+    abstract suspend fun deleteCollectionMembership(collectionId: Long, appId: Long): Int
 
     @Query("DELETE FROM collection_apps")
     abstract suspend fun clearCollectionMemberships()
@@ -196,6 +249,41 @@ abstract class LibraryDao {
 
     @Query("DELETE FROM apps")
     abstract suspend fun clearApps()
+
+    @Transaction
+    open suspend fun createCollection(name: String, createdAt: Long): Long {
+        val displayName = name.trim()
+        require(displayName.isNotEmpty()) { "Collection name must not be blank" }
+        return insertCollection(
+            LibraryCollectionEntity(
+                name = displayName,
+                createdAt = createdAt,
+                sortOrder = (getMaxCollectionSortOrder() ?: -1) + 1,
+            ),
+        )
+    }
+
+    @Transaction
+    open suspend fun setCollectionMembership(
+        collectionId: Long,
+        appId: Long,
+        included: Boolean,
+        addedAt: Long,
+    ) {
+        check(getCollection(collectionId) != null) { "Collection disappeared: $collectionId" }
+        check(getApp(appId) != null) { "Library app disappeared: $appId" }
+        if (included) {
+            insertCollectionMembership(
+                LibraryCollectionAppEntity(
+                    collectionId = collectionId,
+                    appId = appId,
+                    addedAt = addedAt,
+                ),
+            )
+        } else {
+            deleteCollectionMembership(collectionId, appId)
+        }
+    }
 
     @Transaction
     open suspend fun replaceIncompleteCatalog(apps: List<LibraryAppEntity>) {
