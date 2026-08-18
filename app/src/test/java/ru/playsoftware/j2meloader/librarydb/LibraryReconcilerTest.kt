@@ -109,6 +109,8 @@ class LibraryReconcilerTest {
                 favorite = true,
             ),
         )
+        // A real emulator workdir always has converted/ before installer recovery runs.
+        File(workDir, "converted").mkdirs()
         createBackupDirectory("game", "Old Source", version = "1.0")
         val staging = LibraryInstallRecovery.stagingDirectory(workDir).apply { mkdirs() }
         File(staging, "partial").writeText("replacement")
