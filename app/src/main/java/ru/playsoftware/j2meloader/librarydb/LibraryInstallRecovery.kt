@@ -38,7 +38,8 @@ object LibraryInstallRecovery {
 
     /** Current staging is outside converted/, so only the historical in-namespace name is reserved. */
     @JvmStatic
-    fun isReservedStorageKey(storageKey: String): Boolean = storageKey == LEGACY_STAGING_DIR_NAME
+    fun isReservedStorageKey(storageKey: String): Boolean =
+        storageKey.equals(LEGACY_STAGING_DIR_NAME, ignoreCase = true)
 
     @JvmStatic
     fun stagingDirectory(emulatorDir: File): File = File(emulatorDir, STAGING_DIR_NAME)
