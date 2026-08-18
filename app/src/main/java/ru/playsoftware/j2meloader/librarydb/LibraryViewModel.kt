@@ -53,6 +53,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             val generation: Long,
             val emulatorDir: File,
             val apps: List<LibraryAppRow>,
+            val collections: List<LibraryCollectionRow>,
             val filter: String,
             val sortVariant: Int,
             val quickView: LibraryQuickView,
@@ -123,6 +124,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                     generation = repositoryState.generation,
                     emulatorDir = repositoryState.emulatorDir,
                     apps = projected,
+                    collections = repositoryState.collections,
                     filter = input.filter,
                     sortVariant = input.sortVariant,
                     quickView = input.quickView,
@@ -209,10 +211,6 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     fun isReadyGeneration(expectedGeneration: Long, expectedWorkdir: File): Boolean =
         repository.isReadyGeneration(token(expectedGeneration, expectedWorkdir))
 
-    /**
-     * Acquire a very short lease for the filesystem publish point of an install/reinstall.
-     * Workdir changes/retries use the same lock, so they cannot split backup->replacement rename.
-     */
     fun acquireGenerationLease(
         expectedGeneration: Long,
         expectedWorkdir: File,
@@ -312,7 +310,101 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    /** Resolve the retained-JAR action state only after the user chooses Reinstall. */
+    fun createCollection(name: String, callback: MutationCallback<Long>) {
+        val generation = readyGeneration()
+        if (generation == null) {
+            callback.complete(null, IllegalStateException("Library is not READY"))
+            return
+        }
+        launchMutation(callback) {
+            repository.createCollection(generation, name, System.currentTimeMillis())
+        }
+    }
+
+    fun renameCollection(collectionId: Long, name: String, callback: MutationCallback<Unit>) {
+        val generation = readyGeneration()
+        val collection = try {
+            generation?.let { repository.currentCollection(it, collectionId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || collection == null) {
+            callback.complete(null, IllegalStateException("Collection is not available"))
+            return
+        }
+        launchMutation(callback) {
+            repository.renameCollection(generation, collection.id, name)
+        }
+    }
+
+    fun deleteCollection(collectionId: Long, callback: MutationCallback<Unit>) {
+        val generation = readyGeneration()
+        val collection = try {
+            generation?.let { repository.currentCollection(it, collectionId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || collection == null) {
+            callback.complete(null, IllegalStateException("Collection is not available"))
+            return
+        }
+        launchMutation(callback) {
+            repository.deleteCollection(generation, collection.id)
+        }
+    }
+
+    fun setCollectionMembership(
+        collectionId: Long,
+        appId: Long,
+        included: Boolean,
+        callback: MutationCallback<Unit>,
+    ) {
+        val generation = readyGeneration()
+        if (generation == null) {
+            callback.complete(null, IllegalStateException("Library is not READY"))
+            return
+        }
+        val app = try {
+            repository.currentApp(generation, appId)
+        } catch (_: IllegalStateException) {
+            null
+        }
+        val collection = try {
+            repository.currentCollection(generation, collectionId)
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (app == null || collection == null) {
+            callback.complete(null, IllegalStateException("Collection membership target is not available"))
+            return
+        }
+        launchMutation(callback) {
+            repository.setCollectionMembership(
+                expected = generation,
+                collectionId = collection.id,
+                appId = app.id,
+                included = included,
+                addedAt = System.currentTimeMillis(),
+            )
+        }
+    }
+
+    fun getCollectionAppIds(collectionId: Long, callback: MutationCallback<Set<Long>>) {
+        val generation = readyGeneration()
+        val collection = try {
+            generation?.let { repository.currentCollection(it, collectionId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || collection == null) {
+            callback.complete(null, IllegalStateException("Collection is not available"))
+            return
+        }
+        launchMutation(callback) {
+            repository.collectionAppIds(generation, collection.id)
+        }
+    }
+
     fun resolveReinstallAvailability(appId: Long, callback: MutationCallback<Boolean>) {
         val generation = readyGeneration()
         val app = try {
@@ -374,7 +466,6 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    /** Deletes authoritative installed files first; the Room row is removed only after that succeeds. */
     fun deleteInstalledApp(appId: Long, callback: MutationCallback<LibraryFileOperations.DeleteResult>) {
         val generation = readyGeneration()
         val app = try {
