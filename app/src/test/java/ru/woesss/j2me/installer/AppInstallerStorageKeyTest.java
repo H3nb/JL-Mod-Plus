@@ -7,9 +7,11 @@
 package ru.woesss.j2me.installer;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.Collections;
 
 import org.junit.Rule;
@@ -58,5 +60,27 @@ public class AppInstallerStorageKeyTest {
 		File selected = AppInstaller.chooseTargetDirectory(converted, "Game");
 
 		assertEquals("Game", selected.getName());
+	}
+
+	@Test
+	public void sameSizeDifferentJarContentIsNotTreatedAsIdentical() throws Exception {
+		File first = temporaryFolder.newFile("first.jar");
+		File second = temporaryFolder.newFile("second.jar");
+		Files.write(first.toPath(), new byte[]{'P', 'K', 3, 4, 1, 2, 3, 4});
+		Files.write(second.toPath(), new byte[]{'P', 'K', 3, 4, 1, 2, 3, 9});
+
+		assertFalse(AppInstaller.filesHaveSameContents(first, second));
+	}
+
+	@Test
+	public void identicalJarContentIsDetectedAcrossWholeFile() throws Exception {
+		File first = temporaryFolder.newFile("same-one.jar");
+		File second = temporaryFolder.newFile("same-two.jar");
+		byte[] content = new byte[20_000];
+		for (int i = 0; i < content.length; i++) content[i] = (byte) (i * 31);
+		Files.write(first.toPath(), content);
+		Files.write(second.toPath(), content);
+
+		assertTrue(AppInstaller.filesHaveSameContents(first, second));
 	}
 }
