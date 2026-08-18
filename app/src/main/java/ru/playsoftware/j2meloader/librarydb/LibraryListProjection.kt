@@ -13,6 +13,7 @@ enum class LibraryQuickView {
     All,
     Favorites,
     RecentlyAdded,
+    RecentlyPlayed,
 }
 
 /** Pure filter/sort rules used while the Room projection remains deliberately lightweight. */
@@ -28,6 +29,7 @@ object LibraryListProjection {
             LibraryQuickView.All -> rows
             LibraryQuickView.Favorites -> rows.filter(LibraryAppRow::favorite)
             LibraryQuickView.RecentlyAdded -> rows.filter { it.addedAt != null }
+            LibraryQuickView.RecentlyPlayed -> rows.filter { it.lastPlayedAt != null }
         }
         val query = filter.trim()
         val ranked = if (query.isEmpty()) {
@@ -41,13 +43,16 @@ object LibraryListProjection {
             return ranked.map(RankedRow::row)
         }
 
-        val fallbackComparator = if (quickView == LibraryQuickView.RecentlyAdded) {
-            Comparator<LibraryAppRow> { left, right ->
+        val fallbackComparator = when (quickView) {
+            LibraryQuickView.RecentlyAdded -> Comparator<LibraryAppRow> { left, right ->
                 val primary = requireNotNull(right.addedAt).compareTo(requireNotNull(left.addedAt))
                 if (primary != 0) primary else right.id.compareTo(left.id)
             }
-        } else {
-            sortComparator(sortVariant, locale)
+            LibraryQuickView.RecentlyPlayed -> Comparator<LibraryAppRow> { left, right ->
+                val primary = requireNotNull(right.lastPlayedAt).compareTo(requireNotNull(left.lastPlayedAt))
+                if (primary != 0) primary else right.id.compareTo(left.id)
+            }
+            else -> sortComparator(sortVariant, locale)
         }
         val comparator = Comparator<RankedRow> { left, right ->
             val rankOrder = left.rank.compareTo(right.rank)

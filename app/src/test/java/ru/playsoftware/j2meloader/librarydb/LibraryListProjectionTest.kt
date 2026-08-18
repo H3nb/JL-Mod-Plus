@@ -122,6 +122,40 @@ class LibraryListProjectionTest {
         assertEquals(listOf(11L, 12L, 10L), result.map { it.id })
     }
 
+    @Test fun recentlyPlayedUsesKnownLastPlayedTimeNewestFirstAndExcludesNeverPlayedRows() {
+        val playedRows = listOf(
+            row(10, "Old", "Vendor", lastPlayedAt = 100L),
+            row(11, "Never", "Vendor", lastPlayedAt = null),
+            row(12, "Newest", "Vendor", lastPlayedAt = 300L),
+            row(13, "Middle", "Vendor", lastPlayedAt = 200L),
+            row(14, "Same timestamp newer id", "Vendor", lastPlayedAt = 300L),
+        )
+        val result = LibraryListProjection.project(
+            rows = playedRows,
+            filter = "",
+            sortVariant = LibraryListProjection.SORT_VENDOR,
+            locale = Locale.US,
+            quickView = LibraryQuickView.RecentlyPlayed,
+        )
+        assertEquals(listOf(14L, 12L, 13L, 10L), result.map { it.id })
+    }
+
+    @Test fun recentlyPlayedSearchUsesRelevanceThenLastPlayedTime() {
+        val playedRows = listOf(
+            row(10, "My Quest", "Vendor", lastPlayedAt = 500L),
+            row(11, "Quest", "Vendor", lastPlayedAt = 100L),
+            row(12, "Quest Deluxe", "Vendor", lastPlayedAt = 300L),
+        )
+        val result = LibraryListProjection.project(
+            rows = playedRows,
+            filter = "quest",
+            sortVariant = LibraryListProjection.SORT_TITLE,
+            locale = Locale.US,
+            quickView = LibraryQuickView.RecentlyPlayed,
+        )
+        assertEquals(listOf(11L, 12L, 10L), result.map { it.id })
+    }
+
     @Test fun titleSortPreservesLegacySecondaryVendorOrdering() {
         val duplicate = row(4, "alpha", "Alpha")
         val result = LibraryListProjection.project(
@@ -170,6 +204,7 @@ class LibraryListProjectionTest {
         vendor: String,
         favorite: Boolean = false,
         addedAt: Long? = null,
+        lastPlayedAt: Long? = null,
         version: String = "1.0",
         description: String = "",
     ) = LibraryAppRow(
@@ -184,7 +219,7 @@ class LibraryListProjectionTest {
         description = description,
         favorite = favorite,
         addedAt = addedAt,
-        lastPlayedAt = null,
+        lastPlayedAt = lastPlayedAt,
         iconRevision = 0,
     )
 }
