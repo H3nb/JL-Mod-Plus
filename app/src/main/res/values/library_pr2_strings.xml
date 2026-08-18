@@ -2,6 +2,13 @@
 <resources>
     <string name="library_action_share_app">Share App</string>
     <string name="library_action_export_bundle">Export App Bundle</string>
+    <string name="library_action_import_bundle">Import App Bundle</string>
+    <string name="library_action_import_bundle_summary">Restore an exported JAR, app settings, and save data.</string>
+    <string name="library_import_preparing">Reading app bundle…</string>
+    <string name="library_import_restoring">Restoring app settings and save data…</string>
+    <string name="library_import_done">App bundle imported.</string>
+    <string name="library_import_restore_existing">This app is already installed. Importing will replace the settings and save data contained in the bundle.</string>
+    <string name="library_import_restore_failed">The app is installed, but its bundle data could not be restored. Retry the restore?</string>
     <string name="library_play_stats_summary">Play count: %1$d · Total: %2$s</string>
     <string name="library_share_chooser_title">Share app</string>
     <string name="library_export_chooser_title">Export app bundle</string>
