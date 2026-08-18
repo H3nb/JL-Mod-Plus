@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          fetch-depth: 2
+          fetch-depth: 3
           persist-credentials: true
           submodules: recursive
 
@@ -35,8 +35,8 @@ jobs:
           python3 .github/scripts/pr2_feedback_patch.py
           awk '!(/^import /) || !seen[$0]++' app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryCollectionsUi.kt > /tmp/collections.kt
           mv /tmp/collections.kt app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryCollectionsUi.kt
-          git checkout HEAD^ -- .github/workflows/android.yml
-          git rm .github/scripts/pr2_feedback_patch.py
+          git checkout HEAD^^ -- .github/workflows/android.yml
+          git rm -f .github/scripts/pr2_feedback_patch.py
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add app/src/main .github/workflows/android.yml
