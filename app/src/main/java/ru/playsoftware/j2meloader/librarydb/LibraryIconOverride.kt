@@ -90,9 +90,12 @@ object LibraryIconOverride {
             val prepared = File.createTempFile("library-icon-", ".png", context.cacheDir)
             try {
                 FileOutputStream(prepared).use { output ->
-                    if (!normalized.compress(Bitmap.CompressFormat.PNG, 100, output)) {
-                        throw IOException("Unable to encode selected icon as PNG")
+                    val encoded = try {
+                        normalized.compress(Bitmap.CompressFormat.PNG, 100, output)
+                    } catch (error: OutOfMemoryError) {
+                        throw IOException("Selected icon is too large to encode safely", error)
                     }
+                    if (!encoded) throw IOException("Unable to encode selected icon as PNG")
                     output.fd.sync()
                 }
                 if (!prepared.isFile || prepared.length() <= 0L) {
@@ -124,16 +127,15 @@ object LibraryIconOverride {
         val previousCustom = moveAside(custom)
         try {
             copyAtomically(preparedPng, custom)
-            try {
-                copyAtomically(custom, effectiveIconFile(emulatorDir, storageKey))
-            } catch (error: IOException) {
-                custom.delete()
-                restoreMovedAside(previousCustom, custom)
-                throw error
-            }
+            copyAtomically(custom, effectiveIconFile(emulatorDir, storageKey))
             discardMovedAside(previousCustom)
         } catch (error: Throwable) {
-            if (!custom.exists()) restoreMovedAside(previousCustom, custom)
+            if (previousCustom != null && previousCustom.exists()) {
+                if (custom.exists()) custom.delete()
+                restoreMovedAside(previousCustom, custom)
+            } else if (custom.exists()) {
+                custom.delete()
+            }
             throw error
         }
         return LibraryIconRevision.fromFile(effectiveIconFile(emulatorDir, storageKey))

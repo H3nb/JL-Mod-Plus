@@ -8,6 +8,7 @@ package ru.playsoftware.j2meloader.librarydb
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -294,6 +295,75 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun updateIcon(appId: Long, source: Uri, callback: MutationCallback<Unit>) {
+        val generation = readyGeneration()
+        val app = try {
+            generation?.let { repository.currentApp(it, appId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available"))
+            return
+        }
+        launchMutation(callback) {
+            val prepared = withContext(Dispatchers.IO) {
+                LibraryIconOverride.prepare(getApplication(), source)
+            }
+            try {
+                val fileRevision = withContext(Dispatchers.IO) {
+                    acquireGenerationLease(generation.generation, generation.emulatorDir).use {
+                        val current = repository.currentApp(generation, app.id)
+                        check(current?.storageKey == app.storageKey) {
+                            "Library icon target changed before filesystem publish"
+                        }
+                        LibraryIconOverride.installPrepared(
+                            generation.emulatorDir,
+                            app.storageKey,
+                            prepared,
+                        )
+                    }
+                }
+                repository.setIconRevision(
+                    generation,
+                    app.id,
+                    distinctIconRevision(fileRevision, app.iconRevision),
+                )
+            } finally {
+                withContext(Dispatchers.IO) { prepared.delete() }
+            }
+        }
+    }
+
+    fun resetIcon(appId: Long, callback: MutationCallback<Unit>) {
+        val generation = readyGeneration()
+        val app = try {
+            generation?.let { repository.currentApp(it, appId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available"))
+            return
+        }
+        launchMutation(callback) {
+            val fileRevision = withContext(Dispatchers.IO) {
+                acquireGenerationLease(generation.generation, generation.emulatorDir).use {
+                    val current = repository.currentApp(generation, app.id)
+                    check(current?.storageKey == app.storageKey) {
+                        "Library icon target changed before reset"
+                    }
+                    LibraryIconOverride.resetToOriginal(generation.emulatorDir, app.storageKey)
+                }
+            }
+            repository.setIconRevision(
+                generation,
+                app.id,
+                distinctIconRevision(fileRevision, app.iconRevision),
+            )
+        }
+    }
+
     fun setFavorite(appId: Long, favorite: Boolean, callback: MutationCallback<Unit>) {
         val generation = readyGeneration()
         val app = try {
@@ -527,6 +597,11 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         file.absoluteFile
     } catch (_: SecurityException) {
         file.absoluteFile
+    }
+
+    private fun distinctIconRevision(fileRevision: Long, previousRevision: Long): Long {
+        if (fileRevision == 0L || fileRevision != previousRevision) return fileRevision
+        return fileRevision xor Long.MIN_VALUE
     }
 
     private fun <T> launchMutation(callback: MutationCallback<T>, block: suspend () -> T) {

@@ -237,6 +237,8 @@ interface LibraryActions {
         version: String,
         description: String,
     ) = Unit
+    fun onPickIcon(appId: Int) = Unit
+    fun onResetIcon(appId: Int) = Unit
     fun onLayoutChange(layout: LibraryLayout)
     fun onIconRatioChange(iconRatio: LibraryIconRatio) = Unit
     fun onHideGridTitlesChange(hide: Boolean) = Unit
@@ -601,7 +603,8 @@ fun LibraryScreen(
             },
         )
     }
-    metadataTarget?.let { app ->
+    metadataTarget?.let { target ->
+        val app = state.apps.firstOrNull { it.id == target.id } ?: target
         LibraryMetadataEditorDialog(
             app = app,
             onDismiss = { metadataTarget = null },
@@ -609,6 +612,8 @@ fun LibraryScreen(
                 metadataTarget = null
                 actions.onUpdateMetadata(app.id, title, vendor, version, description)
             },
+            onPickIcon = { actions.onPickIcon(app.id) },
+            onResetIcon = { actions.onResetIcon(app.id) },
         )
     }
     deleteTarget?.let { app ->

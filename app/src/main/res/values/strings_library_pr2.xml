@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="library_metadata_edit_title">Edit Metadata</string>
+    <string name="library_metadata_icon">Icon</string>
+    <string name="library_metadata_change_icon">Change Icon</string>
+    <string name="library_metadata_icon_note">Selected images are copied into app storage and normalized to PNG.</string>
     <string name="library_metadata_name">Name</string>
     <string name="library_metadata_vendor">Vendor</string>
     <string name="library_metadata_version">Version</string>

@@ -39,6 +39,7 @@ import android.view.ViewGroup;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContract;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.compose.ui.platform.ComposeView;
@@ -81,6 +82,7 @@ public class AppsListFragment extends Fragment {
 	private static final int GRID_SPACING_COMPACT = 0;
 	private static final int GRID_SPACING_STANDARD = 1;
 	private static final int GRID_SPACING_SPACIOUS = 2;
+	private static final int NO_UI_ID = Integer.MIN_VALUE;
 	private static final long NO_GENERATION = Long.MIN_VALUE;
 
 	private final ActivityResultLauncher<Void> openFileLauncher = registerForActivityResult(
@@ -109,6 +111,11 @@ public class AppsListFragment extends Fragment {
 				}
 			},
 			this::onFilePicked);
+
+	private int pendingIconUiId = NO_UI_ID;
+	private final ActivityResultLauncher<String> iconPickerLauncher = registerForActivityResult(
+			new ActivityResultContracts.GetContent(),
+			this::onIconPicked);
 
 	private final Map<Integer, LibraryAppRow> rowsByUiId = new HashMap<>();
 	private final Map<Long, Integer> uiIdsByDatabaseId = new HashMap<>();
@@ -211,6 +218,22 @@ public class AppsListFragment extends Fragment {
 						(ignored, error) -> {
 							if (error != null) showError(error);
 						});
+			}
+
+			@Override
+			public void onPickIcon(int appId) {
+				if (findRow(appId) == null) return;
+				pendingIconUiId = appId;
+				iconPickerLauncher.launch("image/*");
+			}
+
+			@Override
+			public void onResetIcon(int appId) {
+				LibraryAppRow row = findRow(appId);
+				if (row == null) return;
+				libraryViewModel.resetIcon(row.getId(), (ignored, error) -> {
+					if (error != null) showError(error);
+				});
 			}
 
 			@Override
@@ -511,6 +534,7 @@ public class AppsListFragment extends Fragment {
 		activeWorkdir = null;
 		uiIdsByDatabaseId.clear();
 		nextUiId = 1;
+		pendingIconUiId = NO_UI_ID;
 	}
 
 	private void showError(Throwable error) {
@@ -528,5 +552,16 @@ public class AppsListFragment extends Fragment {
 			return;
 		}
 		throw new IllegalStateException("AppsListFragment requires MainActivity host");
+	}
+
+	private void onIconPicked(Uri uri) {
+		int uiId = pendingIconUiId;
+		pendingIconUiId = NO_UI_ID;
+		if (uri == null || uiId == NO_UI_ID) return;
+		LibraryAppRow row = findRow(uiId);
+		if (row == null) return;
+		libraryViewModel.updateIcon(row.getId(), uri, (ignored, error) -> {
+			if (error != null) showError(error);
+		});
 	}
 }
