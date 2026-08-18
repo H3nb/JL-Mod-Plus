@@ -36,6 +36,8 @@ data class LibraryAppRow(
     val favorite: Boolean,
     @ColumnInfo(name = "added_at") val addedAt: Long?,
     @ColumnInfo(name = "last_played_at") val lastPlayedAt: Long?,
+    @ColumnInfo(name = "play_count") val playCount: Long = 0,
+    @ColumnInfo(name = "total_play_time_ms") val totalPlayTimeMs: Long = 0,
     @ColumnInfo(name = "icon_revision") val iconRevision: Long,
 )
 
@@ -57,6 +59,12 @@ data class InstalledAppMetadata(
     val addedAt: Long,
 )
 
+enum class LibraryPlayStatReconcileResult {
+    Applied,
+    AlreadyReceipted,
+    TargetMissing,
+}
+
 @Dao
 abstract class LibraryDao {
     @Query(
@@ -75,6 +83,8 @@ abstract class LibraryDao {
             favorite,
             added_at,
             last_played_at,
+            play_count,
+            total_play_time_ms,
             icon_revision
         FROM apps
         ORDER BY title COLLATE NOCASE ASC, id ASC
@@ -217,6 +227,27 @@ abstract class LibraryDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     abstract suspend fun insertPlayStatReceipt(receipt: PlayStatReceiptEntity): Long
 
+    @Query(
+        """
+        UPDATE apps SET
+            last_played_at = CASE
+                WHEN :firstRunningWallTimeMillis IS NULL THEN last_played_at
+                WHEN last_played_at IS NULL OR :firstRunningWallTimeMillis > last_played_at
+                    THEN :firstRunningWallTimeMillis
+                ELSE last_played_at
+            END,
+            play_count = play_count + :playIncrement,
+            total_play_time_ms = total_play_time_ms + :activeMillis
+        WHERE id = :appId
+        """,
+    )
+    abstract suspend fun updatePlayStats(
+        appId: Long,
+        firstRunningWallTimeMillis: Long?,
+        playIncrement: Long,
+        activeMillis: Long,
+    ): Int
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     abstract suspend fun insertCollection(collection: LibraryCollectionEntity): Long
 
@@ -254,6 +285,47 @@ abstract class LibraryDao {
 
     @Query("DELETE FROM apps")
     abstract suspend fun clearApps()
+
+    /**
+     * Receipt dedupe and stats mutation must commit atomically. If the app row is missing while the
+     * converted directory still exists, the caller passes allowMissingTarget=false so the journal
+     * remains retryable until targeted indexing recreates the row.
+     */
+    @Transaction
+    open suspend fun reconcilePlayStat(
+        sessionId: String,
+        storageKey: String,
+        reachedRunning: Boolean,
+        firstRunningWallTimeMillis: Long?,
+        accumulatedActiveMillis: Long,
+        allowMissingTarget: Boolean,
+    ): LibraryPlayStatReconcileResult {
+        require(sessionId.isNotBlank()) { "Play-stat session id must not be blank" }
+        require(storageKey.isNotBlank()) { "Play-stat storage key must not be blank" }
+        require(accumulatedActiveMillis >= 0L) { "Play-stat duration must not be negative" }
+        val app = getAppByStorageKey(storageKey)
+        if (app == null && !allowMissingTarget) {
+            return LibraryPlayStatReconcileResult.TargetMissing
+        }
+        val receipt = insertPlayStatReceipt(PlayStatReceiptEntity(sessionId))
+        if (receipt == -1L) {
+            return LibraryPlayStatReconcileResult.AlreadyReceipted
+        }
+        if (app != null && reachedRunning) {
+            check(firstRunningWallTimeMillis != null) {
+                "Reached-running session is missing first-running wall time"
+            }
+            check(
+                updatePlayStats(
+                    appId = app.id,
+                    firstRunningWallTimeMillis = firstRunningWallTimeMillis,
+                    playIncrement = 1L,
+                    activeMillis = accumulatedActiveMillis,
+                ) == 1,
+            ) { "Play-stat target disappeared during transaction: ${app.id}" }
+        }
+        return LibraryPlayStatReconcileResult.Applied
+    }
 
     @Transaction
     open suspend fun createCollection(name: String, createdAt: Long): Long {
