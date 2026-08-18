@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: android-ci-${{ github.workflow }}-${{ github.ref }}
@@ -19,12 +19,10 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - name: Check out PR head
+      - name: Check out sources
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          fetch-depth: 2
-          persist-credentials: true
+          persist-credentials: false
           submodules: recursive
 
       - name: Restore shared debug keystore
@@ -57,16 +55,40 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
 
-      - name: Apply polish and update screenshots
-        shell: bash
-        run: |
-          set -euo pipefail
-          chmod +x gradlew
-          python3 .github/scripts/pr2_visual_polish.py
-          ./gradlew --no-daemon --stacktrace :app:updateEmulatorDebugScreenshotTest
-          git rm .github/scripts/pr2_visual_polish.py
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add app/src/main app/src/androidTest app/src/screenshotTest
-          git commit -m 'Polish Library UI and refresh screenshots'
-          git push origin HEAD:agent/library-pr2-features
+      - name: Grant execute permission for Gradle wrapper
+        run: chmod +x gradlew
+
+      - name: Lint, test, and assemble
+        env:
+          JLMOD_BUILD_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: >-
+          ./gradlew --no-daemon --stacktrace
+          :app:lintEmulatorDebug
+          :dexlib:lintDebug
+          :app:testEmulatorDebugUnitTest
+          :app:validateEmulatorDebugScreenshotTest
+          :app:assembleEmulatorDebug
+          :app:assembleEmulatorDebugAndroidTest
+
+      - name: Upload lint reports
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: JL-Mod-Plus-lint-reports
+          path: |
+            app/build/reports/lint-results-*.html
+            app/build/reports/lint-results-*.xml
+            app/build/reports/lint-results-*.sarif
+            dexlib/build/reports/lint-results-*.html
+            dexlib/build/reports/lint-results-*.xml
+            dexlib/build/reports/lint-results-*.sarif
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload arm64 emulator debug APK
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: JL-Mod-Plus-emulator-debug-arm64-v8a
+          path: app/build/outputs/apk/emulator/debug/app-emulator-arm64-v8a-debug.apk
+          if-no-files-found: error
+          retention-days: 7
