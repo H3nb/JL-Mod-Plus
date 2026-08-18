@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: android-ci-${{ github.workflow }}-${{ github.ref }}
@@ -22,26 +22,8 @@ jobs:
       - name: Check out sources
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          persist-credentials: true
-          fetch-depth: 2
+          persist-credentials: false
           submodules: recursive
-
-      - name: Apply one-shot PR2 source patch
-        if: github.event_name == 'pull_request'
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 .github/agent-pr2-patch.py
-          git show HEAD^:.github/workflows/android.yml > .github/workflows/android.yml
-          rm .github/agent-pr2-patch.py
-          git diff --check
-          git status --short
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .github/workflows/android.yml .github/agent-pr2-patch.py app/src/main app/src/androidTest
-          git commit -m "Apply PR2 UX corrections"
-          git push origin HEAD:${GITHUB_HEAD_REF}
 
       - name: Restore shared debug keystore
         shell: bash
