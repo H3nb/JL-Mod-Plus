@@ -196,8 +196,10 @@ public class MainActivity extends AppCompatActivity {
 			ArrayList<String> pending = savedInstanceState.getStringArrayList(STATE_PENDING_INSTALLERS);
 			if (pending != null) {
 				for (String value : pending) {
-					if (value != null && !value.isEmpty()) pendingInstallerUris.addLast(Uri.parse(value));
-				}
+					if (value != null && !value.isEmpty()) {
+						pendingInstallerUris.addLast(Uri.parse(value));
+					}
+			}
 			return;
 		}
 		Intent intent = getIntent();
