@@ -518,10 +518,20 @@ public class AppInstaller {
 	}
 
 	private void generatePathName(String name) {
-		File dir = new File(appsDir(), name);
-		for (int i = 1; dir.exists(); i++) dir = new File(appsDir(), name + "_" + i);
+		File dir = chooseTargetDirectory(appsDir(), name);
 		appDirName = dir.getName();
 		targetDir = dir;
+	}
+
+	/** Pure path selection boundary so reserved recovery names cannot become installed app keys. */
+	static File chooseTargetDirectory(File appsDir, String name) {
+		File dir = new File(appsDir, name);
+		for (int i = 1;
+				LibraryInstallRecovery.isReservedStorageKey(dir.getName()) || dir.exists();
+				i++) {
+			dir = new File(appsDir, name + "_" + i);
+		}
+		return dir;
 	}
 
 	private void downloadJar() throws ConverterException {
