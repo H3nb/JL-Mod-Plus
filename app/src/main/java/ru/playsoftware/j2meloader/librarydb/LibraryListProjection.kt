@@ -9,25 +9,44 @@ package ru.playsoftware.j2meloader.librarydb
 import java.text.Collator
 import java.util.Locale
 
-/** Pure filter/sort rules used by PR1 while the Room projection remains deliberately lightweight. */
+enum class LibraryQuickView {
+    All,
+    Favorites,
+    RecentlyAdded,
+}
+
+/** Pure filter/sort rules used while the Room projection remains deliberately lightweight. */
 object LibraryListProjection {
     fun project(
         rows: List<LibraryAppRow>,
         filter: String,
         sortVariant: Int,
         locale: Locale = Locale.getDefault(),
+        quickView: LibraryQuickView = LibraryQuickView.All,
     ): List<LibraryAppRow> {
+        val quickRows = when (quickView) {
+            LibraryQuickView.All -> rows
+            LibraryQuickView.Favorites -> rows.filter(LibraryAppRow::favorite)
+            LibraryQuickView.RecentlyAdded -> rows.filter { it.addedAt != null }
+        }
         val query = filter.trim()
         val filtered = if (query.isEmpty()) {
-            rows
+            quickRows
         } else {
-            rows.filter { row ->
+            quickRows.filter { row ->
                 row.title.contains(query, ignoreCase = true) ||
                     row.vendor.contains(query, ignoreCase = true)
             }
         }
         if (filtered.size < 2) {
             return filtered
+        }
+
+        if (quickView == LibraryQuickView.RecentlyAdded) {
+            return filtered.sortedWith { left, right ->
+                val primary = requireNotNull(right.addedAt).compareTo(requireNotNull(left.addedAt))
+                if (primary != 0) primary else right.id.compareTo(left.id)
+            }
         }
 
         val collator = Collator.getInstance(locale).apply {
