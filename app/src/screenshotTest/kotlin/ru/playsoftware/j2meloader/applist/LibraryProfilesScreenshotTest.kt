@@ -255,6 +255,25 @@ fun LibraryCollectionBrowserScreenshot() {
     }
 }
 
+
+@PreviewTest
+@Preview(name = "Library collection add apps", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun LibraryCollectionAppPickerScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryCollectionAppPicker(
+            collection = LibraryCollectionUiItem(1L, "RPG Favorites", 2),
+            allApps = PreviewApps,
+            memberIds = setOf(1, 3),
+            sortVariant = 0,
+            iconRatio = LibraryIconRatio.Square,
+            scaffoldPadding = PaddingValues(),
+            onBack = {},
+            onSetMembership = { _, _ -> },
+        )
+    }
+}
+
 @PreviewTest
 @Preview(name = "Library metadata editor", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable

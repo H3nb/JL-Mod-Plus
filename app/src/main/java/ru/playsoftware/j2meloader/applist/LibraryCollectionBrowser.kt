@@ -8,6 +8,7 @@ package ru.playsoftware.j2meloader.applist
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -437,7 +438,7 @@ private fun LibraryCollectionGridItem(
 }
 
 @Composable
-private fun LibraryCollectionAppPicker(
+internal fun LibraryCollectionAppPicker(
     collection: LibraryCollectionUiItem,
     allApps: List<LibraryAppUiItem>,
     memberIds: Set<Int>,
