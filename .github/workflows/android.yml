@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: android-ci-${{ github.workflow }}-${{ github.ref }}
@@ -19,28 +19,11 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - name: Check out PR head
+      - name: Check out sources
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          fetch-depth: 2
-          persist-credentials: true
+          persist-credentials: false
           submodules: recursive
-
-      - name: Apply PR2 feedback patch
-        shell: bash
-        run: |
-          set -euo pipefail
-          sed -i '/("import androidx.compose.ui.Modifier/d' .github/scripts/pr2_feedback_patch.py
-          python3 .github/scripts/pr2_feedback_patch.py
-          awk '!(/^import /) || !seen[$0]++' app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryCollectionsUi.kt > /tmp/collections.kt
-          mv /tmp/collections.kt app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryCollectionsUi.kt
-          git rm -f .github/scripts/pr2_feedback_patch.py
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add app/src/main
-          git commit -m 'Apply Library feedback and import flow'
-          git push origin HEAD:agent/library-pr2-features
 
       - name: Restore shared debug keystore
         shell: bash
