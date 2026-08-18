@@ -353,7 +353,9 @@ public class MicroLoader {
 				midletVersion,
 				clazz,
 				jarSize,
-				jarSha256
+				jarSha256,
+				workDir,
+				appDirName
 		);
 		CrashReporter.setMidletMainClass(clazz);
 		MidletThread midletThread = new MidletThread(this, clazz, journal);

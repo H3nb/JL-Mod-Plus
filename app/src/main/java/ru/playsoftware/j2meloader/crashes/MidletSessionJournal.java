@@ -43,9 +43,9 @@ import ru.playsoftware.j2meloader.EmulatorApplication;
  * never a partially written properties file.
  */
 public final class MidletSessionJournal {
-	/** Production writer version. Advance only after the compatible reader is already validated. */
+	/** Legacy schema retained for reader fixtures and rollback compatibility. */
 	static final int SCHEMA_VERSION = 1;
-	/** Newest schema understood by the reader/codec. */
+	/** Newest schema understood by the reader/codec and emitted by the production writer. */
 	static final int CURRENT_SCHEMA_VERSION = 2;
 	static final int MAX_JOURNAL_COUNT = 64;
 	static final long MAX_JOURNAL_AGE_MILLIS = 30L * 24L * 60L * 60L * 1000L;
@@ -57,6 +57,7 @@ public final class MidletSessionJournal {
 	private static final String LEGACY_BACKUP_SUFFIX = ".bak";
 	private static final String NEW_WRITE_SUFFIX = ".new";
 	private static final int MAX_VALUE_LENGTH = 256;
+	private static final int MAX_WORKDIR_LOCATOR_LENGTH = 4096;
 
 	private static final String KEY_SCHEMA_VERSION = "schemaVersion";
 	private static final String KEY_SESSION_ID = "sessionId";
@@ -123,6 +124,9 @@ public final class MidletSessionJournal {
 	private final String mainClass;
 	private final String jarSize;
 	private final String jarSha256;
+	private final String workdirLocator;
+	private final String storageKey;
+	private final MidletSessionPlayStats playStats = new MidletSessionPlayStats();
 
 	private Stage stage;
 	private Outcome outcome;
@@ -134,7 +138,7 @@ public final class MidletSessionJournal {
 	private MidletSessionJournal(File file, String sessionId, String processName, int processPid,
 			long startedWallTimeMillis, long startedElapsedRealtimeMillis, String midletName,
 			String midletVendor, String midletVersion, String mainClass, String jarSize,
-			String jarSha256) {
+			String jarSha256, String workdirLocator, String storageKey) {
 		this.atomicFile = new AtomicFile(file);
 		this.sessionId = sessionId;
 		this.processName = processName;
@@ -147,14 +151,24 @@ public final class MidletSessionJournal {
 		this.mainClass = bound(mainClass);
 		this.jarSize = bound(jarSize);
 		this.jarSha256 = bound(jarSha256);
+		this.workdirLocator = normalizeWorkdirLocator(workdirLocator);
+		this.storageKey = bound(storageKey);
 		this.stage = Stage.PREPARING;
 		this.outcome = Outcome.NONE;
 		this.updatedWallTimeMillis = startedWallTimeMillis;
 		this.updatedElapsedRealtimeMillis = startedElapsedRealtimeMillis;
 	}
 
+	/** Compatibility overload for non-runtime callers; production MicroLoader supplies identity. */
 	public static MidletSessionJournal create(Context context, String midletName, String midletVendor,
 			String midletVersion, String mainClass, String jarSize, String jarSha256) {
+		return create(context, midletName, midletVendor, midletVersion, mainClass, jarSize, jarSha256,
+				null, null);
+	}
+
+	public static MidletSessionJournal create(Context context, String midletName, String midletVendor,
+			String midletVersion, String mainClass, String jarSize, String jarSha256,
+			String workdirLocator, String storageKey) {
 		String sessionId = UUID.randomUUID().toString();
 		File directory = journalDirectory(context);
 		File file = new File(directory, sessionId + JOURNAL_SUFFIX);
@@ -170,7 +184,9 @@ public final class MidletSessionJournal {
 				midletVersion,
 				mainClass,
 				jarSize,
-				jarSha256
+				jarSha256,
+				workdirLocator,
+				storageKey
 		);
 		if (!directory.isDirectory() && !directory.mkdirs()) {
 			Log.w(TAG, "Unable to create MIDlet session journal directory");
@@ -334,8 +350,11 @@ public final class MidletSessionJournal {
 		if (nextStage == null || stage == Stage.COMPLETED) {
 			return;
 		}
+		long nowWall = System.currentTimeMillis();
+		long nowElapsed = SystemClock.elapsedRealtime();
+		playStats.transition(stage, nextStage, nowWall, nowElapsed);
 		stage = nextStage;
-		touch();
+		touch(nowWall, nowElapsed);
 		persist();
 	}
 
@@ -343,8 +362,13 @@ public final class MidletSessionJournal {
 		if (nextOutcome == null || nextOutcome == Outcome.NONE || outcome != Outcome.NONE) {
 			return;
 		}
+		long nowWall = System.currentTimeMillis();
+		long nowElapsed = SystemClock.elapsedRealtime();
 		outcome = nextOutcome;
-		touch();
+		if (nextOutcome == Outcome.UNEXPECTED_FAILURE) {
+			playStats.finishActiveSegment(nowElapsed);
+		}
+		touch(nowWall, nowElapsed);
 		persist();
 	}
 
@@ -360,29 +384,35 @@ public final class MidletSessionJournal {
 		if (outcome != Outcome.NONE && outcome != Outcome.UNEXPECTED_FAILURE) {
 			return null;
 		}
+		long nowWall = System.currentTimeMillis();
+		long nowElapsed = SystemClock.elapsedRealtime();
 		outcome = Outcome.UNEXPECTED_FAILURE;
 		failureEventId = UUID.randomUUID().toString();
 		failureBoundary = boundary == null ? FailureBoundary.UNCAUGHT_THREAD : boundary;
-		touch();
+		playStats.finishActiveSegment(nowElapsed);
+		touch(nowWall, nowElapsed);
 		persist();
 		return failureEventId;
 	}
 
 	public synchronized void complete(Outcome fallbackOutcome) {
+		long nowWall = System.currentTimeMillis();
+		long nowElapsed = SystemClock.elapsedRealtime();
 		if (outcome == Outcome.NONE && fallbackOutcome != null && fallbackOutcome != Outcome.NONE) {
 			outcome = fallbackOutcome;
 		}
+		playStats.finishActiveSegment(nowElapsed);
 		// Preserve the causal lifecycle stage when an unexpected failure already won the session.
 		if (outcome != Outcome.UNEXPECTED_FAILURE) {
 			stage = Stage.COMPLETED;
 		}
-		touch();
+		touch(nowWall, nowElapsed);
 		persist();
 	}
 
-	private void touch() {
-		updatedWallTimeMillis = System.currentTimeMillis();
-		updatedElapsedRealtimeMillis = SystemClock.elapsedRealtime();
+	private void touch(long wallTimeMillis, long elapsedRealtimeMillis) {
+		updatedWallTimeMillis = wallTimeMillis;
+		updatedElapsedRealtimeMillis = elapsedRealtimeMillis;
 	}
 
 	private void persist() {
@@ -416,8 +446,9 @@ public final class MidletSessionJournal {
 	}
 
 	private synchronized Snapshot snapshot() {
+		MidletSessionPlayStats.Snapshot stats = playStats.snapshot();
 		return new Snapshot(
-				SCHEMA_VERSION,
+				CURRENT_SCHEMA_VERSION,
 				sessionId,
 				processName,
 				processPid,
@@ -434,7 +465,13 @@ public final class MidletSessionJournal {
 				midletVersion,
 				mainClass,
 				jarSize,
-				jarSha256
+				jarSha256,
+				workdirLocator,
+				storageKey,
+				stats.reachedRunning,
+				stats.firstRunningWallTimeMillis,
+				stats.accumulatedActiveMillis,
+				stats.activeSegmentStartElapsedRealtimeMillis
 		);
 	}
 
@@ -625,6 +662,24 @@ public final class MidletSessionJournal {
 		return normalized.length() <= MAX_VALUE_LENGTH
 				? normalized
 				: normalized.substring(0, MAX_VALUE_LENGTH);
+	}
+
+	private static String normalizeWorkdirLocator(String value) {
+		if (value == null) {
+			return null;
+		}
+		String normalized = value.replace('\r', ' ').replace('\n', ' ').trim();
+		if (normalized.isEmpty()) {
+			return null;
+		}
+		try {
+			normalized = new File(normalized).getCanonicalPath();
+		} catch (IOException | SecurityException ignored) {
+			normalized = new File(normalized).getAbsolutePath();
+		}
+		return normalized.length() <= MAX_WORKDIR_LOCATOR_LENGTH
+				? normalized
+				: normalized.substring(0, MAX_WORKDIR_LOCATOR_LENGTH);
 	}
 
 	static final class Snapshot {
