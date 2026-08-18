@@ -10,6 +10,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.util.Collections;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -36,6 +37,18 @@ public class AppInstallerStorageKeyTest {
 		File selected = AppInstaller.chooseTargetDirectory(converted, ".tmp");
 
 		assertEquals(".tmp_2", selected.getName());
+	}
+
+	@Test
+	public void indexedKeyIsSkippedEvenWhenFolderIsMissing() throws Exception {
+		File converted = temporaryFolder.newFolder("converted-indexed");
+
+		File selected = AppInstaller.chooseTargetDirectory(
+				converted,
+				"Game",
+				Collections.singleton("Game"));
+
+		assertEquals("Game_1", selected.getName());
 	}
 
 	@Test
