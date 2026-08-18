@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          sed -i '/Modifier\\\\n", ""),/d' .github/scripts/pr2_feedback_patch.py
+          sed -i '/("import androidx.compose.ui.Modifier/d' .github/scripts/pr2_feedback_patch.py
           python3 .github/scripts/pr2_feedback_patch.py
           awk '!(/^import /) || !seen[$0]++' app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryCollectionsUi.kt > /tmp/collections.kt
           mv /tmp/collections.kt app/src/main/java/ru/playsoftware/j2meloader/applist/LibraryCollectionsUi.kt
