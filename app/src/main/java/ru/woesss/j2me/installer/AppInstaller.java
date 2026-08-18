@@ -36,7 +36,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.jar.JarFile;
 
 import io.reactivex.SingleEmitter;
@@ -489,7 +491,15 @@ public class AppInstaller {
 		}
 		currentApp = candidates.size() == 1 ? candidates.get(0) : null;
 		if (currentApp == null) {
-			generatePathName(name.replaceAll(FileUtils.ILLEGAL_FILENAME_CHARS, "").trim());
+			Set<String> indexedStorageKeys;
+			try {
+				indexedStorageKeys = libraryViewModel.storageKeys(expectedGeneration, expectedWorkdir);
+			} catch (IllegalStateException e) {
+				throw new IOException("Library generation changed while selecting installer storage key", e);
+			}
+			generatePathName(
+					name.replaceAll(FileUtils.ILLEGAL_FILENAME_CHARS, "").trim(),
+					indexedStorageKeys);
 			return STATUS_NEW;
 		}
 
@@ -517,17 +527,23 @@ public class AppInstaller {
 		return STATUS_EQUAL;
 	}
 
-	private void generatePathName(String name) {
-		File dir = chooseTargetDirectory(appsDir(), name);
+	private void generatePathName(String name, Set<String> indexedStorageKeys) {
+		File dir = chooseTargetDirectory(appsDir(), name, indexedStorageKeys);
 		appDirName = dir.getName();
 		targetDir = dir;
 	}
 
-	/** Pure path selection boundary so reserved recovery names cannot become installed app keys. */
+	/** Compatibility helper retained for focused path-selection unit tests. */
 	static File chooseTargetDirectory(File appsDir, String name) {
+		return chooseTargetDirectory(appsDir, name, Collections.emptySet());
+	}
+
+	/** Pure path selection boundary: neither recovery names nor indexed identities may be reused. */
+	static File chooseTargetDirectory(File appsDir, String name, Set<String> indexedStorageKeys) {
 		File dir = new File(appsDir, name);
 		for (int i = 1;
-				LibraryInstallRecovery.isReservedStorageKey(dir.getName()) || dir.exists();
+				LibraryInstallRecovery.isReservedStorageKey(dir.getName()) ||
+						dir.exists() || indexedStorageKeys.contains(dir.getName());
 				i++) {
 			dir = new File(appsDir, name + "_" + i);
 		}
