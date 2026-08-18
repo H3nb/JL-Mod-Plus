@@ -182,7 +182,9 @@ class LibraryRepository(
         publishIfCurrent(request, State.Opening(request.generation, emulatorDir))
         var database: LibraryDatabase? = null
         try {
-            database = databaseFactory(emulatorDir)
+            database = withContext(Dispatchers.IO) { databaseFactory(emulatorDir) }
+            currentCoroutineContext().ensureActive()
+            ensureCurrent(request)
             val bootstrap = bootstrapper.ensureReady(database, emulatorDir) { progress ->
                 publishIfCurrent(
                     request,
