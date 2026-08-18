@@ -100,10 +100,10 @@ class LibraryScanner {
         val entries = convertedDir.listFiles()
             ?: throw IOException("Unable to list converted directory: ${convertedDir.absolutePath}")
         return entries.asSequence()
-            // Current staging lives outside converted/. Only the historical .tmp location needs
-            // filtering here so an interrupted install from an older build is never indexed.
+            // Current staging lives outside converted/. Filter every case-variant of the historical
+            // .tmp key so case-insensitive removable storage cannot alias it with a real app.
             .filter {
-                it.isDirectory && it.name != LibraryInstallRecovery.LEGACY_STAGING_DIR_NAME
+                it.isDirectory && !LibraryInstallRecovery.isReservedStorageKey(it.name)
             }
             .sortedBy { it.name }
             .toList()
