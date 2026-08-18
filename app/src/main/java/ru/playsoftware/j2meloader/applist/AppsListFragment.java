@@ -3,6 +3,8 @@
  * Copyright 2017-2020 Nikita Shakarun
  * Copyright 2019-2026 Yury Kharchenko
  *
+ * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -441,10 +443,12 @@ public class AppsListFragment extends Fragment {
 			}
 
 			@Override
-			public void onRemoveAppFromCollection(long appId, long collectionId) {
+			public void onRemoveAppFromCollection(int appId, long collectionId) {
+				LibraryAppRow app = findRow(appId);
+				if (app == null) return;
 				libraryViewModel.setCollectionMembership(
 						collectionId,
-						appId,
+						app.getId(),
 						false,
 						(ignored, error) -> {
 							if (error != null) {
@@ -561,15 +565,10 @@ public class AppsListFragment extends Fragment {
 				return;
 			}
 			if (!isAdded() || appIds == null) return;
-			List<LibraryCollectionMemberUiItem> members = new ArrayList<>(appIds.size());
-			for (Long appId : appIds) {
-				LibraryAppRow app = libraryViewModel.getApp(appId);
-				if (app == null) continue;
-				members.add(new LibraryCollectionMemberUiItem(
-						app.getId(),
-						app.getTitle(),
-						app.getVendor(),
-						app.getVersion()));
+			List<LibraryAppRow> rows = libraryViewModel.getApps(appIds);
+			List<LibraryAppUiItem> members = new ArrayList<>(rows.size());
+			for (LibraryAppRow row : rows) {
+				members.add(toLibraryUiItem(row));
 			}
 			collectionsUiStore.showMembers(collectionId, members);
 		});
@@ -625,33 +624,39 @@ public class AppsListFragment extends Fragment {
 		collectionsUiStore.publishCollections(state.getCollections());
 		List<LibraryAppUiItem> uiItems = new ArrayList<>(state.getApps().size());
 		for (LibraryAppRow row : state.getApps()) {
-			int uiId = uiIdFor(row.getId());
-			rowsByUiId.put(uiId, row);
-			String iconPath = row.getIconRevision() == 0L
-					? null
-					: new File(appPath(row) + Config.MIDLET_ICON_FILE).getAbsolutePath();
-			uiItems.add(new LibraryAppUiItem(
-					uiId,
-					row.getTitle(),
-					row.getVendor(),
-					row.getVersion(),
-					iconPath,
-					true,
-					row.getDescription(),
-					row.getIconRevision(),
-					row.getFavorite(),
-					row.getSourceTitle(),
-					row.getSourceVendor(),
-					row.getSourceVersion(),
-					row.getSourceDescription(),
-					row.getPlayCount(),
-					row.getTotalPlayTimeMs()));
+			uiItems.add(toLibraryUiItem(row));
 		}
+		Long activeCollectionId = collectionsUiStore.activeCollectionId();
+		if (activeCollectionId != null) loadCollectionMembers(activeCollectionId);
 		LibraryComposeController controller = composeController;
 		if (controller != null) {
 			controller.updateSort(state.getSortVariant());
 			controller.updateApps(uiItems, state.getFilter(), state.getQuickView());
 		}
+	}
+
+	private LibraryAppUiItem toLibraryUiItem(LibraryAppRow row) {
+		int uiId = uiIdFor(row.getId());
+		rowsByUiId.put(uiId, row);
+		String iconPath = row.getIconRevision() == 0L
+				? null
+				: new File(appPath(row) + Config.MIDLET_ICON_FILE).getAbsolutePath();
+		return new LibraryAppUiItem(
+				uiId,
+				row.getTitle(),
+				row.getVendor(),
+				row.getVersion(),
+				iconPath,
+				true,
+				row.getDescription(),
+				row.getIconRevision(),
+				row.getFavorite(),
+				row.getSourceTitle(),
+				row.getSourceVendor(),
+				row.getSourceVersion(),
+				row.getSourceDescription(),
+				row.getPlayCount(),
+				row.getTotalPlayTimeMs());
 	}
 
 	private int uiIdFor(long databaseId) {

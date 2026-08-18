@@ -221,6 +221,15 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     fun getApp(expectedGeneration: Long, expectedWorkdir: File, appId: Long): LibraryAppRow? =
         repository.currentApp(token(expectedGeneration, expectedWorkdir), appId)
 
+    fun getApps(appIds: Set<Long>): List<LibraryAppRow> {
+        val generation = readyGeneration() ?: return emptyList()
+        return try {
+            repository.currentApps(generation, appIds)
+        } catch (_: IllegalStateException) {
+            emptyList()
+        }
+    }
+
     fun storageKeys(expectedGeneration: Long, expectedWorkdir: File): Set<String> =
         repository.currentStorageKeys(token(expectedGeneration, expectedWorkdir))
 
@@ -615,33 +624,43 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private suspend fun reconcilePlayStats(expected: LibraryGenerationToken) {
-        playStatRefreshMutex.withLock {
-            if (!repository.isReadyGeneration(expected)) return@withLock
-            val application = getApplication<Application>()
-            val records = withContext(Dispatchers.IO) {
-                MidletSessionStatsHandoff.loadTerminalRecords(application).map { record ->
-                    LibraryPlayStatRecord(
-                        sessionId = record.sessionId,
-                        workdirLocator = record.workdirLocator,
-                        storageKey = record.storageKey,
-                        reachedRunning = record.reachedRunning,
-                        firstRunningWallTimeMillis = record.firstRunningWallTimeMillis,
-                        accumulatedActiveMillis = record.accumulatedActiveMillis,
-                    )
-                }
-            }
-            if (records.isEmpty()) return@withLock
-            val result = try {
-                repository.reconcilePlayStats(expected, records)
-            } catch (error: IllegalStateException) {
+        try {
+            playStatRefreshMutex.withLock {
                 if (!repository.isReadyGeneration(expected)) return@withLock
-                throw error
-            }
-            withContext(Dispatchers.IO) {
-                result.reconciledSessionIds.forEach { sessionId ->
-                    MidletSessionStatsHandoff.markReconciled(application, sessionId)
+                val application = getApplication<Application>()
+                val records = withContext(Dispatchers.IO) {
+                    MidletSessionStatsHandoff.loadTerminalRecords(application).map { record ->
+                        LibraryPlayStatRecord(
+                            sessionId = record.sessionId,
+                            workdirLocator = record.workdirLocator,
+                            storageKey = record.storageKey,
+                            reachedRunning = record.reachedRunning,
+                            firstRunningWallTimeMillis = record.firstRunningWallTimeMillis,
+                            accumulatedActiveMillis = record.accumulatedActiveMillis,
+                        )
+                    }
+                }
+                if (records.isEmpty()) return@withLock
+                val result = try {
+                    repository.reconcilePlayStats(expected, records)
+                } catch (error: IllegalStateException) {
+                    if (!repository.isReadyGeneration(expected)) return@withLock
+                    throw error
+                }
+                withContext(Dispatchers.IO) {
+                    result.reconciledSessionIds.forEach { sessionId ->
+                        MidletSessionStatsHandoff.markReconciled(application, sessionId)
+                    }
                 }
             }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            android.util.Log.w(
+                "LibraryViewModel",
+                "Unable to reconcile play statistics; leaving session journals pending",
+                error,
+            )
         }
     }
 
