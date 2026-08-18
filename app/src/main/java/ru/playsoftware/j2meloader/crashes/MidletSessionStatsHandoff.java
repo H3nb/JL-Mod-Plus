@@ -29,6 +29,7 @@ public final class MidletSessionStatsHandoff {
 		if (context == null) {
 			return Collections.emptyList();
 		}
+		MidletSessionStatsAckStore.pruneOrphans(context);
 		List<File> files = MidletSessionJournal.journalFiles(context);
 		if (files.isEmpty()) {
 			return Collections.emptyList();
