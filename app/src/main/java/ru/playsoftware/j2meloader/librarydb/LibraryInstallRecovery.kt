@@ -18,18 +18,15 @@ import java.io.IOException
 import ru.playsoftware.j2meloader.util.FileUtils
 
 /**
- * Small filesystem journal for reinstall replacement.
+ * Small filesystem journal for install/reinstall replacement.
  *
- * A reinstall first moves the old converted directory into a workdir-sibling recovery directory,
- * then publishes the newly converted directory at the original storage key. Keeping recovery state
- * outside converted/ means it can never collide with or masquerade as an installed application.
- * The backup is retained until the Room mutation succeeds so startup can restore or targeted-reindex
- * an interrupted replacement without guessing.
+ * Current staging and reinstall backup both live as workdir siblings rather than under converted/.
+ * That keeps the installed-app namespace pure and avoids relying on filesystem-specific characters
+ * to manufacture an impossible storage key. The legacy converted/.tmp staging name remains cleanup
+ * input only for compatibility with interrupted installs from older builds.
  */
 object LibraryInstallRecovery {
-    // ':' is removed by the installer's storage-key sanitization, so a normal MIDlet can never be
-    // assigned this exact directory name. Keep the legacy .tmp name recognized for old leftovers.
-    const val STAGING_DIR_NAME = ".jl:library-tmp"
+    const val STAGING_DIR_NAME = ".library-install-staging"
     const val LEGACY_STAGING_DIR_NAME = ".tmp"
     const val BACKUP_ROOT_NAME = ".library-install-backup"
 
@@ -39,9 +36,12 @@ object LibraryInstallRecovery {
         val failures: List<Failure>,
     )
 
+    /** Current staging is outside converted/, so only the historical in-namespace name is reserved. */
     @JvmStatic
-    fun isReservedStorageKey(storageKey: String): Boolean =
-        storageKey == STAGING_DIR_NAME || storageKey == LEGACY_STAGING_DIR_NAME
+    fun isReservedStorageKey(storageKey: String): Boolean = storageKey == LEGACY_STAGING_DIR_NAME
+
+    @JvmStatic
+    fun stagingDirectory(emulatorDir: File): File = File(emulatorDir, STAGING_DIR_NAME)
 
     /** Move the current installed directory aside before replacing it. */
     @JvmStatic
@@ -112,7 +112,7 @@ object LibraryInstallRecovery {
     @Throws(IOException::class)
     fun recoverFilesystem(emulatorDir: File): RecoveryResult {
         val converted = File(emulatorDir, "converted")
-        discardStaging(converted)
+        discardStaging(emulatorDir)
 
         val root = backupRoot(emulatorDir)
         if (!root.exists()) return RecoveryResult(emptySet(), emptyList())
@@ -157,11 +157,12 @@ object LibraryInstallRecovery {
         return RecoveryResult(refresh, failures)
     }
 
-    fun discardStaging(convertedDir: File) {
-        for (name in arrayOf(STAGING_DIR_NAME, LEGACY_STAGING_DIR_NAME)) {
-            val staging = File(convertedDir, name)
-            if (staging.exists()) FileUtils.deleteDirectory(staging)
-        }
+    /** Delete current workdir-sibling staging and the historical converted/.tmp leftover. */
+    fun discardStaging(emulatorDir: File) {
+        val current = stagingDirectory(emulatorDir)
+        if (current.exists()) FileUtils.deleteDirectory(current)
+        val legacy = File(File(emulatorDir, "converted"), LEGACY_STAGING_DIR_NAME)
+        if (legacy.exists()) FileUtils.deleteDirectory(legacy)
     }
 
     private fun backupRoot(emulatorDir: File): File = File(emulatorDir, BACKUP_ROOT_NAME)
