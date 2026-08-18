@@ -412,6 +412,7 @@ fun LibraryScreen(
     var infoDialog by remember { mutableStateOf<LibraryInfoDialog?>(null) }
     val isImeVisible = WindowInsets.isImeVisible
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val collectionsHost = actions as? LibraryCollectionsHost
 
     LaunchedEffect(destination) {
         if (destination != LibraryDestination.Apps) {
@@ -558,7 +559,11 @@ fun LibraryScreen(
                             if (!isLandscape) showNavigationBar = visible
                         },
                     )
-                    LibraryDestination.Collections -> LibraryCollectionsDestination(padding)
+                    LibraryDestination.Collections -> if (collectionsHost != null) {
+                        LibraryCollectionsDestination(collectionsHost, padding)
+                    } else {
+                        LibraryCollectionsDestination(padding)
+                    }
                     LibraryDestination.Options -> LibraryOptionsDestination(
                         state = state,
                         scaffoldPadding = padding,
@@ -589,6 +594,11 @@ fun LibraryScreen(
             },
             onRename = { renameTarget = app },
             onSettings = { actions.onOpenAppSettings(app.id) },
+            onAddToCollection = if (state.databaseControlsReady && collectionsHost != null) {
+                { collectionsHost.onRequestAddToCollection(app.id) }
+            } else {
+                null
+            },
             onShareApp = if (state.databaseControlsReady) {
                 { actions.onShareApp(app.id) }
             } else {
@@ -664,6 +674,7 @@ fun LibraryScreen(
             onOpen = { infoDialog = it },
         )
     }
+    collectionsHost?.let { LibraryCollectionsDialogHost(it) }
 }
 
 private const val LIBRARY_CHROME_ANIMATION_MILLIS = 220
@@ -2913,6 +2924,7 @@ internal fun AppActionsDialog(
     onReinstall: () -> Unit,
     onDelete: () -> Unit,
     onEditMetadata: (() -> Unit)? = null,
+    onAddToCollection: (() -> Unit)? = null,
     onShareApp: (() -> Unit)? = null,
     onExportAppBundle: (() -> Unit)? = null,
 ) {
@@ -2986,6 +2998,16 @@ internal fun AppActionsDialog(
                         onDismiss = onDismiss,
                         action = onSettings,
                     )
+                }
+                if (onAddToCollection != null) {
+                    item {
+                        DialogAction(
+                            label = R.string.library_collection_add_app,
+                            icon = R.drawable.ic_collections,
+                            onDismiss = onDismiss,
+                            action = onAddToCollection,
+                        )
+                    }
                 }
                 if (onShareApp != null) {
                     item {
