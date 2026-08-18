@@ -11,7 +11,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.nio.file.Files;
+import java.io.FileOutputStream;
 import java.util.Collections;
 
 import org.junit.Rule;
@@ -66,8 +66,8 @@ public class AppInstallerStorageKeyTest {
 	public void sameSizeDifferentJarContentIsNotTreatedAsIdentical() throws Exception {
 		File first = temporaryFolder.newFile("first.jar");
 		File second = temporaryFolder.newFile("second.jar");
-		Files.write(first.toPath(), new byte[]{'P', 'K', 3, 4, 1, 2, 3, 4});
-		Files.write(second.toPath(), new byte[]{'P', 'K', 3, 4, 1, 2, 3, 9});
+		write(first, new byte[]{'P', 'K', 3, 4, 1, 2, 3, 4});
+		write(second, new byte[]{'P', 'K', 3, 4, 1, 2, 3, 9});
 
 		assertFalse(AppInstaller.filesHaveSameContents(first, second));
 	}
@@ -78,9 +78,15 @@ public class AppInstallerStorageKeyTest {
 		File second = temporaryFolder.newFile("same-two.jar");
 		byte[] content = new byte[20_000];
 		for (int i = 0; i < content.length; i++) content[i] = (byte) (i * 31);
-		Files.write(first.toPath(), content);
-		Files.write(second.toPath(), content);
+		write(first, content);
+		write(second, content);
 
 		assertTrue(AppInstaller.filesHaveSameContents(first, second));
+	}
+
+	private static void write(File file, byte[] content) throws Exception {
+		try (FileOutputStream output = new FileOutputStream(file)) {
+			output.write(content);
+		}
 	}
 }
