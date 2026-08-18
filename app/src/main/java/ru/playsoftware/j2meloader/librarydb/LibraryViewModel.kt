@@ -16,6 +16,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.preference.PreferenceManager
 import java.io.File
 import java.io.IOException
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -70,6 +72,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
 
     private val preferences = PreferenceManager.getDefaultSharedPreferences(application)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val generationCommitLock = ReentrantLock()
     private val repository = LibraryRepository(
         scope = scope,
         databaseFactory = { emulatorDir -> LibraryDatabase.open(application, emulatorDir) },
@@ -124,10 +127,16 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun setEmulatorDirectory(path: String) {
-        repository.setEmulatorDirectory(File(path))
+        generationCommitLock.withLock {
+            repository.setEmulatorDirectory(File(path))
+        }
     }
 
-    fun retry() = repository.retry()
+    fun retry() {
+        generationCommitLock.withLock {
+            repository.retry()
+        }
+    }
 
     fun setFilter(value: String) {
         filter.value = value.trim()
@@ -155,7 +164,11 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
 
     fun getApp(appId: Long): LibraryAppRow? {
         val generation = readyGeneration() ?: return null
-        return repository.currentApp(generation, appId)
+        return try {
+            repository.currentApp(generation, appId)
+        } catch (_: IllegalStateException) {
+            null
+        }
     }
 
     fun getApp(expectedGeneration: Long, expectedWorkdir: File, appId: Long): LibraryAppRow? =
@@ -175,13 +188,38 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     fun isReadyGeneration(expectedGeneration: Long, expectedWorkdir: File): Boolean =
         repository.isReadyGeneration(token(expectedGeneration, expectedWorkdir))
 
+    /**
+     * Acquire a very short lease for the filesystem publish point of an install/reinstall.
+     * Workdir changes/retries use the same lock, so they cannot split backup->replacement rename.
+     */
+    fun acquireGenerationLease(
+        expectedGeneration: Long,
+        expectedWorkdir: File,
+    ): LibraryGenerationLease {
+        generationCommitLock.lock()
+        try {
+            val expected = token(expectedGeneration, expectedWorkdir)
+            check(repository.isReadyGeneration(expected)) {
+                "Library generation changed before filesystem publish"
+            }
+            return LibraryGenerationLease(generationCommitLock)
+        } catch (error: Throwable) {
+            generationCommitLock.unlock()
+            throw error
+        }
+    }
+
     fun renameApp(appId: Long, title: String?, callback: MutationCallback<Unit>) {
         val generation = readyGeneration()
         if (generation == null) {
             callback.complete(null, IllegalStateException("Library is not READY"))
             return
         }
-        val app = repository.currentApp(generation, appId)
+        val app = try {
+            repository.currentApp(generation, appId)
+        } catch (_: IllegalStateException) {
+            null
+        }
         if (app == null) {
             callback.complete(null, IllegalStateException("Library app is not available"))
             return
@@ -194,7 +232,11 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     /** Resolve the retained-JAR action state only after the user chooses Reinstall. */
     fun resolveReinstallAvailability(appId: Long, callback: MutationCallback<Boolean>) {
         val generation = readyGeneration()
-        val app = generation?.let { repository.currentApp(it, appId) }
+        val app = try {
+            generation?.let { repository.currentApp(it, appId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
         if (generation == null || app == null) {
             callback.complete(
                 null,
@@ -252,7 +294,11 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     /** Deletes authoritative installed files first; the Room row is removed only after that succeeds. */
     fun deleteInstalledApp(appId: Long, callback: MutationCallback<LibraryFileOperations.DeleteResult>) {
         val generation = readyGeneration()
-        val app = generation?.let { repository.currentApp(it, appId) }
+        val app = try {
+            generation?.let { repository.currentApp(it, appId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
         if (generation == null || app == null) {
             callback.complete(null, IllegalStateException("Library app is not available in the active READY generation"))
             return
