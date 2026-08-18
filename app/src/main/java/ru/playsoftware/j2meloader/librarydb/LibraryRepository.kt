@@ -161,12 +161,15 @@ class LibraryRepository(
     }
 
     private fun request(emulatorDir: File) {
-        // Publishing the new request is the synchronous invalidation boundary. Old-generation reads
-        // and mutations reject immediately even if collectLatest has not reached DB close yet.
-        workdirRequests.value = WorkdirRequest(
+        // Publishing the request and Opening state together is the synchronous invalidation boundary.
+        // UI/actions stop seeing the previous READY generation immediately; DB close can follow on
+        // the worker without leaving a window where stale rows still look actionable.
+        val request = WorkdirRequest(
             generation = nextGeneration.incrementAndGet(),
             emulatorDir = emulatorDir,
         )
+        workdirRequests.value = request
+        mutableState.value = State.Opening(request.generation, request.emulatorDir)
     }
 
     private suspend fun runWorkdir(request: WorkdirRequest) {
