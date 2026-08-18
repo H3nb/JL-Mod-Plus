@@ -143,6 +143,10 @@ public class InstallerDialog extends DialogFragment {
 	public void onDismiss(@NonNull DialogInterface dialog) {
 		super.onDismiss(dialog);
 		composeController = null;
+		Activity activity = getActivity();
+		if (activity instanceof MainActivity) {
+			((MainActivity) activity).onInstallerDialogDismissed();
+		}
 	}
 
 	@Override
