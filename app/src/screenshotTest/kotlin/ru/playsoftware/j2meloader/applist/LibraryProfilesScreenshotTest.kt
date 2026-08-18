@@ -410,6 +410,7 @@ private object NoOpLibraryActions : LibraryActions {
     override fun onOpenCrashReports() = Unit
     override fun onSaveLog() = Unit
     override fun onExit() = Unit
+    override fun onRetryLibrary() = Unit
 }
 
 private object NoOpProfilesActions : ProfilesActions {
