@@ -15,8 +15,8 @@
 package ru.playsoftware.j2meloader.applist
 
 import android.content.res.Configuration
-import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.android.tools.screenshot.PreviewTest
 import ru.playsoftware.j2meloader.config.ProfileActionsDialog
@@ -36,6 +36,10 @@ private val PreviewApps = listOf(
         iconPath = null,
         canReinstall = true,
         description = "This MIDlet description is intentionally long enough to show how a compact preview expands to the complete text without using a marquee. It remains readable in both portrait and landscape layouts.",
+        favorite = true,
+        sourceTitle = "Demo MIDlet",
+        sourceAuthor = "Example Vendor",
+        sourceDescription = "Original descriptor description",
     ),
     LibraryAppUiItem(2, "Mascot Capsule 3D", "Sample Studio", "2.4", null, false),
     LibraryAppUiItem(3, "Long application title for wrapping", "Vendor", "0.9", null, true),
@@ -60,6 +64,23 @@ fun LibraryGridScreenshot() {
                 loading = false,
                 apps = PreviewApps,
                 layout = LibraryLayout.Grid,
+            ),
+            actions = NoOpLibraryActions,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Library ready list", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun LibraryReadyListScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryScreen(
+            state = LibraryUiState(
+                loading = false,
+                apps = PreviewApps,
+                layout = LibraryLayout.List,
+                databaseControlsReady = true,
             ),
             actions = NoOpLibraryActions,
         )
@@ -204,6 +225,49 @@ fun LibraryFilteredEmptyScreenshot() {
                 appliedFilter = "missing",
             ),
             actions = NoOpLibraryActions,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Library collection browser", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun LibraryCollectionBrowserScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryCollectionBrowser(
+            collection = LibraryCollectionUiItem(1L, "RPG Favorites", 3),
+            members = PreviewApps.take(3),
+            allApps = PreviewApps,
+            libraryState = LibraryUiState(
+                loading = false,
+                apps = PreviewApps,
+                layout = LibraryLayout.List,
+                databaseControlsReady = true,
+            ),
+            scaffoldPadding = PaddingValues(),
+            onBack = {},
+            onOpenApp = {},
+            onOpenActions = {},
+            onRemove = {},
+            onSetMembership = { _, _ -> },
+            onSort = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Library metadata editor", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun LibraryMetadataEditorScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryMetadataEditorScreen(
+            app = PreviewApps.first().copy(
+                title = "Custom Demo Name",
+                author = "Custom Vendor",
+                description = "Custom presentation description that differs from the source MIDlet descriptor.",
+            ),
+            onBack = {},
+            onSave = { _, _, _ -> },
         )
     }
 }

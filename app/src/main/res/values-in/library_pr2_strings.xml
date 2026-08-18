@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_action_share_app">Bagikan Aplikasi</string>
+    <string name="library_action_export_bundle">Ekspor Bundle Aplikasi</string>
+    <string name="library_play_stats_summary">Jumlah main: %1$d · Total: %2$s</string>
+    <string name="library_share_chooser_title">Bagikan aplikasi</string>
+    <string name="library_export_chooser_title">Ekspor bundle aplikasi</string>
+    <string name="library_export_progress">Mengekspor… %1$d/%2$d</string>
+    <string name="library_transfer_unavailable">Aplikasi ini tidak dapat disiapkan untuk transfer.</string>
+    <string name="library_back">Kembali</string>
+    <string name="library_sort">Urutkan</string>
+    <string name="library_search_clear">Batalkan pencarian</string>
+    <string name="library_description_more">… Selengkapnya</string>
+    <string name="library_description_less">Ringkas</string>
+</resources>
