@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: android-ci-${{ github.workflow }}-${{ github.ref }}
@@ -22,7 +22,8 @@ jobs:
       - name: Check out sources
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          persist-credentials: false
+          persist-credentials: true
+          fetch-depth: 0
           submodules: recursive
 
       - name: Restore shared debug keystore
@@ -57,6 +58,15 @@ jobs:
 
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x gradlew
+
+      - name: Apply screenshot source corrections
+        run: python3 .github/scripts/pr2_screenshot_refresh.py apply
+
+      - name: Update Library screenshot references
+        run: ./gradlew --no-daemon --stacktrace :app:updateEmulatorDebugScreenshotTest
+
+      - name: Publish screenshot refresh
+        run: python3 .github/scripts/pr2_screenshot_refresh.py finalize
 
       - name: Lint, test, and assemble
         env:
