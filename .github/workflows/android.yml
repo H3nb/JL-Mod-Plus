@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: android-ci-${{ github.workflow }}-${{ github.ref }}
@@ -22,8 +22,12 @@ jobs:
       - name: Check out sources
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          persist-credentials: false
+          persist-credentials: true
+          fetch-depth: 0
           submodules: recursive
+
+      - name: Apply PR2 Collection UX correction
+        run: python3 .github/scripts/pr2_collection_correction.py
 
       - name: Restore shared debug keystore
         shell: bash

@@ -1,6 +1,8 @@
 /*
  * Copyright 2020-2026 Yury Kharchenko
  *
+ * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -47,6 +49,7 @@ import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.librarydb.LibraryAppRow;
 import ru.playsoftware.j2meloader.librarydb.LibraryGenerationLease;
 import ru.playsoftware.j2meloader.librarydb.LibraryGenerationToken;
+import ru.playsoftware.j2meloader.librarydb.LibraryIconOverride;
 import ru.playsoftware.j2meloader.librarydb.LibraryIconRevision;
 import ru.playsoftware.j2meloader.librarydb.LibraryInstallRecovery;
 import ru.playsoftware.j2meloader.librarydb.LibraryViewModel;
@@ -372,12 +375,15 @@ public class AppInstaller {
 		}
 
 		File replacementBackup = null;
-		// The lease is deliberately limited to the two rename operations. Workdir switching cannot
-		// invalidate the generation between backup and replacement publish, while dexing/copying and
-		// the asynchronous Room mutation remain outside the lock.
+		// The lease covers only final filesystem publication. User icon edits use the same lease, so
+		// an existing app's durable custom icon is sampled and reapplied atomically with replacement.
+		// Dexing/copying and the asynchronous Room mutation remain outside this short critical section.
 		try (LibraryGenerationLease ignored = libraryViewModel.acquireGenerationLease(
 				expectedGeneration,
 				expectedWorkdir)) {
+			if (currentApp != null) {
+				LibraryIconOverride.applyPersistedOverride(expectedWorkdir, appDirName, tmpDir);
+			}
 			if (targetDir.exists()) {
 				replacementBackup = LibraryInstallRecovery.createBackup(
 						expectedWorkdir,

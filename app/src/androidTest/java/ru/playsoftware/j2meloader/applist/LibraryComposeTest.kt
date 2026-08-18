@@ -43,22 +43,16 @@ class LibraryComposeTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun searchIsLowercasedAndDebouncedForThreeHundredMilliseconds() {
+    fun searchDispatchesCurrentTextWithoutArtificialDebounce() {
         val actions = RecordingLibraryActions()
-        composeRule.mainClock.autoAdvance = false
         setLibraryContent(actions = actions)
-        composeRule.mainClock.advanceTimeBy(301)
         composeRule.waitForIdle()
         actions.searches.clear()
 
         composeRule.onNode(hasSetTextAction()).performTextInput("Demo")
-        composeRule.mainClock.advanceTimeBy(299)
         composeRule.waitForIdle()
-        assertTrue(actions.searches.isEmpty())
 
-        composeRule.mainClock.advanceTimeBy(2)
-        composeRule.waitForIdle()
-        assertEquals(listOf("demo"), actions.searches)
+        assertEquals(listOf("Demo"), actions.searches)
     }
 
     @Test
