@@ -157,6 +157,11 @@ class LibraryRepository(
     }
 
     override fun close() {
+        // Activity/ViewModel destruction is an authority boundary just like a workdir switch.
+        // Invalidate synchronously so stale Rx callbacks cannot mutate the still-open DB while the
+        // worker is winding down; runWorkdir's finally block remains responsible for closing it.
+        workdirRequests.value = null
+        mutableState.value = State.Idle
         worker.cancel()
     }
 
