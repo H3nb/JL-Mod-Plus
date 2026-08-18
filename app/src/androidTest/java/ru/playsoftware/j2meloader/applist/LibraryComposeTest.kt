@@ -14,14 +14,15 @@
 
 package ru.playsoftware.j2meloader.applist
 
-import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithContentDescription
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -68,6 +69,40 @@ class LibraryComposeTest {
             actions = actions,
         )
         composeRule.onNodeWithContentDescription("Loading apps").assertIsDisplayed()
+    }
+
+    @Test
+    fun indexingStateShowsProgressAndCurrentStorageKey() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = true,
+                loadingCompleted = 12,
+                loadingTotal = 100,
+                loadingStorageKey = "Bounce_Tales",
+            ),
+            actions = actions,
+        )
+
+        composeRule.onNodeWithText("Indexing library… 12/100").assertIsDisplayed()
+        composeRule.onNodeWithText("Scanning Bounce_Tales").assertIsDisplayed()
+    }
+
+    @Test
+    fun libraryErrorOffersRetryCallback() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                errorMessage = "Storage unavailable",
+            ),
+            actions = actions,
+        )
+
+        composeRule.onNodeWithText("Library unavailable").assertIsDisplayed()
+        composeRule.onNodeWithText("Storage unavailable").assertIsDisplayed()
+        composeRule.onNodeWithText("Retry").performClick()
+        assertEquals(1, actions.retryCount)
     }
 
     @Test
@@ -152,8 +187,8 @@ class LibraryComposeTest {
         composeRule.onAllNodesWithText("Recently added").assertCountEquals(1)
         composeRule.onAllNodesWithText("Favorites").assertCountEquals(1)
         composeRule.onNodeWithContentDescription("Favorite (coming soon)").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Favorite (coming soon)").performClick()
-        composeRule.onNodeWithContentDescription("Remove favorite (coming soon)").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Favorite (coming soon)").assertIsNotEnabled()
+        composeRule.onAllNodesWithContentDescription("Remove favorite (coming soon)").assertCountEquals(0)
 
         composeRule.onNodeWithText("Collections").performClick()
         composeRule.onNodeWithText("Collections and folders will be available in a future update.")
@@ -338,6 +373,7 @@ class LibraryComposeTest {
         var openedId: Int? = null
         var renamed: Pair<Int, String>? = null
         var settingsCount = 0
+        var retryCount = 0
 
         override fun onSearch(query: String) { searches += query }
         override fun onLayoutChange(layout: LibraryLayout) { this.layout = layout }
@@ -357,5 +393,6 @@ class LibraryComposeTest {
         override fun onOpenCrashReports() = Unit
         override fun onSaveLog() = Unit
         override fun onExit() = Unit
+        override fun onRetryLibrary() { retryCount++ }
     }
 }
