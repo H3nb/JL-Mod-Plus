@@ -66,6 +66,7 @@ public class InstallerDialog extends DialogFragment {
 	private String installerTitle;
 	private String currentTitle;
 	private Runnable primaryAction;
+	private boolean restoredInstance;
 
 	public static InstallerDialog newInstance(Uri uri) {
 		InstallerDialog fragment = new InstallerDialog();
@@ -93,6 +94,19 @@ public class InstallerDialog extends DialogFragment {
 	public void onAttach(@NonNull Context context) {
 		super.onAttach(context);
 		libraryViewModel = new ViewModelProvider(requireActivity()).get(LibraryViewModel.class);
+	}
+
+	@Override
+	public void onCreate(@Nullable Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		restoredInstance = savedInstanceState != null;
+		if (restoredInstance) {
+			// MainActivity owns durable external-request state and the Library READY gate. Never resume
+			// an installer Fragment directly after Activity/process recreation: a pending URI remains in
+			// MainActivity's queue and will be presented again only after the active generation is READY.
+			// A request that already committed was ACKed at STATUS_SUCCESS, so it will not replay.
+			dismissAllowingStateLoss();
+		}
 	}
 
 	@NonNull
@@ -140,7 +154,7 @@ public class InstallerDialog extends DialogFragment {
 	@Override
 	public void onStart() {
 		super.onStart();
-		if (installer != null || composeController == null) return;
+		if (restoredInstance || installer != null || composeController == null) return;
 		Bundle args = requireArguments();
 		Uri uri = args.getParcelable(ARG_URI);
 		if (uri != null) {
