@@ -158,6 +158,7 @@ object LibraryInstallRecovery {
     }
 
     /** Delete current workdir-sibling staging and the historical converted/.tmp leftover. */
+    @JvmStatic
     fun discardStaging(emulatorDir: File) {
         val current = stagingDirectory(emulatorDir)
         if (current.exists()) FileUtils.deleteDirectory(current)
