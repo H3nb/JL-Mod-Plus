@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_action_share_app">Share App</string>
+    <string name="library_action_export_bundle">Export App Bundle</string>
+    <string name="library_play_stats_summary">Play count: %1$d · Total: %2$s</string>
+    <string name="library_share_chooser_title">Share app</string>
+    <string name="library_export_chooser_title">Export app bundle</string>
+    <string name="library_export_progress">Exporting… %1$d/%2$d</string>
+    <string name="library_transfer_unavailable">Unable to prepare this app for transfer.</string>
+</resources>
