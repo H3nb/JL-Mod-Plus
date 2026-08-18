@@ -160,6 +160,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ru.playsoftware.j2meloader.BuildConfig
 import ru.playsoftware.j2meloader.R
+import ru.playsoftware.j2meloader.librarydb.LibraryPlayStatsFormatter
 import ru.playsoftware.j2meloader.librarydb.LibraryQuickView
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.TransientNoticeHost
@@ -206,6 +207,8 @@ data class LibraryAppUiItem(
     val sourceAuthor: String = author,
     val sourceVersion: String = version,
     val sourceDescription: String = description,
+    val playCount: Long = 0L,
+    val totalPlayTimeMs: Long = 0L,
 )
 
 data class LibraryUiState(
@@ -249,6 +252,8 @@ interface LibraryActions {
     fun onAddShortcut(appId: Int)
     fun onRename(appId: Int, title: String)
     fun onOpenAppSettings(appId: Int)
+    fun onShareApp(appId: Int) = Unit
+    fun onExportAppBundle(appId: Int) = Unit
     fun onReinstall(appId: Int)
     fun onDelete(appId: Int)
     fun onOpenSettings()
@@ -584,6 +589,16 @@ fun LibraryScreen(
             },
             onRename = { renameTarget = app },
             onSettings = { actions.onOpenAppSettings(app.id) },
+            onShareApp = if (state.databaseControlsReady) {
+                { actions.onShareApp(app.id) }
+            } else {
+                null
+            },
+            onExportAppBundle = if (state.databaseControlsReady) {
+                { actions.onExportAppBundle(app.id) }
+            } else {
+                null
+            },
             onReinstall = { actions.onReinstall(app.id) },
             onDelete = { deleteTarget = app },
             onEditMetadata = if (state.databaseControlsReady) {
@@ -1180,9 +1195,9 @@ private fun LibraryAppsHeader(
             LibraryQuickFilter(
                 label = R.string.library_filter_recently_opened,
                 icon = R.drawable.ic_play,
-                selected = false,
-                enabled = false,
-                onClick = {},
+                selected = state.quickView == LibraryQuickView.RecentlyPlayed,
+                enabled = interactive && state.databaseControlsReady,
+                onClick = { onQuickView(LibraryQuickView.RecentlyPlayed) },
             )
         }
     }
@@ -2898,6 +2913,8 @@ internal fun AppActionsDialog(
     onReinstall: () -> Unit,
     onDelete: () -> Unit,
     onEditMetadata: (() -> Unit)? = null,
+    onShareApp: (() -> Unit)? = null,
+    onExportAppBundle: (() -> Unit)? = null,
 ) {
     val layout = libraryDialogLayout()
     AlertDialog(
@@ -2918,6 +2935,19 @@ internal fun AppActionsDialog(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+                if (app.playCount > 0L || app.totalPlayTimeMs > 0L) {
+                    Text(
+                        text = stringResource(
+                            R.string.library_play_stats_summary,
+                            app.playCount,
+                            LibraryPlayStatsFormatter.duration(app.totalPlayTimeMs),
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
         },
         text = {
@@ -2956,6 +2986,26 @@ internal fun AppActionsDialog(
                         onDismiss = onDismiss,
                         action = onSettings,
                     )
+                }
+                if (onShareApp != null) {
+                    item {
+                        DialogAction(
+                            label = R.string.library_action_share_app,
+                            icon = R.drawable.ic_share,
+                            onDismiss = onDismiss,
+                            action = onShareApp,
+                        )
+                    }
+                }
+                if (onExportAppBundle != null) {
+                    item {
+                        DialogAction(
+                            label = R.string.library_action_export_bundle,
+                            icon = R.drawable.ic_save,
+                            onDismiss = onDismiss,
+                            action = onExportAppBundle,
+                        )
+                    }
                 }
                 if (app.canReinstall) {
                     item {

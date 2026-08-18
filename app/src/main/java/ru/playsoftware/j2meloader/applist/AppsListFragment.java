@@ -26,6 +26,7 @@ import static ru.playsoftware.j2meloader.util.Constants.PREF_APP_SORT;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_LAST_PATH;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -66,6 +67,8 @@ import ru.playsoftware.j2meloader.filepicker.FilteredFilePickerActivity;
 import ru.playsoftware.j2meloader.librarydb.LibraryAppRow;
 import ru.playsoftware.j2meloader.librarydb.LibraryGenerationToken;
 import ru.playsoftware.j2meloader.librarydb.LibraryQuickView;
+import ru.playsoftware.j2meloader.librarydb.LibraryTransferActions;
+import ru.playsoftware.j2meloader.librarydb.LibraryTransferIntents;
 import ru.playsoftware.j2meloader.librarydb.LibraryViewModel;
 import ru.playsoftware.j2meloader.settings.SettingsActivity;
 import ru.playsoftware.j2meloader.util.AppUtils;
@@ -325,6 +328,57 @@ public class AppsListFragment extends Fragment {
 			}
 
 			@Override
+			public void onShareApp(int appId) {
+				LibraryAppRow app = findRow(appId);
+				if (app == null) return;
+				LibraryTransferActions.prepareShareApp(libraryViewModel, app.getId(), (prepared, error) -> {
+					if (error != null) {
+						showTransferError(error);
+						return;
+					}
+					if (!isAdded() || prepared == null) return;
+					try {
+						startActivity(LibraryTransferIntents.shareApp(
+								requireContext(), prepared, app.getTitle()));
+					} catch (ActivityNotFoundException | SecurityException exception) {
+						showTransferError(exception);
+					}
+				});
+			}
+
+			@Override
+			public void onExportAppBundle(int appId) {
+				LibraryAppRow app = findRow(appId);
+				if (app == null) return;
+				LibraryTransferActions.prepareExportAppBundle(
+						libraryViewModel,
+						app.getId(),
+						progress -> {
+							if (!isAdded()) return;
+							LibraryComposeController controller = composeController;
+							if (controller != null) {
+								controller.showNotice(getString(
+										R.string.library_export_progress,
+										progress.getCompletedEntries(),
+										progress.getTotalEntries()));
+							}
+						},
+						(prepared, error) -> {
+							if (error != null) {
+								showTransferError(error);
+								return;
+							}
+							if (!isAdded() || prepared == null) return;
+							try {
+								startActivity(LibraryTransferIntents.exportBundle(
+										requireContext(), prepared, app.getTitle()));
+							} catch (ActivityNotFoundException | SecurityException exception) {
+								showTransferError(exception);
+							}
+						});
+			}
+
+			@Override
 			public void onReinstall(int appId) {
 				LibraryAppRow app = findRow(appId);
 				File workdir = activeWorkdir;
@@ -491,7 +545,9 @@ public class AppsListFragment extends Fragment {
 					row.getSourceTitle(),
 					row.getSourceVendor(),
 					row.getSourceVersion(),
-					row.getSourceDescription()));
+					row.getSourceDescription(),
+					row.getPlayCount(),
+					row.getTotalPlayTimeMs()));
 		}
 		LibraryComposeController controller = composeController;
 		if (controller != null) {
@@ -541,6 +597,14 @@ public class AppsListFragment extends Fragment {
 		Log.e(TAG, "Library operation failed", error);
 		LibraryComposeController controller = composeController;
 		if (controller != null && isAdded()) controller.showNotice(getString(R.string.error));
+	}
+
+	private void showTransferError(Throwable error) {
+		Log.e(TAG, "Library transfer failed", error);
+		LibraryComposeController controller = composeController;
+		if (controller != null && isAdded()) {
+			controller.showNotice(getString(R.string.library_transfer_unavailable));
+		}
 	}
 
 	private void onFilePicked(Uri uri) {
