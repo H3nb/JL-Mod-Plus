@@ -3,10 +3,9 @@
     <string name="library_metadata_edit_title">Edit Metadata</string>
     <string name="library_metadata_icon">Icon</string>
     <string name="library_metadata_change_icon">Change Icon</string>
-    <string name="library_metadata_icon_note">Selected images are copied into app storage and normalized to PNG.</string>
     <string name="library_metadata_name">Name</string>
     <string name="library_metadata_vendor">Vendor</string>
-    <string name="library_metadata_version">Version</string>
     <string name="library_metadata_description">Description</string>
     <string name="library_metadata_reset_to_original">Reset to Original</string>
+    <string name="library_metadata_save">Save</string>
 </resources>
