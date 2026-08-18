@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -49,6 +50,7 @@ class LibraryRepository(
             val generation: Long,
             val emulatorDir: File,
             val apps: List<LibraryAppRow>,
+            val collections: List<LibraryCollectionRow> = emptyList(),
             val bootstrapFailures: List<LibraryScanner.Failure> = emptyList(),
             val legacyImportFailure: String? = null,
             val reconciliationFailures: List<LibraryScanner.Failure> = emptyList(),
@@ -108,6 +110,11 @@ class LibraryRepository(
     fun currentApp(expected: LibraryGenerationToken, appId: Long): LibraryAppRow? {
         val ready = requireReadyGeneration(expected)
         return ready.apps.firstOrNull { it.id == appId }
+    }
+
+    fun currentCollection(expected: LibraryGenerationToken, collectionId: Long): LibraryCollectionRow? {
+        val ready = requireReadyGeneration(expected)
+        return ready.collections.firstOrNull { it.id == collectionId }
     }
 
     fun currentStorageKeys(expected: LibraryGenerationToken): Set<String> =
@@ -187,6 +194,61 @@ class LibraryRepository(
         }
     }
 
+    suspend fun createCollection(
+        expected: LibraryGenerationToken,
+        name: String,
+        createdAt: Long,
+    ): Long = withActiveDatabase(expected) { dao ->
+        dao.createCollection(name, createdAt)
+    }
+
+    suspend fun renameCollection(
+        expected: LibraryGenerationToken,
+        collectionId: Long,
+        name: String,
+    ) {
+        withActiveDatabase(expected) { dao ->
+            check(dao.getCollection(collectionId) != null) { "Collection disappeared: $collectionId" }
+            val displayName = name.trim()
+            require(displayName.isNotEmpty()) { "Collection name must not be blank" }
+            check(
+                dao.updateCollectionName(
+                    collectionId = collectionId,
+                    name = displayName,
+                    normalizedName = LibraryCollectionNames.normalize(displayName),
+                ) == 1,
+            ) { "Unable to rename collection $collectionId" }
+        }
+    }
+
+    suspend fun deleteCollection(expected: LibraryGenerationToken, collectionId: Long) {
+        withActiveDatabase(expected) { dao ->
+            check(dao.deleteCollection(collectionId) == 1) {
+                "Collection disappeared: $collectionId"
+            }
+        }
+    }
+
+    suspend fun setCollectionMembership(
+        expected: LibraryGenerationToken,
+        collectionId: Long,
+        appId: Long,
+        included: Boolean,
+        addedAt: Long,
+    ) {
+        withActiveDatabase(expected) { dao ->
+            dao.setCollectionMembership(collectionId, appId, included, addedAt)
+        }
+    }
+
+    suspend fun collectionAppIds(
+        expected: LibraryGenerationToken,
+        collectionId: Long,
+    ): Set<Long> = withActiveDatabase(expected) { dao ->
+        check(dao.getCollection(collectionId) != null) { "Collection disappeared: $collectionId" }
+        dao.getCollectionAppIds(collectionId).toSet()
+    }
+
     suspend fun recordInstalledApp(
         expected: LibraryGenerationToken,
         existingId: Long?,
@@ -209,18 +271,12 @@ class LibraryRepository(
     }
 
     override fun close() {
-        // Activity/ViewModel destruction is an authority boundary just like a workdir switch.
-        // Invalidate synchronously so stale Rx callbacks cannot mutate the still-open DB while the
-        // worker is winding down; runWorkdir's finally block remains responsible for closing it.
         workdirRequests.value = null
         mutableState.value = State.Idle
         worker.cancel()
     }
 
     private fun request(emulatorDir: File) {
-        // Publishing the request and Opening state together is the synchronous invalidation boundary.
-        // UI/actions stop seeing the previous READY generation immediately; DB close can follow on
-        // the worker without leaving a window where stale rows still look actionable.
         val request = WorkdirRequest(
             generation = nextGeneration.incrementAndGet(),
             emulatorDir = emulatorDir,
@@ -266,13 +322,17 @@ class LibraryRepository(
                 activeDatabase = ActiveDatabase(request.token(), database)
             }
 
-            database.libraryDao().observeApps().collect { apps ->
+            val dao = database.libraryDao()
+            combine(dao.observeApps(), dao.observeCollections()) { apps, collections ->
+                apps to collections
+            }.collect { (apps, collections) ->
                 currentCoroutineContext().ensureActive()
                 ensureCurrent(request)
                 mutableState.value = State.Ready(
                     generation = request.generation,
                     emulatorDir = emulatorDir,
                     apps = apps,
+                    collections = collections,
                     bootstrapFailures = bootstrap.failures,
                     legacyImportFailure = bootstrap.legacyImportFailure,
                     reconciliationFailures = reconciliation.failures,
