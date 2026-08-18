@@ -22,6 +22,43 @@ class LibraryListProjectionTest {
         assertEquals(listOf(2L, 3L), project("alpha", 0).map { it.id })
     }
 
+    @Test fun smartSearchRanksTitleBeforeVendorVersionAndDescription() {
+        val searchable = listOf(
+            row(10, "Quest", "Vendor", version = "1.0", description = "plain"),
+            row(11, "Quest Deluxe", "Vendor", version = "1.0", description = "plain"),
+            row(12, "My Quest", "Vendor", version = "1.0", description = "plain"),
+            row(13, "Ordinary", "Quest Studios", version = "1.0", description = "plain"),
+            row(14, "Ordinary", "Vendor", version = "Quest build", description = "plain"),
+            row(15, "Ordinary", "Vendor", version = "1.0", description = "Includes quest mode"),
+        )
+
+        val result = LibraryListProjection.project(
+            rows = searchable,
+            filter = "quest",
+            sortVariant = LibraryListProjection.SORT_TITLE,
+            locale = Locale.US,
+        )
+
+        assertEquals(listOf(10L, 11L, 12L, 13L, 14L, 15L), result.map { it.id })
+    }
+
+    @Test fun searchRankUsesSelectedSortOnlyAsTieBreakerWithinSameRank() {
+        val searchable = listOf(
+            row(10, "Zulu Quest", "A Vendor"),
+            row(11, "Alpha Quest", "Z Vendor"),
+            row(12, "Quest", "Z Vendor"),
+        )
+
+        val result = LibraryListProjection.project(
+            rows = searchable,
+            filter = "quest",
+            sortVariant = LibraryListProjection.SORT_VENDOR,
+            locale = Locale.US,
+        )
+
+        assertEquals(listOf(12L, 10L, 11L), result.map { it.id })
+    }
+
     @Test fun wildcardCharactersAreTreatedAsLiteralSearchText() {
         val specialRows = listOf(
             row(10, "100% Fun", "Vendor"),
@@ -67,6 +104,22 @@ class LibraryListProjectionTest {
             quickView = LibraryQuickView.RecentlyAdded,
         )
         assertEquals(listOf(14L, 12L, 13L, 10L), result.map { it.id })
+    }
+
+    @Test fun recentlyAddedSearchUsesRelevanceThenRecentTime() {
+        val recentRows = listOf(
+            row(10, "My Quest", "Vendor", addedAt = 500L),
+            row(11, "Quest", "Vendor", addedAt = 100L),
+            row(12, "Quest Deluxe", "Vendor", addedAt = 300L),
+        )
+        val result = LibraryListProjection.project(
+            rows = recentRows,
+            filter = "quest",
+            sortVariant = LibraryListProjection.SORT_TITLE,
+            locale = Locale.US,
+            quickView = LibraryQuickView.RecentlyAdded,
+        )
+        assertEquals(listOf(11L, 12L, 10L), result.map { it.id })
     }
 
     @Test fun titleSortPreservesLegacySecondaryVendorOrdering() {
@@ -117,16 +170,18 @@ class LibraryListProjectionTest {
         vendor: String,
         favorite: Boolean = false,
         addedAt: Long? = null,
+        version: String = "1.0",
+        description: String = "",
     ) = LibraryAppRow(
         id = id,
         storageKey = "app-$id",
         sourceTitle = title,
         sourceVendor = vendor,
-        sourceVersion = "1.0",
+        sourceVersion = version,
         title = title,
         vendor = vendor,
-        version = "1.0",
-        description = "",
+        version = version,
+        description = description,
         favorite = favorite,
         addedAt = addedAt,
         lastPlayedAt = null,
