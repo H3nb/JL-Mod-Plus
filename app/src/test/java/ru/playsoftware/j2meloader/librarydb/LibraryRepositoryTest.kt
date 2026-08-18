@@ -21,6 +21,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -149,6 +150,72 @@ class LibraryRepositoryTest {
         assertEquals("Renamed", renamed.apps.single().title)
     }
 
+    @Test fun metadataOverridesPublishAndResetThroughActiveRoomFlow() = runBlocking {
+        val root = temporaryFolder.newFolder("metadata")
+        createConvertedApp(root, "game", "Original")
+        repository.setEmulatorDirectory(root)
+        val ready = awaitReady(root)
+        val token = ready.token()
+        val id = ready.apps.single().id
+
+        repository.setMetadataOverrides(
+            expected = token,
+            appId = id,
+            title = "  Custom title  ",
+            vendor = "Custom vendor",
+            version = "Special",
+            description = "Custom description",
+        )
+        val edited = withTimeout(10_000) {
+            repository.state.filterIsInstance<LibraryRepository.State.Ready>()
+                .first { state -> state.apps.singleOrNull()?.title == "Custom title" }
+        }.apps.single()
+        assertEquals("Custom title", edited.title)
+        assertEquals("Custom vendor", edited.vendor)
+        assertEquals("Special", edited.version)
+        assertEquals("Custom description", edited.description)
+        assertEquals("Original", edited.sourceTitle)
+        assertEquals("Vendor", edited.sourceVendor)
+
+        repository.resetMetadataOverrides(token, id)
+        val reset = withTimeout(10_000) {
+            repository.state.filterIsInstance<LibraryRepository.State.Ready>()
+                .first { state ->
+                    state.apps.singleOrNull()?.let {
+                        it.title == "Original" && it.vendor == "Vendor" && it.version == "1.0"
+                    } == true
+                }
+        }.apps.single()
+        assertEquals("Original", reset.title)
+        assertEquals("Vendor", reset.vendor)
+        assertEquals("1.0", reset.version)
+        assertEquals("", reset.description)
+    }
+
+    @Test fun favoriteMutationPublishesThroughActiveRoomFlow() = runBlocking {
+        val root = temporaryFolder.newFolder("favorite")
+        createConvertedApp(root, "game", "Game")
+        repository.setEmulatorDirectory(root)
+        val ready = awaitReady(root)
+        val token = ready.token()
+        val id = ready.apps.single().id
+        assertFalse(ready.apps.single().favorite)
+
+        repository.setFavorite(token, id, true)
+        val favorite = withTimeout(10_000) {
+            repository.state.filterIsInstance<LibraryRepository.State.Ready>()
+                .first { state -> state.apps.singleOrNull()?.favorite == true }
+        }
+        assertTrue(favorite.apps.single().favorite)
+
+        repository.setFavorite(token, id, false)
+        val notFavorite = withTimeout(10_000) {
+            repository.state.filterIsInstance<LibraryRepository.State.Ready>()
+                .first { state -> state.apps.singleOrNull()?.favorite == false }
+        }
+        assertFalse(notFavorite.apps.single().favorite)
+    }
+
     @Test fun workdirRequestInvalidatesOldGenerationBeforeWorkerClosesDatabase() = runBlocking {
         val first = temporaryFolder.newFolder("sync-first")
         val second = temporaryFolder.newFolder("sync-second")
@@ -196,6 +263,29 @@ class LibraryRepositoryTest {
             assertEquals(listOf("two"), repository.state.value.let { state ->
                 (state as LibraryRepository.State.Ready).apps.map { it.storageKey }
             })
+        }
+    }
+
+    @Test fun staleFeatureMutationIsRejectedAfterAtoBtoA() = runBlocking {
+        val first = temporaryFolder.newFolder("feature-aba-first")
+        val second = temporaryFolder.newFolder("feature-aba-second")
+        createConvertedApp(first, "one", "First")
+        createConvertedApp(second, "two", "Second")
+
+        repository.setEmulatorDirectory(first)
+        val staleReady = awaitReady(first)
+        val staleToken = staleReady.token()
+        val staleId = staleReady.apps.single().id
+        repository.setEmulatorDirectory(second)
+        awaitReady(second)
+        repository.setEmulatorDirectory(first)
+        val reopened = awaitReady(first) { it.generation != staleToken.generation }
+
+        try {
+            repository.setFavorite(staleToken, staleId, true)
+            throw AssertionError("Expected stale feature mutation rejection")
+        } catch (_: IllegalStateException) {
+            assertFalse(reopened.apps.single().favorite)
         }
     }
 
