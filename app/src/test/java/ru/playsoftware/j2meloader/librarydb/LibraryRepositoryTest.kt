@@ -173,7 +173,8 @@ class LibraryRepositoryTest {
         } catch (_: IllegalStateException) {
             // Expected.
         }
-        awaitReady(second)
+        val secondReady = awaitReady(second)
+        assertEquals(listOf("two"), secondReady.apps.map { it.storageKey })
     }
 
     @Test fun staleWorkdirMutationIsRejectedAfterSwitch() = runBlocking {
