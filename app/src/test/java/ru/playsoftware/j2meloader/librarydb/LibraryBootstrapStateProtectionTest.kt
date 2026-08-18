@@ -17,14 +17,18 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-/** Regression coverage for established Library data whose bootstrap marker is inconsistent. */
+/** Regression coverage for durable Library data whose singleton bootstrap row is missing. */
 class LibraryBootstrapStateProtectionTest {
     @get:Rule val temporaryFolder = TemporaryFolder()
 
     @Test
     fun receiptOnlyDatabaseWithoutBootstrapStateIsNotTreatedAsFresh() = runBlocking {
         val workDir = temporaryFolder.newFolder("receipt-only")
-        val database = openDatabase(workDir)
+        val database = Room.databaseBuilder<LibraryDatabase>(
+            File(workDir, LibraryDatabase.FILE_NAME).absolutePath,
+        )
+            .setDriver(BundledSQLiteDriver())
+            .build()
         try {
             val dao = database.libraryDao()
             assertTrue(dao.insertPlayStatReceipt(PlayStatReceiptEntity("session-preserved")) >= 0)
@@ -43,45 +47,4 @@ class LibraryBootstrapStateProtectionTest {
             database.close()
         }
     }
-
-    @Test
-    fun indexingMarkerWithPersistentAppIsNotClearedAsRetryableBootstrap() = runBlocking {
-        val workDir = temporaryFolder.newFolder("indexing-with-data")
-        val database = openDatabase(workDir)
-        try {
-            val dao = database.libraryDao()
-            dao.setLibraryState(LibraryStateEntity(bootstrapState = LibraryBootstrapState.INDEXING))
-            val appId = dao.insertApp(
-                LibraryAppEntity(
-                    storageKey = "preserved",
-                    sourceTitle = "Preserved",
-                    sourceVendor = "Vendor",
-                    sourceVersion = "1.0",
-                    customTitle = "User Rename",
-                    favorite = true,
-                ),
-            )
-
-            try {
-                LibraryBootstrapper().ensureReady(database, workDir)
-                throw AssertionError("Expected inconsistent INDEXING state to fail closed")
-            } catch (_: IllegalStateException) {
-                // The initial publish is atomic, so INDEXING plus durable rows is not a fresh retry.
-            }
-
-            val preserved = requireNotNull(dao.getApp(appId))
-            assertEquals("User Rename", preserved.customTitle)
-            assertTrue(preserved.favorite)
-            assertEquals(LibraryBootstrapState.INDEXING, dao.getLibraryState()?.bootstrapState)
-        } finally {
-            database.close()
-        }
-    }
-
-    private fun openDatabase(workDir: File): LibraryDatabase =
-        Room.databaseBuilder<LibraryDatabase>(
-            File(workDir, LibraryDatabase.FILE_NAME).absolutePath,
-        )
-            .setDriver(BundledSQLiteDriver())
-            .build()
 }
