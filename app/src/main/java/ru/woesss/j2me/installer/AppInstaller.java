@@ -43,6 +43,7 @@ import io.reactivex.SingleEmitter;
 import ru.playsoftware.j2meloader.EmulatorApplication;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.librarydb.LibraryAppRow;
+import ru.playsoftware.j2meloader.librarydb.LibraryGenerationLease;
 import ru.playsoftware.j2meloader.librarydb.LibraryGenerationToken;
 import ru.playsoftware.j2meloader.librarydb.LibraryIconRevision;
 import ru.playsoftware.j2meloader.librarydb.LibraryInstallRecovery;
@@ -320,9 +321,8 @@ public class AppInstaller {
 		if (!cacheDir.exists() && !cacheDir.mkdirs()) {
 			throw new ConverterException("Can't create cache dir");
 		}
-		tmpDir = new File(appsDir(), LibraryInstallRecovery.STAGING_DIR_NAME);
-		// Never mix a stale interrupted conversion with the next attempt.
-		if (tmpDir.exists()) FileUtils.deleteDirectory(tmpDir);
+		LibraryInstallRecovery.discardStaging(expectedWorkdir);
+		tmpDir = LibraryInstallRecovery.stagingDirectory(expectedWorkdir);
 		if (!tmpDir.mkdirs()) {
 			throw new ConverterException("Can't create staging directory: '" + tmpDir + "'");
 		}
@@ -370,18 +370,26 @@ public class AppInstaller {
 		}
 
 		File replacementBackup = null;
-		if (targetDir.exists()) {
-			replacementBackup = LibraryInstallRecovery.createBackup(
-					expectedWorkdir,
-					appDirName,
-					targetDir);
-		}
-		if (!tmpDir.renameTo(targetDir)) {
-			if (replacementBackup != null &&
-					!LibraryInstallRecovery.restoreBackup(targetDir, replacementBackup)) {
-				Log.e(TAG, "Replacement publish failed and immediate backup rollback also failed: " + appDirName);
+		// The lease is deliberately limited to the two rename operations. Workdir switching cannot
+		// invalidate the generation between backup and replacement publish, while dexing/copying and
+		// the asynchronous Room mutation remain outside the lock.
+		try (LibraryGenerationLease ignored = libraryViewModel.acquireGenerationLease(
+				expectedGeneration,
+				expectedWorkdir)) {
+			if (targetDir.exists()) {
+				replacementBackup = LibraryInstallRecovery.createBackup(
+						expectedWorkdir,
+						appDirName,
+						targetDir);
 			}
-			throw new ConverterException("Can't move '" + tmpDir + "' to '" + targetDir + "'");
+			if (!tmpDir.renameTo(targetDir)) {
+				if (replacementBackup != null &&
+						!LibraryInstallRecovery.restoreBackup(targetDir, replacementBackup)) {
+					Log.e(TAG,
+							"Replacement publish failed and immediate backup rollback also failed: " + appDirName);
+				}
+				throw new ConverterException("Can't move '" + tmpDir + "' to '" + targetDir + "'");
+			}
 		}
 
 		String sourceTitle = newDesc.getName();
