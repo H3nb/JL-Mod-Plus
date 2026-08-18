@@ -408,6 +408,41 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun restoreImportedBundle(
+        appId: Long,
+        prepared: LibraryAppBundleImporter.PreparedImport,
+        callback: MutationCallback<Unit>,
+    ) {
+        val generation = readyGeneration()
+        val app = try {
+            generation?.let { repository.currentApp(it, appId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available"))
+            return
+        }
+        launchMutation(callback) {
+            val result = withContext(Dispatchers.IO) {
+                acquireGenerationLease(generation.generation, generation.emulatorDir).use {
+                    val current = repository.currentApp(generation, app.id)
+                    check(current?.storageKey == app.storageKey) {
+                        "Library import target changed before restore"
+                    }
+                    LibraryAppBundleImporter.restore(prepared, generation.emulatorDir, app.storageKey)
+                }
+            }
+            result.iconRevision?.let { revision ->
+                repository.setIconRevision(
+                    generation,
+                    app.id,
+                    distinctIconRevision(revision, app.iconRevision),
+                )
+            }
+        }
+    }
+
     fun setFavorite(appId: Long, favorite: Boolean, callback: MutationCallback<Unit>) {
         val generation = readyGeneration()
         val app = try {

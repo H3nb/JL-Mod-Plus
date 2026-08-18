@@ -62,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
 	private static final long DIAGNOSTIC_RECOVERY_RETRY_MILLIS = 200L;
 	private static final String STATE_PENDING_INSTALLER_IDS = "MainActivity.pendingInstallerIds";
 	private static final String STATE_PENDING_INSTALLER_URIS = "MainActivity.pendingInstallerUris";
+	private static final String STATE_PENDING_INSTALLER_BUNDLES = "MainActivity.pendingInstallerBundles";
 	private static final String PREF_ACKED_INSTALLER_REQUEST_IDS =
 			"MainActivity.ackedInstallerRequestIds";
 	private static final String INSTALLER_TAG = "installer";
@@ -69,10 +70,12 @@ public class MainActivity extends AppCompatActivity {
 	private static final class PendingInstallerRequest {
 		final String id;
 		final Uri uri;
+		final boolean bundle;
 
-		PendingInstallerRequest(String id, Uri uri) {
+		PendingInstallerRequest(String id, Uri uri, boolean bundle) {
 			this.id = id;
 			this.uri = uri;
+			this.bundle = bundle;
 		}
 	}
 
@@ -174,12 +177,16 @@ public class MainActivity extends AppCompatActivity {
 	protected void onSaveInstanceState(@NonNull Bundle outState) {
 		ArrayList<String> ids = new ArrayList<>(pendingInstallerRequests.size());
 		ArrayList<String> uris = new ArrayList<>(pendingInstallerRequests.size());
+		boolean[] bundles = new boolean[pendingInstallerRequests.size()];
+		int requestIndex = 0;
 		for (PendingInstallerRequest request : pendingInstallerRequests) {
 			ids.add(request.id);
 			uris.add(request.uri.toString());
+			bundles[requestIndex++] = request.bundle;
 		}
 		outState.putStringArrayList(STATE_PENDING_INSTALLER_IDS, ids);
 		outState.putStringArrayList(STATE_PENDING_INSTALLER_URIS, uris);
+		outState.putBooleanArray(STATE_PENDING_INSTALLER_BUNDLES, bundles);
 
 		// This snapshot now reflects every ACK that happened before this callback. Only ACKs that
 		// happen after the snapshot need a durable tombstone to suppress stale-state replay.
@@ -200,9 +207,17 @@ public class MainActivity extends AppCompatActivity {
 
 	/** Single READY gate used by initial intents, onNewIntent(), and the app-owned file picker. */
 	public void requestInstaller(@Nullable Uri uri) {
+		enqueueInstaller(uri, false);
+	}
+
+	public void requestBundleInstaller(@Nullable Uri uri) {
+		enqueueInstaller(uri, true);
+	}
+
+	private void enqueueInstaller(@Nullable Uri uri, boolean bundle) {
 		if (uri == null) return;
 		pendingInstallerRequests.addLast(
-				new PendingInstallerRequest(UUID.randomUUID().toString(), uri));
+				new PendingInstallerRequest(UUID.randomUUID().toString(), uri, bundle));
 		maybeShowPendingInstaller();
 	}
 
@@ -224,6 +239,14 @@ public class MainActivity extends AppCompatActivity {
 		if (completed != null && installerStateSnapshotExists) {
 			recordAcknowledgedInstallerRequest(completed.id);
 		}
+		if (completed != null && completed.bundle) {
+			try {
+				getContentResolver().releasePersistableUriPermission(
+						completed.uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+			} catch (SecurityException ignored) {
+				// The provider may have supplied only a transient grant.
+			}
+		}
 
 		Intent intent = getIntent();
 		if (uri != null && uri.equals(intent.getData())) {
@@ -242,6 +265,7 @@ public class MainActivity extends AppCompatActivity {
 			installerStateSnapshotExists = true;
 			ArrayList<String> ids = savedInstanceState.getStringArrayList(STATE_PENDING_INSTALLER_IDS);
 			ArrayList<String> uris = savedInstanceState.getStringArrayList(STATE_PENDING_INSTALLER_URIS);
+			boolean[] bundles = savedInstanceState.getBooleanArray(STATE_PENDING_INSTALLER_BUNDLES);
 			Set<String> acknowledged = preferences.getStringSet(
 					PREF_ACKED_INSTALLER_REQUEST_IDS,
 					new HashSet<>());
@@ -252,8 +276,9 @@ public class MainActivity extends AppCompatActivity {
 					String value = uris.get(i);
 					if (id != null && !id.isEmpty() && value != null && !value.isEmpty()
 							&& !acknowledged.contains(id)) {
-						pendingInstallerRequests.addLast(
-								new PendingInstallerRequest(id, Uri.parse(value)));
+						boolean bundle = bundles != null && i < bundles.length && bundles[i];
+					pendingInstallerRequests.addLast(
+								new PendingInstallerRequest(id, Uri.parse(value), bundle));
 					}
 				}
 			}
@@ -281,8 +306,10 @@ public class MainActivity extends AppCompatActivity {
 		if (request == null) return;
 		// Do not dequeue here. Presentation is not consumption: process/activity recreation may happen
 		// while the dialog is loading or converting. The dialog acknowledges only a terminal outcome.
-		InstallerDialog.newExternalRequest(request.id, request.uri)
-				.show(getSupportFragmentManager(), INSTALLER_TAG);
+		InstallerDialog installer = request.bundle
+				? InstallerDialog.newExternalBundleRequest(request.id, request.uri)
+				: InstallerDialog.newExternalRequest(request.id, request.uri);
+		installer.show(getSupportFragmentManager(), INSTALLER_TAG);
 	}
 
 	private void recordAcknowledgedInstallerRequest(String requestId) {

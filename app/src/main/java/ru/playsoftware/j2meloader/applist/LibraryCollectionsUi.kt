@@ -7,6 +7,7 @@
 package ru.playsoftware.j2meloader.applist
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -44,15 +46,28 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -146,16 +161,18 @@ interface LibraryCollectionsHost : LibraryActions {
     fun onRemoveAppFromCollection(appId: Int, collectionId: Long)
 }
 
-/** READY Collections destination. Opening a collection reuses the main Library browser. */
+/** READY Collections destination. Collections overview and member browsing share Library scroll chrome. */
 @Composable
 internal fun LibraryCollectionsDestination(
     host: LibraryCollectionsHost,
     libraryState: LibraryUiState,
     scaffoldPadding: PaddingValues,
     onOpenActions: (LibraryAppUiItem, Long) -> Unit,
+    onNavigationVisibilityChanged: (Boolean) -> Unit,
 ) {
     val state by host.collectionsStore().state.collectAsState()
     if (!state.ready) {
+        onNavigationVisibilityChanged(true)
         LibraryCollectionsDestination(scaffoldPadding)
         return
     }
@@ -171,7 +188,10 @@ internal fun LibraryCollectionsDestination(
             allApps = state.allApps,
             libraryState = libraryState,
             scaffoldPadding = scaffoldPadding,
-            onBack = host::onDismissCollectionMembers,
+            onBack = {
+                onNavigationVisibilityChanged(true)
+                host.onDismissCollectionMembers()
+            },
             onOpenApp = host::onOpenApp,
             onOpenActions = { app -> onOpenActions(app, openCollection.id) },
             onRemove = { appId -> host.onRemoveAppFromCollection(appId, openCollection.id) },
@@ -183,6 +203,7 @@ internal fun LibraryCollectionsDestination(
                 }
             },
             onSort = host::onSort,
+            onNavigationVisibilityChanged = onNavigationVisibilityChanged,
         )
         return
     }
@@ -191,117 +212,207 @@ internal fun LibraryCollectionsDestination(
     var actionsTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
     var renameTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
     var deleteTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val headerHeightPx = remember { mutableStateOf(0) }
+    val headerOffsetPx = remember { mutableStateOf(0f) }
+    val density = LocalDensity.current
+    val hideDistancePx = with(density) { 10.dp.toPx() }
+    val revealDistancePx = with(density) { 18.dp.toPx() }
+    val chromeHysteresis = remember(hideDistancePx, revealDistancePx) {
+        LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx)
+    }
 
-    LazyColumn(
+    LaunchedEffect(state.collections) {
+        headerOffsetPx.value = 0f
+        chromeHysteresis.reset()
+        onNavigationVisibilityChanged(true)
+        snapshotFlow {
+            Triple(
+                listState.firstVisibleItemIndex,
+                listState.firstVisibleItemScrollOffset,
+                listState.canScrollForward || listState.canScrollBackward,
+            )
+        }.collectLatest { (index, offset, canScroll) ->
+            if (!canScroll || (index == 0 && offset == 0)) {
+                headerOffsetPx.value = 0f
+                chromeHysteresis.reset()
+                onNavigationVisibilityChanged(true)
+            }
+        }
+    }
+
+    val scrollConnection = remember(chromeHysteresis, onNavigationVisibilityChanged) {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                val delta = available.y
+                val height = headerHeightPx.value
+                if (delta == 0f || height <= 0) return Offset.Zero
+                val canScroll = listState.canScrollForward || listState.canScrollBackward
+                if (!canScroll) {
+                    if (headerOffsetPx.value != 0f || !chromeHysteresis.chromeVisible) {
+                        headerOffsetPx.value = 0f
+                        chromeHysteresis.reset()
+                        onNavigationVisibilityChanged(true)
+                    }
+                    return Offset.Zero
+                }
+                val fullyHidden = headerOffsetPx.value <= -height.toFloat() + 0.5f
+                var visibilityChange = chromeHysteresis.onScrollDelta(delta)
+                val shouldMoveHeader =
+                    delta < 0f || !fullyHidden || chromeHysteresis.chromeVisible || visibilityChange == true
+                if (shouldMoveHeader) {
+                    headerOffsetPx.value =
+                        (headerOffsetPx.value + delta).coerceIn(-height.toFloat(), 0f)
+                }
+                if (delta > 0f && headerOffsetPx.value >= -0.5f && !chromeHysteresis.chromeVisible) {
+                    visibilityChange = chromeHysteresis.revealNow()
+                }
+                visibilityChange?.let(onNavigationVisibilityChanged)
+                return Offset.Zero
+            }
+        }
+    }
+
+    val renderHeader: @Composable (Modifier, Boolean) -> Unit = { modifier, interactive ->
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.library_destination_collections),
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+            TextButton(
+                enabled = interactive,
+                onClick = { createDialog = true },
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_add),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(stringResource(R.string.library_collection_new))
+            }
+        }
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(scaffoldPadding)
-            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+            .clipToBounds()
+            .nestedScroll(scrollConnection),
     ) {
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.library_destination_collections),
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.SemiBold,
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            state = listState,
+        ) {
+            item {
+                renderHeader(
+                    Modifier
+                        .alpha(0f)
+                        .clearAndSetSemantics { },
+                    false,
                 )
-                TextButton(onClick = { createDialog = true }) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_add),
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
+            }
+
+            if (state.collections.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 240.dp)
+                            .padding(horizontal = 28.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_collections),
+                                contentDescription = null,
+                                modifier = Modifier.size(52.dp),
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                            Text(
+                                text = stringResource(R.string.library_collections_empty_title),
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Medium,
+                                textAlign = TextAlign.Center,
+                            )
+                            Text(
+                                text = stringResource(R.string.library_collection_ready_empty_message),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    }
+                }
+            } else {
+                items(state.collections, key = { it.id }) { collection ->
+                    ListItem(
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        headlineContent = {
+                            Text(
+                                text = collection.name,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                fontWeight = FontWeight.Medium,
+                            )
+                        },
+                        supportingContent = {
+                            Text(
+                                text = stringResource(
+                                    R.string.library_collection_member_count,
+                                    collection.appCount,
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        },
+                        leadingContent = {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_collections),
+                                contentDescription = null,
+                            )
+                        },
+                        trailingContent = {
+                            IconButton(onClick = { actionsTarget = collection }) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_edit),
+                                    contentDescription = stringResource(R.string.edit),
+                                )
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { host.onOpenCollection(collection.id) },
                     )
-                    Spacer(Modifier.width(6.dp))
-                    Text(stringResource(R.string.library_collection_new))
+                    HorizontalDivider(
+                        modifier = Modifier.padding(start = 64.dp, end = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                    )
                 }
             }
         }
 
-        if (state.collections.isEmpty()) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 240.dp)
-                        .padding(horizontal = 28.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_collections),
-                            contentDescription = null,
-                            modifier = Modifier.size(52.dp),
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                        Text(
-                            text = stringResource(R.string.library_collections_empty_title),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Medium,
-                            textAlign = TextAlign.Center,
-                        )
-                        Text(
-                            text = stringResource(R.string.library_collection_ready_empty_message),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-                }
-            }
-        } else {
-            items(state.collections, key = { it.id }) { collection ->
-                ListItem(
-                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                    headlineContent = {
-                        Text(
-                            text = collection.name,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            fontWeight = FontWeight.Medium,
-                        )
-                    },
-                    supportingContent = {
-                        Text(
-                            text = stringResource(
-                                R.string.library_collection_member_count,
-                                collection.appCount,
-                            ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    },
-                    leadingContent = {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_collections),
-                            contentDescription = null,
-                        )
-                    },
-                    trailingContent = {
-                        IconButton(onClick = { actionsTarget = collection }) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_edit),
-                                contentDescription = stringResource(R.string.edit),
-                            )
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { host.onOpenCollection(collection.id) },
-                )
-                HorizontalDivider(
-                    modifier = Modifier.padding(start = 64.dp, end = 16.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
-                )
-            }
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .offset { IntOffset(0, headerOffsetPx.value.roundToInt()) }
+                .background(MaterialTheme.colorScheme.background)
+                .onSizeChanged { headerHeightPx.value = it.height },
+        ) {
+            renderHeader(Modifier, true)
         }
     }
 

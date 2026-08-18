@@ -248,6 +248,7 @@ interface LibraryActions {
     fun onGridSpacingChange(spacing: LibraryGridSpacing) = Unit
     fun onSort(sortIndex: Int)
     fun onInstall()
+    fun onImportAppBundle() = Unit
     fun onOpenApp(appId: Int)
     fun onAddShortcut(appId: Int)
     fun onRename(appId: Int, title: String)
@@ -596,6 +597,9 @@ fun LibraryScreen(
                                 appActions = app
                                 appActionsCollectionId = collectionId
                             },
+                            onNavigationVisibilityChanged = { visible ->
+                                if (!isLandscape) showNavigationBar = visible
+                            },
                         )
                     } else {
                         LibraryCollectionsDestination(padding)
@@ -607,6 +611,7 @@ fun LibraryScreen(
                         onIconRatioChange = actions::onIconRatioChange,
                         onHideGridTitlesChange = actions::onHideGridTitlesChange,
                         onGridSpacingChange = actions::onGridSpacingChange,
+                        onImportAppBundle = actions::onImportAppBundle,
                         onAbout = { infoDialog = LibraryInfoDialog.About },
                         onSettings = actions::onOpenSettings,
                         onHelp = { infoDialog = LibraryInfoDialog.Help },
@@ -1462,6 +1467,7 @@ internal fun LibraryOptionsDestination(
     onIconRatioChange: (LibraryIconRatio) -> Unit,
     onHideGridTitlesChange: (Boolean) -> Unit,
     onGridSpacingChange: (LibraryGridSpacing) -> Unit,
+    onImportAppBundle: () -> Unit,
     onAbout: () -> Unit,
     onSettings: () -> Unit,
     onHelp: () -> Unit,
@@ -1553,6 +1559,12 @@ internal fun LibraryOptionsDestination(
                                 )
                             }
                         }
+                        LibraryActionRow(
+                            label = R.string.library_action_import_bundle,
+                            summary = R.string.library_action_import_bundle_summary,
+                            icon = R.drawable.ic_upload_file,
+                            action = onImportAppBundle,
+                        )
                         if (state.layout == LibraryLayout.Grid) {
                             LibraryOptionGroup(
                                 label = R.string.library_grid_spacing_title,
@@ -1780,15 +1792,18 @@ private fun LibraryListItem(
     favoriteEnabled: Boolean,
     iconRatio: LibraryIconRatio,
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = { onOpenApp(app.id) },
+                onLongClick = { onOpenActions(app) },
+            ),
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .combinedClickable(
-                    onClick = { onOpenApp(app.id) },
-                    onLongClick = { onOpenActions(app) },
-                )
-                .padding(start = 16.dp, end = 12.dp, top = 10.dp, bottom = 10.dp),
+                .padding(start = 16.dp, end = 12.dp, top = 10.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             LibraryIconSlot(
@@ -1817,13 +1832,17 @@ private fun LibraryListItem(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                LibraryDescription(app.description, app.id)
             }
             Spacer(Modifier.width(6.dp))
             if (favoriteEnabled) {
                 LibraryFavoriteButton(app, onFavorite)
             } else {
                 LibraryFavoritePlaceholder(app.id)
+            }
+        }
+        if (app.description.isNotBlank()) {
+            Box(modifier = Modifier.padding(start = 80.dp, end = 16.dp, bottom = 10.dp)) {
+                LibraryDescription(app.description, app.id)
             }
         }
         HorizontalDivider(
@@ -1850,6 +1869,7 @@ internal fun LibraryDescription(descriptionValue: String, appId: Int) {
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Justify,
                 maxLines = if (expanded) Int.MAX_VALUE else 2,
                 overflow = if (expanded) TextOverflow.Clip else TextOverflow.Ellipsis,
                 onTextLayout = { result ->
@@ -3022,16 +3042,6 @@ internal fun AppActionsDialog(
         },
         text = {
             LazyColumn(modifier = Modifier.heightIn(max = libraryDialogListHeight())) {
-                if (onShortcut != null) {
-                    item {
-                        DialogAction(
-                            label = R.string.action_context_shortcut,
-                            icon = R.drawable.ic_add,
-                            onDismiss = onDismiss,
-                            action = onShortcut,
-                        )
-                    }
-                }
                 item {
                     if (onEditMetadata != null) {
                         DialogAction(
@@ -3057,6 +3067,16 @@ internal fun AppActionsDialog(
                         action = onSettings,
                     )
                 }
+                if (onShortcut != null) {
+                    item {
+                        DialogAction(
+                            label = R.string.action_context_shortcut,
+                            icon = R.drawable.ic_add,
+                            onDismiss = onDismiss,
+                            action = onShortcut,
+                        )
+                    }
+                }
                 if (onAddToCollection != null) {
                     item {
                         DialogAction(
@@ -3071,11 +3091,14 @@ internal fun AppActionsDialog(
                     item {
                         DialogAction(
                             label = R.string.library_collection_remove_from_current,
-                            icon = R.drawable.ic_delete,
+                            icon = R.drawable.ic_remove_circle,
                             onDismiss = onDismiss,
                             action = onRemoveFromCollection,
                         )
                     }
+                }
+                if (onShareApp != null || onExportAppBundle != null) {
+                    item { DialogActionDivider() }
                 }
                 if (onShareApp != null) {
                     item {
@@ -3098,6 +3121,7 @@ internal fun AppActionsDialog(
                     }
                 }
                 if (app.canReinstall) {
+                    item { DialogActionDivider() }
                     item {
                         DialogAction(
                             label = R.string.action_reinstall,
@@ -3119,6 +3143,14 @@ internal fun AppActionsDialog(
             }
         },
         confirmButton = {},
+    )
+}
+
+@Composable
+private fun DialogActionDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
     )
 }
 

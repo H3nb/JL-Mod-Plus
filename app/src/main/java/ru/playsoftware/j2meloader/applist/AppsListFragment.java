@@ -117,6 +117,10 @@ public class AppsListFragment extends Fragment {
 			},
 			this::onFilePicked);
 
+	private final ActivityResultLauncher<String[]> importBundleLauncher = registerForActivityResult(
+			new ActivityResultContracts.OpenDocument(),
+			this::onImportBundlePicked);
+
 	private int pendingIconUiId = NO_UI_ID;
 	private final ActivityResultLauncher<String> iconPickerLauncher = registerForActivityResult(
 			new ActivityResultContracts.GetContent(),
@@ -301,6 +305,15 @@ public class AppsListFragment extends Fragment {
 			@Override
 			public void onInstall() {
 				openFileLauncher.launch(null);
+			}
+
+			@Override
+			public void onImportAppBundle() {
+				importBundleLauncher.launch(new String[]{
+						"application/zip",
+						"application/x-zip-compressed",
+						"application/octet-stream"
+				});
 			}
 
 			@Override
@@ -738,6 +751,22 @@ public class AppsListFragment extends Fragment {
 		Activity activity = requireActivity();
 		if (activity instanceof MainActivity) {
 			((MainActivity) activity).requestInstaller(uri);
+			return;
+		}
+		throw new IllegalStateException("AppsListFragment requires MainActivity host");
+	}
+
+	private void onImportBundlePicked(Uri uri) {
+		if (uri == null) return;
+		try {
+			requireContext().getContentResolver().takePersistableUriPermission(
+					uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+		} catch (SecurityException ignored) {
+			// Some document providers expose only the active transient read grant.
+		}
+		Activity activity = requireActivity();
+		if (activity instanceof MainActivity) {
+			((MainActivity) activity).requestBundleInstaller(uri);
 			return;
 		}
 		throw new IllegalStateException("AppsListFragment requires MainActivity host");
