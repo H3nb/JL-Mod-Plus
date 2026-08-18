@@ -173,7 +173,6 @@ internal fun LibraryCollectionsDestination(
 ) {
     val state by host.collectionsStore().state.collectAsState()
     if (!state.ready) {
-        onNavigationVisibilityChanged(true)
         LibraryCollectionsDestination(scaffoldPadding)
         return
     }

@@ -152,6 +152,17 @@ class LibraryComposeTest {
     }
 
     @Test
+    fun optionsExposeImportAppBundleCallback() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(actions = actions)
+
+        composeRule.onNodeWithText("Options").performClick()
+        composeRule.onNodeWithText("Import App Bundle").performClick()
+
+        assertEquals(1, actions.importCount)
+    }
+
+    @Test
     fun gridOptionsExposeTitleVisibilitySpacingAndIconRatio() {
         val actions = RecordingLibraryActions()
         setLibraryContent(
@@ -245,6 +256,7 @@ class LibraryComposeTest {
 
         composeRule.onAllNodesWithContentDescription("Expand description").assertCountEquals(1)
         composeRule.onNodeWithContentDescription("Expand description").performClick()
+        assertEquals(null, actions.openedId)
         composeRule.onNodeWithContentDescription("Collapse description").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Collapse description").performClick()
         composeRule.onNodeWithContentDescription("Expand description").assertIsDisplayed()
@@ -364,6 +376,7 @@ class LibraryComposeTest {
         var hideGridTitles = false
         var sortIndex: Int? = null
         var installCount = 0
+        var importCount = 0
         var openedId: Int? = null
         var renamed: Pair<Int, String>? = null
         var settingsCount = 0
@@ -376,6 +389,7 @@ class LibraryComposeTest {
         override fun onGridSpacingChange(spacing: LibraryGridSpacing) { gridSpacing = spacing }
         override fun onSort(sortIndex: Int) { this.sortIndex = sortIndex }
         override fun onInstall() { installCount++ }
+        override fun onImportAppBundle() { importCount++ }
         override fun onOpenApp(appId: Int) { openedId = appId }
         override fun onAddShortcut(appId: Int) = Unit
         override fun onRename(appId: Int, title: String) { renamed = appId to title }

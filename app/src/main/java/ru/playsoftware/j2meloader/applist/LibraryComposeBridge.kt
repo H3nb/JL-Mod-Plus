@@ -440,9 +440,9 @@ fun LibraryScreen(
     }
 
     LaunchedEffect(destination) {
+        showInstallFab = true
+        showNavigationBar = true
         if (destination != LibraryDestination.Apps) {
-            showInstallFab = true
-            showNavigationBar = true
             appActions = null
             appActionsCollectionId = null
         }
@@ -3077,6 +3077,9 @@ internal fun AppActionsDialog(
                         )
                     }
                 }
+                if (onAddToCollection != null || onRemoveFromCollection != null) {
+                    item { DialogActionDivider() }
+                }
                 if (onAddToCollection != null) {
                     item {
                         DialogAction(
@@ -3120,8 +3123,8 @@ internal fun AppActionsDialog(
                         )
                     }
                 }
+                item { DialogActionDivider() }
                 if (app.canReinstall) {
-                    item { DialogActionDivider() }
                     item {
                         DialogAction(
                             label = R.string.action_reinstall,
