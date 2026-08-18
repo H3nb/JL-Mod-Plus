@@ -35,14 +35,14 @@ class LibraryAppBundleImporterTest {
             staging,
         )
 
-        assertEquals(listOf<Byte>(1, 2, 3), prepared.jarFile.readBytes().toList())
+        assertEquals(byteArrayOf(1, 2, 3).toList(), prepared.jarFile.readBytes().toList())
         assertEquals("converted", prepared.convertedConfigFile!!.readText())
         assertEquals("config", File(prepared.configDir, "config.json").readText())
-        assertEquals(listOf<Byte>(4, 5, 6), File(prepared.dataDir, "nested/save.bin").readBytes().toList())
+        assertEquals(byteArrayOf(4, 5, 6).toList(), File(prepared.dataDir, "nested/save.bin").readBytes().toList())
         assertFalse(File(staging, "icon.png").exists())
     }
 
-    @Test fun traversalAndDuplicateEntriesAreRejected() {
+    @Test fun traversalAndUnsupportedEntriesAreRejected() {
         assertImportFails(
             bundle(
                 "app/res.jar" to byteArrayOf(1),
@@ -50,12 +50,9 @@ class LibraryAppBundleImporterTest {
             ),
         )
         assertImportFails(
-            bundleEntries(
-                listOf(
-                    "app/res.jar" to byteArrayOf(1),
-                    "config/a" to byteArrayOf(2),
-                    "config/a" to byteArrayOf(3),
-                ),
+            bundle(
+                "app/res.jar" to byteArrayOf(1),
+                "unexpected/payload.bin" to byteArrayOf(3),
             ),
         )
     }
@@ -103,10 +100,7 @@ class LibraryAppBundleImporterTest {
         }
     }
 
-    private fun bundle(vararg entries: Pair<String, ByteArray>): ByteArrayInputStream =
-        bundleEntries(entries.toList())
-
-    private fun bundleEntries(entries: List<Pair<String, ByteArray>>): ByteArrayInputStream {
+    private fun bundle(vararg entries: Pair<String, ByteArray>): ByteArrayInputStream {
         val bytes = ByteArrayOutputStream()
         ZipOutputStream(bytes).use { zip ->
             entries.forEach { (name, content) ->
