@@ -230,6 +230,15 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun getAllApps(): List<LibraryAppRow> {
+        val generation = readyGeneration() ?: return emptyList()
+        return try {
+            repository.currentApps(generation)
+        } catch (_: IllegalStateException) {
+            emptyList()
+        }
+    }
+
     fun storageKeys(expectedGeneration: Long, expectedWorkdir: File): Set<String> =
         repository.currentStorageKeys(token(expectedGeneration, expectedWorkdir))
 

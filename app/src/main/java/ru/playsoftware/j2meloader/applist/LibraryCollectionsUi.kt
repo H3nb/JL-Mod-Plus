@@ -41,7 +41,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -54,16 +53,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import java.text.Collator
-import java.util.Locale
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.withContext
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.librarydb.LibraryCollectionRow
-import ru.playsoftware.j2meloader.librarydb.LibraryQuickView
 
 data class LibraryCollectionUiItem(
     val id: Long,
@@ -84,6 +78,7 @@ data class LibraryCollectionAppTargetUi(
 data class LibraryCollectionsUiState(
     val ready: Boolean = false,
     val collections: List<LibraryCollectionUiItem> = emptyList(),
+    val allApps: List<LibraryAppUiItem> = emptyList(),
     val members: LibraryCollectionMembersUi? = null,
     val addTarget: LibraryCollectionAppTargetUi? = null,
 )
@@ -103,6 +98,10 @@ class LibraryCollectionsUiStore {
                 collections.any { it.id == members.collectionId }
             },
         )
+    }
+
+    fun publishAllApps(items: List<LibraryAppUiItem>) {
+        mutableState.value = mutableState.value.copy(allApps = items)
     }
 
     fun clear() {
@@ -166,42 +165,24 @@ internal fun LibraryCollectionsDestination(
         state.collections.firstOrNull { it.id == current.collectionId }
     }
     if (members != null && openCollection != null) {
-        BackHandler(onBack = host::onDismissCollectionMembers)
-        var query by rememberSaveable(openCollection.id) { mutableStateOf("") }
-        val projectedMembers by produceState(
-            initialValue = members.members,
-            members.members,
-            query,
-            libraryState.sortVariant,
-        ) {
-            value = withContext(Dispatchers.Default) {
-                projectCollectionMembers(members.members, query, libraryState.sortVariant)
-            }
-        }
-        val browserState = libraryState.copy(
-            loading = false,
-            apps = projectedMembers,
-            appliedFilter = query,
-            quickView = LibraryQuickView.All,
-            databaseControlsReady = true,
-            errorMessage = null,
-        )
-        LibraryAppsDestination(
-            state = browserState,
+        LibraryCollectionBrowser(
+            collection = openCollection,
+            members = members.members,
+            allApps = state.allApps,
+            libraryState = libraryState,
             scaffoldPadding = scaffoldPadding,
+            onBack = host::onDismissCollectionMembers,
             onOpenApp = host::onOpenApp,
             onOpenActions = { app -> onOpenActions(app, openCollection.id) },
-            onSearch = { query = it },
-            onQuickView = {},
-            onFavorite = host::onFavorite,
+            onRemove = { appId -> host.onRemoveAppFromCollection(appId, openCollection.id) },
+            onSetMembership = { appId, included ->
+                if (included) {
+                    host.onAddAppToCollection(appId, openCollection.id)
+                } else {
+                    host.onRemoveAppFromCollection(appId, openCollection.id)
+                }
+            },
             onSort = host::onSort,
-            onRetry = {},
-            onFabVisibilityChanged = {},
-            onNavigationVisibilityChanged = {},
-            title = openCollection.name,
-            onBack = host::onDismissCollectionMembers,
-            showQuickViews = false,
-            queryStateKey = openCollection.id,
         )
         return
     }
@@ -420,57 +401,6 @@ internal fun LibraryCollectionsDialogHost(host: LibraryCollectionsHost) {
                 host.onCreateCollection(name)
             },
         )
-    }
-}
-
-private fun projectCollectionMembers(
-    rows: List<LibraryAppUiItem>,
-    filter: String,
-    sortVariant: Int,
-    locale: Locale = Locale.getDefault(),
-): List<LibraryAppUiItem> {
-    val needle = filter.trim().lowercase(Locale.ROOT)
-    val ranked = rows.mapNotNull { row ->
-        val rank = if (needle.isEmpty()) {
-            0
-        } else {
-            collectionSearchRank(row, needle) ?: return@mapNotNull null
-        }
-        rank to row
-    }
-    if (ranked.size < 2) return ranked.map { it.second }
-
-    val collator = Collator.getInstance(locale).apply { strength = Collator.SECONDARY }
-    val sortIndex = sortVariant and Int.MAX_VALUE
-    val descending = sortVariant < 0
-    val fallback = Comparator<LibraryAppUiItem> { left, right ->
-        val primary = when (sortIndex) {
-            1 -> left.id.compareTo(right.id)
-            2 -> collator.compare(left.author, right.author)
-            else -> collator.compare(left.title, right.title)
-        }
-        val ordered = if (descending) -primary else primary
-        if (ordered != 0) ordered else left.id.compareTo(right.id)
-    }
-    return ranked.sortedWith { left, right ->
-        val rankOrder = left.first.compareTo(right.first)
-        if (rankOrder != 0) rankOrder else fallback.compare(left.second, right.second)
-    }.map { it.second }
-}
-
-private fun collectionSearchRank(row: LibraryAppUiItem, needle: String): Int? {
-    val title = row.title.lowercase(Locale.ROOT)
-    val vendor = row.author.lowercase(Locale.ROOT)
-    val version = row.version.lowercase(Locale.ROOT)
-    val description = row.description.lowercase(Locale.ROOT)
-    return when {
-        title == needle -> 0
-        title.startsWith(needle) -> 1
-        title.contains(needle) -> 2
-        vendor.contains(needle) -> 3
-        version.contains(needle) -> 4
-        description.contains(needle) -> 5
-        else -> null
     }
 }
 

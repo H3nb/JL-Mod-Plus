@@ -438,7 +438,11 @@ public class AppsListFragment extends Fragment {
 						app.getId(),
 						true,
 						(ignored, error) -> {
-							if (error != null) showError(error);
+							if (error != null) {
+								showError(error);
+								return;
+							}
+							loadCollectionMembers(collectionId);
 						});
 			}
 
@@ -622,6 +626,12 @@ public class AppsListFragment extends Fragment {
 		}
 
 		collectionsUiStore.publishCollections(state.getCollections());
+		List<LibraryAppRow> allRows = libraryViewModel.getAllApps();
+		List<LibraryAppUiItem> allUiItems = new ArrayList<>(allRows.size());
+		for (LibraryAppRow row : allRows) {
+			allUiItems.add(toLibraryUiItem(row));
+		}
+		collectionsUiStore.publishAllApps(allUiItems);
 		List<LibraryAppUiItem> uiItems = new ArrayList<>(state.getApps().size());
 		for (LibraryAppRow row : state.getApps()) {
 			uiItems.add(toLibraryUiItem(row));

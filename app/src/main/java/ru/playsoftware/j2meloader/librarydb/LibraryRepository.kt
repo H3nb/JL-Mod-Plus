@@ -118,6 +118,9 @@ class LibraryRepository(
         return requireReadyGeneration(expected).apps.filter { it.id in appIds }
     }
 
+    fun currentApps(expected: LibraryGenerationToken): List<LibraryAppRow> =
+        requireReadyGeneration(expected).apps
+
     fun currentCollection(expected: LibraryGenerationToken, collectionId: Long): LibraryCollectionRow? {
         val ready = requireReadyGeneration(expected)
         return ready.collections.firstOrNull { it.id == collectionId }

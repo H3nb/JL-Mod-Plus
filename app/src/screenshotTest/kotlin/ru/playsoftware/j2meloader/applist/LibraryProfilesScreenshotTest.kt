@@ -234,27 +234,23 @@ fun LibraryFilteredEmptyScreenshot() {
 @Composable
 fun LibraryCollectionBrowserScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        LibraryAppsDestination(
-            state = LibraryUiState(
+        LibraryCollectionBrowser(
+            collection = LibraryCollectionUiItem(1L, "RPG Favorites", 3),
+            members = PreviewApps.take(3),
+            allApps = PreviewApps,
+            libraryState = LibraryUiState(
                 loading = false,
-                apps = PreviewApps.take(3),
+                apps = PreviewApps,
                 layout = LibraryLayout.List,
                 databaseControlsReady = true,
             ),
             scaffoldPadding = PaddingValues(),
+            onBack = {},
             onOpenApp = {},
             onOpenActions = {},
-            onSearch = {},
-            onQuickView = {},
-            onFavorite = { _, _ -> },
+            onRemove = {},
+            onSetMembership = { _, _ -> },
             onSort = {},
-            onRetry = {},
-            onFabVisibilityChanged = {},
-            onNavigationVisibilityChanged = {},
-            title = "RPG Favorites",
-            onBack = {},
-            showQuickViews = false,
-            queryStateKey = "preview-collection",
         )
     }
 }
