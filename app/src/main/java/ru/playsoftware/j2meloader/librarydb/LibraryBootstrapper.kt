@@ -45,13 +45,14 @@ class LibraryBootstrapper(
                 return Result(alreadyReady = true, indexedCount = 0, failures = emptyList())
             }
             LibraryBootstrapState.CREATING,
-            LibraryBootstrapState.INDEXING -> Unit
+            LibraryBootstrapState.INDEXING,
             null -> {
-                // A brand-new schema has no singleton row and no user-owned Library data. If data
-                // exists without the state row, treat it as an established/corrupt catalog instead
-                // of silently clearing metadata that cannot be reconstructed from converted/.
+                // A fresh/incomplete bootstrap cannot contain durable Library-owned rows: the
+                // initial catalog and READY transition are published together in one transaction.
+                // If any persistent data exists here, this is an established/corrupt catalog whose
+                // state marker is inconsistent. Fail closed instead of clearing user-owned data.
                 check(!dao.hasPersistentLibraryData()) {
-                    "Library bootstrap state is missing while persistent Library data exists"
+                    "Library bootstrap state is incomplete or missing while persistent Library data exists"
                 }
             }
             else -> error("Unsupported Library bootstrap state: $bootstrapState")
