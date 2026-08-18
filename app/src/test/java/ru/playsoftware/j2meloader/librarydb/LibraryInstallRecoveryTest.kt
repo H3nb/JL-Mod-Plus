@@ -17,18 +17,21 @@ import org.junit.rules.TemporaryFolder
 class LibraryInstallRecoveryTest {
     @get:Rule val temporaryFolder = TemporaryFolder()
 
-    @Test fun backupRootLivesOutsideConvertedNamespace() {
+    @Test fun recoveryArtifactsLiveOutsideConvertedNamespace() {
         val root = temporaryFolder.newFolder("workdir")
         val converted = File(root, "converted").apply { mkdir() }
         val target = File(converted, "game").apply { mkdir() }
         File(target, "converted.dex").writeText("old")
 
         val backup = LibraryInstallRecovery.createBackup(root, "game", target)
+        val staging = LibraryInstallRecovery.stagingDirectory(root)
 
         assertFalse(target.exists())
         assertEquals(File(root, LibraryInstallRecovery.BACKUP_ROOT_NAME), backup.parentFile)
+        assertEquals(root, staging.parentFile)
         assertTrue(backup.isDirectory)
         assertFalse(File(converted, LibraryInstallRecovery.BACKUP_ROOT_NAME).exists())
+        assertFalse(File(converted, LibraryInstallRecovery.STAGING_DIR_NAME).exists())
     }
 
     @Test fun failedPublishCanRestoreBackupToOriginalStorageKey() {
@@ -61,21 +64,19 @@ class LibraryInstallRecoveryTest {
         assertFalse(File(root, LibraryInstallRecovery.BACKUP_ROOT_NAME).exists())
     }
 
-    @Test fun stagingNamesCannotCollideWithInstallerSanitizedStorageKeys() {
-        assertTrue(LibraryInstallRecovery.isReservedStorageKey(LibraryInstallRecovery.STAGING_DIR_NAME))
+    @Test fun onlyLegacyInNamespaceStagingNameIsReservedAsStorageKey() {
+        assertFalse(LibraryInstallRecovery.isReservedStorageKey(LibraryInstallRecovery.STAGING_DIR_NAME))
         assertTrue(LibraryInstallRecovery.isReservedStorageKey(LibraryInstallRecovery.LEGACY_STAGING_DIR_NAME))
-        // The active staging name contains ':'; FileUtils installer sanitization removes ':' from
-        // MIDlet names, so the exact internal name cannot be generated for a normal install.
-        assertTrue(LibraryInstallRecovery.STAGING_DIR_NAME.contains(':'))
+        assertFalse(LibraryInstallRecovery.STAGING_DIR_NAME.contains(':'))
     }
 
-    @Test fun startupRecoveryCleansCurrentAndLegacyStagingAfterRollback() {
+    @Test fun startupRecoveryCleansSiblingAndLegacyStagingAfterRollback() {
         val root = temporaryFolder.newFolder("staging")
         val converted = File(root, "converted").apply { mkdir() }
         val target = File(converted, "game").apply { mkdir() }
         File(target, "converted.dex").writeText("old")
         LibraryInstallRecovery.createBackup(root, "game", target)
-        File(converted, LibraryInstallRecovery.STAGING_DIR_NAME).mkdir()
+        LibraryInstallRecovery.stagingDirectory(root).mkdir()
         File(converted, LibraryInstallRecovery.LEGACY_STAGING_DIR_NAME).mkdir()
 
         val recovery = LibraryInstallRecovery.recoverFilesystem(root)
@@ -83,7 +84,7 @@ class LibraryInstallRecoveryTest {
         assertTrue(recovery.refreshStorageKeys.isEmpty())
         assertTrue(recovery.failures.isEmpty())
         assertTrue(target.isDirectory)
-        assertFalse(File(converted, LibraryInstallRecovery.STAGING_DIR_NAME).exists())
+        assertFalse(LibraryInstallRecovery.stagingDirectory(root).exists())
         assertFalse(File(converted, LibraryInstallRecovery.LEGACY_STAGING_DIR_NAME).exists())
     }
 }
