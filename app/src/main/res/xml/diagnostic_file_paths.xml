@@ -9,4 +9,7 @@
     <cache-path
         name="library_share"
         path="library-share/" />
+    <cache-path
+        name="library_export"
+        path="library-export/" />
 </paths>
