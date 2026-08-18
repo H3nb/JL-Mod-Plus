@@ -162,8 +162,11 @@ class LibraryRepositoryTest {
         repository.setEmulatorDirectory(second)
 
         // No await/yield here. The request itself must synchronously invalidate A even if the
-        // collectLatest worker has not yet entered Opening(B) or closed DB A.
+        // collectLatest worker has not yet closed DB A.
         assertNull(repository.currentReadyToken())
+        val opening = repository.state.value as LibraryRepository.State.Opening
+        assertEquals(second.canonicalFile, opening.emulatorDir)
+        assertNotEquals(staleToken.generation, opening.generation)
         try {
             repository.setCustomTitle(staleToken, firstId, "Must reject immediately")
             throw AssertionError("Expected immediate old-generation mutation rejection")
