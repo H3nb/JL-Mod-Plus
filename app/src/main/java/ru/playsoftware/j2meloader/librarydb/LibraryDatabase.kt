@@ -37,12 +37,17 @@ abstract class LibraryDatabase : RoomDatabase() {
 
     companion object {
         const val FILE_NAME = "JL-Mod-library.db"
-        const val SCHEMA_VERSION = 1
+        const val SCHEMA_VERSION = 2
 
         /**
          * Opens the Library catalog inside the supplied emulator/work directory. An absolute path
          * is intentional: each workdir owns its own catalog and no global app-private Library DB is
          * shared between roots.
+         *
+         * Destructive migration is deliberately not enabled. Favorites, custom metadata,
+         * Collections, play stats, and receipts are user-owned state that cannot be reconstructed
+         * completely from converted/config/save files. Every supported schema therefore needs an
+         * explicit migration in [LibraryMigrations].
          */
         fun open(context: Context, emulatorDir: File): LibraryDatabase {
             require(emulatorDir.isDirectory) {
@@ -55,6 +60,7 @@ abstract class LibraryDatabase : RoomDatabase() {
                 databaseFile.absolutePath,
             )
                 .setDriver(AndroidSQLiteDriver())
+                .addMigrations(*LibraryMigrations.ALL)
                 .build()
         }
     }
