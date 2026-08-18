@@ -7,7 +7,6 @@
 package ru.playsoftware.j2meloader.librarydb
 
 import androidx.room3.Room
-import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
 import com.google.gson.JsonParser
@@ -42,9 +41,12 @@ class LibraryMigrationTest {
         for (version in LibraryMigrations.FIRST_SUPPORTED_VERSION until LibraryDatabase.SCHEMA_VERSION) {
             val file = File(temporaryFolder.root, "schema-$version.db")
             createFromCommittedSchema(version, file)
-            openLatest(file).use { database ->
+            val database = openLatest(file)
+            try {
                 // Force Room to open, migrate, and validate instead of only creating a lazy builder.
                 database.libraryDao().getStorageKeys()
+            } finally {
+                database.close()
             }
         }
     }
@@ -52,7 +54,8 @@ class LibraryMigrationTest {
     @Test fun schema1MigratesToLatestWithoutLosingLibraryOwnedState() = runBlocking {
         val file = File(temporaryFolder.root, "preserve-state.db")
         createFromCommittedSchema(1, file)
-        BundledSQLiteDriver().open(file.absolutePath).use { connection ->
+        val connection = BundledSQLiteDriver().open(file.absolutePath)
+        try {
             connection.execSQL(
                 """
                 INSERT INTO apps (
@@ -76,9 +79,12 @@ class LibraryMigrationTest {
             )
             connection.execSQL("INSERT INTO play_stat_receipts (session_id) VALUES ('session-1')")
             connection.execSQL("INSERT INTO library_state (id, bootstrap_state) VALUES (1, 'READY')")
+        } finally {
+            connection.close()
         }
 
-        openLatest(file).use { database ->
+        val database = openLatest(file)
+        try {
             val dao = database.libraryDao()
             val app = requireNotNull(dao.getApp(7))
             assertEquals("game", app.storageKey)
@@ -96,6 +102,8 @@ class LibraryMigrationTest {
             assertEquals("READY", dao.getLibraryState()?.bootstrapState)
             assertEquals(-1L, dao.insertPlayStatReceipt(PlayStatReceiptEntity("session-1")))
             assertNotNull(dao.getAppByStorageKey("game"))
+        } finally {
+            database.close()
         }
     }
 
@@ -113,7 +121,8 @@ class LibraryMigrationTest {
         }
         assertEquals(version, databaseJson.get("version").asInt)
 
-        BundledSQLiteDriver().open(file.absolutePath).use { connection ->
+        val connection = BundledSQLiteDriver().open(file.absolutePath)
+        try {
             databaseJson.getAsJsonArray("entities").forEach { element ->
                 val entity = element.asJsonObject
                 val tableName = entity.get("tableName").asString
@@ -128,6 +137,8 @@ class LibraryMigrationTest {
                 connection.execSQL(query.asString)
             }
             connection.execSQL("PRAGMA user_version = $version")
+        } finally {
+            connection.close()
         }
     }
 
