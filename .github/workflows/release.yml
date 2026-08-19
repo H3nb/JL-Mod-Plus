@@ -182,6 +182,18 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "apk=$RELEASE_APK" >> "$GITHUB_OUTPUT"
 
+      - name: Upload R8 reports
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: JL-Mod-Plus-${{ steps.artifacts.outputs.tag }}-r8-reports
+          path: |
+            app/build/outputs/mapping/emulatorRelease/mapping.txt
+            app/build/outputs/mapping/emulatorRelease/configuration.txt
+            app/build/outputs/mapping/emulatorRelease/seeds.txt
+            app/build/outputs/mapping/emulatorRelease/usage.txt
+          if-no-files-found: error
+          retention-days: 90
+
       - name: Verify APK signature
         shell: bash
         env:
