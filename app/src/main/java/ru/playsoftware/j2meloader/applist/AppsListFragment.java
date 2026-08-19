@@ -464,6 +464,7 @@ public class AppsListFragment extends Fragment {
 						(ignored, error) -> {
 							if (error != null) {
 								showError(error);
+								loadCollectionMembers(collectionId);
 								return;
 							}
 							loadCollectionMembers(collectionId);
@@ -481,6 +482,7 @@ public class AppsListFragment extends Fragment {
 						(ignored, error) -> {
 							if (error != null) {
 								showError(error);
+								loadCollectionMembers(collectionId);
 								return;
 							}
 							loadCollectionMembers(collectionId);
@@ -654,19 +656,12 @@ public class AppsListFragment extends Fragment {
 		}
 
 		collectionsUiStore.publishCollections(state.getCollections());
-		List<LibraryAppRow> previousAllRows = cachedAllReadyRows;
-		List<LibraryAppRow> allRows = libraryViewModel.getAllApps();
-		boolean allAppsChanged = allRows != previousAllRows;
-		if (allAppsChanged && previousAllRows != null) {
-			pruneUiCaches(allRows);
-		}
-		cachedAllReadyRows = allRows;
-
+		// Keep the complete READY snapshot truly lazy. Normal list/filter/favorite/stat emissions only
+		// map the already-projected rows below; the O(N) full-library walk happens solely when the user
+		// explicitly opens Collection -> Add apps.
+		cachedAllReadyRows = null;
 		Long activeCollectionId = collectionsUiStore.activeCollectionId();
-		if (activeCollectionId != null && (generationChanged || allAppsChanged)) {
-			if (collectionsUiStore.hasAllAppsSnapshot()) {
-				publishCollectionAllApps(allRows);
-			}
+		if (activeCollectionId != null) {
 			loadCollectionMembers(activeCollectionId);
 		}
 
@@ -701,6 +696,7 @@ public class AppsListFragment extends Fragment {
 		List<LibraryAppRow> rows = cachedAllReadyRows;
 		if (rows != null) return rows;
 		rows = libraryViewModel.getAllApps();
+		pruneUiCaches(rows);
 		cachedAllReadyRows = rows;
 		return rows;
 	}
