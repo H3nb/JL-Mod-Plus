@@ -426,8 +426,10 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         launchMutation(callback) {
             val outcome = withContext(Dispatchers.IO) {
                 acquireGenerationLease(generation.generation, generation.emulatorDir).use {
-                    val current = repository.currentApp(generation, app.id)
-                    check(current?.storageKey == app.storageKey) {
+                    val current = requireNotNull(repository.currentApp(generation, app.id)) {
+                        "Library import target disappeared before restore"
+                    }
+                    check(current.storageKey == app.storageKey) {
                         "Library import target changed before restore"
                     }
                     val sourceMetadata = LibraryAppBundleImporter.readSourceMetadata(prepared)
