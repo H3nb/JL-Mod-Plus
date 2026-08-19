@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - alpha
+      - main
   workflow_dispatch:
 
 permissions:
