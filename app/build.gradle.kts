@@ -23,6 +23,11 @@ val runtimeTestAbi = providers.gradleProperty("jlmodRuntimeTestAbi").orNull
 require(runtimeTestAbi == null || runtimeTestAbi == "arm64-v8a" || runtimeTestAbi == "x86_64") {
     "jlmodRuntimeTestAbi must be arm64-v8a or x86_64"
 }
+val appVersionName = providers.gradleProperty("jlmod.versionName").get().trim()
+val appVersionCode = providers.gradleProperty("jlmod.versionCode").get().toIntOrNull()
+    ?: error("jlmod.versionCode must be an integer")
+require(appVersionName.isNotEmpty()) { "jlmod.versionName must not be empty" }
+require(appVersionCode > 0) { "jlmod.versionCode must be greater than zero" }
 val diagnosticBuildCommit = (
     providers.gradleProperty("jlmodBuildCommit").orNull
         ?: System.getenv("JLMOD_BUILD_COMMIT")
@@ -42,8 +47,8 @@ android {
         applicationId = "io.github.h3nb.jlmodplus"
         minSdk = rootProject.extra["minSdk"] as Int
         targetSdk = rootProject.extra["targetSdk"] as Int
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
         resValue("string", "app_name", "JL-Mod Plus")
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
