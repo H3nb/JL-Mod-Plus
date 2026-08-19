@@ -1,6 +1,8 @@
 /*
  * Copyright 2020-2026 Yury Kharchenko
  *
+ * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -38,6 +40,7 @@ import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import java.io.File;
+import java.io.IOException;
 
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -48,12 +51,14 @@ import ru.playsoftware.j2meloader.MainActivity;
 import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.crashes.CrashReporter;
+import ru.playsoftware.j2meloader.librarydb.LibraryAppBundleImporter;
 import ru.playsoftware.j2meloader.librarydb.LibraryViewModel;
 import ru.woesss.j2me.jar.Descriptor;
 
 public class InstallerDialog extends DialogFragment {
 	private static final String ARG_URI = "InstallerDialog.uri";
 	private static final String ARG_REQUEST_ID = "InstallerDialog.requestId";
+	private static final String ARG_BUNDLE = "InstallerDialog.bundle";
 	private static final String ARG_ID = "InstallerDialog.id";
 	private static final String ARG_GENERATION = "InstallerDialog.generation";
 	private static final String ARG_WORKDIR = "InstallerDialog.workdir";
@@ -67,6 +72,8 @@ public class InstallerDialog extends DialogFragment {
 	private String installerTitle;
 	private String currentTitle;
 	private Runnable primaryAction;
+	private LibraryAppBundleImporter.PreparedImport bundleImport;
+	private boolean bundleWorkerInFlight;
 	private boolean restoredInstance;
 
 	/** Compatibility entry point for callers that do not participate in MainActivity request restore. */
@@ -75,9 +82,18 @@ public class InstallerDialog extends DialogFragment {
 	}
 
 	public static InstallerDialog newExternalRequest(@Nullable String requestId, Uri uri) {
+		return newExternalRequest(requestId, uri, false);
+	}
+
+	public static InstallerDialog newExternalBundleRequest(@Nullable String requestId, Uri uri) {
+		return newExternalRequest(requestId, uri, true);
+	}
+
+	private static InstallerDialog newExternalRequest(@Nullable String requestId, Uri uri, boolean bundle) {
 		InstallerDialog fragment = new InstallerDialog();
 		Bundle args = new Bundle();
 		args.putParcelable(ARG_URI, uri);
+		args.putBoolean(ARG_BUNDLE, bundle);
 		if (requestId != null) args.putString(ARG_REQUEST_ID, requestId);
 		fragment.setArguments(args);
 		fragment.setCancelable(false);
@@ -159,6 +175,7 @@ public class InstallerDialog extends DialogFragment {
 	@Override
 	public void onDestroy() {
 		compositeDisposable.dispose();
+		if (!bundleWorkerInFlight) cleanupBundleImport();
 		super.onDestroy();
 	}
 
@@ -169,7 +186,11 @@ public class InstallerDialog extends DialogFragment {
 		Bundle args = requireArguments();
 		Uri uri = args.getParcelable(ARG_URI);
 		if (uri != null) {
-			installApp(null, uri);
+			if (isBundleRequest()) {
+				prepareBundle(uri);
+			} else {
+				installApp(null, uri);
+			}
 			return;
 		}
 		long generation = args.getLong(ARG_GENERATION, NO_GENERATION);
@@ -206,9 +227,34 @@ public class InstallerDialog extends DialogFragment {
 		};
 	}
 
+	private void prepareBundle(Uri uri) {
+		if (composeController != null) {
+			composeController.showLoading(installerTitle, getString(R.string.library_import_preparing));
+		}
+		Context applicationContext = requireContext().getApplicationContext();
+		bundleWorkerInFlight = true;
+		Disposable disposable = Single.<LibraryAppBundleImporter.PreparedImport>create(emitter -> {
+			LibraryAppBundleImporter.PreparedImport prepared = LibraryAppBundleImporter.prepare(
+					applicationContext, uri);
+			if (emitter.isDisposed()) {
+				LibraryAppBundleImporter.cleanup(prepared);
+				return;
+			}
+			emitter.onSuccess(prepared);
+		})
+				.subscribeOn(Schedulers.io())
+				.observeOn(AndroidSchedulers.mainThread())
+				.subscribe(prepared -> {
+				bundleImport = prepared;
+				installApp(prepared.getJarFile(), null);
+			}, this::onError);
+		compositeDisposable.add(disposable);
+	}
+
 	private void installApp(File jar, Uri uri) {
 		installer = new AppInstaller(jar, uri, libraryViewModel);
 		primaryAction = this::convert;
+		if (isBundleRequest()) bundleWorkerInFlight = true;
 		showLoading();
 		Disposable disposable = Single.create(installer::loadInfo)
 				.subscribeOn(Schedulers.computation())
@@ -243,6 +289,7 @@ public class InstallerDialog extends DialogFragment {
 	private void convert() {
 		if (installer == null || composeController == null || !isAdded()) return;
 		Descriptor nd = installer.getNewDescriptor();
+		if (isBundleRequest()) bundleWorkerInFlight = true;
 		composeController.showConverting(
 				currentTitle,
 				nd.getInfo(requireActivity()).toString(),
@@ -256,7 +303,12 @@ public class InstallerDialog extends DialogFragment {
 
 	private void onProgress(@NonNull Integer status) {
 		if (!isAdded() || composeController == null) return;
+		if (isBundleRequest()) bundleWorkerInFlight = false;
 		if (status == AppInstaller.STATUS_SUCCESS) {
+			if (isBundleRequest()) {
+				restoreBundleToInstalled();
+				return;
+			}
 			// The filesystem + Room commit is the durable consumption point. A process death while the
 			// success screen is visible must not replay the same external install request.
 			acknowledgeExternalRequest();
@@ -270,6 +322,20 @@ public class InstallerDialog extends DialogFragment {
 		}
 
 		Descriptor nd = installer.getNewDescriptor();
+		if (isBundleRequest()) {
+			LibraryAppBundleImporter.PreparedImport prepared = bundleImport;
+			if (prepared == null) {
+				onError(new IllegalStateException("Prepared app bundle is unavailable"));
+				return;
+			}
+			try {
+				LibraryAppBundleImporter.validateSourceIdentity(prepared, nd.getName(), nd.getVendor());
+			} catch (IOException error) {
+				onError(error);
+				return;
+			}
+		}
+
 		String message;
 		String runLabel = null;
 		switch (status) {
@@ -284,7 +350,7 @@ public class InstallerDialog extends DialogFragment {
 					R.string.reinstall_older, nd.getVersion(), installer.getCurrentVersion());
 			case AppInstaller.STATUS_EQUAL -> {
 				message = getString(R.string.reinstall);
-				runLabel = getString(R.string.START_CMD);
+				runLabel = isBundleRequest() ? null : getString(R.string.START_CMD);
 			}
 			case AppInstaller.STATUS_NEWER -> message = getString(
 					R.string.reinstall_newest, nd.getVersion(), installer.getCurrentVersion());
@@ -297,7 +363,12 @@ public class InstallerDialog extends DialogFragment {
 				return;
 			}
 			case AppInstaller.STATUS_SAME -> {
-				launchExistingApp(true);
+				if (isBundleRequest()) {
+					currentTitle = nd.getName();
+					showBundleRestoreConfirmation();
+				} else {
+					launchExistingApp(true);
+				}
 				return;
 			}
 			default -> throw new IllegalStateException("Unexpected value: " + status);
@@ -322,11 +393,81 @@ public class InstallerDialog extends DialogFragment {
 		}
 	}
 
+	private boolean isBundleRequest() {
+		Bundle args = getArguments();
+		return args != null && args.getBoolean(ARG_BUNDLE, false);
+	}
+
+	private void showBundleRestoreConfirmation() {
+		if (composeController == null || installer == null) return;
+		primaryAction = this::restoreBundleToInstalled;
+		composeController.showConfirmation(
+				currentTitle,
+				getString(R.string.library_import_restore_existing),
+				getString(R.string.library_action_import_bundle),
+				getString(android.R.string.cancel),
+				null,
+				installer.getIconPath());
+	}
+
+	private void restoreBundleToInstalled() {
+		if (installer == null || bundleImport == null || composeController == null || !isAdded()) return;
+		long installedId = installer.getInstalledId();
+		if (installedId < 0L) {
+			onBundleRestoreError(new IllegalStateException("Imported app identity is unavailable"));
+			return;
+		}
+		bundleWorkerInFlight = true;
+		composeController.showLoading(currentTitle, getString(R.string.library_import_restoring));
+		libraryViewModel.restoreImportedBundle(installedId, bundleImport, (ignored, error) -> {
+			bundleWorkerInFlight = false;
+			if (error != null) {
+				if (!isAdded() || composeController == null) {
+					cleanupBundleImport();
+					return;
+				}
+				onBundleRestoreError(error);
+				return;
+			}
+			cleanupBundleImport();
+			if (!isAdded() || composeController == null) return;
+			acknowledgeExternalRequest();
+			composeController.showSuccess(
+					currentTitle,
+					getString(R.string.library_import_done),
+					getString(R.string.START_CMD),
+					getString(R.string.close),
+					installer.getIconPath());
+		});
+	}
+
+	private void onBundleRestoreError(Throwable error) {
+		Log.e("Installer", "Bundle restore failed", error);
+		if (composeController == null) return;
+		primaryAction = this::restoreBundleToInstalled;
+		composeController.showConfirmation(
+				currentTitle,
+				getString(R.string.library_import_restore_failed),
+				getString(R.string.library_retry),
+				getString(R.string.close),
+				null,
+				installer == null ? null : installer.getIconPath());
+	}
+
+	private void cleanupBundleImport() {
+		LibraryAppBundleImporter.PreparedImport prepared = bundleImport;
+		bundleImport = null;
+		if (prepared != null) {
+			Schedulers.io().scheduleDirect(() -> LibraryAppBundleImporter.cleanup(prepared));
+		}
+	}
+
 	private void closeInstaller() {
 		if (installer != null) {
 			installer.deleteTemp();
 			installer.clearCache();
 		}
+		cleanupBundleImport();
 		acknowledgeExternalRequest();
 		if (isAdded()) dismiss();
 	}
@@ -340,6 +481,7 @@ public class InstallerDialog extends DialogFragment {
 			installer.clearCache();
 			installer.deleteTemp();
 		}
+		cleanupBundleImport();
 		acknowledgeExternalRequest();
 		Config.startApp(requireContext(), title, path);
 		dismiss();
@@ -357,6 +499,7 @@ public class InstallerDialog extends DialogFragment {
 	}
 
 	private void onError(Throwable e) {
+		bundleWorkerInFlight = false;
 		Log.e("Installer", e.toString(), e);
 		Bundle args = getArguments();
 		Uri uri = args == null ? null : args.getParcelable(ARG_URI);
@@ -374,6 +517,7 @@ public class InstallerDialog extends DialogFragment {
 			installer.clearCache();
 			installer.deleteTemp();
 		}
+		cleanupBundleImport();
 		acknowledgeExternalRequest();
 		if (!isAdded()) return;
 		dismissAllowingStateLoss();

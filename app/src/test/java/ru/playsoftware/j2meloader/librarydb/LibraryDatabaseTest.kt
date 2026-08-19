@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -56,6 +57,44 @@ class LibraryDatabaseTest {
         } catch (_: Exception) {
             // Expected: display casing/spacing differs, normalized identity does not.
         }
+    }
+
+    @Test fun collectionCrudPublishesCountsAndMemberships() = runBlocking {
+        val firstApp = dao.insertApp(app("game-a"))
+        val secondApp = dao.insertApp(app("game-b"))
+        val firstCollection = dao.createCollection("RPG", createdAt = 10L)
+        val secondCollection = dao.createCollection("Arcade", createdAt = 20L)
+
+        val initial = dao.observeCollections().first()
+        assertEquals(listOf(firstCollection, secondCollection), initial.map { it.id })
+        assertEquals(listOf(0, 0), initial.map { it.appCount })
+        assertEquals(listOf(0, 1), initial.map { it.sortOrder })
+
+        dao.setCollectionMembership(firstCollection, firstApp, included = true, addedAt = 30L)
+        dao.setCollectionMembership(firstCollection, secondApp, included = true, addedAt = 40L)
+        assertEquals(listOf(secondApp, firstApp), dao.getCollectionAppIds(firstCollection))
+        assertEquals(2, dao.observeCollections().first().first { it.id == firstCollection }.appCount)
+
+        assertEquals(
+            1,
+            dao.updateCollectionName(
+                collectionId = firstCollection,
+                name = "Role Playing",
+                normalizedName = LibraryCollectionNames.normalize("Role Playing"),
+            ),
+        )
+        assertEquals(
+            "Role Playing",
+            dao.observeCollections().first().first { it.id == firstCollection }.name,
+        )
+
+        dao.setCollectionMembership(firstCollection, firstApp, included = false, addedAt = 50L)
+        assertEquals(listOf(secondApp), dao.getCollectionAppIds(firstCollection))
+        assertEquals(1, dao.observeCollections().first().first { it.id == firstCollection }.appCount)
+
+        assertEquals(1, dao.deleteCollection(firstCollection))
+        assertTrue(dao.getCollectionAppIds(firstCollection).isEmpty())
+        assertEquals(listOf(secondCollection), dao.observeCollections().first().map { it.id })
     }
 
     @Test fun reinstallMutationPreservesAllLibraryOwnedState() = runBlocking {
@@ -150,6 +189,90 @@ class LibraryDatabaseTest {
         assertEquals("Game", row.title)
         assertEquals("Game", row.sourceTitle)
         assertEquals("Vendor", row.sourceVendor)
+    }
+
+    @Test fun customMetadataCanBeEditedAndResetWithoutTouchingOtherLibraryState() = runBlocking {
+        val id = dao.insertApp(
+            LibraryAppEntity(
+                storageKey = "game",
+                sourceTitle = "Game",
+                sourceVendor = "Vendor",
+                sourceVersion = "1.0",
+                sourceDescription = "Source description",
+                favorite = true,
+                addedAt = 10L,
+                lastPlayedAt = 20L,
+                playCount = 3L,
+                totalPlayTimeMs = 4_000L,
+            ),
+        )
+
+        assertEquals(
+            1,
+            dao.updateCustomMetadata(
+                appId = id,
+                customTitle = "My Game",
+                customVendor = "My Vendor",
+                customVersion = "Special",
+                customDescription = "My description",
+            ),
+        )
+        val edited = requireNotNull(dao.getApp(id))
+        assertEquals("My Game", edited.customTitle)
+        assertEquals("My Vendor", edited.customVendor)
+        assertEquals("Special", edited.customVersion)
+        assertEquals("My description", edited.customDescription)
+        assertTrue(edited.favorite)
+        assertEquals(10L, edited.addedAt)
+        assertEquals(20L, edited.lastPlayedAt)
+        assertEquals(3L, edited.playCount)
+        assertEquals(4_000L, edited.totalPlayTimeMs)
+
+        val editedRow = dao.observeApps().first().single()
+        assertEquals("My Game", editedRow.title)
+        assertEquals("My Vendor", editedRow.vendor)
+        assertEquals("Special", editedRow.version)
+        assertEquals("My description", editedRow.description)
+
+        assertEquals(1, dao.resetCustomMetadata(id))
+        val reset = requireNotNull(dao.getApp(id))
+        assertNull(reset.customTitle)
+        assertNull(reset.customVendor)
+        assertNull(reset.customVersion)
+        assertNull(reset.customDescription)
+        assertTrue(reset.favorite)
+        assertEquals(3L, reset.playCount)
+
+        val resetRow = dao.observeApps().first().single()
+        assertEquals("Game", resetRow.title)
+        assertEquals("Vendor", resetRow.vendor)
+        assertEquals("1.0", resetRow.version)
+        assertEquals("Source description", resetRow.description)
+    }
+
+    @Test fun favoriteMutationChangesOnlyFavoriteState() = runBlocking {
+        val id = dao.insertApp(
+            app(
+                storageKey = "game",
+                customTitle = "Custom",
+                addedAt = 11L,
+                lastPlayedAt = 22L,
+                playCount = 5L,
+                totalPlayTimeMs = 6_000L,
+            ),
+        )
+
+        assertEquals(1, dao.updateFavorite(id, true))
+        val favorite = requireNotNull(dao.getApp(id))
+        assertTrue(favorite.favorite)
+        assertEquals("Custom", favorite.customTitle)
+        assertEquals(11L, favorite.addedAt)
+        assertEquals(22L, favorite.lastPlayedAt)
+        assertEquals(5L, favorite.playCount)
+        assertEquals(6_000L, favorite.totalPlayTimeMs)
+
+        assertEquals(1, dao.updateFavorite(id, false))
+        assertFalse(requireNotNull(dao.getApp(id)).favorite)
     }
 
     @Test fun deletingAppCascadesMembershipButDoesNotDeletePlayReceipt() = runBlocking {
