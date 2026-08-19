@@ -18,6 +18,7 @@ import java.io.InputStream
 import java.util.Properties
 import java.util.UUID
 import java.util.zip.ZipInputStream
+import ru.woesss.j2me.jar.Descriptor
 
 /** Validates an exported JL-Mod Plus bundle and restores only authoritative app-owned state. */
 object LibraryAppBundleImporter {
@@ -45,6 +46,13 @@ object LibraryAppBundleImporter {
         internal val configDir: File?,
         internal val dataDir: File?,
         internal val formatVersion: Int,
+    )
+
+    internal data class SourceMetadata(
+        val title: String,
+        val vendor: String,
+        val version: String,
+        val description: String?,
     )
 
     data class RestoreResult(val iconRevision: Long?)
@@ -174,6 +182,19 @@ object LibraryAppBundleImporter {
         )
     }
 
+    @Throws(IOException::class)
+    internal fun readSourceMetadata(prepared: PreparedImport): SourceMetadata? {
+        verifyPrepared(prepared)
+        val file = prepared.convertedConfigFile ?: return null
+        val descriptor = Descriptor(file, false)
+        return SourceMetadata(
+            title = descriptor.name,
+            vendor = descriptor.vendor,
+            version = descriptor.version,
+            description = descriptor.attrs[Descriptor.MIDLET_DESCRIPTION],
+        )
+    }
+
     /**
      * Replaces only namespaces that were present in the bundle. Publication is guarded by a durable
      * transaction marker. If the process dies before commit, the next Library startup restores the
@@ -238,24 +259,33 @@ object LibraryAppBundleImporter {
         val transactionId = UUID.randomUUID().toString()
         val replacements = ArrayList<Replacement>(MAX_REPLACEMENTS)
         prepared.configDir?.let { source ->
-            replacements += stageDirectory(
-                source,
-                File(File(root, "configs"), storageKey),
-                transactionId,
+            replacements += prepareReplacement(
+                source = source,
+                sourceIsDirectory = true,
+                root = root,
+                storageKey = storageKey,
+                target = File(File(root, "configs"), storageKey),
+                transactionId = transactionId,
             )
         }
         prepared.dataDir?.let { source ->
-            replacements += stageDirectory(
-                source,
-                File(File(root, "data"), storageKey),
-                transactionId,
+            replacements += prepareReplacement(
+                source = source,
+                sourceIsDirectory = true,
+                root = root,
+                storageKey = storageKey,
+                target = File(File(root, "data"), storageKey),
+                transactionId = transactionId,
             )
         }
         prepared.convertedConfigFile?.let { source ->
-            replacements += stageFile(
-                source,
-                File(File(File(root, "converted"), storageKey), "converted.dex.conf"),
-                transactionId,
+            replacements += prepareReplacement(
+                source = source,
+                sourceIsDirectory = false,
+                root = root,
+                storageKey = storageKey,
+                target = File(File(File(root, "converted"), storageKey), "converted.dex.conf"),
+                transactionId = transactionId,
             )
         }
         if (replacements.isEmpty()) return RestoreResult(null)
@@ -269,8 +299,11 @@ object LibraryAppBundleImporter {
             commitMarker = File(transactionRoot, "$transactionId$COMMIT_SUFFIX"),
             replacements = replacements,
         )
+        // Publish the durable marker before copying any replacement into the workdir. Recovery can
+        // now remove a partially staged namespace even if the process dies during the copy itself.
         writeTransaction(transaction)
         try {
+            replacements.forEach(::stageReplacement)
             publishReplacements(replacements, afterPublished)
             val iconRevision = if (prepared.configDir != null) {
                 LibraryIconOverride.reapplyPersistedOverride(root, storageKey)
@@ -304,39 +337,55 @@ object LibraryAppBundleImporter {
     }
 
     @Throws(IOException::class)
-    private fun stageDirectory(source: File, target: File, transactionId: String): Replacement {
-        if (!source.isDirectory) throw IOException("Import source directory is unavailable: ${source.path}")
+    private fun prepareReplacement(
+        source: File,
+        sourceIsDirectory: Boolean,
+        root: File,
+        storageKey: String,
+        target: File,
+        transactionId: String,
+    ): Replacement {
+        if (sourceIsDirectory) {
+            if (!source.isDirectory) throw IOException("Import source directory is unavailable: ${source.path}")
+        } else if (!source.isFile) {
+            throw IOException("Import source file is unavailable: ${source.path}")
+        }
         val canonicalTarget = target.canonicalFile
+        if (!isAllowedTransactionTarget(root, storageKey, canonicalTarget)) {
+            throw IOException("Import target resolves outside its allowed workdir namespace")
+        }
         val parent = canonicalTarget.parentFile ?: throw IOException("Import target has no parent")
         ensureDirectory(parent)
         val staged = File(parent, ".${canonicalTarget.name}.$transactionId.import.tmp")
         val backup = File(parent, ".${canonicalTarget.name}.$transactionId.import.bak")
-        deleteIfExists(staged, "stale import staging")
-        deleteIfExists(backup, "stale import backup")
-        if (!source.copyRecursively(staged, overwrite = false)) {
-            staged.deleteRecursively()
-            throw IOException("Unable to stage imported directory: ${canonicalTarget.path}")
-        }
-        return Replacement(canonicalTarget, staged, backup, canonicalTarget.exists())
+        return Replacement(
+            target = canonicalTarget,
+            staged = staged,
+            backup = backup,
+            hadOriginal = canonicalTarget.exists(),
+            source = source.canonicalFile,
+            sourceIsDirectory = sourceIsDirectory,
+        )
     }
 
     @Throws(IOException::class)
-    private fun stageFile(source: File, target: File, transactionId: String): Replacement {
-        if (!source.isFile) throw IOException("Import source file is unavailable: ${source.path}")
-        val canonicalTarget = target.canonicalFile
-        val parent = canonicalTarget.parentFile ?: throw IOException("Import target has no parent")
-        ensureDirectory(parent)
-        val staged = File(parent, ".${canonicalTarget.name}.$transactionId.import.tmp")
-        val backup = File(parent, ".${canonicalTarget.name}.$transactionId.import.bak")
-        deleteIfExists(staged, "stale import staging")
-        deleteIfExists(backup, "stale import backup")
+    private fun stageReplacement(replacement: Replacement) {
+        val source = replacement.source ?: throw IOException("Import replacement has no source")
+        deleteIfExists(replacement.staged, "stale import staging")
+        deleteIfExists(replacement.backup, "stale import backup")
+        if (replacement.sourceIsDirectory) {
+            if (!source.copyRecursively(replacement.staged, overwrite = false)) {
+                replacement.staged.deleteRecursively()
+                throw IOException("Unable to stage imported directory: ${replacement.target.path}")
+            }
+            return
+        }
         source.inputStream().use { input ->
-            FileOutputStream(staged).use { output ->
+            FileOutputStream(replacement.staged).use { output ->
                 input.copyTo(output, COPY_BUFFER_SIZE)
                 output.fd.sync()
             }
         }
-        return Replacement(canonicalTarget, staged, backup, canonicalTarget.exists())
     }
 
     @Throws(IOException::class)
@@ -595,6 +644,8 @@ object LibraryAppBundleImporter {
         val staged: File,
         val backup: File,
         val hadOriginal: Boolean,
+        val source: File? = null,
+        val sourceIsDirectory: Boolean = false,
     )
 
     private data class RestoreTransaction(
