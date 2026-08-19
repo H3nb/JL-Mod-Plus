@@ -129,9 +129,14 @@ jobs:
 
           OUTPUT_DIR='app/build/outputs/apk/emulator/release'
           METADATA="$OUTPUT_DIR/output-metadata.json"
+          MAPPING_SOURCE='app/build/outputs/mapping/emulatorRelease/mapping.txt'
 
           if [[ ! -f "$METADATA" ]]; then
             echo "Missing APK metadata: $METADATA" >&2
+            exit 1
+          fi
+          if [[ ! -f "$MAPPING_SOURCE" ]]; then
+            echo "Missing R8 mapping: $MAPPING_SOURCE" >&2
             exit 1
           fi
 
@@ -147,8 +152,18 @@ jobs:
             | .versionName
           ' "$METADATA" | head -n 1)"
 
+          VERSION_CODE="$(jq -r '
+            .elements[]
+            | select(any(.filters[]?; .filterType == "ABI" and .value == "arm64-v8a"))
+            | .versionCode
+          ' "$METADATA" | head -n 1)"
+
           if [[ -z "$APK_FILE" || "$APK_FILE" == "null" || -z "$VERSION_NAME" || "$VERSION_NAME" == "null" ]]; then
             echo 'Could not resolve the arm64-v8a release APK or versionName.' >&2
+            exit 1
+          fi
+          if [[ ! "$VERSION_CODE" =~ ^[1-9][0-9]*$ ]]; then
+            echo "Invalid release versionCode '$VERSION_CODE'. Increment jlmod.versionCode before publishing." >&2
             exit 1
           fi
 
@@ -175,24 +190,21 @@ jobs:
 
           mkdir -p dist
           RELEASE_APK="dist/JL-Mod-Plus-$TAG-arm64-v8a.apk"
+          RELEASE_MAPPING="dist/JL-Mod-Plus-$TAG-r8-mapping.txt"
           cp "$APK_PATH" "$RELEASE_APK"
-          sha256sum "$RELEASE_APK" > dist/SHA256SUMS.txt
+          cp "$MAPPING_SOURCE" "$RELEASE_MAPPING"
 
+          (
+            cd dist
+            sha256sum "$(basename "$RELEASE_APK")" "$(basename "$RELEASE_MAPPING")" > SHA256SUMS.txt
+          )
+
+          echo "Release version: $VERSION_NAME (versionCode $VERSION_CODE)"
           echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+          echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "apk=$RELEASE_APK" >> "$GITHUB_OUTPUT"
-
-      - name: Upload R8 reports
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: JL-Mod-Plus-${{ steps.artifacts.outputs.tag }}-r8-reports
-          path: |
-            app/build/outputs/mapping/emulatorRelease/mapping.txt
-            app/build/outputs/mapping/emulatorRelease/configuration.txt
-            app/build/outputs/mapping/emulatorRelease/seeds.txt
-            app/build/outputs/mapping/emulatorRelease/usage.txt
-          if-no-files-found: error
-          retention-days: 90
+          echo "mapping=$RELEASE_MAPPING" >> "$GITHUB_OUTPUT"
 
       - name: Verify APK signature
         shell: bash
@@ -217,6 +229,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.artifacts.outputs.tag }}
           APK_PATH: ${{ steps.artifacts.outputs.apk }}
+          MAPPING_PATH: ${{ steps.artifacts.outputs.mapping }}
           PRERELEASE: ${{ steps.channel.outputs.prerelease }}
         run: |
           set -euo pipefail
@@ -224,6 +237,7 @@ jobs:
           args=(
             release create "$TAG"
             "$APK_PATH"
+            "$MAPPING_PATH"
             dist/SHA256SUMS.txt
             --repo "$GITHUB_REPOSITORY"
             --target "$GITHUB_SHA"
