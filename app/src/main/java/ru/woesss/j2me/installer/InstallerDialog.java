@@ -391,13 +391,17 @@ public class InstallerDialog extends DialogFragment {
 		}
 		composeController.showLoading(currentTitle, getString(R.string.library_import_restoring));
 		libraryViewModel.restoreImportedBundle(installedId, bundleImport, (ignored, error) -> {
-			if (!isAdded() || composeController == null) return;
 			if (error != null) {
+				if (!isAdded() || composeController == null) {
+					cleanupBundleImport();
+					return;
+				}
 				onBundleRestoreError(error);
 				return;
 			}
-			acknowledgeExternalRequest();
 			cleanupBundleImport();
+			if (!isAdded() || composeController == null) return;
+			acknowledgeExternalRequest();
 			composeController.showSuccess(
 					currentTitle,
 					getString(R.string.library_import_done),
@@ -421,8 +425,11 @@ public class InstallerDialog extends DialogFragment {
 	}
 
 	private void cleanupBundleImport() {
-		LibraryAppBundleImporter.cleanup(bundleImport);
+		LibraryAppBundleImporter.PreparedImport prepared = bundleImport;
 		bundleImport = null;
+		if (prepared != null) {
+			Schedulers.io().scheduleDirect(() -> LibraryAppBundleImporter.cleanup(prepared));
+		}
 	}
 
 	private void closeInstaller() {
