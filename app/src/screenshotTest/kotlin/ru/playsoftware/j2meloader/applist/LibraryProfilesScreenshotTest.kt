@@ -250,6 +250,7 @@ fun LibraryCollectionBrowserScreenshot() {
             onOpenActions = {},
             onRemove = {},
             onSetMembership = { _, _ -> },
+            onPrepareAppPicker = {},
             onSort = {},
         )
     }
