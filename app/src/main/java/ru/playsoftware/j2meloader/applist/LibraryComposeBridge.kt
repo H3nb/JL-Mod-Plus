@@ -2068,8 +2068,12 @@ private fun normalizeLibraryIcon(
             }
         LibraryIconPresentationMode.Fallback -> null
     }
+    val imageBitmap = normalized.asImageBitmap()
+    if (normalized !== fileSource) {
+        fileSource.recycle()
+    }
     return LibraryNormalizedIcon(
-        bitmap = normalized.asImageBitmap(),
+        bitmap = imageBitmap,
         filterQuality = if (analysis.pixelArt) FilterQuality.None else FilterQuality.Medium,
         representativeColor = representativeColor,
         presentationMode = analysis.presentation.mode,

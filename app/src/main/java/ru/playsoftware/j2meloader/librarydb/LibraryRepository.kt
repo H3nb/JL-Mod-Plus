@@ -324,11 +324,12 @@ class LibraryRepository(
             }
             currentCoroutineContext().ensureActive()
             ensureCurrent(request)
-            database = withContext(Dispatchers.IO) { databaseFactory(emulatorDir) }
+            val openedDatabase = withContext(Dispatchers.IO) { databaseFactory(emulatorDir) }
+            database = openedDatabase
             currentCoroutineContext().ensureActive()
             ensureCurrent(request)
             val bootstrap = withContext(Dispatchers.Default) {
-                bootstrapper.ensureReady(database, emulatorDir) { progress ->
+                bootstrapper.ensureReady(openedDatabase, emulatorDir) { progress ->
                     publishIfCurrent(
                         request,
                         State.Indexing(
@@ -345,7 +346,7 @@ class LibraryRepository(
             ensureCurrent(request)
 
             val reconciliation = if (bootstrap.alreadyReady) {
-                withContext(Dispatchers.Default) { reconciler.reconcile(database, emulatorDir) }
+                withContext(Dispatchers.Default) { reconciler.reconcile(openedDatabase, emulatorDir) }
             } else {
                 LibraryReconciler.Result(0, 0, emptyList())
             }
@@ -355,10 +356,10 @@ class LibraryRepository(
             activeMutex.withLock {
                 currentCoroutineContext().ensureActive()
                 ensureCurrent(request)
-                activeDatabase = ActiveDatabase(request.token(), database)
+                activeDatabase = ActiveDatabase(request.token(), openedDatabase)
             }
 
-            val dao = database.libraryDao()
+            val dao = openedDatabase.libraryDao()
             combine(dao.observeApps(), dao.observeCollections()) { apps, collections ->
                 apps to collections
             }.collect { (apps, collections) ->

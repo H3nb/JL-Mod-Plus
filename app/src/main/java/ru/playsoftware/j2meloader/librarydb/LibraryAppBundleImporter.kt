@@ -196,7 +196,7 @@ object LibraryAppBundleImporter {
     @Throws(IOException::class)
     internal fun recoverInterruptedRestores(emulatorDir: File) {
         val root = emulatorDir.canonicalFile
-        val transactionRoot = File(root, TRANSACTION_DIR)
+        val transactionRoot = transactionRoot(root)
         if (!transactionRoot.exists()) return
         if (!transactionRoot.isDirectory) {
             throw IOException("Library import transaction path is not a directory")
@@ -260,7 +260,7 @@ object LibraryAppBundleImporter {
         }
         if (replacements.isEmpty()) return RestoreResult(null)
 
-        val transactionRoot = File(root, TRANSACTION_DIR)
+        val transactionRoot = transactionRoot(root)
         ensureDirectory(transactionRoot)
         val transaction = RestoreTransaction(
             storageKey = storageKey,
@@ -418,24 +418,22 @@ object LibraryAppBundleImporter {
                 setProperty("hadOriginal.$index", replacement.hadOriginal.toString())
             }
         }
-        FileOutputStream(transaction.marker, false).use { output ->
+        writeAtomically(transaction.marker) { output ->
             properties.store(output, null)
-            output.fd.sync()
         }
     }
 
     @Throws(IOException::class)
     private fun writeCommitMarker(marker: File) {
-        FileOutputStream(marker, false).use { output ->
+        writeAtomically(marker) { output ->
             output.write('1'.code)
-            output.fd.sync()
         }
     }
 
     @Throws(IOException::class)
     private fun readTransaction(root: File, marker: File): RestoreTransaction {
         val properties = Properties()
-        marker.inputStream().use(properties::load)
+        marker.inputStream().use { input -> properties.load(input) }
         val version = properties.getProperty("version")?.toIntOrNull()
             ?: throw IOException("Invalid Library import transaction version")
         if (version != TRANSACTION_VERSION) {
@@ -451,19 +449,33 @@ object LibraryAppBundleImporter {
         if (count !in 1..MAX_REPLACEMENTS) {
             throw IOException("Invalid Library import replacement count: $count")
         }
+        val baseName = marker.name.removeSuffix(TRANSACTION_SUFFIX)
+        if (baseName.isBlank() || baseName.contains('/') || baseName.contains('\\')) {
+            throw IOException("Invalid Library import transaction id")
+        }
         val replacements = ArrayList<Replacement>(count)
+        val seenTargets = HashSet<String>(count)
         repeat(count) { index ->
             val target = transactionPath(root, properties, "target.$index")
             val staged = transactionPath(root, properties, "staged.$index")
             val backup = transactionPath(root, properties, "backup.$index")
-            if (target.parentFile != staged.parentFile || target.parentFile != backup.parentFile) {
-                throw IOException("Library import transaction paths do not share a parent")
+            if (!isAllowedTransactionTarget(root, storageKey, target)) {
+                throw IOException("Library import transaction targets an unsupported path")
+            }
+            if (!seenTargets.add(target.path)) {
+                throw IOException("Library import transaction contains a duplicate target")
+            }
+            val parent = target.parentFile
+                ?: throw IOException("Library import transaction target has no parent")
+            val expectedStaged = File(parent, ".${target.name}.$baseName.import.tmp").canonicalFile
+            val expectedBackup = File(parent, ".${target.name}.$baseName.import.bak").canonicalFile
+            if (staged != expectedStaged || backup != expectedBackup) {
+                throw IOException("Library import transaction staging paths are invalid")
             }
             val hadOriginal = properties.getProperty("hadOriginal.$index")?.toBooleanStrictOrNull()
                 ?: throw IOException("Invalid Library import original-state marker")
             replacements += Replacement(target, staged, backup, hadOriginal)
         }
-        val baseName = marker.name.removeSuffix(TRANSACTION_SUFFIX)
         return RestoreTransaction(
             storageKey = storageKey,
             syncIcon = syncIcon,
@@ -478,6 +490,45 @@ object LibraryAppBundleImporter {
         val candidate = File(raw).canonicalFile
         if (!insideRoot(root, candidate)) throw IOException("Library import transaction escaped the workdir")
         return candidate
+    }
+
+    private fun isAllowedTransactionTarget(root: File, storageKey: String, target: File): Boolean {
+        if (!insideRoot(root, target)) return false
+        val allowed = listOf(
+            File(File(root, "configs"), storageKey).canonicalFile,
+            File(File(root, "data"), storageKey).canonicalFile,
+            File(File(File(root, "converted"), storageKey), "converted.dex.conf").canonicalFile,
+        )
+        return target in allowed
+    }
+
+    private fun transactionRoot(root: File): File {
+        val candidate = File(root, TRANSACTION_DIR).canonicalFile
+        if (candidate.parentFile != root) {
+            throw IOException("Library import transaction directory escaped the workdir")
+        }
+        return candidate
+    }
+
+    @Throws(IOException::class)
+    private fun writeAtomically(target: File, writer: (FileOutputStream) -> Unit) {
+        val parent = target.parentFile ?: throw IOException("Library import marker has no parent")
+        ensureDirectory(parent)
+        val temp = File(parent, ".${target.name}.${UUID.randomUUID()}.tmp")
+        try {
+            FileOutputStream(temp, false).use { output ->
+                writer(output)
+                output.fd.sync()
+            }
+            if (target.exists()) {
+                throw IOException("Library import marker already exists: ${target.path}")
+            }
+            if (!temp.renameTo(target)) {
+                throw IOException("Unable to publish Library import marker: ${target.path}")
+            }
+        } finally {
+            if (temp.exists()) temp.delete()
+        }
     }
 
     private fun readAndValidateFormatVersion(manifestFile: File): Int {

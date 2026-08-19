@@ -56,8 +56,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import ru.playsoftware.j2meloader.MainActivity;
 import ru.playsoftware.j2meloader.R;
@@ -426,8 +429,12 @@ public class AppsListFragment extends Fragment {
 
 			@Override
 			public void onOpenCollection(long collectionId) {
-				publishCollectionAllApps(currentAllReadyRows());
 				loadCollectionMembers(collectionId);
+			}
+
+			@Override
+			public void onPrepareCollectionAppPicker() {
+				publishCollectionAllApps(currentAllReadyRows());
 			}
 
 			@Override
@@ -641,19 +648,25 @@ public class AppsListFragment extends Fragment {
 			uiIdsByDatabaseId.clear();
 			cachedRowsByDatabaseId.clear();
 			cachedUiItemsByDatabaseId.clear();
+			collectionsUiStore.clear();
 			nextUiId = 1;
 			cachedAllReadyRows = null;
 		}
 
 		collectionsUiStore.publishCollections(state.getCollections());
+		List<LibraryAppRow> previousAllRows = cachedAllReadyRows;
 		List<LibraryAppRow> allRows = libraryViewModel.getAllApps();
-		boolean allAppsChanged = allRows != cachedAllReadyRows;
+		boolean allAppsChanged = allRows != previousAllRows;
+		if (allAppsChanged && previousAllRows != null) {
+			pruneUiCaches(allRows);
+		}
 		cachedAllReadyRows = allRows;
 
-		rowsByUiId.clear();
 		Long activeCollectionId = collectionsUiStore.activeCollectionId();
 		if (activeCollectionId != null && (generationChanged || allAppsChanged)) {
-			publishCollectionAllApps(allRows);
+			if (collectionsUiStore.hasAllAppsSnapshot()) {
+				publishCollectionAllApps(allRows);
+			}
 			loadCollectionMembers(activeCollectionId);
 		}
 
@@ -665,6 +678,22 @@ public class AppsListFragment extends Fragment {
 		if (controller != null) {
 			controller.updateSort(state.getSortVariant());
 			controller.updateApps(uiItems, state.getFilter(), state.getQuickView());
+		}
+	}
+
+	private void pruneUiCaches(List<LibraryAppRow> rows) {
+		Set<Long> liveDatabaseIds = new HashSet<>(rows.size());
+		for (LibraryAppRow row : rows) {
+			liveDatabaseIds.add(row.getId());
+		}
+		cachedRowsByDatabaseId.keySet().retainAll(liveDatabaseIds);
+		cachedUiItemsByDatabaseId.keySet().retainAll(liveDatabaseIds);
+		uiIdsByDatabaseId.keySet().retainAll(liveDatabaseIds);
+		Iterator<Map.Entry<Integer, LibraryAppRow>> iterator = rowsByUiId.entrySet().iterator();
+		while (iterator.hasNext()) {
+			if (!liveDatabaseIds.contains(iterator.next().getValue().getId())) {
+				iterator.remove();
+			}
 		}
 	}
 

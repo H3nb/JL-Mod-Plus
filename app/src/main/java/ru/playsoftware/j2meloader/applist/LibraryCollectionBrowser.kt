@@ -101,6 +101,7 @@ internal fun LibraryCollectionBrowser(
     onOpenActions: (LibraryAppUiItem) -> Unit,
     onRemove: (Int) -> Unit,
     onSetMembership: (Int, Boolean) -> Unit,
+    onPrepareAppPicker: () -> Unit,
     onSort: (Int) -> Unit,
     onNavigationVisibilityChanged: (Boolean) -> Unit = {},
 ) {
@@ -235,7 +236,10 @@ internal fun LibraryCollectionBrowser(
             onQueryChange = { query = it },
             onSortVisibilityChanged = { sortVisible = it },
             onSort = onSort,
-            onManageApps = { manageApps = true },
+            onManageApps = {
+                onPrepareAppPicker()
+                manageApps = true
+            },
             interactive = interactive,
         )
     }
@@ -257,10 +261,13 @@ internal fun LibraryCollectionBrowser(
             ) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     if (headerHeightPx.value == 0) {
-                    renderHeader(Modifier.alpha(0f).clearAndSetSemantics { }, false)
-                } else {
-                    Spacer(Modifier.height(headerSpacerHeight))
-                }
+                        renderHeader(
+                            Modifier.alpha(0f).clearAndSetSemantics { },
+                            false,
+                        )
+                    } else {
+                        Spacer(Modifier.height(headerSpacerHeight))
+                    }
                 }
                 if (projected.isEmpty()) {
                     item(span = { GridItemSpan(maxLineSpan) }) {
@@ -287,10 +294,13 @@ internal fun LibraryCollectionBrowser(
             ) {
                 item {
                     if (headerHeightPx.value == 0) {
-                    renderHeader(Modifier.alpha(0f).clearAndSetSemantics { }, false)
-                } else {
-                    Spacer(Modifier.height(headerSpacerHeight))
-                }
+                        renderHeader(
+                            Modifier.alpha(0f).clearAndSetSemantics { },
+                            false,
+                        )
+                    } else {
+                        Spacer(Modifier.height(headerSpacerHeight))
+                    }
                 }
                 if (projected.isEmpty()) {
                     item { LibraryCollectionEmptyState(query) }

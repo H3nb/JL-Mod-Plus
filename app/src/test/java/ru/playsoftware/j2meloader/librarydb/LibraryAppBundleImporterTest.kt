@@ -187,6 +187,68 @@ class LibraryAppBundleImporterTest {
         assertFalse(transactionDir.exists())
     }
 
+    @Test fun committedTransactionKeepsNewStateAndFinishesCleanupAfterProcessDeath() {
+        val workdir = temporaryFolder.newFolder("commit-recovery-workdir")
+        val configParent = File(workdir, "configs").apply { mkdirs() }
+        val target = File(configParent, "game").apply { mkdirs() }
+        File(target, "new.cfg").writeText("new")
+        val backup = File(configParent, ".game.tx.import.bak").apply { mkdirs() }
+        File(backup, "old.cfg").writeText("old")
+        val staged = File(configParent, ".game.tx.import.tmp")
+
+        val transactionDir = File(workdir, ".library-import-transactions").apply { mkdirs() }
+        val marker = File(transactionDir, "tx.txn")
+        val properties = Properties().apply {
+            setProperty("version", "1")
+            setProperty("storageKey", "game")
+            setProperty("syncIcon", "false")
+            setProperty("count", "1")
+            setProperty("target.0", target.absolutePath)
+            setProperty("staged.0", staged.absolutePath)
+            setProperty("backup.0", backup.absolutePath)
+            setProperty("hadOriginal.0", "true")
+        }
+        marker.outputStream().use { properties.store(it, null) }
+        File(transactionDir, "tx.commit").writeText("1")
+
+        LibraryAppBundleImporter.recoverInterruptedRestores(workdir)
+
+        assertEquals("new", File(target, "new.cfg").readText())
+        assertFalse(File(target, "old.cfg").exists())
+        assertFalse(backup.exists())
+        assertFalse(transactionDir.exists())
+    }
+
+    @Test fun recoveryRejectsTransactionThatTargetsUnrelatedWorkdirData() {
+        val workdir = temporaryFolder.newFolder("tampered-recovery-workdir")
+        val unrelated = File(workdir, "unrelated.txt").apply { writeText("keep") }
+        val transactionDir = File(workdir, ".library-import-transactions").apply { mkdirs() }
+        val marker = File(transactionDir, "tx.txn")
+        val staged = File(workdir, ".unrelated.txt.tx.import.tmp")
+        val backup = File(workdir, ".unrelated.txt.tx.import.bak")
+        val properties = Properties().apply {
+            setProperty("version", "1")
+            setProperty("storageKey", "game")
+            setProperty("syncIcon", "false")
+            setProperty("count", "1")
+            setProperty("target.0", unrelated.absolutePath)
+            setProperty("staged.0", staged.absolutePath)
+            setProperty("backup.0", backup.absolutePath)
+            setProperty("hadOriginal.0", "true")
+        }
+        marker.outputStream().use { properties.store(it, null) }
+
+        try {
+            LibraryAppBundleImporter.recoverInterruptedRestores(workdir)
+            throw AssertionError("Expected tampered recovery transaction to be rejected")
+        } catch (_: IOException) {
+            // Expected.
+        }
+
+        assertEquals("keep", unrelated.readText())
+        assertTrue(marker.exists())
+    }
+
     private fun assertImportFails(input: ByteArrayInputStream) {
         val staging = temporaryFolder.newFolder("bad-${System.nanoTime()}")
         try {

@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
@@ -94,6 +95,7 @@ data class LibraryCollectionsUiState(
     val ready: Boolean = false,
     val collections: List<LibraryCollectionUiItem> = emptyList(),
     val allApps: List<LibraryAppUiItem> = emptyList(),
+    val allAppsPrepared: Boolean = false,
     val members: LibraryCollectionMembersUi? = null,
     val addTarget: LibraryCollectionAppTargetUi? = null,
 )
@@ -116,7 +118,10 @@ class LibraryCollectionsUiStore {
     }
 
     fun publishAllApps(items: List<LibraryAppUiItem>) {
-        mutableState.value = mutableState.value.copy(allApps = items)
+        mutableState.value = mutableState.value.copy(
+            allApps = items,
+            allAppsPrepared = true,
+        )
     }
 
     fun clear() {
@@ -132,10 +137,13 @@ class LibraryCollectionsUiStore {
 
     fun activeCollectionId(): Long? = mutableState.value.members?.collectionId
 
+    fun hasAllAppsSnapshot(): Boolean = mutableState.value.allAppsPrepared
+
     fun dismissMembers() {
         mutableState.value = mutableState.value.copy(
             members = null,
             allApps = emptyList(),
+            allAppsPrepared = false,
         )
     }
 
@@ -157,6 +165,7 @@ interface LibraryCollectionsHost : LibraryActions {
     fun onRenameCollection(collectionId: Long, name: String)
     fun onDeleteCollection(collectionId: Long)
     fun onOpenCollection(collectionId: Long)
+    fun onPrepareCollectionAppPicker()
     fun onDismissCollectionMembers()
     fun onRequestAddToCollection(appId: Int)
     fun onDismissAddToCollection()
@@ -204,6 +213,7 @@ internal fun LibraryCollectionsDestination(
                     host.onRemoveAppFromCollection(appId, openCollection.id)
                 }
             },
+            onPrepareAppPicker = host::onPrepareCollectionAppPicker,
             onSort = host::onSort,
             onNavigationVisibilityChanged = onNavigationVisibilityChanged,
         )
