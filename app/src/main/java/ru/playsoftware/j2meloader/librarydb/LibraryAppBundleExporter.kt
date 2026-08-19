@@ -94,11 +94,29 @@ object LibraryAppBundleExporter {
         requireSafeStorageKey(storageKey)
         val entries = collectEntries(emulatorDir, storageKey)
         if (entries.isEmpty()) throw IOException("No app-owned files are available to export")
-        val totalBytes = entries.fold(0L) { total, entry -> saturatingAdd(total, entry.file.length()) }
+        val manifest = LibraryAppBundleFormat.manifestBytes()
+        val totalEntries = entries.size + 1
+        val totalBytes = entries.fold(manifest.size.toLong()) { total, entry ->
+            saturatingAdd(total, entry.file.length())
+        }
         var writtenBytes = 0L
         val buffer = ByteArray(COPY_BUFFER_SIZE)
 
         ZipOutputStream(BufferedOutputStream(FileOutputStream(target, false))).use { zip ->
+            zip.putNextEntry(ZipEntry(LibraryAppBundleFormat.MANIFEST_ENTRY))
+            zip.write(manifest)
+            zip.closeEntry()
+            writtenBytes = manifest.size.toLong()
+            onProgress?.invoke(
+                Progress(
+                    completedEntries = 1,
+                    totalEntries = totalEntries,
+                    currentEntry = LibraryAppBundleFormat.MANIFEST_ENTRY,
+                    writtenBytes = writtenBytes,
+                    totalBytes = totalBytes,
+                ),
+            )
+
             entries.forEachIndexed { index, source ->
                 val zipEntry = ZipEntry(source.path)
                 val modified = source.file.lastModified()
@@ -115,8 +133,8 @@ object LibraryAppBundleExporter {
                 zip.closeEntry()
                 onProgress?.invoke(
                     Progress(
-                        completedEntries = index + 1,
-                        totalEntries = entries.size,
+                        completedEntries = index + 2,
+                        totalEntries = totalEntries,
                         currentEntry = source.path,
                         writtenBytes = writtenBytes,
                         totalBytes = totalBytes,

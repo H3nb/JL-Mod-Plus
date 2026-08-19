@@ -319,26 +319,33 @@ class LibraryRepository(
         publishIfCurrent(request, State.Opening(request.generation, emulatorDir))
         var database: LibraryDatabase? = null
         try {
+            withContext(Dispatchers.IO) {
+                LibraryAppBundleImporter.recoverInterruptedRestores(emulatorDir)
+            }
+            currentCoroutineContext().ensureActive()
+            ensureCurrent(request)
             database = withContext(Dispatchers.IO) { databaseFactory(emulatorDir) }
             currentCoroutineContext().ensureActive()
             ensureCurrent(request)
-            val bootstrap = bootstrapper.ensureReady(database, emulatorDir) { progress ->
-                publishIfCurrent(
-                    request,
-                    State.Indexing(
-                        generation = request.generation,
-                        emulatorDir = emulatorDir,
-                        completed = progress.completed,
-                        total = progress.total,
-                        storageKey = progress.storageKey,
-                    ),
-                )
+            val bootstrap = withContext(Dispatchers.Default) {
+                bootstrapper.ensureReady(database, emulatorDir) { progress ->
+                    publishIfCurrent(
+                        request,
+                        State.Indexing(
+                            generation = request.generation,
+                            emulatorDir = emulatorDir,
+                            completed = progress.completed,
+                            total = progress.total,
+                            storageKey = progress.storageKey,
+                        ),
+                    )
+                }
             }
             currentCoroutineContext().ensureActive()
             ensureCurrent(request)
 
             val reconciliation = if (bootstrap.alreadyReady) {
-                reconciler.reconcile(database, emulatorDir)
+                withContext(Dispatchers.Default) { reconciler.reconcile(database, emulatorDir) }
             } else {
                 LibraryReconciler.Result(0, 0, emptyList())
             }

@@ -174,6 +174,12 @@ public class MainActivity extends AppCompatActivity {
 	}
 
 	@Override
+	protected void onResume() {
+		super.onResume();
+		if (libraryViewModel != null) libraryViewModel.refreshPlayStats();
+	}
+
+	@Override
 	protected void onSaveInstanceState(@NonNull Bundle outState) {
 		ArrayList<String> ids = new ArrayList<>(pendingInstallerRequests.size());
 		ArrayList<String> uris = new ArrayList<>(pendingInstallerRequests.size());

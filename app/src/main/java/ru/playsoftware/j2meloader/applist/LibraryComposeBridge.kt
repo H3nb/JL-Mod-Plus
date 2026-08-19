@@ -122,6 +122,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -150,13 +151,14 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import ru.playsoftware.j2meloader.BuildConfig
 import ru.playsoftware.j2meloader.R
@@ -916,8 +918,10 @@ internal fun LibraryAppsDestination(
     val gridState = rememberLazyGridState()
     val headerHeightPx = remember { mutableStateOf(0) }
     val headerOffsetPx = remember { mutableStateOf(0f) }
-    val hideDistancePx = with(LocalDensity.current) { LIBRARY_CHROME_HIDE_DISTANCE_DP.dp.toPx() }
-    val revealDistancePx = with(LocalDensity.current) { LIBRARY_CHROME_REVEAL_DISTANCE_DP.dp.toPx() }
+    val density = LocalDensity.current
+    val headerSpacerHeight = with(density) { headerHeightPx.value.toDp() }
+    val hideDistancePx = with(density) { LIBRARY_CHROME_HIDE_DISTANCE_DP.dp.toPx() }
+    val revealDistancePx = with(density) { LIBRARY_CHROME_REVEAL_DISTANCE_DP.dp.toPx() }
     val chromeHysteresis = remember(hideDistancePx, revealDistancePx) {
         LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx)
     }
@@ -1046,12 +1050,16 @@ internal fun LibraryAppsDestination(
                 state = gridState,
             ) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
-                    renderHeader(
-                        Modifier
-                            .alpha(0f)
-                            .clearAndSetSemantics { },
-                        false,
-                    )
+                    if (headerHeightPx.value == 0) {
+                        renderHeader(
+                            Modifier
+                                .alpha(0f)
+                                .clearAndSetSemantics { },
+                            false,
+                        )
+                    } else {
+                        Spacer(Modifier.height(headerSpacerHeight))
+                    }
                 }
                 when {
                     state.errorMessage != null -> item(span = { GridItemSpan(maxLineSpan) }) {
@@ -1081,12 +1089,16 @@ internal fun LibraryAppsDestination(
                 state = listState,
             ) {
                 item {
-                    renderHeader(
-                        Modifier
-                            .alpha(0f)
-                            .clearAndSetSemantics { },
-                        false,
-                    )
+                    if (headerHeightPx.value == 0) {
+                        renderHeader(
+                            Modifier
+                                .alpha(0f)
+                                .clearAndSetSemantics { },
+                            false,
+                        )
+                    } else {
+                        Spacer(Modifier.height(headerSpacerHeight))
+                    }
                 }
                 when {
                     state.errorMessage != null -> item { LibraryErrorState(state.errorMessage, onRetry) }
@@ -1109,9 +1121,7 @@ internal fun LibraryAppsDestination(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .offset {
-                    IntOffset(0, headerOffsetPx.value.roundToInt())
-                }
+                .graphicsLayer { translationY = headerOffsetPx.value }
                 .background(MaterialTheme.colorScheme.background)
                 .onSizeChanged { headerHeightPx.value = it.height },
         ) {
@@ -1990,9 +2000,15 @@ private data class LibraryNormalizedIcon(
     val tileColor: Color? = null,
 )
 
-private const val LIBRARY_ICON_CACHE_BYTES = 4 * 1024 * 1024
 private const val LIBRARY_ICON_PRESENTATION_VERSION = 6
-private val LibraryIconCache = object : LruCache<String, LibraryNormalizedIcon>(LIBRARY_ICON_CACHE_BYTES) {
+private const val LIBRARY_ICON_WORK_CONCURRENCY = 3
+private const val LIBRARY_ICON_CACHE_MIN_BYTES = 8L * 1024L * 1024L
+private const val LIBRARY_ICON_CACHE_MAX_BYTES = 24L * 1024L * 1024L
+private val LibraryIconWorkSemaphore = Semaphore(LIBRARY_ICON_WORK_CONCURRENCY)
+private val LibraryIconCacheBytes = (Runtime.getRuntime().maxMemory() / 16L)
+    .coerceIn(LIBRARY_ICON_CACHE_MIN_BYTES, LIBRARY_ICON_CACHE_MAX_BYTES)
+    .toInt()
+private val LibraryIconCache = object : LruCache<String, LibraryNormalizedIcon>(LibraryIconCacheBytes) {
     override fun sizeOf(key: String, value: LibraryNormalizedIcon): Int {
         return (value.bitmap.width.toLong() * value.bitmap.height.toLong() * 4L)
             .coerceAtMost(Int.MAX_VALUE.toLong())
@@ -2718,14 +2734,16 @@ private fun rememberLibraryIcon(
     return produceState<LibraryNormalizedIcon?>(initialValue = cached, cacheKey) {
         if (value != null) return@produceState
         val path = app.iconPath?.takeIf(String::isNotBlank) ?: return@produceState
-        val bitmap = withContext(Dispatchers.IO) {
-            decodeLibraryBitmap(path, contentSizePx)
-        } ?: return@produceState
-        val normalized = withContext(Dispatchers.Default) {
-            normalizeLibraryIcon(
-                fileSource = bitmap,
-                normalizeSquareIcon = iconRatio == LibraryIconRatio.Square,
-            )
+        val normalized = LibraryIconWorkSemaphore.withPermit {
+            val bitmap = withContext(Dispatchers.IO) {
+                decodeLibraryBitmap(path, contentSizePx)
+            } ?: return@withPermit null
+            withContext(Dispatchers.Default) {
+                normalizeLibraryIcon(
+                    fileSource = bitmap,
+                    normalizeSquareIcon = iconRatio == LibraryIconRatio.Square,
+                )
+            }
         } ?: return@produceState
         LibraryIconCache.put(cacheKey, normalized)
         value = normalized

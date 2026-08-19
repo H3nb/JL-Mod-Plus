@@ -40,6 +40,7 @@ class LibraryAppBundleExporterTest {
             val names = zip.entries().asSequence().map { it.name }.toList()
             assertEquals(
                 listOf(
+                    "bundle.json",
                     "app/converted.dex.conf",
                     "app/icon.png",
                     "app/res.jar",
@@ -48,6 +49,10 @@ class LibraryAppBundleExporterTest {
                     "data/nested/save.bin",
                 ),
                 names,
+            )
+            assertEquals(
+                "{\"formatVersion\":1}\n",
+                zip.getInputStream(zip.getEntry("bundle.json")).reader().readText(),
             )
             assertEquals(
                 "MIDlet-Name: Game\n",
@@ -59,8 +64,8 @@ class LibraryAppBundleExporterTest {
             )
             assertEquals(128 * 1024 + 7L, zip.getEntry("data/nested/save.bin").size)
         }
-        assertEquals(6, progress.last().completedEntries)
-        assertEquals(6, progress.last().totalEntries)
+        assertEquals(7, progress.last().completedEntries)
+        assertEquals(7, progress.last().totalEntries)
         assertEquals(progress.last().totalBytes, progress.last().writtenBytes)
         assertTrue(File(converted, "res.jar").isFile)
         assertTrue(File(data, "nested/save.bin").isFile)
@@ -75,7 +80,7 @@ class LibraryAppBundleExporterTest {
         LibraryAppBundleExporter.exportToZip(root, "game", target)
 
         ZipFile(target).use { zip ->
-            assertEquals(listOf("app/res.jar"), zip.entries().asSequence().map { it.name }.toList())
+            assertEquals(listOf("bundle.json", "app/res.jar"), zip.entries().asSequence().map { it.name }.toList())
         }
     }
 

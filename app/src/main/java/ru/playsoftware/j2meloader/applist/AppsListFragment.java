@@ -128,6 +128,8 @@ public class AppsListFragment extends Fragment {
 
 	private final Map<Integer, LibraryAppRow> rowsByUiId = new HashMap<>();
 	private final Map<Long, Integer> uiIdsByDatabaseId = new HashMap<>();
+	private final Map<Long, LibraryAppRow> cachedRowsByDatabaseId = new HashMap<>();
+	private final Map<Long, LibraryAppUiItem> cachedUiItemsByDatabaseId = new HashMap<>();
 	private final LibraryCollectionsUiStore collectionsUiStore = new LibraryCollectionsUiStore();
 	private List<LibraryAppRow> cachedAllReadyRows;
 	private int nextUiId = 1;
@@ -424,6 +426,7 @@ public class AppsListFragment extends Fragment {
 
 			@Override
 			public void onOpenCollection(long collectionId) {
+				publishCollectionAllApps(currentAllReadyRows());
 				loadCollectionMembers(collectionId);
 			}
 
@@ -636,6 +639,8 @@ public class AppsListFragment extends Fragment {
 			activeWorkdir = workdir;
 			rowsByUiId.clear();
 			uiIdsByDatabaseId.clear();
+			cachedRowsByDatabaseId.clear();
+			cachedUiItemsByDatabaseId.clear();
 			nextUiId = 1;
 			cachedAllReadyRows = null;
 		}
@@ -643,23 +648,18 @@ public class AppsListFragment extends Fragment {
 		collectionsUiStore.publishCollections(state.getCollections());
 		List<LibraryAppRow> allRows = libraryViewModel.getAllApps();
 		boolean allAppsChanged = allRows != cachedAllReadyRows;
-		if (allAppsChanged) {
-			rowsByUiId.clear();
-			List<LibraryAppUiItem> allUiItems = new ArrayList<>(allRows.size());
-			for (LibraryAppRow row : allRows) {
-				allUiItems.add(toLibraryUiItem(row));
-			}
-			collectionsUiStore.publishAllApps(allUiItems);
-			cachedAllReadyRows = allRows;
+		cachedAllReadyRows = allRows;
+
+		rowsByUiId.clear();
+		Long activeCollectionId = collectionsUiStore.activeCollectionId();
+		if (activeCollectionId != null && (generationChanged || allAppsChanged)) {
+			publishCollectionAllApps(allRows);
+			loadCollectionMembers(activeCollectionId);
 		}
 
 		List<LibraryAppUiItem> uiItems = new ArrayList<>(state.getApps().size());
 		for (LibraryAppRow row : state.getApps()) {
 			uiItems.add(toLibraryUiItem(row));
-		}
-		Long activeCollectionId = collectionsUiStore.activeCollectionId();
-		if (activeCollectionId != null && (generationChanged || allAppsChanged)) {
-			loadCollectionMembers(activeCollectionId);
 		}
 		LibraryComposeController controller = composeController;
 		if (controller != null) {
@@ -668,13 +668,36 @@ public class AppsListFragment extends Fragment {
 		}
 	}
 
+	private List<LibraryAppRow> currentAllReadyRows() {
+		List<LibraryAppRow> rows = cachedAllReadyRows;
+		if (rows != null) return rows;
+		rows = libraryViewModel.getAllApps();
+		cachedAllReadyRows = rows;
+		return rows;
+	}
+
+	private void publishCollectionAllApps(List<LibraryAppRow> rows) {
+		List<LibraryAppUiItem> allUiItems = new ArrayList<>(rows.size());
+		for (LibraryAppRow row : rows) {
+			allUiItems.add(toLibraryUiItem(row));
+		}
+		collectionsUiStore.publishAllApps(allUiItems);
+	}
+
 	private LibraryAppUiItem toLibraryUiItem(LibraryAppRow row) {
+		LibraryAppRow cachedRow = cachedRowsByDatabaseId.get(row.getId());
+		LibraryAppUiItem cachedItem = cachedUiItemsByDatabaseId.get(row.getId());
+		if (cachedItem != null && row.equals(cachedRow)) {
+			rowsByUiId.put(cachedItem.getId(), row);
+			return cachedItem;
+		}
+
 		int uiId = uiIdFor(row.getId());
 		rowsByUiId.put(uiId, row);
 		String iconPath = row.getIconRevision() == 0L
 				? null
 				: new File(appPath(row) + Config.MIDLET_ICON_FILE).getAbsolutePath();
-		return new LibraryAppUiItem(
+		LibraryAppUiItem item = new LibraryAppUiItem(
 				uiId,
 				row.getTitle(),
 				row.getVendor(),
@@ -690,6 +713,9 @@ public class AppsListFragment extends Fragment {
 				row.getSourceDescription(),
 				row.getPlayCount(),
 				row.getTotalPlayTimeMs());
+		cachedRowsByDatabaseId.put(row.getId(), row);
+		cachedUiItemsByDatabaseId.put(row.getId(), item);
+		return item;
 	}
 
 	private int uiIdFor(long databaseId) {
@@ -725,6 +751,8 @@ public class AppsListFragment extends Fragment {
 		activeGeneration = NO_GENERATION;
 		activeWorkdir = null;
 		uiIdsByDatabaseId.clear();
+		cachedRowsByDatabaseId.clear();
+		cachedUiItemsByDatabaseId.clear();
 		nextUiId = 1;
 		cachedAllReadyRows = null;
 		pendingIconUiId = NO_UI_ID;

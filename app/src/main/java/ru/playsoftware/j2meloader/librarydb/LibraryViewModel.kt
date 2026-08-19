@@ -193,11 +193,6 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 displayState.collect(observer::onState)
             }
         }
-        owner.lifecycleScope.launch {
-            owner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                refreshPlayStats()
-            }
-        }
     }
 
     fun readyGeneration(): LibraryGenerationToken? = repository.currentReadyToken()
@@ -686,7 +681,9 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 }
                 if (records.isEmpty()) return@withLock
                 val result = try {
-                    repository.reconcilePlayStats(expected, records)
+                    withContext(Dispatchers.Default) {
+                        repository.reconcilePlayStats(expected, records)
+                    }
                 } catch (error: IllegalStateException) {
                     if (!repository.isReadyGeneration(expected)) return@withLock
                     throw error

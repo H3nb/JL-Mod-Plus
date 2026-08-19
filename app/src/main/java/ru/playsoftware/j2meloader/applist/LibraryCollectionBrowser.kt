@@ -61,6 +61,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -76,11 +77,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import java.text.Collator
 import java.util.Locale
-import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.withContext
@@ -149,6 +148,7 @@ internal fun LibraryCollectionBrowser(
     val headerHeightPx = remember { mutableStateOf(0) }
     val headerOffsetPx = remember { mutableStateOf(0f) }
     val density = LocalDensity.current
+    val headerSpacerHeight = with(density) { headerHeightPx.value.toDp() }
     val hideDistancePx = with(density) { 10.dp.toPx() }
     val revealDistancePx = with(density) { 18.dp.toPx() }
     val chromeHysteresis = remember(hideDistancePx, revealDistancePx) {
@@ -256,7 +256,11 @@ internal fun LibraryCollectionBrowser(
                 state = gridState,
             ) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
+                    if (headerHeightPx.value == 0) {
                     renderHeader(Modifier.alpha(0f).clearAndSetSemantics { }, false)
+                } else {
+                    Spacer(Modifier.height(headerSpacerHeight))
+                }
                 }
                 if (projected.isEmpty()) {
                     item(span = { GridItemSpan(maxLineSpan) }) {
@@ -282,7 +286,11 @@ internal fun LibraryCollectionBrowser(
                 state = listState,
             ) {
                 item {
+                    if (headerHeightPx.value == 0) {
                     renderHeader(Modifier.alpha(0f).clearAndSetSemantics { }, false)
+                } else {
+                    Spacer(Modifier.height(headerSpacerHeight))
+                }
                 }
                 if (projected.isEmpty()) {
                     item { LibraryCollectionEmptyState(query) }
@@ -304,7 +312,7 @@ internal fun LibraryCollectionBrowser(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .offset { IntOffset(0, headerOffsetPx.value.roundToInt()) }
+                .graphicsLayer { translationY = headerOffsetPx.value }
                 .background(MaterialTheme.colorScheme.background)
                 .onSizeChanged { headerHeightPx.value = it.height },
         ) {

@@ -59,15 +59,14 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -134,7 +133,10 @@ class LibraryCollectionsUiStore {
     fun activeCollectionId(): Long? = mutableState.value.members?.collectionId
 
     fun dismissMembers() {
-        mutableState.value = mutableState.value.copy(members = null)
+        mutableState.value = mutableState.value.copy(
+            members = null,
+            allApps = emptyList(),
+        )
     }
 
     fun showAddTarget(appId: Int, title: String) {
@@ -216,6 +218,7 @@ internal fun LibraryCollectionsDestination(
     val headerHeightPx = remember { mutableStateOf(0) }
     val headerOffsetPx = remember { mutableStateOf(0f) }
     val density = LocalDensity.current
+    val headerSpacerHeight = with(density) { headerHeightPx.value.toDp() }
     val hideDistancePx = with(density) { 10.dp.toPx() }
     val revealDistancePx = with(density) { 18.dp.toPx() }
     val chromeHysteresis = remember(hideDistancePx, revealDistancePx) {
@@ -315,12 +318,16 @@ internal fun LibraryCollectionsDestination(
             state = listState,
         ) {
             item {
-                renderHeader(
-                    Modifier
-                        .alpha(0f)
-                        .clearAndSetSemantics { },
-                    false,
-                )
+                if (headerHeightPx.value == 0) {
+                    renderHeader(
+                        Modifier
+                            .alpha(0f)
+                            .clearAndSetSemantics { },
+                        false,
+                    )
+                } else {
+                    Spacer(Modifier.height(headerSpacerHeight))
+                }
             }
 
             if (state.collections.isEmpty()) {
@@ -408,7 +415,7 @@ internal fun LibraryCollectionsDestination(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .offset { IntOffset(0, headerOffsetPx.value.roundToInt()) }
+                .graphicsLayer { translationY = headerOffsetPx.value }
                 .background(MaterialTheme.colorScheme.background)
                 .onSizeChanged { headerHeightPx.value = it.height },
         ) {
