@@ -40,6 +40,7 @@ import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import java.io.File;
+import java.io.IOException;
 
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -228,9 +229,15 @@ public class InstallerDialog extends DialogFragment {
 		if (composeController != null) {
 			composeController.showLoading(installerTitle, getString(R.string.library_import_preparing));
 		}
-		Disposable disposable = Single.<LibraryAppBundleImporter.PreparedImport>create(emitter ->
-				emitter.onSuccess(LibraryAppBundleImporter.prepare(
-					requireContext().getApplicationContext(), uri)))
+		Disposable disposable = Single.<LibraryAppBundleImporter.PreparedImport>create(emitter -> {
+			LibraryAppBundleImporter.PreparedImport prepared = LibraryAppBundleImporter.prepare(
+					requireContext().getApplicationContext(), uri);
+			if (emitter.isDisposed()) {
+				LibraryAppBundleImporter.cleanup(prepared);
+				return;
+			}
+			emitter.onSuccess(prepared);
+		})
 				.subscribeOn(Schedulers.io())
 				.observeOn(AndroidSchedulers.mainThread())
 				.subscribe(prepared -> {
@@ -308,6 +315,20 @@ public class InstallerDialog extends DialogFragment {
 		}
 
 		Descriptor nd = installer.getNewDescriptor();
+		if (isBundleRequest()) {
+			LibraryAppBundleImporter.PreparedImport prepared = bundleImport;
+			if (prepared == null) {
+				onError(new IllegalStateException("Prepared app bundle is unavailable"));
+				return;
+			}
+			try {
+				LibraryAppBundleImporter.validateSourceIdentity(prepared, nd.getName(), nd.getVendor());
+			} catch (IOException error) {
+				onError(error);
+				return;
+			}
+		}
+
 		String message;
 		String runLabel = null;
 		switch (status) {
