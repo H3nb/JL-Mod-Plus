@@ -41,6 +41,16 @@ Available skill routing:
 - Application-owned UI may migrate to Compose incrementally, but emulator, rendering, input, or Android-platform boundaries may remain native/View when they serve a concrete purpose.
 - For internal app icons, prefer official Material Symbols when suitable; use a repository-provided helper when available before creating a custom icon.
 
+## Library database evolution
+
+For Room Library schema changes, follow `docs/library-schema-evolution.md` and preserve the migration contract:
+
+- Keep every exported historical schema snapshot and add an adjacent `N -> N+1` migration to `LibraryMigrations.ALL` whenever `LibraryDatabase.SCHEMA_VERSION` changes.
+- Never use destructive migration as a shortcut for the Library database. Favorites, custom metadata, Collections, play stats, receipts, and future Library-only state may not be reconstructible from the workdir.
+- Adding, renaming, removing, or merging columns/tables must migrate existing user-owned state deterministically. For destructive structural edits, use a table-copy migration compatible with the project's minimum Android/platform SQLite baseline rather than assuming modern `DROP COLUMN`/`RENAME COLUMN` support.
+- Run the migration tests from historical schemas to latest. A schema version bump without a complete tested migration chain is not ready to merge.
+- A missing/reset database may rebuild reconstructible catalog data from the workdir, but database deletion is not an upgrade/migration mechanism and must never delete or rewrite app/config/save files.
+
 ## Java ME compatibility
 
 For changes to Java ME APIs, JSRs, vendor APIs, or compatibility behavior:
