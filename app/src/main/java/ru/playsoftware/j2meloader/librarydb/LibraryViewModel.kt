@@ -87,6 +87,11 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         val quickView: LibraryQuickView,
     )
 
+    private data class ImportRestoreOutcome(
+        val iconRevision: Long?,
+        val sourceMetadata: LibraryAppBundleImporter.SourceMetadata?,
+    )
+
     private val preferences = PreferenceManager.getDefaultSharedPreferences(application)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val generationCommitLock = ReentrantLock()
@@ -419,20 +424,53 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             return
         }
         launchMutation(callback) {
-            val result = withContext(Dispatchers.IO) {
+            val outcome = withContext(Dispatchers.IO) {
                 acquireGenerationLease(generation.generation, generation.emulatorDir).use {
                     val current = repository.currentApp(generation, app.id)
                     check(current?.storageKey == app.storageKey) {
                         "Library import target changed before restore"
                     }
-                    LibraryAppBundleImporter.restore(prepared, generation.emulatorDir, app.storageKey)
+                    val sourceMetadata = LibraryAppBundleImporter.readSourceMetadata(prepared)
+                    if (
+                        sourceMetadata != null &&
+                        (sourceMetadata.title != current.sourceTitle ||
+                            sourceMetadata.vendor != current.sourceVendor)
+                    ) {
+                        throw IOException(
+                            "App bundle descriptor identity does not match the retained JAR",
+                        )
+                    }
+                    val result = LibraryAppBundleImporter.restore(
+                        prepared,
+                        generation.emulatorDir,
+                        app.storageKey,
+                    )
+                    ImportRestoreOutcome(result.iconRevision, sourceMetadata)
                 }
             }
-            result.iconRevision?.let { revision ->
+            val resolvedIconRevision = outcome.iconRevision?.let { revision ->
+                distinctIconRevision(revision, app.iconRevision)
+            } ?: app.iconRevision
+            val sourceMetadata = outcome.sourceMetadata
+            if (sourceMetadata != null) {
+                repository.recordInstalledApp(
+                    expected = generation,
+                    existingId = app.id,
+                    metadata = InstalledAppMetadata(
+                        storageKey = app.storageKey,
+                        sourceTitle = sourceMetadata.title,
+                        sourceVendor = sourceMetadata.vendor,
+                        sourceVersion = sourceMetadata.version,
+                        sourceDescription = sourceMetadata.description,
+                        iconRevision = resolvedIconRevision,
+                        addedAt = app.addedAt ?: System.currentTimeMillis(),
+                    ),
+                )
+            } else if (outcome.iconRevision != null) {
                 repository.setIconRevision(
                     generation,
                     app.id,
-                    distinctIconRevision(revision, app.iconRevision),
+                    resolvedIconRevision,
                 )
             }
         }
