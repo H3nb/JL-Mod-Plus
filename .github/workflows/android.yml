@@ -31,10 +31,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          base64 --decode .github/scripts/library_pr2_final_followup.py.gz.b64 | gzip -dc > /tmp/library_pr2_final_followup.py
+          base64 --decode .github/scripts/library_pr2_followup_v2.py.gz.b64 | gzip -dc > /tmp/library_pr2_final_followup.py
           python /tmp/library_pr2_final_followup.py
           git checkout 37796e0f22cee50c2380eb5bfd0feeac9a926ada -- .github/workflows/android.yml
           rm .github/scripts/library_pr2_final_followup.py.gz.b64
+          rm .github/scripts/library_pr2_followup_v2.py.gz.b64
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
