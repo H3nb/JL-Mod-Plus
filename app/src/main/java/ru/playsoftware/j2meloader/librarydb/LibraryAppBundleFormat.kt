@@ -7,8 +7,8 @@
 package ru.playsoftware.j2meloader.librarydb
 
 /**
- * Versioned envelope for exported app bundles. Writers always emit [CURRENT_VERSION], while
- * unversioned PR2 preview bundles remain readable as legacy v0.
+ * Versioned envelope for exported app bundles. Writers always emit [CURRENT_VERSION]; readers keep
+ * unversioned PR2 preview bundles readable only as the legacy v0 compatibility format.
  */
 internal object LibraryAppBundleFormat {
     const val MANIFEST_ENTRY = "bundle.json"
