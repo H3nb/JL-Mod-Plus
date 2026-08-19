@@ -70,7 +70,7 @@ jobs:
         env:
           JLMOD_BUILD_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
         run: >-
-          ./gradlew --no-daemon --stacktrace --continue
+          ./gradlew --no-daemon --stacktrace --continue --configuration-cache
           :app:lintEmulatorDebug
           :dexlib:lintDebug
           :app:testEmulatorDebugUnitTest
