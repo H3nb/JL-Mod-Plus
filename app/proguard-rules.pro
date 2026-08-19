@@ -38,29 +38,12 @@
 # rather than the entire org.microemu implementation tree.
 -keep,allowoptimization public class org.microemu.cldc.**.Connection { public protected *; }
 
-# Gson 2.9.x reflection.
-# Serialized fields use @SerializedName, so their wire names must remain stable.
--keepclassmembers,allowobfuscation class * {
-    @com.google.gson.annotations.SerializedName <fields>;
-}
-
-# Gson invokes these constructors/adapters reflectively from directly referenced model
-# classes / @JsonAdapter metadata. Keep the reflective entry points but allow optimization.
--keepclassmembers,allowoptimization class ru.playsoftware.j2meloader.config.ProfileModel {
-    public <init>();
-}
--keepclassmembers,allowoptimization class ru.playsoftware.j2meloader.config.ShaderInfo {
-    public <init>();
-}
--keep,allowoptimization class ru.playsoftware.j2meloader.util.SparseIntArrayAdapter {
-    public <init>();
-    public *;
-}
-
-# Required by Gson versions older than 2.11 when R8 full mode is enabled.
--keepattributes Signature
--keep,allowobfuscation,allowshrinking,allowoptimization class com.google.gson.reflect.TypeToken { *; }
--keep,allowobfuscation,allowshrinking,allowoptimization class * extends com.google.gson.reflect.TypeToken
+# Gson 2.14 ships its own consumer ProGuard/R8 configuration in the artifact. It keeps
+# generic signatures, Gson annotations, TypeToken subclasses, @SerializedName fields,
+# no-arg constructors for reflected models, and TypeAdapter constructors. JL-Mod Plus's
+# persisted profile models already use @SerializedName and SparseIntArrayAdapter is
+# referenced through @JsonAdapter, so duplicating the old Gson 2.9.x rules here would
+# only make the shrinker configuration broader and harder to maintain.
 
 # JNI/reflection-heavy dependencies. Their externally resolved names remain fixed, but
 # method bodies may still be optimized. Do not shrink or obfuscate these without a
