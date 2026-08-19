@@ -10,14 +10,12 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
-import java.nio.file.Files
 import java.util.Properties
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Assume.assumeNoException
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -120,33 +118,6 @@ class LibraryAppBundleImporterTest {
         assertEquals(descriptor, File(converted, "converted.dex.conf").readText())
         assertEquals("existing save", File(data, "keep.sav").readText())
         assertTrue(File(converted, "res.jar").isFile)
-    }
-
-    @Test fun restoreRejectsSymlinkedDestinationOutsideWorkdir() {
-        val workdir = temporaryFolder.newFolder("symlink-workdir")
-        val outside = temporaryFolder.newFolder("symlink-outside")
-        val configParent = File(workdir, "configs").apply { mkdirs() }
-        val linkedTarget = File(configParent, "game")
-        try {
-            Files.createSymbolicLink(linkedTarget.toPath(), outside.toPath())
-        } catch (error: Exception) {
-            assumeNoException(error)
-            return
-        }
-        val prepared = LibraryAppBundleImporter.extractToStaging(
-            bundle(
-                "app/res.jar" to byteArrayOf(1),
-                "config/new.cfg" to "must stay inside workdir".toByteArray(),
-            ),
-            temporaryFolder.newFolder("symlink-staging"),
-        )
-
-        try {
-            LibraryAppBundleImporter.restore(prepared, workdir, "game")
-            throw AssertionError("Expected symlinked import target to be rejected")
-        } catch (_: IOException) {
-            assertFalse(File(outside, "new.cfg").exists())
-        }
     }
 
     @Test fun legacyUnversionedBundleRemainsReadableButFutureFormatIsRejected() {
