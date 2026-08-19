@@ -93,7 +93,6 @@ object LibraryAppBundleExporter {
     ) {
         requireSafeStorageKey(storageKey)
         val entries = collectEntries(emulatorDir, storageKey)
-        if (entries.isEmpty()) throw IOException("No app-owned files are available to export")
         val manifest = LibraryAppBundleFormat.manifestBytes()
         val totalEntries = entries.size + 1
         val totalBytes = entries.fold(manifest.size.toLong()) { total, entry ->
@@ -168,12 +167,29 @@ object LibraryAppBundleExporter {
         val workdirRoot = emulatorDir.canonicalFile
         val entries = ArrayList<SourceEntry>()
         val converted = File(File(emulatorDir, "converted"), storageKey)
-        addIfFile(entries, workdirRoot, File(converted, "res.jar"), "app/res.jar")
+        addRequiredFile(entries, workdirRoot, File(converted, "res.jar"), "app/res.jar")
         addIfFile(entries, workdirRoot, File(converted, "converted.dex.conf"), "app/converted.dex.conf")
         addIfFile(entries, workdirRoot, File(converted, "icon.png"), "app/icon.png")
         addTree(entries, workdirRoot, File(File(emulatorDir, "configs"), storageKey), "config")
         addTree(entries, workdirRoot, File(File(emulatorDir, "data"), storageKey), "data")
         return entries.sortedBy(SourceEntry::path)
+    }
+
+    @Throws(IOException::class)
+    private fun addRequiredFile(
+        entries: MutableList<SourceEntry>,
+        workdirRoot: File,
+        file: File,
+        path: String,
+    ) {
+        val canonical = file.canonicalFile
+        if (!insideRoot(workdirRoot, canonical)) {
+            throw IOException("App-owned file resolves outside the active workdir: ${file.absolutePath}")
+        }
+        if (!canonical.isFile || canonical.length() <= 0L) {
+            throw IOException("Retained JAR is unavailable for app-bundle export")
+        }
+        entries += SourceEntry(canonical, path)
     }
 
     @Throws(IOException::class)
