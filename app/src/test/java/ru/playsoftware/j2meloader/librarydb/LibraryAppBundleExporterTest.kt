@@ -84,6 +84,22 @@ class LibraryAppBundleExporterTest {
         }
     }
 
+    @Test fun exportFailsWithoutRetainedJarEvenWhenSideDataExists() {
+        val root = temporaryFolder.newFolder("missing-jar")
+        val converted = File(File(root, "converted"), "game").apply { mkdirs() }
+        val config = File(File(root, "configs"), "game").apply { mkdirs() }
+        File(converted, "converted.dex.conf").writeText("MIDlet-Name: Game\n")
+        File(config, "config.json").writeText("{}")
+        val target = File(temporaryFolder.root, "missing-jar.zip")
+
+        try {
+            LibraryAppBundleExporter.exportToZip(root, "game", target)
+            throw AssertionError("Expected export without retained JAR to fail")
+        } catch (_: java.io.IOException) {
+            assertFalse(target.exists() && target.length() > 0L)
+        }
+    }
+
     @Test fun exportFailsWhenNothingAppOwnedExists() {
         val root = temporaryFolder.newFolder("empty")
         val target = File(temporaryFolder.root, "empty.zip")
