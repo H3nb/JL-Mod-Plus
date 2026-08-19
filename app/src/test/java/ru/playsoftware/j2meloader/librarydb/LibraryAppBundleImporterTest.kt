@@ -11,6 +11,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
 import java.util.Properties
+import java.util.UUID
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import org.junit.Assert.assertEquals
@@ -65,6 +66,70 @@ class LibraryAppBundleImporterTest {
         assertEquals("Vendor", metadata.vendor)
         assertEquals("9.9", metadata.version)
         assertEquals("Description supplied by JAD", metadata.description)
+    }
+
+    @Test fun preflightIdentityRejectsDescriptorFromDifferentApp() {
+        val descriptor = """
+            MIDlet-Name: Game
+            MIDlet-Vendor: Vendor
+            MIDlet-Version: 9.9-jad
+            MIDlet-Description: Restored description
+        """.trimIndent() + "\n"
+        val prepared = LibraryAppBundleImporter.extractToStaging(
+            bundle(
+                "app/res.jar" to byteArrayOf(1),
+                "app/converted.dex.conf" to descriptor.toByteArray(),
+            ),
+            temporaryFolder.newFolder("preflight-identity"),
+            parseSourceMetadata = true,
+        )
+
+        LibraryAppBundleImporter.validateSourceIdentity(prepared, "Game", "Vendor")
+        try {
+            LibraryAppBundleImporter.validateSourceIdentity(prepared, "Different Game", "Vendor")
+            throw AssertionError("Expected mismatched bundle descriptor identity to fail")
+        } catch (_: IOException) {
+            // Expected before the installer is allowed to publish the retained JAR.
+        }
+    }
+
+    @Test fun oversizedConvertedDescriptorIsRejectedDuringExtraction() {
+        assertImportFails(
+            bundle(
+                "app/res.jar" to byteArrayOf(1),
+                "app/converted.dex.conf" to ByteArray(1024 * 1024 + 1) { 'A'.code.toByte() },
+            ),
+        )
+    }
+
+    @Test fun staleUuidImportStagingIsCleanedConservatively() {
+        val importRoot = temporaryFolder.newFolder("library-import")
+        val stale = File(importRoot, UUID.randomUUID().toString()).apply {
+            mkdirs()
+            File(this, "payload").writeText("stale")
+            setLastModified(1_000L)
+        }
+        val recent = File(importRoot, UUID.randomUUID().toString()).apply {
+            mkdirs()
+            File(this, "payload").writeText("active")
+            setLastModified(9_000L)
+        }
+        val unrelated = File(importRoot, "keep-me").apply {
+            mkdirs()
+            File(this, "payload").writeText("unrelated")
+            setLastModified(1_000L)
+        }
+
+        val removed = LibraryAppBundleImporter.cleanupStaleStaging(
+            importRoot = importRoot,
+            nowMillis = 10_000L,
+            maxAgeMillis = 5_000L,
+        )
+
+        assertEquals(1, removed)
+        assertFalse(stale.exists())
+        assertTrue(recent.exists())
+        assertTrue(unrelated.exists())
     }
 
     @Test fun traversalAndUnsupportedEntriesAreRejected() {
