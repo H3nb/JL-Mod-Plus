@@ -1,22 +1,11 @@
-# Add project specific ProGuard rules here.
-# By default, the flags in this file are appended to flags specified
-# in C:\tools\adt-bundle-windows-x86_64-20131030\sdk/tools/proguard/proguard-android.txt
-# You can edit the include path and order by changing the proguardFiles
-# directive in build.gradle.
+# JL-Mod Plus R8 rules
 #
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# JL-Mod Plus is not a conventional Android app: converted MIDlets are loaded from
+# external DEX at runtime and resolve J2ME/vendor APIs by their original binary names.
+# Those guest-visible APIs therefore form a runtime ABI. Keep their names and
+# public/protected surface conservatively; R8 cannot see external MIDlet callers.
 
-# Add any project specific keep options here:
-
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
-
-# J2ME API's and extensions
+# J2ME APIs and vendor extensions exposed to guest MIDlets.
 -keep public class com.j_phone.** { public protected *; }
 -keep public class com.jblend.** { public protected *; }
 -keep public class com.kddi.** { public protected *; }
@@ -34,23 +23,25 @@
 -keep public class javax.** { public protected *; }
 -keep public class mmpp.media.** { public protected *; }
 
-# emulator
--keep public class org.microemu.** { public protected *; }
-# Keep the BuildConfig
--keep class ru.playsoftware.j2meloader.BuildConfig { *; }
--keep class ru.playsoftware.j2meloader.util.SparseIntArrayAdapter { *; }
--keep class ru.playsoftware.j2meloader.crashes.models.* { *; }
+# MicroEmulator runtime reflection.
+# ImplFactory derives implementation names by replacing a Delegate suffix with Impl,
+# so both sides of these pairs must retain their binary names and callable surface.
+-keep,allowoptimization public interface org.microemu.microedition.io.ConnectorDelegate { public protected *; }
+-keep,allowoptimization public class org.microemu.microedition.io.ConnectorImpl { public protected *; }
+-keep,allowoptimization public interface org.microemu.microedition.io.PushRegistryDelegate { public protected *; }
+-keep,allowoptimization public class org.microemu.microedition.io.PushRegistryImpl { public protected *; }
+-keep,allowoptimization public interface org.microemu.cldc.file.FileSystemRegistryDelegate { public protected *; }
+-keep,allowoptimization public class org.microemu.cldc.file.FileSystemRegistryImpl { public protected *; }
 
-# dependencies
--keep class com.arthenica.mobileffmpeg.** { *; }
--keep public class org.acra.** { public protected *; }
--keepclassmembers,allowobfuscation class * {
- @com.google.gson.annotations.SerializedName <fields>;
-}
--keepattributes Signature
--keep class com.google.gson.reflect.TypeToken { *; }
--keep class * extends com.google.gson.reflect.TypeToken
+# ConnectorImpl constructs org.microemu.cldc.<protocol>.Connection names from URL schemes
+# and instantiates them reflectively. Keep only those dynamic protocol entry points,
+# rather than the entire org.microemu implementation tree.
+-keep,allowoptimization public class org.microemu.cldc.**.Connection { public protected *; }
 
+# Gson 2.14, FFmpegKit, and ACRA ship their own consumer ProGuard/R8 configuration.
+# Keep dependency-specific reflection/JNI rules upstream instead of duplicating broad
+# package-wide keeps here.
+
+# Keep the existing compact obfuscation dictionary for application-internal code.
 -obfuscationdictionary dictionary.pro
 -classobfuscationdictionary dictionary.pro
--repackageclasses
