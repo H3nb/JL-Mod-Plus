@@ -10,12 +10,14 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
 import java.util.Properties
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeNoException
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -42,6 +44,29 @@ class LibraryAppBundleImporterTest {
         assertEquals("config", File(prepared.configDir, "config.json").readText())
         assertEquals(byteArrayOf(4, 5, 6).toList(), File(prepared.dataDir, "nested/save.bin").readBytes().toList())
         assertFalse(File(staging, "icon.png").exists())
+    }
+
+    @Test fun sourceMetadataPreservesDescriptorOverridesFromOriginalInstall() {
+        val descriptor = """
+            MIDlet-Name: Game
+            MIDlet-Vendor: Vendor
+            MIDlet-Version: 9.9
+            MIDlet-Description: Description supplied by JAD
+        """.trimIndent() + "\n"
+        val prepared = LibraryAppBundleImporter.extractToStaging(
+            bundle(
+                "app/res.jar" to byteArrayOf(1),
+                "app/converted.dex.conf" to descriptor.toByteArray(),
+            ),
+            temporaryFolder.newFolder("source-metadata"),
+        )
+
+        val metadata = requireNotNull(LibraryAppBundleImporter.readSourceMetadata(prepared))
+
+        assertEquals("Game", metadata.title)
+        assertEquals("Vendor", metadata.vendor)
+        assertEquals("9.9", metadata.version)
+        assertEquals("Description supplied by JAD", metadata.description)
     }
 
     @Test fun traversalAndUnsupportedEntriesAreRejected() {
@@ -95,6 +120,33 @@ class LibraryAppBundleImporterTest {
         assertEquals(descriptor, File(converted, "converted.dex.conf").readText())
         assertEquals("existing save", File(data, "keep.sav").readText())
         assertTrue(File(converted, "res.jar").isFile)
+    }
+
+    @Test fun restoreRejectsSymlinkedDestinationOutsideWorkdir() {
+        val workdir = temporaryFolder.newFolder("symlink-workdir")
+        val outside = temporaryFolder.newFolder("symlink-outside")
+        val configParent = File(workdir, "configs").apply { mkdirs() }
+        val linkedTarget = File(configParent, "game")
+        try {
+            Files.createSymbolicLink(linkedTarget.toPath(), outside.toPath())
+        } catch (error: Exception) {
+            assumeNoException(error)
+            return
+        }
+        val prepared = LibraryAppBundleImporter.extractToStaging(
+            bundle(
+                "app/res.jar" to byteArrayOf(1),
+                "config/new.cfg" to "must stay inside workdir".toByteArray(),
+            ),
+            temporaryFolder.newFolder("symlink-staging"),
+        )
+
+        try {
+            LibraryAppBundleImporter.restore(prepared, workdir, "game")
+            throw AssertionError("Expected symlinked import target to be rejected")
+        } catch (_: IOException) {
+            assertFalse(File(outside, "new.cfg").exists())
+        }
     }
 
     @Test fun legacyUnversionedBundleRemainsReadableButFutureFormatIsRejected() {
@@ -184,6 +236,36 @@ class LibraryAppBundleImporterTest {
         assertEquals("old", File(target, "old.cfg").readText())
         assertFalse(File(target, "new.cfg").exists())
         assertFalse(backup.exists())
+        assertFalse(transactionDir.exists())
+    }
+
+    @Test fun preparedTransactionWithoutPublishedTargetCleansPartialStaging() {
+        val workdir = temporaryFolder.newFolder("partial-staging-workdir")
+        val configParent = File(workdir, "configs").apply { mkdirs() }
+        val target = File(configParent, "game")
+        val staged = File(configParent, ".game.tx.import.tmp").apply {
+            mkdirs()
+            File(this, "partial.cfg").writeText("partial")
+        }
+        val backup = File(configParent, ".game.tx.import.bak")
+        val transactionDir = File(workdir, ".library-import-transactions").apply { mkdirs() }
+        val marker = File(transactionDir, "tx.txn")
+        val properties = Properties().apply {
+            setProperty("version", "1")
+            setProperty("storageKey", "game")
+            setProperty("syncIcon", "false")
+            setProperty("count", "1")
+            setProperty("target.0", target.absolutePath)
+            setProperty("staged.0", staged.absolutePath)
+            setProperty("backup.0", backup.absolutePath)
+            setProperty("hadOriginal.0", "false")
+        }
+        marker.outputStream().use { properties.store(it, null) }
+
+        LibraryAppBundleImporter.recoverInterruptedRestores(workdir)
+
+        assertFalse(target.exists())
+        assertFalse(staged.exists())
         assertFalse(transactionDir.exists())
     }
 
