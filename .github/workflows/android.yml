@@ -17,7 +17,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 30
 
     steps:
       - name: Check out sources
@@ -70,7 +70,6 @@ jobs:
           :app:validateEmulatorDebugScreenshotTest
           :app:assembleEmulatorDebug
           :app:assembleEmulatorDebugAndroidTest
-          :app:assembleEmulatorRelease
 
       - name: Upload lint reports
         if: always()
@@ -84,19 +83,6 @@ jobs:
             dexlib/build/reports/lint-results-*.html
             dexlib/build/reports/lint-results-*.xml
             dexlib/build/reports/lint-results-*.sarif
-          if-no-files-found: warn
-          retention-days: 7
-
-      - name: Upload R8 reports
-        if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: JL-Mod-Plus-r8-reports
-          path: |
-            app/build/outputs/mapping/emulatorRelease/mapping.txt
-            app/build/outputs/mapping/emulatorRelease/configuration.txt
-            app/build/outputs/mapping/emulatorRelease/seeds.txt
-            app/build/outputs/mapping/emulatorRelease/usage.txt
           if-no-files-found: warn
           retention-days: 7
 
