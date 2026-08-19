@@ -83,6 +83,57 @@ public class MidletSessionJournalTest {
 		assertEquals(expected.mainClass, actual.mainClass);
 		assertEquals(expected.jarSize, actual.jarSize);
 		assertEquals(expected.jarSha256, actual.jarSha256);
+		assertNull(actual.workdirLocator);
+		assertNull(actual.storageKey);
+		assertNull(actual.reachedRunning);
+		assertNull(actual.firstRunningWallTimeMillis);
+		assertNull(actual.accumulatedActiveMillis);
+		assertNull(actual.activeSegmentStartElapsedRealtimeMillis);
+	}
+
+	@Test
+	public void currentSchemaRoundTripPreservesPlayStatFieldsAndLongWorkdir() throws Exception {
+		String workdir = longWorkdirLocator();
+		MidletSessionJournal.Snapshot expected = new MidletSessionJournal.Snapshot(
+				MidletSessionJournal.CURRENT_SCHEMA_VERSION,
+				"session-current",
+				"ru.playsoftware.j2meloader:midlet",
+				4321,
+				10L,
+				20L,
+				30L,
+				40L,
+				MidletSessionJournal.Stage.RUNNING,
+				MidletSessionJournal.Outcome.NONE,
+				null,
+				null,
+				"Game",
+				"Vendor",
+				"2.0",
+				"game.Main",
+				"200",
+				"deadbeef",
+				workdir,
+				"game-storage-key",
+				Boolean.TRUE,
+				25L,
+				1200L,
+				9000L
+		);
+
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		MidletSessionJournal.write(expected, output);
+		MidletSessionJournal.Snapshot actual = MidletSessionJournal.read(
+				new ByteArrayInputStream(output.toByteArray()));
+
+		assertEquals(MidletSessionJournal.CURRENT_SCHEMA_VERSION, actual.schemaVersion);
+		assertEquals(workdir, actual.workdirLocator);
+		assertTrue(actual.workdirLocator.length() > 256);
+		assertEquals("game-storage-key", actual.storageKey);
+		assertEquals(Boolean.TRUE, actual.reachedRunning);
+		assertEquals(Long.valueOf(25L), actual.firstRunningWallTimeMillis);
+		assertEquals(Long.valueOf(1200L), actual.accumulatedActiveMillis);
+		assertEquals(Long.valueOf(9000L), actual.activeSegmentStartElapsedRealtimeMillis);
 	}
 
 	@Test
@@ -131,11 +182,38 @@ public class MidletSessionJournalTest {
 		assertEquals(MidletSessionJournal.Outcome.NONE, actual.outcome);
 		assertNull(actual.failureEventId);
 		assertNull(actual.failureBoundary);
+		assertNull(actual.workdirLocator);
+		assertNull(actual.storageKey);
+		assertNull(actual.reachedRunning);
+	}
+
+	@Test
+	public void currentSchemaWithoutOptionalStatFieldsStillReadsAsDiagnosticEvidence() throws Exception {
+		String data = validProperties().replace("schemaVersion=1", "schemaVersion=2");
+		MidletSessionJournal.Snapshot actual = MidletSessionJournal.read(
+				new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8)));
+
+		assertEquals(MidletSessionJournal.CURRENT_SCHEMA_VERSION, actual.schemaVersion);
+		assertEquals("session-3", actual.sessionId);
+		assertEquals(MidletSessionJournal.Stage.RUNNING, actual.stage);
+		assertNull(actual.workdirLocator);
+		assertNull(actual.storageKey);
+		assertNull(actual.reachedRunning);
+		assertNull(actual.firstRunningWallTimeMillis);
+		assertNull(actual.accumulatedActiveMillis);
+		assertNull(actual.activeSegmentStartElapsedRealtimeMillis);
 	}
 
 	@Test
 	public void futureSchemaIsRejected() throws Exception {
-		String data = validProperties().replace("schemaVersion=1", "schemaVersion=2");
+		String data = validProperties().replace("schemaVersion=1", "schemaVersion=3");
+		assertReadFails(data);
+	}
+
+	@Test
+	public void invalidOptionalStatBooleanIsRejected() throws Exception {
+		String data = validProperties().replace("schemaVersion=1", "schemaVersion=2")
+				+ "reachedRunning=maybe\n";
 		assertReadFails(data);
 	}
 
@@ -288,6 +366,14 @@ public class MidletSessionJournalTest {
 				+ "updatedElapsedRealtimeMillis=4\n"
 				+ "stage=RUNNING\n"
 				+ "outcome=NONE\n";
+	}
+
+	private static String longWorkdirLocator() {
+		StringBuilder builder = new StringBuilder("/storage/emulated/0/");
+		for (int i = 0; i < 48; i++) {
+			builder.append("long-segment-").append(i).append('/');
+		}
+		return builder.toString();
 	}
 
 	private static void assertReadFails(String data) throws Exception {

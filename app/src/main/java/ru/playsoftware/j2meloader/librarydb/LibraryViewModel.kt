@@ -8,6 +8,7 @@ package ru.playsoftware.j2meloader.librarydb
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -27,11 +28,18 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import ru.playsoftware.j2meloader.crashes.MidletSessionStatsHandoff
 import ru.playsoftware.j2meloader.util.Constants.PREF_APP_SORT
 import ru.playsoftware.j2meloader.util.Constants.PREF_EMULATOR_DIR
 
@@ -53,8 +61,10 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             val generation: Long,
             val emulatorDir: File,
             val apps: List<LibraryAppRow>,
+            val collections: List<LibraryCollectionRow>,
             val filter: String,
             val sortVariant: Int,
+            val quickView: LibraryQuickView,
             val bootstrapFailures: List<LibraryScanner.Failure>,
             val legacyImportFailure: String?,
             val reconciliationFailures: List<LibraryScanner.Failure>,
@@ -70,6 +80,18 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         fun complete(value: T?, error: Throwable?)
     }
 
+    private data class DisplayInputs(
+        val repositoryState: LibraryRepository.State,
+        val filter: String,
+        val sortVariant: Int,
+        val quickView: LibraryQuickView,
+    )
+
+    private data class ImportRestoreOutcome(
+        val iconRevision: Long?,
+        val sourceMetadata: LibraryAppBundleImporter.SourceMetadata?,
+    )
+
     private val preferences = PreferenceManager.getDefaultSharedPreferences(application)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val generationCommitLock = ReentrantLock()
@@ -79,15 +101,26 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     )
     private val filter = MutableStateFlow("")
     private val sortVariant = MutableStateFlow(readSortPreference(preferences))
+    private val quickView = MutableStateFlow(LibraryQuickView.All)
+    private val playStatRefreshMutex = Mutex()
+
+    private val playStatReadyWorker = scope.launch {
+        repository.state
+            .filterIsInstance<LibraryRepository.State.Ready>()
+            .map { LibraryGenerationToken(it.generation, it.emulatorDir) }
+            .distinctUntilChanged()
+            .collectLatest { generation -> reconcilePlayStats(generation) }
+    }
 
     val displayState: StateFlow<DisplayState> = combine(
         repository.state,
         filter,
         sortVariant,
-    ) { repositoryState, activeFilter, activeSort ->
-        Triple(repositoryState, activeFilter, activeSort)
-    }.mapLatest { (repositoryState, activeFilter, activeSort) ->
-        when (repositoryState) {
+        quickView,
+    ) { repositoryState, activeFilter, activeSort, activeQuickView ->
+        DisplayInputs(repositoryState, activeFilter, activeSort, activeQuickView)
+    }.mapLatest { input ->
+        when (val repositoryState = input.repositoryState) {
             LibraryRepository.State.Idle -> DisplayState.Idle
             is LibraryRepository.State.Opening -> DisplayState.Loading(repositoryState.emulatorDir)
             is LibraryRepository.State.Indexing -> DisplayState.Indexing(
@@ -104,16 +137,19 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 val projected = withContext(Dispatchers.Default) {
                     LibraryListProjection.project(
                         rows = repositoryState.apps,
-                        filter = activeFilter,
-                        sortVariant = activeSort,
+                        filter = input.filter,
+                        sortVariant = input.sortVariant,
+                        quickView = input.quickView,
                     )
                 }
                 DisplayState.Ready(
                     generation = repositoryState.generation,
                     emulatorDir = repositoryState.emulatorDir,
                     apps = projected,
-                    filter = activeFilter,
-                    sortVariant = activeSort,
+                    collections = repositoryState.collections,
+                    filter = input.filter,
+                    sortVariant = input.sortVariant,
+                    quickView = input.quickView,
                     bootstrapFailures = repositoryState.bootstrapFailures,
                     legacyImportFailure = repositoryState.legacyImportFailure,
                     reconciliationFailures = repositoryState.reconciliationFailures,
@@ -144,6 +180,12 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
 
     fun getFilter(): String = filter.value
 
+    fun setQuickView(value: LibraryQuickView) {
+        quickView.value = value
+    }
+
+    fun getQuickView(): LibraryQuickView = quickView.value
+
     fun setSort(value: Int) {
         if (sortVariant.value == value) return
         sortVariant.value = value
@@ -162,6 +204,11 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
 
     fun readyWorkdir(): File? = readyGeneration()?.emulatorDir
 
+    fun refreshPlayStats() {
+        val generation = readyGeneration() ?: return
+        scope.launch { reconcilePlayStats(generation) }
+    }
+
     fun getApp(appId: Long): LibraryAppRow? {
         val generation = readyGeneration() ?: return null
         return try {
@@ -173,6 +220,24 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
 
     fun getApp(expectedGeneration: Long, expectedWorkdir: File, appId: Long): LibraryAppRow? =
         repository.currentApp(token(expectedGeneration, expectedWorkdir), appId)
+
+    fun getApps(appIds: Set<Long>): List<LibraryAppRow> {
+        val generation = readyGeneration() ?: return emptyList()
+        return try {
+            repository.currentApps(generation, appIds)
+        } catch (_: IllegalStateException) {
+            emptyList()
+        }
+    }
+
+    fun getAllApps(): List<LibraryAppRow> {
+        val generation = readyGeneration() ?: return emptyList()
+        return try {
+            repository.currentApps(generation)
+        } catch (_: IllegalStateException) {
+            emptyList()
+        }
+    }
 
     fun storageKeys(expectedGeneration: Long, expectedWorkdir: File): Set<String> =
         repository.currentStorageKeys(token(expectedGeneration, expectedWorkdir))
@@ -191,10 +256,6 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     fun isReadyGeneration(expectedGeneration: Long, expectedWorkdir: File): Boolean =
         repository.isReadyGeneration(token(expectedGeneration, expectedWorkdir))
 
-    /**
-     * Acquire a very short lease for the filesystem publish point of an install/reinstall.
-     * Workdir changes/retries use the same lock, so they cannot split backup->replacement rename.
-     */
     fun acquireGenerationLease(
         expectedGeneration: Long,
         expectedWorkdir: File,
@@ -232,7 +293,302 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    /** Resolve the retained-JAR action state only after the user chooses Reinstall. */
+    fun updateMetadata(
+        appId: Long,
+        title: String,
+        vendor: String,
+        version: String,
+        description: String,
+        callback: MutationCallback<Unit>,
+    ) {
+        val generation = readyGeneration()
+        val app = try {
+            generation?.let { repository.currentApp(it, appId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available"))
+            return
+        }
+        launchMutation(callback) {
+            repository.setMetadataOverrides(
+                expected = generation,
+                appId = app.id,
+                title = title,
+                vendor = vendor,
+                version = version,
+                description = description,
+            )
+        }
+    }
+
+    fun resetMetadata(appId: Long, callback: MutationCallback<Unit>) {
+        val generation = readyGeneration()
+        val app = try {
+            generation?.let { repository.currentApp(it, appId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available"))
+            return
+        }
+        launchMutation(callback) {
+            repository.resetMetadataOverrides(generation, app.id)
+        }
+    }
+
+    fun updateIcon(appId: Long, source: Uri, callback: MutationCallback<Unit>) {
+        val generation = readyGeneration()
+        val app = try {
+            generation?.let { repository.currentApp(it, appId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available"))
+            return
+        }
+        launchMutation(callback) {
+            val prepared = withContext(Dispatchers.IO) {
+                LibraryIconOverride.prepare(getApplication(), source)
+            }
+            try {
+                val fileRevision = withContext(Dispatchers.IO) {
+                    acquireGenerationLease(generation.generation, generation.emulatorDir).use {
+                        val current = repository.currentApp(generation, app.id)
+                        check(current?.storageKey == app.storageKey) {
+                            "Library icon target changed before filesystem publish"
+                        }
+                        LibraryIconOverride.installPrepared(
+                            generation.emulatorDir,
+                            app.storageKey,
+                            prepared,
+                        )
+                    }
+                }
+                repository.setIconRevision(
+                    generation,
+                    app.id,
+                    distinctIconRevision(fileRevision, app.iconRevision),
+                )
+            } finally {
+                withContext(Dispatchers.IO) { prepared.delete() }
+            }
+        }
+    }
+
+    fun resetIcon(appId: Long, callback: MutationCallback<Unit>) {
+        val generation = readyGeneration()
+        val app = try {
+            generation?.let { repository.currentApp(it, appId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available"))
+            return
+        }
+        launchMutation(callback) {
+            val fileRevision = withContext(Dispatchers.IO) {
+                acquireGenerationLease(generation.generation, generation.emulatorDir).use {
+                    val current = repository.currentApp(generation, app.id)
+                    check(current?.storageKey == app.storageKey) {
+                        "Library icon target changed before reset"
+                    }
+                    LibraryIconOverride.resetToOriginal(generation.emulatorDir, app.storageKey)
+                }
+            }
+            repository.setIconRevision(
+                generation,
+                app.id,
+                distinctIconRevision(fileRevision, app.iconRevision),
+            )
+        }
+    }
+
+    fun restoreImportedBundle(
+        appId: Long,
+        prepared: LibraryAppBundleImporter.PreparedImport,
+        callback: MutationCallback<Unit>,
+    ) {
+        val generation = readyGeneration()
+        val app = try {
+            generation?.let { repository.currentApp(it, appId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available"))
+            return
+        }
+        launchMutation(callback) {
+            val outcome = withContext(Dispatchers.IO) {
+                acquireGenerationLease(generation.generation, generation.emulatorDir).use {
+                    val current = requireNotNull(repository.currentApp(generation, app.id)) {
+                        "Library import target disappeared before restore"
+                    }
+                    check(current.storageKey == app.storageKey) {
+                        "Library import target changed before restore"
+                    }
+                    val sourceMetadata = LibraryAppBundleImporter.readSourceMetadata(prepared)
+                    if (
+                        sourceMetadata != null &&
+                        (sourceMetadata.title != current.sourceTitle ||
+                            sourceMetadata.vendor != current.sourceVendor)
+                    ) {
+                        throw IOException(
+                            "App bundle descriptor identity does not match the retained JAR",
+                        )
+                    }
+                    val result = LibraryAppBundleImporter.restore(
+                        prepared,
+                        generation.emulatorDir,
+                        app.storageKey,
+                    )
+                    ImportRestoreOutcome(result.iconRevision, sourceMetadata)
+                }
+            }
+            val resolvedIconRevision = outcome.iconRevision?.let { revision ->
+                distinctIconRevision(revision, app.iconRevision)
+            } ?: app.iconRevision
+            val sourceMetadata = outcome.sourceMetadata
+            if (sourceMetadata != null) {
+                repository.recordInstalledApp(
+                    expected = generation,
+                    existingId = app.id,
+                    metadata = InstalledAppMetadata(
+                        storageKey = app.storageKey,
+                        sourceTitle = sourceMetadata.title,
+                        sourceVendor = sourceMetadata.vendor,
+                        sourceVersion = sourceMetadata.version,
+                        sourceDescription = sourceMetadata.description,
+                        iconRevision = resolvedIconRevision,
+                        addedAt = app.addedAt ?: System.currentTimeMillis(),
+                    ),
+                )
+            } else if (outcome.iconRevision != null) {
+                repository.setIconRevision(
+                    generation,
+                    app.id,
+                    resolvedIconRevision,
+                )
+            }
+        }
+    }
+
+    fun setFavorite(appId: Long, favorite: Boolean, callback: MutationCallback<Unit>) {
+        val generation = readyGeneration()
+        val app = try {
+            generation?.let { repository.currentApp(it, appId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available"))
+            return
+        }
+        launchMutation(callback) {
+            repository.setFavorite(generation, app.id, favorite)
+        }
+    }
+
+    fun createCollection(name: String, callback: MutationCallback<Long>) {
+        val generation = readyGeneration()
+        if (generation == null) {
+            callback.complete(null, IllegalStateException("Library is not READY"))
+            return
+        }
+        launchMutation(callback) {
+            repository.createCollection(generation, name, System.currentTimeMillis())
+        }
+    }
+
+    fun renameCollection(collectionId: Long, name: String, callback: MutationCallback<Unit>) {
+        val generation = readyGeneration()
+        val collection = try {
+            generation?.let { repository.currentCollection(it, collectionId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || collection == null) {
+            callback.complete(null, IllegalStateException("Collection is not available"))
+            return
+        }
+        launchMutation(callback) {
+            repository.renameCollection(generation, collection.id, name)
+        }
+    }
+
+    fun deleteCollection(collectionId: Long, callback: MutationCallback<Unit>) {
+        val generation = readyGeneration()
+        val collection = try {
+            generation?.let { repository.currentCollection(it, collectionId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || collection == null) {
+            callback.complete(null, IllegalStateException("Collection is not available"))
+            return
+        }
+        launchMutation(callback) {
+            repository.deleteCollection(generation, collection.id)
+        }
+    }
+
+    fun setCollectionMembership(
+        collectionId: Long,
+        appId: Long,
+        included: Boolean,
+        callback: MutationCallback<Unit>,
+    ) {
+        val generation = readyGeneration()
+        if (generation == null) {
+            callback.complete(null, IllegalStateException("Library is not READY"))
+            return
+        }
+        val app = try {
+            repository.currentApp(generation, appId)
+        } catch (_: IllegalStateException) {
+            null
+        }
+        val collection = try {
+            repository.currentCollection(generation, collectionId)
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (app == null || collection == null) {
+            callback.complete(null, IllegalStateException("Collection membership target is not available"))
+            return
+        }
+        launchMutation(callback) {
+            repository.setCollectionMembership(
+                expected = generation,
+                collectionId = collection.id,
+                appId = app.id,
+                included = included,
+                addedAt = System.currentTimeMillis(),
+            )
+        }
+    }
+
+    fun getCollectionAppIds(collectionId: Long, callback: MutationCallback<Set<Long>>) {
+        val generation = readyGeneration()
+        val collection = try {
+            generation?.let { repository.currentCollection(it, collectionId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || collection == null) {
+            callback.complete(null, IllegalStateException("Collection is not available"))
+            return
+        }
+        launchMutation(callback) {
+            repository.collectionAppIds(generation, collection.id)
+        }
+    }
+
     fun resolveReinstallAvailability(appId: Long, callback: MutationCallback<Boolean>) {
         val generation = readyGeneration()
         val app = try {
@@ -294,7 +650,6 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    /** Deletes authoritative installed files first; the Room row is removed only after that succeeds. */
     fun deleteInstalledApp(appId: Long, callback: MutationCallback<LibraryFileOperations.DeleteResult>) {
         val generation = readyGeneration()
         val app = try {
@@ -347,6 +702,49 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         scope.cancel()
     }
 
+    private suspend fun reconcilePlayStats(expected: LibraryGenerationToken) {
+        try {
+            playStatRefreshMutex.withLock {
+                if (!repository.isReadyGeneration(expected)) return@withLock
+                val application = getApplication<Application>()
+                val records = withContext(Dispatchers.IO) {
+                    MidletSessionStatsHandoff.loadTerminalRecords(application).map { record ->
+                        LibraryPlayStatRecord(
+                            sessionId = record.sessionId,
+                            workdirLocator = record.workdirLocator,
+                            storageKey = record.storageKey,
+                            reachedRunning = record.reachedRunning,
+                            firstRunningWallTimeMillis = record.firstRunningWallTimeMillis,
+                            accumulatedActiveMillis = record.accumulatedActiveMillis,
+                        )
+                    }
+                }
+                if (records.isEmpty()) return@withLock
+                val result = try {
+                    withContext(Dispatchers.Default) {
+                        repository.reconcilePlayStats(expected, records)
+                    }
+                } catch (error: IllegalStateException) {
+                    if (!repository.isReadyGeneration(expected)) return@withLock
+                    throw error
+                }
+                withContext(Dispatchers.IO) {
+                    result.reconciledSessionIds.forEach { sessionId ->
+                        MidletSessionStatsHandoff.markReconciled(application, sessionId)
+                    }
+                }
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            android.util.Log.w(
+                "LibraryViewModel",
+                "Unable to reconcile play statistics; leaving session journals pending",
+                error,
+            )
+        }
+    }
+
     private fun token(generation: Long, emulatorDir: File): LibraryGenerationToken =
         LibraryGenerationToken(generation, normalizeWorkdir(emulatorDir))
 
@@ -356,6 +754,11 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         file.absoluteFile
     } catch (_: SecurityException) {
         file.absoluteFile
+    }
+
+    private fun distinctIconRevision(fileRevision: Long, previousRevision: Long): Long {
+        if (fileRevision == 0L || fileRevision != previousRevision) return fileRevision
+        return fileRevision xor Long.MIN_VALUE
     }
 
     private fun <T> launchMutation(callback: MutationCallback<T>, block: suspend () -> T) {

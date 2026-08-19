@@ -3,6 +3,8 @@
  * Copyright 2017-2020 Nikita Shakarun
  * Copyright 2019-2026 Yury Kharchenko
  *
+ * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -26,6 +28,7 @@ import static ru.playsoftware.j2meloader.util.Constants.PREF_APP_SORT;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_LAST_PATH;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -39,6 +42,7 @@ import android.view.ViewGroup;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContract;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.compose.ui.platform.ComposeView;
@@ -52,8 +56,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import ru.playsoftware.j2meloader.MainActivity;
 import ru.playsoftware.j2meloader.R;
@@ -64,6 +71,9 @@ import ru.playsoftware.j2meloader.filepicker.FilePickerContract;
 import ru.playsoftware.j2meloader.filepicker.FilteredFilePickerActivity;
 import ru.playsoftware.j2meloader.librarydb.LibraryAppRow;
 import ru.playsoftware.j2meloader.librarydb.LibraryGenerationToken;
+import ru.playsoftware.j2meloader.librarydb.LibraryQuickView;
+import ru.playsoftware.j2meloader.librarydb.LibraryTransferActions;
+import ru.playsoftware.j2meloader.librarydb.LibraryTransferIntents;
 import ru.playsoftware.j2meloader.librarydb.LibraryViewModel;
 import ru.playsoftware.j2meloader.settings.SettingsActivity;
 import ru.playsoftware.j2meloader.util.AppUtils;
@@ -80,6 +90,7 @@ public class AppsListFragment extends Fragment {
 	private static final int GRID_SPACING_COMPACT = 0;
 	private static final int GRID_SPACING_STANDARD = 1;
 	private static final int GRID_SPACING_SPACIOUS = 2;
+	private static final int NO_UI_ID = Integer.MIN_VALUE;
 	private static final long NO_GENERATION = Long.MIN_VALUE;
 
 	private final ActivityResultLauncher<Void> openFileLauncher = registerForActivityResult(
@@ -109,8 +120,21 @@ public class AppsListFragment extends Fragment {
 			},
 			this::onFilePicked);
 
+	private final ActivityResultLauncher<String[]> importBundleLauncher = registerForActivityResult(
+			new ActivityResultContracts.OpenDocument(),
+			this::onImportBundlePicked);
+
+	private int pendingIconUiId = NO_UI_ID;
+	private final ActivityResultLauncher<String> iconPickerLauncher = registerForActivityResult(
+			new ActivityResultContracts.GetContent(),
+			this::onIconPicked);
+
 	private final Map<Integer, LibraryAppRow> rowsByUiId = new HashMap<>();
 	private final Map<Long, Integer> uiIdsByDatabaseId = new HashMap<>();
+	private final Map<Long, LibraryAppRow> cachedRowsByDatabaseId = new HashMap<>();
+	private final Map<Long, LibraryAppUiItem> cachedUiItemsByDatabaseId = new HashMap<>();
+	private final LibraryCollectionsUiStore collectionsUiStore = new LibraryCollectionsUiStore();
+	private List<LibraryAppRow> cachedAllReadyRows;
 	private int nextUiId = 1;
 	private long activeGeneration = NO_GENERATION;
 	private File activeWorkdir;
@@ -179,10 +203,59 @@ public class AppsListFragment extends Fragment {
 	}
 
 	private LibraryActions createActions() {
-		return new LibraryActions() {
+		return new LibraryCollectionsHost() {
+			@NonNull
+			@Override
+			public LibraryCollectionsUiStore collectionsStore() {
+				return collectionsUiStore;
+			}
+
 			@Override
 			public void onSearch(@NonNull String query) {
 				libraryViewModel.setFilter(query);
+			}
+
+			@Override
+			public void onQuickView(@NonNull LibraryQuickView quickView) {
+				libraryViewModel.setQuickView(quickView);
+			}
+
+			@Override
+			public void onFavorite(int appId, boolean favorite) {
+				LibraryAppRow row = findRow(appId);
+				if (row == null) return;
+				libraryViewModel.setFavorite(row.getId(), favorite, (ignored, error) -> {
+					if (error != null) showError(error);
+				});
+			}
+
+			@Override
+			public void onUpdateMetadata(int appId, @NonNull String title,
+									 @NonNull String vendor, @NonNull String version,
+									 @NonNull String description) {
+				LibraryAppRow row = findRow(appId);
+				if (row == null) return;
+				libraryViewModel.updateMetadata(
+						row.getId(), title, vendor, version, description,
+						(ignored, error) -> {
+							if (error != null) showError(error);
+						});
+			}
+
+			@Override
+			public void onPickIcon(int appId) {
+				if (findRow(appId) == null) return;
+				pendingIconUiId = appId;
+				iconPickerLauncher.launch("image/*");
+			}
+
+			@Override
+			public void onResetIcon(int appId) {
+				LibraryAppRow row = findRow(appId);
+				if (row == null) return;
+				libraryViewModel.resetIcon(row.getId(), (ignored, error) -> {
+					if (error != null) showError(error);
+				});
 			}
 
 			@Override
@@ -240,6 +313,15 @@ public class AppsListFragment extends Fragment {
 			}
 
 			@Override
+			public void onImportAppBundle() {
+				importBundleLauncher.launch(new String[]{
+						"application/zip",
+						"application/x-zip-compressed",
+						"application/octet-stream"
+				});
+			}
+
+			@Override
 			public void onOpenApp(int appId) {
 				LibraryAppRow app = findRow(appId);
 				if (app != null && activeWorkdir != null) {
@@ -251,7 +333,6 @@ public class AppsListFragment extends Fragment {
 			public void onAddShortcut(int appId) {
 				LibraryAppRow row = findRow(appId);
 				if (row != null && ShortcutManagerCompat.isRequestPinShortcutSupported(requireContext())) {
-					// Shortcut creation is explicit user action, so bounded icon/file work is acceptable.
 					AppUtils.addShortcut(requireActivity(), toAppItem(row, appId));
 				}
 			}
@@ -271,6 +352,141 @@ public class AppsListFragment extends Fragment {
 				if (app != null && activeWorkdir != null) {
 					Config.openSettings(requireActivity(), app.getTitle(), appPath(app));
 				}
+			}
+
+			@Override
+			public void onShareApp(int appId) {
+				LibraryAppRow app = findRow(appId);
+				if (app == null) return;
+				LibraryTransferActions.prepareShareApp(libraryViewModel, app.getId(), (prepared, error) -> {
+					if (error != null) {
+						showTransferError(error);
+						return;
+					}
+					if (!isAdded() || prepared == null) return;
+					try {
+						startActivity(LibraryTransferIntents.shareApp(
+								requireContext(), prepared, app.getTitle()));
+					} catch (ActivityNotFoundException | SecurityException exception) {
+						showTransferError(exception);
+					}
+				});
+			}
+
+			@Override
+			public void onExportAppBundle(int appId) {
+				LibraryAppRow app = findRow(appId);
+				if (app == null) return;
+				LibraryTransferActions.prepareExportAppBundle(
+						libraryViewModel,
+						app.getId(),
+						progress -> {
+							if (!isAdded()) return;
+							LibraryComposeController controller = composeController;
+							if (controller != null) {
+								controller.showNotice(getString(
+										R.string.library_export_progress,
+										progress.getCompletedEntries(),
+										progress.getTotalEntries()));
+							}
+						},
+						(prepared, error) -> {
+							if (error != null) {
+								showTransferError(error);
+								return;
+							}
+							if (!isAdded() || prepared == null) return;
+							try {
+								startActivity(LibraryTransferIntents.exportBundle(
+										requireContext(), prepared, app.getTitle()));
+							} catch (ActivityNotFoundException | SecurityException exception) {
+								showTransferError(exception);
+							}
+						});
+			}
+
+			@Override
+			public void onCreateCollection(@NonNull String name) {
+				libraryViewModel.createCollection(name, (ignored, error) -> {
+					if (error != null) showError(error);
+				});
+			}
+
+			@Override
+			public void onRenameCollection(long collectionId, @NonNull String name) {
+				libraryViewModel.renameCollection(collectionId, name, (ignored, error) -> {
+					if (error != null) showError(error);
+				});
+			}
+
+			@Override
+			public void onDeleteCollection(long collectionId) {
+				collectionsUiStore.dismissMembers();
+				libraryViewModel.deleteCollection(collectionId, (ignored, error) -> {
+					if (error != null) showError(error);
+				});
+			}
+
+			@Override
+			public void onOpenCollection(long collectionId) {
+				loadCollectionMembers(collectionId);
+			}
+
+			@Override
+			public void onPrepareCollectionAppPicker() {
+				publishCollectionAllApps(currentAllReadyRows());
+			}
+
+			@Override
+			public void onDismissCollectionMembers() {
+				collectionsUiStore.dismissMembers();
+			}
+
+			@Override
+			public void onRequestAddToCollection(int appId) {
+				LibraryAppRow app = findRow(appId);
+				if (app != null) collectionsUiStore.showAddTarget(appId, app.getTitle());
+			}
+
+			@Override
+			public void onDismissAddToCollection() {
+				collectionsUiStore.dismissAddTarget();
+			}
+
+			@Override
+			public void onAddAppToCollection(int appId, long collectionId) {
+				LibraryAppRow app = findRow(appId);
+				if (app == null) return;
+				libraryViewModel.setCollectionMembership(
+						collectionId,
+						app.getId(),
+						true,
+						(ignored, error) -> {
+							if (error != null) {
+								showError(error);
+								loadCollectionMembers(collectionId);
+								return;
+							}
+							loadCollectionMembers(collectionId);
+						});
+			}
+
+			@Override
+			public void onRemoveAppFromCollection(int appId, long collectionId) {
+				LibraryAppRow app = findRow(appId);
+				if (app == null) return;
+				libraryViewModel.setCollectionMembership(
+						collectionId,
+						app.getId(),
+						false,
+						(ignored, error) -> {
+							if (error != null) {
+								showError(error);
+								loadCollectionMembers(collectionId);
+								return;
+							}
+							loadCollectionMembers(collectionId);
+						});
 			}
 
 			@Override
@@ -372,6 +588,22 @@ public class AppsListFragment extends Fragment {
 		return rowsByUiId.get(uiId);
 	}
 
+	private void loadCollectionMembers(long collectionId) {
+		libraryViewModel.getCollectionAppIds(collectionId, (appIds, error) -> {
+			if (error != null) {
+				showError(error);
+				return;
+			}
+			if (!isAdded() || appIds == null) return;
+			List<LibraryAppRow> rows = libraryViewModel.getApps(appIds);
+			List<LibraryAppUiItem> members = new ArrayList<>(rows.size());
+			for (LibraryAppRow row : rows) {
+				members.add(toLibraryUiItem(row));
+			}
+			collectionsUiStore.showMembers(collectionId, members);
+		});
+	}
+
 	private void setSort(int sortVariant) {
 		if (preferences.getInt(PREF_APP_SORT, 0) == sortVariant) {
 			sortVariant |= Integer.MIN_VALUE;
@@ -388,7 +620,6 @@ public class AppsListFragment extends Fragment {
 			return;
 		}
 
-		// Never expose rows from an older workdir generation while the next generation opens/indexes.
 		clearUiRows();
 		if (controller == null) return;
 		if (state instanceof LibraryViewModel.DisplayState.Indexing) {
@@ -410,38 +641,106 @@ public class AppsListFragment extends Fragment {
 	private void publishReady(LibraryViewModel.DisplayState.Ready state) {
 		long generation = state.getGeneration();
 		File workdir = state.getEmulatorDir();
-		if (activeGeneration != generation || activeWorkdir == null || !activeWorkdir.equals(workdir)) {
+		boolean generationChanged = activeGeneration != generation || activeWorkdir == null ||
+				!activeWorkdir.equals(workdir);
+		if (generationChanged) {
 			activeGeneration = generation;
 			activeWorkdir = workdir;
 			rowsByUiId.clear();
 			uiIdsByDatabaseId.clear();
+			cachedRowsByDatabaseId.clear();
+			cachedUiItemsByDatabaseId.clear();
+			collectionsUiStore.clear();
 			nextUiId = 1;
-		} else {
-			rowsByUiId.clear();
+			cachedAllReadyRows = null;
+		}
+
+		collectionsUiStore.publishCollections(state.getCollections());
+		// Keep the complete READY snapshot truly lazy. Normal list/filter/favorite/stat emissions only
+		// map the already-projected rows below; the O(N) full-library walk happens solely when the user
+		// explicitly opens Collection -> Add apps.
+		cachedAllReadyRows = null;
+		Long activeCollectionId = collectionsUiStore.activeCollectionId();
+		if (activeCollectionId != null) {
+			loadCollectionMembers(activeCollectionId);
 		}
 
 		List<LibraryAppUiItem> uiItems = new ArrayList<>(state.getApps().size());
 		for (LibraryAppRow row : state.getApps()) {
-			int uiId = uiIdFor(row.getId());
-			rowsByUiId.put(uiId, row);
-			String iconPath = row.getIconRevision() == 0L
-					? null
-					: new File(appPath(row) + Config.MIDLET_ICON_FILE).getAbsolutePath();
-			uiItems.add(new LibraryAppUiItem(
-					uiId,
-					row.getTitle(),
-					row.getVendor(),
-					row.getVersion(),
-					iconPath,
-					true,
-					row.getDescription(),
-					row.getIconRevision()));
+			uiItems.add(toLibraryUiItem(row));
 		}
 		LibraryComposeController controller = composeController;
 		if (controller != null) {
 			controller.updateSort(state.getSortVariant());
-			controller.updateApps(uiItems, state.getFilter());
+			controller.updateApps(uiItems, state.getFilter(), state.getQuickView());
 		}
+	}
+
+	private void pruneUiCaches(List<LibraryAppRow> rows) {
+		Set<Long> liveDatabaseIds = new HashSet<>(rows.size());
+		for (LibraryAppRow row : rows) {
+			liveDatabaseIds.add(row.getId());
+		}
+		cachedRowsByDatabaseId.keySet().retainAll(liveDatabaseIds);
+		cachedUiItemsByDatabaseId.keySet().retainAll(liveDatabaseIds);
+		uiIdsByDatabaseId.keySet().retainAll(liveDatabaseIds);
+		Iterator<Map.Entry<Integer, LibraryAppRow>> iterator = rowsByUiId.entrySet().iterator();
+		while (iterator.hasNext()) {
+			if (!liveDatabaseIds.contains(iterator.next().getValue().getId())) {
+				iterator.remove();
+			}
+		}
+	}
+
+	private List<LibraryAppRow> currentAllReadyRows() {
+		List<LibraryAppRow> rows = cachedAllReadyRows;
+		if (rows != null) return rows;
+		rows = libraryViewModel.getAllApps();
+		pruneUiCaches(rows);
+		cachedAllReadyRows = rows;
+		return rows;
+	}
+
+	private void publishCollectionAllApps(List<LibraryAppRow> rows) {
+		List<LibraryAppUiItem> allUiItems = new ArrayList<>(rows.size());
+		for (LibraryAppRow row : rows) {
+			allUiItems.add(toLibraryUiItem(row));
+		}
+		collectionsUiStore.publishAllApps(allUiItems);
+	}
+
+	private LibraryAppUiItem toLibraryUiItem(LibraryAppRow row) {
+		LibraryAppRow cachedRow = cachedRowsByDatabaseId.get(row.getId());
+		LibraryAppUiItem cachedItem = cachedUiItemsByDatabaseId.get(row.getId());
+		if (cachedItem != null && row.equals(cachedRow)) {
+			rowsByUiId.put(cachedItem.getId(), row);
+			return cachedItem;
+		}
+
+		int uiId = uiIdFor(row.getId());
+		rowsByUiId.put(uiId, row);
+		String iconPath = row.getIconRevision() == 0L
+				? null
+				: new File(appPath(row) + Config.MIDLET_ICON_FILE).getAbsolutePath();
+		LibraryAppUiItem item = new LibraryAppUiItem(
+				uiId,
+				row.getTitle(),
+				row.getVendor(),
+				row.getVersion(),
+				iconPath,
+				true,
+				row.getDescription(),
+				row.getIconRevision(),
+				row.getFavorite(),
+				row.getSourceTitle(),
+				row.getSourceVendor(),
+				row.getSourceVersion(),
+				row.getSourceDescription(),
+				row.getPlayCount(),
+				row.getTotalPlayTimeMs());
+		cachedRowsByDatabaseId.put(row.getId(), row);
+		cachedUiItemsByDatabaseId.put(row.getId(), item);
+		return item;
 	}
 
 	private int uiIdFor(long databaseId) {
@@ -477,13 +776,26 @@ public class AppsListFragment extends Fragment {
 		activeGeneration = NO_GENERATION;
 		activeWorkdir = null;
 		uiIdsByDatabaseId.clear();
+		cachedRowsByDatabaseId.clear();
+		cachedUiItemsByDatabaseId.clear();
 		nextUiId = 1;
+		cachedAllReadyRows = null;
+		pendingIconUiId = NO_UI_ID;
+		collectionsUiStore.clear();
 	}
 
 	private void showError(Throwable error) {
 		Log.e(TAG, "Library operation failed", error);
 		LibraryComposeController controller = composeController;
 		if (controller != null && isAdded()) controller.showNotice(getString(R.string.error));
+	}
+
+	private void showTransferError(Throwable error) {
+		Log.e(TAG, "Library transfer failed", error);
+		LibraryComposeController controller = composeController;
+		if (controller != null && isAdded()) {
+			controller.showNotice(getString(R.string.library_transfer_unavailable));
+		}
 	}
 
 	private void onFilePicked(Uri uri) {
@@ -495,5 +807,32 @@ public class AppsListFragment extends Fragment {
 			return;
 		}
 		throw new IllegalStateException("AppsListFragment requires MainActivity host");
+	}
+
+	private void onImportBundlePicked(Uri uri) {
+		if (uri == null) return;
+		try {
+			requireContext().getContentResolver().takePersistableUriPermission(
+					uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+		} catch (SecurityException ignored) {
+			// Some document providers expose only the active transient read grant.
+		}
+		Activity activity = requireActivity();
+		if (activity instanceof MainActivity) {
+			((MainActivity) activity).requestBundleInstaller(uri);
+			return;
+		}
+		throw new IllegalStateException("AppsListFragment requires MainActivity host");
+	}
+
+	private void onIconPicked(Uri uri) {
+		int uiId = pendingIconUiId;
+		pendingIconUiId = NO_UI_ID;
+		if (uri == null || uiId == NO_UI_ID) return;
+		LibraryAppRow row = findRow(uiId);
+		if (row == null) return;
+		libraryViewModel.updateIcon(row.getId(), uri, (ignored, error) -> {
+			if (error != null) showError(error);
+		});
 	}
 }

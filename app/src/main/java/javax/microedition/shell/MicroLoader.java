@@ -2,6 +2,8 @@
  * Copyright 2018-2021 Nikita Shakarun
  * Copyright 2019-2026 Yury Kharchenko
  *
+ * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -353,7 +355,9 @@ public class MicroLoader {
 				midletVersion,
 				clazz,
 				jarSize,
-				jarSha256
+				jarSha256,
+				workDir,
+				appDirName
 		);
 		CrashReporter.setMidletMainClass(clazz);
 		MidletThread midletThread = new MidletThread(this, clazz, journal);
