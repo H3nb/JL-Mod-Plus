@@ -36,8 +36,10 @@ object LibraryAppBundleImporter {
     private const val MAX_ENTRIES = 10_000
     private const val MAX_ENTRY_BYTES = 512L * 1024L * 1024L
     private const val MAX_MANIFEST_BYTES = 4L * 1024L
+    private const val MAX_DESCRIPTOR_BYTES = 1024L * 1024L
     private const val MAX_TOTAL_BYTES = 1024L * 1024L * 1024L
     private const val MAX_REPLACEMENTS = 3
+    private const val STALE_STAGING_AGE_MILLIS = 24L * 60L * 60L * 1000L
 
     class PreparedImport internal constructor(
         val stagingDir: File,
@@ -46,6 +48,7 @@ object LibraryAppBundleImporter {
         internal val configDir: File?,
         internal val dataDir: File?,
         internal val formatVersion: Int,
+        internal val preflightSourceMetadata: SourceMetadata? = null,
     )
 
     internal data class SourceMetadata(
@@ -62,6 +65,7 @@ object LibraryAppBundleImporter {
     fun prepare(context: Context, source: Uri): PreparedImport {
         val importRoot = File(context.cacheDir, IMPORT_DIR)
         ensureDirectory(importRoot)
+        cleanupStaleStaging(importRoot, System.currentTimeMillis())
         val staging = File(importRoot, UUID.randomUUID().toString())
         ensureDirectory(staging)
         return try {
@@ -70,7 +74,7 @@ object LibraryAppBundleImporter {
             } catch (error: SecurityException) {
                 throw IOException("Selected app bundle is no longer readable", error)
             } ?: throw IOException("Unable to open selected app bundle")
-            input.use { extractToStaging(it, staging) }
+            input.use { extractToStaging(it, staging, parseSourceMetadata = true) }
         } catch (error: Throwable) {
             staging.deleteRecursively()
             throw error
@@ -78,7 +82,11 @@ object LibraryAppBundleImporter {
     }
 
     @Throws(IOException::class)
-    internal fun extractToStaging(input: InputStream, staging: File): PreparedImport {
+    internal fun extractToStaging(
+        input: InputStream,
+        staging: File,
+        parseSourceMetadata: Boolean = false,
+    ): PreparedImport {
         ensureDirectory(staging)
         val canonicalRoot = staging.canonicalFile
         val manifestFile = File(canonicalRoot, "bundle.json")
@@ -134,10 +142,10 @@ object LibraryAppBundleImporter {
                 }
 
                 var entryBytes = 0L
-                val entryLimit = if (name == LibraryAppBundleFormat.MANIFEST_ENTRY) {
-                    MAX_MANIFEST_BYTES
-                } else {
-                    MAX_ENTRY_BYTES
+                val entryLimit = when (name) {
+                    LibraryAppBundleFormat.MANIFEST_ENTRY -> MAX_MANIFEST_BYTES
+                    CONVERTED_CONFIG_ENTRY -> MAX_DESCRIPTOR_BYTES
+                    else -> MAX_ENTRY_BYTES
                 }
                 val output = target?.let {
                     ensureDirectory(it.parentFile ?: throw IOException("Bundle entry has no parent"))
@@ -172,6 +180,11 @@ object LibraryAppBundleImporter {
             // Keep those bundles readable while every new export writes a versioned manifest.
             0
         }
+        val sourceMetadata = if (parseSourceMetadata && hasConvertedConfig) {
+            readSourceMetadataFile(convertedConfigFile)
+        } else {
+            null
+        }
         return PreparedImport(
             stagingDir = canonicalRoot,
             jarFile = jarFile,
@@ -179,13 +192,31 @@ object LibraryAppBundleImporter {
             configDir = configDir.takeIf { hasConfig && it.isDirectory },
             dataDir = dataDir.takeIf { hasData && it.isDirectory },
             formatVersion = formatVersion,
+            preflightSourceMetadata = sourceMetadata,
         )
+    }
+
+    @JvmStatic
+    @Throws(IOException::class)
+    fun validateSourceIdentity(prepared: PreparedImport, title: String, vendor: String) {
+        val metadata = prepared.preflightSourceMetadata ?: return
+        if (metadata.title != title || metadata.vendor != vendor) {
+            throw IOException("App bundle descriptor identity does not match the retained JAR")
+        }
     }
 
     @Throws(IOException::class)
     internal fun readSourceMetadata(prepared: PreparedImport): SourceMetadata? {
         verifyPrepared(prepared)
         val file = prepared.convertedConfigFile ?: return null
+        return readSourceMetadataFile(file)
+    }
+
+    @Throws(IOException::class)
+    private fun readSourceMetadataFile(file: File): SourceMetadata {
+        if (!file.isFile || file.length() <= 0L || file.length() > MAX_DESCRIPTOR_BYTES) {
+            throw IOException("Invalid imported source descriptor")
+        }
         val descriptor = Descriptor(file, false)
         return SourceMetadata(
             title = descriptor.name,
@@ -244,6 +275,23 @@ object LibraryAppBundleImporter {
     @JvmStatic
     fun cleanup(prepared: PreparedImport?) {
         prepared?.stagingDir?.deleteRecursively()
+    }
+
+    internal fun cleanupStaleStaging(
+        importRoot: File,
+        nowMillis: Long,
+        maxAgeMillis: Long = STALE_STAGING_AGE_MILLIS,
+    ): Int {
+        if (!importRoot.isDirectory || maxAgeMillis < 0L) return 0
+        val children = importRoot.listFiles() ?: return 0
+        var removed = 0
+        children.forEach { candidate ->
+            if (!candidate.isDirectory || !isUuidName(candidate.name)) return@forEach
+            val modified = candidate.lastModified()
+            if (modified <= 0L || nowMillis < modified || nowMillis - modified < maxAgeMillis) return@forEach
+            if (candidate.deleteRecursively()) removed++
+        }
+        return removed
     }
 
     private fun restoreInternal(
@@ -629,6 +677,13 @@ object LibraryAppBundleImporter {
         if (path.exists() && !path.deleteRecursively()) {
             throw IOException("Unable to remove $description: ${path.path}")
         }
+    }
+
+    private fun isUuidName(value: String): Boolean = try {
+        UUID.fromString(value)
+        true
+    } catch (_: IllegalArgumentException) {
+        false
     }
 
     private fun requireSafeStorageKey(storageKey: String) {
