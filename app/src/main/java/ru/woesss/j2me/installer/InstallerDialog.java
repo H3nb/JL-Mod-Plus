@@ -73,6 +73,7 @@ public class InstallerDialog extends DialogFragment {
 	private String currentTitle;
 	private Runnable primaryAction;
 	private LibraryAppBundleImporter.PreparedImport bundleImport;
+	private boolean bundleWorkerInFlight;
 	private boolean restoredInstance;
 
 	/** Compatibility entry point for callers that do not participate in MainActivity request restore. */
@@ -174,6 +175,7 @@ public class InstallerDialog extends DialogFragment {
 	@Override
 	public void onDestroy() {
 		compositeDisposable.dispose();
+		if (!bundleWorkerInFlight) cleanupBundleImport();
 		super.onDestroy();
 	}
 
@@ -229,9 +231,11 @@ public class InstallerDialog extends DialogFragment {
 		if (composeController != null) {
 			composeController.showLoading(installerTitle, getString(R.string.library_import_preparing));
 		}
+		Context applicationContext = requireContext().getApplicationContext();
+		bundleWorkerInFlight = true;
 		Disposable disposable = Single.<LibraryAppBundleImporter.PreparedImport>create(emitter -> {
 			LibraryAppBundleImporter.PreparedImport prepared = LibraryAppBundleImporter.prepare(
-					requireContext().getApplicationContext(), uri);
+					applicationContext, uri);
 			if (emitter.isDisposed()) {
 				LibraryAppBundleImporter.cleanup(prepared);
 				return;
@@ -250,6 +254,7 @@ public class InstallerDialog extends DialogFragment {
 	private void installApp(File jar, Uri uri) {
 		installer = new AppInstaller(jar, uri, libraryViewModel);
 		primaryAction = this::convert;
+		if (isBundleRequest()) bundleWorkerInFlight = true;
 		showLoading();
 		Disposable disposable = Single.create(installer::loadInfo)
 				.subscribeOn(Schedulers.computation())
@@ -284,6 +289,7 @@ public class InstallerDialog extends DialogFragment {
 	private void convert() {
 		if (installer == null || composeController == null || !isAdded()) return;
 		Descriptor nd = installer.getNewDescriptor();
+		if (isBundleRequest()) bundleWorkerInFlight = true;
 		composeController.showConverting(
 				currentTitle,
 				nd.getInfo(requireActivity()).toString(),
@@ -297,6 +303,7 @@ public class InstallerDialog extends DialogFragment {
 
 	private void onProgress(@NonNull Integer status) {
 		if (!isAdded() || composeController == null) return;
+		if (isBundleRequest()) bundleWorkerInFlight = false;
 		if (status == AppInstaller.STATUS_SUCCESS) {
 			if (isBundleRequest()) {
 				restoreBundleToInstalled();
@@ -410,8 +417,10 @@ public class InstallerDialog extends DialogFragment {
 			onBundleRestoreError(new IllegalStateException("Imported app identity is unavailable"));
 			return;
 		}
+		bundleWorkerInFlight = true;
 		composeController.showLoading(currentTitle, getString(R.string.library_import_restoring));
 		libraryViewModel.restoreImportedBundle(installedId, bundleImport, (ignored, error) -> {
+			bundleWorkerInFlight = false;
 			if (error != null) {
 				if (!isAdded() || composeController == null) {
 					cleanupBundleImport();
@@ -490,6 +499,7 @@ public class InstallerDialog extends DialogFragment {
 	}
 
 	private void onError(Throwable e) {
+		bundleWorkerInFlight = false;
 		Log.e("Installer", e.toString(), e);
 		Bundle args = getArguments();
 		Uri uri = args == null ? null : args.getParcelable(ARG_URI);
