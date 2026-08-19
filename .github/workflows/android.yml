@@ -5,6 +5,9 @@ on:
     branches:
       - alpha
       - main
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
   workflow_dispatch:
 
 permissions:
@@ -55,6 +58,10 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
+        with:
+          # Internal PRs may persist Gradle state for subsequent commits in the same PR.
+          # Fork PRs stay read-only so untrusted code cannot populate repository caches.
+          cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
 
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x gradlew
@@ -63,7 +70,7 @@ jobs:
         env:
           JLMOD_BUILD_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
         run: >-
-          ./gradlew --no-daemon --stacktrace
+          ./gradlew --no-daemon --stacktrace --continue
           :app:lintEmulatorDebug
           :dexlib:lintDebug
           :app:testEmulatorDebugUnitTest
@@ -71,11 +78,11 @@ jobs:
           :app:assembleEmulatorDebug
           :app:assembleEmulatorDebugAndroidTest
 
-      - name: Upload lint reports
+      - name: Upload CI diagnostics
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: JL-Mod-Plus-lint-reports
+          name: JL-Mod-Plus-ci-diagnostics
           path: |
             app/build/reports/lint-results-*.html
             app/build/reports/lint-results-*.xml
@@ -83,6 +90,10 @@ jobs:
             dexlib/build/reports/lint-results-*.html
             dexlib/build/reports/lint-results-*.xml
             dexlib/build/reports/lint-results-*.sarif
+            app/build/reports/tests/**
+            app/build/test-results/**
+            app/build/reports/screenshotTest/**
+            build/reports/problems/**
           if-no-files-found: warn
           retention-days: 7
 
@@ -93,3 +104,4 @@ jobs:
           path: app/build/outputs/apk/emulator/debug/app-emulator-arm64-v8a-debug.apk
           if-no-files-found: error
           retention-days: 7
+          compression-level: 0
