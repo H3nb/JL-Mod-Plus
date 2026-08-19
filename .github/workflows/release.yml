@@ -204,7 +204,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.artifacts.outputs.tag }}
-          VERSION_NAME: ${{ steps.artifacts.outputs.version_name }}
           APK_PATH: ${{ steps.artifacts.outputs.apk }}
           PRERELEASE: ${{ steps.channel.outputs.prerelease }}
         run: |
