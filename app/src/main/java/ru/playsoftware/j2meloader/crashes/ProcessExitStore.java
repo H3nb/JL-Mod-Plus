@@ -206,6 +206,10 @@ public final class ProcessExitStore {
 					delete(context, snapshot);
 					continue;
 				}
+				if ("reporter".equals(snapshot.processRole)) {
+					delete(context, snapshot);
+					continue;
+				}
 				// The isolated MIDlet process is deliberately killed after a graceful MIDlet exit.
 				// Exact journal outcome keeps that expected SIGKILL out of the crash inbox.
 				if (isIntentionalSessionExit(context, snapshot.sessionId)) {
@@ -382,6 +386,12 @@ public final class ProcessExitStore {
 					REASON_PACKAGE_UPDATED -> false;
 			default -> midletProcess || foregroundish;
 		};
+	}
+
+	/** ACRA's private helper process is reporting infrastructure, not a user-facing app incident. */
+	static boolean shouldRetainProcess(String processRole, int reason, int status, int importance) {
+		return !"reporter".equals(processRole)
+				&& shouldRetain(reason, status, importance, "midlet".equals(processRole));
 	}
 
 	private static void prune(Context context) {
@@ -1026,8 +1036,8 @@ public final class ProcessExitStore {
 				if (isIntentionalSessionExit(context, state.sessionId)) {
 					continue;
 				}
-				if (!shouldRetain(info.getReason(), info.getStatus(), info.getImportance(),
-						"midlet".equals(processRole))) {
+				if (!shouldRetainProcess(
+						processRole, info.getReason(), info.getStatus(), info.getImportance())) {
 					continue;
 				}
 

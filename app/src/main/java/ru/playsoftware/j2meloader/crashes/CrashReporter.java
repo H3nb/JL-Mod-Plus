@@ -110,6 +110,7 @@ public final class CrashReporter {
 	private static Application activeApplication;
 	private static boolean mainProcess;
 	private static boolean lifecycleCallbacksRegistered;
+	private static boolean fatalFallbackInstalled;
 	private static boolean diagnosticRefreshRunning;
 	private static boolean diagnosticRefreshPending;
 	private static volatile boolean diagnosticRefreshReady;
@@ -171,7 +172,18 @@ public final class CrashReporter {
 		// Android 11+ keeps a small process-owned state summary. Publish it synchronously so any
 		// later process death can still be attributed even if deferred maintenance never gets CPU.
 		ProcessExitStore.initializeProcess(application, processRole);
+		installFatalFallback(application, processRole);
 		return false;
+	}
+
+	private static synchronized void installFatalFallback(Application application, String processRole) {
+		if (fatalFallbackInstalled) return;
+		Thread.UncaughtExceptionHandler delegate = Thread.getDefaultUncaughtExceptionHandler();
+		Thread.setDefaultUncaughtExceptionHandler((thread, error) -> {
+			FatalJavaCrashStore.capture(application, thread, error, processRole);
+			if (delegate != null) delegate.uncaughtException(thread, error);
+		});
+		fatalFallbackInstalled = true;
 	}
 
 	/** Schedules one best-effort main-process diagnostics refresh after Application startup. */

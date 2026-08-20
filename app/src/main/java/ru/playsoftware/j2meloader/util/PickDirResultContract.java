@@ -46,7 +46,11 @@ public class PickDirResultContract extends ActivityResultContract<String, Uri> {
 	@Override
 	public Uri parseResult(int resultCode, @Nullable Intent intent) {
 		if (resultCode == Activity.RESULT_OK && intent != null) {
-			return intent.getData();
+			Uri result = intent.getData();
+			if (result != null && result.getScheme() == null && result.getPath() != null) {
+				return Uri.fromFile(new java.io.File(result.getPath()));
+			}
+			return result;
 		}
 		return null;
 	}

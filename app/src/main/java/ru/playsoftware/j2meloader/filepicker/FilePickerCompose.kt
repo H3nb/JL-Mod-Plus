@@ -83,6 +83,7 @@ interface FilePickerActions {
     fun onExit()
     fun onOpen(entry: FilePickerEntry)
     fun onConfirmSelection()
+    fun onToggleSelectAll()
     fun onToggleSearch()
     fun onSearchQueryChanged(query: String)
     fun onSortOrderSelected(sortOrder: FilePickerSortOrder)
@@ -144,6 +145,7 @@ fun FilePickerNavHost(
             }
 
             override fun onConfirmSelection() = latestActions.value.onConfirmSelection()
+            override fun onToggleSelectAll() = latestActions.value.onToggleSelectAll()
             override fun onToggleSearch() = latestActions.value.onToggleSearch()
             override fun onSearchQueryChanged(query: String) =
                 latestActions.value.onSearchQueryChanged(query)
@@ -220,6 +222,28 @@ fun FilePickerScreen(
                     }
                 },
                 actions = {
+                    if (state.request.allowMultiple && state.request.allowsFiles) {
+                        val selectablePaths = FilePickerRules.selectablePaths(state.entries)
+                        val allSelected = selectablePaths.isNotEmpty() &&
+                            state.selectedPaths.containsAll(selectablePaths)
+                        IconButton(
+                            onClick = actions::onToggleSelectAll,
+                            enabled = selectablePaths.isNotEmpty() &&
+                                !state.loading && !state.permissionRequired,
+                        ) {
+                            Icon(
+                                painter = painterResource(
+                                    if (allSelected) R.drawable.ic_deselect
+                                    else R.drawable.ic_select_all,
+                                ),
+                                contentDescription = stringResource(
+                                    if (allSelected) R.string.file_picker_unselect_all
+                                    else R.string.file_picker_select_all,
+                                ),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
                     Box {
                         IconButton(onClick = { sortMenuExpanded = true }) {
                             Icon(

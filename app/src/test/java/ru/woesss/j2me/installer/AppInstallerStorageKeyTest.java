@@ -63,6 +63,18 @@ public class AppInstallerStorageKeyTest {
 	}
 
 	@Test
+	public void emptyAndParentNamesStayInsideConvertedDirectory() throws Exception {
+		File converted = temporaryFolder.newFolder("converted-unsafe-name");
+
+		assertEquals(
+				new File(converted, "MIDlet"),
+				AppInstaller.chooseTargetDirectory(converted, ""));
+		assertEquals(
+				new File(converted, "MIDlet"),
+				AppInstaller.chooseTargetDirectory(converted, ".."));
+	}
+
+	@Test
 	public void sameSizeDifferentJarContentIsNotTreatedAsIdentical() throws Exception {
 		File first = temporaryFolder.newFile("first.jar");
 		File second = temporaryFolder.newFile("second.jar");

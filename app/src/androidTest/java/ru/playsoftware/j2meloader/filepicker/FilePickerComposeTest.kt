@@ -89,6 +89,27 @@ class FilePickerComposeTest {
     }
 
     @Test
+    fun multipleSelectionExposesSelectAllAction() {
+        val events = AtomicReference<String>("")
+        composeRule.setContent {
+            JLModPlusTheme {
+                FilePickerScreen(
+                    state = sampleState().copy(
+                        request = sampleState().request.copy(
+                            allowMultiple = true,
+                            singleClick = false,
+                        ),
+                    ),
+                    actions = RecordingActions(events),
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Select all files in this folder").performClick()
+        assertEquals("select-all", events.get())
+    }
+
+    @Test
     fun directoryModeOffersCurrentFolderAsTheSelection() {
         val events = AtomicReference<String>("")
         val request = FilePickerRequest(
@@ -187,6 +208,7 @@ class FilePickerComposeTest {
         override fun onExit() = events.set("exit")
         override fun onOpen(entry: FilePickerEntry) = events.set("open:${entry.name}")
         override fun onConfirmSelection() = events.set("confirm")
+        override fun onToggleSelectAll() = events.set("select-all")
         override fun onToggleSearch() = events.set("search")
         override fun onSearchQueryChanged(query: String) = events.set("query:$query")
         override fun onSortOrderSelected(sortOrder: FilePickerSortOrder) = events.set("sort:$sortOrder")
