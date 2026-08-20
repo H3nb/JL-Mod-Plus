@@ -355,7 +355,9 @@ object BulkInstallPlanner {
             File(activeWorkdir, "converted"),
             File(activeWorkdir, ".library-install-staging"),
             File(activeWorkdir, ".library-install-backup"),
-        ).map { runCatching { it.canonicalFile }.getOrElse { it.absoluteFile } }
+        ).map { path ->
+            runCatching { path.canonicalFile }.getOrElse { path.absoluteFile }
+        }
         val queue = ArrayDeque<File>()
         val visited = HashSet<String>()
         val result = ArrayList<File>()
