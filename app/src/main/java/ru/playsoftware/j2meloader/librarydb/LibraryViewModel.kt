@@ -24,6 +24,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -32,13 +33,16 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import ru.playsoftware.j2meloader.crashes.MidletSessionStatsHandoff
 import ru.playsoftware.j2meloader.util.Constants.PREF_APP_SORT
 import ru.playsoftware.j2meloader.util.Constants.PREF_EMULATOR_DIR
@@ -255,6 +259,45 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
 
     fun isReadyGeneration(expectedGeneration: Long, expectedWorkdir: File): Boolean =
         repository.isReadyGeneration(token(expectedGeneration, expectedWorkdir))
+
+    /**
+     * Waits for Room's observable projection to include a committed installer result.
+     *
+     * This Java-friendly boundary is intentionally blocking: AppInstaller calls it from its
+     * dedicated visibility executor while retaining the process-wide installer permit. StateFlow
+     * suspension avoids timing sleeps and wakes immediately on either visibility or generation
+     * drift.
+     */
+    @Throws(IOException::class)
+    fun awaitInstalledAppVisible(
+        expectedGeneration: Long,
+        expectedWorkdir: File,
+        appId: Long,
+        storageKey: String,
+        timeoutMillis: Long,
+    ) {
+        val expected = token(expectedGeneration, expectedWorkdir)
+        try {
+            runBlocking {
+                withTimeout(timeoutMillis) {
+                    repository.state.first { state ->
+                        check(repository.isReadyGeneration(expected)) {
+                            "Library generation changed before committed install became visible"
+                        }
+                        state is LibraryRepository.State.Ready &&
+                            state.apps.any { app -> app.id == appId && app.storageKey == storageKey }
+                    }
+                }
+            }
+        } catch (error: TimeoutCancellationException) {
+            throw IOException(
+                "Committed install did not become visible in the READY Library projection: $storageKey",
+                error,
+            )
+        } catch (error: IllegalStateException) {
+            throw IOException(error.message ?: "Library generation changed during visibility wait", error)
+        }
+    }
 
     fun acquireGenerationLease(
         expectedGeneration: Long,

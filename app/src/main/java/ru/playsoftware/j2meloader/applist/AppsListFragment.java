@@ -49,6 +49,7 @@ import androidx.compose.ui.platform.ComposeView;
 import androidx.core.content.pm.ShortcutManagerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 
@@ -78,7 +79,7 @@ import ru.playsoftware.j2meloader.librarydb.LibraryViewModel;
 import ru.playsoftware.j2meloader.settings.SettingsActivity;
 import ru.playsoftware.j2meloader.util.AppUtils;
 import ru.playsoftware.j2meloader.util.LogUtils;
-import ru.woesss.j2me.installer.BulkInstallEntryDialog;
+import ru.woesss.j2me.installer.BulkInstallerDialog;
 import ru.woesss.j2me.installer.InstallerDialog;
 
 /** Room 3 Library host. AppItem remains only a temporary DTO for explicit shortcut creation. */
@@ -95,13 +96,13 @@ public class AppsListFragment extends Fragment {
     private static final long NO_GENERATION = Long.MIN_VALUE;
 
     private final ActivityResultLauncher<Void> openFileLauncher = registerForActivityResult(
-            new ActivityResultContract<Void, Uri>() {
+            new ActivityResultContract<Void, List<Uri>>() {
                 @NonNull
                 @Override
                 public Intent createIntent(@NonNull Context context, Void input) {
                     Intent intent = new Intent(context, FilteredFilePickerActivity.class);
-                    intent.putExtra(FilePickerContract.EXTRA_ALLOW_MULTIPLE, false);
-                    intent.putExtra(FilePickerContract.EXTRA_SINGLE_CLICK, true);
+                    intent.putExtra(FilePickerContract.EXTRA_ALLOW_MULTIPLE, true);
+                    intent.putExtra(FilePickerContract.EXTRA_SINGLE_CLICK, false);
                     intent.putExtra(FilePickerContract.EXTRA_ALLOW_CREATE_DIR, false);
                     intent.putExtra(FilePickerContract.EXTRA_MODE, FilePickerContract.MODE_FILE);
                     String path = preferences.getString(PREF_LAST_PATH, null);
@@ -114,12 +115,29 @@ public class AppsListFragment extends Fragment {
                 }
 
                 @Override
-                public Uri parseResult(int resultCode, @Nullable Intent intent) {
-                    if (resultCode == Activity.RESULT_OK && intent != null) return intent.getData();
-                    return null;
+                public List<Uri> parseResult(int resultCode, @Nullable Intent intent) {
+                    if (resultCode != Activity.RESULT_OK || intent == null) {
+                        return List.of();
+                    }
+                    Set<Uri> uris = new java.util.LinkedHashSet<>();
+                    ArrayList<String> paths = intent.getStringArrayListExtra(
+                            FilePickerContract.EXTRA_PATHS);
+                    if (paths != null) {
+                        for (String path : paths) {
+                            if (path != null && !path.isBlank()) uris.add(Uri.parse(path));
+                        }
+                    }
+                    if (intent.getClipData() != null) {
+                        for (int i = 0; i < intent.getClipData().getItemCount(); i++) {
+                            Uri uri = intent.getClipData().getItemAt(i).getUri();
+                            if (uri != null) uris.add(uri);
+                        }
+                    }
+                    if (intent.getData() != null) uris.add(intent.getData());
+                    return new ArrayList<>(uris);
                 }
             },
-            this::onFilePicked);
+            this::onFilesPicked);
 
     private final ActivityResultLauncher<String[]> importBundleLauncher = registerForActivityResult(
             new ActivityResultContracts.OpenDocument(),
@@ -310,11 +328,7 @@ public class AppsListFragment extends Fragment {
 
             @Override
             public void onInstall() {
-                if (getParentFragmentManager().findFragmentByTag(BulkInstallEntryDialog.TAG) == null) {
-                    new BulkInstallEntryDialog().show(
-                            getParentFragmentManager(),
-                            BulkInstallEntryDialog.TAG);
-                }
+                openFileLauncher.launch(null);
             }
 
             @Override
@@ -803,15 +817,20 @@ public class AppsListFragment extends Fragment {
         }
     }
 
-    private void onFilePicked(Uri uri) {
-        if (uri == null) return;
-        preferences.edit().putString(PREF_LAST_PATH, uri.getPath()).apply();
-        Activity activity = requireActivity();
-        if (activity instanceof MainActivity) {
-            ((MainActivity) activity).requestInstaller(uri);
+    private void onFilesPicked(List<Uri> uris) {
+        if (uris == null || uris.isEmpty() || !isAdded()) return;
+        Uri first = uris.get(0);
+        if (first.getPath() != null) {
+            preferences.edit().putString(PREF_LAST_PATH, first.getPath()).apply();
+        }
+        FragmentManager manager = getParentFragmentManager();
+        if (manager.isDestroyed() ||
+                manager.findFragmentByTag(BulkInstallerDialog.TAG) != null) {
             return;
         }
-        throw new IllegalStateException("AppsListFragment requires MainActivity host");
+        manager.beginTransaction()
+                .add(BulkInstallerDialog.newFiles(uris), BulkInstallerDialog.TAG)
+                .commitAllowingStateLoss();
     }
 
     private void onImportBundlePicked(Uri uri) {

@@ -247,6 +247,8 @@
     <string name="file_picker_cancel">Batal</string>
     <string name="file_picker_search">Cari</string>
     <string name="file_picker_sort">Urutkan</string>
+    <string name="file_picker_select_all">Pilih semua berkas dalam folder ini</string>
+    <string name="file_picker_unselect_all">Batalkan semua pilihan dalam folder ini</string>
     <string name="file_picker_sort_type">Folder Terlebih Dahulu</string>
     <string name="file_picker_sort_name_ascending">Nama A–Z</string>
     <string name="file_picker_sort_name_descending">Nama Z–A</string>

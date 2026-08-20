@@ -11,7 +11,6 @@ import java.io.File
 
 enum class BulkSourceOrigin {
     ExplicitSelection,
-    FolderScan,
 }
 
 enum class BulkSourceKind {
@@ -32,7 +31,6 @@ enum class BulkInstallStatus {
     OlderBatchCandidate,
     BatchConflict,
     RemoteSourceUnsupported,
-    DependencyOutsideScanRoot,
     SourceError,
 }
 

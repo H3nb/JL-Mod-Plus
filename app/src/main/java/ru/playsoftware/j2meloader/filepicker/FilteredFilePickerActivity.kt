@@ -134,6 +134,8 @@ class FilteredFilePickerActivity : AppCompatActivity() {
 
         override fun onConfirmSelection() = controller.confirmSelection()
 
+        override fun onToggleSelectAll() = controller.toggleSelectAll()
+
         override fun onToggleSearch() = controller.toggleSearch()
 
         override fun onSearchQueryChanged(query: String) = controller.setSearchQuery(query)

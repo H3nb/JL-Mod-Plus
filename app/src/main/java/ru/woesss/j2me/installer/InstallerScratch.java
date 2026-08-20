@@ -12,6 +12,7 @@ import android.net.Uri;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -32,14 +33,8 @@ final class InstallerScratch {
     InstallerScratch() {
         Context context = EmulatorApplication.getInstance();
         File root = new File(context.getCacheDir(), "installer");
-        if (!root.isDirectory() && !root.mkdirs()) {
-            throw new IllegalStateException("Can't create installer cache root: " + root);
-        }
         cleanupStaleOnce(root);
         directory = new File(root, UUID.randomUUID().toString());
-        if (!directory.mkdirs()) {
-            throw new IllegalStateException("Can't create installer request cache: " + directory);
-        }
     }
 
     File directory() {
@@ -47,6 +42,7 @@ final class InstallerScratch {
     }
 
     File file(String name) throws IOException {
+        ensureDirectory();
         return safeChild(name);
     }
 
@@ -60,6 +56,7 @@ final class InstallerScratch {
             }
         }
 
+        ensureDirectory();
         Context context = EmulatorApplication.getInstance();
         byte[] prefix = new byte[1024];
         int prefixLength = 0;
@@ -91,6 +88,30 @@ final class InstallerScratch {
 
     void clear() {
         FileUtils.deleteDirectory(directory);
+    }
+
+    File copy(File source, String name) throws IOException {
+        if (source == null || !source.isFile()) {
+            throw new IOException("Installer source is unavailable: " + source);
+        }
+        ensureDirectory();
+        File target = safeChild(name);
+        byte[] buffer = new byte[16 * 1024];
+        try (InputStream input = new FileInputStream(source);
+                OutputStream output = new FileOutputStream(target, false)) {
+            int read;
+            while ((read = input.read(buffer)) != -1) {
+                if (read > 0) output.write(buffer, 0, read);
+            }
+        }
+        return target;
+    }
+
+    private void ensureDirectory() throws IOException {
+        if (directory.isDirectory()) return;
+        if (!directory.mkdirs() && !directory.isDirectory()) {
+            throw new IOException("Can't create installer request cache: " + directory);
+        }
     }
 
     private File safeChild(String name) throws IOException {
@@ -131,6 +152,7 @@ final class InstallerScratch {
 
     private static void cleanupStaleOnce(File root) {
         if (!CLEANED_STALE.compareAndSet(false, true)) return;
+        if (!root.isDirectory() && !root.mkdirs()) return;
         long cutoff = System.currentTimeMillis() - STALE_AGE_MILLIS;
         File[] children = root.listFiles();
         if (children == null) return;

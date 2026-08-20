@@ -13,9 +13,9 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 import java.security.MessageDigest
-import java.util.ArrayDeque
 import java.util.Locale
 import java.util.UUID
+import java.util.concurrent.CancellationException
 import ru.playsoftware.j2meloader.librarydb.LibraryGenerationToken
 import ru.playsoftware.j2meloader.librarydb.LibraryViewModel
 import ru.woesss.j2me.jar.Descriptor
@@ -24,13 +24,18 @@ object BulkInstallPlanner {
     private val supportedExtensions = setOf("jar", "jad", "kjx")
     private val hardDiscoveryFailures = setOf(
         BulkInstallStatus.RemoteSourceUnsupported,
-        BulkInstallStatus.DependencyOutsideScanRoot,
         BulkInstallStatus.SourceError,
     )
 
-    fun planExplicit(files: List<File>, library: LibraryViewModel): BulkInstallPlan {
+    fun planExplicit(
+        files: List<File>,
+        library: LibraryViewModel,
+        isActive: () -> Boolean = { true },
+    ): BulkInstallPlan {
+        checkActive(isActive)
         val generation = requireReadyGeneration(library)
         val normalized = files
+            .onEach { checkActive(isActive) }
             .mapNotNull(::canonicalReadableFile)
             .filter(::isSupportedSource)
             .distinctBy { it.path }
@@ -38,27 +43,8 @@ object BulkInstallPlanner {
         val units = normalizeSources(
             files = normalized,
             origin = BulkSourceOrigin.ExplicitSelection,
-            scanRoot = null,
         )
-        return inspectAndFinalize(units, generation, library, emptyList())
-    }
-
-    fun planFolder(root: File, library: LibraryViewModel): BulkInstallPlan {
-        val generation = requireReadyGeneration(library)
-        val canonicalRoot = root.canonicalFile
-        require(canonicalRoot.isDirectory) { "Selected scan root is not a directory" }
-        val warnings = ArrayList<String>()
-        val files = scanSources(
-            root = canonicalRoot,
-            activeWorkdir = generation.emulatorDir.canonicalFile,
-            warnings = warnings,
-        )
-        val units = normalizeSources(
-            files = files,
-            origin = BulkSourceOrigin.FolderScan,
-            scanRoot = canonicalRoot,
-        )
-        return inspectAndFinalize(units, generation, library, warnings)
+        return inspectAndFinalize(units, generation, library, emptyList(), isActive)
     }
 
     fun fingerprint(files: List<File>): String = sourceFingerprint(files)
@@ -68,8 +54,13 @@ object BulkInstallPlanner {
         generation: LibraryGenerationToken,
         library: LibraryViewModel,
         warnings: List<String>,
+        isActive: () -> Boolean,
     ): BulkInstallPlan {
-        val inspected = units.map { unit -> inspect(unit, generation, library) }
+        val inspected = units.map { unit ->
+            checkActive(isActive)
+            inspect(unit, generation, library)
+        }
+        checkActive(isActive)
         val deduplicated = markSemanticDuplicates(inspected)
         val grouped = applyBatchVersionGrouping(deduplicated)
         return BulkInstallPlan(
@@ -187,13 +178,12 @@ object BulkInstallPlanner {
     private fun normalizeSources(
         files: List<File>,
         origin: BulkSourceOrigin,
-        scanRoot: File?,
     ): List<BulkSourceUnit> {
         val jads = files.filter { extension(it) == "jad" }
         val jars = files.filter { extension(it) == "jar" }
         val kjx = files.filter { extension(it) == "kjx" }
         val jarByCanonicalPath = jars.associateBy { canonicalPath(it) }
-        val resolutions = jads.associateWith { resolveJad(it, scanRoot) }
+        val resolutions = jads.associateWith(::resolveJad)
         val consumedJarPaths = HashSet<String>()
         val localByJar = LinkedHashMap<String, MutableList<Pair<File, JadResolution.Local>>>()
         resolutions.forEach { (jad, resolution) ->
@@ -244,15 +234,6 @@ object BulkInstallPlanner {
                         origin,
                         BulkInstallStatus.RemoteSourceUnsupported,
                         "Remote JAR acquisition is not supported by Bulk Install v1",
-                    ),
-                )
-
-                is JadResolution.OutsideScanRoot -> units.add(
-                    unresolvedJadUnit(
-                        jad,
-                        origin,
-                        BulkInstallStatus.DependencyOutsideScanRoot,
-                        "JAR dependency resolves outside the selected folder",
                     ),
                 )
 
@@ -311,11 +292,10 @@ object BulkInstallPlanner {
     private sealed interface JadResolution {
         data class Local(val jar: File) : JadResolution
         data object Remote : JadResolution
-        data object OutsideScanRoot : JadResolution
         data class Error(val message: String) : JadResolution
     }
 
-    private fun resolveJad(jad: File, scanRoot: File?): JadResolution {
+    private fun resolveJad(jad: File): JadResolution {
         return try {
             val descriptor = Descriptor(jad, true)
             val jarUrl = descriptor.jarUrl
@@ -337,59 +317,10 @@ object BulkInstallPlanner {
                 return JadResolution.Error("JAR referenced by JAD was not found: $jarUrl")
             }
             jar = jar.canonicalFile
-            if (scanRoot != null && !isWithin(jar, scanRoot)) {
-                return JadResolution.OutsideScanRoot
-            }
             JadResolution.Local(jar)
         } catch (error: Throwable) {
             JadResolution.Error(boundedMessage(error))
         }
-    }
-
-    private fun scanSources(
-        root: File,
-        activeWorkdir: File,
-        warnings: MutableList<String>,
-    ): List<File> {
-        val excludedRoots = listOf(
-            File(activeWorkdir, "converted"),
-            File(activeWorkdir, ".library-install-staging"),
-            File(activeWorkdir, ".library-install-backup"),
-        ).map { path ->
-            runCatching { path.canonicalFile }.getOrElse { path.absoluteFile }
-        }
-        val queue = ArrayDeque<File>()
-        val visited = HashSet<String>()
-        val result = ArrayList<File>()
-        queue.add(root)
-        while (queue.isNotEmpty()) {
-            val directory = queue.removeFirst()
-            val canonical = runCatching { directory.canonicalFile }.getOrElse { directory.absoluteFile }
-            if (!visited.add(canonical.path)) continue
-            if (canonical != root && excludedRoots.any { canonical == it || isWithin(canonical, it) }) continue
-            if (canonical != root &&
-                (canonical.name.startsWith(".") || runCatching { canonical.isHidden }.getOrDefault(false))
-            ) {
-                continue
-            }
-            val children = try {
-                canonical.listFiles()
-            } catch (error: SecurityException) {
-                warnings.add("Cannot read ${canonical.path}: ${boundedMessage(error)}")
-                null
-            }
-            if (children == null) {
-                warnings.add("Cannot read ${canonical.path}")
-                continue
-            }
-            children.sortedBy { it.name.lowercase(Locale.ROOT) }.forEach { child ->
-                when {
-                    child.isDirectory -> queue.add(child)
-                    child.isFile && isSupportedSource(child) -> result.add(child.canonicalFile)
-                }
-            }
-        }
-        return result.distinctBy { it.path }
     }
 
     private fun markSemanticDuplicates(items: List<BulkInstallItem>): List<BulkInstallItem> {
@@ -397,7 +328,6 @@ object BulkInstallPlanner {
         return items.map { item ->
             if (item.status == BulkInstallStatus.SourceError ||
                 item.status == BulkInstallStatus.RemoteSourceUnsupported ||
-                item.status == BulkInstallStatus.DependencyOutsideScanRoot ||
                 item.status == BulkInstallStatus.BatchConflict
             ) {
                 return@map item
@@ -433,7 +363,6 @@ object BulkInstallPlanner {
                     item.status !in setOf(
                         BulkInstallStatus.SourceError,
                         BulkInstallStatus.RemoteSourceUnsupported,
-                        BulkInstallStatus.DependencyOutsideScanRoot,
                         BulkInstallStatus.Duplicate,
                         BulkInstallStatus.BatchConflict,
                     )
@@ -447,7 +376,13 @@ object BulkInstallPlanner {
             }
             if (maxima.size > 1) {
                 val semanticKeys = maxima
-                    .map { it.value.descriptorAttributes to it.value.jarFingerprint }
+                    .map {
+                        Triple(
+                            it.value.unit.kind,
+                            it.value.descriptorAttributes,
+                            it.value.jarFingerprint,
+                        )
+                    }
                     .distinct()
                 if (semanticKeys.size > 1) {
                     maxima.forEach { indexedItem ->
@@ -481,7 +416,7 @@ object BulkInstallPlanner {
         repeat(length) { index ->
             val left = incomingParts.getOrNull(index)?.trim()?.toIntOrNull() ?: 0
             val right = otherParts.getOrNull(index)?.trim()?.toIntOrNull() ?: 0
-            if (left != right) return left.compareTo(right)
+            if (left != right) return Integer.signum(left - right)
         }
         return 0
     }
@@ -491,23 +426,17 @@ object BulkInstallPlanner {
 
     private fun sourceFingerprint(files: List<File>): String {
         val digest = MessageDigest.getInstance("SHA-256")
-        files.map { it.canonicalFile }.sortedBy(File::getPath).forEach { file ->
-            digest.update(file.path.toByteArray(Charsets.UTF_8))
-            digest.update(0.toByte())
-            FileInputStream(file).use { input ->
-                val buffer = ByteArray(16 * 1024)
-                while (true) {
-                    val read = input.read(buffer)
-                    if (read < 0) break
-                    if (read > 0) digest.update(buffer, 0, read)
-                }
-            }
+        files.forEach { file ->
+            digest.update(hashFileBytes(file))
             digest.update(0.toByte())
         }
         return digest.digest().joinToString("") { "%02x".format(it) }
     }
 
-    private fun hashFile(file: File): String {
+    private fun hashFile(file: File): String =
+        hashFileBytes(file).joinToString("") { "%02x".format(it) }
+
+    private fun hashFileBytes(file: File): ByteArray {
         val digest = MessageDigest.getInstance("SHA-256")
         FileInputStream(file).use { input ->
             val buffer = ByteArray(16 * 1024)
@@ -517,7 +446,7 @@ object BulkInstallPlanner {
                 if (read > 0) digest.update(buffer, 0, read)
             }
         }
-        return digest.digest().joinToString("") { "%02x".format(it) }
+        return digest.digest()
     }
 
     private fun canonicalReadableFile(file: File): File? = try {
@@ -536,13 +465,11 @@ object BulkInstallPlanner {
         file.absolutePath
     }
 
-    private fun isWithin(file: File, root: File): Boolean {
-        val childPath = canonicalPath(file).trimEnd(File.separatorChar)
-        val rootPath = canonicalPath(root).trimEnd(File.separatorChar)
-        return childPath == rootPath || childPath.startsWith(rootPath + File.separator)
-    }
-
     private fun isSupportedSource(file: File): Boolean = extension(file) in supportedExtensions
+
+    private fun checkActive(isActive: () -> Boolean) {
+        if (!isActive()) throw CancellationException("Bulk source planning cancelled")
+    }
 
     private fun extension(file: File): String = file.extension.lowercase(Locale.ROOT)
 

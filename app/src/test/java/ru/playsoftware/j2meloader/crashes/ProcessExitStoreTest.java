@@ -50,6 +50,14 @@ public class ProcessExitStoreTest {
 	}
 
 	@Test
+	public void reporterProcessExitIsNotPresentedAsASecondAppCrash() {
+		assertFalse(ProcessExitStore.shouldRetainProcess(
+				"reporter", ApplicationExitInfo.REASON_CRASH, 0, FOREGROUND));
+		assertTrue(ProcessExitStore.shouldRetainProcess(
+				"main", ApplicationExitInfo.REASON_CRASH, 0, FOREGROUND));
+	}
+
+	@Test
 	public void expectedUserPackageAndNonActionableSystemExitsAreSuppressed() {
 		assertFalse(ProcessExitStore.shouldRetain(
 				ApplicationExitInfo.REASON_USER_REQUESTED, 0, FOREGROUND, true));

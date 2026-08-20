@@ -12,8 +12,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.reactivex.Single
 import java.io.File
+import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,7 +27,7 @@ import ru.playsoftware.j2meloader.librarydb.LibraryViewModel
 class BulkInstallViewModel : ViewModel() {
     sealed interface State {
         data object Idle : State
-        data class Planning(val sourceLabel: String) : State
+        data class Planning(val sourceLabel: String? = null) : State
         data class Review(val plan: BulkInstallPlan) : State
         data class Running(
             val plan: BulkInstallPlan,
@@ -46,43 +49,46 @@ class BulkInstallViewModel : ViewModel() {
     private val mutableState = MutableStateFlow<State>(State.Idle)
     val state: StateFlow<State> = mutableState.asStateFlow()
     private val cancelRequested = AtomicBoolean()
+    private var planningJob: Job? = null
 
-    fun planExplicit(uriStrings: List<String>, library: LibraryViewModel) {
+    fun planExplicit(
+        uriStrings: List<String>,
+        library: LibraryViewModel,
+        omittedSourcesWarning: String? = null,
+    ) {
         if (mutableState.value !is State.Idle) return
-        mutableState.value = State.Planning("Selected files")
-        viewModelScope.launch {
+        mutableState.value = State.Planning()
+        planningJob = viewModelScope.launch {
             try {
+                val job = coroutineContext[Job]
                 val plan = withContext(Dispatchers.IO) {
                     val files = uriStrings.mapNotNull { value ->
                         Uri.parse(value).path?.let(::File)
                     }
-                    BulkInstallPlanner.planExplicit(files, library)
+                    BulkInstallPlanner.planExplicit(files, library) { job?.isActive == true }
                 }
-                mutableState.value = State.Review(plan)
+                val boundedPlan = if (omittedSourcesWarning != null) {
+                    plan.copy(
+                        warnings = plan.warnings + omittedSourcesWarning,
+                    )
+                } else {
+                    plan
+                }
+                mutableState.value = State.Review(boundedPlan)
+            } catch (_: CancellationException) {
+                if (mutableState.value is State.Planning) mutableState.value = State.Idle
             } catch (error: Throwable) {
                 mutableState.value = State.Error(boundedMessage(error))
+            } finally {
+                planningJob = null
             }
         }
     }
 
-    fun planFolder(uriString: String, library: LibraryViewModel) {
-        if (mutableState.value !is State.Idle) return
-        val path = Uri.parse(uriString).path
-        if (path == null) {
-            mutableState.value = State.Error("Selected folder has no filesystem path")
-            return
-        }
-        mutableState.value = State.Planning(path)
-        viewModelScope.launch {
-            try {
-                val plan = withContext(Dispatchers.IO) {
-                    BulkInstallPlanner.planFolder(File(path), library)
-                }
-                mutableState.value = State.Review(plan)
-            } catch (error: Throwable) {
-                mutableState.value = State.Error(boundedMessage(error))
-            }
-        }
+    fun cancelPlanning() {
+        planningJob?.cancel()
+        planningJob = null
+        if (mutableState.value is State.Planning) mutableState.value = State.Idle
     }
 
     fun toggle(itemId: String) {
@@ -206,21 +212,7 @@ class BulkInstallViewModel : ViewModel() {
         if (!library.isReadyGeneration(plan.generation, plan.workdir)) {
             throw FatalBatchException(IllegalStateException("Library generation changed before batch item execution"))
         }
-        val currentFingerprint = try {
-            BulkInstallPlanner.fingerprint(item.unit.sourceFiles)
-        } catch (error: Throwable) {
-            return BulkInstallResult(item.id, item.name, BulkInstallResultKind.Failed, boundedMessage(error))
-        }
-        if (currentFingerprint != item.sourceFingerprint) {
-            return BulkInstallResult(
-                item.id,
-                item.name,
-                BulkInstallResultKind.Failed,
-                "Source changed after review; rescan before installing",
-            )
-        }
-
-        val source = when (item.action) {
+        val requestedSource = when (item.action) {
             BulkInstallAction.InstallJarOnly -> item.unit.jarFile
                 ?: return BulkInstallResult(
                     item.id,
@@ -230,13 +222,38 @@ class BulkInstallViewModel : ViewModel() {
                 )
             else -> item.unit.primaryFile
         }
-        val installer = AppInstaller(null, Uri.fromFile(source), library)
+        val scratch = InstallerScratch()
+        var installer: AppInstaller? = null
         try {
-            val currentCode = Single.create<Int>(installer::loadInfo).blockingGet()
-            if (installer.expectedGeneration != plan.generation || installer.expectedWorkdir?.canonicalFile != plan.workdir) {
+            val copiedSources = item.unit.sourceFiles.mapIndexed { index, source ->
+                val extension = source.extension.lowercase(Locale.ROOT).ifBlank { "bin" }
+                scratch.copy(source, "source-$index.$extension")
+            }
+            if (BulkInstallPlanner.fingerprint(copiedSources) != item.sourceFingerprint) {
+                return BulkInstallResult(
+                    item.id,
+                    item.name,
+                    BulkInstallResultKind.Failed,
+                    "Source changed after review; select the files again",
+                )
+            }
+            val copiedByOriginalPath = item.unit.sourceFiles
+                .zip(copiedSources)
+                .associate { (original, copied) -> original.canonicalPath to copied }
+            val source = copiedByOriginalPath[requestedSource.canonicalPath]
+                ?: return failed(item, "Selected installer source is no longer available")
+            val resolvedJar = if (item.action == BulkInstallAction.InstallJarOnly) {
+                null
+            } else {
+                item.unit.jarFile?.let { copiedByOriginalPath[it.canonicalPath] }
+            }
+            val activeInstaller = AppInstaller(source, resolvedJar, library, scratch)
+            installer = activeInstaller
+            val currentCode = Single.create<Int>(activeInstaller::loadInfo).blockingGet()
+            if (activeInstaller.expectedGeneration != plan.generation || activeInstaller.expectedWorkdir?.canonicalFile != plan.workdir) {
                 throw FatalBatchException(IllegalStateException("Library generation changed during batch revalidation"))
             }
-            val descriptor = installer.newDescriptor
+            val descriptor = activeInstaller.newDescriptor
                 ?: return failed(item, "Installer returned no descriptor during revalidation")
             val candidates = library.findBySourceIdentity(
                 plan.generation,
@@ -265,7 +282,7 @@ class BulkInstallViewModel : ViewModel() {
                 )
             }
 
-            val installCode = Single.create<Int>(installer::install).blockingGet()
+            val installCode = Single.create<Int>(activeInstaller::install).blockingGet()
             if (installCode != AppInstaller.STATUS_SUCCESS) {
                 return failed(item, "Installer stopped with status $installCode")
             }
@@ -280,8 +297,12 @@ class BulkInstallViewModel : ViewModel() {
             if (isFatalEnvironmentError(error)) throw FatalBatchException(error)
             throw error
         } finally {
-            installer.clearCache()
-            installer.deleteTemp()
+            if (installer == null) {
+                scratch.clear()
+            } else {
+                installer.clearCache()
+                installer.deleteTemp()
+            }
         }
     }
 
@@ -332,6 +353,7 @@ class BulkInstallViewModel : ViewModel() {
         BulkInstallResult(item.id, item.name, BulkInstallResultKind.Failed, detail)
 
     override fun onCleared() {
+        planningJob?.cancel()
         cancelRequested.set(true)
         super.onCleared()
     }

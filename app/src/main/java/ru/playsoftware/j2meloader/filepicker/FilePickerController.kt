@@ -128,6 +128,22 @@ class FilePickerController(
         publish(state.copy(selectedPaths = selected, errorMessage = null))
     }
 
+    fun toggleSelectAll() {
+        if (!request.allowMultiple || !request.allowsFiles) {
+            return
+        }
+        val selectablePaths = FilePickerRules.selectablePaths(state.entries)
+        if (selectablePaths.isEmpty()) {
+            return
+        }
+        val selected = if (state.selectedPaths.containsAll(selectablePaths)) {
+            emptySet()
+        } else {
+            selectablePaths
+        }
+        publish(state.copy(selectedPaths = selected, errorMessage = null))
+    }
+
     fun confirmSelection() {
         if (!state.canConfirm) {
             return

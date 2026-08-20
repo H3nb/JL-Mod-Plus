@@ -81,7 +81,8 @@ public class AppInstaller {
     private final long requestedGeneration;
     private final File requestedWorkdir;
     private final String requestedStorageKey;
-    private final InstallerScratch scratch = new InstallerScratch();
+    private final InstallerScratch scratch;
+    private final File resolvedJar;
 
     private Uri uri;
     private Descriptor manifest;
@@ -105,8 +106,23 @@ public class AppInstaller {
         requestedWorkdir = null;
         requestedStorageKey = null;
         this.libraryViewModel = libraryViewModel;
+        scratch = new InstallerScratch();
+        resolvedJar = null;
         if (jar != null) srcFile = jar;
         this.uri = uri;
+    }
+
+    AppInstaller(File source, File resolvedJar, LibraryViewModel libraryViewModel,
+            InstallerScratch scratch) {
+        id = NO_ID;
+        requestedGeneration = NO_GENERATION;
+        requestedWorkdir = null;
+        requestedStorageKey = null;
+        this.libraryViewModel = libraryViewModel;
+        this.scratch = scratch;
+        this.resolvedJar = resolvedJar;
+        srcFile = source;
+        uri = Uri.fromFile(source);
     }
 
     public AppInstaller(long id, long requestedGeneration, File requestedWorkdir,
@@ -116,6 +132,8 @@ public class AppInstaller {
         this.requestedWorkdir = requestedWorkdir;
         this.requestedStorageKey = requestedStorageKey;
         this.libraryViewModel = libraryViewModel;
+        scratch = new InstallerScratch();
+        resolvedJar = null;
     }
 
     Descriptor getNewDescriptor() {
@@ -180,7 +198,14 @@ public class AppInstaller {
             Uri jarUri = Uri.parse(url);
             String scheme = jarUri.getScheme();
             String host = jarUri.getHost();
-            if (isLocal && scheme == null && host == null) {
+            if (resolvedJar != null) {
+                srcJar = resolvedJar;
+                manifest = loadManifest(resolvedJar);
+                if (!manifest.equals(newDesc)) {
+                    emitLoadedStatus(emitter, STATUS_UNMATCHED);
+                    return;
+                }
+            } else if (isLocal && scheme == null && host == null) {
                 boolean matches = this.uri != null && "content".equals(this.uri.getScheme())
                         ? checkContentUriJar(this.uri, srcFile)
                         : checkJarFile(srcFile);
@@ -466,7 +491,6 @@ public class AppInstaller {
 
             clearCache();
             deleteTemp();
-            handedOff = true;
             libraryViewModel.recordInstalledApp(
                     expectedGeneration,
                     expectedWorkdir,
@@ -512,6 +536,7 @@ public class AppInstaller {
                                     else emitter.onSuccess(STATUS_SUCCESS);
                                 });
                     });
+            handedOff = true;
         } finally {
             if (!handedOff) executionPermit.close();
         }
@@ -632,12 +657,16 @@ public class AppInstaller {
 
     /** Pure path selection boundary: neither recovery names nor indexed identities may be reused. */
     static File chooseTargetDirectory(File appsDir, String name, Set<String> indexedStorageKeys) {
-        File dir = new File(appsDir, name);
+        String safeName = name == null ? "" : name.trim();
+        if (safeName.isEmpty() || ".".equals(safeName) || "..".equals(safeName)) {
+            safeName = "MIDlet";
+        }
+        File dir = new File(appsDir, safeName);
         for (int i = 1;
                 LibraryInstallRecovery.isReservedStorageKey(dir.getName()) ||
                         dir.exists() || indexedStorageKeys.contains(dir.getName());
                 i++) {
-            dir = new File(appsDir, name + "_" + i);
+            dir = new File(appsDir, safeName + "_" + i);
         }
         return dir;
     }

@@ -7,8 +7,6 @@
  */
 package ru.woesss.j2me.installer;
 
-import android.os.SystemClock;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
@@ -16,7 +14,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import ru.playsoftware.j2meloader.librarydb.LibraryAppRow;
 import ru.playsoftware.j2meloader.librarydb.LibraryViewModel;
 
 /**
@@ -28,7 +25,6 @@ import ru.playsoftware.j2meloader.librarydb.LibraryViewModel;
  */
 final class InstallerExecutionCoordinator {
     private static final long VISIBILITY_TIMEOUT_MILLIS = 10_000L;
-    private static final long VISIBILITY_POLL_MILLIS = 10L;
     private static final Semaphore INSTALL_PERMIT = new Semaphore(1, true);
     private static final ExecutorService VISIBILITY_EXECUTOR = Executors.newSingleThreadExecutor(runnable -> {
         Thread thread = new Thread(runnable, "jlmod-installer-visibility");
@@ -58,25 +54,14 @@ final class InstallerExecutionCoordinator {
             String storageKey,
             VisibilityCallback callback) {
         VISIBILITY_EXECUTOR.execute(() -> {
-            long deadline = SystemClock.elapsedRealtime() + VISIBILITY_TIMEOUT_MILLIS;
             Throwable failure = null;
             try {
-                while (SystemClock.elapsedRealtime() <= deadline) {
-                    if (!library.isReadyGeneration(expectedGeneration, expectedWorkdir)) {
-                        throw new IOException("Library generation changed before committed install became visible");
-                    }
-                    LibraryAppRow row = library.getApp(expectedGeneration, expectedWorkdir, appId);
-                    if (row != null && storageKey.equals(row.getStorageKey())) {
-                        callback.complete(null);
-                        return;
-                    }
-                    Thread.sleep(VISIBILITY_POLL_MILLIS);
-                }
-                failure = new IOException(
-                        "Committed install did not become visible in the READY Library projection: " + storageKey);
-            } catch (InterruptedException error) {
-                Thread.currentThread().interrupt();
-                failure = new IOException("Interrupted while waiting for Library visibility", error);
+                library.awaitInstalledAppVisible(
+                        expectedGeneration,
+                        expectedWorkdir,
+                        appId,
+                        storageKey,
+                        VISIBILITY_TIMEOUT_MILLIS);
             } catch (Throwable error) {
                 failure = error;
             }
