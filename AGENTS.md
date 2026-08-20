@@ -29,6 +29,15 @@ Available skill routing:
 - `adaptive`: adaptive/multi-pane Compose UI across window sizes and device classes. Check its Compose and Navigation 3 prerequisites before applying it.
 - `r8-analyzer`: R8/keep-rule analysis and app-size optimization investigation. Treat the skill as analysis-only unless a separate implementation task is explicitly in scope.
 
+## Current-state evidence
+
+- When determining whether a feature, behavior, setting, dependency, architecture, or workaround currently exists, inspect the current repository state first: source, configuration, tests, workflows, and current documentation. Do not search GitHub history by default.
+- Pull requests, commits, deleted or historical branches, old issues, discussions, and other historical artifacts are context, not implementation authority. They may describe experiments, reverted work, abandoned designs, or code that no longer exists.
+- Treat closed or unmerged PRs, deleted branches, reverted commits, and explicitly experimental work as non-current unless the user specifically asks to recover, compare, or investigate them.
+- Issues and roadmaps describe intent or planned work unless the current repository state independently confirms that the implementation exists.
+- Consult history only when the task explicitly requires historical/provenance analysis or when current-state evidence is insufficient to answer a necessary question. When history is used, label it as historical and revalidate relevant conclusions against the current repository state before recommending or editing anything.
+- If the user identifies prior work as obsolete, abandoned, experimental, or intentionally removed, exclude it from current-state reasoning unless the user explicitly asks to revisit it.
+
 ## Change discipline
 
 - Do not add abstractions, modules, dependencies, frameworks, generic helpers, or configuration layers without a concrete need in the current task.
