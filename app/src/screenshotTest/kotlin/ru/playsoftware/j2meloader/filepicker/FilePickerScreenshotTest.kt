@@ -25,6 +25,7 @@ private val PreviewActions = object : FilePickerActions {
     override fun onExit() = Unit
     override fun onOpen(entry: FilePickerEntry) = Unit
     override fun onConfirmSelection() = Unit
+    override fun onToggleSelectAll() = Unit
     override fun onToggleSearch() = Unit
     override fun onSearchQueryChanged(query: String) = Unit
     override fun onSortOrderSelected(sortOrder: FilePickerSortOrder) = Unit
