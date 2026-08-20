@@ -70,9 +70,7 @@ class BulkInstallEntryDialog : DialogFragment() {
     ) { uris ->
         if (uris.isEmpty() || !isAdded) return@registerForActivityResult
         rememberPath(uris.first())
-        val manager = parentFragmentManager
-        dismissAllowingStateLoss()
-        BulkInstallerDialog.newFiles(uris).show(manager, TAG_BULK)
+        handOffTo(BulkInstallerDialog.newFiles(uris))
     }
 
     private val folderLauncher: ActivityResultLauncher<Unit> = registerForActivityResult(
@@ -89,9 +87,7 @@ class BulkInstallEntryDialog : DialogFragment() {
     ) { uri ->
         if (uri == null || !isAdded) return@registerForActivityResult
         rememberPath(uri)
-        val manager = parentFragmentManager
-        dismissAllowingStateLoss()
-        BulkInstallerDialog.newFolder(uri).show(manager, TAG_BULK)
+        handOffTo(BulkInstallerDialog.newFolder(uri))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -153,6 +149,23 @@ class BulkInstallEntryDialog : DialogFragment() {
             .edit()
             .putString(PREF_LAST_PATH, path)
             .apply()
+    }
+
+    /**
+     * Activity results can be delivered while the parent FragmentManager still has saved state.
+     * A normal DialogFragment.show() commits without allowing state loss and may crash with
+     * "Can not perform this action after onSaveInstanceState" immediately after returning from
+     * the picker. The bulk review is transient UI, so a state-loss-tolerant handoff is preferable
+     * to terminating the process; if the host is destroyed, the user can simply reopen Install.
+     */
+    private fun handOffTo(dialog: BulkInstallerDialog) {
+        if (!isAdded) return
+        val manager = parentFragmentManager
+        dismissAllowingStateLoss()
+        if (manager.isDestroyed || manager.findFragmentByTag(TAG_BULK) != null) return
+        manager.beginTransaction()
+            .add(dialog, TAG_BULK)
+            .commitAllowingStateLoss()
     }
 
     companion object {
