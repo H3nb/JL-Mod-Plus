@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bulk_install_title">Bulk install</string>
+    <string name="bulk_install_select_files">Select files</string>
+    <string name="bulk_install_scan_folder">Scan folder</string>
+    <string name="bulk_install_planning">Scanning and checking applications…</string>
+    <string name="bulk_install_found">%1$d applications found</string>
+    <string name="bulk_install_selected">%1$d selected</string>
+    <string name="bulk_install_recommended">Recommended</string>
+    <string name="bulk_install_clear">Clear</string>
+    <string name="bulk_install_install">Install selected</string>
+    <string name="bulk_install_cancel">Cancel</string>
+    <string name="bulk_install_close">Close</string>
+    <string name="bulk_install_running">Installing %1$d / %2$d</string>
+    <string name="bulk_install_cancel_requested">Stopping after the current application…</string>
+    <string name="bulk_install_complete">Bulk install complete</string>
+    <string name="bulk_install_cancelled">Bulk install stopped</string>
+    <string name="bulk_install_fatal">Bulk install stopped: %1$s</string>
+    <string name="bulk_install_result_summary">%1$d installed · %2$d updated · %3$d reinstalled · %4$d skipped · %5$d failed</string>
+    <string name="bulk_install_installed_version">Installed: %1$s</string>
+    <string name="bulk_install_source">Source: %1$s</string>
+    <string name="bulk_install_warning_count">%1$d scan warnings</string>
+    <string name="bulk_install_action_separate_copy">Install as separate copy</string>
+    <string name="bulk_install_action_jar_only">Install JAR only</string>
+    <string name="bulk_install_status_new">New</string>
+    <string name="bulk_install_status_update">Update</string>
+    <string name="bulk_install_status_downgrade">Older version</string>
+    <string name="bulk_install_status_same">Already installed</string>
+    <string name="bulk_install_status_reinstall">Variant / reinstall</string>
+    <string name="bulk_install_status_ambiguous">Multiple installed matches</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR mismatch</string>
+    <string name="bulk_install_status_duplicate">Duplicate</string>
+    <string name="bulk_install_status_older_batch">Older batch candidate</string>
+    <string name="bulk_install_status_conflict">Batch conflict</string>
+    <string name="bulk_install_status_remote">Remote source unsupported</string>
+    <string name="bulk_install_status_outside">Dependency outside selected folder</string>
+    <string name="bulk_install_status_error">Invalid source</string>
+</resources>
