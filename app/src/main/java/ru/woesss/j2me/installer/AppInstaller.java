@@ -67,6 +67,7 @@ public class AppInstaller {
     private static final String TAG = AppInstaller.class.getSimpleName();
     private static final long NO_ID = -1L;
     private static final long NO_GENERATION = Long.MIN_VALUE;
+    private static final int NO_STATUS = Integer.MIN_VALUE;
     static final int STATUS_OLDER = -1;
     static final int STATUS_EQUAL = 0;
     static final int STATUS_NEWER = 1;
@@ -96,6 +97,7 @@ public class AppInstaller {
     private long installedId = NO_ID;
     private String installedTitle;
     private String installedPath;
+    private int loadedStatus = NO_STATUS;
 
     AppInstaller(File jar, Uri uri, LibraryViewModel libraryViewModel) {
         id = NO_ID;
@@ -153,7 +155,7 @@ public class AppInstaller {
                 throw new IOException("Retained JAR is unavailable for reinstall: " + appDirName);
             }
             newDesc = new Descriptor(child(targetDir, Config.MIDLET_MANIFEST_FILE), false);
-            emitter.onSuccess(STATUS_EQUAL);
+            emitLoadedStatus(emitter, STATUS_EQUAL);
             return;
         }
 
@@ -183,12 +185,12 @@ public class AppInstaller {
                         ? checkContentUriJar(this.uri, srcFile)
                         : checkJarFile(srcFile);
                 if (!matches) {
-                    emitter.onSuccess(STATUS_UNMATCHED);
+                    emitLoadedStatus(emitter, STATUS_UNMATCHED);
                     return;
                 }
             } else if (isLocal && "content".equals(scheme)) {
                 if (!checkContentUriJar(this.uri, srcFile)) {
-                    emitter.onSuccess(STATUS_UNMATCHED);
+                    emitLoadedStatus(emitter, STATUS_UNMATCHED);
                     return;
                 }
             }
@@ -199,7 +201,12 @@ public class AppInstaller {
             srcJar = srcFile;
             newDesc = loadManifest(srcFile);
         }
-        emitter.onSuccess(checkDescriptor());
+        emitLoadedStatus(emitter, checkDescriptor());
+    }
+
+    private void emitLoadedStatus(SingleEmitter<Integer> emitter, int status) {
+        loadedStatus = status;
+        emitter.onSuccess(status);
     }
 
     private void bindReadyGeneration() throws IOException {
@@ -355,6 +362,21 @@ public class AppInstaller {
         final InstallerExecutionCoordinator.Permit executionPermit = InstallerExecutionCoordinator.acquire();
         boolean handedOff = false;
         try {
+            verifyActiveGeneration();
+            if (id != NO_ID) {
+                verifyRequestedGeneration();
+                requireRequestedAppIdentity();
+            } else {
+                int currentStatus = checkDescriptor();
+                if (loadedStatus != NO_STATUS && currentStatus != loadedStatus) {
+                    // Source inspection and user confirmation happen outside the global permit. If a
+                    // previous installer changed the Library while this request was pending, surface
+                    // the new classification instead of applying a stale NEW/UPDATE/REINSTALL decision.
+                    emitter.onSuccess(currentStatus);
+                    return;
+                }
+            }
+
             LibraryInstallRecovery.discardStaging(expectedWorkdir);
             tmpDir = LibraryInstallRecovery.stagingDirectory(expectedWorkdir);
             if (!tmpDir.mkdirs()) {
@@ -399,8 +421,7 @@ public class AppInstaller {
             }
             newDesc.writeTo(child(tmpDir, Config.MIDLET_MANIFEST_FILE));
 
-            // Conversion may outlive multiple A -> B -> A workdir switches. Path equality is not enough:
-            // only the exact READY generation captured by loadInfo() may publish filesystem or DB state.
+            // DX/copy can run for a while. Revalidate the generation again immediately before publish.
             verifyActiveGeneration();
             if (id != NO_ID) {
                 verifyRequestedGeneration();
