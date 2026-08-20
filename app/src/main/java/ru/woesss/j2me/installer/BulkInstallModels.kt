@@ -67,6 +67,7 @@ data class BulkInstallItem(
     val jarFingerprint: String? = null,
     val groupKey: String = "$name\u0000$vendor",
     val status: BulkInstallStatus,
+    val preflightStatus: BulkInstallStatus = status,
     val action: BulkInstallAction,
     val selected: Boolean,
     val detail: String? = null,
@@ -79,6 +80,7 @@ data class BulkInstallItem(
             BulkInstallStatus.ReinstallOrVariant,
             BulkInstallStatus.AmbiguousInstalledMatch,
             BulkInstallStatus.JadJarMismatch,
+            BulkInstallStatus.OlderBatchCandidate,
             BulkInstallStatus.BatchConflict,
             -> true
 
