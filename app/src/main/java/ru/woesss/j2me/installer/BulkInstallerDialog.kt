@@ -21,11 +21,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -38,8 +36,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
@@ -73,6 +71,7 @@ class BulkInstallerDialog : DialogFragment() {
                     args.getStringArrayList(ARG_SOURCES).orEmpty(),
                     libraryViewModel,
                 )
+
                 MODE_FOLDER -> args.getString(ARG_FOLDER)?.let { source ->
                     bulkViewModel.planFolder(source, libraryViewModel)
                 }
@@ -238,7 +237,7 @@ private fun ReviewContent(
     }
     HorizontalDivider()
     LazyColumn(
-        modifier = Modifier.weight(1f, fill = false),
+        modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         items(plan.items, key = { it.id }) { item ->
@@ -379,7 +378,7 @@ private fun FinishedContent(state: BulkInstallViewModel.State.Finished, onClose:
     ResultCounters(state.results)
     if (state.results.isNotEmpty()) {
         LazyColumn(
-            modifier = Modifier.weight(1f, fill = false),
+            modifier = Modifier.fillMaxWidth().heightIn(max = 360.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             items(state.results, key = { it.itemId }) { result ->
