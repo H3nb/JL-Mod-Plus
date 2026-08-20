@@ -71,6 +71,20 @@ class FilePickerModelTest {
     }
 
     @Test
+    fun selectablePathsContainOnlyFilesFromCurrentDirectoryEntries() {
+        val entries = listOf(
+            FilePickerEntry("/games", "Games", FilePickerEntryKind.DIRECTORY),
+            FilePickerEntry("/alpha.jar", "alpha.jar", FilePickerEntryKind.FILE),
+            FilePickerEntry("/beta.jad", "beta.jad", FilePickerEntryKind.FILE),
+        )
+
+        assertEquals(
+            linkedSetOf("/alpha.jar", "/beta.jad"),
+            FilePickerRules.selectablePaths(entries),
+        )
+    }
+
+    @Test
     fun modeContractsKeepDirectoryAndExistingFileSelectionDistinct() {
         val existingFile = Files.createTempFile("existing", ".jar").toFile()
         try {

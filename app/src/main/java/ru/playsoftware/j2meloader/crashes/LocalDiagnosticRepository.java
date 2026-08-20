@@ -75,13 +75,18 @@ public final class LocalDiagnosticRepository {
 		}
 
 		ArrayList<Record> standaloneReports = new ArrayList<>();
-		for (RawJavaReport raw : readRawJavaReports(context)) {
+		ArrayList<RawJavaReport> rawReports = collapseFallbackDuplicates(readRawJavaReports(context));
+		ArrayList<RawJavaReport> standaloneRawReports = new ArrayList<>();
+		Map<String, RawJavaReport> fatalByRun = new HashMap<>();
+		for (RawJavaReport raw : rawReports) {
 			MutableRecord journal = failuresBySession.get(raw.sessionId);
 			if (journal != null && isExactEventMatch(
 					journal.sessionId, journal.eventId, raw.sessionId, raw.stackTrace)) {
 				journal.attach(raw);
 			} else {
-				standaloneReports.add(Record.fromRaw(raw));
+				standaloneRawReports.add(raw);
+				String runKey = raw.fatalFallback ? fatalRunKey(raw) : null;
+				if (runKey != null) fatalByRun.put(runKey, raw);
 			}
 		}
 
@@ -90,8 +95,17 @@ public final class LocalDiagnosticRepository {
 			if (journal != null) {
 				journal.attach(exit);
 			} else {
-				standaloneReports.add(Record.fromProcessExit(exit, allSessions.get(exit.sessionId)));
+				RawJavaReport fatal = fatalByRun.remove(processRunKey(exit));
+				if (fatal != null) {
+					standaloneRawReports.remove(fatal);
+					standaloneReports.add(Record.fromRaw(fatal, exit));
+				} else {
+					standaloneReports.add(Record.fromProcessExit(exit, allSessions.get(exit.sessionId)));
+				}
 			}
+		}
+		for (RawJavaReport raw : standaloneRawReports) {
+			standaloneReports.add(Record.fromRaw(raw));
 		}
 
 		ArrayList<Record> records = new ArrayList<>(journalRecords.size() + standaloneReports.size());
@@ -106,6 +120,33 @@ public final class LocalDiagnosticRepository {
 			return left.timestampMillis < right.timestampMillis ? 1 : -1;
 		});
 		return records;
+	}
+
+	private static ArrayList<RawJavaReport> collapseFallbackDuplicates(List<RawJavaReport> reports) {
+		ArrayList<RawJavaReport> result = new ArrayList<>(reports);
+		for (RawJavaReport fallback : reports) {
+			if (!fallback.fatalFallback || fallback.stackTrace == null) continue;
+			String fallbackRun = fatalRunKey(fallback);
+			for (RawJavaReport candidate : reports) {
+				if (candidate == fallback || candidate.fatalFallback || candidate.stackTrace == null) continue;
+				if (fallbackRun != null && fallbackRun.equals(fatalRunKey(candidate))
+						&& fallback.stackTrace.equals(candidate.stackTrace)) {
+					fallback.files.addAll(candidate.files);
+					result.remove(candidate);
+				}
+			}
+		}
+		return result;
+	}
+
+	private static String fatalRunKey(RawJavaReport raw) {
+		if (raw == null || raw.appContext == null || raw.appContext.runId == null) return null;
+		return raw.appContext.runId + "\u0000" + String.valueOf(raw.processRole);
+	}
+
+	private static String processRunKey(ProcessExitStore.Snapshot exit) {
+		if (exit == null || exit.appContext == null || exit.appContext.runId == null) return null;
+		return exit.appContext.runId + "\u0000" + String.valueOf(exit.processRole);
 	}
 
 	public static Record find(Context context, String id) {
@@ -238,6 +279,9 @@ public final class LocalDiagnosticRepository {
 				Log.w(TAG, "Ignoring unreadable local Java crash report: " + file.getName(), e);
 			}
 		}
+		for (FatalJavaCrashStore.Snapshot fallback : FatalJavaCrashStore.load(context)) {
+			reports.add(RawJavaReport.fromFallback(fallback));
+		}
 		return reports;
 	}
 
@@ -288,6 +332,10 @@ public final class LocalDiagnosticRepository {
 			mechanism = mechanism + " · " + status;
 		}
 		appendLine(detail, "Failure", mechanism);
+		appendLine(detail, "Process", processLabel(exit));
+		appendLine(detail, "PID", exit.pid > 0 ? Integer.toString(exit.pid) : null);
+		appendLine(detail, "Exit status", status);
+		appendLine(detail, "Importance", ProcessExitStore.importanceLabel(exit.importance));
 		if (exit.reason == ProcessExitStore.REASON_SIGNALED && exit.status == OsConstants.SIGKILL
 				&& exit.lowMemoryKillReportSupported) {
 			appendLine(detail, "Cause", "unknown");
@@ -306,11 +354,20 @@ public final class LocalDiagnosticRepository {
 				evidence += " (truncated at retention limit)";
 			}
 			appendLine(detail, "Evidence", evidence);
+		} else if (exit.reason == ProcessExitStore.REASON_CRASH) {
+			appendLine(detail, "Evidence",
+					"Android supplied no Java stack trace for this process exit");
 		}
 		String trace = ProcessExitStore.readDisplayTrace(exit);
 		if (trace != null && !trace.trim().isEmpty()) {
 			detail.append("\nANR trace:\n").append(trace.trim()).append('\n');
 		}
+	}
+
+	private static String processLabel(ProcessExitStore.Snapshot exit) {
+		if (exit.processRole == null) return exit.processName;
+		if (exit.processName == null) return exit.processRole;
+		return exit.processRole + " · " + exit.processName;
 	}
 
 	private static boolean shouldShowMemory(ProcessExitStore.Snapshot exit) {
@@ -455,11 +512,19 @@ public final class LocalDiagnosticRepository {
 		}
 
 		private static Record fromRaw(RawJavaReport raw) {
+			return fromRaw(raw, null);
+		}
+
+		private static Record fromRaw(RawJavaReport raw, ProcessExitStore.Snapshot exit) {
 			StringBuilder detail = new StringBuilder("Type: Java diagnostic report\n");
 			appendJavaFailureSummary(detail, raw);
 			appendAppContext(detail, raw.appContext, raw.timestampMillis);
 			appendBuild(detail, raw.appContext, raw.appVersion);
 			appendEnvironment(detail, -1, joinDevice(raw.brand, raw.phoneModel), raw.androidVersion);
+			if (exit != null) {
+				detail.append('\n');
+				appendProcessExitSummary(detail, exit);
+			}
 			if (raw.midletName != null) {
 				detail.append('\n');
 				appendLine(detail, "MIDlet", raw.midletName);
@@ -474,7 +539,7 @@ public final class LocalDiagnosticRepository {
 			return new Record(
 					"acra:" + reportKey,
 					Kind.JAVA_REPORT,
-					raw.timestampMillis,
+					Math.max(raw.timestampMillis, exit == null ? 0 : exit.timestampMillis),
 					null,
 					raw.sessionId,
 					raw.midletName,
@@ -482,8 +547,8 @@ public final class LocalDiagnosticRepository {
 					raw.stackTrace,
 					detail.toString().trim(),
 					null,
-					Collections.singletonList(raw.file),
-					null
+					raw.files,
+					exit
 			);
 		}
 
@@ -571,7 +636,7 @@ public final class LocalDiagnosticRepository {
 			ArrayList<File> rawFiles = new ArrayList<>();
 			RawJavaReport primaryRaw = null;
 			for (RawJavaReport raw : rawReports) {
-				rawFiles.add(raw.file);
+				rawFiles.addAll(raw.files);
 				if (primaryRaw == null && raw.stackTrace != null) {
 					primaryRaw = raw;
 					stackTrace = raw.stackTrace;
@@ -617,6 +682,8 @@ public final class LocalDiagnosticRepository {
 
 	private static final class RawJavaReport {
 		private final File file;
+		private final ArrayList<File> files;
+		private final boolean fatalFallback;
 		private final long timestampMillis;
 		private final String reportId;
 		private final String sessionId;
@@ -634,12 +701,15 @@ public final class LocalDiagnosticRepository {
 		private final String stackTraceHash;
 		private final CrashContextStore.Snapshot appContext;
 
-		private RawJavaReport(File file, long timestampMillis, String reportId, String sessionId,
+		private RawJavaReport(File file, boolean fatalFallback, long timestampMillis,
+				String reportId, String sessionId,
 				String processRole, String midletName, String midletVersion, String mainClass,
 				String jarSha256, String appVersion, String androidVersion, String brand,
 				String phoneModel, String threadDetails, String stackTrace, String stackTraceHash,
 				CrashContextStore.Snapshot appContext) {
 			this.file = file;
+			this.files = new ArrayList<>(Collections.singletonList(file));
+			this.fatalFallback = fatalFallback;
 			this.timestampMillis = timestampMillis;
 			this.reportId = reportId;
 			this.sessionId = sessionId;
@@ -695,6 +765,7 @@ public final class LocalDiagnosticRepository {
 			}
 			return new RawJavaReport(
 					file,
+					false,
 					file.lastModified(),
 					stringValue(data.get(REPORT_ID.toString())),
 					custom(custom, CrashReporter.KEY_SESSION_ID),
@@ -711,6 +782,29 @@ public final class LocalDiagnosticRepository {
 					stringValue(data.get(STACK_TRACE.toString())),
 					stringValue(data.get(STACK_TRACE_HASH.toString())),
 					appContext
+			);
+		}
+
+		private static RawJavaReport fromFallback(FatalJavaCrashStore.Snapshot fallback) {
+			return new RawJavaReport(
+					fallback.file,
+					true,
+					fallback.timestampMillis,
+					fallback.file.getName(),
+					null,
+					fallback.processRole,
+					null,
+					null,
+					null,
+					null,
+					fallback.appVersion,
+					fallback.androidVersion,
+					fallback.brand,
+					fallback.model,
+					fallback.thread,
+					fallback.stackTrace,
+					null,
+					fallback.appContext
 			);
 		}
 	}

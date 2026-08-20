@@ -201,6 +201,11 @@ object FilePickerRules {
             )
     }
 
+    fun selectablePaths(entries: Iterable<FilePickerEntry>): Set<String> = entries
+        .asSequence()
+        .filter { it.kind == FilePickerEntryKind.FILE }
+        .mapTo(LinkedHashSet()) { it.path }
+
     fun parent(path: File, root: File): File {
         val absolute = canonicalFile(path)
         val rootAbsolute = canonicalFile(root)

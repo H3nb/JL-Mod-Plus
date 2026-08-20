@@ -53,6 +53,8 @@
     <string name="file_picker_cancel">Cancel</string>
     <string name="file_picker_search">Search</string>
     <string name="file_picker_sort">Sort</string>
+    <string name="file_picker_select_all">Select all files in this folder</string>
+    <string name="file_picker_unselect_all">Unselect all files in this folder</string>
     <string name="file_picker_sort_type">Folders First</string>
     <string name="file_picker_sort_name_ascending">Name A–Z</string>
     <string name="file_picker_sort_name_descending">Name Z–A</string>
