@@ -15,7 +15,6 @@
 package ru.playsoftware.j2meloader.filepicker
 
 import android.content.ClipData
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -190,7 +189,7 @@ class FilteredFilePickerActivity : AppCompatActivity() {
         if (files.isEmpty()) {
             return
         }
-        val result = createFilePickerResult(this, controller.request, files)
+        val result = createFilePickerResult(controller.request, files)
         setResult(RESULT_OK, result)
         finish()
     }
@@ -205,16 +204,18 @@ class FilteredFilePickerActivity : AppCompatActivity() {
     }
 }
 
-/** Builds the legacy-compatible raw-path result without depending on the old picker library. */
+/**
+ * Builds an app-owned raw-path result without exposing file:// URIs through ActivityManager.
+ * Scheme-less URIs preserve Uri.getPath() for existing callers without triggering StrictMode.
+ */
 internal fun createFilePickerResult(
-    context: Context,
     request: FilePickerRequest,
     files: List<File>,
 ): Intent {
     if (files.isEmpty()) {
         return Intent()
     }
-    val uris = files.map(Uri::fromFile)
+    val uris = files.map { Uri.parse(it.absolutePath) }
     return Intent().apply {
         if (request.allowMultiple) {
             putExtra(FilePickerContract.EXTRA_ALLOW_MULTIPLE, true)
@@ -222,7 +223,7 @@ internal fun createFilePickerResult(
                 FilePickerContract.EXTRA_PATHS,
                 ArrayList(uris.map(Uri::toString)),
             )
-            var selected = ClipData.newUri(context.contentResolver, "Paths", uris.first())
+            var selected = ClipData.newRawUri("Paths", uris.first())
             uris.drop(1).forEach { selected = selected.apply { addItem(ClipData.Item(it)) } }
             clipData = selected
         } else {

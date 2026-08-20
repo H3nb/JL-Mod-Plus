@@ -62,15 +62,17 @@ public class FilePickerIntentContractTest {
 				true,
 				false);
 		Intent pickerResult = FilteredFilePickerActivityKt.createFilePickerResult(
-				context,
 				pickerRequest,
 				Arrays.asList(new File("/storage/emulated/0")));
-		assertEquals(selected, pickerResult.getData());
+		assertEquals(Uri.parse("/storage/emulated/0"), pickerResult.getData());
+		assertNull(pickerResult.getData().getScheme());
+		assertEquals(
+				selected,
+				new PickDirResultContract().parseResult(Activity.RESULT_OK, pickerResult));
 	}
 
 	@Test
 	public void multipleResultKeepsRawPathExtrasAndClipDataShape() {
-		Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 		FilePickerRequest request = new FilePickerRequest(
 				"/storage/emulated/0",
 				FilePickerContract.MODE_FILE,
@@ -79,7 +81,6 @@ public class FilePickerIntentContractTest {
 				false,
 				true);
 		Intent result = FilteredFilePickerActivityKt.createFilePickerResult(
-				context,
 				request,
 				Arrays.asList(
 						new File("/storage/emulated/0/one.jar"),
@@ -89,10 +90,12 @@ public class FilePickerIntentContractTest {
 		assertNull(result.getData());
 		assertEquals(
 				Arrays.asList(
-						"file:///storage/emulated/0/one.jar",
-						"file:///storage/emulated/0/two.jad"),
+						"/storage/emulated/0/one.jar",
+						"/storage/emulated/0/two.jad"),
 				result.getStringArrayListExtra(FilePickerContract.EXTRA_PATHS));
 		assertEquals(2, result.getClipData().getItemCount());
 		assertEquals("Paths", result.getClipData().getDescription().getLabel());
+		assertNull(result.getClipData().getItemAt(0).getUri().getScheme());
+		assertNull(result.getClipData().getItemAt(1).getUri().getScheme());
 	}
 }
