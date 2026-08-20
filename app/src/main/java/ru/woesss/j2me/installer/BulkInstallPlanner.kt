@@ -409,8 +409,9 @@ object BulkInstallPlanner {
                 }
                 append('\u0000').append(item.jarFingerprint.orEmpty())
             }
-            val original = seen.putIfAbsent(key, item.id)
+            val original = seen[key]
             if (original == null) {
+                seen[key] = item.id
                 item
             } else {
                 item.copy(
