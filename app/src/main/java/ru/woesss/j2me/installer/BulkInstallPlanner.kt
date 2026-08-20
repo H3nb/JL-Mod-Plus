@@ -22,6 +22,11 @@ import ru.woesss.j2me.jar.Descriptor
 
 object BulkInstallPlanner {
     private val supportedExtensions = setOf("jar", "jad", "kjx")
+    private val hardDiscoveryFailures = setOf(
+        BulkInstallStatus.RemoteSourceUnsupported,
+        BulkInstallStatus.DependencyOutsideScanRoot,
+        BulkInstallStatus.SourceError,
+    )
 
     fun planExplicit(files: List<File>, library: LibraryViewModel): BulkInstallPlan {
         val generation = requireReadyGeneration(library)
@@ -80,7 +85,8 @@ object BulkInstallPlanner {
         generation: LibraryGenerationToken,
         library: LibraryViewModel,
     ): BulkInstallItem {
-        unit.discoveryStatus?.let { status ->
+        val discoveryStatus = unit.discoveryStatus
+        if (discoveryStatus in hardDiscoveryFailures) {
             return BulkInstallItem(
                 id = unit.id,
                 unit = unit,
@@ -88,7 +94,8 @@ object BulkInstallPlanner {
                 vendor = "",
                 version = "",
                 sourceFingerprint = runCatching { sourceFingerprint(unit.sourceFiles) }.getOrDefault(""),
-                status = status,
+                status = requireNotNull(discoveryStatus),
+                preflightStatus = requireNotNull(discoveryStatus),
                 action = BulkInstallAction.Skip,
                 selected = false,
                 detail = unit.discoveryDetail,
@@ -106,12 +113,17 @@ object BulkInstallPlanner {
                 descriptor.name,
                 descriptor.vendor,
             )
-            val status = if (candidates.size > 1) {
+            val authoritativeStatus = if (candidates.size > 1) {
                 BulkInstallStatus.AmbiguousInstalledMatch
             } else {
                 mapInstallerStatus(installerStatus)
             }
-            val defaults = defaultAction(status)
+            val displayStatus = if (discoveryStatus == BulkInstallStatus.BatchConflict) {
+                BulkInstallStatus.BatchConflict
+            } else {
+                authoritativeStatus
+            }
+            val defaults = defaultAction(displayStatus)
             BulkInstallItem(
                 id = unit.id,
                 unit = unit,
@@ -122,10 +134,11 @@ object BulkInstallPlanner {
                 descriptorAttributes = HashMap(descriptor.attrs),
                 sourceFingerprint = sourceFingerprint(unit.sourceFiles),
                 jarFingerprint = jar?.takeIf(File::isFile)?.let(::hashFile),
-                status = status,
+                status = displayStatus,
+                preflightStatus = authoritativeStatus,
                 action = defaults.first,
                 selected = defaults.second,
-                detail = when (status) {
+                detail = unit.discoveryDetail ?: when (authoritativeStatus) {
                     BulkInstallStatus.AmbiguousInstalledMatch ->
                         "${candidates.size} installed applications match this source identity"
                     BulkInstallStatus.JadJarMismatch ->
@@ -142,6 +155,7 @@ object BulkInstallPlanner {
                 version = "",
                 sourceFingerprint = runCatching { sourceFingerprint(unit.sourceFiles) }.getOrDefault(""),
                 status = BulkInstallStatus.SourceError,
+                preflightStatus = BulkInstallStatus.SourceError,
                 action = BulkInstallAction.Skip,
                 selected = false,
                 detail = boundedMessage(error),
@@ -185,8 +199,8 @@ object BulkInstallPlanner {
         resolutions.forEach { (jad, resolution) ->
             if (resolution is JadResolution.Local) {
                 val key = canonicalPath(resolution.jar)
-                localByJar.getOrPut(key) { ArrayList() } += jad to resolution
-                if (jarByCanonicalPath.containsKey(key)) consumedJarPaths += key
+                localByJar.getOrPut(key) { ArrayList() }.add(jad to resolution)
+                if (jarByCanonicalPath.containsKey(key)) consumedJarPaths.add(key)
             }
         }
 
@@ -197,7 +211,7 @@ object BulkInstallPlanner {
                 runCatching { HashMap(Descriptor(jad, true).attrs) }.getOrNull()
             }.distinct()
             if (semanticSets.size > 1) {
-                entries.forEach { (jad, _) -> conflictingJads += canonicalPath(jad) }
+                entries.forEach { (jad, _) -> conflictingJads.add(canonicalPath(jad)) }
             }
         }
 
@@ -206,57 +220,73 @@ object BulkInstallPlanner {
             val resolution = resolutions.getValue(jad)
             val conflict = canonicalPath(jad) in conflictingJads
             when (resolution) {
-                is JadResolution.Local -> units += BulkSourceUnit(
-                    id = UUID.randomUUID().toString(),
-                    origin = origin,
-                    kind = BulkSourceKind.JadJarPair,
-                    primaryFile = jad,
-                    sourceFiles = listOf(jad, resolution.jar),
-                    jadFile = jad,
-                    jarFile = resolution.jar,
-                    discoveryStatus = if (conflict) BulkInstallStatus.BatchConflict else null,
-                    discoveryDetail = if (conflict) "Multiple non-equivalent JADs resolve to the same JAR" else null,
+                is JadResolution.Local -> units.add(
+                    BulkSourceUnit(
+                        id = UUID.randomUUID().toString(),
+                        origin = origin,
+                        kind = BulkSourceKind.JadJarPair,
+                        primaryFile = jad,
+                        sourceFiles = listOf(jad, resolution.jar),
+                        jadFile = jad,
+                        jarFile = resolution.jar,
+                        discoveryStatus = if (conflict) BulkInstallStatus.BatchConflict else null,
+                        discoveryDetail = if (conflict) {
+                            "Multiple non-equivalent JADs resolve to the same JAR"
+                        } else {
+                            null
+                        },
+                    ),
                 )
 
-                is JadResolution.Remote -> units += unresolvedJadUnit(
-                    jad,
-                    origin,
-                    BulkInstallStatus.RemoteSourceUnsupported,
-                    "Remote JAR acquisition is not supported by Bulk Install v1",
+                is JadResolution.Remote -> units.add(
+                    unresolvedJadUnit(
+                        jad,
+                        origin,
+                        BulkInstallStatus.RemoteSourceUnsupported,
+                        "Remote JAR acquisition is not supported by Bulk Install v1",
+                    ),
                 )
 
-                is JadResolution.OutsideScanRoot -> units += unresolvedJadUnit(
-                    jad,
-                    origin,
-                    BulkInstallStatus.DependencyOutsideScanRoot,
-                    "JAR dependency resolves outside the selected folder",
+                is JadResolution.OutsideScanRoot -> units.add(
+                    unresolvedJadUnit(
+                        jad,
+                        origin,
+                        BulkInstallStatus.DependencyOutsideScanRoot,
+                        "JAR dependency resolves outside the selected folder",
+                    ),
                 )
 
-                is JadResolution.Error -> units += unresolvedJadUnit(
-                    jad,
-                    origin,
-                    BulkInstallStatus.SourceError,
-                    resolution.message,
+                is JadResolution.Error -> units.add(
+                    unresolvedJadUnit(
+                        jad,
+                        origin,
+                        BulkInstallStatus.SourceError,
+                        resolution.message,
+                    ),
                 )
             }
         }
         jars.filter { canonicalPath(it) !in consumedJarPaths }.forEach { jar ->
-            units += BulkSourceUnit(
-                id = UUID.randomUUID().toString(),
-                origin = origin,
-                kind = BulkSourceKind.JarOnly,
-                primaryFile = jar,
-                sourceFiles = listOf(jar),
-                jarFile = jar,
+            units.add(
+                BulkSourceUnit(
+                    id = UUID.randomUUID().toString(),
+                    origin = origin,
+                    kind = BulkSourceKind.JarOnly,
+                    primaryFile = jar,
+                    sourceFiles = listOf(jar),
+                    jarFile = jar,
+                ),
             )
         }
         kjx.forEach { source ->
-            units += BulkSourceUnit(
-                id = UUID.randomUUID().toString(),
-                origin = origin,
-                kind = BulkSourceKind.Kjx,
-                primaryFile = source,
-                sourceFiles = listOf(source),
+            units.add(
+                BulkSourceUnit(
+                    id = UUID.randomUUID().toString(),
+                    origin = origin,
+                    kind = BulkSourceKind.Kjx,
+                    primaryFile = source,
+                    sourceFiles = listOf(source),
+                ),
             )
         }
         return units.sortedBy { it.primaryFile.path.lowercase(Locale.ROOT) }
@@ -285,29 +315,42 @@ object BulkInstallPlanner {
         data class Error(val message: String) : JadResolution
     }
 
-    private fun resolveJad(jad: File, scanRoot: File?): JadResolution = try {
-        val descriptor = Descriptor(jad, true)
-        val jarUrl = descriptor.jarUrl ?: return JadResolution.Error("JAD has no MIDlet-Jar-URL")
-        val uri = Uri.parse(jarUrl)
-        if (uri.scheme != null) {
-            return if (uri.scheme.equals("http", true) || uri.scheme.equals("https", true)) {
-                JadResolution.Remote
-            } else {
-                JadResolution.Error("Unsupported JAD JAR URI scheme: ${uri.scheme}")
+    private fun resolveJad(jad: File, scanRoot: File?): JadResolution {
+        return try {
+            val descriptor = Descriptor(jad, true)
+            val jarUrl = descriptor.jarUrl
+                ?: return JadResolution.Error("JAD has no MIDlet-Jar-URL")
+            val parsedUri = Uri.parse(jarUrl)
+            val scheme = parsedUri.scheme
+            if (scheme != null) {
+                return if (scheme.equals("http", true) || scheme.equals("https", true)) {
+                    JadResolution.Remote
+                } else {
+                    JadResolution.Error("Unsupported JAD JAR URI scheme: $scheme")
+                }
             }
+            val parent = jad.parentFile
+                ?: return JadResolution.Error("JAD has no parent directory")
+            var jar = File(parent, jarUrl)
+            if (!jar.isFile) jar = File(parent, jad.nameWithoutExtension + ".jar")
+            if (!jar.isFile) {
+                return JadResolution.Error("JAR referenced by JAD was not found: $jarUrl")
+            }
+            jar = jar.canonicalFile
+            if (scanRoot != null && !isWithin(jar, scanRoot)) {
+                return JadResolution.OutsideScanRoot
+            }
+            JadResolution.Local(jar)
+        } catch (error: Throwable) {
+            JadResolution.Error(boundedMessage(error))
         }
-        val parent = jad.parentFile ?: return JadResolution.Error("JAD has no parent directory")
-        var jar = File(parent, jarUrl)
-        if (!jar.isFile) jar = File(parent, jad.nameWithoutExtension + ".jar")
-        if (!jar.isFile) return JadResolution.Error("JAR referenced by JAD was not found: $jarUrl")
-        jar = jar.canonicalFile
-        if (scanRoot != null && !isWithin(jar, scanRoot)) return JadResolution.OutsideScanRoot
-        JadResolution.Local(jar)
-    } catch (error: Throwable) {
-        JadResolution.Error(boundedMessage(error))
     }
 
-    private fun scanSources(root: File, activeWorkdir: File, warnings: MutableList<String>): List<File> {
+    private fun scanSources(
+        root: File,
+        activeWorkdir: File,
+        warnings: MutableList<String>,
+    ): List<File> {
         val excludedRoots = listOf(
             File(activeWorkdir, "converted"),
             File(activeWorkdir, ".library-install-staging"),
@@ -316,29 +359,31 @@ object BulkInstallPlanner {
         val queue = ArrayDeque<File>()
         val visited = HashSet<String>()
         val result = ArrayList<File>()
-        queue += root
+        queue.add(root)
         while (queue.isNotEmpty()) {
             val directory = queue.removeFirst()
             val canonical = runCatching { directory.canonicalFile }.getOrElse { directory.absoluteFile }
             if (!visited.add(canonical.path)) continue
             if (canonical != root && excludedRoots.any { canonical == it || isWithin(canonical, it) }) continue
-            if (canonical != root && (canonical.name.startsWith(".") || runCatching { canonical.isHidden }.getOrDefault(false))) {
+            if (canonical != root &&
+                (canonical.name.startsWith(".") || runCatching { canonical.isHidden }.getOrDefault(false))
+            ) {
                 continue
             }
             val children = try {
                 canonical.listFiles()
             } catch (error: SecurityException) {
-                warnings += "Cannot read ${canonical.path}: ${boundedMessage(error)}"
+                warnings.add("Cannot read ${canonical.path}: ${boundedMessage(error)}")
                 null
             }
             if (children == null) {
-                warnings += "Cannot read ${canonical.path}"
+                warnings.add("Cannot read ${canonical.path}")
                 continue
             }
             children.sortedBy { it.name.lowercase(Locale.ROOT) }.forEach { child ->
                 when {
-                    child.isDirectory -> queue += child
-                    child.isFile && isSupportedSource(child) -> result += child.canonicalFile
+                    child.isDirectory -> queue.add(child)
+                    child.isFile && isSupportedSource(child) -> result.add(child.canonicalFile)
                 }
             }
         }
@@ -363,32 +408,44 @@ object BulkInstallPlanner {
                 append('\u0000').append(item.jarFingerprint.orEmpty())
             }
             val original = seen.putIfAbsent(key, item.id)
-            if (original == null) item else item.copy(
-                status = BulkInstallStatus.Duplicate,
-                action = BulkInstallAction.Skip,
-                selected = false,
-                detail = "Duplicate of another source in this batch",
-            )
+            if (original == null) {
+                item
+            } else {
+                item.copy(
+                    status = BulkInstallStatus.Duplicate,
+                    action = BulkInstallAction.Skip,
+                    selected = false,
+                    detail = "Duplicate of another source in this batch",
+                )
+            }
         }
     }
 
     private fun applyBatchVersionGrouping(items: List<BulkInstallItem>): List<BulkInstallItem> {
         val replacements = items.toMutableList()
-        val indexed = items.withIndex()
-            .filter { (_, item) -> item.name.isNotBlank() && item.vendor.isNotBlank() && item.status !in setOf(
-                BulkInstallStatus.SourceError,
-                BulkInstallStatus.RemoteSourceUnsupported,
-                BulkInstallStatus.DependencyOutsideScanRoot,
-                BulkInstallStatus.Duplicate,
-            ) }
+        val grouped = items.withIndex()
+            .filter { (_, item) ->
+                item.name.isNotBlank() &&
+                    item.vendor.isNotBlank() &&
+                    item.status !in setOf(
+                        BulkInstallStatus.SourceError,
+                        BulkInstallStatus.RemoteSourceUnsupported,
+                        BulkInstallStatus.DependencyOutsideScanRoot,
+                        BulkInstallStatus.Duplicate,
+                        BulkInstallStatus.BatchConflict,
+                    )
+            }
             .groupBy { it.value.groupKey }
-        indexed.values.forEach { group ->
+
+        grouped.values.forEach { group ->
             if (group.size <= 1) return@forEach
             val maxima = group.filter { candidate ->
                 group.none { other -> compareVersions(other.value.version, candidate.value.version) > 0 }
             }
             if (maxima.size > 1) {
-                val semanticKeys = maxima.map { it.value.descriptorAttributes to it.value.jarFingerprint }.distinct()
+                val semanticKeys = maxima
+                    .map { it.value.descriptorAttributes to it.value.jarFingerprint }
+                    .distinct()
                 if (semanticKeys.size > 1) {
                     maxima.forEach { indexedItem ->
                         replacements[indexedItem.index] = indexedItem.value.copy(
@@ -421,7 +478,7 @@ object BulkInstallPlanner {
         repeat(length) { index ->
             val left = incomingParts.getOrNull(index)?.trim()?.toIntOrNull() ?: 0
             val right = otherParts.getOrNull(index)?.trim()?.toIntOrNull() ?: 0
-            if (left != right) return (left - right).coerceIn(-1, 1)
+            if (left != right) return left.compareTo(right)
         }
         return 0
     }
@@ -433,7 +490,7 @@ object BulkInstallPlanner {
         val digest = MessageDigest.getInstance("SHA-256")
         files.map { it.canonicalFile }.sortedBy(File::getPath).forEach { file ->
             digest.update(file.path.toByteArray(Charsets.UTF_8))
-            digest.update(0)
+            digest.update(0.toByte())
             FileInputStream(file).use { input ->
                 val buffer = ByteArray(16 * 1024)
                 while (true) {
@@ -442,7 +499,7 @@ object BulkInstallPlanner {
                     if (read > 0) digest.update(buffer, 0, read)
                 }
             }
-            digest.update(0)
+            digest.update(0.toByte())
         }
         return digest.digest().joinToString("") { "%02x".format(it) }
     }
@@ -471,6 +528,8 @@ object BulkInstallPlanner {
     private fun canonicalPath(file: File): String = try {
         file.canonicalPath
     } catch (_: IOException) {
+        file.absolutePath
+    } catch (_: SecurityException) {
         file.absolutePath
     }
 
