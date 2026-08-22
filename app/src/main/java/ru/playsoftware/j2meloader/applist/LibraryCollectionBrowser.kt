@@ -44,7 +44,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -67,8 +66,6 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -366,8 +363,6 @@ private fun LibraryCollectionHeader(
     onManageApps: () -> Unit,
     interactive: Boolean,
 ) {
-    val focusManager = LocalFocusManager.current
-    val keyboardController = LocalSoftwareKeyboardController.current
     val sortEntries = stringArrayResource(R.array.pref_app_sort_entries).toList()
     val selectedSort = sortVariant and Int.MAX_VALUE
     val ascending = sortVariant >= 0
@@ -413,37 +408,12 @@ private fun LibraryCollectionHeader(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            OutlinedTextField(
-                value = query,
-                onValueChange = onQueryChange,
+            LibrarySearchField(
+                query = query,
+                onQueryChange = onQueryChange,
                 modifier = Modifier
-                    .weight(1f)
-                    .height(54.dp),
+                    .weight(1f),
                 enabled = interactive,
-                singleLine = true,
-                placeholder = { Text(stringResource(R.string.library_search_placeholder)) },
-                leadingIcon = {
-                    if (query.isEmpty()) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_search),
-                            contentDescription = stringResource(R.string.search),
-                        )
-                    } else {
-                        IconButton(
-                            enabled = interactive,
-                            onClick = {
-                                onQueryChange("")
-                                focusManager.clearFocus()
-                                keyboardController?.hide()
-                            },
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_arrow_back),
-                                contentDescription = stringResource(R.string.library_search_clear),
-                            )
-                        }
-                    }
-                },
             )
             Box {
                 IconButton(
@@ -633,9 +603,6 @@ internal fun LibraryCollectionAppPicker(
             projectCollectionApps(allApps, query, sortVariant)
         }
     }
-    val focusManager = LocalFocusManager.current
-    val keyboardController = LocalSoftwareKeyboardController.current
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -677,34 +644,12 @@ internal fun LibraryCollectionAppPicker(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.bodySmall,
         )
-        OutlinedTextField(
-            value = query,
-            onValueChange = { query = it },
+        LibrarySearchField(
+            query = query,
+            onQueryChange = { query = it },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
-                .height(54.dp),
-            singleLine = true,
-            placeholder = { Text(stringResource(R.string.library_search_placeholder)) },
-            leadingIcon = {
-                if (query.isEmpty()) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_search),
-                        contentDescription = stringResource(R.string.search),
-                    )
-                } else {
-                    IconButton(onClick = {
-                        query = ""
-                        focusManager.clearFocus()
-                        keyboardController?.hide()
-                    }) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_arrow_back),
-                            contentDescription = stringResource(R.string.library_search_clear),
-                        )
-                    }
-                }
-            },
         )
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(visibleApps, key = { it.id }) { app ->

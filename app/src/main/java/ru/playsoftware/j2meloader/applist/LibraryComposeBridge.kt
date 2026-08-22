@@ -1281,8 +1281,6 @@ private fun LibraryAppsHeader(
     val sortEntries = stringArrayResource(R.array.pref_app_sort_entries).toList()
     val selectedSort = state.sortVariant and Int.MAX_VALUE
     val ascending = state.sortVariant >= 0
-    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
-    val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
     val quickControlsPagerBoundary = remember {
         object : NestedScrollConnection {
             override fun onPostScroll(
@@ -1363,38 +1361,11 @@ private fun LibraryAppsHeader(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            OutlinedTextField(
-                value = query,
-                onValueChange = onQueryChange,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(54.dp),
+            LibrarySearchField(
+                query = query,
+                onQueryChange = onQueryChange,
+                modifier = Modifier.weight(1f),
                 enabled = interactive,
-                singleLine = true,
-                shape = RoundedCornerShape(18.dp),
-                placeholder = { Text(stringResource(R.string.library_search_placeholder)) },
-                leadingIcon = {
-                    if (query.isEmpty()) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_search),
-                            contentDescription = stringResource(R.string.search),
-                        )
-                    } else {
-                        IconButton(
-                            onClick = {
-                                onQueryChange("")
-                                focusManager.clearFocus()
-                                keyboardController?.hide()
-                            },
-                            enabled = interactive,
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_arrow_back),
-                                contentDescription = stringResource(R.string.library_search_clear),
-                            )
-                        }
-                    }
-                },
             )
             Box {
                 IconButton(
