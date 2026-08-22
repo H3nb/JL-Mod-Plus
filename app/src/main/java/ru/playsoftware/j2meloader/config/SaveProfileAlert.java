@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import ru.playsoftware.j2meloader.R;
+import ru.playsoftware.j2meloader.ui.ThemedToast;
 
 /** Compose presentation with filename filtering and overwrite confirmation preserved. */
 public class SaveProfileAlert extends DialogFragment {
@@ -74,7 +75,7 @@ public class SaveProfileAlert extends DialogFragment {
 					public void onError() {
 						Context context = getContext();
 						if (context != null) {
-							Toast.makeText(context, R.string.error, Toast.LENGTH_SHORT).show();
+							ThemedToast.show(context, R.string.error, Toast.LENGTH_SHORT);
 						}
 					}
 
@@ -89,11 +90,11 @@ public class SaveProfileAlert extends DialogFragment {
 							if (context instanceof ConfigActivity) {
 								((ConfigActivity) context).onProfileDataChanged();
 							}
-							Toast.makeText(context, getString(R.string.saved, name), Toast.LENGTH_SHORT).show();
+							ThemedToast.show(context, getString(R.string.saved, name), Toast.LENGTH_SHORT);
 							dismiss();
 						} catch (Exception e) {
 							e.printStackTrace();
-							Toast.makeText(context, R.string.error, Toast.LENGTH_SHORT).show();
+							ThemedToast.show(context, R.string.error, Toast.LENGTH_SHORT);
 						}
 					}
 				});

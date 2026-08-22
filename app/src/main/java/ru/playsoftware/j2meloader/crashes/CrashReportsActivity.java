@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Set;
 
 import ru.playsoftware.j2meloader.R;
+import ru.playsoftware.j2meloader.ui.ThemedToast;
 import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 
 /** Local-only inbox for retained JL-Mod Plus diagnostic records. */
@@ -150,9 +151,9 @@ public class CrashReportsActivity extends AppCompatActivity {
 		ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
 		if (clipboard != null) {
 			clipboard.setPrimaryClip(ClipData.newPlainText(getString(R.string.crash_reports), exportText));
-			Toast.makeText(this, getResources().getQuantityString(
+			ThemedToast.show(this, getResources().getQuantityString(
 					R.plurals.crash_reports_copied, records.size(), records.size()),
-					Toast.LENGTH_SHORT).show();
+					Toast.LENGTH_SHORT);
 		}
 	}
 
@@ -214,7 +215,7 @@ public class CrashReportsActivity extends AppCompatActivity {
 		}
 		updateStoredRecords();
 		if (!allDeleted) {
-			Toast.makeText(this, R.string.crash_report_delete_failed, Toast.LENGTH_LONG).show();
+			ThemedToast.show(this, R.string.crash_report_delete_failed, Toast.LENGTH_LONG);
 		}
 	}
 

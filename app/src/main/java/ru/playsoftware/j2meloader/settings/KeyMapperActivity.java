@@ -41,6 +41,7 @@ import ru.playsoftware.j2meloader.config.ProfileModel;
 import ru.playsoftware.j2meloader.config.ProfilesManager;
 import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 import ru.playsoftware.j2meloader.util.SparseIntArrayAdapter;
+import ru.playsoftware.j2meloader.ui.ThemedToast;
 
 public class KeyMapperActivity extends AppCompatActivity {
 	private static final String KEY_SAVE = "KEY_MAP_SAVE";
@@ -57,7 +58,7 @@ public class KeyMapperActivity extends AppCompatActivity {
 		Intent intent = getIntent();
 		String path = intent.getDataString();
 		if (path == null) {
-			Toast.makeText(this, "Error", Toast.LENGTH_SHORT).show();
+			ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
 			finish();
 			return;
 		}

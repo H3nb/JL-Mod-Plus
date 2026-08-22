@@ -61,6 +61,7 @@ import ru.playsoftware.j2meloader.config.model.Size;
 import ru.playsoftware.j2meloader.settings.KeyMapperActivity;
 import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 import ru.playsoftware.j2meloader.util.FileUtils;
+import ru.playsoftware.j2meloader.ui.ThemedToast;
 import ru.woesss.util.TextUtils;
 import static ru.playsoftware.j2meloader.config.ConfigFormEvents.ColorField;
 
@@ -641,14 +642,14 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			loadParams(true);
 		} catch (IOException e) {
 			Log.e(TAG, "applyTemplate: " + name, e);
-			Toast.makeText(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT).show();
+			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 		}
 	}
 
 	private void saveTemplate(@NonNull String rawName) {
 		String name = rawName.trim();
 		if (name.isEmpty() || findProfile(name) != null) {
-			Toast.makeText(this, R.string.profile_name_exists, Toast.LENGTH_SHORT).show();
+			ThemedToast.show(this, R.string.profile_name_exists, Toast.LENGTH_SHORT);
 			return;
 		}
 		try {
@@ -660,7 +661,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			composeController.update(createUiState());
 		} catch (IOException e) {
 			Log.e(TAG, "saveTemplate: " + name, e);
-			Toast.makeText(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT).show();
+			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 		}
 	}
 
@@ -675,7 +676,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			composeController.update(createUiState());
 		} catch (IOException e) {
 			Log.e(TAG, "updateTemplate: " + name, e);
-			Toast.makeText(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT).show();
+			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 		}
 	}
 
@@ -684,7 +685,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		Profile profile = findProfile(oldName);
 		if (profile == null || newName.isEmpty() || findProfile(newName) != null) return;
 		if (!profile.renameTo(newName)) {
-			Toast.makeText(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT).show();
+			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 			return;
 		}
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -779,12 +780,12 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	private void addResolutionToPresets(@NonNull Size size) {
 		if (size.width <= 0 || size.height <= 0) {
-			Toast.makeText(this, R.string.invalid_resolution_not_saved, Toast.LENGTH_SHORT).show();
+			ThemedToast.show(this, R.string.invalid_resolution_not_saved, Toast.LENGTH_SHORT);
 			return;
 		}
 		int index = Collections.binarySearch(screenPresets, size);
 		if (index >= 0) {
-			Toast.makeText(this, R.string.not_saved_exists, Toast.LENGTH_SHORT).show();
+			ThemedToast.show(this, R.string.not_saved_exists, Toast.LENGTH_SHORT);
 			return;
 		}
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -796,7 +797,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		if (composeController != null) {
 			composeController.update(createUiState());
 		}
-		Toast.makeText(this, getString(R.string.saved, size.toString()), Toast.LENGTH_SHORT).show();
+		ThemedToast.show(this, getString(R.string.saved, size.toString()), Toast.LENGTH_SHORT);
 	}
 
 	private void removeResolutionPreset(Size size) {
@@ -823,7 +824,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		if (composeController != null) {
 			composeController.update(createUiState());
 		}
-		Toast.makeText(this, getString(R.string.removed, size.toString()), Toast.LENGTH_SHORT).show();
+		ThemedToast.show(this, getString(R.string.removed, size.toString()), Toast.LENGTH_SHORT);
 	}
 
 	@Override
