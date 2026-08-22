@@ -53,8 +53,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
+import ru.playsoftware.j2meloader.MainActivity
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.librarydb.LibraryViewModel
 import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
@@ -75,17 +77,28 @@ class BulkInstallerDialog : DialogFragment() {
         isCancelable = false
         if (bulkViewModel.state.value is BulkInstallViewModel.State.Idle) {
             val args = requireArguments()
-            bulkViewModel.planExplicit(
-                args.getStringArrayList(ARG_SOURCES).orEmpty(),
-                libraryViewModel,
-                args.getInt(ARG_OMITTED_SOURCES).takeIf { it > 0 }?.let { omitted ->
-                    resources.getQuantityString(
-                        R.plurals.bulk_install_omitted_sources,
-                        omitted,
-                        omitted,
-                    )
-                },
-            )
+            val omittedWarning = args.getInt(ARG_OMITTED_SOURCES).takeIf { it > 0 }?.let { omitted ->
+                resources.getQuantityString(
+                    R.plurals.bulk_install_omitted_sources,
+                    omitted,
+                    omitted,
+                )
+            }
+            val bundleUri = args.getString(ARG_BUNDLE_URI)
+            if (bundleUri != null) {
+                bulkViewModel.planUniversalBundle(
+                    context = requireContext(),
+                    uriString = bundleUri,
+                    library = libraryViewModel,
+                    warning = omittedWarning,
+                )
+            } else {
+                bulkViewModel.planExplicit(
+                    args.getStringArrayList(ARG_SOURCES).orEmpty(),
+                    libraryViewModel,
+                    omittedWarning,
+                )
+            }
         }
     }
 
@@ -102,7 +115,7 @@ class BulkInstallerDialog : DialogFragment() {
                         onInstall = { bulkViewModel.execute(libraryViewModel) },
                         onCancel = bulkViewModel::cancel,
                         onClose = {
-                            bulkViewModel.cancelPlanning()
+                            bulkViewModel.close()
                             dismissAllowingStateLoss()
                         },
                     )
@@ -114,6 +127,20 @@ class BulkInstallerDialog : DialogFragment() {
             setCancelable(false)
             setCanceledOnTouchOutside(false)
             window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        }
+    }
+
+    override fun onDismiss(dialog: android.content.DialogInterface) {
+        super.onDismiss(dialog)
+        val args = arguments
+        val requestId = args?.getString(ARG_REQUEST_ID)
+        val bundleUri = args?.getString(ARG_BUNDLE_URI)
+        val activity = activity
+        if (activity is MainActivity) {
+            if (requestId != null && bundleUri != null) {
+                activity.completeInstallerRequest(requestId, bundleUri.toUri())
+            }
+            activity.onInstallerDialogDismissed()
         }
     }
 
@@ -131,6 +158,8 @@ class BulkInstallerDialog : DialogFragment() {
     companion object {
         private const val ARG_SOURCES = "BulkInstallerDialog.sources"
         private const val ARG_OMITTED_SOURCES = "BulkInstallerDialog.omittedSources"
+        private const val ARG_BUNDLE_URI = "BulkInstallerDialog.bundleUri"
+        private const val ARG_REQUEST_ID = "BulkInstallerDialog.requestId"
         private const val MAX_EXPLICIT_SOURCES = 500
         const val TAG = "BulkInstallerDialog"
 
@@ -143,6 +172,15 @@ class BulkInstallerDialog : DialogFragment() {
                 putInt(ARG_OMITTED_SOURCES, distinct.size - bounded.size)
             }
         }
+
+        @JvmStatic
+        fun newBundle(uri: Uri, requestId: String? = null): BulkInstallerDialog =
+            BulkInstallerDialog().apply {
+                arguments = Bundle().apply {
+                    putString(ARG_BUNDLE_URI, uri.toString())
+                    requestId?.let { putString(ARG_REQUEST_ID, it) }
+                }
+            }
     }
 }
 

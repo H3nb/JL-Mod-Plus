@@ -7,7 +7,9 @@
  */
 package ru.woesss.j2me.installer
 
+import android.content.Context
 import android.net.Uri
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.reactivex.Single
@@ -22,7 +24,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import ru.playsoftware.j2meloader.librarydb.LibraryAppBundleImporter
 import ru.playsoftware.j2meloader.librarydb.LibraryViewModel
+import ru.playsoftware.j2meloader.librarydb.LibraryUniversalBundleStager
+import ru.woesss.j2me.jar.Descriptor
 
 class BulkInstallViewModel : ViewModel() {
     sealed interface State {
@@ -50,6 +55,7 @@ class BulkInstallViewModel : ViewModel() {
     val state: StateFlow<State> = mutableState.asStateFlow()
     private val cancelRequested = AtomicBoolean()
     private var planningJob: Job? = null
+    private var bundleImport: LibraryUniversalBundleStager.PreparedBundle? = null
 
     fun planExplicit(
         uriStrings: List<String>,
@@ -80,6 +86,49 @@ class BulkInstallViewModel : ViewModel() {
             } catch (error: Throwable) {
                 mutableState.value = State.Error(boundedMessage(error))
             } finally {
+                planningJob = null
+            }
+        }
+    }
+
+    fun planUniversalBundle(
+        context: Context,
+        uriString: String,
+        library: LibraryViewModel,
+        warning: String? = null,
+    ) {
+        if (mutableState.value !is State.Idle) return
+        mutableState.value = State.Planning(uriString)
+        planningJob = viewModelScope.launch {
+            var staged: LibraryUniversalBundleStager.PreparedBundle? = null
+            try {
+                val job = coroutineContext[Job]
+                val planned = withContext(Dispatchers.IO) {
+                    staged = LibraryUniversalBundleStager.prepare(
+                        context.applicationContext,
+                        uriString.toUri(),
+                    )
+                    val sourceFiles = requireNotNull(staged).apps.map { it.prepared.jarFile }
+                    BulkInstallPlanner.planExplicit(sourceFiles, library) { job?.isActive == true }
+                }
+                val prepared = requireNotNull(staged)
+                val knownJars = prepared.apps.associateBy {
+                    it.prepared.jarFile.canonicalFile.path
+                }
+                if (planned.items.any { it.unit.primaryFile.canonicalFile.path !in knownJars }) {
+                    throw IllegalStateException("Universal app-bundle staging lost an app payload")
+                }
+                bundleImport = prepared
+                staged = null
+                mutableState.value = State.Review(
+                    if (warning == null) planned else planned.copy(warnings = planned.warnings + warning),
+                )
+            } catch (_: CancellationException) {
+                if (mutableState.value is State.Planning) mutableState.value = State.Idle
+            } catch (error: Throwable) {
+                mutableState.value = State.Error(boundedMessage(error))
+            } finally {
+                LibraryUniversalBundleStager.cleanup(staged)
                 planningJob = null
             }
         }
@@ -286,6 +335,7 @@ class BulkInstallViewModel : ViewModel() {
             if (installCode != AppInstaller.STATUS_SUCCESS) {
                 return failed(item, "Installer stopped with status $installCode")
             }
+            restoreBundlePayloadIfPresent(plan, item, activeInstaller, descriptor, library)
             val kind = when {
                 item.action == BulkInstallAction.InstallSeparateCopy -> BulkInstallResultKind.Installed
                 item.preflightStatus == BulkInstallStatus.New -> BulkInstallResultKind.Installed
@@ -304,6 +354,33 @@ class BulkInstallViewModel : ViewModel() {
                 installer.deleteTemp()
             }
         }
+    }
+
+    private fun restoreBundlePayloadIfPresent(
+        plan: BulkInstallPlan,
+        item: BulkInstallItem,
+        installer: AppInstaller,
+        descriptor: Descriptor,
+        library: LibraryViewModel,
+    ) {
+        val bundle = bundleImport ?: return
+        val staged = bundle.apps.firstOrNull {
+            it.prepared.jarFile.canonicalFile.path == item.unit.primaryFile.canonicalFile.path
+        } ?: throw IllegalStateException("Universal app-bundle payload is unavailable")
+        val installedId = installer.installedId
+        if (installedId < 0L) throw IllegalStateException("Installed app identity is unavailable")
+        val app = library.getApp(plan.generation, plan.workdir, installedId)
+            ?: throw IllegalStateException("Installed app is not visible after bundle import")
+        LibraryAppBundleImporter.validateSourceIdentity(
+            staged.prepared,
+            descriptor.name,
+            descriptor.vendor,
+        )
+        LibraryAppBundleImporter.restore(
+            prepared = staged.prepared,
+            emulatorDir = plan.workdir,
+            storageKey = app.storageKey,
+        )
     }
 
     private fun authorized(
@@ -352,9 +429,16 @@ class BulkInstallViewModel : ViewModel() {
     private fun failed(item: BulkInstallItem, detail: String) =
         BulkInstallResult(item.id, item.name, BulkInstallResultKind.Failed, detail)
 
-    override fun onCleared() {
+    fun close() {
         planningJob?.cancel()
+        planningJob = null
         cancelRequested.set(true)
+        LibraryUniversalBundleStager.cleanup(bundleImport)
+        bundleImport = null
+    }
+
+    override fun onCleared() {
+        close()
         super.onCleared()
     }
 

@@ -51,6 +51,11 @@ object LibraryAppBundleImporter {
         internal val preflightSourceMetadata: SourceMetadata? = null,
     )
 
+    internal data class PreparedUniversalApp(
+        val app: BundleApp,
+        val prepared: PreparedImport,
+    )
+
     internal data class SourceMetadata(
         val title: String,
         val vendor: String,
@@ -59,6 +64,13 @@ object LibraryAppBundleImporter {
     )
 
     data class RestoreResult(val iconRevision: Long?)
+
+    @JvmStatic
+    @Throws(IOException::class)
+    fun requiresBulkImport(context: Context, source: Uri): Boolean =
+        openSource(context, source).use { input ->
+            LibraryAppBundleImportPlanner.plan(LibraryAppBundleReader.read(input)).isBatch
+        }
 
     @JvmStatic
     @Throws(IOException::class)
@@ -224,6 +236,147 @@ object LibraryAppBundleImporter {
             formatVersion = LibraryAppBundleFormat.UNIVERSAL_VERSION,
             preflightSourceMetadata = sourceMetadata,
         )
+    }
+
+    /** Extracts every v2 namespace in one pass for the batch installer. */
+    @Throws(IOException::class)
+    internal fun extractUniversalBatchToStaging(
+        input: InputStream,
+        staging: File,
+        apps: List<BundleApp>,
+        parseSourceMetadata: Boolean = false,
+    ): List<PreparedUniversalApp> {
+        if (apps.isEmpty()) throw IOException("Universal app bundle has no apps")
+        ensureDirectory(staging)
+        val canonicalRoot = staging.canonicalFile
+        val states = apps.map { app ->
+            BatchExtractionState(
+                app = app,
+                root = File(canonicalRoot, app.bundleId).canonicalFile,
+            ).also { ensureDirectory(it.root) }
+        }
+        val statesByRoot = states.associateBy { it.app.payloadRoot }
+        val seen = HashSet<String>()
+        val buffer = ByteArray(COPY_BUFFER_SIZE)
+        var entryCount = 0
+        var totalBytes = 0L
+
+        ZipInputStream(BufferedInputStream(input)).use { zip ->
+            while (true) {
+                val entry = zip.nextEntry ?: break
+                entryCount++
+                if (entryCount > MAX_ENTRIES) throw IOException("App bundle contains too many entries")
+                val name = normalizeUniversalEntryName(entry.name)
+                if (!seen.add(name)) throw IOException("Duplicate app bundle entry: $name")
+                if (name == LibraryAppBundleFormat.MANIFEST_ENTRY) {
+                    zip.closeEntry()
+                    continue
+                }
+                val state = statesByRoot.entries
+                    .firstOrNull { (root, _) -> name.startsWith(root) }
+                    ?.value
+                    ?: throw IOException("Universal app bundle contains an unexpected namespace")
+                val relative = name.removePrefix(state.app.payloadRoot)
+                if (relative.isEmpty()) {
+                    zip.closeEntry()
+                    continue
+                }
+                val target = when {
+                    relative == "app/res.jar" -> {
+                        state.hasJar = true
+                        File(state.root, "res.jar")
+                    }
+                    relative == "app/converted.dex.conf" -> {
+                        state.hasConvertedConfig = true
+                        File(state.root, "converted.dex.conf")
+                    }
+                    relative == "app/icon.png" -> null
+                    relative == "config/" -> {
+                        state.hasConfig = true
+                        ensureDirectory(File(state.root, "config"))
+                        null
+                    }
+                    relative.startsWith("config/") -> {
+                        state.hasConfig = true
+                        safeChild(File(state.root, "config"), relative.removePrefix("config/"))
+                    }
+                    relative == "data/" -> {
+                        state.hasData = true
+                        ensureDirectory(File(state.root, "data"))
+                        null
+                    }
+                    relative.startsWith("data/") -> {
+                        state.hasData = true
+                        safeChild(File(state.root, "data"), relative.removePrefix("data/"))
+                    }
+                    else -> throw IOException("Unsupported app bundle entry: $name")
+                }
+                if (entry.isDirectory) {
+                    target?.let(::ensureDirectory)
+                    zip.closeEntry()
+                    continue
+                }
+
+                var entryBytes = 0L
+                val entryLimit = if (relative == "app/converted.dex.conf") {
+                    MAX_DESCRIPTOR_BYTES
+                } else {
+                    MAX_ENTRY_BYTES
+                }
+                val output = target?.let {
+                    ensureDirectory(it.parentFile ?: throw IOException("Bundle entry has no parent"))
+                    BufferedOutputStream(FileOutputStream(it, false))
+                }
+                try {
+                    while (true) {
+                        val read = zip.read(buffer)
+                        if (read < 0) break
+                        entryBytes += read
+                        totalBytes += read
+                        if (entryBytes > entryLimit || totalBytes > MAX_TOTAL_BYTES) {
+                            throw IOException("App bundle is too large to import safely")
+                        }
+                        output?.write(buffer, 0, read)
+                    }
+                    output?.flush()
+                } finally {
+                    output?.close()
+                }
+                zip.closeEntry()
+            }
+        }
+
+        return states.map { state ->
+            val jarFile = File(state.root, "res.jar")
+            if (!state.hasJar || !jarFile.isFile || jarFile.length() <= 0L) {
+                throw IOException("App ${state.app.bundleId} does not contain a retained JAR")
+            }
+            state.app.sourceSha256?.let { expected ->
+                LibraryAppBundleReader.verifySourceHash(jarFile, expected)
+            }
+            val convertedConfigFile = File(state.root, "converted.dex.conf")
+            val configDir = File(state.root, "config")
+            val dataDir = File(state.root, "data")
+            val sourceMetadata = if (parseSourceMetadata && state.hasConvertedConfig) {
+                readSourceMetadataFile(convertedConfigFile)
+            } else {
+                null
+            }
+            PreparedUniversalApp(
+                app = state.app,
+                prepared = PreparedImport(
+                    stagingDir = state.root,
+                    jarFile = jarFile,
+                    convertedConfigFile = convertedConfigFile.takeIf {
+                        state.hasConvertedConfig && it.isFile
+                    },
+                    configDir = configDir.takeIf { state.hasConfig && it.isDirectory },
+                    dataDir = dataDir.takeIf { state.hasData && it.isDirectory },
+                    formatVersion = LibraryAppBundleFormat.UNIVERSAL_VERSION,
+                    preflightSourceMetadata = sourceMetadata,
+                ),
+            )
+        }
     }
 
     @Throws(IOException::class)
@@ -809,6 +962,15 @@ object LibraryAppBundleImporter {
         }
         return if (raw.endsWith('/')) "$normalized/" else normalized
     }
+
+    private class BatchExtractionState(
+        val app: BundleApp,
+        val root: File,
+        var hasJar: Boolean = false,
+        var hasConvertedConfig: Boolean = false,
+        var hasConfig: Boolean = false,
+        var hasData: Boolean = false,
+    )
 
     private fun normalizeEntryName(raw: String): String {
         if (raw.isBlank() || raw.startsWith('/') || raw.startsWith('\\') || raw.contains('\\')) {
