@@ -31,6 +31,39 @@ public class GuestWindowPolicyTest {
 	}
 
 	@Test
+	public void canvasChromeUsesOnlyTheEnabledRuntimeBars() {
+		GuestWindowPolicy.Chrome chrome = GuestWindowPolicy.resolve(true, true, false, true);
+
+		assertTrue(chrome.canvas);
+		assertFalse(chrome.toolbarVisible);
+		assertTrue(chrome.statusBarVisible);
+		assertFalse(chrome.navigationBarVisible);
+		assertFalse(chrome.cutoutAllowed);
+	}
+
+	@Test
+	public void immersiveCanvasChromeAllowsCutoutOnlyWhenBothBarsAreHidden() {
+		GuestWindowPolicy.Chrome chrome = GuestWindowPolicy.resolve(true, false, false, true);
+
+		assertTrue(chrome.canvas);
+		assertFalse(chrome.toolbarVisible);
+		assertFalse(chrome.statusBarVisible);
+		assertFalse(chrome.navigationBarVisible);
+		assertTrue(chrome.cutoutAllowed);
+	}
+
+	@Test
+	public void hostChromeAlwaysRestoresHostNavigationAndToolbar() {
+		GuestWindowPolicy.Chrome chrome = GuestWindowPolicy.resolve(false, false, false, true);
+
+		assertFalse(chrome.canvas);
+		assertTrue(chrome.toolbarVisible);
+		assertTrue(chrome.statusBarVisible);
+		assertTrue(chrome.navigationBarVisible);
+		assertFalse(chrome.cutoutAllowed);
+	}
+
+	@Test
 	public void immersiveCanvasWithAllowedCutoutKeepsGuestGeometryUnpadded() {
 		GuestWindowPolicy.Padding padding = GuestWindowPolicy.calculate(
 				true, false, false, true,
