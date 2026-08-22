@@ -16,6 +16,7 @@ package ru.playsoftware.j2meloader.settings
 
 import android.content.res.Configuration
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -24,13 +25,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -63,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.ScrollableContentHint
 
 data class SettingsOption(
     val value: String,
@@ -172,13 +176,11 @@ fun SettingsScreen(
                             selected = state.theme,
                             onClick = { choiceDialog = SettingsChoice.Theme },
                         )
-                        SettingsDivider()
                         SettingsChoiceRow(
                             title = stringResource(R.string.pref_accent_title),
                             selected = state.accent,
                             onClick = { choiceDialog = SettingsChoice.Accent },
                         )
-                        SettingsDivider()
                         SettingsChoiceRow(
                             title = stringResource(R.string.pref_language),
                             selected = state.language,
@@ -188,12 +190,11 @@ fun SettingsScreen(
                 }
                 item {
                     SettingsSection(stringResource(R.string.settings_section_midlet_runtime)) {
-                        state.switches.forEachIndexed { index, setting ->
+                        state.switches.forEach { setting ->
                             SettingsSwitchRow(
                                 setting = setting,
                                 onCheckedChange = { checked -> actions.onToggle(setting.key, checked) },
                             )
-                            if (index != state.switches.lastIndex) SettingsDivider()
                         }
                     }
                 }
@@ -206,15 +207,25 @@ fun SettingsScreen(
                         )
                     }
                 }
+                if (state.showProfiles) {
+                    item {
+                        SettingsSection(stringResource(R.string.settings_section_profiles)) {
+                            SettingsActionRow(
+                                title = stringResource(R.string.profiles),
+                                summary = stringResource(R.string.settings_profiles_summary),
+                                onClick = actions::onOpenProfiles,
+                            )
+                        }
+                    }
+                }
                 if (state.experimentalSwitches.isNotEmpty()) {
                     item {
                         SettingsSection(stringResource(R.string.pref_category_experimental)) {
-                            state.experimentalSwitches.forEachIndexed { index, setting ->
+                            state.experimentalSwitches.forEach { setting ->
                                 SettingsSwitchRow(
                                     setting = setting,
                                     onCheckedChange = { checked -> actions.onToggle(setting.key, checked) },
                                 )
-                                if (index != state.experimentalSwitches.lastIndex) SettingsDivider()
                             }
                         }
                     }
@@ -229,7 +240,22 @@ fun SettingsScreen(
             properties = DialogProperties(usePlatformDefaultWidth = !landscape),
             onDismissRequest = {},
             title = { Text(stringResource(R.string.error)) },
-            text = { Text(message) },
+            text = {
+                val scrollState = rememberScrollState()
+                Column {
+                    Text(
+                        text = message,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = if (landscape) 220.dp else 360.dp)
+                            .verticalScroll(scrollState),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    ScrollableContentHint(
+                        visible = scrollState.maxValue > 0,
+                    )
+                }
+            },
             dismissButton = {
                 TextButton(onClick = actions::onDismissDirectoryError) {
                     Text(stringResource(android.R.string.cancel))
@@ -292,11 +318,12 @@ private fun SettingsSection(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
             text = title,
-            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp),
+            modifier = Modifier.padding(start = 12.dp, top = 6.dp, end = 12.dp, bottom = 1.dp),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary,
@@ -312,41 +339,31 @@ private fun SettingsSection(
 }
 
 @Composable
-private fun SettingsDivider() {
-    HorizontalDivider(
-        modifier = Modifier.padding(horizontal = 16.dp),
-        color = MaterialTheme.colorScheme.outlineVariant,
-    )
-}
-
-@Composable
 private fun SettingsChoiceRow(
     title: String,
     selected: SettingsOption,
     onClick: () -> Unit,
 ) {
-    ListItem(
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        headlineContent = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-            )
-        },
-        supportingContent = {
-            Text(
-                text = selected.label,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        },
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(role = Role.Button, onClick = onClick),
-    )
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 11.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+        )
+        Text(
+            text = selected.label,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodySmall,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
 }
 
 private enum class SettingsChoice {
@@ -364,6 +381,7 @@ private fun SettingsChoiceDialog(
     onSelected: (String) -> Unit,
 ) {
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val listState = rememberLazyListState()
     AlertDialog(
         modifier = settingsDialogModifier(landscape),
         properties = DialogProperties(usePlatformDefaultWidth = !landscape),
@@ -372,6 +390,7 @@ private fun SettingsChoiceDialog(
         text = {
             LazyColumn(
                 modifier = Modifier.heightIn(max = if (landscape) 220.dp else 360.dp),
+                state = listState,
             ) {
                 items(options, key = { it.value }) { option ->
                     val selectedOption = option.value == selected.value
@@ -398,6 +417,11 @@ private fun SettingsChoiceDialog(
                             ),
                     )
                 }
+                item {
+                    ScrollableContentHint(
+                        visible = listState.canScrollBackward || listState.canScrollForward,
+                    )
+                }
             }
         },
         confirmButton = {},
@@ -409,38 +433,37 @@ private fun SettingsSwitchRow(
     setting: SettingsSwitch,
     onCheckedChange: (Boolean) -> Unit,
 ) {
-    ListItem(
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        headlineContent = {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .clickable(
+                role = Role.Switch,
+                onClick = { onCheckedChange(!setting.checked) },
+            )
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+        ) {
             Text(
                 text = setting.title,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
             )
-        },
-        supportingContent = setting.summary?.let { summary ->
-            {
+            setting.summary?.let { summary ->
                 Text(
                     text = summary,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
-        },
-        trailingContent = {
-            Switch(
-                checked = setting.checked,
-                onCheckedChange = null,
-            )
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .toggleable(
-                value = setting.checked,
-                role = Role.Switch,
-                onValueChange = onCheckedChange,
-            ),
-    )
+        }
+        Switch(checked = setting.checked, onCheckedChange = onCheckedChange)
+    }
 }
 
 @Composable
@@ -449,30 +472,28 @@ private fun SettingsActionRow(
     summary: String? = null,
     onClick: () -> Unit,
 ) {
-    ListItem(
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        headlineContent = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-            )
-        },
-        supportingContent = summary?.let { value ->
-            {
-                Text(
-                    text = value,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        },
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(role = Role.Button, onClick = onClick),
-    )
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 11.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+        )
+        summary?.let { value ->
+            Text(
+                text = value,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
 }
 
 private fun settingsDialogModifier(landscape: Boolean): Modifier {

@@ -3,6 +3,8 @@
     <string name="settings_section_appearance">Tampilan</string>
     <string name="settings_section_midlet_runtime">Runtime MIDlet</string>
     <string name="settings_section_storage">Penyimpanan</string>
+    <string name="settings_section_profiles">Profil</string>
+    <string name="settings_profiles_summary">Kelola profil konfigurasi MIDlet yang dapat digunakan kembali.</string>
     <string name="pref_use_display_cutout_title">Gunakan Area Cutout Di MIDlet</string>
     <string name="pref_use_display_cutout_summary">Izinkan konten Canvas MIDlet yang kompatibel menggunakan area cutout layar ketika runtime dapat melakukannya dengan aman.</string>
     <string name="dialog_scroll_hint">Geser atau gulir untuk melihat lainnya</string>
@@ -28,6 +30,7 @@
     <string name="library_action_crash_reports_summary">Tinjau laporan crash dan bukti diagnostik yang tersimpan.</string>
     <string name="library_action_save_log_summary">Simpan log aplikasi saat ini untuk pemecahan masalah.</string>
     <string name="library_action_about_summary">Informasi versi, proyek, dan maintainer.</string>
+    <string name="library_action_licenses_summary">Pemberitahuan pihak ketiga dan ketentuan lisensi yang disertakan.</string>
     <string name="library_action_help_summary">Panduan penggunaan dan kontrol umum.</string>
     <string name="library_action_exit_summary">Tutup JL-Mod Plus.</string>
     <string name="library_action_select">Pilih</string>

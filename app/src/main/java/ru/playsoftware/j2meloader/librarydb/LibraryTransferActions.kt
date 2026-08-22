@@ -95,9 +95,12 @@ fun LibraryViewModel.prepareExportAppsBundle(
             sources = plan.apps.mapIndexed { index, app ->
                 LibraryUniversalBundleExporter.AppSource(
                     bundleId = "a${(index + 1).toString().padStart(4, '0')}",
-                    title = app.title,
-                    vendor = app.vendor,
-                    version = app.version,
+                    // The universal manifest requires textual identity. Legacy descriptors can
+                    // omit vendor/version; keep the selected app exportable with deterministic
+                    // placeholders instead of failing the entire bulk operation.
+                    title = app.title.ifBlank { "J2ME app ${app.id}" },
+                    vendor = app.vendor.ifBlank { "Unknown vendor" },
+                    version = app.version.ifBlank { "0" },
                     emulatorDir = generation.emulatorDir,
                     storageKey = app.storageKey,
                 )

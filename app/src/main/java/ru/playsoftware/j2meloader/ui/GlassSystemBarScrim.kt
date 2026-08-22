@@ -27,7 +27,13 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 
-/** Transparent, theme-aware system-bar protection while a scrolling header is off-screen. */
+/**
+ * Theme-aware translucent system-bar protection while a scrolling header is off-screen.
+ *
+ * Keep enough of the surface tint to preserve status-bar legibility, but leave the content
+ * underneath perceptible while the header is being scrolled away. This is intentionally a
+ * tonal scrim rather than a fully opaque replacement for the header.
+ */
 @Composable
 internal fun GlassSystemBarScrim(
     visible: Boolean,
@@ -38,7 +44,7 @@ internal fun GlassSystemBarScrim(
         modifier = modifier
             .fillMaxWidth()
             .windowInsetsTopHeight(WindowInsets.statusBars)
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.84f))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.68f))
             .shadow(elevation = 2.dp)
             .zIndex(2f),
     )

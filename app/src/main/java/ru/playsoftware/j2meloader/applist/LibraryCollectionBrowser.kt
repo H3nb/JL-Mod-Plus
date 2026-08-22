@@ -125,6 +125,7 @@ internal fun LibraryCollectionBrowser(
             memberIds = members.mapTo(LinkedHashSet()) { it.id },
             sortVariant = libraryState.sortVariant,
             iconRatio = libraryState.iconRatio,
+            iconShape = libraryState.iconShape,
             scaffoldPadding = scaffoldPadding,
             onBack = { manageApps = false },
             onSetMembership = onSetMembership,
@@ -151,7 +152,7 @@ internal fun LibraryCollectionBrowser(
     val headerOffsetPx = remember { mutableStateOf(0f) }
     val density = LocalDensity.current
     val headerSpacerHeight = with(density) { headerHeightPx.value.toDp() }
-    val hideDistancePx = with(density) { 10.dp.toPx() }
+    val hideDistancePx = with(density) { LIBRARY_CHROME_HIDE_DISTANCE_DP.dp.toPx() }
     val revealDistancePx = with(density) { 18.dp.toPx() }
     val chromeHysteresis = remember(hideDistancePx, revealDistancePx) {
         LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx)
@@ -243,10 +244,13 @@ internal fun LibraryCollectionBrowser(
         onNavigationVisibilityChanged,
     ) {
         object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                val delta = available.y
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource,
+            ): Offset {
                 val height = headerHeightPx.value
-                if (delta == 0f || height <= 0) return Offset.Zero
+                if (height <= 0) return Offset.Zero
 
                 val canScroll = if (libraryState.layout == LibraryLayout.List) {
                     listState.canScrollForward || listState.canScrollBackward
@@ -262,6 +266,14 @@ internal fun LibraryCollectionBrowser(
                     return Offset.Zero
                 }
 
+                // Count only child-consumed distance for hiding. A fling can report a large
+                // unconsumed delta even when one or two rows are the entire scroll range; using
+                // it would hide the chrome and then immediately re-show it after remeasurement.
+                val delta = when {
+                    consumed.y != 0f -> consumed.y
+                    available.y > 0f -> available.y
+                    else -> return Offset.Zero
+                }
                 val fullyHidden = headerOffsetPx.value <= -height.toFloat() + 0.5f
                 var visibilityChange = chromeHysteresis.onScrollDelta(delta)
                 val shouldMoveHeader =
@@ -332,6 +344,7 @@ internal fun LibraryCollectionBrowser(
                         LibraryCollectionGridItem(
                             app = app,
                             iconRatio = libraryState.iconRatio,
+                            iconShape = libraryState.iconShape,
                             hideTitle = libraryState.hideGridTitles,
                             gridSpacing = libraryState.gridSpacing.value,
                             onOpenApp = onOpenApp,
@@ -363,6 +376,8 @@ internal fun LibraryCollectionBrowser(
                         LibraryCollectionListItem(
                             app = app,
                             iconRatio = libraryState.iconRatio,
+                            iconShape = libraryState.iconShape,
+                            showDescription = libraryState.showListDescription,
                             onOpenApp = onOpenApp,
                             onOpenActions = onOpenActions,
                             onRemove = onRemove,
@@ -504,6 +519,8 @@ private fun LibraryCollectionHeader(
 private fun LibraryCollectionListItem(
     app: LibraryAppUiItem,
     iconRatio: LibraryIconRatio,
+    iconShape: LibraryIconShape,
+    showDescription: Boolean,
     onOpenApp: (Int) -> Unit,
     onOpenActions: (LibraryAppUiItem) -> Unit,
     onRemove: (Int) -> Unit,
@@ -527,6 +544,7 @@ private fun LibraryCollectionListItem(
                 modifier = Modifier.width(52.dp),
                 contentSize = 40.dp,
                 iconRatio = iconRatio,
+                iconShape = iconShape,
             )
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -557,7 +575,7 @@ private fun LibraryCollectionListItem(
                 )
             }
         }
-        if (app.description.isNotBlank()) {
+        if (showDescription && app.description.isNotBlank()) {
             Box(modifier = Modifier.padding(start = 80.dp, end = 16.dp, bottom = 10.dp)) {
                 LibraryDescription(app.description, app.id)
             }
@@ -574,6 +592,7 @@ private fun LibraryCollectionListItem(
 private fun LibraryCollectionGridItem(
     app: LibraryAppUiItem,
     iconRatio: LibraryIconRatio,
+    iconShape: LibraryIconShape,
     hideTitle: Boolean,
     gridSpacing: Dp,
     onOpenApp: (Int) -> Unit,
@@ -596,6 +615,7 @@ private fun LibraryCollectionGridItem(
                 modifier = Modifier.fillMaxWidth(),
                 contentSize = null,
                 iconRatio = iconRatio,
+                iconShape = iconShape,
             )
             IconButton(
                 onClick = { onRemove(app.id) },
@@ -642,6 +662,7 @@ internal fun LibraryCollectionAppPicker(
     memberIds: Set<Int>,
     sortVariant: Int,
     iconRatio: LibraryIconRatio,
+    iconShape: LibraryIconShape,
     scaffoldPadding: PaddingValues,
     onBack: () -> Unit,
     onSetMembership: (Int, Boolean) -> Unit,
@@ -728,6 +749,7 @@ internal fun LibraryCollectionAppPicker(
                         modifier = Modifier.width(48.dp),
                         contentSize = 40.dp,
                         iconRatio = iconRatio,
+                        iconShape = iconShape,
                     )
                     Spacer(Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {

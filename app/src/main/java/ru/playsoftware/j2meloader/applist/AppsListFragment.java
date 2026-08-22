@@ -23,6 +23,8 @@ package ru.playsoftware.j2meloader.applist;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_GRID_SPACING;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_HIDE_GRID_TITLES;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_ICON_RATIO;
+import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_ICON_SHAPE;
+import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_SHOW_LIST_DESCRIPTION;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_VIEW;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APP_SORT;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_LAST_PATH;
@@ -72,7 +74,6 @@ import ru.playsoftware.j2meloader.filepicker.FilePickerContract;
 import ru.playsoftware.j2meloader.filepicker.FilteredFilePickerActivity;
 import ru.playsoftware.j2meloader.librarydb.LibraryAppRow;
 import ru.playsoftware.j2meloader.librarydb.LibraryGenerationToken;
-import ru.playsoftware.j2meloader.librarydb.LibraryFileOperations;
 import ru.playsoftware.j2meloader.librarydb.LibraryQuickView;
 import ru.playsoftware.j2meloader.librarydb.LibraryTransferActions;
 import ru.playsoftware.j2meloader.librarydb.LibraryTransferIntents;
@@ -90,6 +91,9 @@ public class AppsListFragment extends Fragment {
     private static final int LAYOUT_TYPE_GRID = 1;
     private static final int ICON_RATIO_SQUARE = 0;
     private static final int ICON_RATIO_PORTRAIT = 1;
+    private static final int ICON_SHAPE_ROUND = 0;
+    private static final int ICON_SHAPE_SQUARE = 1;
+    private static final int GRID_SPACING_NONE = 3;
     private static final int GRID_SPACING_COMPACT = 0;
     private static final int GRID_SPACING_STANDARD = 1;
     private static final int GRID_SPACING_SPACIOUS = 2;
@@ -189,6 +193,9 @@ public class AppsListFragment extends Fragment {
         int storedIconRatio = preferences.getInt(PREF_APPS_ICON_RATIO, ICON_RATIO_SQUARE);
         LibraryIconRatio iconRatio = storedIconRatio == ICON_RATIO_PORTRAIT
                 ? LibraryIconRatio.Portrait : LibraryIconRatio.Square;
+        int storedIconShape = preferences.getInt(PREF_APPS_ICON_SHAPE, ICON_SHAPE_ROUND);
+        LibraryIconShape iconShape = storedIconShape == ICON_SHAPE_SQUARE
+                ? LibraryIconShape.Square : LibraryIconShape.Round;
         int storedGridSpacing = preferences.getInt(PREF_APPS_GRID_SPACING, GRID_SPACING_STANDARD);
         LibraryGridSpacing gridSpacing;
         switch (storedGridSpacing) {
@@ -202,6 +209,9 @@ public class AppsListFragment extends Fragment {
             default:
                 gridSpacing = LibraryGridSpacing.Standard;
                 break;
+            case GRID_SPACING_NONE:
+                gridSpacing = LibraryGridSpacing.None;
+                break;
         }
         composeController = new LibraryComposeController(
                 (ComposeView) view,
@@ -209,7 +219,9 @@ public class AppsListFragment extends Fragment {
                 layout,
                 preferences.getInt(PREF_APP_SORT, 0),
                 iconRatio,
+                iconShape,
                 preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false),
+                preferences.getBoolean(PREF_APPS_SHOW_LIST_DESCRIPTION, true),
                 gridSpacing,
                 ShortcutManagerCompat.isRequestPinShortcutSupported(requireContext()));
         libraryViewModel.observe(getViewLifecycleOwner(), this::onLibraryState);
@@ -296,10 +308,26 @@ public class AppsListFragment extends Fragment {
             }
 
             @Override
+            public void onIconShapeChange(@NonNull LibraryIconShape iconShape) {
+                int value = iconShape == LibraryIconShape.Square
+                        ? ICON_SHAPE_SQUARE : ICON_SHAPE_ROUND;
+                preferences.edit().putInt(PREF_APPS_ICON_SHAPE, value).apply();
+                LibraryComposeController controller = composeController;
+                if (controller != null) controller.updateIconShape(iconShape);
+            }
+
+            @Override
             public void onHideGridTitlesChange(boolean hide) {
                 preferences.edit().putBoolean(PREF_APPS_HIDE_GRID_TITLES, hide).apply();
                 LibraryComposeController controller = composeController;
                 if (controller != null) controller.updateHideGridTitles(hide);
+            }
+
+            @Override
+            public void onShowListDescriptionChange(boolean show) {
+                preferences.edit().putBoolean(PREF_APPS_SHOW_LIST_DESCRIPTION, show).apply();
+                LibraryComposeController controller = composeController;
+                if (controller != null) controller.updateShowListDescription(show);
             }
 
             @Override
@@ -311,6 +339,9 @@ public class AppsListFragment extends Fragment {
                         break;
                     case Spacious:
                         value = GRID_SPACING_SPACIOUS;
+                        break;
+                    case None:
+                        value = GRID_SPACING_NONE;
                         break;
                     case Standard:
                     default:
@@ -667,21 +698,7 @@ public class AppsListFragment extends Fragment {
                     showError(new IllegalStateException("Library generation is not ready"));
                     return;
                 }
-                List<Uri> sources = new ArrayList<>();
-                for (Long appId : appIds) {
-                    LibraryAppRow app = libraryViewModel.getApp(appId);
-                    if (app == null) continue;
-                    File retained = LibraryFileOperations.INSTANCE.retainedJar(workdir, app.getStorageKey());
-                    if (retained.isFile()) sources.add(Uri.fromFile(retained));
-                }
-                if (sources.isEmpty()) {
-                    LibraryComposeController controller = composeController;
-                    if (controller != null) {
-                        controller.showNotice(getString(R.string.library_reinstall_source_missing));
-                    }
-                    return;
-                }
-                BulkInstallerDialog.newFiles(sources)
+                BulkInstallerDialog.newReinstall(appIds)
                         .show(getParentFragmentManager(), BulkInstallerDialog.TAG);
             }
 

@@ -85,7 +85,10 @@ class BulkInstallerDialog : DialogFragment() {
                 )
             }
             val bundleUri = args.getString(ARG_BUNDLE_URI)
-            if (bundleUri != null) {
+            val reinstallAppIds = args.getLongArray(ARG_REINSTALL_APP_IDS)
+            if (reinstallAppIds != null) {
+                bulkViewModel.planReinstall(requireContext(), reinstallAppIds.toList(), libraryViewModel)
+            } else if (bundleUri != null) {
                 bulkViewModel.planUniversalBundle(
                     context = requireContext(),
                     uriString = bundleUri,
@@ -157,6 +160,7 @@ class BulkInstallerDialog : DialogFragment() {
         private const val ARG_SOURCES = "BulkInstallerDialog.sources"
         private const val ARG_OMITTED_SOURCES = "BulkInstallerDialog.omittedSources"
         private const val ARG_BUNDLE_URI = "BulkInstallerDialog.bundleUri"
+        private const val ARG_REINSTALL_APP_IDS = "BulkInstallerDialog.reinstallAppIds"
         private const val ARG_REQUEST_ID = "BulkInstallerDialog.requestId"
         private const val MAX_EXPLICIT_SOURCES = 500
         const val TAG = "BulkInstallerDialog"
@@ -170,6 +174,14 @@ class BulkInstallerDialog : DialogFragment() {
                 putInt(ARG_OMITTED_SOURCES, distinct.size - bounded.size)
             }
         }
+
+        @JvmStatic
+        fun newReinstall(appIds: Collection<Long>): BulkInstallerDialog =
+            BulkInstallerDialog().apply {
+                arguments = Bundle().apply {
+                    putLongArray(ARG_REINSTALL_APP_IDS, appIds.distinct().sorted().toLongArray())
+                }
+            }
 
         @JvmStatic
         fun newBundle(uri: Uri, requestId: String? = null): BulkInstallerDialog =

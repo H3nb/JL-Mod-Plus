@@ -193,9 +193,17 @@ enum class LibraryIconRatio(
     Portrait(3f / 4f),
 }
 
+/** The tile silhouette is independent from the selected 1:1 or 3:4 ratio. */
+enum class LibraryIconShape {
+    Round,
+    Square,
+}
+
 enum class LibraryGridSpacing(
     val value: Dp,
 ) {
+    /** Tiles touch at their edges; useful when the grid should read as a continuous sheet. */
+    None(0.dp),
     Compact(4.dp),
     Standard(8.dp),
     Spacious(12.dp),
@@ -233,7 +241,9 @@ data class LibraryUiState(
     val appliedFilter: String = "",
     val layout: LibraryLayout = LibraryLayout.List,
     val iconRatio: LibraryIconRatio = LibraryIconRatio.Square,
+    val iconShape: LibraryIconShape = LibraryIconShape.Round,
     val hideGridTitles: Boolean = false,
+    val showListDescription: Boolean = true,
     val gridSpacing: LibraryGridSpacing = LibraryGridSpacing.Standard,
     val sortVariant: Int = 0,
     val quickView: LibraryQuickView = LibraryQuickView.All,
@@ -261,7 +271,9 @@ interface LibraryActions {
     fun onResetIcon(appId: Int) = Unit
     fun onLayoutChange(layout: LibraryLayout)
     fun onIconRatioChange(iconRatio: LibraryIconRatio) = Unit
+    fun onIconShapeChange(iconShape: LibraryIconShape) = Unit
     fun onHideGridTitlesChange(hide: Boolean) = Unit
+    fun onShowListDescriptionChange(show: Boolean) = Unit
     fun onGridSpacingChange(spacing: LibraryGridSpacing) = Unit
     fun onSort(sortIndex: Int)
     fun onInstall()
@@ -288,7 +300,9 @@ class LibraryComposeController(
     initialLayout: LibraryLayout,
     initialSortVariant: Int,
     initialIconRatio: LibraryIconRatio,
+    initialIconShape: LibraryIconShape,
     initialHideGridTitles: Boolean,
+    initialShowListDescription: Boolean,
     initialGridSpacing: LibraryGridSpacing,
     canAddShortcut: Boolean,
 ) {
@@ -297,7 +311,9 @@ class LibraryComposeController(
         LibraryUiState(
             layout = initialLayout,
             iconRatio = initialIconRatio,
+            iconShape = initialIconShape,
             hideGridTitles = initialHideGridTitles,
+            showListDescription = initialShowListDescription,
             gridSpacing = initialGridSpacing,
             sortVariant = initialSortVariant,
             canAddShortcut = canAddShortcut,
@@ -388,8 +404,16 @@ class LibraryComposeController(
         state = state.copy(iconRatio = iconRatio)
     }
 
+    fun updateIconShape(iconShape: LibraryIconShape) {
+        state = state.copy(iconShape = iconShape)
+    }
+
     fun updateHideGridTitles(hide: Boolean) {
         state = state.copy(hideGridTitles = hide)
+    }
+
+    fun updateShowListDescription(show: Boolean) {
+        state = state.copy(showListDescription = show)
     }
 
     fun updateGridSpacing(spacing: LibraryGridSpacing) {
@@ -712,10 +736,13 @@ fun LibraryScreen(
                         scaffoldPadding = padding,
                         onLayoutChange = actions::onLayoutChange,
                         onIconRatioChange = actions::onIconRatioChange,
+                        onIconShapeChange = actions::onIconShapeChange,
                         onHideGridTitlesChange = actions::onHideGridTitlesChange,
+                        onShowListDescriptionChange = actions::onShowListDescriptionChange,
                         onGridSpacingChange = actions::onGridSpacingChange,
                         onImportAppBundle = actions::onImportAppBundle,
                         onAbout = { infoDialog = LibraryInfoDialog.About },
+                        onLicenses = { infoDialog = LibraryInfoDialog.Licenses },
                         onSettings = actions::onOpenSettings,
                         onHelp = { infoDialog = LibraryInfoDialog.Help },
                         onCrashReports = actions::onOpenCrashReports,
@@ -863,7 +890,10 @@ fun LibraryScreen(
 }
 
 private const val LIBRARY_CHROME_ANIMATION_MILLIS = 220
-private const val LIBRARY_CHROME_HIDE_DISTANCE_DP = 10f
+// Require enough scroll progress to survive reclaiming the bottom navigation height. Without
+// this guard, a list/grid with only one or two rows of overflow becomes non-scrollable as soon
+// as the footer disappears, which immediately re-shows the chrome and causes a visible flicker.
+internal const val LIBRARY_CHROME_HIDE_DISTANCE_DP = 128f
 private const val LIBRARY_CHROME_REVEAL_DISTANCE_DP = 18f
 private val LibraryGridMinCellSize = 88.dp
 private const val LIBRARY_GRID_ARTWORK_FRACTION = 0.78f
@@ -1194,13 +1224,13 @@ internal fun LibraryAppsDestination(
         onNavigationVisibilityChanged,
     ) {
         object : NestedScrollConnection {
-            override fun onPreScroll(
+            override fun onPostScroll(
+                consumed: Offset,
                 available: Offset,
                 source: NestedScrollSource,
             ): Offset {
-                val delta = available.y
                 val height = headerHeightPx.value
-                if (delta == 0f || height <= 0) return Offset.Zero
+                if (height <= 0) return Offset.Zero
 
                 val canScroll = if (state.layout == LibraryLayout.List) {
                     listState.canScrollForward || listState.canScrollBackward
@@ -1217,6 +1247,15 @@ internal fun LibraryAppsDestination(
                     return Offset.Zero
                 }
 
+                // Base hide/reveal progress on the distance the child actually consumed. A
+                // fling's unconsumed delta can be much larger than a short list's real scroll
+                // range; counting it here would hide the chrome and immediately make the list
+                // non-scrollable when the footer is reclaimed, causing a visible flicker.
+                val delta = when {
+                    consumed.y != 0f -> consumed.y
+                    available.y > 0f -> available.y
+                    else -> return Offset.Zero
+                }
                 val fullyHidden = headerOffsetPx.value <= -height.toFloat() + 0.5f
                 var visibilityChange = chromeHysteresis.onScrollDelta(delta)
                 val shouldMoveHeader =
@@ -1283,6 +1322,7 @@ internal fun LibraryAppsDestination(
                         LibraryGridItem(
                             app = app,
                             iconRatio = state.iconRatio,
+                            iconShape = state.iconShape,
                             hideTitle = state.hideGridTitles,
                             gridSpacing = state.gridSpacing.value,
                             onOpenApp = onOpenApp,
@@ -1319,6 +1359,8 @@ internal fun LibraryAppsDestination(
                         LibraryListItem(
                             app = app,
                             iconRatio = state.iconRatio,
+                            iconShape = state.iconShape,
+                            showDescription = state.showListDescription,
                             onOpenApp = onOpenApp,
                             onOpenActions = onOpenActions,
                             onFavorite = onFavorite,
@@ -1807,10 +1849,13 @@ internal fun LibraryOptionsDestination(
     scaffoldPadding: PaddingValues,
     onLayoutChange: (LibraryLayout) -> Unit,
     onIconRatioChange: (LibraryIconRatio) -> Unit,
+    onIconShapeChange: (LibraryIconShape) -> Unit,
     onHideGridTitlesChange: (Boolean) -> Unit,
+    onShowListDescriptionChange: (Boolean) -> Unit,
     onGridSpacingChange: (LibraryGridSpacing) -> Unit,
     onImportAppBundle: () -> Unit = {},
     onAbout: () -> Unit,
+    onLicenses: () -> Unit,
     onSettings: () -> Unit,
     onHelp: () -> Unit,
     onCrashReports: () -> Unit,
@@ -1901,12 +1946,27 @@ internal fun LibraryOptionsDestination(
                                 )
                             }
                         }
-                        LibraryActionRow(
-                            label = R.string.library_action_import_bundle,
-                            summary = R.string.library_action_import_bundle_summary,
-                            icon = R.drawable.ic_upload_file,
-                            action = onImportAppBundle,
-                        )
+                        LibraryOptionGroup(
+                            label = R.string.library_icon_shape_title,
+                            summary = R.string.library_icon_shape_summary,
+                        ) {
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                FilterChip(
+                                    selected = state.iconShape == LibraryIconShape.Round,
+                                    onClick = { onIconShapeChange(LibraryIconShape.Round) },
+                                    label = { Text(stringResource(R.string.library_icon_shape_round)) },
+                                )
+                                FilterChip(
+                                    selected = state.iconShape == LibraryIconShape.Square,
+                                    onClick = { onIconShapeChange(LibraryIconShape.Square) },
+                                    label = { Text(stringResource(R.string.library_icon_shape_square)) },
+                                )
+                            }
+                        }
                         if (state.layout == LibraryLayout.Grid) {
                             LibraryOptionGroup(
                                 label = R.string.library_grid_spacing_title,
@@ -1919,6 +1979,7 @@ internal fun LibraryOptionsDestination(
                                 ) {
                                     LibraryGridSpacing.entries.forEach { spacing ->
                                         val label = when (spacing) {
+                                            LibraryGridSpacing.None -> R.string.library_grid_spacing_none
                                             LibraryGridSpacing.Compact -> R.string.library_grid_spacing_compact
                                             LibraryGridSpacing.Standard -> R.string.library_grid_spacing_standard
                                             LibraryGridSpacing.Spacious -> R.string.library_grid_spacing_spacious
@@ -1959,7 +2020,48 @@ internal fun LibraryOptionsDestination(
                                     },
                                 )
                             }
+                        } else {
+                            val showDescriptionLabel = stringResource(R.string.library_show_list_description)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 52.dp)
+                                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = showDescriptionLabel,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Medium,
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.library_show_list_description_summary),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                }
+                                Switch(
+                                    checked = state.showListDescription,
+                                    onCheckedChange = onShowListDescriptionChange,
+                                    modifier = Modifier.semantics {
+                                        contentDescription = showDescriptionLabel
+                                    },
+                                )
+                            }
                         }
+                    }
+                    LibraryOptionsSection(
+                        modifier = Modifier.fillMaxWidth(),
+                        title = R.string.library_options_actions_title,
+                    ) {
+                        LibraryActionRow(
+                            label = R.string.library_action_import_bundle,
+                            summary = R.string.library_action_import_bundle_summary,
+                            icon = R.drawable.ic_upload_file,
+                            action = onImportAppBundle,
+                        )
                     }
                     LibraryOptionsSection(
                         modifier = Modifier.fillMaxWidth(),
@@ -1998,6 +2100,12 @@ internal fun LibraryOptionsDestination(
                             summary = R.string.library_action_about_summary,
                             icon = R.drawable.ic_info,
                             action = onAbout,
+                        )
+                        LibraryActionRow(
+                            label = R.string.licenses,
+                            summary = R.string.library_action_licenses_summary,
+                            icon = R.drawable.ic_list,
+                            action = onLicenses,
                         )
                         LibraryActionRow(
                             label = R.string.help,
@@ -2087,6 +2195,7 @@ private fun LibraryGridItem(
     selected: Boolean,
     onToggleSelection: (LibraryAppUiItem) -> Unit,
     iconRatio: LibraryIconRatio,
+    iconShape: LibraryIconShape,
     hideTitle: Boolean,
     gridSpacing: Dp,
 ) {
@@ -2118,6 +2227,7 @@ private fun LibraryGridItem(
                 modifier = Modifier.fillMaxWidth(),
                 contentSize = null,
                 iconRatio = iconRatio,
+                iconShape = iconShape,
             )
             if (selectionMode) {
                 Checkbox(
@@ -2165,6 +2275,8 @@ private fun LibraryListItem(
     selected: Boolean,
     onToggleSelection: (LibraryAppUiItem) -> Unit,
     iconRatio: LibraryIconRatio,
+    iconShape: LibraryIconShape,
+    showDescription: Boolean,
 ) {
     val selectionDescription = stringResource(
         R.string.library_selection_checkbox_description,
@@ -2197,6 +2309,7 @@ private fun LibraryListItem(
                 modifier = Modifier.width(52.dp),
                 contentSize = 40.dp,
                 iconRatio = iconRatio,
+                iconShape = iconShape,
             )
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -2235,7 +2348,7 @@ private fun LibraryListItem(
                 LibraryFavoritePlaceholder(app.id)
             }
         }
-        if (app.description.isNotBlank()) {
+        if (showDescription && app.description.isNotBlank()) {
             Box(modifier = Modifier.padding(start = 80.dp, end = 16.dp, bottom = 10.dp)) {
                 LibraryDescription(app.description, app.id)
             }
@@ -3154,6 +3267,7 @@ internal fun LibraryIconSlot(
     modifier: Modifier,
     contentSize: Dp?,
     iconRatio: LibraryIconRatio,
+    iconShape: LibraryIconShape = LibraryIconShape.Round,
 ) {
     BoxWithConstraints(
         modifier = modifier.aspectRatio(iconRatio.widthToHeight),
@@ -3179,7 +3293,11 @@ internal fun LibraryIconSlot(
 
         Card(
             modifier = Modifier.fillMaxSize(),
-            shape = MaterialTheme.shapes.medium,
+            shape = if (iconShape == LibraryIconShape.Round) {
+                MaterialTheme.shapes.medium
+            } else {
+                RoundedCornerShape(0.dp)
+            },
             colors = CardDefaults.cardColors(containerColor = containerColor),
         ) {
             Box(
@@ -3723,21 +3841,30 @@ internal fun LibraryInformationDialog(
         text = {
             when (dialog) {
                 LibraryInfoDialog.About -> LibraryAboutBody(
+                    maxHeight = maxMessageHeight,
                     onLicenses = { onOpen(LibraryInfoDialog.Licenses) },
                 )
                 LibraryInfoDialog.Help -> LibraryHelpBody(
                     message = message,
                     maxHeight = maxMessageHeight,
                 )
-                LibraryInfoDialog.Licenses -> Text(
-                    text = message,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = maxMessageHeight)
-                        .verticalScroll(rememberScrollState()),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                LibraryInfoDialog.Licenses -> {
+                    val scrollState = rememberScrollState()
+                    Column {
+                        Text(
+                            text = message,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = maxMessageHeight)
+                                .verticalScroll(scrollState),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        ScrollableContentHint(
+                            visible = scrollState.maxValue > 0,
+                        )
+                    }
+                }
             }
         },
         confirmButton = {
@@ -3748,9 +3875,17 @@ internal fun LibraryInformationDialog(
 
 @Composable
 private fun LibraryAboutBody(
+    maxHeight: Dp,
     onLicenses: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    val scrollState = rememberScrollState()
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = maxHeight)
+            .verticalScroll(scrollState),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         Text(
             text = stringResource(R.string.about_product_name),
             style = MaterialTheme.typography.titleLarge,
@@ -3779,7 +3914,11 @@ private fun LibraryAboutBody(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        HorizontalDivider(modifier = Modifier.padding(top = 2.dp))
+        Text(
+            text = stringResource(R.string.about_lineage),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -3794,6 +3933,9 @@ private fun LibraryAboutBody(
                 Text(stringResource(R.string.licenses))
             }
         }
+        ScrollableContentHint(
+            visible = scrollState.maxValue > 0,
+        )
     }
 }
 

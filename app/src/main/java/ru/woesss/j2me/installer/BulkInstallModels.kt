@@ -36,6 +36,7 @@ enum class BulkInstallStatus {
 
 enum class BulkInstallAction {
     Install,
+    Reinstall,
     Skip,
     InstallJarOnly,
     InstallSeparateCopy,
@@ -49,6 +50,9 @@ data class BulkSourceUnit(
     val sourceFiles: List<File>,
     val jadFile: File? = null,
     val jarFile: File? = null,
+    /** Exact Library identity for a user-requested reinstall; avoids source-identity ambiguity. */
+    val reinstallAppId: Long? = null,
+    val reinstallStorageKey: String? = null,
     val discoveryStatus: BulkInstallStatus? = null,
     val discoveryDetail: String? = null,
 )
@@ -84,7 +88,9 @@ data class BulkInstallItem(
             BulkInstallStatus.BatchConflict,
             -> true
 
-            BulkInstallStatus.AlreadyInstalled -> bundlePayloadAvailable
+            BulkInstallStatus.AlreadyInstalled ->
+                bundlePayloadAvailable ||
+                    (action == BulkInstallAction.Reinstall && unit.reinstallAppId != null)
 
             else -> false
         }

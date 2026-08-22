@@ -258,7 +258,7 @@ internal fun LibraryCollectionsDestination(
     val headerOffsetPx = remember { mutableStateOf(0f) }
     val density = LocalDensity.current
     val headerSpacerHeight = with(density) { headerHeightPx.value.toDp() }
-    val hideDistancePx = with(density) { 10.dp.toPx() }
+    val hideDistancePx = with(density) { LIBRARY_CHROME_HIDE_DISTANCE_DP.dp.toPx() }
     val revealDistancePx = with(density) { 18.dp.toPx() }
     val chromeHysteresis = remember(hideDistancePx, revealDistancePx) {
         LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx)
@@ -321,10 +321,13 @@ internal fun LibraryCollectionsDestination(
 
     val scrollConnection = remember(chromeHysteresis, onNavigationVisibilityChanged) {
         object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                val delta = available.y
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource,
+            ): Offset {
                 val height = headerHeightPx.value
-                if (delta == 0f || height <= 0) return Offset.Zero
+                if (height <= 0) return Offset.Zero
                 val canScroll = listState.canScrollForward || listState.canScrollBackward
                 if (!canScroll) {
                     if (headerOffsetPx.value != 0f || !chromeHysteresis.chromeVisible) {
@@ -333,6 +336,14 @@ internal fun LibraryCollectionsDestination(
                         onNavigationVisibilityChanged(true)
                     }
                     return Offset.Zero
+                }
+                // Base hide/reveal progress on the distance the LazyColumn actually consumed.
+                // Unconsumed fling distance can exceed a short collection's range and otherwise
+                // causes a footer hide/show loop when the viewport changes.
+                val delta = when {
+                    consumed.y != 0f -> consumed.y
+                    available.y > 0f -> available.y
+                    else -> return Offset.Zero
                 }
                 val fullyHidden = headerOffsetPx.value <= -height.toFloat() + 0.5f
                 var visibilityChange = chromeHysteresis.onScrollDelta(delta)

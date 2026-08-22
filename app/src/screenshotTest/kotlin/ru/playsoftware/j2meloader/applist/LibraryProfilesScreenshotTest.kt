@@ -304,6 +304,7 @@ fun LibraryCollectionAppPickerScreenshot() {
             memberIds = setOf(1, 3),
             sortVariant = 0,
             iconRatio = LibraryIconRatio.Square,
+            iconShape = LibraryIconShape.Round,
             scaffoldPadding = PaddingValues(),
             onBack = {},
             onSetMembership = { _, _ -> },
@@ -363,9 +364,12 @@ fun LibraryOptionsScreenshot() {
             scaffoldPadding = PaddingValues(),
             onLayoutChange = {},
             onIconRatioChange = {},
+            onIconShapeChange = {},
             onHideGridTitlesChange = {},
+            onShowListDescriptionChange = {},
             onGridSpacingChange = {},
             onAbout = {},
+            onLicenses = {},
             onSettings = {},
             onHelp = {},
             onCrashReports = {},
@@ -404,9 +408,74 @@ fun LibraryOptionsIndonesianScreenshot() {
             scaffoldPadding = PaddingValues(),
             onLayoutChange = {},
             onIconRatioChange = {},
+            onIconShapeChange = {},
             onHideGridTitlesChange = {},
+            onShowListDescriptionChange = {},
             onGridSpacingChange = {},
             onAbout = {},
+            onLicenses = {},
+            onSettings = {},
+            onHelp = {},
+            onCrashReports = {},
+            onSaveLog = {},
+            onExit = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Library options list display", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun LibraryOptionsListDisplayScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryOptionsDestination(
+            state = LibraryUiState(
+                loading = false,
+                apps = PreviewApps,
+                layout = LibraryLayout.List,
+                iconShape = LibraryIconShape.Square,
+                showListDescription = false,
+            ),
+            scaffoldPadding = PaddingValues(),
+            onLayoutChange = {},
+            onIconRatioChange = {},
+            onIconShapeChange = {},
+            onHideGridTitlesChange = {},
+            onShowListDescriptionChange = {},
+            onGridSpacingChange = {},
+            onAbout = {},
+            onLicenses = {},
+            onSettings = {},
+            onHelp = {},
+            onCrashReports = {},
+            onSaveLog = {},
+            onExit = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Library options grid touching", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun LibraryOptionsGridTouchingScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryOptionsDestination(
+            state = LibraryUiState(
+                loading = false,
+                apps = PreviewApps,
+                layout = LibraryLayout.Grid,
+                iconShape = LibraryIconShape.Square,
+                gridSpacing = LibraryGridSpacing.None,
+            ),
+            scaffoldPadding = PaddingValues(),
+            onLayoutChange = {},
+            onIconRatioChange = {},
+            onIconShapeChange = {},
+            onHideGridTitlesChange = {},
+            onShowListDescriptionChange = {},
+            onGridSpacingChange = {},
+            onAbout = {},
+            onLicenses = {},
             onSettings = {},
             onHelp = {},
             onCrashReports = {},

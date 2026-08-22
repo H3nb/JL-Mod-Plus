@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="about">Tentang</string>
-    <string name="about_message">Aplikasi ini memungkinkan Anda menjalankan aplikasi dan permainan J2ME di Android.\n</string>
+    <string name="about_message">Aplikasi ini memungkinkan Anda menjalankan aplikasi dan permainan J2ME di Android.</string>
+    <string name="about_lineage">JL-Mod Plus adalah fork dari JL-Mod oleh woesss (Yury Kharchenko), yang juga merupakan fork dan mod eksperimental dari J2ME-Loader oleh Nikita Shakarun. Fork ini dikembangkan melalui desain, rekayasa, dan pengujian yang berkelanjutan. Atribusi dan pemberitahuan lisensi upstream dipertahankan di Tentang → Lisensi.</string>
     <string name="action_context_delete">Hapus</string>
     <string name="action_context_rename">Ubah Nama</string>
     <string name="action_context_shortcut">Buat Pintasan</string>
@@ -91,13 +92,20 @@
     <string name="library_icon_ratio_summary">1:1 memakai bingkai adaptif; 3:4 hanya menyesuaikan ukuran ikon.</string>
     <string name="library_icon_ratio_square">1:1</string>
     <string name="library_icon_ratio_portrait">3:4</string>
+    <string name="library_icon_shape_title">Bentuk Ikon</string>
+    <string name="library_icon_shape_summary">Pilih ubin membulat atau sudut tajam untuk kedua rasio.</string>
+    <string name="library_icon_shape_round">Membulat</string>
+    <string name="library_icon_shape_square">Sudut tajam</string>
     <string name="library_grid_spacing_title">Jarak Grid</string>
     <string name="library_grid_spacing_summary">Atur jarak antar kotak aplikasi.</string>
+    <string name="library_grid_spacing_none">Tidak ada (bersentuhan)</string>
     <string name="library_grid_spacing_compact">Rapat (4 dp)</string>
     <string name="library_grid_spacing_standard">Standar (8 dp)</string>
     <string name="library_grid_spacing_spacious">Lega (12 dp)</string>
     <string name="library_hide_grid_titles">Sembunyikan Judul Di Grid</string>
     <string name="library_hide_grid_titles_summary">Hanya tampilkan ikon aplikasi</string>
+    <string name="library_show_list_description">Tampilkan Deskripsi Di Daftar</string>
+    <string name="library_show_list_description_summary">Tampilkan deskripsi aplikasi di bawah judul dan versinya.</string>
     <string name="library_collections_empty_title">Belum Ada Koleksi</string>
     <string name="library_collections_empty_message">Koleksi dan folder akan tersedia pada pembaruan mendatang.</string>
     <string name="library_expand_description">Buka deskripsi lengkap</string>

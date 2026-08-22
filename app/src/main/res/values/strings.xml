@@ -4,7 +4,8 @@
     <string name="about_github" translatable="false">GitHub: &lt;a href="https://github.com/H3nb/JL-Mod-Plus"&gt;H3nb/JL-Mod-Plus&lt;/a&gt;</string>
     <string name="about_maintainer" translatable="false">Maintainer: Hendra Bara\'langi\' (H3NB)</string>
     <string name="about_product_name" translatable="false">JL-Mod Plus</string>
-    <string name="about_message">This app allows you to launch J2ME apps and games on Android.\n</string>
+    <string name="about_message">This app allows you to launch J2ME apps and games on Android.</string>
+    <string name="about_lineage">JL-Mod Plus is a fork of JL-Mod by woesss (Yury Kharchenko), itself a fork and experimental mod of J2ME-Loader by Nikita Shakarun. This fork is developed through ongoing design, engineering, and testing. Upstream attribution and license notices are preserved in About → Licenses.</string>
     <string name="action_context_delete">Delete</string>
     <string name="action_context_rename">Rename</string>
     <string name="action_context_shortcut">Add Shortcut</string>
@@ -130,13 +131,20 @@
     <string name="library_icon_ratio_summary">Square uses adaptive framing; portrait uses fit-only rendering.</string>
     <string name="library_icon_ratio_square">1:1</string>
     <string name="library_icon_ratio_portrait">3:4</string>
+    <string name="library_icon_shape_title">Icon Shape</string>
+    <string name="library_icon_shape_summary">Choose rounded tiles or sharp-corner tiles for both ratios.</string>
+    <string name="library_icon_shape_round">Rounded</string>
+    <string name="library_icon_shape_square">Sharp corners</string>
     <string name="library_grid_spacing_title">Grid Spacing</string>
     <string name="library_grid_spacing_summary">Adjust the space between app tiles.</string>
+    <string name="library_grid_spacing_none">None (touching)</string>
     <string name="library_grid_spacing_compact">Compact (4 dp)</string>
     <string name="library_grid_spacing_standard">Standard (8 dp)</string>
     <string name="library_grid_spacing_spacious">Spacious (12 dp)</string>
     <string name="library_hide_grid_titles">Hide Titles In Grid</string>
     <string name="library_hide_grid_titles_summary">Show only app icons</string>
+    <string name="library_show_list_description">Show Description In List</string>
+    <string name="library_show_list_description_summary">Show each app description below its title and version.</string>
     <string name="library_collections_empty_title">No Collections Yet</string>
     <string name="library_collections_empty_message">Collections and folders will be available in a future update.</string>
     <string name="library_expand_description">Expand description</string>

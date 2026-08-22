@@ -24,6 +24,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import ru.playsoftware.j2meloader.R
+import ru.playsoftware.j2meloader.librarydb.LibraryFileOperations
 import ru.playsoftware.j2meloader.librarydb.LibraryViewModel
 import ru.playsoftware.j2meloader.librarydb.LibraryUniversalBundleStager
 
@@ -81,6 +83,111 @@ class BulkInstallViewModel : ViewModel() {
                     plan
                 }
                 mutableState.value = State.Review(boundedPlan)
+            } catch (_: CancellationException) {
+                if (mutableState.value is State.Planning) mutableState.value = State.Idle
+            } catch (error: Throwable) {
+                mutableState.value = State.Error(boundedMessage(error))
+            } finally {
+                planningJob = null
+            }
+        }
+    }
+
+    /**
+     * Builds an exact-identity reinstall plan for Library selection mode.
+     *
+     * Reinstalling by feeding retained JARs back through the normal source planner is ambiguous
+     * when two installed rows share the same title/vendor. Keep the selected Room id and storage
+     * key at the installer boundary so the batch can use AppInstaller's generation-bound reinstall
+     * constructor for the precise row the user checked.
+     */
+    fun planReinstall(
+        context: Context,
+        appIds: List<Long>,
+        library: LibraryViewModel,
+    ) {
+        if (mutableState.value !is State.Idle) return
+        mutableState.value = State.Planning()
+        planningJob = viewModelScope.launch {
+            try {
+                val job = coroutineContext[Job]
+                val plan = withContext(Dispatchers.IO) {
+                    check(job?.isActive != false) { "Reinstall planning cancelled" }
+                    val generation = requireNotNull(library.readyGeneration()) {
+                        "Library is not READY for reinstall"
+                    }
+                    val requested = appIds.distinct().sorted()
+                    val rows = library.getApps(requested.toSet()).associateBy { it.id }
+                    val missing = requested.filterNot(rows::containsKey)
+                    val items = requested.mapNotNull { appId ->
+                        check(job?.isActive != false) { "Reinstall planning cancelled" }
+                        val app = rows[appId] ?: return@mapNotNull null
+                        val retained = LibraryFileOperations.retainedJar(
+                            generation.emulatorDir,
+                            app.storageKey,
+                        ).canonicalFile
+                        val available = retained.isFile && retained.length() > 0L
+                        val sourceFingerprint = if (available) {
+                            runCatching { BulkInstallPlanner.fingerprint(listOf(retained)) }
+                                .getOrDefault("")
+                        } else {
+                            ""
+                        }
+                        val sourceUnit = BulkSourceUnit(
+                            id = "reinstall-$appId",
+                            origin = BulkSourceOrigin.ExplicitSelection,
+                            kind = BulkSourceKind.JarOnly,
+                            primaryFile = retained,
+                            sourceFiles = listOf(retained),
+                            jarFile = retained,
+                            reinstallAppId = app.id,
+                            reinstallStorageKey = app.storageKey,
+                        )
+                        BulkInstallItem(
+                            id = sourceUnit.id,
+                            unit = sourceUnit,
+                            name = app.title,
+                            vendor = app.vendor,
+                            version = app.version,
+                            installedVersion = app.version,
+                            groupKey = "reinstall\u0000${app.id}",
+                            sourceFingerprint = sourceFingerprint,
+                            status = if (available) {
+                                BulkInstallStatus.ReinstallOrVariant
+                            } else {
+                                BulkInstallStatus.SourceError
+                            },
+                            preflightStatus = if (available) {
+                                BulkInstallStatus.ReinstallOrVariant
+                            } else {
+                                BulkInstallStatus.SourceError
+                            },
+                            action = if (available) {
+                                BulkInstallAction.Reinstall
+                            } else {
+                                BulkInstallAction.Skip
+                            },
+                            selected = available,
+                            detail = if (available) null else {
+                                context.getString(R.string.bulk_install_reinstall_source_missing)
+                            },
+                        )
+                    }
+                    val warnings = if (missing.isEmpty()) emptyList() else listOf(
+                        context.resources.getQuantityString(
+                            R.plurals.bulk_install_reinstall_missing_apps,
+                            missing.size,
+                            missing.size,
+                        ),
+                    )
+                    BulkInstallPlan(
+                        generation = generation.generation,
+                        workdir = generation.emulatorDir.canonicalFile,
+                        items = items,
+                        warnings = warnings,
+                    )
+                }
+                mutableState.value = State.Review(plan)
             } catch (_: CancellationException) {
                 if (mutableState.value is State.Planning) mutableState.value = State.Idle
             } catch (error: Throwable) {
@@ -154,9 +261,11 @@ class BulkInstallViewModel : ViewModel() {
         val chosenAction = if (!selecting) {
             BulkInstallAction.Skip
         } else {
-            when (current.status) {
-                BulkInstallStatus.AmbiguousInstalledMatch -> BulkInstallAction.InstallSeparateCopy
-                BulkInstallStatus.JadJarMismatch -> {
+            when {
+                current.unit.reinstallAppId != null -> BulkInstallAction.Reinstall
+                current.status == BulkInstallStatus.AmbiguousInstalledMatch ->
+                    BulkInstallAction.InstallSeparateCopy
+                current.status == BulkInstallStatus.JadJarMismatch -> {
                     if (current.unit.jarFile == null) return
                     BulkInstallAction.InstallJarOnly
                 }
@@ -177,8 +286,16 @@ class BulkInstallViewModel : ViewModel() {
     fun selectRecommended() {
         val review = mutableState.value as? State.Review ?: return
         val items = review.plan.items.map { item ->
-            if (item.status == BulkInstallStatus.New || item.status == BulkInstallStatus.Update) {
-                item.copy(action = BulkInstallAction.Install, selected = true)
+            if ((item.unit.reinstallAppId != null && item.status == BulkInstallStatus.ReinstallOrVariant) ||
+                item.status == BulkInstallStatus.New || item.status == BulkInstallStatus.Update) {
+                item.copy(
+                    action = if (item.unit.reinstallAppId != null) {
+                        BulkInstallAction.Reinstall
+                    } else {
+                        BulkInstallAction.Install
+                    },
+                    selected = true,
+                )
             } else {
                 item.copy(action = BulkInstallAction.Skip, selected = false)
             }
@@ -304,14 +421,31 @@ class BulkInstallViewModel : ViewModel() {
             val copiedByOriginalPath = item.unit.sourceFiles
                 .zip(copiedSources)
                 .associate { (original, copied) -> original.canonicalPath to copied }
-            val source = copiedByOriginalPath[requestedSource.canonicalPath]
-                ?: return failed(item, "Selected installer source is no longer available")
-            val resolvedJar = if (item.action == BulkInstallAction.InstallJarOnly) {
-                null
+            val activeInstaller = if (item.unit.reinstallAppId != null) {
+                val storageKey = item.unit.reinstallStorageKey
+                    ?: return failed(item, "Reinstall target identity is incomplete")
+                val current = library.getApp(plan.generation, plan.workdir, item.unit.reinstallAppId)
+                    ?: return failed(item, "Reinstall target is no longer installed")
+                if (current.storageKey != storageKey) {
+                    return failed(item, "Reinstall target changed after review")
+                }
+                AppInstaller(
+                    item.unit.reinstallAppId,
+                    plan.generation,
+                    plan.workdir,
+                    storageKey,
+                    library,
+                )
             } else {
-                item.unit.jarFile?.let { copiedByOriginalPath[it.canonicalPath] }
+                val source = copiedByOriginalPath[requestedSource.canonicalPath]
+                    ?: return failed(item, "Selected installer source is no longer available")
+                val resolvedJar = if (item.action == BulkInstallAction.InstallJarOnly) {
+                    null
+                } else {
+                    item.unit.jarFile?.let { copiedByOriginalPath[it.canonicalPath] }
+                }
+                AppInstaller(source, resolvedJar, library, scratch)
             }
-            val activeInstaller = AppInstaller(source, resolvedJar, library, scratch)
             installer = activeInstaller
             val currentCode = Single.create<Int>(activeInstaller::loadInfo).blockingGet()
             if (activeInstaller.expectedGeneration != plan.generation || activeInstaller.expectedWorkdir?.canonicalFile != plan.workdir) {
@@ -325,7 +459,9 @@ class BulkInstallViewModel : ViewModel() {
                 descriptor.name,
                 descriptor.vendor,
             )
-            val currentStatus = if (candidates.size > 1) {
+            val currentStatus = if (item.unit.reinstallAppId != null) {
+                BulkInstallStatus.ReinstallOrVariant
+            } else if (candidates.size > 1) {
                 BulkInstallStatus.AmbiguousInstalledMatch
             } else {
                 mapInstallerStatus(currentCode)
@@ -362,6 +498,7 @@ class BulkInstallViewModel : ViewModel() {
             restoreBundlePayloadIfPresent(plan, item, activeInstaller, library)
             val kind = when {
                 item.action == BulkInstallAction.InstallSeparateCopy -> BulkInstallResultKind.Installed
+                item.action == BulkInstallAction.Reinstall -> BulkInstallResultKind.Reinstalled
                 item.preflightStatus == BulkInstallStatus.New -> BulkInstallResultKind.Installed
                 item.preflightStatus == BulkInstallStatus.Update -> BulkInstallResultKind.Updated
                 else -> BulkInstallResultKind.Reinstalled
@@ -376,6 +513,9 @@ class BulkInstallViewModel : ViewModel() {
             } else {
                 installer.clearCache()
                 installer.deleteTemp()
+                // Exact-identity reinstall uses AppInstaller's own scratch directory, but the
+                // source fingerprint copy above still belongs to this batch scratch instance.
+                scratch.clear()
             }
         }
     }
@@ -408,6 +548,8 @@ class BulkInstallViewModel : ViewModel() {
         currentStatus: BulkInstallStatus,
         installedMatches: Int,
     ): Boolean = when (item.action) {
+        BulkInstallAction.Reinstall ->
+            item.unit.reinstallAppId != null && currentStatus == BulkInstallStatus.ReinstallOrVariant
         BulkInstallAction.InstallSeparateCopy ->
             installedMatches > 1 && currentStatus == BulkInstallStatus.AmbiguousInstalledMatch
 

@@ -12,4 +12,12 @@
     <cache-path
         name="library_export"
         path="library-export/" />
+    <!-- Bulk transfer artifacts are published separately from single-app exports so one active
+         operation cannot replace another artifact. Keep both roots allowlisted for FileProvider. -->
+    <cache-path
+        name="library_share_bulk"
+        path="library-share-bulk/" />
+    <cache-path
+        name="library_export_bulk"
+        path="library-export-bulk/" />
 </paths>

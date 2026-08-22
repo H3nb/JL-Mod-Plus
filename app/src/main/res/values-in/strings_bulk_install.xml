@@ -35,4 +35,8 @@
     <string name="bulk_install_status_conflict">Konflik batch</string>
     <string name="bulk_install_status_remote">Sumber jarak jauh tidak didukung</string>
     <string name="bulk_install_status_error">Sumber tidak valid</string>
+    <string name="bulk_install_reinstall_source_missing">JAR tersimpan tidak tersedia untuk instalasi ulang.</string>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="other">%1$d aplikasi Library yang dipilih sudah tidak tersedia.</item>
+    </plurals>
 </resources>

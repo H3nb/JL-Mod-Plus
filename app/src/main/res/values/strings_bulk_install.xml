@@ -35,4 +35,9 @@
     <string name="bulk_install_status_conflict">Batch conflict</string>
     <string name="bulk_install_status_remote">Remote source unsupported</string>
     <string name="bulk_install_status_error">Invalid source</string>
+    <string name="bulk_install_reinstall_source_missing">Retained JAR is unavailable for reinstall.</string>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one">%1$d selected Library app is no longer available.</item>
+        <item quantity="other">%1$d selected Library apps are no longer available.</item>
+    </plurals>
 </resources>
