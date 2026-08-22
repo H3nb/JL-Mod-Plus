@@ -44,6 +44,8 @@ fun LibraryViewModel.prepareExportAppBundle(
             emulatorDir = generation.emulatorDir,
             storageKey = app.storageKey,
             displayTitle = app.title,
+            sourceVendor = app.vendor,
+            sourceVersion = app.version,
             onProgress = if (progressCallback == null) {
                 null
             } else {

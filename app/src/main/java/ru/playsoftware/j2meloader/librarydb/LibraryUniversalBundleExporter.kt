@@ -32,8 +32,9 @@ import java.util.zip.ZipOutputStream
  * Deterministic writer for the universal app-payload bundle. A single app is represented by the
  * same [AppSource] list and namespace as a bulk export; the caller decides how that list is built.
  *
- * This writer intentionally has no Android or Room dependency. The existing v1 exporter remains
- * the public single-app path until the v2 importer/planner is ready to consume this format.
+ * This writer intentionally has no Android or Room dependency. The single-app exporter delegates
+ * here whenever retained source identity is available; legacy v1 output remains readable for old
+ * integrations that cannot provide that identity.
  */
 internal object LibraryUniversalBundleExporter {
     private const val ROOT_PREFIX = "apps/"
