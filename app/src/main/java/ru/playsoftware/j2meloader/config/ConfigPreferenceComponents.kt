@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -300,9 +299,9 @@ internal fun ConfigColorPreference(
             Box(
                 modifier = Modifier
                     .size(24.dp)
-                    .clip(RoundedCornerShape(6.dp))
+                    .clip(MaterialTheme.shapes.extraSmall)
                     .background(configColor(value))
-                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(6.dp)),
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.extraSmall),
             )
             Text(
                 text = "#${value.ifEmpty { "000000" }}",
@@ -326,7 +325,7 @@ internal fun ConfigActionPreference(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = if (emphasized) MaterialTheme.colorScheme.errorContainer else Color.Transparent,
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
     ) {
         Column(
             modifier = Modifier
@@ -414,7 +413,7 @@ private fun ConfigInlineMessage(text: String, level: ConfigMessageLevel) {
         ConfigMessageLevel.Warning -> "⚠ "
         ConfigMessageLevel.Danger -> "⚠ "
     }
-    Surface(shape = RoundedCornerShape(10.dp), color = container) {
+    Surface(shape = MaterialTheme.shapes.small, color = container) {
         Text(
             text = prefix + text,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
