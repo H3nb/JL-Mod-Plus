@@ -14,6 +14,9 @@
 
 package ru.playsoftware.j2meloader.applist
 
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
+
 /** Stable surfaces whose scroll anchors must survive destination replacement. */
 enum class LibraryNavigationSurface {
     AppsList,
@@ -47,6 +50,41 @@ data class LibraryNavigationState(
     val selectedCollectionId: Long? = null,
     val anchors: Map<LibraryNavigationSurface, LibraryScrollAnchor> = emptyMap(),
 ) {
+    companion object {
+        /**
+         * Keeps return anchors across activity recreation without asking Android to parcel
+         * Compose implementation details such as LazyListState.
+         */
+        val Saver: Saver<LibraryNavigationState, Any> = listSaver(
+            save = { state ->
+                state.anchors.entries.map { (surface, anchor) ->
+                    listOf(
+                        surface.name,
+                        anchor.generation,
+                        anchor.stableItemId ?: Long.MIN_VALUE,
+                        anchor.offsetPx,
+                        anchor.fallbackIndex,
+                    )
+                }
+            },
+            restore = { saved ->
+                val anchors = saved.mapNotNull { value ->
+                    val entry = value as? List<*> ?: return@mapNotNull null
+                    val surface = entry.getOrNull(0)?.toString()?.let {
+                        runCatching { LibraryNavigationSurface.valueOf(it) }.getOrNull()
+                    } ?: return@mapNotNull null
+                    val generation = (entry.getOrNull(1) as? Number)?.toLong() ?: return@mapNotNull null
+                    val stableId = (entry.getOrNull(2) as? Number)?.toLong()
+                        ?.takeUnless { it == Long.MIN_VALUE }
+                    val offset = (entry.getOrNull(3) as? Number)?.toInt() ?: return@mapNotNull null
+                    val fallbackIndex = (entry.getOrNull(4) as? Number)?.toInt() ?: return@mapNotNull null
+                    surface to LibraryScrollAnchor(generation, stableId, offset, fallbackIndex)
+                }.toMap()
+                LibraryNavigationState(anchors = anchors)
+            },
+        )
+    }
+
     fun saveAnchor(
         surface: LibraryNavigationSurface,
         anchor: LibraryScrollAnchor,

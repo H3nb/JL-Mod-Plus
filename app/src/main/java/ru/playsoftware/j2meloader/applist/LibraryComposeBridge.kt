@@ -67,8 +67,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -112,6 +114,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -427,6 +430,11 @@ fun LibraryScreen(
     var selectionState by rememberSaveable(stateSaver = LibrarySelectionState.Saver) {
         mutableStateOf(initialSelectionState)
     }
+    var navigationState by rememberSaveable(stateSaver = LibraryNavigationState.Saver) {
+        mutableStateOf(LibraryNavigationState())
+    }
+    val appsListState = rememberLazyListState()
+    val appsGridState = rememberLazyGridState()
     val isImeVisible = WindowInsets.isImeVisible
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val collectionsHost = actions as? LibraryCollectionsHost
@@ -597,6 +605,10 @@ fun LibraryScreen(
                     LibraryDestination.Apps -> LibraryAppsDestination(
                         state = state,
                         scaffoldPadding = padding,
+                        listState = appsListState,
+                        gridState = appsGridState,
+                        navigationState = navigationState,
+                        onNavigationStateChanged = { navigationState = it },
                         selectionState = selectionState,
                         onOpenApp = actions::onOpenApp,
                         onOpenActions = {
@@ -940,6 +952,10 @@ private fun RowScope.LibraryNavigationItem(
 internal fun LibraryAppsDestination(
     state: LibraryUiState,
     scaffoldPadding: PaddingValues,
+    listState: LazyListState = rememberLazyListState(),
+    gridState: LazyGridState = rememberLazyGridState(),
+    navigationState: LibraryNavigationState = LibraryNavigationState(),
+    onNavigationStateChanged: (LibraryNavigationState) -> Unit = {},
     selectionState: LibrarySelectionState = LibrarySelectionState(),
     onOpenApp: (Int) -> Unit,
     onOpenActions: (LibraryAppUiItem) -> Unit,
@@ -961,8 +977,6 @@ internal fun LibraryAppsDestination(
 ) {
     var query by rememberSaveable(queryStateKey) { mutableStateOf(state.appliedFilter) }
     var sortVisible by remember { mutableStateOf(false) }
-    val listState = rememberLazyListState()
-    val gridState = rememberLazyGridState()
     val headerHeightPx = remember { mutableStateOf(0) }
     val headerOffsetPx = remember { mutableStateOf(0f) }
     val density = LocalDensity.current
@@ -972,6 +986,10 @@ internal fun LibraryAppsDestination(
     val chromeHysteresis = remember(hideDistancePx, revealDistancePx) {
         LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx)
     }
+    val currentApps by rememberUpdatedState(state.apps)
+    val currentLayout by rememberUpdatedState(state.layout)
+    val currentNavigationState by rememberUpdatedState(navigationState)
+    val currentOnNavigationStateChanged by rememberUpdatedState(onNavigationStateChanged)
 
     LaunchedEffect(query) {
         onSearch(query)
@@ -1003,6 +1021,59 @@ internal fun LibraryAppsDestination(
                 onFabVisibilityChanged(true)
                 onNavigationVisibilityChanged(true)
             }
+        }
+    }
+
+    LaunchedEffect(state.layout, state.generation, state.apps) {
+        val surface = if (state.layout == LibraryLayout.List) {
+            LibraryNavigationSurface.AppsList
+        } else {
+            LibraryNavigationSurface.AppsGrid
+        }
+        val availableIds = state.apps.map(LibraryAppUiItem::databaseId)
+        val anchor = navigationState.resolveAnchor(surface, state.generation, availableIds)
+            ?: return@LaunchedEffect
+        val targetIndex = anchor.index + 1 // the header occupies item index zero
+        if (state.layout == LibraryLayout.List) {
+            if (listState.firstVisibleItemIndex != targetIndex ||
+                listState.firstVisibleItemScrollOffset != anchor.offsetPx
+            ) {
+                listState.scrollToItem(targetIndex, anchor.offsetPx)
+            }
+        } else if (
+            gridState.firstVisibleItemIndex != targetIndex ||
+            gridState.firstVisibleItemScrollOffset != anchor.offsetPx
+        ) {
+            gridState.scrollToItem(targetIndex, anchor.offsetPx)
+        }
+    }
+
+    LaunchedEffect(state.layout, state.generation) {
+        val surface = if (currentLayout == LibraryLayout.List) {
+            LibraryNavigationSurface.AppsList
+        } else {
+            LibraryNavigationSurface.AppsGrid
+        }
+        snapshotFlow {
+            val firstApp: Pair<Int, Int>? = if (currentLayout == LibraryLayout.List) {
+                listState.layoutInfo.visibleItemsInfo
+                    .firstOrNull { it.index > 0 }
+                    ?.let { item -> item.index to item.offset }
+            } else {
+                gridState.layoutInfo.visibleItemsInfo
+                    .firstOrNull { it.index > 0 }
+                    ?.let { item -> item.index to item.offset.y }
+            }
+            val fallbackIndex = (firstApp?.first ?: 1) - 1
+            val stableItemId = currentApps.getOrNull(fallbackIndex)?.databaseId
+            LibraryScrollAnchor(
+                generation = state.generation,
+                stableItemId = stableItemId,
+                offsetPx = firstApp?.second ?: 0,
+                fallbackIndex = fallbackIndex.coerceAtLeast(0),
+            )
+        }.collectLatest { anchor ->
+            currentOnNavigationStateChanged(currentNavigationState.saveAnchor(surface, anchor))
         }
     }
 
