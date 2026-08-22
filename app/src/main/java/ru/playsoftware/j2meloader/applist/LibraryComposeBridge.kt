@@ -58,6 +58,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -429,6 +430,7 @@ fun LibraryScreen(
     var appActionsCollectionId by remember { mutableStateOf<Long?>(null) }
     var deleteTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var infoDialog by remember { mutableStateOf<LibraryInfoDialog?>(null) }
+    var pendingBulkDeleteIds by remember { mutableStateOf<Set<Long>?>(null) }
     var selectionState by rememberSaveable(stateSaver = LibrarySelectionState.Saver) {
         mutableStateOf(initialSelectionState)
     }
@@ -440,6 +442,7 @@ fun LibraryScreen(
     val isImeVisible = WindowInsets.isImeVisible
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val collectionsHost = actions as? LibraryCollectionsHost
+    val bulkActions = actions as? LibraryBulkActions
 
     LaunchedEffect(state.generation) {
         if (selectionState.generation != null && selectionState.generation != state.generation) {
@@ -498,7 +501,18 @@ fun LibraryScreen(
                 .fillMaxSize(),
             contentWindowInsets = LibraryScaffoldInsets,
             bottomBar = {
-                if (!isLandscape && !isImeVisible && !selectionState.isActive) {
+                if (selectionState.isActive && !isImeVisible && bulkActions != null) {
+                    LibrarySelectionBottomBar(
+                        enabled = selectionState.selectedAppIds.isNotEmpty(),
+                        onDelete = { pendingBulkDeleteIds = selectionState.selectedAppIds },
+                        onAddToCollection = {
+                            bulkActions.onAddSelectedToCollection(selectionState.selectedAppIds)
+                        },
+                        onShare = { bulkActions.onShareSelected(selectionState.selectedAppIds) },
+                        onReinstall = { bulkActions.onReinstallSelected(selectionState.selectedAppIds) },
+                        onExport = { bulkActions.onExportSelectedBundle(selectionState.selectedAppIds) },
+                    )
+                } else if (!isLandscape && !isImeVisible && !selectionState.isActive) {
                     AnimatedVisibility(
                         visible = showNavigationBar,
                         enter = fadeIn(
@@ -763,6 +777,43 @@ fun LibraryScreen(
             },
             dismissButton = {
                 TextButton(onClick = { deleteTarget = null }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+        )
+    }
+    pendingBulkDeleteIds?.let { selectedIds ->
+        val layout = libraryDialogLayout()
+        AlertDialog(
+            modifier = layout.modifier,
+            properties = layout.properties,
+            onDismissRequest = { pendingBulkDeleteIds = null },
+            title = { Text(stringResource(R.string.library_bulk_delete_apps)) },
+            text = {
+                Text(
+                    pluralStringResource(
+                        R.plurals.library_bulk_delete_confirmation,
+                        selectedIds.size,
+                        selectedIds.size,
+                    ),
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        pendingBulkDeleteIds = null
+                        bulkActions?.onDeleteSelected(selectedIds)
+                        selectionState = selectionState.clear()
+                    },
+                ) {
+                    Text(
+                        text = stringResource(R.string.library_bulk_delete_apps),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingBulkDeleteIds = null }) {
                     Text(stringResource(android.R.string.cancel))
                 }
             },
@@ -1261,6 +1312,108 @@ internal fun LibraryAppsDestination(
     }
 }
 
+@Composable
+private fun LibrarySelectionBottomBar(
+    enabled: Boolean,
+    onDelete: () -> Unit,
+    onAddToCollection: () -> Unit,
+    onShare: () -> Unit,
+    onReinstall: () -> Unit,
+    onExport: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding(),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        tonalElevation = 3.dp,
+        shadowElevation = 2.dp,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            // Keep every icon at the same top edge. Centering columns with
+            // different label heights makes one-line actions drift downward.
+            verticalAlignment = Alignment.Top,
+        ) {
+            LibrarySelectionAction(
+                icon = R.drawable.ic_delete,
+                label = stringResource(R.string.library_bulk_delete_apps),
+                onClick = onDelete,
+                enabled = enabled,
+                destructive = true,
+            )
+            LibrarySelectionAction(
+                icon = R.drawable.ic_collections,
+                label = stringResource(R.string.library_bulk_add_collection),
+                onClick = onAddToCollection,
+                enabled = enabled,
+            )
+            LibrarySelectionAction(
+                icon = R.drawable.ic_share,
+                label = stringResource(R.string.library_bulk_share_apps),
+                onClick = onShare,
+                enabled = enabled,
+            )
+            LibrarySelectionAction(
+                icon = R.drawable.ic_restart_alt,
+                label = stringResource(R.string.library_bulk_reinstall_apps),
+                onClick = onReinstall,
+                enabled = enabled,
+            )
+            LibrarySelectionAction(
+                icon = R.drawable.ic_save,
+                label = stringResource(R.string.library_bulk_export_apps),
+                onClick = onExport,
+                enabled = enabled,
+            )
+        }
+    }
+}
+
+@Composable
+private fun RowScope.LibrarySelectionAction(
+    icon: Int,
+    label: String,
+    onClick: () -> Unit,
+    enabled: Boolean,
+    destructive: Boolean = false,
+) {
+    val contentColor = if (!enabled) {
+        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+    } else if (destructive) {
+        MaterialTheme.colorScheme.error
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    Column(
+        modifier = Modifier.weight(1f),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        IconButton(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = Modifier.semantics { contentDescription = label },
+        ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = contentColor,
+            )
+        }
+        Text(
+            text = label,
+            color = contentColor,
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LibraryAppsHeader(
@@ -1346,14 +1499,23 @@ private fun LibraryAppsHeader(
                         R.string.library_selection_select_all
                     },
                 )
-                TextButton(
+                IconButton(
                     onClick = if (allVisibleSelected) onUnselectAll else onSelectAll,
                     enabled = visibleIds.isNotEmpty() && interactive,
                     modifier = Modifier.semantics {
                         contentDescription = selectionToggleLabel
                     },
                 ) {
-                    Text(selectionToggleLabel)
+                    Icon(
+                        painter = painterResource(
+                            if (allVisibleSelected) {
+                                R.drawable.ic_deselect
+                            } else {
+                                R.drawable.ic_select_all
+                            },
+                        ),
+                        contentDescription = null,
+                    )
                 }
             }
         }

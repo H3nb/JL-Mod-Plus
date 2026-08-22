@@ -161,14 +161,14 @@ class LibraryComposeTest {
         composeRule.onNodeWithText("Demo MIDlet").performTouchInput { longClick() }
         composeRule.onNodeWithText("Select").performClick()
 
-        composeRule.onNodeWithText("1 app selected").assertIsDisplayed()
+        composeRule.onNodeWithText("1 app").assertIsDisplayed()
         composeRule.onAllNodesWithText("Recently opened").assertCountEquals(0)
         composeRule.onAllNodesWithText("Favorites").assertCountEquals(0)
         composeRule.onAllNodesWithContentDescription("Favorite (coming soon)").assertCountEquals(0)
-        composeRule.onNodeWithText("Select all").performClick()
-        composeRule.onNodeWithText("2 apps selected").assertIsDisplayed()
-        composeRule.onNodeWithText("Unselect all").performClick()
-        composeRule.onNodeWithText("0 apps selected").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Select all").performClick()
+        composeRule.onNodeWithText("2 apps").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Unselect all").performClick()
+        composeRule.onNodeWithText("0 apps").assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription("Library back").performClick()
         composeRule.onNodeWithText("Recently opened").assertIsDisplayed()

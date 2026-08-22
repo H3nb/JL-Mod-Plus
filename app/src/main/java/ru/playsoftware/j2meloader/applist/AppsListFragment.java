@@ -72,6 +72,7 @@ import ru.playsoftware.j2meloader.filepicker.FilePickerContract;
 import ru.playsoftware.j2meloader.filepicker.FilteredFilePickerActivity;
 import ru.playsoftware.j2meloader.librarydb.LibraryAppRow;
 import ru.playsoftware.j2meloader.librarydb.LibraryGenerationToken;
+import ru.playsoftware.j2meloader.librarydb.LibraryFileOperations;
 import ru.playsoftware.j2meloader.librarydb.LibraryQuickView;
 import ru.playsoftware.j2meloader.librarydb.LibraryTransferActions;
 import ru.playsoftware.j2meloader.librarydb.LibraryTransferIntents;
@@ -563,6 +564,125 @@ public class AppsListFragment extends Fragment {
                         Log.w(TAG, "App removed with leftover config/save data: " + result.getAppPath());
                     }
                 });
+            }
+
+            @Override
+            public void onAddAppsToCollection(@NonNull Set<Long> appIds, long collectionId) {
+                libraryViewModel.addAppsToCollection(
+                        collectionId,
+                        appIds,
+                        (ignored, error) -> {
+                            if (error != null) {
+                                showError(error);
+                                loadCollectionMembers(collectionId);
+                                return;
+                            }
+                            loadCollectionMembers(collectionId);
+                        });
+            }
+
+            @Override
+            public void onAddSelectedToCollection(@NonNull Set<Long> appIds) {
+                collectionsUiStore.showBulkAddTarget(appIds);
+            }
+
+            @Override
+            public void onDeleteSelected(@NonNull Set<Long> appIds) {
+                libraryViewModel.deleteInstalledApps(appIds, (result, error) -> {
+                    if (error != null) {
+                        showError(error);
+                        return;
+                    }
+                    if (!isAdded() || result == null) return;
+                    LibraryComposeController controller = composeController;
+                    if (controller != null) {
+                        int deletedCount = result.getSucceeded().size();
+                        int failedCount = result.getFailed().size() + result.getMissingAppIds().size();
+                        controller.showNotice(getResources().getQuantityString(
+                                R.plurals.library_bulk_delete_result,
+                                deletedCount,
+                                deletedCount,
+                                failedCount));
+                    }
+                });
+            }
+
+            @Override
+            public void onShareSelected(@NonNull Set<Long> appIds) {
+                LibraryTransferActions.prepareShareApps(
+                        libraryViewModel,
+                        appIds,
+                        (prepared, error) -> {
+                            if (error != null) {
+                                showTransferError(error);
+                                return;
+                            }
+                            if (!isAdded() || prepared == null) return;
+                            try {
+                                startActivity(LibraryTransferIntents.shareApp(
+                                        requireContext(), prepared, getString(R.string.library_bulk_share_apps)));
+                            } catch (ActivityNotFoundException | SecurityException exception) {
+                                showTransferError(exception);
+                            }
+                        });
+            }
+
+            @Override
+            public void onExportSelectedBundle(@NonNull Set<Long> appIds) {
+                LibraryTransferActions.prepareExportAppsBundle(
+                        libraryViewModel,
+                        appIds,
+                        progress -> {
+                            if (!isAdded()) return;
+                            LibraryComposeController controller = composeController;
+                            if (controller != null) {
+                                controller.showNotice(getString(
+                                        R.string.library_export_progress,
+                                        progress.getCompletedEntries(),
+                                        progress.getTotalEntries()));
+                            }
+                        },
+                        (prepared, error) -> {
+                            if (error != null) {
+                                showTransferError(error);
+                                return;
+                            }
+                            if (!isAdded() || prepared == null) return;
+                            try {
+                                startActivity(LibraryTransferIntents.exportBundle(
+                                        requireContext(), prepared, getString(R.string.library_bulk_export_apps)));
+                            } catch (ActivityNotFoundException | SecurityException exception) {
+                                showTransferError(exception);
+                            }
+                        });
+            }
+
+            @Override
+            public void onReinstallSelected(@NonNull Set<Long> appIds) {
+                File workdir = activeWorkdir;
+                LibraryGenerationToken generation = libraryViewModel.readyGeneration();
+                if (workdir == null || generation == null ||
+                        activeGeneration != generation.getGeneration() ||
+                        !workdir.equals(generation.getEmulatorDir())) {
+                    showError(new IllegalStateException("Library generation is not ready"));
+                    return;
+                }
+                List<Uri> sources = new ArrayList<>();
+                for (Long appId : appIds) {
+                    LibraryAppRow app = libraryViewModel.getApp(appId);
+                    if (app == null) continue;
+                    File retained = LibraryFileOperations.INSTANCE.retainedJar(workdir, app.getStorageKey());
+                    if (retained.isFile()) sources.add(Uri.fromFile(retained));
+                }
+                if (sources.isEmpty()) {
+                    LibraryComposeController controller = composeController;
+                    if (controller != null) {
+                        controller.showNotice(getString(R.string.library_reinstall_source_missing));
+                    }
+                    return;
+                }
+                BulkInstallerDialog.newFiles(sources)
+                        .show(getParentFragmentManager(), BulkInstallerDialog.TAG);
             }
 
             @Override

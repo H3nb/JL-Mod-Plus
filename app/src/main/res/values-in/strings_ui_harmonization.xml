@@ -28,4 +28,9 @@
     <string name="library_action_select">Pilih</string>
     <string name="library_selection_select_all">Pilih semua</string>
     <string name="library_selection_unselect_all">Batalkan semua pilihan</string>
+    <string name="library_bulk_delete_apps">Hapus</string>
+    <string name="library_bulk_add_collection">Tambahkan Ke Koleksi</string>
+    <string name="library_bulk_share_apps">Bagikan Aplikasi</string>
+    <string name="library_bulk_reinstall_apps">Instal Ulang</string>
+    <string name="library_bulk_export_apps">Ekspor Bundle</string>
 </resources>

@@ -106,6 +106,24 @@ fun LibrarySelectionScreenshot() {
 }
 
 @PreviewTest
+@Preview(name = "Library selection bulk actions", widthDp = 400, heightDp = 500, showBackground = true)
+@Composable
+fun LibrarySelectionBulkActionsScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryScreen(
+            state = LibraryUiState(
+                loading = false,
+                generation = 1L,
+                apps = PreviewApps,
+                databaseControlsReady = true,
+            ),
+            actions = PreviewBulkActions,
+            initialSelectionState = LibrarySelectionState(1L, setOf(1L, 3L)),
+        )
+    }
+}
+
+@PreviewTest
 @Preview(name = "Library grid portrait icons", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
 fun LibraryGridPortraitScreenshot() {
@@ -518,6 +536,8 @@ private object NoOpLibraryActions : LibraryActions {
     override fun onExit() = Unit
     override fun onRetryLibrary() = Unit
 }
+
+private object PreviewBulkActions : LibraryActions by NoOpLibraryActions, LibraryBulkActions
 
 private object NoOpProfilesActions : ProfilesActions {
     override fun onBack() = Unit

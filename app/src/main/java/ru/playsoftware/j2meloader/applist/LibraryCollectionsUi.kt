@@ -99,6 +99,7 @@ data class LibraryCollectionsUiState(
     val allAppsPrepared: Boolean = false,
     val members: LibraryCollectionMembersUi? = null,
     val addTarget: LibraryCollectionAppTargetUi? = null,
+    val bulkAddTargetAppIds: Set<Long>? = null,
 )
 
 /** Fragment-owned presentation bridge; Compose never reaches Room or filesystem directly. */
@@ -151,16 +152,37 @@ class LibraryCollectionsUiStore {
     fun showAddTarget(appId: Int, title: String) {
         mutableState.value = mutableState.value.copy(
             addTarget = LibraryCollectionAppTargetUi(appId, title),
+            bulkAddTargetAppIds = null,
+        )
+    }
+
+    fun showBulkAddTarget(appIds: Set<Long>) {
+        if (appIds.isEmpty()) return
+        mutableState.value = mutableState.value.copy(
+            addTarget = null,
+            bulkAddTargetAppIds = appIds.toSet(),
         )
     }
 
     fun dismissAddTarget() {
-        mutableState.value = mutableState.value.copy(addTarget = null)
+        mutableState.value = mutableState.value.copy(
+            addTarget = null,
+            bulkAddTargetAppIds = null,
+        )
     }
 }
 
+/** Bulk operations are kept separate so previews and lightweight hosts can omit the domain side effects. */
+interface LibraryBulkActions {
+    fun onDeleteSelected(appIds: Set<Long>) = Unit
+    fun onAddSelectedToCollection(appIds: Set<Long>) = Unit
+    fun onShareSelected(appIds: Set<Long>) = Unit
+    fun onReinstallSelected(appIds: Set<Long>) = Unit
+    fun onExportSelectedBundle(appIds: Set<Long>) = Unit
+}
+
 /** Extra capabilities implemented only by the production Library host. */
-interface LibraryCollectionsHost : LibraryActions {
+interface LibraryCollectionsHost : LibraryActions, LibraryBulkActions {
     fun collectionsStore(): LibraryCollectionsUiStore
     fun onCreateCollection(name: String)
     fun onRenameCollection(collectionId: Long, name: String)
@@ -171,6 +193,7 @@ interface LibraryCollectionsHost : LibraryActions {
     fun onRequestAddToCollection(appId: Int)
     fun onDismissAddToCollection()
     fun onAddAppToCollection(appId: Int, collectionId: Long)
+    fun onAddAppsToCollection(appIds: Set<Long>, collectionId: Long)
     fun onRemoveAppFromCollection(appId: Int, collectionId: Long)
 }
 
@@ -520,6 +543,18 @@ internal fun LibraryCollectionsDialogHost(host: LibraryCollectionsHost) {
         )
     }
 
+    state.bulkAddTargetAppIds?.let { appIds ->
+        AddAppsToCollectionDialog(
+            appCount = appIds.size,
+            collections = state.collections,
+            onDismiss = host::onDismissAddToCollection,
+            onSelected = { collectionId ->
+                host.onAddAppsToCollection(appIds, collectionId)
+                host.onDismissAddToCollection()
+            },
+        )
+    }
+
     if (createForAdd) {
         CollectionNameDialog(
             title = stringResource(R.string.library_collection_new),
@@ -598,6 +633,73 @@ private fun AddToCollectionDialog(
                 }
             }
         },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        },
+    )
+}
+
+@Composable
+private fun AddAppsToCollectionDialog(
+    appCount: Int,
+    collections: List<LibraryCollectionUiItem>,
+    onDismiss: () -> Unit,
+    onSelected: (Long) -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.library_bulk_add_collection)) },
+        text = {
+            Column {
+                Text(
+                    text = pluralStringResource(
+                        R.plurals.library_collection_member_count,
+                        appCount,
+                        appCount,
+                    ),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                if (collections.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.library_collection_ready_empty_message),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    LazyColumn(modifier = Modifier.heightIn(max = 380.dp)) {
+                        items(collections, key = { it.id }) { collection ->
+                            ListItem(
+                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                                headlineContent = {
+                                    Text(
+                                        text = collection.name,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                },
+                                supportingContent = {
+                                    Text(
+                                        pluralStringResource(
+                                            R.plurals.library_collection_member_count,
+                                            collection.appCount,
+                                            collection.appCount,
+                                        ),
+                                    )
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onSelected(collection.id) },
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(stringResource(android.R.string.cancel))

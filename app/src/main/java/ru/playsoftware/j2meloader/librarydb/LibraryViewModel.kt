@@ -718,6 +718,119 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun addAppsToCollection(
+        collectionId: Long,
+        appIds: Set<Long>,
+        callback: MutationCallback<Unit>,
+    ) {
+        val generation = readyGeneration()
+        val plan = try {
+            generation?.let { token ->
+                LibraryBulkSelectionPlanner.plan(
+                    generation = token.generation,
+                    requestedAppIds = appIds,
+                    availableApps = getApps(appIds),
+                )
+            }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        val collection = try {
+            generation?.let { token -> repository.currentCollection(token, collectionId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || plan == null || !plan.isComplete || collection == null) {
+            callback.complete(null, IllegalStateException("Bulk collection target is no longer available"))
+            return
+        }
+        launchMutation(callback) {
+            repository.setCollectionMemberships(
+                expected = generation,
+                collectionId = collection.id,
+                appIds = plan.apps.map(LibraryAppRow::id),
+                included = true,
+                addedAt = System.currentTimeMillis(),
+            )
+        }
+    }
+
+    /** Deletes selected apps sequentially and preserves per-app outcomes for retry UI. */
+    fun deleteInstalledApps(
+        appIds: Set<Long>,
+        callback: MutationCallback<LibraryBulkOperationResult>,
+    ) {
+        val generation = readyGeneration()
+        val plan = try {
+            generation?.let { token ->
+                LibraryBulkSelectionPlanner.plan(
+                    generation = token.generation,
+                    requestedAppIds = appIds,
+                    availableApps = getApps(appIds),
+                )
+            }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || plan == null || !plan.isComplete) {
+            callback.complete(
+                null,
+                IllegalStateException("Selected Library apps are not available in the active generation"),
+            )
+            return
+        }
+        launchMutation(callback) {
+            withContext(Dispatchers.IO) {
+                val results = ArrayList<LibraryBulkItemResult>(plan.apps.size)
+                acquireGenerationLease(generation.generation, generation.emulatorDir).use {
+                    for ((index, app) in plan.apps.withIndex()) {
+                        if (!repository.isReadyGeneration(generation)) {
+                            plan.apps.drop(index).forEach { remaining ->
+                                results += LibraryBulkItemResult(
+                                    appId = remaining.id,
+                                    storageKey = remaining.storageKey,
+                                    title = remaining.title,
+                                    status = LibraryBulkItemStatus.Skipped,
+                                    detail = "Library generation changed before deletion",
+                                )
+                            }
+                            break
+                        }
+                        try {
+                            LibraryFileOperations.deleteInstalledApp(
+                                context = getApplication(),
+                                emulatorDir = generation.emulatorDir,
+                                storageKey = app.storageKey,
+                            )
+                            repository.removeCatalogApp(generation, app.storageKey)
+                            results += LibraryBulkItemResult(
+                                appId = app.id,
+                                storageKey = app.storageKey,
+                                title = app.title,
+                                status = LibraryBulkItemStatus.Succeeded,
+                            )
+                        } catch (cancelled: CancellationException) {
+                            throw cancelled
+                        } catch (error: Exception) {
+                            results += LibraryBulkItemResult(
+                                appId = app.id,
+                                storageKey = app.storageKey,
+                                title = app.title,
+                                status = LibraryBulkItemStatus.Failed,
+                                detail = error.message,
+                            )
+                        }
+                    }
+                }
+                LibraryBulkOperationResult(
+                    generation = generation.generation,
+                    items = results,
+                    missingAppIds = plan.missingAppIds,
+                )
+            }
+        }
+    }
+
     fun removeCatalogApp(
         expectedGeneration: Long,
         expectedWorkdir: File,
