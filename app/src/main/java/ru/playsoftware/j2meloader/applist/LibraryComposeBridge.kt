@@ -177,6 +177,7 @@ import ru.playsoftware.j2meloader.ui.ScrollableContentHint
 import ru.playsoftware.j2meloader.ui.TransientNoticeHost
 import ru.playsoftware.j2meloader.ui.TransientNoticeState
 import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
+import ru.playsoftware.j2meloader.ui.availableWindowWidthDp
 import kotlin.math.roundToInt
 
 enum class LibraryLayout {
@@ -440,7 +441,7 @@ fun LibraryScreen(
     val appsListState = rememberLazyListState()
     val appsGridState = rememberLazyGridState()
     val isImeVisible = WindowInsets.isImeVisible
-    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val useNavigationRail = availableWindowWidthDp() >= 600.dp
     val collectionsHost = actions as? LibraryCollectionsHost
     val bulkActions = actions as? LibraryBulkActions
 
@@ -486,7 +487,7 @@ fun LibraryScreen(
     }
 
     Row(modifier = modifier.fillMaxSize()) {
-        if (isLandscape) {
+        if (useNavigationRail) {
             LibraryNavigationRail(
                 selected = destination,
                 onSelected = { section ->
@@ -512,7 +513,7 @@ fun LibraryScreen(
                         onReinstall = { bulkActions.onReinstallSelected(selectionState.selectedAppIds) },
                         onExport = { bulkActions.onExportSelectedBundle(selectionState.selectedAppIds) },
                     )
-                } else if (!isLandscape && !isImeVisible && !selectionState.isActive) {
+                } else if (!useNavigationRail && !isImeVisible && !selectionState.isActive) {
                     AnimatedVisibility(
                         visible = showNavigationBar,
                         enter = fadeIn(
@@ -654,7 +655,7 @@ fun LibraryScreen(
                         onRetry = actions::onRetryLibrary,
                         onFabVisibilityChanged = { showInstallFab = it },
                         onNavigationVisibilityChanged = { visible ->
-                            if (!isLandscape) showNavigationBar = visible
+                            if (!useNavigationRail) showNavigationBar = visible
                         },
                     )
                     LibraryDestination.Collections -> if (collectionsHost != null) {
@@ -667,7 +668,7 @@ fun LibraryScreen(
                                 appActionsCollectionId = collectionId
                             },
                             onNavigationVisibilityChanged = { visible ->
-                                if (!isLandscape) showNavigationBar = visible
+                                if (!useNavigationRail) showNavigationBar = visible
                             },
                         )
                     } else {

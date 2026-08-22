@@ -31,3 +31,10 @@ fun availableWindowHeightDp(): Dp {
     val heightPx = LocalWindowInfo.current.containerSize.height
     return with(LocalDensity.current) { heightPx.toDp() }
 }
+
+/** Width of the currently available Compose container, independent of device orientation. */
+@Composable
+fun availableWindowWidthDp(): Dp {
+    val widthPx = LocalWindowInfo.current.containerSize.width
+    return with(LocalDensity.current) { widthPx.toDp() }
+}
