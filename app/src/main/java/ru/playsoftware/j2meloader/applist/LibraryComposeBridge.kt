@@ -251,6 +251,18 @@ private data class MetadataRestoreRequest(
     val title: String,
     val author: String,
     val description: String,
+    /**
+     * The raw LazyList/LazyGrid viewport at the moment the editor opened. The stable-id anchor
+     * is preferable when rows are reordered, but this snapshot is the exact visual fallback for
+     * a metadata save/back that only changes layout/insets.
+     */
+    val viewport: LibraryViewportSnapshot? = null,
+)
+
+internal data class LibraryViewportSnapshot(
+    val layout: LibraryLayout,
+    val firstVisibleItemIndex: Int,
+    val firstVisibleItemOffsetPx: Int,
 )
 
 private data class ConsumedReturnAnchor(
@@ -492,6 +504,7 @@ fun LibraryScreen(
     var renameTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var metadataTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var metadataCapturedAnchor by remember { mutableStateOf<LibraryScrollAnchor?>(null) }
+    var metadataCapturedViewport by remember { mutableStateOf<LibraryViewportSnapshot?>(null) }
     var metadataRestoreRequest by remember { mutableStateOf<MetadataRestoreRequest?>(null) }
     // The metadata editor is an overlay. Keep the underlying list viewport and scaffold chrome
     // fixed while its focus/IME state changes, otherwise closing the editor changes the list
@@ -593,12 +606,49 @@ fun LibraryScreen(
         )
     }
 
+    fun captureAppsViewport(): LibraryViewportSnapshot? {
+        return if (state.layout == LibraryLayout.List) {
+            if (appsListState.layoutInfo.totalItemsCount == 0) {
+                null
+            } else {
+                LibraryViewportSnapshot(
+                    layout = LibraryLayout.List,
+                    firstVisibleItemIndex = appsListState.firstVisibleItemIndex,
+                    firstVisibleItemOffsetPx = appsListState.firstVisibleItemScrollOffset,
+                )
+            }
+        } else if (appsGridState.layoutInfo.totalItemsCount == 0) {
+            null
+        } else {
+            LibraryViewportSnapshot(
+                layout = LibraryLayout.Grid,
+                firstVisibleItemIndex = appsGridState.firstVisibleItemIndex,
+                firstVisibleItemOffsetPx = appsGridState.firstVisibleItemScrollOffset,
+            )
+        }
+    }
+
     fun closeMetadataEditor(restoreRequest: MetadataRestoreRequest? = null) {
-        metadataRestoreRequest = restoreRequest
-        if (restoreRequest != null) {
+        // Treat a plain back as a viewport-preserving return as well. The editor is an overlay;
+        // removing it can still trigger a list remeasure even when no metadata was changed.
+        val request = restoreRequest ?: metadataTarget?.let { app ->
+            metadataCapturedAnchor?.let { anchor ->
+                MetadataRestoreRequest(
+                    anchor = anchor,
+                    databaseId = app.databaseId,
+                    title = app.title,
+                    author = app.author,
+                    description = app.description,
+                    viewport = metadataCapturedViewport,
+                )
+            }
+        }
+        metadataRestoreRequest = request
+        if (request != null) {
             metadataRestoreAnchorKey++
         }
         metadataCapturedAnchor = null
+        metadataCapturedViewport = null
         metadataTarget = null
     }
 
@@ -766,6 +816,7 @@ fun LibraryScreen(
                         gridState = appsGridState,
                         navigationState = navigationState,
                         returnAnchor = metadataRestoreRequest?.anchor,
+                        returnViewport = metadataRestoreRequest?.viewport,
                         returnAnchorKey = metadataRestoreAnchorKey,
                         returnAnchorReady = metadataRestoreReady && !isImeVisible,
                         onReturnAnchorConsumed = { metadataRestoreRequest = null },
@@ -864,6 +915,7 @@ fun LibraryScreen(
                                 title = title,
                                 author = vendor,
                                 description = description,
+                                viewport = metadataCapturedViewport,
                             )
                         }
                         closeMetadataEditor(restoreRequest)
@@ -932,6 +984,11 @@ fun LibraryScreen(
                     metadataImeWasVisible = isImeVisible
                     metadataCapturedAnchor = if (destination == LibraryDestination.Apps) {
                         captureAppsAnchor(app.databaseId)
+                    } else {
+                        null
+                    }
+                    metadataCapturedViewport = if (destination == LibraryDestination.Apps) {
+                        captureAppsViewport()
                     } else {
                         null
                     }
@@ -1217,6 +1274,7 @@ internal fun LibraryAppsDestination(
     gridState: LazyGridState = rememberLazyGridState(),
     navigationState: LibraryNavigationState = LibraryNavigationState(),
     returnAnchor: LibraryScrollAnchor? = null,
+    returnViewport: LibraryViewportSnapshot? = null,
     returnAnchorKey: Any? = Unit,
     returnAnchorReady: Boolean = true,
     onReturnAnchorConsumed: () -> Unit = {},
@@ -1321,29 +1379,42 @@ internal fun LibraryAppsDestination(
         val anchor = returnAnchor?.let { navigationState.resolveAnchor(it, availableIds) }
             ?: navigationState.resolveAnchor(surface, state.generation, availableIds)
             ?: return@LaunchedEffect
-        val targetIndex = anchor.index + 1 // the header occupies item index zero
+        // A raw viewport snapshot is the exact visual contract for returning from an overlay.
+        // Prefer it over the stable-id resolution because a Room projection can remeasure or
+        // reorder rows after the editor closes, before the stable anchor has been consumed.
+        val targetIndex = if (returnAnchor != null && returnViewport?.layout == state.layout) {
+            val maxIndex = state.apps.size.coerceAtLeast(0)
+            returnViewport.firstVisibleItemIndex.coerceIn(0, maxIndex)
+        } else {
+            anchor.index + 1 // the header occupies item index zero
+        }
+        val targetOffset = if (returnAnchor != null && returnViewport?.layout == state.layout) {
+            returnViewport.firstVisibleItemOffsetPx
+        } else {
+            anchor.offsetPx
+        }
         if (state.layout == LibraryLayout.List) {
             if (listState.firstVisibleItemIndex != targetIndex ||
-                listState.firstVisibleItemScrollOffset != anchor.offsetPx
+                listState.firstVisibleItemScrollOffset != targetOffset
             ) {
-                listState.scrollToItem(targetIndex, anchor.offsetPx)
+                listState.scrollToItem(targetIndex, targetOffset)
             }
             withFrameNanos { }
             if (listState.firstVisibleItemIndex != targetIndex ||
-                listState.firstVisibleItemScrollOffset != anchor.offsetPx
+                listState.firstVisibleItemScrollOffset != targetOffset
             ) {
-                listState.scrollToItem(targetIndex, anchor.offsetPx)
+                listState.scrollToItem(targetIndex, targetOffset)
             }
         } else if (
             gridState.firstVisibleItemIndex != targetIndex ||
-            gridState.firstVisibleItemScrollOffset != anchor.offsetPx
+            gridState.firstVisibleItemScrollOffset != targetOffset
         ) {
-            gridState.scrollToItem(targetIndex, anchor.offsetPx)
+            gridState.scrollToItem(targetIndex, targetOffset)
             withFrameNanos { }
             if (gridState.firstVisibleItemIndex != targetIndex ||
-                gridState.firstVisibleItemScrollOffset != anchor.offsetPx
+                gridState.firstVisibleItemScrollOffset != targetOffset
             ) {
-                gridState.scrollToItem(targetIndex, anchor.offsetPx)
+                gridState.scrollToItem(targetIndex, targetOffset)
             }
         }
         if (returnAnchor != null) {
@@ -1498,7 +1569,6 @@ internal fun LibraryAppsDestination(
     }
     Box(
         modifier = listModifier
-            .padding(scaffoldPadding)
             .clipToBounds()
             .nestedScroll(headerScrollConnection),
     ) {
@@ -1507,6 +1577,7 @@ internal fun LibraryAppsDestination(
                 columns = GridCells.Adaptive(minSize = LibraryGridMinCellSize),
                 modifier = Modifier.fillMaxSize(),
                 state = gridState,
+                contentPadding = scaffoldPadding,
             ) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     if (headerHeightPx.intValue == 0) {
@@ -1551,6 +1622,7 @@ internal fun LibraryAppsDestination(
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 state = listState,
+                contentPadding = scaffoldPadding,
             ) {
                 item {
                     if (headerHeightPx.intValue == 0) {
