@@ -35,6 +35,7 @@ public class Constants {
 	public static final String PREF_LAST_PATH = "pref_last_path";
 	public static final String PREF_STATUSBAR = "pref_statusbar_switch";
 	public static final String PREF_THEME = "pref_theme";
+	public static final String PREF_ACCENT = "pref_accent_color";
 	public static final String PREF_TOOLBAR = "pref_actionbar_switch";
 	public static final String PREF_USE_DISPLAY_CUTOUT = "pref_use_display_cutout";
 	public static final String PREF_VIBRATION = "pref_vibration_switch";

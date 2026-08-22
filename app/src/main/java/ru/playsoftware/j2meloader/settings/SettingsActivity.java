@@ -17,6 +17,7 @@
 package ru.playsoftware.j2meloader.settings;
 
 import static ru.playsoftware.j2meloader.util.Constants.PREF_EMULATOR_DIR;
+import static ru.playsoftware.j2meloader.util.Constants.PREF_ACCENT;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_KEEP_SCREEN;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_SCREENSHOT_SWITCH;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_STATUSBAR;
@@ -105,6 +106,12 @@ public class SettingsActivity extends AppCompatActivity {
 			}
 
 			@Override
+			public void onAccentChanged(@NonNull String value) {
+				preferences.edit().putString(PREF_ACCENT, value).apply();
+				refreshState();
+			}
+
+			@Override
 			public void onLanguageChanged(@NonNull String value) {
 				AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(value));
 				refreshState();
@@ -144,6 +151,9 @@ public class SettingsActivity extends AppCompatActivity {
 		List<SettingsOption> themes = buildThemeOptions();
 		String themeValue = preferences.getString(PREF_THEME, getString(R.string.pref_theme_default));
 		SettingsOption selectedTheme = findOption(themes, themeValue, themes.get(0));
+		List<SettingsOption> accents = buildAccentOptions();
+		String accentValue = preferences.getString(PREF_ACCENT, "blue");
+		SettingsOption selectedAccent = findOption(accents, accentValue, accents.get(0));
 
 		List<SettingsOption> languages = buildLanguageOptions();
 		Locale locale = AppCompatDelegate.getApplicationLocales().get(0);
@@ -207,12 +217,24 @@ public class SettingsActivity extends AppCompatActivity {
 				experimentalSwitches,
 				true,
 				Config.getEmulatorDir(),
-				directoryError);
+				directoryError,
+				selectedAccent,
+				accents);
 	}
 
 	private List<SettingsOption> buildThemeOptions() {
 		String[] values = getResources().getStringArray(R.array.pref_theme_values);
 		String[] labels = getResources().getStringArray(R.array.pref_theme_entries);
+		List<SettingsOption> options = new ArrayList<>(Math.min(values.length, labels.length));
+		for (int i = 0; i < Math.min(values.length, labels.length); i++) {
+			options.add(new SettingsOption(values[i], labels[i]));
+		}
+		return options;
+	}
+
+	private List<SettingsOption> buildAccentOptions() {
+		String[] values = getResources().getStringArray(R.array.pref_accent_values);
+		String[] labels = getResources().getStringArray(R.array.pref_accent_entries);
 		List<SettingsOption> options = new ArrayList<>(Math.min(values.length, labels.length));
 		for (int i = 0; i < Math.min(values.length, labels.length); i++) {
 			options.add(new SettingsOption(values[i], labels[i]));

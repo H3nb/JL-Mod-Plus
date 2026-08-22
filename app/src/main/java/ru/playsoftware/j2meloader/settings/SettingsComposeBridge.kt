@@ -86,11 +86,14 @@ data class SettingsUiState(
     val showProfiles: Boolean,
     val workingDirectory: String,
     val directoryError: String? = null,
+    val accent: SettingsOption = SettingsOption("blue", "Default Blue"),
+    val accents: List<SettingsOption> = emptyList(),
 )
 
 interface SettingsActions {
     fun onBack()
     fun onThemeChanged(value: String)
+    fun onAccentChanged(value: String) = Unit
     fun onLanguageChanged(value: String)
     fun onToggle(key: String, checked: Boolean)
     fun onOpenProfiles()
@@ -171,6 +174,12 @@ fun SettingsScreen(
                         )
                         SettingsDivider()
                         SettingsChoiceRow(
+                            title = stringResource(R.string.pref_accent_title),
+                            selected = state.accent,
+                            onClick = { choiceDialog = SettingsChoice.Accent },
+                        )
+                        SettingsDivider()
+                        SettingsChoiceRow(
                             title = stringResource(R.string.pref_language),
                             selected = state.language,
                             onClick = { choiceDialog = SettingsChoice.Language },
@@ -246,6 +255,17 @@ fun SettingsScreen(
             onSelected = { value ->
                 choiceDialog = null
                 actions.onThemeChanged(value)
+            },
+        )
+
+        SettingsChoice.Accent -> SettingsChoiceDialog(
+            title = stringResource(R.string.pref_accent_title),
+            selected = state.accent,
+            options = state.accents,
+            onDismiss = { choiceDialog = null },
+            onSelected = { value ->
+                choiceDialog = null
+                actions.onAccentChanged(value)
             },
         )
 
@@ -331,6 +351,7 @@ private fun SettingsChoiceRow(
 
 private enum class SettingsChoice {
     Theme,
+    Accent,
     Language,
 }
 

@@ -71,6 +71,21 @@ class SettingsComposeTest {
         assertEquals(1, actions.directoryClicks)
     }
 
+    @Test
+    fun settingsExposeAccentPaletteAndDispatchSelection() {
+        val actions = RecordingSettingsActions()
+        composeRule.setContent {
+            JLModPlusTheme {
+                SettingsScreen(state = sampleState(), actions = actions)
+            }
+        }
+
+        composeRule.onNodeWithText("Accent Color").performClick()
+        composeRule.onNodeWithText("Teal").performClick()
+
+        assertEquals(listOf("teal"), actions.accents)
+    }
+
     private fun sampleState() = SettingsUiState(
         theme = SettingsOption("dark", "Dark"),
         themes = listOf(
@@ -81,6 +96,11 @@ class SettingsComposeTest {
         languages = listOf(
             SettingsOption("", "Follow system settings"),
             SettingsOption("en", "English"),
+        ),
+        accent = SettingsOption("blue", "Default Blue"),
+        accents = listOf(
+            SettingsOption("blue", "Default Blue"),
+            SettingsOption("teal", "Teal"),
         ),
         switches = listOf(
             SettingsSwitch(
@@ -97,6 +117,7 @@ class SettingsComposeTest {
 
     private class RecordingSettingsActions : SettingsActions {
         val changes = mutableListOf<String>()
+        val accents = mutableListOf<String>()
         var profileClicks = 0
         var directoryClicks = 0
 
@@ -104,6 +125,10 @@ class SettingsComposeTest {
 
         override fun onThemeChanged(value: String) {
             changes += value
+        }
+
+        override fun onAccentChanged(value: String) {
+            accents += value
         }
 
         override fun onLanguageChanged(value: String) {

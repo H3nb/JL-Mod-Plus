@@ -16,19 +16,28 @@
 package ru.playsoftware.j2meloader.ui
 
 import android.app.Activity
+import android.content.SharedPreferences
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
+import androidx.preference.PreferenceManager
+import ru.playsoftware.j2meloader.util.Constants
 
 private val LightColors = lightColorScheme(
     primary = Color(0xFF34536B),
@@ -108,6 +117,109 @@ private val DarkColors = darkColorScheme(
     surfaceContainerHighest = Color(0xFF20272C),
 )
 
+enum class AccentPalette(val key: String) {
+    DefaultBlue("blue"),
+    Teal("teal"),
+    Green("green"),
+    Amber("amber"),
+    Rose("rose"),
+    Violet("violet");
+
+    companion object {
+        fun fromKey(key: String?): AccentPalette = entries.firstOrNull { it.key == key } ?: DefaultBlue
+    }
+}
+
+private data class AccentColors(
+    val primary: Color,
+    val onPrimary: Color,
+    val primaryContainer: Color,
+    val onPrimaryContainer: Color,
+    val inversePrimary: Color,
+)
+
+private fun AccentPalette.colors(dark: Boolean): AccentColors = when (this) {
+    AccentPalette.DefaultBlue -> if (dark) {
+        AccentColors(
+            Color(0xFFA9C8E5), Color(0xFF103246), Color(0xFF234B63),
+            Color(0xFFD5EBFA), Color(0xFF3C6079),
+        )
+    } else {
+        AccentColors(
+            Color(0xFF34536B), Color.White, Color(0xFFD5E7F5),
+            Color(0xFF0E2738), Color(0xFFAEC9DE),
+        )
+    }
+    AccentPalette.Teal -> if (dark) {
+        AccentColors(
+            Color(0xFF70D5CB), Color(0xFF003735), Color(0xFF00504C),
+            Color(0xFF8CF2E8), Color(0xFF1E8F88),
+        )
+    } else {
+        AccentColors(
+            Color(0xFF006A64), Color.White, Color(0xFF9CF2E8),
+            Color(0xFF00201E), Color(0xFF006A64),
+        )
+    }
+    AccentPalette.Green -> if (dark) {
+        AccentColors(
+            Color(0xFF9CD67A), Color(0xFF17370F), Color(0xFF2A511F),
+            Color(0xFFB8F397), Color(0xFF4D8A39),
+        )
+    } else {
+        AccentColors(
+            Color(0xFF376A26), Color.White, Color(0xFFB8F397),
+            Color(0xFF0C2006), Color(0xFF376A26),
+        )
+    }
+    AccentPalette.Amber -> if (dark) {
+        AccentColors(
+            Color(0xFFFFC55E), Color(0xFF432B00), Color(0xFF604000),
+            Color(0xFFFFDFA6), Color(0xFF9A6800),
+        )
+    } else {
+        AccentColors(
+            Color(0xFF7A5100), Color.White, Color(0xFFFFDFA6),
+            Color(0xFF271900), Color(0xFF7A5100),
+        )
+    }
+    AccentPalette.Rose -> if (dark) {
+        AccentColors(
+            Color(0xFFFFB0C4), Color(0xFF570022), Color(0xFF780033),
+            Color(0xFFFFD9E1), Color(0xFFAA2D57),
+        )
+    } else {
+        AccentColors(
+            Color(0xFF9B234D), Color.White, Color(0xFFFFD9E1),
+            Color(0xFF3E0018), Color(0xFF9B234D),
+        )
+    }
+    AccentPalette.Violet -> if (dark) {
+        AccentColors(
+            Color(0xFFD0BCFF), Color(0xFF381E72), Color(0xFF4F378B),
+            Color(0xFFEADDFF), Color(0xFF6750A4),
+        )
+    } else {
+        AccentColors(
+            Color(0xFF6750A4), Color.White, Color(0xFFEADDFF),
+            Color(0xFF21005D), Color(0xFF6750A4),
+        )
+    }
+}
+
+private fun AccentPalette.colorScheme(dark: Boolean): androidx.compose.material3.ColorScheme {
+    val base = if (dark) DarkColors else LightColors
+    val colors = colors(dark)
+    return base.copy(
+        primary = colors.primary,
+        onPrimary = colors.onPrimary,
+        primaryContainer = colors.primaryContainer,
+        onPrimaryContainer = colors.onPrimaryContainer,
+        inversePrimary = colors.inversePrimary,
+        surfaceTint = colors.primary,
+    )
+}
+
 /** Shared shape scale keeps fields, cards, menus, and action controls visually related. */
 private val AppShapes = Shapes(
     extraSmall = RoundedCornerShape(4.dp),
@@ -121,10 +233,35 @@ private val AppShapes = Shapes(
 @Composable
 fun JLModPlusTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    accent: AccentPalette? = null,
     content: @Composable () -> Unit,
 ) {
+    val context = LocalContext.current
+    val preferences = remember(context) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+    }
+    var preferenceAccentKey by remember(preferences) {
+        mutableStateOf(preferences.getString(Constants.PREF_ACCENT, AccentPalette.DefaultBlue.key))
+    }
+    DisposableEffect(preferences, accent) {
+        if (accent == null) {
+            val listener = SharedPreferences.OnSharedPreferenceChangeListener { shared, key ->
+                if (key == Constants.PREF_ACCENT) {
+                    preferenceAccentKey = shared.getString(
+                        Constants.PREF_ACCENT,
+                        AccentPalette.DefaultBlue.key,
+                    )
+                }
+            }
+            preferences.registerOnSharedPreferenceChangeListener(listener)
+            onDispose { preferences.unregisterOnSharedPreferenceChangeListener(listener) }
+        } else {
+            onDispose { }
+        }
+    }
     val view = LocalView.current
-    val colorScheme = if (darkTheme) DarkColors else LightColors
+    val selectedAccent = accent ?: AccentPalette.fromKey(preferenceAccentKey)
+    val colorScheme = selectedAccent.colorScheme(darkTheme)
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as? Activity)?.window ?: return@SideEffect
