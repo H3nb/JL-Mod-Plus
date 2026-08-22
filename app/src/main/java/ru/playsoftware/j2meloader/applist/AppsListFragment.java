@@ -691,7 +691,7 @@ public class AppsListFragment extends Fragment {
         LibraryComposeController controller = composeController;
         if (controller != null) {
             controller.updateSort(state.getSortVariant());
-            controller.updateApps(uiItems, state.getFilter(), state.getQuickView());
+            controller.updateApps(uiItems, state.getFilter(), state.getQuickView(), generation);
         }
     }
 
@@ -756,7 +756,8 @@ public class AppsListFragment extends Fragment {
                 row.getSourceVersion(),
                 row.getSourceDescription(),
                 row.getPlayCount(),
-                row.getTotalPlayTimeMs());
+                row.getTotalPlayTimeMs(),
+                row.getId());
         cachedRowsByDatabaseId.put(row.getId(), row);
         cachedUiItemsByDatabaseId.put(row.getId(), item);
         return item;

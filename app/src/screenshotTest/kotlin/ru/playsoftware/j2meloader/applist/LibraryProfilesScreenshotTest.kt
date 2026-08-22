@@ -88,6 +88,24 @@ fun LibraryReadyListScreenshot() {
 }
 
 @PreviewTest
+@Preview(name = "Library selection", widthDp = 400, heightDp = 500, showBackground = true)
+@Composable
+fun LibrarySelectionScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryScreen(
+            state = LibraryUiState(
+                loading = false,
+                generation = 1L,
+                apps = PreviewApps,
+                databaseControlsReady = true,
+            ),
+            actions = NoOpLibraryActions,
+            initialSelectionState = LibrarySelectionState(1L, setOf(1L, 3L)),
+        )
+    }
+}
+
+@PreviewTest
 @Preview(name = "Library grid portrait icons", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
 fun LibraryGridPortraitScreenshot() {

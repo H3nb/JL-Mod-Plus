@@ -127,6 +127,54 @@ class LibraryComposeTest {
     }
 
     @Test
+    fun longPressSelectEntersSelectionModeAndScopesSelectAllToVisibleApps() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                generation = 11L,
+                databaseControlsReady = true,
+                apps = listOf(
+                    LibraryAppUiItem(
+                        id = 7,
+                        title = "Demo MIDlet",
+                        author = "Example Vendor",
+                        version = "1.0",
+                        iconPath = null,
+                        canReinstall = true,
+                        databaseId = 70L,
+                    ),
+                    LibraryAppUiItem(
+                        id = 8,
+                        title = "Second MIDlet",
+                        author = "Example Vendor",
+                        version = "1.0",
+                        iconPath = null,
+                        canReinstall = true,
+                        databaseId = 80L,
+                    ),
+                ),
+            ),
+            actions = actions,
+        )
+
+        composeRule.onNodeWithText("Demo MIDlet").performTouchInput { longClick() }
+        composeRule.onNodeWithText("Select").performClick()
+
+        composeRule.onNodeWithText("1 app selected").assertIsDisplayed()
+        composeRule.onAllNodesWithText("Recently opened").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Favorites").assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription("Favorite (coming soon)").assertCountEquals(0)
+        composeRule.onNodeWithText("Select all").performClick()
+        composeRule.onNodeWithText("2 apps selected").assertIsDisplayed()
+        composeRule.onNodeWithText("Unselect all").performClick()
+        composeRule.onNodeWithText("0 apps selected").assertIsDisplayed()
+
+        composeRule.onNodeWithContentDescription("Library back").performClick()
+        composeRule.onNodeWithText("Recently opened").assertIsDisplayed()
+    }
+
+    @Test
     fun viewAndSortActionsRemainExplicitCallbacks() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)

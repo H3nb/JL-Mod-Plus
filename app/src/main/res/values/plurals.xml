@@ -4,4 +4,8 @@
         <item quantity="one">%1$d Selected</item>
         <item quantity="other">%1$d Selected</item>
     </plurals>
+    <plurals name="library_selection_count">
+        <item quantity="one">%1$d app selected</item>
+        <item quantity="other">%1$d apps selected</item>
+    </plurals>
 </resources>

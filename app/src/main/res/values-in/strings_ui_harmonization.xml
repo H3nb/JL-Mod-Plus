@@ -17,4 +17,7 @@
     <string name="library_action_about_summary">Informasi versi, proyek, dan maintainer.</string>
     <string name="library_action_help_summary">Panduan penggunaan dan kontrol umum.</string>
     <string name="library_action_exit_summary">Tutup JL-Mod Plus.</string>
+    <string name="library_action_select">Pilih</string>
+    <string name="library_selection_select_all">Pilih semua</string>
+    <string name="library_selection_unselect_all">Batalkan semua pilihan</string>
 </resources>

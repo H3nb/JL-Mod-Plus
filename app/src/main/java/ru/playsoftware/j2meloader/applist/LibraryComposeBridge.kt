@@ -20,6 +20,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Color as AndroidColor
 import android.graphics.Rect
 import android.util.LruCache
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -81,6 +82,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -136,6 +138,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -211,6 +214,8 @@ data class LibraryAppUiItem(
     val sourceDescription: String = description,
     val playCount: Long = 0L,
     val totalPlayTimeMs: Long = 0L,
+    /** Stable Room identity; [id] remains a transient Compose/host bridge id. */
+    val databaseId: Long = id.toLong(),
 )
 
 data class LibraryUiState(
@@ -229,6 +234,7 @@ data class LibraryUiState(
     val loadingTotal: Int = 0,
     val loadingStorageKey: String = "",
     val errorMessage: String? = null,
+    val generation: Long = 0L,
 )
 
 interface LibraryActions {
@@ -316,6 +322,7 @@ class LibraryComposeController(
         items: List<LibraryAppUiItem>,
         appliedFilter: String,
         quickView: LibraryQuickView,
+        generation: Long,
     ) {
         state = state.copy(
             loading = false,
@@ -327,6 +334,7 @@ class LibraryComposeController(
             loadingTotal = 0,
             loadingStorageKey = "",
             errorMessage = null,
+            generation = generation,
         )
     }
 
@@ -402,6 +410,7 @@ fun LibraryScreen(
     state: LibraryUiState,
     actions: LibraryActions,
     modifier: Modifier = Modifier,
+    initialSelectionState: LibrarySelectionState = LibrarySelectionState(),
 ) {
     val pagerState = rememberPagerState(pageCount = { LibraryDestination.entries.size })
     val coroutineScope = rememberCoroutineScope()
@@ -414,9 +423,21 @@ fun LibraryScreen(
     var appActionsCollectionId by remember { mutableStateOf<Long?>(null) }
     var deleteTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var infoDialog by remember { mutableStateOf<LibraryInfoDialog?>(null) }
+    var selectionState by rememberSaveable(stateSaver = LibrarySelectionState.Saver) {
+        mutableStateOf(initialSelectionState)
+    }
     val isImeVisible = WindowInsets.isImeVisible
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val collectionsHost = actions as? LibraryCollectionsHost
+
+    LaunchedEffect(state.generation) {
+        if (selectionState.generation != null && selectionState.generation != state.generation) {
+            selectionState = selectionState.clear()
+        }
+    }
+    BackHandler(enabled = selectionState.isActive) {
+        selectionState = selectionState.clear()
+    }
 
     val metadataApp = metadataTarget?.let { target ->
         state.apps.firstOrNull { it.id == target.id } ?: target
@@ -466,7 +487,7 @@ fun LibraryScreen(
                 .fillMaxSize(),
             contentWindowInsets = LibraryScaffoldInsets,
             bottomBar = {
-                if (!isLandscape && !isImeVisible) {
+                if (!isLandscape && !isImeVisible && !selectionState.isActive) {
                     AnimatedVisibility(
                         visible = showNavigationBar,
                         enter = fadeIn(
@@ -516,7 +537,7 @@ fun LibraryScreen(
                 }
             },
             floatingActionButton = {
-                if (!isImeVisible && destination == LibraryDestination.Apps) {
+                if (!isImeVisible && destination == LibraryDestination.Apps && !selectionState.isActive) {
                     AnimatedVisibility(
                         visible = showInstallFab,
                         enter = fadeIn(
@@ -575,6 +596,7 @@ fun LibraryScreen(
                     LibraryDestination.Apps -> LibraryAppsDestination(
                         state = state,
                         scaffoldPadding = padding,
+                        selectionState = selectionState,
                         onOpenApp = actions::onOpenApp,
                         onOpenActions = {
                             appActions = it
@@ -583,6 +605,22 @@ fun LibraryScreen(
                         onSearch = actions::onSearch,
                         onQuickView = actions::onQuickView,
                         onFavorite = actions::onFavorite,
+                        onToggleSelection = { app ->
+                            selectionState = selectionState.toggle(state.generation, app.databaseId)
+                        },
+                        onExitSelection = { selectionState = selectionState.clear() },
+                        onSelectAll = {
+                            selectionState = selectionState.selectVisible(
+                                state.generation,
+                                state.apps.asSequence().map(LibraryAppUiItem::databaseId).toList(),
+                            )
+                        },
+                        onUnselectAll = {
+                            selectionState = selectionState.unselectVisible(
+                                state.generation,
+                                state.apps.asSequence().map(LibraryAppUiItem::databaseId).toList(),
+                            )
+                        },
                         onSort = actions::onSort,
                         onRetry = actions::onRetryLibrary,
                         onFabVisibilityChanged = { showInstallFab = it },
@@ -673,6 +711,9 @@ fun LibraryScreen(
                 { metadataTarget = app }
             } else {
                 null
+            },
+            onSelect = {
+                selectionState = selectionState.enter(state.generation, app.databaseId)
             },
         )
     }
@@ -898,11 +939,16 @@ private fun RowScope.LibraryNavigationItem(
 internal fun LibraryAppsDestination(
     state: LibraryUiState,
     scaffoldPadding: PaddingValues,
+    selectionState: LibrarySelectionState = LibrarySelectionState(),
     onOpenApp: (Int) -> Unit,
     onOpenActions: (LibraryAppUiItem) -> Unit,
     onSearch: (String) -> Unit,
     onQuickView: (LibraryQuickView) -> Unit,
     onFavorite: (Int, Boolean) -> Unit,
+    onToggleSelection: (LibraryAppUiItem) -> Unit = {},
+    onExitSelection: () -> Unit = {},
+    onSelectAll: () -> Unit = {},
+    onUnselectAll: () -> Unit = {},
     onSort: (Int) -> Unit,
     onRetry: () -> Unit,
     onFabVisibilityChanged: (Boolean) -> Unit,
@@ -973,9 +1019,13 @@ internal fun LibraryAppsDestination(
             onSortVisibilityChanged = { sortVisible = it },
             onQuickView = onQuickView,
             onSort = onSort,
+            selectionState = selectionState,
+            onExitSelection = onExitSelection,
+            onSelectAll = onSelectAll,
+            onUnselectAll = onUnselectAll,
             title = title,
             onBack = onBack,
-            showQuickViews = showQuickViews,
+            showQuickViews = showQuickViews && !selectionState.isActive,
             interactive = interactive,
         )
     }
@@ -1079,6 +1129,9 @@ internal fun LibraryAppsDestination(
                             gridSpacing = state.gridSpacing.value,
                             onOpenApp = onOpenApp,
                             onOpenActions = onOpenActions,
+                            selectionMode = selectionState.isActive,
+                            selected = app.databaseId in selectionState.selectedAppIds,
+                            onToggleSelection = onToggleSelection,
                         )
                     }
                 }
@@ -1112,6 +1165,9 @@ internal fun LibraryAppsDestination(
                             onOpenActions = onOpenActions,
                             onFavorite = onFavorite,
                             favoriteEnabled = state.databaseControlsReady,
+                            selectionMode = selectionState.isActive,
+                            selected = app.databaseId in selectionState.selectedAppIds,
+                            onToggleSelection = onToggleSelection,
                         )
                     }
                 }
@@ -1141,6 +1197,10 @@ private fun LibraryAppsHeader(
     onSortVisibilityChanged: (Boolean) -> Unit,
     onQuickView: (LibraryQuickView) -> Unit,
     onSort: (Int) -> Unit,
+    selectionState: LibrarySelectionState = LibrarySelectionState(),
+    onExitSelection: () -> Unit = {},
+    onSelectAll: () -> Unit = {},
+    onUnselectAll: () -> Unit = {},
     title: String? = null,
     onBack: (() -> Unit)? = null,
     showQuickViews: Boolean = true,
@@ -1175,8 +1235,11 @@ private fun LibraryAppsHeader(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (onBack != null) {
-                IconButton(onClick = onBack, enabled = interactive) {
+            if (selectionState.isActive || onBack != null) {
+                IconButton(
+                    onClick = if (selectionState.isActive) onExitSelection else requireNotNull(onBack),
+                    enabled = interactive,
+                ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_arrow_back),
                         contentDescription = stringResource(R.string.library_back),
@@ -1185,13 +1248,41 @@ private fun LibraryAppsHeader(
                 Spacer(Modifier.width(4.dp))
             }
             Text(
-                text = title ?: stringResource(R.string.app_name),
+                text = if (selectionState.isActive) {
+                    pluralStringResource(
+                        R.plurals.library_selection_count,
+                        selectionState.selectedCount,
+                        selectionState.selectedCount,
+                    )
+                } else {
+                    title ?: stringResource(R.string.app_name)
+                },
                 modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+            if (selectionState.isActive) {
+                val visibleIds = state.apps.asSequence().map(LibraryAppUiItem::databaseId).toList()
+                val allVisibleSelected = selectionState.isAllVisibleSelected(visibleIds)
+                val selectionToggleLabel = stringResource(
+                    if (allVisibleSelected) {
+                        R.string.library_selection_unselect_all
+                    } else {
+                        R.string.library_selection_select_all
+                    },
+                )
+                TextButton(
+                    onClick = if (allVisibleSelected) onUnselectAll else onSelectAll,
+                    enabled = visibleIds.isNotEmpty() && interactive,
+                    modifier = Modifier.semantics {
+                        contentDescription = selectionToggleLabel
+                    },
+                ) {
+                    Text(selectionToggleLabel)
+                }
+            }
         }
         Row(
             modifier = Modifier
@@ -1751,6 +1842,9 @@ private fun LibraryGridItem(
     app: LibraryAppUiItem,
     onOpenApp: (Int) -> Unit,
     onOpenActions: (LibraryAppUiItem) -> Unit,
+    selectionMode: Boolean,
+    selected: Boolean,
+    onToggleSelection: (LibraryAppUiItem) -> Unit,
     iconRatio: LibraryIconRatio,
     hideTitle: Boolean,
     gridSpacing: Dp,
@@ -1760,17 +1854,34 @@ private fun LibraryGridItem(
             .fillMaxWidth()
             .padding(horizontal = gridSpacing / 2, vertical = gridSpacing / 2)
             .combinedClickable(
-                onClick = { onOpenApp(app.id) },
-                onLongClick = { onOpenActions(app) },
+                onClick = {
+                    if (selectionMode) onToggleSelection(app) else onOpenApp(app.id)
+                },
+                onLongClick = {
+                    if (selectionMode) onToggleSelection(app) else onOpenActions(app)
+                },
             ),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        LibraryIconSlot(
-            app = app,
-            modifier = Modifier.fillMaxWidth(),
-            contentSize = null,
-            iconRatio = iconRatio,
-        )
+        Box(modifier = Modifier.fillMaxWidth()) {
+            LibraryIconSlot(
+                app = app,
+                modifier = Modifier.fillMaxWidth(),
+                contentSize = null,
+                iconRatio = iconRatio,
+            )
+            if (selectionMode) {
+                Checkbox(
+                    checked = selected,
+                    onCheckedChange = { onToggleSelection(app) },
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .semantics {
+                            contentDescription = app.title
+                        },
+                )
+            }
+        }
         if (!hideTitle) {
             Box(
                 modifier = Modifier
@@ -1800,14 +1911,21 @@ private fun LibraryListItem(
     onOpenActions: (LibraryAppUiItem) -> Unit,
     onFavorite: (Int, Boolean) -> Unit,
     favoriteEnabled: Boolean,
+    selectionMode: Boolean,
+    selected: Boolean,
+    onToggleSelection: (LibraryAppUiItem) -> Unit,
     iconRatio: LibraryIconRatio,
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(
-                onClick = { onOpenApp(app.id) },
-                onLongClick = { onOpenActions(app) },
+                onClick = {
+                    if (selectionMode) onToggleSelection(app) else onOpenApp(app.id)
+                },
+                onLongClick = {
+                    if (selectionMode) onToggleSelection(app) else onOpenActions(app)
+                },
             ),
     ) {
         Row(
@@ -1844,7 +1962,15 @@ private fun LibraryListItem(
                 )
             }
             Spacer(Modifier.width(6.dp))
-            if (favoriteEnabled) {
+            if (selectionMode) {
+                Checkbox(
+                    checked = selected,
+                    onCheckedChange = { onToggleSelection(app) },
+                    modifier = Modifier.semantics {
+                        contentDescription = app.title
+                    },
+                )
+            } else if (favoriteEnabled) {
                 LibraryFavoriteButton(app, onFavorite)
             } else {
                 LibraryFavoritePlaceholder(app.id)
@@ -3027,6 +3153,7 @@ internal fun AppActionsDialog(
     onRemoveFromCollection: (() -> Unit)? = null,
     onShareApp: (() -> Unit)? = null,
     onExportAppBundle: (() -> Unit)? = null,
+    onSelect: (() -> Unit)? = null,
 ) {
     val layout = libraryDialogLayout()
     AlertDialog(
@@ -3078,6 +3205,16 @@ internal fun AppActionsDialog(
                             icon = R.drawable.ic_edit,
                             onDismiss = onDismiss,
                             action = onRename,
+                        )
+                    }
+                }
+                if (onSelect != null) {
+                    item {
+                        DialogAction(
+                            label = R.string.library_action_select,
+                            icon = R.drawable.ic_check,
+                            onDismiss = onDismiss,
+                            action = onSelect,
                         )
                     }
                 }

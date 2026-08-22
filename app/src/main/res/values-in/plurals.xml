@@ -4,4 +4,7 @@
         <item quantity="one">%1$d Dipilih</item>
         <item quantity="other">%1$d Dipilih</item>
     </plurals>
+    <plurals name="library_selection_count">
+        <item quantity="other">%1$d aplikasi dipilih</item>
+    </plurals>
 </resources>
