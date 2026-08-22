@@ -596,7 +596,7 @@ private fun LibraryCollectionListItem(
         }
         if (showDescription && app.description.isNotBlank()) {
             Box(modifier = Modifier.padding(start = 80.dp, end = 16.dp, bottom = 10.dp)) {
-                LibraryDescription(app.description, app.id)
+                LibraryDescription(app.description, app.databaseId)
             }
         }
         HorizontalDivider(

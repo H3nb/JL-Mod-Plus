@@ -211,12 +211,8 @@ public class ProfileModel {
 		systemProperties = ContextHolder.getAssetAsString("defaults/system.props");
 	}
 
-	/**
-	 * Creates the app-provided profile template using the active host theme. Existing saved
-	 * profiles intentionally continue to load their own explicit colors.
-	 */
-	public static ProfileModel createBuiltIn(File dir, boolean darkTheme) {
-		ProfileModel profile = new ProfileModel(dir);
+	/** Applies the theme-owned colors used by the app-provided profile template. */
+	public static void applyBuiltInTheme(ProfileModel profile, boolean darkTheme) {
 		int background = darkTheme ? 0x000000 : 0xFFFFFF;
 		int foreground = darkTheme ? 0xFFFFFF : 0x000000;
 		profile.screenBackgroundColor = background;
@@ -226,6 +222,15 @@ public class ProfileModel {
 		profile.vkBgColorSelected = foreground;
 		profile.vkFgColorSelected = background;
 		profile.vkOutlineColor = foreground;
+	}
+
+	/**
+	 * Creates the app-provided profile template using the active host theme. Existing saved
+	 * named profiles continue to load their own explicit colors.
+	 */
+	public static ProfileModel createBuiltIn(File dir, boolean darkTheme) {
+		ProfileModel profile = new ProfileModel(dir);
+		applyBuiltInTheme(profile, darkTheme);
 		return profile;
 	}
 }

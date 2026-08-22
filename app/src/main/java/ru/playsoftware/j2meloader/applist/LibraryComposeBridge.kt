@@ -122,6 +122,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -492,6 +493,11 @@ fun LibraryScreen(
     var metadataTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var metadataCapturedAnchor by remember { mutableStateOf<LibraryScrollAnchor?>(null) }
     var metadataRestoreRequest by remember { mutableStateOf<MetadataRestoreRequest?>(null) }
+    // The metadata editor is an overlay. Keep the underlying list viewport and scaffold chrome
+    // fixed while its focus/IME state changes, otherwise closing the editor changes the list
+    // padding before the saved anchor can be restored.
+    var metadataViewportLocked by remember { mutableStateOf(false) }
+    var metadataImeWasVisible by remember { mutableStateOf(false) }
     var metadataRestoreAnchorKey by remember { mutableIntStateOf(0) }
     var appActionsCollectionId by remember { mutableStateOf<Long?>(null) }
     var deleteTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
@@ -544,34 +550,38 @@ fun LibraryScreen(
     }
 
     val metadataApp = metadataTarget?.let { target ->
-        state.apps.firstOrNull { it.id == target.id } ?: target
+        state.apps.firstOrNull { it.databaseId == target.databaseId } ?: target
     }
     val metadataRestoreReady = metadataRestoreRequest?.let { request ->
         val current = state.apps.firstOrNull { it.databaseId == request.databaseId }
         // A filtered-out/deleted target cannot be measured, so the stable-id/fallback anchor
         // is already the best possible restoration. Otherwise wait until the database projection
         // contains the values submitted by the editor and the row has been remeasured.
-        current == null || (
+        !state.loading && (current == null || (
             current.title == request.title &&
                 current.author == request.author &&
                 current.description == request.description
-            )
+            ))
     } ?: false
 
-    fun captureAppsAnchor(): LibraryScrollAnchor? {
+    fun captureAppsAnchor(excludedDatabaseId: Long? = null): LibraryScrollAnchor? {
         val surface = if (state.layout == LibraryLayout.List) {
             LibraryNavigationSurface.AppsList
         } else {
             LibraryNavigationSurface.AppsGrid
         }
-        val visible = if (state.layout == LibraryLayout.List) {
-            appsListState.layoutInfo.visibleItemsInfo
-                .firstOrNull { it.index > 0 }
-                ?.let { it.index to it.offset }
+        val visible: Pair<Int, Int>? = if (state.layout == LibraryLayout.List) {
+            val items = appsListState.layoutInfo.visibleItemsInfo.filter { it.index > 0 }
+            (items.firstOrNull { item ->
+                val fallbackIndex = (item.index - 1).coerceAtLeast(0)
+                state.apps.getOrNull(fallbackIndex)?.databaseId != excludedDatabaseId
+            } ?: items.firstOrNull())?.let { it.index to it.offset }
         } else {
-            appsGridState.layoutInfo.visibleItemsInfo
-                .firstOrNull { it.index > 0 }
-                ?.let { it.index to it.offset.y }
+            val items = appsGridState.layoutInfo.visibleItemsInfo.filter { it.index > 0 }
+            (items.firstOrNull { item ->
+                val fallbackIndex = (item.index - 1).coerceAtLeast(0)
+                state.apps.getOrNull(fallbackIndex)?.databaseId != excludedDatabaseId
+            } ?: items.firstOrNull())?.let { it.index to it.offset.y }
         }
         if (visible == null) return navigationState.anchorFor(surface, state.generation)
         val fallbackIndex = (visible.first - 1).coerceAtLeast(0)
@@ -601,6 +611,20 @@ fun LibraryScreen(
         }
     }
 
+    LaunchedEffect(metadataViewportLocked, metadataTarget, isImeVisible, metadataRestoreRequest) {
+        if (!metadataViewportLocked || metadataTarget != null || isImeVisible
+            || metadataRestoreRequest != null
+        ) {
+            return@LaunchedEffect
+        }
+        // Focus removal and the final inset dispatch happen asynchronously after the overlay is
+        // removed. Release the lock only after that dispatch has had one frame to settle.
+        withFrameNanos { }
+        metadataViewportLocked = false
+    }
+
+    val imeHidesLibraryChrome = isImeVisible && (!metadataViewportLocked || metadataImeWasVisible)
+
     Box(modifier = modifier.fillMaxSize()) {
         Row(modifier = Modifier.fillMaxSize()) {
         if (useNavigationRail) {
@@ -618,7 +642,7 @@ fun LibraryScreen(
                 .fillMaxSize(),
             contentWindowInsets = LibraryScaffoldInsets,
             bottomBar = {
-                if (selectionState.isActive && !isImeVisible && bulkActions != null) {
+                if (selectionState.isActive && !imeHidesLibraryChrome && bulkActions != null) {
                     LibrarySelectionBottomBar(
                         enabled = selectionState.selectedAppIds.isNotEmpty(),
                         onDelete = { pendingBulkDeleteIds = selectionState.selectedAppIds },
@@ -629,7 +653,7 @@ fun LibraryScreen(
                         onReinstall = { bulkActions.onReinstallSelected(selectionState.selectedAppIds) },
                         onExport = { bulkActions.onExportSelectedBundle(selectionState.selectedAppIds) },
                     )
-                } else if (!useNavigationRail && !isImeVisible && !selectionState.isActive) {
+                } else if (!useNavigationRail && !imeHidesLibraryChrome && !selectionState.isActive) {
                     AnimatedVisibility(
                         visible = showNavigationBar,
                         enter = fadeIn(
@@ -679,7 +703,7 @@ fun LibraryScreen(
                 }
             },
             floatingActionButton = {
-                if (!isImeVisible && destination == LibraryDestination.Apps && !selectionState.isActive) {
+                if (!imeHidesLibraryChrome && destination == LibraryDestination.Apps && !selectionState.isActive) {
                     AnimatedVisibility(
                         visible = showInstallFab,
                         enter = fadeIn(
@@ -743,8 +767,10 @@ fun LibraryScreen(
                         navigationState = navigationState,
                         returnAnchor = metadataRestoreRequest?.anchor,
                         returnAnchorKey = metadataRestoreAnchorKey,
-                        returnAnchorReady = metadataRestoreReady,
+                        returnAnchorReady = metadataRestoreReady && !isImeVisible,
                         onReturnAnchorConsumed = { metadataRestoreRequest = null },
+                        freezeViewport = metadataViewportLocked,
+                        preserveImePaddingWhileFrozen = metadataImeWasVisible,
                         onNavigationStateChanged = { navigationState = it },
                         selectionState = selectionState,
                         onOpenApp = actions::onOpenApp,
@@ -902,8 +928,10 @@ fun LibraryScreen(
             onEditMetadata = if (state.databaseControlsReady) {
                 {
                     metadataRestoreRequest = null
+                    metadataViewportLocked = true
+                    metadataImeWasVisible = isImeVisible
                     metadataCapturedAnchor = if (destination == LibraryDestination.Apps) {
-                        captureAppsAnchor()
+                        captureAppsAnchor(app.databaseId)
                     } else {
                         null
                     }
@@ -1009,6 +1037,7 @@ internal const val LIBRARY_CHROME_HIDE_DISTANCE_DP = 128f
 // list non-scrollable and start a hide/show loop.
 internal const val LIBRARY_CHROME_MIN_SCROLL_ROOM_DP = 160f
 private const val LIBRARY_CHROME_REVEAL_DISTANCE_DP = 18f
+private const val LIBRARY_RETURN_ANCHOR_SETTLE_FRAMES = 2
 private val LibraryGridMinCellSize = 88.dp
 private const val LIBRARY_GRID_ARTWORK_FRACTION = 0.78f
 private val LibraryGridMaxArtworkSize = 72.dp
@@ -1210,6 +1239,8 @@ internal fun LibraryAppsDestination(
     onBack: (() -> Unit)? = null,
     showQuickViews: Boolean = true,
     queryStateKey: Any? = Unit,
+    freezeViewport: Boolean = false,
+    preserveImePaddingWhileFrozen: Boolean = false,
 ) {
     var query by rememberSaveable(queryStateKey) { mutableStateOf(state.appliedFilter) }
     var sortVisible by remember { mutableStateOf(false) }
@@ -1276,6 +1307,11 @@ internal fun LibraryAppsDestination(
             return@LaunchedEffect
         }
         if (returnAnchor != null && !returnAnchorReady) return@LaunchedEffect
+        if (returnAnchor != null) {
+            // Room projection readiness does not imply that the changed row has completed its
+            // final measure. Wait for two bounded frames before taking the viewport snapshot.
+            repeat(LIBRARY_RETURN_ANCHOR_SETTLE_FRAMES) { withFrameNanos { } }
+        }
         val surface = if (state.layout == LibraryLayout.List) {
             LibraryNavigationSurface.AppsList
         } else {
@@ -1292,11 +1328,23 @@ internal fun LibraryAppsDestination(
             ) {
                 listState.scrollToItem(targetIndex, anchor.offsetPx)
             }
+            withFrameNanos { }
+            if (listState.firstVisibleItemIndex != targetIndex ||
+                listState.firstVisibleItemScrollOffset != anchor.offsetPx
+            ) {
+                listState.scrollToItem(targetIndex, anchor.offsetPx)
+            }
         } else if (
             gridState.firstVisibleItemIndex != targetIndex ||
             gridState.firstVisibleItemScrollOffset != anchor.offsetPx
         ) {
             gridState.scrollToItem(targetIndex, anchor.offsetPx)
+            withFrameNanos { }
+            if (gridState.firstVisibleItemIndex != targetIndex ||
+                gridState.firstVisibleItemScrollOffset != anchor.offsetPx
+            ) {
+                gridState.scrollToItem(targetIndex, anchor.offsetPx)
+            }
         }
         if (returnAnchor != null) {
             consumedReturnAnchor = ConsumedReturnAnchor(
@@ -1339,7 +1387,13 @@ internal fun LibraryAppsDestination(
 
     val listModifier = Modifier
         .fillMaxSize()
-        .imePadding()
+        .then(
+            if (!freezeViewport || preserveImePaddingWhileFrozen) {
+                Modifier.imePadding()
+            } else {
+                Modifier
+            },
+        )
         .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
     val renderHeader: @Composable (Modifier, Boolean) -> Unit = { headerModifier, interactive ->
         LibraryAppsHeader(
@@ -1365,6 +1419,7 @@ internal fun LibraryAppsDestination(
         chromeHysteresis,
         state.layout,
         minScrollRoomPx,
+        freezeViewport,
         onFabVisibilityChanged,
         onNavigationVisibilityChanged,
     ) {
@@ -1374,6 +1429,7 @@ internal fun LibraryAppsDestination(
                 available: Offset,
                 source: NestedScrollSource,
             ): Offset {
+                if (freezeViewport) return Offset.Zero
                 val height = headerHeightPx.intValue
                 if (height <= 0) return Offset.Zero
 
@@ -1474,7 +1530,7 @@ internal fun LibraryAppsDestination(
                     state.apps.isEmpty() -> item(span = { GridItemSpan(maxLineSpan) }) {
                         LibraryEmptyState(state.appliedFilter)
                     }
-                    else -> items(state.apps, key = { it.id }) { app ->
+                    else -> items(state.apps, key = { it.databaseId }) { app ->
                         LibraryGridItem(
                             app = app,
                             iconRatio = state.iconRatio,
@@ -1512,7 +1568,7 @@ internal fun LibraryAppsDestination(
                     state.errorMessage != null -> item { LibraryErrorState(state.errorMessage, onRetry) }
                     state.loading -> item { LibraryLoadingState(state) }
                     state.apps.isEmpty() -> item { LibraryEmptyState(state.appliedFilter) }
-                    else -> items(state.apps, key = { it.id }) { app ->
+                    else -> items(state.apps, key = { it.databaseId }) { app ->
                         LibraryListItem(
                             app = app,
                             iconRatio = state.iconRatio,
@@ -2579,7 +2635,7 @@ private fun LibraryListItem(
         }
         if (showDescription && app.description.isNotBlank()) {
             Box(modifier = Modifier.padding(start = 80.dp, end = 16.dp, bottom = 10.dp)) {
-                LibraryDescription(app.description, app.id)
+                LibraryDescription(app.description, app.databaseId)
             }
         }
         HorizontalDivider(
@@ -2590,7 +2646,7 @@ private fun LibraryListItem(
 }
 
 @Composable
-internal fun LibraryDescription(descriptionValue: String, appId: Int) {
+internal fun LibraryDescription(descriptionValue: String, appId: Long) {
     val description = descriptionValue.trim()
     if (description.isEmpty()) return
 

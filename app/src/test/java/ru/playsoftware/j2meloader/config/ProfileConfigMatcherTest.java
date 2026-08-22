@@ -130,4 +130,21 @@ public class ProfileConfigMatcherTest {
 
 		assertEquals(json, new String(Files.readAllBytes(config.toPath()), StandardCharsets.UTF_8));
 	}
+
+	@Test
+	public void builtInThemeSwitchUpdatesOnlyThemeOwnedPalette() {
+		ProfileModel profile = new ProfileModel();
+		profile.screenWidth = 360;
+		profile.screenBackgroundColor = 0x123456;
+
+		ProfileModel.applyBuiltInTheme(profile, true);
+		assertEquals(360, profile.screenWidth);
+		assertEquals(0x000000, profile.screenBackgroundColor);
+		assertEquals(0xFFFFFF, profile.vkFgColor);
+
+		ProfileModel.applyBuiltInTheme(profile, false);
+		assertEquals(360, profile.screenWidth);
+		assertEquals(0xFFFFFF, profile.screenBackgroundColor);
+		assertEquals(0x000000, profile.vkFgColor);
+	}
 }

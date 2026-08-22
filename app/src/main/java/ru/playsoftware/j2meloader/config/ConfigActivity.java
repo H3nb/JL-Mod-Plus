@@ -87,6 +87,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private ConfigFormState currentForm;
 	private ConfigComposeController composeController;
 	private ProfileModel builtInDefaultParams;
+	/** True when this app config is the built-in template and should track host theme changes. */
+	private boolean builtInThemeLinked;
 	private List<ProfileConfigMatcher.Candidate> profileCandidates = Collections.emptyList();
 	private byte[] currentKeyLayoutSnapshot;
 	@Nullable private String profileOrigin;
@@ -309,6 +311,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 					public void onResetSettings() {
 						setProfileOrigin(null);
 						params = newBuiltInProfile();
+						setBuiltInThemeLinked(true);
 						loadParams(false);
 					}
 
@@ -370,12 +373,35 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		defProfile = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
 				.getString(PREF_DEFAULT_PROFILE, null);
 		params = ProfilesManager.loadConfig(configDir);
+		boolean loadedDefaultProfile = false;
 		if (params == null && defProfile != null) {
 			FileUtils.copyFiles(new File(Config.getProfilesDir(), defProfile), configDir, null);
 			params = ProfilesManager.loadConfig(configDir);
+			loadedDefaultProfile = params != null;
 		}
 		if (params == null) {
 			params = newBuiltInProfile();
+			setBuiltInThemeLinked(!isProfile && !loadedDefaultProfile);
+			return;
+		}
+		if (isProfile) {
+			builtInThemeLinked = false;
+			return;
+		}
+
+		boolean linked = readBuiltInThemeLinked();
+		if (profileOrigin != null || loadedDefaultProfile) {
+			linked = false;
+		}
+		// Migrate legacy app configs that were saved from the old one-time built-in snapshot. A
+		// genuinely custom config is never inferred from the global default-profile preference.
+		if (!linked && !loadedDefaultProfile && profileOrigin == null
+				&& matchesBuiltInVariant(params)) {
+			linked = true;
+		}
+		setBuiltInThemeLinked(linked);
+		if (builtInThemeLinked) {
+			ProfileModel.applyBuiltInTheme(params, isDarkTheme());
 		}
 	}
 
@@ -527,6 +553,10 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	public void onConfigurationChanged(@NonNull Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
 		if (configDir != null) {
+			if (!isProfile && builtInThemeLinked && params != null) {
+				ProfileModel.applyBuiltInTheme(params, isDarkTheme());
+				currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
+			}
 			builtInDefaultParams = newBuiltInProfile();
 		}
 		if (display != null) {
@@ -601,6 +631,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private void saveParams() {
 		try {
 			if (currentForm != null) {
+				reconcileBuiltInThemeLink();
 				currentForm.applyTo(params);
 			}
 			ProfilesManager.saveConfig(params);
@@ -629,6 +660,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private void applyBuiltInTemplate() {
 		setProfileOrigin(null);
 		params = newBuiltInProfile();
+		setBuiltInThemeLinked(true);
 		currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
 		refreshProfileMatchCache();
 		if (composeController != null) {
@@ -637,12 +669,21 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	}
 
 	private ProfileModel newBuiltInProfile() {
+		return ProfileModel.createBuiltIn(configDir, isDarkTheme());
+	}
+
+	private boolean isDarkTheme() {
 		int nightMask = getResources().getConfiguration().uiMode
 				& Configuration.UI_MODE_NIGHT_MASK;
-		return ProfileModel.createBuiltIn(
-				configDir,
-				nightMask == Configuration.UI_MODE_NIGHT_YES
-		);
+		return nightMask == Configuration.UI_MODE_NIGHT_YES;
+	}
+
+	private boolean matchesBuiltInVariant(@NonNull ProfileModel candidate) {
+		if (configDir == null) return false;
+		return ProfileConfigMatcher.sameConfig(
+				candidate, ProfileModel.createBuiltIn(configDir, false))
+				|| ProfileConfigMatcher.sameConfig(
+				candidate, ProfileModel.createBuiltIn(configDir, true));
 	}
 
 	private void applyTemplate(@NonNull String name) {
@@ -651,6 +692,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		try {
 			ProfilesManager.load(profile, configDir.getPath(), true, profile.hasKeyLayout());
 			setProfileOrigin(profile.getName());
+			setBuiltInThemeLinked(false);
 			loadParams(true);
 		} catch (IOException e) {
 			Log.e(TAG, "applyTemplate: " + name, e);
@@ -743,6 +785,25 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		return "config_profile_origin:" + configDir.getAbsolutePath();
 	}
 
+	private String builtInThemeKey() {
+		return "config_profile_builtin_theme:" + configDir.getAbsolutePath();
+	}
+
+	private boolean readBuiltInThemeLinked() {
+		if (isProfile || configDir == null) return false;
+		return PreferenceManager.getDefaultSharedPreferences(this)
+				.getBoolean(builtInThemeKey(), false);
+	}
+
+	private void setBuiltInThemeLinked(boolean linked) {
+		builtInThemeLinked = linked;
+		if (isProfile || configDir == null) return;
+		SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
+		if (linked) editor.putBoolean(builtInThemeKey(), true);
+		else editor.remove(builtInThemeKey());
+		editor.apply();
+	}
+
 	@Nullable
 	private String readProfileOrigin() {
 		if (isProfile || configDir == null) return null;
@@ -752,6 +813,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private void setProfileOrigin(@Nullable String name) {
 		profileOrigin = name;
 		if (isProfile || configDir == null) return;
+		if (name != null) {
+			setBuiltInThemeLinked(false);
+		}
 		SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
 		if (name == null) editor.remove(profileOriginKey());
 		else editor.putString(profileOriginKey(), name);
@@ -846,6 +910,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 		if (currentForm != null && currentForm.shader != null) {
 			currentForm.shader.values = values;
+			reconcileBuiltInThemeLink();
 			if (composeController != null) {
 				composeController.update(createUiState());
 			}
@@ -912,8 +977,19 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	private void updateForm(ConfigFormState state) {
 		currentForm = state;
+		reconcileBuiltInThemeLink();
 		if (composeController != null) {
 			composeController.update(createUiState());
+		}
+	}
+
+	private void reconcileBuiltInThemeLink() {
+		if (!builtInThemeLinked || isProfile || params == null || currentForm == null
+				|| builtInDefaultParams == null) {
+			return;
+		}
+		if (!ProfileConfigMatcher.sameEffectiveConfig(params, currentForm, builtInDefaultParams)) {
+			setBuiltInThemeLinked(false);
 		}
 	}
 
