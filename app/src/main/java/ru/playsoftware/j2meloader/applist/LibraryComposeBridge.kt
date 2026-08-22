@@ -171,6 +171,7 @@ import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.librarydb.LibraryPlayStatsFormatter
 import ru.playsoftware.j2meloader.librarydb.LibraryQuickView
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.ScrollableContentHint
 import ru.playsoftware.j2meloader.ui.TransientNoticeHost
 import ru.playsoftware.j2meloader.ui.TransientNoticeState
 import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
@@ -3231,118 +3232,127 @@ internal fun AppActionsDialog(
             }
         },
         text = {
-            LazyColumn(modifier = Modifier.heightIn(max = libraryDialogListHeight())) {
-                item {
-                    if (onEditMetadata != null) {
-                        DialogAction(
-                            label = R.string.library_metadata_edit_title,
-                            icon = R.drawable.ic_edit,
-                            onDismiss = onDismiss,
-                            action = onEditMetadata,
-                        )
-                    } else {
-                        DialogAction(
-                            label = R.string.action_context_rename,
-                            icon = R.drawable.ic_edit,
-                            onDismiss = onDismiss,
-                            action = onRename,
-                        )
+            val listState = rememberLazyListState()
+            Column {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.heightIn(max = libraryDialogListHeight()),
+                ) {
+                    item {
+                        if (onEditMetadata != null) {
+                            DialogAction(
+                                label = R.string.library_metadata_edit_title,
+                                icon = R.drawable.ic_edit,
+                                onDismiss = onDismiss,
+                                action = onEditMetadata,
+                            )
+                        } else {
+                            DialogAction(
+                                label = R.string.action_context_rename,
+                                icon = R.drawable.ic_edit,
+                                onDismiss = onDismiss,
+                                action = onRename,
+                            )
+                        }
                     }
-                }
-                if (onSelect != null) {
+                    if (onSelect != null) {
+                        item {
+                            DialogAction(
+                                label = R.string.library_action_select,
+                                icon = R.drawable.ic_check,
+                                onDismiss = onDismiss,
+                                action = onSelect,
+                            )
+                        }
+                    }
                     item {
                         DialogAction(
-                            label = R.string.library_action_select,
-                            icon = R.drawable.ic_check,
+                            label = R.string.action_settings,
+                            icon = R.drawable.ic_settings,
                             onDismiss = onDismiss,
-                            action = onSelect,
+                            action = onSettings,
                         )
                     }
-                }
-                item {
-                    DialogAction(
-                        label = R.string.action_settings,
-                        icon = R.drawable.ic_settings,
-                        onDismiss = onDismiss,
-                        action = onSettings,
-                    )
-                }
-                if (onShortcut != null) {
-                    item {
-                        DialogAction(
-                            label = R.string.action_context_shortcut,
-                            icon = R.drawable.ic_add,
-                            onDismiss = onDismiss,
-                            action = onShortcut,
-                        )
+                    if (onShortcut != null) {
+                        item {
+                            DialogAction(
+                                label = R.string.action_context_shortcut,
+                                icon = R.drawable.ic_add,
+                                onDismiss = onDismiss,
+                                action = onShortcut,
+                            )
+                        }
                     }
-                }
-                if (onAddToCollection != null || onRemoveFromCollection != null) {
+                    if (onAddToCollection != null || onRemoveFromCollection != null) {
+                        item { DialogActionDivider() }
+                    }
+                    if (onAddToCollection != null) {
+                        item {
+                            DialogAction(
+                                label = R.string.library_collection_add_app,
+                                icon = R.drawable.ic_collections,
+                                onDismiss = onDismiss,
+                                action = onAddToCollection,
+                            )
+                        }
+                    }
+                    if (onRemoveFromCollection != null) {
+                        item {
+                            DialogAction(
+                                label = R.string.library_collection_remove_from_current,
+                                icon = R.drawable.ic_remove_circle,
+                                onDismiss = onDismiss,
+                                action = onRemoveFromCollection,
+                            )
+                        }
+                    }
+                    if (onShareApp != null || onExportAppBundle != null) {
+                        item { DialogActionDivider() }
+                    }
+                    if (onShareApp != null) {
+                        item {
+                            DialogAction(
+                                label = R.string.library_action_share_app,
+                                icon = R.drawable.ic_share,
+                                onDismiss = onDismiss,
+                                action = onShareApp,
+                            )
+                        }
+                    }
+                    if (onExportAppBundle != null) {
+                        item {
+                            DialogAction(
+                                label = R.string.library_action_export_bundle,
+                                icon = R.drawable.ic_save,
+                                onDismiss = onDismiss,
+                                action = onExportAppBundle,
+                            )
+                        }
+                    }
                     item { DialogActionDivider() }
-                }
-                if (onAddToCollection != null) {
+                    if (app.canReinstall) {
+                        item {
+                            DialogAction(
+                                label = R.string.action_reinstall,
+                                icon = R.drawable.ic_restart_alt,
+                                onDismiss = onDismiss,
+                                action = onReinstall,
+                            )
+                        }
+                    }
                     item {
                         DialogAction(
-                            label = R.string.library_collection_add_app,
-                            icon = R.drawable.ic_collections,
+                            label = R.string.action_context_delete,
+                            icon = R.drawable.ic_delete,
+                            destructive = true,
                             onDismiss = onDismiss,
-                            action = onAddToCollection,
+                            action = onDelete,
                         )
                     }
                 }
-                if (onRemoveFromCollection != null) {
-                    item {
-                        DialogAction(
-                            label = R.string.library_collection_remove_from_current,
-                            icon = R.drawable.ic_remove_circle,
-                            onDismiss = onDismiss,
-                            action = onRemoveFromCollection,
-                        )
-                    }
-                }
-                if (onShareApp != null || onExportAppBundle != null) {
-                    item { DialogActionDivider() }
-                }
-                if (onShareApp != null) {
-                    item {
-                        DialogAction(
-                            label = R.string.library_action_share_app,
-                            icon = R.drawable.ic_share,
-                            onDismiss = onDismiss,
-                            action = onShareApp,
-                        )
-                    }
-                }
-                if (onExportAppBundle != null) {
-                    item {
-                        DialogAction(
-                            label = R.string.library_action_export_bundle,
-                            icon = R.drawable.ic_save,
-                            onDismiss = onDismiss,
-                            action = onExportAppBundle,
-                        )
-                    }
-                }
-                item { DialogActionDivider() }
-                if (app.canReinstall) {
-                    item {
-                        DialogAction(
-                            label = R.string.action_reinstall,
-                            icon = R.drawable.ic_restart_alt,
-                            onDismiss = onDismiss,
-                            action = onReinstall,
-                        )
-                    }
-                }
-                item {
-                    DialogAction(
-                        label = R.string.action_context_delete,
-                        icon = R.drawable.ic_delete,
-                        destructive = true,
-                        onDismiss = onDismiss,
-                        action = onDelete,
-                    )
-                }
+                ScrollableContentHint(
+                    visible = listState.canScrollBackward || listState.canScrollForward,
+                )
             }
         },
         confirmButton = {},

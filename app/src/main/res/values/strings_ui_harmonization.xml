@@ -5,6 +5,7 @@
     <string name="settings_section_storage">Storage</string>
     <string name="pref_use_display_cutout_title">Use Display Cutout In MIDlet</string>
     <string name="pref_use_display_cutout_summary">Allow compatible MIDlet Canvas content to use the display-cutout area when the runtime can do so safely.</string>
+    <string name="dialog_scroll_hint">Swipe or scroll to see more</string>
     <string name="pref_accent_title">Accent Color</string>
     <string name="pref_accent_blue">Default Blue</string>
     <string name="pref_accent_teal">Teal</string>

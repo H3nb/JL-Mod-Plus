@@ -17,6 +17,7 @@ package javax.microedition.shell
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,6 +30,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -61,6 +63,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.ScrollableContentHint
 import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 
 /** Android-host menu state only; Java ME Displayable and Command state stay in the runtime. */
@@ -395,15 +398,24 @@ private fun RuntimeMenuDialog(
             )
         },
         text = {
-            LazyColumn(modifier = Modifier.heightIn(max = runtimeMenuDialogContentHeight())) {
-                runtimeMenuItems(
-                    state = state,
-                    includeCanvasShortcuts = true,
-                    virtualKeyboardPage = virtualKeyboardPage,
-                    actions = actions,
-                    onOpenVirtualKeyboardPage = { virtualKeyboardPage = true },
-                    onCloseVirtualKeyboardPage = { virtualKeyboardPage = false },
-                    onDismiss = onDismiss,
+            val listState = rememberLazyListState()
+            Column {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.heightIn(max = runtimeMenuDialogContentHeight()),
+                ) {
+                    runtimeMenuItems(
+                        state = state,
+                        includeCanvasShortcuts = true,
+                        virtualKeyboardPage = virtualKeyboardPage,
+                        actions = actions,
+                        onOpenVirtualKeyboardPage = { virtualKeyboardPage = true },
+                        onCloseVirtualKeyboardPage = { virtualKeyboardPage = false },
+                        onDismiss = onDismiss,
+                    )
+                }
+                ScrollableContentHint(
+                    visible = listState.canScrollBackward || listState.canScrollForward,
                 )
             }
         },
