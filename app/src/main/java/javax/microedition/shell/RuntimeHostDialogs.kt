@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
@@ -161,6 +162,7 @@ private fun MidletSelectionDialog(
     onDismiss: () -> Unit,
 ) {
     val layout = runtimeDialogLayout()
+    val listState = rememberLazyListState()
     AlertDialog(
         modifier = layout.modifier,
         properties = layout.properties,
@@ -171,7 +173,10 @@ private fun MidletSelectionDialog(
         title = { Text(stringResource(R.string.select_dialog_title)) },
         text = {
             Column {
-                LazyColumn(modifier = Modifier.heightIn(max = runtimeDialogListHeight())) {
+                LazyColumn(
+                    modifier = Modifier.heightIn(max = runtimeDialogListHeight()),
+                    state = listState,
+                ) {
                     itemsIndexed(state.names) { index, name ->
                         ListItem(
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -191,7 +196,9 @@ private fun MidletSelectionDialog(
                         )
                     }
                 }
-                ScrollableContentHint(visible = state.names.size > 6)
+                ScrollableContentHint(
+                    visible = listState.canScrollForward,
+                )
             }
         },
         confirmButton = {},
@@ -291,6 +298,7 @@ private fun HideButtonsDialog(
 ) {
     var checked by remember(state) { mutableStateOf(state.checked.copyOf()) }
     val layout = runtimeDialogLayout()
+    val listState = rememberLazyListState()
     AlertDialog(
         modifier = layout.modifier,
         properties = layout.properties,
@@ -298,7 +306,10 @@ private fun HideButtonsDialog(
         title = { Text(stringResource(R.string.hide_buttons)) },
         text = {
             Column {
-                LazyColumn(modifier = Modifier.heightIn(max = runtimeDialogListHeight())) {
+                LazyColumn(
+                    modifier = Modifier.heightIn(max = runtimeDialogListHeight()),
+                    state = listState,
+                ) {
                     itemsIndexed(state.names) { index, name ->
                         val isChecked = checked.getOrNull(index) == true
                         ListItem(
@@ -317,7 +328,9 @@ private fun HideButtonsDialog(
                         )
                     }
                 }
-                ScrollableContentHint(visible = state.names.size > 6)
+                ScrollableContentHint(
+                    visible = listState.canScrollForward,
+                )
             }
         },
         confirmButton = {
@@ -397,6 +410,7 @@ private fun LayoutSelectionDialog(
 ) {
     var selected by remember(state) { mutableIntStateOf(state.selected) }
     val layout = runtimeDialogLayout()
+    val listState = rememberLazyListState()
     AlertDialog(
         modifier = layout.modifier,
         properties = layout.properties,
@@ -404,7 +418,10 @@ private fun LayoutSelectionDialog(
         title = { Text(stringResource(R.string.layout_switch)) },
         text = {
             Column {
-                LazyColumn(modifier = Modifier.heightIn(max = runtimeDialogListHeight())) {
+                LazyColumn(
+                    modifier = Modifier.heightIn(max = runtimeDialogListHeight()),
+                    state = listState,
+                ) {
                     itemsIndexed(state.entries) { index, entry ->
                         ListItem(
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -421,7 +438,9 @@ private fun LayoutSelectionDialog(
                         )
                     }
                 }
-                ScrollableContentHint(visible = state.entries.size > 6)
+                ScrollableContentHint(
+                    visible = listState.canScrollForward,
+                )
             }
         },
         confirmButton = {

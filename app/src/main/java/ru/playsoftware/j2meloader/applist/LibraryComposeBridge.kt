@@ -3684,7 +3684,7 @@ internal fun AppActionsDialog(
                     }
                 }
                 ScrollableContentHint(
-                    visible = listState.canScrollBackward || listState.canScrollForward,
+                    visible = listState.canScrollForward,
                 )
             }
         },
@@ -3806,7 +3806,7 @@ internal fun LibraryInformationDialog(
     }
     val layout = libraryDialogLayout()
     val maxMessageHeight = libraryDialogListHeight(
-        maxHeight = if (dialog == LibraryInfoDialog.Licenses) 520 else 420,
+        maxHeight = if (dialog == LibraryInfoDialog.Help) 420 else 640,
     )
     val message = when (dialog) {
         LibraryInfoDialog.About -> AnnotatedString(stringResource(R.string.about_message))
@@ -3861,7 +3861,7 @@ internal fun LibraryInformationDialog(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         ScrollableContentHint(
-                            visible = scrollState.maxValue > 0,
+                            visible = scrollState.value < scrollState.maxValue,
                         )
                     }
                 }
@@ -3880,62 +3880,57 @@ private fun LibraryAboutBody(
 ) {
     val scrollState = rememberScrollState()
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(max = maxHeight)
-            .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxWidth(),
     ) {
-        Text(
-            text = stringResource(R.string.about_product_name),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Text(
-            text = buildString {
-                append(stringResource(R.string.version))
-                append(' ')
-                append(BuildConfig.VERSION_NAME)
-            },
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = AnnotatedString.fromHtml(stringResource(R.string.about_github)),
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        Text(
-            text = stringResource(R.string.about_maintainer),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = stringResource(R.string.about_message).trim(),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = stringResource(R.string.about_lineage),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = maxHeight)
+                .verticalScroll(scrollState),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            TextButton(onClick = onLicenses) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_list),
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(stringResource(R.string.licenses))
+            Text(
+                text = stringResource(R.string.about_product_name),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = buildString {
+                    append(stringResource(R.string.version))
+                    append(' ')
+                    append(BuildConfig.VERSION_NAME)
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = AnnotatedString.fromHtml(stringResource(R.string.about_github)),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Text(
+                text = stringResource(R.string.about_maintainer),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = stringResource(R.string.about_message).trim(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = stringResource(R.string.about_lineage),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                TextButton(onClick = onLicenses) {
+                    Text(stringResource(R.string.licenses).uppercase())
+                }
             }
         }
-        ScrollableContentHint(
-            visible = scrollState.maxValue > 0,
-        )
     }
 }
 
@@ -3950,31 +3945,39 @@ private fun LibraryHelpBody(
             .map(String::trim)
             .filter(String::isNotEmpty)
     }
+    val scrollState = rememberScrollState()
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(max = maxHeight)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier.fillMaxWidth(),
     ) {
-        items.forEach { item ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.Top,
-            ) {
-                Text(
-                    text = "•",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                Text(
-                    text = item,
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = maxHeight)
+                .verticalScroll(scrollState),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            items.forEach { item ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    Text(
+                        text = "•",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(
+                        text = item,
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
+        ScrollableContentHint(
+            visible = scrollState.value < scrollState.maxValue,
+        )
     }
 }

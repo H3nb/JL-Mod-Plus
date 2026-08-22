@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -350,15 +351,19 @@ private fun ReviewContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         } else {
+            val listState = rememberLazyListState()
             LazyColumn(
                 modifier = Modifier.fillMaxWidth().weight(1f, fill = false),
+                state = listState,
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 items(plan.items, key = { it.id }) { item ->
                     BulkItemRow(item, onToggle)
                 }
             }
-            ScrollableContentHint(visible = plan.items.size > 6)
+            ScrollableContentHint(
+                visible = listState.canScrollForward,
+            )
         }
         HorizontalDivider()
         Row(

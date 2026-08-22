@@ -415,7 +415,7 @@ private fun RuntimeMenuDialog(
                     )
                 }
                 ScrollableContentHint(
-                    visible = listState.canScrollBackward || listState.canScrollForward,
+                    visible = listState.canScrollForward,
                 )
             }
         },

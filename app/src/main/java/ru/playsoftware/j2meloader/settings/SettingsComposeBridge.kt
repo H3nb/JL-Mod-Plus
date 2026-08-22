@@ -252,7 +252,7 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     ScrollableContentHint(
-                        visible = scrollState.maxValue > 0,
+                        visible = scrollState.value < scrollState.maxValue,
                     )
                 }
             },
@@ -388,40 +388,40 @@ private fun SettingsChoiceDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            LazyColumn(
-                modifier = Modifier.heightIn(max = if (landscape) 220.dp else 360.dp),
-                state = listState,
-            ) {
-                items(options, key = { it.value }) { option ->
-                    val selectedOption = option.value == selected.value
-                    ListItem(
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        headlineContent = {
-                            Text(
-                                text = option.label,
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = if (selectedOption) FontWeight.Medium else FontWeight.Normal,
-                            )
-                        },
-                        leadingContent = {
-                            RadioButton(
-                                selected = selectedOption,
-                                onClick = null,
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(
-                                role = Role.RadioButton,
-                                onClick = { onSelected(option.value) },
-                            ),
-                    )
+            Column {
+                LazyColumn(
+                    modifier = Modifier.heightIn(max = if (landscape) 220.dp else 360.dp),
+                    state = listState,
+                ) {
+                    items(options, key = { it.value }) { option ->
+                        val selectedOption = option.value == selected.value
+                        ListItem(
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            headlineContent = {
+                                Text(
+                                    text = option.label,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = if (selectedOption) FontWeight.Medium else FontWeight.Normal,
+                                )
+                            },
+                            leadingContent = {
+                                RadioButton(
+                                    selected = selectedOption,
+                                    onClick = null,
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(
+                                    role = Role.RadioButton,
+                                    onClick = { onSelected(option.value) },
+                                ),
+                        )
+                    }
                 }
-                item {
-                    ScrollableContentHint(
-                        visible = listState.canScrollBackward || listState.canScrollForward,
-                    )
-                }
+                ScrollableContentHint(
+                    visible = listState.canScrollForward,
+                )
             }
         },
         confirmButton = {},

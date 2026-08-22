@@ -29,7 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import ru.playsoftware.j2meloader.R
 
-/** Small, theme-aware affordance shown only when a bounded popup actually overflows. */
+/** Small, theme-aware affordance shown only when a bounded popup has content below its viewport. */
 @Composable
 internal fun ScrollableContentHint(
     visible: Boolean,
