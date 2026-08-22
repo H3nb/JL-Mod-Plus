@@ -16,7 +16,6 @@ package javax.microedition.shell
 
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.heightIn
@@ -427,8 +426,7 @@ private fun RuntimeMenuDialog(
                 ScrollableContentHint(
                     visible = canScrollForward,
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
+                        .align(Alignment.BottomCenter),
                 )
             }
         },

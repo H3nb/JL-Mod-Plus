@@ -25,6 +25,7 @@ import javax.microedition.lcdui.event.EventQueue;
 import javax.microedition.lcdui.event.RunnableEvent;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.util.ContextHolder;
+import ru.playsoftware.j2meloader.ui.LegacyThemeColors;
 
 @SuppressWarnings("unused")
 public class Display {
@@ -117,6 +118,16 @@ public class Display {
 		if (current instanceof Alert alert) {
 			AlertDialog alertDialog = alert.prepareDialog();
 			alertDialog.show();
+			int accent = LegacyThemeColors.accent(alertDialog.getContext());
+			if (alertDialog.getButton(AlertDialog.BUTTON_POSITIVE) != null) {
+				alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(accent);
+			}
+			if (alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE) != null) {
+				alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(accent);
+			}
+			if (alertDialog.getButton(AlertDialog.BUTTON_NEUTRAL) != null) {
+				alertDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setTextColor(accent);
+			}
 			if (alert.finiteTimeout()) {
 				ViewHandler.postDelayed(alertDialog::dismiss, alert.getTimeout());
 			}

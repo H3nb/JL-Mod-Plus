@@ -24,6 +24,7 @@ import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_GRID_SPACING;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_HIDE_GRID_TITLES;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_ICON_RATIO;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_ICON_SHAPE;
+import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_ENHANCED_ICONS;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_SHOW_LIST_DESCRIPTION;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_VIEW;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APP_SORT;
@@ -220,6 +221,7 @@ public class AppsListFragment extends Fragment {
                 preferences.getInt(PREF_APP_SORT, 0),
                 iconRatio,
                 iconShape,
+                preferences.getBoolean(PREF_APPS_ENHANCED_ICONS, true),
                 preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false),
                 preferences.getBoolean(PREF_APPS_SHOW_LIST_DESCRIPTION, true),
                 gridSpacing,
@@ -314,6 +316,13 @@ public class AppsListFragment extends Fragment {
                 preferences.edit().putInt(PREF_APPS_ICON_SHAPE, value).apply();
                 LibraryComposeController controller = composeController;
                 if (controller != null) controller.updateIconShape(iconShape);
+            }
+
+            @Override
+            public void onEnhancedIconsChange(boolean enabled) {
+                preferences.edit().putBoolean(PREF_APPS_ENHANCED_ICONS, enabled).apply();
+                LibraryComposeController controller = composeController;
+                if (controller != null) controller.updateEnhancedIcons(enabled);
             }
 
             @Override

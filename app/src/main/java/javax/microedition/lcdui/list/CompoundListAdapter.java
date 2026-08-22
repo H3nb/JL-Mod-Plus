@@ -19,44 +19,33 @@
 package javax.microedition.lcdui.list;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
-import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckedTextView;
 import android.widget.ListAdapter;
 
-import androidx.core.content.ContextCompat;
-
 import java.util.ArrayList;
 
 import javax.microedition.lcdui.Choice;
 import javax.microedition.util.ContextHolder;
+import ru.playsoftware.j2meloader.ui.LegacyThemeColors;
 
 public class CompoundListAdapter extends CompoundAdapter implements ListAdapter {
-	private static int highlightColor;
+	private final int highlightColor;
 
 	private final int listType;
 	private final int viewResourceID;
 
 	public CompoundListAdapter(int type, ArrayList<CompoundItem> items) {
 		super(items);
+		Context context = ContextHolder.getActivity();
+		int accent = LegacyThemeColors.accent(context);
+		highlightColor = (accent & 0x00FFFFFF) | (0x33 << 24);
 		switch (type) {
 			case Choice.IMPLICIT:
 				viewResourceID = android.R.layout.simple_list_item_1;
-				if (highlightColor == 0) {
-					TypedValue typedValue = new TypedValue();
-					Context context = ContextHolder.getActivity();
-					boolean resolved = context.getTheme().resolveAttribute(android.R.attr.colorControlHighlight, typedValue, true);
-					if (resolved && typedValue.resourceId != 0) {
-						highlightColor = ContextCompat.getColor(context, typedValue.resourceId);
-					} else if (resolved && typedValue.type >= TypedValue.TYPE_FIRST_INT &&
-							typedValue.type <= TypedValue.TYPE_LAST_INT) {
-						highlightColor = typedValue.data;
-					} else {
-						highlightColor = 0x33000000;
-					}
-				}
 				break;
 			case Choice.EXCLUSIVE:
 				viewResourceID = android.R.layout.simple_list_item_single_choice;
@@ -78,7 +67,10 @@ public class CompoundListAdapter extends CompoundAdapter implements ListAdapter 
 		if (listType == Choice.IMPLICIT) {
 			convertView.setBackgroundColor(selected ? highlightColor : Color.TRANSPARENT);
 		} else {
-			((CheckedTextView) convertView).setChecked(selected);
+			CheckedTextView checkedTextView = (CheckedTextView) convertView;
+			checkedTextView.setCheckMarkTintList(ColorStateList.valueOf(LegacyThemeColors.accent(
+					convertView.getContext())));
+			checkedTextView.setChecked(selected);
 		}
 
 		return convertView;

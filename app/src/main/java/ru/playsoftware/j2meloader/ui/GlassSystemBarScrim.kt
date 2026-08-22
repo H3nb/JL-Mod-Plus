@@ -24,16 +24,15 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.zIndex
 
 /**
  * Theme-aware translucent system-bar protection while a scrolling header is off-screen.
  *
  * Keep enough of the surface tint to preserve status-bar legibility, but leave the content
- * underneath perceptible while the header is being scrolled away. This is intentionally a
- * tonal scrim rather than a fully opaque replacement for the header.
+ * underneath perceptible while the header is being scrolled away. The vertical fade avoids the
+ * hard horizontal edge produced by an opaque replacement bar and adapts to light/dark surfaces.
  */
 @Composable
 internal fun GlassSystemBarScrim(
@@ -42,19 +41,25 @@ internal fun GlassSystemBarScrim(
 ) {
     if (!visible) return
     val darkTheme = isSystemInDarkTheme()
-    val scrimColor = if (darkTheme) {
-        MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.82f)
+    val scrimBase = if (darkTheme) {
+        MaterialTheme.colorScheme.surfaceContainerHighest
     } else {
-        MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.72f)
+        MaterialTheme.colorScheme.surfaceContainerLow
     }
+    val topAlpha = if (darkTheme) 0.78f else 0.62f
+    val bottomAlpha = if (darkTheme) 0.42f else 0.24f
     Box(
         modifier = modifier
             .fillMaxWidth()
             .windowInsetsTopHeight(WindowInsets.statusBars)
-            // Keep the status icons readable without replacing the scrolled content with an
-            // opaque bar. The stronger night variant compensates for bright content behind it.
-            .background(scrimColor)
-            .shadow(elevation = 2.dp)
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        scrimBase.copy(alpha = topAlpha),
+                        scrimBase.copy(alpha = bottomAlpha),
+                    ),
+                ),
+            )
             .zIndex(2f),
     )
 }

@@ -7,7 +7,7 @@
     <string name="settings_profiles_summary">Kelola profil konfigurasi MIDlet yang dapat digunakan kembali.</string>
     <string name="pref_use_display_cutout_title">Gunakan Area Cutout Di MIDlet</string>
     <string name="pref_use_display_cutout_summary">Izinkan konten Canvas MIDlet yang kompatibel menggunakan area cutout layar ketika runtime dapat melakukannya dengan aman.</string>
-    <string name="dialog_scroll_hint">Geser atau gulir untuk melihat lainnya</string>
+    <string name="dialog_scroll_hint">Geser untuk melanjutkan</string>
     <string name="pref_accent_title">Warna Aksen</string>
     <string name="pref_accent_blue">Biru Bawaan</string>
     <string name="pref_accent_teal">Teal</string>
@@ -45,4 +45,6 @@
     <string name="library_bulk_share_apps">Bagikan Aplikasi</string>
     <string name="library_bulk_reinstall_apps">Instal Ulang</string>
     <string name="library_bulk_export_apps">Ekspor Bundle</string>
+    <string name="library_enhanced_icons_title">Tingkatkan Ikon</string>
+    <string name="library_enhanced_icons_summary">Perbaiki ikon sumber dengan ukuran dan warna adaptif.</string>
 </resources>

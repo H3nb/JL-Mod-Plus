@@ -125,23 +125,41 @@ public class CanvasWrapper {
 
 	/** Draws a compact, theme-colored pill for app-owned diagnostic overlays. */
 	public void drawPillBackgroundedText(String text, int backgroundColor, int foregroundColor) {
+		drawPillBackgroundedText(text, backgroundColor, foregroundColor, 1f, 0f, 0f);
+	}
+
+	/**
+	 * Draws a compact diagnostic pill with an explicit scale and inset position. The position is
+	 * kept separate from the guest canvas so overlays can stay clear of rounded corners/cutouts.
+	 */
+	public void drawPillBackgroundedText(String text, int backgroundColor, int foregroundColor,
+			float scale, float left, float top) {
+		float previousTextSize = textPaint.getTextSize();
+		int previousTextColor = textPaint.getColor();
+		int previousFillColor = fillPaint.getColor();
+		textPaint.setTextSize(textSize * Math.max(0.5f, scale));
+		Paint.FontMetrics metrics = textPaint.getFontMetrics();
 		float width = textPaint.measureText(text);
-		float horizontalPadding = Math.max(6f, textSize * 0.34f);
-		float verticalPadding = Math.max(3f, textSize * 0.16f);
+		float measuredHeight = metrics.descent - metrics.ascent;
+		float horizontalPadding = Math.max(4f, textPaint.getTextSize() * 0.34f);
+		float verticalPadding = Math.max(2f, textPaint.getTextSize() * 0.16f);
 		float pillWidth = width + horizontalPadding * 2f;
-		float pillHeight = textHeight + verticalPadding * 2f;
+		float pillHeight = measuredHeight + verticalPadding * 2f;
 		fillPaint.setColor(backgroundColor);
 		canvas.drawRoundRect(
-				new RectF(0f, 0f, pillWidth, pillHeight),
+				new RectF(left, top, left + pillWidth, top + pillHeight),
 				pillHeight / 2f,
 				pillHeight / 2f,
 				fillPaint);
 		textPaint.setColor(foregroundColor);
 		canvas.drawText(
 				text,
-				horizontalPadding + width / 2f,
-				verticalPadding - textAscent,
+				left + horizontalPadding + width / 2f,
+				top + verticalPadding - metrics.ascent,
 				textPaint);
+		textPaint.setTextSize(previousTextSize);
+		textPaint.setColor(previousTextColor);
+		fillPaint.setColor(previousFillColor);
 	}
 
 	public float getTextHeight() {

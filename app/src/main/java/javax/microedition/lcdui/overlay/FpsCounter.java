@@ -18,6 +18,9 @@ package javax.microedition.lcdui.overlay;
 import android.view.View;
 
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -61,7 +64,24 @@ public class FpsCounter extends TimerTask implements Layer {
 	}
 
 	public void paint(CanvasWrapper g) {
-		g.drawPillBackgroundedText(prevFrameCount, pillBackgroundColor, pillContentColor);
+		float density = view.getResources().getDisplayMetrics().density;
+		float margin = 10f * density;
+		float left = margin;
+		float top = margin;
+		WindowInsetsCompat insets = ViewCompat.getRootWindowInsets(view);
+		if (insets != null) {
+			Insets cutout = insets.getInsetsIgnoringVisibility(
+					WindowInsetsCompat.Type.displayCutout());
+			left = Math.max(left, cutout.left + margin);
+			top = Math.max(top, cutout.top + margin);
+		}
+		g.drawPillBackgroundedText(
+				prevFrameCount,
+				pillBackgroundColor,
+				pillContentColor,
+				0.68f,
+				left,
+				top);
 	}
 
 	public void stop() {

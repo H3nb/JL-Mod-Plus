@@ -126,6 +126,7 @@ internal fun LibraryCollectionBrowser(
             sortVariant = libraryState.sortVariant,
             iconRatio = libraryState.iconRatio,
             iconShape = libraryState.iconShape,
+            enhancedIcons = libraryState.enhancedIcons,
             scaffoldPadding = scaffoldPadding,
             onBack = { manageApps = false },
             onSetMembership = onSetMembership,
@@ -357,6 +358,7 @@ internal fun LibraryCollectionBrowser(
                             app = app,
                             iconRatio = libraryState.iconRatio,
                             iconShape = libraryState.iconShape,
+                            enhancedIcons = libraryState.enhancedIcons,
                             hideTitle = libraryState.hideGridTitles,
                             gridSpacing = libraryState.gridSpacing.value,
                             onOpenApp = onOpenApp,
@@ -389,6 +391,7 @@ internal fun LibraryCollectionBrowser(
                             app = app,
                             iconRatio = libraryState.iconRatio,
                             iconShape = libraryState.iconShape,
+                            enhancedIcons = libraryState.enhancedIcons,
                             showDescription = libraryState.showListDescription,
                             onOpenApp = onOpenApp,
                             onOpenActions = onOpenActions,
@@ -532,6 +535,7 @@ private fun LibraryCollectionListItem(
     app: LibraryAppUiItem,
     iconRatio: LibraryIconRatio,
     iconShape: LibraryIconShape,
+    enhancedIcons: Boolean,
     showDescription: Boolean,
     onOpenApp: (Int) -> Unit,
     onOpenActions: (LibraryAppUiItem) -> Unit,
@@ -557,6 +561,7 @@ private fun LibraryCollectionListItem(
                 contentSize = 40.dp,
                 iconRatio = iconRatio,
                 iconShape = iconShape,
+                enhancedIcons = enhancedIcons,
             )
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -605,6 +610,7 @@ private fun LibraryCollectionGridItem(
     app: LibraryAppUiItem,
     iconRatio: LibraryIconRatio,
     iconShape: LibraryIconShape,
+    enhancedIcons: Boolean,
     hideTitle: Boolean,
     gridSpacing: Dp,
     onOpenApp: (Int) -> Unit,
@@ -628,6 +634,7 @@ private fun LibraryCollectionGridItem(
                 contentSize = null,
                 iconRatio = iconRatio,
                 iconShape = iconShape,
+                enhancedIcons = enhancedIcons,
             )
             IconButton(
                 onClick = { onRemove(app.id) },
@@ -675,6 +682,7 @@ internal fun LibraryCollectionAppPicker(
     sortVariant: Int,
     iconRatio: LibraryIconRatio,
     iconShape: LibraryIconShape,
+    enhancedIcons: Boolean = true,
     scaffoldPadding: PaddingValues,
     onBack: () -> Unit,
     onSetMembership: (Int, Boolean) -> Unit,
@@ -762,6 +770,7 @@ internal fun LibraryCollectionAppPicker(
                         contentSize = 40.dp,
                         iconRatio = iconRatio,
                         iconShape = iconShape,
+                        enhancedIcons = enhancedIcons,
                     )
                     Spacer(Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {

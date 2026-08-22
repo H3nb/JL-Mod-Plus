@@ -15,7 +15,6 @@
 package javax.microedition.shell
 
 import android.content.res.Configuration
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -210,8 +209,7 @@ private fun MidletSelectionDialog(
                 ScrollableContentHint(
                     visible = canScrollForward,
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
+                        .align(Alignment.BottomCenter),
                 )
             }
         },
@@ -353,8 +351,7 @@ private fun HideButtonsDialog(
                 ScrollableContentHint(
                     visible = canScrollForward,
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
+                        .align(Alignment.BottomCenter),
                 )
             }
         },
@@ -474,8 +471,7 @@ private fun LayoutSelectionDialog(
                 ScrollableContentHint(
                     visible = canScrollForward,
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
+                        .align(Alignment.BottomCenter),
                 )
             }
         },

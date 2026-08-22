@@ -475,8 +475,7 @@ private fun SettingsChoiceDialog(
                 ScrollableContentHint(
                     visible = canScrollForward,
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
+                        .align(Alignment.BottomCenter),
                 )
             }
         },

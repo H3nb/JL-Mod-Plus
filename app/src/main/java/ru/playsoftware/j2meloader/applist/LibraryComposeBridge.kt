@@ -58,7 +58,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.isImeVisible
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -99,6 +98,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
@@ -163,6 +163,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.zIndex
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -244,6 +245,7 @@ data class LibraryUiState(
     val layout: LibraryLayout = LibraryLayout.List,
     val iconRatio: LibraryIconRatio = LibraryIconRatio.Square,
     val iconShape: LibraryIconShape = LibraryIconShape.Round,
+    val enhancedIcons: Boolean = true,
     val hideGridTitles: Boolean = false,
     val showListDescription: Boolean = true,
     val gridSpacing: LibraryGridSpacing = LibraryGridSpacing.Standard,
@@ -274,6 +276,7 @@ interface LibraryActions {
     fun onLayoutChange(layout: LibraryLayout)
     fun onIconRatioChange(iconRatio: LibraryIconRatio) = Unit
     fun onIconShapeChange(iconShape: LibraryIconShape) = Unit
+    fun onEnhancedIconsChange(enabled: Boolean) = Unit
     fun onHideGridTitlesChange(hide: Boolean) = Unit
     fun onShowListDescriptionChange(show: Boolean) = Unit
     fun onGridSpacingChange(spacing: LibraryGridSpacing) = Unit
@@ -303,6 +306,7 @@ class LibraryComposeController(
     initialSortVariant: Int,
     initialIconRatio: LibraryIconRatio,
     initialIconShape: LibraryIconShape,
+    initialEnhancedIcons: Boolean,
     initialHideGridTitles: Boolean,
     initialShowListDescription: Boolean,
     initialGridSpacing: LibraryGridSpacing,
@@ -314,6 +318,7 @@ class LibraryComposeController(
             layout = initialLayout,
             iconRatio = initialIconRatio,
             iconShape = initialIconShape,
+            enhancedIcons = initialEnhancedIcons,
             hideGridTitles = initialHideGridTitles,
             showListDescription = initialShowListDescription,
             gridSpacing = initialGridSpacing,
@@ -410,6 +415,10 @@ class LibraryComposeController(
         state = state.copy(iconShape = iconShape)
     }
 
+    fun updateEnhancedIcons(enabled: Boolean) {
+        state = state.copy(enhancedIcons = enabled)
+    }
+
     fun updateHideGridTitles(hide: Boolean) {
         state = state.copy(hideGridTitles = hide)
     }
@@ -461,7 +470,9 @@ fun LibraryScreen(
     var appActions by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var renameTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var metadataTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
-    var metadataReturnAnchor by remember { mutableStateOf<LibraryScrollAnchor?>(null) }
+    var metadataCapturedAnchor by remember { mutableStateOf<LibraryScrollAnchor?>(null) }
+    var metadataRestoreAnchor by remember { mutableStateOf<LibraryScrollAnchor?>(null) }
+    var metadataRestoreAnchorKey by remember { mutableStateOf(0) }
     var appActionsCollectionId by remember { mutableStateOf<Long?>(null) }
     var deleteTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var infoDialog by remember { mutableStateOf<LibraryInfoDialog?>(null) }
@@ -541,24 +552,11 @@ fun LibraryScreen(
         )
     }
 
-    if (metadataApp != null) {
-        LibraryMetadataEditorScreen(
-            app = metadataApp,
-            onBack = { metadataTarget = null },
-            onSave = { title, vendor, description ->
-                metadataTarget = null
-                actions.onUpdateMetadata(
-                    metadataApp.id,
-                    title,
-                    vendor,
-                    metadataApp.version,
-                    description,
-                )
-            },
-            onPickIcon = { actions.onPickIcon(metadataApp.id) },
-            onResetIcon = { actions.onResetIcon(metadataApp.id) },
-        )
-        return
+    fun closeMetadataEditor() {
+        metadataRestoreAnchor = metadataCapturedAnchor ?: captureAppsAnchor()
+        metadataCapturedAnchor = null
+        metadataRestoreAnchorKey++
+        metadataTarget = null
     }
 
     LaunchedEffect(destination) {
@@ -570,7 +568,8 @@ fun LibraryScreen(
         }
     }
 
-    Row(modifier = modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize()) {
+        Row(modifier = Modifier.fillMaxSize()) {
         if (useNavigationRail) {
             LibraryNavigationRail(
                 selected = destination,
@@ -709,8 +708,9 @@ fun LibraryScreen(
                         listState = appsListState,
                         gridState = appsGridState,
                         navigationState = navigationState,
-                        returnAnchor = metadataReturnAnchor,
-                        onReturnAnchorConsumed = { metadataReturnAnchor = null },
+                        returnAnchor = metadataRestoreAnchor,
+                        returnAnchorKey = metadataRestoreAnchorKey,
+                        onReturnAnchorConsumed = { metadataRestoreAnchor = null },
                         onNavigationStateChanged = { navigationState = it },
                         selectionState = selectionState,
                         onOpenApp = actions::onOpenApp,
@@ -768,6 +768,7 @@ fun LibraryScreen(
                         onLayoutChange = actions::onLayoutChange,
                         onIconRatioChange = actions::onIconRatioChange,
                         onIconShapeChange = actions::onIconShapeChange,
+                        onEnhancedIconsChange = actions::onEnhancedIconsChange,
                         onHideGridTitlesChange = actions::onHideGridTitlesChange,
                         onShowListDescriptionChange = actions::onShowListDescriptionChange,
                         onGridSpacingChange = actions::onGridSpacingChange,
@@ -781,6 +782,33 @@ fun LibraryScreen(
                         onExit = actions::onExit,
                     )
                 }
+            }
+        }
+        }
+
+        metadataApp?.let { app ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .zIndex(3f),
+            ) {
+                LibraryMetadataEditorScreen(
+                    app = app,
+                    onBack = ::closeMetadataEditor,
+                    onSave = { title, vendor, description ->
+                        closeMetadataEditor()
+                        actions.onUpdateMetadata(
+                            app.id,
+                            title,
+                            vendor,
+                            app.version,
+                            description,
+                        )
+                    },
+                    onPickIcon = { actions.onPickIcon(app.id) },
+                    onResetIcon = { actions.onResetIcon(app.id) },
+                )
             }
         }
     }
@@ -830,7 +858,8 @@ fun LibraryScreen(
             onDelete = { deleteTarget = app },
             onEditMetadata = if (state.databaseControlsReady) {
                 {
-                    metadataReturnAnchor = captureAppsAnchor()
+                    metadataRestoreAnchor = null
+                    metadataCapturedAnchor = captureAppsAnchor()
                     metadataTarget = app
                 }
             } else {
@@ -1110,6 +1139,7 @@ internal fun LibraryAppsDestination(
     gridState: LazyGridState = rememberLazyGridState(),
     navigationState: LibraryNavigationState = LibraryNavigationState(),
     returnAnchor: LibraryScrollAnchor? = null,
+    returnAnchorKey: Any? = Unit,
     onReturnAnchorConsumed: () -> Unit = {},
     onNavigationStateChanged: (LibraryNavigationState) -> Unit = {},
     selectionState: LibrarySelectionState = LibrarySelectionState(),
@@ -1181,7 +1211,10 @@ internal fun LibraryAppsDestination(
         }
     }
 
-    LaunchedEffect(state.layout, state.generation, state.apps, returnAnchor) {
+    // The list/grid stays mounted while metadata and other overlays are open. Restore only when
+    // its actual surface or catalog generation changes; replaying this effect for every item
+    // mutation (for example a favorite toggle) would visibly jump back to the saved anchor.
+    LaunchedEffect(state.layout, state.generation, returnAnchorKey) {
         val surface = if (state.layout == LibraryLayout.List) {
             LibraryNavigationSurface.AppsList
         } else {
@@ -1207,11 +1240,7 @@ internal fun LibraryAppsDestination(
         if (returnAnchor != null) onReturnAnchorConsumed()
     }
 
-    LaunchedEffect(state.layout, state.generation, returnAnchor) {
-        // The metadata editor temporarily removes this destination from composition. Do not
-        // persist the empty/top layout that Compose reports during that hand-off over the
-        // explicitly captured return anchor.
-        if (returnAnchor != null) return@LaunchedEffect
+    LaunchedEffect(state.layout, state.generation) {
         val surface = if (currentLayout == LibraryLayout.List) {
             LibraryNavigationSurface.AppsList
         } else {
@@ -1382,6 +1411,7 @@ internal fun LibraryAppsDestination(
                             app = app,
                             iconRatio = state.iconRatio,
                             iconShape = state.iconShape,
+                            enhancedIcons = state.enhancedIcons,
                             hideTitle = state.hideGridTitles,
                             gridSpacing = state.gridSpacing.value,
                             onOpenApp = onOpenApp,
@@ -1419,6 +1449,7 @@ internal fun LibraryAppsDestination(
                             app = app,
                             iconRatio = state.iconRatio,
                             iconShape = state.iconShape,
+                            enhancedIcons = state.enhancedIcons,
                             showDescription = state.showListDescription,
                             onOpenApp = onOpenApp,
                             onOpenActions = onOpenActions,
@@ -1471,18 +1502,17 @@ private fun LibrarySelectionBottomBar(
     onReinstall: () -> Unit,
     onExport: () -> Unit,
 ) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .navigationBarsPadding(),
-        color = MaterialTheme.colorScheme.surfaceContainer,
+    NavigationBar(
+        modifier = Modifier.fillMaxWidth(),
+        windowInsets = NavigationBarDefaults.windowInsets,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         tonalElevation = 3.dp,
-        shadowElevation = 2.dp,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 4.dp, vertical = 6.dp),
+                .heightIn(min = 80.dp)
+                .padding(horizontal = 4.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             // Keep every icon at the same top edge. Centering columns with
             // different label heights makes one-line actions drift downward.
@@ -1925,6 +1955,7 @@ internal fun LibraryOptionsDestination(
     onLayoutChange: (LibraryLayout) -> Unit,
     onIconRatioChange: (LibraryIconRatio) -> Unit,
     onIconShapeChange: (LibraryIconShape) -> Unit,
+    onEnhancedIconsChange: (Boolean) -> Unit = {},
     onHideGridTitlesChange: (Boolean) -> Unit,
     onShowListDescriptionChange: (Boolean) -> Unit,
     onGridSpacingChange: (LibraryGridSpacing) -> Unit,
@@ -2041,6 +2072,39 @@ internal fun LibraryOptionsDestination(
                                     label = { Text(stringResource(R.string.library_icon_shape_square)) },
                                 )
                             }
+                        }
+                        val enhancedIconsLabel = stringResource(R.string.library_enhanced_icons_title)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 64.dp)
+                                .clickable(
+                                    role = Role.Switch,
+                                    onClick = { onEnhancedIconsChange(!state.enhancedIcons) },
+                                )
+                                .padding(horizontal = 16.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = enhancedIconsLabel,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium,
+                                )
+                                Text(
+                                    text = stringResource(R.string.library_enhanced_icons_summary),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                            }
+                            Switch(
+                                checked = state.enhancedIcons,
+                                onCheckedChange = onEnhancedIconsChange,
+                                modifier = Modifier.semantics {
+                                    contentDescription = enhancedIconsLabel
+                                },
+                            )
                         }
                         if (state.layout == LibraryLayout.Grid) {
                             LibraryOptionGroup(
@@ -2281,6 +2345,7 @@ private fun LibraryGridItem(
     onToggleSelection: (LibraryAppUiItem) -> Unit,
     iconRatio: LibraryIconRatio,
     iconShape: LibraryIconShape,
+    enhancedIcons: Boolean,
     hideTitle: Boolean,
     gridSpacing: Dp,
 ) {
@@ -2313,6 +2378,7 @@ private fun LibraryGridItem(
                 contentSize = null,
                 iconRatio = iconRatio,
                 iconShape = iconShape,
+                enhancedIcons = enhancedIcons,
             )
             if (selectionMode) {
                 Checkbox(
@@ -2361,6 +2427,7 @@ private fun LibraryListItem(
     onToggleSelection: (LibraryAppUiItem) -> Unit,
     iconRatio: LibraryIconRatio,
     iconShape: LibraryIconShape,
+    enhancedIcons: Boolean,
     showDescription: Boolean,
 ) {
     val selectionDescription = stringResource(
@@ -2395,6 +2462,7 @@ private fun LibraryListItem(
                 contentSize = 40.dp,
                 iconRatio = iconRatio,
                 iconShape = iconShape,
+                enhancedIcons = enhancedIcons,
             )
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -2512,24 +2580,21 @@ private fun LibraryFavoriteButton(
         onClick = { onFavorite(app.id, !app.favorite) },
         modifier = Modifier.size(36.dp),
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            AnimatedVisibility(
-                visible = app.favorite,
-                enter = fadeIn(tween(140)) + scaleIn(tween(180), initialScale = 0.55f),
-                exit = fadeOut(tween(100)) + scaleOut(tween(120), targetScale = 0.7f),
-            ) {
+        // Keep the slot dimensions identical for both states. AnimatedVisibility can temporarily
+        // measure an exiting/entering child at a different size, which makes a long list reflow
+        // when the user only intended to toggle the star.
+        Box(
+            modifier = Modifier.size(28.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (app.favorite) {
                 Icon(
                     painter = painterResource(R.drawable.ic_star_filled),
                     contentDescription = stringResource(R.string.library_filter_favorites),
                     modifier = Modifier.size(28.dp),
                     tint = MaterialTheme.colorScheme.primary,
                 )
-            }
-            AnimatedVisibility(
-                visible = !app.favorite,
-                enter = fadeIn(tween(120)) + scaleIn(tween(150), initialScale = 0.7f),
-                exit = fadeOut(tween(100)) + scaleOut(tween(120), targetScale = 0.55f),
-            ) {
+            } else {
                 Icon(
                     painter = painterResource(R.drawable.ic_star),
                     contentDescription = stringResource(R.string.library_filter_favorites),
@@ -3312,10 +3377,17 @@ private fun rememberLibraryIcon(
     app: LibraryAppUiItem,
     contentSize: Dp,
     iconRatio: LibraryIconRatio,
+    enhancedIcons: Boolean,
 ): LibraryNormalizedIcon? {
     val contentSizePx = with(LocalDensity.current) { contentSize.roundToPx() }.coerceAtLeast(1)
-    val cacheKey = remember(app.iconPath, app.iconRevision, contentSizePx, iconRatio) {
-        libraryIconCacheKey(app.iconPath, app.iconRevision, contentSizePx, iconRatio)
+    val cacheKey = remember(app.iconPath, app.iconRevision, contentSizePx, iconRatio, enhancedIcons) {
+        libraryIconCacheKey(
+            app.iconPath,
+            app.iconRevision,
+            contentSizePx,
+            iconRatio,
+            enhancedIcons,
+        )
     }
     val cached = remember(cacheKey) { LibraryIconCache.get(cacheKey) }
     return produceState<LibraryNormalizedIcon?>(initialValue = cached, cacheKey) {
@@ -3328,7 +3400,7 @@ private fun rememberLibraryIcon(
             withContext(Dispatchers.Default) {
                 normalizeLibraryIcon(
                     fileSource = bitmap,
-                    normalizeSquareIcon = iconRatio == LibraryIconRatio.Square,
+                    normalizeSquareIcon = enhancedIcons && iconRatio == LibraryIconRatio.Square,
                 )
             }
         } ?: return@produceState
@@ -3342,8 +3414,9 @@ private fun libraryIconCacheKey(
     iconRevision: Long,
     targetSizePx: Int,
     iconRatio: LibraryIconRatio,
+    enhancedIcons: Boolean,
 ): String {
-    return "real:$LIBRARY_ICON_PRESENTATION_VERSION:${iconPath.orEmpty()}:$iconRevision:$targetSizePx:${iconRatio.name}"
+    return "real:$LIBRARY_ICON_PRESENTATION_VERSION:${iconPath.orEmpty()}:$iconRevision:$targetSizePx:${iconRatio.name}:$enhancedIcons"
 }
 
 @Composable
@@ -3353,6 +3426,7 @@ internal fun LibraryIconSlot(
     contentSize: Dp?,
     iconRatio: LibraryIconRatio,
     iconShape: LibraryIconShape = LibraryIconShape.Round,
+    enhancedIcons: Boolean = true,
 ) {
     BoxWithConstraints(
         modifier = modifier.aspectRatio(iconRatio.widthToHeight),
@@ -3364,7 +3438,7 @@ internal fun LibraryIconSlot(
         val icon = if (app.iconPath.isNullOrBlank()) {
             null
         } else {
-            rememberLibraryIcon(app, artworkSize, iconRatio)
+            rememberLibraryIcon(app, artworkSize, iconRatio, enhancedIcons)
         }
         val isFallback = icon == null ||
             icon.presentationMode == LibraryIconPresentationMode.Fallback
@@ -3772,8 +3846,7 @@ internal fun AppActionsDialog(
                 ScrollableContentHint(
                     visible = canScrollForward,
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
+                        .align(Alignment.BottomCenter),
                 )
             }
         },
@@ -3878,12 +3951,12 @@ internal fun LibraryInformationDialog(
     val title = when (dialog) {
         LibraryInfoDialog.About -> stringResource(R.string.about)
         LibraryInfoDialog.Help -> stringResource(R.string.help)
-        LibraryInfoDialog.Licenses -> stringResource(R.string.licenses)
+        LibraryInfoDialog.Licenses -> stringResource(R.string.licenses).uppercase()
     }
     val icon = when (dialog) {
         LibraryInfoDialog.About -> R.drawable.ic_info
         LibraryInfoDialog.Help -> R.drawable.ic_help
-        LibraryInfoDialog.Licenses -> R.drawable.ic_list
+        LibraryInfoDialog.Licenses -> null
     }
     val layout = libraryDialogLayout()
     val maxMessageHeight = libraryDialogListHeight(
@@ -3906,17 +3979,26 @@ internal fun LibraryInformationDialog(
         properties = layout.properties,
         onDismissRequest = onDismiss,
         title = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Icon(
-                    painter = painterResource(icon),
-                    contentDescription = null,
-                    modifier = Modifier.size(26.dp),
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-                Text(title)
+            if (dialog == LibraryInfoDialog.Licenses) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(title)
+                }
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(requireNotNull(icon)),
+                        contentDescription = null,
+                        modifier = Modifier.size(26.dp),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(title)
+                }
             }
         },
         text = {
@@ -3948,8 +4030,7 @@ internal fun LibraryInformationDialog(
                         ScrollableContentHint(
                             visible = canScrollForward,
                             modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
+                                .align(Alignment.BottomCenter),
                         )
                     }
                 }
@@ -4018,8 +4099,7 @@ private fun LibraryAboutBody(
         ScrollableContentHint(
             visible = canScrollForward,
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
+                .align(Alignment.BottomCenter),
         )
     }
 }
@@ -4074,8 +4154,7 @@ private fun LibraryHelpBody(
         ScrollableContentHint(
             visible = canScrollForward,
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
+                .align(Alignment.BottomCenter),
         )
     }
 }
