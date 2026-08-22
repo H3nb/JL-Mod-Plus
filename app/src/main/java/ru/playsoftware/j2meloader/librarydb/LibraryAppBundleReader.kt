@@ -17,8 +17,11 @@ package ru.playsoftware.j2meloader.librarydb
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import java.io.BufferedInputStream
+import java.io.File
+import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream
+import java.security.MessageDigest
 import java.util.zip.ZipInputStream
 
 /** Config/data directory state declared by the universal app-payload manifest. */
@@ -156,12 +159,57 @@ internal object LibraryAppBundleReader {
                     relative.startsWith("data/")
                 if (!allowed) throw IOException("Unsupported app bundle entry: $entry")
             }
+            validateNamespaceState(
+                app.configState,
+                entries.mapNotNull { it.removePrefix(app.payloadRoot).takeIf { relative -> relative.startsWith("config/") } },
+                "configState",
+            )
+            validateNamespaceState(
+                app.dataState,
+                entries.mapNotNull { it.removePrefix(app.payloadRoot).takeIf { relative -> relative.startsWith("data/") } },
+                "dataState",
+            )
         }
         return ParsedBundle(
             formatVersion = LibraryAppBundleFormat.UNIVERSAL_VERSION,
             apps = apps,
             legacyAssurance = false,
         )
+    }
+
+    private fun validateNamespaceState(
+        state: BundleNamespaceState,
+        entries: List<String>,
+        field: String,
+    ) {
+        val hasFile = entries.any { !it.endsWith('/') }
+        when (state) {
+            BundleNamespaceState.Absent -> if (entries.isNotEmpty()) {
+                throw IOException("$field is absent but the ZIP contains namespace entries")
+            }
+            BundleNamespaceState.PresentEmpty -> if (hasFile) {
+                throw IOException("$field is present-empty but the ZIP contains files")
+            }
+            BundleNamespaceState.Present -> if (!hasFile) {
+                throw IOException("$field is present but the ZIP contains no files")
+            }
+        }
+    }
+
+    @Throws(IOException::class)
+    internal fun verifySourceHash(file: File, expected: String) {
+        if (!file.isFile) throw IOException("Staged source JAR is unavailable")
+        val digest = MessageDigest.getInstance("SHA-256")
+        val buffer = ByteArray(8 * 1024)
+        BufferedInputStream(FileInputStream(file)).use { input ->
+            while (true) {
+                val count = input.read(buffer)
+                if (count < 0) break
+                digest.update(buffer, 0, count)
+            }
+        }
+        val actual = digest.digest().joinToString("") { "%02x".format(it.toInt() and 0xff) }
+        if (actual != expected) throw IOException("App bundle source JAR hash does not match its manifest")
     }
 
     @Throws(IOException::class)

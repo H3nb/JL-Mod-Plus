@@ -16,7 +16,9 @@ package ru.playsoftware.j2meloader.librarydb
 
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.io.IOException
+import java.security.MessageDigest
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import org.junit.Assert.assertEquals
@@ -102,6 +104,43 @@ class LibraryAppBundleReaderTest {
         )
     }
 
+    @Test
+    fun rejectsNamespaceStateThatDoesNotMatchZipEntries() {
+        assertReadFails(
+            zip(
+                "bundle.json" to manifest("a0001", "Demo", "Vendor", "1.0", configState = "absent"),
+                "apps/a0001/app/res.jar" to byteArrayOf(1),
+                "apps/a0001/config/" to byteArrayOf(),
+            ),
+        )
+        assertReadFails(
+            zip(
+                "bundle.json" to manifest("a0001", "Demo", "Vendor", "1.0", configState = "present-empty"),
+                "apps/a0001/app/res.jar" to byteArrayOf(1),
+                "apps/a0001/config/settings.json" to byteArrayOf(1),
+            ),
+        )
+    }
+
+    @Test
+    fun verifiesStagedSourceHashAgainstManifestValue() {
+        val file = File.createTempFile("bundle-reader", ".jar")
+        try {
+            file.writeBytes(byteArrayOf(1, 2, 3))
+            val digest = MessageDigest.getInstance("SHA-256").digest(file.readBytes())
+            val expected = digest.joinToString("") { "%02x".format(it.toInt() and 0xff) }
+            LibraryAppBundleReader.verifySourceHash(file, expected)
+            try {
+                LibraryAppBundleReader.verifySourceHash(file, "0".repeat(64))
+                throw AssertionError("Expected source hash mismatch")
+            } catch (_: IOException) {
+                // Expected.
+            }
+        } finally {
+            file.delete()
+        }
+    }
+
     private fun assertReadFails(bytes: ByteArray) {
         try {
             LibraryAppBundleReader.read(ByteArrayInputStream(bytes))
@@ -117,9 +156,10 @@ class LibraryAppBundleReaderTest {
         vendor: String,
         version: String,
         hash: String = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        configState: String = "present-empty",
     ): ByteArray {
         return """
-            {"schema":"${LibraryAppBundleFormat.UNIVERSAL_SCHEMA}","formatVersion":2,"apps":[{"bundleId":"$bundleId","title":"$title","vendor":"$vendor","version":"$version","payloadRoot":"apps/$bundleId/","sourceSha256":"$hash","configState":"present-empty","dataState":"present"}]}
+            {"schema":"${LibraryAppBundleFormat.UNIVERSAL_SCHEMA}","formatVersion":2,"apps":[{"bundleId":"$bundleId","title":"$title","vendor":"$vendor","version":"$version","payloadRoot":"apps/$bundleId/","sourceSha256":"$hash","configState":"$configState","dataState":"present"}]}
         """.trimIndent().toByteArray()
     }
 
