@@ -4,6 +4,7 @@
 package ru.playsoftware.j2meloader.config
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -46,6 +47,7 @@ internal enum class ConfigMessageLevel { Info, Warning, Danger }
 @Composable
 internal fun ConfigSection(
     title: String,
+    highlighted: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -53,13 +55,23 @@ internal fun ConfigSection(
             text = title,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary,
+            color = if (highlighted) MaterialTheme.colorScheme.onPrimaryContainer
+            else MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(start = 12.dp, top = 6.dp, end = 12.dp, bottom = 1.dp),
         )
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            shape = MaterialTheme.shapes.large,
+            color = if (highlighted) {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.58f)
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerLow
+            },
+            border = if (highlighted) {
+                BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.42f))
+            } else {
+                null
+            },
         ) {
             Column(content = content)
         }

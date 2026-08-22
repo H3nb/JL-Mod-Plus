@@ -73,7 +73,10 @@ internal fun ConfigProfilePanel(
     }
     val summary = if (defaultSuffix == null) currentSummary else "$currentSummary · $defaultSuffix"
 
-    ConfigSection(title = stringResource(R.string.profiles)) {
+    ConfigSection(
+        title = stringResource(R.string.profiles),
+        highlighted = true,
+    ) {
         ConfigValuePreference(
             title = currentTitle,
             description = summary,
