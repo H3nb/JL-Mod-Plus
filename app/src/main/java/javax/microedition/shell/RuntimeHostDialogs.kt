@@ -56,6 +56,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import ru.playsoftware.j2meloader.R
+import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 
 /** Callbacks for host-owned runtime dialogs. MIDP state and rendering remain in Java. */
 interface RuntimeHostDialogActions {
@@ -144,11 +145,9 @@ private fun runtimeDialogLayout(): RuntimeDialogLayout {
 
 @Composable
 private fun runtimeDialogListHeight(maxHeight: Int = 420) =
-    LocalConfiguration.current.screenHeightDp
-        .minus(220)
-        .coerceAtLeast(120)
-        .coerceAtMost(maxHeight)
-        .dp
+    (availableWindowHeightDp() - 220.dp)
+        .coerceAtLeast(120.dp)
+        .coerceAtMost(maxHeight.dp)
 
 @Composable
 private fun MidletSelectionDialog(

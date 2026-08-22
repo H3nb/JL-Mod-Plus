@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import android.content.res.Configuration
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 import java.text.DecimalFormat
 import kotlin.math.roundToInt
 
@@ -117,7 +118,7 @@ object ConfigDialogComposeBridge {
 private fun DialogSurface(content: @Composable ColumnScope.() -> Unit) {
     val configuration = LocalConfiguration.current
     val landscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-    val maxHeight = (configuration.screenHeightDp.dp * if (landscape) 0.86f else 0.90f)
+    val maxHeight = (availableWindowHeightDp() * if (landscape) 0.86f else 0.90f)
         .coerceAtLeast(180.dp)
     Surface(
         modifier = Modifier

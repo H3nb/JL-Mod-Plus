@@ -257,7 +257,6 @@
     <string name="file_picker_choose">Pilih</string>
     <string name="file_picker_current_folder">Folder Saat Ini</string>
     <string name="file_picker_parent_folder">Folder Induk</string>
-    <string name="file_picker_parent_marker" translatable="false">..</string>
     <string name="file_picker_file">Berkas</string>
     <string name="file_picker_storage_volume">Volume Penyimpanan</string>
     <string name="file_picker_empty">Tidak ada berkas yang cocok</string>

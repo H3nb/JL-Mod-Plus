@@ -2,9 +2,6 @@
 <resources>
     <string name="bulk_install_title">Instal massal</string>
     <string name="bulk_install_planning">Memeriksa aplikasi yang dipilih…</string>
-    <string name="bulk_install_found">%1$d aplikasi ditemukan</string>
-    <string name="bulk_install_selected">%1$d dipilih</string>
-    <string name="bulk_install_review_summary">%1$d siap · %2$d dilewati · %3$d perlu ditinjau</string>
     <string name="bulk_install_empty">Tidak ada aplikasi yang didukung.</string>
     <string name="bulk_install_recommended">Rekomendasi</string>
     <string name="bulk_install_clear">Hapus pilihan</string>
@@ -17,7 +14,6 @@
     <string name="bulk_install_complete">Instalasi massal selesai</string>
     <string name="bulk_install_cancelled">Instalasi massal dihentikan</string>
     <string name="bulk_install_fatal">Instalasi massal dihentikan: %1$s</string>
-    <string name="bulk_install_result_summary">%1$d terinstal · %2$d diperbarui · %3$d diinstal ulang · %4$d dilewati · %5$d gagal</string>
     <string name="bulk_install_result_installed">Terinstal</string>
     <string name="bulk_install_result_updated">Diperbarui</string>
     <string name="bulk_install_result_reinstalled">Diinstal ulang</string>
@@ -25,8 +21,6 @@
     <string name="bulk_install_result_failed">Gagal</string>
     <string name="bulk_install_installed_version">Terinstal: %1$s</string>
     <string name="bulk_install_source">Sumber: %1$s</string>
-    <string name="bulk_install_warning_count">%1$d peringatan</string>
-    <string name="bulk_install_omitted_sources">%1$d berkas tambahan tidak disertakan agar peninjauan tetap responsif.</string>
     <string name="bulk_install_action_separate_copy">Instal sebagai salinan terpisah</string>
     <string name="bulk_install_action_jar_only">Instal JAR saja</string>
     <string name="bulk_install_status_new">Baru</string>

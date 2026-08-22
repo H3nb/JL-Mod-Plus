@@ -83,7 +83,6 @@
     <string name="config_help_system_properties">Properti Java ME lanjutan yang dilaporkan ke aplikasi.</string>
     <string name="config_help_system_properties_long">Edit satu properti per baris dengan format “nama: nilai”. Nilai yang salah dapat mengubah perilaku aplikasi, jadi ubah hanya jika diperlukan untuk kompatibilitas.</string>
     <string name="config_system_properties_info">Sebagian besar aplikasi tidak memerlukan perubahan di sini.</string>
-    <string name="config_system_properties_value">%1$d properti</string>
     <string name="config_font_sizes">Ukuran Font</string>
     <string name="config_help_font_sizes">Ukuran yang digunakan untuk font logis kecil, sedang, dan besar Java ME.</string>
     <string name="config_help_font_sizes_long">Nilai ini memetakan ukuran font logis Java ME ke piksel. Ubah secara bersamaan agar teks tetap seimbang di berbagai aplikasi.</string>

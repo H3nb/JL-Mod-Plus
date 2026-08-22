@@ -90,6 +90,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -104,6 +105,7 @@ import kotlinx.coroutines.launch
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.config.model.Size
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 import kotlin.math.roundToInt
 
 /** Host bridge; ConfigActivity remains the owner of persistence and platform-sensitive flows. */
@@ -555,7 +557,7 @@ private fun ConfigTopBar(
             IconButton(onClick = onBack) {
                 Icon(
                     painter = painterResource(R.drawable.ic_arrow_back),
-                    contentDescription = stringResource(androidx.appcompat.R.string.abc_action_bar_up_description),
+                    contentDescription = stringResource(R.string.action_back),
                 )
             }
         },
@@ -709,7 +711,7 @@ internal fun ScreenPresetDialog(
 ) {
     var customResolutionVisible by rememberSaveable { mutableStateOf(false) }
     val landscape = configDialogLandscape()
-    val dialogMaxHeight = (LocalConfiguration.current.screenHeightDp.dp * 0.88f).coerceAtLeast(180.dp)
+    val dialogMaxHeight = (availableWindowHeightDp() * 0.88f).coerceAtLeast(180.dp)
     val listedPresets = if (selectedPreset != null && !presets.contains(selectedPreset)) {
         listOf(selectedPreset) + presets
     } else {
@@ -879,7 +881,7 @@ private fun configDialogModifier(landscape: Boolean): Modifier = if (landscape) 
 
 @Composable
 private fun configDialogBodyModifier(landscape: Boolean): Modifier {
-    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val screenHeight = availableWindowHeightDp()
     val maxBodyHeight = if (landscape) {
         (screenHeight * 0.48f).coerceAtLeast(120.dp)
     } else {
@@ -1364,7 +1366,11 @@ private fun ConfigSystemPropertiesPreference(
     ConfigValuePreference(
         title = stringResource(R.string.config_edit_system_properties),
         description = stringResource(R.string.config_help_system_properties),
-        value = stringResource(R.string.config_system_properties_value, value.lineSequence().count { it.isNotBlank() }),
+        value = pluralStringResource(
+            R.plurals.config_system_properties_value,
+            value.lineSequence().count { it.isNotBlank() },
+            value.lineSequence().count { it.isNotBlank() },
+        ),
         message = stringResource(R.string.config_system_properties_info),
         onClick = onClick,
     )
@@ -1398,7 +1404,7 @@ internal fun ConfigSystemPropertiesPage(
                     IconButton(onClick = onBack) {
                         Icon(
                             painter = painterResource(R.drawable.ic_arrow_back),
-                            contentDescription = stringResource(androidx.appcompat.R.string.abc_action_bar_up_description),
+                            contentDescription = stringResource(R.string.action_back),
                         )
                     }
                 },

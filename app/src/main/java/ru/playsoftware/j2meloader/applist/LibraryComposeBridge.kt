@@ -170,6 +170,7 @@ import ru.playsoftware.j2meloader.librarydb.LibraryQuickView
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.TransientNoticeHost
 import ru.playsoftware.j2meloader.ui.TransientNoticeState
+import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 import kotlin.math.roundToInt
 
 enum class LibraryLayout {
@@ -3133,11 +3134,9 @@ private fun libraryDialogLayout(): LibraryDialogLayout {
 
 @Composable
 private fun libraryDialogListHeight(maxHeight: Int = 420) =
-    LocalConfiguration.current.screenHeightDp
-        .minus(220)
-        .coerceAtLeast(120)
-        .coerceAtMost(maxHeight)
-        .dp
+    (availableWindowHeightDp() - 220.dp)
+        .coerceAtLeast(120.dp)
+        .coerceAtMost(maxHeight.dp)
 
 @Composable
 internal fun AppActionsDialog(

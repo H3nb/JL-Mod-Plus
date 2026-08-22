@@ -53,6 +53,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import ru.playsoftware.j2meloader.R
+import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 
 /** Presentation-only state. Installation and repository ownership remain in InstallerDialog. */
@@ -279,11 +280,9 @@ private fun InstallerProgressMessage(status: String) {
 
 @Composable
 private fun InstallerMessage(message: String) {
-    val maxMessageHeight = LocalConfiguration.current.screenHeightDp
-        .minus(280)
-        .coerceAtLeast(120)
-        .coerceAtMost(360)
-        .dp
+    val maxMessageHeight = (availableWindowHeightDp() - 280.dp)
+        .coerceAtLeast(120.dp)
+        .coerceAtMost(360.dp)
     Text(
         text = message,
         modifier = Modifier

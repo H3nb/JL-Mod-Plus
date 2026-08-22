@@ -2,9 +2,6 @@
 <resources>
     <string name="bulk_install_title">Bulk install</string>
     <string name="bulk_install_planning">Checking selected applications…</string>
-    <string name="bulk_install_found">%1$d applications found</string>
-    <string name="bulk_install_selected">%1$d selected</string>
-    <string name="bulk_install_review_summary">%1$d ready · %2$d skipped · %3$d need review</string>
     <string name="bulk_install_empty">No supported applications were found.</string>
     <string name="bulk_install_recommended">Recommended</string>
     <string name="bulk_install_clear">Clear</string>
@@ -17,7 +14,6 @@
     <string name="bulk_install_complete">Bulk install complete</string>
     <string name="bulk_install_cancelled">Bulk install stopped</string>
     <string name="bulk_install_fatal">Bulk install stopped: %1$s</string>
-    <string name="bulk_install_result_summary">%1$d installed · %2$d updated · %3$d reinstalled · %4$d skipped · %5$d failed</string>
     <string name="bulk_install_result_installed">Installed</string>
     <string name="bulk_install_result_updated">Updated</string>
     <string name="bulk_install_result_reinstalled">Reinstalled</string>
@@ -25,8 +21,6 @@
     <string name="bulk_install_result_failed">Failed</string>
     <string name="bulk_install_installed_version">Installed: %1$s</string>
     <string name="bulk_install_source">Source: %1$s</string>
-    <string name="bulk_install_warning_count">%1$d warnings</string>
-    <string name="bulk_install_omitted_sources">%1$d additional files were omitted to keep the review responsive.</string>
     <string name="bulk_install_action_separate_copy">Install as separate copy</string>
     <string name="bulk_install_action_jar_only">Install JAR only</string>
     <string name="bulk_install_status_new">New</string>

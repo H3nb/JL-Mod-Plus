@@ -37,6 +37,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 
 /** Actions stay in MainActivity so permission, picker, recovery, and Fragment contracts remain host-owned. */
 internal interface MainHostActions {
@@ -130,11 +131,9 @@ private fun mainHostDialogLayout(): MainHostDialogLayout {
 
 @Composable
 private fun MainHostDialogText(message: String) {
-    val maxHeight = LocalConfiguration.current.screenHeightDp
-        .minus(220)
-        .coerceAtLeast(120)
-        .coerceAtMost(420)
-        .dp
+    val maxHeight = (availableWindowHeightDp() - 220.dp)
+        .coerceAtLeast(120.dp)
+        .coerceAtMost(420.dp)
     Text(
         text = message,
         modifier = androidx.compose.ui.Modifier

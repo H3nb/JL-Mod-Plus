@@ -8,4 +8,60 @@
         <item quantity="one">%1$d app selected</item>
         <item quantity="other">%1$d apps selected</item>
     </plurals>
+    <plurals name="library_collection_member_count">
+        <item quantity="one">%1$d app</item>
+        <item quantity="other">%1$d apps</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">%1$d application found</item>
+        <item quantity="other">%1$d applications found</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">%1$d ready</item>
+        <item quantity="other">%1$d ready</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">%1$d skipped</item>
+        <item quantity="other">%1$d skipped</item>
+    </plurals>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one">%1$d needs review</item>
+        <item quantity="other">%1$d need review</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">%1$d installed</item>
+        <item quantity="other">%1$d installed</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">%1$d updated</item>
+        <item quantity="other">%1$d updated</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">%1$d reinstalled</item>
+        <item quantity="other">%1$d reinstalled</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">%1$d skipped</item>
+        <item quantity="other">%1$d skipped</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">%1$d failed</item>
+        <item quantity="other">%1$d failed</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one">%1$d warning</item>
+        <item quantity="other">%1$d warnings</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">%1$d additional file was omitted to keep the review responsive.</item>
+        <item quantity="other">%1$d additional files were omitted to keep the review responsive.</item>
+    </plurals>
+    <plurals name="config_system_properties_value">
+        <item quantity="one">%1$d property</item>
+        <item quantity="other">%1$d properties</item>
+    </plurals>
 </resources>

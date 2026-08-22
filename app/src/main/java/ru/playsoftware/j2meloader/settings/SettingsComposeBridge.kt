@@ -147,9 +147,7 @@ fun SettingsScreen(
                     IconButton(onClick = actions::onBack) {
                         Icon(
                             painter = painterResource(R.drawable.ic_arrow_back),
-                            contentDescription = stringResource(
-                                androidx.appcompat.R.string.abc_action_bar_up_description,
-                            ),
+                            contentDescription = stringResource(R.string.action_back),
                         )
                     }
                 },

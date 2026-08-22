@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 
 /** Android-host menu state only; Java ME Displayable and Command state stay in the runtime. */
 internal data class RuntimeMenuUiState(
@@ -224,11 +225,9 @@ private fun runtimeMenuDialogLayout(): RuntimeMenuDialogLayout {
 
 @Composable
 private fun runtimeMenuDialogContentHeight(maxHeight: Int = 420) =
-    LocalConfiguration.current.screenHeightDp
-        .minus(220)
-        .coerceAtLeast(120)
-        .coerceAtMost(maxHeight)
-        .dp
+    (availableWindowHeightDp() - 220.dp)
+        .coerceAtLeast(120.dp)
+        .coerceAtMost(maxHeight.dp)
 
 @Composable
 internal fun RuntimeLimitFpsDialog(
@@ -344,7 +343,7 @@ private fun RuntimeToolbar(
             Box {
                 RuntimeToolbarAction(
                     icon = R.drawable.ic_more_vert,
-                    label = androidx.appcompat.R.string.abc_action_menu_overflow_description,
+                    label = R.string.cmd_menu,
                     size = actionSize,
                     onClick = onOpenMenu,
                 )

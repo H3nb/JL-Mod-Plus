@@ -62,6 +62,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -388,8 +389,9 @@ internal fun LibraryCollectionsDestination(
                         },
                         supportingContent = {
                             Text(
-                                text = stringResource(
-                                    R.string.library_collection_member_count,
+                                text = pluralStringResource(
+                                    R.plurals.library_collection_member_count,
+                                    collection.appCount,
                                     collection.appCount,
                                 ),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -573,8 +575,9 @@ private fun AddToCollectionDialog(
                                 },
                                 supportingContent = {
                                     Text(
-                                        stringResource(
-                                            R.string.library_collection_member_count,
+                                        pluralStringResource(
+                                            R.plurals.library_collection_member_count,
+                                            collection.appCount,
                                             collection.appCount,
                                         ),
                                     )

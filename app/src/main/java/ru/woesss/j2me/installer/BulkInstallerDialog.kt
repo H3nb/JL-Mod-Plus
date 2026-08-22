@@ -46,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -56,6 +57,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.librarydb.LibraryViewModel
+import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 
 class BulkInstallerDialog : DialogFragment() {
@@ -77,7 +79,11 @@ class BulkInstallerDialog : DialogFragment() {
                 args.getStringArrayList(ARG_SOURCES).orEmpty(),
                 libraryViewModel,
                 args.getInt(ARG_OMITTED_SOURCES).takeIf { it > 0 }?.let { omitted ->
-                    getString(R.string.bulk_install_omitted_sources, omitted)
+                    resources.getQuantityString(
+                        R.plurals.bulk_install_omitted_sources,
+                        omitted,
+                        omitted,
+                    )
                 },
             )
         }
@@ -150,9 +156,8 @@ private fun BulkInstallSurface(
     onCancel: () -> Unit,
     onClose: () -> Unit,
 ) {
-    val maxHeight = (LocalConfiguration.current.screenHeightDp - 48)
-        .coerceIn(240, 760)
-        .dp
+    val maxHeight = (availableWindowHeightDp() - 48.dp)
+        .coerceIn(240.dp, 760.dp)
     Surface(
         shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -236,9 +241,19 @@ private fun ReviewContent(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(stringResource(R.string.bulk_install_found, plan.items.size))
             Text(
-                text = stringResource(R.string.bulk_install_selected, plan.selectedCount),
+                pluralStringResource(
+                    R.plurals.bulk_install_found,
+                    plan.items.size,
+                    plan.items.size,
+                ),
+            )
+            Text(
+                text = pluralStringResource(
+                    R.plurals.bulk_install_selected,
+                    plan.selectedCount,
+                    plan.selectedCount,
+                ),
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -246,7 +261,11 @@ private fun ReviewContent(
         ReviewStatusSummary(plan)
         if (plan.warnings.isNotEmpty()) {
             Text(
-                text = stringResource(R.string.bulk_install_warning_count, plan.warnings.size),
+                text = pluralStringResource(
+                    R.plurals.bulk_install_warning_count,
+                    plan.warnings.size,
+                    plan.warnings.size,
+                ),
                 modifier = Modifier.padding(top = 4.dp),
                 color = MaterialTheme.colorScheme.tertiary,
                 style = MaterialTheme.typography.labelMedium,
@@ -317,7 +336,11 @@ private fun ReviewStatusSummary(plan: BulkInstallPlan) {
     }
     val attention = plan.items.size - ready - skipped
     Text(
-        text = stringResource(R.string.bulk_install_review_summary, ready, skipped, attention),
+        text = listOf(
+            pluralStringResource(R.plurals.bulk_install_ready_count, ready, ready),
+            pluralStringResource(R.plurals.bulk_install_skipped_count, skipped, skipped),
+            pluralStringResource(R.plurals.bulk_install_attention_count, attention, attention),
+        ).joinToString(" · "),
         modifier = Modifier.padding(top = 2.dp),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -529,14 +552,21 @@ private fun ResultCounters(results: List<BulkInstallResult>) {
     val skipped = results.count { it.kind == BulkInstallResultKind.Skipped }
     val failed = results.count { it.kind == BulkInstallResultKind.Failed }
     Text(
-        stringResource(
-            R.string.bulk_install_result_summary,
-            installed,
-            updated,
-            reinstalled,
-            skipped,
-            failed,
-        ),
+        listOf(
+            pluralStringResource(R.plurals.bulk_install_installed_count, installed, installed),
+            pluralStringResource(R.plurals.bulk_install_updated_count, updated, updated),
+            pluralStringResource(
+                R.plurals.bulk_install_reinstalled_count,
+                reinstalled,
+                reinstalled,
+            ),
+            pluralStringResource(
+                R.plurals.bulk_install_skipped_result_count,
+                skipped,
+                skipped,
+            ),
+            pluralStringResource(R.plurals.bulk_install_failed_count, failed, failed),
+        ).joinToString(" · "),
         style = MaterialTheme.typography.bodySmall,
     )
 }
