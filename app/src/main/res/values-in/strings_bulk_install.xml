@@ -5,7 +5,6 @@
     <string name="bulk_install_empty">Tidak ada aplikasi yang didukung.</string>
     <string name="bulk_install_recommended">Rekomendasi</string>
     <string name="bulk_install_clear">Hapus pilihan</string>
-    <string name="bulk_install_install">Instal Yang Dipilih</string>
     <string name="bulk_install_install_count">Instal %1$d</string>
     <string name="bulk_install_cancel">Batal</string>
     <string name="bulk_install_close">Tutup</string>

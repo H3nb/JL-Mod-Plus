@@ -5,7 +5,6 @@
     <string name="bulk_install_empty">No supported applications were found.</string>
     <string name="bulk_install_recommended">Recommended</string>
     <string name="bulk_install_clear">Clear</string>
-    <string name="bulk_install_install">Install Selected</string>
     <string name="bulk_install_install_count">Install %1$d</string>
     <string name="bulk_install_cancel">Cancel</string>
     <string name="bulk_install_close">Close</string>

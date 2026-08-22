@@ -14,11 +14,7 @@
 
 package ru.playsoftware.j2meloader.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -26,8 +22,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,7 +31,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -46,8 +39,8 @@ import ru.playsoftware.j2meloader.R
 
 /**
  * Small, theme-aware affordance shown only when a bounded popup has content below its viewport.
- * The fade and compact tonal pill keep the affordance visually attached to the popup instead of
- * introducing a hard, opaque label across the content.
+ * A small trailing arrow keeps the cue visually attached to the popup without introducing a
+ * hard, floating label across the content.
  */
 @Composable
 internal fun ScrollableContentHint(
@@ -58,47 +51,17 @@ internal fun ScrollableContentHint(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(60.dp)
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f),
-                        MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.99f),
-                    ),
-                ),
-            ),
-        contentAlignment = Alignment.BottomCenter,
+            .height(28.dp),
+        contentAlignment = Alignment.BottomEnd,
     ) {
-        Surface(
-            shape = MaterialTheme.shapes.extraLarge,
-            // Keep the compact affordance opaque enough to avoid ghosting the last body line;
-            // the surrounding gradient still makes it read as part of the dialog surface.
-            color = MaterialTheme.colorScheme.surfaceContainerHighest,
-            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            tonalElevation = 2.dp,
-            shadowElevation = 1.dp,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)),
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_arrow_downward),
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = stringResource(R.string.dialog_scroll_hint),
-                    modifier = Modifier.padding(start = 6.dp),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
+        Icon(
+            painter = painterResource(R.drawable.ic_arrow_downward),
+            contentDescription = stringResource(R.string.dialog_scroll_hint),
+            modifier = Modifier
+                .padding(end = 12.dp, bottom = 6.dp)
+                .size(20.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.68f),
+        )
     }
 }
 

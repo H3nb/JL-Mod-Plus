@@ -398,8 +398,7 @@ public class MicroActivity extends AppCompatActivity {
 			return;
 		}
 		binding.displayableContainer.postDelayed(() -> {
-			if (isFinishing() || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1
-					&& isDestroyed()) || !(current instanceof Canvas)) {
+			if (isFinishing() || isDestroyed() || !(current instanceof Canvas)) {
 				return;
 			}
 			View inputTarget = findCanvasSurface(binding.displayableContainer);
@@ -688,8 +687,7 @@ public class MicroActivity extends AppCompatActivity {
 			View host = binding == null ? null : binding.displayableContainer;
 			if (host != null) {
 				host.post(() -> {
-					if (!isFinishing() && (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1 || !isDestroyed())
-							&& current instanceof Canvas) {
+					if (!isFinishing() && !isDestroyed() && current instanceof Canvas) {
 						applySystemUi(getRuntimeChrome(current), current);
 					}
 				});

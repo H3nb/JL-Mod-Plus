@@ -9,6 +9,7 @@ package ru.playsoftware.j2meloader.librarydb
 import android.app.Application
 import android.content.SharedPreferences
 import android.net.Uri
+import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -193,7 +194,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     fun setSort(value: Int) {
         if (sortVariant.value == value) return
         sortVariant.value = value
-        preferences.edit().putInt(PREF_APP_SORT, value).apply()
+        preferences.edit { putInt(PREF_APP_SORT, value) }
     }
 
     fun observe(owner: LifecycleOwner, observer: StateObserver) {
@@ -963,7 +964,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         val legacy = sharedPreferences.getString(PREF_APP_SORT, "name")
         val migrated = if (legacy == "name") LibraryListProjection.SORT_TITLE
         else LibraryListProjection.SORT_DATE
-        sharedPreferences.edit().putInt(PREF_APP_SORT, migrated).apply()
+        sharedPreferences.edit { putInt(PREF_APP_SORT, migrated) }
         migrated
     }
 }

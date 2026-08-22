@@ -5,7 +5,7 @@
     <string name="about_maintainer" translatable="false">Maintainer: Hendra Bara\'langi\' (H3NB)</string>
     <string name="about_product_name" translatable="false">JL-Mod Plus</string>
     <string name="about_message">This app allows you to launch J2ME apps and games on Android.</string>
-    <string name="about_lineage">JL-Mod Plus is a fork of JL-Mod by woesss (Yury Kharchenko), itself a fork and experimental mod of J2ME-Loader by Nikita Shakarun. Upstream attribution and license notices are preserved in the project.</string>
+    <string name="about_lineage">JL-Mod Plus is a fork of JL-Mod by woesss (Yury Kharchenko), itself a fork and experimental mod of J2ME-Loader by Nikita Shakarun. The fork is maintained through sustained design, engineering, testing, and infrastructure work. Upstream attribution and license notices are preserved in the project.</string>
     <string name="action_context_delete">Delete</string>
     <string name="action_context_rename">Rename</string>
     <string name="action_context_shortcut">Add Shortcut</string>
@@ -341,4 +341,6 @@
     <string name="config_color_picker_invalid">Enter exactly six hexadecimal digits.</string>
     <string name="config_color_picker_saturation_value">Saturation and brightness</string>
     <string name="config_color_picker_hue">Hue</string>
+    <string name="config_decrease_value">Decrease value</string>
+    <string name="config_increase_value">Increase value</string>
 </resources>

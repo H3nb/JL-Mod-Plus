@@ -2,7 +2,7 @@
 <resources>
     <string name="about">Tentang</string>
     <string name="about_message">Aplikasi ini memungkinkan Anda menjalankan aplikasi dan permainan J2ME di Android.</string>
-    <string name="about_lineage">JL-Mod Plus adalah fork dari JL-Mod oleh woesss (Yury Kharchenko), yang juga merupakan fork dan mod eksperimental dari J2ME-Loader oleh Nikita Shakarun. Atribusi dan pemberitahuan lisensi upstream dipertahankan di dalam proyek.</string>
+    <string name="about_lineage">JL-Mod Plus adalah fork dari JL-Mod oleh woesss (Yury Kharchenko), yang juga merupakan fork dan mod eksperimental dari J2ME-Loader oleh Nikita Shakarun. Fork ini dipelihara melalui pekerjaan desain, rekayasa, pengujian, dan infrastruktur yang berkelanjutan. Atribusi dan pemberitahuan lisensi upstream dipertahankan di dalam proyek.</string>
     <string name="action_context_delete">Hapus</string>
     <string name="action_context_rename">Ubah Nama</string>
     <string name="action_context_shortcut">Buat Pintasan</string>
@@ -292,4 +292,6 @@
     <string name="config_color_picker_invalid">Masukkan tepat enam digit heksadesimal.</string>
     <string name="config_color_picker_saturation_value">Saturasi dan kecerahan</string>
     <string name="config_color_picker_hue">Rona</string>
+    <string name="config_decrease_value">Kurangi nilai</string>
+    <string name="config_increase_value">Tambah nilai</string>
 </resources>

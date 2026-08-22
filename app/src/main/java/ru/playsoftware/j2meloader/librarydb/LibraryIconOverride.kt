@@ -10,6 +10,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import androidx.core.graphics.scale
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -81,7 +82,7 @@ object LibraryIconOverride {
                 val width = (decoded.width * scale).toInt().coerceAtLeast(1)
                 val height = (decoded.height * scale).toInt().coerceAtLeast(1)
                 normalized = try {
-                    Bitmap.createScaledBitmap(decoded, width, height, true)
+                    decoded.scale(width, height, true)
                 } catch (error: OutOfMemoryError) {
                     throw IOException("Selected icon is too large to normalize safely", error)
                 }

@@ -320,11 +320,10 @@ internal fun ConfigActionPreference(
     description: String,
     onClick: () -> Unit,
     destructive: Boolean = false,
-    emphasized: Boolean = false,
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = if (emphasized) MaterialTheme.colorScheme.errorContainer else Color.Transparent,
+        color = Color.Transparent,
         shape = MaterialTheme.shapes.medium,
     ) {
         Column(
@@ -338,17 +337,13 @@ internal fun ConfigActionPreference(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
-                color = when {
-                    emphasized -> MaterialTheme.colorScheme.onErrorContainer
-                    destructive -> MaterialTheme.colorScheme.error
-                    else -> MaterialTheme.colorScheme.onSurface
-                },
+                color = if (destructive) MaterialTheme.colorScheme.error
+                else MaterialTheme.colorScheme.onSurface,
             )
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodySmall,
-                color = if (emphasized) MaterialTheme.colorScheme.onErrorContainer
-                else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

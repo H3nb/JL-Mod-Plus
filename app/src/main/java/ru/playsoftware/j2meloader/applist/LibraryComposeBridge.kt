@@ -112,6 +112,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -162,6 +164,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.get
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.Dispatchers
@@ -177,6 +180,9 @@ import ru.playsoftware.j2meloader.librarydb.LibraryQuickView
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.GlassSystemBarScrim
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+import ru.playsoftware.j2meloader.ui.jlModPlusFilterChipColors
+import ru.playsoftware.j2meloader.ui.jlModPlusNavigationBarItemColors
+import ru.playsoftware.j2meloader.ui.jlModPlusNavigationRailItemColors
 import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 import ru.playsoftware.j2meloader.ui.TransientNoticeHost
 import ru.playsoftware.j2meloader.ui.TransientNoticeState
@@ -236,6 +242,20 @@ data class LibraryAppUiItem(
     val totalPlayTimeMs: Long = 0L,
     /** Stable Room identity; [id] remains a transient Compose/host bridge id. */
     val databaseId: Long = id.toLong(),
+)
+
+private data class MetadataRestoreRequest(
+    val anchor: LibraryScrollAnchor,
+    val databaseId: Long,
+    val title: String,
+    val author: String,
+    val description: String,
+)
+
+private data class ConsumedReturnAnchor(
+    val key: Any?,
+    val layout: LibraryLayout,
+    val generation: Long,
 )
 
 data class LibraryUiState(
@@ -471,8 +491,8 @@ fun LibraryScreen(
     var renameTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var metadataTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var metadataCapturedAnchor by remember { mutableStateOf<LibraryScrollAnchor?>(null) }
-    var metadataRestoreAnchor by remember { mutableStateOf<LibraryScrollAnchor?>(null) }
-    var metadataRestoreAnchorKey by remember { mutableStateOf(0) }
+    var metadataRestoreRequest by remember { mutableStateOf<MetadataRestoreRequest?>(null) }
+    var metadataRestoreAnchorKey by remember { mutableIntStateOf(0) }
     var appActionsCollectionId by remember { mutableStateOf<Long?>(null) }
     var deleteTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var infoDialog by remember { mutableStateOf<LibraryInfoDialog?>(null) }
@@ -526,6 +546,17 @@ fun LibraryScreen(
     val metadataApp = metadataTarget?.let { target ->
         state.apps.firstOrNull { it.id == target.id } ?: target
     }
+    val metadataRestoreReady = metadataRestoreRequest?.let { request ->
+        val current = state.apps.firstOrNull { it.databaseId == request.databaseId }
+        // A filtered-out/deleted target cannot be measured, so the stable-id/fallback anchor
+        // is already the best possible restoration. Otherwise wait until the database projection
+        // contains the values submitted by the editor and the row has been remeasured.
+        current == null || (
+            current.title == request.title &&
+                current.author == request.author &&
+                current.description == request.description
+            )
+    } ?: false
 
     fun captureAppsAnchor(): LibraryScrollAnchor? {
         val surface = if (state.layout == LibraryLayout.List) {
@@ -552,10 +583,12 @@ fun LibraryScreen(
         )
     }
 
-    fun closeMetadataEditor() {
-        metadataRestoreAnchor = metadataCapturedAnchor ?: captureAppsAnchor()
+    fun closeMetadataEditor(restoreRequest: MetadataRestoreRequest? = null) {
+        metadataRestoreRequest = restoreRequest
+        if (restoreRequest != null) {
+            metadataRestoreAnchorKey++
+        }
         metadataCapturedAnchor = null
-        metadataRestoreAnchorKey++
         metadataTarget = null
     }
 
@@ -708,9 +741,10 @@ fun LibraryScreen(
                         listState = appsListState,
                         gridState = appsGridState,
                         navigationState = navigationState,
-                        returnAnchor = metadataRestoreAnchor,
+                        returnAnchor = metadataRestoreRequest?.anchor,
                         returnAnchorKey = metadataRestoreAnchorKey,
-                        onReturnAnchorConsumed = { metadataRestoreAnchor = null },
+                        returnAnchorReady = metadataRestoreReady,
+                        onReturnAnchorConsumed = { metadataRestoreRequest = null },
                         onNavigationStateChanged = { navigationState = it },
                         selectionState = selectionState,
                         onOpenApp = actions::onOpenApp,
@@ -797,7 +831,16 @@ fun LibraryScreen(
                     app = app,
                     onBack = ::closeMetadataEditor,
                     onSave = { title, vendor, description ->
-                        closeMetadataEditor()
+                        val restoreRequest = metadataCapturedAnchor?.let { anchor ->
+                            MetadataRestoreRequest(
+                                anchor = anchor,
+                                databaseId = app.databaseId,
+                                title = title,
+                                author = vendor,
+                                description = description,
+                            )
+                        }
+                        closeMetadataEditor(restoreRequest)
                         actions.onUpdateMetadata(
                             app.id,
                             title,
@@ -858,8 +901,12 @@ fun LibraryScreen(
             onDelete = { deleteTarget = app },
             onEditMetadata = if (state.databaseControlsReady) {
                 {
-                    metadataRestoreAnchor = null
-                    metadataCapturedAnchor = captureAppsAnchor()
+                    metadataRestoreRequest = null
+                    metadataCapturedAnchor = if (destination == LibraryDestination.Apps) {
+                        captureAppsAnchor()
+                    } else {
+                        null
+                    }
                     metadataTarget = app
                 }
             } else {
@@ -1064,6 +1111,7 @@ private fun ColumnScope.LibraryNavigationRailItem(
     NavigationRailItem(
         selected = destination == selected,
         onClick = { onSelected(destination) },
+        colors = jlModPlusNavigationRailItemColors(),
         icon = {
             Icon(
                 painter = painterResource(icon),
@@ -1120,6 +1168,7 @@ private fun RowScope.LibraryNavigationItem(
     NavigationBarItem(
         selected = destination == selected,
         onClick = { onSelected(destination) },
+        colors = jlModPlusNavigationBarItemColors(),
         icon = {
             Icon(
                 painter = painterResource(icon),
@@ -1140,6 +1189,7 @@ internal fun LibraryAppsDestination(
     navigationState: LibraryNavigationState = LibraryNavigationState(),
     returnAnchor: LibraryScrollAnchor? = null,
     returnAnchorKey: Any? = Unit,
+    returnAnchorReady: Boolean = true,
     onReturnAnchorConsumed: () -> Unit = {},
     onNavigationStateChanged: (LibraryNavigationState) -> Unit = {},
     selectionState: LibrarySelectionState = LibrarySelectionState(),
@@ -1163,10 +1213,10 @@ internal fun LibraryAppsDestination(
 ) {
     var query by rememberSaveable(queryStateKey) { mutableStateOf(state.appliedFilter) }
     var sortVisible by remember { mutableStateOf(false) }
-    val headerHeightPx = remember { mutableStateOf(0) }
-    val headerOffsetPx = remember { mutableStateOf(0f) }
+    val headerHeightPx = remember { mutableIntStateOf(0) }
+    val headerOffsetPx = remember { mutableFloatStateOf(0f) }
     val density = LocalDensity.current
-    val headerSpacerHeight = with(density) { headerHeightPx.value.toDp() }
+    val headerSpacerHeight = with(density) { headerHeightPx.intValue.toDp() }
     val hideDistancePx = with(density) { LIBRARY_CHROME_HIDE_DISTANCE_DP.dp.toPx() }
     val minScrollRoomPx = with(density) { LIBRARY_CHROME_MIN_SCROLL_ROOM_DP.dp.toPx() }
     val revealDistancePx = with(density) { LIBRARY_CHROME_REVEAL_DISTANCE_DP.dp.toPx() }
@@ -1177,13 +1227,14 @@ internal fun LibraryAppsDestination(
     val currentLayout by rememberUpdatedState(state.layout)
     val currentNavigationState by rememberUpdatedState(navigationState)
     val currentOnNavigationStateChanged by rememberUpdatedState(onNavigationStateChanged)
+    var consumedReturnAnchor by remember { mutableStateOf<ConsumedReturnAnchor?>(null) }
 
     LaunchedEffect(query) {
         onSearch(query)
     }
 
     LaunchedEffect(state.layout) {
-        headerOffsetPx.value = 0f
+        headerOffsetPx.floatValue = 0f
         chromeHysteresis.reset()
         onFabVisibilityChanged(true)
         onNavigationVisibilityChanged(true)
@@ -1202,8 +1253,8 @@ internal fun LibraryAppsDestination(
                 )
             }
         }.collectLatest { (index, offset, canScroll) ->
-            if ((index == 0 && offset == 0 || !canScroll) && headerOffsetPx.value >= -0.5f) {
-                headerOffsetPx.value = 0f
+            if ((index == 0 && offset == 0 || !canScroll) && headerOffsetPx.floatValue >= -0.5f) {
+                headerOffsetPx.floatValue = 0f
                 chromeHysteresis.reset()
                 onFabVisibilityChanged(true)
                 onNavigationVisibilityChanged(true)
@@ -1211,10 +1262,20 @@ internal fun LibraryAppsDestination(
         }
     }
 
-    // The list/grid stays mounted while metadata and other overlays are open. Restore only when
-    // its actual surface or catalog generation changes; replaying this effect for every item
-    // mutation (for example a favorite toggle) would visibly jump back to the saved anchor.
-    LaunchedEffect(state.layout, state.generation, returnAnchorKey) {
+    // The list/grid stays mounted while metadata and other overlays are open. A save request is
+    // held until the projection contains the submitted metadata, while a plain back leaves the
+    // existing LazyListState/LazyGridState untouched. This prevents a second scrollToItem from
+    // nudging the content after a row has been remeasured.
+    LaunchedEffect(state.layout, state.generation, returnAnchorKey, returnAnchorReady) {
+        if (
+            returnAnchor == null &&
+            consumedReturnAnchor?.key == returnAnchorKey &&
+            consumedReturnAnchor?.layout == state.layout &&
+            consumedReturnAnchor?.generation == state.generation
+        ) {
+            return@LaunchedEffect
+        }
+        if (returnAnchor != null && !returnAnchorReady) return@LaunchedEffect
         val surface = if (state.layout == LibraryLayout.List) {
             LibraryNavigationSurface.AppsList
         } else {
@@ -1237,7 +1298,14 @@ internal fun LibraryAppsDestination(
         ) {
             gridState.scrollToItem(targetIndex, anchor.offsetPx)
         }
-        if (returnAnchor != null) onReturnAnchorConsumed()
+        if (returnAnchor != null) {
+            consumedReturnAnchor = ConsumedReturnAnchor(
+                key = returnAnchorKey,
+                layout = state.layout,
+                generation = state.generation,
+            )
+            onReturnAnchorConsumed()
+        }
     }
 
     LaunchedEffect(state.layout, state.generation) {
@@ -1306,7 +1374,7 @@ internal fun LibraryAppsDestination(
                 available: Offset,
                 source: NestedScrollSource,
             ): Offset {
-                val height = headerHeightPx.value
+                val height = headerHeightPx.intValue
                 if (height <= 0) return Offset.Zero
 
                 val canScroll = if (state.layout == LibraryLayout.List) {
@@ -1315,13 +1383,13 @@ internal fun LibraryAppsDestination(
                     gridState.canScrollForward || gridState.canScrollBackward
                 }
                 if (!canScroll) {
-                    if (headerOffsetPx.value < -0.5f && (consumed.y > 0f || available.y > 0f)) {
-                        headerOffsetPx.value = 0f
+                    if (headerOffsetPx.floatValue < -0.5f && (consumed.y > 0f || available.y > 0f)) {
+                        headerOffsetPx.floatValue = 0f
                         if (chromeHysteresis.revealNow() != null) {
                             onFabVisibilityChanged(true)
                             onNavigationVisibilityChanged(true)
                         }
-                    } else if (headerOffsetPx.value == 0f && !chromeHysteresis.chromeVisible) {
+                    } else if (headerOffsetPx.floatValue == 0f && !chromeHysteresis.chromeVisible) {
                         chromeHysteresis.reset()
                         onFabVisibilityChanged(true)
                         onNavigationVisibilityChanged(true)
@@ -1344,7 +1412,7 @@ internal fun LibraryAppsDestination(
                     gridState.hasLibraryChromeScrollRoom(minScrollRoomPx)
                 }
                 if (delta < 0f && !hasScrollRoom) return Offset.Zero
-                val fullyHidden = headerOffsetPx.value <= -height.toFloat() + 0.5f
+                val fullyHidden = headerOffsetPx.floatValue <= -height.toFloat() + 0.5f
                 var visibilityChange = chromeHysteresis.onScrollDelta(delta)
                 val shouldMoveHeader =
                     delta < 0f ||
@@ -1352,13 +1420,13 @@ internal fun LibraryAppsDestination(
                         chromeHysteresis.chromeVisible ||
                         visibilityChange == true
                 if (shouldMoveHeader) {
-                    headerOffsetPx.value =
-                        (headerOffsetPx.value + delta).coerceIn(-height.toFloat(), 0f)
+                    headerOffsetPx.floatValue =
+                        (headerOffsetPx.floatValue + delta).coerceIn(-height.toFloat(), 0f)
                 }
 
                 if (
                     delta > 0f &&
-                    headerOffsetPx.value >= -0.5f &&
+                    headerOffsetPx.floatValue >= -0.5f &&
                     !chromeHysteresis.chromeVisible
                 ) {
                     visibilityChange = chromeHysteresis.revealNow()
@@ -1385,7 +1453,7 @@ internal fun LibraryAppsDestination(
                 state = gridState,
             ) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
-                    if (headerHeightPx.value == 0) {
+                    if (headerHeightPx.intValue == 0) {
                         renderHeader(
                             Modifier
                                 .alpha(0f)
@@ -1429,7 +1497,7 @@ internal fun LibraryAppsDestination(
                 state = listState,
             ) {
                 item {
-                    if (headerHeightPx.value == 0) {
+                    if (headerHeightPx.intValue == 0) {
                         renderHeader(
                             Modifier
                                 .alpha(0f)
@@ -1467,13 +1535,13 @@ internal fun LibraryAppsDestination(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .graphicsLayer { translationY = headerOffsetPx.value }
+                .graphicsLayer { translationY = headerOffsetPx.floatValue }
                 .background(MaterialTheme.colorScheme.background)
-                .onSizeChanged { headerHeightPx.value = it.height },
+                .onSizeChanged { headerHeightPx.intValue = it.height },
         ) {
             renderHeader(Modifier, true)
         }
-        GlassSystemBarScrim(visible = headerOffsetPx.value < -1f)
+        GlassSystemBarScrim(visible = headerOffsetPx.floatValue < -1f)
     }
 }
 
@@ -1790,6 +1858,7 @@ private fun LibraryQuickFilter(
         selected = selected,
         onClick = onClick,
         enabled = enabled,
+        colors = jlModPlusFilterChipColors(),
         leadingIcon = {
             Icon(
                 painter = painterResource(icon),
@@ -2008,6 +2077,7 @@ internal fun LibraryOptionsDestination(
                                 FilterChip(
                                     selected = state.layout == LibraryLayout.List,
                                     onClick = { onLayoutChange(LibraryLayout.List) },
+                                    colors = jlModPlusFilterChipColors(),
                                     label = { Text(stringResource(R.string.library_view_list)) },
                                     leadingIcon = {
                                         Icon(
@@ -2020,6 +2090,7 @@ internal fun LibraryOptionsDestination(
                                 FilterChip(
                                     selected = state.layout == LibraryLayout.Grid,
                                     onClick = { onLayoutChange(LibraryLayout.Grid) },
+                                    colors = jlModPlusFilterChipColors(),
                                     label = { Text(stringResource(R.string.library_view_grid)) },
                                     leadingIcon = {
                                         Icon(
@@ -2043,11 +2114,13 @@ internal fun LibraryOptionsDestination(
                                 FilterChip(
                                     selected = state.iconRatio == LibraryIconRatio.Square,
                                     onClick = { onIconRatioChange(LibraryIconRatio.Square) },
+                                    colors = jlModPlusFilterChipColors(),
                                     label = { Text(stringResource(R.string.library_icon_ratio_square)) },
                                 )
                                 FilterChip(
                                     selected = state.iconRatio == LibraryIconRatio.Portrait,
                                     onClick = { onIconRatioChange(LibraryIconRatio.Portrait) },
+                                    colors = jlModPlusFilterChipColors(),
                                     label = { Text(stringResource(R.string.library_icon_ratio_portrait)) },
                                 )
                             }
@@ -2064,11 +2137,13 @@ internal fun LibraryOptionsDestination(
                                 FilterChip(
                                     selected = state.iconShape == LibraryIconShape.Round,
                                     onClick = { onIconShapeChange(LibraryIconShape.Round) },
+                                    colors = jlModPlusFilterChipColors(),
                                     label = { Text(stringResource(R.string.library_icon_shape_round)) },
                                 )
                                 FilterChip(
                                     selected = state.iconShape == LibraryIconShape.Square,
                                     onClick = { onIconShapeChange(LibraryIconShape.Square) },
+                                    colors = jlModPlusFilterChipColors(),
                                     label = { Text(stringResource(R.string.library_icon_shape_square)) },
                                 )
                             }
@@ -2126,6 +2201,7 @@ internal fun LibraryOptionsDestination(
                                         FilterChip(
                                             selected = state.gridSpacing == spacing,
                                             onClick = { onGridSpacingChange(spacing) },
+                                            colors = jlModPlusFilterChipColors(),
                                             label = { Text(stringResource(label)) },
                                         )
                                     }
@@ -2648,7 +2724,7 @@ private data class LibraryNormalizedIcon(
     val tileColor: Color? = null,
 )
 
-private const val LIBRARY_ICON_PRESENTATION_VERSION = 6
+private const val LIBRARY_ICON_PRESENTATION_VERSION = 7
 private const val LIBRARY_ICON_WORK_CONCURRENCY = 3
 private const val LIBRARY_ICON_CACHE_MIN_BYTES = 8L * 1024L * 1024L
 private const val LIBRARY_ICON_CACHE_MAX_BYTES = 24L * 1024L * 1024L
@@ -2667,9 +2743,9 @@ private val LibraryIconCache = object : LruCache<String, LibraryNormalizedIcon>(
 
 private fun normalizeLibraryIcon(
     fileSource: Bitmap,
-    normalizeSquareIcon: Boolean,
+    enhanceIcon: Boolean,
 ): LibraryNormalizedIcon? {
-    if (!normalizeSquareIcon) {
+    if (!enhanceIcon) {
         return LibraryNormalizedIcon(
             bitmap = fileSource.asImageBitmap(),
             filterQuality = fileSource.libraryFilterQuality(),
@@ -2940,7 +3016,7 @@ private fun Bitmap.findUniformCornerBackgroundColor(): Int? {
     cornerRects.forEachIndexed { index, rect ->
         for (y in rect.top until rect.bottom step step) {
             for (x in rect.left until rect.right step step) {
-                val pixel = getPixel(x, y)
+                val pixel = this[x, y]
                 val alpha = (pixel ushr 24) and 0xff
                 if (alpha < LIBRARY_BACKGROUND_SAMPLE_ALPHA) continue
                 cornerSamples[index].add(pixel)
@@ -3004,7 +3080,7 @@ private fun Bitmap.findDominantVisibleColor(): LibraryDominantColorSample? {
     var visibleSamples = 0
     for (y in 0 until height step step) {
         for (x in 0 until width step step) {
-            val pixel = getPixel(x, y)
+            val pixel = this[x, y]
             if (((pixel ushr 24) and 0xff) < MIN_VISIBLE_ALPHA) continue
             bins[quantizeLibraryColor(pixel)]++
             visibleSamples++
@@ -3028,7 +3104,7 @@ private fun Bitmap.findDominantVisibleColor(): LibraryDominantColorSample? {
     var matched = 0
     for (y in 0 until height step step) {
         for (x in 0 until width step step) {
-            val pixel = getPixel(x, y)
+            val pixel = this[x, y]
             if (((pixel ushr 24) and 0xff) < MIN_VISIBLE_ALPHA) continue
             if (quantizeLibraryColor(pixel) != dominantBin) continue
             red += AndroidColor.red(pixel)
@@ -3400,7 +3476,7 @@ private fun rememberLibraryIcon(
             withContext(Dispatchers.Default) {
                 normalizeLibraryIcon(
                     fileSource = bitmap,
-                    normalizeSquareIcon = enhancedIcons && iconRatio == LibraryIconRatio.Square,
+                    enhanceIcon = enhancedIcons,
                 )
             }
         } ?: return@produceState
@@ -3445,7 +3521,6 @@ internal fun LibraryIconSlot(
         val baseContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
         val containerColor = when {
             isFallback -> colorResource(R.color.library_default_icon_background)
-            iconRatio != LibraryIconRatio.Square -> baseContainerColor
             icon.presentationMode == LibraryIconPresentationMode.Cover -> baseContainerColor
             else -> icon.tileColor ?: baseContainerColor
         }
@@ -3469,7 +3544,6 @@ internal fun LibraryIconSlot(
                     LibraryIconArtwork(
                         icon = icon,
                         contentSize = artworkSize,
-                        iconRatio = iconRatio,
                     )
                 }
             }
@@ -3500,12 +3574,10 @@ private const val LIBRARY_FALLBACK_VECTOR_PORTRAIT_SCALE = 0.62f
 private fun LibraryIconArtwork(
     icon: LibraryNormalizedIcon?,
     contentSize: Dp,
-    iconRatio: LibraryIconRatio,
 ) {
     if (icon == null) return
 
     val artworkModifier = when {
-        iconRatio != LibraryIconRatio.Square -> Modifier.fillMaxSize()
         icon.presentationMode == LibraryIconPresentationMode.Subject ||
             icon.presentationMode == LibraryIconPresentationMode.Backed ->
             Modifier.fillMaxSize(icon.visualScale)
@@ -3515,10 +3587,7 @@ private fun LibraryIconArtwork(
                 .clip(MaterialTheme.shapes.small)
         else -> Modifier.fillMaxSize()
     }
-    val contentScale = if (
-        iconRatio == LibraryIconRatio.Square &&
-        icon.presentationMode == LibraryIconPresentationMode.Cover
-    ) {
+    val contentScale = if (icon.presentationMode == LibraryIconPresentationMode.Cover) {
         ContentScale.Crop
     } else {
         ContentScale.Fit

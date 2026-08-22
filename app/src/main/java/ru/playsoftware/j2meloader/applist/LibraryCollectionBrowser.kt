@@ -49,6 +49,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -149,10 +151,10 @@ internal fun LibraryCollectionBrowser(
     val listState = rememberLazyListState()
     val gridState = rememberLazyGridState()
     val currentNavigationState by androidx.compose.runtime.rememberUpdatedState(navigationState)
-    val headerHeightPx = remember { mutableStateOf(0) }
-    val headerOffsetPx = remember { mutableStateOf(0f) }
+    val headerHeightPx = remember { mutableIntStateOf(0) }
+    val headerOffsetPx = remember { mutableFloatStateOf(0f) }
     val density = LocalDensity.current
-    val headerSpacerHeight = with(density) { headerHeightPx.value.toDp() }
+    val headerSpacerHeight = with(density) { headerHeightPx.intValue.toDp() }
     val hideDistancePx = with(density) { LIBRARY_CHROME_HIDE_DISTANCE_DP.dp.toPx() }
     val minScrollRoomPx = with(density) { LIBRARY_CHROME_MIN_SCROLL_ROOM_DP.dp.toPx() }
     val revealDistancePx = with(density) { 18.dp.toPx() }
@@ -214,7 +216,7 @@ internal fun LibraryCollectionBrowser(
     }
 
     LaunchedEffect(libraryState.layout, collection.id) {
-        headerOffsetPx.value = 0f
+        headerOffsetPx.floatValue = 0f
         chromeHysteresis.reset()
         onNavigationVisibilityChanged(true)
         snapshotFlow {
@@ -232,8 +234,8 @@ internal fun LibraryCollectionBrowser(
                 )
             }
         }.collectLatest { (index, offset, canScroll) ->
-            if ((index == 0 && offset == 0 || !canScroll) && headerOffsetPx.value >= -0.5f) {
-                headerOffsetPx.value = 0f
+            if ((index == 0 && offset == 0 || !canScroll) && headerOffsetPx.floatValue >= -0.5f) {
+                headerOffsetPx.floatValue = 0f
                 chromeHysteresis.reset()
                 onNavigationVisibilityChanged(true)
             }
@@ -252,7 +254,7 @@ internal fun LibraryCollectionBrowser(
                 available: Offset,
                 source: NestedScrollSource,
             ): Offset {
-                val height = headerHeightPx.value
+                val height = headerHeightPx.intValue
                 if (height <= 0) return Offset.Zero
 
                 val canScroll = if (libraryState.layout == LibraryLayout.List) {
@@ -261,12 +263,12 @@ internal fun LibraryCollectionBrowser(
                     gridState.canScrollForward || gridState.canScrollBackward
                 }
                 if (!canScroll) {
-                    if (headerOffsetPx.value < -0.5f && (consumed.y > 0f || available.y > 0f)) {
-                        headerOffsetPx.value = 0f
+                    if (headerOffsetPx.floatValue < -0.5f && (consumed.y > 0f || available.y > 0f)) {
+                        headerOffsetPx.floatValue = 0f
                         if (chromeHysteresis.revealNow() != null) {
                             onNavigationVisibilityChanged(true)
                         }
-                    } else if (headerOffsetPx.value == 0f && !chromeHysteresis.chromeVisible) {
+                    } else if (headerOffsetPx.floatValue == 0f && !chromeHysteresis.chromeVisible) {
                         chromeHysteresis.reset()
                         onNavigationVisibilityChanged(true)
                     }
@@ -287,15 +289,15 @@ internal fun LibraryCollectionBrowser(
                     gridState.hasLibraryChromeScrollRoom(minScrollRoomPx)
                 }
                 if (delta < 0f && !hasScrollRoom) return Offset.Zero
-                val fullyHidden = headerOffsetPx.value <= -height.toFloat() + 0.5f
+                val fullyHidden = headerOffsetPx.floatValue <= -height.toFloat() + 0.5f
                 var visibilityChange = chromeHysteresis.onScrollDelta(delta)
                 val shouldMoveHeader =
                     delta < 0f || !fullyHidden || chromeHysteresis.chromeVisible || visibilityChange == true
                 if (shouldMoveHeader) {
-                    headerOffsetPx.value =
-                        (headerOffsetPx.value + delta).coerceIn(-height.toFloat(), 0f)
+                    headerOffsetPx.floatValue =
+                        (headerOffsetPx.floatValue + delta).coerceIn(-height.toFloat(), 0f)
                 }
-                if (delta > 0f && headerOffsetPx.value >= -0.5f && !chromeHysteresis.chromeVisible) {
+                if (delta > 0f && headerOffsetPx.floatValue >= -0.5f && !chromeHysteresis.chromeVisible) {
                     visibilityChange = chromeHysteresis.revealNow()
                 }
                 visibilityChange?.let(onNavigationVisibilityChanged)
@@ -339,7 +341,7 @@ internal fun LibraryCollectionBrowser(
                 state = gridState,
             ) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
-                    if (headerHeightPx.value == 0) {
+                    if (headerHeightPx.intValue == 0) {
                         renderHeader(
                             Modifier.alpha(0f).clearAndSetSemantics { },
                             false,
@@ -374,7 +376,7 @@ internal fun LibraryCollectionBrowser(
                 state = listState,
             ) {
                 item {
-                    if (headerHeightPx.value == 0) {
+                    if (headerHeightPx.intValue == 0) {
                         renderHeader(
                             Modifier.alpha(0f).clearAndSetSemantics { },
                             false,
@@ -406,13 +408,13 @@ internal fun LibraryCollectionBrowser(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .graphicsLayer { translationY = headerOffsetPx.value }
+                .graphicsLayer { translationY = headerOffsetPx.floatValue }
                 .background(MaterialTheme.colorScheme.background)
-                .onSizeChanged { headerHeightPx.value = it.height },
+                .onSizeChanged { headerHeightPx.intValue = it.height },
         ) {
             renderHeader(Modifier, true)
         }
-        GlassSystemBarScrim(visible = headerOffsetPx.value < -1f)
+        GlassSystemBarScrim(visible = headerOffsetPx.floatValue < -1f)
     }
 }
 

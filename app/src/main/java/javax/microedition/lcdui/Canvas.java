@@ -1219,7 +1219,7 @@ public abstract class Canvas extends Displayable {
 			popup.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
 			int x = (int) (displayWidth - bounds.right);
 			int y = (int) (displayHeight - bounds.top);
-			popup.showAtLocation(overlayView, Gravity.RIGHT | Gravity.BOTTOM, x, y);
+			popup.showAtLocation(overlayView, Gravity.END | Gravity.BOTTOM, x, y);
 		}
 
 		@Override

@@ -254,7 +254,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 		configDir.mkdirs();
 		profileOrigin = readProfileOrigin();
-		builtInDefaultParams = new ProfileModel(configDir);
+		builtInDefaultParams = newBuiltInProfile();
 
 		defProfile = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
 				.getString(PREF_DEFAULT_PROFILE, null);
@@ -308,7 +308,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 					@Override
 					public void onResetSettings() {
 						setProfileOrigin(null);
-						params = new ProfileModel(configDir);
+						params = newBuiltInProfile();
 						loadParams(false);
 					}
 
@@ -375,7 +375,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			params = ProfilesManager.loadConfig(configDir);
 		}
 		if (params == null) {
-			params = new ProfileModel(configDir);
+			params = newBuiltInProfile();
 		}
 	}
 
@@ -526,6 +526,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	@Override
 	public void onConfigurationChanged(@NonNull Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
+		if (configDir != null) {
+			builtInDefaultParams = newBuiltInProfile();
+		}
 		if (display != null) {
 			fillScreenSizePresets(display.getWidth(), display.getHeight());
 			if (composeController != null) {
@@ -625,12 +628,21 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	private void applyBuiltInTemplate() {
 		setProfileOrigin(null);
-		params = new ProfileModel(configDir);
+		params = newBuiltInProfile();
 		currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
 		refreshProfileMatchCache();
 		if (composeController != null) {
 			composeController.update(createUiState());
 		}
+	}
+
+	private ProfileModel newBuiltInProfile() {
+		int nightMask = getResources().getConfiguration().uiMode
+				& Configuration.UI_MODE_NIGHT_MASK;
+		return ProfileModel.createBuiltIn(
+				configDir,
+				nightMask == Configuration.UI_MODE_NIGHT_YES
+		);
 	}
 
 	private void applyTemplate(@NonNull String name) {

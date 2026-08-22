@@ -19,6 +19,9 @@ import android.app.Activity
 import android.content.SharedPreferences
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -269,6 +272,43 @@ private fun AccentPalette.colorScheme(dark: Boolean): androidx.compose.material3
         surfaceTint = colors.primary,
     )
 }
+
+/**
+ * Accent-aware colors for navigation destinations.
+ *
+ * Material 3 uses a secondary container for the selected indicator by default. That
+ * container is intentionally neutral in our base scheme, so expose one shared mapping for
+ * every app-owned navigation surface instead of repeating ad-hoc colors at each call site.
+ */
+@Composable
+internal fun jlModPlusNavigationBarItemColors() = NavigationBarItemDefaults.colors(
+    selectedIconColor = MaterialTheme.colorScheme.primary,
+    selectedTextColor = MaterialTheme.colorScheme.primary,
+    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+)
+
+@Composable
+internal fun jlModPlusNavigationRailItemColors() = NavigationRailItemDefaults.colors(
+    selectedIconColor = MaterialTheme.colorScheme.primary,
+    selectedTextColor = MaterialTheme.colorScheme.primary,
+    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+)
+
+/** Shared selected/unselected treatment for quick filters and library option chips. */
+@Composable
+internal fun jlModPlusFilterChipColors() = FilterChipDefaults.filterChipColors(
+    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    selectedLeadingIconColor = MaterialTheme.colorScheme.primary,
+    selectedTrailingIconColor = MaterialTheme.colorScheme.primary,
+)
 
 /** Shared shape scale keeps fields, cards, menus, and action controls visually related. */
 private val AppShapes = Shapes(

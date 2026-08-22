@@ -43,6 +43,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -236,12 +237,27 @@ private fun ErrorDialog(
         },
         title = { Text(stringResource(R.string.error)) },
         text = {
-            Text(
-                text = message,
+            val scrollState = rememberScrollState()
+            val canScrollForward by remember {
+                derivedStateOf { scrollState.value < scrollState.maxValue }
+            }
+            Box(
                 modifier = Modifier
-                    .heightIn(max = runtimeDialogListHeight(300))
-                    .verticalScroll(rememberScrollState()),
-            )
+                    .fillMaxWidth()
+                    .heightIn(max = runtimeDialogListHeight(300)),
+            ) {
+                Text(
+                    text = message,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = runtimeDialogListHeight(300))
+                        .verticalScroll(scrollState),
+                )
+                ScrollableContentHint(
+                    visible = canScrollForward,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
+            }
         },
         confirmButton = {
             TextButton(onClick = onAcknowledge) {
@@ -384,10 +400,14 @@ private fun SaveVirtualKeyboardDialog(
             Text(stringResource(R.string.CONFIRMATION_REQUIRED))
         },
         text = {
+            val scrollState = rememberScrollState()
+            val canScrollForward by remember {
+                derivedStateOf { scrollState.value < scrollState.maxValue }
+            }
             Column(
                 modifier = Modifier
                     .heightIn(max = runtimeDialogListHeight(360))
-                    .verticalScroll(rememberScrollState()),
+                    .verticalScroll(scrollState),
             ) {
                 Text(stringResource(R.string.pref_vk_save_alert))
                 if (state.phone) {
@@ -403,9 +423,13 @@ private fun SaveVirtualKeyboardDialog(
                             .fillMaxWidth()
                             .toggleable(value = saveScreenParams, role = Role.Checkbox) {
                                 saveScreenParams = !saveScreenParams
-                            },
+                        },
                     )
                 }
+                ScrollableContentHint(
+                    visible = canScrollForward,
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                )
             }
         },
         confirmButton = {

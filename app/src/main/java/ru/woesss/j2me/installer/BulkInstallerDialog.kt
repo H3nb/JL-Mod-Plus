@@ -9,14 +9,13 @@ package ru.woesss.j2me.installer
 
 import android.app.Dialog
 import android.content.Context
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -55,6 +54,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.widthIn
 import androidx.core.net.toUri
+import androidx.core.graphics.drawable.toDrawable
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import ru.playsoftware.j2meloader.MainActivity
@@ -137,7 +137,7 @@ class BulkInstallerDialog : DialogFragment() {
             setContentView(compose)
             setCancelable(false)
             setCanceledOnTouchOutside(false)
-            window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            window?.setBackgroundDrawable(android.graphics.Color.TRANSPARENT.toDrawable())
         }
     }
 
@@ -158,7 +158,7 @@ class BulkInstallerDialog : DialogFragment() {
     override fun onStart() {
         super.onStart()
         val window = dialog?.window ?: return
-        window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        window.setBackgroundDrawable(android.graphics.Color.TRANSPARENT.toDrawable())
         // Let the dialog window follow the actual container; Compose applies the adaptive max width
         // below. This avoids using physical display metrics in split-screen and freeform windows.
         window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT)
@@ -551,32 +551,45 @@ private fun FinishedContent(
         }
         ResultCounters(state.results)
         if (state.results.isNotEmpty()) {
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth().weight(1f, fill = false),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+            val listState = rememberLazyListState()
+            val canScrollForward = rememberLazyListCanScrollForward(listState)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f, fill = false),
             ) {
-                items(state.results, key = { it.itemId }) { result ->
-                    Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                        Text(result.name, style = MaterialTheme.typography.titleSmall)
-                        Text(
-                            resultLabel(result.kind),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = if (result.kind == BulkInstallResultKind.Failed) {
-                                MaterialTheme.colorScheme.error
-                            } else {
-                                MaterialTheme.colorScheme.primary
-                            },
-                        )
-                        result.detail?.let { detail ->
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    state = listState,
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    items(state.results, key = { it.itemId }) { result ->
+                        Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                            Text(result.name, style = MaterialTheme.typography.titleSmall)
                             Text(
-                                detail,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                resultLabel(result.kind),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = if (result.kind == BulkInstallResultKind.Failed) {
+                                    MaterialTheme.colorScheme.error
+                                } else {
+                                    MaterialTheme.colorScheme.primary
+                                },
                             )
+                            result.detail?.let { detail ->
+                                Text(
+                                    detail,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                         }
+                        HorizontalDivider()
                     }
-                    HorizontalDivider()
                 }
+                ScrollableContentHint(
+                    visible = canScrollForward,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
             }
         }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {

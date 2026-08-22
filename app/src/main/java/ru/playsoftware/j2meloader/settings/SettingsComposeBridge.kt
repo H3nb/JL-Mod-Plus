@@ -244,7 +244,7 @@ fun SettingsScreen(
 
     state.directoryError?.let { message ->
         AlertDialog(
-            modifier = settingsDialogModifier(landscape),
+            modifier = Modifier.settingsDialogModifier(landscape),
             properties = DialogProperties(usePlatformDefaultWidth = !landscape),
             onDismissRequest = {},
             title = { Text(stringResource(R.string.error)) },
@@ -415,7 +415,7 @@ private fun SettingsChoiceDialog(
     val maxListHeight = if (landscape) 220.dp else 360.dp
     val canScrollForward = rememberLazyListCanScrollForward(listState)
     AlertDialog(
-        modifier = settingsDialogModifier(landscape),
+        modifier = Modifier.settingsDialogModifier(landscape),
         properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismiss,
         title = { Text(title) },
@@ -551,12 +551,12 @@ private fun SettingsActionRow(
     }
 }
 
-private fun settingsDialogModifier(landscape: Boolean): Modifier {
+private fun Modifier.settingsDialogModifier(landscape: Boolean): Modifier {
     return if (landscape) {
-        Modifier
+        this
             .fillMaxWidth(0.94f)
             .widthIn(max = 760.dp)
     } else {
-        Modifier.widthIn(max = 560.dp)
+        this.widthIn(max = 560.dp)
     }
 }

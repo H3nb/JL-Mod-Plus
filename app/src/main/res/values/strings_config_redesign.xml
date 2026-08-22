@@ -15,11 +15,8 @@
     <string name="profile_default_badge">Default for new apps</string>
     <string name="profile_save_template">Save As Profile</string>
     <string name="profile_save_template_summary">Save the current configuration as a reusable template.</string>
-    <string name="profile_builtin_default">Default</string>
-    <string name="profile_builtin_default_summary">Built-in emulator settings</string>
     <string name="config_lock_custom_resolution_ratio">Keep Width/Height Ratio While Editing</string>
     <string name="config_swap_screen_size">Swap width and height</string>
-    <string name="profile_manage_templates">Manage Templates</string>
     <string name="profile_builtin_settings">Built-In Settings</string>
     <string name="profile_builtin_settings_summary">JL-Mod Plus factory configuration</string>
     <string name="profile_default_template_summary">Default template for new apps</string>

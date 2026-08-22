@@ -29,11 +29,8 @@
     <string name="profile_default_badge">Bawaan untuk aplikasi baru</string>
     <string name="profile_save_template">Simpan Sebagai Profil</string>
     <string name="profile_save_template_summary">Simpan konfigurasi saat ini sebagai templat yang dapat digunakan kembali.</string>
-    <string name="profile_builtin_default">Bawaan</string>
-    <string name="profile_builtin_default_summary">Pengaturan bawaan emulator</string>
     <string name="config_lock_custom_resolution_ratio">Pertahankan Rasio Lebar/Tinggi Saat Mengedit</string>
     <string name="config_swap_screen_size">Tukar lebar dan tinggi</string>
-    <string name="profile_manage_templates">Kelola Templat</string>
     <string name="profile_builtin_settings">Pengaturan Bawaan</string>
     <string name="profile_builtin_settings_summary">Konfigurasi pabrik JL-Mod Plus</string>
     <string name="profile_default_template_summary">Template default untuk aplikasi baru</string>

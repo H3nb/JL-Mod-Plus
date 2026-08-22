@@ -8,7 +8,6 @@
 package ru.woesss.j2me.installer
 
 import android.content.Context
-import android.net.Uri
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -71,7 +70,7 @@ class BulkInstallViewModel : ViewModel() {
                 val job = coroutineContext[Job]
                 val plan = withContext(Dispatchers.IO) {
                     val files = uriStrings.mapNotNull { value ->
-                        Uri.parse(value).path?.let(::File)
+                        value.toUri().path?.let(::File)
                     }
                     BulkInstallPlanner.planExplicit(files, library) { job?.isActive == true }
                 }

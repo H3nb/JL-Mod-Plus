@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,6 +40,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import ru.playsoftware.j2meloader.R
+import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 
 private sealed interface TemplateNameRequest {
     data object Create : TemplateNameRequest
@@ -168,36 +171,51 @@ private fun ConfigTemplateManagerDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
                     )
-                    LazyColumn(modifier = Modifier.weight(1f, fill = false).fillMaxWidth()) {
-                        item(key = "__built_in__") {
-                            TemplateRow(
-                                name = stringResource(R.string.profile_builtin_settings),
-                                summary = stringResource(R.string.profile_builtin_settings_summary),
-                                isActive = status.builtInDefault,
-                                isModifiedSource = false,
-                                isDefault = status.defaultProfile == null,
-                                onClick = {
-                                    events.onApplyBuiltInTemplate()
-                                    onDismissRequest()
-                                },
-                                onMore = if (status.defaultProfile == null) null else ({ events.onSetDefaultTemplate(null) }),
-                                builtIn = true,
-                            )
+                    val listState = rememberLazyListState()
+                    val canScrollForward = rememberLazyListCanScrollForward(listState)
+                    Box(
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .fillMaxWidth(),
+                    ) {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxWidth(),
+                            state = listState,
+                        ) {
+                            item(key = "__built_in__") {
+                                TemplateRow(
+                                    name = stringResource(R.string.profile_builtin_settings),
+                                    summary = stringResource(R.string.profile_builtin_settings_summary),
+                                    isActive = status.builtInDefault,
+                                    isModifiedSource = false,
+                                    isDefault = status.defaultProfile == null,
+                                    onClick = {
+                                        events.onApplyBuiltInTemplate()
+                                        onDismissRequest()
+                                    },
+                                    onMore = if (status.defaultProfile == null) null else ({ events.onSetDefaultTemplate(null) }),
+                                    builtIn = true,
+                                )
+                            }
+                            items(templates, key = { it.name }) { template ->
+                                TemplateRow(
+                                    name = template.name,
+                                    summary = stringResource(R.string.profile_template_summary),
+                                    isActive = status.activeProfile == template.name,
+                                    isModifiedSource = status.modified && status.sourceProfile == template.name,
+                                    isDefault = template.isDefault,
+                                    onClick = {
+                                        events.onApplyTemplate(template.name)
+                                        onDismissRequest()
+                                    },
+                                    onMore = { actionTarget = template },
+                                )
+                            }
                         }
-                        items(templates, key = { it.name }) { template ->
-                            TemplateRow(
-                                name = template.name,
-                                summary = stringResource(R.string.profile_template_summary),
-                                isActive = status.activeProfile == template.name,
-                                isModifiedSource = status.modified && status.sourceProfile == template.name,
-                                isDefault = template.isDefault,
-                                onClick = {
-                                    events.onApplyTemplate(template.name)
-                                    onDismissRequest()
-                                },
-                                onMore = { actionTarget = template },
-                            )
-                        }
+                        ScrollableContentHint(
+                            visible = canScrollForward,
+                            modifier = Modifier.align(Alignment.BottomCenter),
+                        )
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),

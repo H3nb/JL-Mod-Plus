@@ -20,19 +20,20 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsTopHeight
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.zIndex
+
+private const val SYSTEM_BAR_SCRIM_ALPHA = 0.30f
 
 /**
  * Theme-aware translucent system-bar protection while a scrolling header is off-screen.
  *
  * Keep enough of the surface tint to preserve status-bar legibility, but leave the content
- * underneath perceptible while the header is being scrolled away. The vertical fade avoids the
- * hard horizontal edge produced by an opaque replacement bar and adapts to light/dark surfaces.
+ * underneath perceptible while the header is being scrolled away. The flat translucent layer
+ * avoids the hard edge produced by an opaque replacement bar and adapts to light/dark surfaces.
  */
 @Composable
 internal fun GlassSystemBarScrim(
@@ -40,26 +41,22 @@ internal fun GlassSystemBarScrim(
     modifier: Modifier = Modifier,
 ) {
     if (!visible) return
-    val darkTheme = isSystemInDarkTheme()
+    // Read the effective Compose surface rather than the platform setting so an explicitly
+    // selected in-app dark/light theme receives the matching scrim as well.
+    val darkTheme = MaterialTheme.colorScheme.surface.luminance() < 0.5f
     val scrimBase = if (darkTheme) {
         MaterialTheme.colorScheme.surfaceContainerHighest
     } else {
         MaterialTheme.colorScheme.surfaceContainerLow
     }
-    val topAlpha = if (darkTheme) 0.78f else 0.62f
-    val bottomAlpha = if (darkTheme) 0.42f else 0.24f
     Box(
         modifier = modifier
             .fillMaxWidth()
             .windowInsetsTopHeight(WindowInsets.statusBars)
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        scrimBase.copy(alpha = topAlpha),
-                        scrimBase.copy(alpha = bottomAlpha),
-                    ),
-                ),
-            )
+            // Keep the app content perceptible while providing a predictable 30% protection
+            // layer for status-bar icons in both themes. A flat scrim also avoids a visible
+            // gradient edge when the header is revealed again.
+            .background(scrimBase.copy(alpha = SYSTEM_BAR_SCRIM_ALPHA))
             .zIndex(2f),
     )
 }

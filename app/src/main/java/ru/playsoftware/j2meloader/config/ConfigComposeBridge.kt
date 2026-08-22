@@ -42,8 +42,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -66,8 +66,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -76,6 +74,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -106,7 +105,11 @@ import kotlinx.coroutines.launch
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.config.model.Size
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.ScrollableContentHint
 import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
+import ru.playsoftware.j2meloader.ui.jlModPlusNavigationBarItemColors
+import ru.playsoftware.j2meloader.ui.jlModPlusNavigationRailItemColors
+import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 import kotlin.math.roundToInt
 
 /** Host bridge; ConfigActivity remains the owner of persistence and platform-sensitive flows. */
@@ -497,6 +500,7 @@ private fun ConfigNavigationBar(
             NavigationBarItem(
                 selected = destination == selected,
                 onClick = { onSelected(destination) },
+                colors = jlModPlusNavigationBarItemColors(),
                 icon = {
                     Icon(
                         painter = painterResource(destination.icon),
@@ -524,6 +528,7 @@ private fun ConfigNavigationRail(
             NavigationRailItem(
                 selected = destination == selected,
                 onClick = { onSelected(destination) },
+                colors = jlModPlusNavigationRailItemColors(),
                 icon = {
                     Icon(
                         painter = painterResource(destination.icon),
@@ -727,6 +732,8 @@ internal fun ScreenPresetDialog(
     }
 
     val dialogContent: @Composable () -> Unit = {
+        val listState = rememberLazyListState()
+        val canScrollForward = rememberLazyListCanScrollForward(listState)
         Surface(
             modifier = Modifier
                 .fillMaxWidth(if (landscape) 0.90f else 0.92f)
@@ -744,51 +751,60 @@ internal fun ScreenPresetDialog(
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
                 )
-                LazyColumn(
+                Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth(),
                 ) {
-                    itemsIndexed(listedPresets) { index, preset ->
-                        val isTemporary = temporaryPreset && index == 0
-                        ListItem(
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                            headlineContent = {
-                                Text(
-                                    if (isTemporary) {
-                                        stringResource(R.string.config_current_screen_size, preset.toString())
-                                    } else {
-                                        preset.toString()
-                                    },
-                                )
-                            },
-                            leadingContent = {
-                                RadioButton(
-                                    selected = preset == selectedPreset,
-                                    onClick = null,
-                                )
-                            },
-                            trailingContent = if (!isTemporary && removablePresets.contains(preset)) {
-                                {
-                                    IconButton(onClick = { onRemove(preset) }) {
-                                        Icon(
-                                            painter = painterResource(R.drawable.ic_delete_report),
-                                            contentDescription = stringResource(R.string.remove_screen_preset),
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        state = listState,
+                    ) {
+                        itemsIndexed(listedPresets) { index, preset ->
+                            val isTemporary = temporaryPreset && index == 0
+                            ListItem(
+                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                                headlineContent = {
+                                    Text(
+                                        if (isTemporary) {
+                                            stringResource(R.string.config_current_screen_size, preset.toString())
+                                        } else {
+                                            preset.toString()
+                                        },
+                                    )
+                                },
+                                leadingContent = {
+                                    RadioButton(
+                                        selected = preset == selectedPreset,
+                                        onClick = null,
+                                    )
+                                },
+                                trailingContent = if (!isTemporary && removablePresets.contains(preset)) {
+                                    {
+                                        IconButton(onClick = { onRemove(preset) }) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.ic_delete_report),
+                                                contentDescription = stringResource(R.string.remove_screen_preset),
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
                                     }
-                                }
-                            } else {
-                                null
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable(
-                                    role = Role.RadioButton,
-                                    onClick = { selectAndDismiss(preset) },
-                                ),
-                        )
+                                } else {
+                                    null
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(
+                                        role = Role.RadioButton,
+                                        onClick = { selectAndDismiss(preset) },
+                                    ),
+                            )
+                        }
                     }
+                    ScrollableContentHint(
+                        visible = canScrollForward,
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                    )
                 }
                 HorizontalDivider()
                 if (onSwap != null) {
@@ -873,26 +889,49 @@ internal fun ScreenPresetDialog(
 private fun configDialogLandscape(): Boolean =
     LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-private fun configDialogModifier(landscape: Boolean): Modifier = if (landscape) {
-    Modifier
+private fun Modifier.configDialogModifier(landscape: Boolean): Modifier = if (landscape) {
+    this
         .fillMaxWidth(0.90f)
         .widthIn(max = 840.dp)
 } else {
-    Modifier.widthIn(max = 560.dp)
+    this.widthIn(max = 560.dp)
 }
 
 @Composable
-private fun configDialogBodyModifier(landscape: Boolean): Modifier {
+private fun ConfigDialogScrollableBody(
+    landscape: Boolean,
+    verticalArrangement: Arrangement.Vertical,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     val screenHeight = availableWindowHeightDp()
     val maxBodyHeight = if (landscape) {
         (screenHeight * 0.48f).coerceAtLeast(120.dp)
     } else {
         (screenHeight * 0.62f).coerceAtLeast(220.dp)
     }
-    return Modifier
-        .heightIn(max = maxBodyHeight)
-        .imePadding()
-        .verticalScroll(rememberScrollState())
+    val scrollState = rememberScrollState()
+    val canScrollForward by androidx.compose.runtime.remember {
+        androidx.compose.runtime.derivedStateOf { scrollState.value < scrollState.maxValue }
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = maxBodyHeight)
+            .imePadding(),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = maxBodyHeight)
+                .verticalScroll(scrollState),
+            verticalArrangement = verticalArrangement,
+            content = content,
+        )
+        ScrollableContentHint(
+            visible = canScrollForward,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
+    }
 }
 
 @Composable
@@ -909,21 +948,21 @@ internal fun CustomResolutionDialog(
         mutableStateOf(fallback.height.toString())
     }
     var lockAspect by rememberSaveable(fallback.width, fallback.height) { mutableStateOf(false) }
-    var aspectWidth by rememberSaveable(fallback.width, fallback.height) { mutableStateOf(fallback.width) }
-    var aspectHeight by rememberSaveable(fallback.width, fallback.height) { mutableStateOf(fallback.height) }
+    var aspectWidth by rememberSaveable(fallback.width, fallback.height) { mutableIntStateOf(fallback.width) }
+    var aspectHeight by rememberSaveable(fallback.width, fallback.height) { mutableIntStateOf(fallback.height) }
     val validWidth = width.toIntOrNull()?.takeIf { it > 0 }
     val validHeight = height.toIntOrNull()?.takeIf { it > 0 }
     val valid = validWidth != null && validHeight != null
     val landscape = configDialogLandscape()
 
     AlertDialog(
-        modifier = configDialogModifier(landscape),
+        modifier = Modifier.configDialogModifier(landscape),
         properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(R.string.config_custom_resolution)) },
         text = {
-            Column(
-                modifier = configDialogBodyModifier(landscape),
+            ConfigDialogScrollableBody(
+                landscape = landscape,
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Row(
@@ -1106,13 +1145,13 @@ internal fun FontSizesDialog(
     var largeDraft by remember(large) { mutableStateOf(large) }
     val landscape = configDialogLandscape()
     AlertDialog(
-        modifier = configDialogModifier(landscape),
+        modifier = Modifier.configDialogModifier(landscape),
         properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(R.string.config_font_sizes)) },
         text = {
-            Column(
-                modifier = configDialogBodyModifier(landscape),
+            ConfigDialogScrollableBody(
+                landscape = landscape,
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Text(
@@ -1354,7 +1393,6 @@ private fun SystemSection(
       title = stringResource(R.string.config_delete_game_data),
       description = stringResource(R.string.config_delete_game_data_summary),
       destructive = true,
-      emphasized = true,
       onClick = { onRequestAction(ConfigAction.ClearData) },
   )
         }
@@ -1449,14 +1487,12 @@ private fun SettingActionRow(
     title: String,
     summary: String? = null,
     destructive: Boolean = false,
-    emphasized: Boolean = false,
     onClick: () -> Unit,
 ) {
     ConfigActionPreference(
         title = title,
         description = summary ?: stringResource(R.string.config_help_action_generic),
         destructive = destructive,
-        emphasized = emphasized,
         onClick = onClick,
     )
 }
@@ -1475,7 +1511,7 @@ private fun ConfigActionConfirmationDialog(
     }
     val landscape = configDialogLandscape()
     AlertDialog(
-        modifier = configDialogModifier(landscape),
+        modifier = Modifier.configDialogModifier(landscape),
         properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(action.title)) },
@@ -1616,13 +1652,13 @@ internal fun ConfigNumberDialog(
     val landscape = configDialogLandscape()
 
     AlertDialog(
-        modifier = configDialogModifier(landscape),
+        modifier = Modifier.configDialogModifier(landscape),
         properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(title) },
         text = {
-            Column(
-                modifier = configDialogBodyModifier(landscape),
+            ConfigDialogScrollableBody(
+                landscape = landscape,
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 if (description != null) {
@@ -1634,13 +1670,13 @@ internal fun ConfigNumberDialog(
                 }
                 OutlinedTextField(
                     value = draft,
-                onValueChange = { draft = it },
-                modifier = Modifier.fillMaxWidth(),
-                label = label?.let { value ->
-                    { Text(value, maxLines = 1, overflow = TextOverflow.Ellipsis) }
-                },
-                suffix = valueSuffix?.let { suffix -> { Text(suffix) } },
-                singleLine = true,
+                    onValueChange = { draft = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = label?.let { value ->
+                        { Text(value, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                    },
+                    suffix = valueSuffix?.let { suffix -> { Text(suffix) } },
+                    singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
                 )
             }
@@ -1703,17 +1739,16 @@ internal fun ConfigSliderDialog(
     onConfirm: (Int) -> Unit,
 ) {
     var draftText by remember(initialValue) { mutableStateOf(initialValue.toString()) }
-    val range = valueRange.first.toFloat()..valueRange.last.toFloat()
     val landscape = configDialogLandscape()
 
     AlertDialog(
-        modifier = configDialogModifier(landscape),
+        modifier = Modifier.configDialogModifier(landscape),
         properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(title) },
         text = {
-            Column(
-                modifier = configDialogBodyModifier(landscape),
+            ConfigDialogScrollableBody(
+                landscape = landscape,
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 if (description != null) {
@@ -1724,36 +1759,19 @@ internal fun ConfigSliderDialog(
                     )
                 }
                 val draftValue = draftText.toIntOrNull()
-                val sliderValue = (draftValue ?: initialValue).coerceIn(valueRange)
-                OutlinedTextField(
-                    value = draftText,
-                    onValueChange = { draftText = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
+                val currentValue = (draftValue ?: initialValue).coerceIn(valueRange)
+                ConfigValueStepper(
+                    valueText = draftText,
+                    onValueTextChange = { draftText = it },
+                    onDecrease = {
+                        draftText = (currentValue - 1).coerceIn(valueRange).toString()
+                    },
+                    onIncrease = {
+                        draftText = (currentValue + 1).coerceIn(valueRange).toString()
+                    },
+                    decreaseEnabled = currentValue > valueRange.first,
+                    increaseEnabled = currentValue < valueRange.last,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                )
-                Slider(
-                    value = sliderValue.toFloat(),
-                    onValueChange = { draftText = it.roundToInt().toString() },
-                    valueRange = range,
-                    steps = (valueRange.last - valueRange.first - 1).coerceAtLeast(0),
-                    modifier = Modifier.fillMaxWidth(),
-                    thumb = {
-                        Box(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary),
-                        )
-                    },
-                    track = { sliderState ->
-                        SliderDefaults.Track(
-                            sliderState = sliderState,
-                            colors = SliderDefaults.colors(),
-                            thumbTrackGapSize = 0.dp,
-                            trackInsideCornerSize = 8.dp,
-                        )
-                    },
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -1830,7 +1848,7 @@ internal fun ConfigChoiceDialog(
 ) {
     val landscape = configDialogLandscape()
     AlertDialog(
-        modifier = configDialogModifier(landscape),
+        modifier = Modifier.configDialogModifier(landscape),
         properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(title) },
@@ -1843,31 +1861,46 @@ internal fun ConfigChoiceDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                LazyColumn(modifier = Modifier.heightIn(max = if (landscape) 180.dp else 360.dp)) {
-                itemsIndexed(options) { index, option ->
-                    ListItem(
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        headlineContent = {
-                            Text(
-                                text = option,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
+                val listState = rememberLazyListState()
+                val canScrollForward = rememberLazyListCanScrollForward(listState)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = if (landscape) 180.dp else 360.dp),
+                ) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth(),
+                        state = listState,
+                    ) {
+                        itemsIndexed(options) { index, option ->
+                            ListItem(
+                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                                headlineContent = {
+                                    Text(
+                                        text = option,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                },
+                                leadingContent = {
+                                    RadioButton(
+                                        selected = option == selected,
+                                        onClick = null,
+                                    )
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(
+                                        role = Role.RadioButton,
+                                        onClick = { onSelected(index) },
+                                    ),
                             )
-                        },
-                        leadingContent = {
-                            RadioButton(
-                                selected = option == selected,
-                                onClick = null,
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(
-                                role = Role.RadioButton,
-                                onClick = { onSelected(index) },
-                            ),
+                        }
+                    }
+                    ScrollableContentHint(
+                        visible = canScrollForward,
+                        modifier = Modifier.align(Alignment.BottomCenter),
                     )
-                }
                 }
             }
         },

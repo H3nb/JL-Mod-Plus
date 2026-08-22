@@ -44,6 +44,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -75,6 +77,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.librarydb.LibraryCollectionRow
+import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 
 data class LibraryCollectionUiItem(
     val id: Long,
@@ -254,10 +258,10 @@ internal fun LibraryCollectionsDestination(
     var deleteTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     val currentNavigationState by androidx.compose.runtime.rememberUpdatedState(navigationState)
-    val headerHeightPx = remember { mutableStateOf(0) }
-    val headerOffsetPx = remember { mutableStateOf(0f) }
+    val headerHeightPx = remember { mutableIntStateOf(0) }
+    val headerOffsetPx = remember { mutableFloatStateOf(0f) }
     val density = LocalDensity.current
-    val headerSpacerHeight = with(density) { headerHeightPx.value.toDp() }
+    val headerSpacerHeight = with(density) { headerHeightPx.intValue.toDp() }
     val hideDistancePx = with(density) { LIBRARY_CHROME_HIDE_DISTANCE_DP.dp.toPx() }
     val minScrollRoomPx = with(density) { LIBRARY_CHROME_MIN_SCROLL_ROOM_DP.dp.toPx() }
     val revealDistancePx = with(density) { 18.dp.toPx() }
@@ -302,7 +306,7 @@ internal fun LibraryCollectionsDestination(
     }
 
     LaunchedEffect(state.collections) {
-        headerOffsetPx.value = 0f
+        headerOffsetPx.floatValue = 0f
         chromeHysteresis.reset()
         onNavigationVisibilityChanged(true)
         snapshotFlow {
@@ -312,8 +316,8 @@ internal fun LibraryCollectionsDestination(
                 listState.canScrollForward || listState.canScrollBackward,
             )
         }.collectLatest { (index, offset, canScroll) ->
-            if ((index == 0 && offset == 0 || !canScroll) && headerOffsetPx.value >= -0.5f) {
-                headerOffsetPx.value = 0f
+            if ((index == 0 && offset == 0 || !canScroll) && headerOffsetPx.floatValue >= -0.5f) {
+                headerOffsetPx.floatValue = 0f
                 chromeHysteresis.reset()
                 onNavigationVisibilityChanged(true)
             }
@@ -331,16 +335,16 @@ internal fun LibraryCollectionsDestination(
                 available: Offset,
                 source: NestedScrollSource,
             ): Offset {
-                val height = headerHeightPx.value
+                val height = headerHeightPx.intValue
                 if (height <= 0) return Offset.Zero
                 val canScroll = listState.canScrollForward || listState.canScrollBackward
                 if (!canScroll) {
-                    if (headerOffsetPx.value < -0.5f && (consumed.y > 0f || available.y > 0f)) {
-                        headerOffsetPx.value = 0f
+                    if (headerOffsetPx.floatValue < -0.5f && (consumed.y > 0f || available.y > 0f)) {
+                        headerOffsetPx.floatValue = 0f
                         if (chromeHysteresis.revealNow() != null) {
                             onNavigationVisibilityChanged(true)
                         }
-                    } else if (headerOffsetPx.value == 0f && !chromeHysteresis.chromeVisible) {
+                    } else if (headerOffsetPx.floatValue == 0f && !chromeHysteresis.chromeVisible) {
                         chromeHysteresis.reset()
                         onNavigationVisibilityChanged(true)
                     }
@@ -357,15 +361,15 @@ internal fun LibraryCollectionsDestination(
                 if (delta < 0f && !listState.hasLibraryChromeScrollRoom(minScrollRoomPx)) {
                     return Offset.Zero
                 }
-                val fullyHidden = headerOffsetPx.value <= -height.toFloat() + 0.5f
+                val fullyHidden = headerOffsetPx.floatValue <= -height.toFloat() + 0.5f
                 var visibilityChange = chromeHysteresis.onScrollDelta(delta)
                 val shouldMoveHeader =
                     delta < 0f || !fullyHidden || chromeHysteresis.chromeVisible || visibilityChange == true
                 if (shouldMoveHeader) {
-                    headerOffsetPx.value =
-                        (headerOffsetPx.value + delta).coerceIn(-height.toFloat(), 0f)
+                    headerOffsetPx.floatValue =
+                        (headerOffsetPx.floatValue + delta).coerceIn(-height.toFloat(), 0f)
                 }
-                if (delta > 0f && headerOffsetPx.value >= -0.5f && !chromeHysteresis.chromeVisible) {
+                if (delta > 0f && headerOffsetPx.floatValue >= -0.5f && !chromeHysteresis.chromeVisible) {
                     visibilityChange = chromeHysteresis.revealNow()
                 }
                 visibilityChange?.let(onNavigationVisibilityChanged)
@@ -416,7 +420,7 @@ internal fun LibraryCollectionsDestination(
             state = listState,
         ) {
             item {
-                if (headerHeightPx.value == 0) {
+                if (headerHeightPx.intValue == 0) {
                     renderHeader(
                         Modifier
                             .alpha(0f)
@@ -514,9 +518,9 @@ internal fun LibraryCollectionsDestination(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .graphicsLayer { translationY = headerOffsetPx.value }
+                .graphicsLayer { translationY = headerOffsetPx.floatValue }
                 .background(MaterialTheme.colorScheme.background)
-                .onSizeChanged { headerHeightPx.value = it.height },
+                .onSizeChanged { headerHeightPx.intValue = it.height },
         ) {
             renderHeader(Modifier, true)
         }
@@ -661,31 +665,46 @@ private fun AddToCollectionDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 } else {
-                    LazyColumn(modifier = Modifier.heightIn(max = 380.dp)) {
-                        items(collections, key = { it.id }) { collection ->
-                            ListItem(
-                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                                headlineContent = {
-                                    Text(
-                                        text = collection.name,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                },
-                                supportingContent = {
-                                    Text(
-                                        pluralStringResource(
-                                            R.plurals.library_collection_member_count,
-                                            collection.appCount,
-                                            collection.appCount,
-                                        ),
-                                    )
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onSelected(collection.id) },
-                            )
+                    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+                    val canScrollForward = rememberLazyListCanScrollForward(listState)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 380.dp),
+                    ) {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxWidth(),
+                            state = listState,
+                        ) {
+                            items(collections, key = { it.id }) { collection ->
+                                ListItem(
+                                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                                    headlineContent = {
+                                        Text(
+                                            text = collection.name,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    },
+                                    supportingContent = {
+                                        Text(
+                                            pluralStringResource(
+                                                R.plurals.library_collection_member_count,
+                                                collection.appCount,
+                                                collection.appCount,
+                                            ),
+                                        )
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { onSelected(collection.id) },
+                                )
+                            }
                         }
+                        ScrollableContentHint(
+                            visible = canScrollForward,
+                            modifier = Modifier.align(Alignment.BottomCenter),
+                        )
                     }
                 }
             }
@@ -734,31 +753,46 @@ private fun AddAppsToCollectionDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 } else {
-                    LazyColumn(modifier = Modifier.heightIn(max = 380.dp)) {
-                        items(collections, key = { it.id }) { collection ->
-                            ListItem(
-                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                                headlineContent = {
-                                    Text(
-                                        text = collection.name,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                },
-                                supportingContent = {
-                                    Text(
-                                        pluralStringResource(
-                                            R.plurals.library_collection_member_count,
-                                            collection.appCount,
-                                            collection.appCount,
-                                        ),
-                                    )
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onSelected(collection.id) },
-                            )
+                    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+                    val canScrollForward = rememberLazyListCanScrollForward(listState)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 380.dp),
+                    ) {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxWidth(),
+                            state = listState,
+                        ) {
+                            items(collections, key = { it.id }) { collection ->
+                                ListItem(
+                                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                                    headlineContent = {
+                                        Text(
+                                            text = collection.name,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    },
+                                    supportingContent = {
+                                        Text(
+                                            pluralStringResource(
+                                                R.plurals.library_collection_member_count,
+                                                collection.appCount,
+                                                collection.appCount,
+                                            ),
+                                        )
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { onSelected(collection.id) },
+                                )
+                            }
                         }
+                        ScrollableContentHint(
+                            visible = canScrollForward,
+                            modifier = Modifier.align(Alignment.BottomCenter),
+                        )
                     }
                 }
             }
