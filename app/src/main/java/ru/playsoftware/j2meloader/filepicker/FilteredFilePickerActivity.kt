@@ -20,7 +20,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.SystemClock
 import android.widget.Toast
-import androidx.annotation.Nullable
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,7 +58,7 @@ class FilteredFilePickerActivity : AppCompatActivity() {
         }
     }
 
-    override fun onCreate(@Nullable savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         EdgeToEdgeCompat.enableIfSupported(this)
 

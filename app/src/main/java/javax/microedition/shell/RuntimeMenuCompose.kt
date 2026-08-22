@@ -16,6 +16,7 @@ package javax.microedition.shell
 
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.heightIn
@@ -65,6 +66,7 @@ import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
 import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
+import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 
 /** Android-host menu state only; Java ME Displayable and Command state stay in the runtime. */
 internal data class RuntimeMenuUiState(
@@ -399,10 +401,18 @@ private fun RuntimeMenuDialog(
         },
         text = {
             val listState = rememberLazyListState()
-            Column {
+            val maxListHeight = runtimeMenuDialogContentHeight()
+            val canScrollForward = rememberLazyListCanScrollForward(listState)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = maxListHeight),
+            ) {
                 LazyColumn(
                     state = listState,
-                    modifier = Modifier.heightIn(max = runtimeMenuDialogContentHeight()),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxListHeight),
                 ) {
                     runtimeMenuItems(
                         state = state,
@@ -415,7 +425,10 @@ private fun RuntimeMenuDialog(
                     )
                 }
                 ScrollableContentHint(
-                    visible = listState.canScrollForward,
+                    visible = canScrollForward,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
                 )
             }
         },

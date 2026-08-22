@@ -142,6 +142,18 @@ data class LibraryNavigationState(
         availableIds: List<Long>,
     ): ResolvedLibraryScrollAnchor? {
         val anchor = anchorFor(surface, activeGeneration) ?: return null
+        return resolveAnchor(anchor, availableIds)
+    }
+
+    /**
+     * Resolves a captured return anchor even when the catalog generation changed while a
+     * full-screen editor was open. The stable database id still keeps the visual position
+     * meaningful; ordinary destination restoration remains generation-scoped above.
+     */
+    fun resolveAnchor(
+        anchor: LibraryScrollAnchor,
+        availableIds: List<Long>,
+    ): ResolvedLibraryScrollAnchor {
         val anchoredIndex = anchor.stableItemId?.let(availableIds::indexOf)?.takeIf { it >= 0 }
         val index = (anchoredIndex ?: anchor.fallbackIndex).coerceIn(
             0,

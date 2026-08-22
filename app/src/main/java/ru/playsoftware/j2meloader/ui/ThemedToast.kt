@@ -15,6 +15,8 @@ import android.view.Gravity
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.StringRes
+import androidx.core.content.ContextCompat
+import ru.playsoftware.j2meloader.R
 
 /** App-owned Toast surface so transient feedback follows the active light/dark theme. */
 object ThemedToast {
@@ -29,7 +31,9 @@ object ThemedToast {
         val density = context.resources.displayMetrics.density
         val text = TextView(context).apply {
             this.text = message
-            setTextColor(resolveColor(context, android.R.attr.textColorPrimary, Color.WHITE))
+            // Resolve from app-owned day/night resources so this legacy Toast follows the same
+            // light/dark surface contract as the Compose snackbar and dialogs.
+            setTextColor(ContextCompat.getColor(context, R.color.toast_content))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
             gravity = Gravity.CENTER
             setPadding(
@@ -41,10 +45,10 @@ object ThemedToast {
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = 16 * density
-                setColor(resolveColor(context, android.R.attr.colorBackground, Color.DKGRAY))
+                setColor(ContextCompat.getColor(context, R.color.toast_surface))
                 setStroke(
                     (1 * density).toInt().coerceAtLeast(1),
-                    resolveColor(context, android.R.attr.textColorSecondary, Color.GRAY)
+                    ContextCompat.getColor(context, R.color.toast_outline)
                         .withAlpha(0x66),
                 )
             }
@@ -55,22 +59,6 @@ object ThemedToast {
             view = text
             this.duration = duration
         }.show()
-    }
-
-    private fun resolveColor(context: Context, attribute: Int, fallback: Int): Int {
-        val value = TypedValue()
-        return if (context.theme.resolveAttribute(attribute, value, true)) {
-            when {
-                value.resourceId != 0 -> runCatching {
-                    context.getColor(value.resourceId)
-                }.getOrDefault(fallback)
-                value.type in TypedValue.TYPE_FIRST_COLOR_INT..TypedValue.TYPE_LAST_COLOR_INT ->
-                    value.data
-                else -> fallback
-            }
-        } else {
-            fallback
-        }
     }
 
     private fun Int.withAlpha(alpha: Int): Int =

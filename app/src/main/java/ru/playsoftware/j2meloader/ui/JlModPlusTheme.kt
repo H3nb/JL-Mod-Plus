@@ -123,11 +123,17 @@ enum class AccentPalette(val key: String) {
     Green("green"),
     Amber("amber"),
     Rose("rose"),
-    Violet("violet");
+    Violet("violet"),
+    Indigo("indigo"),
+    Cyan("cyan"),
+    Orange("orange"),
+    Pink("pink");
 
     companion object {
         fun fromKey(key: String?): AccentPalette = entries.firstOrNull { it.key == key } ?: DefaultBlue
     }
+
+    fun previewColor(dark: Boolean): Color = colors(dark).primary
 }
 
 private data class AccentColors(
@@ -203,6 +209,50 @@ private fun AccentPalette.colors(dark: Boolean): AccentColors = when (this) {
         AccentColors(
             Color(0xFF6750A4), Color.White, Color(0xFFEADDFF),
             Color(0xFF21005D), Color(0xFF6750A4),
+        )
+    }
+    AccentPalette.Indigo -> if (dark) {
+        AccentColors(
+            Color(0xFFBAC3FF), Color(0xFF1E2A67), Color(0xFF283777),
+            Color(0xFFDEE2FF), Color(0xFF5368C4),
+        )
+    } else {
+        AccentColors(
+            Color(0xFF3F51B5), Color.White, Color(0xFFDDE2FF),
+            Color(0xFF111A4B), Color(0xFF3F51B5),
+        )
+    }
+    AccentPalette.Cyan -> if (dark) {
+        AccentColors(
+            Color(0xFF4FD8E8), Color(0xFF00363D), Color(0xFF004F58),
+            Color(0xFF97F0FF), Color(0xFF006874),
+        )
+    } else {
+        AccentColors(
+            Color(0xFF006874), Color.White, Color(0xFF97F0FF),
+            Color(0xFF001F24), Color(0xFF006874),
+        )
+    }
+    AccentPalette.Orange -> if (dark) {
+        AccentColors(
+            Color(0xFFFFB599), Color(0xFF5B1A00), Color(0xFF7D2900),
+            Color(0xFFFFDCC8), Color(0xFFA13B00),
+        )
+    } else {
+        AccentColors(
+            Color(0xFFA13B00), Color.White, Color(0xFFFFDCC8),
+            Color(0xFF3A0B00), Color(0xFFA13B00),
+        )
+    }
+    AccentPalette.Pink -> if (dark) {
+        AccentColors(
+            Color(0xFFFFB0CB), Color(0xFF680035), Color(0xFF870047),
+            Color(0xFFFFD9E5), Color(0xFFD64E7D),
+        )
+    } else {
+        AccentColors(
+            Color(0xFFA9005A), Color.White, Color(0xFFFFD9E5),
+            Color(0xFF3F0020), Color(0xFFA9005A),
         )
     }
 }

@@ -41,6 +41,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -62,6 +63,7 @@ import ru.playsoftware.j2meloader.librarydb.LibraryViewModel
 import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 
 class BulkInstallerDialog : DialogFragment() {
     private lateinit var libraryViewModel: LibraryViewModel
@@ -88,7 +90,12 @@ class BulkInstallerDialog : DialogFragment() {
             val bundleUri = args.getString(ARG_BUNDLE_URI)
             val reinstallAppIds = args.getLongArray(ARG_REINSTALL_APP_IDS)
             if (reinstallAppIds != null) {
-                bulkViewModel.planReinstall(requireContext(), reinstallAppIds.toList(), libraryViewModel)
+                bulkViewModel.planReinstall(
+                    context = requireContext(),
+                    appIds = reinstallAppIds.toList(),
+                    library = libraryViewModel,
+                    executeImmediately = true,
+                )
             } else if (bundleUri != null) {
                 bulkViewModel.planUniversalBundle(
                     context = requireContext(),
@@ -352,6 +359,7 @@ private fun ReviewContent(
             )
         } else {
             val listState = rememberLazyListState()
+            val canScrollForward = rememberLazyListCanScrollForward(listState)
             LazyColumn(
                 modifier = Modifier.fillMaxWidth().weight(1f, fill = false),
                 state = listState,
@@ -362,7 +370,7 @@ private fun ReviewContent(
                 }
             }
             ScrollableContentHint(
-                visible = listState.canScrollForward,
+                visible = canScrollForward,
             )
         }
         HorizontalDivider()

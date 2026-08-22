@@ -2,7 +2,7 @@
 <resources>
     <string name="about">Tentang</string>
     <string name="about_message">Aplikasi ini memungkinkan Anda menjalankan aplikasi dan permainan J2ME di Android.</string>
-    <string name="about_lineage">JL-Mod Plus adalah fork dari JL-Mod oleh woesss (Yury Kharchenko), yang juga merupakan fork dan mod eksperimental dari J2ME-Loader oleh Nikita Shakarun. Atribusi dan pemberitahuan lisensi upstream dipertahankan di Lisensi.</string>
+    <string name="about_lineage">JL-Mod Plus adalah fork dari JL-Mod oleh woesss (Yury Kharchenko), yang juga merupakan fork dan mod eksperimental dari J2ME-Loader oleh Nikita Shakarun. Atribusi dan pemberitahuan lisensi upstream dipertahankan di dalam proyek.</string>
     <string name="action_context_delete">Hapus</string>
     <string name="action_context_rename">Ubah Nama</string>
     <string name="action_context_shortcut">Buat Pintasan</string>
@@ -95,10 +95,10 @@
     <string name="library_icon_shape_title">Bentuk Ikon</string>
     <string name="library_icon_shape_summary">Pilih ubin membulat atau sudut tajam untuk kedua rasio.</string>
     <string name="library_icon_shape_round">Membulat</string>
-    <string name="library_icon_shape_square">Sudut tajam</string>
+    <string name="library_icon_shape_square">Sudut Tajam</string>
     <string name="library_grid_spacing_title">Jarak Grid</string>
     <string name="library_grid_spacing_summary">Atur jarak antar kotak aplikasi.</string>
-    <string name="library_grid_spacing_none">Tidak ada (bersentuhan)</string>
+    <string name="library_grid_spacing_none">Tidak Ada (Bersentuhan)</string>
     <string name="library_grid_spacing_compact">Rapat (4 dp)</string>
     <string name="library_grid_spacing_standard">Standar (8 dp)</string>
     <string name="library_grid_spacing_spacious">Lega (12 dp)</string>
@@ -128,7 +128,7 @@
     <string name="PREF_BACKGROUND">Latar Belakang</string>
     <string name="pref_button_shape_oval">Oval</string>
     <string name="pref_button_shape_rect">Kotak</string>
-    <string name="pref_button_shape_round">Kotak membulat</string>
+    <string name="pref_button_shape_round">Kotak Membulat</string>
     <string name="pref_button_shape_title">Bentuk Tombol</string>
     <string name="pref_category_experimental">Opsi Eksperimental/Sementara</string>
     <string name="pref_emulator_dir">Direktori Kerja</string>
@@ -218,6 +218,7 @@
     <string name="pref_vk_type_phone">Ponsel (Numerik)</string>
     <string name="pref_vk_type_phone_arrows">Ponsel (Arah Panah)</string>
     <string name="pref_wakelock_title">Layar Tetap Menyala</string>
+    <string name="fps_overlay_label">FPS</string>
     <string name="pref_skin_not_set">Belum diatur</string>
     <string name="pref_skin_title">Skin</string>
     <string name="pref_skip_resume_call">Lewati Callback Resume</string>
@@ -285,6 +286,7 @@
     <string name="file_picker_create_folder_failed">Tidak dapat membuat folder.</string>
     <string name="file_picker_selection_unavailable">Item yang dipilih sudah tidak tersedia.</string>
     <string name="config_color_picker_title">Pilih Warna</string>
+    <string name="library_load_error_title">Pustaka Tidak Tersedia</string>
     <string name="config_color_picker_hex">Warna heksadesimal</string>
     <string name="config_color_picker_hint">Seret bidang warna atau masukkan nilai RGB enam digit.</string>
     <string name="config_color_picker_invalid">Masukkan tepat enam digit heksadesimal.</string>

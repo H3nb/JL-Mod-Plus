@@ -15,6 +15,10 @@
     <string name="pref_accent_amber">Amber</string>
     <string name="pref_accent_rose">Mawar</string>
     <string name="pref_accent_violet">Violet</string>
+    <string name="pref_accent_indigo">Indigo</string>
+    <string name="pref_accent_cyan">Sian</string>
+    <string name="pref_accent_orange">Oranye</string>
+    <string name="pref_accent_pink">Merah Muda</string>
     <string name="runtime_invalid_intent">Permintaan peluncuran tidak valid: jalur MIDlet tidak tersedia.</string>
     <string name="runtime_no_midlets">Tidak ada MIDlet yang ditemukan dalam aplikasi ini.</string>
     <string name="library_selection_checkbox_description">Pilih %1$s</string>

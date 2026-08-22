@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="bulk_install_title">Bulk install</string>
+    <string name="bulk_install_title">Bulk Install</string>
     <string name="bulk_install_planning">Checking selected applications…</string>
     <string name="bulk_install_empty">No supported applications were found.</string>
     <string name="bulk_install_recommended">Recommended</string>
     <string name="bulk_install_clear">Clear</string>
-    <string name="bulk_install_install">Install selected</string>
+    <string name="bulk_install_install">Install Selected</string>
     <string name="bulk_install_install_count">Install %1$d</string>
     <string name="bulk_install_cancel">Cancel</string>
     <string name="bulk_install_close">Close</string>
     <string name="bulk_install_running">Installing %1$d / %2$d</string>
     <string name="bulk_install_cancel_requested">Stopping after the current application…</string>
-    <string name="bulk_install_complete">Bulk install complete</string>
-    <string name="bulk_install_cancelled">Bulk install stopped</string>
+    <string name="bulk_install_complete">Bulk Install Complete</string>
+    <string name="bulk_install_cancelled">Bulk Install Stopped</string>
     <string name="bulk_install_fatal">Bulk install stopped: %1$s</string>
     <string name="bulk_install_result_installed">Installed</string>
     <string name="bulk_install_result_updated">Updated</string>
@@ -21,8 +21,8 @@
     <string name="bulk_install_result_failed">Failed</string>
     <string name="bulk_install_installed_version">Installed: %1$s</string>
     <string name="bulk_install_source">Source: %1$s</string>
-    <string name="bulk_install_action_separate_copy">Install as separate copy</string>
-    <string name="bulk_install_action_jar_only">Install JAR only</string>
+    <string name="bulk_install_action_separate_copy">Install As Separate Copy</string>
+    <string name="bulk_install_action_jar_only">Install JAR Only</string>
     <string name="bulk_install_status_new">New</string>
     <string name="bulk_install_status_update">Update</string>
     <string name="bulk_install_status_downgrade">Older version</string>

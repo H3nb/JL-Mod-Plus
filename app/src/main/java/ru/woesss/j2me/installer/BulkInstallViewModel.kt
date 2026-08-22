@@ -105,6 +105,7 @@ class BulkInstallViewModel : ViewModel() {
         context: Context,
         appIds: List<Long>,
         library: LibraryViewModel,
+        executeImmediately: Boolean = false,
     ) {
         if (mutableState.value !is State.Idle) return
         mutableState.value = State.Planning()
@@ -187,7 +188,14 @@ class BulkInstallViewModel : ViewModel() {
                         warnings = warnings,
                     )
                 }
-                mutableState.value = State.Review(plan)
+                if (executeImmediately) {
+                    // Reinstall targets are already installed, generation-bound rows. There is
+                    // no source conflict or install-choice review to present; move straight to
+                    // the existing progress/execution path after the exact plan is built.
+                    executePlan(library, plan)
+                } else {
+                    mutableState.value = State.Review(plan)
+                }
             } catch (_: CancellationException) {
                 if (mutableState.value is State.Planning) mutableState.value = State.Idle
             } catch (error: Throwable) {
@@ -314,13 +322,26 @@ class BulkInstallViewModel : ViewModel() {
 
     fun execute(library: LibraryViewModel) {
         val review = mutableState.value as? State.Review ?: return
+        executePlan(library, review.plan)
+    }
+
+    /** Starts a prepared plan without exposing the optional review surface to the user. */
+    private fun executePlan(library: LibraryViewModel, plan: BulkInstallPlan) {
         if (executionJob != null) return
-        val selected = review.plan.items.filter { it.selected && it.action != BulkInstallAction.Skip }
-        if (selected.isEmpty()) return
+        val selected = plan.items.filter { it.selected && it.action != BulkInstallAction.Skip }
+        if (selected.isEmpty()) {
+            val failures = plan.items.mapNotNull { item ->
+                item.detail?.let { detail ->
+                    BulkInstallResult(item.id, item.name, BulkInstallResultKind.Failed, detail)
+                }
+            }
+            mutableState.value = State.Finished(plan, failures, cancelled = false)
+            return
+        }
         closeRequested.set(false)
         cancelRequested.set(false)
         mutableState.value = State.Running(
-            plan = review.plan,
+            plan = plan,
             completed = 0,
             total = selected.size,
             currentName = selected.first().name,
@@ -334,7 +355,7 @@ class BulkInstallViewModel : ViewModel() {
                 selected.forEachIndexed { index, item ->
                     if (cancelRequested.get() || fatalError != null) return@forEachIndexed
                     mutableState.value = State.Running(
-                        plan = review.plan,
+                        plan = plan,
                         completed = index,
                         total = selected.size,
                         currentName = item.name,
@@ -342,7 +363,7 @@ class BulkInstallViewModel : ViewModel() {
                         cancelRequested = cancelRequested.get(),
                     )
                     try {
-                        results += executeItem(review.plan, item, library)
+                        results += executeItem(plan, item, library)
                     } catch (error: FatalBatchException) {
                         val detail = boundedMessage(error.cause ?: error)
                         results += BulkInstallResult(item.id, item.name, BulkInstallResultKind.Failed, detail)
@@ -356,7 +377,7 @@ class BulkInstallViewModel : ViewModel() {
                         )
                     }
                     mutableState.value = State.Running(
-                        plan = review.plan,
+                        plan = plan,
                         completed = index + 1,
                         total = selected.size,
                         currentName = item.name,
@@ -365,7 +386,7 @@ class BulkInstallViewModel : ViewModel() {
                     )
                 }
                 mutableState.value = State.Finished(
-                    plan = review.plan,
+                    plan = plan,
                     results = results,
                     cancelled = cancelRequested.get(),
                     fatalError = fatalError,

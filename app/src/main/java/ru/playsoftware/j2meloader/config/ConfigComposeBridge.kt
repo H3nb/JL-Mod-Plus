@@ -1154,7 +1154,7 @@ private fun FontSizeField(
     value: String,
     onValueChange: (String) -> Unit,
     labelRes: Int,
-    modifier: Modifier = Modifier.fillMaxWidth(),
+    modifier: Modifier = Modifier,
 ) {
     OutlinedTextField(
         value = value,

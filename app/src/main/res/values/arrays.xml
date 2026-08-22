@@ -19,6 +19,10 @@
         <item>@string/pref_accent_amber</item>
         <item>@string/pref_accent_rose</item>
         <item>@string/pref_accent_violet</item>
+        <item>@string/pref_accent_indigo</item>
+        <item>@string/pref_accent_cyan</item>
+        <item>@string/pref_accent_orange</item>
+        <item>@string/pref_accent_pink</item>
     </string-array>
     <string-array name="pref_accent_values" translatable="false" tools:ignore="InconsistentArrays">
         <item>blue</item>
@@ -27,6 +31,10 @@
         <item>amber</item>
         <item>rose</item>
         <item>violet</item>
+        <item>indigo</item>
+        <item>cyan</item>
+        <item>orange</item>
+        <item>pink</item>
     </string-array>
     <string-array name="pref_app_sort_entries">
         <item>@string/pref_app_sort_name</item>

@@ -259,6 +259,7 @@ internal fun LibraryCollectionsDestination(
     val density = LocalDensity.current
     val headerSpacerHeight = with(density) { headerHeightPx.value.toDp() }
     val hideDistancePx = with(density) { LIBRARY_CHROME_HIDE_DISTANCE_DP.dp.toPx() }
+    val minScrollRoomPx = with(density) { LIBRARY_CHROME_MIN_SCROLL_ROOM_DP.dp.toPx() }
     val revealDistancePx = with(density) { 18.dp.toPx() }
     val chromeHysteresis = remember(hideDistancePx, revealDistancePx) {
         LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx)
@@ -311,7 +312,7 @@ internal fun LibraryCollectionsDestination(
                 listState.canScrollForward || listState.canScrollBackward,
             )
         }.collectLatest { (index, offset, canScroll) ->
-            if (!canScroll || (index == 0 && offset == 0)) {
+            if ((index == 0 && offset == 0 || !canScroll) && headerOffsetPx.value >= -0.5f) {
                 headerOffsetPx.value = 0f
                 chromeHysteresis.reset()
                 onNavigationVisibilityChanged(true)
@@ -319,7 +320,11 @@ internal fun LibraryCollectionsDestination(
         }
     }
 
-    val scrollConnection = remember(chromeHysteresis, onNavigationVisibilityChanged) {
+    val scrollConnection = remember(
+        chromeHysteresis,
+        minScrollRoomPx,
+        onNavigationVisibilityChanged,
+    ) {
         object : NestedScrollConnection {
             override fun onPostScroll(
                 consumed: Offset,
@@ -330,8 +335,12 @@ internal fun LibraryCollectionsDestination(
                 if (height <= 0) return Offset.Zero
                 val canScroll = listState.canScrollForward || listState.canScrollBackward
                 if (!canScroll) {
-                    if (headerOffsetPx.value != 0f || !chromeHysteresis.chromeVisible) {
+                    if (headerOffsetPx.value < -0.5f && (consumed.y > 0f || available.y > 0f)) {
                         headerOffsetPx.value = 0f
+                        if (chromeHysteresis.revealNow() != null) {
+                            onNavigationVisibilityChanged(true)
+                        }
+                    } else if (headerOffsetPx.value == 0f && !chromeHysteresis.chromeVisible) {
                         chromeHysteresis.reset()
                         onNavigationVisibilityChanged(true)
                     }
@@ -344,6 +353,9 @@ internal fun LibraryCollectionsDestination(
                     consumed.y != 0f -> consumed.y
                     available.y > 0f -> available.y
                     else -> return Offset.Zero
+                }
+                if (delta < 0f && !listState.hasLibraryChromeScrollRoom(minScrollRoomPx)) {
+                    return Offset.Zero
                 }
                 val fullyHidden = headerOffsetPx.value <= -height.toFloat() + 0.5f
                 var visibilityChange = chromeHysteresis.onScrollDelta(delta)

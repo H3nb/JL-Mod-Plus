@@ -15,9 +15,11 @@
 package javax.microedition.shell
 
 import android.content.res.Configuration
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -60,6 +62,7 @@ import androidx.compose.ui.window.DialogProperties
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
 import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
+import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 
 /** Callbacks for host-owned runtime dialogs. MIDP state and rendering remain in Java. */
 interface RuntimeHostDialogActions {
@@ -163,6 +166,8 @@ private fun MidletSelectionDialog(
 ) {
     val layout = runtimeDialogLayout()
     val listState = rememberLazyListState()
+    val maxListHeight = runtimeDialogListHeight()
+    val canScrollForward = rememberLazyListCanScrollForward(listState)
     AlertDialog(
         modifier = layout.modifier,
         properties = layout.properties,
@@ -172,9 +177,15 @@ private fun MidletSelectionDialog(
         },
         title = { Text(stringResource(R.string.select_dialog_title)) },
         text = {
-            Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = maxListHeight),
+            ) {
                 LazyColumn(
-                    modifier = Modifier.heightIn(max = runtimeDialogListHeight()),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxListHeight),
                     state = listState,
                 ) {
                     itemsIndexed(state.names) { index, name ->
@@ -197,7 +208,10 @@ private fun MidletSelectionDialog(
                     }
                 }
                 ScrollableContentHint(
-                    visible = listState.canScrollForward,
+                    visible = canScrollForward,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
                 )
             }
         },
@@ -299,15 +313,23 @@ private fun HideButtonsDialog(
     var checked by remember(state) { mutableStateOf(state.checked.copyOf()) }
     val layout = runtimeDialogLayout()
     val listState = rememberLazyListState()
+    val maxListHeight = runtimeDialogListHeight()
+    val canScrollForward = rememberLazyListCanScrollForward(listState)
     AlertDialog(
         modifier = layout.modifier,
         properties = layout.properties,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.hide_buttons)) },
         text = {
-            Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = maxListHeight),
+            ) {
                 LazyColumn(
-                    modifier = Modifier.heightIn(max = runtimeDialogListHeight()),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxListHeight),
                     state = listState,
                 ) {
                     itemsIndexed(state.names) { index, name ->
@@ -329,7 +351,10 @@ private fun HideButtonsDialog(
                     }
                 }
                 ScrollableContentHint(
-                    visible = listState.canScrollForward,
+                    visible = canScrollForward,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
                 )
             }
         },
@@ -411,15 +436,23 @@ private fun LayoutSelectionDialog(
     var selected by remember(state) { mutableIntStateOf(state.selected) }
     val layout = runtimeDialogLayout()
     val listState = rememberLazyListState()
+    val maxListHeight = runtimeDialogListHeight()
+    val canScrollForward = rememberLazyListCanScrollForward(listState)
     AlertDialog(
         modifier = layout.modifier,
         properties = layout.properties,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.layout_switch)) },
         text = {
-            Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = maxListHeight),
+            ) {
                 LazyColumn(
-                    modifier = Modifier.heightIn(max = runtimeDialogListHeight()),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxListHeight),
                     state = listState,
                 ) {
                     itemsIndexed(state.entries) { index, entry ->
@@ -439,7 +472,10 @@ private fun LayoutSelectionDialog(
                     }
                 }
                 ScrollableContentHint(
-                    visible = listState.canScrollForward,
+                    visible = canScrollForward,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
                 )
             }
         },

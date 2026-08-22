@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsTopHeight
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -40,11 +41,19 @@ internal fun GlassSystemBarScrim(
     modifier: Modifier = Modifier,
 ) {
     if (!visible) return
+    val darkTheme = isSystemInDarkTheme()
+    val scrimColor = if (darkTheme) {
+        MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.82f)
+    } else {
+        MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.72f)
+    }
     Box(
         modifier = modifier
             .fillMaxWidth()
             .windowInsetsTopHeight(WindowInsets.statusBars)
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.68f))
+            // Keep the status icons readable without replacing the scrolled content with an
+            // opaque bar. The stronger night variant compensates for bright content behind it.
+            .background(scrimColor)
             .shadow(elevation = 2.dp)
             .zIndex(2f),
     )

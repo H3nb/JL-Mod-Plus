@@ -61,6 +61,24 @@ class LibraryNavigationStateTest {
     }
 
     @Test
+    fun capturedReturnAnchorCanResolveAfterGenerationChanges() {
+        val captured = LibraryScrollAnchor(
+            generation = 3L,
+            stableItemId = 20L,
+            offsetPx = 24,
+            fallbackIndex = 1,
+        )
+
+        assertEquals(
+            ResolvedLibraryScrollAnchor(index = 1, offsetPx = 24),
+            LibraryNavigationState().resolveAnchor(
+                captured,
+                availableIds = listOf(10L, 20L, 30L),
+            ),
+        )
+    }
+
+    @Test
     fun listAndGridAnchorsRemainIndependent() {
         val state = LibraryNavigationState()
             .saveAnchor(

@@ -16,6 +16,8 @@ package ru.playsoftware.j2meloader.settings
 
 import android.content.res.Configuration
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,11 +29,13 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -47,6 +51,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,7 +71,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.AccentPalette
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 
 data class SettingsOption(
     val value: String,
@@ -179,6 +186,7 @@ fun SettingsScreen(
                         SettingsChoiceRow(
                             title = stringResource(R.string.pref_accent_title),
                             selected = state.accent,
+                            showAccentPreview = true,
                             onClick = { choiceDialog = SettingsChoice.Accent },
                         )
                         SettingsChoiceRow(
@@ -242,6 +250,9 @@ fun SettingsScreen(
             title = { Text(stringResource(R.string.error)) },
             text = {
                 val scrollState = rememberScrollState()
+                val canScrollForward by remember {
+                    derivedStateOf { scrollState.value < scrollState.maxValue }
+                }
                 Column {
                     Text(
                         text = message,
@@ -252,7 +263,7 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     ScrollableContentHint(
-                        visible = scrollState.value < scrollState.maxValue,
+                        visible = canScrollForward,
                     )
                 }
             },
@@ -288,6 +299,7 @@ fun SettingsScreen(
             title = stringResource(R.string.pref_accent_title),
             selected = state.accent,
             options = state.accents,
+            showAccentPreview = true,
             onDismiss = { choiceDialog = null },
             onSelected = { value ->
                 choiceDialog = null
@@ -342,27 +354,44 @@ private fun SettingsSection(
 private fun SettingsChoiceRow(
     title: String,
     selected: SettingsOption,
+    showAccentPreview: Boolean = false,
     onClick: () -> Unit,
 ) {
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 11.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium,
-        )
-        Text(
-            text = selected.label,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodySmall,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+            )
+            Text(
+                text = selected.label,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (showAccentPreview) {
+            androidx.compose.foundation.layout.Box(
+                modifier = Modifier
+                    .size(22.dp)
+                    .background(
+                        AccentPalette.fromKey(selected.value).previewColor(isSystemInDarkTheme()),
+                        CircleShape,
+                    ),
+            )
+        }
     }
 }
 
@@ -377,20 +406,29 @@ private fun SettingsChoiceDialog(
     title: String,
     selected: SettingsOption,
     options: List<SettingsOption>,
+    showAccentPreview: Boolean = false,
     onDismiss: () -> Unit,
     onSelected: (String) -> Unit,
 ) {
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val listState = rememberLazyListState()
+    val maxListHeight = if (landscape) 220.dp else 360.dp
+    val canScrollForward = rememberLazyListCanScrollForward(listState)
     AlertDialog(
         modifier = settingsDialogModifier(landscape),
         properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = maxListHeight),
+            ) {
                 LazyColumn(
-                    modifier = Modifier.heightIn(max = if (landscape) 220.dp else 360.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxListHeight),
                     state = listState,
                 ) {
                     items(options, key = { it.value }) { option ->
@@ -410,6 +448,21 @@ private fun SettingsChoiceDialog(
                                     onClick = null,
                                 )
                             },
+                            trailingContent = if (showAccentPreview) {
+                                {
+                                    androidx.compose.foundation.layout.Box(
+                                        modifier = Modifier
+                                            .size(22.dp)
+                                            .background(
+                                                AccentPalette.fromKey(option.value)
+                                                    .previewColor(isSystemInDarkTheme()),
+                                                CircleShape,
+                                            ),
+                                    )
+                                }
+                            } else {
+                                null
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable(
@@ -420,7 +473,10 @@ private fun SettingsChoiceDialog(
                     }
                 }
                 ScrollableContentHint(
-                    visible = listState.canScrollForward,
+                    visible = canScrollForward,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
                 )
             }
         },

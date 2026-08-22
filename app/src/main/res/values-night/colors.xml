@@ -11,4 +11,9 @@
     <color name="library_default_icon_background">#1B2027</color>
     <color name="btn_bg_normal">#0099ff</color>
     <color name="btn_bg_pressed">#005D8C</color>
+    <color name="toast_surface">#E61B2027</color>
+    <color name="toast_content">#F5F7FA</color>
+    <color name="toast_outline">#82909A</color>
+    <color name="fps_overlay_surface">#E61B2027</color>
+    <color name="fps_overlay_content">#F5F7FA</color>
 </resources>

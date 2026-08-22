@@ -123,6 +123,27 @@ public class CanvasWrapper {
 		canvas.drawText(text, width / 2.0f, -textAscent, textPaint);
 	}
 
+	/** Draws a compact, theme-colored pill for app-owned diagnostic overlays. */
+	public void drawPillBackgroundedText(String text, int backgroundColor, int foregroundColor) {
+		float width = textPaint.measureText(text);
+		float horizontalPadding = Math.max(6f, textSize * 0.34f);
+		float verticalPadding = Math.max(3f, textSize * 0.16f);
+		float pillWidth = width + horizontalPadding * 2f;
+		float pillHeight = textHeight + verticalPadding * 2f;
+		fillPaint.setColor(backgroundColor);
+		canvas.drawRoundRect(
+				new RectF(0f, 0f, pillWidth, pillHeight),
+				pillHeight / 2f,
+				pillHeight / 2f,
+				fillPaint);
+		textPaint.setColor(foregroundColor);
+		canvas.drawText(
+				text,
+				horizontalPadding + width / 2f,
+				verticalPadding - textAscent,
+				textPaint);
+	}
+
 	public float getTextHeight() {
 		return textHeight;
 	}

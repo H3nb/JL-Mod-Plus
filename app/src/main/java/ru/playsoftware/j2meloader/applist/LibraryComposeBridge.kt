@@ -109,6 +109,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -175,6 +176,7 @@ import ru.playsoftware.j2meloader.librarydb.LibraryQuickView
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.GlassSystemBarScrim
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 import ru.playsoftware.j2meloader.ui.TransientNoticeHost
 import ru.playsoftware.j2meloader.ui.TransientNoticeState
 import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
@@ -459,6 +461,7 @@ fun LibraryScreen(
     var appActions by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var renameTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var metadataTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
+    var metadataReturnAnchor by remember { mutableStateOf<LibraryScrollAnchor?>(null) }
     var appActionsCollectionId by remember { mutableStateOf<Long?>(null) }
     var deleteTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var infoDialog by remember { mutableStateOf<LibraryInfoDialog?>(null) }
@@ -512,6 +515,32 @@ fun LibraryScreen(
     val metadataApp = metadataTarget?.let { target ->
         state.apps.firstOrNull { it.id == target.id } ?: target
     }
+
+    fun captureAppsAnchor(): LibraryScrollAnchor? {
+        val surface = if (state.layout == LibraryLayout.List) {
+            LibraryNavigationSurface.AppsList
+        } else {
+            LibraryNavigationSurface.AppsGrid
+        }
+        val visible = if (state.layout == LibraryLayout.List) {
+            appsListState.layoutInfo.visibleItemsInfo
+                .firstOrNull { it.index > 0 }
+                ?.let { it.index to it.offset }
+        } else {
+            appsGridState.layoutInfo.visibleItemsInfo
+                .firstOrNull { it.index > 0 }
+                ?.let { it.index to it.offset.y }
+        }
+        if (visible == null) return navigationState.anchorFor(surface, state.generation)
+        val fallbackIndex = (visible.first - 1).coerceAtLeast(0)
+        return LibraryScrollAnchor(
+            generation = state.generation,
+            stableItemId = state.apps.getOrNull(fallbackIndex)?.databaseId,
+            offsetPx = visible.second,
+            fallbackIndex = fallbackIndex,
+        )
+    }
+
     if (metadataApp != null) {
         LibraryMetadataEditorScreen(
             app = metadataApp,
@@ -680,6 +709,8 @@ fun LibraryScreen(
                         listState = appsListState,
                         gridState = appsGridState,
                         navigationState = navigationState,
+                        returnAnchor = metadataReturnAnchor,
+                        onReturnAnchorConsumed = { metadataReturnAnchor = null },
                         onNavigationStateChanged = { navigationState = it },
                         selectionState = selectionState,
                         onOpenApp = actions::onOpenApp,
@@ -798,7 +829,10 @@ fun LibraryScreen(
             onReinstall = { actions.onReinstall(app.id) },
             onDelete = { deleteTarget = app },
             onEditMetadata = if (state.databaseControlsReady) {
-                { metadataTarget = app }
+                {
+                    metadataReturnAnchor = captureAppsAnchor()
+                    metadataTarget = app
+                }
             } else {
                 null
             },
@@ -894,6 +928,10 @@ private const val LIBRARY_CHROME_ANIMATION_MILLIS = 220
 // this guard, a list/grid with only one or two rows of overflow becomes non-scrollable as soon
 // as the footer disappears, which immediately re-shows the chrome and causes a visible flicker.
 internal const val LIBRARY_CHROME_HIDE_DISTANCE_DP = 128f
+// The footer reclaims roughly one navigation-bar height. Require more than a row or two of
+// remaining content before hiding chrome so the viewport resize cannot immediately make the
+// list non-scrollable and start a hide/show loop.
+internal const val LIBRARY_CHROME_MIN_SCROLL_ROOM_DP = 160f
 private const val LIBRARY_CHROME_REVEAL_DISTANCE_DP = 18f
 private val LibraryGridMinCellSize = 88.dp
 private const val LIBRARY_GRID_ARTWORK_FRACTION = 0.78f
@@ -1071,6 +1109,8 @@ internal fun LibraryAppsDestination(
     listState: LazyListState = rememberLazyListState(),
     gridState: LazyGridState = rememberLazyGridState(),
     navigationState: LibraryNavigationState = LibraryNavigationState(),
+    returnAnchor: LibraryScrollAnchor? = null,
+    onReturnAnchorConsumed: () -> Unit = {},
     onNavigationStateChanged: (LibraryNavigationState) -> Unit = {},
     selectionState: LibrarySelectionState = LibrarySelectionState(),
     onOpenApp: (Int) -> Unit,
@@ -1098,6 +1138,7 @@ internal fun LibraryAppsDestination(
     val density = LocalDensity.current
     val headerSpacerHeight = with(density) { headerHeightPx.value.toDp() }
     val hideDistancePx = with(density) { LIBRARY_CHROME_HIDE_DISTANCE_DP.dp.toPx() }
+    val minScrollRoomPx = with(density) { LIBRARY_CHROME_MIN_SCROLL_ROOM_DP.dp.toPx() }
     val revealDistancePx = with(density) { LIBRARY_CHROME_REVEAL_DISTANCE_DP.dp.toPx() }
     val chromeHysteresis = remember(hideDistancePx, revealDistancePx) {
         LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx)
@@ -1131,7 +1172,7 @@ internal fun LibraryAppsDestination(
                 )
             }
         }.collectLatest { (index, offset, canScroll) ->
-            if (!canScroll || (index == 0 && offset == 0)) {
+            if ((index == 0 && offset == 0 || !canScroll) && headerOffsetPx.value >= -0.5f) {
                 headerOffsetPx.value = 0f
                 chromeHysteresis.reset()
                 onFabVisibilityChanged(true)
@@ -1140,14 +1181,15 @@ internal fun LibraryAppsDestination(
         }
     }
 
-    LaunchedEffect(state.layout, state.generation, state.apps) {
+    LaunchedEffect(state.layout, state.generation, state.apps, returnAnchor) {
         val surface = if (state.layout == LibraryLayout.List) {
             LibraryNavigationSurface.AppsList
         } else {
             LibraryNavigationSurface.AppsGrid
         }
         val availableIds = state.apps.map(LibraryAppUiItem::databaseId)
-        val anchor = navigationState.resolveAnchor(surface, state.generation, availableIds)
+        val anchor = returnAnchor?.let { navigationState.resolveAnchor(it, availableIds) }
+            ?: navigationState.resolveAnchor(surface, state.generation, availableIds)
             ?: return@LaunchedEffect
         val targetIndex = anchor.index + 1 // the header occupies item index zero
         if (state.layout == LibraryLayout.List) {
@@ -1162,9 +1204,14 @@ internal fun LibraryAppsDestination(
         ) {
             gridState.scrollToItem(targetIndex, anchor.offsetPx)
         }
+        if (returnAnchor != null) onReturnAnchorConsumed()
     }
 
-    LaunchedEffect(state.layout, state.generation) {
+    LaunchedEffect(state.layout, state.generation, returnAnchor) {
+        // The metadata editor temporarily removes this destination from composition. Do not
+        // persist the empty/top layout that Compose reports during that hand-off over the
+        // explicitly captured return anchor.
+        if (returnAnchor != null) return@LaunchedEffect
         val surface = if (currentLayout == LibraryLayout.List) {
             LibraryNavigationSurface.AppsList
         } else {
@@ -1220,6 +1267,7 @@ internal fun LibraryAppsDestination(
     val headerScrollConnection = remember(
         chromeHysteresis,
         state.layout,
+        minScrollRoomPx,
         onFabVisibilityChanged,
         onNavigationVisibilityChanged,
     ) {
@@ -1238,8 +1286,13 @@ internal fun LibraryAppsDestination(
                     gridState.canScrollForward || gridState.canScrollBackward
                 }
                 if (!canScroll) {
-                    if (headerOffsetPx.value != 0f || !chromeHysteresis.chromeVisible) {
+                    if (headerOffsetPx.value < -0.5f && (consumed.y > 0f || available.y > 0f)) {
                         headerOffsetPx.value = 0f
+                        if (chromeHysteresis.revealNow() != null) {
+                            onFabVisibilityChanged(true)
+                            onNavigationVisibilityChanged(true)
+                        }
+                    } else if (headerOffsetPx.value == 0f && !chromeHysteresis.chromeVisible) {
                         chromeHysteresis.reset()
                         onFabVisibilityChanged(true)
                         onNavigationVisibilityChanged(true)
@@ -1256,6 +1309,12 @@ internal fun LibraryAppsDestination(
                     available.y > 0f -> available.y
                     else -> return Offset.Zero
                 }
+                val hasScrollRoom = if (state.layout == LibraryLayout.List) {
+                    listState.hasLibraryChromeScrollRoom(minScrollRoomPx)
+                } else {
+                    gridState.hasLibraryChromeScrollRoom(minScrollRoomPx)
+                }
+                if (delta < 0f && !hasScrollRoom) return Offset.Zero
                 val fullyHidden = headerOffsetPx.value <= -height.toFloat() + 0.5f
                 var visibilityChange = chromeHysteresis.onScrollDelta(delta)
                 val shouldMoveHeader =
@@ -1385,6 +1444,22 @@ internal fun LibraryAppsDestination(
         }
         GlassSystemBarScrim(visible = headerOffsetPx.value < -1f)
     }
+}
+
+internal fun LazyListState.hasLibraryChromeScrollRoom(minScrollRoomPx: Float): Boolean {
+    if (!canScrollForward) return false
+    val layout = layoutInfo
+    val lastVisible = layout.visibleItemsInfo.lastOrNull() ?: return false
+    val remaining = lastVisible.offset + lastVisible.size - layout.viewportEndOffset
+    return lastVisible.index < layout.totalItemsCount - 1 || remaining > minScrollRoomPx
+}
+
+internal fun LazyGridState.hasLibraryChromeScrollRoom(minScrollRoomPx: Float): Boolean {
+    if (!canScrollForward) return false
+    val layout = layoutInfo
+    val lastVisible = layout.visibleItemsInfo.lastOrNull() ?: return false
+    val remaining = lastVisible.offset.y + lastVisible.size.height - layout.viewportEndOffset
+    return lastVisible.index < layout.totalItemsCount - 1 || remaining > minScrollRoomPx
 }
 
 @Composable
@@ -1995,10 +2070,14 @@ internal fun LibraryOptionsDestination(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .heightIn(min = 52.dp)
-                                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                                    .heightIn(min = 64.dp)
+                                    .clickable(
+                                        role = Role.Switch,
+                                        onClick = { onHideGridTitlesChange(!state.hideGridTitles) },
+                                    )
+                                    .padding(horizontal = 16.dp, vertical = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
@@ -2025,10 +2104,14 @@ internal fun LibraryOptionsDestination(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .heightIn(min = 52.dp)
-                                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                                    .heightIn(min = 64.dp)
+                                    .clickable(
+                                        role = Role.Switch,
+                                        onClick = { onShowListDescriptionChange(!state.showListDescription) },
+                                    )
+                                    .padding(horizontal = 16.dp, vertical = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
@@ -2138,11 +2221,14 @@ private fun LibraryOptionsSection(
     title: Int,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         Text(
             text = stringResource(title),
-            modifier = Modifier.padding(start = 10.dp, end = 10.dp, bottom = 4.dp),
-            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.padding(start = 12.dp, top = 6.dp, end = 12.dp, bottom = 1.dp),
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary,
         )
@@ -2165,7 +2251,8 @@ private fun LibraryOptionGroup(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 9.dp),
+            .padding(horizontal = 16.dp, vertical = 11.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(
             text = stringResource(label),
@@ -2175,12 +2262,10 @@ private fun LibraryOptionGroup(
         summary?.let {
             Text(
                 text = stringResource(it),
-                modifier = Modifier.padding(top = 1.dp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
             )
         }
-        Spacer(Modifier.height(5.dp))
         content()
     }
 }
@@ -3385,17 +3470,17 @@ private fun LibraryActionRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 52.dp)
+            .heightIn(min = 64.dp)
             .clickable(role = Role.Button, onClick = action)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+            .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         if (icon != null) {
             Icon(
                 painter = painterResource(icon),
                 contentDescription = null,
-                modifier = Modifier.size(22.dp),
+                modifier = Modifier.size(24.dp),
                 tint = contentColor,
             )
         }
@@ -3566,11 +3651,29 @@ internal fun AppActionsDialog(
         },
         text = {
             val listState = rememberLazyListState()
-            Column {
+            val maxListHeight = libraryDialogListHeight()
+            val canScrollForward = rememberLazyListCanScrollForward(listState)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = maxListHeight),
+            ) {
                 LazyColumn(
                     state = listState,
-                    modifier = Modifier.heightIn(max = libraryDialogListHeight()),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxListHeight),
                 ) {
+                    if (onSelect != null) {
+                        item {
+                            DialogAction(
+                                label = R.string.library_action_select,
+                                icon = R.drawable.ic_check,
+                                onDismiss = onDismiss,
+                                action = onSelect,
+                            )
+                        }
+                    }
                     item {
                         if (onEditMetadata != null) {
                             DialogAction(
@@ -3588,24 +3691,6 @@ internal fun AppActionsDialog(
                             )
                         }
                     }
-                    if (onSelect != null) {
-                        item {
-                            DialogAction(
-                                label = R.string.library_action_select,
-                                icon = R.drawable.ic_check,
-                                onDismiss = onDismiss,
-                                action = onSelect,
-                            )
-                        }
-                    }
-                    item {
-                        DialogAction(
-                            label = R.string.action_settings,
-                            icon = R.drawable.ic_settings,
-                            onDismiss = onDismiss,
-                            action = onSettings,
-                        )
-                    }
                     if (onShortcut != null) {
                         item {
                             DialogAction(
@@ -3615,9 +3700,6 @@ internal fun AppActionsDialog(
                                 action = onShortcut,
                             )
                         }
-                    }
-                    if (onAddToCollection != null || onRemoveFromCollection != null) {
-                        item { DialogActionDivider() }
                     }
                     if (onAddToCollection != null) {
                         item {
@@ -3639,8 +3721,23 @@ internal fun AppActionsDialog(
                             )
                         }
                     }
-                    if (onShareApp != null || onExportAppBundle != null) {
-                        item { DialogActionDivider() }
+                    item {
+                        DialogAction(
+                            label = R.string.action_settings,
+                            icon = R.drawable.ic_settings,
+                            onDismiss = onDismiss,
+                            action = onSettings,
+                        )
+                    }
+                    if (app.canReinstall) {
+                        item {
+                            DialogAction(
+                                label = R.string.action_reinstall,
+                                icon = R.drawable.ic_restart_alt,
+                                onDismiss = onDismiss,
+                                action = onReinstall,
+                            )
+                        }
                     }
                     if (onShareApp != null) {
                         item {
@@ -3662,17 +3759,6 @@ internal fun AppActionsDialog(
                             )
                         }
                     }
-                    item { DialogActionDivider() }
-                    if (app.canReinstall) {
-                        item {
-                            DialogAction(
-                                label = R.string.action_reinstall,
-                                icon = R.drawable.ic_restart_alt,
-                                onDismiss = onDismiss,
-                                action = onReinstall,
-                            )
-                        }
-                    }
                     item {
                         DialogAction(
                             label = R.string.action_context_delete,
@@ -3684,19 +3770,14 @@ internal fun AppActionsDialog(
                     }
                 }
                 ScrollableContentHint(
-                    visible = listState.canScrollForward,
+                    visible = canScrollForward,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
                 )
             }
         },
         confirmButton = {},
-    )
-}
-
-@Composable
-private fun DialogActionDivider() {
-    HorizontalDivider(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
     )
 }
 
@@ -3840,17 +3921,21 @@ internal fun LibraryInformationDialog(
         },
         text = {
             when (dialog) {
-                LibraryInfoDialog.About -> LibraryAboutBody(
-                    maxHeight = maxMessageHeight,
-                    onLicenses = { onOpen(LibraryInfoDialog.Licenses) },
-                )
+                LibraryInfoDialog.About -> LibraryAboutBody(maxHeight = maxMessageHeight)
                 LibraryInfoDialog.Help -> LibraryHelpBody(
                     message = message,
                     maxHeight = maxMessageHeight,
                 )
                 LibraryInfoDialog.Licenses -> {
                     val scrollState = rememberScrollState()
-                    Column {
+                    val canScrollForward by remember {
+                        derivedStateOf { scrollState.value < scrollState.maxValue }
+                    }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = maxMessageHeight),
+                    ) {
                         Text(
                             text = message,
                             modifier = Modifier
@@ -3861,7 +3946,10 @@ internal fun LibraryInformationDialog(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         ScrollableContentHint(
-                            visible = scrollState.value < scrollState.maxValue,
+                            visible = canScrollForward,
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
                         )
                     }
                 }
@@ -3876,11 +3964,15 @@ internal fun LibraryInformationDialog(
 @Composable
 private fun LibraryAboutBody(
     maxHeight: Dp,
-    onLicenses: () -> Unit,
 ) {
     val scrollState = rememberScrollState()
-    Column(
-        modifier = Modifier.fillMaxWidth(),
+    val canScrollForward by remember {
+        derivedStateOf { scrollState.value < scrollState.maxValue }
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = maxHeight),
     ) {
         Column(
             modifier = Modifier
@@ -3922,15 +4014,13 @@ private fun LibraryAboutBody(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                TextButton(onClick = onLicenses) {
-                    Text(stringResource(R.string.licenses).uppercase())
-                }
-            }
         }
+        ScrollableContentHint(
+            visible = canScrollForward,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
+        )
     }
 }
 
@@ -3946,8 +4036,13 @@ private fun LibraryHelpBody(
             .filter(String::isNotEmpty)
     }
     val scrollState = rememberScrollState()
-    Column(
-        modifier = Modifier.fillMaxWidth(),
+    val canScrollForward by remember {
+        derivedStateOf { scrollState.value < scrollState.maxValue }
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = maxHeight),
     ) {
         Column(
             modifier = Modifier
@@ -3977,7 +4072,10 @@ private fun LibraryHelpBody(
             }
         }
         ScrollableContentHint(
-            visible = scrollState.value < scrollState.maxValue,
+            visible = canScrollForward,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
         )
     }
 }

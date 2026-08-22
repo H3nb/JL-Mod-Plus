@@ -5,7 +5,7 @@
     <string name="about_maintainer" translatable="false">Maintainer: Hendra Bara\'langi\' (H3NB)</string>
     <string name="about_product_name" translatable="false">JL-Mod Plus</string>
     <string name="about_message">This app allows you to launch J2ME apps and games on Android.</string>
-    <string name="about_lineage">JL-Mod Plus is a fork of JL-Mod by woesss (Yury Kharchenko), itself a fork and experimental mod of J2ME-Loader by Nikita Shakarun. Upstream attribution and license notices are preserved in Licenses.</string>
+    <string name="about_lineage">JL-Mod Plus is a fork of JL-Mod by woesss (Yury Kharchenko), itself a fork and experimental mod of J2ME-Loader by Nikita Shakarun. Upstream attribution and license notices are preserved in the project.</string>
     <string name="action_context_delete">Delete</string>
     <string name="action_context_rename">Rename</string>
     <string name="action_context_shortcut">Add Shortcut</string>
@@ -134,10 +134,10 @@
     <string name="library_icon_shape_title">Icon Shape</string>
     <string name="library_icon_shape_summary">Choose rounded tiles or sharp-corner tiles for both ratios.</string>
     <string name="library_icon_shape_round">Rounded</string>
-    <string name="library_icon_shape_square">Sharp corners</string>
+    <string name="library_icon_shape_square">Sharp Corners</string>
     <string name="library_grid_spacing_title">Grid Spacing</string>
     <string name="library_grid_spacing_summary">Adjust the space between app tiles.</string>
-    <string name="library_grid_spacing_none">None (touching)</string>
+    <string name="library_grid_spacing_none">None (Touching)</string>
     <string name="library_grid_spacing_compact">Compact (4 dp)</string>
     <string name="library_grid_spacing_standard">Standard (8 dp)</string>
     <string name="library_grid_spacing_spacious">Spacious (12 dp)</string>
@@ -167,7 +167,7 @@
     <string name="PREF_BACKGROUND">Background</string>
     <string name="pref_button_shape_oval">Oval</string>
     <string name="pref_button_shape_rect">Rectangle</string>
-    <string name="pref_button_shape_round">Rounded rectangle</string>
+    <string name="pref_button_shape_round">Rounded Rectangle</string>
     <string name="pref_button_shape_title">Button Shape</string>
     <string name="pref_category_experimental">Experimental/Temporary Options</string>
     <string name="pref_emulator_dir">Working Directory</string>
@@ -281,6 +281,7 @@
     <string name="pref_vk_type_phone">Phone</string>
     <string name="pref_vk_type_phone_arrows">Phone (Arrows)</string>
     <string name="pref_wakelock_title">Keep Screen On</string>
+    <string name="fps_overlay_label">FPS</string>
     <string name="PREF_WIDTH">Width</string>
     <string name="profiles">Profiles</string>
     <string name="reinstall">App already installed.\n\nDo you want to reinstall it?\nAll data will be saved.</string>

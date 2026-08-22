@@ -343,6 +343,7 @@ fun LibraryAppActionsScreenshot() {
             onReinstall = {},
             onDelete = {},
             onEditMetadata = {},
+            onSelect = {},
             onAddToCollection = {},
             onShareApp = {},
             onExportAppBundle = {},

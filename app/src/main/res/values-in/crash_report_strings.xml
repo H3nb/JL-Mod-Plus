@@ -28,7 +28,7 @@
         <item quantity="other">Bagikan %1$d Laporan Diagnostik?</item>
     </plurals>
     <string name="crash_reports_batch_share_disclosure">Laporan diagnostik yang dipilih mungkin berisi informasi perangkat, metadata MIDlet, pengenal korelasi crash, stack trace Java, atau detail proses Android yang berhenti. Raw trace yang disimpan juga akan dilampirkan. Tinjau laporan sebelum membagikannya.</string>
-    <string name="crash_report_github_issue_title">Laporan diagnostik: %1$s</string>
+    <string name="crash_report_github_issue_title">Laporan Diagnostik: %1$s</string>
     <string name="crash_report_github_intro">Sebelum mengirim, jelaskan apa yang sedang Anda lakukan saat masalah terjadi. Tinjau teks diagnostik yang telah diisi dan hapus apa pun yang tidak ingin Anda publikasikan.\n\n---\n\nLaporan diagnostik (disanitasi oleh JL-Mod Plus):</string>
     <string name="crash_report_github_truncated">\n\n[Isian awal diagnostik dipersingkat untuk formulir issue GitHub. Gunakan Bagikan Laporan di JL-Mod Plus jika bukti tambahan diperlukan.]</string>
     <string name="crash_report_github_unavailable">Tidak ada aplikasi yang dapat membuka formulir issue GitHub</string>
@@ -40,7 +40,7 @@
     <string name="crash_reports_batch_delete_message">Tindakan ini akan menghapus secara permanen catatan diagnostik lokal yang dipilih dari JL-Mod Plus.</string>
     <string name="crash_report_delete_failed">Tidak dapat menghapus laporan secara lengkap</string>
     <string name="crash_report_unavailable">Laporan ini tidak lagi tersedia</string>
-    <string name="process_exit_recovery_title">Terdeteksi proses berhenti secara tak terduga</string>
+    <string name="process_exit_recovery_title">Terdeteksi Proses Berhenti Secara Tak Terduga</string>
     <string name="process_exit_recovery_message">JL-Mod Plus sebelumnya berhenti secara tak terduga (%1$s). Detail diagnostik disimpan secara lokal.</string>
     <string name="process_exit_recovery_message_midlet">Proses MIDlet sebelumnya berhenti secara tak terduga (%1$s). Detail diagnostik disimpan secara lokal.</string>
     <string name="process_exit_recovery_message_named">%1$s sebelumnya berhenti secara tak terduga (%2$s). Detail diagnostik disimpan secara lokal.</string>

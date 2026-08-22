@@ -18,15 +18,23 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.collect
 import ru.playsoftware.j2meloader.R
 
 /** Small, theme-aware affordance shown only when a bounded popup has content below its viewport. */
@@ -55,4 +63,18 @@ internal fun ScrollableContentHint(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
+}
+
+/**
+ * Bridges LazyListState's layout-backed scrollability to a stable Compose value. Some bounded
+ * dialogs are captured immediately after their first layout, so observing the state through a
+ * snapshot flow avoids a stale one-frame false result for the scroll affordance.
+ */
+@Composable
+internal fun rememberLazyListCanScrollForward(state: LazyListState): Boolean {
+    var canScrollForward by remember(state) { mutableStateOf(false) }
+    LaunchedEffect(state) {
+        snapshotFlow { state.canScrollForward }.collect { canScrollForward = it }
+    }
+    return canScrollForward
 }
