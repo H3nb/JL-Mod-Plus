@@ -149,6 +149,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.buildAnnotatedString
@@ -420,7 +421,13 @@ fun LibraryScreen(
     modifier: Modifier = Modifier,
     initialSelectionState: LibrarySelectionState = LibrarySelectionState(),
 ) {
-    val pagerState = rememberPagerState(pageCount = { LibraryDestination.entries.size })
+    var navigationState by rememberSaveable(stateSaver = LibraryNavigationState.Saver) {
+        mutableStateOf(LibraryNavigationState())
+    }
+    val pagerState = rememberPagerState(
+        initialPage = navigationState.destination.ordinal.coerceIn(0, LibraryDestination.entries.lastIndex),
+        pageCount = { LibraryDestination.entries.size },
+    )
     val coroutineScope = rememberCoroutineScope()
     val destination = LibraryDestination.entries[pagerState.currentPage]
     var showInstallFab by rememberSaveable { mutableStateOf(true) }
@@ -435,20 +442,44 @@ fun LibraryScreen(
     var selectionState by rememberSaveable(stateSaver = LibrarySelectionState.Saver) {
         mutableStateOf(initialSelectionState)
     }
-    var navigationState by rememberSaveable(stateSaver = LibraryNavigationState.Saver) {
-        mutableStateOf(LibraryNavigationState())
-    }
     val appsListState = rememberLazyListState()
     val appsGridState = rememberLazyGridState()
     val isImeVisible = WindowInsets.isImeVisible
     val useNavigationRail = availableWindowWidthDp() >= 600.dp
     val collectionsHost = actions as? LibraryCollectionsHost
     val bulkActions = actions as? LibraryBulkActions
+    val currentNavigationState by rememberUpdatedState(navigationState)
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.currentPage }
+            .collectLatest { page ->
+                val key = LibraryDestinationKey.valueOf(LibraryDestination.entries[page].name)
+                if (currentNavigationState.destination != key) {
+                    navigationState = currentNavigationState.copy(destination = key)
+                }
+            }
+    }
+    LaunchedEffect(state.layout, state.appliedFilter, state.sortVariant, state.quickView) {
+        navigationState = currentNavigationState.copy(
+            layout = state.layout,
+            query = state.appliedFilter,
+            sortVariant = state.sortVariant,
+            quickView = state.quickView,
+        )
+    }
 
     LaunchedEffect(state.generation) {
+        if (!state.databaseControlsReady) return@LaunchedEffect
         if (selectionState.generation != null && selectionState.generation != state.generation) {
             selectionState = selectionState.clear()
         }
+    }
+    LaunchedEffect(state.generation, state.apps) {
+        if (!state.databaseControlsReady) return@LaunchedEffect
+        selectionState = selectionState.retainAvailable(
+            state.generation,
+            state.apps.asSequence().map(LibraryAppUiItem::databaseId).toList(),
+        )
     }
     BackHandler(enabled = selectionState.isActive) {
         selectionState = selectionState.clear()
@@ -663,6 +694,8 @@ fun LibraryScreen(
                             host = collectionsHost,
                             libraryState = state,
                             scaffoldPadding = padding,
+                            navigationState = navigationState,
+                            onNavigationStateChanged = { navigationState = it },
                             onOpenActions = { app, collectionId ->
                                 appActions = app
                                 appActionsCollectionId = collectionId
@@ -804,7 +837,6 @@ fun LibraryScreen(
                     onClick = {
                         pendingBulkDeleteIds = null
                         bulkActions?.onDeleteSelected(selectedIds)
-                        selectionState = selectionState.clear()
                     },
                 ) {
                     Text(
@@ -2058,6 +2090,14 @@ private fun LibraryGridItem(
     hideTitle: Boolean,
     gridSpacing: Dp,
 ) {
+    val selectionDescription = stringResource(
+        R.string.library_selection_checkbox_description,
+        app.title,
+    )
+    val selectionStateDescription = stringResource(
+        if (selected) R.string.library_selection_checked
+        else R.string.library_selection_unchecked,
+    )
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -2086,7 +2126,8 @@ private fun LibraryGridItem(
                     modifier = Modifier
                         .align(Alignment.TopStart)
                         .semantics {
-                            contentDescription = app.title
+                            contentDescription = selectionDescription
+                            stateDescription = selectionStateDescription
                         },
                 )
             }
@@ -2125,6 +2166,14 @@ private fun LibraryListItem(
     onToggleSelection: (LibraryAppUiItem) -> Unit,
     iconRatio: LibraryIconRatio,
 ) {
+    val selectionDescription = stringResource(
+        R.string.library_selection_checkbox_description,
+        app.title,
+    )
+    val selectionStateDescription = stringResource(
+        if (selected) R.string.library_selection_checked
+        else R.string.library_selection_unchecked,
+    )
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -2176,7 +2225,8 @@ private fun LibraryListItem(
                     checked = selected,
                     onCheckedChange = { onToggleSelection(app) },
                     modifier = Modifier.semantics {
-                        contentDescription = app.title
+                        contentDescription = selectionDescription
+                        stateDescription = selectionStateDescription
                     },
                 )
             } else if (favoriteEnabled) {

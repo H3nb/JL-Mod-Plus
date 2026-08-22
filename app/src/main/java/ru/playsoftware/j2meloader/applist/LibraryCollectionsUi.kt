@@ -203,6 +203,8 @@ internal fun LibraryCollectionsDestination(
     host: LibraryCollectionsHost,
     libraryState: LibraryUiState,
     scaffoldPadding: PaddingValues,
+    navigationState: LibraryNavigationState = LibraryNavigationState(),
+    onNavigationStateChanged: (LibraryNavigationState) -> Unit = {},
     onOpenActions: (LibraryAppUiItem, Long) -> Unit,
     onNavigationVisibilityChanged: (Boolean) -> Unit = {},
 ) {
@@ -223,6 +225,8 @@ internal fun LibraryCollectionsDestination(
             allApps = state.allApps,
             libraryState = libraryState,
             scaffoldPadding = scaffoldPadding,
+            navigationState = navigationState,
+            onNavigationStateChanged = onNavigationStateChanged,
             onBack = {
                 onNavigationVisibilityChanged(true)
                 host.onDismissCollectionMembers()
@@ -249,6 +253,7 @@ internal fun LibraryCollectionsDestination(
     var renameTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
     var deleteTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val currentNavigationState by androidx.compose.runtime.rememberUpdatedState(navigationState)
     val headerHeightPx = remember { mutableStateOf(0) }
     val headerOffsetPx = remember { mutableStateOf(0f) }
     val density = LocalDensity.current
@@ -257,6 +262,42 @@ internal fun LibraryCollectionsDestination(
     val revealDistancePx = with(density) { 18.dp.toPx() }
     val chromeHysteresis = remember(hideDistancePx, revealDistancePx) {
         LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx)
+    }
+
+    LaunchedEffect(state.collections, libraryState.generation) {
+        val availableIds = state.collections.map { it.id }
+        val anchor = navigationState.resolveAnchor(
+            LibraryNavigationSurface.CollectionsList,
+            libraryState.generation,
+            availableIds,
+        ) ?: return@LaunchedEffect
+        val targetIndex = anchor.index + 1
+        if (listState.firstVisibleItemIndex != targetIndex ||
+            listState.firstVisibleItemScrollOffset != anchor.offsetPx
+        ) {
+            listState.scrollToItem(targetIndex, anchor.offsetPx)
+        }
+    }
+
+    LaunchedEffect(state.collections, libraryState.generation) {
+        snapshotFlow {
+            val firstCollection = listState.layoutInfo.visibleItemsInfo
+                .firstOrNull { it.index > 0 }
+            val fallbackIndex = (firstCollection?.index ?: 1) - 1
+            LibraryScrollAnchor(
+                generation = libraryState.generation,
+                stableItemId = state.collections.getOrNull(fallbackIndex)?.id,
+                offsetPx = firstCollection?.offset ?: 0,
+                fallbackIndex = fallbackIndex.coerceAtLeast(0),
+            )
+        }.collectLatest { anchor ->
+            onNavigationStateChanged(
+                currentNavigationState.saveAnchor(
+                    LibraryNavigationSurface.CollectionsList,
+                    anchor,
+                ),
+            )
+        }
     }
 
     LaunchedEffect(state.collections) {

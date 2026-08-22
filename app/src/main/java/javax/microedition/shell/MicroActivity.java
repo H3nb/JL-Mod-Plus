@@ -152,7 +152,7 @@ public class MicroActivity extends AppCompatActivity {
 			appName = intent.getStringExtra(KEY_MIDLET_NAME);
 			Uri data = intent.getData();
 			if (data == null) {
-				showErrorDialog("Invalid intent: app path is null");
+				showErrorDialog(getString(R.string.runtime_invalid_intent));
 				return;
 			}
 			appPath = data.toString();
@@ -452,7 +452,7 @@ public class MicroActivity extends AppCompatActivity {
 		String[] midletsNameArray = midlets.values().toArray(new String[0]);
 		String[] midletsClassArray = midlets.keySet().toArray(new String[0]);
 		if (size == 0) {
-			showErrorDialog("No MIDlets found");
+			showErrorDialog(getString(R.string.runtime_no_midlets));
 		} else if (size == 1) {
 			microLoader.loadMidlet(midletsClassArray[0], appName);
 		} else {
@@ -480,7 +480,7 @@ public class MicroActivity extends AppCompatActivity {
 
 	private float getToolBarHeight() {
 		TypedValue typedValue = new TypedValue();
-		if (getTheme().resolveAttribute(androidx.appcompat.R.attr.actionBarSize, typedValue, true)) {
+		if (getTheme().resolveAttribute(android.R.attr.actionBarSize, typedValue, true)) {
 			return typedValue.getDimension(getResources().getDisplayMetrics());
 		}
 		return 0;
@@ -681,6 +681,21 @@ public class MicroActivity extends AppCompatActivity {
 			runtimeMenuController.closeMenu();
 		} else {
 			super.closeOptionsMenu();
+		}
+		// The runtime menu temporarily reveals system bars for immersive Canvas screens. Restore
+		// the configured chrome after dismissal so actionbar/statusbar/cutout policy stays coherent.
+		if (!actionBarEnabled && current instanceof Canvas) {
+			View host = binding == null ? null : binding.displayableContainer;
+			if (host != null) {
+				host.post(() -> {
+					if (!isFinishing() && (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1 || !isDestroyed())
+							&& current instanceof Canvas) {
+						applySystemUi(getRuntimeChrome(current), current);
+					}
+				});
+			} else {
+				applySystemUi(getRuntimeChrome(current), current);
+			}
 		}
 	}
 

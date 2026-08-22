@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -286,6 +287,7 @@ internal fun ConfigScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .verticalScroll(pageScrollState)
+                            .imePadding()
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
@@ -889,6 +891,7 @@ private fun configDialogBodyModifier(landscape: Boolean): Modifier {
     }
     return Modifier
         .heightIn(max = maxBodyHeight)
+        .imePadding()
         .verticalScroll(rememberScrollState())
 }
 

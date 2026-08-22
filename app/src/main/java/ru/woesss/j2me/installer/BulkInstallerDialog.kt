@@ -13,7 +13,6 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
-import android.util.TypedValue
 import android.view.WindowManager
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -45,7 +44,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -53,6 +51,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.widthIn
 import androidx.core.net.toUri
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
@@ -61,6 +60,7 @@ import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.librarydb.LibraryViewModel
 import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.ScrollableContentHint
 
 class BulkInstallerDialog : DialogFragment() {
     private lateinit var libraryViewModel: LibraryViewModel
@@ -148,11 +148,9 @@ class BulkInstallerDialog : DialogFragment() {
         super.onStart()
         val window = dialog?.window ?: return
         window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        val metrics = resources.displayMetrics
-        val margin = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 24f, metrics).toInt()
-        val maxWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 720f, metrics).toInt()
-        val width = minOf(maxWidth, metrics.widthPixels - margin)
-        window.setLayout(width.coerceAtLeast(1), WindowManager.LayoutParams.WRAP_CONTENT)
+        // Let the dialog window follow the actual container; Compose applies the adaptive max width
+        // below. This avoids using physical display metrics in split-screen and freeform windows.
+        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT)
     }
 
     companion object {
@@ -200,7 +198,9 @@ private fun BulkInstallSurface(
         shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         tonalElevation = 6.dp,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .widthIn(max = 720.dp),
     ) {
         Column(
             modifier = Modifier
@@ -346,6 +346,7 @@ private fun ReviewContent(
                     BulkItemRow(item, onToggle)
                 }
             }
+            ScrollableContentHint(visible = plan.items.size > 6)
         }
         HorizontalDivider()
         Row(

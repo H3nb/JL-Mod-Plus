@@ -212,7 +212,8 @@
         <activity
             android:name=".config.ProfilesActivity"
             android:exported="false"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:theme="@style/AppTheme.NoActionBar"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity
             android:name=".crashes.CrashReportsActivity"
             android:exported="false"

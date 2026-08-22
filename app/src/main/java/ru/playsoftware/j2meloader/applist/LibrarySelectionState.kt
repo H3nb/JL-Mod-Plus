@@ -79,6 +79,20 @@ data class LibrarySelectionState(
     fun retainGeneration(activeGeneration: Long): LibrarySelectionState =
         takeIf { it.generation == activeGeneration } ?: LibrarySelectionState()
 
+    /** Drops rows removed from the current Room projection while retaining failed bulk actions. */
+    fun retainAvailable(
+        activeGeneration: Long,
+        availableAppIds: Iterable<Long>,
+    ): LibrarySelectionState {
+        if (generation != activeGeneration) return LibrarySelectionState()
+        val retained = selectedAppIds.intersect(availableAppIds.toSet())
+        return if (selectedAppIds.isNotEmpty() && retained.isEmpty()) {
+            LibrarySelectionState()
+        } else {
+            copy(selectedAppIds = retained)
+        }
+    }
+
     fun clear(): LibrarySelectionState = LibrarySelectionState()
 
     companion object {

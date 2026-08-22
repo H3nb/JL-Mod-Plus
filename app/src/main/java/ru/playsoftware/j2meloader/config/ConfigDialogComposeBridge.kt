@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -130,7 +131,9 @@ private fun DialogSurface(content: @Composable ColumnScope.() -> Unit) {
         tonalElevation = 6.dp,
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
+            modifier = Modifier
+                .padding(horizontal = 24.dp, vertical = 20.dp)
+                .imePadding(),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             content = content,
         )

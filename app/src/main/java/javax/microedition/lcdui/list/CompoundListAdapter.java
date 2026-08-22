@@ -47,8 +47,15 @@ public class CompoundListAdapter extends CompoundAdapter implements ListAdapter 
 				if (highlightColor == 0) {
 					TypedValue typedValue = new TypedValue();
 					Context context = ContextHolder.getActivity();
-					context.getTheme().resolveAttribute(androidx.appcompat.R.attr.colorControlHighlight, typedValue, true);
-					highlightColor = ContextCompat.getColor(context, typedValue.resourceId);
+					boolean resolved = context.getTheme().resolveAttribute(android.R.attr.colorControlHighlight, typedValue, true);
+					if (resolved && typedValue.resourceId != 0) {
+						highlightColor = ContextCompat.getColor(context, typedValue.resourceId);
+					} else if (resolved && typedValue.type >= TypedValue.TYPE_FIRST_INT &&
+							typedValue.type <= TypedValue.TYPE_LAST_INT) {
+						highlightColor = typedValue.data;
+					} else {
+						highlightColor = 0x33000000;
+					}
 				}
 				break;
 			case Choice.EXCLUSIVE:

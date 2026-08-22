@@ -57,18 +57,51 @@ data class LibraryNavigationState(
          */
         val Saver: Saver<LibraryNavigationState, Any> = listSaver(
             save = { state ->
-                state.anchors.entries.map { (surface, anchor) ->
-                    listOf(
-                        surface.name,
-                        anchor.generation,
-                        anchor.stableItemId ?: Long.MIN_VALUE,
-                        anchor.offsetPx,
-                        anchor.fallbackIndex,
-                    )
-                }
+                listOf(
+                    state.destination.name,
+                    state.layout.name,
+                    state.query,
+                    state.quickView.name,
+                    state.sortVariant,
+                    state.selectedCollectionId ?: Long.MIN_VALUE,
+                    state.anchors.entries.map { (surface, anchor) ->
+                        listOf(
+                            surface.name,
+                            anchor.generation,
+                            anchor.stableItemId ?: Long.MIN_VALUE,
+                            anchor.offsetPx,
+                            anchor.fallbackIndex,
+                        )
+                    },
+                )
             },
             restore = { saved ->
-                val anchors = saved.mapNotNull { value ->
+                // The first released saver stored anchors directly. Keep accepting that shape so
+                // an activity restored from an older process does not lose its return position.
+                val legacyAnchors = saved.takeIf { values ->
+                    values.isEmpty() || values.firstOrNull() !is String
+                } ?: emptyList()
+                val destination = saved.getOrNull(0)?.toString()?.let {
+                    runCatching { LibraryDestinationKey.valueOf(it) }.getOrNull()
+                } ?: LibraryDestinationKey.Apps
+                val layout = saved.getOrNull(1)?.toString()?.let {
+                    runCatching { LibraryLayout.valueOf(it) }.getOrNull()
+                } ?: LibraryLayout.List
+                val query = saved.getOrNull(2) as? String ?: ""
+                val quickView = saved.getOrNull(3)?.toString()?.let {
+                    runCatching {
+                        ru.playsoftware.j2meloader.librarydb.LibraryQuickView.valueOf(it)
+                    }.getOrNull()
+                } ?: ru.playsoftware.j2meloader.librarydb.LibraryQuickView.All
+                val sortVariant = (saved.getOrNull(4) as? Number)?.toInt() ?: 0
+                val selectedCollectionId = (saved.getOrNull(5) as? Number)?.toLong()
+                    ?.takeUnless { it == Long.MIN_VALUE }
+                val anchorValues = if (legacyAnchors.isNotEmpty() || saved.isEmpty()) {
+                    saved
+                } else {
+                    saved.getOrNull(6) as? List<*> ?: emptyList<Any?>()
+                }
+                val anchors = anchorValues.mapNotNull { value ->
                     val entry = value as? List<*> ?: return@mapNotNull null
                     val surface = entry.getOrNull(0)?.toString()?.let {
                         runCatching { LibraryNavigationSurface.valueOf(it) }.getOrNull()
@@ -80,7 +113,15 @@ data class LibraryNavigationState(
                     val fallbackIndex = (entry.getOrNull(4) as? Number)?.toInt() ?: return@mapNotNull null
                     surface to LibraryScrollAnchor(generation, stableId, offset, fallbackIndex)
                 }.toMap()
-                LibraryNavigationState(anchors = anchors)
+                LibraryNavigationState(
+                    destination = destination,
+                    layout = layout,
+                    query = query,
+                    quickView = quickView,
+                    sortVariant = sortVariant,
+                    selectedCollectionId = selectedCollectionId,
+                    anchors = anchors,
+                )
             },
         )
     }

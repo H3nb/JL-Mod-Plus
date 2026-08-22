@@ -94,6 +94,8 @@ internal fun LibraryCollectionBrowser(
     allApps: List<LibraryAppUiItem>,
     libraryState: LibraryUiState,
     scaffoldPadding: PaddingValues,
+    navigationState: LibraryNavigationState = LibraryNavigationState(),
+    onNavigationStateChanged: (LibraryNavigationState) -> Unit = {},
     onBack: () -> Unit,
     onOpenApp: (Int) -> Unit,
     onOpenActions: (LibraryAppUiItem) -> Unit,
@@ -144,6 +146,7 @@ internal fun LibraryCollectionBrowser(
     }
     val listState = rememberLazyListState()
     val gridState = rememberLazyGridState()
+    val currentNavigationState by androidx.compose.runtime.rememberUpdatedState(navigationState)
     val headerHeightPx = remember { mutableStateOf(0) }
     val headerOffsetPx = remember { mutableStateOf(0f) }
     val density = LocalDensity.current
@@ -152,6 +155,59 @@ internal fun LibraryCollectionBrowser(
     val revealDistancePx = with(density) { 18.dp.toPx() }
     val chromeHysteresis = remember(hideDistancePx, revealDistancePx) {
         LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx)
+    }
+
+    LaunchedEffect(libraryState.layout, libraryState.generation, collection.id, projected) {
+        val surface = if (libraryState.layout == LibraryLayout.List) {
+            LibraryNavigationSurface.CollectionAppsList
+        } else {
+            LibraryNavigationSurface.CollectionAppsGrid
+        }
+        val anchor = navigationState.resolveAnchor(
+            surface,
+            libraryState.generation,
+            projected.map(LibraryAppUiItem::databaseId),
+        ) ?: return@LaunchedEffect
+        val targetIndex = anchor.index + 1
+        if (libraryState.layout == LibraryLayout.List) {
+            if (listState.firstVisibleItemIndex != targetIndex ||
+                listState.firstVisibleItemScrollOffset != anchor.offsetPx
+            ) {
+                listState.scrollToItem(targetIndex, anchor.offsetPx)
+            }
+        } else if (gridState.firstVisibleItemIndex != targetIndex ||
+            gridState.firstVisibleItemScrollOffset != anchor.offsetPx
+        ) {
+            gridState.scrollToItem(targetIndex, anchor.offsetPx)
+        }
+    }
+
+    LaunchedEffect(libraryState.layout, libraryState.generation, collection.id, projected) {
+        val surface = if (libraryState.layout == LibraryLayout.List) {
+            LibraryNavigationSurface.CollectionAppsList
+        } else {
+            LibraryNavigationSurface.CollectionAppsGrid
+        }
+        snapshotFlow {
+            val firstApp = if (libraryState.layout == LibraryLayout.List) {
+                listState.layoutInfo.visibleItemsInfo
+                    .firstOrNull { it.index > 0 }
+                    ?.let { it.index to it.offset }
+            } else {
+                gridState.layoutInfo.visibleItemsInfo
+                    .firstOrNull { it.index > 0 }
+                    ?.let { it.index to it.offset.y }
+            }
+            val fallbackIndex = (firstApp?.first ?: 1) - 1
+            LibraryScrollAnchor(
+                generation = libraryState.generation,
+                stableItemId = projected.getOrNull(fallbackIndex)?.databaseId,
+                offsetPx = firstApp?.second ?: 0,
+                fallbackIndex = fallbackIndex.coerceAtLeast(0),
+            )
+        }.collectLatest { anchor ->
+            onNavigationStateChanged(currentNavigationState.saveAnchor(surface, anchor))
+        }
     }
 
     LaunchedEffect(libraryState.layout, collection.id) {
@@ -591,9 +647,9 @@ internal fun LibraryCollectionAppPicker(
     onSetMembership: (Int, Boolean) -> Unit,
 ) {
     var query by rememberSaveable(collection.id, "picker") { mutableStateOf("") }
-    var selectedIds by remember(collection.id) { mutableStateOf(memberIds) }
+    var selectedIds by remember(collection.id) { mutableStateOf(memberIds.toSet()) }
     LaunchedEffect(memberIds) {
-        selectedIds = memberIds
+        selectedIds = memberIds.toSet()
     }
     val visibleApps by produceState(
         initialValue = allApps,
@@ -661,9 +717,7 @@ internal fun LibraryCollectionAppPicker(
                         .fillMaxWidth()
                         .clickable {
                             val next = !checked
-                            selectedIds = selectedIds.toMutableSet().apply {
-                                if (next) add(app.id) else remove(app.id)
-                            }
+                            selectedIds = if (next) selectedIds + app.id else selectedIds - app.id
                             onSetMembership(app.id, next)
                         }
                         .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -695,9 +749,7 @@ internal fun LibraryCollectionAppPicker(
                     Checkbox(
                         checked = checked,
                         onCheckedChange = { next ->
-                            selectedIds = selectedIds.toMutableSet().apply {
-                                if (next) add(app.id) else remove(app.id)
-                            }
+                            selectedIds = if (next) selectedIds + app.id else selectedIds - app.id
                             onSetMembership(app.id, next)
                         },
                     )

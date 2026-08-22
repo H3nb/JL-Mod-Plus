@@ -166,6 +166,7 @@
     <string name="pref_enable_actionbar_summary">For fullscreen applications</string>
     <string name="pref_enable_actionbar_title">Enable ActionBar</string>
     <string name="pref_enable_statusbar_title">Enable Statusbar</string>
+    <string name="pref_enable_statusbar_summary">Keep the system status bar visible</string>
     <string name="pref_encoding_title">Encoding</string>
     <string name="PREF_FILTER">Filter</string>
     <string name="PREF_FONT_ANTI_ALIASING">Anti-Aliasing</string>

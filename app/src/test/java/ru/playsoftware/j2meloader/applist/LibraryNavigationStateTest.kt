@@ -17,6 +17,7 @@ package ru.playsoftware.j2meloader.applist
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import ru.playsoftware.j2meloader.librarydb.LibraryQuickView
 
 class LibraryNavigationStateTest {
     @Test
@@ -73,5 +74,42 @@ class LibraryNavigationStateTest {
 
         assertEquals(10L, state.anchors[LibraryNavigationSurface.AppsList]?.stableItemId)
         assertEquals(30L, state.anchors[LibraryNavigationSurface.AppsGrid]?.stableItemId)
+    }
+
+    @Test
+    fun saverRestoresDestinationAndViewStateAlongsideAnchors() {
+        val state = LibraryNavigationState(
+            destination = LibraryDestinationKey.Collections,
+            layout = LibraryLayout.Grid,
+            query = "demo",
+            quickView = LibraryQuickView.RecentlyPlayed,
+            sortVariant = -3,
+            selectedCollectionId = 42L,
+        ).saveAnchor(
+            LibraryNavigationSurface.CollectionsList,
+            LibraryScrollAnchor(9L, 100L, offsetPx = 7, fallbackIndex = 2),
+        )
+
+        val restored = LibraryNavigationState.Saver.restore(
+            listOf(
+                "Collections",
+                "Grid",
+                "demo",
+                "RecentlyPlayed",
+                -3,
+                42L,
+                listOf(listOf("CollectionsList", 9L, 100L, 7, 2)),
+            ),
+        )
+        assertEquals(state, restored)
+    }
+
+    @Test
+    fun saverAcceptsLegacyAnchorOnlyState() {
+        val restored = LibraryNavigationState.Saver.restore(
+            listOf(listOf("AppsList", 4L, 12L, 3, 1)),
+        )
+        assertEquals(12L, restored?.anchors?.get(LibraryNavigationSurface.AppsList)?.stableItemId)
+        assertEquals(LibraryDestinationKey.Apps, restored?.destination)
     }
 }

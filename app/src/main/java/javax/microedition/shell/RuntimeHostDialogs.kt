@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -56,6 +57,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import ru.playsoftware.j2meloader.R
+import ru.playsoftware.j2meloader.ui.ScrollableContentHint
 import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 
 /** Callbacks for host-owned runtime dialogs. MIDP state and rendering remain in Java. */
@@ -136,8 +138,11 @@ private fun runtimeDialogLayout(): RuntimeDialogLayout {
             Modifier
                 .fillMaxWidth(0.94f)
                 .widthIn(max = 760.dp)
+                .imePadding()
         } else {
-            Modifier.widthIn(max = 560.dp)
+            Modifier
+                .widthIn(max = 560.dp)
+                .imePadding()
         },
         properties = DialogProperties(usePlatformDefaultWidth = !landscape),
     )
@@ -165,25 +170,28 @@ private fun MidletSelectionDialog(
         },
         title = { Text(stringResource(R.string.select_dialog_title)) },
         text = {
-            LazyColumn(modifier = Modifier.heightIn(max = runtimeDialogListHeight())) {
-                itemsIndexed(state.names) { index, name ->
-                    ListItem(
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        headlineContent = {
-                            Text(
-                                text = name,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(role = Role.Button) {
-                                onDismiss()
-                                actions.onMidletSelected(index)
+            Column {
+                LazyColumn(modifier = Modifier.heightIn(max = runtimeDialogListHeight())) {
+                    itemsIndexed(state.names) { index, name ->
+                        ListItem(
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            headlineContent = {
+                                Text(
+                                    text = name,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
                             },
-                    )
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(role = Role.Button) {
+                                    onDismiss()
+                                    actions.onMidletSelected(index)
+                                },
+                        )
+                    }
                 }
+                ScrollableContentHint(visible = state.names.size > 6)
             }
         },
         confirmButton = {},
@@ -289,24 +297,27 @@ private fun HideButtonsDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.hide_buttons)) },
         text = {
-            LazyColumn(modifier = Modifier.heightIn(max = runtimeDialogListHeight())) {
-                itemsIndexed(state.names) { index, name ->
-                    val isChecked = checked.getOrNull(index) == true
-                    ListItem(
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        headlineContent = { Text(name, maxLines = 2, overflow = TextOverflow.Ellipsis) },
-                        leadingContent = {
-                            Checkbox(checked = isChecked, onCheckedChange = null)
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .toggleable(value = isChecked, role = Role.Checkbox) {
-                                checked = checked.copyOf().also { copy ->
-                                    if (index in copy.indices) copy[index] = !isChecked
-                                }
+            Column {
+                LazyColumn(modifier = Modifier.heightIn(max = runtimeDialogListHeight())) {
+                    itemsIndexed(state.names) { index, name ->
+                        val isChecked = checked.getOrNull(index) == true
+                        ListItem(
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            headlineContent = { Text(name, maxLines = 2, overflow = TextOverflow.Ellipsis) },
+                            leadingContent = {
+                                Checkbox(checked = isChecked, onCheckedChange = null)
                             },
-                    )
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .toggleable(value = isChecked, role = Role.Checkbox) {
+                                    checked = checked.copyOf().also { copy ->
+                                        if (index in copy.indices) copy[index] = !isChecked
+                                    }
+                                },
+                        )
+                    }
                 }
+                ScrollableContentHint(visible = state.names.size > 6)
             }
         },
         confirmButton = {
@@ -392,22 +403,25 @@ private fun LayoutSelectionDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.layout_switch)) },
         text = {
-            LazyColumn(modifier = Modifier.heightIn(max = runtimeDialogListHeight())) {
-                itemsIndexed(state.entries) { index, entry ->
-                    ListItem(
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        headlineContent = { Text(entry) },
-                        leadingContent = {
-                            RadioButton(
-                                selected = selected == index,
-                                onClick = { selected = index },
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(role = Role.RadioButton) { selected = index },
-                    )
+            Column {
+                LazyColumn(modifier = Modifier.heightIn(max = runtimeDialogListHeight())) {
+                    itemsIndexed(state.entries) { index, entry ->
+                        ListItem(
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            headlineContent = { Text(entry) },
+                            leadingContent = {
+                                RadioButton(
+                                    selected = selected == index,
+                                    onClick = { selected = index },
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(role = Role.RadioButton) { selected = index },
+                        )
+                    }
                 }
+                ScrollableContentHint(visible = state.entries.size > 6)
             }
         },
         confirmButton = {

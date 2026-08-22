@@ -68,7 +68,13 @@ public final class EdgeToEdgeCompat {
 			return;
 		}
 		View decor = activity.getWindow().getDecorView();
-		View actionBar = activity.findViewById(androidx.appcompat.R.id.action_bar_container);
+		// AppCompat's container id is an implementation detail. The public action_bar child is
+		// stable; its parent is the toolbar container whose bounds are needed for inset math.
+		View actionBarView = activity.findViewById(androidx.appcompat.R.id.action_bar);
+		if (actionBarView != null && actionBarView.getParent() instanceof View) {
+			actionBarView = (View) actionBarView.getParent();
+		}
+		final View actionBar = actionBarView;
 		int contentPaddingLeft = content.getPaddingLeft();
 		int contentPaddingTop = content.getPaddingTop();
 		int contentPaddingRight = content.getPaddingRight();

@@ -13,6 +13,11 @@
     <string name="pref_accent_amber">Amber</string>
     <string name="pref_accent_rose">Rose</string>
     <string name="pref_accent_violet">Violet</string>
+    <string name="runtime_invalid_intent">Invalid launch request: the MIDlet path is missing.</string>
+    <string name="runtime_no_midlets">No MIDlets were found in this application.</string>
+    <string name="library_selection_checkbox_description">Select %1$s</string>
+    <string name="library_selection_checked">Selected</string>
+    <string name="library_selection_unchecked">Not selected</string>
 
     <string name="library_options_library_title">Library View</string>
     <string name="library_options_application_title">Application</string>

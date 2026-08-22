@@ -176,7 +176,7 @@ public class SettingsActivity extends AppCompatActivity {
 		switches.add(new SettingsSwitch(
 				PREF_STATUSBAR,
 				getString(R.string.pref_enable_statusbar_title),
-				getString(R.string.pref_enable_actionbar_summary),
+				getString(R.string.pref_enable_statusbar_summary),
 				preferences.getBoolean(PREF_STATUSBAR, false)));
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
 			switches.add(new SettingsSwitch(

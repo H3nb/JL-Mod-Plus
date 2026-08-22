@@ -52,8 +52,14 @@ public class ChoiceGroupView extends ListView {
 
 	private static int computeMaxHeight(Context context) {
 		TypedValue typedValue = new TypedValue();
-		context.getTheme().resolveAttribute(androidx.appcompat.R.attr.listPreferredItemHeightSmall, typedValue, true);
-		float itemHeight = typedValue.getDimension(context.getResources().getDisplayMetrics());
+		boolean resolved = context.getTheme().resolveAttribute(android.R.attr.listPreferredItemHeightSmall, typedValue, true);
+		float itemHeight = resolved ? typedValue.getDimension(context.getResources().getDisplayMetrics()) : 0f;
+		if (itemHeight <= 0f) {
+			itemHeight = TypedValue.applyDimension(
+					TypedValue.COMPLEX_UNIT_DIP,
+					48f,
+					context.getResources().getDisplayMetrics());
+		}
 		return (int) (itemHeight * MAX_EXPANDED_ITEMS);
 	}
 }
