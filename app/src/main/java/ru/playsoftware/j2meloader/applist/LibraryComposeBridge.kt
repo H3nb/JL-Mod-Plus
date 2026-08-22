@@ -171,6 +171,7 @@ import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.librarydb.LibraryPlayStatsFormatter
 import ru.playsoftware.j2meloader.librarydb.LibraryQuickView
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.GlassSystemBarScrim
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
 import ru.playsoftware.j2meloader.ui.TransientNoticeHost
 import ru.playsoftware.j2meloader.ui.TransientNoticeState
@@ -1256,6 +1257,7 @@ internal fun LibraryAppsDestination(
         ) {
             renderHeader(Modifier, true)
         }
+        GlassSystemBarScrim(visible = headerOffsetPx.value < -1f)
     }
 }
 

@@ -81,6 +81,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.withContext
 import ru.playsoftware.j2meloader.R
+import ru.playsoftware.j2meloader.ui.GlassSystemBarScrim
 
 /**
  * Collection-specific browser. It mirrors Library List/Grid chrome while membership controls replace
@@ -325,6 +326,7 @@ internal fun LibraryCollectionBrowser(
         ) {
             renderHeader(Modifier, true)
         }
+        GlassSystemBarScrim(visible = headerOffsetPx.value < -1f)
     }
 }
 
