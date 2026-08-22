@@ -24,6 +24,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.security.MessageDigest
+import java.util.HashSet
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -163,7 +164,13 @@ internal object LibraryUniversalBundleExporter {
         if (!root.exists()) return BundleNamespaceState.Absent
         val canonicalRoot = requiredDirectory(workdirRoot, root, "App-owned namespace")
         entries += SourceEntry(path = "$prefix/", file = canonicalRoot, directory = true)
-        walkNamespace(entries, workdirRoot, canonicalRoot, prefix)
+        walkNamespace(
+            entries = entries,
+            workdirRoot = workdirRoot,
+            directory = canonicalRoot,
+            prefix = prefix,
+            visitedDirectories = HashSet(),
+        )
         return if (entries.any { !it.directory && it.path.startsWith("$prefix/") }) {
             BundleNamespaceState.Present
         } else {
@@ -176,8 +183,21 @@ internal object LibraryUniversalBundleExporter {
         workdirRoot: File,
         directory: File,
         prefix: String,
+        visitedDirectories: MutableSet<String>,
     ) {
-        val children = directory.listFiles()
+        val canonicalDirectory = directory.canonicalFile
+        if (!insideRoot(workdirRoot, canonicalDirectory)) {
+            throw IOException(
+                "App-owned directory resolves outside the active workdir: ${directory.absolutePath}",
+            )
+        }
+        if (!visitedDirectories.add(canonicalDirectory.path)) {
+            throw IOException(
+                "App-owned directory graph contains a canonical-directory cycle: " +
+                    directory.absolutePath,
+            )
+        }
+        val children = canonicalDirectory.listFiles()
             ?: throw IOException("Unable to list app-owned directory: ${directory.absolutePath}")
         children.sortedBy(File::getName).forEach { child ->
             val canonical = child.canonicalFile
@@ -188,7 +208,13 @@ internal object LibraryUniversalBundleExporter {
             when {
                 canonical.isDirectory -> {
                     entries += SourceEntry(path = "$path/", file = canonical, directory = true)
-                    walkNamespace(entries, workdirRoot, canonical, path)
+                    walkNamespace(
+                        entries = entries,
+                        workdirRoot = workdirRoot,
+                        directory = canonical,
+                        prefix = path,
+                        visitedDirectories = visitedDirectories,
+                    )
                 }
                 canonical.isFile -> entries += SourceEntry(path = path, file = canonical, directory = false)
                 else -> throw IOException("App-owned path is not a regular file or directory: ${child.absolutePath}")

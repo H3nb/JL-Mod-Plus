@@ -24,10 +24,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import ru.playsoftware.j2meloader.librarydb.LibraryAppBundleImporter
 import ru.playsoftware.j2meloader.librarydb.LibraryViewModel
 import ru.playsoftware.j2meloader.librarydb.LibraryUniversalBundleStager
-import ru.woesss.j2me.jar.Descriptor
 
 class BulkInstallViewModel : ViewModel() {
     sealed interface State {
@@ -55,6 +53,8 @@ class BulkInstallViewModel : ViewModel() {
     val state: StateFlow<State> = mutableState.asStateFlow()
     private val cancelRequested = AtomicBoolean()
     private var planningJob: Job? = null
+    private var executionJob: Job? = null
+    private val closeRequested = AtomicBoolean()
     private var bundleImport: LibraryUniversalBundleStager.PreparedBundle? = null
 
     fun planExplicit(
@@ -120,8 +120,14 @@ class BulkInstallViewModel : ViewModel() {
                 }
                 bundleImport = prepared
                 staged = null
+                val bundlePlan = planned.copy(
+                    items = planned.items.map { item ->
+                        item.copy(bundlePayloadAvailable = true)
+                    },
+                )
                 mutableState.value = State.Review(
-                    if (warning == null) planned else planned.copy(warnings = planned.warnings + warning),
+                    if (warning == null) bundlePlan
+                    else bundlePlan.copy(warnings = bundlePlan.warnings + warning),
                 )
             } catch (_: CancellationException) {
                 if (mutableState.value is State.Planning) mutableState.value = State.Idle
@@ -191,8 +197,10 @@ class BulkInstallViewModel : ViewModel() {
 
     fun execute(library: LibraryViewModel) {
         val review = mutableState.value as? State.Review ?: return
+        if (executionJob != null) return
         val selected = review.plan.items.filter { it.selected && it.action != BulkInstallAction.Skip }
         if (selected.isEmpty()) return
+        closeRequested.set(false)
         cancelRequested.set(false)
         mutableState.value = State.Running(
             plan = review.plan,
@@ -202,48 +210,55 @@ class BulkInstallViewModel : ViewModel() {
             results = emptyList(),
             cancelRequested = false,
         )
-        viewModelScope.launch(Dispatchers.IO) {
+        executionJob = viewModelScope.launch(Dispatchers.IO) {
             val results = ArrayList<BulkInstallResult>()
             var fatalError: String? = null
-            selected.forEachIndexed { index, item ->
-                if (cancelRequested.get() || fatalError != null) return@forEachIndexed
-                mutableState.value = State.Running(
-                    plan = review.plan,
-                    completed = index,
-                    total = selected.size,
-                    currentName = item.name,
-                    results = results.toList(),
-                    cancelRequested = cancelRequested.get(),
-                )
-                try {
-                    results += executeItem(review.plan, item, library)
-                } catch (error: FatalBatchException) {
-                    val detail = boundedMessage(error.cause ?: error)
-                    results += BulkInstallResult(item.id, item.name, BulkInstallResultKind.Failed, detail)
-                    fatalError = detail
-                } catch (error: Throwable) {
-                    results += BulkInstallResult(
-                        item.id,
-                        item.name,
-                        BulkInstallResultKind.Failed,
-                        boundedMessage(error),
+            try {
+                selected.forEachIndexed { index, item ->
+                    if (cancelRequested.get() || fatalError != null) return@forEachIndexed
+                    mutableState.value = State.Running(
+                        plan = review.plan,
+                        completed = index,
+                        total = selected.size,
+                        currentName = item.name,
+                        results = results.toList(),
+                        cancelRequested = cancelRequested.get(),
+                    )
+                    try {
+                        results += executeItem(review.plan, item, library)
+                    } catch (error: FatalBatchException) {
+                        val detail = boundedMessage(error.cause ?: error)
+                        results += BulkInstallResult(item.id, item.name, BulkInstallResultKind.Failed, detail)
+                        fatalError = detail
+                    } catch (error: Throwable) {
+                        results += BulkInstallResult(
+                            item.id,
+                            item.name,
+                            BulkInstallResultKind.Failed,
+                            boundedMessage(error),
+                        )
+                    }
+                    mutableState.value = State.Running(
+                        plan = review.plan,
+                        completed = index + 1,
+                        total = selected.size,
+                        currentName = item.name,
+                        results = results.toList(),
+                        cancelRequested = cancelRequested.get(),
                     )
                 }
-                mutableState.value = State.Running(
+                mutableState.value = State.Finished(
                     plan = review.plan,
-                    completed = index + 1,
-                    total = selected.size,
-                    currentName = item.name,
-                    results = results.toList(),
-                    cancelRequested = cancelRequested.get(),
+                    results = results,
+                    cancelled = cancelRequested.get(),
+                    fatalError = fatalError,
                 )
+            } finally {
+                executionJob = null
+                if (closeRequested.get()) {
+                    cleanupBundleImport()
+                }
             }
-            mutableState.value = State.Finished(
-                plan = review.plan,
-                results = results,
-                cancelled = cancelRequested.get(),
-                fatalError = fatalError,
-            )
         }
     }
 
@@ -253,7 +268,7 @@ class BulkInstallViewModel : ViewModel() {
         mutableState.value = running.copy(cancelRequested = true)
     }
 
-    private fun executeItem(
+    private suspend fun executeItem(
         plan: BulkInstallPlan,
         item: BulkInstallItem,
         library: LibraryViewModel,
@@ -317,11 +332,20 @@ class BulkInstallViewModel : ViewModel() {
             }
 
             if (currentStatus == BulkInstallStatus.AlreadyInstalled) {
+                if (!item.bundlePayloadAvailable || bundleImport == null) {
+                    return BulkInstallResult(
+                        item.id,
+                        item.name,
+                        BulkInstallResultKind.Skipped,
+                        "Already installed after revalidation",
+                    )
+                }
+                restoreBundlePayloadIfPresent(plan, item, activeInstaller, library)
                 return BulkInstallResult(
                     item.id,
                     item.name,
-                    BulkInstallResultKind.Skipped,
-                    "Already installed after revalidation",
+                    BulkInstallResultKind.Reinstalled,
+                    "Restored app data and settings",
                 )
             }
             if (!authorized(item, currentStatus, candidates.size)) {
@@ -335,7 +359,7 @@ class BulkInstallViewModel : ViewModel() {
             if (installCode != AppInstaller.STATUS_SUCCESS) {
                 return failed(item, "Installer stopped with status $installCode")
             }
-            restoreBundlePayloadIfPresent(plan, item, activeInstaller, descriptor, library)
+            restoreBundlePayloadIfPresent(plan, item, activeInstaller, library)
             val kind = when {
                 item.action == BulkInstallAction.InstallSeparateCopy -> BulkInstallResultKind.Installed
                 item.preflightStatus == BulkInstallStatus.New -> BulkInstallResultKind.Installed
@@ -356,11 +380,10 @@ class BulkInstallViewModel : ViewModel() {
         }
     }
 
-    private fun restoreBundlePayloadIfPresent(
+    private suspend fun restoreBundlePayloadIfPresent(
         plan: BulkInstallPlan,
         item: BulkInstallItem,
         installer: AppInstaller,
-        descriptor: Descriptor,
         library: LibraryViewModel,
     ) {
         val bundle = bundleImport ?: return
@@ -371,15 +394,12 @@ class BulkInstallViewModel : ViewModel() {
         if (installedId < 0L) throw IllegalStateException("Installed app identity is unavailable")
         val app = library.getApp(plan.generation, plan.workdir, installedId)
             ?: throw IllegalStateException("Installed app is not visible after bundle import")
-        LibraryAppBundleImporter.validateSourceIdentity(
-            staged.prepared,
-            descriptor.name,
-            descriptor.vendor,
-        )
-        LibraryAppBundleImporter.restore(
-            prepared = staged.prepared,
-            emulatorDir = plan.workdir,
+        library.restoreImportedBundleAwait(
+            expectedGeneration = plan.generation,
+            expectedWorkdir = plan.workdir,
+            appId = app.id,
             storageKey = app.storageKey,
+            prepared = staged.prepared,
         )
     }
 
@@ -433,6 +453,14 @@ class BulkInstallViewModel : ViewModel() {
         planningJob?.cancel()
         planningJob = null
         cancelRequested.set(true)
+        closeRequested.set(true)
+        if (executionJob == null) {
+            cleanupBundleImport()
+        }
+    }
+
+    @Synchronized
+    private fun cleanupBundleImport() {
         LibraryUniversalBundleStager.cleanup(bundleImport)
         bundleImport = null
     }

@@ -123,6 +123,43 @@ class LibraryAppBundleReaderTest {
     }
 
     @Test
+    fun rejectsMalformedManifestTypesAsIoException() {
+        assertReadFails(
+            zip(
+                "bundle.json" to """
+                    {"schema":"${LibraryAppBundleFormat.UNIVERSAL_SCHEMA}","formatVersion":2,"apps":[{"bundleId":{},"title":"Demo","vendor":"Vendor","version":"1.0","payloadRoot":"apps/a0001/","sourceSha256":"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef","configState":"absent","dataState":"absent"}]}
+                """.trimIndent().toByteArray(),
+                "apps/a0001/app/res.jar" to byteArrayOf(1),
+            ),
+        )
+        assertReadFails(
+            zip(
+                "bundle.json" to """{"formatVersion":{}}""".toByteArray(),
+                "app/res.jar" to byteArrayOf(1),
+            ),
+        )
+    }
+
+    @Test
+    fun rejectsBundlesThatExceedRoutingUncompressedByteLimit() {
+        val payload = ByteArray(2_048) { 7 }
+        val bundle = zip(
+            "bundle.json" to manifest("a0001", "Demo", "Vendor", "1.0"),
+            "apps/a0001/app/res.jar" to payload,
+        )
+
+        try {
+            LibraryAppBundleReader.read(
+                ByteArrayInputStream(bundle),
+                maxTotalBytes = 1_024,
+            )
+            throw AssertionError("Expected the routing byte limit to reject the bundle")
+        } catch (error: IOException) {
+            assertTrue(error.message.orEmpty().contains("too large"))
+        }
+    }
+
+    @Test
     fun verifiesStagedSourceHashAgainstManifestValue() {
         val file = File.createTempFile("bundle-reader", ".jar")
         try {

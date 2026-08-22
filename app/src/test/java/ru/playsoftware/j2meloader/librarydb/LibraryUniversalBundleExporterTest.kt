@@ -112,6 +112,36 @@ class LibraryUniversalBundleExporterTest {
         }
     }
 
+    @Test
+    fun rejectsCanonicalDirectoryCyclesBeforeRecursing() {
+        val root = temporaryFolder.newFolder("workdir-cycle")
+        createApp(root, "cycle", byteArrayOf(1), config = Empty, data = Missing)
+        val namespace = File(File(root, "configs"), "cycle")
+        val cycle = namespace.toPath().resolve("loop")
+        try {
+            Files.createSymbolicLink(cycle, namespace.toPath())
+        } catch (error: Exception) {
+            // Symbolic-link creation requires elevated privileges on some Windows test runners.
+            org.junit.Assume.assumeNoException(error)
+        }
+
+        assertExportFails(File(temporaryFolder.root, "cycle.zip")) {
+            LibraryUniversalBundleExporter.exportToZip(
+                apps = listOf(
+                    LibraryUniversalBundleExporter.AppSource(
+                        "a0001",
+                        "Cycle",
+                        "Vendor",
+                        "1.0",
+                        root,
+                        "cycle",
+                    ),
+                ),
+                target = File(temporaryFolder.root, "cycle.zip"),
+            )
+        }
+    }
+
     private fun assertExportFails(target: File, action: () -> Unit) {
         try {
             action()

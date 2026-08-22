@@ -21,6 +21,7 @@ import java.util.UUID
  */
 internal object LibraryUniversalBundleStager {
     private const val STAGING_DIR = "library-bulk-import"
+    private const val STALE_STAGING_AGE_MILLIS = 24L * 60L * 60L * 1000L
 
     internal data class PreparedBundle(
         val root: File,
@@ -30,7 +31,12 @@ internal object LibraryUniversalBundleStager {
 
     @Throws(IOException::class)
     fun prepare(context: Context, source: Uri): PreparedBundle {
-        val root = File(File(context.cacheDir, STAGING_DIR), UUID.randomUUID().toString())
+        val importRoot = File(context.cacheDir, STAGING_DIR)
+        if (!importRoot.isDirectory && !importRoot.mkdirs()) {
+            throw IOException("Unable to create bulk app-bundle staging directory")
+        }
+        cleanupStale(importRoot, System.currentTimeMillis())
+        val root = File(importRoot, UUID.randomUUID().toString())
         if (!root.isDirectory && !root.mkdirs()) {
             throw IOException("Unable to create bulk app-bundle staging directory")
         }
@@ -57,6 +63,33 @@ internal object LibraryUniversalBundleStager {
 
     fun cleanup(bundle: PreparedBundle?) {
         bundle?.root?.deleteRecursively()
+    }
+
+    /** Removes abandoned process-death staging roots without touching active/recent imports. */
+    internal fun cleanupStale(
+        importRoot: File,
+        nowMillis: Long,
+        maxAgeMillis: Long = STALE_STAGING_AGE_MILLIS,
+    ): Int {
+        if (!importRoot.isDirectory || maxAgeMillis < 0L) return 0
+        val children = importRoot.listFiles() ?: return 0
+        var removed = 0
+        children.forEach { candidate ->
+            if (!candidate.isDirectory || !isUuidName(candidate.name)) return@forEach
+            val modified = candidate.lastModified()
+            if (modified <= 0L || nowMillis < modified || nowMillis - modified < maxAgeMillis) {
+                return@forEach
+            }
+            if (candidate.deleteRecursively()) removed++
+        }
+        return removed
+    }
+
+    private fun isUuidName(value: String): Boolean = try {
+        UUID.fromString(value)
+        true
+    } catch (_: IllegalArgumentException) {
+        false
     }
 
     private fun openSource(context: Context, source: Uri): InputStream = try {

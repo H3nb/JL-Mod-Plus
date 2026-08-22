@@ -69,6 +69,8 @@ data class BulkInstallItem(
     val action: BulkInstallAction,
     val selected: Boolean,
     val detail: String? = null,
+    /** True when the source is a universal bundle carrying app-owned state for this item. */
+    val bundlePayloadAvailable: Boolean = false,
 ) {
     val installable: Boolean
         get() = when (status) {
@@ -81,6 +83,8 @@ data class BulkInstallItem(
             BulkInstallStatus.OlderBatchCandidate,
             BulkInstallStatus.BatchConflict,
             -> true
+
+            BulkInstallStatus.AlreadyInstalled -> bundlePayloadAvailable
 
             else -> false
         }

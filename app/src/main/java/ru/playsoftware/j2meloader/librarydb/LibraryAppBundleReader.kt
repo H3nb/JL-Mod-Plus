@@ -66,14 +66,17 @@ internal object LibraryAppBundleReader {
     private const val MAX_MANIFEST_BYTES = 4L * 1024L
     private const val MAX_ENTRIES = 10_000
     private const val MAX_BUNDLE_APPS = 1_024
+    private const val MAX_TOTAL_BYTES = 1024L * 1024L * 1024L
     private const val ROOT_PREFIX = "apps/"
     private const val JAR_SUFFIX = "/app/res.jar"
     private val SHA256 = Regex("[0-9a-f]{64}")
 
     @Throws(IOException::class)
-    fun read(input: InputStream): ParsedBundle {
+    fun read(input: InputStream, maxTotalBytes: Long = MAX_TOTAL_BYTES): ParsedBundle {
+        if (maxTotalBytes < 0L) throw IOException("Invalid app bundle byte limit")
         val names = LinkedHashSet<String>()
         var manifest: ByteArray? = null
+        var totalBytes = 0L
         ZipInputStream(BufferedInputStream(input)).use { zip ->
             while (true) {
                 val entry = zip.nextEntry ?: break
@@ -81,7 +84,11 @@ internal object LibraryAppBundleReader {
                 val name = normalizeEntryName(entry.name)
                 if (!names.add(name)) throw IOException("Duplicate app bundle entry: $name")
                 if (name == LibraryAppBundleFormat.MANIFEST_ENTRY && !entry.isDirectory) {
-                    manifest = zip.readBounded(MAX_MANIFEST_BYTES)
+                    val result = zip.readBounded(MAX_MANIFEST_BYTES, totalBytes, maxTotalBytes)
+                    manifest = result.first
+                    totalBytes = result.second
+                } else {
+                    totalBytes = zip.drainEntry(totalBytes, maxTotalBytes)
                 }
                 zip.closeEntry()
             }
@@ -92,7 +99,12 @@ internal object LibraryAppBundleReader {
             return legacyBundle(names)
         }
         val root = parseManifest(manifestBytes)
-        return when (root.get("formatVersion")?.asInt) {
+        val formatVersion = try {
+            root.get("formatVersion")?.asInt
+        } catch (error: RuntimeException) {
+            throw IOException("Invalid app bundle format version", error)
+        }
+        return when (formatVersion) {
             LibraryAppBundleFormat.UNIVERSAL_VERSION -> parseUniversal(root, names)
             LibraryAppBundleFormat.CURRENT_VERSION -> legacyBundle(names, formatVersion = LibraryAppBundleFormat.CURRENT_VERSION)
             else -> throw IOException("Unsupported app bundle format version")
@@ -107,7 +119,7 @@ internal object LibraryAppBundleReader {
     }
 
     @Throws(IOException::class)
-    private fun parseUniversal(root: JsonObject, names: Set<String>): ParsedBundle {
+    private fun parseUniversal(root: JsonObject, names: Set<String>): ParsedBundle = try {
         val schema = root.get("schema")?.takeUnless { it.isJsonNull }?.asString
         if (schema != LibraryAppBundleFormat.UNIVERSAL_SCHEMA) {
             throw IOException("Invalid app bundle schema")
@@ -170,11 +182,15 @@ internal object LibraryAppBundleReader {
                 "dataState",
             )
         }
-        return ParsedBundle(
+        ParsedBundle(
             formatVersion = LibraryAppBundleFormat.UNIVERSAL_VERSION,
             apps = apps,
             legacyAssurance = false,
         )
+    } catch (error: IOException) {
+        throw error
+    } catch (error: RuntimeException) {
+        throw IOException("Invalid universal app bundle manifest", error)
     }
 
     private fun validateNamespaceState(
@@ -295,17 +311,43 @@ internal object LibraryAppBundleReader {
     }
 
     @Throws(IOException::class)
-    private fun InputStream.readBounded(limit: Long): ByteArray {
+    private fun InputStream.readBounded(
+        limit: Long,
+        totalBytesBefore: Long,
+        maxTotalBytes: Long,
+    ): Pair<ByteArray, Long> {
         val bytes = java.io.ByteArrayOutputStream()
         val buffer = ByteArray(8 * 1024)
-        var total = 0L
+        var entryBytes = 0L
+        var totalBytes = totalBytesBefore
         while (true) {
             val count = read(buffer)
             if (count < 0) break
-            total += count
-            if (total > limit) throw IOException("App bundle manifest is too large")
+            entryBytes += count
+            if (entryBytes > limit) throw IOException("App bundle manifest is too large")
+            totalBytes = addTotalBytes(totalBytes, count, maxTotalBytes)
             bytes.write(buffer, 0, count)
         }
-        return bytes.toByteArray()
+        return bytes.toByteArray() to totalBytes
+    }
+
+    @Throws(IOException::class)
+    private fun InputStream.drainEntry(totalBytesBefore: Long, maxTotalBytes: Long): Long {
+        val buffer = ByteArray(8 * 1024)
+        var totalBytes = totalBytesBefore
+        while (true) {
+            val count = read(buffer)
+            if (count < 0) break
+            totalBytes = addTotalBytes(totalBytes, count, maxTotalBytes)
+        }
+        return totalBytes
+    }
+
+    @Throws(IOException::class)
+    private fun addTotalBytes(current: Long, additional: Int, limit: Long): Long {
+        if (additional < 0 || current > limit - additional.toLong()) {
+            throw IOException("App bundle is too large to inspect safely")
+        }
+        return current + additional
     }
 }

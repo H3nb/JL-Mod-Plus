@@ -467,57 +467,85 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             return
         }
         launchMutation(callback) {
-            val outcome = withContext(Dispatchers.IO) {
-                acquireGenerationLease(generation.generation, generation.emulatorDir).use {
-                    val current = requireNotNull(repository.currentApp(generation, app.id)) {
-                        "Library import target disappeared before restore"
-                    }
-                    check(current.storageKey == app.storageKey) {
-                        "Library import target changed before restore"
-                    }
-                    val sourceMetadata = LibraryAppBundleImporter.readSourceMetadata(prepared)
-                    if (
-                        sourceMetadata != null &&
-                        (sourceMetadata.title != current.sourceTitle ||
-                            sourceMetadata.vendor != current.sourceVendor)
-                    ) {
-                        throw IOException(
-                            "App bundle descriptor identity does not match the retained JAR",
-                        )
-                    }
-                    val result = LibraryAppBundleImporter.restore(
-                        prepared,
-                        generation.emulatorDir,
-                        app.storageKey,
-                    )
-                    ImportRestoreOutcome(result.iconRevision, sourceMetadata)
+            restoreImportedBundleAwait(
+                expectedGeneration = generation.generation,
+                expectedWorkdir = generation.emulatorDir,
+                appId = app.id,
+                storageKey = app.storageKey,
+                prepared = prepared,
+            )
+        }
+    }
+
+    /**
+     * Restores an app-owned bundle while holding the same generation and database checks used by
+     * the single-app import path. Bulk import uses this boundary so filesystem publication and
+     * Room reconciliation cannot drift apart when the active Library changes mid-batch.
+     */
+    suspend fun restoreImportedBundleAwait(
+        expectedGeneration: Long,
+        expectedWorkdir: File,
+        appId: Long,
+        storageKey: String,
+        prepared: LibraryAppBundleImporter.PreparedImport,
+    ) {
+        val generation = token(expectedGeneration, expectedWorkdir)
+        val app = requireNotNull(repository.currentApp(generation, appId)) {
+            "Library import target disappeared before restore"
+        }
+        check(app.storageKey == storageKey) {
+            "Library import target changed before restore"
+        }
+        val outcome = withContext(Dispatchers.IO) {
+            acquireGenerationLease(expectedGeneration, expectedWorkdir).use {
+                val current = requireNotNull(repository.currentApp(generation, appId)) {
+                    "Library import target disappeared before restore"
                 }
-            }
-            val resolvedIconRevision = outcome.iconRevision?.let { revision ->
-                distinctIconRevision(revision, app.iconRevision)
-            } ?: app.iconRevision
-            val sourceMetadata = outcome.sourceMetadata
-            if (sourceMetadata != null) {
-                repository.recordInstalledApp(
-                    expected = generation,
-                    existingId = app.id,
-                    metadata = InstalledAppMetadata(
-                        storageKey = app.storageKey,
-                        sourceTitle = sourceMetadata.title,
-                        sourceVendor = sourceMetadata.vendor,
-                        sourceVersion = sourceMetadata.version,
-                        sourceDescription = sourceMetadata.description,
-                        iconRevision = resolvedIconRevision,
-                        addedAt = app.addedAt ?: System.currentTimeMillis(),
-                    ),
+                check(current.storageKey == storageKey) {
+                    "Library import target changed before restore"
+                }
+                val sourceMetadata = LibraryAppBundleImporter.readSourceMetadata(prepared)
+                if (
+                    sourceMetadata != null &&
+                    (sourceMetadata.title != current.sourceTitle ||
+                        sourceMetadata.vendor != current.sourceVendor)
+                ) {
+                    throw IOException(
+                        "App bundle descriptor identity does not match the retained JAR",
+                    )
+                }
+                val result = LibraryAppBundleImporter.restore(
+                    prepared,
+                    generation.emulatorDir,
+                    storageKey,
                 )
-            } else if (outcome.iconRevision != null) {
-                repository.setIconRevision(
-                    generation,
-                    app.id,
-                    resolvedIconRevision,
-                )
+                ImportRestoreOutcome(result.iconRevision, sourceMetadata)
             }
+        }
+        val resolvedIconRevision = outcome.iconRevision?.let { revision ->
+            distinctIconRevision(revision, app.iconRevision)
+        } ?: app.iconRevision
+        val sourceMetadata = outcome.sourceMetadata
+        if (sourceMetadata != null) {
+            repository.recordInstalledApp(
+                expected = generation,
+                existingId = app.id,
+                metadata = InstalledAppMetadata(
+                    storageKey = storageKey,
+                    sourceTitle = sourceMetadata.title,
+                    sourceVendor = sourceMetadata.vendor,
+                    sourceVersion = sourceMetadata.version,
+                    sourceDescription = sourceMetadata.description,
+                    iconRevision = resolvedIconRevision,
+                    addedAt = app.addedAt ?: System.currentTimeMillis(),
+                ),
+            )
+        } else if (outcome.iconRevision != null) {
+            repository.setIconRevision(
+                generation,
+                app.id,
+                resolvedIconRevision,
+            )
         }
     }
 
