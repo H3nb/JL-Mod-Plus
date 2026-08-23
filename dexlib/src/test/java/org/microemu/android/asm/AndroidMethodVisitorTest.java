@@ -41,12 +41,12 @@ public class AndroidMethodVisitorTest {
 	}
 
 	@Test
-	public void yieldRewriteUsesGuestTimingBridge() {
+	public void yieldRewriteUsesHostCompatibilitySleep() {
 		byte[] source = createYieldClass();
 		byte[] transformed = transform(source);
 		List<String> calls = methodCalls(transformed, "yielded");
 
-		assertTrue(calls.contains("INVOKESTATIC javax/microedition/shell/GuestTimingBridge.sleep(J)V"));
+		assertTrue(calls.contains("INVOKESTATIC java/lang/Thread.sleep(J)V"));
 		assertEquals(1, calls.size());
 	}
 
