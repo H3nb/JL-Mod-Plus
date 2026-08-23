@@ -32,6 +32,7 @@ package org.microemu.android.asm;
 
 import static org.objectweb.asm.Opcodes.*;
 
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 
@@ -55,7 +56,7 @@ public class AndroidMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitLabel(Label label) {
-		clearDateConstructorCandidate();
+		flushDateAllocation();
 		mv.visitLabel(label);
 		if (USE_PANIC_LOGGING && exceptionHandlers.contains(label)) {
 			mv.visitInsn(DUP);
@@ -68,9 +69,9 @@ public class AndroidMethodVisitor extends MethodVisitor {
 		if (opcode == DUP && dateAllocationPending) {
 			dateConstructorCandidate = true;
 			dateAllocationPending = false;
-		} else {
-			clearDateConstructorCandidate();
+			return;
 		}
+		flushDateAllocation();
 		if (opcode == IRETURN && returnsBoolean) {
 			// JVMS ireturn narrows boolean results as value & 1. Make that implicit JVM
 			// conversion explicit before dx so ART sees an int-compatible return value.
@@ -87,7 +88,13 @@ public class AndroidMethodVisitor extends MethodVisitor {
 				&& opcode == INVOKESPECIAL
 				&& name.equals("<init>")
 				&& desc.equals("()V");
-		clearDateConstructorCandidate();
+		if (rewriteDateConstructor) {
+			clearDateAllocation();
+			mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/GuestTimingBridge",
+					"newDate", "()Ljava/util/Date;", false);
+			return;
+		}
+		flushDateAllocation();
 		switch (owner) {
 			case "java/lang/Class":
 				if (name.equals("getResourceAsStream")) {
@@ -119,14 +126,6 @@ public class AndroidMethodVisitor extends MethodVisitor {
 				}
 				break;
 			case "java/util/Date":
-				if (rewriteDateConstructor) {
-					// The canonical NEW/DUP/<init> sequence leaves two uninitialized Date references
-					// on the stack. Discard them and produce the parent-owned guest-time instance.
-					mv.visitInsn(POP2);
-					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/GuestTimingBridge",
-							"newDate", "()Ljava/util/Date;", false);
-					return;
-				}
 				break;
 			case "java/util/Calendar":
 				if (opcode == INVOKESTATIC && name.equals("getInstance")
@@ -231,30 +230,116 @@ public class AndroidMethodVisitor extends MethodVisitor {
 	@Override
 	public void visitTypeInsn(int opcode, String type) {
 		if (opcode == NEW && type.equals("java/util/Date")) {
+			flushDateAllocation();
 			dateAllocationPending = true;
 			dateConstructorCandidate = false;
+			return;
 		} else {
-			clearDateConstructorCandidate();
+			flushDateAllocation();
 		}
 		type = type.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
 		super.visitTypeInsn(opcode, type);
 	}
 
-	private void clearDateConstructorCandidate() {
+	private void clearDateAllocation() {
 		dateAllocationPending = false;
 		dateConstructorCandidate = false;
 	}
 
+	private void flushDateAllocation() {
+		if (dateAllocationPending) {
+			super.visitTypeInsn(NEW, "java/util/Date");
+		} else if (dateConstructorCandidate) {
+			super.visitTypeInsn(NEW, "java/util/Date");
+			super.visitInsn(DUP);
+		}
+		clearDateAllocation();
+	}
+
+	@Override
+	public void visitIntInsn(int opcode, int operand) {
+		flushDateAllocation();
+		super.visitIntInsn(opcode, operand);
+	}
+
+	@Override
+	public void visitVarInsn(int opcode, int var) {
+		flushDateAllocation();
+		super.visitVarInsn(opcode, var);
+	}
+
 	@Override
 	public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
+		flushDateAllocation();
 		descriptor = descriptor.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
 		owner = owner.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
 		super.visitFieldInsn(opcode, owner, name, descriptor);
 	}
 
 	@Override
+	public void visitJumpInsn(int opcode, Label label) {
+		flushDateAllocation();
+		super.visitJumpInsn(opcode, label);
+	}
+
+	@Override
+	public void visitLdcInsn(Object value) {
+		flushDateAllocation();
+		super.visitLdcInsn(value);
+	}
+
+	@Override
+	public void visitIincInsn(int var, int increment) {
+		flushDateAllocation();
+		super.visitIincInsn(var, increment);
+	}
+
+	@Override
+	public void visitTableSwitchInsn(int min, int max, Label dflt, Label... labels) {
+		flushDateAllocation();
+		super.visitTableSwitchInsn(min, max, dflt, labels);
+	}
+
+	@Override
+	public void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {
+		flushDateAllocation();
+		super.visitLookupSwitchInsn(dflt, keys, labels);
+	}
+
+	@Override
 	public void visitMultiANewArrayInsn(String descriptor, int numDimensions) {
+		flushDateAllocation();
 		descriptor = descriptor.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
 		super.visitMultiANewArrayInsn(descriptor, numDimensions);
+	}
+
+	@Override
+	public void visitInvokeDynamicInsn(String name, String descriptor, Handle bsm, Object... bsmArgs) {
+		flushDateAllocation();
+		super.visitInvokeDynamicInsn(name, descriptor, bsm, bsmArgs);
+	}
+
+	@Override
+	public void visitFrame(int type, int numLocal, Object[] local, int numStack, Object[] stack) {
+		flushDateAllocation();
+		super.visitFrame(type, numLocal, local, numStack, stack);
+	}
+
+	@Override
+	public void visitLineNumber(int line, Label start) {
+		flushDateAllocation();
+		super.visitLineNumber(line, start);
+	}
+
+	@Override
+	public void visitMaxs(int maxStack, int maxLocals) {
+		flushDateAllocation();
+		super.visitMaxs(maxStack, maxLocals);
+	}
+
+	@Override
+	public void visitEnd() {
+		flushDateAllocation();
+		super.visitEnd();
 	}
 }

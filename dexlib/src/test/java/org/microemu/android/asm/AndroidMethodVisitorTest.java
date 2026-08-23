@@ -76,6 +76,7 @@ public class AndroidMethodVisitorTest {
 		assertTrue(calls.contains(
 				"INVOKESTATIC javax/microedition/shell/GuestTimingBridge.calendarInstance(Ljava/util/TimeZone;)Ljava/util/Calendar;"));
 		assertEquals(4, calls.size());
+		assertEquals(0, typeInstructions(transformed, "dates", "java/util/Date").size());
 
 		byte[] subclass = transform(createDateSubclassClass());
 		List<String> constructorCalls = methodCalls(subclass, "<init>");
@@ -213,6 +214,30 @@ public class AndroidMethodVisitorTest {
 			}
 		}, 0);
 		return calls;
+	}
+
+	private static List<String> typeInstructions(byte[] classData, String methodName, String typeName) {
+		List<String> types = new ArrayList<>();
+		new ClassReader(classData).accept(new org.objectweb.asm.ClassVisitor(Opcodes.ASM9) {
+			@Override
+			public MethodVisitor visitMethod(int access, String name, String descriptor,
+					String signature, String[] exceptions) {
+				MethodVisitor next = super.visitMethod(access, name, descriptor, signature, exceptions);
+				if (!methodName.equals(name)) {
+					return next;
+				}
+				return new MethodVisitor(Opcodes.ASM9, next) {
+					@Override
+					public void visitTypeInsn(int opcode, String type) {
+						if (typeName.equals(type)) {
+							types.add(type);
+						}
+						super.visitTypeInsn(opcode, type);
+					}
+				};
+			}
+		}, 0);
+		return types;
 	}
 
 	private static byte[] transform(byte[] source) {
