@@ -16,6 +16,8 @@ package javax.microedition.shell.timing;
 
 import androidx.annotation.NonNull;
 
+import java.util.concurrent.locks.LockSupport;
+
 /**
  * Lifecycle-scoped guest clock mapping. All reads and speed transitions are serialized so a
  * transition is linearizable and cannot make guest time move backward.
@@ -85,6 +87,44 @@ public final class TimingSession implements AutoCloseable {
 		synchronized (lock) {
 			ensureOpen();
 			return clockState.speedPercent();
+		}
+	}
+
+	/**
+	 * Sleeps for a guest duration using the speed sampled at entry. Parking on a private token
+	 * preserves held guest monitors and interruption semantics without polling or guest notify.
+	 */
+	public void sleep(long guestMillis) throws InterruptedException {
+		if (guestMillis < 0L) {
+			throw new IllegalArgumentException("timeout value is negative");
+		}
+		if (Thread.interrupted()) {
+			throw new InterruptedException();
+		}
+		if (guestMillis == 0L) {
+			return;
+		}
+
+		long hostDeadlineNanos;
+		synchronized (lock) {
+			ensureOpen();
+			TimingSnapshot start = snapshotAt(timeSource.monotonicNanos());
+			long hostDurationNanos = TimingMath.scaleGuestToHostNanos(
+					TimingMath.millisToNanos(guestMillis),
+					start.speedPercent());
+			hostDeadlineNanos = TimingMath.saturatingAdd(
+					start.hostMonotonicNanos(), hostDurationNanos);
+		}
+
+		while (true) {
+			if (Thread.interrupted()) {
+				throw new InterruptedException();
+			}
+			long remainingNanos = hostDeadlineNanos - timeSource.monotonicNanos();
+			if (remainingNanos <= 0L) {
+				return;
+			}
+			LockSupport.parkNanos(this, remainingNanos);
 		}
 	}
 

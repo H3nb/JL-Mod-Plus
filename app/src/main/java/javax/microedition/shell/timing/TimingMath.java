@@ -32,6 +32,27 @@ final class TimingMath {
 		return saturatingAdd(scaledWhole, scaledRemainder);
 	}
 
+	/** Converts a guest duration to a host duration, rounding up to avoid an early wakeup. */
+	static long scaleGuestToHostNanos(long guestDurationNanos, int speedPercent) {
+		if (guestDurationNanos <= 0L) {
+			return 0L;
+		}
+		long whole = guestDurationNanos / speedPercent;
+		long remainder = guestDurationNanos % speedPercent;
+		long scaledWhole = saturatingMultiply(whole, PERCENT_DENOMINATOR);
+		long scaledRemainder = ceilMultiplyDivide(remainder, PERCENT_DENOMINATOR, speedPercent);
+		return saturatingAdd(scaledWhole, scaledRemainder);
+	}
+
+	static long millisToNanos(long millis) {
+		if (millis <= 0L) {
+			return 0L;
+		}
+		return millis > Long.MAX_VALUE / 1_000_000L
+				? Long.MAX_VALUE
+				: millis * 1_000_000L;
+	}
+
 	private static long saturatingMultiply(long value, long factor) {
 		if (value <= 0L || factor <= 0L) {
 			return 0L;
@@ -42,10 +63,18 @@ final class TimingMath {
 		return value * factor;
 	}
 
-	private static long saturatingAdd(long left, long right) {
+	static long saturatingAdd(long left, long right) {
 		if (right > 0L && left > Long.MAX_VALUE - right) {
 			return Long.MAX_VALUE;
 		}
 		return left + right;
+	}
+
+	private static long ceilMultiplyDivide(long value, long factor, long divisor) {
+		if (value <= 0L || factor <= 0L) {
+			return 0L;
+		}
+		long product = value * factor;
+		return (product + divisor - 1L) / divisor;
 	}
 }
