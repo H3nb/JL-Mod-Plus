@@ -113,6 +113,7 @@ import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.launch
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.config.model.Size
+import javax.microedition.shell.timing.EmulationSpeed
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
 import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
@@ -712,6 +713,41 @@ private fun ScreenSection(
             fallbackLabel = stringResource(R.string.unlimited),
             keyboardType = KeyboardType.Number,
             onValueChange = { value -> onFormChanged(form.toBuilder().fpsLimit(value).build()) },
+        )
+        val currentSpeed = form.emulationSpeed.toIntOrNull()
+            ?.let(EmulationSpeed::sanitizePercent)
+            ?: EmulationSpeed.NORMAL_PERCENT
+        val speedValues = EmulationSpeed.presets().toList().let { presets ->
+            if (currentSpeed in presets) presets else listOf(currentSpeed) + presets
+        }
+        val speedOptions = speedValues.map(EmulationSpeed::formatMultiplier)
+        val speedIndex = speedValues.indexOf(currentSpeed).coerceAtLeast(0)
+        val timingUnavailableMessage = if (state.timingControlsEnabled) null
+        else stringResource(R.string.config_help_timing_unavailable)
+        ConfigChoicePreference(
+            title = stringResource(R.string.PREF_EMULATION_SPEED),
+            description = stringResource(R.string.config_help_emulation_speed),
+            selected = speedOptions.getOrElse(speedIndex) { EmulationSpeed.formatMultiplier(currentSpeed) },
+            options = speedOptions,
+            enabled = state.timingControlsEnabled,
+            message = timingUnavailableMessage,
+            messageLevel = ConfigMessageLevel.Warning,
+            onSelected = { index ->
+                speedValues.getOrNull(index)?.let { value ->
+                    onFormChanged(form.toBuilder().emulationSpeed(value.toString()).build())
+                }
+            },
+        )
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_SHOW_EMULATION_SPEED),
+            description = stringResource(R.string.config_help_show_emulation_speed),
+            checked = form.showEmulationSpeed,
+            enabled = state.timingControlsEnabled,
+            message = timingUnavailableMessage,
+            messageLevel = ConfigMessageLevel.Warning,
+            onCheckedChange = { checked ->
+                onFormChanged(form.toBuilder().showEmulationSpeed(checked).build())
+            },
         )
     }
 }
