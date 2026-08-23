@@ -87,6 +87,11 @@ public class AndroidMethodVisitor extends MethodVisitor {
 					mv.visitMethodInsn(opcode, owner, "sleep", "(J)V", false);
 					return;
 				}
+				if (opcode == INVOKESTATIC && name.equals("sleep") && desc.equals("(J)V")) {
+					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/GuestTimingBridge",
+							"sleep", "(J)V", false);
+					return;
+				}
 				break;
 			case "java/lang/String":
 				if (name.equals("<init>") && desc.startsWith("([B") && !desc.endsWith("Ljava/lang/String;)V")) {
@@ -139,6 +144,11 @@ public class AndroidMethodVisitor extends MethodVisitor {
 				}
 				break;
 			case "java/lang/System":
+				if (opcode == INVOKESTATIC && name.equals("currentTimeMillis") && desc.equals("()J")) {
+					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/GuestTimingBridge",
+							"currentTimeMillis", "()J", false);
+					return;
+				}
 				if (opcode == INVOKESTATIC && name.equals("getProperty")) {
 					mv.visitMethodInsn(opcode, "javax/microedition/shell/MidletSystem", name, desc, itf);
 					return;
