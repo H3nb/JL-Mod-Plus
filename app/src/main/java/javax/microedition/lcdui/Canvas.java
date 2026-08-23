@@ -93,6 +93,7 @@ import ru.playsoftware.j2meloader.config.ProfileModel;
 @SuppressWarnings({"WeakerAccess", "unused"})
 public abstract class Canvas extends Displayable {
 	private static final String TAG = Canvas.class.getName();
+	private static final int MAX_SYNCHRONOUS_DRAIN = 4;
 
 	public static final int KEY_POUND = 35;
 	public static final int KEY_STAR = 42;
@@ -695,10 +696,23 @@ public abstract class Canvas extends Displayable {
 		if (!presentationMailbox.trySchedule(presentationGeneration)) {
 			return;
 		}
+		int drained = 0;
 		while (true) {
 			PresentationResult result = presentToSurface();
 			if (!result.presented) {
 				presentationMailbox.releaseAfterFailure(presentationGeneration);
+				return;
+			}
+			drained++;
+			if (drained >= MAX_SYNCHRONOUS_DRAIN) {
+				if (presentationMailbox.completeAndRelease(
+						presentationGeneration, result.frameSequence) && innerView != null) {
+					innerView.post(() -> {
+						if (presentationMailbox.generation() == presentationGeneration) {
+							requestSynchronousPresentation();
+						}
+					});
+				}
 				return;
 			}
 			if (!presentationMailbox.complete(presentationGeneration, result.frameSequence)) {
