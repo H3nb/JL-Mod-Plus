@@ -51,9 +51,20 @@ public final class EmulationSpeed {
 
 	/** Formats a percentage as a locale-independent picker/overlay multiplier. */
 	public static String formatMultiplier(int percent) {
-		int safePercent = sanitizePercent(percent);
-		int whole = safePercent / 100;
-		int fraction = safePercent % 100;
+		return formatMultiplierValue(sanitizePercent(percent));
+	}
+
+	/** Formats a measured diagnostic percentage without clamping it to the picker range. */
+	public static String formatMeasuredMultiplier(int percent) {
+		if (percent < 0) {
+			throw new IllegalArgumentException("Measured speed must not be negative: " + percent);
+		}
+		return formatMultiplierValue(percent);
+	}
+
+	private static String formatMultiplierValue(int percent) {
+		int whole = percent / 100;
+		int fraction = percent % 100;
 		if (fraction == 0) {
 			return whole + "x";
 		}

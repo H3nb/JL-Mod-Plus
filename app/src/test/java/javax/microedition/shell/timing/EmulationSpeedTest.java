@@ -54,5 +54,6 @@ public class EmulationSpeedTest {
 		assertEquals("1x", EmulationSpeed.formatMultiplier(100));
 		assertEquals("1.25x", EmulationSpeed.formatMultiplier(125));
 		assertEquals("16x", EmulationSpeed.formatMultiplier(1600));
+		assertEquals("20x", EmulationSpeed.formatMeasuredMultiplier(2000));
 	}
 }

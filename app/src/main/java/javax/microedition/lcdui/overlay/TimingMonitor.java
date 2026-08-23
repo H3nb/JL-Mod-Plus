@@ -83,7 +83,7 @@ public final class TimingMonitor extends TimerTask implements Layer {
 		}
 
 		String measured = sample.hasMeasuredPercent()
-				? EmulationSpeed.formatMultiplier(sample.measuredPercent())
+				? EmulationSpeed.formatMeasuredMultiplier(sample.measuredPercent())
 				: "—";
 		String text = ContextHolder.getAppContext().getString(
 				R.string.emulation_speed_overlay,
