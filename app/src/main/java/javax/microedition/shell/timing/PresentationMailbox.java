@@ -88,6 +88,15 @@ public final class PresentationMailbox {
 		return false;
 	}
 
+	/** Releases a renderer request after a transient presentation failure. */
+	public synchronized boolean releaseAfterFailure(long expectedGeneration) {
+		if (!open || generation != expectedGeneration || !renderScheduled) {
+			return false;
+		}
+		renderScheduled = false;
+		return publishedSequence > renderedSequence;
+	}
+
 	private static long nextSequence(long sequence) {
 		return sequence == Long.MAX_VALUE ? 1L : sequence + 1L;
 	}
