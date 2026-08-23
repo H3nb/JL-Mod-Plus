@@ -74,6 +74,8 @@ import io.reactivex.disposables.Disposable;
 import ru.playsoftware.j2meloader.BuildConfig;
 import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.config.Config;
+import ru.playsoftware.j2meloader.crashes.MidletSessionStore;
+import ru.playsoftware.j2meloader.runtime.MidletKeepAliveService;
 import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 import ru.playsoftware.j2meloader.util.LogUtils;
 import ru.playsoftware.j2meloader.ui.TransientNoticeComposeController;
@@ -166,12 +168,16 @@ public class MicroActivity extends AppCompatActivity {
 				throw new RuntimeException("Can't access file system");
 			}
 		}
+		MidletSessionStore.markPending(getApplicationContext(), appPath, appName);
 		microLoader = new MicroLoader(appPath);
 		if (!microLoader.init()) {
+			MidletSessionStore.clear(getApplicationContext());
+			MidletKeepAliveService.stop(this);
 			Config.openSettings(this, appName, appPath);
 			finish();
 			return;
 		}
+		MidletKeepAliveService.start(this);
 		microLoader.applyConfiguration();
 		SkinLayer skinLayer = SkinLayer.getInstance();
 		if (skinLayer != null) {
@@ -457,7 +463,12 @@ public class MicroActivity extends AppCompatActivity {
 		} else if (size == 1) {
 			microLoader.loadMidlet(midletsClassArray[0], appName);
 		} else {
-			showMidletDialog(midletsNameArray, midletsClassArray);
+			String requestedClass = getIntent().getStringExtra(KEY_MIDLET_CLASS);
+			if (requestedClass != null && midlets.containsKey(requestedClass)) {
+				microLoader.loadMidlet(requestedClass, appName);
+			} else {
+				showMidletDialog(midletsNameArray, midletsClassArray);
+			}
 		}
 	}
 

@@ -2235,7 +2235,7 @@ internal fun LibraryMoreDestination(
                                 LibraryActionRow(
                                     label = R.string.licenses,
                                     summary = R.string.library_action_licenses_summary,
-                                    icon = R.drawable.ic_list,
+                                    icon = R.drawable.ic_license,
                                     action = onLicenses,
                                 )
                                 LibraryActionRow(

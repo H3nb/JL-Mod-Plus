@@ -22,6 +22,9 @@
     <string name="pref_accent_pink">Pink</string>
     <string name="runtime_invalid_intent">Invalid launch request: the MIDlet path is missing.</string>
     <string name="runtime_no_midlets">No MIDlets were found in this application.</string>
+    <string name="midlet_running_notification_title">MIDlet Running</string>
+    <string name="midlet_running_notification_text">%1$s is running in the background.</string>
+    <string name="midlet_running_notification_channel">MIDlet Runtime</string>
     <string name="library_selection_checkbox_description">Select %1$s</string>
     <string name="library_selection_checked">Selected</string>
     <string name="library_selection_unchecked">Not selected</string>

@@ -100,10 +100,10 @@
     <string name="library_grid_spacing_compact">Rapat (4 dp)</string>
     <string name="library_grid_spacing_standard">Standar (8 dp)</string>
     <string name="library_grid_spacing_spacious">Lega (12 dp)</string>
-    <string name="library_hide_grid_titles">Sembunyikan Judul Di Grid</string>
-    <string name="library_hide_grid_titles_summary">Hanya tampilkan ikon aplikasi</string>
-    <string name="library_show_list_description">Tampilkan Deskripsi Di Daftar</string>
-    <string name="library_show_list_description_summary">Tampilkan deskripsi aplikasi di bawah judul dan versinya.</string>
+    <string name="library_hide_grid_titles">Sembunyikan Judul MIDlet</string>
+    <string name="library_hide_grid_titles_summary">Hanya tampilkan ikon MIDlet dalam tampilan grid.</string>
+    <string name="library_show_list_description">Tampilkan Deskripsi MIDlet</string>
+    <string name="library_show_list_description_summary">Tampilkan deskripsi MIDlet di bawah judul dan versinya.</string>
     <string name="library_collections_empty_title">Belum Ada Koleksi</string>
     <string name="library_collections_empty_message">Koleksi dan folder akan tersedia pada pembaruan mendatang.</string>
     <string name="library_expand_description">Buka deskripsi lengkap</string>
@@ -121,7 +121,7 @@
     <string name="pref_app_sort_vendor">Vendor</string>
     <string name="pref_app_sort_ascending">Menaik</string>
     <string name="pref_app_sort_descending">Menurun</string>
-    <string name="pref_apps_view">Tampilan</string>
+    <string name="pref_apps_view">Tampilan Pustaka</string>
     <string name="pref_audio_title">Audio</string>
     <string name="PREF_BACKGROUND">Latar Belakang</string>
     <string name="pref_button_shape_oval">Oval</string>

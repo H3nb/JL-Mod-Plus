@@ -24,6 +24,9 @@
         tools:targetApi="s" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"
         tools:targetApi="tiramisu" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"
+        tools:targetApi="upsidedowncake" />
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
 
     <uses-sdk tools:overrideLibrary="com.google.oboe" />
@@ -49,17 +52,23 @@
         tools:targetApi="tiramisu"
         tools:ignore="RtlEnabled">
         <activity
+            android:name=".LauncherActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:theme="@style/AppTheme.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"
             android:launchMode="singleTask"
             android:exported="true"
             android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="stateHidden|adjustResize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -195,6 +204,15 @@
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode"
             android:enableOnBackInvokedCallback="true"
             android:process=":midlet" />
+        <service
+            android:name=".runtime.MidletKeepAliveService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            android:process=":midlet">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="j2me_midlet_runtime" />
+        </service>
         <activity android:name=".settings.SettingsActivity"
             android:exported="true">
             <intent-filter>

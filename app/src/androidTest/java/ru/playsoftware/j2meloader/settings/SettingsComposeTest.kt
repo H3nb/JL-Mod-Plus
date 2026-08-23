@@ -124,6 +124,77 @@ class SettingsComposeTest {
         assertEquals(listOf("pref_apps_enhanced_icons=false"), actions.toggles)
     }
 
+    @Test
+    fun gridOnlyLibraryOptionsAreNotShownInListMode() {
+        val gridState = sampleState().copy(
+            libraryChoices = listOf(
+                SettingsChoice(
+                    key = "pref_apps_view",
+                    title = "Library View",
+                    selected = SettingsOption("grid", "Grid"),
+                    options = listOf(
+                        SettingsOption("list", "List"),
+                        SettingsOption("grid", "Grid"),
+                    ),
+                ),
+                SettingsChoice(
+                    key = "pref_apps_grid_spacing",
+                    title = "Grid Spacing",
+                    selected = SettingsOption("standard", "Standard (8 dp)"),
+                    options = listOf(SettingsOption("standard", "Standard (8 dp)")),
+                ),
+            ),
+            librarySwitches = listOf(
+                SettingsSwitch("pref_apps_enhanced_icons", "Enhanced Icons", null, true),
+                SettingsSwitch("pref_apps_hide_grid_titles", "Hide MIDlet Titles", null, false),
+            ),
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                SettingsScreen(state = gridState, actions = RecordingSettingsActions())
+            }
+        }
+
+        composeRule.onNodeWithText("Grid Spacing").assertExists()
+        composeRule.onNodeWithText("Hide MIDlet Titles").assertExists()
+        composeRule.onNodeWithText("Show MIDlet Descriptions").assertDoesNotExist()
+    }
+
+    @Test
+    fun listOnlyLibraryOptionsAreNotShownInGridMode() {
+        val listState = sampleState().copy(
+            libraryChoices = listOf(
+                SettingsChoice(
+                    key = "pref_apps_view",
+                    title = "Library View",
+                    selected = SettingsOption("list", "List"),
+                    options = listOf(
+                        SettingsOption("list", "List"),
+                        SettingsOption("grid", "Grid"),
+                    ),
+                ),
+            ),
+            librarySwitches = listOf(
+                SettingsSwitch("pref_apps_enhanced_icons", "Enhanced Icons", null, true),
+                SettingsSwitch(
+                    "pref_apps_show_list_description",
+                    "Show MIDlet Descriptions",
+                    null,
+                    true,
+                ),
+            ),
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                SettingsScreen(state = listState, actions = RecordingSettingsActions())
+            }
+        }
+
+        composeRule.onNodeWithText("Show MIDlet Descriptions").assertExists()
+        composeRule.onNodeWithText("Grid Spacing").assertDoesNotExist()
+        composeRule.onNodeWithText("Hide MIDlet Titles").assertDoesNotExist()
+    }
+
     private fun sampleState() = SettingsUiState(
         theme = SettingsOption("dark", "Dark"),
         themes = listOf(

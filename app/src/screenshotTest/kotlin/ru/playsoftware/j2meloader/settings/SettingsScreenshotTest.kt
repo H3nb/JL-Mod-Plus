@@ -77,8 +77,8 @@ private val PreviewSettingsState = SettingsUiState(
         SettingsChoice(
             "pref_apps_icon_shape",
             "Icon Shape",
-            SettingsOption("round", "Round"),
-            listOf(SettingsOption("round", "Round"), SettingsOption("square", "Square")),
+            SettingsOption("round", "Rounded"),
+            listOf(SettingsOption("round", "Rounded"), SettingsOption("square", "Sharp Corners")),
         ),
         SettingsChoice(
             "pref_apps_grid_spacing",
@@ -93,9 +93,18 @@ private val PreviewSettingsState = SettingsUiState(
         ),
     ),
     librarySwitches = listOf(
-        SettingsSwitch("pref_apps_enhanced_icons", "Enhanced Icons", "Improve low-resolution artwork", true),
-        SettingsSwitch("pref_apps_hide_grid_titles", "Hide Grid Titles", "Hide app names below grid icons", false),
-        SettingsSwitch("pref_apps_show_list_description", "Show List Description", "Show descriptions in list view", true),
+        SettingsSwitch(
+            "pref_apps_enhanced_icons",
+            "Enhanced Icons",
+            "Improve source icons with adaptive sizing and color treatment.",
+            true,
+        ),
+        SettingsSwitch(
+            "pref_apps_hide_grid_titles",
+            "Hide MIDlet Titles",
+            "Show only MIDlet icons in grid view.",
+            false,
+        ),
     ),
 )
 

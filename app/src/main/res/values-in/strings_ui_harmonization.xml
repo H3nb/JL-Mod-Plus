@@ -22,6 +22,9 @@
     <string name="pref_accent_pink">Merah Muda</string>
     <string name="runtime_invalid_intent">Permintaan peluncuran tidak valid: jalur MIDlet tidak tersedia.</string>
     <string name="runtime_no_midlets">Tidak ada MIDlet yang ditemukan dalam aplikasi ini.</string>
+    <string name="midlet_running_notification_title">MIDlet Berjalan</string>
+    <string name="midlet_running_notification_text">%1$s sedang berjalan di latar belakang.</string>
+    <string name="midlet_running_notification_channel">Runtime MIDlet</string>
     <string name="library_selection_checkbox_description">Pilih %1$s</string>
     <string name="library_selection_checked">Dipilih</string>
     <string name="library_selection_unchecked">Tidak dipilih</string>

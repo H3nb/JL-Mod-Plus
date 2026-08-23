@@ -73,6 +73,7 @@ import ru.playsoftware.j2meloader.config.ProfilesManager;
 import ru.playsoftware.j2meloader.config.ShaderInfo;
 import ru.playsoftware.j2meloader.crashes.CrashReporter;
 import ru.playsoftware.j2meloader.crashes.MidletSessionJournal;
+import ru.playsoftware.j2meloader.crashes.MidletSessionStore;
 import ru.playsoftware.j2meloader.util.AppUtils;
 import ru.playsoftware.j2meloader.util.FileUtils;
 import ru.playsoftware.j2meloader.util.IOUtils;
@@ -362,6 +363,7 @@ public class MicroLoader {
 	}
 
 	void loadMidlet(String clazz, String appName) {
+		MidletSessionStore.markStarted(ContextHolder.getAppContext(), appDir.getPath(), appName, clazz);
 		MidletSessionJournal journal = MidletSessionJournal.create(
 				ContextHolder.getAppContext(),
 				midletName,

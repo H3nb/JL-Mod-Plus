@@ -141,10 +141,10 @@
     <string name="library_grid_spacing_compact">Compact (4 dp)</string>
     <string name="library_grid_spacing_standard">Standard (8 dp)</string>
     <string name="library_grid_spacing_spacious">Spacious (12 dp)</string>
-    <string name="library_hide_grid_titles">Hide Titles In Grid</string>
-    <string name="library_hide_grid_titles_summary">Show only app icons</string>
-    <string name="library_show_list_description">Show Description In List</string>
-    <string name="library_show_list_description_summary">Show each app description below its title and version.</string>
+    <string name="library_hide_grid_titles">Hide MIDlet Titles</string>
+    <string name="library_hide_grid_titles_summary">Show only MIDlet icons in grid view.</string>
+    <string name="library_show_list_description">Show MIDlet Descriptions</string>
+    <string name="library_show_list_description_summary">Show each MIDlet description below its title and version.</string>
     <string name="library_collections_empty_title">No Collections Yet</string>
     <string name="library_collections_empty_message">Collections and folders will be available in a future update.</string>
     <string name="library_expand_description">Expand description</string>
@@ -162,7 +162,7 @@
     <string name="pref_app_sort_vendor">Vendor</string>
     <string name="pref_app_sort_ascending">Ascending</string>
     <string name="pref_app_sort_descending">Descending</string>
-    <string name="pref_apps_view">View</string>
+    <string name="pref_apps_view">Library View</string>
     <string name="pref_audio_title">Audio</string>
     <string name="PREF_BACKGROUND">Background</string>
     <string name="pref_button_shape_oval">Oval</string>

@@ -288,6 +288,8 @@ public class SettingsActivity extends AppCompatActivity {
 
 	private List<SettingsChoice> buildLibraryChoices() {
 		List<SettingsChoice> choices = new ArrayList<>();
+		boolean gridView = preferences.getInt(PREF_APPS_VIEW, LIBRARY_LAYOUT_LIST)
+				== LIBRARY_LAYOUT_GRID;
 		List<SettingsOption> viewOptions = Arrays.asList(
 				new SettingsOption("list", getString(R.string.library_view_list)),
 				new SettingsOption("grid", getString(R.string.library_view_grid)));
@@ -324,39 +326,47 @@ public class SettingsActivity extends AppCompatActivity {
 						shapeOptions.get(0)),
 				shapeOptions));
 
-		List<SettingsOption> spacingOptions = Arrays.asList(
-				new SettingsOption("none", getString(R.string.library_grid_spacing_none)),
-				new SettingsOption("compact", getString(R.string.library_grid_spacing_compact)),
-				new SettingsOption("standard", getString(R.string.library_grid_spacing_standard)),
-				new SettingsOption("spacious", getString(R.string.library_grid_spacing_spacious)));
-		choices.add(new SettingsChoice(
-				PREF_APPS_GRID_SPACING,
-				getString(R.string.library_grid_spacing_title),
-				findOption(spacingOptions,
-						gridSpacingKey(preferences.getInt(
-								PREF_APPS_GRID_SPACING, LIBRARY_GRID_SPACING_STANDARD)),
-						spacingOptions.get(2)),
-				spacingOptions));
+		if (gridView) {
+			List<SettingsOption> spacingOptions = Arrays.asList(
+					new SettingsOption("none", getString(R.string.library_grid_spacing_none)),
+					new SettingsOption("compact", getString(R.string.library_grid_spacing_compact)),
+					new SettingsOption("standard", getString(R.string.library_grid_spacing_standard)),
+					new SettingsOption("spacious", getString(R.string.library_grid_spacing_spacious)));
+			choices.add(new SettingsChoice(
+					PREF_APPS_GRID_SPACING,
+					getString(R.string.library_grid_spacing_title),
+					findOption(spacingOptions,
+							gridSpacingKey(preferences.getInt(
+									PREF_APPS_GRID_SPACING, LIBRARY_GRID_SPACING_STANDARD)),
+							spacingOptions.get(2)),
+					spacingOptions));
+		}
 		return choices;
 	}
 
 	private List<SettingsSwitch> buildLibrarySwitches() {
-		return Arrays.asList(
-				new SettingsSwitch(
-						PREF_APPS_ENHANCED_ICONS,
-						getString(R.string.library_enhanced_icons_title),
-						getString(R.string.library_enhanced_icons_summary),
-						preferences.getBoolean(PREF_APPS_ENHANCED_ICONS, true)),
-				new SettingsSwitch(
-						PREF_APPS_HIDE_GRID_TITLES,
-						getString(R.string.library_hide_grid_titles),
-						getString(R.string.library_hide_grid_titles_summary),
-						preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false)),
-				new SettingsSwitch(
-						PREF_APPS_SHOW_LIST_DESCRIPTION,
-						getString(R.string.library_show_list_description),
-						getString(R.string.library_show_list_description_summary),
-						preferences.getBoolean(PREF_APPS_SHOW_LIST_DESCRIPTION, true)));
+		boolean gridView = preferences.getInt(PREF_APPS_VIEW, LIBRARY_LAYOUT_LIST)
+				== LIBRARY_LAYOUT_GRID;
+		List<SettingsSwitch> switches = new ArrayList<>();
+		switches.add(new SettingsSwitch(
+				PREF_APPS_ENHANCED_ICONS,
+				getString(R.string.library_enhanced_icons_title),
+				getString(R.string.library_enhanced_icons_summary),
+				preferences.getBoolean(PREF_APPS_ENHANCED_ICONS, true)));
+		if (gridView) {
+			switches.add(new SettingsSwitch(
+					PREF_APPS_HIDE_GRID_TITLES,
+					getString(R.string.library_hide_grid_titles),
+					getString(R.string.library_hide_grid_titles_summary),
+					preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false)));
+		} else {
+			switches.add(new SettingsSwitch(
+					PREF_APPS_SHOW_LIST_DESCRIPTION,
+					getString(R.string.library_show_list_description),
+					getString(R.string.library_show_list_description_summary),
+					preferences.getBoolean(PREF_APPS_SHOW_LIST_DESCRIPTION, true)));
+		}
+		return switches;
 	}
 
 	private static int gridSpacingValue(String value) {
