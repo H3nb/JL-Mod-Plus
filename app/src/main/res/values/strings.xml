@@ -47,6 +47,7 @@
     <string name="install">Install</string>
     <string name="install_done">Application successfully installed!</string>
     <string name="installer_title">MIDlet Installer</string>
+    <string name="installer_error_message">The selected application could not be installed. Choose a valid MIDlet file and try again.</string>
     <string name="install_jar_non_matched_jad">This app differs from the one described in the JAD.\nIgnore the JAD and install anyway?</string>
     <string name="file_picker_select_file">Select File</string>
     <string name="file_picker_select_folder">Select Folder</string>

@@ -513,13 +513,31 @@ public class InstallerDialog extends DialogFragment {
 				descriptor == null ? null : descriptor.getVersion(),
 				jar == null ? null : Long.toString(jar.length())
 		);
+		if (!isAdded() || composeController == null) {
+			cleanupInstallerResources();
+			acknowledgeExternalRequest();
+			if (isAdded()) dismissAllowingStateLoss();
+			return;
+		}
+
+		// Keep the dialog visible so a malformed or damaged bundle is reported to the user instead
+		// of silently disappearing. Release temporary installer files now; closing the error surface
+		// remains the acknowledgement point for the pending external request.
+		cleanupInstallerResources();
+		primaryAction = null;
+		composeController.showError(
+			isBundleRequest() ? getString(R.string.library_import_error_title) : getString(R.string.error),
+			isBundleRequest()
+					? getString(R.string.library_import_invalid_bundle)
+					: getString(R.string.installer_error_message),
+			getString(R.string.close));
+	}
+
+	private void cleanupInstallerResources() {
 		if (installer != null) {
 			installer.clearCache();
 			installer.deleteTemp();
 		}
 		cleanupBundleImport();
-		acknowledgeExternalRequest();
-		if (!isAdded()) return;
-		dismissAllowingStateLoss();
 	}
 }

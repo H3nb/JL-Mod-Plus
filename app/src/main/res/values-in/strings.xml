@@ -46,6 +46,7 @@
     <string name="install">Pasang</string>
     <string name="install_done">Aplikasi telah berhasil dipasang!</string>
     <string name="installer_title">Penginstal MIDlet</string>
+    <string name="installer_error_message">Aplikasi yang dipilih tidak dapat diinstal. Pilih file MIDlet yang valid lalu coba lagi.</string>
     <string name="install_jar_non_matched_jad">Aplikasi ini berbeda dari yang dijelaskan dalam JAD.\nAbaikan JAD tersebut dan tetap pasang?</string>
     <string name="invalid_resolution_not_saved">Resolusi tidak valid; perubahan tidak disimpan!</string>
     <string name="layout_edit_finish">Akhiri Mode Ubah</string>

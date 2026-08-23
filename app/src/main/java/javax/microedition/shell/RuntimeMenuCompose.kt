@@ -346,7 +346,7 @@ private fun RuntimeToolbar(
             }
             Box {
                 RuntimeToolbarAction(
-                    icon = R.drawable.ic_more_vert,
+                    icon = R.drawable.ic_menu,
                     label = R.string.cmd_menu,
                     size = actionSize,
                     onClick = onOpenMenu,

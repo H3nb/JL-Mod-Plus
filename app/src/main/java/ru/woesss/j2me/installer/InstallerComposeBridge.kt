@@ -90,6 +90,12 @@ sealed interface InstallerUiState {
         val closeLabel: String,
         val iconPath: String?,
     ) : InstallerUiState
+
+    data class Error(
+        override val title: String,
+        val message: String,
+        val closeLabel: String,
+    ) : InstallerUiState
 }
 
 /** Stable event boundary for the Java installer state machine. */
@@ -160,6 +166,14 @@ class InstallerComposeController internal constructor(
             iconPath = iconPath,
         )
     }
+
+    fun showError(title: String, message: String, closeLabel: String) {
+        state = InstallerUiState.Error(
+            title = title,
+            message = message,
+            closeLabel = closeLabel,
+        )
+    }
 }
 
 object InstallerComposeBridge {
@@ -184,7 +198,9 @@ fun InstallerScreen(
     val iconPath = when (state) {
         is InstallerUiState.Confirmation -> state.iconPath
         is InstallerUiState.Success -> state.iconPath
-        is InstallerUiState.Loading, is InstallerUiState.Converting -> null
+        is InstallerUiState.Loading,
+        is InstallerUiState.Converting,
+        is InstallerUiState.Error -> null
     }
     val icon = remember(iconPath) {
         iconPath?.let(BitmapFactory::decodeFile)
@@ -256,6 +272,18 @@ fun InstallerScreen(
                         onRun = actions::onRunExisting,
                     )
                 }
+
+                is InstallerUiState.Error -> {
+                    InstallerMessage(state.message, isError = true)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        TextButton(onClick = actions::onClose) {
+                            Text(state.closeLabel)
+                        }
+                    }
+                }
             }
         }
     }
@@ -282,7 +310,7 @@ private fun InstallerProgressMessage(status: String) {
 }
 
 @Composable
-private fun InstallerMessage(message: String) {
+private fun InstallerMessage(message: String, isError: Boolean = false) {
     val maxMessageHeight = (availableWindowHeightDp() - 280.dp)
         .coerceAtLeast(120.dp)
         .coerceAtMost(360.dp)
@@ -301,7 +329,11 @@ private fun InstallerMessage(message: String) {
                 .fillMaxWidth()
                 .heightIn(max = maxMessageHeight)
                 .verticalScroll(scrollState),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = if (isError) {
+                MaterialTheme.colorScheme.error
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
         )
         ScrollableContentHint(
             visible = canScrollForward,

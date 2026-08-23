@@ -138,3 +138,19 @@ fun InstallerSuccessScreenshot() {
         )
     }
 }
+
+@PreviewTest
+@Preview(name = "Installer bundle error", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun InstallerBundleErrorScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        InstallerScreen(
+            state = InstallerUiState.Error(
+                title = "App Bundle Import Failed",
+                message = "The selected app bundle is invalid, damaged, or unsupported. Choose a valid JL-Mod Plus app bundle and try again.",
+                closeLabel = "Close",
+            ),
+            actions = NoOpInstallerActions,
+        )
+    }
+}
