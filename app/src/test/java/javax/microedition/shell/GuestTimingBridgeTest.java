@@ -32,6 +32,7 @@ public class GuestTimingBridgeTest {
 		try {
 			time.monotonicNanos = 500_000_000L;
 			assertEquals(1_700_000_001_000L, GuestTimingBridge.currentTimeMillis());
+			assertEquals(1_000_000_000L, GuestTimingBridge.nanoTime());
 			assertSame(session, GuestTimingBridge.activeSession());
 			assertEquals(12L, GuestTimingBridge.activeSession().generation());
 		} finally {

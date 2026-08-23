@@ -98,10 +98,23 @@ public final class TimingSession implements AutoCloseable {
 		if (guestMillis < 0L) {
 			throw new IllegalArgumentException("timeout value is negative");
 		}
+		sleepGuestDuration(TimingMath.millisToNanos(guestMillis));
+	}
+
+	/** Java-compatible millisecond plus nanosecond sleep overload for transformed guest code. */
+	public void sleep(long guestMillis, int guestNanos) throws InterruptedException {
+		if (guestMillis < 0L || guestNanos < 0 || guestNanos > 999_999) {
+			throw new IllegalArgumentException("timeout value is invalid");
+		}
+		sleepGuestDuration(TimingMath.saturatingAdd(
+				TimingMath.millisToNanos(guestMillis), guestNanos));
+	}
+
+	private void sleepGuestDuration(long guestDurationNanos) throws InterruptedException {
 		if (Thread.interrupted()) {
 			throw new InterruptedException();
 		}
-		if (guestMillis == 0L) {
+		if (guestDurationNanos == 0L) {
 			return;
 		}
 
@@ -110,7 +123,7 @@ public final class TimingSession implements AutoCloseable {
 			ensureOpen();
 			TimingSnapshot start = snapshotAt(timeSource.monotonicNanos());
 			long hostDurationNanos = TimingMath.scaleGuestToHostNanos(
-					TimingMath.millisToNanos(guestMillis),
+					guestDurationNanos,
 					start.speedPercent());
 			hostDeadlineNanos = TimingMath.saturatingAdd(
 					start.hostMonotonicNanos(), hostDurationNanos);

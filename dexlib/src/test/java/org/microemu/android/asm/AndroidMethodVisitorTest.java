@@ -28,23 +28,25 @@ import java.util.List;
 
 public class AndroidMethodVisitorTest {
 	@Test
-	public void currentTimeAndExplicitSleepUseParentOwnedBridge() {
+	public void guestClockAndExplicitSleepUseParentOwnedBridge() {
 		byte[] source = createClass();
 		byte[] transformed = transform(source);
 		List<String> calls = methodCalls(transformed, "timed");
 
 		assertTrue(calls.contains("INVOKESTATIC javax/microedition/shell/GuestTimingBridge.currentTimeMillis()J"));
+		assertTrue(calls.contains("INVOKESTATIC javax/microedition/shell/GuestTimingBridge.nanoTime()J"));
 		assertTrue(calls.contains("INVOKESTATIC javax/microedition/shell/GuestTimingBridge.sleep(J)V"));
-		assertEquals(2, calls.size());
+		assertTrue(calls.contains("INVOKESTATIC javax/microedition/shell/GuestTimingBridge.sleep(JI)V"));
+		assertEquals(4, calls.size());
 	}
 
 	@Test
-	public void yieldRewriteRemainsOneMillisecondHostSleep() {
+	public void yieldRewriteUsesGuestTimingBridge() {
 		byte[] source = createYieldClass();
 		byte[] transformed = transform(source);
 		List<String> calls = methodCalls(transformed, "yielded");
 
-		assertTrue(calls.contains("INVOKESTATIC java/lang/Thread.sleep(J)V"));
+		assertTrue(calls.contains("INVOKESTATIC javax/microedition/shell/GuestTimingBridge.sleep(J)V"));
 		assertEquals(1, calls.size());
 	}
 
@@ -58,8 +60,14 @@ public class AndroidMethodVisitorTest {
 		method.visitMethodInsn(
 				Opcodes.INVOKESTATIC, "java/lang/System", "currentTimeMillis", "()J", false);
 		method.visitInsn(Opcodes.POP2);
+		method.visitMethodInsn(
+				Opcodes.INVOKESTATIC, "java/lang/System", "nanoTime", "()J", false);
+		method.visitInsn(Opcodes.POP2);
 		method.visitLdcInsn(10L);
 		method.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Thread", "sleep", "(J)V", false);
+		method.visitLdcInsn(1L);
+		method.visitInsn(Opcodes.ICONST_1);
+		method.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Thread", "sleep", "(JI)V", false);
 		method.visitInsn(Opcodes.RETURN);
 		method.visitMaxs(2, 0);
 		method.visitEnd();

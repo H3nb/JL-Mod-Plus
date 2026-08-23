@@ -84,12 +84,14 @@ public class AndroidMethodVisitor extends MethodVisitor {
 			case "java/lang/Thread":
 				if (name.equals("yield")) {
 					mv.visitLdcInsn(1L);
-					mv.visitMethodInsn(opcode, owner, "sleep", "(J)V", false);
-					return;
-				}
-				if (opcode == INVOKESTATIC && name.equals("sleep") && desc.equals("(J)V")) {
 					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/GuestTimingBridge",
 							"sleep", "(J)V", false);
+					return;
+				}
+				if (opcode == INVOKESTATIC && name.equals("sleep")
+						&& (desc.equals("(J)V") || desc.equals("(JI)V"))) {
+					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/GuestTimingBridge",
+							"sleep", desc, false);
 					return;
 				}
 				break;
@@ -147,6 +149,11 @@ public class AndroidMethodVisitor extends MethodVisitor {
 				if (opcode == INVOKESTATIC && name.equals("currentTimeMillis") && desc.equals("()J")) {
 					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/GuestTimingBridge",
 							"currentTimeMillis", "()J", false);
+					return;
+				}
+				if (opcode == INVOKESTATIC && name.equals("nanoTime") && desc.equals("()J")) {
+					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/GuestTimingBridge",
+							"nanoTime", "()J", false);
 					return;
 				}
 				if (opcode == INVOKESTATIC && name.equals("getProperty")) {
