@@ -17,6 +17,7 @@
 package javax.microedition.lcdui.graphics;
 
 import android.content.Context;
+import android.util.AttributeSet;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -37,6 +38,24 @@ public class CanvasView extends SurfaceView {
 		this.owner = owner;
 	}
 
+	/**
+	 * Standard View constructors keep this custom SurfaceView usable from layout tooling and
+	 * previews. Runtime MIDP surfaces still use the owner-aware constructor above.
+	 */
+	public CanvasView(Context context) {
+		this(null, context);
+	}
+
+	public CanvasView(Context context, AttributeSet attrs) {
+		super(context, attrs);
+		this.owner = null;
+	}
+
+	public CanvasView(Context context, AttributeSet attrs, int defStyleAttr) {
+		super(context, attrs, defStyleAttr);
+		this.owner = null;
+	}
+
 	@Override
 	protected void onVisibilityChanged(@NonNull View changedView, int visibility) {
 		super.onVisibilityChanged(changedView, visibility);
@@ -48,7 +67,9 @@ public class CanvasView extends SurfaceView {
 
 	@Override
 	protected void onDraw(android.graphics.Canvas canvas) {
-		owner.onDraw(canvas);
+		if (owner != null) {
+			owner.onDraw(canvas);
+		}
 	}
 
 	@Override

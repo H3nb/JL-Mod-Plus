@@ -20,27 +20,71 @@ final class GuestWindowPolicy {
 
 	static boolean canUseDisplayCutout(boolean canvas,
 			boolean statusBarEnabled, boolean actionBarEnabled, boolean userAllowsCutout) {
-		return userAllowsCutout && canvas && !statusBarEnabled && !actionBarEnabled;
+		// The Compose ActionBar is part of the host content and may occupy the cutout area. The
+		// system status bar cannot be combined with a cutout-enabled MIDlet because both reserve
+		// the same top inset.
+		return userAllowsCutout && canvas && !statusBarEnabled;
+	}
+
+	/**
+	 * Resolves the complete host-chrome contract for one displayable kind.
+	 *
+	 * <p>The runtime toolbar, system bars, cutout eligibility, and guest padding must all use the
+	 * same interpretation of the three user-facing switches. Keeping this state as one value makes
+	 * transitions between Canvas and form displayables deterministic and testable without an
+	 * Android window.</p>
+	 */
+	static Chrome resolve(boolean canvas, boolean statusBarEnabled,
+			boolean actionBarEnabled, boolean userAllowsCutout) {
+		return new Chrome(
+				canvas,
+				!canvas || actionBarEnabled,
+				!canvas || statusBarEnabled,
+				!canvas,
+				canUseDisplayCutout(canvas, statusBarEnabled, actionBarEnabled, userAllowsCutout));
 	}
 
 	static Padding calculate(boolean canvas, boolean statusBarEnabled,
 			boolean actionBarEnabled, boolean userAllowsCutout,
 			int systemLeft, int statusTop, int systemRight, int navigationBottom,
 			int cutoutLeft, int cutoutTop, int cutoutRight, int cutoutBottom, int imeBottom) {
-		boolean canUseCutout = canUseDisplayCutout(canvas,
-				statusBarEnabled, actionBarEnabled, userAllowsCutout);
-		if (canvas) {
+		return calculate(resolve(canvas, statusBarEnabled, actionBarEnabled, userAllowsCutout),
+				systemLeft, statusTop, systemRight, navigationBottom,
+				cutoutLeft, cutoutTop, cutoutRight, cutoutBottom, imeBottom);
+	}
+
+	static Padding calculate(Chrome chrome,
+			int systemLeft, int statusTop, int systemRight, int navigationBottom,
+			int cutoutLeft, int cutoutTop, int cutoutRight, int cutoutBottom, int imeBottom) {
+		if (chrome.canvas) {
 			return new Padding(
-					canUseCutout ? 0 : cutoutLeft,
-					canUseCutout ? 0 : Math.max(statusBarEnabled ? statusTop : 0, cutoutTop),
-					canUseCutout ? 0 : cutoutRight,
-					canUseCutout ? 0 : cutoutBottom);
+					chrome.cutoutAllowed ? 0 : cutoutLeft,
+					chrome.cutoutAllowed ? 0 : Math.max(chrome.statusBarVisible ? statusTop : 0, cutoutTop),
+					chrome.cutoutAllowed ? 0 : cutoutRight,
+					chrome.cutoutAllowed ? 0 : cutoutBottom);
 		}
 		return new Padding(
 				Math.max(systemLeft, cutoutLeft),
 				Math.max(statusTop, cutoutTop),
 				Math.max(systemRight, cutoutRight),
 				Math.max(Math.max(navigationBottom, imeBottom), cutoutBottom));
+	}
+
+	static final class Chrome {
+		final boolean canvas;
+		final boolean toolbarVisible;
+		final boolean statusBarVisible;
+		final boolean navigationBarVisible;
+		final boolean cutoutAllowed;
+
+		private Chrome(boolean canvas, boolean toolbarVisible, boolean statusBarVisible,
+				boolean navigationBarVisible, boolean cutoutAllowed) {
+			this.canvas = canvas;
+			this.toolbarVisible = toolbarVisible;
+			this.statusBarVisible = statusBarVisible;
+			this.navigationBarVisible = navigationBarVisible;
+			this.cutoutAllowed = cutoutAllowed;
+		}
 	}
 
 	static final class Padding {

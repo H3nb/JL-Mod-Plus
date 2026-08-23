@@ -7,11 +7,13 @@
     <string name="library_import_preparing">Reading app bundle…</string>
     <string name="library_import_restoring">Restoring app settings and save data…</string>
     <string name="library_import_done">App bundle imported.</string>
+    <string name="library_import_error_title">App Bundle Import Failed</string>
+    <string name="library_import_invalid_bundle">The selected app bundle is invalid, damaged, or unsupported. Choose a valid JL-Mod Plus app bundle and try again.</string>
     <string name="library_import_restore_existing">This app is already installed. Importing will replace the settings and save data contained in the bundle.</string>
     <string name="library_import_restore_failed">The app is installed, but its bundle data could not be restored. Retry the restore?</string>
     <string name="library_play_stats_summary">Play count: %1$d · Total: %2$s</string>
-    <string name="library_share_chooser_title">Share app</string>
-    <string name="library_export_chooser_title">Export app bundle</string>
+    <string name="library_share_chooser_title">Share App</string>
+    <string name="library_export_chooser_title">Export App Bundle</string>
     <string name="library_export_progress">Exporting… %1$d/%2$d</string>
     <string name="library_transfer_unavailable">Unable to prepare this app for transfer.</string>
     <string name="library_back">Back</string>

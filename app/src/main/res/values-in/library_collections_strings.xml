@@ -2,7 +2,6 @@
 <resources>
     <string name="library_collection_new">Koleksi Baru</string>
     <string name="library_collection_ready_empty_message">Buat koleksi untuk mengelompokkan aplikasi tanpa memindahkan filenya.</string>
-    <string name="library_collection_member_count">%1$d aplikasi</string>
     <string name="library_collection_add_app">Tambahkan ke Koleksi</string>
     <string name="library_collection_add_apps">Tambah aplikasi</string>
     <string name="library_collection_manage_apps">Pilih aplikasi</string>

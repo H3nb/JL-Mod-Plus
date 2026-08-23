@@ -16,11 +16,13 @@ package ru.playsoftware.j2meloader.config
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -32,7 +34,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -43,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -50,6 +52,9 @@ import androidx.compose.ui.unit.dp
 import android.content.res.Configuration
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
+import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 import java.text.DecimalFormat
 import kotlin.math.roundToInt
 
@@ -117,7 +122,7 @@ object ConfigDialogComposeBridge {
 private fun DialogSurface(content: @Composable ColumnScope.() -> Unit) {
     val configuration = LocalConfiguration.current
     val landscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-    val maxHeight = (configuration.screenHeightDp.dp * if (landscape) 0.86f else 0.90f)
+    val maxHeight = (availableWindowHeightDp() * if (landscape) 0.86f else 0.90f)
         .coerceAtLeast(180.dp)
     Surface(
         modifier = Modifier
@@ -129,7 +134,9 @@ private fun DialogSurface(content: @Composable ColumnScope.() -> Unit) {
         tonalElevation = 6.dp,
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
+            modifier = Modifier
+                .padding(horizontal = 24.dp, vertical = 20.dp)
+                .imePadding(),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             content = content,
         )
@@ -156,27 +163,42 @@ private fun LoadProfileContent(
                 modifier = Modifier.padding(vertical = 20.dp),
             )
         } else {
-            LazyColumn(modifier = Modifier.heightIn(max = if (landscape) 180.dp else 420.dp)) {
-                itemsIndexed(profiles) { _, profile ->
-                    val hasConfig = profile.hasConfig() || profile.hasOldConfig()
-                    val hasKeyboard = profile.hasKeyLayout()
-                    val available = hasConfig || hasKeyboard
-                    ListItem(
-                        colors = ListItemDefaults.colors(
-                            containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                        ),
-                        headlineContent = { Text(profile.name) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(enabled = available) {
-                                if (available) {
-                                    callbacks.onConfirm(profile.name, hasConfig, hasKeyboard)
-                                } else {
-                                    callbacks.onError()
-                                }
-                            },
-                    )
+            val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+            val canScrollForward = rememberLazyListCanScrollForward(listState)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = if (landscape) 180.dp else 420.dp),
+            ) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    itemsIndexed(profiles) { _, profile ->
+                        val hasConfig = profile.hasConfig() || profile.hasOldConfig()
+                        val hasKeyboard = profile.hasKeyLayout()
+                        val available = hasConfig || hasKeyboard
+                        ListItem(
+                            colors = ListItemDefaults.colors(
+                                containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                            ),
+                            headlineContent = { Text(profile.name) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(enabled = available) {
+                                    if (available) {
+                                        callbacks.onConfirm(profile.name, hasConfig, hasKeyboard)
+                                    } else {
+                                        callbacks.onError()
+                                    }
+                                },
+                        )
+                    }
                 }
+                ScrollableContentHint(
+                    visible = canScrollForward,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
             }
         }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
@@ -301,42 +323,90 @@ private fun ShaderContent(
     }
     var values by remember(shader) { mutableStateOf(initial) }
     val format = remember { DecimalFormat("#.######") }
+    var draftValues by remember(shader) {
+        mutableStateOf(List(4) { index ->
+            settings.firstOrNull { it.index == index }?.let { setting ->
+                format.format(initial[index].coerceIn(setting.min, setting.max))
+            } ?: format.format(initial[index])
+        })
+    }
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+    fun normalizedValue(setting: ShaderSettingUi, raw: Float): Float {
+        val progress = ((raw - setting.min) / setting.step).roundToInt()
+        return (setting.min + progress * setting.step).coerceIn(setting.min, setting.max)
+    }
+
+    fun updateValue(index: Int, setting: ShaderSettingUi, raw: Float, syncDraft: Boolean) {
+        val next = normalizedValue(setting, raw)
+        values = values.copyOf().also { it[index] = next }
+        if (syncDraft) {
+            draftValues = draftValues.toMutableList().also { it[index] = format.format(next) }
+        }
+    }
 
     DialogSurface {
         Text(stringResource(R.string.shader_tuning), style = MaterialTheme.typography.headlineSmall)
-        LazyColumn(modifier = Modifier.heightIn(max = if (landscape) 180.dp else 420.dp)) {
-            itemsIndexed(settings) { _, setting ->
-                val value = values[setting.index].coerceIn(setting.min, setting.max)
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = stringResource(
-                            R.string.shader_setting,
-                            setting.name,
-                            format.format(value),
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Slider(
-                        value = value,
-                        onValueChange = { next ->
-                            val copy = values.copyOf()
-                            val progress = ((next - setting.min) / setting.step).roundToInt()
-                            copy[setting.index] = (setting.min + progress * setting.step)
-                                .coerceIn(setting.min, setting.max)
-                            values = copy
-                        },
-                        valueRange = setting.min..setting.max,
-                        steps = (((setting.max - setting.min) / setting.step).roundToInt() - 1)
-                            .coerceAtLeast(0),
-                    )
+        val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+        val canScrollForward = rememberLazyListCanScrollForward(listState)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = if (landscape) 180.dp else 420.dp),
+        ) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                itemsIndexed(settings) { _, setting ->
+                    val value = values[setting.index].coerceIn(setting.min, setting.max)
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        val draft = draftValues.getOrNull(setting.index) ?: format.format(value)
+                        Text(
+                            text = stringResource(
+                                R.string.shader_setting,
+                                setting.name,
+                                format.format(value),
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        ConfigValueStepper(
+                            valueText = draft,
+                            onValueTextChange = { text ->
+                                draftValues = draftValues.toMutableList().also {
+                                    it[setting.index] = text
+                                }
+                                text.toFloatOrNull()?.let { next ->
+                                    updateValue(setting.index, setting, next, syncDraft = false)
+                                }
+                            },
+                            onDecrease = {
+                                updateValue(setting.index, setting, value - setting.step, syncDraft = true)
+                            },
+                            onIncrease = {
+                                updateValue(setting.index, setting, value + setting.step, syncDraft = true)
+                            },
+                            decreaseEnabled = value > setting.min,
+                            increaseEnabled = value < setting.max,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        )
+                    }
                 }
             }
+            ScrollableContentHint(
+                visible = canScrollForward,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
         }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             TextButton(onClick = {
                 values = FloatArray(4) { index ->
                     settings.firstOrNull { it.index == index }?.defaultValue ?: 0f
+                }
+                draftValues = List(4) { index ->
+                    settings.firstOrNull { it.index == index }?.let { setting ->
+                        format.format(setting.defaultValue.coerceIn(setting.min, setting.max))
+                    } ?: format.format(0f)
                 }
             }) { Text(stringResource(R.string.reset)) }
             TextButton(onClick = callbacks::onDismiss) {

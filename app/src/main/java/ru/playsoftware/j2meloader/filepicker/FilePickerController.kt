@@ -382,6 +382,7 @@ class FilePickerController(
             request.mode,
             request.allowExistingFile,
             root,
+            request.allowedExtensions,
         )
     }
 
@@ -393,9 +394,14 @@ class FilePickerController(
                     if (file.isDirectory) {
                         request.allowsDirectories
                     } else {
-                        request.allowsFiles &&
+                            request.allowsFiles &&
                             file.isFile &&
-                            FilePickerRules.isVisible(file, request.mode, request.allowExistingFile)
+                            FilePickerRules.isVisible(
+                                file,
+                                request.mode,
+                                request.allowExistingFile,
+                                request.allowedExtensions,
+                            )
                     }
             } catch (_: SecurityException) {
                 false

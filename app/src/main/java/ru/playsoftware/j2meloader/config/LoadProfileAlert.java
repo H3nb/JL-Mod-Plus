@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import ru.playsoftware.j2meloader.R;
+import ru.playsoftware.j2meloader.ui.ThemedToast;
 
 /** Compose presentation with the legacy profile copy contract kept in the host callback. */
 public class LoadProfileAlert extends DialogFragment {
@@ -81,7 +82,7 @@ public class LoadProfileAlert extends DialogFragment {
 					public void onError() {
 						Context context = getContext();
 						if (context != null) {
-							Toast.makeText(context, R.string.error, Toast.LENGTH_SHORT).show();
+							ThemedToast.show(context, R.string.error, Toast.LENGTH_SHORT);
 						}
 					}
 
@@ -100,7 +101,7 @@ public class LoadProfileAlert extends DialogFragment {
 								}
 							}
 							if (selected == null) {
-								Toast.makeText(context, R.string.error, Toast.LENGTH_SHORT).show();
+								ThemedToast.show(context, R.string.error, Toast.LENGTH_SHORT);
 								return;
 							}
 							ProfilesManager.load(selected, configPath, config, keyboard);
@@ -110,7 +111,7 @@ public class LoadProfileAlert extends DialogFragment {
 							dismiss();
 						} catch (Exception e) {
 							e.printStackTrace();
-							Toast.makeText(context, R.string.error, Toast.LENGTH_SHORT).show();
+							ThemedToast.show(context, R.string.error, Toast.LENGTH_SHORT);
 						}
 					}
 				});

@@ -13,6 +13,8 @@ package ru.playsoftware.j2meloader.librarydb
 internal object LibraryAppBundleFormat {
     const val MANIFEST_ENTRY = "bundle.json"
     const val CURRENT_VERSION = 1
+    const val UNIVERSAL_VERSION = 2
+    const val UNIVERSAL_SCHEMA = "io.github.h3nb.jlmodplus.app-bundle"
 
     fun manifestBytes(): ByteArray =
         "{\"formatVersion\":$CURRENT_VERSION}\n".toByteArray(Charsets.UTF_8)

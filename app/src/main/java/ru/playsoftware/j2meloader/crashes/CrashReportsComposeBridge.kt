@@ -158,12 +158,12 @@ fun CrashReportsScreen(
     actions: CrashReportsActions,
 ) {
     val loadingDescription = stringResource(R.string.crash_reports_loading)
-    var selectedIds by rememberSaveable { mutableStateOf(arrayListOf<String>()) }
+    var selectedIds by rememberSaveable { mutableStateOf(emptyList<String>()) }
     var confirmation by rememberSaveable { mutableStateOf<CrashReportConfirmation?>(null) }
 
     LaunchedEffect(state.records) {
         val retainedIds = state.records.mapTo(HashSet()) { it.id }
-        val retainedSelection = ArrayList(selectedIds.filter { it in retainedIds })
+        val retainedSelection = selectedIds.filter { it in retainedIds }
         if (retainedSelection != selectedIds) {
             selectedIds = retainedSelection
         }
@@ -171,11 +171,11 @@ fun CrashReportsScreen(
 
     val selectionMode = selectedIds.isNotEmpty()
     fun toggleSelection(reportId: String) {
-        val updated = ArrayList(selectedIds)
+        val updated = selectedIds.toMutableList()
         if (!updated.remove(reportId)) {
             updated.add(reportId)
         }
-        selectedIds = updated
+        selectedIds = updated.toList()
     }
 
     Scaffold(
@@ -203,7 +203,7 @@ fun CrashReportsScreen(
                         onClick = {
                             if (selectionMode) {
                                 confirmation = null
-                                selectedIds = arrayListOf()
+                                selectedIds = emptyList()
                             } else {
                                 actions.onBack()
                             }
@@ -220,11 +220,11 @@ fun CrashReportsScreen(
                         val allSelected = selectedIds.size == state.records.size
                         IconButton(
                             onClick = {
-                                selectedIds = if (allSelected) {
-                                    arrayListOf()
-                                } else {
-                                    ArrayList(state.records.map { it.id })
-                                }
+                                    selectedIds = if (allSelected) {
+                                        emptyList()
+                                    } else {
+                                        state.records.map { it.id }
+                                    }
                             },
                         ) {
                             Icon(

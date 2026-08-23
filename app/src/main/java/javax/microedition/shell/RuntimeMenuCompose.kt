@@ -17,6 +17,7 @@ package javax.microedition.shell
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,6 +30,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -61,6 +63,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
+import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 
 /** Android-host menu state only; Java ME Displayable and Command state stay in the runtime. */
 internal data class RuntimeMenuUiState(
@@ -119,7 +124,6 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
                     state = state,
                     menuVisible = menuVisible,
                     actions = menuActions,
-                    onOpenMenu = ::openMenu,
                     onDismissMenu = ::closeMenu,
                 )
                 if (limitFpsVisible) {
@@ -224,11 +228,9 @@ private fun runtimeMenuDialogLayout(): RuntimeMenuDialogLayout {
 
 @Composable
 private fun runtimeMenuDialogContentHeight(maxHeight: Int = 420) =
-    LocalConfiguration.current.screenHeightDp
-        .minus(220)
-        .coerceAtLeast(120)
-        .coerceAtMost(maxHeight)
-        .dp
+    (availableWindowHeightDp() - 220.dp)
+        .coerceAtLeast(120.dp)
+        .coerceAtMost(maxHeight.dp)
 
 @Composable
 internal fun RuntimeLimitFpsDialog(
@@ -276,7 +278,6 @@ internal fun RuntimeMenuHost(
     state: RuntimeMenuUiState,
     menuVisible: Boolean,
     actions: RuntimeMenuActions,
-    onOpenMenu: () -> Unit,
     onDismissMenu: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -285,7 +286,6 @@ internal fun RuntimeMenuHost(
             RuntimeToolbar(
                 state = state,
                 actions = actions,
-                onOpenMenu = onOpenMenu,
             )
         }
 
@@ -303,7 +303,6 @@ internal fun RuntimeMenuHost(
 private fun RuntimeToolbar(
     state: RuntimeMenuUiState,
     actions: RuntimeMenuActions,
-    onOpenMenu: () -> Unit,
 ) {
     val actionSize = if (state.isCanvas) 36.dp else 48.dp
     Surface(
@@ -339,14 +338,6 @@ private fun RuntimeToolbar(
                     label = R.string.take_screenshot,
                     size = actionSize,
                     onClick = actions::onTakeScreenshot,
-                )
-            }
-            Box {
-                RuntimeToolbarAction(
-                    icon = R.drawable.ic_more_vert,
-                    label = androidx.appcompat.R.string.abc_action_menu_overflow_description,
-                    size = actionSize,
-                    onClick = onOpenMenu,
                 )
             }
         }
@@ -396,15 +387,34 @@ private fun RuntimeMenuDialog(
             )
         },
         text = {
-            LazyColumn(modifier = Modifier.heightIn(max = runtimeMenuDialogContentHeight())) {
-                runtimeMenuItems(
-                    state = state,
-                    includeCanvasShortcuts = true,
-                    virtualKeyboardPage = virtualKeyboardPage,
-                    actions = actions,
-                    onOpenVirtualKeyboardPage = { virtualKeyboardPage = true },
-                    onCloseVirtualKeyboardPage = { virtualKeyboardPage = false },
-                    onDismiss = onDismiss,
+            val listState = rememberLazyListState()
+            val maxListHeight = runtimeMenuDialogContentHeight()
+            val canScrollForward = rememberLazyListCanScrollForward(listState)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = maxListHeight),
+            ) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxListHeight),
+                ) {
+                    runtimeMenuItems(
+                        state = state,
+                        includeCanvasShortcuts = true,
+                        virtualKeyboardPage = virtualKeyboardPage,
+                        actions = actions,
+                        onOpenVirtualKeyboardPage = { virtualKeyboardPage = true },
+                        onCloseVirtualKeyboardPage = { virtualKeyboardPage = false },
+                        onDismiss = onDismiss,
+                    )
+                }
+                ScrollableContentHint(
+                    visible = canScrollForward,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter),
                 )
             }
         },

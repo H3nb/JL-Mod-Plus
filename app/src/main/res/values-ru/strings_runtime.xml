@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="midlet_running_notification_title">MIDlet запущен</string>
+    <string name="midlet_running_notification_text">%1$s работает в фоновом режиме.</string>
+    <string name="midlet_running_notification_channel">Среда выполнения MIDlet</string>
+</resources>

@@ -51,7 +51,7 @@ public abstract class AbstractSoftKeysBar {
 	protected PopupWindow prepareMenu(int skip) {
 		if (popup == null) {
 			Context context = ContextHolder.getActivity();
-			popup = new PopupWindow(context, null, androidx.appcompat.R.attr.actionOverflowMenuStyle);
+			popup = new PopupWindow(context, null, android.R.attr.actionOverflowMenuStyle);
 			popup.setExitTransition(null);
 			popup.setOutsideTouchable(true);
 			popup.setFocusable(true);

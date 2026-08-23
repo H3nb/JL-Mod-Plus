@@ -21,6 +21,8 @@ package javax.microedition.util;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
+import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.view.Display;
 import android.view.WindowManager;
@@ -199,14 +201,12 @@ public class ContextHolder {
 		if (!vibrationEnabled) {
 			return false;
 		}
-		if (vibrator == null) {
-			vibrator = (Vibrator) getAppContext().getSystemService(Context.VIBRATOR_SERVICE);
-		}
+		vibrator = getVibrator();
 		if (vibrator == null || !vibrator.hasVibrator()) {
 			return false;
 		}
 		if (duration > 0) {
-			vibrator.vibrate(duration);
+			vibrateOneShot(duration);
 		} else if (duration < 0) {
 			throw new IllegalStateException();
 		} else {
@@ -219,23 +219,45 @@ public class ContextHolder {
 		if (!vibrationEnabled) {
 			return;
 		}
-		if (vibrator == null) {
-			vibrator = (Vibrator) getAppContext().getSystemService(Context.VIBRATOR_SERVICE);
-		}
+		vibrator = getVibrator();
 		if (vibrator == null || !vibrator.hasVibrator()) {
 			return;
 		}
-		vibrator.vibrate(new long[]{0, durationOn, durationOff}, 1);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			vibrator.vibrate(VibrationEffect.createWaveform(new long[]{0, durationOn, durationOff}, 1));
+		} else {
+			//noinspection deprecation
+			vibrator.vibrate(new long[]{0, durationOn, durationOff}, 1);
+		}
 	}
 
 	public static void vibrateKey(int duration) {
-		if (vibrator == null) {
-			vibrator = (Vibrator) getAppContext().getSystemService(Context.VIBRATOR_SERVICE);
+		if (!vibrationEnabled) {
+			return;
 		}
+		vibrator = getVibrator();
 		if (vibrator == null || !vibrator.hasVibrator()) {
 			return;
 		}
-		vibrator.vibrate(duration);
+		if (duration > 0) {
+			vibrateOneShot(duration);
+		}
+	}
+
+	private static Vibrator getVibrator() {
+		if (vibrator == null) {
+			vibrator = (Vibrator) getAppContext().getSystemService(Context.VIBRATOR_SERVICE);
+		}
+		return vibrator;
+	}
+
+	private static void vibrateOneShot(int duration) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			vibrator.vibrate(VibrationEffect.createOneShot(duration, VibrationEffect.DEFAULT_AMPLITUDE));
+		} else {
+			//noinspection deprecation
+			vibrator.vibrate(duration);
+		}
 	}
 
 	public static void setVibration(boolean vibrationEnabled) {

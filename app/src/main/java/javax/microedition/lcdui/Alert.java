@@ -169,8 +169,11 @@ public class Alert extends Screen {
 		if (indicator != null) {
 			View indicatorView = indicator.getItemContentView();
 			TypedValue typedValue = new TypedValue();
-			context.getTheme().resolveAttribute(androidx.appcompat.R.attr.dialogPreferredPadding, typedValue, true);
-			int p = (int) typedValue.getDimension(context.getResources().getDisplayMetrics());
+			boolean resolved = context.getTheme().resolveAttribute(android.R.attr.dialogPreferredPadding, typedValue, true);
+			int p = resolved ? (int) typedValue.getDimension(context.getResources().getDisplayMetrics()) : 0;
+			if (p <= 0) {
+				p = (int) (16f * context.getResources().getDisplayMetrics().density + 0.5f);
+			}
 			indicatorView.setPadding(p, 0, p, 0);
 			builder.setView(indicatorView);
 		}

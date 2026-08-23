@@ -4,6 +4,7 @@
 package ru.playsoftware.j2meloader.config
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,7 +18,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -46,6 +46,7 @@ internal enum class ConfigMessageLevel { Info, Warning, Danger }
 @Composable
 internal fun ConfigSection(
     title: String,
+    highlighted: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -53,13 +54,23 @@ internal fun ConfigSection(
             text = title,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary,
+            color = if (highlighted) MaterialTheme.colorScheme.onPrimaryContainer
+            else MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(start = 12.dp, top = 6.dp, end = 12.dp, bottom = 1.dp),
         )
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            shape = MaterialTheme.shapes.large,
+            color = if (highlighted) {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.58f)
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerLow
+            },
+            border = if (highlighted) {
+                BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.42f))
+            } else {
+                null
+            },
         ) {
             Column(content = content)
         }
@@ -288,9 +299,9 @@ internal fun ConfigColorPreference(
             Box(
                 modifier = Modifier
                     .size(24.dp)
-                    .clip(RoundedCornerShape(6.dp))
+                    .clip(MaterialTheme.shapes.extraSmall)
                     .background(configColor(value))
-                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(6.dp)),
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.extraSmall),
             )
             Text(
                 text = "#${value.ifEmpty { "000000" }}",
@@ -309,12 +320,11 @@ internal fun ConfigActionPreference(
     description: String,
     onClick: () -> Unit,
     destructive: Boolean = false,
-    emphasized: Boolean = false,
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = if (emphasized) MaterialTheme.colorScheme.errorContainer else Color.Transparent,
-        shape = RoundedCornerShape(12.dp),
+        color = Color.Transparent,
+        shape = MaterialTheme.shapes.medium,
     ) {
         Column(
             modifier = Modifier
@@ -327,17 +337,13 @@ internal fun ConfigActionPreference(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
-                color = when {
-                    emphasized -> MaterialTheme.colorScheme.onErrorContainer
-                    destructive -> MaterialTheme.colorScheme.error
-                    else -> MaterialTheme.colorScheme.onSurface
-                },
+                color = if (destructive) MaterialTheme.colorScheme.error
+                else MaterialTheme.colorScheme.onSurface,
             )
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodySmall,
-                color = if (emphasized) MaterialTheme.colorScheme.onErrorContainer
-                else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -402,7 +408,7 @@ private fun ConfigInlineMessage(text: String, level: ConfigMessageLevel) {
         ConfigMessageLevel.Warning -> "⚠ "
         ConfigMessageLevel.Danger -> "⚠ "
     }
-    Surface(shape = RoundedCornerShape(10.dp), color = container) {
+    Surface(shape = MaterialTheme.shapes.small, color = container) {
         Text(
             text = prefix + text,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),

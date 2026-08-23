@@ -31,6 +31,7 @@ import androidx.compose.ui.platform.ComposeView;
 import java.util.ArrayList;
 
 import ru.playsoftware.j2meloader.R;
+import ru.playsoftware.j2meloader.ui.ThemedToast;
 import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 
 /** Read-only diagnostic detail view with explicit copy/share/report/delete actions. */
@@ -60,7 +61,7 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 		// must never copy framework traces or run maintenance on the UI thread.
 		record = LocalDiagnosticRepository.findStored(this, recordId);
 		if (record == null) {
-			Toast.makeText(this, R.string.crash_report_unavailable, Toast.LENGTH_SHORT).show();
+			ThemedToast.show(this, R.string.crash_report_unavailable, Toast.LENGTH_SHORT);
 			finish();
 			return;
 		}
@@ -133,7 +134,7 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 		ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
 		if (clipboard != null) {
 			clipboard.setPrimaryClip(ClipData.newPlainText(getString(R.string.crash_reports), exportText));
-			Toast.makeText(this, R.string.crash_report_copied, Toast.LENGTH_SHORT).show();
+			ThemedToast.show(this, R.string.crash_report_copied, Toast.LENGTH_SHORT);
 		}
 	}
 
@@ -208,7 +209,7 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 		try {
 			startActivity(issueIntent);
 		} catch (ActivityNotFoundException | SecurityException e) {
-			Toast.makeText(this, R.string.crash_report_github_unavailable, Toast.LENGTH_LONG).show();
+			ThemedToast.show(this, R.string.crash_report_github_unavailable, Toast.LENGTH_LONG);
 		}
 	}
 
@@ -216,7 +217,7 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 		if (LocalDiagnosticRepository.delete(this, record)) {
 			finish();
 		} else {
-			Toast.makeText(this, R.string.crash_report_delete_failed, Toast.LENGTH_LONG).show();
+			ThemedToast.show(this, R.string.crash_report_delete_failed, Toast.LENGTH_LONG);
 		}
 	}
 }

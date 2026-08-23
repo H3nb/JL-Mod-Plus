@@ -5,7 +5,7 @@
     <!--light theme colors-->
     <color name="primary">#212121</color>
     <color name="primary_dark">#1c1c1c</color>
-    <color name="accent">#ff2e51</color>
+    <color name="accent">#34536B</color>
     <color name="background">#fafafa</color>
     <color name="text_primary">#000000</color>
     <color name="text_secondary">#353535</color>
@@ -13,4 +13,9 @@
     <color name="library_default_icon_background">#EEF1F5</color>
     <color name="btn_bg_normal">#2e2e2e</color>
     <color name="btn_bg_pressed">#707070</color>
+    <color name="toast_surface">#E6F4F7F8</color>
+    <color name="toast_content">#172027</color>
+    <color name="toast_outline">#66747D</color>
+    <color name="fps_overlay_surface">#A6F4F7F8</color>
+    <color name="fps_overlay_content">#172027</color>
 </resources>

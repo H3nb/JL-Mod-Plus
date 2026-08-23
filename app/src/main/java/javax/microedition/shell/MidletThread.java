@@ -36,6 +36,8 @@ import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.LifecycleOwner;
 
 import ru.playsoftware.j2meloader.crashes.MidletSessionJournal;
+import ru.playsoftware.j2meloader.crashes.MidletSessionStore;
+import ru.playsoftware.j2meloader.runtime.MidletKeepAliveService;
 
 public class MidletThread extends HandlerThread implements Handler.Callback {
 	private static final String TAG = MidletThread.class.getName();
@@ -93,6 +95,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			}
 			current.state = DESTROYED;
 		} else {
+			clearActiveSession();
 			Thread.setDefaultUncaughtExceptionHandler(POST_DESTROY_UNCAUGHT_HANDLER);
 		}
 		MicroActivity activity = ContextHolder.getActivity();
@@ -343,8 +346,11 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			fatalFailureClaimed.set(true);
 			primaryFailureThread = thread;
 			primaryFailureBoundary = boundary;
-			return true;
 		}
+		// A crashed MIDlet must not be relaunched indefinitely by the launcher dispatcher. The
+		// durable marker is reserved for a system/background kill, which has no callback here.
+		clearActiveSession();
+		return true;
 	}
 
 	private void clearPrimaryFailureClaim() {
@@ -379,7 +385,18 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 				intentionalTerminationFinalized = true;
 			}
 			Thread.setDefaultUncaughtExceptionHandler(POST_DESTROY_UNCAUGHT_HANDLER);
-			return true;
+		}
+		clearActiveSession();
+		return true;
+	}
+
+	private static void clearActiveSession() {
+		try {
+			android.content.Context context = ContextHolder.getAppContext();
+			MidletSessionStore.clear(context);
+			MidletKeepAliveService.stop(context);
+		} catch (Throwable ignored) {
+			// Runtime cleanup must never replace the original lifecycle/crash outcome.
 		}
 	}
 

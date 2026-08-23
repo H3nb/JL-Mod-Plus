@@ -125,6 +125,39 @@ class FilePickerModelTest {
     }
 
     @Test
+    fun customExtensionFiltersAreNormalizedAndAppliedToFiles() {
+        val root = Files.createTempDirectory("jlmod-picker-icons").toFile()
+        try {
+            File(root, "icon.PNG").createNewFile()
+            File(root, "photo.webp").createNewFile()
+            File(root, "game.jar").createNewFile()
+
+            assertEquals(
+                setOf(".png", ".webp"),
+                FilePickerRules.normalizeAllowedExtensions(listOf(" PNG ", "webp")),
+            )
+            assertEquals(
+                listOf("icon.PNG", "photo.webp"),
+                FilePickerRules.sortEntries(
+                    root.listFiles()!!.asIterable(),
+                    FilePickerContract.MODE_FILE,
+                    allowedExtensions = setOf(".png", ".webp"),
+                ).map { it.name },
+            )
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun emptyCustomExtensionListFallsBackToMidletFiles() {
+        assertEquals(
+            FilePickerRules.DEFAULT_ALLOWED_EXTENSIONS,
+            FilePickerRules.normalizeAllowedExtensions(emptyList()),
+        )
+    }
+
+    @Test
     fun startPathAndParentStayInsideRoot() {
         val root = Files.createTempDirectory("jlmod-root").toFile()
         val nested = File(root, "emulated/0").apply { mkdirs() }

@@ -44,6 +44,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -62,6 +64,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -74,6 +77,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.librarydb.LibraryCollectionRow
+import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 
 data class LibraryCollectionUiItem(
     val id: Long,
@@ -98,6 +103,7 @@ data class LibraryCollectionsUiState(
     val allAppsPrepared: Boolean = false,
     val members: LibraryCollectionMembersUi? = null,
     val addTarget: LibraryCollectionAppTargetUi? = null,
+    val bulkAddTargetAppIds: Set<Long>? = null,
 )
 
 /** Fragment-owned presentation bridge; Compose never reaches Room or filesystem directly. */
@@ -150,16 +156,37 @@ class LibraryCollectionsUiStore {
     fun showAddTarget(appId: Int, title: String) {
         mutableState.value = mutableState.value.copy(
             addTarget = LibraryCollectionAppTargetUi(appId, title),
+            bulkAddTargetAppIds = null,
+        )
+    }
+
+    fun showBulkAddTarget(appIds: Set<Long>) {
+        if (appIds.isEmpty()) return
+        mutableState.value = mutableState.value.copy(
+            addTarget = null,
+            bulkAddTargetAppIds = appIds.toSet(),
         )
     }
 
     fun dismissAddTarget() {
-        mutableState.value = mutableState.value.copy(addTarget = null)
+        mutableState.value = mutableState.value.copy(
+            addTarget = null,
+            bulkAddTargetAppIds = null,
+        )
     }
 }
 
+/** Bulk operations are kept separate so previews and lightweight hosts can omit the domain side effects. */
+interface LibraryBulkActions {
+    fun onDeleteSelected(appIds: Set<Long>) = Unit
+    fun onAddSelectedToCollection(appIds: Set<Long>) = Unit
+    fun onShareSelected(appIds: Set<Long>) = Unit
+    fun onReinstallSelected(appIds: Set<Long>) = Unit
+    fun onExportSelectedBundle(appIds: Set<Long>) = Unit
+}
+
 /** Extra capabilities implemented only by the production Library host. */
-interface LibraryCollectionsHost : LibraryActions {
+interface LibraryCollectionsHost : LibraryActions, LibraryBulkActions {
     fun collectionsStore(): LibraryCollectionsUiStore
     fun onCreateCollection(name: String)
     fun onRenameCollection(collectionId: Long, name: String)
@@ -170,6 +197,7 @@ interface LibraryCollectionsHost : LibraryActions {
     fun onRequestAddToCollection(appId: Int)
     fun onDismissAddToCollection()
     fun onAddAppToCollection(appId: Int, collectionId: Long)
+    fun onAddAppsToCollection(appIds: Set<Long>, collectionId: Long)
     fun onRemoveAppFromCollection(appId: Int, collectionId: Long)
 }
 
@@ -179,6 +207,8 @@ internal fun LibraryCollectionsDestination(
     host: LibraryCollectionsHost,
     libraryState: LibraryUiState,
     scaffoldPadding: PaddingValues,
+    navigationState: LibraryNavigationState = LibraryNavigationState(),
+    onNavigationStateChanged: (LibraryNavigationState) -> Unit = {},
     onOpenActions: (LibraryAppUiItem, Long) -> Unit,
     onNavigationVisibilityChanged: (Boolean) -> Unit = {},
 ) {
@@ -199,6 +229,8 @@ internal fun LibraryCollectionsDestination(
             allApps = state.allApps,
             libraryState = libraryState,
             scaffoldPadding = scaffoldPadding,
+            navigationState = navigationState,
+            onNavigationStateChanged = onNavigationStateChanged,
             onBack = {
                 onNavigationVisibilityChanged(true)
                 host.onDismissCollectionMembers()
@@ -225,18 +257,56 @@ internal fun LibraryCollectionsDestination(
     var renameTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
     var deleteTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
-    val headerHeightPx = remember { mutableStateOf(0) }
-    val headerOffsetPx = remember { mutableStateOf(0f) }
+    val currentNavigationState by androidx.compose.runtime.rememberUpdatedState(navigationState)
+    val headerHeightPx = remember { mutableIntStateOf(0) }
+    val headerOffsetPx = remember { mutableFloatStateOf(0f) }
     val density = LocalDensity.current
-    val headerSpacerHeight = with(density) { headerHeightPx.value.toDp() }
-    val hideDistancePx = with(density) { 10.dp.toPx() }
+    val headerSpacerHeight = with(density) { headerHeightPx.intValue.toDp() }
+    val hideDistancePx = with(density) { LIBRARY_CHROME_HIDE_DISTANCE_DP.dp.toPx() }
+    val minScrollRoomPx = with(density) { LIBRARY_CHROME_MIN_SCROLL_ROOM_DP.dp.toPx() }
     val revealDistancePx = with(density) { 18.dp.toPx() }
     val chromeHysteresis = remember(hideDistancePx, revealDistancePx) {
         LibraryChromeScrollHysteresis(hideDistancePx, revealDistancePx)
     }
 
+    LaunchedEffect(state.collections, libraryState.generation) {
+        val availableIds = state.collections.map { it.id }
+        val anchor = navigationState.resolveAnchor(
+            LibraryNavigationSurface.CollectionsList,
+            libraryState.generation,
+            availableIds,
+        ) ?: return@LaunchedEffect
+        val targetIndex = anchor.index + 1
+        if (listState.firstVisibleItemIndex != targetIndex ||
+            listState.firstVisibleItemScrollOffset != anchor.offsetPx
+        ) {
+            listState.scrollToItem(targetIndex, anchor.offsetPx)
+        }
+    }
+
+    LaunchedEffect(state.collections, libraryState.generation) {
+        snapshotFlow {
+            val firstCollection = listState.layoutInfo.visibleItemsInfo
+                .firstOrNull { it.index > 0 }
+            val fallbackIndex = (firstCollection?.index ?: 1) - 1
+            LibraryScrollAnchor(
+                generation = libraryState.generation,
+                stableItemId = state.collections.getOrNull(fallbackIndex)?.id,
+                offsetPx = firstCollection?.offset ?: 0,
+                fallbackIndex = fallbackIndex.coerceAtLeast(0),
+            )
+        }.collectLatest { anchor ->
+            onNavigationStateChanged(
+                currentNavigationState.saveAnchor(
+                    LibraryNavigationSurface.CollectionsList,
+                    anchor,
+                ),
+            )
+        }
+    }
+
     LaunchedEffect(state.collections) {
-        headerOffsetPx.value = 0f
+        headerOffsetPx.floatValue = 0f
         chromeHysteresis.reset()
         onNavigationVisibilityChanged(true)
         snapshotFlow {
@@ -246,38 +316,60 @@ internal fun LibraryCollectionsDestination(
                 listState.canScrollForward || listState.canScrollBackward,
             )
         }.collectLatest { (index, offset, canScroll) ->
-            if (!canScroll || (index == 0 && offset == 0)) {
-                headerOffsetPx.value = 0f
+            if ((index == 0 && offset == 0 || !canScroll) && headerOffsetPx.floatValue >= -0.5f) {
+                headerOffsetPx.floatValue = 0f
                 chromeHysteresis.reset()
                 onNavigationVisibilityChanged(true)
             }
         }
     }
 
-    val scrollConnection = remember(chromeHysteresis, onNavigationVisibilityChanged) {
+    val scrollConnection = remember(
+        chromeHysteresis,
+        minScrollRoomPx,
+        onNavigationVisibilityChanged,
+    ) {
         object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                val delta = available.y
-                val height = headerHeightPx.value
-                if (delta == 0f || height <= 0) return Offset.Zero
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource,
+            ): Offset {
+                val height = headerHeightPx.intValue
+                if (height <= 0) return Offset.Zero
                 val canScroll = listState.canScrollForward || listState.canScrollBackward
                 if (!canScroll) {
-                    if (headerOffsetPx.value != 0f || !chromeHysteresis.chromeVisible) {
-                        headerOffsetPx.value = 0f
+                    if (headerOffsetPx.floatValue < -0.5f && (consumed.y > 0f || available.y > 0f)) {
+                        headerOffsetPx.floatValue = 0f
+                        if (chromeHysteresis.revealNow() != null) {
+                            onNavigationVisibilityChanged(true)
+                        }
+                    } else if (headerOffsetPx.floatValue == 0f && !chromeHysteresis.chromeVisible) {
                         chromeHysteresis.reset()
                         onNavigationVisibilityChanged(true)
                     }
                     return Offset.Zero
                 }
-                val fullyHidden = headerOffsetPx.value <= -height.toFloat() + 0.5f
+                // Base hide/reveal progress on the distance the LazyColumn actually consumed.
+                // Unconsumed fling distance can exceed a short collection's range and otherwise
+                // causes a footer hide/show loop when the viewport changes.
+                val delta = when {
+                    consumed.y != 0f -> consumed.y
+                    available.y > 0f -> available.y
+                    else -> return Offset.Zero
+                }
+                if (delta < 0f && !listState.hasLibraryChromeScrollRoom(minScrollRoomPx)) {
+                    return Offset.Zero
+                }
+                val fullyHidden = headerOffsetPx.floatValue <= -height.toFloat() + 0.5f
                 var visibilityChange = chromeHysteresis.onScrollDelta(delta)
                 val shouldMoveHeader =
                     delta < 0f || !fullyHidden || chromeHysteresis.chromeVisible || visibilityChange == true
                 if (shouldMoveHeader) {
-                    headerOffsetPx.value =
-                        (headerOffsetPx.value + delta).coerceIn(-height.toFloat(), 0f)
+                    headerOffsetPx.floatValue =
+                        (headerOffsetPx.floatValue + delta).coerceIn(-height.toFloat(), 0f)
                 }
-                if (delta > 0f && headerOffsetPx.value >= -0.5f && !chromeHysteresis.chromeVisible) {
+                if (delta > 0f && headerOffsetPx.floatValue >= -0.5f && !chromeHysteresis.chromeVisible) {
                     visibilityChange = chromeHysteresis.revealNow()
                 }
                 visibilityChange?.let(onNavigationVisibilityChanged)
@@ -328,7 +420,7 @@ internal fun LibraryCollectionsDestination(
             state = listState,
         ) {
             item {
-                if (headerHeightPx.value == 0) {
+                if (headerHeightPx.intValue == 0) {
                     renderHeader(
                         Modifier
                             .alpha(0f)
@@ -388,8 +480,9 @@ internal fun LibraryCollectionsDestination(
                         },
                         supportingContent = {
                             Text(
-                                text = stringResource(
-                                    R.string.library_collection_member_count,
+                                text = pluralStringResource(
+                                    R.plurals.library_collection_member_count,
+                                    collection.appCount,
                                     collection.appCount,
                                 ),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -425,9 +518,9 @@ internal fun LibraryCollectionsDestination(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .graphicsLayer { translationY = headerOffsetPx.value }
+                .graphicsLayer { translationY = headerOffsetPx.floatValue }
                 .background(MaterialTheme.colorScheme.background)
-                .onSizeChanged { headerHeightPx.value = it.height },
+                .onSizeChanged { headerHeightPx.intValue = it.height },
         ) {
             renderHeader(Modifier, true)
         }
@@ -518,6 +611,18 @@ internal fun LibraryCollectionsDialogHost(host: LibraryCollectionsHost) {
         )
     }
 
+    state.bulkAddTargetAppIds?.let { appIds ->
+        AddAppsToCollectionDialog(
+            appCount = appIds.size,
+            collections = state.collections,
+            onDismiss = host::onDismissAddToCollection,
+            onSelected = { collectionId ->
+                host.onAddAppsToCollection(appIds, collectionId)
+                host.onDismissAddToCollection()
+            },
+        )
+    }
+
     if (createForAdd) {
         CollectionNameDialog(
             title = stringResource(R.string.library_collection_new),
@@ -560,30 +665,46 @@ private fun AddToCollectionDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 } else {
-                    LazyColumn(modifier = Modifier.heightIn(max = 380.dp)) {
-                        items(collections, key = { it.id }) { collection ->
-                            ListItem(
-                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                                headlineContent = {
-                                    Text(
-                                        text = collection.name,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                },
-                                supportingContent = {
-                                    Text(
-                                        stringResource(
-                                            R.string.library_collection_member_count,
-                                            collection.appCount,
-                                        ),
-                                    )
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onSelected(collection.id) },
-                            )
+                    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+                    val canScrollForward = rememberLazyListCanScrollForward(listState)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 380.dp),
+                    ) {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxWidth(),
+                            state = listState,
+                        ) {
+                            items(collections, key = { it.id }) { collection ->
+                                ListItem(
+                                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                                    headlineContent = {
+                                        Text(
+                                            text = collection.name,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    },
+                                    supportingContent = {
+                                        Text(
+                                            pluralStringResource(
+                                                R.plurals.library_collection_member_count,
+                                                collection.appCount,
+                                                collection.appCount,
+                                            ),
+                                        )
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { onSelected(collection.id) },
+                                )
+                            }
                         }
+                        ScrollableContentHint(
+                            visible = canScrollForward,
+                            modifier = Modifier.align(Alignment.BottomCenter),
+                        )
                     }
                 }
             }
@@ -595,6 +716,88 @@ private fun AddToCollectionDialog(
                 }
             }
         },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        },
+    )
+}
+
+@Composable
+private fun AddAppsToCollectionDialog(
+    appCount: Int,
+    collections: List<LibraryCollectionUiItem>,
+    onDismiss: () -> Unit,
+    onSelected: (Long) -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.library_bulk_add_collection)) },
+        text = {
+            Column {
+                Text(
+                    text = pluralStringResource(
+                        R.plurals.library_collection_member_count,
+                        appCount,
+                        appCount,
+                    ),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                if (collections.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.library_collection_ready_empty_message),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+                    val canScrollForward = rememberLazyListCanScrollForward(listState)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 380.dp),
+                    ) {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxWidth(),
+                            state = listState,
+                        ) {
+                            items(collections, key = { it.id }) { collection ->
+                                ListItem(
+                                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                                    headlineContent = {
+                                        Text(
+                                            text = collection.name,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    },
+                                    supportingContent = {
+                                        Text(
+                                            pluralStringResource(
+                                                R.plurals.library_collection_member_count,
+                                                collection.appCount,
+                                                collection.appCount,
+                                            ),
+                                        )
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { onSelected(collection.id) },
+                                )
+                            }
+                        }
+                        ScrollableContentHint(
+                            visible = canScrollForward,
+                            modifier = Modifier.align(Alignment.BottomCenter),
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(stringResource(android.R.string.cancel))

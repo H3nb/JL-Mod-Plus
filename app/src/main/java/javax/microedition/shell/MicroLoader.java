@@ -30,6 +30,7 @@ import android.util.SparseIntArray;
 import android.view.KeyEvent;
 
 import androidx.core.content.ContextCompat;
+import androidx.preference.PreferenceManager;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -72,6 +73,7 @@ import ru.playsoftware.j2meloader.config.ProfilesManager;
 import ru.playsoftware.j2meloader.config.ShaderInfo;
 import ru.playsoftware.j2meloader.crashes.CrashReporter;
 import ru.playsoftware.j2meloader.crashes.MidletSessionJournal;
+import ru.playsoftware.j2meloader.crashes.MidletSessionStore;
 import ru.playsoftware.j2meloader.util.AppUtils;
 import ru.playsoftware.j2meloader.util.FileUtils;
 import ru.playsoftware.j2meloader.util.IOUtils;
@@ -108,6 +110,7 @@ public class MicroLoader {
 		if (params == null) {
 			return false;
 		}
+		applyLinkedBuiltInTheme(config);
 		Display.initDisplay();
 		Graphics3D.initGraphics3D();
 		File cacheDir = ContextHolder.getCacheDir();
@@ -121,6 +124,18 @@ public class MicroLoader {
 				.build();
 		StrictMode.setThreadPolicy(policy);
 		return true;
+	}
+
+	/** Applies only the theme-owned colors for a linked built-in profile at runtime. */
+	private void applyLinkedBuiltInTheme(File configDir) {
+		boolean linked = PreferenceManager.getDefaultSharedPreferences(ContextHolder.getAppContext())
+				.getBoolean(ProfileModel.builtInThemePreferenceKey(configDir), false);
+		if (!linked) {
+			return;
+		}
+		ProfileModel.applyBuiltInTheme(
+				params,
+				ProfileModel.isDarkTheme(ContextHolder.getAppContext()));
 	}
 
 	Map<String, String> loadMIDletList() throws IOException {
@@ -348,6 +363,7 @@ public class MicroLoader {
 	}
 
 	void loadMidlet(String clazz, String appName) {
+		MidletSessionStore.markStarted(ContextHolder.getAppContext(), appDir.getPath(), appName, clazz);
 		MidletSessionJournal journal = MidletSessionJournal.create(
 				ContextHolder.getAppContext(),
 				midletName,

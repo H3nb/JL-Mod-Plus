@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="about">Tentang</string>
-    <string name="about_message">Aplikasi ini memungkinkan Anda menjalankan aplikasi dan permainan J2ME di Android.\n</string>
+    <string name="about_message">Aplikasi ini memungkinkan Anda menjalankan aplikasi dan permainan J2ME di Android.</string>
+    <string name="about_lineage">JL-Mod Plus adalah fork dari JL-Mod oleh woesss (Yury Kharchenko), yang juga merupakan fork dan mod eksperimental dari J2ME-Loader oleh Nikita Shakarun. Fork ini dipelihara melalui pekerjaan desain, rekayasa, pengujian, dan infrastruktur yang berkelanjutan. Atribusi dan pemberitahuan lisensi upstream dipertahankan di dalam proyek.</string>
     <string name="action_context_delete">Hapus</string>
     <string name="action_context_rename">Ubah Nama</string>
     <string name="action_context_shortcut">Buat Pintasan</string>
@@ -45,6 +46,7 @@
     <string name="install">Pasang</string>
     <string name="install_done">Aplikasi telah berhasil dipasang!</string>
     <string name="installer_title">Penginstal MIDlet</string>
+    <string name="installer_error_message">Aplikasi yang dipilih tidak dapat diinstal. Pilih file MIDlet yang valid lalu coba lagi.</string>
     <string name="install_jar_non_matched_jad">Aplikasi ini berbeda dari yang dijelaskan dalam JAD.\nAbaikan JAD tersebut dan tetap pasang?</string>
     <string name="invalid_resolution_not_saved">Resolusi tidak valid; perubahan tidak disimpan!</string>
     <string name="layout_edit_finish">Akhiri Mode Ubah</string>
@@ -73,7 +75,7 @@
     <string name="msg_no_matches">Tidak ada kecocokan untuk \"%1$s\"</string>
     <string name="library_destination_apps">Aplikasi</string>
     <string name="library_destination_collections">Koleksi</string>
-    <string name="library_destination_options">Opsi</string>
+    <string name="library_destination_more">Lainnya</string>
     <string name="library_search_placeholder">Cari aplikasi atau pengembang…</string>
     <string name="library_filter_all">Semua</string>
     <string name="library_filter_recently_opened">Baru Dibuka</string>
@@ -84,20 +86,24 @@
     <string name="library_vendor_version">%1$s · %2$s</string>
     <string name="library_view_list">Daftar</string>
     <string name="library_view_grid">Grid</string>
-    <string name="library_options_display_title">Tampilan</string>
-    <string name="library_options_grid_title">Grid</string>
-    <string name="library_options_actions_title">Tindakan</string>
     <string name="library_icon_ratio_title">Rasio Ikon</string>
     <string name="library_icon_ratio_summary">1:1 memakai bingkai adaptif; 3:4 hanya menyesuaikan ukuran ikon.</string>
     <string name="library_icon_ratio_square">1:1</string>
     <string name="library_icon_ratio_portrait">3:4</string>
+    <string name="library_icon_shape_title">Bentuk Ikon</string>
+    <string name="library_icon_shape_summary">Pilih ubin membulat atau sudut tajam untuk kedua rasio.</string>
+    <string name="library_icon_shape_round">Membulat</string>
+    <string name="library_icon_shape_square">Sudut Tajam</string>
     <string name="library_grid_spacing_title">Jarak Grid</string>
     <string name="library_grid_spacing_summary">Atur jarak antar kotak aplikasi.</string>
+    <string name="library_grid_spacing_none">Tidak Ada (Bersentuhan)</string>
     <string name="library_grid_spacing_compact">Rapat (4 dp)</string>
     <string name="library_grid_spacing_standard">Standar (8 dp)</string>
     <string name="library_grid_spacing_spacious">Lega (12 dp)</string>
-    <string name="library_hide_grid_titles">Sembunyikan Judul Di Grid</string>
-    <string name="library_hide_grid_titles_summary">Hanya tampilkan ikon aplikasi</string>
+    <string name="library_hide_grid_titles">Sembunyikan Judul MIDlet</string>
+    <string name="library_hide_grid_titles_summary">Hanya tampilkan ikon MIDlet dalam tampilan grid.</string>
+    <string name="library_show_list_description">Tampilkan Deskripsi MIDlet</string>
+    <string name="library_show_list_description_summary">Tampilkan deskripsi MIDlet di bawah judul dan versinya.</string>
     <string name="library_collections_empty_title">Belum Ada Koleksi</string>
     <string name="library_collections_empty_message">Koleksi dan folder akan tersedia pada pembaruan mendatang.</string>
     <string name="library_expand_description">Buka deskripsi lengkap</string>
@@ -115,18 +121,19 @@
     <string name="pref_app_sort_vendor">Vendor</string>
     <string name="pref_app_sort_ascending">Menaik</string>
     <string name="pref_app_sort_descending">Menurun</string>
-    <string name="pref_apps_view">Tampilan</string>
+    <string name="pref_apps_view">Tampilan Pustaka</string>
     <string name="pref_audio_title">Audio</string>
     <string name="PREF_BACKGROUND">Latar Belakang</string>
     <string name="pref_button_shape_oval">Oval</string>
     <string name="pref_button_shape_rect">Kotak</string>
-    <string name="pref_button_shape_round">Kotak membulat</string>
+    <string name="pref_button_shape_round">Kotak Membulat</string>
     <string name="pref_button_shape_title">Bentuk Tombol</string>
     <string name="pref_category_experimental">Opsi Eksperimental/Sementara</string>
     <string name="pref_emulator_dir">Direktori Kerja</string>
     <string name="pref_enable_actionbar_summary">Untuk aplikasi layar penuh</string>
     <string name="pref_enable_actionbar_title">Aktifkan ActionBar</string>
     <string name="pref_enable_statusbar_title">Aktifkan Bilah Status</string>
+    <string name="pref_enable_statusbar_summary">Pertahankan bilah status sistem tetap terlihat. Opsi ini tidak dapat digunakan bersama area cutout MIDlet.</string>
     <string name="pref_encoding_title">Pengodean</string>
     <string name="pref_language">Bahasa</string>
     <string name="PREF_FILTER">Filter</string>
@@ -209,6 +216,7 @@
     <string name="pref_vk_type_phone">Ponsel (Numerik)</string>
     <string name="pref_vk_type_phone_arrows">Ponsel (Arah Panah)</string>
     <string name="pref_wakelock_title">Layar Tetap Menyala</string>
+    <string name="fps_overlay_label">FPS</string>
     <string name="pref_skin_not_set">Belum diatur</string>
     <string name="pref_skin_title">Skin</string>
     <string name="pref_skip_resume_call">Lewati Callback Resume</string>
@@ -243,6 +251,8 @@
     <string name="removed">Dihapus %1$s</string>
     <string name="file_picker_select_file">Pilih Berkas</string>
     <string name="file_picker_select_folder">Pilih Folder</string>
+    <string name="file_picker_select_app_bundle">Pilih Bundel Aplikasi</string>
+    <string name="file_picker_select_icon">Pilih Ikon</string>
     <string name="file_picker_navigate_back">Kembali ke Folder Induk</string>
     <string name="file_picker_cancel">Batal</string>
     <string name="file_picker_search">Cari</string>
@@ -257,14 +267,13 @@
     <string name="file_picker_choose">Pilih</string>
     <string name="file_picker_current_folder">Folder Saat Ini</string>
     <string name="file_picker_parent_folder">Folder Induk</string>
-    <string name="file_picker_parent_marker" translatable="false">..</string>
     <string name="file_picker_file">Berkas</string>
     <string name="file_picker_storage_volume">Volume Penyimpanan</string>
     <string name="file_picker_empty">Tidak ada berkas yang cocok</string>
     <string name="file_picker_empty_folder">Folder kosong</string>
     <string name="file_picker_no_matches">Tidak ada kecocokan</string>
     <string name="file_picker_permission_required">Izin Penyimpanan Diperlukan</string>
-    <string name="file_picker_permission_message">Izinkan akses penyimpanan untuk menelusuri berkas JAR, JAD, dan KJX.</string>
+    <string name="file_picker_permission_message">Izinkan akses penyimpanan untuk menelusuri bundel aplikasi, ikon, dan berkas MIDlet.</string>
     <string name="file_picker_permission_denied">Akses penyimpanan tidak diberikan.</string>
     <string name="file_picker_grant_access">Berikan Akses</string>
     <string name="file_picker_retry">Coba Lagi</string>
@@ -277,9 +286,12 @@
     <string name="file_picker_create_folder_failed">Tidak dapat membuat folder.</string>
     <string name="file_picker_selection_unavailable">Item yang dipilih sudah tidak tersedia.</string>
     <string name="config_color_picker_title">Pilih Warna</string>
+    <string name="library_load_error_title">Pustaka Tidak Tersedia</string>
     <string name="config_color_picker_hex">Warna heksadesimal</string>
     <string name="config_color_picker_hint">Seret bidang warna atau masukkan nilai RGB enam digit.</string>
     <string name="config_color_picker_invalid">Masukkan tepat enam digit heksadesimal.</string>
     <string name="config_color_picker_saturation_value">Saturasi dan kecerahan</string>
     <string name="config_color_picker_hue">Rona</string>
+    <string name="config_decrease_value">Kurangi nilai</string>
+    <string name="config_increase_value">Tambah nilai</string>
 </resources>

@@ -80,6 +80,7 @@ import javax.microedition.util.ContextHolder;
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
 import ru.playsoftware.j2meloader.R;
+import ru.playsoftware.j2meloader.ui.LegacyThemeColors;
 import ru.playsoftware.j2meloader.config.ProfileModel;
 
 @SuppressWarnings({"WeakerAccess", "unused"})
@@ -1208,7 +1209,7 @@ public abstract class Canvas extends Displayable {
 			this.overlayView = activity.findViewById(R.id.overlay);
 			DisplayMetrics metrics = activity.getResources().getDisplayMetrics();
 			padding = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5, metrics);
-			textColor = ContextCompat.getColor(activity, R.color.accent);
+			textColor = LegacyThemeColors.accent(activity);
 			bgColor = ContextCompat.getColor(activity, R.color.background);
 		}
 
@@ -1218,7 +1219,7 @@ public abstract class Canvas extends Displayable {
 			popup.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
 			int x = (int) (displayWidth - bounds.right);
 			int y = (int) (displayHeight - bounds.top);
-			popup.showAtLocation(overlayView, Gravity.RIGHT | Gravity.BOTTOM, x, y);
+			popup.showAtLocation(overlayView, Gravity.END | Gravity.BOTTOM, x, y);
 		}
 
 		@Override

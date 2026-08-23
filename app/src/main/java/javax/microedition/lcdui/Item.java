@@ -261,7 +261,7 @@ public abstract class Item {
 	private LinearLayout.LayoutParams getLayoutParams() {
 		int hwrap = LayoutParams.MATCH_PARENT;
 		int vwrap = LayoutParams.WRAP_CONTENT;
-		int gravity = Gravity.LEFT;
+		int gravity = Gravity.START;
 
 		if (this instanceof ImageItem) {
 			hwrap = LayoutParams.WRAP_CONTENT;
@@ -283,10 +283,10 @@ public abstract class Item {
 		if (horizontal == LAYOUT_CENTER) {
 			gravity = Gravity.CENTER_HORIZONTAL;
 		} else if (horizontal == LAYOUT_RIGHT) {
-			gravity = Gravity.RIGHT;
+			gravity = Gravity.END;
 			hwrap = LayoutParams.WRAP_CONTENT;
 		} else if (horizontal == LAYOUT_LEFT) {
-			gravity = Gravity.LEFT;
+			gravity = Gravity.START;
 			hwrap = LayoutParams.WRAP_CONTENT;
 		}
 
