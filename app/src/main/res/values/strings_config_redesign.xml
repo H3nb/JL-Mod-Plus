@@ -72,6 +72,7 @@
     <string name="config_help_show_emulation_speed">Shows the selected target and measured emulation clock rate while the app is running.</string>
     <string name="config_help_timing_unavailable">This converted app does not contain timing instrumentation. Reinstall or reconvert it before enabling emulation speed.</string>
     <string name="emulation_speed_overlay">Speed %1$s · clock %2$s</string>
+    <string name="fps_overlay_value">Game %1$d · Render %2$d</string>
     <string name="config_help_generic_toggle">Enable or disable this behavior for the current app.</string>
     <string name="config_help_generic_color">Choose the color used by this visual element.</string>
     <string name="config_help_action_generic">Open this configuration tool.</string>

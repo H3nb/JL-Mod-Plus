@@ -83,6 +83,7 @@
     <string name="config_help_show_emulation_speed">Menampilkan target yang dipilih dan laju clock emulasi yang terukur saat aplikasi berjalan.</string>
     <string name="config_help_timing_unavailable">Aplikasi hasil konversi ini belum memiliki instrumentasi timing. Instal ulang atau konversi ulang sebelum mengaktifkan kecepatan emulasi.</string>
     <string name="emulation_speed_overlay">Kecepatan %1$s · clock %2$s</string>
+    <string name="fps_overlay_value">Game %1$d · Render %2$d</string>
     <string name="config_help_generic_toggle">Aktifkan atau nonaktifkan perilaku ini untuk aplikasi saat ini.</string>
     <string name="config_help_generic_color">Pilih warna yang digunakan oleh elemen visual ini.</string>
     <string name="config_help_action_generic">Buka alat konfigurasi ini.</string>

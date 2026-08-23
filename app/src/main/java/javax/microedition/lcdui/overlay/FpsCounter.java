@@ -1,5 +1,6 @@
 /*
  * Copyright 2019 Yury Kharchenko
+ * Modified in 2026 for guest/render frame telemetry.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +25,10 @@ import androidx.core.view.WindowInsetsCompat;
 
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.microedition.lcdui.graphics.CanvasWrapper;
+import javax.microedition.shell.timing.FrameMetrics;
+import javax.microedition.shell.timing.FrameMetricsSnapshot;
 import javax.microedition.util.ContextHolder;
 
 import ru.playsoftware.j2meloader.R;
@@ -34,33 +36,39 @@ import ru.playsoftware.j2meloader.R;
 public class FpsCounter extends TimerTask implements Layer {
 
 	private final View view;
-	private final String frameRateLabel;
+	private final String frameRateFormat;
 	private final int pillBackgroundColor;
 	private final int pillContentColor;
-	private volatile String prevFrameCount;
-	private final AtomicInteger totalFrameCount = new AtomicInteger();
+	private volatile String previousFrameRate;
+	private final FrameMetrics metrics;
 	private final Timer timer;
 
-	public FpsCounter(View view) {
+	public FpsCounter(View view, FrameMetrics metrics) {
 		this.view = view;
-		frameRateLabel = ContextHolder.getAppContext().getString(R.string.fps_overlay_label);
+		this.metrics = metrics;
+		frameRateFormat = ContextHolder.getAppContext().getString(R.string.fps_overlay_value);
 		pillBackgroundColor = ContextCompat.getColor(
 				ContextHolder.getAppContext(), R.color.fps_overlay_surface);
 		pillContentColor = ContextCompat.getColor(
 				ContextHolder.getAppContext(), R.color.fps_overlay_content);
-		prevFrameCount = frameRateLabel + " 0";
+		previousFrameRate = format(0L, 0L);
 		timer = new Timer("FpsCounter", true);
 		// Avoid catch-up bursts after a cached process resumes on Android 16.
 		timer.schedule(this, 0, 1000);
 	}
 
 	public void run() {
-		prevFrameCount = frameRateLabel + " " + totalFrameCount.getAndSet(0);
+		FrameMetricsSnapshot snapshot = metrics.snapshotAndReset();
+		previousFrameRate = format(snapshot.gameFrames(), snapshot.renderFrames());
 		view.postInvalidate();
 	}
 
-	public void increment() {
-		totalFrameCount.incrementAndGet();
+	private String format(long gameFrames, long renderFrames) {
+		return String.format(
+				java.util.Locale.ROOT,
+				frameRateFormat,
+				gameFrames,
+				renderFrames);
 	}
 
 	public void paint(CanvasWrapper g) {
@@ -76,7 +84,7 @@ public class FpsCounter extends TimerTask implements Layer {
 			top = Math.max(top, cutout.top + margin);
 		}
 		g.drawPillBackgroundedText(
-				prevFrameCount,
+				previousFrameRate,
 				pillBackgroundColor,
 				pillContentColor,
 				0.68f,
