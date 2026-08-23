@@ -36,6 +36,7 @@ import javax.microedition.util.ContextHolder;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import javax.microedition.shell.timing.EmulationSpeed;
 import ru.playsoftware.j2meloader.util.FileUtils;
 import ru.playsoftware.j2meloader.util.XmlUtils;
 
@@ -187,12 +188,17 @@ public class ProfilesManager {
 					params.screenScaleType = 0;
 				}
 				params.screenGravity = 1;
-
-				params.version = ProfileModel.VERSION;
-				if (persistMigrations) {
-					ProfilesManager.saveConfig(params);
-				}
 				break;
+		}
+		boolean versionNeedsMigration = params.version < ProfileModel.VERSION;
+		int normalizedSpeed = EmulationSpeed.sanitizePercent(params.emulationSpeedPercent);
+		boolean speedNeedsMigration = params.emulationSpeedPercent != normalizedSpeed;
+		params.emulationSpeedPercent = normalizedSpeed;
+		if (versionNeedsMigration) {
+			params.version = ProfileModel.VERSION;
+		}
+		if (persistMigrations && (versionNeedsMigration || speedNeedsMigration)) {
+			ProfilesManager.saveConfig(params);
 		}
 		return params;
 	}

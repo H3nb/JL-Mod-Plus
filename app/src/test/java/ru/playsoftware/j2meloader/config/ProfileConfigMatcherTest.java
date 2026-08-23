@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 import android.content.res.Configuration;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 import org.junit.Test;
 
@@ -131,6 +132,50 @@ public class ProfileConfigMatcherTest {
 		ProfilesManager.loadConfig(directory, false);
 
 		assertEquals(json, new String(Files.readAllBytes(config.toPath()), StandardCharsets.UTF_8));
+	}
+
+	@Test
+	public void legacyProfileGetsSafeTimingDefaultsAndPersistsMigration() throws Exception {
+		File directory = Files.createTempDirectory("jlmod-profile-timing").toFile();
+		directory.deleteOnExit();
+		ProfileModel legacy = new ProfileModel();
+		legacy.dir = directory;
+		legacy.version = 3;
+		legacy.emulationSpeedPercent = 0;
+		legacy.showEmulationSpeed = false;
+		assertTrue(ProfilesManager.saveConfig(legacy));
+
+		ProfileModel loaded = ProfilesManager.loadConfig(directory);
+
+		assertEquals(ProfileModel.VERSION, loaded.version);
+		assertEquals(100, loaded.emulationSpeedPercent);
+		assertFalse(loaded.showEmulationSpeed);
+		String migrated = new String(
+				Files.readAllBytes(new File(directory, "config.json").toPath()),
+				StandardCharsets.UTF_8);
+		assertTrue(migrated.contains("\"Version\": 4"));
+		assertTrue(migrated.contains("\"EmulationSpeedPercent\": 100"));
+	}
+
+	@Test
+	public void missingTimingFieldsUseNormalDefaultsWhenLoadingOldJson() throws Exception {
+		File directory = Files.createTempDirectory("jlmod-profile-timing-missing").toFile();
+		directory.deleteOnExit();
+		ProfileModel source = new ProfileModel();
+		source.dir = directory;
+		source.version = 3;
+		JsonObject json = new Gson().toJsonTree(source).getAsJsonObject();
+		json.remove("EmulationSpeedPercent");
+		json.remove("ShowEmulationSpeed");
+		Files.write(
+				new File(directory, "config.json").toPath(),
+				new Gson().toJson(json).getBytes(StandardCharsets.UTF_8));
+
+		ProfileModel loaded = ProfilesManager.loadConfig(directory);
+
+		assertEquals(ProfileModel.VERSION, loaded.version);
+		assertEquals(100, loaded.emulationSpeedPercent);
+		assertFalse(loaded.showEmulationSpeed);
 	}
 
 	@Test
