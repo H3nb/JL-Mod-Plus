@@ -17,8 +17,12 @@ package javax.microedition.shell;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
+
+import java.util.Calendar;
+import java.util.Date;
 
 import javax.microedition.shell.timing.TimingSession;
 import javax.microedition.shell.timing.TimingTimeSource;
@@ -55,6 +59,27 @@ public class GuestTimingBridgeTest {
 		} finally {
 			GuestTimingBridge.clear(second);
 		}
+	}
+
+	@Test
+	public void dateAndCalendarFactoriesUseGuestWallClock() {
+		FakeTimeSource time = new FakeTimeSource(1_700_000_000_000L);
+		TimingSession session = new TimingSession(time, 200, 1L);
+		GuestTimingBridge.install(session);
+		try {
+			time.monotonicNanos = 500_000_000L;
+			assertEquals(1_700_000_001_000L, GuestTimingBridge.newDate().getTime());
+			assertEquals(1_700_000_001_000L,
+					GuestTimingBridge.calendarInstance().getTimeInMillis());
+			assertEquals(50L, GuestTimingBridge.hostDelayMillis(100L));
+		} finally {
+			GuestTimingBridge.clear(session);
+		}
+
+		Date hostDate = GuestTimingBridge.newDate();
+		Calendar hostCalendar = GuestTimingBridge.calendarInstance();
+		assertTrue(Math.abs(System.currentTimeMillis() - hostDate.getTime()) < 1_000L);
+		assertTrue(Math.abs(System.currentTimeMillis() - hostCalendar.getTimeInMillis()) < 1_000L);
 	}
 
 	private static final class FakeTimeSource implements TimingTimeSource {
