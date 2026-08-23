@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -39,6 +38,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.window.DialogProperties
 import java.util.Locale
 import ru.playsoftware.j2meloader.R
+import ru.playsoftware.j2meloader.ui.ScrollableContentHint
 
 /** A dependency-free HSV picker used only by the host configuration presentation. */
 @Composable
@@ -75,6 +76,10 @@ internal fun ConfigColorPickerDialog(
     val color = Color.hsv(hsv[0], hsv[1], hsv[2])
     val hexIsValid = hexText.length == 6
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val scrollState = rememberScrollState()
+    val canScrollForward by remember {
+        derivedStateOf { scrollState.value < scrollState.maxValue }
+    }
 
     fun updateHsv(hue: Float = hsv[0], saturation: Float = hsv[1], value: Float = hsv[2]) {
         hsv = floatArrayOf(
@@ -105,20 +110,60 @@ internal fun ConfigColorPickerDialog(
                     (maxHeight * if (landscape) 0.68f else 0.38f)
                         .coerceIn(96.dp, 180.dp)
                 }
-                if (landscape) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .verticalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.Top,
-                    ) {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    if (landscape) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(scrollState),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.Top,
+                        ) {
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                SaturationValuePicker(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    hue = hsv[0],
+                                    saturation = hsv[1],
+                                    value = hsv[2],
+                                    height = pickerHeight,
+                                    onChanged = { saturation, value ->
+                                        updateHsv(saturation = saturation, value = value)
+                                    },
+                                )
+                                HuePicker(
+                                    hue = hsv[0],
+                                    onChanged = { hue -> updateHsv(hue = hue) },
+                                )
+                            }
+                            Column(
+                                modifier = Modifier.weight(0.85f),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                ColorValueInput(
+                                    hexText = hexText,
+                                    color = color,
+                                    hexIsValid = hexIsValid,
+                                    showPreview = true,
+                                    onHexChanged = { value ->
+                                        val normalized = normalizePickerHex(value)
+                                        hexText = normalized
+                                        if (normalized.length == 6) {
+                                            hsv = parseHsv(normalized)
+                                        }
+                                    },
+                                )
+                                ColorPickerHint()
+                            }
+                        }
+                    } else {
                         Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.verticalScroll(scrollState),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             SaturationValuePicker(
-                                modifier = Modifier.fillMaxWidth(),
                                 hue = hsv[0],
                                 saturation = hsv[1],
                                 value = hsv[2],
@@ -131,11 +176,6 @@ internal fun ConfigColorPickerDialog(
                                 hue = hsv[0],
                                 onChanged = { hue -> updateHsv(hue = hue) },
                             )
-                        }
-                        Column(
-                            modifier = Modifier.weight(0.85f),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
                             ColorValueInput(
                                 hexText = hexText,
                                 color = color,
@@ -152,39 +192,10 @@ internal fun ConfigColorPickerDialog(
                             ColorPickerHint()
                         }
                     }
-                } else {
-                    Column(
-                        modifier = Modifier.verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        SaturationValuePicker(
-                            hue = hsv[0],
-                            saturation = hsv[1],
-                            value = hsv[2],
-                            height = pickerHeight,
-                            onChanged = { saturation, value ->
-                                updateHsv(saturation = saturation, value = value)
-                            },
-                        )
-                        HuePicker(
-                            hue = hsv[0],
-                            onChanged = { hue -> updateHsv(hue = hue) },
-                        )
-                        ColorValueInput(
-                            hexText = hexText,
-                            color = color,
-                            hexIsValid = hexIsValid,
-                            showPreview = true,
-                            onHexChanged = { value ->
-                                val normalized = normalizePickerHex(value)
-                                hexText = normalized
-                                if (normalized.length == 6) {
-                                    hsv = parseHsv(normalized)
-                                }
-                            },
-                        )
-                        ColorPickerHint()
-                    }
+                    ScrollableContentHint(
+                        visible = canScrollForward,
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                    )
                 }
             }
         },
@@ -221,7 +232,7 @@ private fun ColorValueInput(
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(MaterialTheme.shapes.small)
                     .background(color),
             )
         }
@@ -269,7 +280,7 @@ private fun SaturationValuePicker(
         modifier = modifier
             .fillMaxWidth()
             .height(height)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(MaterialTheme.shapes.medium)
             .semantics {
                 contentDescription = pickerDescription
             }
@@ -327,7 +338,7 @@ private fun HuePicker(
         modifier = Modifier
             .fillMaxWidth()
             .height(24.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(MaterialTheme.shapes.medium)
             .semantics { contentDescription = pickerDescription }
             .pointerInput(Unit) {
                 detectTapGestures { position ->

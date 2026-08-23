@@ -70,7 +70,7 @@ private val PreviewConfigState = ConfigUiState(
 @Composable
 fun ConfigLightPhoneScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Graphics)
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Display)
     }
 }
 
@@ -85,7 +85,7 @@ fun ConfigLightPhoneScreenshot() {
 @Composable
 fun ConfigDarkPhoneScreenshot() {
     JLModPlusTheme(darkTheme = true) {
-        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Graphics)
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Display)
     }
 }
 
@@ -100,7 +100,7 @@ fun ConfigDarkPhoneScreenshot() {
 @Composable
 fun ConfigLargeFontFormScreenshot() {
     JLModPlusTheme {
-        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Graphics)
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Display)
     }
 }
 
@@ -163,7 +163,7 @@ fun ConfigPreferenceComponentsScreenshot() {
 @Composable
 fun ConfigMediaEmptyScreenshot() {
     JLModPlusTheme {
-        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Media)
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Audio)
     }
 }
 
@@ -204,7 +204,7 @@ fun ConfigColorPickerDarkScreenshot() {
 @Composable
 fun ConfigLandscapeScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Graphics)
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Display)
     }
 }
 

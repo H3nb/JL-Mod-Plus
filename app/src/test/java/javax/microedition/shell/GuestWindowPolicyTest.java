@@ -22,18 +22,51 @@ import org.junit.Test;
 
 public class GuestWindowPolicyTest {
 	@Test
-	public void cutoutRequiresUserOptInCanvasAndBothBarsDisabled() {
+	public void cutoutRequiresUserOptInCanvasAndNoStatusBar() {
 		assertTrue(GuestWindowPolicy.canUseDisplayCutout(true, false, false, true));
 		assertFalse(GuestWindowPolicy.canUseDisplayCutout(true, false, false, false));
 		assertFalse(GuestWindowPolicy.canUseDisplayCutout(false, false, false, true));
 		assertFalse(GuestWindowPolicy.canUseDisplayCutout(true, true, false, true));
-		assertFalse(GuestWindowPolicy.canUseDisplayCutout(true, false, true, true));
+		assertTrue(GuestWindowPolicy.canUseDisplayCutout(true, false, true, true));
 	}
 
 	@Test
-	public void immersiveCanvasWithAllowedCutoutKeepsGuestGeometryUnpadded() {
+	public void canvasChromeUsesOnlyTheEnabledRuntimeBars() {
+		GuestWindowPolicy.Chrome chrome = GuestWindowPolicy.resolve(true, true, false, true);
+
+		assertTrue(chrome.canvas);
+		assertFalse(chrome.toolbarVisible);
+		assertTrue(chrome.statusBarVisible);
+		assertFalse(chrome.navigationBarVisible);
+		assertFalse(chrome.cutoutAllowed);
+	}
+
+	@Test
+	public void immersiveCanvasChromeAllowsCutoutOnlyWhenBothBarsAreHidden() {
+		GuestWindowPolicy.Chrome chrome = GuestWindowPolicy.resolve(true, false, false, true);
+
+		assertTrue(chrome.canvas);
+		assertFalse(chrome.toolbarVisible);
+		assertFalse(chrome.statusBarVisible);
+		assertFalse(chrome.navigationBarVisible);
+		assertTrue(chrome.cutoutAllowed);
+	}
+
+	@Test
+	public void hostChromeAlwaysRestoresHostNavigationAndToolbar() {
+		GuestWindowPolicy.Chrome chrome = GuestWindowPolicy.resolve(false, false, false, true);
+
+		assertFalse(chrome.canvas);
+		assertTrue(chrome.toolbarVisible);
+		assertTrue(chrome.statusBarVisible);
+		assertTrue(chrome.navigationBarVisible);
+		assertFalse(chrome.cutoutAllowed);
+	}
+
+	@Test
+	public void actionBarAndCanvasMayShareAnAllowedCutout() {
 		GuestWindowPolicy.Padding padding = GuestWindowPolicy.calculate(
-				true, false, false, true,
+				true, false, true, true,
 				30, 40, 50, 60,
 				7, 8, 9, 10, 100);
 
@@ -51,13 +84,13 @@ public class GuestWindowPolicyTest {
 	}
 
 	@Test
-	public void canvasReservesCutoutButNeverNavigationBarWhenCutoutIsDisallowed() {
+	public void visibleStatusBarDisablesCutoutEvenWhenActionBarIsEnabled() {
 		GuestWindowPolicy.Padding padding = GuestWindowPolicy.calculate(
-				true, false, true, true,
+				true, true, true, true,
 				30, 40, 50, 60,
 				7, 8, 9, 10, 100);
 
-		assertPadding(padding, 7, 8, 9, 10);
+		assertPadding(padding, 7, 40, 9, 10);
 	}
 
 	@Test

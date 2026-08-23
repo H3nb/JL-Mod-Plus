@@ -363,6 +363,30 @@ abstract class LibraryDao {
     }
 
     @Transaction
+    open suspend fun setCollectionMemberships(
+        collectionId: Long,
+        appIds: List<Long>,
+        included: Boolean,
+        addedAt: Long,
+    ) {
+        check(getCollection(collectionId) != null) { "Collection disappeared: $collectionId" }
+        appIds.distinct().forEach { appId ->
+            check(getApp(appId) != null) { "Library app disappeared: $appId" }
+            if (included) {
+                insertCollectionMembership(
+                    LibraryCollectionAppEntity(
+                        collectionId = collectionId,
+                        appId = appId,
+                        addedAt = addedAt,
+                    ),
+                )
+            } else {
+                deleteCollectionMembership(collectionId, appId)
+            }
+        }
+    }
+
+    @Transaction
     open suspend fun replaceIncompleteCatalog(apps: List<LibraryAppEntity>) {
         clearCollectionMemberships()
         clearCollections()

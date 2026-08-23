@@ -32,7 +32,7 @@
         <item quantity="other">Share %1$d Diagnostic Reports?</item>
     </plurals>
     <string name="crash_reports_batch_share_disclosure">The selected diagnostic reports may contain device information, MIDlet metadata, crash-correlation identifiers, Java stack traces, or Android process-exit details. Retained raw traces will also be attached. Review the reports before sharing them.</string>
-    <string name="crash_report_github_issue_title">Diagnostic report: %1$s</string>
+    <string name="crash_report_github_issue_title">Diagnostic Report: %1$s</string>
     <string name="crash_report_github_intro">Before submitting, describe what you were doing when the problem occurred. Review the prefilled diagnostic text and remove anything you do not want to publish.\n\n---\n\nDiagnostic report (sanitized by JL-Mod Plus):</string>
     <string name="crash_report_github_truncated">\n\n[Diagnostic prefill shortened for the GitHub issue form. Use Share Report in JL-Mod Plus if additional evidence is needed.]</string>
     <string name="crash_report_github_unavailable">No app is available to open the GitHub issue form</string>
@@ -45,7 +45,7 @@
     <string name="crash_reports_batch_delete_message">This permanently removes the selected local diagnostic records from JL-Mod Plus.</string>
     <string name="crash_report_delete_failed">Could not delete the complete report</string>
     <string name="crash_report_unavailable">This report is no longer available</string>
-    <string name="process_exit_recovery_title">Unexpected process exit detected</string>
+    <string name="process_exit_recovery_title">Unexpected Process Exit Detected</string>
     <string name="process_exit_recovery_message">JL-Mod Plus previously ended unexpectedly (%1$s). Diagnostic details were saved locally.</string>
     <string name="process_exit_recovery_message_midlet">A MIDlet process previously ended unexpectedly (%1$s). Diagnostic details were saved locally.</string>
     <string name="process_exit_recovery_message_named">%1$s previously ended unexpectedly (%2$s). Diagnostic details were saved locally.</string>

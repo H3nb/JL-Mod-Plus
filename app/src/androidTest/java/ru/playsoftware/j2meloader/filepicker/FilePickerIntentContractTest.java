@@ -98,4 +98,41 @@ public class FilePickerIntentContractTest {
 		assertNull(result.getClipData().getItemAt(0).getUri().getScheme());
 		assertNull(result.getClipData().getItemAt(1).getUri().getScheme());
 	}
+
+	@Test
+	public void resultContractNormalizesSingleAndMultiplePickerPathsToFileUris() {
+		FilePickerResultContract contract = new FilePickerResultContract();
+
+		FilePickerRequest singleRequest = new FilePickerRequest(
+				"/storage/emulated/0",
+				FilePickerContract.MODE_FILE,
+				false,
+				true,
+				false,
+				true);
+		Intent singleResult = FilteredFilePickerActivityKt.createFilePickerResult(
+				singleRequest,
+				Arrays.asList(new File("/storage/emulated/0/icon.png")));
+		assertEquals(
+				Arrays.asList(Uri.fromFile(new File("/storage/emulated/0/icon.png"))),
+				contract.parseResult(Activity.RESULT_OK, singleResult));
+
+		FilePickerRequest multipleRequest = new FilePickerRequest(
+				"/storage/emulated/0",
+				FilePickerContract.MODE_FILE,
+				true,
+				false,
+				false,
+				true);
+		Intent multipleResult = FilteredFilePickerActivityKt.createFilePickerResult(
+				multipleRequest,
+				Arrays.asList(
+						new File("/storage/emulated/0/one.zip"),
+						new File("/storage/emulated/0/two.zip")));
+		assertEquals(
+				Arrays.asList(
+						Uri.fromFile(new File("/storage/emulated/0/one.zip")),
+						Uri.fromFile(new File("/storage/emulated/0/two.zip"))),
+				contract.parseResult(Activity.RESULT_OK, multipleResult));
+	}
 }

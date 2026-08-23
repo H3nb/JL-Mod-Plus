@@ -23,13 +23,25 @@ package ru.playsoftware.j2meloader.applist;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_GRID_SPACING;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_HIDE_GRID_TITLES;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_ICON_RATIO;
+import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_ICON_SHAPE;
+import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_ENHANCED_ICONS;
+import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_SHOW_LIST_DESCRIPTION;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_VIEW;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APP_SORT;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_LAST_PATH;
+import static ru.playsoftware.j2meloader.util.Constants.LIBRARY_GRID_SPACING_COMPACT;
+import static ru.playsoftware.j2meloader.util.Constants.LIBRARY_GRID_SPACING_NONE;
+import static ru.playsoftware.j2meloader.util.Constants.LIBRARY_GRID_SPACING_SPACIOUS;
+import static ru.playsoftware.j2meloader.util.Constants.LIBRARY_GRID_SPACING_STANDARD;
+import static ru.playsoftware.j2meloader.util.Constants.LIBRARY_ICON_RATIO_PORTRAIT;
+import static ru.playsoftware.j2meloader.util.Constants.LIBRARY_ICON_RATIO_SQUARE;
+import static ru.playsoftware.j2meloader.util.Constants.LIBRARY_ICON_SHAPE_ROUND;
+import static ru.playsoftware.j2meloader.util.Constants.LIBRARY_ICON_SHAPE_SQUARE;
+import static ru.playsoftware.j2meloader.util.Constants.LIBRARY_LAYOUT_GRID;
+import static ru.playsoftware.j2meloader.util.Constants.LIBRARY_LAYOUT_LIST;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -41,8 +53,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContract;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.compose.ui.platform.ComposeView;
@@ -69,6 +79,7 @@ import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.config.ProfilesActivity;
 import ru.playsoftware.j2meloader.crashes.CrashReportsActivity;
 import ru.playsoftware.j2meloader.filepicker.FilePickerContract;
+import ru.playsoftware.j2meloader.filepicker.FilePickerResultContract;
 import ru.playsoftware.j2meloader.filepicker.FilteredFilePickerActivity;
 import ru.playsoftware.j2meloader.librarydb.LibraryAppRow;
 import ru.playsoftware.j2meloader.librarydb.LibraryGenerationToken;
@@ -85,68 +96,23 @@ import ru.woesss.j2me.installer.InstallerDialog;
 /** Room 3 Library host. AppItem remains only a temporary DTO for explicit shortcut creation. */
 public class AppsListFragment extends Fragment {
     private static final String TAG = AppsListFragment.class.getSimpleName();
-    private static final int LAYOUT_TYPE_LIST = 0;
-    private static final int LAYOUT_TYPE_GRID = 1;
-    private static final int ICON_RATIO_SQUARE = 0;
-    private static final int ICON_RATIO_PORTRAIT = 1;
-    private static final int GRID_SPACING_COMPACT = 0;
-    private static final int GRID_SPACING_STANDARD = 1;
-    private static final int GRID_SPACING_SPACIOUS = 2;
     private static final int NO_UI_ID = Integer.MIN_VALUE;
     private static final long NO_GENERATION = Long.MIN_VALUE;
+    private static final String STATE_PENDING_ICON_DATABASE_ID =
+            "apps_list.pending_icon_database_id";
 
-    private final ActivityResultLauncher<Void> openFileLauncher = registerForActivityResult(
-            new ActivityResultContract<Void, List<Uri>>() {
-                @NonNull
-                @Override
-                public Intent createIntent(@NonNull Context context, Void input) {
-                    Intent intent = new Intent(context, FilteredFilePickerActivity.class);
-                    intent.putExtra(FilePickerContract.EXTRA_ALLOW_MULTIPLE, true);
-                    intent.putExtra(FilePickerContract.EXTRA_SINGLE_CLICK, false);
-                    intent.putExtra(FilePickerContract.EXTRA_ALLOW_CREATE_DIR, false);
-                    intent.putExtra(FilePickerContract.EXTRA_MODE, FilePickerContract.MODE_FILE);
-                    String path = preferences.getString(PREF_LAST_PATH, null);
-                    if (path == null) {
-                        File dir = Environment.getExternalStorageDirectory();
-                        if (dir.canRead()) path = dir.getAbsolutePath();
-                    }
-                    intent.putExtra(FilePickerContract.EXTRA_START_PATH, path);
-                    return intent;
-                }
-
-                @Override
-                public List<Uri> parseResult(int resultCode, @Nullable Intent intent) {
-                    if (resultCode != Activity.RESULT_OK || intent == null) {
-                        return List.of();
-                    }
-                    Set<Uri> uris = new java.util.LinkedHashSet<>();
-                    ArrayList<String> paths = intent.getStringArrayListExtra(
-                            FilePickerContract.EXTRA_PATHS);
-                    if (paths != null) {
-                        for (String path : paths) {
-                            if (path != null && !path.isBlank()) uris.add(Uri.parse(path));
-                        }
-                    }
-                    if (intent.getClipData() != null) {
-                        for (int i = 0; i < intent.getClipData().getItemCount(); i++) {
-                            Uri uri = intent.getClipData().getItemAt(i).getUri();
-                            if (uri != null) uris.add(uri);
-                        }
-                    }
-                    if (intent.getData() != null) uris.add(intent.getData());
-                    return new ArrayList<>(uris);
-                }
-            },
+    private final ActivityResultLauncher<Intent> openFileLauncher = registerForActivityResult(
+            new FilePickerResultContract(),
             this::onFilesPicked);
 
-    private final ActivityResultLauncher<String[]> importBundleLauncher = registerForActivityResult(
-            new ActivityResultContracts.OpenDocument(),
-            this::onImportBundlePicked);
+    private final ActivityResultLauncher<Intent> importBundleLauncher = registerForActivityResult(
+            new FilePickerResultContract(),
+            uris -> onImportBundlePicked(uris.isEmpty() ? null : uris.get(0)));
 
-    private int pendingIconUiId = NO_UI_ID;
-    private final ActivityResultLauncher<String> iconPickerLauncher = registerForActivityResult(
-            new ActivityResultContracts.GetContent(),
-            this::onIconPicked);
+    private long pendingIconDatabaseId = NO_GENERATION;
+    private final ActivityResultLauncher<Intent> iconPickerLauncher = registerForActivityResult(
+            new FilePickerResultContract(),
+            uris -> onIconPicked(uris.isEmpty() ? null : uris.get(0)));
 
     private final Map<Integer, LibraryAppRow> rowsByUiId = new HashMap<>();
     private final Map<Long, Integer> uiIdsByDatabaseId = new HashMap<>();
@@ -160,6 +126,12 @@ public class AppsListFragment extends Fragment {
     private SharedPreferences preferences;
     private LibraryViewModel libraryViewModel;
     private LibraryComposeController composeController;
+    private final SharedPreferences.OnSharedPreferenceChangeListener appearancePreferenceListener =
+            (sharedPreferences, key) -> {
+                if (isLibraryAppearancePreference(key)) {
+                    syncLibraryAppearance();
+                }
+            };
 
     /** Kept temporarily for source compatibility; installer URI ownership moved to MainActivity. */
     public static AppsListFragment newInstance(@Nullable Uri ignored) {
@@ -169,9 +141,19 @@ public class AppsListFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (savedInstanceState != null) {
+            pendingIconDatabaseId = savedInstanceState.getLong(
+                    STATE_PENDING_ICON_DATABASE_ID, NO_GENERATION);
+        }
         FragmentActivity activity = requireActivity();
         preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         libraryViewModel = new ViewModelProvider(activity).get(LibraryViewModel.class);
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        outState.putLong(STATE_PENDING_ICON_DATABASE_ID, pendingIconDatabaseId);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -182,24 +164,31 @@ public class AppsListFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        int storedLayout = preferences.getInt(PREF_APPS_VIEW, LAYOUT_TYPE_LIST);
-        LibraryLayout layout = storedLayout == LAYOUT_TYPE_LIST
+        int storedLayout = preferences.getInt(PREF_APPS_VIEW, LIBRARY_LAYOUT_LIST);
+        LibraryLayout layout = storedLayout == LIBRARY_LAYOUT_LIST
                 ? LibraryLayout.List : LibraryLayout.Grid;
-        int storedIconRatio = preferences.getInt(PREF_APPS_ICON_RATIO, ICON_RATIO_SQUARE);
-        LibraryIconRatio iconRatio = storedIconRatio == ICON_RATIO_PORTRAIT
+        int storedIconRatio = preferences.getInt(PREF_APPS_ICON_RATIO, LIBRARY_ICON_RATIO_SQUARE);
+        LibraryIconRatio iconRatio = storedIconRatio == LIBRARY_ICON_RATIO_PORTRAIT
                 ? LibraryIconRatio.Portrait : LibraryIconRatio.Square;
-        int storedGridSpacing = preferences.getInt(PREF_APPS_GRID_SPACING, GRID_SPACING_STANDARD);
+        int storedIconShape = preferences.getInt(PREF_APPS_ICON_SHAPE, LIBRARY_ICON_SHAPE_ROUND);
+        LibraryIconShape iconShape = storedIconShape == LIBRARY_ICON_SHAPE_SQUARE
+                ? LibraryIconShape.Square : LibraryIconShape.Round;
+        int storedGridSpacing = preferences.getInt(
+                PREF_APPS_GRID_SPACING, LIBRARY_GRID_SPACING_STANDARD);
         LibraryGridSpacing gridSpacing;
         switch (storedGridSpacing) {
-            case GRID_SPACING_COMPACT:
+            case LIBRARY_GRID_SPACING_COMPACT:
                 gridSpacing = LibraryGridSpacing.Compact;
                 break;
-            case GRID_SPACING_SPACIOUS:
+            case LIBRARY_GRID_SPACING_SPACIOUS:
                 gridSpacing = LibraryGridSpacing.Spacious;
                 break;
-            case GRID_SPACING_STANDARD:
+            case LIBRARY_GRID_SPACING_STANDARD:
             default:
                 gridSpacing = LibraryGridSpacing.Standard;
+                break;
+            case LIBRARY_GRID_SPACING_NONE:
+                gridSpacing = LibraryGridSpacing.None;
                 break;
         }
         composeController = new LibraryComposeController(
@@ -208,7 +197,10 @@ public class AppsListFragment extends Fragment {
                 layout,
                 preferences.getInt(PREF_APP_SORT, 0),
                 iconRatio,
+                iconShape,
+                preferences.getBoolean(PREF_APPS_ENHANCED_ICONS, true),
                 preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false),
+                preferences.getBoolean(PREF_APPS_SHOW_LIST_DESCRIPTION, true),
                 gridSpacing,
                 ShortcutManagerCompat.isRequestPinShortcutSupported(requireContext()));
         libraryViewModel.observe(getViewLifecycleOwner(), this::onLibraryState);
@@ -219,6 +211,72 @@ public class AppsListFragment extends Fragment {
         composeController = null;
         clearUiRows();
         super.onDestroyView();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (preferences != null) {
+            preferences.registerOnSharedPreferenceChangeListener(appearancePreferenceListener);
+            syncLibraryAppearance();
+        }
+    }
+
+    @Override
+    public void onStop() {
+        if (preferences != null) {
+            preferences.unregisterOnSharedPreferenceChangeListener(appearancePreferenceListener);
+        }
+        super.onStop();
+    }
+
+    private void syncLibraryAppearance() {
+        LibraryComposeController controller = composeController;
+        if (controller == null || preferences == null) return;
+
+        int storedLayout = preferences.getInt(PREF_APPS_VIEW, LIBRARY_LAYOUT_LIST);
+        int storedIconRatio = preferences.getInt(
+                PREF_APPS_ICON_RATIO, LIBRARY_ICON_RATIO_SQUARE);
+        int storedIconShape = preferences.getInt(
+                PREF_APPS_ICON_SHAPE, LIBRARY_ICON_SHAPE_ROUND);
+        int storedGridSpacing = preferences.getInt(
+                PREF_APPS_GRID_SPACING, LIBRARY_GRID_SPACING_STANDARD);
+        LibraryGridSpacing gridSpacing;
+        switch (storedGridSpacing) {
+            case LIBRARY_GRID_SPACING_COMPACT:
+                gridSpacing = LibraryGridSpacing.Compact;
+                break;
+            case LIBRARY_GRID_SPACING_SPACIOUS:
+                gridSpacing = LibraryGridSpacing.Spacious;
+                break;
+            case LIBRARY_GRID_SPACING_NONE:
+                gridSpacing = LibraryGridSpacing.None;
+                break;
+            case LIBRARY_GRID_SPACING_STANDARD:
+            default:
+                gridSpacing = LibraryGridSpacing.Standard;
+                break;
+        }
+        controller.updateAppearance(
+                storedLayout == LIBRARY_LAYOUT_GRID ? LibraryLayout.Grid : LibraryLayout.List,
+                storedIconRatio == LIBRARY_ICON_RATIO_PORTRAIT
+                        ? LibraryIconRatio.Portrait : LibraryIconRatio.Square,
+                storedIconShape == LIBRARY_ICON_SHAPE_SQUARE
+                        ? LibraryIconShape.Square : LibraryIconShape.Round,
+                preferences.getBoolean(PREF_APPS_ENHANCED_ICONS, true),
+                preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false),
+                preferences.getBoolean(PREF_APPS_SHOW_LIST_DESCRIPTION, true),
+                gridSpacing);
+    }
+
+    private static boolean isLibraryAppearancePreference(String key) {
+        return PREF_APPS_VIEW.equals(key)
+                || PREF_APPS_ICON_RATIO.equals(key)
+                || PREF_APPS_ICON_SHAPE.equals(key)
+                || PREF_APPS_ENHANCED_ICONS.equals(key)
+                || PREF_APPS_HIDE_GRID_TITLES.equals(key)
+                || PREF_APPS_SHOW_LIST_DESCRIPTION.equals(key)
+                || PREF_APPS_GRID_SPACING.equals(key);
     }
 
     private LibraryActions createActions() {
@@ -262,10 +320,18 @@ public class AppsListFragment extends Fragment {
             }
 
             @Override
-            public void onPickIcon(int appId) {
-                if (findRow(appId) == null) return;
-                pendingIconUiId = appId;
-                iconPickerLauncher.launch("image/*");
+            public void onPickIconByDatabaseId(long databaseId) {
+                pendingIconDatabaseId = databaseId;
+                iconPickerLauncher.launch(createFilePickerIntent(
+                        false,
+                        true,
+                        getString(R.string.file_picker_select_icon),
+                        ".png",
+                        ".jpg",
+                        ".jpeg",
+                        ".webp",
+                        ".gif",
+                        ".bmp"));
             }
 
             @Override
@@ -279,7 +345,8 @@ public class AppsListFragment extends Fragment {
 
             @Override
             public void onLayoutChange(@NonNull LibraryLayout layout) {
-                int value = layout == LibraryLayout.Grid ? LAYOUT_TYPE_GRID : LAYOUT_TYPE_LIST;
+                int value = layout == LibraryLayout.Grid
+                        ? LIBRARY_LAYOUT_GRID : LIBRARY_LAYOUT_LIST;
                 preferences.edit().putInt(PREF_APPS_VIEW, value).apply();
                 LibraryComposeController controller = composeController;
                 if (controller != null) controller.updateLayout(layout);
@@ -288,10 +355,26 @@ public class AppsListFragment extends Fragment {
             @Override
             public void onIconRatioChange(@NonNull LibraryIconRatio iconRatio) {
                 int value = iconRatio == LibraryIconRatio.Portrait
-                        ? ICON_RATIO_PORTRAIT : ICON_RATIO_SQUARE;
+                        ? LIBRARY_ICON_RATIO_PORTRAIT : LIBRARY_ICON_RATIO_SQUARE;
                 preferences.edit().putInt(PREF_APPS_ICON_RATIO, value).apply();
                 LibraryComposeController controller = composeController;
                 if (controller != null) controller.updateIconRatio(iconRatio);
+            }
+
+            @Override
+            public void onIconShapeChange(@NonNull LibraryIconShape iconShape) {
+                int value = iconShape == LibraryIconShape.Square
+                        ? LIBRARY_ICON_SHAPE_SQUARE : LIBRARY_ICON_SHAPE_ROUND;
+                preferences.edit().putInt(PREF_APPS_ICON_SHAPE, value).apply();
+                LibraryComposeController controller = composeController;
+                if (controller != null) controller.updateIconShape(iconShape);
+            }
+
+            @Override
+            public void onEnhancedIconsChange(boolean enabled) {
+                preferences.edit().putBoolean(PREF_APPS_ENHANCED_ICONS, enabled).apply();
+                LibraryComposeController controller = composeController;
+                if (controller != null) controller.updateEnhancedIcons(enabled);
             }
 
             @Override
@@ -302,18 +385,28 @@ public class AppsListFragment extends Fragment {
             }
 
             @Override
+            public void onShowListDescriptionChange(boolean show) {
+                preferences.edit().putBoolean(PREF_APPS_SHOW_LIST_DESCRIPTION, show).apply();
+                LibraryComposeController controller = composeController;
+                if (controller != null) controller.updateShowListDescription(show);
+            }
+
+            @Override
             public void onGridSpacingChange(@NonNull LibraryGridSpacing spacing) {
                 int value;
                 switch (spacing) {
                     case Compact:
-                        value = GRID_SPACING_COMPACT;
+                        value = LIBRARY_GRID_SPACING_COMPACT;
                         break;
                     case Spacious:
-                        value = GRID_SPACING_SPACIOUS;
+                        value = LIBRARY_GRID_SPACING_SPACIOUS;
+                        break;
+                    case None:
+                        value = LIBRARY_GRID_SPACING_NONE;
                         break;
                     case Standard:
                     default:
-                        value = GRID_SPACING_STANDARD;
+                        value = LIBRARY_GRID_SPACING_STANDARD;
                         break;
                 }
                 preferences.edit().putInt(PREF_APPS_GRID_SPACING, value).apply();
@@ -328,16 +421,17 @@ public class AppsListFragment extends Fragment {
 
             @Override
             public void onInstall() {
-                openFileLauncher.launch(null);
+                openFileLauncher.launch(createFilePickerIntent(true, false, null,
+                        ".jad", ".jar", ".kjx"));
             }
 
             @Override
             public void onImportAppBundle() {
-                importBundleLauncher.launch(new String[]{
-                        "application/zip",
-                        "application/x-zip-compressed",
-                        "application/octet-stream"
-                });
+                importBundleLauncher.launch(createFilePickerIntent(
+                        false,
+                        true,
+                        getString(R.string.file_picker_select_app_bundle),
+                        ".zip"));
             }
 
             @Override
@@ -566,6 +660,111 @@ public class AppsListFragment extends Fragment {
             }
 
             @Override
+            public void onAddAppsToCollection(@NonNull Set<Long> appIds, long collectionId) {
+                libraryViewModel.addAppsToCollection(
+                        collectionId,
+                        appIds,
+                        (ignored, error) -> {
+                            if (error != null) {
+                                showError(error);
+                                loadCollectionMembers(collectionId);
+                                return;
+                            }
+                            loadCollectionMembers(collectionId);
+                        });
+            }
+
+            @Override
+            public void onAddSelectedToCollection(@NonNull Set<Long> appIds) {
+                collectionsUiStore.showBulkAddTarget(appIds);
+            }
+
+            @Override
+            public void onDeleteSelected(@NonNull Set<Long> appIds) {
+                libraryViewModel.deleteInstalledApps(appIds, (result, error) -> {
+                    if (error != null) {
+                        showError(error);
+                        return;
+                    }
+                    if (!isAdded() || result == null) return;
+                    LibraryComposeController controller = composeController;
+                    if (controller != null) {
+                        int deletedCount = result.getSucceeded().size();
+                        int failedCount = result.getFailed().size() + result.getMissingAppIds().size();
+                        controller.showNotice(getResources().getQuantityString(
+                                R.plurals.library_bulk_delete_result,
+                                deletedCount,
+                                deletedCount,
+                                failedCount));
+                    }
+                });
+            }
+
+            @Override
+            public void onShareSelected(@NonNull Set<Long> appIds) {
+                LibraryTransferActions.prepareShareApps(
+                        libraryViewModel,
+                        appIds,
+                        (prepared, error) -> {
+                            if (error != null) {
+                                showTransferError(error);
+                                return;
+                            }
+                            if (!isAdded() || prepared == null) return;
+                            try {
+                                startActivity(LibraryTransferIntents.shareApp(
+                                        requireContext(), prepared, getString(R.string.library_bulk_share_apps)));
+                            } catch (ActivityNotFoundException | SecurityException exception) {
+                                showTransferError(exception);
+                            }
+                        });
+            }
+
+            @Override
+            public void onExportSelectedBundle(@NonNull Set<Long> appIds) {
+                LibraryTransferActions.prepareExportAppsBundle(
+                        libraryViewModel,
+                        appIds,
+                        progress -> {
+                            if (!isAdded()) return;
+                            LibraryComposeController controller = composeController;
+                            if (controller != null) {
+                                controller.showNotice(getString(
+                                        R.string.library_export_progress,
+                                        progress.getCompletedEntries(),
+                                        progress.getTotalEntries()));
+                            }
+                        },
+                        (prepared, error) -> {
+                            if (error != null) {
+                                showTransferError(error);
+                                return;
+                            }
+                            if (!isAdded() || prepared == null) return;
+                            try {
+                                startActivity(LibraryTransferIntents.exportBundle(
+                                        requireContext(), prepared, getString(R.string.library_bulk_export_apps)));
+                            } catch (ActivityNotFoundException | SecurityException exception) {
+                                showTransferError(exception);
+                            }
+                        });
+            }
+
+            @Override
+            public void onReinstallSelected(@NonNull Set<Long> appIds) {
+                File workdir = activeWorkdir;
+                LibraryGenerationToken generation = libraryViewModel.readyGeneration();
+                if (workdir == null || generation == null ||
+                        activeGeneration != generation.getGeneration() ||
+                        !workdir.equals(generation.getEmulatorDir())) {
+                    showError(new IllegalStateException("Library generation is not ready"));
+                    return;
+                }
+                BulkInstallerDialog.newReinstall(appIds)
+                        .show(getParentFragmentManager(), BulkInstallerDialog.TAG);
+            }
+
+            @Override
             public void onOpenSettings() {
                 startActivity(new Intent(requireActivity(), SettingsActivity.class));
             }
@@ -589,11 +788,6 @@ public class AppsListFragment extends Fragment {
                 } catch (IOException e) {
                     if (controller != null) controller.showNotice(getString(R.string.error));
                 }
-            }
-
-            @Override
-            public void onExit() {
-                requireActivity().finish();
             }
 
             @Override
@@ -691,7 +885,7 @@ public class AppsListFragment extends Fragment {
         LibraryComposeController controller = composeController;
         if (controller != null) {
             controller.updateSort(state.getSortVariant());
-            controller.updateApps(uiItems, state.getFilter(), state.getQuickView());
+            controller.updateApps(uiItems, state.getFilter(), state.getQuickView(), generation);
         }
     }
 
@@ -756,7 +950,8 @@ public class AppsListFragment extends Fragment {
                 row.getSourceVersion(),
                 row.getSourceDescription(),
                 row.getPlayCount(),
-                row.getTotalPlayTimeMs());
+                row.getTotalPlayTimeMs(),
+                row.getId());
         cachedRowsByDatabaseId.put(row.getId(), row);
         cachedUiItemsByDatabaseId.put(row.getId(), item);
         return item;
@@ -799,7 +994,6 @@ public class AppsListFragment extends Fragment {
         cachedUiItemsByDatabaseId.clear();
         nextUiId = 1;
         cachedAllReadyRows = null;
-        pendingIconUiId = NO_UI_ID;
         collectionsUiStore.clear();
     }
 
@@ -817,11 +1011,54 @@ public class AppsListFragment extends Fragment {
         }
     }
 
+    private Intent createFilePickerIntent(
+            boolean allowMultiple,
+            boolean singleClick,
+            @Nullable String title,
+            String... allowedExtensions) {
+        Intent intent = new Intent(requireContext(), FilteredFilePickerActivity.class);
+        intent.putExtra(FilePickerContract.EXTRA_ALLOW_MULTIPLE, allowMultiple);
+        intent.putExtra(FilePickerContract.EXTRA_SINGLE_CLICK, singleClick);
+        intent.putExtra(FilePickerContract.EXTRA_ALLOW_CREATE_DIR, false);
+        intent.putExtra(FilePickerContract.EXTRA_MODE, FilePickerContract.MODE_FILE);
+        if (title != null) {
+            intent.putExtra(FilePickerContract.EXTRA_TITLE, title);
+        }
+        ArrayList<String> normalizedExtensions = new ArrayList<>();
+        for (String extension : allowedExtensions) {
+            if (extension != null && !extension.isBlank()) {
+                normalizedExtensions.add(extension);
+            }
+        }
+        if (!normalizedExtensions.isEmpty()) {
+            intent.putStringArrayListExtra(
+                    FilePickerContract.EXTRA_ALLOWED_EXTENSIONS,
+                    normalizedExtensions);
+        }
+        String path = preferences.getString(PREF_LAST_PATH, null);
+        if (path == null) {
+            File dir = Environment.getExternalStorageDirectory();
+            if (dir.canRead()) path = dir.getAbsolutePath();
+        }
+        intent.putExtra(FilePickerContract.EXTRA_START_PATH, path);
+        return intent;
+    }
+
     private void onFilesPicked(List<Uri> uris) {
         if (uris == null || uris.isEmpty() || !isAdded()) return;
         Uri first = uris.get(0);
         if (first.getPath() != null) {
             preferences.edit().putString(PREF_LAST_PATH, first.getPath()).apply();
+        }
+        if (uris.size() == 1) {
+            Activity activity = requireActivity();
+            if (activity instanceof MainActivity) {
+                // A single JAR/JAD is the established single-app flow. Do not make the user
+                // pass through the bulk-install review surface just because the picker supports
+                // selecting multiple files.
+                ((MainActivity) activity).requestInstaller(first);
+                return;
+            }
         }
         FragmentManager manager = getParentFragmentManager();
         if (manager.isDestroyed() ||
@@ -835,12 +1072,6 @@ public class AppsListFragment extends Fragment {
 
     private void onImportBundlePicked(Uri uri) {
         if (uri == null) return;
-        try {
-            requireContext().getContentResolver().takePersistableUriPermission(
-                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        } catch (SecurityException ignored) {
-            // Some document providers expose only the active transient read grant.
-        }
         Activity activity = requireActivity();
         if (activity instanceof MainActivity) {
             ((MainActivity) activity).requestBundleInstaller(uri);
@@ -850,12 +1081,10 @@ public class AppsListFragment extends Fragment {
     }
 
     private void onIconPicked(Uri uri) {
-        int uiId = pendingIconUiId;
-        pendingIconUiId = NO_UI_ID;
-        if (uri == null || uiId == NO_UI_ID) return;
-        LibraryAppRow row = findRow(uiId);
-        if (row == null) return;
-        libraryViewModel.updateIcon(row.getId(), uri, (ignored, error) -> {
+        long databaseId = pendingIconDatabaseId;
+        pendingIconDatabaseId = NO_GENERATION;
+        if (uri == null || databaseId == NO_GENERATION || !isAdded()) return;
+        libraryViewModel.updateIcon(databaseId, uri, (ignored, error) -> {
             if (error != null) showError(error);
         });
     }

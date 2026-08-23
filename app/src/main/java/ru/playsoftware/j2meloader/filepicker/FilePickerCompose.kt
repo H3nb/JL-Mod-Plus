@@ -63,6 +63,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -208,7 +209,7 @@ fun FilePickerScreen(
                 title = {
                     Column {
                         Text(
-                            text = stringResource(pickerTitle(state.request)),
+                            text = state.request.title ?: stringResource(pickerTitle(state.request)),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -406,7 +407,8 @@ private fun PickerContent(
                                     PickerEntryRow(
                                         entry = entry,
                                         selected = state.selectedPaths.contains(entry.path),
-                                        allowSelection = state.request.allowsFiles &&
+                                        allowSelection = state.request.allowMultiple &&
+                                            state.request.allowsFiles &&
                                             entry.kind == FilePickerEntryKind.FILE,
                                         onClick = { actions.onOpen(entry) },
                                     )
@@ -428,7 +430,8 @@ private fun PickerContent(
                                     PickerEntryRow(
                                         entry = entry,
                                         selected = state.selectedPaths.contains(entry.path),
-                                        allowSelection = state.request.allowsFiles &&
+                                        allowSelection = state.request.allowMultiple &&
+                                            state.request.allowsFiles &&
                                             entry.kind == FilePickerEntryKind.FILE,
                                         onClick = { actions.onOpen(entry) },
                                     )
@@ -533,6 +536,7 @@ private fun PickerEntryRow(
                 androidx.compose.material3.Checkbox(
                     checked = selected,
                     onCheckedChange = null,
+                    modifier = Modifier.testTag("file_picker_selection_checkbox"),
                 )
             }
         } else {

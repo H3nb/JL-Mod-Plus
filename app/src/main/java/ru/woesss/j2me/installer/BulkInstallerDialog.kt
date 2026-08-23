@@ -9,15 +9,13 @@ package ru.woesss.j2me.installer
 
 import android.app.Dialog
 import android.content.Context
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
-import android.util.TypedValue
 import android.view.WindowManager
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -41,22 +40,30 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.widthIn
+import androidx.core.net.toUri
+import androidx.core.graphics.drawable.toDrawable
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
+import ru.playsoftware.j2meloader.MainActivity
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.librarydb.LibraryViewModel
+import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 
 class BulkInstallerDialog : DialogFragment() {
     private lateinit var libraryViewModel: LibraryViewModel
@@ -73,13 +80,36 @@ class BulkInstallerDialog : DialogFragment() {
         isCancelable = false
         if (bulkViewModel.state.value is BulkInstallViewModel.State.Idle) {
             val args = requireArguments()
-            bulkViewModel.planExplicit(
-                args.getStringArrayList(ARG_SOURCES).orEmpty(),
-                libraryViewModel,
-                args.getInt(ARG_OMITTED_SOURCES).takeIf { it > 0 }?.let { omitted ->
-                    getString(R.string.bulk_install_omitted_sources, omitted)
-                },
-            )
+            val omittedWarning = args.getInt(ARG_OMITTED_SOURCES).takeIf { it > 0 }?.let { omitted ->
+                resources.getQuantityString(
+                    R.plurals.bulk_install_omitted_sources,
+                    omitted,
+                    omitted,
+                )
+            }
+            val bundleUri = args.getString(ARG_BUNDLE_URI)
+            val reinstallAppIds = args.getLongArray(ARG_REINSTALL_APP_IDS)
+            if (reinstallAppIds != null) {
+                bulkViewModel.planReinstall(
+                    context = requireContext(),
+                    appIds = reinstallAppIds.toList(),
+                    library = libraryViewModel,
+                    executeImmediately = true,
+                )
+            } else if (bundleUri != null) {
+                bulkViewModel.planUniversalBundle(
+                    context = requireContext(),
+                    uriString = bundleUri,
+                    library = libraryViewModel,
+                    warning = omittedWarning,
+                )
+            } else {
+                bulkViewModel.planExplicit(
+                    args.getStringArrayList(ARG_SOURCES).orEmpty(),
+                    libraryViewModel,
+                    omittedWarning,
+                )
+            }
         }
     }
 
@@ -96,7 +126,7 @@ class BulkInstallerDialog : DialogFragment() {
                         onInstall = { bulkViewModel.execute(libraryViewModel) },
                         onCancel = bulkViewModel::cancel,
                         onClose = {
-                            bulkViewModel.cancelPlanning()
+                            bulkViewModel.close()
                             dismissAllowingStateLoss()
                         },
                     )
@@ -107,24 +137,39 @@ class BulkInstallerDialog : DialogFragment() {
             setContentView(compose)
             setCancelable(false)
             setCanceledOnTouchOutside(false)
-            window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            window?.setBackgroundDrawable(android.graphics.Color.TRANSPARENT.toDrawable())
+        }
+    }
+
+    override fun onDismiss(dialog: android.content.DialogInterface) {
+        super.onDismiss(dialog)
+        val args = arguments
+        val requestId = args?.getString(ARG_REQUEST_ID)
+        val bundleUri = args?.getString(ARG_BUNDLE_URI)
+        val activity = activity
+        if (activity is MainActivity) {
+            if (requestId != null && bundleUri != null) {
+                activity.completeInstallerRequest(requestId, bundleUri.toUri())
+            }
+            activity.onInstallerDialogDismissed()
         }
     }
 
     override fun onStart() {
         super.onStart()
         val window = dialog?.window ?: return
-        window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        val metrics = resources.displayMetrics
-        val margin = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 24f, metrics).toInt()
-        val maxWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 720f, metrics).toInt()
-        val width = minOf(maxWidth, metrics.widthPixels - margin)
-        window.setLayout(width.coerceAtLeast(1), WindowManager.LayoutParams.WRAP_CONTENT)
+        window.setBackgroundDrawable(android.graphics.Color.TRANSPARENT.toDrawable())
+        // Let the dialog window follow the actual container; Compose applies the adaptive max width
+        // below. This avoids using physical display metrics in split-screen and freeform windows.
+        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT)
     }
 
     companion object {
         private const val ARG_SOURCES = "BulkInstallerDialog.sources"
         private const val ARG_OMITTED_SOURCES = "BulkInstallerDialog.omittedSources"
+        private const val ARG_BUNDLE_URI = "BulkInstallerDialog.bundleUri"
+        private const val ARG_REINSTALL_APP_IDS = "BulkInstallerDialog.reinstallAppIds"
+        private const val ARG_REQUEST_ID = "BulkInstallerDialog.requestId"
         private const val MAX_EXPLICIT_SOURCES = 500
         const val TAG = "BulkInstallerDialog"
 
@@ -137,6 +182,23 @@ class BulkInstallerDialog : DialogFragment() {
                 putInt(ARG_OMITTED_SOURCES, distinct.size - bounded.size)
             }
         }
+
+        @JvmStatic
+        fun newReinstall(appIds: Collection<Long>): BulkInstallerDialog =
+            BulkInstallerDialog().apply {
+                arguments = Bundle().apply {
+                    putLongArray(ARG_REINSTALL_APP_IDS, appIds.distinct().sorted().toLongArray())
+                }
+            }
+
+        @JvmStatic
+        fun newBundle(uri: Uri, requestId: String? = null): BulkInstallerDialog =
+            BulkInstallerDialog().apply {
+                arguments = Bundle().apply {
+                    putString(ARG_BUNDLE_URI, uri.toString())
+                    requestId?.let { putString(ARG_REQUEST_ID, it) }
+                }
+            }
     }
 }
 
@@ -150,14 +212,15 @@ private fun BulkInstallSurface(
     onCancel: () -> Unit,
     onClose: () -> Unit,
 ) {
-    val maxHeight = (LocalConfiguration.current.screenHeightDp - 48)
-        .coerceIn(240, 760)
-        .dp
+    val maxHeight = (availableWindowHeightDp() - 48.dp)
+        .coerceIn(240.dp, 760.dp)
     Surface(
         shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         tonalElevation = 6.dp,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .widthIn(max = 720.dp),
     ) {
         Column(
             modifier = Modifier
@@ -236,9 +299,19 @@ private fun ReviewContent(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(stringResource(R.string.bulk_install_found, plan.items.size))
             Text(
-                text = stringResource(R.string.bulk_install_selected, plan.selectedCount),
+                pluralStringResource(
+                    R.plurals.bulk_install_found,
+                    plan.items.size,
+                    plan.items.size,
+                ),
+            )
+            Text(
+                text = pluralStringResource(
+                    R.plurals.bulk_install_selected,
+                    plan.selectedCount,
+                    plan.selectedCount,
+                ),
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -246,7 +319,11 @@ private fun ReviewContent(
         ReviewStatusSummary(plan)
         if (plan.warnings.isNotEmpty()) {
             Text(
-                text = stringResource(R.string.bulk_install_warning_count, plan.warnings.size),
+                text = pluralStringResource(
+                    R.plurals.bulk_install_warning_count,
+                    plan.warnings.size,
+                    plan.warnings.size,
+                ),
                 modifier = Modifier.padding(top = 4.dp),
                 color = MaterialTheme.colorScheme.tertiary,
                 style = MaterialTheme.typography.labelMedium,
@@ -281,14 +358,20 @@ private fun ReviewContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         } else {
+            val listState = rememberLazyListState()
+            val canScrollForward = rememberLazyListCanScrollForward(listState)
             LazyColumn(
                 modifier = Modifier.fillMaxWidth().weight(1f, fill = false),
+                state = listState,
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 items(plan.items, key = { it.id }) { item ->
                     BulkItemRow(item, onToggle)
                 }
             }
+            ScrollableContentHint(
+                visible = canScrollForward,
+            )
         }
         HorizontalDivider()
         Row(
@@ -317,7 +400,11 @@ private fun ReviewStatusSummary(plan: BulkInstallPlan) {
     }
     val attention = plan.items.size - ready - skipped
     Text(
-        text = stringResource(R.string.bulk_install_review_summary, ready, skipped, attention),
+        text = listOf(
+            pluralStringResource(R.plurals.bulk_install_ready_count, ready, ready),
+            pluralStringResource(R.plurals.bulk_install_skipped_count, skipped, skipped),
+            pluralStringResource(R.plurals.bulk_install_attention_count, attention, attention),
+        ).joinToString(" · "),
         modifier = Modifier.padding(top = 2.dp),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -464,32 +551,45 @@ private fun FinishedContent(
         }
         ResultCounters(state.results)
         if (state.results.isNotEmpty()) {
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth().weight(1f, fill = false),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+            val listState = rememberLazyListState()
+            val canScrollForward = rememberLazyListCanScrollForward(listState)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f, fill = false),
             ) {
-                items(state.results, key = { it.itemId }) { result ->
-                    Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                        Text(result.name, style = MaterialTheme.typography.titleSmall)
-                        Text(
-                            resultLabel(result.kind),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = if (result.kind == BulkInstallResultKind.Failed) {
-                                MaterialTheme.colorScheme.error
-                            } else {
-                                MaterialTheme.colorScheme.primary
-                            },
-                        )
-                        result.detail?.let { detail ->
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    state = listState,
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    items(state.results, key = { it.itemId }) { result ->
+                        Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                            Text(result.name, style = MaterialTheme.typography.titleSmall)
                             Text(
-                                detail,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                resultLabel(result.kind),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = if (result.kind == BulkInstallResultKind.Failed) {
+                                    MaterialTheme.colorScheme.error
+                                } else {
+                                    MaterialTheme.colorScheme.primary
+                                },
                             )
+                            result.detail?.let { detail ->
+                                Text(
+                                    detail,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                         }
+                        HorizontalDivider()
                     }
-                    HorizontalDivider()
                 }
+                ScrollableContentHint(
+                    visible = canScrollForward,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
             }
         }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
@@ -529,14 +629,21 @@ private fun ResultCounters(results: List<BulkInstallResult>) {
     val skipped = results.count { it.kind == BulkInstallResultKind.Skipped }
     val failed = results.count { it.kind == BulkInstallResultKind.Failed }
     Text(
-        stringResource(
-            R.string.bulk_install_result_summary,
-            installed,
-            updated,
-            reinstalled,
-            skipped,
-            failed,
-        ),
+        listOf(
+            pluralStringResource(R.plurals.bulk_install_installed_count, installed, installed),
+            pluralStringResource(R.plurals.bulk_install_updated_count, updated, updated),
+            pluralStringResource(
+                R.plurals.bulk_install_reinstalled_count,
+                reinstalled,
+                reinstalled,
+            ),
+            pluralStringResource(
+                R.plurals.bulk_install_skipped_result_count,
+                skipped,
+                skipped,
+            ),
+            pluralStringResource(R.plurals.bulk_install_failed_count, failed, failed),
+        ).joinToString(" · "),
         style = MaterialTheme.typography.bodySmall,
     )
 }

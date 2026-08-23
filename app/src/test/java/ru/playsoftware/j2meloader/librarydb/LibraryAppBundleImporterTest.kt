@@ -45,6 +45,87 @@ class LibraryAppBundleImporterTest {
         assertFalse(File(staging, "icon.png").exists())
     }
 
+    @Test fun universalSinglePayloadMapsIntoTheSharedRestoreShape() {
+        val staging = temporaryFolder.newFolder("universal-staging")
+        val jar = byteArrayOf(1, 2, 3)
+        val descriptor = "MIDlet-Name: Game\nMIDlet-Vendor: Vendor\nMIDlet-Version: 1.0\n"
+        val prepared = LibraryAppBundleImporter.extractUniversalSingleToStaging(
+            input = bundle(
+                "bundle.json" to "{}".toByteArray(),
+                "apps/a0001/" to byteArrayOf(),
+                "apps/a0001/app/res.jar" to jar,
+                "apps/a0001/app/converted.dex.conf" to descriptor.toByteArray(),
+                "apps/a0001/config/" to byteArrayOf(),
+                "apps/a0001/data/save.bin" to byteArrayOf(9),
+            ),
+            staging = staging,
+            app = BundleApp(
+                bundleId = "a0001",
+                title = "Game",
+                vendor = "Vendor",
+                version = "1.0",
+                payloadRoot = "apps/a0001/",
+                sourceSha256 = null,
+                configState = BundleNamespaceState.PresentEmpty,
+                dataState = BundleNamespaceState.Present,
+            ),
+            parseSourceMetadata = true,
+        )
+
+        assertEquals(jar.toList(), prepared.jarFile.readBytes().toList())
+        assertEquals(descriptor, prepared.convertedConfigFile!!.readText())
+        assertTrue(prepared.configDir!!.isDirectory)
+        assertEquals(
+            byteArrayOf(9).toList(),
+            File(requireNotNull(prepared.dataDir), "save.bin").readBytes().toList(),
+        )
+        assertEquals("Game", LibraryAppBundleImporter.readSourceMetadata(prepared)!!.title)
+    }
+
+    @Test fun universalBatchPayloadIsExtractedInOnePassPerManifestOrder() {
+        val staging = temporaryFolder.newFolder("universal-batch-staging")
+        val apps = listOf(
+            BundleApp(
+                bundleId = "a0001",
+                title = "First",
+                vendor = "Vendor",
+                version = "1.0",
+                payloadRoot = "apps/a0001/",
+                sourceSha256 = null,
+                configState = BundleNamespaceState.Absent,
+                dataState = BundleNamespaceState.Absent,
+            ),
+            BundleApp(
+                bundleId = "a0002",
+                title = "Second",
+                vendor = "Vendor",
+                version = "2.0",
+                payloadRoot = "apps/a0002/",
+                sourceSha256 = null,
+                configState = BundleNamespaceState.Present,
+                dataState = BundleNamespaceState.PresentEmpty,
+            ),
+        )
+
+        val prepared = LibraryAppBundleImporter.extractUniversalBatchToStaging(
+            input = bundle(
+                "bundle.json" to "{}".toByteArray(),
+                "apps/a0001/app/res.jar" to byteArrayOf(1),
+                "apps/a0002/app/res.jar" to byteArrayOf(2),
+                "apps/a0002/config/config.json" to byteArrayOf(3),
+                "apps/a0002/data/" to byteArrayOf(),
+            ),
+            staging = staging,
+            apps = apps,
+        )
+
+        assertEquals(listOf("a0001", "a0002"), prepared.map { it.app.bundleId })
+        assertEquals(byteArrayOf(1).toList(), prepared[0].prepared.jarFile.readBytes().toList())
+        assertEquals(byteArrayOf(2).toList(), prepared[1].prepared.jarFile.readBytes().toList())
+        assertEquals(byteArrayOf(3).toList(), File(requireNotNull(prepared[1].prepared.configDir), "config.json").readBytes().toList())
+        assertTrue(requireNotNull(prepared[1].prepared.dataDir).isDirectory)
+    }
+
     @Test fun sourceMetadataPreservesDescriptorOverridesFromOriginalInstall() {
         val descriptor = """
             MIDlet-Name: Game

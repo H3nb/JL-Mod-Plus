@@ -17,28 +17,45 @@ package javax.microedition.lcdui.overlay;
 
 import android.view.View;
 
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.microedition.lcdui.graphics.CanvasWrapper;
+import javax.microedition.util.ContextHolder;
+
+import ru.playsoftware.j2meloader.R;
 
 public class FpsCounter extends TimerTask implements Layer {
 
 	private final View view;
-	private volatile String prevFrameCount = "0";
+	private final String frameRateLabel;
+	private final int pillBackgroundColor;
+	private final int pillContentColor;
+	private volatile String prevFrameCount;
 	private final AtomicInteger totalFrameCount = new AtomicInteger();
 	private final Timer timer;
 
 	public FpsCounter(View view) {
 		this.view = view;
+		frameRateLabel = ContextHolder.getAppContext().getString(R.string.fps_overlay_label);
+		pillBackgroundColor = ContextCompat.getColor(
+				ContextHolder.getAppContext(), R.color.fps_overlay_surface);
+		pillContentColor = ContextCompat.getColor(
+				ContextHolder.getAppContext(), R.color.fps_overlay_content);
+		prevFrameCount = frameRateLabel + " 0";
 		timer = new Timer("FpsCounter", true);
 		// Avoid catch-up bursts after a cached process resumes on Android 16.
 		timer.schedule(this, 0, 1000);
 	}
 
 	public void run() {
-		prevFrameCount = String.valueOf(totalFrameCount.getAndSet(0));
+		prevFrameCount = frameRateLabel + " " + totalFrameCount.getAndSet(0);
 		view.postInvalidate();
 	}
 
@@ -47,9 +64,24 @@ public class FpsCounter extends TimerTask implements Layer {
 	}
 
 	public void paint(CanvasWrapper g) {
-		g.setFillColor(0x90000000);
-		g.setTextColor(0xFF00FF00);
-		g.drawBackgroundedText(prevFrameCount);
+		float density = view.getResources().getDisplayMetrics().density;
+		float margin = 10f * density;
+		float left = margin;
+		float top = margin;
+		WindowInsetsCompat insets = ViewCompat.getRootWindowInsets(view);
+		if (insets != null) {
+			Insets cutout = insets.getInsetsIgnoringVisibility(
+					WindowInsetsCompat.Type.displayCutout());
+			left = Math.max(left, cutout.left + margin);
+			top = Math.max(top, cutout.top + margin);
+		}
+		g.drawPillBackgroundedText(
+				prevFrameCount,
+				pillBackgroundColor,
+				pillContentColor,
+				0.68f,
+				left,
+				top);
 	}
 
 	public void stop() {

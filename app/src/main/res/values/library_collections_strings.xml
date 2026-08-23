@@ -2,7 +2,6 @@
 <resources>
     <string name="library_collection_new">New Collection</string>
     <string name="library_collection_ready_empty_message">Create collections to organize apps without moving their files.</string>
-    <string name="library_collection_member_count">%1$d apps</string>
     <string name="library_collection_add_app">Add to Collection</string>
     <string name="library_collection_add_apps">Add apps</string>
     <string name="library_collection_manage_apps">Choose apps</string>

@@ -10,9 +10,12 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import androidx.core.graphics.scale
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.InputStream
 import java.util.UUID
 import ru.playsoftware.j2meloader.config.Config
 import ru.playsoftware.j2meloader.util.ZipUtils
@@ -37,12 +40,11 @@ object LibraryIconOverride {
     @JvmStatic
     @Throws(IOException::class)
     fun prepare(context: Context, source: Uri): File {
-        val resolver = context.contentResolver
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         try {
-            resolver.openInputStream(source)?.use { input ->
+            openInputStream(context, source).use { input ->
                 BitmapFactory.decodeStream(input, null, bounds)
-            } ?: throw IOException("Unable to open selected icon")
+            }
         } catch (error: SecurityException) {
             throw IOException("Selected icon is no longer readable", error)
         }
@@ -64,9 +66,9 @@ object LibraryIconOverride {
                 inSampleSize = sampleSize.coerceAtLeast(1)
                 inPreferredConfig = Bitmap.Config.ARGB_8888
             }
-            resolver.openInputStream(source)?.use { input ->
+            openInputStream(context, source).use { input ->
                 BitmapFactory.decodeStream(input, null, options)
-            } ?: throw IOException("Unable to reopen selected icon")
+            }
         } catch (error: SecurityException) {
             throw IOException("Selected icon is no longer readable", error)
         } catch (error: OutOfMemoryError) {
@@ -81,7 +83,7 @@ object LibraryIconOverride {
                 val width = (decoded.width * scale).toInt().coerceAtLeast(1)
                 val height = (decoded.height * scale).toInt().coerceAtLeast(1)
                 normalized = try {
-                    Bitmap.createScaledBitmap(decoded, width, height, true)
+                    decoded.scale(width, height, true)
                 } catch (error: OutOfMemoryError) {
                     throw IOException("Selected icon is too large to normalize safely", error)
                 }
@@ -110,6 +112,23 @@ object LibraryIconOverride {
             if (normalized !== decoded) normalized.recycle()
             decoded.recycle()
         }
+    }
+
+    private fun openInputStream(context: Context, source: Uri): InputStream {
+        if (source.scheme == null || source.scheme == "file") {
+            val path = source.path
+                ?: throw IOException("Selected icon has no filesystem path")
+            return try {
+                FileInputStream(File(path))
+            } catch (error: SecurityException) {
+                throw IOException("Selected icon is no longer readable", error)
+            }
+        }
+        return try {
+            context.contentResolver.openInputStream(source)
+        } catch (error: SecurityException) {
+            throw IOException("Selected icon is no longer readable", error)
+        } ?: throw IOException("Unable to open selected icon")
     }
 
     /** Publish a prepared PNG as both the durable override and the effective canonical icon. */

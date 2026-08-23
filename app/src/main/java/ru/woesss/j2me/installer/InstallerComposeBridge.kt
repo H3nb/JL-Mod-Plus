@@ -19,6 +19,7 @@ import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,6 +36,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,7 +55,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import ru.playsoftware.j2meloader.R
+import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.ScrollableContentHint
 
 /** Presentation-only state. Installation and repository ownership remain in InstallerDialog. */
 sealed interface InstallerUiState {
@@ -85,6 +89,12 @@ sealed interface InstallerUiState {
         val startLabel: String,
         val closeLabel: String,
         val iconPath: String?,
+    ) : InstallerUiState
+
+    data class Error(
+        override val title: String,
+        val message: String,
+        val closeLabel: String,
     ) : InstallerUiState
 }
 
@@ -156,6 +166,14 @@ class InstallerComposeController internal constructor(
             iconPath = iconPath,
         )
     }
+
+    fun showError(title: String, message: String, closeLabel: String) {
+        state = InstallerUiState.Error(
+            title = title,
+            message = message,
+            closeLabel = closeLabel,
+        )
+    }
 }
 
 object InstallerComposeBridge {
@@ -180,7 +198,9 @@ fun InstallerScreen(
     val iconPath = when (state) {
         is InstallerUiState.Confirmation -> state.iconPath
         is InstallerUiState.Success -> state.iconPath
-        is InstallerUiState.Loading, is InstallerUiState.Converting -> null
+        is InstallerUiState.Loading,
+        is InstallerUiState.Converting,
+        is InstallerUiState.Error -> null
     }
     val icon = remember(iconPath) {
         iconPath?.let(BitmapFactory::decodeFile)
@@ -252,6 +272,18 @@ fun InstallerScreen(
                         onRun = actions::onRunExisting,
                     )
                 }
+
+                is InstallerUiState.Error -> {
+                    InstallerMessage(state.message, isError = true)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        TextButton(onClick = actions::onClose) {
+                            Text(state.closeLabel)
+                        }
+                    }
+                }
             }
         }
     }
@@ -278,20 +310,36 @@ private fun InstallerProgressMessage(status: String) {
 }
 
 @Composable
-private fun InstallerMessage(message: String) {
-    val maxMessageHeight = LocalConfiguration.current.screenHeightDp
-        .minus(280)
-        .coerceAtLeast(120)
-        .coerceAtMost(360)
-        .dp
-    Text(
-        text = message,
+private fun InstallerMessage(message: String, isError: Boolean = false) {
+    val maxMessageHeight = (availableWindowHeightDp() - 280.dp)
+        .coerceAtLeast(120.dp)
+        .coerceAtMost(360.dp)
+    val scrollState = rememberScrollState()
+    val canScrollForward by androidx.compose.runtime.remember {
+        derivedStateOf { scrollState.value < scrollState.maxValue }
+    }
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(max = maxMessageHeight)
-            .verticalScroll(rememberScrollState()),
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
+            .heightIn(max = maxMessageHeight),
+    ) {
+        Text(
+            text = message,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = maxMessageHeight)
+                .verticalScroll(scrollState),
+            color = if (isError) {
+                MaterialTheme.colorScheme.error
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+        )
+        ScrollableContentHint(
+            visible = canScrollForward,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
+    }
 }
 
 @Composable

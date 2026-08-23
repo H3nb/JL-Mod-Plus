@@ -9,6 +9,7 @@ package ru.playsoftware.j2meloader.librarydb
 import android.app.Application
 import android.content.SharedPreferences
 import android.net.Uri
+import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -193,7 +194,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     fun setSort(value: Int) {
         if (sortVariant.value == value) return
         sortVariant.value = value
-        preferences.edit().putInt(PREF_APP_SORT, value).apply()
+        preferences.edit { putInt(PREF_APP_SORT, value) }
     }
 
     fun observe(owner: LifecycleOwner, observer: StateObserver) {
@@ -467,57 +468,85 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             return
         }
         launchMutation(callback) {
-            val outcome = withContext(Dispatchers.IO) {
-                acquireGenerationLease(generation.generation, generation.emulatorDir).use {
-                    val current = requireNotNull(repository.currentApp(generation, app.id)) {
-                        "Library import target disappeared before restore"
-                    }
-                    check(current.storageKey == app.storageKey) {
-                        "Library import target changed before restore"
-                    }
-                    val sourceMetadata = LibraryAppBundleImporter.readSourceMetadata(prepared)
-                    if (
-                        sourceMetadata != null &&
-                        (sourceMetadata.title != current.sourceTitle ||
-                            sourceMetadata.vendor != current.sourceVendor)
-                    ) {
-                        throw IOException(
-                            "App bundle descriptor identity does not match the retained JAR",
-                        )
-                    }
-                    val result = LibraryAppBundleImporter.restore(
-                        prepared,
-                        generation.emulatorDir,
-                        app.storageKey,
-                    )
-                    ImportRestoreOutcome(result.iconRevision, sourceMetadata)
+            restoreImportedBundleAwait(
+                expectedGeneration = generation.generation,
+                expectedWorkdir = generation.emulatorDir,
+                appId = app.id,
+                storageKey = app.storageKey,
+                prepared = prepared,
+            )
+        }
+    }
+
+    /**
+     * Restores an app-owned bundle while holding the same generation and database checks used by
+     * the single-app import path. Bulk import uses this boundary so filesystem publication and
+     * Room reconciliation cannot drift apart when the active Library changes mid-batch.
+     */
+    suspend fun restoreImportedBundleAwait(
+        expectedGeneration: Long,
+        expectedWorkdir: File,
+        appId: Long,
+        storageKey: String,
+        prepared: LibraryAppBundleImporter.PreparedImport,
+    ) {
+        val generation = token(expectedGeneration, expectedWorkdir)
+        val app = requireNotNull(repository.currentApp(generation, appId)) {
+            "Library import target disappeared before restore"
+        }
+        check(app.storageKey == storageKey) {
+            "Library import target changed before restore"
+        }
+        val outcome = withContext(Dispatchers.IO) {
+            acquireGenerationLease(expectedGeneration, expectedWorkdir).use {
+                val current = requireNotNull(repository.currentApp(generation, appId)) {
+                    "Library import target disappeared before restore"
                 }
-            }
-            val resolvedIconRevision = outcome.iconRevision?.let { revision ->
-                distinctIconRevision(revision, app.iconRevision)
-            } ?: app.iconRevision
-            val sourceMetadata = outcome.sourceMetadata
-            if (sourceMetadata != null) {
-                repository.recordInstalledApp(
-                    expected = generation,
-                    existingId = app.id,
-                    metadata = InstalledAppMetadata(
-                        storageKey = app.storageKey,
-                        sourceTitle = sourceMetadata.title,
-                        sourceVendor = sourceMetadata.vendor,
-                        sourceVersion = sourceMetadata.version,
-                        sourceDescription = sourceMetadata.description,
-                        iconRevision = resolvedIconRevision,
-                        addedAt = app.addedAt ?: System.currentTimeMillis(),
-                    ),
+                check(current.storageKey == storageKey) {
+                    "Library import target changed before restore"
+                }
+                val sourceMetadata = LibraryAppBundleImporter.readSourceMetadata(prepared)
+                if (
+                    sourceMetadata != null &&
+                    (sourceMetadata.title != current.sourceTitle ||
+                        sourceMetadata.vendor != current.sourceVendor)
+                ) {
+                    throw IOException(
+                        "App bundle descriptor identity does not match the retained JAR",
+                    )
+                }
+                val result = LibraryAppBundleImporter.restore(
+                    prepared,
+                    generation.emulatorDir,
+                    storageKey,
                 )
-            } else if (outcome.iconRevision != null) {
-                repository.setIconRevision(
-                    generation,
-                    app.id,
-                    resolvedIconRevision,
-                )
+                ImportRestoreOutcome(result.iconRevision, sourceMetadata)
             }
+        }
+        val resolvedIconRevision = outcome.iconRevision?.let { revision ->
+            distinctIconRevision(revision, app.iconRevision)
+        } ?: app.iconRevision
+        val sourceMetadata = outcome.sourceMetadata
+        if (sourceMetadata != null) {
+            repository.recordInstalledApp(
+                expected = generation,
+                existingId = app.id,
+                metadata = InstalledAppMetadata(
+                    storageKey = storageKey,
+                    sourceTitle = sourceMetadata.title,
+                    sourceVendor = sourceMetadata.vendor,
+                    sourceVersion = sourceMetadata.version,
+                    sourceDescription = sourceMetadata.description,
+                    iconRevision = resolvedIconRevision,
+                    addedAt = app.addedAt ?: System.currentTimeMillis(),
+                ),
+            )
+        } else if (outcome.iconRevision != null) {
+            repository.setIconRevision(
+                generation,
+                app.id,
+                resolvedIconRevision,
+            )
         }
     }
 
@@ -718,6 +747,119 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun addAppsToCollection(
+        collectionId: Long,
+        appIds: Set<Long>,
+        callback: MutationCallback<Unit>,
+    ) {
+        val generation = readyGeneration()
+        val plan = try {
+            generation?.let { token ->
+                LibraryBulkSelectionPlanner.plan(
+                    generation = token.generation,
+                    requestedAppIds = appIds,
+                    availableApps = getApps(appIds),
+                )
+            }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        val collection = try {
+            generation?.let { token -> repository.currentCollection(token, collectionId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || plan == null || !plan.isComplete || collection == null) {
+            callback.complete(null, IllegalStateException("Bulk collection target is no longer available"))
+            return
+        }
+        launchMutation(callback) {
+            repository.setCollectionMemberships(
+                expected = generation,
+                collectionId = collection.id,
+                appIds = plan.apps.map(LibraryAppRow::id),
+                included = true,
+                addedAt = System.currentTimeMillis(),
+            )
+        }
+    }
+
+    /** Deletes selected apps sequentially and preserves per-app outcomes for retry UI. */
+    fun deleteInstalledApps(
+        appIds: Set<Long>,
+        callback: MutationCallback<LibraryBulkOperationResult>,
+    ) {
+        val generation = readyGeneration()
+        val plan = try {
+            generation?.let { token ->
+                LibraryBulkSelectionPlanner.plan(
+                    generation = token.generation,
+                    requestedAppIds = appIds,
+                    availableApps = getApps(appIds),
+                )
+            }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || plan == null || !plan.isComplete) {
+            callback.complete(
+                null,
+                IllegalStateException("Selected Library apps are not available in the active generation"),
+            )
+            return
+        }
+        launchMutation(callback) {
+            withContext(Dispatchers.IO) {
+                val results = ArrayList<LibraryBulkItemResult>(plan.apps.size)
+                acquireGenerationLease(generation.generation, generation.emulatorDir).use {
+                    for ((index, app) in plan.apps.withIndex()) {
+                        if (!repository.isReadyGeneration(generation)) {
+                            plan.apps.drop(index).forEach { remaining ->
+                                results += LibraryBulkItemResult(
+                                    appId = remaining.id,
+                                    storageKey = remaining.storageKey,
+                                    title = remaining.title,
+                                    status = LibraryBulkItemStatus.Skipped,
+                                    detail = "Library generation changed before deletion",
+                                )
+                            }
+                            break
+                        }
+                        try {
+                            LibraryFileOperations.deleteInstalledApp(
+                                context = getApplication(),
+                                emulatorDir = generation.emulatorDir,
+                                storageKey = app.storageKey,
+                            )
+                            repository.removeCatalogApp(generation, app.storageKey)
+                            results += LibraryBulkItemResult(
+                                appId = app.id,
+                                storageKey = app.storageKey,
+                                title = app.title,
+                                status = LibraryBulkItemStatus.Succeeded,
+                            )
+                        } catch (cancelled: CancellationException) {
+                            throw cancelled
+                        } catch (error: Exception) {
+                            results += LibraryBulkItemResult(
+                                appId = app.id,
+                                storageKey = app.storageKey,
+                                title = app.title,
+                                status = LibraryBulkItemStatus.Failed,
+                                detail = error.message,
+                            )
+                        }
+                    }
+                }
+                LibraryBulkOperationResult(
+                    generation = generation.generation,
+                    items = results,
+                    missingAppIds = plan.missingAppIds,
+                )
+            }
+        }
+    }
+
     fun removeCatalogApp(
         expectedGeneration: Long,
         expectedWorkdir: File,
@@ -822,7 +964,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         val legacy = sharedPreferences.getString(PREF_APP_SORT, "name")
         val migrated = if (legacy == "name") LibraryListProjection.SORT_TITLE
         else LibraryListProjection.SORT_DATE
-        sharedPreferences.edit().putInt(PREF_APP_SORT, migrated).apply()
+        sharedPreferences.edit { putInt(PREF_APP_SORT, migrated) }
         migrated
     }
 }

@@ -15,9 +15,11 @@
 package ru.playsoftware.j2meloader.filepicker
 
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -89,6 +91,20 @@ class FilePickerComposeTest {
     }
 
     @Test
+    fun singleSelectionHidesCheckboxes() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                FilePickerScreen(
+                    state = sampleState(),
+                    actions = RecordingActions(AtomicReference("")),
+                )
+            }
+        }
+
+        composeRule.onAllNodesWithTag("file_picker_selection_checkbox").assertCountEquals(0)
+    }
+
+    @Test
     fun multipleSelectionExposesSelectAllAction() {
         val events = AtomicReference<String>("")
         composeRule.setContent {
@@ -107,6 +123,7 @@ class FilePickerComposeTest {
 
         composeRule.onNodeWithContentDescription("Select all files in this folder").performClick()
         assertEquals("select-all", events.get())
+        composeRule.onAllNodesWithTag("file_picker_selection_checkbox").assertCountEquals(1)
     }
 
     @Test

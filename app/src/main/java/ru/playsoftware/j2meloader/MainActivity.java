@@ -19,6 +19,7 @@
 
 package ru.playsoftware.j2meloader;
 
+import android.app.ActivityManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
@@ -44,6 +45,10 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
 
+import io.reactivex.Single;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 import ru.playsoftware.j2meloader.applist.AppsListFragment;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.crashes.CrashReporter;
@@ -57,6 +62,8 @@ import ru.playsoftware.j2meloader.util.FileUtils;
 import ru.playsoftware.j2meloader.util.PickDirResultContract;
 import ru.playsoftware.j2meloader.util.StoragePermissionHelper;
 import ru.woesss.j2me.installer.InstallerDialog;
+import ru.woesss.j2me.installer.BulkInstallerDialog;
+import ru.playsoftware.j2meloader.librarydb.LibraryAppBundleImporter;
 
 public class MainActivity extends AppCompatActivity {
 	private static final long DIAGNOSTIC_RECOVERY_RETRY_MILLIS = 200L;
@@ -92,10 +99,13 @@ public class MainActivity extends AppCompatActivity {
 	private String lastRecoveryNoticeId;
 	private boolean diagnosticRecoveryRetryScheduled;
 	private boolean installerStateSnapshotExists;
+	private boolean bundleRoutingInFlight;
+	private Disposable bundleRouting;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		updateRecentTaskDescription();
 		EdgeToEdgeCompat.enableForComposeLibrary(this);
 		FrameLayout root = new FrameLayout(this);
 		root.setId(R.id.main_host_root);
@@ -176,7 +186,22 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		updateRecentTaskDescription();
 		if (libraryViewModel != null) libraryViewModel.refreshPlayStats();
+	}
+
+	private void updateRecentTaskDescription() {
+		setTaskDescription(new ActivityManager.TaskDescription(getString(R.string.app_name)));
+	}
+
+	@Override
+	protected void onDestroy() {
+		if (bundleRouting != null) {
+			bundleRouting.dispose();
+			bundleRouting = null;
+		}
+		bundleRoutingInFlight = false;
+		super.onDestroy();
 	}
 
 	@Override
@@ -245,11 +270,12 @@ public class MainActivity extends AppCompatActivity {
 		if (completed != null && installerStateSnapshotExists) {
 			recordAcknowledgedInstallerRequest(completed.id);
 		}
-		if (completed != null && completed.bundle) {
+		if (completed != null && completed.bundle
+				&& "content".equals(completed.uri.getScheme())) {
 			try {
 				getContentResolver().releasePersistableUriPermission(
 						completed.uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-			} catch (SecurityException ignored) {
+			} catch (SecurityException | IllegalArgumentException ignored) {
 				// The provider may have supplied only a transient grant.
 			}
 		}
@@ -305,17 +331,56 @@ public class MainActivity extends AppCompatActivity {
 		if (pendingInstallerRequests.isEmpty() || isFinishing() || isDestroyed()) return;
 		if (libraryViewModel == null || libraryViewModel.readyGeneration() == null) return;
 		if (getSupportFragmentManager().isStateSaved()) return;
-		if (getSupportFragmentManager().findFragmentByTag(INSTALLER_TAG) != null) return;
+		if (getSupportFragmentManager().findFragmentByTag(INSTALLER_TAG) != null ||
+				getSupportFragmentManager().findFragmentByTag(BulkInstallerDialog.TAG) != null ||
+				bundleRoutingInFlight) return;
 		if (mainComposeController != null && mainComposeController.isDialogVisible()) return;
 
 		PendingInstallerRequest request = pendingInstallerRequests.peekFirst();
 		if (request == null) return;
 		// Do not dequeue here. Presentation is not consumption: process/activity recreation may happen
 		// while the dialog is loading or converting. The dialog acknowledges only a terminal outcome.
-		InstallerDialog installer = request.bundle
-				? InstallerDialog.newExternalBundleRequest(request.id, request.uri)
-				: InstallerDialog.newExternalRequest(request.id, request.uri);
-		installer.show(getSupportFragmentManager(), INSTALLER_TAG);
+		if (!request.bundle) {
+			InstallerDialog installer = InstallerDialog.newExternalRequest(request.id, request.uri);
+			installer.show(getSupportFragmentManager(), INSTALLER_TAG);
+			return;
+		}
+
+		bundleRoutingInFlight = true;
+		bundleRouting = Single.fromCallable(() ->
+				LibraryAppBundleImporter.requiresBulkImport(getApplicationContext(), request.uri))
+				.subscribeOn(Schedulers.io())
+				.observeOn(AndroidSchedulers.mainThread())
+				.subscribe(requiresBulk -> {
+					bundleRoutingInFlight = false;
+					bundleRouting = null;
+					if (isFinishing() || isDestroyed() ||
+							getSupportFragmentManager().isStateSaved() ||
+							pendingInstallerRequests.peekFirst() != request) {
+						maybeShowPendingInstaller();
+						return;
+					}
+					if (requiresBulk) {
+						BulkInstallerDialog.newBundle(request.uri, request.id)
+								.show(getSupportFragmentManager(), BulkInstallerDialog.TAG);
+					} else {
+						InstallerDialog.newExternalBundleRequest(request.id, request.uri)
+								.show(getSupportFragmentManager(), INSTALLER_TAG);
+					}
+				}, error -> {
+					bundleRoutingInFlight = false;
+					bundleRouting = null;
+					if (isFinishing() || isDestroyed() ||
+							getSupportFragmentManager().isStateSaved() ||
+							pendingInstallerRequests.peekFirst() != request) {
+						maybeShowPendingInstaller();
+						return;
+					}
+					// Keep the existing single-app error surface for malformed/legacy bundles; it owns
+					// request acknowledgement and presents the validation failure consistently.
+					InstallerDialog.newExternalBundleRequest(request.id, request.uri)
+							.show(getSupportFragmentManager(), INSTALLER_TAG);
+				});
 	}
 
 	private void recordAcknowledgedInstallerRequest(String requestId) {

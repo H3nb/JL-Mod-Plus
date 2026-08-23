@@ -18,6 +18,7 @@ import android.content.res.Configuration
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -32,8 +33,10 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -41,6 +44,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -75,6 +79,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -83,6 +88,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size as ComposeSize
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalConfiguration
@@ -90,6 +99,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -104,6 +114,11 @@ import kotlinx.coroutines.launch
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.config.model.Size
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
+import ru.playsoftware.j2meloader.ui.jlModPlusNavigationBarItemColors
+import ru.playsoftware.j2meloader.ui.jlModPlusNavigationRailItemColors
+import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 import kotlin.math.roundToInt
 
 /** Host bridge; ConfigActivity remains the owner of persistence and platform-sensitive flows. */
@@ -173,10 +188,9 @@ data class EncodingPickerRequest(
 )
 
 internal enum class ConfigDestination(val label: Int, val icon: Int) {
-    General(R.string.config_destination_general, R.drawable.ic_config_quick),
-    Graphics(R.string.config_destination_graphics, R.drawable.ic_config_graphics),
+    Basic(R.string.config_destination_general, R.drawable.ic_config_quick),
+    Display(R.string.config_destination_graphics, R.drawable.ic_config_graphics),
     Audio(R.string.config_destination_audio, R.drawable.ic_config_audio),
-    Media(R.string.config_destination_media, R.drawable.ic_config_media),
     Controls(R.string.config_destination_controls, R.drawable.ic_config_controls),
     System(R.string.config_destination_system, R.drawable.ic_config_system),
 }
@@ -284,6 +298,7 @@ internal fun ConfigScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .verticalScroll(pageScrollState)
+                            .imePadding()
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
@@ -360,20 +375,19 @@ private fun ConfigDestinationContent(
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
         when (destination) {
-            ConfigDestination.General -> GeneralDestination(
+            ConfigDestination.Basic -> GeneralDestination(
                 state = state,
                 form = form,
                 onFormChanged = onFormChanged,
                 events = events,
                 showProfileStatus = !isProfile,
             )
-            ConfigDestination.Graphics -> {
+            ConfigDestination.Display -> {
                 ScreenSection(form, state, onFormChanged, events)
                 FontSection(form, state, onFormChanged)
             }
             ConfigDestination.Audio -> AudioSection(form, state, onFormChanged)
-            ConfigDestination.Media -> MediaDestination()
-            ConfigDestination.Controls -> InputSection(form, state, onFormChanged, events, onRequestAction)
+            ConfigDestination.Controls -> InputSection(form, onFormChanged, events, onRequestAction)
             ConfigDestination.System -> {
                 EmulationSection(form, onFormChanged)
                 SystemSection(form, onFormChanged, events, !isProfile, onRequestAction, onEditSystemProperties)
@@ -394,86 +408,96 @@ private fun GeneralDestination(
         ConfigProfilePanel(state.profileStatus, state.profileTemplates, events)
     }
     var presetsDialogVisible by rememberSaveable { mutableStateOf(false) }
-    ConfigSection(title = stringResource(R.string.config_general_settings)) {
+    ConfigSection(title = stringResource(R.string.config_basic_display)) {
         ConfigValuePreference(
-  title = stringResource(R.string.config_screen_size),
-  description = stringResource(R.string.config_help_screen_size),
-  value = "${form.screenWidth} × ${form.screenHeight}",
-  onClick = { presetsDialogVisible = true },
+            title = stringResource(R.string.config_screen_size),
+            description = stringResource(R.string.config_help_screen_size),
+            value = "${form.screenWidth} × ${form.screenHeight}",
+            onClick = { presetsDialogVisible = true },
         )
         val orientationOptions = stringArrayResource(R.array.PREF_ORIENTATION_ENTRIES).toList()
         ConfigChoicePreference(
-  title = stringResource(R.string.PREF_ORIENTATION),
-  description = stringResource(R.string.config_help_orientation),
-  selected = orientationOptions.getOrElse(form.orientation) { orientationOptions.firstOrNull().orEmpty() },
-  options = orientationOptions,
-  onSelected = { index -> onFormChanged(form.toBuilder().orientation(index).build()) },
+            title = stringResource(R.string.PREF_ORIENTATION),
+            description = stringResource(R.string.config_help_orientation),
+            selected = orientationOptions.getOrElse(form.orientation) { orientationOptions.firstOrNull().orEmpty() },
+            options = orientationOptions,
+            onSelected = { index -> onFormChanged(form.toBuilder().orientation(index).build()) },
         )
         val scaleOptions = stringArrayResource(R.array.pref_scale_type_entries).toList()
         ConfigChoicePreference(
-  title = stringResource(R.string.pref_screen_scale_type),
-  description = stringResource(R.string.config_help_scale_type),
-  selected = scaleOptions.getOrElse(form.screenScaleType) { scaleOptions.firstOrNull().orEmpty() },
-  options = scaleOptions,
-  onSelected = { index -> onFormChanged(form.toBuilder().screenScaleType(index).build()) },
+            title = stringResource(R.string.pref_screen_scale_type),
+            description = stringResource(R.string.config_help_scale_type),
+            selected = scaleOptions.getOrElse(form.screenScaleType) { scaleOptions.firstOrNull().orEmpty() },
+            options = scaleOptions,
+            onSelected = { index -> onFormChanged(form.toBuilder().screenScaleType(index).build()) },
         )
         ConfigNumberPreference(
-  title = stringResource(R.string.PREF_SCALE_RATIO),
-  description = stringResource(R.string.config_help_scale_ratio),
-  value = form.screenScaleRatio,
-  fallbackLabel = "100",
-  valueSuffix = "%",
-  keyboardType = KeyboardType.Number,
-  onValueChange = { value ->
-      onFormChanged(form.toBuilder().screenScaleRatio(normalizeScaleRatio(value)).build())
-  },
+            title = stringResource(R.string.PREF_SCALE_RATIO),
+            description = stringResource(R.string.config_help_scale_ratio),
+            value = form.screenScaleRatio,
+            fallbackLabel = "100",
+            valueSuffix = "%",
+            keyboardType = KeyboardType.Number,
+            onValueChange = { value ->
+                onFormChanged(form.toBuilder().screenScaleRatio(normalizeScaleRatio(value)).build())
+            },
         )
         ConfigSwitchPreference(
-  title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
-  description = stringResource(R.string.config_help_virtual_keyboard),
-  checked = form.showKeyboard,
-  onCheckedChange = { checked -> onFormChanged(form.toBuilder().showKeyboard(checked).build()) },
+            title = stringResource(R.string.PREF_FORCE_FULLSCREEN),
+            description = stringResource(R.string.config_help_force_fullscreen),
+            checked = form.forceFullscreen,
+            onCheckedChange = { checked ->
+                onFormChanged(form.toBuilder().forceFullscreen(checked).build())
+            },
+        )
+    }
+    ConfigSection(title = stringResource(R.string.config_basic_input)) {
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
+            description = stringResource(R.string.config_help_virtual_keyboard),
+            checked = form.showKeyboard,
+            onCheckedChange = { checked ->
+                onFormChanged(form.toBuilder().showKeyboard(checked).build())
+            },
         )
         ConfigSwitchPreference(
-  title = stringResource(R.string.PREF_TOUCH_INPUT),
-  description = stringResource(R.string.config_help_touch_input),
-  checked = form.touchInput,
-  onCheckedChange = { checked -> onFormChanged(form.toBuilder().touchInput(checked).build()) },
+            title = stringResource(R.string.PREF_TOUCH_INPUT),
+            description = stringResource(R.string.config_help_touch_input),
+            checked = form.touchInput,
+            onCheckedChange = { checked ->
+                onFormChanged(form.toBuilder().touchInput(checked).build())
+            },
         )
     }
     if (presetsDialogVisible) {
         val selectedPreset = form.screenWidth.toIntOrNull()?.let { width ->
-  form.screenHeight.toIntOrNull()?.let { height -> Size(width, height) }
+            form.screenHeight.toIntOrNull()?.let { height -> Size(width, height) }
         }
         ScreenPresetDialog(
-  presets = state.screenPresets,
-  removablePresets = state.removableScreenPresets,
-  selectedPreset = selectedPreset,
-  onDismissRequest = { presetsDialogVisible = false },
-  onSelected = { preset ->
-      presetsDialogVisible = false
-      onFormChanged(
-          form.toBuilder().screenWidth(preset.width.toString()).screenHeight(preset.height.toString()).build(),
-      )
-  },
-  onSwap = {
-      presetsDialogVisible = false
-      onFormChanged(
-          form.toBuilder().screenWidth(form.screenHeight).screenHeight(form.screenWidth).build(),
-      )
-  },
-  onAdd = events::onAddResolutionPreset,
-  onRemove = events::onRemoveResolutionPreset,
-        )
-    }
-}
-
-@Composable
-private fun MediaDestination() {
-    ConfigCard(title = stringResource(R.string.config_destination_media)) {
-        Text(
-            text = stringResource(R.string.config_media_empty),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            presets = state.screenPresets,
+            removablePresets = state.removableScreenPresets,
+            selectedPreset = selectedPreset,
+            onDismissRequest = { presetsDialogVisible = false },
+            onSelected = { preset ->
+                presetsDialogVisible = false
+                onFormChanged(
+                    form.toBuilder()
+                        .screenWidth(preset.width.toString())
+                        .screenHeight(preset.height.toString())
+                        .build(),
+                )
+            },
+            onSwap = {
+                presetsDialogVisible = false
+                onFormChanged(
+                    form.toBuilder()
+                        .screenWidth(form.screenHeight)
+                        .screenHeight(form.screenWidth)
+                        .build(),
+                )
+            },
+            onAdd = events::onAddResolutionPreset,
+            onRemove = events::onRemoveResolutionPreset,
         )
     }
 }
@@ -493,6 +517,7 @@ private fun ConfigNavigationBar(
             NavigationBarItem(
                 selected = destination == selected,
                 onClick = { onSelected(destination) },
+                colors = jlModPlusNavigationBarItemColors(),
                 icon = {
                     Icon(
                         painter = painterResource(destination.icon),
@@ -520,6 +545,7 @@ private fun ConfigNavigationRail(
             NavigationRailItem(
                 selected = destination == selected,
                 onClick = { onSelected(destination) },
+                colors = jlModPlusNavigationRailItemColors(),
                 icon = {
                     Icon(
                         painter = painterResource(destination.icon),
@@ -555,7 +581,7 @@ private fun ConfigTopBar(
             IconButton(onClick = onBack) {
                 Icon(
                     painter = painterResource(R.drawable.ic_arrow_back),
-                    contentDescription = stringResource(androidx.appcompat.R.string.abc_action_bar_up_description),
+                    contentDescription = stringResource(R.string.action_back),
                 )
             }
         },
@@ -580,118 +606,113 @@ private fun ScreenSection(
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
 ) {
-    var advancedExpanded by rememberSaveable { mutableStateOf(false) }
-    ConfigSection(title = stringResource(R.string.PREF_SCREEN_OPTIONS)) {
+    ConfigSection(title = stringResource(R.string.config_display_appearance)) {
         ConfigColorPreference(
-  title = stringResource(R.string.PREF_BACKGROUND),
-  description = stringResource(R.string.config_help_background),
-  value = form.screenBackground,
-  onClick = { events.onColorPicker(ConfigFormEvents.ColorField.SCREEN_BACKGROUND) },
+            title = stringResource(R.string.PREF_BACKGROUND),
+            description = stringResource(R.string.config_help_background),
+            value = form.screenBackground,
+            onClick = { events.onColorPicker(ConfigFormEvents.ColorField.SCREEN_BACKGROUND) },
         )
         val skinIndex = state.skins.indexOfFirst { it == form.screenBackgroundImage }.coerceAtLeast(0)
         ConfigChoicePreference(
-  title = stringResource(R.string.pref_skin_title),
-  description = stringResource(R.string.config_help_skin),
-  selected = state.skins.getOrElse(skinIndex) { "" },
-  options = state.skins,
-  onSelected = { index ->
-      onFormChanged(
-          form.toBuilder().screenBackgroundImage(if (index == 0) null else state.skins.getOrNull(index)).build(),
-      )
-  },
+            title = stringResource(R.string.pref_skin_title),
+            description = stringResource(R.string.config_help_skin),
+            selected = state.skins.getOrElse(skinIndex) { "" },
+            options = state.skins,
+            onSelected = { index ->
+                onFormChanged(
+                    form.toBuilder().screenBackgroundImage(
+                        if (index == 0) null else state.skins.getOrNull(index),
+                    ).build(),
+                )
+            },
         )
         val gravityOptions = stringArrayResource(R.array.pref_screen_gravity_entries).toList()
         ConfigChoicePreference(
-  title = stringResource(R.string.pref_screen_gravity),
-  description = stringResource(R.string.config_help_screen_gravity),
-  selected = gravityOptions.getOrElse(form.screenGravity) { gravityOptions.firstOrNull().orEmpty() },
-  options = gravityOptions,
-  onSelected = { index -> onFormChanged(form.toBuilder().screenGravity(index).build()) },
+            title = stringResource(R.string.pref_screen_gravity),
+            description = stringResource(R.string.config_help_screen_gravity),
+            selected = gravityOptions.getOrElse(form.screenGravity) { gravityOptions.firstOrNull().orEmpty() },
+            options = gravityOptions,
+            onSelected = { index -> onFormChanged(form.toBuilder().screenGravity(index).build()) },
         )
         ConfigNumberPreference(
-  title = stringResource(R.string.pref_screen_padding_title),
-  description = stringResource(R.string.config_help_screen_padding),
-  value = form.screenPadding,
-  fallbackLabel = "0",
-  keyboardType = KeyboardType.Number,
-  onValueChange = { value -> onFormChanged(form.toBuilder().screenPadding(value).build()) },
+            title = stringResource(R.string.pref_screen_padding_title),
+            description = stringResource(R.string.config_help_screen_padding),
+            value = form.screenPadding,
+            fallbackLabel = "0",
+            keyboardType = KeyboardType.Number,
+            onValueChange = { value -> onFormChanged(form.toBuilder().screenPadding(value).build()) },
         )
         ConfigSwitchPreference(
-  title = stringResource(R.string.PREF_FILTER),
-  description = stringResource(R.string.config_help_filter),
-  checked = form.screenFilter,
-  onCheckedChange = { checked -> onFormChanged(form.toBuilder().screenFilter(checked).build()) },
+            title = stringResource(R.string.PREF_FILTER),
+            description = stringResource(R.string.config_help_filter),
+            checked = form.screenFilter,
+            onCheckedChange = { checked -> onFormChanged(form.toBuilder().screenFilter(checked).build()) },
         )
-        ConfigDisclosurePreference(
-  title = stringResource(R.string.config_advanced_settings),
-  description = stringResource(R.string.config_help_advanced_graphics),
-  expanded = advancedExpanded,
-  onExpandedChange = { advancedExpanded = it },
+    }
+    ConfigSection(title = stringResource(R.string.config_display_rendering)) {
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_IMMEDIATE),
+            description = stringResource(R.string.config_help_immediate),
+            checked = form.immediateMode,
+            onCheckedChange = { checked -> onFormChanged(form.toBuilder().immediateMode(checked).build()) },
         )
-        if (advancedExpanded) {
-  ConfigSwitchPreference(
-      title = stringResource(R.string.PREF_IMMEDIATE),
-      description = stringResource(R.string.config_help_immediate),
-      checked = form.immediateMode,
-      onCheckedChange = { checked -> onFormChanged(form.toBuilder().immediateMode(checked).build()) },
-  )
-  val graphicsOptions = stringArrayResource(R.array.pref_graphics_mode_entries).toList()
-  ConfigChoicePreference(
-      title = stringResource(R.string.pref_graphics_mode_title),
-      description = stringResource(R.string.config_help_graphics_mode),
-      selected = graphicsOptions.getOrElse(form.graphicsMode) { graphicsOptions.firstOrNull().orEmpty() },
-      options = graphicsOptions,
-      onSelected = { index -> onFormChanged(form.toBuilder().graphicsMode(index).build()) },
-  )
-  if (form.graphicsMode == 1) {
-      val shaderIndex = state.shaders.indexOfFirst { it == form.shader }.coerceAtLeast(0)
-      ConfigChoicePreference(
-          title = stringResource(R.string.PREF_SHADER_FILTER),
-          description = stringResource(R.string.config_help_shader),
-          selected = state.shaders.getOrElse(shaderIndex) { "" }.toString(),
-          options = state.shaders.map { it.toString() },
-          onSelected = { index ->
-              onFormChanged(form.toBuilder().shader(if (index == 0) null else state.shaders.getOrNull(index)).build())
-          },
-      )
-      val selectedShader = state.shaders.getOrNull(shaderIndex)
-      if (selectedShader?.hasTunableSettings() == true) {
-          ConfigActionPreference(
-              title = stringResource(R.string.shader_tuning),
-              description = stringResource(R.string.config_help_shader_tuning),
-              onClick = events::onShaderTuning,
-          )
-      }
-  }
-  if (form.graphicsMode == 0 || form.graphicsMode == 3) {
-      ConfigSwitchPreference(
-          title = stringResource(R.string.parallel_screen_redrawing),
-          description = stringResource(R.string.config_help_parallel_redraw),
-          checked = form.parallelRedrawScreen,
-          onCheckedChange = { checked -> onFormChanged(form.toBuilder().parallelRedrawScreen(checked).build()) },
-      )
-  }
-  ConfigSwitchPreference(
-      title = stringResource(R.string.PREF_FORCE_FULLSCREEN),
-      description = stringResource(R.string.config_help_force_fullscreen),
-      checked = form.forceFullscreen,
-      onCheckedChange = { checked -> onFormChanged(form.toBuilder().forceFullscreen(checked).build()) },
-  )
-  ConfigSwitchPreference(
-      title = stringResource(R.string.PREF_SHOW_FPS),
-      description = stringResource(R.string.config_help_show_fps),
-      checked = form.showFps,
-      onCheckedChange = { checked -> onFormChanged(form.toBuilder().showFps(checked).build()) },
-  )
-  ConfigNumberPreference(
-      title = stringResource(R.string.PREF_LIMIT_FPS),
-      description = stringResource(R.string.config_help_fps_limit),
-      value = form.fpsLimit,
-      fallbackLabel = stringResource(R.string.unlimited),
-      keyboardType = KeyboardType.Number,
-      onValueChange = { value -> onFormChanged(form.toBuilder().fpsLimit(value).build()) },
-  )
+        val graphicsOptions = stringArrayResource(R.array.pref_graphics_mode_entries).toList()
+        ConfigChoicePreference(
+            title = stringResource(R.string.pref_graphics_mode_title),
+            description = stringResource(R.string.config_help_graphics_mode),
+            selected = graphicsOptions.getOrElse(form.graphicsMode) { graphicsOptions.firstOrNull().orEmpty() },
+            options = graphicsOptions,
+            onSelected = { index -> onFormChanged(form.toBuilder().graphicsMode(index).build()) },
+        )
+        if (form.graphicsMode == 1) {
+            val shaderIndex = state.shaders.indexOfFirst { it == form.shader }.coerceAtLeast(0)
+            ConfigChoicePreference(
+                title = stringResource(R.string.PREF_SHADER_FILTER),
+                description = stringResource(R.string.config_help_shader),
+                selected = state.shaders.getOrElse(shaderIndex) { "" }.toString(),
+                options = state.shaders.map { it.toString() },
+                onSelected = { index ->
+                    onFormChanged(
+                        form.toBuilder().shader(if (index == 0) null else state.shaders.getOrNull(index)).build(),
+                    )
+                },
+            )
+            val selectedShader = state.shaders.getOrNull(shaderIndex)
+            if (selectedShader?.hasTunableSettings() == true) {
+                ConfigActionPreference(
+                    title = stringResource(R.string.shader_tuning),
+                    description = stringResource(R.string.config_help_shader_tuning),
+                    onClick = events::onShaderTuning,
+                )
+            }
         }
+        if (form.graphicsMode == 0 || form.graphicsMode == 3) {
+            ConfigSwitchPreference(
+                title = stringResource(R.string.parallel_screen_redrawing),
+                description = stringResource(R.string.config_help_parallel_redraw),
+                checked = form.parallelRedrawScreen,
+                onCheckedChange = { checked ->
+                    onFormChanged(form.toBuilder().parallelRedrawScreen(checked).build())
+                },
+            )
+        }
+    }
+    ConfigSection(title = stringResource(R.string.config_display_performance)) {
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_SHOW_FPS),
+            description = stringResource(R.string.config_help_show_fps),
+            checked = form.showFps,
+            onCheckedChange = { checked -> onFormChanged(form.toBuilder().showFps(checked).build()) },
+        )
+        ConfigNumberPreference(
+            title = stringResource(R.string.PREF_LIMIT_FPS),
+            description = stringResource(R.string.config_help_fps_limit),
+            value = form.fpsLimit,
+            fallbackLabel = stringResource(R.string.unlimited),
+            keyboardType = KeyboardType.Number,
+            onValueChange = { value -> onFormChanged(form.toBuilder().fpsLimit(value).build()) },
+        )
     }
 }
 
@@ -709,7 +730,7 @@ internal fun ScreenPresetDialog(
 ) {
     var customResolutionVisible by rememberSaveable { mutableStateOf(false) }
     val landscape = configDialogLandscape()
-    val dialogMaxHeight = (LocalConfiguration.current.screenHeightDp.dp * 0.88f).coerceAtLeast(180.dp)
+    val dialogMaxHeight = (availableWindowHeightDp() * 0.88f).coerceAtLeast(180.dp)
     val listedPresets = if (selectedPreset != null && !presets.contains(selectedPreset)) {
         listOf(selectedPreset) + presets
     } else {
@@ -723,6 +744,8 @@ internal fun ScreenPresetDialog(
     }
 
     val dialogContent: @Composable () -> Unit = {
+        val listState = rememberLazyListState()
+        val canScrollForward = rememberLazyListCanScrollForward(listState)
         Surface(
             modifier = Modifier
                 .fillMaxWidth(if (landscape) 0.90f else 0.92f)
@@ -740,51 +763,60 @@ internal fun ScreenPresetDialog(
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
                 )
-                LazyColumn(
+                Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth(),
                 ) {
-                    itemsIndexed(listedPresets) { index, preset ->
-                        val isTemporary = temporaryPreset && index == 0
-                        ListItem(
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                            headlineContent = {
-                                Text(
-                                    if (isTemporary) {
-                                        stringResource(R.string.config_current_screen_size, preset.toString())
-                                    } else {
-                                        preset.toString()
-                                    },
-                                )
-                            },
-                            leadingContent = {
-                                RadioButton(
-                                    selected = preset == selectedPreset,
-                                    onClick = null,
-                                )
-                            },
-                            trailingContent = if (!isTemporary && removablePresets.contains(preset)) {
-                                {
-                                    IconButton(onClick = { onRemove(preset) }) {
-                                        Icon(
-                                            painter = painterResource(R.drawable.ic_delete_report),
-                                            contentDescription = stringResource(R.string.remove_screen_preset),
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        state = listState,
+                    ) {
+                        itemsIndexed(listedPresets) { index, preset ->
+                            val isTemporary = temporaryPreset && index == 0
+                            ListItem(
+                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                                headlineContent = {
+                                    Text(
+                                        if (isTemporary) {
+                                            stringResource(R.string.config_current_screen_size, preset.toString())
+                                        } else {
+                                            preset.toString()
+                                        },
+                                    )
+                                },
+                                leadingContent = {
+                                    RadioButton(
+                                        selected = preset == selectedPreset,
+                                        onClick = null,
+                                    )
+                                },
+                                trailingContent = if (!isTemporary && removablePresets.contains(preset)) {
+                                    {
+                                        IconButton(onClick = { onRemove(preset) }) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.ic_delete_report),
+                                                contentDescription = stringResource(R.string.remove_screen_preset),
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
                                     }
-                                }
-                            } else {
-                                null
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable(
-                                    role = Role.RadioButton,
-                                    onClick = { selectAndDismiss(preset) },
-                                ),
-                        )
+                                } else {
+                                    null
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(
+                                        role = Role.RadioButton,
+                                        onClick = { selectAndDismiss(preset) },
+                                    ),
+                            )
+                        }
                     }
+                    ScrollableContentHint(
+                        visible = canScrollForward,
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                    )
                 }
                 HorizontalDivider()
                 if (onSwap != null) {
@@ -869,25 +901,49 @@ internal fun ScreenPresetDialog(
 private fun configDialogLandscape(): Boolean =
     LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-private fun configDialogModifier(landscape: Boolean): Modifier = if (landscape) {
-    Modifier
+private fun Modifier.configDialogModifier(landscape: Boolean): Modifier = if (landscape) {
+    this
         .fillMaxWidth(0.90f)
         .widthIn(max = 840.dp)
 } else {
-    Modifier.widthIn(max = 560.dp)
+    this.widthIn(max = 560.dp)
 }
 
 @Composable
-private fun configDialogBodyModifier(landscape: Boolean): Modifier {
-    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+private fun ConfigDialogScrollableBody(
+    landscape: Boolean,
+    verticalArrangement: Arrangement.Vertical,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val screenHeight = availableWindowHeightDp()
     val maxBodyHeight = if (landscape) {
         (screenHeight * 0.48f).coerceAtLeast(120.dp)
     } else {
         (screenHeight * 0.62f).coerceAtLeast(220.dp)
     }
-    return Modifier
-        .heightIn(max = maxBodyHeight)
-        .verticalScroll(rememberScrollState())
+    val scrollState = rememberScrollState()
+    val canScrollForward by androidx.compose.runtime.remember {
+        androidx.compose.runtime.derivedStateOf { scrollState.value < scrollState.maxValue }
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = maxBodyHeight)
+            .imePadding(),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = maxBodyHeight)
+                .verticalScroll(scrollState),
+            verticalArrangement = verticalArrangement,
+            content = content,
+        )
+        ScrollableContentHint(
+            visible = canScrollForward,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
+    }
 }
 
 @Composable
@@ -904,21 +960,21 @@ internal fun CustomResolutionDialog(
         mutableStateOf(fallback.height.toString())
     }
     var lockAspect by rememberSaveable(fallback.width, fallback.height) { mutableStateOf(false) }
-    var aspectWidth by rememberSaveable(fallback.width, fallback.height) { mutableStateOf(fallback.width) }
-    var aspectHeight by rememberSaveable(fallback.width, fallback.height) { mutableStateOf(fallback.height) }
+    var aspectWidth by rememberSaveable(fallback.width, fallback.height) { mutableIntStateOf(fallback.width) }
+    var aspectHeight by rememberSaveable(fallback.width, fallback.height) { mutableIntStateOf(fallback.height) }
     val validWidth = width.toIntOrNull()?.takeIf { it > 0 }
     val validHeight = height.toIntOrNull()?.takeIf { it > 0 }
     val valid = validWidth != null && validHeight != null
     val landscape = configDialogLandscape()
 
     AlertDialog(
-        modifier = configDialogModifier(landscape),
+        modifier = Modifier.configDialogModifier(landscape),
         properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(R.string.config_custom_resolution)) },
         text = {
-            Column(
-                modifier = configDialogBodyModifier(landscape),
+            ConfigDialogScrollableBody(
+                landscape = landscape,
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Row(
@@ -1009,9 +1065,8 @@ private fun FontSection(
     state: ConfigUiState,
     onFormChanged: (ConfigFormState) -> Unit,
 ) {
-    var advancedExpanded by rememberSaveable { mutableStateOf(false) }
     var fontSizesVisible by rememberSaveable { mutableStateOf(false) }
-    ConfigSection(title = stringResource(R.string.PREF_FONT_OPTIONS)) {
+    ConfigSection(title = stringResource(R.string.config_display_text)) {
         ConfigValuePreference(
             title = stringResource(R.string.config_font_sizes),
             description = stringResource(R.string.config_help_font_sizes),
@@ -1045,28 +1100,20 @@ private fun FontSection(
                 }
             },
         )
-        ConfigDisclosurePreference(
-            title = stringResource(R.string.config_advanced_settings),
-            description = stringResource(R.string.config_help_advanced_font),
-            expanded = advancedExpanded,
-            onExpandedChange = { advancedExpanded = it },
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_FONT_SIZE_IN_SP),
+            description = stringResource(R.string.config_help_font_dimensions),
+            checked = form.fontApplyDimensions,
+            onCheckedChange = { checked ->
+                onFormChanged(form.toBuilder().fontApplyDimensions(checked).build())
+            },
         )
-        if (advancedExpanded) {
-            ConfigSwitchPreference(
-                title = stringResource(R.string.PREF_FONT_SIZE_IN_SP),
-                description = stringResource(R.string.config_help_font_dimensions),
-                checked = form.fontApplyDimensions,
-                onCheckedChange = { checked ->
-                    onFormChanged(form.toBuilder().fontApplyDimensions(checked).build())
-                },
-            )
-            ConfigSwitchPreference(
-                title = stringResource(R.string.PREF_FONT_ANTI_ALIASING),
-                description = stringResource(R.string.config_help_font_aa),
-                checked = form.fontAA,
-                onCheckedChange = { checked -> onFormChanged(form.toBuilder().fontAA(checked).build()) },
-            )
-        }
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_FONT_ANTI_ALIASING),
+            description = stringResource(R.string.config_help_font_aa),
+            checked = form.fontAA,
+            onCheckedChange = { checked -> onFormChanged(form.toBuilder().fontAA(checked).build()) },
+        )
     }
     if (fontSizesVisible) {
         FontSizesDialog(
@@ -1101,13 +1148,13 @@ internal fun FontSizesDialog(
     var largeDraft by remember(large) { mutableStateOf(large) }
     val landscape = configDialogLandscape()
     AlertDialog(
-        modifier = configDialogModifier(landscape),
+        modifier = Modifier.configDialogModifier(landscape),
         properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(R.string.config_font_sizes)) },
         text = {
-            Column(
-                modifier = configDialogBodyModifier(landscape),
+            ConfigDialogScrollableBody(
+                landscape = landscape,
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Text(
@@ -1149,7 +1196,7 @@ private fun FontSizeField(
     value: String,
     onValueChange: (String) -> Unit,
     labelRes: Int,
-    modifier: Modifier = Modifier.fillMaxWidth(),
+    modifier: Modifier = Modifier,
 ) {
     OutlinedTextField(
         value = value,
@@ -1164,13 +1211,11 @@ private fun FontSizeField(
 @Composable
 private fun InputSection(
     form: ConfigFormState,
-    state: ConfigUiState,
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
     onRequestAction: (ConfigAction) -> Unit,
 ) {
-    var advancedExpanded by rememberSaveable { mutableStateOf(false) }
-    ConfigSection(title = stringResource(R.string.pref_input_devices_title)) {
+    ConfigSection(title = stringResource(R.string.config_controls_key_input)) {
         val layoutOptions = stringArrayResource(R.array.PREF_LAYOUT_ENTRIES).toList()
         ConfigChoicePreference(
             title = stringResource(R.string.PREF_LAYOUT),
@@ -1184,88 +1229,88 @@ private fun InputSection(
             description = stringResource(R.string.config_help_key_mapping),
             onClick = events::onKeyMappings,
         )
+    }
+    ConfigSection(title = stringResource(R.string.config_controls_virtual_keyboard)) {
         ConfigSwitchPreference(
             title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
-            description = stringResource(R.string.config_help_virtual_keyboard_controls),
+            description = stringResource(R.string.config_help_virtual_keyboard),
             checked = form.showKeyboard,
             onCheckedChange = { checked -> onFormChanged(form.toBuilder().showKeyboard(checked).build()) },
         )
         if (form.showKeyboard) {
-            ConfigDisclosurePreference(
-                title = stringResource(R.string.config_advanced_settings),
-                description = stringResource(R.string.config_help_advanced_controls),
-                expanded = advancedExpanded,
-                onExpandedChange = { advancedExpanded = it },
+            val shapeOptions = stringArrayResource(R.array.pref_button_shape_entries).toList()
+            ConfigChoicePreference(
+                title = stringResource(R.string.pref_button_shape_title),
+                description = stringResource(R.string.config_help_vk_button_shape),
+                selected = shapeOptions.getOrElse(form.vkButtonShape) { shapeOptions.firstOrNull().orEmpty() },
+                options = shapeOptions,
+                onSelected = { index -> onFormChanged(form.toBuilder().vkButtonShape(index).build()) },
             )
-            if (advancedExpanded) {
-                val shapeOptions = stringArrayResource(R.array.pref_button_shape_entries).toList()
-                ConfigChoicePreference(
-                    title = stringResource(R.string.pref_button_shape_title),
-                    description = stringResource(R.string.config_help_vk_button_shape),
-                    selected = shapeOptions.getOrElse(form.vkButtonShape) { shapeOptions.firstOrNull().orEmpty() },
-                    options = shapeOptions,
-                    onSelected = { index -> onFormChanged(form.toBuilder().vkButtonShape(index).build()) },
-                )
-                ConfigSwitchPreference(
-                    title = stringResource(R.string.PREF_VK_FEEDBACK),
-                    description = stringResource(R.string.config_help_vk_feedback),
-                    checked = form.vkFeedback,
-                    onCheckedChange = { checked -> onFormChanged(form.toBuilder().vkFeedback(checked).build()) },
-                )
-                ConfigSliderPreference(
-                    title = stringResource(R.string.PREF_VK_ALPHA),
-                    description = stringResource(R.string.config_help_vk_alpha),
-                    value = form.vkAlpha,
-                    valueRange = 0..255,
-                    onSelected = { value -> onFormChanged(form.toBuilder().vkAlpha(value).build()) },
-                )
-                ConfigSwitchPreference(
-                    title = stringResource(R.string.PREF_VK_FORCE_OPACITY),
-                    description = stringResource(R.string.config_help_vk_force_opacity),
-                    checked = form.vkForceOpacity,
-                    onCheckedChange = { checked -> onFormChanged(form.toBuilder().vkForceOpacity(checked).build()) },
-                )
-                ConfigNumberPreference(
-                    title = stringResource(R.string.PREF_VK_HIDE_DELAY),
-                    description = stringResource(R.string.config_help_vk_hide_delay),
-                    value = form.vkHideDelay,
-                    fallbackLabel = stringResource(R.string.pref_vk_hide_hint),
-                    valueSuffix = stringResource(R.string.PREF_UNIT_MS),
-                    keyboardType = KeyboardType.Number,
-                    onValueChange = { value -> onFormChanged(form.toBuilder().vkHideDelay(value).build()) },
-                )
-                ConfigColorPreference(
-                    title = stringResource(R.string.PREF_VK_FORE),
-                    description = stringResource(R.string.config_help_vk_foreground),
-                    value = form.vkForeground,
-                    onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_FOREGROUND) },
-                )
-                ConfigColorPreference(
-                    title = stringResource(R.string.PREF_VK_BACK),
-                    description = stringResource(R.string.config_help_vk_background),
-                    value = form.vkBackground,
-                    onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_BACKGROUND) },
-                )
-                ConfigColorPreference(
-                    title = stringResource(R.string.PREF_VK_SEL_FORE),
-                    description = stringResource(R.string.config_help_vk_selected_foreground),
-                    value = form.vkSelectedForeground,
-                    onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_FOREGROUND) },
-                )
-                ConfigColorPreference(
-                    title = stringResource(R.string.PREF_VK_SEL_BACK),
-                    description = stringResource(R.string.config_help_vk_selected_background),
-                    value = form.vkSelectedBackground,
-                    onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_BACKGROUND) },
-                )
-                ConfigColorPreference(
-                    title = stringResource(R.string.PREF_VK_OUTLINE),
-                    description = stringResource(R.string.config_help_vk_outline),
-                    value = form.vkOutline,
-                    onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_OUTLINE) },
-                )
-            }
+            ConfigSwitchPreference(
+                title = stringResource(R.string.PREF_VK_FEEDBACK),
+                description = stringResource(R.string.config_help_vk_feedback),
+                checked = form.vkFeedback,
+                onCheckedChange = { checked -> onFormChanged(form.toBuilder().vkFeedback(checked).build()) },
+            )
+            ConfigSliderPreference(
+                title = stringResource(R.string.PREF_VK_ALPHA),
+                description = stringResource(R.string.config_help_vk_alpha),
+                value = form.vkAlpha,
+                valueRange = 0..255,
+                onSelected = { value -> onFormChanged(form.toBuilder().vkAlpha(value).build()) },
+            )
+            ConfigSwitchPreference(
+                title = stringResource(R.string.PREF_VK_FORCE_OPACITY),
+                description = stringResource(R.string.config_help_vk_force_opacity),
+                checked = form.vkForceOpacity,
+                onCheckedChange = { checked -> onFormChanged(form.toBuilder().vkForceOpacity(checked).build()) },
+            )
+            ConfigNumberPreference(
+                title = stringResource(R.string.PREF_VK_HIDE_DELAY),
+                description = stringResource(R.string.config_help_vk_hide_delay),
+                value = form.vkHideDelay,
+                fallbackLabel = stringResource(R.string.pref_vk_hide_hint),
+                valueSuffix = stringResource(R.string.PREF_UNIT_MS),
+                keyboardType = KeyboardType.Number,
+                onValueChange = { value -> onFormChanged(form.toBuilder().vkHideDelay(value).build()) },
+            )
         }
+    }
+    ConfigSection(title = stringResource(R.string.config_controls_virtual_keyboard_colors)) {
+        if (form.showKeyboard) {
+            ConfigColorPreference(
+                title = stringResource(R.string.PREF_VK_FORE),
+                description = stringResource(R.string.config_help_vk_foreground),
+                value = form.vkForeground,
+                onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_FOREGROUND) },
+            )
+            ConfigColorPreference(
+                title = stringResource(R.string.PREF_VK_BACK),
+                description = stringResource(R.string.config_help_vk_background),
+                value = form.vkBackground,
+                onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_BACKGROUND) },
+            )
+            ConfigColorPreference(
+                title = stringResource(R.string.PREF_VK_SEL_FORE),
+                description = stringResource(R.string.config_help_vk_selected_foreground),
+                value = form.vkSelectedForeground,
+                onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_FOREGROUND) },
+            )
+            ConfigColorPreference(
+                title = stringResource(R.string.PREF_VK_SEL_BACK),
+                description = stringResource(R.string.config_help_vk_selected_background),
+                value = form.vkSelectedBackground,
+                onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_BACKGROUND) },
+            )
+            ConfigColorPreference(
+                title = stringResource(R.string.PREF_VK_OUTLINE),
+                description = stringResource(R.string.config_help_vk_outline),
+                value = form.vkOutline,
+                onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_OUTLINE) },
+            )
+        }
+    }
+    ConfigSection(title = stringResource(R.string.config_controls_maintenance)) {
         ConfigActionPreference(
             title = stringResource(R.string.RESET_LAYOUT_CMD),
             description = stringResource(R.string.config_help_reset_layout),
@@ -1349,7 +1394,6 @@ private fun SystemSection(
       title = stringResource(R.string.config_delete_game_data),
       description = stringResource(R.string.config_delete_game_data_summary),
       destructive = true,
-      emphasized = true,
       onClick = { onRequestAction(ConfigAction.ClearData) },
   )
         }
@@ -1364,7 +1408,11 @@ private fun ConfigSystemPropertiesPreference(
     ConfigValuePreference(
         title = stringResource(R.string.config_edit_system_properties),
         description = stringResource(R.string.config_help_system_properties),
-        value = stringResource(R.string.config_system_properties_value, value.lineSequence().count { it.isNotBlank() }),
+        value = pluralStringResource(
+            R.plurals.config_system_properties_value,
+            value.lineSequence().count { it.isNotBlank() },
+            value.lineSequence().count { it.isNotBlank() },
+        ),
         message = stringResource(R.string.config_system_properties_info),
         onClick = onClick,
     )
@@ -1398,7 +1446,7 @@ internal fun ConfigSystemPropertiesPage(
                     IconButton(onClick = onBack) {
                         Icon(
                             painter = painterResource(R.drawable.ic_arrow_back),
-                            contentDescription = stringResource(androidx.appcompat.R.string.abc_action_bar_up_description),
+                            contentDescription = stringResource(R.string.action_back),
                         )
                     }
                 },
@@ -1440,14 +1488,12 @@ private fun SettingActionRow(
     title: String,
     summary: String? = null,
     destructive: Boolean = false,
-    emphasized: Boolean = false,
     onClick: () -> Unit,
 ) {
     ConfigActionPreference(
         title = title,
         description = summary ?: stringResource(R.string.config_help_action_generic),
         destructive = destructive,
-        emphasized = emphasized,
         onClick = onClick,
     )
 }
@@ -1466,7 +1512,7 @@ private fun ConfigActionConfirmationDialog(
     }
     val landscape = configDialogLandscape()
     AlertDialog(
-        modifier = configDialogModifier(landscape),
+        modifier = Modifier.configDialogModifier(landscape),
         properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(action.title)) },
@@ -1485,27 +1531,6 @@ private fun ConfigActionConfirmationDialog(
             }
         },
     )
-}
-
-@Composable
-private fun AdvancedSettingsRow(
-    expanded: Boolean,
-    onExpandedChange: (Boolean) -> Unit,
-) {
-    ConfigDisclosurePreference(
-        title = stringResource(R.string.config_advanced_settings),
-        description = stringResource(R.string.config_help_advanced_generic),
-        expanded = expanded,
-        onExpandedChange = onExpandedChange,
-    )
-}
-
-@Composable
-private fun ConfigCard(
-    title: String,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    ConfigSection(title = title, content = content)
 }
 
 @Composable
@@ -1607,13 +1632,13 @@ internal fun ConfigNumberDialog(
     val landscape = configDialogLandscape()
 
     AlertDialog(
-        modifier = configDialogModifier(landscape),
+        modifier = Modifier.configDialogModifier(landscape),
         properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(title) },
         text = {
-            Column(
-                modifier = configDialogBodyModifier(landscape),
+            ConfigDialogScrollableBody(
+                landscape = landscape,
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 if (description != null) {
@@ -1625,13 +1650,13 @@ internal fun ConfigNumberDialog(
                 }
                 OutlinedTextField(
                     value = draft,
-                onValueChange = { draft = it },
-                modifier = Modifier.fillMaxWidth(),
-                label = label?.let { value ->
-                    { Text(value, maxLines = 1, overflow = TextOverflow.Ellipsis) }
-                },
-                suffix = valueSuffix?.let { suffix -> { Text(suffix) } },
-                singleLine = true,
+                    onValueChange = { draft = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = label?.let { value ->
+                        { Text(value, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                    },
+                    suffix = valueSuffix?.let { suffix -> { Text(suffix) } },
+                    singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
                 )
             }
@@ -1694,17 +1719,16 @@ internal fun ConfigSliderDialog(
     onConfirm: (Int) -> Unit,
 ) {
     var draftText by remember(initialValue) { mutableStateOf(initialValue.toString()) }
-    val range = valueRange.first.toFloat()..valueRange.last.toFloat()
     val landscape = configDialogLandscape()
 
     AlertDialog(
-        modifier = configDialogModifier(landscape),
+        modifier = Modifier.configDialogModifier(landscape),
         properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(title) },
         text = {
-            Column(
-                modifier = configDialogBodyModifier(landscape),
+            ConfigDialogScrollableBody(
+                landscape = landscape,
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 if (description != null) {
@@ -1715,36 +1739,73 @@ internal fun ConfigSliderDialog(
                     )
                 }
                 val draftValue = draftText.toIntOrNull()
-                val sliderValue = (draftValue ?: initialValue).coerceIn(valueRange)
-                OutlinedTextField(
-                    value = draftText,
-                    onValueChange = { draftText = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                )
+                val currentValue = (draftValue ?: initialValue).coerceIn(valueRange)
                 Slider(
-                    value = sliderValue.toFloat(),
-                    onValueChange = { draftText = it.roundToInt().toString() },
-                    valueRange = range,
-                    steps = (valueRange.last - valueRange.first - 1).coerceAtLeast(0),
-                    modifier = Modifier.fillMaxWidth(),
+                    value = currentValue.toFloat(),
+                    onValueChange = { value -> draftText = value.roundToInt().toString() },
+                    valueRange = valueRange.first.toFloat()..valueRange.last.toFloat(),
+                    // Keep the control visually continuous. A step for every integer makes
+                    // Material3 draw hundreds of tick marks, which turns the track into a
+                    // distracting double line for ranges such as 0..255.
+                    steps = 0,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp),
+                    colors = SliderDefaults.colors(
+                        thumbColor = MaterialTheme.colorScheme.primary,
+                        activeTrackColor = MaterialTheme.colorScheme.primary,
+                        inactiveTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.28f),
+                    ),
+                    track = { sliderState ->
+                        val primary = MaterialTheme.colorScheme.primary
+                        val inactive = primary.copy(alpha = 0.28f)
+                        Canvas(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(6.dp),
+                        ) {
+                            val range = valueRange.last - valueRange.first
+                            val fraction = if (range <= 0) {
+                                0f
+                            } else {
+                                ((sliderState.value - valueRange.first.toFloat()) / range.toFloat())
+                                    .coerceIn(0f, 1f)
+                            }
+                            val radius = size.height / 2f
+                            drawRoundRect(
+                                color = inactive,
+                                topLeft = Offset.Zero,
+                                size = size,
+                                cornerRadius = CornerRadius(radius, radius),
+                            )
+                            val activeWidth = size.width * fraction
+                            if (activeWidth > 0f) {
+                                drawRoundRect(
+                                    color = primary,
+                                    topLeft = Offset.Zero,
+                                    size = ComposeSize(activeWidth, size.height),
+                                    cornerRadius = CornerRadius(radius, radius),
+                                )
+                            }
+                        }
+                    },
                     thumb = {
+                        // Keep the target easy to drag without adding endpoint icons.
                         Box(
                             modifier = Modifier
                                 .size(24.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary),
+                                .shadow(2.dp, CircleShape)
+                                .background(MaterialTheme.colorScheme.primary, CircleShape),
                         )
                     },
-                    track = { sliderState ->
-                        SliderDefaults.Track(
-                            sliderState = sliderState,
-                            colors = SliderDefaults.colors(),
-                            thumbTrackGapSize = 0.dp,
-                            trackInsideCornerSize = 8.dp,
-                        )
-                    },
+                )
+                OutlinedTextField(
+                    value = draftText,
+                    onValueChange = { draftText = it },
+                    label = { Text(stringResource(R.string.config_current_value)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -1753,6 +1814,9 @@ internal fun ConfigSliderDialog(
                     Text(valueRange.first.toString(), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(valueRange.last.toString(), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+                // Reserve a small clear area for the automatic scroll affordance so it never
+                // obscures the range labels when the dialog is height-constrained.
+                Spacer(Modifier.height(28.dp))
             }
         },
         dismissButton = {
@@ -1762,7 +1826,9 @@ internal fun ConfigSliderDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = { onConfirm(draftText.toInt().coerceIn(valueRange)) },
+                onClick = {
+                    draftText.toIntOrNull()?.let { onConfirm(it.coerceIn(valueRange)) }
+                },
                 enabled = draftText.toIntOrNull() != null,
             ) {
                 Text(stringResource(android.R.string.ok))
@@ -1821,7 +1887,7 @@ internal fun ConfigChoiceDialog(
 ) {
     val landscape = configDialogLandscape()
     AlertDialog(
-        modifier = configDialogModifier(landscape),
+        modifier = Modifier.configDialogModifier(landscape),
         properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(title) },
@@ -1834,31 +1900,46 @@ internal fun ConfigChoiceDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                LazyColumn(modifier = Modifier.heightIn(max = if (landscape) 180.dp else 360.dp)) {
-                itemsIndexed(options) { index, option ->
-                    ListItem(
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        headlineContent = {
-                            Text(
-                                text = option,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
+                val listState = rememberLazyListState()
+                val canScrollForward = rememberLazyListCanScrollForward(listState)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = if (landscape) 180.dp else 360.dp),
+                ) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth(),
+                        state = listState,
+                    ) {
+                        itemsIndexed(options) { index, option ->
+                            ListItem(
+                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                                headlineContent = {
+                                    Text(
+                                        text = option,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                },
+                                leadingContent = {
+                                    RadioButton(
+                                        selected = option == selected,
+                                        onClick = null,
+                                    )
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(
+                                        role = Role.RadioButton,
+                                        onClick = { onSelected(index) },
+                                    ),
                             )
-                        },
-                        leadingContent = {
-                            RadioButton(
-                                selected = option == selected,
-                                onClick = null,
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(
-                                role = Role.RadioButton,
-                                onClick = { onSelected(index) },
-                            ),
+                        }
+                    }
+                    ScrollableContentHint(
+                        visible = canScrollForward,
+                        modifier = Modifier.align(Alignment.BottomCenter),
                     )
-                }
                 }
             }
         },

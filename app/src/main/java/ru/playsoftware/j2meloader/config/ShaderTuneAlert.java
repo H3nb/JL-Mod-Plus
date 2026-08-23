@@ -31,6 +31,7 @@ import androidx.compose.ui.platform.ComposeView;
 import androidx.fragment.app.DialogFragment;
 
 import ru.playsoftware.j2meloader.R;
+import ru.playsoftware.j2meloader.ui.ThemedToast;
 
 /** Compose shader tuning surface; shader values and callback ownership remain unchanged. */
 public class ShaderTuneAlert extends DialogFragment {
@@ -55,7 +56,7 @@ public class ShaderTuneAlert extends DialogFragment {
 		}
 		shader = requireArguments().getParcelable(SHADER_KEY);
 		if (shader == null) {
-			Toast.makeText(context, R.string.error, Toast.LENGTH_SHORT).show();
+			ThemedToast.show(context, R.string.error, Toast.LENGTH_SHORT);
 			dismiss();
 		}
 	}

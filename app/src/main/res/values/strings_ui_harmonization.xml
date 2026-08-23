@@ -1,20 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_library_appearance">Library Appearance</string>
     <string name="settings_section_midlet_runtime">MIDlet Runtime</string>
     <string name="settings_section_storage">Storage</string>
+    <string name="settings_section_profiles">Profiles</string>
+    <string name="settings_profiles_summary">Manage reusable MIDlet configuration profiles.</string>
     <string name="pref_use_display_cutout_title">Use Display Cutout In MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Allow compatible MIDlet Canvas content to use the display-cutout area when the runtime can do so safely.</string>
+    <string name="pref_use_display_cutout_summary">Allow compatible MIDlet Canvas content and the ActionBar to use the display-cutout area. It cannot be used with the system status bar.</string>
+    <string name="dialog_scroll_hint">Swipe to continue</string>
+    <string name="pref_accent_title">Accent Color</string>
+    <string name="pref_accent_blue">Default Blue</string>
+    <string name="pref_accent_teal">Teal</string>
+    <string name="pref_accent_green">Green</string>
+    <string name="pref_accent_amber">Amber</string>
+    <string name="pref_accent_rose">Rose</string>
+    <string name="pref_accent_violet">Violet</string>
+    <string name="pref_accent_indigo">Indigo</string>
+    <string name="pref_accent_cyan">Cyan</string>
+    <string name="pref_accent_orange">Orange</string>
+    <string name="pref_accent_pink">Pink</string>
+    <string name="runtime_invalid_intent">Invalid launch request: the MIDlet path is missing.</string>
+    <string name="runtime_no_midlets">No MIDlets were found in this application.</string>
+    <string name="midlet_running_notification_title">MIDlet Running</string>
+    <string name="midlet_running_notification_text">%1$s is running in the background.</string>
+    <string name="midlet_running_notification_channel">MIDlet Runtime</string>
+    <string name="library_selection_checkbox_description">Select %1$s</string>
+    <string name="library_selection_checked">Selected</string>
+    <string name="library_selection_unchecked">Not selected</string>
 
-    <string name="library_options_library_title">Library View</string>
-    <string name="library_options_application_title">Application</string>
-    <string name="library_options_diagnostics_title">Diagnostics</string>
-    <string name="library_options_information_title">Help &amp; Information</string>
-    <string name="library_options_session_title">Session</string>
     <string name="library_action_settings_summary">Configure global behavior and appearance.</string>
     <string name="library_action_crash_reports_summary">Review retained crash reports and diagnostic evidence.</string>
     <string name="library_action_save_log_summary">Save the current application log for troubleshooting.</string>
     <string name="library_action_about_summary">Version, project, and maintainer information.</string>
+    <string name="library_action_licenses_summary">Third-party notices and license terms included with the app.</string>
     <string name="library_action_help_summary">Usage guidance and common controls.</string>
-    <string name="library_action_exit_summary">Close JL-Mod Plus.</string>
+    <string name="library_bulk_delete_apps">Delete</string>
+    <string name="library_bulk_add_collection">Add To Collection</string>
+    <string name="library_bulk_share_apps">Share Apps</string>
+    <string name="library_bulk_reinstall_apps">Reinstall</string>
+    <string name="library_bulk_export_apps">Export Bundle</string>
+    <string name="library_enhanced_icons_title">Enhanced Icons</string>
+    <string name="library_enhanced_icons_summary">Improve source icons with adaptive sizing and color treatment.</string>
 </resources>
