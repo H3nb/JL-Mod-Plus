@@ -50,6 +50,8 @@
     <string name="install_jar_non_matched_jad">This app differs from the one described in the JAD.\nIgnore the JAD and install anyway?</string>
     <string name="file_picker_select_file">Select File</string>
     <string name="file_picker_select_folder">Select Folder</string>
+    <string name="file_picker_select_app_bundle">Select App Bundle</string>
+    <string name="file_picker_select_icon">Select Icon</string>
     <string name="file_picker_navigate_back">Back to Parent Folder</string>
     <string name="file_picker_cancel">Cancel</string>
     <string name="file_picker_search">Search</string>
@@ -71,7 +73,7 @@
     <string name="file_picker_empty_folder">Folder is empty</string>
     <string name="file_picker_no_matches">No matches</string>
     <string name="file_picker_permission_required">Storage Permission Required</string>
-    <string name="file_picker_permission_message">Allow storage access to browse JAR, JAD, and KJX files.</string>
+    <string name="file_picker_permission_message">Allow storage access to browse app bundles, icons, and MIDlet files.</string>
     <string name="file_picker_permission_denied">Storage access was not granted.</string>
     <string name="file_picker_grant_access">Grant Access</string>
     <string name="file_picker_retry">Retry</string>

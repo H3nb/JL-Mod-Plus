@@ -253,6 +253,8 @@
     <string name="removed">Dihapus %1$s</string>
     <string name="file_picker_select_file">Pilih Berkas</string>
     <string name="file_picker_select_folder">Pilih Folder</string>
+    <string name="file_picker_select_app_bundle">Pilih Bundel Aplikasi</string>
+    <string name="file_picker_select_icon">Pilih Ikon</string>
     <string name="file_picker_navigate_back">Kembali ke Folder Induk</string>
     <string name="file_picker_cancel">Batal</string>
     <string name="file_picker_search">Cari</string>
@@ -273,7 +275,7 @@
     <string name="file_picker_empty_folder">Folder kosong</string>
     <string name="file_picker_no_matches">Tidak ada kecocokan</string>
     <string name="file_picker_permission_required">Izin Penyimpanan Diperlukan</string>
-    <string name="file_picker_permission_message">Izinkan akses penyimpanan untuk menelusuri berkas JAR, JAD, dan KJX.</string>
+    <string name="file_picker_permission_message">Izinkan akses penyimpanan untuk menelusuri bundel aplikasi, ikon, dan berkas MIDlet.</string>
     <string name="file_picker_permission_denied">Akses penyimpanan tidak diberikan.</string>
     <string name="file_picker_grant_access">Berikan Akses</string>
     <string name="file_picker_retry">Coba Lagi</string>

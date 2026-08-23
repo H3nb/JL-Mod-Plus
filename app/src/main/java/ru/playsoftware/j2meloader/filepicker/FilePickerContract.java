@@ -28,6 +28,8 @@ public final class FilePickerContract {
 	public static final String EXTRA_SINGLE_CLICK = "nononsense.intent.SINGLE_CLICK";
 	public static final String EXTRA_ALLOW_MULTIPLE = "android.intent.extra.ALLOW_MULTIPLE";
 	public static final String EXTRA_ALLOW_EXISTING_FILE = "android.intent.extra.ALLOW_EXISTING_FILE";
+	public static final String EXTRA_ALLOWED_EXTENSIONS = "nononsense.intent.ALLOWED_EXTENSIONS";
+	public static final String EXTRA_TITLE = "nononsense.intent.TITLE";
 	public static final String EXTRA_PATHS = "nononsense.intent.PATHS";
 
 	public static final int MODE_FILE = 0;

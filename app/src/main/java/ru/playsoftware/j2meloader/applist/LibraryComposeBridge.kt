@@ -305,6 +305,7 @@ interface LibraryActions {
         description: String,
     ) = Unit
     fun onPickIcon(appId: Int) = Unit
+    fun onPickIconByDatabaseId(databaseId: Long) = Unit
     fun onResetIcon(appId: Int) = Unit
     fun onLayoutChange(layout: LibraryLayout)
     fun onIconRatioChange(iconRatio: LibraryIconRatio) = Unit
@@ -927,7 +928,7 @@ fun LibraryScreen(
                             description,
                         )
                     },
-                    onPickIcon = { actions.onPickIcon(app.id) },
+                    onPickIcon = { actions.onPickIconByDatabaseId(app.databaseId) },
                     onResetIcon = { actions.onResetIcon(app.id) },
                 )
             }

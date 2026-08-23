@@ -18,6 +18,7 @@ import android.content.res.Configuration
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -32,6 +33,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
@@ -87,6 +89,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size as ComposeSize
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalConfiguration
@@ -1739,21 +1744,57 @@ internal fun ConfigSliderDialog(
                     value = currentValue.toFloat(),
                     onValueChange = { value -> draftText = value.roundToInt().toString() },
                     valueRange = valueRange.first.toFloat()..valueRange.last.toFloat(),
-                    steps = (valueRange.last - valueRange.first - 1).coerceAtLeast(0),
+                    // Keep the control visually continuous. A step for every integer makes
+                    // Material3 draw hundreds of tick marks, which turns the track into a
+                    // distracting double line for ranges such as 0..255.
+                    steps = 0,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 52.dp),
+                        .heightIn(min = 48.dp),
                     colors = SliderDefaults.colors(
                         thumbColor = MaterialTheme.colorScheme.primary,
                         activeTrackColor = MaterialTheme.colorScheme.primary,
                         inactiveTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.28f),
                     ),
+                    track = { sliderState ->
+                        val primary = MaterialTheme.colorScheme.primary
+                        val inactive = primary.copy(alpha = 0.28f)
+                        Canvas(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(6.dp),
+                        ) {
+                            val range = valueRange.last - valueRange.first
+                            val fraction = if (range <= 0) {
+                                0f
+                            } else {
+                                ((sliderState.value - valueRange.first.toFloat()) / range.toFloat())
+                                    .coerceIn(0f, 1f)
+                            }
+                            val radius = size.height / 2f
+                            drawRoundRect(
+                                color = inactive,
+                                topLeft = Offset.Zero,
+                                size = size,
+                                cornerRadius = CornerRadius(radius, radius),
+                            )
+                            val activeWidth = size.width * fraction
+                            if (activeWidth > 0f) {
+                                drawRoundRect(
+                                    color = primary,
+                                    topLeft = Offset.Zero,
+                                    size = ComposeSize(activeWidth, size.height),
+                                    cornerRadius = CornerRadius(radius, radius),
+                                )
+                            }
+                        }
+                    },
                     thumb = {
-                        // Keep the control visually prominent without adding endpoint icons.
+                        // Keep the target easy to drag without adding endpoint icons.
                         Box(
                             modifier = Modifier
-                                .size(32.dp)
-                                .shadow(3.dp, CircleShape)
+                                .size(24.dp)
+                                .shadow(2.dp, CircleShape)
                                 .background(MaterialTheme.colorScheme.primary, CircleShape),
                         )
                     },
@@ -1773,6 +1814,9 @@ internal fun ConfigSliderDialog(
                     Text(valueRange.first.toString(), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(valueRange.last.toString(), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+                // Reserve a small clear area for the automatic scroll affordance so it never
+                // obscures the range labels when the dialog is height-constrained.
+                Spacer(Modifier.height(28.dp))
             }
         },
         dismissButton = {

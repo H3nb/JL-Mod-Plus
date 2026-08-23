@@ -208,7 +208,7 @@ fun FilePickerScreen(
                 title = {
                     Column {
                         Text(
-                            text = stringResource(pickerTitle(state.request)),
+                            text = state.request.title ?: stringResource(pickerTitle(state.request)),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )

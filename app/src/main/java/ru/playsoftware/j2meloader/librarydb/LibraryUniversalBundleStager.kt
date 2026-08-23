@@ -10,6 +10,7 @@ package ru.playsoftware.j2meloader.librarydb
 import android.content.Context
 import android.net.Uri
 import java.io.File
+import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.util.UUID
@@ -92,9 +93,20 @@ internal object LibraryUniversalBundleStager {
         false
     }
 
-    private fun openSource(context: Context, source: Uri): InputStream = try {
-        context.contentResolver.openInputStream(source)
-    } catch (error: SecurityException) {
-        throw IOException("Selected app bundle is no longer readable", error)
-    } ?: throw IOException("Unable to open selected app bundle")
+    private fun openSource(context: Context, source: Uri): InputStream {
+        if (source.scheme == null || source.scheme == "file") {
+            val path = source.path
+                ?: throw IOException("Selected app bundle has no filesystem path")
+            return try {
+                FileInputStream(File(path))
+            } catch (error: SecurityException) {
+                throw IOException("Selected app bundle is no longer readable", error)
+            }
+        }
+        return try {
+            context.contentResolver.openInputStream(source)
+        } catch (error: SecurityException) {
+            throw IOException("Selected app bundle is no longer readable", error)
+        } ?: throw IOException("Unable to open selected app bundle")
+    }
 }

@@ -263,11 +263,12 @@ public class MainActivity extends AppCompatActivity {
 		if (completed != null && installerStateSnapshotExists) {
 			recordAcknowledgedInstallerRequest(completed.id);
 		}
-		if (completed != null && completed.bundle) {
+		if (completed != null && completed.bundle
+				&& "content".equals(completed.uri.getScheme())) {
 			try {
 				getContentResolver().releasePersistableUriPermission(
 						completed.uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-			} catch (SecurityException ignored) {
+			} catch (SecurityException | IllegalArgumentException ignored) {
 				// The provider may have supplied only a transient grant.
 			}
 		}

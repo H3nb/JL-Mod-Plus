@@ -32,7 +32,6 @@ import static ru.playsoftware.j2meloader.util.Constants.PREF_LAST_PATH;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -44,8 +43,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContract;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.compose.ui.platform.ComposeView;
@@ -72,6 +69,7 @@ import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.config.ProfilesActivity;
 import ru.playsoftware.j2meloader.crashes.CrashReportsActivity;
 import ru.playsoftware.j2meloader.filepicker.FilePickerContract;
+import ru.playsoftware.j2meloader.filepicker.FilePickerResultContract;
 import ru.playsoftware.j2meloader.filepicker.FilteredFilePickerActivity;
 import ru.playsoftware.j2meloader.librarydb.LibraryAppRow;
 import ru.playsoftware.j2meloader.librarydb.LibraryGenerationToken;
@@ -103,85 +101,18 @@ public class AppsListFragment extends Fragment {
     private static final String STATE_PENDING_ICON_DATABASE_ID =
             "apps_list.pending_icon_database_id";
 
-    private final ActivityResultLauncher<Void> openFileLauncher = registerForActivityResult(
-            new ActivityResultContract<Void, List<Uri>>() {
-                @NonNull
-                @Override
-                public Intent createIntent(@NonNull Context context, Void input) {
-                    Intent intent = new Intent(context, FilteredFilePickerActivity.class);
-                    intent.putExtra(FilePickerContract.EXTRA_ALLOW_MULTIPLE, true);
-                    intent.putExtra(FilePickerContract.EXTRA_SINGLE_CLICK, false);
-                    intent.putExtra(FilePickerContract.EXTRA_ALLOW_CREATE_DIR, false);
-                    intent.putExtra(FilePickerContract.EXTRA_MODE, FilePickerContract.MODE_FILE);
-                    String path = preferences.getString(PREF_LAST_PATH, null);
-                    if (path == null) {
-                        File dir = Environment.getExternalStorageDirectory();
-                        if (dir.canRead()) path = dir.getAbsolutePath();
-                    }
-                    intent.putExtra(FilePickerContract.EXTRA_START_PATH, path);
-                    return intent;
-                }
-
-                @Override
-                public List<Uri> parseResult(int resultCode, @Nullable Intent intent) {
-                    if (resultCode != Activity.RESULT_OK || intent == null) {
-                        return List.of();
-                    }
-                    Set<Uri> uris = new java.util.LinkedHashSet<>();
-                    ArrayList<String> paths = intent.getStringArrayListExtra(
-                            FilePickerContract.EXTRA_PATHS);
-                    if (paths != null) {
-                        for (String path : paths) {
-                            if (path != null && !path.isBlank()) uris.add(Uri.parse(path));
-                        }
-                    }
-                    if (intent.getClipData() != null) {
-                        for (int i = 0; i < intent.getClipData().getItemCount(); i++) {
-                            Uri uri = intent.getClipData().getItemAt(i).getUri();
-                            if (uri != null) uris.add(uri);
-                        }
-                    }
-                    if (intent.getData() != null) uris.add(intent.getData());
-                    return new ArrayList<>(uris);
-                }
-            },
+    private final ActivityResultLauncher<Intent> openFileLauncher = registerForActivityResult(
+            new FilePickerResultContract(),
             this::onFilesPicked);
 
-    private final ActivityResultLauncher<String[]> importBundleLauncher = registerForActivityResult(
-            new ActivityResultContracts.OpenDocument(),
-            this::onImportBundlePicked);
+    private final ActivityResultLauncher<Intent> importBundleLauncher = registerForActivityResult(
+            new FilePickerResultContract(),
+            uris -> onImportBundlePicked(uris.isEmpty() ? null : uris.get(0)));
 
     private long pendingIconDatabaseId = NO_GENERATION;
-    /**
-     * Use an explicit single-image document contract instead of relying on the array MIME
-     * overload. A few Android document providers return the selected item through ClipData even
-     * for a single selection; parsing both result shapes keeps the icon edit flow reliable.
-     */
-    private final ActivityResultLauncher<Void> iconPickerLauncher = registerForActivityResult(
-            new ActivityResultContract<Void, Uri>() {
-                @NonNull
-                @Override
-                public Intent createIntent(@NonNull Context context, Void input) {
-                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT)
-                            .addCategory(Intent.CATEGORY_OPENABLE)
-                            .setType("image/*");
-                    intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false);
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
-                            | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-                    return intent;
-                }
-
-                @Override
-                @Nullable
-                public Uri parseResult(int resultCode, @Nullable Intent intent) {
-                    if (resultCode != Activity.RESULT_OK || intent == null) return null;
-                    if (intent.getClipData() != null && intent.getClipData().getItemCount() > 0) {
-                        return intent.getClipData().getItemAt(0).getUri();
-                    }
-                    return intent.getData();
-                }
-            },
-            this::onIconPicked);
+    private final ActivityResultLauncher<Intent> iconPickerLauncher = registerForActivityResult(
+            new FilePickerResultContract(),
+            uris -> onIconPicked(uris.isEmpty() ? null : uris.get(0)));
 
     private final Map<Integer, LibraryAppRow> rowsByUiId = new HashMap<>();
     private final Map<Long, Integer> uiIdsByDatabaseId = new HashMap<>();
@@ -316,11 +247,18 @@ public class AppsListFragment extends Fragment {
             }
 
             @Override
-            public void onPickIcon(int appId) {
-                LibraryAppRow row = findRow(appId);
-                if (row == null) return;
-                pendingIconDatabaseId = row.getId();
-                iconPickerLauncher.launch(null);
+            public void onPickIconByDatabaseId(long databaseId) {
+                pendingIconDatabaseId = databaseId;
+                iconPickerLauncher.launch(createFilePickerIntent(
+                        false,
+                        true,
+                        getString(R.string.file_picker_select_icon),
+                        ".png",
+                        ".jpg",
+                        ".jpeg",
+                        ".webp",
+                        ".gif",
+                        ".bmp"));
             }
 
             @Override
@@ -409,16 +347,17 @@ public class AppsListFragment extends Fragment {
 
             @Override
             public void onInstall() {
-                openFileLauncher.launch(null);
+                openFileLauncher.launch(createFilePickerIntent(true, false, null,
+                        ".jad", ".jar", ".kjx"));
             }
 
             @Override
             public void onImportAppBundle() {
-                importBundleLauncher.launch(new String[]{
-                        "application/zip",
-                        "application/x-zip-compressed",
-                        "application/octet-stream"
-                });
+                importBundleLauncher.launch(createFilePickerIntent(
+                        false,
+                        true,
+                        getString(R.string.file_picker_select_app_bundle),
+                        ".zip"));
             }
 
             @Override
@@ -1003,6 +942,39 @@ public class AppsListFragment extends Fragment {
         }
     }
 
+    private Intent createFilePickerIntent(
+            boolean allowMultiple,
+            boolean singleClick,
+            @Nullable String title,
+            String... allowedExtensions) {
+        Intent intent = new Intent(requireContext(), FilteredFilePickerActivity.class);
+        intent.putExtra(FilePickerContract.EXTRA_ALLOW_MULTIPLE, allowMultiple);
+        intent.putExtra(FilePickerContract.EXTRA_SINGLE_CLICK, singleClick);
+        intent.putExtra(FilePickerContract.EXTRA_ALLOW_CREATE_DIR, false);
+        intent.putExtra(FilePickerContract.EXTRA_MODE, FilePickerContract.MODE_FILE);
+        if (title != null) {
+            intent.putExtra(FilePickerContract.EXTRA_TITLE, title);
+        }
+        ArrayList<String> normalizedExtensions = new ArrayList<>();
+        for (String extension : allowedExtensions) {
+            if (extension != null && !extension.isBlank()) {
+                normalizedExtensions.add(extension);
+            }
+        }
+        if (!normalizedExtensions.isEmpty()) {
+            intent.putStringArrayListExtra(
+                    FilePickerContract.EXTRA_ALLOWED_EXTENSIONS,
+                    normalizedExtensions);
+        }
+        String path = preferences.getString(PREF_LAST_PATH, null);
+        if (path == null) {
+            File dir = Environment.getExternalStorageDirectory();
+            if (dir.canRead()) path = dir.getAbsolutePath();
+        }
+        intent.putExtra(FilePickerContract.EXTRA_START_PATH, path);
+        return intent;
+    }
+
     private void onFilesPicked(List<Uri> uris) {
         if (uris == null || uris.isEmpty() || !isAdded()) return;
         Uri first = uris.get(0);
@@ -1021,12 +993,6 @@ public class AppsListFragment extends Fragment {
 
     private void onImportBundlePicked(Uri uri) {
         if (uri == null) return;
-        try {
-            requireContext().getContentResolver().takePersistableUriPermission(
-                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        } catch (SecurityException ignored) {
-            // Some document providers expose only the active transient read grant.
-        }
         Activity activity = requireActivity();
         if (activity instanceof MainActivity) {
             ((MainActivity) activity).requestBundleInstaller(uri);
@@ -1039,12 +1005,6 @@ public class AppsListFragment extends Fragment {
         long databaseId = pendingIconDatabaseId;
         pendingIconDatabaseId = NO_GENERATION;
         if (uri == null || databaseId == NO_GENERATION || !isAdded()) return;
-        try {
-            requireContext().getContentResolver().takePersistableUriPermission(
-                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        } catch (SecurityException ignored) {
-            // Some providers expose only a transient read grant.
-        }
         libraryViewModel.updateIcon(databaseId, uri, (ignored, error) -> {
             if (error != null) showError(error);
         });
