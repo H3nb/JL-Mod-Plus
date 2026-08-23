@@ -88,6 +88,22 @@ public final class PresentationMailbox {
 		return false;
 	}
 
+	/**
+	 * Completes and disarms the active request even when a newer publication is pending. This is
+	 * used by bounded synchronous drains so a later producer or host retry can re-arm the mailbox.
+	 */
+	public synchronized boolean completeAndRelease(long expectedGeneration, long consumedSequence) {
+		if (!open || generation != expectedGeneration || !renderScheduled) {
+			return false;
+		}
+		if (consumedSequence > renderedSequence) {
+			renderedSequence = consumedSequence;
+		}
+		boolean pending = publishedSequence > renderedSequence;
+		renderScheduled = false;
+		return pending;
+	}
+
 	/** Releases a renderer request after a transient presentation failure. */
 	public synchronized boolean releaseAfterFailure(long expectedGeneration) {
 		if (!open || generation != expectedGeneration || !renderScheduled) {

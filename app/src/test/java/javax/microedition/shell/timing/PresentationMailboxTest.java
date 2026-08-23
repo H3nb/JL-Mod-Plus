@@ -35,6 +35,19 @@ public class PresentationMailboxTest {
 	}
 
 	@Test
+	public void boundedSynchronousDrainCanReleasePendingFrameForRetry() {
+		PresentationMailbox mailbox = new PresentationMailbox();
+		long generation = mailbox.begin();
+		long first = mailbox.publish();
+		assertTrue(mailbox.trySchedule(generation));
+		long second = mailbox.publish();
+
+		assertTrue(mailbox.completeAndRelease(generation, first));
+		assertTrue(mailbox.trySchedule(generation));
+		assertFalse(mailbox.complete(generation, second));
+	}
+
+	@Test
 	public void repeatedRenderOfSameSequenceIsNotConsideredAFrameRequest() {
 		PresentationMailbox mailbox = new PresentationMailbox();
 		long generation = mailbox.begin();
