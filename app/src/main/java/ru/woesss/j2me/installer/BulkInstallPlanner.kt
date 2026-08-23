@@ -8,6 +8,7 @@
 package ru.woesss.j2me.installer
 
 import android.net.Uri
+import androidx.core.net.toUri
 import io.reactivex.Single
 import java.io.File
 import java.io.FileInputStream
@@ -300,7 +301,7 @@ object BulkInstallPlanner {
             val descriptor = Descriptor(jad, true)
             val jarUrl = descriptor.jarUrl
                 ?: return JadResolution.Error("JAD has no MIDlet-Jar-URL")
-            val parsedUri = Uri.parse(jarUrl)
+            val parsedUri = jarUrl.toUri()
             val scheme = parsedUri.scheme
             if (scheme != null) {
                 return if (scheme.equals("http", true) || scheme.equals("https", true)) {

@@ -124,6 +124,25 @@ class InstallerComposeTest {
         assertEquals(1, actions.closeCount)
     }
 
+    @Test
+    fun errorStateKeepsAVisibleCloseAction() {
+        val actions = RecordingInstallerActions()
+        setState(
+            InstallerUiState.Error(
+                title = "App Bundle Import Failed",
+                message = "The selected app bundle is invalid or damaged.",
+                closeLabel = "Close",
+            ),
+            actions,
+        )
+
+        composeRule.onNodeWithText("The selected app bundle is invalid or damaged.")
+            .assertIsDisplayed()
+        composeRule.onNodeWithText("Close").performClick()
+
+        assertEquals(1, actions.closeCount)
+    }
+
     private fun setState(
         state: InstallerUiState,
         actions: RecordingInstallerActions = RecordingInstallerActions(),

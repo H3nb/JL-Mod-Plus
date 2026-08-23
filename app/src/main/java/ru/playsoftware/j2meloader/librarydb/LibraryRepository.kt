@@ -263,6 +263,18 @@ class LibraryRepository(
         }
     }
 
+    suspend fun setCollectionMemberships(
+        expected: LibraryGenerationToken,
+        collectionId: Long,
+        appIds: List<Long>,
+        included: Boolean,
+        addedAt: Long,
+    ) {
+        withActiveDatabase(expected) { dao ->
+            dao.setCollectionMemberships(collectionId, appIds, included, addedAt)
+        }
+    }
+
     suspend fun collectionAppIds(
         expected: LibraryGenerationToken,
         collectionId: Long,

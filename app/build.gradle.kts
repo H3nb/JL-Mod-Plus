@@ -249,7 +249,7 @@ dependencies {
     // Android local-unit-test configurations otherwise resolve sqlite-bundled's Android variant,
     // whose JNI binaries cannot load on the Linux host. Pin the dedicated JVM artifact only for
     // host DB execution; production continues to use AndroidSQLiteDriver/sqlite-framework.
-    testImplementation("androidx.sqlite:sqlite-bundled-jvm:2.7.0")
+    testImplementation(libs.androidx.sqlite.bundled.jvm)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }

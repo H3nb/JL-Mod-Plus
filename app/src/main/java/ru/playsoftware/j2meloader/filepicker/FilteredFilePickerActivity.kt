@@ -20,7 +20,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.SystemClock
 import android.widget.Toast
-import androidx.annotation.Nullable
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +28,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.ThemedToast
 import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat
 import ru.playsoftware.j2meloader.util.StoragePermissionHelper
 import java.io.File
@@ -47,18 +47,18 @@ class FilteredFilePickerActivity : AppCompatActivity() {
         if (::controller.isInitialized) {
             controller.onPermissionResult(granted)
             if (!granted) {
-                Toast.makeText(
+                ThemedToast.show(
                     this,
                     R.string.file_picker_permission_denied,
                     Toast.LENGTH_SHORT,
-                ).show()
+                )
                 setResult(RESULT_CANCELED)
                 finish()
             }
         }
     }
 
-    override fun onCreate(@Nullable savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         EdgeToEdgeCompat.enableIfSupported(this)
 
@@ -177,7 +177,7 @@ class FilteredFilePickerActivity : AppCompatActivity() {
             return
         }
         lastBackPressAt = now
-        Toast.makeText(this, R.string.msg_press_again_to_close, Toast.LENGTH_SHORT).show()
+        ThemedToast.show(this, R.string.msg_press_again_to_close, Toast.LENGTH_SHORT)
     }
 
     private fun exitPicker() {

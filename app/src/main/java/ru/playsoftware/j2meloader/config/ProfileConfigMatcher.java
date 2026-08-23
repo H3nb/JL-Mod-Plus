@@ -161,7 +161,7 @@ final class ProfileConfigMatcher {
 		return sameConfig(effective, candidate);
 	}
 
-	private static boolean sameConfig(ProfileModel left, ProfileModel right) {
+	static boolean sameConfig(ProfileModel left, ProfileModel right) {
 		left = copy(left);
 		right = copy(right);
 		left.systemProperties = ConfigFormState.normalizeSystemProperties(left.systemProperties);

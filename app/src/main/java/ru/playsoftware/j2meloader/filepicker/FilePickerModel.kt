@@ -20,13 +20,15 @@ import java.io.IOException
 import java.util.Locale
 
 /** The launch configuration consumed by the app-owned picker. */
-data class FilePickerRequest(
+data class FilePickerRequest @JvmOverloads constructor(
     val startPath: String?,
     val mode: Int,
     val allowMultiple: Boolean,
     val singleClick: Boolean,
     val allowCreateDirectory: Boolean,
     val allowExistingFile: Boolean,
+    val allowedExtensions: Set<String> = FilePickerRules.DEFAULT_ALLOWED_EXTENSIONS,
+    val title: String? = null,
 ) {
     val allowsDirectories: Boolean
         get() = mode == FilePickerContract.MODE_DIR || mode == FilePickerContract.MODE_FILE_AND_DIR
@@ -50,6 +52,10 @@ data class FilePickerRequest(
                 FilePickerContract.EXTRA_ALLOW_EXISTING_FILE,
                 true,
             ),
+            allowedExtensions = FilePickerRules.normalizeAllowedExtensions(
+                intent.getStringArrayListExtra(FilePickerContract.EXTRA_ALLOWED_EXTENSIONS),
+            ),
+            title = intent.getStringExtra(FilePickerContract.EXTRA_TITLE),
         )
     }
 }
@@ -105,7 +111,19 @@ data class FilePickerState(
 
 /** Pure path, filtering, and ordering rules shared by production code and tests. */
 object FilePickerRules {
-    private val allowedExtensions = setOf(".jad", ".jar", ".kjx")
+    val DEFAULT_ALLOWED_EXTENSIONS: Set<String> = setOf(".jad", ".jar", ".kjx")
+
+    fun normalizeAllowedExtensions(values: Iterable<String>?): Set<String> {
+        val normalized = (values ?: emptyList())
+            .map(String::trim)
+            .filter(String::isNotEmpty)
+            .map { extension ->
+                val lower = extension.lowercase(Locale.ROOT)
+                if (lower.startsWith('.')) lower else ".${lower}"
+            }
+            .toSet()
+        return normalized.ifEmpty { DEFAULT_ALLOWED_EXTENSIONS }
+    }
 
     fun normalizeStartPath(startPath: String?, root: File): File {
         val requested = startPath
@@ -128,7 +146,12 @@ object FilePickerRules {
         return if (isWithinRoot(absolute, rootAbsolute)) absolute else rootAbsolute
     }
 
-    fun isVisible(file: File, mode: Int, allowExistingFile: Boolean = false): Boolean {
+    fun isVisible(
+        file: File,
+        mode: Int,
+        allowExistingFile: Boolean = false,
+        allowedExtensions: Set<String> = DEFAULT_ALLOWED_EXTENSIONS,
+    ): Boolean {
         // Android marks hidden files through File.isHidden on device storage, but
         // dotfiles are not consistently reported as hidden on every host/JVM.
         if (file.isHidden || file.name.startsWith(".")) {
@@ -155,10 +178,11 @@ object FilePickerRules {
         mode: Int,
         allowExistingFile: Boolean = false,
         root: File? = null,
+        allowedExtensions: Set<String> = DEFAULT_ALLOWED_EXTENSIONS,
     ): List<FilePickerEntry> = files
         .filter { file ->
             (root == null || isWithinRoot(file, root)) &&
-                isVisible(file, mode, allowExistingFile)
+                isVisible(file, mode, allowExistingFile, allowedExtensions)
         }
         .sortedWith(
             compareBy<File> { !it.isDirectory }

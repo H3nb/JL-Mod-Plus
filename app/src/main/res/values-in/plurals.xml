@@ -1,7 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <plurals name="file_picker_selected_count">
-        <item quantity="one">%1$d Dipilih</item>
         <item quantity="other">%1$d Dipilih</item>
+    </plurals>
+    <plurals name="library_selection_count">
+        <item quantity="other">%1$d aplikasi</item>
+    </plurals>
+    <plurals name="library_collection_member_count">
+        <item quantity="other">%1$d aplikasi</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="other">%1$d aplikasi ditemukan</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="other">%1$d dipilih</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="other">%1$d siap</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="other">%1$d dilewati</item>
+    </plurals>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="other">%1$d perlu ditinjau</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="other">%1$d terinstal</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="other">%1$d diperbarui</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="other">%1$d diinstal ulang</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="other">%1$d dilewati</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="other">%1$d gagal</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="other">%1$d peringatan</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="other">%1$d berkas tambahan tidak disertakan agar peninjauan tetap responsif.</item>
+    </plurals>
+    <plurals name="config_system_properties_value">
+        <item quantity="other">%1$d properti</item>
+    </plurals>
+    <plurals name="library_bulk_delete_confirmation">
+        <item quantity="other">Hapus %1$d aplikasi? Berkas aplikasi dan entri katalog akan dihapus.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_result">
+        <item quantity="other">%1$d aplikasi dihapus; %2$d gagal.</item>
     </plurals>
 </resources>

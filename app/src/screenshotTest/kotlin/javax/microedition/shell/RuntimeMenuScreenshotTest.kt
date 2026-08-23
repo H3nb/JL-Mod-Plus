@@ -166,7 +166,6 @@ private fun RuntimeMenuPreview(
         state = state,
         menuVisible = menuVisible,
         actions = NoOpRuntimeMenuActions,
-        onOpenMenu = {},
         onDismissMenu = {},
         modifier = modifier,
     )

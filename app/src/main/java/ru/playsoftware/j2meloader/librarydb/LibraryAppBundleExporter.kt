@@ -52,6 +52,8 @@ object LibraryAppBundleExporter {
         storageKey: String,
         displayTitle: String,
         onProgress: ((Progress) -> Unit)? = null,
+        sourceVendor: String = "",
+        sourceVersion: String = "",
     ): PreparedExport = prepareMutex.withLock {
         withContext(Dispatchers.IO) {
             requireSafeStorageKey(storageKey)
@@ -63,7 +65,27 @@ object LibraryAppBundleExporter {
             val target = File(directory, fileName)
             val staging = File(directory, "$fileName.tmp")
             try {
-                exportToZip(emulatorDir, storageKey, staging, onProgress)
+                if (sourceVendor.isNotBlank() && sourceVersion.isNotBlank()) {
+                    LibraryUniversalBundleExporter.exportToZip(
+                        apps = listOf(
+                            LibraryUniversalBundleExporter.AppSource(
+                                bundleId = "a0001",
+                                title = displayTitle,
+                                vendor = sourceVendor,
+                                version = sourceVersion,
+                                emulatorDir = emulatorDir,
+                                storageKey = storageKey,
+                            ),
+                        ),
+                        target = staging,
+                        onProgress = onProgress,
+                    )
+                } else {
+                    // Callers without retained source identity (including old integrations) keep
+                    // the v1 payload path; once identity is available, single exports share v2
+                    // with bulk exports.
+                    exportToZip(emulatorDir, storageKey, staging, onProgress)
+                }
                 if (target.exists() && !target.delete()) {
                     throw IOException("Unable to replace previous app bundle")
                 }

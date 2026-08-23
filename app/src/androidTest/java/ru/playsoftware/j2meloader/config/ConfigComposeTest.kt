@@ -55,8 +55,8 @@ class ConfigComposeTest {
         composeRule.onNodeWithText("Scale (%)").assertExists()
         composeRule.onNodeWithContentDescription("Start").assertExists()
 
-        composeRule.onNodeWithContentDescription("Graphics").performClick()
-        composeRule.onNodeWithText("Screen settings").assertExists()
+        composeRule.onNodeWithContentDescription("Display").performClick()
+        composeRule.onNodeWithText("Screen Appearance").assertExists()
         composeRule.onNodeWithText("Font").assertExists()
         composeRule.onNodeWithText("Screen size").assertDoesNotExist()
         composeRule.onNodeWithText("Screen orientation").assertDoesNotExist()
@@ -64,11 +64,10 @@ class ConfigComposeTest {
         composeRule.onNodeWithText("Scale (%)").assertDoesNotExist()
 
         composeRule.onNodeWithContentDescription("Controls").performClick()
-        composeRule.onNodeWithText("Input devices").assertExists()
+        composeRule.onNodeWithText("Key Input").assertExists()
         composeRule.onNodeWithText("Audio").assertDoesNotExist()
 
-        composeRule.onNodeWithContentDescription("Media").performClick()
-        composeRule.onNodeWithText("Multimedia settings will be added here in a future update.").assertExists()
+        composeRule.onNodeWithContentDescription("Audio").performClick()
 
         composeRule.onNodeWithContentDescription("System").performClick()
         composeRule.onNodeWithText("System properties").assertExists()
@@ -84,14 +83,14 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Essential settings").assertExists()
+        composeRule.onNodeWithText("Screen & Window Basics").assertExists()
         composeRule.onRoot().performTouchInput { swipeLeft() }
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Screen settings").assertExists()
+        composeRule.onNodeWithText("Screen Appearance").assertExists()
 
         composeRule.onRoot().performTouchInput { swipeRight() }
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Essential settings").assertExists()
+        composeRule.onNodeWithText("Screen & Window Basics").assertExists()
     }
 
     @Test
@@ -102,7 +101,7 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("General").assertExists()
+        composeRule.onNodeWithContentDescription("Basic").assertExists()
         composeRule.onNodeWithText("Screen size").assertExists()
         composeRule.onNodeWithText("Touch input").assertExists()
         composeRule.onNodeWithContentDescription("Start").assertDoesNotExist()
@@ -115,13 +114,13 @@ class ConfigComposeTest {
         val events = RecordingConfigEvents()
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.Graphics)
+                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.Display)
             }
         }
 
         composeRule.onNodeWithText("Filter").performClick()
         composeRule.onNodeWithContentDescription("Controls").performClick()
-        composeRule.onNodeWithContentDescription("General").performClick()
+        composeRule.onNodeWithContentDescription("Basic").performClick()
         composeRule.onNodeWithText("Touch input").performClick()
 
         assertTrue(events.lastForm?.screenFilter == true)
@@ -271,7 +270,7 @@ class ConfigComposeTest {
         val events = RecordingConfigEvents()
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.General)
+                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.Basic)
             }
         }
 
@@ -289,7 +288,6 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Advanced settings").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Foreground").assertExists()
         composeRule.onNodeWithText("#000080").assertExists()
@@ -306,7 +304,6 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Advanced settings").performClick()
         composeRule.onNodeWithText("64").performClick()
         composeRule.onNodeWithText("Opacity").assertExists()
         composeRule.onNode(hasSetTextAction()).performTextReplacement("128")
@@ -322,7 +319,7 @@ class ConfigComposeTest {
                 ConfigScreen(
                     state = sampleState(),
                     events = RecordingConfigEvents(),
-                    initialDestination = ConfigDestination.Graphics,
+                    initialDestination = ConfigDestination.Display,
                     colorPicker = ColorPickerRequest(
                         ConfigFormEvents.ColorField.SCREEN_BACKGROUND,
                         "D0D0D0",
@@ -360,7 +357,7 @@ class ConfigComposeTest {
         val events = RecordingConfigEvents()
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.Graphics)
+                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.Display)
             }
         }
 
@@ -400,7 +397,6 @@ class ConfigComposeTest {
         composeRule.setContent {
   JLModPlusTheme { ConfigScreen(state, events, initialDestination = ConfigDestination.Controls) }
         }
-        composeRule.onNodeWithText("Advanced settings").performClick()
         composeRule.onNodeWithText("ms").assertExists()
         composeRule.onNodeWithContentDescription("System").performClick()
         composeRule.onNodeWithText("Edit system properties").performClick()

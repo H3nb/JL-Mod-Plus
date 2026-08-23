@@ -16,6 +16,9 @@ package ru.playsoftware.j2meloader.settings
 
 import android.content.res.Configuration
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -24,13 +27,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -44,6 +51,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,17 +71,28 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.AccentPalette
+import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 
 data class SettingsOption(
     val value: String,
     val label: String,
 )
 
-data class SettingsSwitch(
+data class SettingsChoice(
+    val key: String,
+    val title: String,
+    val selected: SettingsOption,
+    val options: List<SettingsOption>,
+)
+
+data class SettingsSwitch @JvmOverloads constructor(
     val key: String,
     val title: String,
     val summary: String?,
     val checked: Boolean,
+    val enabled: Boolean = true,
 )
 
 data class SettingsUiState(
@@ -86,12 +105,18 @@ data class SettingsUiState(
     val showProfiles: Boolean,
     val workingDirectory: String,
     val directoryError: String? = null,
+    val accent: SettingsOption = SettingsOption("blue", "Default Blue"),
+    val accents: List<SettingsOption> = emptyList(),
+    val libraryChoices: List<SettingsChoice> = emptyList(),
+    val librarySwitches: List<SettingsSwitch> = emptyList(),
 )
 
 interface SettingsActions {
     fun onBack()
     fun onThemeChanged(value: String)
+    fun onAccentChanged(value: String) = Unit
     fun onLanguageChanged(value: String)
+    fun onLibraryChoiceChanged(key: String, value: String) = Unit
     fun onToggle(key: String, checked: Boolean)
     fun onOpenProfiles()
     fun onChooseDirectory()
@@ -133,7 +158,8 @@ fun SettingsScreen(
     actions: SettingsActions,
     modifier: Modifier = Modifier,
 ) {
-    var choiceDialog by remember { mutableStateOf<SettingsChoice?>(null) }
+    var choiceDialog by remember { mutableStateOf<SettingsDialogChoice?>(null) }
+    var libraryChoiceDialog by remember { mutableStateOf<SettingsChoice?>(null) }
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     Scaffold(
@@ -147,9 +173,7 @@ fun SettingsScreen(
                     IconButton(onClick = actions::onBack) {
                         Icon(
                             painter = painterResource(R.drawable.ic_arrow_back),
-                            contentDescription = stringResource(
-                                androidx.appcompat.R.string.abc_action_bar_up_description,
-                            ),
+                            contentDescription = stringResource(R.string.action_back),
                         )
                     }
                 },
@@ -169,24 +193,49 @@ fun SettingsScreen(
                         SettingsChoiceRow(
                             title = stringResource(R.string.pref_theme_title),
                             selected = state.theme,
-                            onClick = { choiceDialog = SettingsChoice.Theme },
+                            onClick = { choiceDialog = SettingsDialogChoice.Theme },
                         )
-                        SettingsDivider()
+                        SettingsChoiceRow(
+                            title = stringResource(R.string.pref_accent_title),
+                            selected = state.accent,
+                            showAccentPreview = true,
+                            onClick = { choiceDialog = SettingsDialogChoice.Accent },
+                        )
                         SettingsChoiceRow(
                             title = stringResource(R.string.pref_language),
                             selected = state.language,
-                            onClick = { choiceDialog = SettingsChoice.Language },
+                            onClick = { choiceDialog = SettingsDialogChoice.Language },
                         )
+                    }
+                }
+                if (state.libraryChoices.isNotEmpty() || state.librarySwitches.isNotEmpty()) {
+                    item {
+                        SettingsSection(stringResource(R.string.settings_section_library_appearance)) {
+                            state.libraryChoices.forEach { choice ->
+                                SettingsChoiceRow(
+                                    title = choice.title,
+                                    selected = choice.selected,
+                                    onClick = { libraryChoiceDialog = choice },
+                                )
+                            }
+                            state.librarySwitches.forEach { setting ->
+                                SettingsSwitchRow(
+                                    setting = setting,
+                                    onCheckedChange = { checked ->
+                                        actions.onToggle(setting.key, checked)
+                                    },
+                                )
+                            }
+                        }
                     }
                 }
                 item {
                     SettingsSection(stringResource(R.string.settings_section_midlet_runtime)) {
-                        state.switches.forEachIndexed { index, setting ->
+                        state.switches.forEach { setting ->
                             SettingsSwitchRow(
                                 setting = setting,
                                 onCheckedChange = { checked -> actions.onToggle(setting.key, checked) },
                             )
-                            if (index != state.switches.lastIndex) SettingsDivider()
                         }
                     }
                 }
@@ -199,15 +248,25 @@ fun SettingsScreen(
                         )
                     }
                 }
+                if (state.showProfiles) {
+                    item {
+                        SettingsSection(stringResource(R.string.settings_section_profiles)) {
+                            SettingsActionRow(
+                                title = stringResource(R.string.profiles),
+                                summary = stringResource(R.string.settings_profiles_summary),
+                                onClick = actions::onOpenProfiles,
+                            )
+                        }
+                    }
+                }
                 if (state.experimentalSwitches.isNotEmpty()) {
                     item {
                         SettingsSection(stringResource(R.string.pref_category_experimental)) {
-                            state.experimentalSwitches.forEachIndexed { index, setting ->
+                            state.experimentalSwitches.forEach { setting ->
                                 SettingsSwitchRow(
                                     setting = setting,
                                     onCheckedChange = { checked -> actions.onToggle(setting.key, checked) },
                                 )
-                                if (index != state.experimentalSwitches.lastIndex) SettingsDivider()
                             }
                         }
                     }
@@ -218,11 +277,29 @@ fun SettingsScreen(
 
     state.directoryError?.let { message ->
         AlertDialog(
-            modifier = settingsDialogModifier(landscape),
+            modifier = Modifier.settingsDialogModifier(landscape),
             properties = DialogProperties(usePlatformDefaultWidth = !landscape),
             onDismissRequest = {},
             title = { Text(stringResource(R.string.error)) },
-            text = { Text(message) },
+            text = {
+                val scrollState = rememberScrollState()
+                val canScrollForward by remember {
+                    derivedStateOf { scrollState.value < scrollState.maxValue }
+                }
+                Column {
+                    Text(
+                        text = message,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = if (landscape) 220.dp else 360.dp)
+                            .verticalScroll(scrollState),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    ScrollableContentHint(
+                        visible = canScrollForward,
+                    )
+                }
+            },
             dismissButton = {
                 TextButton(onClick = actions::onDismissDirectoryError) {
                     Text(stringResource(android.R.string.cancel))
@@ -240,7 +317,7 @@ fun SettingsScreen(
     }
 
     when (choiceDialog) {
-        SettingsChoice.Theme -> SettingsChoiceDialog(
+        SettingsDialogChoice.Theme -> SettingsChoiceDialog(
             title = stringResource(R.string.pref_theme_title),
             selected = state.theme,
             options = state.themes,
@@ -251,7 +328,19 @@ fun SettingsScreen(
             },
         )
 
-        SettingsChoice.Language -> SettingsChoiceDialog(
+        SettingsDialogChoice.Accent -> SettingsChoiceDialog(
+            title = stringResource(R.string.pref_accent_title),
+            selected = state.accent,
+            options = state.accents,
+            showAccentPreview = true,
+            onDismiss = { choiceDialog = null },
+            onSelected = { value ->
+                choiceDialog = null
+                actions.onAccentChanged(value)
+            },
+        )
+
+        SettingsDialogChoice.Language -> SettingsChoiceDialog(
             title = stringResource(R.string.pref_language),
             selected = state.language,
             options = state.languages,
@@ -264,6 +353,19 @@ fun SettingsScreen(
 
         null -> Unit
     }
+
+    libraryChoiceDialog?.let { choice ->
+        SettingsChoiceDialog(
+            title = choice.title,
+            selected = choice.selected,
+            options = choice.options,
+            onDismiss = { libraryChoiceDialog = null },
+            onSelected = { value ->
+                libraryChoiceDialog = null
+                actions.onLibraryChoiceChanged(choice.key, value)
+            },
+        )
+    }
 }
 
 @Composable
@@ -274,11 +376,12 @@ private fun SettingsSection(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
             text = title,
-            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp),
+            modifier = Modifier.padding(start = 12.dp, top = 6.dp, end = 12.dp, bottom = 1.dp),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary,
@@ -294,29 +397,29 @@ private fun SettingsSection(
 }
 
 @Composable
-private fun SettingsDivider() {
-    HorizontalDivider(
-        modifier = Modifier.padding(horizontal = 16.dp),
-        color = MaterialTheme.colorScheme.outlineVariant,
-    )
-}
-
-@Composable
 private fun SettingsChoiceRow(
     title: String,
     selected: SettingsOption,
+    showAccentPreview: Boolean = false,
     onClick: () -> Unit,
 ) {
-    ListItem(
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        headlineContent = {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 11.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
             )
-        },
-        supportingContent = {
             Text(
                 text = selected.label,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -324,15 +427,23 @@ private fun SettingsChoiceRow(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(role = Role.Button, onClick = onClick),
-    )
+        }
+        if (showAccentPreview) {
+            androidx.compose.foundation.layout.Box(
+                modifier = Modifier
+                    .size(22.dp)
+                    .background(
+                        AccentPalette.fromKey(selected.value).previewColor(isSystemInDarkTheme()),
+                        CircleShape,
+                    ),
+            )
+        }
+    }
 }
 
-private enum class SettingsChoice {
+private enum class SettingsDialogChoice {
     Theme,
+    Accent,
     Language,
 }
 
@@ -341,44 +452,77 @@ private fun SettingsChoiceDialog(
     title: String,
     selected: SettingsOption,
     options: List<SettingsOption>,
+    showAccentPreview: Boolean = false,
     onDismiss: () -> Unit,
     onSelected: (String) -> Unit,
 ) {
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val listState = rememberLazyListState()
+    val maxListHeight = if (landscape) 220.dp else 360.dp
+    val canScrollForward = rememberLazyListCanScrollForward(listState)
     AlertDialog(
-        modifier = settingsDialogModifier(landscape),
+        modifier = Modifier.settingsDialogModifier(landscape),
         properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            LazyColumn(
-                modifier = Modifier.heightIn(max = if (landscape) 220.dp else 360.dp),
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = maxListHeight),
             ) {
-                items(options, key = { it.value }) { option ->
-                    val selectedOption = option.value == selected.value
-                    ListItem(
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        headlineContent = {
-                            Text(
-                                text = option.label,
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = if (selectedOption) FontWeight.Medium else FontWeight.Normal,
-                            )
-                        },
-                        leadingContent = {
-                            RadioButton(
-                                selected = selectedOption,
-                                onClick = null,
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(
-                                role = Role.RadioButton,
-                                onClick = { onSelected(option.value) },
-                            ),
-                    )
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxListHeight),
+                    state = listState,
+                ) {
+                    items(options, key = { it.value }) { option ->
+                        val selectedOption = option.value == selected.value
+                        ListItem(
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            headlineContent = {
+                                Text(
+                                    text = option.label,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = if (selectedOption) FontWeight.Medium else FontWeight.Normal,
+                                )
+                            },
+                            leadingContent = {
+                                RadioButton(
+                                    selected = selectedOption,
+                                    onClick = null,
+                                )
+                            },
+                            trailingContent = if (showAccentPreview) {
+                                {
+                                    androidx.compose.foundation.layout.Box(
+                                        modifier = Modifier
+                                            .size(22.dp)
+                                            .background(
+                                                AccentPalette.fromKey(option.value)
+                                                    .previewColor(isSystemInDarkTheme()),
+                                                CircleShape,
+                                            ),
+                                    )
+                                }
+                            } else {
+                                null
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(
+                                    role = Role.RadioButton,
+                                    onClick = { onSelected(option.value) },
+                                ),
+                        )
+                    }
                 }
+                ScrollableContentHint(
+                    visible = canScrollForward,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter),
+                )
             }
         },
         confirmButton = {},
@@ -390,38 +534,45 @@ private fun SettingsSwitchRow(
     setting: SettingsSwitch,
     onCheckedChange: (Boolean) -> Unit,
 ) {
-    ListItem(
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        headlineContent = {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .clickable(
+                enabled = setting.enabled,
+                role = Role.Switch,
+                onClick = { onCheckedChange(!setting.checked) },
+            )
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+        ) {
             Text(
                 text = setting.title,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
+                color = if (setting.enabled) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.onSurfaceVariant,
             )
-        },
-        supportingContent = setting.summary?.let { summary ->
-            {
+            setting.summary?.let { summary ->
                 Text(
                     text = summary,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (setting.enabled) MaterialTheme.colorScheme.onSurfaceVariant
+                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.62f),
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
-        },
-        trailingContent = {
-            Switch(
-                checked = setting.checked,
-                onCheckedChange = null,
-            )
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .toggleable(
-                value = setting.checked,
-                role = Role.Switch,
-                onValueChange = onCheckedChange,
-            ),
-    )
+        }
+        Switch(
+            checked = setting.checked,
+            onCheckedChange = onCheckedChange,
+            enabled = setting.enabled,
+        )
+    }
 }
 
 @Composable
@@ -430,38 +581,36 @@ private fun SettingsActionRow(
     summary: String? = null,
     onClick: () -> Unit,
 ) {
-    ListItem(
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        headlineContent = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-            )
-        },
-        supportingContent = summary?.let { value ->
-            {
-                Text(
-                    text = value,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        },
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(role = Role.Button, onClick = onClick),
-    )
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 11.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+        )
+        summary?.let { value ->
+            Text(
+                text = value,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
 }
 
-private fun settingsDialogModifier(landscape: Boolean): Modifier {
+private fun Modifier.settingsDialogModifier(landscape: Boolean): Modifier {
     return if (landscape) {
-        Modifier
+        this
             .fillMaxWidth(0.94f)
             .widthIn(max = 760.dp)
     } else {
-        Modifier.widthIn(max = 560.dp)
+        this.widthIn(max = 560.dp)
     }
 }

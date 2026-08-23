@@ -44,6 +44,68 @@ fun LibraryViewModel.prepareExportAppBundle(
             emulatorDir = generation.emulatorDir,
             storageKey = app.storageKey,
             displayTitle = app.title,
+            sourceVendor = app.vendor,
+            sourceVersion = app.version,
+            onProgress = if (progressCallback == null) {
+                null
+            } else {
+                { progress ->
+                    val percent = progress.percent()
+                    if (lastPercent.getAndSet(percent) != percent) {
+                        viewModelScope.launch {
+                            if (isReadyGeneration(generation.generation, generation.emulatorDir)) {
+                                progressCallback.onProgress(progress)
+                            }
+                        }
+                    }
+                }
+            },
+        )
+    }
+}
+
+fun LibraryViewModel.prepareShareApps(
+    appIds: Set<Long>,
+    callback: LibraryViewModel.MutationCallback<LibraryShareManager.PreparedShare>,
+) {
+    launchLibraryBulkTransfer(appIds, callback) { generation, plan ->
+        LibraryBulkTransfer.prepareJarArchive(
+            context = getApplication(),
+            sources = plan.apps.map { app ->
+                LibraryJarArchiveExporter.JarSource(
+                    appId = app.id,
+                    title = app.title,
+                    file = LibraryFileOperations.retainedJar(generation.emulatorDir, app.storageKey),
+                )
+            },
+            displayTitle = "JL-Mod-Plus-Apps",
+        )
+    }
+}
+
+fun LibraryViewModel.prepareExportAppsBundle(
+    appIds: Set<Long>,
+    progressCallback: LibraryExportProgressCallback?,
+    callback: LibraryViewModel.MutationCallback<LibraryAppBundleExporter.PreparedExport>,
+) {
+    val lastPercent = AtomicInteger(-1)
+    launchLibraryBulkTransfer(appIds, callback) { generation, plan ->
+        LibraryBulkTransfer.prepareUniversalBundle(
+            context = getApplication(),
+            sources = plan.apps.mapIndexed { index, app ->
+                LibraryUniversalBundleExporter.AppSource(
+                    bundleId = "a${(index + 1).toString().padStart(4, '0')}",
+                    // The universal manifest requires textual identity. Legacy descriptors can
+                    // omit vendor/version; keep the selected app exportable with deterministic
+                    // placeholders instead of failing the entire bulk operation.
+                    title = app.title.ifBlank { "J2ME app ${app.id}" },
+                    vendor = app.vendor.ifBlank { "Unknown vendor" },
+                    version = app.version.ifBlank { "0" },
+                    emulatorDir = generation.emulatorDir,
+                    storageKey = app.storageKey,
+                )
+            },
+            displayTitle = "JL-Mod-Plus-Apps",
             onProgress = if (progressCallback == null) {
                 null
             } else {
@@ -102,6 +164,52 @@ private fun <T> LibraryViewModel.launchLibraryTransfer(
             val current = getApp(generation.generation, generation.emulatorDir, app.id)
             check(current?.storageKey == app.storageKey) {
                 "Library transfer target changed while preparing output"
+            }
+            callback.complete(result, null)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            callback.complete(null, error)
+        }
+    }
+}
+
+private fun <T> LibraryViewModel.launchLibraryBulkTransfer(
+    appIds: Set<Long>,
+    callback: LibraryViewModel.MutationCallback<T>,
+    operation: suspend (LibraryGenerationToken, LibraryBulkSelectionPlan) -> T,
+) {
+    val generation = readyGeneration()
+    val plan = try {
+        generation?.let { token ->
+            LibraryBulkSelectionPlanner.plan(
+                generation = token.generation,
+                requestedAppIds = appIds,
+                availableApps = getApps(appIds),
+            )
+        }
+    } catch (_: IllegalStateException) {
+        null
+    }
+    if (generation == null || plan == null || !plan.isComplete) {
+        callback.complete(
+            null,
+            IllegalStateException(
+                if (plan?.missingAppIds?.isNotEmpty() == true) {
+                    "One or more selected Library apps are no longer available"
+                } else {
+                    "Library apps are not available in the active READY generation"
+                },
+            ),
+        )
+        return
+    }
+
+    viewModelScope.launch {
+        try {
+            val result = operation(generation, plan)
+            check(isReadyGeneration(generation.generation, generation.emulatorDir)) {
+                "Library generation changed while preparing bulk transfer"
             }
             callback.complete(result, null)
         } catch (cancelled: CancellationException) {

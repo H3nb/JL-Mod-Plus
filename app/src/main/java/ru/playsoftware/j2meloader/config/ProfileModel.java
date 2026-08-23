@@ -16,6 +16,10 @@
 
 package ru.playsoftware.j2meloader.config;
 
+import static ru.playsoftware.j2meloader.util.Constants.PREF_THEME;
+
+import android.content.Context;
+import android.content.res.Configuration;
 import android.util.SparseIntArray;
 
 import com.google.gson.annotations.JsonAdapter;
@@ -28,10 +32,18 @@ import javax.microedition.lcdui.keyboard.KeyModel;
 import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 import javax.microedition.util.ContextHolder;
 
+import androidx.preference.PreferenceManager;
+
+import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.util.SparseIntArrayAdapter;
 
 public class ProfileModel {
 	public static final int VERSION = 3;
+
+	/** Stable preference key used to keep the built-in palette linked to the host theme. */
+	public static String builtInThemePreferenceKey(File configDir) {
+		return "config_profile_builtin_theme:" + configDir.getAbsolutePath();
+	}
 	/** True if this is a new profile (not yet saved to file) */
 	public final transient boolean isNew;
 
@@ -209,5 +221,48 @@ public class ProfileModel {
 		vkFgColorSelected = 0xFFFFFF;
 		vkOutlineColor = 0xFFFFFF;
 		systemProperties = ContextHolder.getAssetAsString("defaults/system.props");
+	}
+
+	/** Applies the theme-owned colors used by the app-provided profile template. */
+	public static void applyBuiltInTheme(ProfileModel profile, boolean darkTheme) {
+		int background = darkTheme ? 0x000000 : 0xFFFFFF;
+		int foreground = darkTheme ? 0xFFFFFF : 0x000000;
+		profile.screenBackgroundColor = background;
+		profile.vkAlpha = 255;
+		profile.vkBgColor = background;
+		profile.vkFgColor = foreground;
+		profile.vkBgColorSelected = foreground;
+		profile.vkFgColorSelected = background;
+		profile.vkOutlineColor = foreground;
+	}
+
+	/**
+	 * Resolves the active app theme for both activities and the MIDlet runtime. AppCompat applies
+	 * an explicit light/dark preference to activity resources, but the application context used by
+	 * the MIDlet loader can still expose the device's original uiMode. Reading the explicit
+	 * preference first keeps linked built-in profiles in sync even when the device theme differs.
+	 */
+	public static boolean isDarkTheme(Context context) {
+		String preference = PreferenceManager.getDefaultSharedPreferences(context)
+				.getString(PREF_THEME, context.getString(R.string.pref_theme_default));
+		return isDarkTheme(preference, context.getResources().getConfiguration().uiMode);
+	}
+
+	/** Visible to JVM tests so explicit preference precedence stays regression-tested. */
+	static boolean isDarkTheme(String preference, int uiMode) {
+		if ("dark".equals(preference)) return true;
+		if ("light".equals(preference)) return false;
+		int nightMask = uiMode & Configuration.UI_MODE_NIGHT_MASK;
+		return nightMask == Configuration.UI_MODE_NIGHT_YES;
+	}
+
+	/**
+	 * Creates the app-provided profile template using the active host theme. Existing saved
+	 * named profiles continue to load their own explicit colors.
+	 */
+	public static ProfileModel createBuiltIn(File dir, boolean darkTheme) {
+		ProfileModel profile = new ProfileModel(dir);
+		applyBuiltInTheme(profile, darkTheme);
+		return profile;
 	}
 }

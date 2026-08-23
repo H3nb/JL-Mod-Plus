@@ -29,6 +29,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.preference.PreferenceManager;
 
+import javax.microedition.util.ContextHolder;
+
 import ru.playsoftware.j2meloader.crashes.CrashReporter;
 import ru.playsoftware.j2meloader.util.Constants;
 import ru.playsoftware.j2meloader.util.FileUtils;
@@ -53,6 +55,11 @@ public class EmulatorApplication extends Application implements OnSharedPreferen
 			boolean enable = !ViewConfiguration.get(this).hasPermanentMenuKey();
 			sp.edit().putBoolean(Constants.PREF_TOOLBAR, enable).apply();
 		}
+		if (sp.getBoolean(Constants.PREF_STATUSBAR, false)
+				&& sp.getBoolean(Constants.PREF_USE_DISPLAY_CUTOUT, true)) {
+			sp.edit().putBoolean(Constants.PREF_USE_DISPLAY_CUTOUT, false).apply();
+		}
+		ContextHolder.setVibration(sp.getBoolean(Constants.PREF_VIBRATION, true));
 		sp.registerOnSharedPreferenceChangeListener(this);
 		setNightMode(sp.getString(Constants.PREF_THEME, null));
 		AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
@@ -103,6 +110,9 @@ public class EmulatorApplication extends Application implements OnSharedPreferen
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (Constants.PREF_THEME.equals(key)) {
 			setNightMode(sharedPreferences.getString(Constants.PREF_THEME, null));
+		}
+		if (Constants.PREF_VIBRATION.equals(key)) {
+			ContextHolder.setVibration(sharedPreferences.getBoolean(Constants.PREF_VIBRATION, true));
 		}
 	}
 }

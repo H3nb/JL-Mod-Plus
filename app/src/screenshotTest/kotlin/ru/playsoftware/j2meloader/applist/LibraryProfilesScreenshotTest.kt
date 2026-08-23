@@ -88,6 +88,42 @@ fun LibraryReadyListScreenshot() {
 }
 
 @PreviewTest
+@Preview(name = "Library selection", widthDp = 400, heightDp = 500, showBackground = true)
+@Composable
+fun LibrarySelectionScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryScreen(
+            state = LibraryUiState(
+                loading = false,
+                generation = 1L,
+                apps = PreviewApps,
+                databaseControlsReady = true,
+            ),
+            actions = NoOpLibraryActions,
+            initialSelectionState = LibrarySelectionState(1L, setOf(1L, 3L)),
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Library selection bulk actions", widthDp = 400, heightDp = 500, showBackground = true)
+@Composable
+fun LibrarySelectionBulkActionsScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryScreen(
+            state = LibraryUiState(
+                loading = false,
+                generation = 1L,
+                apps = PreviewApps,
+                databaseControlsReady = true,
+            ),
+            actions = PreviewBulkActions,
+            initialSelectionState = LibrarySelectionState(1L, setOf(1L, 3L)),
+        )
+    }
+}
+
+@PreviewTest
 @Preview(name = "Library grid portrait icons", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
 fun LibraryGridPortraitScreenshot() {
@@ -268,6 +304,7 @@ fun LibraryCollectionAppPickerScreenshot() {
             memberIds = setOf(1, 3),
             sortVariant = 0,
             iconRatio = LibraryIconRatio.Square,
+            iconShape = LibraryIconShape.Round,
             scaffoldPadding = PaddingValues(),
             onBack = {},
             onSetMembership = { _, _ -> },
@@ -306,6 +343,7 @@ fun LibraryAppActionsScreenshot() {
             onReinstall = {},
             onDelete = {},
             onEditMetadata = {},
+            onSelect = {},
             onAddToCollection = {},
             onShareApp = {},
             onExportAppBundle = {},
@@ -318,23 +356,15 @@ fun LibraryAppActionsScreenshot() {
 @Composable
 fun LibraryOptionsScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        LibraryOptionsDestination(
-            state = LibraryUiState(
-                loading = false,
-                apps = PreviewApps,
-                layout = LibraryLayout.Grid,
-            ),
+        LibraryMoreDestination(
             scaffoldPadding = PaddingValues(),
-            onLayoutChange = {},
-            onIconRatioChange = {},
-            onHideGridTitlesChange = {},
-            onGridSpacingChange = {},
+            onImportAppBundle = {},
             onAbout = {},
+            onLicenses = {},
             onSettings = {},
             onHelp = {},
             onCrashReports = {},
             onSaveLog = {},
-            onExit = {},
         )
     }
 }
@@ -359,23 +389,51 @@ fun LibraryCollectionsScreenshot() {
 @Composable
 fun LibraryOptionsIndonesianScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        LibraryOptionsDestination(
-            state = LibraryUiState(
-                loading = false,
-                apps = PreviewApps,
-                layout = LibraryLayout.Grid,
-            ),
+        LibraryMoreDestination(
             scaffoldPadding = PaddingValues(),
-            onLayoutChange = {},
-            onIconRatioChange = {},
-            onHideGridTitlesChange = {},
-            onGridSpacingChange = {},
+            onImportAppBundle = {},
             onAbout = {},
+            onLicenses = {},
             onSettings = {},
             onHelp = {},
             onCrashReports = {},
             onSaveLog = {},
-            onExit = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Library options list display", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun LibraryOptionsListDisplayScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryMoreDestination(
+            scaffoldPadding = PaddingValues(),
+            onImportAppBundle = {},
+            onAbout = {},
+            onLicenses = {},
+            onSettings = {},
+            onHelp = {},
+            onCrashReports = {},
+            onSaveLog = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Library options grid touching", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun LibraryOptionsGridTouchingScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryMoreDestination(
+            scaffoldPadding = PaddingValues(),
+            onImportAppBundle = {},
+            onAbout = {},
+            onLicenses = {},
+            onSettings = {},
+            onHelp = {},
+            onCrashReports = {},
+            onSaveLog = {},
         )
     }
 }
@@ -497,9 +555,10 @@ private object NoOpLibraryActions : LibraryActions {
     override fun onOpenProfiles() = Unit
     override fun onOpenCrashReports() = Unit
     override fun onSaveLog() = Unit
-    override fun onExit() = Unit
     override fun onRetryLibrary() = Unit
 }
+
+private object PreviewBulkActions : LibraryActions by NoOpLibraryActions, LibraryBulkActions
 
 private object NoOpProfilesActions : ProfilesActions {
     override fun onBack() = Unit

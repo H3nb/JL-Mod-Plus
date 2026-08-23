@@ -71,6 +71,130 @@ class SettingsComposeTest {
         assertEquals(1, actions.directoryClicks)
     }
 
+    @Test
+    fun settingsExposeAccentPaletteAndDispatchSelection() {
+        val actions = RecordingSettingsActions()
+        composeRule.setContent {
+            JLModPlusTheme {
+                SettingsScreen(state = sampleState(), actions = actions)
+            }
+        }
+
+        composeRule.onNodeWithText("Accent Color").performClick()
+        composeRule.onNodeWithText("Teal").performClick()
+
+        assertEquals(listOf("teal"), actions.accents)
+    }
+
+    @Test
+    fun libraryAppearanceOptionsStayInGlobalSettings() {
+        val actions = RecordingSettingsActions()
+        val state = sampleState().copy(
+            libraryChoices = listOf(
+                SettingsChoice(
+                    key = "pref_apps_view",
+                    title = "Library View",
+                    selected = SettingsOption("list", "List"),
+                    options = listOf(
+                        SettingsOption("list", "List"),
+                        SettingsOption("grid", "Grid"),
+                    ),
+                ),
+            ),
+            librarySwitches = listOf(
+                SettingsSwitch(
+                    key = "pref_apps_enhanced_icons",
+                    title = "Enhanced Icons",
+                    summary = null,
+                    checked = true,
+                ),
+            ),
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                SettingsScreen(state = state, actions = actions)
+            }
+        }
+
+        composeRule.onNodeWithText("Library View").performClick()
+        composeRule.onNodeWithText("Grid").performClick()
+        composeRule.onNodeWithText("Enhanced Icons").performClick()
+
+        assertEquals(listOf("pref_apps_view=grid"), actions.libraryChoices)
+        assertEquals(listOf("pref_apps_enhanced_icons=false"), actions.toggles)
+    }
+
+    @Test
+    fun gridOnlyLibraryOptionsAreNotShownInListMode() {
+        val gridState = sampleState().copy(
+            libraryChoices = listOf(
+                SettingsChoice(
+                    key = "pref_apps_view",
+                    title = "Library View",
+                    selected = SettingsOption("grid", "Grid"),
+                    options = listOf(
+                        SettingsOption("list", "List"),
+                        SettingsOption("grid", "Grid"),
+                    ),
+                ),
+                SettingsChoice(
+                    key = "pref_apps_grid_spacing",
+                    title = "Grid Spacing",
+                    selected = SettingsOption("standard", "Standard (8 dp)"),
+                    options = listOf(SettingsOption("standard", "Standard (8 dp)")),
+                ),
+            ),
+            librarySwitches = listOf(
+                SettingsSwitch("pref_apps_enhanced_icons", "Enhanced Icons", null, true),
+                SettingsSwitch("pref_apps_hide_grid_titles", "Hide MIDlet Titles", null, false),
+            ),
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                SettingsScreen(state = gridState, actions = RecordingSettingsActions())
+            }
+        }
+
+        composeRule.onNodeWithText("Grid Spacing").assertExists()
+        composeRule.onNodeWithText("Hide MIDlet Titles").assertExists()
+        composeRule.onNodeWithText("Show MIDlet Descriptions").assertDoesNotExist()
+    }
+
+    @Test
+    fun listOnlyLibraryOptionsAreNotShownInGridMode() {
+        val listState = sampleState().copy(
+            libraryChoices = listOf(
+                SettingsChoice(
+                    key = "pref_apps_view",
+                    title = "Library View",
+                    selected = SettingsOption("list", "List"),
+                    options = listOf(
+                        SettingsOption("list", "List"),
+                        SettingsOption("grid", "Grid"),
+                    ),
+                ),
+            ),
+            librarySwitches = listOf(
+                SettingsSwitch("pref_apps_enhanced_icons", "Enhanced Icons", null, true),
+                SettingsSwitch(
+                    "pref_apps_show_list_description",
+                    "Show MIDlet Descriptions",
+                    null,
+                    true,
+                ),
+            ),
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                SettingsScreen(state = listState, actions = RecordingSettingsActions())
+            }
+        }
+
+        composeRule.onNodeWithText("Show MIDlet Descriptions").assertExists()
+        composeRule.onNodeWithText("Grid Spacing").assertDoesNotExist()
+        composeRule.onNodeWithText("Hide MIDlet Titles").assertDoesNotExist()
+    }
+
     private fun sampleState() = SettingsUiState(
         theme = SettingsOption("dark", "Dark"),
         themes = listOf(
@@ -81,6 +205,11 @@ class SettingsComposeTest {
         languages = listOf(
             SettingsOption("", "Follow system settings"),
             SettingsOption("en", "English"),
+        ),
+        accent = SettingsOption("blue", "Default Blue"),
+        accents = listOf(
+            SettingsOption("blue", "Default Blue"),
+            SettingsOption("teal", "Teal"),
         ),
         switches = listOf(
             SettingsSwitch(
@@ -97,6 +226,9 @@ class SettingsComposeTest {
 
     private class RecordingSettingsActions : SettingsActions {
         val changes = mutableListOf<String>()
+        val accents = mutableListOf<String>()
+        val libraryChoices = mutableListOf<String>()
+        val toggles = mutableListOf<String>()
         var profileClicks = 0
         var directoryClicks = 0
 
@@ -106,12 +238,21 @@ class SettingsComposeTest {
             changes += value
         }
 
+        override fun onAccentChanged(value: String) {
+            accents += value
+        }
+
         override fun onLanguageChanged(value: String) {
             changes += value
         }
 
         override fun onToggle(key: String, checked: Boolean) {
             changes += key
+            toggles += "$key=$checked"
+        }
+
+        override fun onLibraryChoiceChanged(key: String, value: String) {
+            libraryChoices += "$key=$value"
         }
 
         override fun onOpenProfiles() {

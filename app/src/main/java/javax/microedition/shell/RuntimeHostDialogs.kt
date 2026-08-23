@@ -18,13 +18,16 @@ import android.content.res.Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
@@ -40,6 +43,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -56,6 +60,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import ru.playsoftware.j2meloader.R
+import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
+import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 
 /** Callbacks for host-owned runtime dialogs. MIDP state and rendering remain in Java. */
 interface RuntimeHostDialogActions {
@@ -135,8 +142,11 @@ private fun runtimeDialogLayout(): RuntimeDialogLayout {
             Modifier
                 .fillMaxWidth(0.94f)
                 .widthIn(max = 760.dp)
+                .imePadding()
         } else {
-            Modifier.widthIn(max = 560.dp)
+            Modifier
+                .widthIn(max = 560.dp)
+                .imePadding()
         },
         properties = DialogProperties(usePlatformDefaultWidth = !landscape),
     )
@@ -144,11 +154,9 @@ private fun runtimeDialogLayout(): RuntimeDialogLayout {
 
 @Composable
 private fun runtimeDialogListHeight(maxHeight: Int = 420) =
-    LocalConfiguration.current.screenHeightDp
-        .minus(220)
-        .coerceAtLeast(120)
-        .coerceAtMost(maxHeight)
-        .dp
+    (availableWindowHeightDp() - 220.dp)
+        .coerceAtLeast(120.dp)
+        .coerceAtMost(maxHeight.dp)
 
 @Composable
 private fun MidletSelectionDialog(
@@ -157,6 +165,9 @@ private fun MidletSelectionDialog(
     onDismiss: () -> Unit,
 ) {
     val layout = runtimeDialogLayout()
+    val listState = rememberLazyListState()
+    val maxListHeight = runtimeDialogListHeight()
+    val canScrollForward = rememberLazyListCanScrollForward(listState)
     AlertDialog(
         modifier = layout.modifier,
         properties = layout.properties,
@@ -166,25 +177,41 @@ private fun MidletSelectionDialog(
         },
         title = { Text(stringResource(R.string.select_dialog_title)) },
         text = {
-            LazyColumn(modifier = Modifier.heightIn(max = runtimeDialogListHeight())) {
-                itemsIndexed(state.names) { index, name ->
-                    ListItem(
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        headlineContent = {
-                            Text(
-                                text = name,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(role = Role.Button) {
-                                onDismiss()
-                                actions.onMidletSelected(index)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = maxListHeight),
+            ) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxListHeight),
+                    state = listState,
+                ) {
+                    itemsIndexed(state.names) { index, name ->
+                        ListItem(
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            headlineContent = {
+                                Text(
+                                    text = name,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
                             },
-                    )
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(role = Role.Button) {
+                                    onDismiss()
+                                    actions.onMidletSelected(index)
+                                },
+                        )
+                    }
                 }
+                ScrollableContentHint(
+                    visible = canScrollForward,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter),
+                )
             }
         },
         confirmButton = {},
@@ -210,12 +237,27 @@ private fun ErrorDialog(
         },
         title = { Text(stringResource(R.string.error)) },
         text = {
-            Text(
-                text = message,
+            val scrollState = rememberScrollState()
+            val canScrollForward by remember {
+                derivedStateOf { scrollState.value < scrollState.maxValue }
+            }
+            Box(
                 modifier = Modifier
-                    .heightIn(max = runtimeDialogListHeight(300))
-                    .verticalScroll(rememberScrollState()),
-            )
+                    .fillMaxWidth()
+                    .heightIn(max = runtimeDialogListHeight(300)),
+            ) {
+                Text(
+                    text = message,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = runtimeDialogListHeight(300))
+                        .verticalScroll(scrollState),
+                )
+                ScrollableContentHint(
+                    visible = canScrollForward,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
+            }
         },
         confirmButton = {
             TextButton(onClick = onAcknowledge) {
@@ -284,30 +326,49 @@ private fun HideButtonsDialog(
 ) {
     var checked by remember(state) { mutableStateOf(state.checked.copyOf()) }
     val layout = runtimeDialogLayout()
+    val listState = rememberLazyListState()
+    val maxListHeight = runtimeDialogListHeight()
+    val canScrollForward = rememberLazyListCanScrollForward(listState)
     AlertDialog(
         modifier = layout.modifier,
         properties = layout.properties,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.hide_buttons)) },
         text = {
-            LazyColumn(modifier = Modifier.heightIn(max = runtimeDialogListHeight())) {
-                itemsIndexed(state.names) { index, name ->
-                    val isChecked = checked.getOrNull(index) == true
-                    ListItem(
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        headlineContent = { Text(name, maxLines = 2, overflow = TextOverflow.Ellipsis) },
-                        leadingContent = {
-                            Checkbox(checked = isChecked, onCheckedChange = null)
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .toggleable(value = isChecked, role = Role.Checkbox) {
-                                checked = checked.copyOf().also { copy ->
-                                    if (index in copy.indices) copy[index] = !isChecked
-                                }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = maxListHeight),
+            ) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxListHeight),
+                    state = listState,
+                ) {
+                    itemsIndexed(state.names) { index, name ->
+                        val isChecked = checked.getOrNull(index) == true
+                        ListItem(
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            headlineContent = { Text(name, maxLines = 2, overflow = TextOverflow.Ellipsis) },
+                            leadingContent = {
+                                Checkbox(checked = isChecked, onCheckedChange = null)
                             },
-                    )
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .toggleable(value = isChecked, role = Role.Checkbox) {
+                                    checked = checked.copyOf().also { copy ->
+                                        if (index in copy.indices) copy[index] = !isChecked
+                                    }
+                                },
+                        )
+                    }
                 }
+                ScrollableContentHint(
+                    visible = canScrollForward,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter),
+                )
             }
         },
         confirmButton = {
@@ -339,10 +400,14 @@ private fun SaveVirtualKeyboardDialog(
             Text(stringResource(R.string.CONFIRMATION_REQUIRED))
         },
         text = {
+            val scrollState = rememberScrollState()
+            val canScrollForward by remember {
+                derivedStateOf { scrollState.value < scrollState.maxValue }
+            }
             Column(
                 modifier = Modifier
                     .heightIn(max = runtimeDialogListHeight(360))
-                    .verticalScroll(rememberScrollState()),
+                    .verticalScroll(scrollState),
             ) {
                 Text(stringResource(R.string.pref_vk_save_alert))
                 if (state.phone) {
@@ -358,9 +423,13 @@ private fun SaveVirtualKeyboardDialog(
                             .fillMaxWidth()
                             .toggleable(value = saveScreenParams, role = Role.Checkbox) {
                                 saveScreenParams = !saveScreenParams
-                            },
+                        },
                     )
                 }
+                ScrollableContentHint(
+                    visible = canScrollForward,
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                )
             }
         },
         confirmButton = {
@@ -387,28 +456,47 @@ private fun LayoutSelectionDialog(
 ) {
     var selected by remember(state) { mutableIntStateOf(state.selected) }
     val layout = runtimeDialogLayout()
+    val listState = rememberLazyListState()
+    val maxListHeight = runtimeDialogListHeight()
+    val canScrollForward = rememberLazyListCanScrollForward(listState)
     AlertDialog(
         modifier = layout.modifier,
         properties = layout.properties,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.layout_switch)) },
         text = {
-            LazyColumn(modifier = Modifier.heightIn(max = runtimeDialogListHeight())) {
-                itemsIndexed(state.entries) { index, entry ->
-                    ListItem(
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        headlineContent = { Text(entry) },
-                        leadingContent = {
-                            RadioButton(
-                                selected = selected == index,
-                                onClick = { selected = index },
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(role = Role.RadioButton) { selected = index },
-                    )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = maxListHeight),
+            ) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxListHeight),
+                    state = listState,
+                ) {
+                    itemsIndexed(state.entries) { index, entry ->
+                        ListItem(
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            headlineContent = { Text(entry) },
+                            leadingContent = {
+                                RadioButton(
+                                    selected = selected == index,
+                                    onClick = { selected = index },
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(role = Role.RadioButton) { selected = index },
+                        )
+                    }
                 }
+                ScrollableContentHint(
+                    visible = canScrollForward,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter),
+                )
             }
         },
         confirmButton = {

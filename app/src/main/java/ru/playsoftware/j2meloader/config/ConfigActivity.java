@@ -23,6 +23,7 @@ import static ru.playsoftware.j2meloader.util.Constants.ACTION_EDIT;
 import static ru.playsoftware.j2meloader.util.Constants.ACTION_EDIT_PROFILE;
 import static ru.playsoftware.j2meloader.util.Constants.KEY_MIDLET_NAME;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_DEFAULT_PROFILE;
+import static ru.playsoftware.j2meloader.util.Constants.PREF_THEME;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -61,6 +62,7 @@ import ru.playsoftware.j2meloader.config.model.Size;
 import ru.playsoftware.j2meloader.settings.KeyMapperActivity;
 import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 import ru.playsoftware.j2meloader.util.FileUtils;
+import ru.playsoftware.j2meloader.ui.ThemedToast;
 import ru.woesss.util.TextUtils;
 import static ru.playsoftware.j2meloader.config.ConfigFormEvents.ColorField;
 
@@ -86,6 +88,17 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private ConfigFormState currentForm;
 	private ConfigComposeController composeController;
 	private ProfileModel builtInDefaultParams;
+	/** True when this app config is the built-in template and should track host theme changes. */
+	private boolean builtInThemeLinked;
+	private SharedPreferences hostPreferences;
+	private final SharedPreferences.OnSharedPreferenceChangeListener hostThemeListener =
+			(sharedPreferences, key) -> {
+				if (PREF_THEME.equals(key) && builtInThemeLinked && !isProfile) {
+					// AppCompat applies the new uiMode after the preference callback. Post the sync so
+					// the profile palette is derived from the new configuration, not the old one.
+					getWindow().getDecorView().post(this::syncLinkedBuiltInTheme);
+				}
+			};
 	private List<ProfileConfigMatcher.Candidate> profileCandidates = Collections.emptyList();
 	private byte[] currentKeyLayoutSnapshot;
 	@Nullable private String profileOrigin;
@@ -252,8 +265,10 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			configDir = new File(workDir + Config.MIDLET_CONFIGS_DIR + appDir.getName());
 		}
 		configDir.mkdirs();
+		hostPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+		hostPreferences.registerOnSharedPreferenceChangeListener(hostThemeListener);
 		profileOrigin = readProfileOrigin();
-		builtInDefaultParams = new ProfileModel(configDir);
+		builtInDefaultParams = newBuiltInProfile();
 
 		defProfile = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
 				.getString(PREF_DEFAULT_PROFILE, null);
@@ -307,7 +322,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 					@Override
 					public void onResetSettings() {
 						setProfileOrigin(null);
-						params = new ProfileModel(configDir);
+						params = newBuiltInProfile();
+						setBuiltInThemeLinked(true);
 						loadParams(false);
 					}
 
@@ -369,12 +385,35 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		defProfile = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
 				.getString(PREF_DEFAULT_PROFILE, null);
 		params = ProfilesManager.loadConfig(configDir);
+		boolean loadedDefaultProfile = false;
 		if (params == null && defProfile != null) {
 			FileUtils.copyFiles(new File(Config.getProfilesDir(), defProfile), configDir, null);
 			params = ProfilesManager.loadConfig(configDir);
+			loadedDefaultProfile = params != null;
 		}
 		if (params == null) {
-			params = new ProfileModel(configDir);
+			params = newBuiltInProfile();
+			setBuiltInThemeLinked(!isProfile && !loadedDefaultProfile);
+			return;
+		}
+		if (isProfile) {
+			builtInThemeLinked = false;
+			return;
+		}
+
+		boolean linked = readBuiltInThemeLinked();
+		if (profileOrigin != null || loadedDefaultProfile) {
+			linked = false;
+		}
+		// Migrate legacy app configs that were saved from the old one-time built-in snapshot. A
+		// genuinely custom config is never inferred from the global default-profile preference.
+		if (!linked && !loadedDefaultProfile && profileOrigin == null
+				&& matchesBuiltInVariant(params)) {
+			linked = true;
+		}
+		setBuiltInThemeLinked(linked);
+		if (builtInThemeLinked) {
+			ProfileModel.applyBuiltInTheme(params, isDarkTheme());
 		}
 	}
 
@@ -523,8 +562,21 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	}
 
 	@Override
+	protected void onDestroy() {
+		if (hostPreferences != null) {
+			hostPreferences.unregisterOnSharedPreferenceChangeListener(hostThemeListener);
+			hostPreferences = null;
+		}
+		super.onDestroy();
+	}
+
+	@Override
 	public void onConfigurationChanged(@NonNull Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
+		if (configDir != null) {
+			syncLinkedBuiltInTheme();
+			builtInDefaultParams = newBuiltInProfile();
+		}
 		if (display != null) {
 			fillScreenSizePresets(display.getWidth(), display.getHeight());
 			if (composeController != null) {
@@ -597,6 +649,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private void saveParams() {
 		try {
 			if (currentForm != null) {
+				reconcileBuiltInThemeLink();
 				currentForm.applyTo(params);
 			}
 			ProfilesManager.saveConfig(params);
@@ -624,12 +677,41 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	private void applyBuiltInTemplate() {
 		setProfileOrigin(null);
-		params = new ProfileModel(configDir);
+		params = newBuiltInProfile();
+		setBuiltInThemeLinked(true);
 		currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
 		refreshProfileMatchCache();
 		if (composeController != null) {
 			composeController.update(createUiState());
 		}
+	}
+
+	private ProfileModel newBuiltInProfile() {
+		return ProfileModel.createBuiltIn(configDir, isDarkTheme());
+	}
+
+	/** Re-derives theme-owned built-in colors without turning the profile into a custom snapshot. */
+	private void syncLinkedBuiltInTheme() {
+		if (isProfile || !builtInThemeLinked || params == null || configDir == null) return;
+		ProfileModel.applyBuiltInTheme(params, isDarkTheme());
+		currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
+		builtInDefaultParams = newBuiltInProfile();
+		refreshProfileMatchCache();
+		if (composeController != null) {
+			composeController.update(createUiState());
+		}
+	}
+
+	private boolean isDarkTheme() {
+		return ProfileModel.isDarkTheme(this);
+	}
+
+	private boolean matchesBuiltInVariant(@NonNull ProfileModel candidate) {
+		if (configDir == null) return false;
+		return ProfileConfigMatcher.sameConfig(
+				candidate, ProfileModel.createBuiltIn(configDir, false))
+				|| ProfileConfigMatcher.sameConfig(
+				candidate, ProfileModel.createBuiltIn(configDir, true));
 	}
 
 	private void applyTemplate(@NonNull String name) {
@@ -638,17 +720,18 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		try {
 			ProfilesManager.load(profile, configDir.getPath(), true, profile.hasKeyLayout());
 			setProfileOrigin(profile.getName());
+			setBuiltInThemeLinked(false);
 			loadParams(true);
 		} catch (IOException e) {
 			Log.e(TAG, "applyTemplate: " + name, e);
-			Toast.makeText(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT).show();
+			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 		}
 	}
 
 	private void saveTemplate(@NonNull String rawName) {
 		String name = rawName.trim();
 		if (name.isEmpty() || findProfile(name) != null) {
-			Toast.makeText(this, R.string.profile_name_exists, Toast.LENGTH_SHORT).show();
+			ThemedToast.show(this, R.string.profile_name_exists, Toast.LENGTH_SHORT);
 			return;
 		}
 		try {
@@ -660,7 +743,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			composeController.update(createUiState());
 		} catch (IOException e) {
 			Log.e(TAG, "saveTemplate: " + name, e);
-			Toast.makeText(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT).show();
+			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 		}
 	}
 
@@ -675,7 +758,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			composeController.update(createUiState());
 		} catch (IOException e) {
 			Log.e(TAG, "updateTemplate: " + name, e);
-			Toast.makeText(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT).show();
+			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 		}
 	}
 
@@ -684,7 +767,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		Profile profile = findProfile(oldName);
 		if (profile == null || newName.isEmpty() || findProfile(newName) != null) return;
 		if (!profile.renameTo(newName)) {
-			Toast.makeText(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT).show();
+			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
 			return;
 		}
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -730,6 +813,25 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		return "config_profile_origin:" + configDir.getAbsolutePath();
 	}
 
+	private String builtInThemeKey() {
+		return ProfileModel.builtInThemePreferenceKey(configDir);
+	}
+
+	private boolean readBuiltInThemeLinked() {
+		if (isProfile || configDir == null) return false;
+		return PreferenceManager.getDefaultSharedPreferences(this)
+				.getBoolean(builtInThemeKey(), false);
+	}
+
+	private void setBuiltInThemeLinked(boolean linked) {
+		builtInThemeLinked = linked;
+		if (isProfile || configDir == null) return;
+		SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
+		if (linked) editor.putBoolean(builtInThemeKey(), true);
+		else editor.remove(builtInThemeKey());
+		editor.apply();
+	}
+
 	@Nullable
 	private String readProfileOrigin() {
 		if (isProfile || configDir == null) return null;
@@ -739,6 +841,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private void setProfileOrigin(@Nullable String name) {
 		profileOrigin = name;
 		if (isProfile || configDir == null) return;
+		if (name != null) {
+			setBuiltInThemeLinked(false);
+		}
 		SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
 		if (name == null) editor.remove(profileOriginKey());
 		else editor.putString(profileOriginKey(), name);
@@ -779,12 +884,12 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	private void addResolutionToPresets(@NonNull Size size) {
 		if (size.width <= 0 || size.height <= 0) {
-			Toast.makeText(this, R.string.invalid_resolution_not_saved, Toast.LENGTH_SHORT).show();
+			ThemedToast.show(this, R.string.invalid_resolution_not_saved, Toast.LENGTH_SHORT);
 			return;
 		}
 		int index = Collections.binarySearch(screenPresets, size);
 		if (index >= 0) {
-			Toast.makeText(this, R.string.not_saved_exists, Toast.LENGTH_SHORT).show();
+			ThemedToast.show(this, R.string.not_saved_exists, Toast.LENGTH_SHORT);
 			return;
 		}
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -796,7 +901,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		if (composeController != null) {
 			composeController.update(createUiState());
 		}
-		Toast.makeText(this, getString(R.string.saved, size.toString()), Toast.LENGTH_SHORT).show();
+		ThemedToast.show(this, getString(R.string.saved, size.toString()), Toast.LENGTH_SHORT);
 	}
 
 	private void removeResolutionPreset(Size size) {
@@ -823,7 +928,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		if (composeController != null) {
 			composeController.update(createUiState());
 		}
-		Toast.makeText(this, getString(R.string.removed, size.toString()), Toast.LENGTH_SHORT).show();
+		ThemedToast.show(this, getString(R.string.removed, size.toString()), Toast.LENGTH_SHORT);
 	}
 
 	@Override
@@ -833,6 +938,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 		if (currentForm != null && currentForm.shader != null) {
 			currentForm.shader.values = values;
+			reconcileBuiltInThemeLink();
 			if (composeController != null) {
 				composeController.update(createUiState());
 			}
@@ -899,8 +1005,19 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	private void updateForm(ConfigFormState state) {
 		currentForm = state;
+		reconcileBuiltInThemeLink();
 		if (composeController != null) {
 			composeController.update(createUiState());
+		}
+	}
+
+	private void reconcileBuiltInThemeLink() {
+		if (!builtInThemeLinked || isProfile || params == null || currentForm == null
+				|| builtInDefaultParams == null) {
+			return;
+		}
+		if (!ProfileConfigMatcher.sameEffectiveConfig(params, currentForm, builtInDefaultParams)) {
+			setBuiltInThemeLinked(false);
 		}
 	}
 

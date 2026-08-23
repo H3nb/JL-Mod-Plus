@@ -15,6 +15,7 @@
 package ru.playsoftware.j2meloader
 
 import android.content.res.Configuration
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -26,9 +27,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -37,6 +41,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 
 /** Actions stay in MainActivity so permission, picker, recovery, and Fragment contracts remain host-owned. */
 internal interface MainHostActions {
@@ -130,20 +136,32 @@ private fun mainHostDialogLayout(): MainHostDialogLayout {
 
 @Composable
 private fun MainHostDialogText(message: String) {
-    val maxHeight = LocalConfiguration.current.screenHeightDp
-        .minus(220)
-        .coerceAtLeast(120)
-        .coerceAtMost(420)
-        .dp
-    Text(
-        text = message,
+    val maxHeight = (availableWindowHeightDp() - 220.dp)
+        .coerceAtLeast(120.dp)
+        .coerceAtMost(420.dp)
+    val scrollState = rememberScrollState()
+    val canScrollForward by remember {
+        derivedStateOf { scrollState.value < scrollState.maxValue }
+    }
+    Box(
         modifier = androidx.compose.ui.Modifier
             .fillMaxWidth()
-            .heightIn(max = maxHeight)
-            .verticalScroll(rememberScrollState()),
-        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
-        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
-    )
+            .heightIn(max = maxHeight),
+    ) {
+        Text(
+            text = message,
+            modifier = androidx.compose.ui.Modifier
+                .fillMaxWidth()
+                .heightIn(max = maxHeight)
+                .verticalScroll(scrollState),
+            color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+            style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+        )
+        ScrollableContentHint(
+            visible = canScrollForward,
+            modifier = androidx.compose.ui.Modifier.align(Alignment.BottomCenter),
+        )
+    }
 }
 
 @Composable
