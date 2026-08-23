@@ -63,6 +63,7 @@ import javax.microedition.lcdui.commands.AbstractSoftKeysBar;
 import javax.microedition.lcdui.event.CanvasEvent;
 import javax.microedition.lcdui.event.Event;
 import javax.microedition.lcdui.event.EventFilter;
+import javax.microedition.lcdui.event.EventQueue;
 import javax.microedition.lcdui.event.PointerEvent;
 import javax.microedition.lcdui.graphics.CanvasView;
 import javax.microedition.lcdui.graphics.CanvasWrapper;
@@ -77,6 +78,8 @@ import javax.microedition.lcdui.overlay.OverlayView;
 import javax.microedition.lcdui.overlay.TimingMonitor;
 import javax.microedition.lcdui.skin.SkinLayer;
 import javax.microedition.shell.MicroActivity;
+import javax.microedition.shell.GuestTimingBridge;
+import javax.microedition.shell.timing.FramePacer;
 import javax.microedition.shell.timing.FrameMetrics;
 import javax.microedition.util.ContextHolder;
 
@@ -153,7 +156,7 @@ public abstract class Canvas extends Displayable {
 	private volatile long publishedFrameSequence;
 	private volatile FrameMetrics frameMetrics;
 	private int onX, onY, onWidth, onHeight;
-	private long lastFrameTime = System.currentTimeMillis();
+	private final FramePacer framePacer = new FramePacer(GuestTimingBridge.activeSession());
 	private Handler uiHandler;
 	private Overlay overlay;
 	private FpsCounter fpsCounter;
@@ -634,14 +637,7 @@ public abstract class Canvas extends Displayable {
 	}
 
 	private void limitFps() {
-		if (fpsLimit <= 0) return;
-		try {
-			long millis = (1000 / fpsLimit) - (System.currentTimeMillis() - lastFrameTime);
-			if (millis > 0) Thread.sleep(millis);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		lastFrameTime = System.currentTimeMillis();
+		framePacer.pace(fpsLimit, !EventQueue.isInCallback());
 	}
 
 	private void publishFrameLocked() {
