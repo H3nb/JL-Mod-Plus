@@ -53,7 +53,7 @@
         tools:ignore="RtlEnabled">
         <activity
             android:name=".LauncherActivity"
-            android:excludeFromRecents="true"
+            android:excludeFromRecents="false"
             android:exported="true"
             android:noHistory="true"
             android:theme="@style/AppTheme.NoActionBar">

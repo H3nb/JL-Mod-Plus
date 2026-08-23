@@ -1050,6 +1050,16 @@ public class AppsListFragment extends Fragment {
         if (first.getPath() != null) {
             preferences.edit().putString(PREF_LAST_PATH, first.getPath()).apply();
         }
+        if (uris.size() == 1) {
+            Activity activity = requireActivity();
+            if (activity instanceof MainActivity) {
+                // A single JAR/JAD is the established single-app flow. Do not make the user
+                // pass through the bulk-install review surface just because the picker supports
+                // selecting multiple files.
+                ((MainActivity) activity).requestInstaller(first);
+                return;
+            }
+        }
         FragmentManager manager = getParentFragmentManager();
         if (manager.isDestroyed() ||
                 manager.findFragmentByTag(BulkInstallerDialog.TAG) != null) {

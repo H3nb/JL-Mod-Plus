@@ -22,6 +22,7 @@ import static android.content.pm.ActivityInfo.*;
 import static ru.playsoftware.j2meloader.util.Constants.*;
 
 import android.annotation.SuppressLint;
+import android.app.ActivityManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -168,6 +169,7 @@ public class MicroActivity extends AppCompatActivity {
 				throw new RuntimeException("Can't access file system");
 			}
 		}
+		updateRecentTaskDescription();
 		MidletSessionStore.markPending(getApplicationContext(), appPath, appName);
 		microLoader = new MicroLoader(appPath);
 		if (!microLoader.init()) {
@@ -434,6 +436,12 @@ public class MicroActivity extends AppCompatActivity {
 		if (hasFocus && current instanceof Canvas) {
 			applySystemUi(getRuntimeChrome(current), current);
 		}
+	}
+
+	private void updateRecentTaskDescription() {
+		String label = appName == null || appName.isEmpty()
+				? getString(R.string.app_name) : appName;
+		setTaskDescription(new ActivityManager.TaskDescription(label));
 	}
 
 	@SuppressLint("SourceLockedOrientationActivity")

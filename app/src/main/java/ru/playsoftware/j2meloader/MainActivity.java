@@ -19,6 +19,7 @@
 
 package ru.playsoftware.j2meloader;
 
+import android.app.ActivityManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
@@ -104,6 +105,7 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		updateRecentTaskDescription();
 		EdgeToEdgeCompat.enableForComposeLibrary(this);
 		FrameLayout root = new FrameLayout(this);
 		root.setId(R.id.main_host_root);
@@ -184,7 +186,12 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		updateRecentTaskDescription();
 		if (libraryViewModel != null) libraryViewModel.refreshPlayStats();
+	}
+
+	private void updateRecentTaskDescription() {
+		setTaskDescription(new ActivityManager.TaskDescription(getString(R.string.app_name)));
 	}
 
 	@Override
