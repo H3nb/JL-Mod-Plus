@@ -30,6 +30,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -42,6 +43,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.ui.semantics.Role
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -66,6 +68,7 @@ import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
 import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
+import javax.microedition.shell.timing.EmulationSpeed
 
 /** Android-host menu state only; Java ME Displayable and Command state stay in the runtime. */
 internal data class RuntimeMenuUiState(
@@ -76,6 +79,8 @@ internal data class RuntimeMenuUiState(
     val virtualKeyboardAvailable: Boolean = false,
     val virtualKeyboardEditing: Boolean = false,
     val orientationLocked: Boolean = false,
+    val emulationSpeedAvailable: Boolean = false,
+    val emulationSpeedPercent: Int = EmulationSpeed.NORMAL_PERCENT,
 )
 
 interface RuntimeMenuActions {
@@ -87,6 +92,9 @@ interface RuntimeMenuActions {
     fun onLimitFps()
     fun onSetFpsLimit(value: Int)
     fun onResetFpsLimit()
+    fun onEmulationSpeed()
+    fun onSetEmulationSpeed(value: Int)
+    fun onResetEmulationSpeed()
     fun onEditVirtualKeyboardLayout()
     fun onResizeVirtualKeyboardLayout()
     fun onFinishVirtualKeyboardLayout()
@@ -106,11 +114,17 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     private var state by mutableStateOf(RuntimeMenuUiState())
     private var menuVisible by mutableStateOf(false)
     private var limitFpsVisible by mutableStateOf(false)
+    private var emulationSpeedVisible by mutableStateOf(false)
     private var hostDialogState by mutableStateOf<RuntimeHostDialogState?>(null)
     private val menuActions = object : RuntimeMenuActions by actions {
         override fun onLimitFps() {
             closeMenu()
             limitFpsVisible = true
+        }
+
+        override fun onEmulationSpeed() {
+            closeMenu()
+            emulationSpeedVisible = true
         }
     }
 
@@ -139,6 +153,20 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
                         },
                     )
                 }
+                if (emulationSpeedVisible) {
+                    RuntimeEmulationSpeedDialog(
+                        currentPercent = state.emulationSpeedPercent,
+                        onDismiss = { emulationSpeedVisible = false },
+                        onConfirm = { value ->
+                            emulationSpeedVisible = false
+                            actions.onSetEmulationSpeed(value)
+                        },
+                        onReset = {
+                            emulationSpeedVisible = false
+                            actions.onResetEmulationSpeed()
+                        },
+                    )
+                }
                 if (hostDialogActions != null) {
                     RuntimeHostDialogs(
                         state = hostDialogState,
@@ -158,6 +186,8 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
         virtualKeyboardAvailable: Boolean,
         virtualKeyboardEditing: Boolean,
         orientationLocked: Boolean,
+        emulationSpeedAvailable: Boolean,
+        emulationSpeedPercent: Int,
     ) {
         state = RuntimeMenuUiState(
             title = title,
@@ -167,6 +197,8 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             virtualKeyboardAvailable = virtualKeyboardAvailable,
             virtualKeyboardEditing = virtualKeyboardEditing,
             orientationLocked = orientationLocked,
+            emulationSpeedAvailable = emulationSpeedAvailable,
+            emulationSpeedPercent = emulationSpeedPercent,
         )
     }
 
@@ -176,9 +208,15 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
 
     /** Allows the Activity's legacy Back/key paths to dismiss an already-open host menu. */
     fun isMenuVisible(): Boolean = menuVisible
+            || limitFpsVisible
+            || emulationSpeedVisible
+            || hostDialogState != null
 
     fun closeMenu() {
         menuVisible = false
+        limitFpsVisible = false
+        emulationSpeedVisible = false
+        hostDialogState = null
     }
 
     fun showMidletDialog(names: Array<String>) {
@@ -260,6 +298,80 @@ internal fun RuntimeLimitFpsDialog(
                 Text(stringResource(android.R.string.ok))
             }
         },
+        dismissButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                TextButton(onClick = onReset) {
+                    Text(stringResource(R.string.reset))
+                }
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            }
+        },
+    )
+}
+
+@Composable
+internal fun RuntimeEmulationSpeedDialog(
+    currentPercent: Int,
+    onDismiss: () -> Unit,
+    onConfirm: (Int) -> Unit,
+    onReset: () -> Unit,
+) {
+    val presetValues = remember(currentPercent) {
+        EmulationSpeed.presets().toList().let { presets ->
+            if (currentPercent in presets) presets else listOf(currentPercent) + presets
+        }
+    }
+    val layout = runtimeMenuDialogLayout()
+    AlertDialog(
+        modifier = layout.modifier,
+        properties = layout.properties,
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.PREF_EMULATION_SPEED)) },
+        text = {
+            val listState = rememberLazyListState()
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = runtimeMenuDialogContentHeight()),
+            ) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    items(presetValues) { value ->
+                        ListItem(
+                            colors = ListItemDefaults.colors(
+                                containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                            ),
+                            headlineContent = {
+                                Text(
+                                    text = EmulationSpeed.formatMultiplier(value),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium,
+                                )
+                            },
+                            leadingContent = {
+                                RadioButton(
+                                    selected = value == currentPercent,
+                                    onClick = null,
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("runtime_emulation_speed_${value}")
+                                .clickable { onConfirm(value) },
+                        )
+                    }
+                }
+                ScrollableContentHint(
+                    visible = rememberLazyListCanScrollForward(listState),
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
+            }
+        },
+        confirmButton = {},
         dismissButton = {
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 TextButton(onClick = onReset) {
@@ -507,6 +619,16 @@ private fun LazyListScope.runtimeMenuItems(
         }
         item {
             RuntimeActionItem(R.string.PREF_LIMIT_FPS, onDismiss, actions::onLimitFps, leadingIcon = R.drawable.ic_speed)
+        }
+        if (state.emulationSpeedAvailable) {
+            item {
+                RuntimeActionItem(
+                    R.string.PREF_EMULATION_SPEED,
+                    onDismiss,
+                    actions::onEmulationSpeed,
+                    leadingIcon = R.drawable.ic_speed,
+                )
+            }
         }
         if (state.virtualKeyboardAvailable) {
             item {
