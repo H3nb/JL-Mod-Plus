@@ -26,10 +26,21 @@ import java.util.concurrent.locks.LockSupport;
  * transition is linearizable and cannot make guest time move backward.
  */
 public final class TimingSession implements AutoCloseable {
+	private static final class CloseAwareWait {
+		private final Thread thread;
+		private volatile boolean closed;
+
+		private CloseAwareWait(Thread thread) {
+			this.thread = thread;
+		}
+	}
+
 	private final Object lock = new Object();
 	private final TimingTimeSource timeSource;
 	private final long generation;
 	private final Set<Thread> closeAwareThreads =
+			Collections.newSetFromMap(new ConcurrentHashMap<>());
+	private final Set<CloseAwareWait> closeAwareWaiters =
 			Collections.newSetFromMap(new ConcurrentHashMap<>());
 
 	private TimingClockState clockState;
@@ -191,15 +202,37 @@ public final class TimingSession implements AutoCloseable {
 	private void waitOnMonitorNanos(Object monitor, long guestDurationNanos)
 			throws InterruptedException {
 		long hostDurationNanos;
+		CloseAwareWait waiter = new CloseAwareWait(Thread.currentThread());
 		synchronized (lock) {
-			ensureOpen();
+			// A transformed wait can race MIDlet teardown after the bridge has selected this
+			// session. Treat that stale call like a closed guest sleep rather than throwing into
+			// application code during shutdown.
+			if (closed) {
+				return;
+			}
 			TimingSnapshot start = snapshotAt(timeSource.monotonicNanos());
 			hostDurationNanos = TimingMath.scaleGuestToHostNanos(
 					guestDurationNanos, start.speedPercent());
+			closeAwareWaiters.add(waiter);
 		}
 		long hostMillis = hostDurationNanos / 1_000_000L;
 		int hostNanos = (int) (hostDurationNanos % 1_000_000L);
-		monitor.wait(hostMillis, hostNanos);
+		try {
+			monitor.wait(hostMillis, hostNanos);
+		} catch (InterruptedException e) {
+			// A session close is an emulator-owned wakeup, not a guest interrupt. Let teardown
+			// finish without exposing a stale InterruptedException to guest code.
+			if (!waiter.closed) {
+				throw e;
+			}
+		} finally {
+			closeAwareWaiters.remove(waiter);
+			if (waiter.closed) {
+				// close() uses interrupt only because Object.wait cannot be unparked. Do not leak
+				// that implementation detail into a thread that continues its teardown path.
+				Thread.interrupted();
+			}
+		}
 	}
 
 	private void sleepGuestDuration(long guestDurationNanos) throws InterruptedException {
@@ -278,6 +311,10 @@ public final class TimingSession implements AutoCloseable {
 			closed = true;
 			for (Thread thread : closeAwareThreads) {
 				LockSupport.unpark(thread);
+			}
+			for (CloseAwareWait waiter : closeAwareWaiters) {
+				waiter.closed = true;
+				waiter.thread.interrupt();
 			}
 		}
 	}

@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class TimingSessionTest {
 	private static final long WALL_START = 1_700_000_000_000L;
@@ -148,6 +149,35 @@ public class TimingSessionTest {
 			sleeper.interrupt();
 		}
 		assertFalse(sleeper.isAlive());
+	}
+
+	@Test
+	public void closeWakesGuestMonitorWaitersWithoutLeakingInternalInterrupt() throws Exception {
+		TimingSession session = new TimingSession(new FakeTimeSource(WALL_START), 25, 1L);
+		Object monitor = new Object();
+		CountDownLatch started = new CountDownLatch(1);
+		AtomicReference<Throwable> failure = new AtomicReference<>();
+		Thread waiter = new Thread(() -> {
+			synchronized (monitor) {
+				started.countDown();
+				try {
+					session.waitOnMonitor(monitor, 60_000L);
+				} catch (Throwable throwable) {
+					failure.set(throwable);
+				}
+			}
+		});
+		waiter.start();
+		assertTrue(started.await(1L, TimeUnit.SECONDS));
+
+		session.close();
+		waiter.join(1_000L);
+		if (waiter.isAlive()) {
+			waiter.interrupt();
+		}
+		assertFalse(waiter.isAlive());
+		assertTrue(failure.get() == null);
+		assertFalse(waiter.isInterrupted());
 	}
 
 	@Test
