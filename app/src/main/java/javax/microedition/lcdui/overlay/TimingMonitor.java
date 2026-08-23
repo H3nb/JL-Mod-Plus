@@ -43,6 +43,7 @@ public final class TimingMonitor extends TimerTask implements Layer {
 	private static final long UPDATE_PERIOD_MILLIS = 1000L;
 
 	private final View view;
+	private final TimingSession session;
 	private final float topOffsetDp;
 	private final int pillBackgroundColor;
 	private final int pillContentColor;
@@ -51,6 +52,7 @@ public final class TimingMonitor extends TimerTask implements Layer {
 
 	public TimingMonitor(View view, boolean fpsVisible) {
 		this.view = view;
+		this.session = GuestTimingBridge.activeSession();
 		this.topOffsetDp = fpsVisible ? 48f : 0f;
 		pillBackgroundColor = ContextCompat.getColor(
 				ContextHolder.getAppContext(), R.color.fps_overlay_surface);
@@ -68,7 +70,6 @@ public final class TimingMonitor extends TimerTask implements Layer {
 
 	@Override
 	public void paint(CanvasWrapper g) {
-		TimingSession session = GuestTimingBridge.activeSession();
 		if (session == null || session.isClosed()) {
 			return;
 		}
