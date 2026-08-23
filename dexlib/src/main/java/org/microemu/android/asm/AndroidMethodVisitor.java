@@ -23,6 +23,8 @@
  * See the LGPL or the AL for the specific language governing permissions and
  * limitations.
  *
+ * Modified in JL-Mod Plus to preserve Java ME bytecode return semantics during DEX conversion.
+ *
  * @version $Id$
  */
 
@@ -38,9 +40,15 @@ import java.util.ArrayList;
 public class AndroidMethodVisitor extends MethodVisitor {
 	static boolean USE_PANIC_LOGGING = false;
 	private final ArrayList<Label> exceptionHandlers = new ArrayList<>();
+	private final boolean returnsBoolean;
 
 	public AndroidMethodVisitor(MethodVisitor methodVisitor) {
+		this(methodVisitor, false);
+	}
+
+	AndroidMethodVisitor(MethodVisitor methodVisitor, boolean returnsBoolean) {
 		super(ASM9, methodVisitor);
+		this.returnsBoolean = returnsBoolean;
 	}
 
 	@Override
@@ -50,6 +58,17 @@ public class AndroidMethodVisitor extends MethodVisitor {
 			mv.visitInsn(DUP);
 			mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Throwable", "printStackTrace", "()V", false);
 		}
+	}
+
+	@Override
+	public void visitInsn(int opcode) {
+		if (opcode == IRETURN && returnsBoolean) {
+			// JVMS ireturn narrows boolean results as value & 1. Make that implicit JVM
+			// conversion explicit before dx so ART sees an int-compatible return value.
+			super.visitInsn(ICONST_1);
+			super.visitInsn(IAND);
+		}
+		super.visitInsn(opcode);
 	}
 
 	@Override
