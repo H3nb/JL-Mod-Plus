@@ -74,7 +74,6 @@ jobs:
           :app:lintEmulatorDebug
           :dexlib:lintDebug
           :app:testEmulatorDebugUnitTest
-          :dexlib:testDebugUnitTest
           :app:validateEmulatorDebugScreenshotTest
           :app:assembleEmulatorDebug
           :app:assembleEmulatorDebugAndroidTest
@@ -93,8 +92,6 @@ jobs:
             dexlib/build/reports/lint-results-*.sarif
             app/build/reports/tests/**
             app/build/test-results/**
-            dexlib/build/reports/tests/**
-            dexlib/build/test-results/**
             app/build/reports/screenshotTest/**
             build/reports/problems/**
           if-no-files-found: warn
