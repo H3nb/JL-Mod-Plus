@@ -19,6 +19,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.content.res.Configuration;
+
 import com.google.gson.Gson;
 
 import org.junit.Test;
@@ -146,5 +148,11 @@ public class ProfileConfigMatcherTest {
 		assertEquals(360, profile.screenWidth);
 		assertEquals(0xFFFFFF, profile.screenBackgroundColor);
 		assertEquals(0x000000, profile.vkFgColor);
+	}
+
+	@Test
+	public void explicitThemePreferenceWinsOverApplicationContextUiMode() {
+		assertTrue(ProfileModel.isDarkTheme("dark", Configuration.UI_MODE_NIGHT_NO));
+		assertFalse(ProfileModel.isDarkTheme("light", Configuration.UI_MODE_NIGHT_YES));
 	}
 }

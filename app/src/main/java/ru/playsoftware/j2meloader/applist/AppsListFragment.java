@@ -152,8 +152,35 @@ public class AppsListFragment extends Fragment {
             this::onImportBundlePicked);
 
     private long pendingIconDatabaseId = NO_GENERATION;
-    private final ActivityResultLauncher<String[]> iconPickerLauncher = registerForActivityResult(
-            new ActivityResultContracts.OpenDocument(),
+    /**
+     * Use an explicit single-image document contract instead of relying on the array MIME
+     * overload. A few Android document providers return the selected item through ClipData even
+     * for a single selection; parsing both result shapes keeps the icon edit flow reliable.
+     */
+    private final ActivityResultLauncher<Void> iconPickerLauncher = registerForActivityResult(
+            new ActivityResultContract<Void, Uri>() {
+                @NonNull
+                @Override
+                public Intent createIntent(@NonNull Context context, Void input) {
+                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT)
+                            .addCategory(Intent.CATEGORY_OPENABLE)
+                            .setType("image/*");
+                    intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false);
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                    return intent;
+                }
+
+                @Override
+                @Nullable
+                public Uri parseResult(int resultCode, @Nullable Intent intent) {
+                    if (resultCode != Activity.RESULT_OK || intent == null) return null;
+                    if (intent.getClipData() != null && intent.getClipData().getItemCount() > 0) {
+                        return intent.getClipData().getItemAt(0).getUri();
+                    }
+                    return intent.getData();
+                }
+            },
             this::onIconPicked);
 
     private final Map<Integer, LibraryAppRow> rowsByUiId = new HashMap<>();
@@ -293,7 +320,7 @@ public class AppsListFragment extends Fragment {
                 LibraryAppRow row = findRow(appId);
                 if (row == null) return;
                 pendingIconDatabaseId = row.getId();
-                iconPickerLauncher.launch(new String[]{"image/*"});
+                iconPickerLauncher.launch(null);
             }
 
             @Override
@@ -1011,7 +1038,7 @@ public class AppsListFragment extends Fragment {
     private void onIconPicked(Uri uri) {
         long databaseId = pendingIconDatabaseId;
         pendingIconDatabaseId = NO_GENERATION;
-        if (uri == null || databaseId == NO_GENERATION) return;
+        if (uri == null || databaseId == NO_GENERATION || !isAdded()) return;
         try {
             requireContext().getContentResolver().takePersistableUriPermission(
                     uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);

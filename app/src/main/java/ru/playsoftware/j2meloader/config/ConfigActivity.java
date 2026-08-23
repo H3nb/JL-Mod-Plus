@@ -23,6 +23,7 @@ import static ru.playsoftware.j2meloader.util.Constants.ACTION_EDIT;
 import static ru.playsoftware.j2meloader.util.Constants.ACTION_EDIT_PROFILE;
 import static ru.playsoftware.j2meloader.util.Constants.KEY_MIDLET_NAME;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_DEFAULT_PROFILE;
+import static ru.playsoftware.j2meloader.util.Constants.PREF_THEME;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -89,6 +90,15 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private ProfileModel builtInDefaultParams;
 	/** True when this app config is the built-in template and should track host theme changes. */
 	private boolean builtInThemeLinked;
+	private SharedPreferences hostPreferences;
+	private final SharedPreferences.OnSharedPreferenceChangeListener hostThemeListener =
+			(sharedPreferences, key) -> {
+				if (PREF_THEME.equals(key) && builtInThemeLinked && !isProfile) {
+					// AppCompat applies the new uiMode after the preference callback. Post the sync so
+					// the profile palette is derived from the new configuration, not the old one.
+					getWindow().getDecorView().post(this::syncLinkedBuiltInTheme);
+				}
+			};
 	private List<ProfileConfigMatcher.Candidate> profileCandidates = Collections.emptyList();
 	private byte[] currentKeyLayoutSnapshot;
 	@Nullable private String profileOrigin;
@@ -255,6 +265,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			configDir = new File(workDir + Config.MIDLET_CONFIGS_DIR + appDir.getName());
 		}
 		configDir.mkdirs();
+		hostPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+		hostPreferences.registerOnSharedPreferenceChangeListener(hostThemeListener);
 		profileOrigin = readProfileOrigin();
 		builtInDefaultParams = newBuiltInProfile();
 
@@ -550,13 +562,19 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	}
 
 	@Override
+	protected void onDestroy() {
+		if (hostPreferences != null) {
+			hostPreferences.unregisterOnSharedPreferenceChangeListener(hostThemeListener);
+			hostPreferences = null;
+		}
+		super.onDestroy();
+	}
+
+	@Override
 	public void onConfigurationChanged(@NonNull Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
 		if (configDir != null) {
-			if (!isProfile && builtInThemeLinked && params != null) {
-				ProfileModel.applyBuiltInTheme(params, isDarkTheme());
-				currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
-			}
+			syncLinkedBuiltInTheme();
 			builtInDefaultParams = newBuiltInProfile();
 		}
 		if (display != null) {
@@ -672,10 +690,20 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		return ProfileModel.createBuiltIn(configDir, isDarkTheme());
 	}
 
+	/** Re-derives theme-owned built-in colors without turning the profile into a custom snapshot. */
+	private void syncLinkedBuiltInTheme() {
+		if (isProfile || !builtInThemeLinked || params == null || configDir == null) return;
+		ProfileModel.applyBuiltInTheme(params, isDarkTheme());
+		currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
+		builtInDefaultParams = newBuiltInProfile();
+		refreshProfileMatchCache();
+		if (composeController != null) {
+			composeController.update(createUiState());
+		}
+	}
+
 	private boolean isDarkTheme() {
-		int nightMask = getResources().getConfiguration().uiMode
-				& Configuration.UI_MODE_NIGHT_MASK;
-		return nightMask == Configuration.UI_MODE_NIGHT_YES;
+		return ProfileModel.isDarkTheme(this);
 	}
 
 	private boolean matchesBuiltInVariant(@NonNull ProfileModel candidate) {

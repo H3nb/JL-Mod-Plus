@@ -23,7 +23,6 @@ import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
 
 import android.graphics.Bitmap;
-import android.content.res.Configuration;
 import android.os.Environment;
 import android.os.StrictMode;
 import android.util.Log;
@@ -133,9 +132,9 @@ public class MicroLoader {
 		if (!linked) {
 			return;
 		}
-		int uiMode = ContextHolder.getAppContext().getResources().getConfiguration().uiMode;
-		boolean darkTheme = (uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
-		ProfileModel.applyBuiltInTheme(params, darkTheme);
+		ProfileModel.applyBuiltInTheme(
+				params,
+				ProfileModel.isDarkTheme(ContextHolder.getAppContext()));
 	}
 
 	Map<String, String> loadMIDletList() throws IOException {
