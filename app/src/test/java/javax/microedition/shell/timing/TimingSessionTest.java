@@ -91,6 +91,25 @@ public class TimingSessionTest {
 	}
 
 	@Test
+	public void timedMonitorWaitValidatesArgumentsBeforeWaiting() throws Exception {
+		TimingSession session = new TimingSession(new FakeTimeSource(WALL_START), 100, 1L);
+		Object monitor = new Object();
+
+		try {
+			session.waitOnMonitor(monitor, -1L);
+			throw new AssertionError("Expected negative timeout to be rejected");
+		} catch (IllegalArgumentException expected) {
+			// Expected.
+		}
+		try {
+			session.waitOnMonitor(monitor, 0L, 1_000_000);
+			throw new AssertionError("Expected invalid nanoseconds to be rejected");
+		} catch (IllegalArgumentException expected) {
+			// Expected.
+		}
+	}
+
+	@Test
 	public void closeIsIdempotentAndPreventsFurtherReads() {
 		TimingSession session = new TimingSession(new FakeTimeSource(WALL_START), 100, 1L);
 		session.close();

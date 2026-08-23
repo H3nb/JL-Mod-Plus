@@ -50,6 +50,19 @@ public class AndroidMethodVisitorTest {
 		assertEquals(1, calls.size());
 	}
 
+	@Test
+	public void finiteObjectWaitUsesParentOwnedMonitorBridge() {
+		byte[] source = createWaitClass();
+		byte[] transformed = transform(source);
+		List<String> calls = methodCalls(transformed, "waited");
+
+		assertTrue(calls.contains(
+				"INVOKESTATIC javax/microedition/shell/GuestTimingBridge.waitOnMonitor(Ljava/lang/Object;J)V"));
+		assertTrue(calls.contains(
+				"INVOKESTATIC javax/microedition/shell/GuestTimingBridge.waitOnMonitor(Ljava/lang/Object;JI)V"));
+		assertEquals(2, calls.size());
+	}
+
 	private static byte[] createClass() {
 		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
 		writer.visit(Opcodes.V17, Opcodes.ACC_PUBLIC, "sample/Timing", null, "java/lang/Object", null);
@@ -84,6 +97,27 @@ public class AndroidMethodVisitorTest {
 		method.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Thread", "yield", "()V", false);
 		method.visitInsn(Opcodes.RETURN);
 		method.visitMaxs(2, 0);
+		method.visitEnd();
+		writer.visitEnd();
+		return writer.toByteArray();
+	}
+
+	private static byte[] createWaitClass() {
+		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+		writer.visit(Opcodes.V17, Opcodes.ACC_PUBLIC, "sample/Wait", null, "java/lang/Object", null);
+		MethodVisitor method = writer.visitMethod(
+				Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, "waited", "(Ljava/lang/Object;)V", null,
+				new String[] {"java/lang/InterruptedException"});
+		method.visitCode();
+		method.visitVarInsn(Opcodes.ALOAD, 0);
+		method.visitLdcInsn(10L);
+		method.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Object", "wait", "(J)V", false);
+		method.visitVarInsn(Opcodes.ALOAD, 0);
+		method.visitLdcInsn(10L);
+		method.visitInsn(Opcodes.ICONST_1);
+		method.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Object", "wait", "(JI)V", false);
+		method.visitInsn(Opcodes.RETURN);
+		method.visitMaxs(3, 1);
 		method.visitEnd();
 		writer.visitEnd();
 		return writer.toByteArray();

@@ -94,4 +94,32 @@ public final class GuestTimingBridge {
 			session.sleep(guestMillis, guestNanos);
 		}
 	}
+
+	/** Replacement for transformed finite java.lang.Object.wait(long). */
+	public static void waitOnMonitor(Object monitor, long guestMillis)
+			throws InterruptedException {
+		if (monitor == null) {
+			throw new NullPointerException("monitor");
+		}
+		TimingSession session = activeSession();
+		if (session == null) {
+			monitor.wait(guestMillis);
+		} else {
+			session.waitOnMonitor(monitor, guestMillis);
+		}
+	}
+
+	/** Replacement for transformed finite java.lang.Object.wait(long, int). */
+	public static void waitOnMonitor(Object monitor, long guestMillis, int guestNanos)
+			throws InterruptedException {
+		if (monitor == null) {
+			throw new NullPointerException("monitor");
+		}
+		TimingSession session = activeSession();
+		if (session == null) {
+			monitor.wait(guestMillis, guestNanos);
+		} else {
+			session.waitOnMonitor(monitor, guestMillis, guestNanos);
+		}
+	}
 }

@@ -110,6 +110,48 @@ public final class TimingSession implements AutoCloseable {
 				TimingMath.millisToNanos(guestMillis), guestNanos));
 	}
 
+	/**
+	 * Waits on the supplied guest monitor with a speed-scaled timeout sampled at entry. The
+	 * monitor wait itself remains a JVM wait, so monitor release, notify, and reacquisition retain
+	 * their normal semantics.
+	 */
+	public void waitOnMonitor(Object monitor, long guestMillis) throws InterruptedException {
+		if (monitor == null) {
+			throw new NullPointerException("monitor");
+		}
+		if (guestMillis < 0L) {
+			throw new IllegalArgumentException("timeout value is negative");
+		}
+		waitOnMonitorNanos(monitor, TimingMath.millisToNanos(guestMillis));
+	}
+
+	/** Java-compatible millisecond plus nanosecond timed monitor wait. */
+	public void waitOnMonitor(Object monitor, long guestMillis, int guestNanos)
+			throws InterruptedException {
+		if (monitor == null) {
+			throw new NullPointerException("monitor");
+		}
+		if (guestMillis < 0L || guestNanos < 0 || guestNanos > 999_999) {
+			throw new IllegalArgumentException("timeout value is invalid");
+		}
+		waitOnMonitorNanos(monitor, TimingMath.saturatingAdd(
+				TimingMath.millisToNanos(guestMillis), guestNanos));
+	}
+
+	private void waitOnMonitorNanos(Object monitor, long guestDurationNanos)
+			throws InterruptedException {
+		long hostDurationNanos;
+		synchronized (lock) {
+			ensureOpen();
+			TimingSnapshot start = snapshotAt(timeSource.monotonicNanos());
+			hostDurationNanos = TimingMath.scaleGuestToHostNanos(
+					guestDurationNanos, start.speedPercent());
+		}
+		long hostMillis = hostDurationNanos / 1_000_000L;
+		int hostNanos = (int) (hostDurationNanos % 1_000_000L);
+		monitor.wait(hostMillis, hostNanos);
+	}
+
 	private void sleepGuestDuration(long guestDurationNanos) throws InterruptedException {
 		if (Thread.interrupted()) {
 			throw new InterruptedException();
