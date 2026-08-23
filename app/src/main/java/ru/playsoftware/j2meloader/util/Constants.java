@@ -32,6 +32,16 @@ public class Constants {
 	public static final String PREF_APPS_ENHANCED_ICONS = "pref_apps_enhanced_icons";
 	public static final String PREF_APPS_SHOW_LIST_DESCRIPTION = "pref_apps_show_list_description";
 	public static final String PREF_APPS_VIEW = "pref_apps_view";
+	public static final int LIBRARY_LAYOUT_LIST = 0;
+	public static final int LIBRARY_LAYOUT_GRID = 1;
+	public static final int LIBRARY_ICON_RATIO_SQUARE = 0;
+	public static final int LIBRARY_ICON_RATIO_PORTRAIT = 1;
+	public static final int LIBRARY_ICON_SHAPE_ROUND = 0;
+	public static final int LIBRARY_ICON_SHAPE_SQUARE = 1;
+	public static final int LIBRARY_GRID_SPACING_COMPACT = 0;
+	public static final int LIBRARY_GRID_SPACING_STANDARD = 1;
+	public static final int LIBRARY_GRID_SPACING_SPACIOUS = 2;
+	public static final int LIBRARY_GRID_SPACING_NONE = 3;
 	public static final String PREF_DEFAULT_PROFILE = "default_profile";
 	public static final String PREF_EMULATOR_DIR = "emulator_dir";
 	public static final String PREF_KEEP_SCREEN = "pref_wakelock_switch";

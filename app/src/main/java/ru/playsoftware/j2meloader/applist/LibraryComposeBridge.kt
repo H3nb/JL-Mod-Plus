@@ -222,7 +222,7 @@ enum class LibraryGridSpacing(
 private enum class LibraryDestination {
     Apps,
     Collections,
-    Options,
+    More,
 }
 
 data class LibraryAppUiItem(
@@ -329,7 +329,6 @@ interface LibraryActions {
     fun onOpenProfiles()
     fun onOpenCrashReports()
     fun onSaveLog()
-    fun onExit()
     fun onRetryLibrary()
 }
 
@@ -463,6 +462,26 @@ class LibraryComposeController(
 
     fun updateGridSpacing(spacing: LibraryGridSpacing) {
         state = state.copy(gridSpacing = spacing)
+    }
+
+    fun updateAppearance(
+        layout: LibraryLayout,
+        iconRatio: LibraryIconRatio,
+        iconShape: LibraryIconShape,
+        enhancedIcons: Boolean,
+        hideGridTitles: Boolean,
+        showListDescription: Boolean,
+        gridSpacing: LibraryGridSpacing,
+    ) {
+        state = state.copy(
+            layout = layout,
+            iconRatio = iconRatio,
+            iconShape = iconShape,
+            enhancedIcons = enhancedIcons,
+            hideGridTitles = hideGridTitles,
+            showListDescription = showListDescription,
+            gridSpacing = gridSpacing,
+        )
     }
 
     fun updateSort(sortVariant: Int) {
@@ -874,16 +893,8 @@ fun LibraryScreen(
                     } else {
                         LibraryCollectionsDestination(padding)
                     }
-                    LibraryDestination.Options -> LibraryOptionsDestination(
-                        state = state,
+                    LibraryDestination.More -> LibraryMoreDestination(
                         scaffoldPadding = padding,
-                        onLayoutChange = actions::onLayoutChange,
-                        onIconRatioChange = actions::onIconRatioChange,
-                        onIconShapeChange = actions::onIconShapeChange,
-                        onEnhancedIconsChange = actions::onEnhancedIconsChange,
-                        onHideGridTitlesChange = actions::onHideGridTitlesChange,
-                        onShowListDescriptionChange = actions::onShowListDescriptionChange,
-                        onGridSpacingChange = actions::onGridSpacingChange,
                         onImportAppBundle = actions::onImportAppBundle,
                         onAbout = { infoDialog = LibraryInfoDialog.About },
                         onLicenses = { infoDialog = LibraryInfoDialog.Licenses },
@@ -891,7 +902,6 @@ fun LibraryScreen(
                         onHelp = { infoDialog = LibraryInfoDialog.Help },
                         onCrashReports = actions::onOpenCrashReports,
                         onSaveLog = actions::onSaveLog,
-                        onExit = actions::onExit,
                     )
                 }
             }
@@ -1177,9 +1187,9 @@ private fun LibraryNavigationRail(
             onSelected = onSelected,
         )
         LibraryNavigationRailItem(
-            destination = LibraryDestination.Options,
+            destination = LibraryDestination.More,
             selected = selected,
-            label = R.string.library_destination_options,
+            label = R.string.library_destination_more,
             icon = R.drawable.ic_options,
             onSelected = onSelected,
         )
@@ -1234,9 +1244,9 @@ private fun LibraryNavigationBar(
             onSelected = onSelected,
         )
         LibraryNavigationItem(
-            destination = LibraryDestination.Options,
+            destination = LibraryDestination.More,
             selected = selected,
-            label = R.string.library_destination_options,
+            label = R.string.library_destination_more,
             icon = R.drawable.ic_options,
             onSelected = onSelected,
         )
@@ -1741,7 +1751,7 @@ private fun LibrarySelectionBottomBar(
                 enabled = enabled,
             )
             LibrarySelectionAction(
-                icon = R.drawable.ic_save,
+                icon = R.drawable.ic_file_download,
                 label = stringResource(R.string.library_bulk_export_apps),
                 onClick = onExport,
                 enabled = enabled,
@@ -2145,18 +2155,9 @@ internal fun LibraryCollectionsDestination(scaffoldPadding: PaddingValues) {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun LibraryOptionsDestination(
-    state: LibraryUiState,
+internal fun LibraryMoreDestination(
     scaffoldPadding: PaddingValues,
-    onLayoutChange: (LibraryLayout) -> Unit,
-    onIconRatioChange: (LibraryIconRatio) -> Unit,
-    onIconShapeChange: (LibraryIconShape) -> Unit,
-    onEnhancedIconsChange: (Boolean) -> Unit = {},
-    onHideGridTitlesChange: (Boolean) -> Unit,
-    onShowListDescriptionChange: (Boolean) -> Unit,
-    onGridSpacingChange: (LibraryGridSpacing) -> Unit,
     onImportAppBundle: () -> Unit = {},
     onAbout: () -> Unit,
     onLicenses: () -> Unit,
@@ -2164,388 +2165,95 @@ internal fun LibraryOptionsDestination(
     onHelp: () -> Unit,
     onCrashReports: () -> Unit,
     onSaveLog: () -> Unit,
-    onExit: () -> Unit,
 ) {
-    val hideGridTitlesLabel = stringResource(R.string.library_hide_grid_titles)
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
-        contentPadding = scaffoldPadding,
-    ) {
-        item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)),
-            ) {
-                Column(
+    val listState = rememberLazyListState()
+    val canScrollForward = rememberLazyListCanScrollForward(listState)
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
+            state = listState,
+            contentPadding = scaffoldPadding,
+        ) {
+            item {
+                Box(
                     modifier = Modifier
-                        .align(Alignment.TopCenter)
                         .fillMaxWidth()
-                        .widthIn(max = 840.dp)
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)),
                 ) {
-                    Text(
-                        text = stringResource(R.string.library_destination_options),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                    )
-                    LibraryOptionsSection(
-                        modifier = Modifier.fillMaxWidth(),
-                        title = R.string.library_options_layout_title,
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .fillMaxWidth()
+                            .widthIn(max = 840.dp)
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        LibraryOptionGroup(label = R.string.pref_apps_view) {
-                            FlowRow(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp),
-                            ) {
-                                FilterChip(
-                                    selected = state.layout == LibraryLayout.List,
-                                    onClick = { onLayoutChange(LibraryLayout.List) },
-                                    colors = jlModPlusFilterChipColors(),
-                                    label = { Text(stringResource(R.string.library_view_list)) },
-                                    leadingIcon = {
-                                        Icon(
-                                            painter = painterResource(R.drawable.ic_library_list),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp),
-                                        )
-                                    },
-                                )
-                                FilterChip(
-                                    selected = state.layout == LibraryLayout.Grid,
-                                    onClick = { onLayoutChange(LibraryLayout.Grid) },
-                                    colors = jlModPlusFilterChipColors(),
-                                    label = { Text(stringResource(R.string.library_view_grid)) },
-                                    leadingIcon = {
-                                        Icon(
-                                            painter = painterResource(R.drawable.ic_library_grid),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp),
-                                        )
-                                    },
-                                )
-                            }
-                        }
-                    }
-                    LibraryOptionsSection(
-                        modifier = Modifier.fillMaxWidth(),
-                        title = R.string.library_options_icons_title,
-                    ) {
-                        LibraryOptionGroup(
-                            label = R.string.library_icon_ratio_title,
-                            summary = R.string.library_icon_ratio_summary,
+                        Text(
+                            text = stringResource(R.string.library_destination_more),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                        )
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = MaterialTheme.shapes.large,
+                            color = MaterialTheme.colorScheme.surfaceContainerLow,
                         ) {
-                            FlowRow(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp),
-                            ) {
-                                FilterChip(
-                                    selected = state.iconRatio == LibraryIconRatio.Square,
-                                    onClick = { onIconRatioChange(LibraryIconRatio.Square) },
-                                    colors = jlModPlusFilterChipColors(),
-                                    label = { Text(stringResource(R.string.library_icon_ratio_square)) },
+                            Column {
+                                LibraryActionRow(
+                                    label = R.string.action_settings,
+                                    summary = R.string.library_action_settings_summary,
+                                    icon = R.drawable.ic_settings,
+                                    action = onSettings,
                                 )
-                                FilterChip(
-                                    selected = state.iconRatio == LibraryIconRatio.Portrait,
-                                    onClick = { onIconRatioChange(LibraryIconRatio.Portrait) },
-                                    colors = jlModPlusFilterChipColors(),
-                                    label = { Text(stringResource(R.string.library_icon_ratio_portrait)) },
+                                LibraryActionRow(
+                                    label = R.string.library_action_import_bundle,
+                                    summary = R.string.library_action_import_bundle_summary,
+                                    icon = R.drawable.ic_file_upload,
+                                    action = onImportAppBundle,
                                 )
-                            }
-                        }
-                        LibraryOptionGroup(
-                            label = R.string.library_icon_shape_title,
-                            summary = R.string.library_icon_shape_summary,
-                        ) {
-                            FlowRow(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp),
-                            ) {
-                                FilterChip(
-                                    selected = state.iconShape == LibraryIconShape.Round,
-                                    onClick = { onIconShapeChange(LibraryIconShape.Round) },
-                                    colors = jlModPlusFilterChipColors(),
-                                    label = { Text(stringResource(R.string.library_icon_shape_round)) },
+                                LibraryActionRow(
+                                    label = R.string.crash_reports,
+                                    summary = R.string.library_action_crash_reports_summary,
+                                    icon = R.drawable.ic_bug_report,
+                                    action = onCrashReports,
                                 )
-                                FilterChip(
-                                    selected = state.iconShape == LibraryIconShape.Square,
-                                    onClick = { onIconShapeChange(LibraryIconShape.Square) },
-                                    colors = jlModPlusFilterChipColors(),
-                                    label = { Text(stringResource(R.string.library_icon_shape_square)) },
+                                LibraryActionRow(
+                                    label = R.string.save_log,
+                                    summary = R.string.library_action_save_log_summary,
+                                    icon = R.drawable.ic_save,
+                                    action = onSaveLog,
                                 )
-                            }
-                        }
-                        val enhancedIconsLabel = stringResource(R.string.library_enhanced_icons_title)
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 64.dp)
-                                .clickable(
-                                    role = Role.Switch,
-                                    onClick = { onEnhancedIconsChange(!state.enhancedIcons) },
+                                LibraryActionRow(
+                                    label = R.string.about,
+                                    summary = R.string.library_action_about_summary,
+                                    icon = R.drawable.ic_info,
+                                    action = onAbout,
                                 )
-                                .padding(horizontal = 16.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = enhancedIconsLabel,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium,
+                                LibraryActionRow(
+                                    label = R.string.licenses,
+                                    summary = R.string.library_action_licenses_summary,
+                                    icon = R.drawable.ic_list,
+                                    action = onLicenses,
                                 )
-                                Text(
-                                    text = stringResource(R.string.library_enhanced_icons_summary),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    style = MaterialTheme.typography.bodySmall,
-                                )
-                            }
-                            Switch(
-                                checked = state.enhancedIcons,
-                                onCheckedChange = onEnhancedIconsChange,
-                                modifier = Modifier.semantics {
-                                    contentDescription = enhancedIconsLabel
-                                },
-                            )
-                        }
-                    }
-                    LibraryOptionsSection(
-                        modifier = Modifier.fillMaxWidth(),
-                        title = R.string.library_options_content_title,
-                    ) {
-                        if (state.layout == LibraryLayout.Grid) {
-                            LibraryOptionGroup(
-                                label = R.string.library_grid_spacing_title,
-                                summary = R.string.library_grid_spacing_summary,
-                            ) {
-                                FlowRow(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                                ) {
-                                    LibraryGridSpacing.entries.forEach { spacing ->
-                                        val label = when (spacing) {
-                                            LibraryGridSpacing.None -> R.string.library_grid_spacing_none
-                                            LibraryGridSpacing.Compact -> R.string.library_grid_spacing_compact
-                                            LibraryGridSpacing.Standard -> R.string.library_grid_spacing_standard
-                                            LibraryGridSpacing.Spacious -> R.string.library_grid_spacing_spacious
-                                        }
-                                        FilterChip(
-                                            selected = state.gridSpacing == spacing,
-                                            onClick = { onGridSpacingChange(spacing) },
-                                            colors = jlModPlusFilterChipColors(),
-                                            label = { Text(stringResource(label)) },
-                                        )
-                                    }
-                                }
-                            }
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(min = 64.dp)
-                                    .clickable(
-                                        role = Role.Switch,
-                                        onClick = { onHideGridTitlesChange(!state.hideGridTitles) },
-                                    )
-                                    .padding(horizontal = 16.dp, vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = hideGridTitlesLabel,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Medium,
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.library_hide_grid_titles_summary),
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        style = MaterialTheme.typography.bodySmall,
-                                    )
-                                }
-                                Switch(
-                                    checked = state.hideGridTitles,
-                                    onCheckedChange = onHideGridTitlesChange,
-                                    modifier = Modifier.semantics {
-                                        contentDescription = hideGridTitlesLabel
-                                    },
-                                )
-                            }
-                        } else {
-                            val showDescriptionLabel = stringResource(R.string.library_show_list_description)
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(min = 64.dp)
-                                    .clickable(
-                                        role = Role.Switch,
-                                        onClick = { onShowListDescriptionChange(!state.showListDescription) },
-                                    )
-                                    .padding(horizontal = 16.dp, vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = showDescriptionLabel,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Medium,
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.library_show_list_description_summary),
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        style = MaterialTheme.typography.bodySmall,
-                                    )
-                                }
-                                Switch(
-                                    checked = state.showListDescription,
-                                    onCheckedChange = onShowListDescriptionChange,
-                                    modifier = Modifier.semantics {
-                                        contentDescription = showDescriptionLabel
-                                    },
+                                LibraryActionRow(
+                                    label = R.string.help,
+                                    summary = R.string.library_action_help_summary,
+                                    icon = R.drawable.ic_help,
+                                    action = onHelp,
                                 )
                             }
                         }
-                    }
-                    LibraryOptionsSection(
-                        modifier = Modifier.fillMaxWidth(),
-                        title = R.string.library_options_actions_title,
-                    ) {
-                        LibraryActionRow(
-                            label = R.string.library_action_import_bundle,
-                            summary = R.string.library_action_import_bundle_summary,
-                            icon = R.drawable.ic_upload_file,
-                            action = onImportAppBundle,
-                        )
-                    }
-                    LibraryOptionsSection(
-                        modifier = Modifier.fillMaxWidth(),
-                        title = R.string.library_options_application_title,
-                    ) {
-                        LibraryActionRow(
-                            label = R.string.action_settings,
-                            summary = R.string.library_action_settings_summary,
-                            icon = R.drawable.ic_settings,
-                            action = onSettings,
-                        )
-                    }
-                    LibraryOptionsSection(
-                        modifier = Modifier.fillMaxWidth(),
-                        title = R.string.library_options_diagnostics_title,
-                    ) {
-                        LibraryActionRow(
-                            label = R.string.crash_reports,
-                            summary = R.string.library_action_crash_reports_summary,
-                            icon = R.drawable.ic_bug_report,
-                            action = onCrashReports,
-                        )
-                        LibraryActionRow(
-                            label = R.string.save_log,
-                            summary = R.string.library_action_save_log_summary,
-                            icon = R.drawable.ic_save,
-                            action = onSaveLog,
-                        )
-                    }
-                    LibraryOptionsSection(
-                        modifier = Modifier.fillMaxWidth(),
-                        title = R.string.library_options_information_title,
-                    ) {
-                        LibraryActionRow(
-                            label = R.string.about,
-                            summary = R.string.library_action_about_summary,
-                            icon = R.drawable.ic_info,
-                            action = onAbout,
-                        )
-                        LibraryActionRow(
-                            label = R.string.licenses,
-                            summary = R.string.library_action_licenses_summary,
-                            icon = R.drawable.ic_list,
-                            action = onLicenses,
-                        )
-                        LibraryActionRow(
-                            label = R.string.help,
-                            summary = R.string.library_action_help_summary,
-                            icon = R.drawable.ic_help,
-                            action = onHelp,
-                        )
-                    }
-                    LibraryOptionsSection(
-                        modifier = Modifier.fillMaxWidth(),
-                        title = R.string.library_options_session_title,
-                    ) {
-                        LibraryActionRow(
-                            label = R.string.exit,
-                            summary = R.string.library_action_exit_summary,
-                            icon = R.drawable.ic_logout,
-                            destructive = true,
-                            action = onExit,
-                        )
                     }
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun LibraryOptionsSection(
-    modifier: Modifier = Modifier,
-    title: Int,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(
-            text = stringResource(title),
-            modifier = Modifier.padding(start = 12.dp, top = 6.dp, end = 12.dp, bottom = 1.dp),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary,
+        ScrollableContentHint(
+            visible = canScrollForward,
+            modifier = Modifier.align(Alignment.BottomCenter),
         )
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.large,
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
-        ) {
-            Column(content = content)
-        }
-    }
-}
-
-@Composable
-private fun LibraryOptionGroup(
-    label: Int,
-    summary: Int? = null,
-    content: @Composable () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 11.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text(
-            text = stringResource(label),
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium,
-        )
-        summary?.let {
-            Text(
-                text = stringResource(it),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall,
-            )
-        }
-        content()
     }
 }
 
@@ -4035,7 +3743,7 @@ internal fun AppActionsDialog(
                         item {
                             DialogAction(
                                 label = R.string.library_action_export_bundle,
-                                icon = R.drawable.ic_save,
+                                icon = R.drawable.ic_file_download,
                                 onDismiss = onDismiss,
                                 action = onExportAppBundle,
                             )

@@ -356,26 +356,15 @@ fun LibraryAppActionsScreenshot() {
 @Composable
 fun LibraryOptionsScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        LibraryOptionsDestination(
-            state = LibraryUiState(
-                loading = false,
-                apps = PreviewApps,
-                layout = LibraryLayout.Grid,
-            ),
+        LibraryMoreDestination(
             scaffoldPadding = PaddingValues(),
-            onLayoutChange = {},
-            onIconRatioChange = {},
-            onIconShapeChange = {},
-            onHideGridTitlesChange = {},
-            onShowListDescriptionChange = {},
-            onGridSpacingChange = {},
+            onImportAppBundle = {},
             onAbout = {},
             onLicenses = {},
             onSettings = {},
             onHelp = {},
             onCrashReports = {},
             onSaveLog = {},
-            onExit = {},
         )
     }
 }
@@ -400,26 +389,15 @@ fun LibraryCollectionsScreenshot() {
 @Composable
 fun LibraryOptionsIndonesianScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        LibraryOptionsDestination(
-            state = LibraryUiState(
-                loading = false,
-                apps = PreviewApps,
-                layout = LibraryLayout.Grid,
-            ),
+        LibraryMoreDestination(
             scaffoldPadding = PaddingValues(),
-            onLayoutChange = {},
-            onIconRatioChange = {},
-            onIconShapeChange = {},
-            onHideGridTitlesChange = {},
-            onShowListDescriptionChange = {},
-            onGridSpacingChange = {},
+            onImportAppBundle = {},
             onAbout = {},
             onLicenses = {},
             onSettings = {},
             onHelp = {},
             onCrashReports = {},
             onSaveLog = {},
-            onExit = {},
         )
     }
 }
@@ -429,28 +407,15 @@ fun LibraryOptionsIndonesianScreenshot() {
 @Composable
 fun LibraryOptionsListDisplayScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        LibraryOptionsDestination(
-            state = LibraryUiState(
-                loading = false,
-                apps = PreviewApps,
-                layout = LibraryLayout.List,
-                iconShape = LibraryIconShape.Square,
-                showListDescription = false,
-            ),
+        LibraryMoreDestination(
             scaffoldPadding = PaddingValues(),
-            onLayoutChange = {},
-            onIconRatioChange = {},
-            onIconShapeChange = {},
-            onHideGridTitlesChange = {},
-            onShowListDescriptionChange = {},
-            onGridSpacingChange = {},
+            onImportAppBundle = {},
             onAbout = {},
             onLicenses = {},
             onSettings = {},
             onHelp = {},
             onCrashReports = {},
             onSaveLog = {},
-            onExit = {},
         )
     }
 }
@@ -460,28 +425,15 @@ fun LibraryOptionsListDisplayScreenshot() {
 @Composable
 fun LibraryOptionsGridTouchingScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        LibraryOptionsDestination(
-            state = LibraryUiState(
-                loading = false,
-                apps = PreviewApps,
-                layout = LibraryLayout.Grid,
-                iconShape = LibraryIconShape.Square,
-                gridSpacing = LibraryGridSpacing.None,
-            ),
+        LibraryMoreDestination(
             scaffoldPadding = PaddingValues(),
-            onLayoutChange = {},
-            onIconRatioChange = {},
-            onIconShapeChange = {},
-            onHideGridTitlesChange = {},
-            onShowListDescriptionChange = {},
-            onGridSpacingChange = {},
+            onImportAppBundle = {},
             onAbout = {},
             onLicenses = {},
             onSettings = {},
             onHelp = {},
             onCrashReports = {},
             onSaveLog = {},
-            onExit = {},
         )
     }
 }
@@ -603,7 +555,6 @@ private object NoOpLibraryActions : LibraryActions {
     override fun onOpenProfiles() = Unit
     override fun onOpenCrashReports() = Unit
     override fun onSaveLog() = Unit
-    override fun onExit() = Unit
     override fun onRetryLibrary() = Unit
 }
 

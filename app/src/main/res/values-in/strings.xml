@@ -75,7 +75,7 @@
     <string name="msg_no_matches">Tidak ada kecocokan untuk \"%1$s\"</string>
     <string name="library_destination_apps">Aplikasi</string>
     <string name="library_destination_collections">Koleksi</string>
-    <string name="library_destination_options">Opsi</string>
+    <string name="library_destination_more">Lainnya</string>
     <string name="library_search_placeholder">Cari aplikasi atau pengembang…</string>
     <string name="library_filter_all">Semua</string>
     <string name="library_filter_recently_opened">Baru Dibuka</string>
@@ -86,9 +86,6 @@
     <string name="library_vendor_version">%1$s · %2$s</string>
     <string name="library_view_list">Daftar</string>
     <string name="library_view_grid">Grid</string>
-    <string name="library_options_display_title">Tampilan</string>
-    <string name="library_options_grid_title">Grid</string>
-    <string name="library_options_actions_title">Tindakan</string>
     <string name="library_icon_ratio_title">Rasio Ikon</string>
     <string name="library_icon_ratio_summary">1:1 memakai bingkai adaptif; 3:4 hanya menyesuaikan ukuran ikon.</string>
     <string name="library_icon_ratio_square">1:1</string>

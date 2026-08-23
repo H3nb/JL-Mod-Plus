@@ -17,6 +17,7 @@ package javax.microedition.shell
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -34,6 +35,27 @@ class RuntimeMenuComposeTest {
     val composeRule = createComposeRule()
 
     @Test
+    fun runtimeToolbarDoesNotExposeRedundantMenuButton() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeMenuHost(
+                    state = RuntimeMenuUiState(
+                        title = "Canvas MIDlet",
+                        isCanvas = true,
+                        toolbarVisible = true,
+                        imeAvailable = true,
+                    ),
+                    menuVisible = false,
+                    actions = RecordingRuntimeMenuActions(),
+                    onDismissMenu = {},
+                )
+            }
+        }
+
+        composeRule.onAllNodesWithContentDescription("Menu").assertCountEquals(0)
+    }
+
+    @Test
     fun nonCanvasMenu_excludesCanvasOnlyActions() {
         composeRule.setContent {
             JLModPlusTheme {
@@ -41,7 +63,6 @@ class RuntimeMenuComposeTest {
                     state = RuntimeMenuUiState(title = "MIDlet Form", toolbarVisible = true),
                     menuVisible = true,
                     actions = RecordingRuntimeMenuActions(),
-                    onOpenMenu = {},
                     onDismissMenu = {},
                 )
             }
@@ -69,7 +90,6 @@ class RuntimeMenuComposeTest {
                     ),
                     menuVisible = true,
                     actions = RecordingRuntimeMenuActions(),
-                    onOpenMenu = {},
                     onDismissMenu = {},
                 )
             }
@@ -93,7 +113,6 @@ class RuntimeMenuComposeTest {
                     state = RuntimeMenuUiState(title = "MIDlet"),
                     menuVisible = true,
                     actions = actions,
-                    onOpenMenu = {},
                     onDismissMenu = { events += "dismiss" },
                 )
             }
@@ -114,7 +133,6 @@ class RuntimeMenuComposeTest {
                     state = RuntimeMenuUiState(title = "MIDlet", orientationLocked = false),
                     menuVisible = true,
                     actions = actions,
-                    onOpenMenu = {},
                     onDismissMenu = { events += "dismiss" },
                 )
             }
@@ -134,7 +152,6 @@ class RuntimeMenuComposeTest {
                     state = RuntimeMenuUiState(title = "MIDlet"),
                     menuVisible = visible.value,
                     actions = RecordingRuntimeMenuActions(),
-                    onOpenMenu = {},
                     onDismissMenu = { visible.value = false },
                 )
             }

@@ -80,6 +80,13 @@ data class SettingsOption(
     val label: String,
 )
 
+data class SettingsChoice(
+    val key: String,
+    val title: String,
+    val selected: SettingsOption,
+    val options: List<SettingsOption>,
+)
+
 data class SettingsSwitch @JvmOverloads constructor(
     val key: String,
     val title: String,
@@ -100,6 +107,8 @@ data class SettingsUiState(
     val directoryError: String? = null,
     val accent: SettingsOption = SettingsOption("blue", "Default Blue"),
     val accents: List<SettingsOption> = emptyList(),
+    val libraryChoices: List<SettingsChoice> = emptyList(),
+    val librarySwitches: List<SettingsSwitch> = emptyList(),
 )
 
 interface SettingsActions {
@@ -107,6 +116,7 @@ interface SettingsActions {
     fun onThemeChanged(value: String)
     fun onAccentChanged(value: String) = Unit
     fun onLanguageChanged(value: String)
+    fun onLibraryChoiceChanged(key: String, value: String) = Unit
     fun onToggle(key: String, checked: Boolean)
     fun onOpenProfiles()
     fun onChooseDirectory()
@@ -148,7 +158,8 @@ fun SettingsScreen(
     actions: SettingsActions,
     modifier: Modifier = Modifier,
 ) {
-    var choiceDialog by remember { mutableStateOf<SettingsChoice?>(null) }
+    var choiceDialog by remember { mutableStateOf<SettingsDialogChoice?>(null) }
+    var libraryChoiceDialog by remember { mutableStateOf<SettingsChoice?>(null) }
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     Scaffold(
@@ -182,19 +193,40 @@ fun SettingsScreen(
                         SettingsChoiceRow(
                             title = stringResource(R.string.pref_theme_title),
                             selected = state.theme,
-                            onClick = { choiceDialog = SettingsChoice.Theme },
+                            onClick = { choiceDialog = SettingsDialogChoice.Theme },
                         )
                         SettingsChoiceRow(
                             title = stringResource(R.string.pref_accent_title),
                             selected = state.accent,
                             showAccentPreview = true,
-                            onClick = { choiceDialog = SettingsChoice.Accent },
+                            onClick = { choiceDialog = SettingsDialogChoice.Accent },
                         )
                         SettingsChoiceRow(
                             title = stringResource(R.string.pref_language),
                             selected = state.language,
-                            onClick = { choiceDialog = SettingsChoice.Language },
+                            onClick = { choiceDialog = SettingsDialogChoice.Language },
                         )
+                    }
+                }
+                if (state.libraryChoices.isNotEmpty() || state.librarySwitches.isNotEmpty()) {
+                    item {
+                        SettingsSection(stringResource(R.string.settings_section_library_appearance)) {
+                            state.libraryChoices.forEach { choice ->
+                                SettingsChoiceRow(
+                                    title = choice.title,
+                                    selected = choice.selected,
+                                    onClick = { libraryChoiceDialog = choice },
+                                )
+                            }
+                            state.librarySwitches.forEach { setting ->
+                                SettingsSwitchRow(
+                                    setting = setting,
+                                    onCheckedChange = { checked ->
+                                        actions.onToggle(setting.key, checked)
+                                    },
+                                )
+                            }
+                        }
                     }
                 }
                 item {
@@ -285,7 +317,7 @@ fun SettingsScreen(
     }
 
     when (choiceDialog) {
-        SettingsChoice.Theme -> SettingsChoiceDialog(
+        SettingsDialogChoice.Theme -> SettingsChoiceDialog(
             title = stringResource(R.string.pref_theme_title),
             selected = state.theme,
             options = state.themes,
@@ -296,7 +328,7 @@ fun SettingsScreen(
             },
         )
 
-        SettingsChoice.Accent -> SettingsChoiceDialog(
+        SettingsDialogChoice.Accent -> SettingsChoiceDialog(
             title = stringResource(R.string.pref_accent_title),
             selected = state.accent,
             options = state.accents,
@@ -308,7 +340,7 @@ fun SettingsScreen(
             },
         )
 
-        SettingsChoice.Language -> SettingsChoiceDialog(
+        SettingsDialogChoice.Language -> SettingsChoiceDialog(
             title = stringResource(R.string.pref_language),
             selected = state.language,
             options = state.languages,
@@ -320,6 +352,19 @@ fun SettingsScreen(
         )
 
         null -> Unit
+    }
+
+    libraryChoiceDialog?.let { choice ->
+        SettingsChoiceDialog(
+            title = choice.title,
+            selected = choice.selected,
+            options = choice.options,
+            onDismiss = { libraryChoiceDialog = null },
+            onSelected = { value ->
+                libraryChoiceDialog = null
+                actions.onLibraryChoiceChanged(choice.key, value)
+            },
+        )
     }
 }
 
@@ -396,7 +441,7 @@ private fun SettingsChoiceRow(
     }
 }
 
-private enum class SettingsChoice {
+private enum class SettingsDialogChoice {
     Theme,
     Accent,
     Language,

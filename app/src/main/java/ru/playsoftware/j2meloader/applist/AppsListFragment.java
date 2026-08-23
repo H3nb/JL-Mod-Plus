@@ -29,6 +29,16 @@ import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_SHOW_LIST_DESC
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_VIEW;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APP_SORT;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_LAST_PATH;
+import static ru.playsoftware.j2meloader.util.Constants.LIBRARY_GRID_SPACING_COMPACT;
+import static ru.playsoftware.j2meloader.util.Constants.LIBRARY_GRID_SPACING_NONE;
+import static ru.playsoftware.j2meloader.util.Constants.LIBRARY_GRID_SPACING_SPACIOUS;
+import static ru.playsoftware.j2meloader.util.Constants.LIBRARY_GRID_SPACING_STANDARD;
+import static ru.playsoftware.j2meloader.util.Constants.LIBRARY_ICON_RATIO_PORTRAIT;
+import static ru.playsoftware.j2meloader.util.Constants.LIBRARY_ICON_RATIO_SQUARE;
+import static ru.playsoftware.j2meloader.util.Constants.LIBRARY_ICON_SHAPE_ROUND;
+import static ru.playsoftware.j2meloader.util.Constants.LIBRARY_ICON_SHAPE_SQUARE;
+import static ru.playsoftware.j2meloader.util.Constants.LIBRARY_LAYOUT_GRID;
+import static ru.playsoftware.j2meloader.util.Constants.LIBRARY_LAYOUT_LIST;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
@@ -86,16 +96,6 @@ import ru.woesss.j2me.installer.InstallerDialog;
 /** Room 3 Library host. AppItem remains only a temporary DTO for explicit shortcut creation. */
 public class AppsListFragment extends Fragment {
     private static final String TAG = AppsListFragment.class.getSimpleName();
-    private static final int LAYOUT_TYPE_LIST = 0;
-    private static final int LAYOUT_TYPE_GRID = 1;
-    private static final int ICON_RATIO_SQUARE = 0;
-    private static final int ICON_RATIO_PORTRAIT = 1;
-    private static final int ICON_SHAPE_ROUND = 0;
-    private static final int ICON_SHAPE_SQUARE = 1;
-    private static final int GRID_SPACING_NONE = 3;
-    private static final int GRID_SPACING_COMPACT = 0;
-    private static final int GRID_SPACING_STANDARD = 1;
-    private static final int GRID_SPACING_SPACIOUS = 2;
     private static final int NO_UI_ID = Integer.MIN_VALUE;
     private static final long NO_GENERATION = Long.MIN_VALUE;
     private static final String STATE_PENDING_ICON_DATABASE_ID =
@@ -126,6 +126,12 @@ public class AppsListFragment extends Fragment {
     private SharedPreferences preferences;
     private LibraryViewModel libraryViewModel;
     private LibraryComposeController composeController;
+    private final SharedPreferences.OnSharedPreferenceChangeListener appearancePreferenceListener =
+            (sharedPreferences, key) -> {
+                if (isLibraryAppearancePreference(key)) {
+                    syncLibraryAppearance();
+                }
+            };
 
     /** Kept temporarily for source compatibility; installer URI ownership moved to MainActivity. */
     public static AppsListFragment newInstance(@Nullable Uri ignored) {
@@ -158,29 +164,30 @@ public class AppsListFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        int storedLayout = preferences.getInt(PREF_APPS_VIEW, LAYOUT_TYPE_LIST);
-        LibraryLayout layout = storedLayout == LAYOUT_TYPE_LIST
+        int storedLayout = preferences.getInt(PREF_APPS_VIEW, LIBRARY_LAYOUT_LIST);
+        LibraryLayout layout = storedLayout == LIBRARY_LAYOUT_LIST
                 ? LibraryLayout.List : LibraryLayout.Grid;
-        int storedIconRatio = preferences.getInt(PREF_APPS_ICON_RATIO, ICON_RATIO_SQUARE);
-        LibraryIconRatio iconRatio = storedIconRatio == ICON_RATIO_PORTRAIT
+        int storedIconRatio = preferences.getInt(PREF_APPS_ICON_RATIO, LIBRARY_ICON_RATIO_SQUARE);
+        LibraryIconRatio iconRatio = storedIconRatio == LIBRARY_ICON_RATIO_PORTRAIT
                 ? LibraryIconRatio.Portrait : LibraryIconRatio.Square;
-        int storedIconShape = preferences.getInt(PREF_APPS_ICON_SHAPE, ICON_SHAPE_ROUND);
-        LibraryIconShape iconShape = storedIconShape == ICON_SHAPE_SQUARE
+        int storedIconShape = preferences.getInt(PREF_APPS_ICON_SHAPE, LIBRARY_ICON_SHAPE_ROUND);
+        LibraryIconShape iconShape = storedIconShape == LIBRARY_ICON_SHAPE_SQUARE
                 ? LibraryIconShape.Square : LibraryIconShape.Round;
-        int storedGridSpacing = preferences.getInt(PREF_APPS_GRID_SPACING, GRID_SPACING_STANDARD);
+        int storedGridSpacing = preferences.getInt(
+                PREF_APPS_GRID_SPACING, LIBRARY_GRID_SPACING_STANDARD);
         LibraryGridSpacing gridSpacing;
         switch (storedGridSpacing) {
-            case GRID_SPACING_COMPACT:
+            case LIBRARY_GRID_SPACING_COMPACT:
                 gridSpacing = LibraryGridSpacing.Compact;
                 break;
-            case GRID_SPACING_SPACIOUS:
+            case LIBRARY_GRID_SPACING_SPACIOUS:
                 gridSpacing = LibraryGridSpacing.Spacious;
                 break;
-            case GRID_SPACING_STANDARD:
+            case LIBRARY_GRID_SPACING_STANDARD:
             default:
                 gridSpacing = LibraryGridSpacing.Standard;
                 break;
-            case GRID_SPACING_NONE:
+            case LIBRARY_GRID_SPACING_NONE:
                 gridSpacing = LibraryGridSpacing.None;
                 break;
         }
@@ -204,6 +211,72 @@ public class AppsListFragment extends Fragment {
         composeController = null;
         clearUiRows();
         super.onDestroyView();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (preferences != null) {
+            preferences.registerOnSharedPreferenceChangeListener(appearancePreferenceListener);
+            syncLibraryAppearance();
+        }
+    }
+
+    @Override
+    public void onStop() {
+        if (preferences != null) {
+            preferences.unregisterOnSharedPreferenceChangeListener(appearancePreferenceListener);
+        }
+        super.onStop();
+    }
+
+    private void syncLibraryAppearance() {
+        LibraryComposeController controller = composeController;
+        if (controller == null || preferences == null) return;
+
+        int storedLayout = preferences.getInt(PREF_APPS_VIEW, LIBRARY_LAYOUT_LIST);
+        int storedIconRatio = preferences.getInt(
+                PREF_APPS_ICON_RATIO, LIBRARY_ICON_RATIO_SQUARE);
+        int storedIconShape = preferences.getInt(
+                PREF_APPS_ICON_SHAPE, LIBRARY_ICON_SHAPE_ROUND);
+        int storedGridSpacing = preferences.getInt(
+                PREF_APPS_GRID_SPACING, LIBRARY_GRID_SPACING_STANDARD);
+        LibraryGridSpacing gridSpacing;
+        switch (storedGridSpacing) {
+            case LIBRARY_GRID_SPACING_COMPACT:
+                gridSpacing = LibraryGridSpacing.Compact;
+                break;
+            case LIBRARY_GRID_SPACING_SPACIOUS:
+                gridSpacing = LibraryGridSpacing.Spacious;
+                break;
+            case LIBRARY_GRID_SPACING_NONE:
+                gridSpacing = LibraryGridSpacing.None;
+                break;
+            case LIBRARY_GRID_SPACING_STANDARD:
+            default:
+                gridSpacing = LibraryGridSpacing.Standard;
+                break;
+        }
+        controller.updateAppearance(
+                storedLayout == LIBRARY_LAYOUT_GRID ? LibraryLayout.Grid : LibraryLayout.List,
+                storedIconRatio == LIBRARY_ICON_RATIO_PORTRAIT
+                        ? LibraryIconRatio.Portrait : LibraryIconRatio.Square,
+                storedIconShape == LIBRARY_ICON_SHAPE_SQUARE
+                        ? LibraryIconShape.Square : LibraryIconShape.Round,
+                preferences.getBoolean(PREF_APPS_ENHANCED_ICONS, true),
+                preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false),
+                preferences.getBoolean(PREF_APPS_SHOW_LIST_DESCRIPTION, true),
+                gridSpacing);
+    }
+
+    private static boolean isLibraryAppearancePreference(String key) {
+        return PREF_APPS_VIEW.equals(key)
+                || PREF_APPS_ICON_RATIO.equals(key)
+                || PREF_APPS_ICON_SHAPE.equals(key)
+                || PREF_APPS_ENHANCED_ICONS.equals(key)
+                || PREF_APPS_HIDE_GRID_TITLES.equals(key)
+                || PREF_APPS_SHOW_LIST_DESCRIPTION.equals(key)
+                || PREF_APPS_GRID_SPACING.equals(key);
     }
 
     private LibraryActions createActions() {
@@ -272,7 +345,8 @@ public class AppsListFragment extends Fragment {
 
             @Override
             public void onLayoutChange(@NonNull LibraryLayout layout) {
-                int value = layout == LibraryLayout.Grid ? LAYOUT_TYPE_GRID : LAYOUT_TYPE_LIST;
+                int value = layout == LibraryLayout.Grid
+                        ? LIBRARY_LAYOUT_GRID : LIBRARY_LAYOUT_LIST;
                 preferences.edit().putInt(PREF_APPS_VIEW, value).apply();
                 LibraryComposeController controller = composeController;
                 if (controller != null) controller.updateLayout(layout);
@@ -281,7 +355,7 @@ public class AppsListFragment extends Fragment {
             @Override
             public void onIconRatioChange(@NonNull LibraryIconRatio iconRatio) {
                 int value = iconRatio == LibraryIconRatio.Portrait
-                        ? ICON_RATIO_PORTRAIT : ICON_RATIO_SQUARE;
+                        ? LIBRARY_ICON_RATIO_PORTRAIT : LIBRARY_ICON_RATIO_SQUARE;
                 preferences.edit().putInt(PREF_APPS_ICON_RATIO, value).apply();
                 LibraryComposeController controller = composeController;
                 if (controller != null) controller.updateIconRatio(iconRatio);
@@ -290,7 +364,7 @@ public class AppsListFragment extends Fragment {
             @Override
             public void onIconShapeChange(@NonNull LibraryIconShape iconShape) {
                 int value = iconShape == LibraryIconShape.Square
-                        ? ICON_SHAPE_SQUARE : ICON_SHAPE_ROUND;
+                        ? LIBRARY_ICON_SHAPE_SQUARE : LIBRARY_ICON_SHAPE_ROUND;
                 preferences.edit().putInt(PREF_APPS_ICON_SHAPE, value).apply();
                 LibraryComposeController controller = composeController;
                 if (controller != null) controller.updateIconShape(iconShape);
@@ -322,17 +396,17 @@ public class AppsListFragment extends Fragment {
                 int value;
                 switch (spacing) {
                     case Compact:
-                        value = GRID_SPACING_COMPACT;
+                        value = LIBRARY_GRID_SPACING_COMPACT;
                         break;
                     case Spacious:
-                        value = GRID_SPACING_SPACIOUS;
+                        value = LIBRARY_GRID_SPACING_SPACIOUS;
                         break;
                     case None:
-                        value = GRID_SPACING_NONE;
+                        value = LIBRARY_GRID_SPACING_NONE;
                         break;
                     case Standard:
                     default:
-                        value = GRID_SPACING_STANDARD;
+                        value = LIBRARY_GRID_SPACING_STANDARD;
                         break;
                 }
                 preferences.edit().putInt(PREF_APPS_GRID_SPACING, value).apply();
@@ -714,11 +788,6 @@ public class AppsListFragment extends Fragment {
                 } catch (IOException e) {
                     if (controller != null) controller.showNotice(getString(R.string.error));
                 }
-            }
-
-            @Override
-            public void onExit() {
-                requireActivity().finish();
             }
 
             @Override

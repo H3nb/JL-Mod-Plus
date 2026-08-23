@@ -124,7 +124,6 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
                     state = state,
                     menuVisible = menuVisible,
                     actions = menuActions,
-                    onOpenMenu = ::openMenu,
                     onDismissMenu = ::closeMenu,
                 )
                 if (limitFpsVisible) {
@@ -279,7 +278,6 @@ internal fun RuntimeMenuHost(
     state: RuntimeMenuUiState,
     menuVisible: Boolean,
     actions: RuntimeMenuActions,
-    onOpenMenu: () -> Unit,
     onDismissMenu: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -288,7 +286,6 @@ internal fun RuntimeMenuHost(
             RuntimeToolbar(
                 state = state,
                 actions = actions,
-                onOpenMenu = onOpenMenu,
             )
         }
 
@@ -306,7 +303,6 @@ internal fun RuntimeMenuHost(
 private fun RuntimeToolbar(
     state: RuntimeMenuUiState,
     actions: RuntimeMenuActions,
-    onOpenMenu: () -> Unit,
 ) {
     val actionSize = if (state.isCanvas) 36.dp else 48.dp
     Surface(
@@ -342,14 +338,6 @@ private fun RuntimeToolbar(
                     label = R.string.take_screenshot,
                     size = actionSize,
                     onClick = actions::onTakeScreenshot,
-                )
-            }
-            Box {
-                RuntimeToolbarAction(
-                    icon = R.drawable.ic_menu,
-                    label = R.string.cmd_menu,
-                    size = actionSize,
-                    onClick = onOpenMenu,
                 )
             }
         }

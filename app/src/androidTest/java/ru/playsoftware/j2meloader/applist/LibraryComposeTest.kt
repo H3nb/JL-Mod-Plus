@@ -31,7 +31,6 @@ import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeUp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -178,40 +177,37 @@ class LibraryComposeTest {
     fun viewAndSortActionsRemainExplicitCallbacks() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
-        composeRule.onNodeWithText("Options").performClick()
-        composeRule.onNodeWithText("Grid").performClick()
-        assertEquals(LibraryLayout.Grid, actions.layout)
 
-        composeRule.onNodeWithText("Apps").performClick()
         composeRule.onNodeWithContentDescription("App Sort Order").performClick()
         composeRule.onNodeWithText("Vendor").performClick()
         assertEquals(2, actions.sortIndex)
     }
 
     @Test
-    fun optionsTabExposesTheFormerOverflowActions() {
+    fun moreTabExposesFlatLibraryActions() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
 
-        composeRule.onNodeWithText("Options").performClick()
+        composeRule.onNodeWithText("More").performClick()
         composeRule.onNodeWithText("Settings").performClick()
 
         assertEquals(1, actions.settingsCount)
+        composeRule.onAllNodesWithText("Exit Emulator").assertCountEquals(0)
     }
 
     @Test
-    fun optionsExposeImportAppBundleCallback() {
+    fun moreExposesImportAppBundleCallback() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
 
-        composeRule.onNodeWithText("Options").performClick()
+        composeRule.onNodeWithText("More").performClick()
         composeRule.onNodeWithText("Import App Bundle").performClick()
 
         assertEquals(1, actions.importCount)
     }
 
     @Test
-    fun gridOptionsExposeTitleVisibilitySpacingAndIconRatio() {
+    fun moreDoesNotExposeFormerInlineLibraryDisplayOptions() {
         val actions = RecordingLibraryActions()
         setLibraryContent(
             state = LibraryUiState(
@@ -221,14 +217,11 @@ class LibraryComposeTest {
             actions = actions,
         )
 
-        composeRule.onNodeWithText("Options").performClick()
-        composeRule.onNodeWithText("3:4").performClick()
-        composeRule.onNodeWithText("Compact (4 dp)").performClick()
-        composeRule.onNodeWithContentDescription("Hide titles in grid").performClick()
-
-        assertEquals(LibraryIconRatio.Portrait, actions.iconRatio)
-        assertEquals(LibraryGridSpacing.Compact, actions.gridSpacing)
-        assertTrue(actions.hideGridTitles)
+        composeRule.onNodeWithText("More").performClick()
+        composeRule.onNodeWithText("Settings").assertIsDisplayed()
+        composeRule.onAllNodesWithText("3:4").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Compact (4 dp)").assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription("Hide titles in grid").assertCountEquals(0)
     }
 
     @Test
@@ -246,9 +239,8 @@ class LibraryComposeTest {
         composeRule.onNodeWithText("Collections").performClick()
         composeRule.onNodeWithText("Collections and folders will be available in a future update.")
             .assertIsDisplayed()
-        composeRule.onNodeWithText("Options").performClick()
-        composeRule.onNodeWithText("List").assertIsDisplayed()
-        composeRule.onNodeWithText("Grid").assertIsDisplayed()
+        composeRule.onNodeWithText("More").performClick()
+        composeRule.onNodeWithText("Settings").assertIsDisplayed()
     }
 
     @Test
@@ -448,7 +440,6 @@ class LibraryComposeTest {
         override fun onOpenProfiles() = Unit
         override fun onOpenCrashReports() = Unit
         override fun onSaveLog() = Unit
-        override fun onExit() = Unit
         override fun onRetryLibrary() { retryCount++ }
     }
 }

@@ -130,4 +130,13 @@ class LibraryNavigationStateTest {
         assertEquals(12L, restored?.anchors?.get(LibraryNavigationSurface.AppsList)?.stableItemId)
         assertEquals(LibraryDestinationKey.Apps, restored?.destination)
     }
+
+    @Test
+    fun saverMigratesLegacyOptionsDestinationToMore() {
+        val restored = LibraryNavigationState.Saver.restore(
+            listOf("Options", "List", "", "All", 0, null, emptyList<Any>()),
+        )
+
+        assertEquals(LibraryDestinationKey.More, restored?.destination)
+    }
 }

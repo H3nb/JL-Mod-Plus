@@ -61,6 +61,42 @@ private val PreviewSettingsState = SettingsUiState(
     ),
     showProfiles = true,
     workingDirectory = "/storage/emulated/0/JL-Mod Plus",
+    libraryChoices = listOf(
+        SettingsChoice(
+            "pref_apps_view",
+            "Library View",
+            SettingsOption("grid", "Grid"),
+            listOf(SettingsOption("list", "List"), SettingsOption("grid", "Grid")),
+        ),
+        SettingsChoice(
+            "pref_apps_icon_ratio",
+            "Icon Ratio",
+            SettingsOption("square", "1:1"),
+            listOf(SettingsOption("square", "1:1"), SettingsOption("portrait", "3:4")),
+        ),
+        SettingsChoice(
+            "pref_apps_icon_shape",
+            "Icon Shape",
+            SettingsOption("round", "Round"),
+            listOf(SettingsOption("round", "Round"), SettingsOption("square", "Square")),
+        ),
+        SettingsChoice(
+            "pref_apps_grid_spacing",
+            "Grid Spacing",
+            SettingsOption("standard", "Standard"),
+            listOf(
+                SettingsOption("none", "None"),
+                SettingsOption("compact", "Compact"),
+                SettingsOption("standard", "Standard"),
+                SettingsOption("spacious", "Spacious"),
+            ),
+        ),
+    ),
+    librarySwitches = listOf(
+        SettingsSwitch("pref_apps_enhanced_icons", "Enhanced Icons", "Improve low-resolution artwork", true),
+        SettingsSwitch("pref_apps_hide_grid_titles", "Hide Grid Titles", "Hide app names below grid icons", false),
+        SettingsSwitch("pref_apps_show_list_description", "Show List Description", "Show descriptions in list view", true),
+    ),
 )
 
 @PreviewTest

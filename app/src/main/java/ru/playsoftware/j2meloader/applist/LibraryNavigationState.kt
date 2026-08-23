@@ -81,8 +81,11 @@ data class LibraryNavigationState(
                 val legacyAnchors = saved.takeIf { values ->
                     values.isEmpty() || values.firstOrNull() !is String
                 } ?: emptyList()
-                val destination = saved.getOrNull(0)?.toString()?.let {
-                    runCatching { LibraryDestinationKey.valueOf(it) }.getOrNull()
+                val destination = saved.getOrNull(0)?.toString()?.let { value ->
+                    // The third destination was previously called Options. Keep restored
+                    // activity state on the same page after the visible tab is renamed More.
+                    val compatibleValue = if (value == "Options") "More" else value
+                    runCatching { LibraryDestinationKey.valueOf(compatibleValue) }.getOrNull()
                 } ?: LibraryDestinationKey.Apps
                 val layout = saved.getOrNull(1)?.toString()?.let {
                     runCatching { LibraryLayout.valueOf(it) }.getOrNull()
@@ -171,5 +174,5 @@ data class ResolvedLibraryScrollAnchor(
 enum class LibraryDestinationKey {
     Apps,
     Collections,
-    Options,
+    More,
 }

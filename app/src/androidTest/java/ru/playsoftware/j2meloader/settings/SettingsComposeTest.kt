@@ -86,6 +86,44 @@ class SettingsComposeTest {
         assertEquals(listOf("teal"), actions.accents)
     }
 
+    @Test
+    fun libraryAppearanceOptionsStayInGlobalSettings() {
+        val actions = RecordingSettingsActions()
+        val state = sampleState().copy(
+            libraryChoices = listOf(
+                SettingsChoice(
+                    key = "pref_apps_view",
+                    title = "Library View",
+                    selected = SettingsOption("list", "List"),
+                    options = listOf(
+                        SettingsOption("list", "List"),
+                        SettingsOption("grid", "Grid"),
+                    ),
+                ),
+            ),
+            librarySwitches = listOf(
+                SettingsSwitch(
+                    key = "pref_apps_enhanced_icons",
+                    title = "Enhanced Icons",
+                    summary = null,
+                    checked = true,
+                ),
+            ),
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                SettingsScreen(state = state, actions = actions)
+            }
+        }
+
+        composeRule.onNodeWithText("Library View").performClick()
+        composeRule.onNodeWithText("Grid").performClick()
+        composeRule.onNodeWithText("Enhanced Icons").performClick()
+
+        assertEquals(listOf("pref_apps_view=grid"), actions.libraryChoices)
+        assertEquals(listOf("pref_apps_enhanced_icons=false"), actions.toggles)
+    }
+
     private fun sampleState() = SettingsUiState(
         theme = SettingsOption("dark", "Dark"),
         themes = listOf(
@@ -118,6 +156,8 @@ class SettingsComposeTest {
     private class RecordingSettingsActions : SettingsActions {
         val changes = mutableListOf<String>()
         val accents = mutableListOf<String>()
+        val libraryChoices = mutableListOf<String>()
+        val toggles = mutableListOf<String>()
         var profileClicks = 0
         var directoryClicks = 0
 
@@ -137,6 +177,11 @@ class SettingsComposeTest {
 
         override fun onToggle(key: String, checked: Boolean) {
             changes += key
+            toggles += "$key=$checked"
+        }
+
+        override fun onLibraryChoiceChanged(key: String, value: String) {
+            libraryChoices += "$key=$value"
         }
 
         override fun onOpenProfiles() {
