@@ -22,7 +22,7 @@ import org.junit.Test;
 
 public class PresentationMailboxTest {
 	@Test
-	public void coalescesProducerPublishesWithoutDroppingTheFollowUpRequest() {
+	public void synchronousRendererDrainsNewerPublicationWithoutSecondSchedule() {
 		PresentationMailbox mailbox = new PresentationMailbox();
 		long generation = mailbox.begin();
 		long first = mailbox.publish();

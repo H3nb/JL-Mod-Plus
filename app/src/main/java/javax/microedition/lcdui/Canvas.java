@@ -668,23 +668,59 @@ public abstract class Canvas extends Displayable {
 
 	@SuppressLint("NewApi")
 	private boolean repaintScreen() {
+		long presentationGeneration = presentationMailbox.generation();
+		PresentationResult result = presentToSurface();
+		if (!result.surfaceAvailable && parallelRedraw) {
+			presentationMailbox.close();
+		}
+		if (parallelRedraw && uiHandler != null) {
+			boolean needsAnother = result.presented
+					? presentationMailbox.complete(presentationGeneration, result.frameSequence)
+					: presentationMailbox.releaseAfterFailure(presentationGeneration);
+			if (needsAnother) {
+				requestAnotherPresentation(!result.presented);
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Presents all frames that were published while one synchronous surface presentation was in
+	 * flight. The loop is deliberately local and non-recursive: synchronous Surface rendering is
+	 * still completed by the caller, while the mailbox closes the same lost-wakeup race as the
+	 * asynchronous backends.
+	 */
+	private void requestSynchronousPresentation() {
+		long presentationGeneration = presentationMailbox.generation();
+		if (!presentationMailbox.trySchedule(presentationGeneration)) {
+			return;
+		}
+		while (true) {
+			PresentationResult result = presentToSurface();
+			if (!result.presented) {
+				presentationMailbox.releaseAfterFailure(presentationGeneration);
+				return;
+			}
+			if (!presentationMailbox.complete(presentationGeneration, result.frameSequence)) {
+				return;
+			}
+		}
+	}
+
+	@SuppressLint("NewApi")
+	private PresentationResult presentToSurface() {
 		FrameMetrics metrics = frameMetrics;
 		long frameSequence = 0L;
-		long presentationGeneration = presentationMailbox.generation();
 		Surface surface = this.surface;
 		if (surface == null || !surface.isValid()) {
-			if (parallelRedraw) {
-				presentationMailbox.close();
-			}
-			return true;
+			return PresentationResult.surfaceUnavailable();
 		}
-		boolean presented = false;
 		try {
 			synchronized (surfaceLock) {
 				android.graphics.Canvas canvas = settings.graphicsMode == 3 ?
 						surface.lockHardwareCanvas() : surface.lockCanvas(null);
 				if (canvas == null) {
-					return true;
+					return PresentationResult.surfaceReady();
 				}
 				CanvasWrapper g = this.canvasWrapper;
 				g.bind(canvas);
@@ -697,24 +733,39 @@ public abstract class Canvas extends Displayable {
 					frameSequence = publishedFrameSequence;
 				}
 				surface.unlockCanvasAndPost(canvas);
-				presented = true;
 			}
 			if (metrics != null) {
 				metrics.recordRender(frameSequence);
 			}
+			return PresentationResult.presented(frameSequence);
 		} catch (Exception e) {
 			Log.w(TAG, "repaintScreen: " + e);
-		} finally {
-			if (parallelRedraw && uiHandler != null) {
-				boolean needsAnother = presented
-						? presentationMailbox.complete(presentationGeneration, frameSequence)
-						: presentationMailbox.releaseAfterFailure(presentationGeneration);
-				if (needsAnother) {
-					requestAnotherPresentation(!presented);
-				}
-			}
+			return PresentationResult.surfaceReady();
 		}
-		return true;
+	}
+
+	private static final class PresentationResult {
+		final boolean surfaceAvailable;
+		final boolean presented;
+		final long frameSequence;
+
+		private PresentationResult(boolean surfaceAvailable, boolean presented, long frameSequence) {
+			this.surfaceAvailable = surfaceAvailable;
+			this.presented = presented;
+			this.frameSequence = frameSequence;
+		}
+
+		static PresentationResult surfaceUnavailable() {
+			return new PresentationResult(false, false, 0L);
+		}
+
+		static PresentationResult surfaceReady() {
+			return new PresentationResult(true, false, 0L);
+		}
+
+		static PresentationResult presented(long frameSequence) {
+			return new PresentationResult(true, true, frameSequence);
+		}
 	}
 
 	/**
@@ -1274,7 +1325,7 @@ public abstract class Canvas extends Displayable {
 				innerView.postInvalidate();
 			}
 		} else if (!parallelRedraw) {
-			repaintScreen();
+			requestSynchronousPresentation();
 		} else if (uiHandler != null) {
 			long generation = presentationMailbox.generation();
 			if (presentationMailbox.trySchedule(generation)) {
