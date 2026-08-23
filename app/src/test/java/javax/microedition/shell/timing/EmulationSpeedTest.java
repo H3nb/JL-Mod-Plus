@@ -47,4 +47,12 @@ public class EmulationSpeedTest {
 	public void invalidSpeedIsRejected() {
 		EmulationSpeed.requireValidPercent(0);
 	}
+
+	@Test
+	public void formatMultiplierIsLocaleIndependentAndCompact() {
+		assertEquals("0.25x", EmulationSpeed.formatMultiplier(25));
+		assertEquals("1x", EmulationSpeed.formatMultiplier(100));
+		assertEquals("1.25x", EmulationSpeed.formatMultiplier(125));
+		assertEquals("16x", EmulationSpeed.formatMultiplier(1600));
+	}
 }

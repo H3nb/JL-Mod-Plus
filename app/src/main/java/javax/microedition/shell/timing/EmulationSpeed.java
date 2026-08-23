@@ -48,4 +48,19 @@ public final class EmulationSpeed {
 	public static int[] presets() {
 		return PRESETS.clone();
 	}
+
+	/** Formats a percentage as a locale-independent picker/overlay multiplier. */
+	public static String formatMultiplier(int percent) {
+		int safePercent = sanitizePercent(percent);
+		int whole = safePercent / 100;
+		int fraction = safePercent % 100;
+		if (fraction == 0) {
+			return whole + "x";
+		}
+		String fractionText = fraction < 10 ? "0" + fraction : Integer.toString(fraction);
+		while (fractionText.endsWith("0")) {
+			fractionText = fractionText.substring(0, fractionText.length() - 1);
+		}
+		return whole + "." + fractionText + "x";
+	}
 }

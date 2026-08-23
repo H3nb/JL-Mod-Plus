@@ -53,6 +53,22 @@ final class TimingMath {
 				: millis * 1_000_000L;
 	}
 
+	/** Returns a diagnostic guest-clock rate as a percentage of host elapsed time. */
+	static int measureRatePercent(long guestDurationNanos, long hostDurationNanos) {
+		if (guestDurationNanos < 0L || hostDurationNanos <= 0L) {
+			return -1;
+		}
+		double percent = ((double) guestDurationNanos * PERCENT_DENOMINATOR)
+				/ (double) hostDurationNanos;
+		if (Double.isNaN(percent) || Double.isInfinite(percent) || percent < 0d) {
+			return -1;
+		}
+		if (percent >= Integer.MAX_VALUE) {
+			return Integer.MAX_VALUE;
+		}
+		return (int) Math.round(percent);
+	}
+
 	private static long saturatingMultiply(long value, long factor) {
 		if (value <= 0L || factor <= 0L) {
 			return 0L;
