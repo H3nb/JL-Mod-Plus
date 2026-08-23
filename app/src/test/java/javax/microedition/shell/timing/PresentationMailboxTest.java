@@ -67,4 +67,15 @@ public class PresentationMailboxTest {
 		assertEquals(0L, mailbox.publish());
 		assertFalse(mailbox.trySchedule(generation));
 	}
+
+	@Test
+	public void failedPresentationReleasesRequestWithoutLosingPendingFrame() {
+		PresentationMailbox mailbox = new PresentationMailbox();
+		long generation = mailbox.begin();
+		mailbox.publish();
+		assertTrue(mailbox.trySchedule(generation));
+
+		assertTrue(mailbox.releaseAfterFailure(generation));
+		assertTrue(mailbox.trySchedule(generation));
+	}
 }

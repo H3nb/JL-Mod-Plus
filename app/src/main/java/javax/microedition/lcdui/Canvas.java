@@ -276,20 +276,32 @@ public abstract class Canvas extends Displayable {
 	public void onDraw(android.graphics.Canvas canvas) {
 		if (settings.graphicsMode != 2) return; // Fix for Android Pie
 		FrameMetrics metrics = frameMetrics;
-		long frameSequence;
+		long frameSequence = 0L;
+		long presentationGeneration = presentationMailbox.generation();
+		boolean presented = false;
 		CanvasWrapper g = canvasWrapper;
-		g.bind(canvas);
-		g.clear(settings.screenBackgroundColor | Color.BLACK);
-		SkinLayer skinLayer = SkinLayer.getInstance();
-		int p = skinLayer != null && skinLayer.hasDisplayFrame() ? 0 : settings.screenPadding;
-		canvas.clipRect(p, p, displayWidth - p, displayHeight - p);
-		synchronized (bufferLock) {
-			offscreenCopy.getBitmap().prepareToDraw();
-			g.drawImage(offscreenCopy, virtualScreen);
-			frameSequence = publishedFrameSequence;
-		}
-		if (metrics != null) {
-			metrics.recordRender(frameSequence);
+		try {
+			g.bind(canvas);
+			g.clear(settings.screenBackgroundColor | Color.BLACK);
+			SkinLayer skinLayer = SkinLayer.getInstance();
+			int p = skinLayer != null && skinLayer.hasDisplayFrame() ? 0 : settings.screenPadding;
+			canvas.clipRect(p, p, displayWidth - p, displayHeight - p);
+			synchronized (bufferLock) {
+				offscreenCopy.getBitmap().prepareToDraw();
+				g.drawImage(offscreenCopy, virtualScreen);
+				frameSequence = publishedFrameSequence;
+			}
+			presented = true;
+			if (metrics != null) {
+				metrics.recordRender(frameSequence);
+			}
+		} finally {
+			boolean needsAnother = presented
+					? presentationMailbox.complete(presentationGeneration, frameSequence)
+					: presentationMailbox.releaseAfterFailure(presentationGeneration);
+			if (needsAnother) {
+				requestAnotherPresentation(!presented);
+			}
 		}
 	}
 
@@ -694,11 +706,11 @@ public abstract class Canvas extends Displayable {
 			Log.w(TAG, "repaintScreen: " + e);
 		} finally {
 			if (parallelRedraw && uiHandler != null) {
-				boolean needsAnother = presentationMailbox.complete(
-						presentationGeneration,
-						presented ? frameSequence : 0L);
+				boolean needsAnother = presented
+						? presentationMailbox.complete(presentationGeneration, frameSequence)
+						: presentationMailbox.releaseAfterFailure(presentationGeneration);
 				if (needsAnother) {
-					uiHandler.sendEmptyMessage(0);
+					requestAnotherPresentation(!presented);
 				}
 			}
 		}
@@ -815,17 +827,29 @@ public abstract class Canvas extends Displayable {
 		@Override
 		public void onDrawFrame(GL10 gl) {
 			FrameMetrics metrics = frameMetrics;
-			long frameSequence;
-			glDisable(GL_SCISSOR_TEST);
-			glClear(GL_COLOR_BUFFER_BIT);
-			glEnable(GL_SCISSOR_TEST);
-			synchronized (bufferLock) {
-				GLUtils.texImage2D(GL_TEXTURE_2D, 0, offscreenCopy.getBitmap(), 0);
-				frameSequence = publishedFrameSequence;
-			}
-			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-			if (metrics != null) {
-				metrics.recordRender(frameSequence);
+			long frameSequence = 0L;
+			long presentationGeneration = presentationMailbox.generation();
+			boolean presented = false;
+			try {
+				glDisable(GL_SCISSOR_TEST);
+				glClear(GL_COLOR_BUFFER_BIT);
+				glEnable(GL_SCISSOR_TEST);
+				synchronized (bufferLock) {
+					GLUtils.texImage2D(GL_TEXTURE_2D, 0, offscreenCopy.getBitmap(), 0);
+					frameSequence = publishedFrameSequence;
+				}
+				glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+				presented = true;
+				if (metrics != null) {
+					metrics.recordRender(frameSequence);
+				}
+			} finally {
+				boolean needsAnother = presented
+						? presentationMailbox.complete(presentationGeneration, frameSequence)
+						: presentationMailbox.releaseAfterFailure(presentationGeneration);
+				if (needsAnother) {
+					requestAnotherPresentation(!presented);
+				}
 			}
 		}
 
@@ -1240,11 +1264,13 @@ public abstract class Canvas extends Displayable {
 
 	private void requestFlushToScreen() {
 		if (settings.graphicsMode == 1) {
-			if (innerView != null) {
+			long generation = presentationMailbox.generation();
+			if (innerView != null && presentationMailbox.trySchedule(generation)) {
 				renderer.requestRender();
 			}
 		} else if (settings.graphicsMode == 2) {
-			if (innerView != null) {
+			long generation = presentationMailbox.generation();
+			if (innerView != null && presentationMailbox.trySchedule(generation)) {
 				innerView.postInvalidate();
 			}
 		} else if (!parallelRedraw) {
@@ -1252,6 +1278,39 @@ public abstract class Canvas extends Displayable {
 		} else if (uiHandler != null) {
 			long generation = presentationMailbox.generation();
 			if (presentationMailbox.trySchedule(generation)) {
+				uiHandler.sendEmptyMessage(0);
+			}
+		}
+	}
+
+	private void requestAnotherPresentation(boolean delayed) {
+		long retryDelayMillis = delayed ? 16L : 0L;
+		if (delayed) {
+			long generation = presentationMailbox.generation();
+			if (!presentationMailbox.trySchedule(generation)) {
+				return;
+			}
+		}
+		if (settings.graphicsMode == 1) {
+			if (innerView != null && renderer != null) {
+				if (delayed) {
+					innerView.postDelayed(renderer::requestRender, retryDelayMillis);
+				} else {
+					renderer.requestRender();
+				}
+			}
+		} else if (settings.graphicsMode == 2) {
+			if (innerView != null) {
+				if (delayed) {
+					innerView.postInvalidateDelayed(retryDelayMillis);
+				} else {
+					innerView.postInvalidate();
+				}
+			}
+		} else if (parallelRedraw && uiHandler != null) {
+			if (delayed) {
+				uiHandler.sendEmptyMessageDelayed(0, retryDelayMillis);
+			} else {
 				uiHandler.sendEmptyMessage(0);
 			}
 		}
