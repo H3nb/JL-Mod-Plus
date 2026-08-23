@@ -48,6 +48,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Display;
@@ -78,10 +79,13 @@ import ru.playsoftware.j2meloader.util.AppUtils;
 import ru.playsoftware.j2meloader.util.FileUtils;
 import ru.playsoftware.j2meloader.util.IOUtils;
 import ru.woesss.j2me.jar.Descriptor;
+import javax.microedition.shell.timing.EmulationSpeed;
+import javax.microedition.shell.timing.TimingSession;
 
 public class MicroLoader {
 	private static final String TAG = MicroLoader.class.getName();
 	private static final char[] HEX = "0123456789abcdef".toCharArray();
+	private static final AtomicLong NEXT_TIMING_GENERATION = new AtomicLong(1L);
 	private static String soundBank;
 	private final Map<String, String> midlets = new LinkedHashMap<>();
 
@@ -94,6 +98,7 @@ public class MicroLoader {
 	private String midletVersion;
 	private String jarSize;
 	private String jarSha256;
+	private TimingSession timingSession;
 
 	MicroLoader(String appPath) {
 		this.appDir = new File(appPath);
@@ -110,6 +115,12 @@ public class MicroLoader {
 		if (params == null) {
 			return false;
 		}
+		try {
+			startTimingSession();
+		} catch (IllegalStateException e) {
+			Log.e(TAG, "A MIDlet timing session is already active", e);
+			return false;
+		}
 		applyLinkedBuiltInTheme(config);
 		Display.initDisplay();
 		Graphics3D.initGraphics3D();
@@ -124,6 +135,24 @@ public class MicroLoader {
 				.build();
 		StrictMode.setThreadPolicy(policy);
 		return true;
+	}
+
+	private void startTimingSession() {
+		TimingSession session = new TimingSession(
+				EmulationSpeed.sanitizePercent(params.emulationSpeedPercent),
+				NEXT_TIMING_GENERATION.getAndIncrement());
+		GuestTimingBridge.install(session);
+		timingSession = session;
+	}
+
+	void closeTimingSession() {
+		TimingSession session = timingSession;
+		timingSession = null;
+		GuestTimingBridge.clear(session);
+	}
+
+	TimingSession getTimingSession() {
+		return timingSession;
 	}
 
 	/** Applies only the theme-owned colors for a linked built-in profile at runtime. */
