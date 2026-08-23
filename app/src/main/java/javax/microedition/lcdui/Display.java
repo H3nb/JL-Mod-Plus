@@ -105,11 +105,22 @@ public class Display {
 	}
 
 	public void setCurrent(Alert alert, Displayable displayable) {
-		if (displayable == null) {
+		if (alert == null || displayable == null) {
 			throw new NullPointerException();
 		} else if (displayable instanceof Alert) {
 			throw new IllegalArgumentException();
 		}
+		if (current == alert) {
+			alert.setNextDisplayable(displayable);
+			return;
+		}
+		Displayable previous = current;
+		if (previous instanceof Canvas canvas) {
+			canvas.setInvisible();
+		} else if (previous instanceof Alert previousAlert) {
+			previousAlert.close();
+		}
+		alert.setNextDisplayable(displayable);
 		current = alert;
 		ViewHandler.postEvent(this::showAlert);
 	}

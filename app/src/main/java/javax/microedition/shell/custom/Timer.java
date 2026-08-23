@@ -25,6 +25,7 @@ import java.util.concurrent.locks.LockSupport;
 
 import javax.microedition.shell.GuestTimingBridge;
 import javax.microedition.shell.timing.TimingSession;
+import javax.microedition.shell.timing.TimingSnapshot;
 
 /**
  * Timers schedule one-shot or recurring {@link TimerTask tasks} for execution.
@@ -236,6 +237,9 @@ public class Timer {
                             waitingForTask = true;
                         } else {
                             long currentTime = currentTimeMillis();
+                            if (isStaleTimingSession()) {
+                                return;
+                            }
 
                             task = tasks.minimum();
 
@@ -361,9 +365,11 @@ public class Timer {
         }
 
         private long currentTimeMillis() {
-            return timingSession == null
-                    ? System.currentTimeMillis()
-                    : timingSession.guestWallTimeMillis();
+            if (timingSession == null) {
+                return System.currentTimeMillis();
+            }
+            TimingSnapshot snapshot = timingSession.snapshotIfOpen();
+            return snapshot == null ? System.currentTimeMillis() : snapshot.guestWallTimeMillis();
         }
 
         private void sleepGuestDuration(long guestMillis) throws InterruptedException {

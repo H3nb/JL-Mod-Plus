@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import javax.microedition.shell.timing.TimingSession;
+import javax.microedition.shell.timing.TimingSnapshot;
 
 /**
  * Parent-classloader-owned ABI for transformed guest timing calls. Guest archives must never
@@ -69,32 +70,30 @@ public final class GuestTimingBridge {
 
 	/** Replacement for transformed guest java.lang.System.currentTimeMillis(). */
 	public static long currentTimeMillis() {
-		TimingSession session = activeSession();
-		return session == null ? System.currentTimeMillis() : session.guestWallTimeMillis();
+		TimingSnapshot snapshot = activeSnapshot();
+		return snapshot == null ? System.currentTimeMillis() : snapshot.guestWallTimeMillis();
 	}
 
 	/** Replacement for transformed guest java.lang.System.nanoTime(). */
 	public static long nanoTime() {
-		TimingSession session = activeSession();
-		return session == null ? System.nanoTime() : session.guestMonotonicNanos();
+		TimingSnapshot snapshot = activeSnapshot();
+		return snapshot == null ? System.nanoTime() : snapshot.guestMonotonicNanos();
 	}
 
 	/** Replacement for a transformed no-argument java.util.Date constructor. */
 	public static Date newDate() {
-		TimingSession session = activeSession();
-		return new Date(session == null ? System.currentTimeMillis() : session.guestWallTimeMillis());
+		TimingSnapshot snapshot = activeSnapshot();
+		return new Date(snapshot == null ? System.currentTimeMillis() : snapshot.guestWallTimeMillis());
 	}
 
 	/** Replacement for a transformed no-argument java.util.Calendar factory. */
 	public static Calendar calendarInstance() {
-		TimingSession session = activeSession();
-		return calendarAtGuestTime(Calendar.getInstance(), session);
+		return calendarAtGuestTime(Calendar.getInstance(), activeSnapshot());
 	}
 
 	/** Replacement for a transformed time-zone-aware java.util.Calendar factory. */
 	public static Calendar calendarInstance(TimeZone timeZone) {
-		TimingSession session = activeSession();
-		return calendarAtGuestTime(Calendar.getInstance(timeZone), session);
+		return calendarAtGuestTime(Calendar.getInstance(timeZone), activeSnapshot());
 	}
 
 	/** Converts a guest millisecond deadline for an Android host callback. */
@@ -103,11 +102,23 @@ public final class GuestTimingBridge {
 		return session == null ? guestMillis : session.hostDelayMillis(guestMillis);
 	}
 
-	private static Calendar calendarAtGuestTime(Calendar calendar, TimingSession session) {
-		if (session != null) {
-			calendar.setTimeInMillis(session.guestWallTimeMillis());
+	private static Calendar calendarAtGuestTime(Calendar calendar, TimingSnapshot snapshot) {
+		if (snapshot != null) {
+			calendar.setTimeInMillis(snapshot.guestWallTimeMillis());
 		}
 		return calendar;
+	}
+
+	/**
+	 * Selects and reads the active session as one teardown-tolerant operation. A session can be
+	 * closed by lifecycle cleanup immediately after a transformed call selects it; snapshotIfOpen
+	 * makes that stale call fall back to the host clock instead of leaking IllegalStateException.
+	 */
+	private static TimingSnapshot activeSnapshot() {
+		synchronized (LOCK) {
+			TimingSession session = activeSession;
+			return session == null ? null : session.snapshotIfOpen();
+		}
 	}
 
 	/** Replacement for transformed guest java.lang.Thread.sleep(long). */

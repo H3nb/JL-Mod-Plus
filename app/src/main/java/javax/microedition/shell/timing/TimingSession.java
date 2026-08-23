@@ -15,8 +15,11 @@
 package javax.microedition.shell.timing;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.LockSupport;
@@ -38,8 +41,7 @@ public final class TimingSession implements AutoCloseable {
 	private final Object lock = new Object();
 	private final TimingTimeSource timeSource;
 	private final long generation;
-	private final Set<Thread> closeAwareThreads =
-			Collections.newSetFromMap(new ConcurrentHashMap<>());
+	private final Map<Thread, Integer> closeAwareThreadRegistrations = new HashMap<>();
 	private final Set<CloseAwareWait> closeAwareWaiters =
 			Collections.newSetFromMap(new ConcurrentHashMap<>());
 
@@ -92,16 +94,25 @@ public final class TimingSession implements AutoCloseable {
 				LockSupport.unpark(thread);
 				return;
 			}
-			closeAwareThreads.add(thread);
+			Integer registrations = closeAwareThreadRegistrations.get(thread);
+			closeAwareThreadRegistrations.put(
+					thread, registrations == null ? 1 : registrations + 1);
 		}
 	}
 
-	/** Removes a previously registered emulator-owned thread. */
+	/** Removes one registration for an emulator-owned thread. */
 	public void unregisterCloseAwareThread(@NonNull Thread thread) {
 		if (thread == null) {
 			throw new NullPointerException("thread");
 		}
-		closeAwareThreads.remove(thread);
+		synchronized (lock) {
+			Integer registrations = closeAwareThreadRegistrations.get(thread);
+			if (registrations == null || registrations <= 1) {
+				closeAwareThreadRegistrations.remove(thread);
+			} else {
+				closeAwareThreadRegistrations.put(thread, registrations - 1);
+			}
+		}
 	}
 
 	/** Returns one coherent snapshot for bridge calls and diagnostics. */
@@ -110,6 +121,18 @@ public final class TimingSession implements AutoCloseable {
 		synchronized (lock) {
 			ensureOpen();
 			return snapshotAt(timeSource.monotonicNanos());
+		}
+	}
+
+	/**
+	 * Returns a coherent snapshot while the session is open, or {@code null} for a stale caller.
+	 * Unlike {@link #snapshot()}, this method is intended for teardown-tolerant bridge and host UI
+	 * reads where exposing the session's closed state as an exception would be a lifecycle bug.
+	 */
+	@Nullable
+	public TimingSnapshot snapshotIfOpen() {
+		synchronized (lock) {
+			return closed ? null : snapshotAt(timeSource.monotonicNanos());
 		}
 	}
 
@@ -125,6 +148,13 @@ public final class TimingSession implements AutoCloseable {
 		synchronized (lock) {
 			ensureOpen();
 			return clockState.speedPercent();
+		}
+	}
+
+	/** Returns the current speed or a safe host/UI fallback if the session has closed. */
+	public int speedPercentOr(int fallbackPercent) {
+		synchronized (lock) {
+			return closed ? fallbackPercent : clockState.speedPercent();
 		}
 	}
 
@@ -203,17 +233,24 @@ public final class TimingSession implements AutoCloseable {
 			throws InterruptedException {
 		long hostDurationNanos;
 		CloseAwareWait waiter = new CloseAwareWait(Thread.currentThread());
+		boolean closedAtEntry;
 		synchronized (lock) {
-			// A transformed wait can race MIDlet teardown after the bridge has selected this
-			// session. Treat that stale call like a closed guest sleep rather than throwing into
-			// application code during shutdown.
-			if (closed) {
-				return;
+			closedAtEntry = closed;
+			if (!closedAtEntry) {
+				TimingSnapshot start = snapshotAt(timeSource.monotonicNanos());
+				hostDurationNanos = TimingMath.scaleGuestToHostNanos(
+						guestDurationNanos, start.speedPercent());
+				closeAwareWaiters.add(waiter);
+			} else {
+				hostDurationNanos = 0L;
 			}
-			TimingSnapshot start = snapshotAt(timeSource.monotonicNanos());
-			hostDurationNanos = TimingMath.scaleGuestToHostNanos(
-					guestDurationNanos, start.speedPercent());
-			closeAwareWaiters.add(waiter);
+		}
+		if (closedAtEntry) {
+			// Object.wait validates monitor ownership before it can return. Preserve that
+			// validation even for a stale transformed call, without leaving a closed-session
+			// guest thread blocked indefinitely.
+			monitor.wait(0L, 1);
+			return;
 		}
 		long hostMillis = hostDurationNanos / 1_000_000L;
 		int hostNanos = (int) (hostDurationNanos % 1_000_000L);
@@ -227,11 +264,6 @@ public final class TimingSession implements AutoCloseable {
 			}
 		} finally {
 			closeAwareWaiters.remove(waiter);
-			if (waiter.closed) {
-				// close() uses interrupt only because Object.wait cannot be unparked. Do not leak
-				// that implementation detail into a thread that continues its teardown path.
-				Thread.interrupted();
-			}
 		}
 	}
 
@@ -244,7 +276,7 @@ public final class TimingSession implements AutoCloseable {
 		}
 
 		Thread sleeper = Thread.currentThread();
-		closeAwareThreads.add(sleeper);
+		registerCloseAwareThread(sleeper);
 		try {
 			long hostDeadlineNanos;
 			synchronized (lock) {
@@ -277,7 +309,7 @@ public final class TimingSession implements AutoCloseable {
 				LockSupport.parkNanos(this, remainingNanos);
 			}
 		} finally {
-			closeAwareThreads.remove(sleeper);
+			unregisterCloseAwareThread(sleeper);
 		}
 	}
 
@@ -309,7 +341,7 @@ public final class TimingSession implements AutoCloseable {
 				return;
 			}
 			closed = true;
-			for (Thread thread : closeAwareThreads) {
+			for (Thread thread : closeAwareThreadRegistrations.keySet()) {
 				LockSupport.unpark(thread);
 			}
 			for (CloseAwareWait waiter : closeAwareWaiters) {

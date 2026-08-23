@@ -106,7 +106,10 @@ public final class FramePacer {
 		boolean registered = false;
 		Thread pacingThread = null;
 		if (allowBlocking && deadline > now) {
-			interrupted = Thread.interrupted();
+			// Inspect without consuming the flag. A guest worker may use interruption as its
+			// shutdown signal, and pacing must not erase that signal while checking whether it
+			// is safe to park.
+			interrupted = Thread.currentThread().isInterrupted();
 			if (!interrupted) {
 				pacingThread = Thread.currentThread();
 				if (session != null) {
@@ -116,7 +119,7 @@ public final class FramePacer {
 				try {
 					while (deadline > now) {
 						sleeper.parkNanos(this, deadline - now);
-						interrupted = Thread.interrupted();
+						interrupted = Thread.currentThread().isInterrupted();
 						if (interrupted) {
 							break;
 						}

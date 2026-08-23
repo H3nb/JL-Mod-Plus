@@ -23,6 +23,7 @@ import org.junit.Test;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
 
 public class TimingSessionTest {
 	private static final long WALL_START = 1_700_000_000_000L;
@@ -115,6 +116,40 @@ public class TimingSessionTest {
 	}
 
 	@Test
+	public void closedTimedMonitorWaitStillValidatesMonitorOwnership() throws Exception {
+		TimingSession session = new TimingSession(new FakeTimeSource(WALL_START), 100, 1L);
+		session.close();
+
+		try {
+			session.waitOnMonitor(new Object(), 1L);
+			throw new AssertionError("Expected monitor ownership to be validated");
+		} catch (IllegalMonitorStateException expected) {
+			// Expected.
+		}
+	}
+
+	@Test
+	public void nestedCloseAwareRegistrationsRemainUntilAllAreRemoved() throws Exception {
+		TimingSession session = new TimingSession(new FakeTimeSource(WALL_START), 100, 1L);
+		CountDownLatch registered = new CountDownLatch(1);
+		CountDownLatch finished = new CountDownLatch(1);
+		Thread worker = new Thread(() -> {
+			session.registerCloseAwareThread(Thread.currentThread());
+			session.registerCloseAwareThread(Thread.currentThread());
+			registered.countDown();
+			session.unregisterCloseAwareThread(Thread.currentThread());
+			LockSupport.park(session);
+			finished.countDown();
+		});
+		worker.start();
+		assertTrue(registered.await(1L, TimeUnit.SECONDS));
+		session.close();
+		assertTrue(finished.await(1L, TimeUnit.SECONDS));
+		worker.join(1_000L);
+		assertFalse(worker.isAlive());
+	}
+
+	@Test
 	public void closeIsIdempotentAndPreventsFurtherReads() {
 		TimingSession session = new TimingSession(new FakeTimeSource(WALL_START), 100, 1L);
 		session.close();
@@ -178,6 +213,33 @@ public class TimingSessionTest {
 		assertFalse(waiter.isAlive());
 		assertTrue(failure.get() == null);
 		assertFalse(waiter.isInterrupted());
+	}
+
+	@Test
+	public void guestMonitorInterruptStillPropagates() throws Exception {
+		TimingSession session = new TimingSession(new FakeTimeSource(WALL_START), 100, 1L);
+		Object monitor = new Object();
+		CountDownLatch started = new CountDownLatch(1);
+		AtomicReference<Throwable> failure = new AtomicReference<>();
+		Thread waiter = new Thread(() -> {
+			synchronized (monitor) {
+				started.countDown();
+				try {
+					session.waitOnMonitor(monitor, 60_000L);
+				} catch (Throwable throwable) {
+					failure.set(throwable);
+				}
+			}
+		});
+		waiter.start();
+		assertTrue(started.await(1L, TimeUnit.SECONDS));
+
+		waiter.interrupt();
+		waiter.join(1_000L);
+		assertFalse(waiter.isAlive());
+		assertTrue(failure.get() instanceof InterruptedException);
+		assertFalse(waiter.isInterrupted());
+		session.close();
 	}
 
 	@Test
