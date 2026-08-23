@@ -95,6 +95,14 @@ public class AndroidMethodVisitor extends MethodVisitor {
 					return;
 				}
 				break;
+			case "java/lang/Object":
+				if (opcode == INVOKEVIRTUAL && name.equals("wait")
+						&& (desc.equals("(J)V") || desc.equals("(JI)V"))) {
+					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/GuestTimingBridge",
+							"waitOnMonitor", "(Ljava/lang/Object;" + desc.substring(1), false);
+					return;
+				}
+				break;
 			case "java/lang/String":
 				if (name.equals("<init>") && desc.startsWith("([B") && !desc.endsWith("Ljava/lang/String;)V")) {
 					injectGetPropertyEncoding();
