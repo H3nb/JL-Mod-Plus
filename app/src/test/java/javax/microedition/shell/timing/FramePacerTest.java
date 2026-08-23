@@ -15,6 +15,7 @@
 package javax.microedition.shell.timing;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -82,6 +83,23 @@ public class FramePacerTest {
 		sleeper.lastParkNanos = 0L;
 		pacer.pace(60, true);
 		assertEquals(0L, sleeper.lastParkNanos);
+	}
+
+	@Test
+	public void pacingDoesNotConsumeCallerInterruptStatus() {
+		FakeTimeSource time = new FakeTimeSource();
+		RecordingSleeper sleeper = new RecordingSleeper(time);
+		TimingSession session = new TimingSession(time, 100, 1L);
+		FramePacer pacer = new FramePacer(session, sleeper);
+
+		Thread.currentThread().interrupt();
+		try {
+			pacer.pace(60, true);
+			assertTrue(Thread.currentThread().isInterrupted());
+		} finally {
+			Thread.interrupted();
+			session.close();
+		}
 	}
 
 	private static final class RecordingSleeper implements FramePacer.HostSleeper {

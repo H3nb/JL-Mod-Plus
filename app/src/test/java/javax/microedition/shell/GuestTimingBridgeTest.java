@@ -82,6 +82,20 @@ public class GuestTimingBridgeTest {
 		assertTrue(Math.abs(System.currentTimeMillis() - hostCalendar.getTimeInMillis()) < 1_000L);
 	}
 
+	@Test
+	public void bridgeFallsBackToHostClockAfterSessionClose() {
+		TimingSession session = new TimingSession(new FakeTimeSource(1_700_000_000_000L), 200, 1L);
+		GuestTimingBridge.install(session);
+		try {
+			session.close();
+			long now = System.currentTimeMillis();
+			assertTrue(Math.abs(now - GuestTimingBridge.currentTimeMillis()) < 1_000L);
+			assertTrue(Math.abs(System.nanoTime() - GuestTimingBridge.nanoTime()) < 1_000_000_000L);
+		} finally {
+			GuestTimingBridge.clear(session);
+		}
+	}
+
 	private static final class FakeTimeSource implements TimingTimeSource {
 		private long monotonicNanos;
 		private final long wallTimeMillis;

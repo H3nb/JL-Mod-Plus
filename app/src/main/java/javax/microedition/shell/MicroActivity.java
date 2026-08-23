@@ -374,7 +374,7 @@ public class MicroActivity extends AppCompatActivity {
 				&& timingSession != null
 				&& !timingSession.isClosed();
 		int emulationSpeedPercent = emulationSpeedAvailable
-				? timingSession.speedPercent()
+				? timingSession.speedPercentOr(EmulationSpeed.NORMAL_PERCENT)
 				: EmulationSpeed.NORMAL_PERCENT;
 		String title = displayable != null ? displayable.getTitle() : null;
 		// RuntimeMenuComposeController exposes a non-null Kotlin String. An incomplete internal

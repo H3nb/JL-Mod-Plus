@@ -20,6 +20,8 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import javax.microedition.shell.GuestTimingBridge;
 import javax.microedition.shell.timing.TimingSession;
 import javax.microedition.shell.timing.TimingTimeSource;
@@ -38,6 +40,41 @@ public class TimerTest {
 				Thread.yield();
 			}
 			assertTrue(worker.isAlive());
+			session.close();
+			worker.join(1_000L);
+			assertFalse(worker.isAlive());
+		} finally {
+			if (timer != null) {
+				timer.cancel();
+			}
+			GuestTimingBridge.clear(session);
+		}
+	}
+
+	@Test
+	public void persistentTimerRegistrationSurvivesGuestSleepRegistration() throws Exception {
+		TimingSession session = new TimingSession(new HostTimeSource(), 100, 1L);
+		GuestTimingBridge.install(session);
+		Timer timer = null;
+		try {
+			timer = new Timer("timing-test-idle", true);
+			Thread worker = workerOf(timer);
+			CountDownLatch ran = new CountDownLatch(1);
+			timer.schedule(new TimerTask() {
+				@Override
+				public void run() {
+					ran.countDown();
+				}
+			}, 20L);
+
+			assertTrue(ran.await(1L, TimeUnit.SECONDS));
+			long idleDeadline = System.nanoTime() + 1_000_000_000L;
+			while (worker.getState() != Thread.State.WAITING
+					&& System.nanoTime() < idleDeadline) {
+				Thread.yield();
+			}
+			assertTrue(worker.getState() == Thread.State.WAITING);
+
 			session.close();
 			worker.join(1_000L);
 			assertFalse(worker.isAlive());
