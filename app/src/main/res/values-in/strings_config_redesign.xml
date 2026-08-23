@@ -77,6 +77,7 @@
     <string name="config_help_force_fullscreen">Memaksa permukaan aplikasi menggunakan seluruh area tampilan yang tersedia.</string>
     <string name="config_help_show_fps">Menampilkan frame rate saat aplikasi berjalan.</string>
     <string name="config_help_fps_limit">Membatasi frame rate maksimum. Kosongkan untuk tanpa batas.</string>
+    <string name="emulation_speed_overlay">Kecepatan %1$s · clock %2$s</string>
     <string name="config_help_generic_toggle">Aktifkan atau nonaktifkan perilaku ini untuk aplikasi saat ini.</string>
     <string name="config_help_generic_color">Pilih warna yang digunakan oleh elemen visual ini.</string>
     <string name="config_help_action_generic">Buka alat konfigurasi ini.</string>

@@ -352,6 +352,7 @@ public class MicroLoader {
 				shader.dir = workDir + Config.SHADERS_DIR;
 			}
 			Canvas.setSettings(params);
+			Canvas.setTimingOverlayEnabled(timingTransformCompatible);
 
 			Font.applySettings(params);
 

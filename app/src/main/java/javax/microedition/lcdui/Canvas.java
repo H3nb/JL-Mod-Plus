@@ -73,6 +73,7 @@ import javax.microedition.lcdui.overlay.FpsCounter;
 import javax.microedition.lcdui.overlay.Layer;
 import javax.microedition.lcdui.overlay.Overlay;
 import javax.microedition.lcdui.overlay.OverlayView;
+import javax.microedition.lcdui.overlay.TimingMonitor;
 import javax.microedition.lcdui.skin.SkinLayer;
 import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
@@ -125,6 +126,7 @@ public abstract class Canvas extends Displayable {
 	private static boolean parallelRedraw;
 	private static int fpsLimit;
 	private static boolean screenshotRawMode;
+	private static boolean timingOverlayEnabled;
 
 	private final Object bufferLock = new Object();
 	private final Object surfaceLock = new Object();
@@ -151,6 +153,7 @@ public abstract class Canvas extends Displayable {
 	private Handler uiHandler;
 	private Overlay overlay;
 	private FpsCounter fpsCounter;
+	private TimingMonitor timingMonitor;
 	private boolean skipLeftSoft;
 	private boolean skipRightSoft;
 
@@ -185,6 +188,11 @@ public abstract class Canvas extends Displayable {
 		fpsLimit = settings.fpsLimit;
 		int mode = settings.graphicsMode;
 		parallelRedraw = (mode == 0 || mode == 3) && settings.parallelRedrawScreen;
+	}
+
+	/** Enables the diagnostic only when the loaded artifact advertises the timing transform ABI. */
+	public static void setTimingOverlayEnabled(boolean enabled) {
+		timingOverlayEnabled = enabled;
 	}
 
 	public int getKeyCode(int gameAction) {
@@ -1142,6 +1150,10 @@ public abstract class Canvas extends Displayable {
 				fpsCounter = new FpsCounter(overlayView);
 				overlayView.addLayer(fpsCounter);
 			}
+			if (timingOverlayEnabled && settings.showEmulationSpeed) {
+				timingMonitor = new TimingMonitor(overlayView, fpsCounter != null);
+				overlayView.addLayer(timingMonitor);
+			}
 			overlayView.addLayer(softBar, 0);
 			overlayView.setVisibility(true);
 			overlay = ContextHolder.getVk();
@@ -1163,6 +1175,11 @@ public abstract class Canvas extends Displayable {
 				fpsCounter.stop();
 				overlayView.removeLayer(fpsCounter);
 				fpsCounter = null;
+			}
+			if (timingMonitor != null) {
+				timingMonitor.stop();
+				overlayView.removeLayer(timingMonitor);
+				timingMonitor = null;
 			}
 			overlayView.removeLayer(softBar);
 			softBar.closeMenu();

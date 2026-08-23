@@ -66,6 +66,7 @@
     <string name="config_help_force_fullscreen">Forces the app surface to use the full available display area.</string>
     <string name="config_help_show_fps">Displays the current frame rate while the app is running.</string>
     <string name="config_help_fps_limit">Caps the maximum frame rate. Leave empty for no limit.</string>
+    <string name="emulation_speed_overlay">Speed %1$s · clock %2$s</string>
     <string name="config_help_generic_toggle">Enable or disable this behavior for the current app.</string>
     <string name="config_help_generic_color">Choose the color used by this visual element.</string>
     <string name="config_help_action_generic">Open this configuration tool.</string>
