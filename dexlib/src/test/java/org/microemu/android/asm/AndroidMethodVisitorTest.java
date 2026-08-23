@@ -63,6 +63,28 @@ public class AndroidMethodVisitorTest {
 		assertEquals(2, calls.size());
 	}
 
+	@Test
+	public void currentDateAndCalendarFactoriesUseParentOwnedGuestTime() {
+		byte[] source = createDateAndCalendarClass();
+		byte[] transformed = transform(source);
+		List<String> calls = methodCalls(transformed, "dates");
+
+		assertTrue(calls.contains(
+				"INVOKESTATIC javax/microedition/shell/GuestTimingBridge.newDate()Ljava/util/Date;"));
+		assertTrue(calls.contains(
+				"INVOKESTATIC javax/microedition/shell/GuestTimingBridge.calendarInstance()Ljava/util/Calendar;"));
+		assertTrue(calls.contains(
+				"INVOKESTATIC javax/microedition/shell/GuestTimingBridge.calendarInstance(Ljava/util/TimeZone;)Ljava/util/Calendar;"));
+		assertEquals(4, calls.size());
+
+		byte[] subclass = transform(createDateSubclassClass());
+		List<String> constructorCalls = methodCalls(subclass, "<init>");
+		assertTrue(constructorCalls.contains(
+				"INVOKESPECIAL java/util/Date.<init>()V"));
+		assertEquals(1, constructorCalls.size());
+	}
+
+
 	private static byte[] createClass() {
 		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
 		writer.visit(Opcodes.V17, Opcodes.ACC_PUBLIC, "sample/Timing", null, "java/lang/Object", null);
@@ -123,6 +145,53 @@ public class AndroidMethodVisitorTest {
 		return writer.toByteArray();
 	}
 
+	private static byte[] createDateAndCalendarClass() {
+		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+		writer.visit(Opcodes.V17, Opcodes.ACC_PUBLIC, "sample/DateAndCalendar", null,
+				"java/lang/Object", null);
+		MethodVisitor method = writer.visitMethod(
+				Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, "dates", "(Ljava/util/TimeZone;)Ljava/util/Date;",
+				null, null);
+		method.visitCode();
+		method.visitTypeInsn(Opcodes.NEW, "java/util/Date");
+		method.visitInsn(Opcodes.DUP);
+		method.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/util/Date", "<init>", "()V", false);
+		method.visitInsn(Opcodes.POP);
+		method.visitMethodInsn(
+				Opcodes.INVOKESTATIC, "java/util/Calendar", "getInstance",
+				"()Ljava/util/Calendar;", false);
+		method.visitInsn(Opcodes.POP);
+		method.visitVarInsn(Opcodes.ALOAD, 0);
+		method.visitMethodInsn(
+				Opcodes.INVOKESTATIC, "java/util/Calendar", "getInstance",
+				"(Ljava/util/TimeZone;)Ljava/util/Calendar;", false);
+		method.visitInsn(Opcodes.POP);
+		method.visitTypeInsn(Opcodes.NEW, "java/util/Date");
+		method.visitInsn(Opcodes.DUP);
+		method.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/util/Date", "<init>", "()V", false);
+		method.visitInsn(Opcodes.ARETURN);
+		method.visitMaxs(2, 1);
+		method.visitEnd();
+		writer.visitEnd();
+		return writer.toByteArray();
+	}
+
+	private static byte[] createDateSubclassClass() {
+		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+		writer.visit(Opcodes.V17, Opcodes.ACC_PUBLIC, "sample/DateSubclass", null,
+				"java/util/Date", null);
+		MethodVisitor method = writer.visitMethod(
+				Opcodes.ACC_PUBLIC, "<init>", "()V", null, null);
+		method.visitCode();
+		method.visitVarInsn(Opcodes.ALOAD, 0);
+		method.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/util/Date", "<init>", "()V", false);
+		method.visitInsn(Opcodes.RETURN);
+		method.visitMaxs(1, 1);
+		method.visitEnd();
+		writer.visitEnd();
+		return writer.toByteArray();
+	}
+
 	private static List<String> methodCalls(byte[] classData, String methodName) {
 		List<String> calls = new ArrayList<>();
 		new ClassReader(classData).accept(new org.objectweb.asm.ClassVisitor(Opcodes.ASM9) {
@@ -153,6 +222,12 @@ public class AndroidMethodVisitorTest {
 	}
 
 	private static String opcodeName(int opcode) {
-		return opcode == Opcodes.INVOKESTATIC ? "INVOKESTATIC" : Integer.toString(opcode);
+		if (opcode == Opcodes.INVOKESTATIC) {
+			return "INVOKESTATIC";
+		}
+		if (opcode == Opcodes.INVOKESPECIAL) {
+			return "INVOKESPECIAL";
+		}
+		return Integer.toString(opcode);
 	}
 }

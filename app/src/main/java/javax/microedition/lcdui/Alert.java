@@ -27,6 +27,7 @@ import android.view.View;
 import androidx.appcompat.app.AlertDialog;
 
 import javax.microedition.lcdui.event.SimpleEvent;
+import javax.microedition.shell.GuestTimingBridge;
 import javax.microedition.util.ContextHolder;
 
 public class Alert extends Screen {
@@ -39,6 +40,7 @@ public class Alert extends Screen {
 	private int timeout = FOREVER;
 	private Gauge indicator;
 	private AlertDialog dialog;
+	private Runnable timeoutRunnable;
 	private Displayable nextDisplayable;
 	private Command positive;
 	private Command negative;
@@ -143,7 +145,13 @@ public class Alert extends Screen {
 	}
 
 	public void setTimeout(int timeout) {
+		if (timeout != FOREVER && timeout <= 0) {
+			throw new IllegalArgumentException("timeout must be positive or FOREVER");
+		}
 		this.timeout = timeout;
+		if (dialog != null) {
+			scheduleTimeout(dialog);
+		}
 	}
 
 	public int getTimeout() {
@@ -224,6 +232,30 @@ public class Alert extends Screen {
 		return dialog;
 	}
 
+	void scheduleTimeout(AlertDialog alertDialog) {
+		cancelTimeout();
+		if (!finiteTimeout()) {
+			return;
+		}
+		long hostDelay = GuestTimingBridge.hostDelayMillis(timeout);
+		Runnable timeoutCallback = () -> {
+			if (dialog == alertDialog) {
+				timeoutRunnable = null;
+				alertDialog.dismiss();
+			}
+		};
+		timeoutRunnable = timeoutCallback;
+		ViewHandler.postDelayed(timeoutCallback, hostDelay);
+	}
+
+	private void cancelTimeout() {
+		Runnable callback = timeoutRunnable;
+		if (callback != null) {
+			ViewHandler.removeCallbacks(callback);
+			timeoutRunnable = null;
+		}
+	}
+
 	@Override
 	public void addCommand(Command cmd) {
 		if (cmd == null) {
@@ -275,6 +307,7 @@ public class Alert extends Screen {
 	}
 
 	void onDismiss(DialogInterface dialogInterface) {
+		cancelTimeout();
 		dialog = null;
 		Gauge indicator = this.indicator;
 		if (indicator != null) {
@@ -291,6 +324,7 @@ public class Alert extends Screen {
 	}
 
 	void close() {
+		cancelTimeout();
 		this.nextDisplayable = null;
 		AlertDialog dialog = this.dialog;
 		if (dialog != null) {

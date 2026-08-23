@@ -117,6 +117,29 @@ public final class TimingSession implements AutoCloseable {
 		}
 	}
 
+	/** Converts a guest millisecond deadline to a host Handler delay, rounded up safely. */
+	public long hostDelayMillis(long guestMillis) {
+		if (guestMillis < 0L) {
+			throw new IllegalArgumentException("timeout value is negative");
+		}
+		if (guestMillis == 0L) {
+			return 0L;
+		}
+		synchronized (lock) {
+			if (closed) {
+				return 0L;
+			}
+			TimingSnapshot start = snapshotAt(timeSource.monotonicNanos());
+			long hostDurationNanos = TimingMath.scaleGuestToHostNanos(
+					TimingMath.millisToNanos(guestMillis), start.speedPercent());
+			long hostMillis = hostDurationNanos / 1_000_000L;
+			if (hostDurationNanos % 1_000_000L != 0L && hostMillis < Long.MAX_VALUE) {
+				hostMillis++;
+			}
+			return hostMillis;
+		}
+	}
+
 	/**
 	 * Sleeps for a guest duration using the speed sampled at entry. Parking on a private token
 	 * preserves held guest monitors and interruption semantics without polling or guest notify.

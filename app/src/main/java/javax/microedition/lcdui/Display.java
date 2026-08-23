@@ -128,9 +128,7 @@ public class Display {
 			if (alertDialog.getButton(AlertDialog.BUTTON_NEUTRAL) != null) {
 				alertDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setTextColor(accent);
 			}
-			if (alert.finiteTimeout()) {
-				ViewHandler.postDelayed(alertDialog::dismiss, alert.getTimeout());
-			}
+			alert.scheduleTimeout(alertDialog);
 		}
 	}
 

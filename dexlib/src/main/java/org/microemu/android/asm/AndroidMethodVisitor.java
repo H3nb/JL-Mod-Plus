@@ -41,6 +41,8 @@ public class AndroidMethodVisitor extends MethodVisitor {
 	static boolean USE_PANIC_LOGGING = false;
 	private final ArrayList<Label> exceptionHandlers = new ArrayList<>();
 	private final boolean returnsBoolean;
+	private boolean dateAllocationPending;
+	private boolean dateConstructorCandidate;
 
 	public AndroidMethodVisitor(MethodVisitor methodVisitor) {
 		this(methodVisitor, false);
@@ -53,6 +55,7 @@ public class AndroidMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitLabel(Label label) {
+		clearDateConstructorCandidate();
 		mv.visitLabel(label);
 		if (USE_PANIC_LOGGING && exceptionHandlers.contains(label)) {
 			mv.visitInsn(DUP);
@@ -62,6 +65,12 @@ public class AndroidMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitInsn(int opcode) {
+		if (opcode == DUP && dateAllocationPending) {
+			dateConstructorCandidate = true;
+			dateAllocationPending = false;
+		} else {
+			clearDateConstructorCandidate();
+		}
 		if (opcode == IRETURN && returnsBoolean) {
 			// JVMS ireturn narrows boolean results as value & 1. Make that implicit JVM
 			// conversion explicit before dx so ART sees an int-compatible return value.
@@ -73,6 +82,12 @@ public class AndroidMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+		boolean rewriteDateConstructor = dateConstructorCandidate
+				&& owner.equals("java/util/Date")
+				&& opcode == INVOKESPECIAL
+				&& name.equals("<init>")
+				&& desc.equals("()V");
+		clearDateConstructorCandidate();
 		switch (owner) {
 			case "java/lang/Class":
 				if (name.equals("getResourceAsStream")) {
@@ -100,6 +115,25 @@ public class AndroidMethodVisitor extends MethodVisitor {
 						&& (desc.equals("(J)V") || desc.equals("(JI)V"))) {
 					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/GuestTimingBridge",
 							"waitOnMonitor", "(Ljava/lang/Object;" + desc.substring(1), false);
+					return;
+				}
+				break;
+			case "java/util/Date":
+				if (rewriteDateConstructor) {
+					// The canonical NEW/DUP/<init> sequence leaves two uninitialized Date references
+					// on the stack. Discard them and produce the parent-owned guest-time instance.
+					mv.visitInsn(POP2);
+					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/GuestTimingBridge",
+							"newDate", "()Ljava/util/Date;", false);
+					return;
+				}
+				break;
+			case "java/util/Calendar":
+				if (opcode == INVOKESTATIC && name.equals("getInstance")
+						&& (desc.equals("()Ljava/util/Calendar;")
+						|| desc.equals("(Ljava/util/TimeZone;)Ljava/util/Calendar;"))) {
+					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/GuestTimingBridge",
+							"calendarInstance", desc, false);
 					return;
 				}
 				break;
@@ -196,8 +230,19 @@ public class AndroidMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitTypeInsn(int opcode, String type) {
+		if (opcode == NEW && type.equals("java/util/Date")) {
+			dateAllocationPending = true;
+			dateConstructorCandidate = false;
+		} else {
+			clearDateConstructorCandidate();
+		}
 		type = type.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
 		super.visitTypeInsn(opcode, type);
+	}
+
+	private void clearDateConstructorCandidate() {
+		dateAllocationPending = false;
+		dateConstructorCandidate = false;
 	}
 
 	@Override

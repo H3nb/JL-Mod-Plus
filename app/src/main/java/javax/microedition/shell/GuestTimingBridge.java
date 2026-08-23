@@ -16,6 +16,10 @@ package javax.microedition.shell;
 
 import androidx.annotation.Nullable;
 
+import java.util.Calendar;
+import java.util.Date;
+import java.util.TimeZone;
+
 import javax.microedition.shell.timing.TimingSession;
 
 /**
@@ -73,6 +77,37 @@ public final class GuestTimingBridge {
 	public static long nanoTime() {
 		TimingSession session = activeSession();
 		return session == null ? System.nanoTime() : session.guestMonotonicNanos();
+	}
+
+	/** Replacement for a transformed no-argument java.util.Date constructor. */
+	public static Date newDate() {
+		TimingSession session = activeSession();
+		return new Date(session == null ? System.currentTimeMillis() : session.guestWallTimeMillis());
+	}
+
+	/** Replacement for a transformed no-argument java.util.Calendar factory. */
+	public static Calendar calendarInstance() {
+		TimingSession session = activeSession();
+		return calendarAtGuestTime(Calendar.getInstance(), session);
+	}
+
+	/** Replacement for a transformed time-zone-aware java.util.Calendar factory. */
+	public static Calendar calendarInstance(TimeZone timeZone) {
+		TimingSession session = activeSession();
+		return calendarAtGuestTime(Calendar.getInstance(timeZone), session);
+	}
+
+	/** Converts a guest millisecond deadline for an Android host callback. */
+	public static long hostDelayMillis(long guestMillis) {
+		TimingSession session = activeSession();
+		return session == null ? guestMillis : session.hostDelayMillis(guestMillis);
+	}
+
+	private static Calendar calendarAtGuestTime(Calendar calendar, TimingSession session) {
+		if (session != null) {
+			calendar.setTimeInMillis(session.guestWallTimeMillis());
+		}
+		return calendar;
 	}
 
 	/** Replacement for transformed guest java.lang.Thread.sleep(long). */
