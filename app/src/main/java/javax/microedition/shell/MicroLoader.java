@@ -81,6 +81,7 @@ import ru.playsoftware.j2meloader.util.IOUtils;
 import ru.woesss.j2me.jar.Descriptor;
 import javax.microedition.shell.timing.EmulationSpeed;
 import javax.microedition.shell.timing.TimingSession;
+import javax.microedition.shell.timing.TimingTransformMetadata;
 
 public class MicroLoader {
 	private static final String TAG = MicroLoader.class.getName();
@@ -99,6 +100,7 @@ public class MicroLoader {
 	private String jarSize;
 	private String jarSha256;
 	private TimingSession timingSession;
+	private boolean timingTransformCompatible;
 
 	MicroLoader(String appPath) {
 		this.appDir = new File(appPath);
@@ -115,6 +117,7 @@ public class MicroLoader {
 		if (params == null) {
 			return false;
 		}
+		timingTransformCompatible = hasCompatibleTimingTransform();
 		try {
 			startTimingSession();
 		} catch (IllegalStateException e) {
@@ -139,7 +142,9 @@ public class MicroLoader {
 
 	private void startTimingSession() {
 		TimingSession session = new TimingSession(
-				EmulationSpeed.sanitizePercent(params.emulationSpeedPercent),
+				timingTransformCompatible
+						? EmulationSpeed.sanitizePercent(params.emulationSpeedPercent)
+						: EmulationSpeed.NORMAL_PERCENT,
 				NEXT_TIMING_GENERATION.getAndIncrement());
 		GuestTimingBridge.install(session);
 		timingSession = session;
@@ -153,6 +158,21 @@ public class MicroLoader {
 
 	TimingSession getTimingSession() {
 		return timingSession;
+	}
+
+	boolean isTimingTransformCompatible() {
+		return timingTransformCompatible;
+	}
+
+	private boolean hasCompatibleTimingTransform() {
+		try {
+			Descriptor descriptor = new Descriptor(
+					new File(appDir, Config.MIDLET_MANIFEST_FILE), false);
+			return TimingTransformMetadata.isCompatible(descriptor.getAttrs());
+		} catch (IOException | RuntimeException e) {
+			Log.w(TAG, "Timing transform metadata is unavailable", e);
+			return false;
+		}
 	}
 
 	/** Applies only the theme-owned colors for a linked built-in profile at runtime. */
