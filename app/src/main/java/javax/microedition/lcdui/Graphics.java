@@ -31,6 +31,8 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Region;
+import android.os.Build;
 import android.util.Log;
 
 import com.jblend.graphics.j3d.Effect3D;
@@ -77,6 +79,7 @@ public class Graphics implements
 		this.image = image;
 		boundBitmap = image.getBitmap();
 		canvas = new Canvas(boundBitmap);
+		canvas.save();
 		canvas.clipRect(image.getBounds());
 		canvas.getClipBounds(clip);
 		drawPaint.setStyle(Paint.Style.STROKE);
@@ -85,17 +88,28 @@ public class Graphics implements
 		fillPaint.setAntiAlias(false);
 	}
 
-	private void rebindCanvasTarget() {
-		canvas.setBitmap(null);
-		boundBitmap = image.getBitmap();
-		canvas.setBitmap(boundBitmap);
+	@SuppressWarnings("deprecation")
+	private void resetCanvasState() {
+		Bitmap bitmap = image.getBitmap();
+
+		canvas.restoreToCount(1);
+		if (bitmap != boundBitmap) {
+			canvas.setBitmap(bitmap);
+			boundBitmap = bitmap;
+			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+				// Before Android O setBitmap() preserves the previous clip, so replace it
+				// only when the backing store actually changes.
+				canvas.clipRect(image.getBounds(), Region.Op.REPLACE);
+			}
+		}
+		canvas.save();
 	}
 
 	public void reset(float cl, float ct, float cr, float cb) {
 		setColor(0);
 		setFont(Font.getDefaultFont());
 		setStrokeStyle(SOLID);
-		rebindCanvasTarget();
+		resetCanvasState();
 		canvas.clipRect(cl, ct, cr, cb);
 		canvas.getClipBounds(this.clip);
 		translateX = 0;
@@ -200,7 +214,7 @@ public class Graphics implements
 
 	public void setClip(int x, int y, int width, int height) {
 		clip.set(x, y, x + width, y + height);
-		rebindCanvasTarget();
+		resetCanvasState();
 		canvas.translate(translateX, translateY);
 		canvas.clipRect(clip);
 		canvas.getClipBounds(clip);
