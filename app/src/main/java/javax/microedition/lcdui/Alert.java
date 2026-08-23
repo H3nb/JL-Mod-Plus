@@ -266,8 +266,10 @@ public class Alert extends Screen {
 			return;
 		}
 		commands.add(cmd);
-		if (commands.size() == 1 && dialog != null) {
+		AlertDialog currentDialog = dialog;
+		if (commands.size() == 1 && currentDialog != null) {
 			ViewHandler.postEvent(msgCommandsChanged);
+			scheduleTimeout(currentDialog);
 		}
 	}
 
@@ -277,8 +279,10 @@ public class Alert extends Screen {
 			return;
 		}
 		commands.remove(cmd);
-		if (commands.isEmpty() && dialog != null) {
+		AlertDialog currentDialog = dialog;
+		if (commands.isEmpty() && currentDialog != null) {
 			ViewHandler.postEvent(msgCommandsChanged);
+			scheduleTimeout(currentDialog);
 		}
 	}
 
