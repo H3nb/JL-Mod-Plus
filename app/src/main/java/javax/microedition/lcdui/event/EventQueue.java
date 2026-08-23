@@ -2,6 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017 Nikita Shakarun
  * Copyright 2019-2024 Yury Kharchenko
+ * Modified in 2026 for callback context tracking.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +29,7 @@ import ru.playsoftware.j2meloader.R;
  */
 public class EventQueue implements Runnable {
 	private static boolean immediate;
+	private static final ThreadLocal<Integer> callbackDepth = new ThreadLocal<>();
 
 	private final LinkedList<Event> queue = new LinkedList<>();
 	private final Object waiter = new Object();
@@ -55,6 +57,26 @@ public class EventQueue implements Runnable {
 		immediate = value;
 	}
 
+	/** Returns whether the current thread is executing an LCDUI callback. */
+	public static boolean isInCallback() {
+		Integer depth = callbackDepth.get();
+		return depth != null && depth > 0;
+	}
+
+	private static void enterCallback() {
+		Integer depth = callbackDepth.get();
+		callbackDepth.set(depth == null ? 1 : depth + 1);
+	}
+
+	private static void leaveCallback() {
+		Integer depth = callbackDepth.get();
+		if (depth == null || depth <= 1) {
+			callbackDepth.remove();
+		} else {
+			callbackDepth.set(depth - 1);
+		}
+	}
+
 	/**
 	 * Add event to the queue.
 	 * <p>
@@ -80,8 +102,10 @@ public class EventQueue implements Runnable {
 				synchronized (callbackLock) {
 					try {
 						loopCounter.set(loop + 1);
+						enterCallback();
 						event.run(); // process event on the spot
 					} finally {
+						leaveCallback();
 						loopCounter.set(loop);
 					}
 				}
@@ -194,7 +218,12 @@ public class EventQueue implements Runnable {
 
 				if (event != null) {
 					synchronized (callbackLock) {
-						event.run();
+						enterCallback();
+						try {
+							event.run();
+						} finally {
+							leaveCallback();
+						}
 					}
 				} else {
 					synchronized (waiter) {
@@ -223,7 +252,12 @@ public class EventQueue implements Runnable {
 		}
 
 		synchronized (callbackLock) {
-			paintEvent.process();
+			enterCallback();
+			try {
+				paintEvent.process();
+			} finally {
+				leaveCallback();
+			}
 		}
 	}
 }
