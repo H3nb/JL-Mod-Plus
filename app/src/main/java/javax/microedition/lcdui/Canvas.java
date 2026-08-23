@@ -700,24 +700,39 @@ public abstract class Canvas extends Displayable {
 		while (true) {
 			PresentationResult result = presentToSurface();
 			if (!result.presented) {
-				presentationMailbox.releaseAfterFailure(presentationGeneration);
+				boolean retry = presentationMailbox.releaseAfterFailure(presentationGeneration);
+				if (retry && result.surfaceAvailable) {
+					postSynchronousRetry(presentationGeneration, 16L);
+				}
 				return;
 			}
 			drained++;
 			if (drained >= MAX_SYNCHRONOUS_DRAIN) {
 				if (presentationMailbox.completeAndRelease(
-						presentationGeneration, result.frameSequence) && innerView != null) {
-					innerView.post(() -> {
-						if (presentationMailbox.generation() == presentationGeneration) {
-							requestSynchronousPresentation();
-						}
-					});
+						presentationGeneration, result.frameSequence)) {
+					postSynchronousRetry(presentationGeneration, 0L);
 				}
 				return;
 			}
 			if (!presentationMailbox.complete(presentationGeneration, result.frameSequence)) {
 				return;
 			}
+		}
+	}
+
+	private void postSynchronousRetry(long presentationGeneration, long delayMillis) {
+		if (innerView == null) {
+			return;
+		}
+		Runnable retry = () -> {
+			if (presentationMailbox.generation() == presentationGeneration) {
+				requestSynchronousPresentation();
+			}
+		};
+		if (delayMillis > 0L) {
+			innerView.postDelayed(retry, delayMillis);
+		} else {
+			innerView.post(retry);
 		}
 	}
 
