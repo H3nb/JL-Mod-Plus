@@ -15,9 +15,16 @@
  *  limitations under the License.
  */
 
+/* Modified in JL-Mod Plus: converted guest timers use the parent-owned timing bridge while
+ * retaining the inherited Apache Timer contracts. */
+
 package javax.microedition.shell.custom;
 
 import java.util.Date;
+import java.util.concurrent.locks.LockSupport;
+
+import javax.microedition.shell.GuestTimingBridge;
+import javax.microedition.shell.timing.TimingSession;
 
 /**
  * Timers schedule one-shot or recurring {@link TimerTask tasks} for execution.
@@ -176,6 +183,12 @@ public class Timer {
          */
         private boolean finished;
 
+        /** True only while this worker is in the guest-duration wait outside the Timer lock. */
+        private boolean guestWaiting;
+
+        /** Session captured at guest Timer construction; null means host-owned Timer behavior. */
+        private final TimingSession timingSession;
+
         /**
          * Contains scheduled events, sorted according to
          * {@code when} field of TaskScheduled object.
@@ -191,6 +204,10 @@ public class Timer {
         TimerImpl(String name, boolean isDaemon) {
             this.setName(name);
             this.setDaemon(isDaemon);
+            this.timingSession = GuestTimingBridge.activeSession();
+            if (timingSession != null) {
+                timingSession.registerCloseAwareThread(this);
+            }
             this.start();
         }
 
@@ -200,102 +217,136 @@ public class Timer {
          */
         @Override
         public void run() {
-            while (true) {
-                TimerTask task;
-                synchronized (this) {
-                    // need to check cancelled inside the synchronized block
-                    if (cancelled) {
-                        return;
-                    }
-                    if (tasks.isEmpty()) {
-                        if (finished) {
+            try {
+                while (true) {
+                    TimerTask task = null;
+                    long timeToSleep = 0L;
+                    boolean waitingForTask = false;
+                    synchronized (this) {
+                        // need to check cancelled inside the synchronized block
+                        if (cancelled || isStaleTimingSession()) {
                             return;
                         }
-                        // no tasks scheduled -- sleep until any task appear
-                        try {
-                            this.wait();
-                        } catch (InterruptedException ignored) {
-                        }
-                        continue;
-                    }
+                        if (tasks.isEmpty()) {
+                            if (finished) {
+                                return;
+                            }
+                            // no tasks scheduled -- park until any task appears or the session
+                            // closes. Unlike Object.wait(), this can be woken by the session.
+                            waitingForTask = true;
+                        } else {
+                            long currentTime = currentTimeMillis();
 
-                    long currentTime = System.currentTimeMillis();
+                            task = tasks.minimum();
 
-                    task = tasks.minimum();
-                    long timeToSleep;
+                            synchronized (task.lock) {
+                                if (task.cancelled) {
+                                    tasks.delete(0);
+                                    continue;
+                                }
 
-                    synchronized (task.lock) {
-                        if (task.cancelled) {
-                            tasks.delete(0);
-                            continue;
-                        }
-
-                        // check the time to sleep for the first task scheduled
-                        timeToSleep = task.when - currentTime;
-                    }
-
-                    if (timeToSleep > 0) {
-                        // sleep!
-                        try {
-                            this.wait(timeToSleep);
-                        } catch (InterruptedException ignored) {
-                        }
-                        continue;
-                    }
-
-                    // no sleep is necessary before launching the task
-
-                    synchronized (task.lock) {
-                        int pos = 0;
-                        if (tasks.minimum().when != task.when) {
-                            pos = tasks.getTask(task);
-                        }
-                        if (task.cancelled) {
-                            tasks.delete(tasks.getTask(task));
-                            continue;
-                        }
-
-                        // set time to schedule
-                        task.setScheduledTime(task.when);
-
-                        // remove task from queue
-                        tasks.delete(pos);
-
-                        // set when the next task should be launched
-                        if (task.period >= 0) {
-                            // this is a repeating task,
-                            if (task.fixedRate) {
-                                // task is scheduled at fixed rate
-                                task.when = task.when + task.period;
-                            } else {
-                                // task is scheduled at fixed delay
-                                task.when = System.currentTimeMillis()
-                                        + task.period;
+                                // check the time to sleep for the first task scheduled
+                                timeToSleep = task.when - currentTime;
                             }
 
-                            // insert this task into queue
-                            insertTask(task);
-                        } else {
-                            task.when = 0;
+                            if (timeToSleep > 0) {
+                                // Do not hold the Timer lock while waiting. Scheduling/canceling
+                                // must be able to interrupt this worker and publish an earlier
+                                // deadline.
+                                task = null;
+                                guestWaiting = true;
+                            } else {
+                                // no sleep is necessary before launching the task
+
+                                synchronized (task.lock) {
+                                    int pos = 0;
+                                    if (tasks.minimum().when != task.when) {
+                                        pos = tasks.getTask(task);
+                                    }
+                                    if (task.cancelled) {
+                                        tasks.delete(tasks.getTask(task));
+                                        task = null;
+                                        continue;
+                                    }
+
+                                    // set time to schedule
+                                    task.setScheduledTime(task.when);
+
+                                    // remove task from queue
+                                    tasks.delete(pos);
+
+                                    // set when the next task should be launched
+                                    if (task.period >= 0) {
+                                        // this is a repeating task,
+                                        if (task.fixedRate) {
+                                            // task is scheduled at fixed rate
+                                            task.when = task.when + task.period;
+                                        } else {
+                                            // task is scheduled at fixed delay in guest wall-clock
+                                            // time
+                                            task.when = currentTimeMillis() + task.period;
+                                        }
+
+                                        // insert this task into queue
+                                        insertTask(task);
+                                    } else {
+                                        task.when = 0;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (waitingForTask) {
+                        LockSupport.park(this);
+                        // Match Object.wait()'s clearing of an internal interrupt while keeping
+                        // lifecycle and schedule wakeups independent from guest code.
+                        Thread.interrupted();
+                        continue;
+                    }
+
+                    if (task == null) {
+                        try {
+                            sleepGuestDuration(timeToSleep);
+                        } catch (InterruptedException ignored) {
+                            // A new task, cancellation, or a host lifecycle transition requested
+                            // a fresh queue evaluation.
+                        } catch (IllegalStateException e) {
+                            if (isStaleTimingSession()) {
+                                return;
+                            }
+                            throw e;
+                        } finally {
+                            synchronized (this) {
+                                guestWaiting = false;
+                            }
+                            // Internal wakeups must never leak as an interrupt into guest
+                            // TimerTask code that runs after the queue is reevaluated.
+                            Thread.interrupted();
+                        }
+                        continue;
+                    }
+
+                    boolean taskCompletedNormally = false;
+                    try {
+                        task.run();
+                        taskCompletedNormally = true;
+                    // Changes: J2ME compat
+                    } catch (Exception e) {
+                        task.cancel();
+                        taskCompletedNormally = true;
+                    // End changes
+                    } finally {
+                        if (!taskCompletedNormally) {
+                            synchronized (this) {
+                                cancelled = true;
+                            }
                         }
                     }
                 }
-
-                boolean taskCompletedNormally = false;
-                try {
-                    task.run();
-                    taskCompletedNormally = true;
-                // Changes: J2ME compat
-                } catch (Exception e) {
-                    task.cancel();
-                    taskCompletedNormally = true;
-                // End changes
-                } finally {
-                    if (!taskCompletedNormally) {
-                        synchronized (this) {
-                            cancelled = true;
-                        }
-                    }
+            } finally {
+                if (timingSession != null) {
+                    timingSession.unregisterCloseAwareThread(this);
                 }
             }
         }
@@ -303,7 +354,30 @@ public class Timer {
         private void insertTask(TimerTask newTask) {
             // callers are synchronized
             tasks.insert(newTask);
-            this.notify();
+            LockSupport.unpark(this);
+            if (guestWaiting) {
+                this.interrupt();
+            }
+        }
+
+        private long currentTimeMillis() {
+            return timingSession == null
+                    ? System.currentTimeMillis()
+                    : timingSession.guestWallTimeMillis();
+        }
+
+        private void sleepGuestDuration(long guestMillis) throws InterruptedException {
+            if (timingSession == null) {
+                Thread.sleep(guestMillis);
+            } else {
+                timingSession.sleep(guestMillis);
+            }
+        }
+
+        private boolean isStaleTimingSession() {
+            return timingSession != null
+                    && (timingSession.isClosed()
+                    || GuestTimingBridge.activeSession() != timingSession);
         }
 
         /**
@@ -312,7 +386,10 @@ public class Timer {
         public synchronized void cancel() {
             cancelled = true;
             tasks.reset();
-            this.notify();
+            LockSupport.unpark(this);
+            if (guestWaiting) {
+                this.interrupt();
+            }
         }
 
         public int purge() {
@@ -338,7 +415,7 @@ public class Timer {
             try {
                 synchronized (impl) {
                     impl.finished = true;
-                    impl.notify();
+                    LockSupport.unpark(impl);
                 }
             } finally {
                 super.finalize();
@@ -439,7 +516,7 @@ public class Timer {
         if (when.getTime() < 0) {
             throw new IllegalArgumentException("when < 0: " + when.getTime());
         }
-        long delay = when.getTime() - System.currentTimeMillis();
+        long delay = when.getTime() - impl.currentTimeMillis();
         scheduleImpl(task, delay < 0 ? 0 : delay, -1, false);
     }
 
@@ -505,7 +582,7 @@ public class Timer {
         if (period <= 0 || when.getTime() < 0) {
             throw new IllegalArgumentException();
         }
-        long delay = when.getTime() - System.currentTimeMillis();
+        long delay = when.getTime() - impl.currentTimeMillis();
         scheduleImpl(task, delay < 0 ? 0 : delay, period, false);
     }
 
@@ -552,7 +629,7 @@ public class Timer {
         if (period <= 0 || when.getTime() < 0) {
             throw new IllegalArgumentException();
         }
-        long delay = when.getTime() - System.currentTimeMillis();
+        long delay = when.getTime() - impl.currentTimeMillis();
         scheduleImpl(task, delay, period, true);
     }
 
@@ -565,7 +642,7 @@ public class Timer {
                 throw new IllegalStateException("Timer was canceled");
             }
 
-            long when = delay + System.currentTimeMillis();
+            long when = delay + impl.currentTimeMillis();
 
             if (when < 0) {
                 throw new IllegalArgumentException("Illegal delay to start the TimerTask: " + when);
