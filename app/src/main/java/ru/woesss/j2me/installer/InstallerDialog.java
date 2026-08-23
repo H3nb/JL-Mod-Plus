@@ -340,10 +340,6 @@ public class InstallerDialog extends DialogFragment {
 		String runLabel = null;
 		switch (status) {
 			case AppInstaller.STATUS_NEW -> {
-				if (installer.getJar() != null) {
-					convert();
-					return;
-				}
 				message = nd.getInfo(requireActivity()).toString();
 			}
 			case AppInstaller.STATUS_OLDER -> message = getString(
@@ -366,10 +362,10 @@ public class InstallerDialog extends DialogFragment {
 				if (isBundleRequest()) {
 					currentTitle = nd.getName();
 					showBundleRestoreConfirmation();
-				} else {
-					launchExistingApp(true);
+					return;
 				}
-				return;
+				message = getString(R.string.reinstall);
+				runLabel = getString(R.string.START_CMD);
 			}
 			default -> throw new IllegalStateException("Unexpected value: " + status);
 		}
