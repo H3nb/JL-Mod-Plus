@@ -49,6 +49,8 @@ public final class ConfigUiState {
 	public final ProfileStatus profileStatus;
 	@NonNull
 	public final List<ProfileTemplate> profileTemplates;
+	/** True when the current MIDlet artifact can execute the timing bridge. */
+	public final boolean timingControlsEnabled;
 
 	public ConfigUiState(
 			@NonNull ConfigFormState form,
@@ -96,6 +98,21 @@ public final class ConfigUiState {
 			@NonNull List<Size> removableScreenPresets,
 			@NonNull ProfileStatus profileStatus,
 			@NonNull List<ProfileTemplate> profileTemplates) {
+		this(form, screenPresets, fontPresets, skins, soundBanks, shaders, removableScreenPresets,
+				profileStatus, profileTemplates, true);
+	}
+
+	public ConfigUiState(
+			@NonNull ConfigFormState form,
+			@NonNull List<Size> screenPresets,
+			@NonNull List<FontPreset> fontPresets,
+			@NonNull List<String> skins,
+			@NonNull List<String> soundBanks,
+			@NonNull List<ShaderInfo> shaders,
+			@NonNull List<Size> removableScreenPresets,
+			@NonNull ProfileStatus profileStatus,
+			@NonNull List<ProfileTemplate> profileTemplates,
+			boolean timingControlsEnabled) {
 		this.form = form;
 		this.screenPresets = immutableCopy(screenPresets);
 		this.removableScreenPresets = immutableCopy(removableScreenPresets);
@@ -105,6 +122,7 @@ public final class ConfigUiState {
 		this.shaders = immutableCopy(shaders);
 		this.profileStatus = profileStatus;
 		this.profileTemplates = immutableCopy(profileTemplates);
+		this.timingControlsEnabled = timingControlsEnabled;
 	}
 
 	private static <T> List<T> immutableCopy(List<T> values) {

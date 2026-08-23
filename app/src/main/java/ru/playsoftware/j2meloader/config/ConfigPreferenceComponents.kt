@@ -135,6 +135,7 @@ internal fun ConfigSwitchPreference(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     message: String? = null,
     messageLevel: ConfigMessageLevel = ConfigMessageLevel.Info,
 ) {
@@ -142,13 +143,19 @@ internal fun ConfigSwitchPreference(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 64.dp)
-            .clickable { onCheckedChange(!checked) }
+            .clickable(enabled = enabled) { onCheckedChange(!checked) }
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(text = title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = if (enabled) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodySmall,
@@ -158,7 +165,7 @@ internal fun ConfigSwitchPreference(
                 ConfigInlineMessage(message, messageLevel)
             }
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        Switch(enabled = enabled, checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 
@@ -170,6 +177,7 @@ internal fun ConfigChoicePreference(
     options: List<String>,
     onSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     message: String? = null,
     messageLevel: ConfigMessageLevel = ConfigMessageLevel.Info,
 ) {
@@ -178,7 +186,7 @@ internal fun ConfigChoicePreference(
         title = title,
         description = description,
         value = selected,
-        enabled = options.isNotEmpty(),
+        enabled = enabled && options.isNotEmpty(),
         message = message,
         messageLevel = messageLevel,
         modifier = modifier,
@@ -208,6 +216,7 @@ internal fun ConfigNumberPreference(
     keyboardType: KeyboardType,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     valueSuffix: String? = null,
 ) {
     var dialogVisible by remember(value) { mutableStateOf(false) }
@@ -219,6 +228,7 @@ internal fun ConfigNumberPreference(
         title = title,
         description = description,
         value = display,
+        enabled = enabled,
         modifier = modifier,
         onClick = { dialogVisible = true },
     )
