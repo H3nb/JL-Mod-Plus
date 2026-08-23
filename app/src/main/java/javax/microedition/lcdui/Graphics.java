@@ -3,6 +3,8 @@
  * Copyright 2017-2020 Nikita Shakarun
  * Copyright 2019-2023 Yury Kharchenko
  *
+ * Modified for JL-Mod Plus to stabilize LCDUI Canvas state management.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -53,6 +55,7 @@ public class Graphics implements
 
 	private final Canvas canvas;
 	private final Image image;
+	private Bitmap boundBitmap;
 
 	private final Paint drawPaint = new Paint();
 	private final Paint fillPaint = new Paint();
@@ -72,7 +75,8 @@ public class Graphics implements
 
 	Graphics(Image image) {
 		this.image = image;
-		canvas = new Canvas(image.getBitmap());
+		boundBitmap = image.getBitmap();
+		canvas = new Canvas(boundBitmap);
 		canvas.clipRect(image.getBounds());
 		canvas.getClipBounds(clip);
 		drawPaint.setStyle(Paint.Style.STROKE);
@@ -81,12 +85,17 @@ public class Graphics implements
 		fillPaint.setAntiAlias(false);
 	}
 
+	private void rebindCanvasTarget() {
+		canvas.setBitmap(null);
+		boundBitmap = image.getBitmap();
+		canvas.setBitmap(boundBitmap);
+	}
+
 	public void reset(float cl, float ct, float cr, float cb) {
 		setColor(0);
 		setFont(Font.getDefaultFont());
 		setStrokeStyle(SOLID);
-		canvas.setBitmap(null);
-		canvas.setBitmap(image.getBitmap());
+		rebindCanvasTarget();
 		canvas.clipRect(cl, ct, cr, cb);
 		canvas.getClipBounds(this.clip);
 		translateX = 0;
@@ -191,8 +200,7 @@ public class Graphics implements
 
 	public void setClip(int x, int y, int width, int height) {
 		clip.set(x, y, x + width, y + height);
-		canvas.setBitmap(null);
-		canvas.setBitmap(image.getBitmap());
+		rebindCanvasTarget();
 		canvas.translate(translateX, translateY);
 		canvas.clipRect(clip);
 		canvas.getClipBounds(clip);
