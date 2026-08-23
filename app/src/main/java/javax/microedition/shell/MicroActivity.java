@@ -68,6 +68,8 @@ import javax.microedition.lcdui.ViewHandler;
 import javax.microedition.lcdui.event.SimpleEvent;
 import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 import javax.microedition.lcdui.skin.SkinLayer;
+import javax.microedition.shell.timing.EmulationSpeed;
+import javax.microedition.shell.timing.TimingSession;
 import javax.microedition.util.ContextHolder;
 
 import io.reactivex.SingleObserver;
@@ -262,6 +264,25 @@ public class MicroActivity extends AppCompatActivity {
 					}
 
 					@Override
+					public void onEmulationSpeed() {
+						// The Compose controller owns the speed picker dialog.
+					}
+
+					@Override
+					public void onSetEmulationSpeed(int value) {
+						if (microLoader == null || !microLoader.setRuntimeEmulationSpeed(value)) {
+							toast(R.string.error);
+						} else {
+							updateRuntimeMenuState(current);
+						}
+					}
+
+					@Override
+					public void onResetEmulationSpeed() {
+						onSetEmulationSpeed(EmulationSpeed.NORMAL_PERCENT);
+					}
+
+					@Override
 					public void onEditVirtualKeyboardLayout() {
 						setVirtualKeyboardEditMode(VirtualKeyboard.LAYOUT_KEYS,
 								R.string.layout_edit_mode);
@@ -347,6 +368,14 @@ public class MicroActivity extends AppCompatActivity {
 		}
 		GuestWindowPolicy.Chrome chrome = getRuntimeChrome(displayable);
 		VirtualKeyboard vk = ContextHolder.getVk();
+		TimingSession timingSession = microLoader == null ? null : microLoader.getTimingSession();
+		boolean emulationSpeedAvailable = microLoader != null
+				&& microLoader.isTimingTransformCompatible()
+				&& timingSession != null
+				&& !timingSession.isClosed();
+		int emulationSpeedPercent = emulationSpeedAvailable
+				? timingSession.speedPercent()
+				: EmulationSpeed.NORMAL_PERCENT;
 		String title = displayable != null ? displayable.getTitle() : null;
 		// RuntimeMenuComposeController exposes a non-null Kotlin String. An incomplete internal
 		// launch intent may omit KEY_MIDLET_NAME, so keep that malformed-input path on a safe
@@ -359,7 +388,9 @@ public class MicroActivity extends AppCompatActivity {
 				inputMethodManager != null,
 				vk != null,
 				vk != null && vk.getLayoutEditMode() != VirtualKeyboard.LAYOUT_EOF,
-				orientationLocked);
+				orientationLocked,
+				emulationSpeedAvailable,
+				emulationSpeedPercent);
 	}
 
 	private GuestWindowPolicy.Chrome getRuntimeChrome(@Nullable Displayable displayable) {

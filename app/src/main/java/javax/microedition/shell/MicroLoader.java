@@ -164,6 +164,22 @@ public class MicroLoader {
 		return timingTransformCompatible;
 	}
 
+	/** Applies a runtime-only speed change without mutating the persisted MIDlet profile. */
+	boolean setRuntimeEmulationSpeed(int speedPercent) {
+		if (!timingTransformCompatible
+				|| timingSession == null
+				|| GuestTimingBridge.activeSession() != timingSession
+				|| !EmulationSpeed.isValidPercent(speedPercent)) {
+			return false;
+		}
+		try {
+			timingSession.updateSpeedPercent(speedPercent);
+			return true;
+		} catch (IllegalStateException e) {
+			return false;
+		}
+	}
+
 	private boolean hasCompatibleTimingTransform() {
 		try {
 			Descriptor descriptor = new Descriptor(
