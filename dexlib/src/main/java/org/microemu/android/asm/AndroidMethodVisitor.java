@@ -23,7 +23,8 @@
  * See the LGPL or the AL for the specific language governing permissions and
  * limitations.
  *
- * Modified in JL-Mod Plus to preserve Java ME bytecode return semantics during DEX conversion.
+ * Modified in JL-Mod Plus to preserve Java ME bytecode return semantics and route guest timing
+ * call sites through the parent-owned emulator bridge during DEX conversion.
  *
  * @version $Id$
  */
