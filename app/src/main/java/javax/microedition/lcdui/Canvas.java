@@ -2,6 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2020 Nikita Shakarun
  * Copyright 2019-2025 Yury Kharchenko
+ * Modified in 2026 for guest/render frame telemetry.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +77,7 @@ import javax.microedition.lcdui.overlay.OverlayView;
 import javax.microedition.lcdui.overlay.TimingMonitor;
 import javax.microedition.lcdui.skin.SkinLayer;
 import javax.microedition.shell.MicroActivity;
+import javax.microedition.shell.timing.FrameMetrics;
 import javax.microedition.util.ContextHolder;
 
 import io.reactivex.Single;
@@ -148,6 +150,8 @@ public abstract class Canvas extends Displayable {
 	private boolean sizeChangedCalled;
 	private static Image offscreen;
 	private Image offscreenCopy;
+	private volatile long publishedFrameSequence;
+	private volatile FrameMetrics frameMetrics;
 	private int onX, onY, onWidth, onHeight;
 	private long lastFrameTime = System.currentTimeMillis();
 	private Handler uiHandler;
@@ -266,6 +270,8 @@ public abstract class Canvas extends Displayable {
 
 	public void onDraw(android.graphics.Canvas canvas) {
 		if (settings.graphicsMode != 2) return; // Fix for Android Pie
+		FrameMetrics metrics = frameMetrics;
+		long frameSequence;
 		CanvasWrapper g = canvasWrapper;
 		g.bind(canvas);
 		g.clear(settings.screenBackgroundColor | Color.BLACK);
@@ -275,9 +281,10 @@ public abstract class Canvas extends Displayable {
 		synchronized (bufferLock) {
 			offscreenCopy.getBitmap().prepareToDraw();
 			g.drawImage(offscreenCopy, virtualScreen);
+			frameSequence = publishedFrameSequence;
 		}
-		if (fpsCounter != null) {
-			fpsCounter.increment();
+		if (metrics != null) {
+			metrics.recordRender(frameSequence);
 		}
 	}
 
@@ -611,6 +618,7 @@ public abstract class Canvas extends Displayable {
 				return;
 			}
 			offscreenCopy.getSingleGraphics().flush(image, x, y, width, height);
+			publishFrameLocked();
 		}
 		requestFlushToScreen();
 	}
@@ -620,6 +628,7 @@ public abstract class Canvas extends Displayable {
 		limitFps();
 		synchronized (bufferLock) {
 			image.copyTo(offscreenCopy, x, y);
+			publishFrameLocked();
 		}
 		requestFlushToScreen();
 	}
@@ -635,8 +644,17 @@ public abstract class Canvas extends Displayable {
 		lastFrameTime = System.currentTimeMillis();
 	}
 
+	private void publishFrameLocked() {
+		FrameMetrics metrics = frameMetrics;
+		if (metrics != null) {
+			publishedFrameSequence = metrics.recordGameFrame();
+		}
+	}
+
 	@SuppressLint("NewApi")
 	private boolean repaintScreen() {
+		FrameMetrics metrics = frameMetrics;
+		long frameSequence = 0L;
 		Surface surface = this.surface;
 		if (surface == null || !surface.isValid()) {
 			return true;
@@ -656,11 +674,12 @@ public abstract class Canvas extends Displayable {
 				canvas.clipRect(p, p, displayWidth - p, displayHeight - p);
 				synchronized (bufferLock) {
 					g.drawImage(offscreenCopy, virtualScreen);
+					frameSequence = publishedFrameSequence;
 				}
 				surface.unlockCanvasAndPost(canvas);
 			}
-			if (fpsCounter != null) {
-				fpsCounter.increment();
+			if (metrics != null) {
+				metrics.recordRender(frameSequence);
 			}
 			if (parallelRedraw) uiHandler.removeMessages(0);
 		} catch (Exception e) {
@@ -778,15 +797,18 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		public void onDrawFrame(GL10 gl) {
+			FrameMetrics metrics = frameMetrics;
+			long frameSequence;
 			glDisable(GL_SCISSOR_TEST);
 			glClear(GL_COLOR_BUFFER_BIT);
 			glEnable(GL_SCISSOR_TEST);
 			synchronized (bufferLock) {
 				GLUtils.texImage2D(GL_TEXTURE_2D, 0, offscreenCopy.getBitmap(), 0);
+				frameSequence = publishedFrameSequence;
 			}
 			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-			if (fpsCounter != null) {
-				fpsCounter.increment();
+			if (metrics != null) {
+				metrics.recordRender(frameSequence);
 			}
 		}
 
@@ -906,6 +928,7 @@ public abstract class Canvas extends Displayable {
 			}
 			synchronized (bufferLock) {
 				offscreen.copyTo(offscreenCopy);
+				publishFrameLocked();
 			}
 			if (surface == null || !surface.isValid()) {
 				return;
@@ -1144,12 +1167,13 @@ public abstract class Canvas extends Displayable {
 				renderer.start();
 			}
 			surface = holder.getSurface();
-			Display.postEvent(CanvasEvent.getInstance(Canvas.this, CanvasEvent.SHOW_NOTIFY));
-			repaintInternal();
 			if (settings.showFps) {
-				fpsCounter = new FpsCounter(overlayView);
+				frameMetrics = new FrameMetrics();
+				fpsCounter = new FpsCounter(overlayView, frameMetrics);
 				overlayView.addLayer(fpsCounter);
 			}
+			Display.postEvent(CanvasEvent.getInstance(Canvas.this, CanvasEvent.SHOW_NOTIFY));
+			repaintInternal();
 			if (timingOverlayEnabled && settings.showEmulationSpeed) {
 				timingMonitor = new TimingMonitor(overlayView, fpsCounter != null);
 				overlayView.addLayer(timingMonitor);
@@ -1176,6 +1200,8 @@ public abstract class Canvas extends Displayable {
 				overlayView.removeLayer(fpsCounter);
 				fpsCounter = null;
 			}
+			frameMetrics = null;
+			publishedFrameSequence = 0L;
 			if (timingMonitor != null) {
 				timingMonitor.stop();
 				overlayView.removeLayer(timingMonitor);
