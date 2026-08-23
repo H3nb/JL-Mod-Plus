@@ -69,6 +69,12 @@ public final class GuestTimingBridge {
 		return session == null ? System.currentTimeMillis() : session.guestWallTimeMillis();
 	}
 
+	/** Replacement for transformed guest java.lang.System.nanoTime(). */
+	public static long nanoTime() {
+		TimingSession session = activeSession();
+		return session == null ? System.nanoTime() : session.guestMonotonicNanos();
+	}
+
 	/** Replacement for transformed guest java.lang.Thread.sleep(long). */
 	public static void sleep(long guestMillis) throws InterruptedException {
 		TimingSession session = activeSession();
@@ -76,6 +82,16 @@ public final class GuestTimingBridge {
 			Thread.sleep(guestMillis);
 		} else {
 			session.sleep(guestMillis);
+		}
+	}
+
+	/** Replacement for transformed guest java.lang.Thread.sleep(long, int). */
+	public static void sleep(long guestMillis, int guestNanos) throws InterruptedException {
+		TimingSession session = activeSession();
+		if (session == null) {
+			Thread.sleep(guestMillis, guestNanos);
+		} else {
+			session.sleep(guestMillis, guestNanos);
 		}
 	}
 }
