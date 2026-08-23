@@ -330,45 +330,53 @@ internal fun RuntimeEmulationSpeedDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.PREF_EMULATION_SPEED)) },
         text = {
-            val listState = rememberLazyListState()
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = runtimeMenuDialogContentHeight()),
-            ) {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    items(presetValues) { value ->
-                        ListItem(
-                            colors = ListItemDefaults.colors(
-                                containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                            ),
-                            headlineContent = {
-                                Text(
-                                    text = EmulationSpeed.formatMultiplier(value),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium,
-                                )
-                            },
-                            leadingContent = {
-                                RadioButton(
-                                    selected = value == currentPercent,
-                                    onClick = null,
-                                )
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .testTag("runtime_emulation_speed_${value}")
-                                .clickable { onConfirm(value) },
-                        )
-                    }
-                }
-                ScrollableContentHint(
-                    visible = rememberLazyListCanScrollForward(listState),
-                    modifier = Modifier.align(Alignment.BottomCenter),
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = stringResource(R.string.config_help_emulation_speed),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp),
                 )
+                val listState = rememberLazyListState()
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = runtimeMenuDialogContentHeight()),
+                ) {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        items(presetValues) { value ->
+                            ListItem(
+                                colors = ListItemDefaults.colors(
+                                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                                ),
+                                headlineContent = {
+                                    Text(
+                                        text = EmulationSpeed.formatMultiplier(value),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Medium,
+                                    )
+                                },
+                                leadingContent = {
+                                    RadioButton(
+                                        selected = value == currentPercent,
+                                        onClick = null,
+                                    )
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("runtime_emulation_speed_${value}")
+                                    .clickable { onConfirm(value) },
+                            )
+                        }
+                    }
+                    ScrollableContentHint(
+                        visible = rememberLazyListCanScrollForward(listState),
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                    )
+                }
             }
         },
         confirmButton = {},
