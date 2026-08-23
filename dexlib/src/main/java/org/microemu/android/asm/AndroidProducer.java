@@ -3,6 +3,7 @@
  * Copyright (C) 2008 Bartek Teodorczyk <barteo@barteo.net>
  * Copyright (C) 2017-2018 Nikita Shakarun
  * Copyright (C) 2021-2024 Yury Kharchenko
+ * Modified in 2026 for resilient optional patch-asset loading.
  * <p>
  * It is licensed under the following two licenses as alternatives:
  * 1. GNU Lesser General Public License (the "LGPL") version 2.1 or any newer version
@@ -34,6 +35,7 @@ import org.objectweb.asm.ClassWriter;
 
 import java.io.DataInputStream;
 import java.io.EOFException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -59,7 +61,11 @@ public class AndroidProducer {
 	}
 
 	private static byte[] patchClass(byte[] classData, int patch) {
-		try (DataInputStream dis = new DataInputStream(AndroidProducer.class.getResourceAsStream("/assets/dexer/patches.bin"))) {
+		InputStream patchStream = AndroidProducer.class.getResourceAsStream("/assets/dexer/patches.bin");
+		if (patchStream == null) {
+			return classData;
+		}
+		try (DataInputStream dis = new DataInputStream(patchStream)) {
 			dis.skipBytes(patch);
 			int len = dis.readUnsignedShort();
 			int newSize = dis.readShort() + classData.length;
@@ -74,7 +80,11 @@ public class AndroidProducer {
 
 	public static Map<Integer, Integer> initPatchFixes() {
 		Map<Integer, Integer> map = new HashMap<>();
-		try (DataInputStream dis = new DataInputStream(AndroidProducer.class.getResourceAsStream("/assets/dexer/patches.bin"))) {
+		InputStream patchStream = AndroidProducer.class.getResourceAsStream("/assets/dexer/patches.bin");
+		if (patchStream == null) {
+			return map;
+		}
+		try (DataInputStream dis = new DataInputStream(patchStream)) {
 			int pos = 0;
 			//noinspection InfiniteLoopStatement
 			while (true) {
