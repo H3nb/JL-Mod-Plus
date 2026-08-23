@@ -16,6 +16,9 @@ package javax.microedition.shell.timing;
 
 import androidx.annotation.NonNull;
 
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -26,6 +29,8 @@ public final class TimingSession implements AutoCloseable {
 	private final Object lock = new Object();
 	private final TimingTimeSource timeSource;
 	private final long generation;
+	private final Set<Thread> closeAwareThreads =
+			Collections.newSetFromMap(new ConcurrentHashMap<>());
 
 	private TimingClockState clockState;
 	private long lastHostMonotonicNanos;
@@ -64,6 +69,28 @@ public final class TimingSession implements AutoCloseable {
 		synchronized (lock) {
 			return closed;
 		}
+	}
+
+	/** Registers an emulator-owned thread that must be woken when this session closes. */
+	public void registerCloseAwareThread(@NonNull Thread thread) {
+		if (thread == null) {
+			throw new NullPointerException("thread");
+		}
+		synchronized (lock) {
+			if (closed) {
+				LockSupport.unpark(thread);
+				return;
+			}
+			closeAwareThreads.add(thread);
+		}
+	}
+
+	/** Removes a previously registered emulator-owned thread. */
+	public void unregisterCloseAwareThread(@NonNull Thread thread) {
+		if (thread == null) {
+			throw new NullPointerException("thread");
+		}
+		closeAwareThreads.remove(thread);
 	}
 
 	/** Returns one coherent snapshot for bridge calls and diagnostics. */
@@ -160,26 +187,41 @@ public final class TimingSession implements AutoCloseable {
 			return;
 		}
 
-		long hostDeadlineNanos;
-		synchronized (lock) {
-			ensureOpen();
-			TimingSnapshot start = snapshotAt(timeSource.monotonicNanos());
-			long hostDurationNanos = TimingMath.scaleGuestToHostNanos(
-					guestDurationNanos,
-					start.speedPercent());
-			hostDeadlineNanos = TimingMath.saturatingAdd(
-					start.hostMonotonicNanos(), hostDurationNanos);
-		}
+		Thread sleeper = Thread.currentThread();
+		closeAwareThreads.add(sleeper);
+		try {
+			long hostDeadlineNanos;
+			synchronized (lock) {
+				// Teardown may race a guest sleep call. Returning here lets lifecycle shutdown
+				// finish without turning a stale transformed call into a guest crash.
+				if (closed) {
+					return;
+				}
+				TimingSnapshot start = snapshotAt(timeSource.monotonicNanos());
+				long hostDurationNanos = TimingMath.scaleGuestToHostNanos(
+						guestDurationNanos,
+						start.speedPercent());
+				hostDeadlineNanos = TimingMath.saturatingAdd(
+						start.hostMonotonicNanos(), hostDurationNanos);
+			}
 
-		while (true) {
-			if (Thread.interrupted()) {
-				throw new InterruptedException();
+			while (true) {
+				if (Thread.interrupted()) {
+					throw new InterruptedException();
+				}
+				synchronized (lock) {
+					if (closed) {
+						return;
+					}
+				}
+				long remainingNanos = hostDeadlineNanos - timeSource.monotonicNanos();
+				if (remainingNanos <= 0L) {
+					return;
+				}
+				LockSupport.parkNanos(this, remainingNanos);
 			}
-			long remainingNanos = hostDeadlineNanos - timeSource.monotonicNanos();
-			if (remainingNanos <= 0L) {
-				return;
-			}
-			LockSupport.parkNanos(this, remainingNanos);
+		} finally {
+			closeAwareThreads.remove(sleeper);
 		}
 	}
 
@@ -207,7 +249,13 @@ public final class TimingSession implements AutoCloseable {
 	@Override
 	public void close() {
 		synchronized (lock) {
+			if (closed) {
+				return;
+			}
 			closed = true;
+			for (Thread thread : closeAwareThreads) {
+				LockSupport.unpark(thread);
+			}
 		}
 	}
 

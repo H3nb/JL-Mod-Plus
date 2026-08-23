@@ -15,9 +15,13 @@
 package javax.microedition.shell.timing;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class TimingSessionTest {
 	private static final long WALL_START = 1_700_000_000_000L;
@@ -122,6 +126,28 @@ public class TimingSessionTest {
 		} catch (IllegalStateException expected) {
 			// Expected.
 		}
+	}
+
+	@Test
+	public void closeUnparksGuestSleepersWithoutInterruptingTheirThread() throws Exception {
+		TimingSession session = new TimingSession(new FakeTimeSource(WALL_START), 100, 1L);
+		CountDownLatch started = new CountDownLatch(1);
+		Thread sleeper = new Thread(() -> {
+			started.countDown();
+			try {
+				session.sleep(60_000L);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+		});
+		sleeper.start();
+		assertTrue(started.await(1L, TimeUnit.SECONDS));
+		session.close();
+		sleeper.join(1_000L);
+		if (sleeper.isAlive()) {
+			sleeper.interrupt();
+		}
+		assertFalse(sleeper.isAlive());
 	}
 
 	@Test
