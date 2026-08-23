@@ -81,6 +81,7 @@ import javax.microedition.shell.MicroActivity;
 import javax.microedition.shell.GuestTimingBridge;
 import javax.microedition.shell.timing.FramePacer;
 import javax.microedition.shell.timing.FrameMetrics;
+import javax.microedition.shell.timing.PresentationMailbox;
 import javax.microedition.util.ContextHolder;
 
 import io.reactivex.Single;
@@ -155,6 +156,7 @@ public abstract class Canvas extends Displayable {
 	private Image offscreenCopy;
 	private volatile long publishedFrameSequence;
 	private volatile FrameMetrics frameMetrics;
+	private final PresentationMailbox presentationMailbox = new PresentationMailbox();
 	private int onX, onY, onWidth, onHeight;
 	private final FramePacer framePacer = new FramePacer(GuestTimingBridge.activeSession());
 	private Handler uiHandler;
@@ -641,9 +643,14 @@ public abstract class Canvas extends Displayable {
 	}
 
 	private void publishFrameLocked() {
+		long sequence = presentationMailbox.publish();
+		if (sequence == 0L) {
+			return;
+		}
+		publishedFrameSequence = sequence;
 		FrameMetrics metrics = frameMetrics;
 		if (metrics != null) {
-			publishedFrameSequence = metrics.recordGameFrame();
+			metrics.recordGameFrame();
 		}
 	}
 
@@ -651,10 +658,15 @@ public abstract class Canvas extends Displayable {
 	private boolean repaintScreen() {
 		FrameMetrics metrics = frameMetrics;
 		long frameSequence = 0L;
+		long presentationGeneration = presentationMailbox.generation();
 		Surface surface = this.surface;
 		if (surface == null || !surface.isValid()) {
+			if (parallelRedraw) {
+				presentationMailbox.close();
+			}
 			return true;
 		}
+		boolean presented = false;
 		try {
 			synchronized (surfaceLock) {
 				android.graphics.Canvas canvas = settings.graphicsMode == 3 ?
@@ -673,13 +685,22 @@ public abstract class Canvas extends Displayable {
 					frameSequence = publishedFrameSequence;
 				}
 				surface.unlockCanvasAndPost(canvas);
+				presented = true;
 			}
 			if (metrics != null) {
 				metrics.recordRender(frameSequence);
 			}
-			if (parallelRedraw) uiHandler.removeMessages(0);
 		} catch (Exception e) {
 			Log.w(TAG, "repaintScreen: " + e);
+		} finally {
+			if (parallelRedraw && uiHandler != null) {
+				boolean needsAnother = presentationMailbox.complete(
+						presentationGeneration,
+						presented ? frameSequence : 0L);
+				if (needsAnother) {
+					uiHandler.sendEmptyMessage(0);
+				}
+			}
 		}
 		return true;
 	}
@@ -1159,6 +1180,7 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		public void surfaceCreated(@NonNull SurfaceHolder holder) {
+			presentationMailbox.begin();
 			if (renderer != null) {
 				renderer.start();
 			}
@@ -1184,6 +1206,7 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
+			presentationMailbox.close();
 			if (renderer != null) {
 				renderer.stop();
 			}
@@ -1226,8 +1249,11 @@ public abstract class Canvas extends Displayable {
 			}
 		} else if (!parallelRedraw) {
 			repaintScreen();
-		} else if (!uiHandler.hasMessages(0)) {
-			uiHandler.sendEmptyMessage(0);
+		} else if (uiHandler != null) {
+			long generation = presentationMailbox.generation();
+			if (presentationMailbox.trySchedule(generation)) {
+				uiHandler.sendEmptyMessage(0);
+			}
 		}
 	}
 
