@@ -44,5 +44,4 @@ dependencies {
     implementation(fileTree("dir" to "libs", "include" to listOf("*.jar")))
     api(libs.zip4j)
     implementation(libs.asm)
-    testImplementation(libs.junit)
 }
