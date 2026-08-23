@@ -36,9 +36,10 @@ import androidx.preference.PreferenceManager;
 
 import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.util.SparseIntArrayAdapter;
+import javax.microedition.shell.timing.EmulationSpeed;
 
 public class ProfileModel {
-	public static final int VERSION = 3;
+	public static final int VERSION = 4;
 
 	/** Stable preference key used to keep the built-in palette linked to the host theme. */
 	public static String builtInThemePreferenceKey(File configDir) {
@@ -105,6 +106,12 @@ public class ProfileModel {
 
 	@SerializedName("ShowFps")
 	public boolean showFps;
+
+	@SerializedName("EmulationSpeedPercent")
+	public int emulationSpeedPercent = EmulationSpeed.NORMAL_PERCENT;
+
+	@SerializedName("ShowEmulationSpeed")
+	public boolean showEmulationSpeed;
 
 	@SerializedName("FpsLimit")
 	public int fpsLimit;
@@ -188,6 +195,8 @@ public class ProfileModel {
 	@SuppressWarnings("unused") // Gson uses default constructor if present
 	public ProfileModel() {
 		isNew = false;
+		emulationSpeedPercent = EmulationSpeed.NORMAL_PERCENT;
+		showEmulationSpeed = false;
 	}
 
 	public ProfileModel(File dir) {

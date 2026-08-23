@@ -16,6 +16,8 @@ package ru.playsoftware.j2meloader.config;
 
 import androidx.annotation.Nullable;
 
+import javax.microedition.shell.timing.EmulationSpeed;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -66,6 +68,8 @@ public final class ConfigFormState {
 	public final boolean parallelRedrawScreen;
 	public final boolean forceFullscreen;
 	public final boolean showFps;
+	public final String emulationSpeed;
+	public final boolean showEmulationSpeed;
 	public final boolean fontApplyDimensions;
 	public final boolean fontAA;
 	public final boolean showKeyboard;
@@ -106,6 +110,8 @@ public final class ConfigFormState {
 		parallelRedrawScreen = builder.parallelRedrawScreen;
 		forceFullscreen = builder.forceFullscreen;
 		showFps = builder.showFps;
+		emulationSpeed = builder.emulationSpeed;
+		showEmulationSpeed = builder.showEmulationSpeed;
 		fontApplyDimensions = builder.fontApplyDimensions;
 		fontAA = builder.fontAA;
 		showKeyboard = builder.showKeyboard;
@@ -142,6 +148,8 @@ public final class ConfigFormState {
 				.graphicsMode(params.graphicsMode)
 				.shader(params.shader)
 				.showFps(params.showFps)
+				.emulationSpeed(Integer.toString(EmulationSpeed.sanitizePercent(params.emulationSpeedPercent)))
+				.showEmulationSpeed(params.showEmulationSpeed)
 				.fpsLimit(optionalInt(params.fpsLimit))
 				.fontSizeSmall(Integer.toString(params.fontSizeSmall))
 				.fontSizeMedium(Integer.toString(params.fontSizeMedium))
@@ -187,6 +195,9 @@ public final class ConfigFormState {
 		params.parallelRedrawScreen = parallelRedrawScreen;
 		params.forceFullscreen = forceFullscreen;
 		params.showFps = showFps;
+		params.emulationSpeedPercent = EmulationSpeed.sanitizePercent(
+				parseInt(emulationSpeed, EmulationSpeed.NORMAL_PERCENT));
+		params.showEmulationSpeed = showEmulationSpeed;
 		params.fpsLimit = parseInt(fpsLimit, 0);
 
 		params.fontSizeSmall = parseInt(fontSizeSmall, 0);
@@ -292,6 +303,8 @@ public final class ConfigFormState {
 		private boolean parallelRedrawScreen;
 		private boolean forceFullscreen;
 		private boolean showFps;
+		private String emulationSpeed = Integer.toString(EmulationSpeed.NORMAL_PERCENT);
+		private boolean showEmulationSpeed;
 		private boolean fontApplyDimensions;
 		private boolean fontAA;
 		private boolean showKeyboard;
@@ -335,6 +348,8 @@ public final class ConfigFormState {
 			parallelRedrawScreen = source.parallelRedrawScreen;
 			forceFullscreen = source.forceFullscreen;
 			showFps = source.showFps;
+			emulationSpeed = source.emulationSpeed;
+			showEmulationSpeed = source.showEmulationSpeed;
 			fontApplyDimensions = source.fontApplyDimensions;
 			fontAA = source.fontAA;
 			showKeyboard = source.showKeyboard;
@@ -375,6 +390,8 @@ public final class ConfigFormState {
 		public Builder parallelRedrawScreen(boolean value) { parallelRedrawScreen = value; return this; }
 		public Builder forceFullscreen(boolean value) { forceFullscreen = value; return this; }
 		public Builder showFps(boolean value) { showFps = value; return this; }
+		public Builder emulationSpeed(String value) { emulationSpeed = value; return this; }
+		public Builder showEmulationSpeed(boolean value) { showEmulationSpeed = value; return this; }
 		public Builder fontApplyDimensions(boolean value) { fontApplyDimensions = value; return this; }
 		public Builder fontAA(boolean value) { fontAA = value; return this; }
 		public Builder showKeyboard(boolean value) { showKeyboard = value; return this; }
