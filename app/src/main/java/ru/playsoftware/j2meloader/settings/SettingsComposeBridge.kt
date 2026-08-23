@@ -80,11 +80,12 @@ data class SettingsOption(
     val label: String,
 )
 
-data class SettingsSwitch(
+data class SettingsSwitch @JvmOverloads constructor(
     val key: String,
     val title: String,
     val summary: String?,
     val checked: Boolean,
+    val enabled: Boolean = true,
 )
 
 data class SettingsUiState(
@@ -493,6 +494,7 @@ private fun SettingsSwitchRow(
             .fillMaxWidth()
             .heightIn(min = 64.dp)
             .clickable(
+                enabled = setting.enabled,
                 role = Role.Switch,
                 onClick = { onCheckedChange(!setting.checked) },
             )
@@ -508,16 +510,23 @@ private fun SettingsSwitchRow(
                 text = setting.title,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
+                color = if (setting.enabled) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.onSurfaceVariant,
             )
             setting.summary?.let { summary ->
                 Text(
                     text = summary,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (setting.enabled) MaterialTheme.colorScheme.onSurfaceVariant
+                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.62f),
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
         }
-        Switch(checked = setting.checked, onCheckedChange = onCheckedChange)
+        Switch(
+            checked = setting.checked,
+            onCheckedChange = onCheckedChange,
+            enabled = setting.enabled,
+        )
     }
 }
 

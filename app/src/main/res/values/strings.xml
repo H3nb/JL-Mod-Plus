@@ -174,7 +174,7 @@
     <string name="pref_enable_actionbar_summary">For fullscreen applications</string>
     <string name="pref_enable_actionbar_title">Enable ActionBar</string>
     <string name="pref_enable_statusbar_title">Enable Statusbar</string>
-    <string name="pref_enable_statusbar_summary">Keep the system status bar visible</string>
+    <string name="pref_enable_statusbar_summary">Keep the system status bar visible. It cannot be used with the MIDlet display cutout.</string>
     <string name="pref_encoding_title">Encoding</string>
     <string name="PREF_FILTER">Filter</string>
     <string name="PREF_FONT_ANTI_ALIASING">Anti-Aliasing</string>
@@ -228,10 +228,8 @@
     <string name="PREF_SYS_PROPS">System Properties</string>
     <string name="PREF_SYS_PROPS_HINT" translatable="false">microedition.platform: Sony Ericsson C510i\nmicroedition.profiles: MIDP2.0</string>
     <string name="config_system_properties_empty">No custom properties</string>
-    <string name="config_destination_quick">Quick</string>
-    <string name="config_destination_graphics">Graphics</string>
+    <string name="config_destination_graphics">Display</string>
     <string name="config_destination_audio">Audio</string>
-    <string name="config_destination_media">Media</string>
     <string name="config_destination_controls">Controls</string>
     <string name="config_destination_system">System</string>
     <string name="config_quick_settings">Essential settings</string>
@@ -240,8 +238,6 @@
     <string name="config_current_screen_size">Current size: %1$s</string>
     <string name="config_custom_resolution">Custom resolution</string>
     <string name="config_select">Select</string>
-    <string name="config_advanced_settings">Advanced Settings</string>
-    <string name="config_media_empty">Multimedia settings will be added here in a future update.</string>
     <string name="profile_custom">Custom</string>
     <string name="profile_custom_summary">Settings do not match a saved profile</string>
     <string name="profile_active_summary">Active profile</string>

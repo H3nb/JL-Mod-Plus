@@ -1,7 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="config_destination_general">General</string>
-    <string name="config_general_settings">Essential Settings</string>
+    <string name="config_destination_general">Basic</string>
+    <string name="config_basic_display">Screen &amp; Window Basics</string>
+    <string name="config_basic_input">Input Basics</string>
+    <string name="config_display_appearance">Screen Appearance</string>
+    <string name="config_display_rendering">Rendering</string>
+    <string name="config_display_performance">Performance &amp; Diagnostics</string>
+    <string name="config_display_text">Text Rendering</string>
+    <string name="config_controls_key_input">Key Input</string>
+    <string name="config_controls_virtual_keyboard">Virtual Keyboard Behavior</string>
+    <string name="config_controls_virtual_keyboard_colors">Virtual Keyboard Colors</string>
+    <string name="config_controls_maintenance">Layout Maintenance</string>
+    <string name="config_current_value">Current Value</string>
     <string name="config_maintenance">Reset &amp; Data</string>
     <string name="config_reset_all_settings">Reset All Settings</string>
     <string name="config_reset_all_settings_summary">Restore emulator settings to their defaults</string>
@@ -48,7 +58,6 @@
     <string name="config_help_screen_gravity">Positions the app screen when unused space remains.</string>
     <string name="config_help_screen_padding">Adds space between the app screen and the edge of the display area.</string>
     <string name="config_help_filter">Smooths the image when the J2ME screen is scaled.</string>
-    <string name="config_help_advanced_graphics">Renderer, shader, frame-rate, and compatibility controls.</string>
     <string name="config_help_immediate">Processes Java ME events as soon as they arrive instead of queuing them. May improve responsiveness, but can cause unpredictable behavior.</string>
     <string name="config_help_graphics_mode">Selects the rendering path used to draw J2ME graphics.</string>
     <string name="config_help_shader">Applies a post-processing shader to the rendered app screen.</string>
@@ -59,7 +68,6 @@
     <string name="config_help_fps_limit">Caps the maximum frame rate. Leave empty for no limit.</string>
     <string name="config_help_generic_toggle">Enable or disable this behavior for the current app.</string>
     <string name="config_help_generic_color">Choose the color used by this visual element.</string>
-    <string name="config_help_advanced_generic">Less common controls for compatibility and fine tuning.</string>
     <string name="config_help_action_generic">Open this configuration tool.</string>
     <string name="config_help_encoding">Select the character encoding exposed to the J2ME application.</string>
     <string name="config_edit_system_properties">Edit System Properties</string>
@@ -71,13 +79,10 @@
     <string name="config_help_font_sizes_long">These values map Java ME logical font sizes to pixels. Change them together so text remains visually balanced across applications.</string>
     <string name="config_font_sizes_value">Small %1$s · Medium %2$s · Large %3$s</string>
     <string name="config_help_font_presets">Apply a balanced set of font sizes designed for a common J2ME screen resolution.</string>
-    <string name="config_help_advanced_font">Less common font rendering and compatibility controls.</string>
     <string name="config_help_font_dimensions">Use Android scaled-pixel dimensions when calculating Java ME font sizes.</string>
     <string name="config_help_font_aa">Smooth font edges when rendering text.</string>
     <string name="config_help_key_layout">Select the device key-code layout exposed to the J2ME application.</string>
     <string name="config_help_key_mapping">Assign Android buttons or keys to J2ME keypad actions.</string>
-    <string name="config_help_virtual_keyboard_controls">Show the on-screen J2ME keypad and expose its appearance controls below.</string>
-    <string name="config_help_advanced_controls">Appearance, feedback, timing, and color controls for the virtual keypad.</string>
     <string name="config_help_vk_button_shape">Choose the shape used to draw virtual keypad buttons.</string>
     <string name="config_help_vk_feedback">Provide feedback when a virtual keypad button is pressed.</string>
     <string name="config_help_vk_alpha">Controls the overall transparency of the virtual keypad.</string>

@@ -50,6 +50,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+import javax.microedition.util.ContextHolder;
+
 import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.config.ProfilesActivity;
@@ -72,6 +74,7 @@ public class SettingsActivity extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		EdgeToEdgeCompat.enableIfSupported(this);
 		preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		normalizeChromePreferences();
 
 		ComposeView composeView = new ComposeView(this);
 		setContentView(composeView);
@@ -119,7 +122,16 @@ public class SettingsActivity extends AppCompatActivity {
 
 			@Override
 			public void onToggle(@NonNull String key, boolean checked) {
-				preferences.edit().putBoolean(key, checked).apply();
+				SharedPreferences.Editor editor = preferences.edit().putBoolean(key, checked);
+				if (PREF_STATUSBAR.equals(key) && checked) {
+					editor.putBoolean(PREF_USE_DISPLAY_CUTOUT, false);
+				} else if (PREF_USE_DISPLAY_CUTOUT.equals(key) && checked) {
+					editor.putBoolean(PREF_STATUSBAR, false);
+				}
+				editor.apply();
+				if (PREF_VIBRATION.equals(key)) {
+					ContextHolder.setVibration(checked);
+				}
 				refreshState();
 			}
 
@@ -148,6 +160,7 @@ public class SettingsActivity extends AppCompatActivity {
 	}
 
 	private SettingsUiState buildState() {
+		normalizeChromePreferences();
 		List<SettingsOption> themes = buildThemeOptions();
 		String themeValue = preferences.getString(PREF_THEME, getString(R.string.pref_theme_default));
 		SettingsOption selectedTheme = findOption(themes, themeValue, themes.get(0));
@@ -173,17 +186,21 @@ public class SettingsActivity extends AppCompatActivity {
 				getString(R.string.pref_enable_actionbar_title),
 				getString(R.string.pref_enable_actionbar_summary),
 				preferences.getBoolean(PREF_TOOLBAR, false)));
+		boolean statusBarEnabled = preferences.getBoolean(PREF_STATUSBAR, false);
+		boolean displayCutoutEnabled = preferences.getBoolean(PREF_USE_DISPLAY_CUTOUT, true);
 		switches.add(new SettingsSwitch(
 				PREF_STATUSBAR,
 				getString(R.string.pref_enable_statusbar_title),
 				getString(R.string.pref_enable_statusbar_summary),
-				preferences.getBoolean(PREF_STATUSBAR, false)));
+				statusBarEnabled,
+				true));
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
 			switches.add(new SettingsSwitch(
 					PREF_USE_DISPLAY_CUTOUT,
 					getString(R.string.pref_use_display_cutout_title),
 					getString(R.string.pref_use_display_cutout_summary),
-					preferences.getBoolean(PREF_USE_DISPLAY_CUTOUT, true)));
+					displayCutoutEnabled,
+					true));
 		}
 		switches.add(new SettingsSwitch(
 				PREF_KEEP_SCREEN,
@@ -220,6 +237,16 @@ public class SettingsActivity extends AppCompatActivity {
 				directoryError,
 				selectedAccent,
 				accents);
+	}
+
+	/** Repairs combinations persisted by versions that did not enforce the chrome interlock. */
+	private void normalizeChromePreferences() {
+		if (preferences == null) return;
+		boolean statusBarEnabled = preferences.getBoolean(PREF_STATUSBAR, false);
+		boolean displayCutoutEnabled = preferences.getBoolean(PREF_USE_DISPLAY_CUTOUT, true);
+		if (statusBarEnabled && displayCutoutEnabled) {
+			preferences.edit().putBoolean(PREF_USE_DISPLAY_CUTOUT, false).apply();
+		}
 	}
 
 	private List<SettingsOption> buildThemeOptions() {

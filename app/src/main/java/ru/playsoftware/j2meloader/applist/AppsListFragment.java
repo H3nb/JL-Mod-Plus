@@ -100,6 +100,8 @@ public class AppsListFragment extends Fragment {
     private static final int GRID_SPACING_SPACIOUS = 2;
     private static final int NO_UI_ID = Integer.MIN_VALUE;
     private static final long NO_GENERATION = Long.MIN_VALUE;
+    private static final String STATE_PENDING_ICON_DATABASE_ID =
+            "apps_list.pending_icon_database_id";
 
     private final ActivityResultLauncher<Void> openFileLauncher = registerForActivityResult(
             new ActivityResultContract<Void, List<Uri>>() {
@@ -149,9 +151,9 @@ public class AppsListFragment extends Fragment {
             new ActivityResultContracts.OpenDocument(),
             this::onImportBundlePicked);
 
-    private int pendingIconUiId = NO_UI_ID;
-    private final ActivityResultLauncher<String> iconPickerLauncher = registerForActivityResult(
-            new ActivityResultContracts.GetContent(),
+    private long pendingIconDatabaseId = NO_GENERATION;
+    private final ActivityResultLauncher<String[]> iconPickerLauncher = registerForActivityResult(
+            new ActivityResultContracts.OpenDocument(),
             this::onIconPicked);
 
     private final Map<Integer, LibraryAppRow> rowsByUiId = new HashMap<>();
@@ -175,9 +177,19 @@ public class AppsListFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (savedInstanceState != null) {
+            pendingIconDatabaseId = savedInstanceState.getLong(
+                    STATE_PENDING_ICON_DATABASE_ID, NO_GENERATION);
+        }
         FragmentActivity activity = requireActivity();
         preferences = PreferenceManager.getDefaultSharedPreferences(activity);
         libraryViewModel = new ViewModelProvider(activity).get(LibraryViewModel.class);
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        outState.putLong(STATE_PENDING_ICON_DATABASE_ID, pendingIconDatabaseId);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -278,9 +290,10 @@ public class AppsListFragment extends Fragment {
 
             @Override
             public void onPickIcon(int appId) {
-                if (findRow(appId) == null) return;
-                pendingIconUiId = appId;
-                iconPickerLauncher.launch("image/*");
+                LibraryAppRow row = findRow(appId);
+                if (row == null) return;
+                pendingIconDatabaseId = row.getId();
+                iconPickerLauncher.launch(new String[]{"image/*"});
             }
 
             @Override
@@ -946,7 +959,6 @@ public class AppsListFragment extends Fragment {
         cachedUiItemsByDatabaseId.clear();
         nextUiId = 1;
         cachedAllReadyRows = null;
-        pendingIconUiId = NO_UI_ID;
         collectionsUiStore.clear();
     }
 
@@ -997,12 +1009,16 @@ public class AppsListFragment extends Fragment {
     }
 
     private void onIconPicked(Uri uri) {
-        int uiId = pendingIconUiId;
-        pendingIconUiId = NO_UI_ID;
-        if (uri == null || uiId == NO_UI_ID) return;
-        LibraryAppRow row = findRow(uiId);
-        if (row == null) return;
-        libraryViewModel.updateIcon(row.getId(), uri, (ignored, error) -> {
+        long databaseId = pendingIconDatabaseId;
+        pendingIconDatabaseId = NO_GENERATION;
+        if (uri == null || databaseId == NO_GENERATION) return;
+        try {
+            requireContext().getContentResolver().takePersistableUriPermission(
+                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        } catch (SecurityException ignored) {
+            // Some providers expose only a transient read grant.
+        }
+        libraryViewModel.updateIcon(databaseId, uri, (ignored, error) -> {
             if (error != null) showError(error);
         });
     }

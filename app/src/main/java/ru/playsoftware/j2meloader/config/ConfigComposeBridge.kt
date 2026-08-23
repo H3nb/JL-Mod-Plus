@@ -66,6 +66,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -179,10 +180,9 @@ data class EncodingPickerRequest(
 )
 
 internal enum class ConfigDestination(val label: Int, val icon: Int) {
-    General(R.string.config_destination_general, R.drawable.ic_config_quick),
-    Graphics(R.string.config_destination_graphics, R.drawable.ic_config_graphics),
+    Basic(R.string.config_destination_general, R.drawable.ic_config_quick),
+    Display(R.string.config_destination_graphics, R.drawable.ic_config_graphics),
     Audio(R.string.config_destination_audio, R.drawable.ic_config_audio),
-    Media(R.string.config_destination_media, R.drawable.ic_config_media),
     Controls(R.string.config_destination_controls, R.drawable.ic_config_controls),
     System(R.string.config_destination_system, R.drawable.ic_config_system),
 }
@@ -367,20 +367,19 @@ private fun ConfigDestinationContent(
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
         when (destination) {
-            ConfigDestination.General -> GeneralDestination(
+            ConfigDestination.Basic -> GeneralDestination(
                 state = state,
                 form = form,
                 onFormChanged = onFormChanged,
                 events = events,
                 showProfileStatus = !isProfile,
             )
-            ConfigDestination.Graphics -> {
+            ConfigDestination.Display -> {
                 ScreenSection(form, state, onFormChanged, events)
                 FontSection(form, state, onFormChanged)
             }
             ConfigDestination.Audio -> AudioSection(form, state, onFormChanged)
-            ConfigDestination.Media -> MediaDestination()
-            ConfigDestination.Controls -> InputSection(form, state, onFormChanged, events, onRequestAction)
+            ConfigDestination.Controls -> InputSection(form, onFormChanged, events, onRequestAction)
             ConfigDestination.System -> {
                 EmulationSection(form, onFormChanged)
                 SystemSection(form, onFormChanged, events, !isProfile, onRequestAction, onEditSystemProperties)
@@ -401,86 +400,96 @@ private fun GeneralDestination(
         ConfigProfilePanel(state.profileStatus, state.profileTemplates, events)
     }
     var presetsDialogVisible by rememberSaveable { mutableStateOf(false) }
-    ConfigSection(title = stringResource(R.string.config_general_settings)) {
+    ConfigSection(title = stringResource(R.string.config_basic_display)) {
         ConfigValuePreference(
-  title = stringResource(R.string.config_screen_size),
-  description = stringResource(R.string.config_help_screen_size),
-  value = "${form.screenWidth} × ${form.screenHeight}",
-  onClick = { presetsDialogVisible = true },
+            title = stringResource(R.string.config_screen_size),
+            description = stringResource(R.string.config_help_screen_size),
+            value = "${form.screenWidth} × ${form.screenHeight}",
+            onClick = { presetsDialogVisible = true },
         )
         val orientationOptions = stringArrayResource(R.array.PREF_ORIENTATION_ENTRIES).toList()
         ConfigChoicePreference(
-  title = stringResource(R.string.PREF_ORIENTATION),
-  description = stringResource(R.string.config_help_orientation),
-  selected = orientationOptions.getOrElse(form.orientation) { orientationOptions.firstOrNull().orEmpty() },
-  options = orientationOptions,
-  onSelected = { index -> onFormChanged(form.toBuilder().orientation(index).build()) },
+            title = stringResource(R.string.PREF_ORIENTATION),
+            description = stringResource(R.string.config_help_orientation),
+            selected = orientationOptions.getOrElse(form.orientation) { orientationOptions.firstOrNull().orEmpty() },
+            options = orientationOptions,
+            onSelected = { index -> onFormChanged(form.toBuilder().orientation(index).build()) },
         )
         val scaleOptions = stringArrayResource(R.array.pref_scale_type_entries).toList()
         ConfigChoicePreference(
-  title = stringResource(R.string.pref_screen_scale_type),
-  description = stringResource(R.string.config_help_scale_type),
-  selected = scaleOptions.getOrElse(form.screenScaleType) { scaleOptions.firstOrNull().orEmpty() },
-  options = scaleOptions,
-  onSelected = { index -> onFormChanged(form.toBuilder().screenScaleType(index).build()) },
+            title = stringResource(R.string.pref_screen_scale_type),
+            description = stringResource(R.string.config_help_scale_type),
+            selected = scaleOptions.getOrElse(form.screenScaleType) { scaleOptions.firstOrNull().orEmpty() },
+            options = scaleOptions,
+            onSelected = { index -> onFormChanged(form.toBuilder().screenScaleType(index).build()) },
         )
         ConfigNumberPreference(
-  title = stringResource(R.string.PREF_SCALE_RATIO),
-  description = stringResource(R.string.config_help_scale_ratio),
-  value = form.screenScaleRatio,
-  fallbackLabel = "100",
-  valueSuffix = "%",
-  keyboardType = KeyboardType.Number,
-  onValueChange = { value ->
-      onFormChanged(form.toBuilder().screenScaleRatio(normalizeScaleRatio(value)).build())
-  },
+            title = stringResource(R.string.PREF_SCALE_RATIO),
+            description = stringResource(R.string.config_help_scale_ratio),
+            value = form.screenScaleRatio,
+            fallbackLabel = "100",
+            valueSuffix = "%",
+            keyboardType = KeyboardType.Number,
+            onValueChange = { value ->
+                onFormChanged(form.toBuilder().screenScaleRatio(normalizeScaleRatio(value)).build())
+            },
         )
         ConfigSwitchPreference(
-  title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
-  description = stringResource(R.string.config_help_virtual_keyboard),
-  checked = form.showKeyboard,
-  onCheckedChange = { checked -> onFormChanged(form.toBuilder().showKeyboard(checked).build()) },
+            title = stringResource(R.string.PREF_FORCE_FULLSCREEN),
+            description = stringResource(R.string.config_help_force_fullscreen),
+            checked = form.forceFullscreen,
+            onCheckedChange = { checked ->
+                onFormChanged(form.toBuilder().forceFullscreen(checked).build())
+            },
+        )
+    }
+    ConfigSection(title = stringResource(R.string.config_basic_input)) {
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
+            description = stringResource(R.string.config_help_virtual_keyboard),
+            checked = form.showKeyboard,
+            onCheckedChange = { checked ->
+                onFormChanged(form.toBuilder().showKeyboard(checked).build())
+            },
         )
         ConfigSwitchPreference(
-  title = stringResource(R.string.PREF_TOUCH_INPUT),
-  description = stringResource(R.string.config_help_touch_input),
-  checked = form.touchInput,
-  onCheckedChange = { checked -> onFormChanged(form.toBuilder().touchInput(checked).build()) },
+            title = stringResource(R.string.PREF_TOUCH_INPUT),
+            description = stringResource(R.string.config_help_touch_input),
+            checked = form.touchInput,
+            onCheckedChange = { checked ->
+                onFormChanged(form.toBuilder().touchInput(checked).build())
+            },
         )
     }
     if (presetsDialogVisible) {
         val selectedPreset = form.screenWidth.toIntOrNull()?.let { width ->
-  form.screenHeight.toIntOrNull()?.let { height -> Size(width, height) }
+            form.screenHeight.toIntOrNull()?.let { height -> Size(width, height) }
         }
         ScreenPresetDialog(
-  presets = state.screenPresets,
-  removablePresets = state.removableScreenPresets,
-  selectedPreset = selectedPreset,
-  onDismissRequest = { presetsDialogVisible = false },
-  onSelected = { preset ->
-      presetsDialogVisible = false
-      onFormChanged(
-          form.toBuilder().screenWidth(preset.width.toString()).screenHeight(preset.height.toString()).build(),
-      )
-  },
-  onSwap = {
-      presetsDialogVisible = false
-      onFormChanged(
-          form.toBuilder().screenWidth(form.screenHeight).screenHeight(form.screenWidth).build(),
-      )
-  },
-  onAdd = events::onAddResolutionPreset,
-  onRemove = events::onRemoveResolutionPreset,
-        )
-    }
-}
-
-@Composable
-private fun MediaDestination() {
-    ConfigCard(title = stringResource(R.string.config_destination_media)) {
-        Text(
-            text = stringResource(R.string.config_media_empty),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            presets = state.screenPresets,
+            removablePresets = state.removableScreenPresets,
+            selectedPreset = selectedPreset,
+            onDismissRequest = { presetsDialogVisible = false },
+            onSelected = { preset ->
+                presetsDialogVisible = false
+                onFormChanged(
+                    form.toBuilder()
+                        .screenWidth(preset.width.toString())
+                        .screenHeight(preset.height.toString())
+                        .build(),
+                )
+            },
+            onSwap = {
+                presetsDialogVisible = false
+                onFormChanged(
+                    form.toBuilder()
+                        .screenWidth(form.screenHeight)
+                        .screenHeight(form.screenWidth)
+                        .build(),
+                )
+            },
+            onAdd = events::onAddResolutionPreset,
+            onRemove = events::onRemoveResolutionPreset,
         )
     }
 }
@@ -589,118 +598,113 @@ private fun ScreenSection(
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
 ) {
-    var advancedExpanded by rememberSaveable { mutableStateOf(false) }
-    ConfigSection(title = stringResource(R.string.PREF_SCREEN_OPTIONS)) {
+    ConfigSection(title = stringResource(R.string.config_display_appearance)) {
         ConfigColorPreference(
-  title = stringResource(R.string.PREF_BACKGROUND),
-  description = stringResource(R.string.config_help_background),
-  value = form.screenBackground,
-  onClick = { events.onColorPicker(ConfigFormEvents.ColorField.SCREEN_BACKGROUND) },
+            title = stringResource(R.string.PREF_BACKGROUND),
+            description = stringResource(R.string.config_help_background),
+            value = form.screenBackground,
+            onClick = { events.onColorPicker(ConfigFormEvents.ColorField.SCREEN_BACKGROUND) },
         )
         val skinIndex = state.skins.indexOfFirst { it == form.screenBackgroundImage }.coerceAtLeast(0)
         ConfigChoicePreference(
-  title = stringResource(R.string.pref_skin_title),
-  description = stringResource(R.string.config_help_skin),
-  selected = state.skins.getOrElse(skinIndex) { "" },
-  options = state.skins,
-  onSelected = { index ->
-      onFormChanged(
-          form.toBuilder().screenBackgroundImage(if (index == 0) null else state.skins.getOrNull(index)).build(),
-      )
-  },
+            title = stringResource(R.string.pref_skin_title),
+            description = stringResource(R.string.config_help_skin),
+            selected = state.skins.getOrElse(skinIndex) { "" },
+            options = state.skins,
+            onSelected = { index ->
+                onFormChanged(
+                    form.toBuilder().screenBackgroundImage(
+                        if (index == 0) null else state.skins.getOrNull(index),
+                    ).build(),
+                )
+            },
         )
         val gravityOptions = stringArrayResource(R.array.pref_screen_gravity_entries).toList()
         ConfigChoicePreference(
-  title = stringResource(R.string.pref_screen_gravity),
-  description = stringResource(R.string.config_help_screen_gravity),
-  selected = gravityOptions.getOrElse(form.screenGravity) { gravityOptions.firstOrNull().orEmpty() },
-  options = gravityOptions,
-  onSelected = { index -> onFormChanged(form.toBuilder().screenGravity(index).build()) },
+            title = stringResource(R.string.pref_screen_gravity),
+            description = stringResource(R.string.config_help_screen_gravity),
+            selected = gravityOptions.getOrElse(form.screenGravity) { gravityOptions.firstOrNull().orEmpty() },
+            options = gravityOptions,
+            onSelected = { index -> onFormChanged(form.toBuilder().screenGravity(index).build()) },
         )
         ConfigNumberPreference(
-  title = stringResource(R.string.pref_screen_padding_title),
-  description = stringResource(R.string.config_help_screen_padding),
-  value = form.screenPadding,
-  fallbackLabel = "0",
-  keyboardType = KeyboardType.Number,
-  onValueChange = { value -> onFormChanged(form.toBuilder().screenPadding(value).build()) },
+            title = stringResource(R.string.pref_screen_padding_title),
+            description = stringResource(R.string.config_help_screen_padding),
+            value = form.screenPadding,
+            fallbackLabel = "0",
+            keyboardType = KeyboardType.Number,
+            onValueChange = { value -> onFormChanged(form.toBuilder().screenPadding(value).build()) },
         )
         ConfigSwitchPreference(
-  title = stringResource(R.string.PREF_FILTER),
-  description = stringResource(R.string.config_help_filter),
-  checked = form.screenFilter,
-  onCheckedChange = { checked -> onFormChanged(form.toBuilder().screenFilter(checked).build()) },
+            title = stringResource(R.string.PREF_FILTER),
+            description = stringResource(R.string.config_help_filter),
+            checked = form.screenFilter,
+            onCheckedChange = { checked -> onFormChanged(form.toBuilder().screenFilter(checked).build()) },
         )
-        ConfigDisclosurePreference(
-  title = stringResource(R.string.config_advanced_settings),
-  description = stringResource(R.string.config_help_advanced_graphics),
-  expanded = advancedExpanded,
-  onExpandedChange = { advancedExpanded = it },
+    }
+    ConfigSection(title = stringResource(R.string.config_display_rendering)) {
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_IMMEDIATE),
+            description = stringResource(R.string.config_help_immediate),
+            checked = form.immediateMode,
+            onCheckedChange = { checked -> onFormChanged(form.toBuilder().immediateMode(checked).build()) },
         )
-        if (advancedExpanded) {
-  ConfigSwitchPreference(
-      title = stringResource(R.string.PREF_IMMEDIATE),
-      description = stringResource(R.string.config_help_immediate),
-      checked = form.immediateMode,
-      onCheckedChange = { checked -> onFormChanged(form.toBuilder().immediateMode(checked).build()) },
-  )
-  val graphicsOptions = stringArrayResource(R.array.pref_graphics_mode_entries).toList()
-  ConfigChoicePreference(
-      title = stringResource(R.string.pref_graphics_mode_title),
-      description = stringResource(R.string.config_help_graphics_mode),
-      selected = graphicsOptions.getOrElse(form.graphicsMode) { graphicsOptions.firstOrNull().orEmpty() },
-      options = graphicsOptions,
-      onSelected = { index -> onFormChanged(form.toBuilder().graphicsMode(index).build()) },
-  )
-  if (form.graphicsMode == 1) {
-      val shaderIndex = state.shaders.indexOfFirst { it == form.shader }.coerceAtLeast(0)
-      ConfigChoicePreference(
-          title = stringResource(R.string.PREF_SHADER_FILTER),
-          description = stringResource(R.string.config_help_shader),
-          selected = state.shaders.getOrElse(shaderIndex) { "" }.toString(),
-          options = state.shaders.map { it.toString() },
-          onSelected = { index ->
-              onFormChanged(form.toBuilder().shader(if (index == 0) null else state.shaders.getOrNull(index)).build())
-          },
-      )
-      val selectedShader = state.shaders.getOrNull(shaderIndex)
-      if (selectedShader?.hasTunableSettings() == true) {
-          ConfigActionPreference(
-              title = stringResource(R.string.shader_tuning),
-              description = stringResource(R.string.config_help_shader_tuning),
-              onClick = events::onShaderTuning,
-          )
-      }
-  }
-  if (form.graphicsMode == 0 || form.graphicsMode == 3) {
-      ConfigSwitchPreference(
-          title = stringResource(R.string.parallel_screen_redrawing),
-          description = stringResource(R.string.config_help_parallel_redraw),
-          checked = form.parallelRedrawScreen,
-          onCheckedChange = { checked -> onFormChanged(form.toBuilder().parallelRedrawScreen(checked).build()) },
-      )
-  }
-  ConfigSwitchPreference(
-      title = stringResource(R.string.PREF_FORCE_FULLSCREEN),
-      description = stringResource(R.string.config_help_force_fullscreen),
-      checked = form.forceFullscreen,
-      onCheckedChange = { checked -> onFormChanged(form.toBuilder().forceFullscreen(checked).build()) },
-  )
-  ConfigSwitchPreference(
-      title = stringResource(R.string.PREF_SHOW_FPS),
-      description = stringResource(R.string.config_help_show_fps),
-      checked = form.showFps,
-      onCheckedChange = { checked -> onFormChanged(form.toBuilder().showFps(checked).build()) },
-  )
-  ConfigNumberPreference(
-      title = stringResource(R.string.PREF_LIMIT_FPS),
-      description = stringResource(R.string.config_help_fps_limit),
-      value = form.fpsLimit,
-      fallbackLabel = stringResource(R.string.unlimited),
-      keyboardType = KeyboardType.Number,
-      onValueChange = { value -> onFormChanged(form.toBuilder().fpsLimit(value).build()) },
-  )
+        val graphicsOptions = stringArrayResource(R.array.pref_graphics_mode_entries).toList()
+        ConfigChoicePreference(
+            title = stringResource(R.string.pref_graphics_mode_title),
+            description = stringResource(R.string.config_help_graphics_mode),
+            selected = graphicsOptions.getOrElse(form.graphicsMode) { graphicsOptions.firstOrNull().orEmpty() },
+            options = graphicsOptions,
+            onSelected = { index -> onFormChanged(form.toBuilder().graphicsMode(index).build()) },
+        )
+        if (form.graphicsMode == 1) {
+            val shaderIndex = state.shaders.indexOfFirst { it == form.shader }.coerceAtLeast(0)
+            ConfigChoicePreference(
+                title = stringResource(R.string.PREF_SHADER_FILTER),
+                description = stringResource(R.string.config_help_shader),
+                selected = state.shaders.getOrElse(shaderIndex) { "" }.toString(),
+                options = state.shaders.map { it.toString() },
+                onSelected = { index ->
+                    onFormChanged(
+                        form.toBuilder().shader(if (index == 0) null else state.shaders.getOrNull(index)).build(),
+                    )
+                },
+            )
+            val selectedShader = state.shaders.getOrNull(shaderIndex)
+            if (selectedShader?.hasTunableSettings() == true) {
+                ConfigActionPreference(
+                    title = stringResource(R.string.shader_tuning),
+                    description = stringResource(R.string.config_help_shader_tuning),
+                    onClick = events::onShaderTuning,
+                )
+            }
         }
+        if (form.graphicsMode == 0 || form.graphicsMode == 3) {
+            ConfigSwitchPreference(
+                title = stringResource(R.string.parallel_screen_redrawing),
+                description = stringResource(R.string.config_help_parallel_redraw),
+                checked = form.parallelRedrawScreen,
+                onCheckedChange = { checked ->
+                    onFormChanged(form.toBuilder().parallelRedrawScreen(checked).build())
+                },
+            )
+        }
+    }
+    ConfigSection(title = stringResource(R.string.config_display_performance)) {
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_SHOW_FPS),
+            description = stringResource(R.string.config_help_show_fps),
+            checked = form.showFps,
+            onCheckedChange = { checked -> onFormChanged(form.toBuilder().showFps(checked).build()) },
+        )
+        ConfigNumberPreference(
+            title = stringResource(R.string.PREF_LIMIT_FPS),
+            description = stringResource(R.string.config_help_fps_limit),
+            value = form.fpsLimit,
+            fallbackLabel = stringResource(R.string.unlimited),
+            keyboardType = KeyboardType.Number,
+            onValueChange = { value -> onFormChanged(form.toBuilder().fpsLimit(value).build()) },
+        )
     }
 }
 
@@ -1053,9 +1057,8 @@ private fun FontSection(
     state: ConfigUiState,
     onFormChanged: (ConfigFormState) -> Unit,
 ) {
-    var advancedExpanded by rememberSaveable { mutableStateOf(false) }
     var fontSizesVisible by rememberSaveable { mutableStateOf(false) }
-    ConfigSection(title = stringResource(R.string.PREF_FONT_OPTIONS)) {
+    ConfigSection(title = stringResource(R.string.config_display_text)) {
         ConfigValuePreference(
             title = stringResource(R.string.config_font_sizes),
             description = stringResource(R.string.config_help_font_sizes),
@@ -1089,28 +1092,20 @@ private fun FontSection(
                 }
             },
         )
-        ConfigDisclosurePreference(
-            title = stringResource(R.string.config_advanced_settings),
-            description = stringResource(R.string.config_help_advanced_font),
-            expanded = advancedExpanded,
-            onExpandedChange = { advancedExpanded = it },
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_FONT_SIZE_IN_SP),
+            description = stringResource(R.string.config_help_font_dimensions),
+            checked = form.fontApplyDimensions,
+            onCheckedChange = { checked ->
+                onFormChanged(form.toBuilder().fontApplyDimensions(checked).build())
+            },
         )
-        if (advancedExpanded) {
-            ConfigSwitchPreference(
-                title = stringResource(R.string.PREF_FONT_SIZE_IN_SP),
-                description = stringResource(R.string.config_help_font_dimensions),
-                checked = form.fontApplyDimensions,
-                onCheckedChange = { checked ->
-                    onFormChanged(form.toBuilder().fontApplyDimensions(checked).build())
-                },
-            )
-            ConfigSwitchPreference(
-                title = stringResource(R.string.PREF_FONT_ANTI_ALIASING),
-                description = stringResource(R.string.config_help_font_aa),
-                checked = form.fontAA,
-                onCheckedChange = { checked -> onFormChanged(form.toBuilder().fontAA(checked).build()) },
-            )
-        }
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_FONT_ANTI_ALIASING),
+            description = stringResource(R.string.config_help_font_aa),
+            checked = form.fontAA,
+            onCheckedChange = { checked -> onFormChanged(form.toBuilder().fontAA(checked).build()) },
+        )
     }
     if (fontSizesVisible) {
         FontSizesDialog(
@@ -1208,13 +1203,11 @@ private fun FontSizeField(
 @Composable
 private fun InputSection(
     form: ConfigFormState,
-    state: ConfigUiState,
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
     onRequestAction: (ConfigAction) -> Unit,
 ) {
-    var advancedExpanded by rememberSaveable { mutableStateOf(false) }
-    ConfigSection(title = stringResource(R.string.pref_input_devices_title)) {
+    ConfigSection(title = stringResource(R.string.config_controls_key_input)) {
         val layoutOptions = stringArrayResource(R.array.PREF_LAYOUT_ENTRIES).toList()
         ConfigChoicePreference(
             title = stringResource(R.string.PREF_LAYOUT),
@@ -1228,88 +1221,88 @@ private fun InputSection(
             description = stringResource(R.string.config_help_key_mapping),
             onClick = events::onKeyMappings,
         )
+    }
+    ConfigSection(title = stringResource(R.string.config_controls_virtual_keyboard)) {
         ConfigSwitchPreference(
             title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
-            description = stringResource(R.string.config_help_virtual_keyboard_controls),
+            description = stringResource(R.string.config_help_virtual_keyboard),
             checked = form.showKeyboard,
             onCheckedChange = { checked -> onFormChanged(form.toBuilder().showKeyboard(checked).build()) },
         )
         if (form.showKeyboard) {
-            ConfigDisclosurePreference(
-                title = stringResource(R.string.config_advanced_settings),
-                description = stringResource(R.string.config_help_advanced_controls),
-                expanded = advancedExpanded,
-                onExpandedChange = { advancedExpanded = it },
+            val shapeOptions = stringArrayResource(R.array.pref_button_shape_entries).toList()
+            ConfigChoicePreference(
+                title = stringResource(R.string.pref_button_shape_title),
+                description = stringResource(R.string.config_help_vk_button_shape),
+                selected = shapeOptions.getOrElse(form.vkButtonShape) { shapeOptions.firstOrNull().orEmpty() },
+                options = shapeOptions,
+                onSelected = { index -> onFormChanged(form.toBuilder().vkButtonShape(index).build()) },
             )
-            if (advancedExpanded) {
-                val shapeOptions = stringArrayResource(R.array.pref_button_shape_entries).toList()
-                ConfigChoicePreference(
-                    title = stringResource(R.string.pref_button_shape_title),
-                    description = stringResource(R.string.config_help_vk_button_shape),
-                    selected = shapeOptions.getOrElse(form.vkButtonShape) { shapeOptions.firstOrNull().orEmpty() },
-                    options = shapeOptions,
-                    onSelected = { index -> onFormChanged(form.toBuilder().vkButtonShape(index).build()) },
-                )
-                ConfigSwitchPreference(
-                    title = stringResource(R.string.PREF_VK_FEEDBACK),
-                    description = stringResource(R.string.config_help_vk_feedback),
-                    checked = form.vkFeedback,
-                    onCheckedChange = { checked -> onFormChanged(form.toBuilder().vkFeedback(checked).build()) },
-                )
-                ConfigSliderPreference(
-                    title = stringResource(R.string.PREF_VK_ALPHA),
-                    description = stringResource(R.string.config_help_vk_alpha),
-                    value = form.vkAlpha,
-                    valueRange = 0..255,
-                    onSelected = { value -> onFormChanged(form.toBuilder().vkAlpha(value).build()) },
-                )
-                ConfigSwitchPreference(
-                    title = stringResource(R.string.PREF_VK_FORCE_OPACITY),
-                    description = stringResource(R.string.config_help_vk_force_opacity),
-                    checked = form.vkForceOpacity,
-                    onCheckedChange = { checked -> onFormChanged(form.toBuilder().vkForceOpacity(checked).build()) },
-                )
-                ConfigNumberPreference(
-                    title = stringResource(R.string.PREF_VK_HIDE_DELAY),
-                    description = stringResource(R.string.config_help_vk_hide_delay),
-                    value = form.vkHideDelay,
-                    fallbackLabel = stringResource(R.string.pref_vk_hide_hint),
-                    valueSuffix = stringResource(R.string.PREF_UNIT_MS),
-                    keyboardType = KeyboardType.Number,
-                    onValueChange = { value -> onFormChanged(form.toBuilder().vkHideDelay(value).build()) },
-                )
-                ConfigColorPreference(
-                    title = stringResource(R.string.PREF_VK_FORE),
-                    description = stringResource(R.string.config_help_vk_foreground),
-                    value = form.vkForeground,
-                    onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_FOREGROUND) },
-                )
-                ConfigColorPreference(
-                    title = stringResource(R.string.PREF_VK_BACK),
-                    description = stringResource(R.string.config_help_vk_background),
-                    value = form.vkBackground,
-                    onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_BACKGROUND) },
-                )
-                ConfigColorPreference(
-                    title = stringResource(R.string.PREF_VK_SEL_FORE),
-                    description = stringResource(R.string.config_help_vk_selected_foreground),
-                    value = form.vkSelectedForeground,
-                    onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_FOREGROUND) },
-                )
-                ConfigColorPreference(
-                    title = stringResource(R.string.PREF_VK_SEL_BACK),
-                    description = stringResource(R.string.config_help_vk_selected_background),
-                    value = form.vkSelectedBackground,
-                    onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_BACKGROUND) },
-                )
-                ConfigColorPreference(
-                    title = stringResource(R.string.PREF_VK_OUTLINE),
-                    description = stringResource(R.string.config_help_vk_outline),
-                    value = form.vkOutline,
-                    onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_OUTLINE) },
-                )
-            }
+            ConfigSwitchPreference(
+                title = stringResource(R.string.PREF_VK_FEEDBACK),
+                description = stringResource(R.string.config_help_vk_feedback),
+                checked = form.vkFeedback,
+                onCheckedChange = { checked -> onFormChanged(form.toBuilder().vkFeedback(checked).build()) },
+            )
+            ConfigSliderPreference(
+                title = stringResource(R.string.PREF_VK_ALPHA),
+                description = stringResource(R.string.config_help_vk_alpha),
+                value = form.vkAlpha,
+                valueRange = 0..255,
+                onSelected = { value -> onFormChanged(form.toBuilder().vkAlpha(value).build()) },
+            )
+            ConfigSwitchPreference(
+                title = stringResource(R.string.PREF_VK_FORCE_OPACITY),
+                description = stringResource(R.string.config_help_vk_force_opacity),
+                checked = form.vkForceOpacity,
+                onCheckedChange = { checked -> onFormChanged(form.toBuilder().vkForceOpacity(checked).build()) },
+            )
+            ConfigNumberPreference(
+                title = stringResource(R.string.PREF_VK_HIDE_DELAY),
+                description = stringResource(R.string.config_help_vk_hide_delay),
+                value = form.vkHideDelay,
+                fallbackLabel = stringResource(R.string.pref_vk_hide_hint),
+                valueSuffix = stringResource(R.string.PREF_UNIT_MS),
+                keyboardType = KeyboardType.Number,
+                onValueChange = { value -> onFormChanged(form.toBuilder().vkHideDelay(value).build()) },
+            )
         }
+    }
+    ConfigSection(title = stringResource(R.string.config_controls_virtual_keyboard_colors)) {
+        if (form.showKeyboard) {
+            ConfigColorPreference(
+                title = stringResource(R.string.PREF_VK_FORE),
+                description = stringResource(R.string.config_help_vk_foreground),
+                value = form.vkForeground,
+                onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_FOREGROUND) },
+            )
+            ConfigColorPreference(
+                title = stringResource(R.string.PREF_VK_BACK),
+                description = stringResource(R.string.config_help_vk_background),
+                value = form.vkBackground,
+                onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_BACKGROUND) },
+            )
+            ConfigColorPreference(
+                title = stringResource(R.string.PREF_VK_SEL_FORE),
+                description = stringResource(R.string.config_help_vk_selected_foreground),
+                value = form.vkSelectedForeground,
+                onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_FOREGROUND) },
+            )
+            ConfigColorPreference(
+                title = stringResource(R.string.PREF_VK_SEL_BACK),
+                description = stringResource(R.string.config_help_vk_selected_background),
+                value = form.vkSelectedBackground,
+                onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_SELECTED_BACKGROUND) },
+            )
+            ConfigColorPreference(
+                title = stringResource(R.string.PREF_VK_OUTLINE),
+                description = stringResource(R.string.config_help_vk_outline),
+                value = form.vkOutline,
+                onClick = { events.onColorPicker(ConfigFormEvents.ColorField.VIRTUAL_KEYBOARD_OUTLINE) },
+            )
+        }
+    }
+    ConfigSection(title = stringResource(R.string.config_controls_maintenance)) {
         ConfigActionPreference(
             title = stringResource(R.string.RESET_LAYOUT_CMD),
             description = stringResource(R.string.config_help_reset_layout),
@@ -1533,27 +1526,6 @@ private fun ConfigActionConfirmationDialog(
 }
 
 @Composable
-private fun AdvancedSettingsRow(
-    expanded: Boolean,
-    onExpandedChange: (Boolean) -> Unit,
-) {
-    ConfigDisclosurePreference(
-        title = stringResource(R.string.config_advanced_settings),
-        description = stringResource(R.string.config_help_advanced_generic),
-        expanded = expanded,
-        onExpandedChange = onExpandedChange,
-    )
-}
-
-@Composable
-private fun ConfigCard(
-    title: String,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    ConfigSection(title = title, content = content)
-}
-
-@Composable
 private fun ConfigRow(
     label: String,
     content: @Composable () -> Unit,
@@ -1760,18 +1732,20 @@ internal fun ConfigSliderDialog(
                 }
                 val draftValue = draftText.toIntOrNull()
                 val currentValue = (draftValue ?: initialValue).coerceIn(valueRange)
-                ConfigValueStepper(
-                    valueText = draftText,
-                    onValueTextChange = { draftText = it },
-                    onDecrease = {
-                        draftText = (currentValue - 1).coerceIn(valueRange).toString()
-                    },
-                    onIncrease = {
-                        draftText = (currentValue + 1).coerceIn(valueRange).toString()
-                    },
-                    decreaseEnabled = currentValue > valueRange.first,
-                    increaseEnabled = currentValue < valueRange.last,
+                Slider(
+                    value = currentValue.toFloat(),
+                    onValueChange = { value -> draftText = value.roundToInt().toString() },
+                    valueRange = valueRange.first.toFloat()..valueRange.last.toFloat(),
+                    steps = (valueRange.last - valueRange.first - 1).coerceAtLeast(0),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = draftText,
+                    onValueChange = { draftText = it },
+                    label = { Text(stringResource(R.string.config_current_value)) },
+                    singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -1789,7 +1763,9 @@ internal fun ConfigSliderDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = { onConfirm(draftText.toInt().coerceIn(valueRange)) },
+                onClick = {
+                    draftText.toIntOrNull()?.let { onConfirm(it.coerceIn(valueRange)) }
+                },
                 enabled = draftText.toIntOrNull() != null,
             ) {
                 Text(stringResource(android.R.string.ok))

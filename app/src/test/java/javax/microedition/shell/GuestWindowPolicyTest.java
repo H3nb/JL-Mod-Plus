@@ -22,12 +22,12 @@ import org.junit.Test;
 
 public class GuestWindowPolicyTest {
 	@Test
-	public void cutoutRequiresUserOptInCanvasAndBothBarsDisabled() {
+	public void cutoutRequiresUserOptInCanvasAndNoStatusBar() {
 		assertTrue(GuestWindowPolicy.canUseDisplayCutout(true, false, false, true));
 		assertFalse(GuestWindowPolicy.canUseDisplayCutout(true, false, false, false));
 		assertFalse(GuestWindowPolicy.canUseDisplayCutout(false, false, false, true));
 		assertFalse(GuestWindowPolicy.canUseDisplayCutout(true, true, false, true));
-		assertFalse(GuestWindowPolicy.canUseDisplayCutout(true, false, true, true));
+		assertTrue(GuestWindowPolicy.canUseDisplayCutout(true, false, true, true));
 	}
 
 	@Test
@@ -64,9 +64,9 @@ public class GuestWindowPolicyTest {
 	}
 
 	@Test
-	public void immersiveCanvasWithAllowedCutoutKeepsGuestGeometryUnpadded() {
+	public void actionBarAndCanvasMayShareAnAllowedCutout() {
 		GuestWindowPolicy.Padding padding = GuestWindowPolicy.calculate(
-				true, false, false, true,
+				true, false, true, true,
 				30, 40, 50, 60,
 				7, 8, 9, 10, 100);
 
@@ -84,13 +84,13 @@ public class GuestWindowPolicyTest {
 	}
 
 	@Test
-	public void canvasReservesCutoutButNeverNavigationBarWhenCutoutIsDisallowed() {
+	public void visibleStatusBarDisablesCutoutEvenWhenActionBarIsEnabled() {
 		GuestWindowPolicy.Padding padding = GuestWindowPolicy.calculate(
-				true, false, true, true,
+				true, true, true, true,
 				30, 40, 50, 60,
 				7, 8, 9, 10, 100);
 
-		assertPadding(padding, 7, 8, 9, 10);
+		assertPadding(padding, 7, 40, 9, 10);
 	}
 
 	@Test

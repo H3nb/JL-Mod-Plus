@@ -32,6 +32,11 @@ import ru.playsoftware.j2meloader.util.SparseIntArrayAdapter;
 
 public class ProfileModel {
 	public static final int VERSION = 3;
+
+	/** Stable preference key used to keep the built-in palette linked to the host theme. */
+	public static String builtInThemePreferenceKey(File configDir) {
+		return "config_profile_builtin_theme:" + configDir.getAbsolutePath();
+	}
 	/** True if this is a new profile (not yet saved to file) */
 	public final transient boolean isNew;
 

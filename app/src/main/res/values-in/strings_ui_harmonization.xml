@@ -6,7 +6,7 @@
     <string name="settings_section_profiles">Profil</string>
     <string name="settings_profiles_summary">Kelola profil konfigurasi MIDlet yang dapat digunakan kembali.</string>
     <string name="pref_use_display_cutout_title">Gunakan Area Cutout Di MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Izinkan konten Canvas MIDlet yang kompatibel menggunakan area cutout layar ketika runtime dapat melakukannya dengan aman.</string>
+    <string name="pref_use_display_cutout_summary">Izinkan konten Canvas MIDlet dan ActionBar menggunakan area cutout layar. Opsi ini tidak dapat digunakan bersama bilah status sistem.</string>
     <string name="dialog_scroll_hint">Geser untuk melanjutkan</string>
     <string name="pref_accent_title">Warna Aksen</string>
     <string name="pref_accent_blue">Biru Bawaan</string>
@@ -25,7 +25,9 @@
     <string name="library_selection_checked">Dipilih</string>
     <string name="library_selection_unchecked">Tidak dipilih</string>
 
-    <string name="library_options_library_title">Tampilan Pustaka</string>
+    <string name="library_options_layout_title">Tata Letak Pustaka</string>
+    <string name="library_options_icons_title">Tampilan Ikon</string>
+    <string name="library_options_content_title">Konten</string>
     <string name="library_options_application_title">Aplikasi</string>
     <string name="library_options_diagnostics_title">Diagnostik</string>
     <string name="library_options_information_title">Bantuan &amp; Informasi</string>

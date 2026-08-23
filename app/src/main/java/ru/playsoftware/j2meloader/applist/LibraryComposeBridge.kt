@@ -2194,7 +2194,7 @@ internal fun LibraryOptionsDestination(
                     )
                     LibraryOptionsSection(
                         modifier = Modifier.fillMaxWidth(),
-                        title = R.string.library_options_library_title,
+                        title = R.string.library_options_layout_title,
                     ) {
                         LibraryOptionGroup(label = R.string.pref_apps_view) {
                             FlowRow(
@@ -2230,6 +2230,11 @@ internal fun LibraryOptionsDestination(
                                 )
                             }
                         }
+                    }
+                    LibraryOptionsSection(
+                        modifier = Modifier.fillMaxWidth(),
+                        title = R.string.library_options_icons_title,
+                    ) {
                         LibraryOptionGroup(
                             label = R.string.library_icon_ratio_title,
                             summary = R.string.library_icon_ratio_summary,
@@ -2309,6 +2314,11 @@ internal fun LibraryOptionsDestination(
                                 },
                             )
                         }
+                    }
+                    LibraryOptionsSection(
+                        modifier = Modifier.fillMaxWidth(),
+                        title = R.string.library_options_content_title,
+                    ) {
                         if (state.layout == LibraryLayout.Grid) {
                             LibraryOptionGroup(
                                 label = R.string.library_grid_spacing_title,

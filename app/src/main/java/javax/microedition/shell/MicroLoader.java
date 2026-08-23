@@ -23,6 +23,7 @@ import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
 
 import android.graphics.Bitmap;
+import android.content.res.Configuration;
 import android.os.Environment;
 import android.os.StrictMode;
 import android.util.Log;
@@ -30,6 +31,7 @@ import android.util.SparseIntArray;
 import android.view.KeyEvent;
 
 import androidx.core.content.ContextCompat;
+import androidx.preference.PreferenceManager;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -108,6 +110,7 @@ public class MicroLoader {
 		if (params == null) {
 			return false;
 		}
+		applyLinkedBuiltInTheme(config);
 		Display.initDisplay();
 		Graphics3D.initGraphics3D();
 		File cacheDir = ContextHolder.getCacheDir();
@@ -121,6 +124,18 @@ public class MicroLoader {
 				.build();
 		StrictMode.setThreadPolicy(policy);
 		return true;
+	}
+
+	/** Applies only the theme-owned colors for a linked built-in profile at runtime. */
+	private void applyLinkedBuiltInTheme(File configDir) {
+		boolean linked = PreferenceManager.getDefaultSharedPreferences(ContextHolder.getAppContext())
+				.getBoolean(ProfileModel.builtInThemePreferenceKey(configDir), false);
+		if (!linked) {
+			return;
+		}
+		int uiMode = ContextHolder.getAppContext().getResources().getConfiguration().uiMode;
+		boolean darkTheme = (uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+		ProfileModel.applyBuiltInTheme(params, darkTheme);
 	}
 
 	Map<String, String> loadMIDletList() throws IOException {

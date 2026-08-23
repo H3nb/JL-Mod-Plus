@@ -137,7 +137,9 @@ public class MicroActivity extends AppCompatActivity {
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		actionBarEnabled = sp.getBoolean(PREF_TOOLBAR, false);
 		statusBarEnabled = sp.getBoolean(PREF_STATUSBAR, false);
-		displayCutoutEnabled = sp.getBoolean(PREF_USE_DISPLAY_CUTOUT, true);
+		// Keep legacy preference files safe: status bar and cutout are mutually exclusive even if
+		// an older version persisted both switches as enabled.
+		displayCutoutEnabled = sp.getBoolean(PREF_USE_DISPLAY_CUTOUT, true) && !statusBarEnabled;
 		if (sp.getBoolean(PREF_KEEP_SCREEN, false)) {
 			getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		}
@@ -523,8 +525,7 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void configureDisplayCutoutWindow() {
-		configureDisplayCutoutWindow(displayCutoutEnabled
-				&& !statusBarEnabled && !actionBarEnabled);
+		configureDisplayCutoutWindow(displayCutoutEnabled && !statusBarEnabled);
 	}
 
 	private void configureDisplayCutoutWindow(boolean allowWindowCutout) {

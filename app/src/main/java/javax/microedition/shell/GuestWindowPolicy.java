@@ -20,7 +20,10 @@ final class GuestWindowPolicy {
 
 	static boolean canUseDisplayCutout(boolean canvas,
 			boolean statusBarEnabled, boolean actionBarEnabled, boolean userAllowsCutout) {
-		return userAllowsCutout && canvas && !statusBarEnabled && !actionBarEnabled;
+		// The Compose ActionBar is part of the host content and may occupy the cutout area. The
+		// system status bar cannot be combined with a cutout-enabled MIDlet because both reserve
+		// the same top inset.
+		return userAllowsCutout && canvas && !statusBarEnabled;
 	}
 
 	/**

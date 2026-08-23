@@ -786,7 +786,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	}
 
 	private String builtInThemeKey() {
-		return "config_profile_builtin_theme:" + configDir.getAbsolutePath();
+		return ProfileModel.builtInThemePreferenceKey(configDir);
 	}
 
 	private boolean readBuiltInThemeLinked() {

@@ -6,7 +6,7 @@
     <string name="settings_section_profiles">Profiles</string>
     <string name="settings_profiles_summary">Manage reusable MIDlet configuration profiles.</string>
     <string name="pref_use_display_cutout_title">Use Display Cutout In MIDlet</string>
-    <string name="pref_use_display_cutout_summary">Allow compatible MIDlet Canvas content to use the display-cutout area when the runtime can do so safely.</string>
+    <string name="pref_use_display_cutout_summary">Allow compatible MIDlet Canvas content and the ActionBar to use the display-cutout area. It cannot be used with the system status bar.</string>
     <string name="dialog_scroll_hint">Swipe to continue</string>
     <string name="pref_accent_title">Accent Color</string>
     <string name="pref_accent_blue">Default Blue</string>
@@ -25,7 +25,9 @@
     <string name="library_selection_checked">Selected</string>
     <string name="library_selection_unchecked">Not selected</string>
 
-    <string name="library_options_library_title">Library View</string>
+    <string name="library_options_layout_title">Library Layout</string>
+    <string name="library_options_icons_title">Icon Appearance</string>
+    <string name="library_options_content_title">Content</string>
     <string name="library_options_application_title">Application</string>
     <string name="library_options_diagnostics_title">Diagnostics</string>
     <string name="library_options_information_title">Help &amp; Information</string>
