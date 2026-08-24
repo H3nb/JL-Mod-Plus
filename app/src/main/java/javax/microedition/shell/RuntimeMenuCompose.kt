@@ -14,7 +14,6 @@
 
 package javax.microedition.shell
 
-import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,7 +29,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -38,15 +36,17 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.ui.semantics.Role
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -54,7 +54,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.res.painterResource
@@ -67,8 +66,10 @@ import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
 import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
+import ru.playsoftware.j2meloader.ui.availableWindowWidthDp
 import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 import javax.microedition.shell.timing.EmulationSpeed
+import kotlin.math.roundToInt
 
 /** Android-host menu state only; Java ME Displayable and Command state stay in the runtime. */
 internal data class RuntimeMenuUiState(
@@ -251,16 +252,16 @@ private data class RuntimeMenuDialogLayout(
 
 @Composable
 private fun runtimeMenuDialogLayout(): RuntimeMenuDialogLayout {
-    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val wide = availableWindowWidthDp() >= 600.dp
     return RuntimeMenuDialogLayout(
-        modifier = if (landscape) {
+        modifier = if (wide) {
             Modifier
                 .fillMaxWidth(0.94f)
                 .widthIn(max = 760.dp)
         } else {
             Modifier.widthIn(max = 560.dp)
         },
-        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
+        properties = DialogProperties(usePlatformDefaultWidth = !wide),
     )
 }
 
@@ -319,10 +320,12 @@ internal fun RuntimeEmulationSpeedDialog(
     onReset: () -> Unit,
 ) {
     val presetValues = remember(currentPercent) {
-        EmulationSpeed.presets().toList().let { presets ->
-            if (currentPercent in presets) presets else listOf(currentPercent) + presets
-        }
+        (EmulationSpeed.presets().toList() + currentPercent).distinct().sorted()
     }
+    val currentIndex = presetValues.indexOf(currentPercent).coerceAtLeast(0)
+    var draftIndex by remember(currentIndex, presetValues) { mutableFloatStateOf(currentIndex.toFloat()) }
+    val selectedIndex = draftIndex.roundToInt().coerceIn(presetValues.indices)
+    val selectedValue = presetValues[selectedIndex]
     val layout = runtimeMenuDialogLayout()
     AlertDialog(
         modifier = layout.modifier,
@@ -337,49 +340,47 @@ internal fun RuntimeEmulationSpeedDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
-                val listState = rememberLazyListState()
-                Box(
+                Text(
+                    text = EmulationSpeed.formatMultiplier(selectedValue),
+                    modifier = Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Slider(
+                    value = draftIndex,
+                    onValueChange = { draftIndex = it },
+                    valueRange = 0f..presetValues.lastIndex.toFloat(),
+                    steps = (presetValues.size - 2).coerceAtLeast(0),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = runtimeMenuDialogContentHeight()),
+                        .heightIn(min = 48.dp)
+                        .testTag("runtime_emulation_speed_slider"),
+                    colors = SliderDefaults.colors(
+                        thumbColor = MaterialTheme.colorScheme.primary,
+                        activeTrackColor = MaterialTheme.colorScheme.primary,
+                        inactiveTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.28f),
+                    ),
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        items(presetValues) { value ->
-                            ListItem(
-                                colors = ListItemDefaults.colors(
-                                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                                ),
-                                headlineContent = {
-                                    Text(
-                                        text = EmulationSpeed.formatMultiplier(value),
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Medium,
-                                    )
-                                },
-                                leadingContent = {
-                                    RadioButton(
-                                        selected = value == currentPercent,
-                                        onClick = null,
-                                    )
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .testTag("runtime_emulation_speed_${value}")
-                                    .clickable { onConfirm(value) },
-                            )
-                        }
-                    }
-                    ScrollableContentHint(
-                        visible = rememberLazyListCanScrollForward(listState),
-                        modifier = Modifier.align(Alignment.BottomCenter),
+                    Text(
+                        text = EmulationSpeed.formatMultiplier(presetValues.first()),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = EmulationSpeed.formatMultiplier(presetValues.last()),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
         },
-        confirmButton = {},
+        confirmButton = {
+            TextButton(onClick = { onConfirm(selectedValue) }) {
+                Text(stringResource(android.R.string.ok))
+            }
+        },
         dismissButton = {
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 TextButton(onClick = onReset) {

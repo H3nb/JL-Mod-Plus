@@ -718,25 +718,21 @@ private fun ScreenSection(
         val currentSpeed = form.emulationSpeed.toIntOrNull()
             ?.let(EmulationSpeed::sanitizePercent)
             ?: EmulationSpeed.NORMAL_PERCENT
-        val speedValues = EmulationSpeed.presets().toList().let { presets ->
-            if (currentSpeed in presets) presets else listOf(currentSpeed) + presets
-        }
-        val speedOptions = speedValues.map(EmulationSpeed::formatMultiplier)
+        val speedValues = (EmulationSpeed.presets().toList() + currentSpeed).distinct().sorted()
         val speedIndex = speedValues.indexOf(currentSpeed).coerceAtLeast(0)
         val timingUnavailableMessage = if (state.timingControlsEnabled) null
         else stringResource(R.string.config_help_timing_unavailable)
-        ConfigChoicePreference(
+        ConfigDiscreteSliderPreference(
             title = stringResource(R.string.PREF_EMULATION_SPEED),
             description = stringResource(R.string.config_help_emulation_speed),
-            selected = speedOptions.getOrElse(speedIndex) { EmulationSpeed.formatMultiplier(currentSpeed) },
-            options = speedOptions,
+            values = speedValues,
+            selectedIndex = speedIndex,
+            valueLabel = EmulationSpeed::formatMultiplier,
             enabled = state.timingControlsEnabled,
             message = timingUnavailableMessage,
             messageLevel = ConfigMessageLevel.Warning,
-            onSelected = { index ->
-                speedValues.getOrNull(index)?.let { value ->
-                    onFormChanged(form.toBuilder().emulationSpeed(value.toString()).build())
-                }
+            onSelected = { value ->
+                onFormChanged(form.toBuilder().emulationSpeed(value.toString()).build())
             },
         )
         ConfigSwitchPreference(

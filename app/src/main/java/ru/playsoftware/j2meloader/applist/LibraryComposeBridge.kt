@@ -189,6 +189,7 @@ import ru.playsoftware.j2meloader.ui.TransientNoticeHost
 import ru.playsoftware.j2meloader.ui.TransientNoticeState
 import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 import ru.playsoftware.j2meloader.ui.availableWindowWidthDp
+import ru.playsoftware.j2meloader.ui.availableWindowWidthDp
 import kotlin.math.roundToInt
 
 enum class LibraryLayout {
@@ -3570,16 +3571,16 @@ private data class LibraryDialogLayout(
 
 @Composable
 private fun libraryDialogLayout(): LibraryDialogLayout {
-    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val wide = availableWindowWidthDp() >= 600.dp
     return LibraryDialogLayout(
-        modifier = if (landscape) {
+        modifier = if (wide) {
             Modifier
                 .fillMaxWidth(0.94f)
                 .widthIn(max = 760.dp)
         } else {
             Modifier.widthIn(max = 560.dp)
         },
-        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
+        properties = DialogProperties(usePlatformDefaultWidth = !wide),
     )
 }
 

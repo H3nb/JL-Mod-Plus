@@ -21,11 +21,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -39,7 +44,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.window.DialogProperties
 import ru.playsoftware.j2meloader.R
+import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
+import ru.playsoftware.j2meloader.ui.availableWindowWidthDp
+import kotlin.math.roundToInt
 
 internal enum class ConfigMessageLevel { Info, Warning, Danger }
 
@@ -279,6 +289,126 @@ internal fun ConfigSliderPreference(
             },
         )
     }
+}
+
+/** Discrete slider used for settings whose supported values are intentionally non-linear. */
+@Composable
+internal fun ConfigDiscreteSliderPreference(
+    title: String,
+    description: String,
+    values: List<Int>,
+    selectedIndex: Int,
+    valueLabel: (Int) -> String,
+    onSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    message: String? = null,
+    messageLevel: ConfigMessageLevel = ConfigMessageLevel.Info,
+) {
+    if (values.isEmpty()) return
+    val safeIndex = selectedIndex.coerceIn(values.indices)
+    var dialogVisible by remember(values, safeIndex) { mutableStateOf(false) }
+    ConfigValuePreference(
+        title = title,
+        description = description,
+        value = valueLabel(values[safeIndex]),
+        enabled = enabled,
+        message = message,
+        messageLevel = messageLevel,
+        modifier = modifier,
+        onClick = { dialogVisible = true },
+    )
+    if (dialogVisible) {
+        ConfigDiscreteSliderDialog(
+            title = title,
+            description = description,
+            values = values,
+            selectedIndex = safeIndex,
+            valueLabel = valueLabel,
+            onDismissRequest = { dialogVisible = false },
+            onConfirm = { index ->
+                dialogVisible = false
+                onSelected(values[index.coerceIn(values.indices)])
+            },
+        )
+    }
+}
+
+@Composable
+private fun ConfigDiscreteSliderDialog(
+    title: String,
+    description: String,
+    values: List<Int>,
+    selectedIndex: Int,
+    valueLabel: (Int) -> String,
+    onDismissRequest: () -> Unit,
+    onConfirm: (Int) -> Unit,
+) {
+    val wide = availableWindowWidthDp() >= 600.dp
+    var draftIndex by remember(selectedIndex, values) { mutableFloatStateOf(selectedIndex.toFloat()) }
+    val currentIndex = draftIndex.roundToInt().coerceIn(values.indices)
+    val currentValue = values[currentIndex]
+    AlertDialog(
+        modifier = if (wide) {
+            Modifier.fillMaxWidth(0.92f).widthIn(max = 760.dp)
+        } else {
+            Modifier.widthIn(max = 560.dp)
+        },
+        properties = DialogProperties(usePlatformDefaultWidth = !wide),
+        onDismissRequest = onDismissRequest,
+        title = { Text(title) },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = (availableWindowHeightDp() - 220.dp).coerceAtLeast(180.dp)),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = valueLabel(currentValue),
+                    modifier = Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Slider(
+                    value = draftIndex,
+                    onValueChange = { draftIndex = it },
+                    valueRange = 0f..(values.lastIndex.toFloat()),
+                    steps = (values.size - 2).coerceAtLeast(0),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp),
+                    colors = SliderDefaults.colors(
+                        thumbColor = MaterialTheme.colorScheme.primary,
+                        activeTrackColor = MaterialTheme.colorScheme.primary,
+                        inactiveTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.28f),
+                    ),
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(valueLabel(values.first()), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(valueLabel(values.last()), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text(androidx.compose.ui.res.stringResource(android.R.string.cancel))
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(currentIndex) }) {
+                Text(androidx.compose.ui.res.stringResource(android.R.string.ok))
+            }
+        },
+    )
 }
 
 @Composable
