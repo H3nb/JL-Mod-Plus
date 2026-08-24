@@ -79,7 +79,7 @@
     <string name="config_help_show_fps">Menampilkan frame rate saat aplikasi berjalan.</string>
     <string name="config_help_fps_limit">Membatasi frame rate maksimum. Kosongkan untuk tanpa batas.</string>
     <string name="PREF_EMULATION_SPEED">Kecepatan Emulasi</string>
-    <string name="PREF_SHOW_EMULATION_SPEED">Tampilkan kecepatan emulasi</string>
+    <string name="PREF_SHOW_EMULATION_SPEED">Tampilkan Kecepatan Emulasi</string>
     <string name="PREF_TIMING_MODE">Mode timing</string>
     <string name="config_timing_mode_full_guest">Waktu tamu penuh</string>
     <string name="config_timing_mode_real_wall">Waktu nyata</string>
