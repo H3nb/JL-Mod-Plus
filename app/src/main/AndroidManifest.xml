@@ -200,6 +200,11 @@
             android:exported="true"
             android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity
+            android:name="ru.woesss.j2me.installer.AutoReconversionActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:theme="@style/AppTheme.AutoReconversion" />
+        <activity
             android:name="javax.microedition.shell.MicroActivity"
             android:exported="false"
             android:theme="@style/AppTheme.NoActionBar"

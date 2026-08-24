@@ -18,7 +18,15 @@ import java.util.Map;
 
 import javax.microedition.shell.GuestTimingBridge;
 
-/** Compatibility marker stored in the converted descriptor next to the DEX artifact. */
+/**
+ * Timing-specific compatibility marker stored in the converted descriptor next to the DEX
+ * artifact.
+ *
+ * <p>This is intentionally not a universal "converted" bit. A future bytecode feature must use
+ * its own namespaced transform/ABI entries, or participate in an explicit transform manifest, so
+ * that enabling or revving one feature cannot make an unrelated transformed artifact appear
+ * compatible.</p>
+ */
 public final class TimingTransformMetadata {
 	public static final int TRANSFORM_VERSION = 4;
 	public static final String TRANSFORM_VERSION_ATTRIBUTE = "JLMod-Timing-Transform-Version";
