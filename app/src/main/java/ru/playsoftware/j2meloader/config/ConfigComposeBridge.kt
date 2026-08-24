@@ -113,7 +113,6 @@ import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.launch
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.config.model.Size
-import javax.microedition.shell.timing.EmulationSpeed
 import javax.microedition.shell.timing.TimingMode
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
@@ -715,26 +714,8 @@ private fun ScreenSection(
             keyboardType = KeyboardType.Number,
             onValueChange = { value -> onFormChanged(form.toBuilder().fpsLimit(value).build()) },
         )
-        val currentSpeed = form.emulationSpeed.toIntOrNull()
-            ?.let(EmulationSpeed::sanitizePercent)
-            ?: EmulationSpeed.NORMAL_PERCENT
-        val speedValues = (EmulationSpeed.presets().toList() + currentSpeed).distinct().sorted()
-        val speedIndex = speedValues.indexOf(currentSpeed).coerceAtLeast(0)
         val timingUnavailableMessage = if (state.timingControlsEnabled) null
         else stringResource(R.string.config_help_timing_unavailable)
-        ConfigDiscreteSliderPreference(
-            title = stringResource(R.string.PREF_EMULATION_SPEED),
-            description = stringResource(R.string.config_help_emulation_speed),
-            values = speedValues,
-            selectedIndex = speedIndex,
-            valueLabel = EmulationSpeed::formatMultiplier,
-            enabled = state.timingControlsEnabled,
-            message = timingUnavailableMessage,
-            messageLevel = ConfigMessageLevel.Warning,
-            onSelected = { value ->
-                onFormChanged(form.toBuilder().emulationSpeed(value.toString()).build())
-            },
-        )
         ConfigSwitchPreference(
             title = stringResource(R.string.PREF_SHOW_EMULATION_SPEED),
             description = stringResource(R.string.config_help_show_emulation_speed),

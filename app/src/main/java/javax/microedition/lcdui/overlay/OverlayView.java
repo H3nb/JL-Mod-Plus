@@ -62,6 +62,14 @@ public class OverlayView extends View {
 		postInvalidate();
 	}
 
+	int getContentOffsetX() {
+		return x;
+	}
+
+	int getContentOffsetY() {
+		return y;
+	}
+
 	public void addLayer(Layer layer) {
 		if (layers.contains(layer)) {
 			return;
