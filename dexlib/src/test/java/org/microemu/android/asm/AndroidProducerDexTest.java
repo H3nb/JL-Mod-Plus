@@ -29,6 +29,8 @@ import org.objectweb.asm.Opcodes;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 
 public class AndroidProducerDexTest {
 	@Test
@@ -36,13 +38,16 @@ public class AndroidProducerDexTest {
 		Path root = Files.createTempDirectory("jlmod-dex-transform-");
 		Path classDirectory = Files.createDirectories(root.resolve("sample"));
 		Path classFile = classDirectory.resolve("Timing.class");
+		Path dateSubclassFile = classDirectory.resolve("DateSubclass.class");
 		Path dexFile = root.resolve("timing.dex");
 		try {
 			Files.write(classFile, createTimingClass());
+			Files.write(dateSubclassFile, createDateSubclassClass());
 
 			Main.Arguments arguments = new Main.Arguments();
 			arguments.fileNames = new String[] {
-					root.resolve(".").resolve("sample").resolve("Timing.class").toString()
+				root.resolve(".").resolve("sample").resolve("Timing.class").toString(),
+				root.resolve(".").resolve("sample").resolve("DateSubclass.class").toString()
 			};
 			arguments.outName = dexFile.toString();
 			arguments.numThreads = 1;
@@ -54,12 +59,43 @@ public class AndroidProducerDexTest {
 			assertEquals(1, countMethods(dex, bridge, "nanoTime"));
 			assertEquals(2, countMethods(dex, bridge, "sleep"));
 			assertEquals(2, countMethods(dex, bridge, "waitOnMonitor"));
-			assertEquals(1, countMethods(dex, bridge, "newDate"));
+			// Date() is rewritten to currentTimeMillis() + Date(long), keeping the original
+			// allocation/constructor verifier shape valid for subclasses and non-canonical code.
+			assertEquals(1, countMethods(dex, bridge, "currentTimeMillis"));
 			assertEquals(2, countMethods(dex, bridge, "calendarInstance"));
 		} finally {
 			Files.deleteIfExists(dexFile);
 			Files.deleteIfExists(classFile);
+			Files.deleteIfExists(dateSubclassFile);
 			Files.deleteIfExists(classDirectory);
+			Files.deleteIfExists(root);
+		}
+	}
+
+	@Test
+	public void conversionFailsWhenOneArchiveClassCannotBeTransformed() throws Exception {
+		Path root = Files.createTempDirectory("jlmod-dex-transform-failure-");
+		Path archive = root.resolve("mixed.jar");
+		Path dexFile = root.resolve("mixed.dex");
+		try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(archive))) {
+			output.putNextEntry(new JarEntry("sample/Good.class"));
+			output.write(createSimpleClass("sample/Good"));
+			output.closeEntry();
+			output.putNextEntry(new JarEntry("sample/Bad.class"));
+			// The path deliberately disagrees with the class's internal name.
+			output.write(createSimpleClass("sample/BadPayload"));
+			output.closeEntry();
+		}
+
+		try {
+			Main.Arguments arguments = new Main.Arguments();
+			arguments.fileNames = new String[] {archive.toString()};
+			arguments.outName = dexFile.toString();
+			arguments.numThreads = 1;
+			assertTrue(Main.run(arguments) != 0);
+		} finally {
+			Files.deleteIfExists(dexFile);
+			Files.deleteIfExists(archive);
 			Files.deleteIfExists(root);
 		}
 	}
@@ -82,6 +118,29 @@ public class AndroidProducerDexTest {
 		createClockAndSleepMethod(writer);
 		createWaitMethod(writer);
 		createDateAndCalendarMethod(writer);
+		writer.visitEnd();
+		return writer.toByteArray();
+	}
+
+	private static byte[] createSimpleClass(String name) {
+		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+		writer.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC, name, null,
+				"java/lang/Object", null);
+		writer.visitEnd();
+		return writer.toByteArray();
+	}
+
+	private static byte[] createDateSubclassClass() {
+		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+		writer.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC, "sample/DateSubclass", null,
+				"java/util/Date", null);
+		MethodVisitor method = writer.visitMethod(Opcodes.ACC_PUBLIC, "<init>", "()V", null, null);
+		method.visitCode();
+		method.visitVarInsn(Opcodes.ALOAD, 0);
+		method.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/util/Date", "<init>", "()V", false);
+		method.visitInsn(Opcodes.RETURN);
+		method.visitMaxs(1, 1);
+		method.visitEnd();
 		writer.visitEnd();
 		return writer.toByteArray();
 	}

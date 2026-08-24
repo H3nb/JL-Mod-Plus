@@ -64,8 +64,9 @@ public final class FramePacer {
 
 	/**
 	 * Paces one guest frame request. A non-positive FPS value disables and resets the pacer. When
-	 * {@code allowBlocking} is false, the request still advances the schedule but never parks the
-	 * caller; the next guest worker request can absorb the remaining interval.
+	 * {@code allowBlocking} is false, the request never parks the caller and never advances the
+	 * schedule by more than one interval. This keeps LCDUI callbacks from accumulating future
+	 * deadline debt that would make a later guest worker block for several frames.
 	 */
 	public synchronized void pace(int compatibilityFps, boolean allowBlocking) {
 		if (compatibilityFps <= 0) {
@@ -104,7 +105,9 @@ public final class FramePacer {
 		long deadline = nextDeadlineNanos;
 		boolean interrupted = false;
 		boolean registered = false;
+		boolean timingChangeRegistered = false;
 		Thread pacingThread = null;
+		long observedTimingRevision = session == null ? 0L : session.timingRevision();
 		if (allowBlocking && deadline > now) {
 			// Inspect without consuming the flag. A guest worker may use interruption as its
 			// shutdown signal, and pacing must not erase that signal while checking whether it
@@ -115,13 +118,45 @@ public final class FramePacer {
 				if (session != null) {
 					session.registerCloseAwareThread(pacingThread);
 					registered = true;
+					session.registerTimingChangeThread(pacingThread);
+					timingChangeRegistered = true;
 				}
 				try {
+					// A speed transition may have completed between the initial clock read and
+					// registration. Revalidate both values before the first park; the registration
+					// guarantees that a transition after this check will unpark the caller.
+					if (session != null) {
+						long currentTimingRevision = session.timingRevision();
+						int currentSpeedPercent = speedPercent();
+						if (currentTimingRevision != observedTimingRevision
+								|| currentSpeedPercent != speedPercent) {
+							now = hostNowNanos();
+							speedPercent = currentSpeedPercent;
+							intervalNanos = intervalNanos(compatibilityFps, speedPercent);
+							previousSpeedPercent = speedPercent;
+							deadline = saturatingAdd(now, intervalNanos);
+							nextDeadlineNanos = deadline;
+							observedTimingRevision = currentTimingRevision;
+						}
+					}
 					while (deadline > now) {
 						sleeper.parkNanos(this, deadline - now);
 						interrupted = Thread.currentThread().isInterrupted();
 						if (interrupted) {
 							break;
+						}
+						if (session != null) {
+							long currentTimingRevision = session.timingRevision();
+							if (currentTimingRevision != observedTimingRevision) {
+								now = hostNowNanos();
+								speedPercent = speedPercent();
+								intervalNanos = intervalNanos(compatibilityFps, speedPercent);
+								previousSpeedPercent = speedPercent;
+								deadline = saturatingAdd(now, intervalNanos);
+								nextDeadlineNanos = deadline;
+								observedTimingRevision = currentTimingRevision;
+								continue;
+							}
 						}
 						now = hostNowNanos();
 					}
@@ -129,6 +164,9 @@ public final class FramePacer {
 					reset();
 					return;
 				} finally {
+					if (timingChangeRegistered) {
+						session.unregisterTimingChangeThread(pacingThread);
+					}
 					if (registered) {
 						session.unregisterCloseAwareThread(pacingThread);
 					}
@@ -137,9 +175,10 @@ public final class FramePacer {
 		}
 
 		if (now < deadline) {
-			// A callback is intentionally not blocked, or the caller was interrupted. Preserve the
-			// cadence so a later worker call cannot create an unbounded burst.
-			nextDeadlineNanos = saturatingAdd(deadline, intervalNanos);
+			// A callback is intentionally not blocked, or the caller was interrupted. Preserve
+			// only the current pending deadline; advancing it here creates unbounded debt when
+			// callbacks arrive faster than the configured frame interval.
+			nextDeadlineNanos = deadline;
 		} else {
 			nextDeadlineNanos = saturatingAdd(now, intervalNanos);
 		}

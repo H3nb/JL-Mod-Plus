@@ -21,6 +21,8 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import javax.microedition.shell.timing.TimingMode;
+
 public class ConfigFormStateTest {
 	@Test
 	public void applyToKeepsLegacyParsingAndFallbackRules() {
@@ -72,6 +74,7 @@ public class ConfigFormStateTest {
 		assertEquals(0, model.vkHideDelay);
 		assertEquals(100, model.emulationSpeedPercent);
 		assertTrue(model.showEmulationSpeed);
+		assertEquals(TimingMode.FULL_GUEST_TIME, model.timingMode);
 		assertEquals(0x445566, model.vkBgColor);
 		assertEquals(0x778899, model.vkFgColor);
 		assertEquals(0xAABBCC, model.vkBgColorSelected);
@@ -94,6 +97,7 @@ public class ConfigFormStateTest {
 		model.fpsLimit = 60;
 		model.emulationSpeedPercent = 250;
 		model.showEmulationSpeed = true;
+		model.timingMode = TimingMode.REAL_WALL_CLOCK;
 		model.vkHideDelay = 250;
 		model.vkBgColor = 0x010203;
 		model.showKeyboard = true;
@@ -108,6 +112,7 @@ public class ConfigFormStateTest {
 		assertEquals("60", state.fpsLimit);
 		assertEquals("250", state.emulationSpeed);
 		assertTrue(state.showEmulationSpeed);
+		assertEquals(TimingMode.REAL_WALL_CLOCK, state.timingMode);
 		assertEquals("250", state.vkHideDelay);
 		assertEquals("010203", state.vkBackground);
 		assertEquals("64", Integer.toString(state.vkAlpha));
@@ -158,5 +163,6 @@ public class ConfigFormStateTest {
 
 		assertEquals(100, model.emulationSpeedPercent);
 		assertTrue(model.showEmulationSpeed);
+		assertEquals(TimingMode.FULL_GUEST_TIME, model.timingMode);
 	}
 }

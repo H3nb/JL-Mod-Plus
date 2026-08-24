@@ -279,7 +279,9 @@ public class MicroActivity extends AppCompatActivity {
 
 					@Override
 					public void onResetEmulationSpeed() {
-						onSetEmulationSpeed(EmulationSpeed.NORMAL_PERCENT);
+						onSetEmulationSpeed(microLoader == null
+								? EmulationSpeed.NORMAL_PERCENT
+								: microLoader.getConfiguredEmulationSpeedPercent());
 					}
 
 					@Override
@@ -418,6 +420,16 @@ public class MicroActivity extends AppCompatActivity {
 	public void onPause() {
 		hideSoftInput();
 		super.onPause();
+	}
+
+	@Override
+	protected void onDestroy() {
+		// A MIDlet chooser, malformed archive, or Activity teardown can happen before a
+		// MidletThread is started. In that window MicroLoader still owns any launch session.
+		if (microLoader != null) {
+			microLoader.closeTimingSessionIfNotTransferred();
+		}
+		super.onDestroy();
 	}
 
 	private void hideSoftInput() {
@@ -667,6 +679,33 @@ public class MicroActivity extends AppCompatActivity {
 	public void setCurrent(Displayable displayable) {
 		ViewHandler.postEvent(new SetCurrentEvent(current, displayable));
 		current = displayable;
+	}
+
+	/** Implements MIDP's setCurrent(null) background request without changing guest current state. */
+	public void requestBackground() {
+		runOnUiThread(() -> {
+			if (!isFinishing() && !isDestroyed()) {
+				moveTaskToBack(true);
+			}
+		});
+	}
+
+	/** Implements MIDP's foreground request without changing the guest Displayable. */
+	public void requestForeground() {
+		runOnUiThread(() -> {
+			if (isFinishing() || isDestroyed()) {
+				return;
+			}
+			try {
+				ActivityManager activityManager =
+						(ActivityManager) getSystemService(ACTIVITY_SERVICE);
+				if (activityManager != null) {
+					activityManager.moveTaskToFront(getTaskId(), ActivityManager.MOVE_TASK_WITH_HOME);
+				}
+			} catch (SecurityException ignored) {
+				// Foregrounding is a host convenience; Android may reject it for background starts.
+			}
+		});
 	}
 
 	public Displayable getCurrent() {

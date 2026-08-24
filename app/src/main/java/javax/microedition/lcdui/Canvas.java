@@ -151,7 +151,7 @@ public abstract class Canvas extends Displayable {
 	private int displayWidth;
 	private int displayHeight;
 	private boolean fullscreen;
-	private boolean visible;
+	private volatile boolean visible;
 	private boolean sizeChangedCalled;
 	private static Image offscreen;
 	private Image offscreenCopy;
@@ -602,10 +602,15 @@ public abstract class Canvas extends Displayable {
 	}
 
 	public final void repaint(int x, int y, int width, int height) {
+		if (!visible || !hasVisibleRegion(x, y, width, height)) {
+			return;
+		}
 		limitFps();
 		boolean post;
 		synchronized (paintEvent.clip) {
-			post = paintEvent.invalidateClip(this, x, y, x + width, y + height) && !paintEvent.isPending;
+			post = paintEvent.invalidateClip(
+					this, x, y, safeRegionEnd(x, width), safeRegionEnd(y, height))
+					&& !paintEvent.isPending;
 			if (post) {
 				paintEvent.isPending = true;
 			}
@@ -624,12 +629,10 @@ public abstract class Canvas extends Displayable {
 
 	// GameCanvas
 	protected void flushBuffer(Image image, int x, int y, int width, int height) {
-		limitFps();
-		if (width <= 0 || height <= 0 ||
-				x + width < 0 || y + height < 0 ||
-				x >= this.width || y >= this.height) {
+		if (!visible || !hasVisibleRegion(x, y, width, height)) {
 			return;
 		}
+		limitFps();
 		synchronized (bufferLock) {
 			if (Thread.holdsLock(paintEvent)) {
 				offscreen.getSingleGraphics().flush(image, x, y, width, height);
@@ -639,6 +642,20 @@ public abstract class Canvas extends Displayable {
 			publishFrameLocked();
 		}
 		requestFlushToScreen();
+	}
+
+	private boolean hasVisibleRegion(int x, int y, int regionWidth, int regionHeight) {
+		if (regionWidth <= 0 || regionHeight <= 0 || this.width <= 0 || this.height <= 0) {
+			return false;
+		}
+		long right = (long) x + regionWidth;
+		long bottom = (long) y + regionHeight;
+		return right > 0L && bottom > 0L && x < this.width && y < this.height;
+	}
+
+	private static int safeRegionEnd(int start, int size) {
+		long end = (long) start + size;
+		return end >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) end;
 	}
 
 	// ExtendedImage

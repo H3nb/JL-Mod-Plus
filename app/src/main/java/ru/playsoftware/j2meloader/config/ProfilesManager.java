@@ -37,6 +37,7 @@ import javax.microedition.util.ContextHolder;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import javax.microedition.shell.timing.EmulationSpeed;
+import javax.microedition.shell.timing.TimingMode;
 import ru.playsoftware.j2meloader.util.FileUtils;
 import ru.playsoftware.j2meloader.util.XmlUtils;
 
@@ -194,10 +195,14 @@ public class ProfilesManager {
 		int normalizedSpeed = EmulationSpeed.sanitizePercent(params.emulationSpeedPercent);
 		boolean speedNeedsMigration = params.emulationSpeedPercent != normalizedSpeed;
 		params.emulationSpeedPercent = normalizedSpeed;
+		int normalizedTimingMode = TimingMode.sanitize(params.timingMode);
+		boolean timingModeNeedsMigration = params.timingMode != normalizedTimingMode;
+		params.timingMode = normalizedTimingMode;
 		if (versionNeedsMigration) {
 			params.version = ProfileModel.VERSION;
 		}
-		if (persistMigrations && (versionNeedsMigration || speedNeedsMigration)) {
+		if (persistMigrations && (versionNeedsMigration || speedNeedsMigration
+				|| timingModeNeedsMigration)) {
 			ProfilesManager.saveConfig(params);
 		}
 		return params;

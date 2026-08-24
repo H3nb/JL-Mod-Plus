@@ -40,10 +40,10 @@ import javax.microedition.shell.timing.TimingSnapshot;
  *
  * <p>Recurring tasks are scheduled with either a fixed period or a fixed rate:
  * <ul>
- *   <li>With the default <strong>fixed-period execution</strong>, each
- *       successive run of a task is scheduled relative to the start time of
- *       the previous run, so two runs are never fired closer together in time
- *       than the specified {@code period}.
+ *   <li>With the default <strong>fixed-delay execution</strong>, each
+ *       successive run of a task is scheduled relative to the actual
+ *       execution time (dispatch/start) of the previous run, so delays
+ *       accumulate naturally.
  *   <li>With <strong>fixed-rate execution</strong>, the start time of each
  *       successive run of a task is scheduled without regard for when the
  *       previous run took place. This may result in a series of bunched-up runs
@@ -63,114 +63,176 @@ public class Timer {
 
     private static final class TimerImpl extends Thread {
 
+        /** A binary heap whose key is comparable within one Timer deadline domain. */
         private static final class TimerHeap {
-            private int DEFAULT_HEAP_SIZE = 256;
+            private static final int DEFAULT_HEAP_SIZE = 256;
 
             private TimerTask[] timers = new TimerTask[DEFAULT_HEAP_SIZE];
+            private int size;
 
-            private int size = 0;
-
-            private int deletedCancelledNumber = 0;
-
-            public TimerTask minimum() {
-                return timers[0];
+            TimerTask minimum() {
+                return size == 0 ? null : timers[0];
             }
 
-            public boolean isEmpty() {
+            boolean isEmpty() {
                 return size == 0;
             }
 
-            public void insert(TimerTask task) {
+            void insert(TimerTask task) {
                 if (timers.length == size) {
                     TimerTask[] appendedTimers = new TimerTask[size * 2];
                     System.arraycopy(timers, 0, appendedTimers, 0, size);
                     timers = appendedTimers;
                 }
-                timers[size++] = task;
-                upHeap();
+                timers[size] = task;
+                upHeap(size++);
             }
 
-            public void delete(int pos) {
-                // posible to delete any position of the heap
-                if (pos >= 0 && pos < size) {
-                    timers[pos] = timers[--size];
-                    timers[size] = null;
-                    downHeap(pos);
+            void delete(int position) {
+                if (position < 0 || position >= size) {
+                    return;
+                }
+                int replacement = --size;
+                TimerTask moved = timers[replacement];
+                timers[replacement] = null;
+                if (position == replacement) {
+                    return;
+                }
+                timers[position] = moved;
+                int parent = (position - 1) / 2;
+                if (position > 0 && timers[position].when < timers[parent].when) {
+                    upHeap(position);
+                } else {
+                    downHeap(position);
                 }
             }
 
-            private void upHeap() {
-                int current = size - 1;
-                int parent = (current - 1) / 2;
-
-                while (timers[current].when < timers[parent].when) {
-                    // swap the two
+            private void upHeap(int position) {
+                int current = position;
+                while (current > 0) {
+                    int parent = (current - 1) / 2;
+                    if (timers[parent].when <= timers[current].when) {
+                        break;
+                    }
                     TimerTask tmp = timers[current];
                     timers[current] = timers[parent];
                     timers[parent] = tmp;
-
-                    // update pos and current
                     current = parent;
-                    parent = (current - 1) / 2;
                 }
             }
 
-            private void downHeap(int pos) {
-                int current = pos;
-                int child = 2 * current + 1;
-
-                while (child < size && size > 0) {
-                    // compare the children if they exist
+            private void downHeap(int position) {
+                int current = position;
+                while (true) {
+                    int child = 2 * current + 1;
+                    if (child >= size) {
+                        return;
+                    }
                     if (child + 1 < size
                             && timers[child + 1].when < timers[child].when) {
                         child++;
                     }
-
-                    // compare selected child with parent
-                    if (timers[current].when < timers[child].when) {
-                        break;
+                    if (timers[current].when <= timers[child].when) {
+                        return;
                     }
-
-                    // swap the two
                     TimerTask tmp = timers[current];
                     timers[current] = timers[child];
                     timers[child] = tmp;
-
-                    // update pos and current
                     current = child;
-                    child = 2 * current + 1;
                 }
             }
 
-            public void reset() {
+            void reset() {
                 timers = new TimerTask[DEFAULT_HEAP_SIZE];
                 size = 0;
             }
 
-            public void adjustMinimum() {
-                downHeap(0);
-            }
-
-            public void deleteIfCancelled() {
+            int deleteIfCancelled() {
+                int deleted = 0;
                 for (int i = 0; i < size; i++) {
-                    if (timers[i].cancelled) {
-                        deletedCancelledNumber++;
-                        delete(i);
-                        // re-try this point
-                        i--;
+                    TimerTask task = timers[i];
+                    boolean cancelled;
+                    synchronized (task.lock) {
+                        cancelled = task.cancelled;
+                    }
+                    if (cancelled) {
+                        delete(i--);
+                        deleted++;
                     }
                 }
+                return deleted;
             }
 
-            private int getTask(TimerTask task) {
-                for (int i = 0; i < timers.length; i++) {
+            int getTask(TimerTask task) {
+                for (int i = 0; i < size; i++) {
                     if (timers[i] == task) {
                         return i;
                     }
                 }
                 return -1;
             }
+        }
 
+        /**
+         * Keeps separate heaps for guest-monotonic and absolute Date deadlines. The two heads
+         * are the only values that need host-delay projection, so mixed-domain selection remains
+         * correct without scanning every queued task after each wakeup.
+         */
+        private static final class TimerQueue {
+            private final TimerHeap relativeTasks = new TimerHeap();
+            private final TimerHeap absoluteTasks = new TimerHeap();
+
+            boolean isEmpty() {
+                return relativeTasks.isEmpty() && absoluteTasks.isEmpty();
+            }
+
+            TimerTask minimum(TimerImpl timer) {
+                TimerTask relative = relativeTasks.minimum();
+                TimerTask absolute = absoluteTasks.minimum();
+                if (relative == null) {
+                    return absolute;
+                }
+                if (absolute == null) {
+                    return relative;
+                }
+                return timer.hostDelayMillis(relative) <= timer.hostDelayMillis(absolute)
+                        ? relative : absolute;
+            }
+
+            void insert(TimerTask task) {
+                heapFor(task).insert(task);
+            }
+
+            boolean contains(TimerTask task) {
+                return heapFor(task).getTask(task) >= 0
+                        || (task.relativeGuestTime
+                        ? absoluteTasks.getTask(task) >= 0
+                        : relativeTasks.getTask(task) >= 0);
+            }
+
+            void delete(TimerTask task) {
+                TimerHeap heap = heapFor(task);
+                int position = heap.getTask(task);
+                if (position < 0) {
+                    TimerHeap other = task.relativeGuestTime ? absoluteTasks : relativeTasks;
+                    position = other.getTask(task);
+                    heap = other;
+                }
+                heap.delete(position);
+            }
+
+            void reset() {
+                relativeTasks.reset();
+                absoluteTasks.reset();
+            }
+
+            int deleteIfCancelled() {
+                return relativeTasks.deleteIfCancelled() + absoluteTasks.deleteIfCancelled();
+            }
+
+            private TimerHeap heapFor(TimerTask task) {
+                return task.relativeGuestTime ? relativeTasks : absoluteTasks;
+            }
         }
 
         /**
@@ -194,7 +256,7 @@ public class Timer {
          * Contains scheduled events, sorted according to
          * {@code when} field of TaskScheduled object.
          */
-        private TimerHeap tasks = new TimerHeap();
+        private final TimerQueue tasks = new TimerQueue();
 
         /**
          * Starts a new timer.
@@ -221,7 +283,10 @@ public class Timer {
             try {
                 while (true) {
                     TimerTask task = null;
+                    TimerTask taskToSleep = null;
                     long timeToSleep = 0L;
+                    long fixedDelayStartTime = 0L;
+                    long fixedDelayStartWallTime = 0L;
                     boolean waitingForTask = false;
                     synchronized (this) {
                         // need to check cancelled inside the synchronized block
@@ -236,18 +301,22 @@ public class Timer {
                             // closes. Unlike Object.wait(), this can be woken by the session.
                             waitingForTask = true;
                         } else {
-                            long currentTime = currentTimeMillis();
+                            // The queue can contain relative guest-monotonic and absolute
+                            // Date/epoch deadlines at the same time. Raw `when` values are not
+                            // comparable across those domains, so choose by remaining time.
+                            task = tasks.minimum(this);
+                            long currentTime = currentTimeMillis(task);
                             if (isStaleTimingSession()) {
                                 return;
                             }
 
-                            task = tasks.minimum();
-
                             synchronized (task.lock) {
                                 if (task.cancelled) {
-                                    tasks.delete(0);
+                                    tasks.delete(task);
                                     continue;
                                 }
+
+                                refreshScheduledWallTime(task);
 
                                 // check the time to sleep for the first task scheduled
                                 timeToSleep = task.when - currentTime;
@@ -257,42 +326,62 @@ public class Timer {
                                 // Do not hold the Timer lock while waiting. Scheduling/canceling
                                 // must be able to interrupt this worker and publish an earlier
                                 // deadline.
+                                taskToSleep = task;
                                 task = null;
                                 guestWaiting = true;
                             } else {
                                 // no sleep is necessary before launching the task
 
                                 synchronized (task.lock) {
-                                    int pos = 0;
-                                    if (tasks.minimum().when != task.when) {
-                                        pos = tasks.getTask(task);
+									if (!tasks.contains(task)) {
+                                        task = null;
+                                        continue;
                                     }
                                     if (task.cancelled) {
-                                        tasks.delete(tasks.getTask(task));
+										tasks.delete(task);
                                         task = null;
                                         continue;
                                     }
 
-                                    // set time to schedule
-                                    task.setScheduledTime(task.when);
+                                    if (task.period >= 0 && !task.fixedRate) {
+                                        // CLDC fixed-delay execution is relative to the actual
+                                        // execution/dispatch time, not callback completion. Capture
+                                        // both domains before entering guest code; the next deadline
+                                        // is published after run() returns so queue ownership stays
+                                        // serialized.
+                                        fixedDelayStartTime = currentTimeMillis(task);
+                                        fixedDelayStartWallTime = wallTimeMillis();
+                                    }
+
+                                    // Publish the nominal Date.getTime() value, not the dispatch
+                                    // clock. Games use this value for tardiness and frame-skipping
+                                    // decisions.
+                                    task.setScheduledTime(task.scheduledWallTime);
+                                    task.executionStarted = true;
 
                                     // remove task from queue
-                                    tasks.delete(pos);
+                                    tasks.delete(task);
 
                                     // set when the next task should be launched
                                     if (task.period >= 0) {
                                         // this is a repeating task,
                                         if (task.fixedRate) {
                                             // task is scheduled at fixed rate
-                                            task.when = task.when + task.period;
+                                            task.when = saturatingAdd(task.when, task.period);
+                                            task.scheduledWallTime = nextFixedRateWallTime(task);
                                         } else {
-                                            // task is scheduled at fixed delay in guest wall-clock
-                                            // time
-                                            task.when = currentTimeMillis() + task.period;
+                                            // Fixed-delay tasks are scheduled after the current run
+                                            // completes. Keep the task out of the queue while guest
+                                            // code is executing.
+                                            task.when = 0L;
                                         }
 
-                                        // insert this task into queue
-                                        insertTask(task);
+                                        if (task.fixedRate) {
+                                            // Fixed-rate tasks remain queued before the callback so
+                                            // missed periods can catch up according to the CLDC
+                                            // contract.
+                                            insertTask(task);
+                                        }
                                     } else {
                                         task.when = 0;
                                     }
@@ -311,7 +400,7 @@ public class Timer {
 
                     if (task == null) {
                         try {
-                            sleepGuestDuration(timeToSleep);
+                            sleepTaskDuration(taskToSleep, timeToSleep);
                         } catch (InterruptedException ignored) {
                             // A new task, cancellation, or a host lifecycle transition requested
                             // a fresh queue evaluation.
@@ -335,11 +424,6 @@ public class Timer {
                     try {
                         task.run();
                         taskCompletedNormally = true;
-                    // Changes: J2ME compat
-                    } catch (Exception e) {
-                        task.cancel();
-                        taskCompletedNormally = true;
-                    // End changes
                     } finally {
                         if (!taskCompletedNormally) {
                             synchronized (this) {
@@ -347,10 +431,22 @@ public class Timer {
                             }
                         }
                     }
+                    if (taskCompletedNormally && task.period >= 0 && !task.fixedRate) {
+                        rescheduleFixedDelayTask(task, fixedDelayStartTime, fixedDelayStartWallTime);
+                    }
                 }
-            } finally {
-                if (timingSession != null) {
-                    timingSession.unregisterCloseAwareThread(this);
+			} finally {
+				// A worker that exits for any reason is a terminated Timer, even when the exit did
+				// not pass through Timer.cancel(). Publishing this state under the Timer lock makes
+				// later schedule() calls fail with the CLDC-required IllegalStateException instead
+				// of silently accepting tasks into a queue that no thread services.
+				synchronized (this) {
+					cancelled = true;
+					tasks.reset();
+					guestWaiting = false;
+				}
+				if (timingSession != null) {
+					timingSession.unregisterCloseAwareThread(this);
                 }
             }
         }
@@ -364,20 +460,161 @@ public class Timer {
             }
         }
 
-        private long currentTimeMillis() {
+			private void rescheduleFixedDelayTask(
+					TimerTask task, long executionStartTime, long executionStartWallTime) {
+            synchronized (this) {
+                if (cancelled || isStaleTimingSession()) {
+                    return;
+                }
+                synchronized (task.lock) {
+                    if (task.cancelled) {
+                        return;
+                    }
+					task.when = saturatingAdd(executionStartTime, task.period);
+					if (task.relativeGuestTime && timingSession != null) {
+						task.scheduledWallTime =
+								timingSession.wallTimeMillisForGuestMonotonicMillis(task.when);
+					} else {
+						task.scheduledWallTime = saturatingAdd(
+								executionStartWallTime,
+								wallDelayMillis(task.period, task.relativeGuestTime));
+					}
+					insertTask(task);
+                }
+            }
+        }
+
+        private long currentTimeMillis(boolean relativeGuestTime) {
+            if (timingSession == null) {
+                return System.currentTimeMillis();
+            }
+            if (relativeGuestTime) {
+                TimingSnapshot snapshot = timingSession.snapshotIfOpen();
+                return snapshot == null
+                        ? System.currentTimeMillis()
+                        : snapshot.guestMonotonicNanos() / 1_000_000L;
+            }
+            return wallTimeMillis();
+        }
+
+        private long currentTimeMillis(TimerTask task) {
+            return currentTimeMillis(task.relativeGuestTime);
+        }
+
+        /**
+         * Relative schedules have a guest-monotonic deadline but publish a Date-domain nominal
+         * time. In real-wall-clock mode that nominal wall time must be reprojected after a speed
+         * transition; otherwise scheduledExecutionTime() can report the target calculated at the
+         * old speed even though the task is now due much earlier or later.
+         */
+        private void refreshScheduledWallTime(TimerTask task) {
+			if (!task.relativeGuestTime
+					|| timingSession == null) {
+				return;
+			}
+            long scheduledWallTime = timingSession.wallTimeMillisForGuestMonotonicMillis(task.when);
+            task.scheduledWallTime = scheduledWallTime;
+            if (task.period > 0L) {
+                long nextWhen = saturatingAdd(task.when, task.period);
+                if (nextWhen > task.when) {
+                    long nextWallTime =
+                            timingSession.wallTimeMillisForGuestMonotonicMillis(nextWhen);
+                    task.scheduledWallPeriodMillis =
+                            nonNegativeDifference(nextWallTime, scheduledWallTime);
+                }
+            }
+        }
+
+		private long nextFixedRateWallTime(TimerTask task) {
+			if (task.relativeGuestTime && timingSession != null) {
+				long nextWallTime =
+						timingSession.wallTimeMillisForGuestMonotonicMillis(task.when);
+				task.scheduledWallPeriodMillis = nonNegativeDifference(
+						nextWallTime, task.scheduledWallTime);
+				return nextWallTime;
+			}
+			return saturatingAdd(task.scheduledWallTime, task.scheduledWallPeriodMillis);
+        }
+
+        private long timeToSleepMillis(TimerTask task) {
+            synchronized (task.lock) {
+                long currentTime = currentTimeMillis(task);
+                return task.when - currentTime;
+            }
+        }
+
+        private long hostDelayMillis(TimerTask task) {
+            long activeDelay = timeToSleepMillis(task);
+            if (activeDelay <= 0L || timingSession == null
+                    || (!task.relativeGuestTime && !timingSession.usesGuestWallClock())) {
+                return activeDelay;
+            }
+            return timingSession.hostDelayMillis(activeDelay);
+        }
+
+        private long wallTimeMillis() {
             if (timingSession == null) {
                 return System.currentTimeMillis();
             }
             TimingSnapshot snapshot = timingSession.snapshotIfOpen();
-            return snapshot == null ? System.currentTimeMillis() : snapshot.guestWallTimeMillis();
+            if (snapshot == null) {
+                return System.currentTimeMillis();
+            }
+            return timingSession.usesGuestWallClock()
+                    ? snapshot.guestWallTimeMillis()
+                    : timingSession.hostWallTimeMillisOr(System.currentTimeMillis());
         }
 
-        private void sleepGuestDuration(long guestMillis) throws InterruptedException {
-            if (timingSession == null) {
-                Thread.sleep(guestMillis);
-            } else {
-                timingSession.sleep(guestMillis);
+        private long wallDelayMillis(long activeMillis, boolean relativeGuestTime) {
+            if (activeMillis <= 0L || timingSession == null
+                    || !relativeGuestTime || timingSession.usesGuestWallClock()) {
+                return Math.max(0L, activeMillis);
             }
+            return timingSession.hostDelayMillis(activeMillis);
+        }
+
+        private void sleepTaskDuration(TimerTask task, long millis)
+                throws InterruptedException {
+            if (task == null) {
+                throw new IllegalStateException("Timer deadline has no task");
+            }
+            if (timingSession == null) {
+                Thread.sleep(millis);
+            } else {
+                boolean guestDuration = task.relativeGuestTime || timingSession.usesGuestWallClock();
+                timingSession.awaitSchedulerDuration(millis, guestDuration);
+            }
+        }
+
+        private static long saturatingAdd(long left, long right) {
+            if (right > 0L && left > Long.MAX_VALUE - right) {
+                return Long.MAX_VALUE;
+            }
+            return left + right;
+        }
+
+        private static long nonNegativeDifference(long later, long earlier) {
+            if (later <= earlier) {
+                return 0L;
+            }
+            if (earlier < 0L && later > Long.MAX_VALUE + earlier) {
+                return Long.MAX_VALUE;
+            }
+            return later - earlier;
+        }
+
+        private static long checkedAdd(long left, long right) {
+            if (right > 0L && left > Long.MAX_VALUE - right) {
+                throw new IllegalArgumentException("Illegal delay to start the TimerTask");
+            }
+            if (right < 0L && left < Long.MIN_VALUE - right) {
+                throw new IllegalArgumentException("Illegal delay to start the TimerTask");
+            }
+            long result = left + right;
+            if (result < 0L) {
+                throw new IllegalArgumentException("Illegal delay to start the TimerTask");
+            }
+            return result;
         }
 
         private boolean isStaleTimingSession() {
@@ -403,9 +640,7 @@ public class Timer {
                 return 0;
             }
             // callers are synchronized
-            tasks.deletedCancelledNumber = 0;
-            tasks.deleteIfCancelled();
-            return tasks.deletedCancelledNumber;
+            return tasks.deleteIfCancelled();
         }
 
     }
@@ -518,12 +753,12 @@ public class Timer {
      *                if the {@code Timer} has been canceled, or if the task has been
      *                scheduled or canceled.
      */
-    public void schedule(TimerTask task, Date when) {
-        if (when.getTime() < 0) {
-            throw new IllegalArgumentException("when < 0: " + when.getTime());
-        }
-        long delay = when.getTime() - impl.currentTimeMillis();
-        scheduleImpl(task, delay < 0 ? 0 : delay, -1, false);
+	public void schedule(TimerTask task, Date when) {
+		long requestedTime = when.getTime();
+		if (requestedTime < 0) {
+			throw new IllegalArgumentException("when < 0: " + requestedTime);
+		}
+		scheduleAbsoluteImpl(task, requestedTime, -1, false);
     }
 
     /**
@@ -543,7 +778,7 @@ public class Timer {
         if (delay < 0) {
             throw new IllegalArgumentException("delay < 0: " + delay);
         }
-        scheduleImpl(task, delay, -1, false);
+		scheduleImpl(task, delay, -1, false, true);
     }
 
     /**
@@ -565,7 +800,7 @@ public class Timer {
         if (delay < 0 || period <= 0) {
             throw new IllegalArgumentException();
         }
-        scheduleImpl(task, delay, period, false);
+		scheduleImpl(task, delay, period, false, true);
     }
 
     /**
@@ -584,12 +819,12 @@ public class Timer {
      *                if the {@code Timer} has been canceled, or if the task has been
      *                scheduled or canceled.
      */
-    public void schedule(TimerTask task, Date when, long period) {
-        if (period <= 0 || when.getTime() < 0) {
-            throw new IllegalArgumentException();
-        }
-        long delay = when.getTime() - impl.currentTimeMillis();
-        scheduleImpl(task, delay < 0 ? 0 : delay, period, false);
+	public void schedule(TimerTask task, Date when, long period) {
+		long requestedTime = when.getTime();
+		if (period <= 0 || requestedTime < 0) {
+			throw new IllegalArgumentException();
+		}
+		scheduleAbsoluteImpl(task, requestedTime, period, false);
     }
 
     /**
@@ -612,7 +847,7 @@ public class Timer {
         if (delay < 0 || period <= 0) {
             throw new IllegalArgumentException();
         }
-        scheduleImpl(task, delay, period, true);
+		scheduleImpl(task, delay, period, true, true);
     }
 
     /**
@@ -631,28 +866,36 @@ public class Timer {
      *                if the {@code Timer} has been canceled, or if the task has been
      *                scheduled or canceled.
      */
-    public void scheduleAtFixedRate(TimerTask task, Date when, long period) {
-        if (period <= 0 || when.getTime() < 0) {
-            throw new IllegalArgumentException();
-        }
-        long delay = when.getTime() - impl.currentTimeMillis();
-        scheduleImpl(task, delay, period, true);
-    }
+	public void scheduleAtFixedRate(TimerTask task, Date when, long period) {
+		long requestedTime = when.getTime();
+		if (period <= 0 || requestedTime < 0) {
+			throw new IllegalArgumentException();
+		}
+		scheduleAbsoluteImpl(task, requestedTime, period, true);
+	}
 
     /*
      * Schedule a task.
      */
-    private void scheduleImpl(TimerTask task, long delay, long period, boolean fixed) {
+	private void scheduleImpl(
+			TimerTask task,
+			long delay,
+			long period,
+			boolean fixed,
+			boolean relativeGuestTime) {
         synchronized (impl) {
             if (impl.cancelled) {
                 throw new IllegalStateException("Timer was canceled");
             }
 
-            long when = delay + impl.currentTimeMillis();
-
-            if (when < 0) {
-                throw new IllegalArgumentException("Illegal delay to start the TimerTask: " + when);
+            if (relativeGuestTime) {
+                // CLDC requires validation against the wall-clock current time even though the
+                // execution queue uses a separate guest-monotonic domain.
+                TimerImpl.checkedAdd(delay, impl.wallTimeMillis());
             }
+
+            long when = TimerImpl.saturatingAdd(
+                    delay, impl.currentTimeMillis(relativeGuestTime));
 
             synchronized (task.lock) {
                 if (task.isScheduled()) {
@@ -663,13 +906,55 @@ public class Timer {
                     throw new IllegalStateException("TimerTask is canceled");
                 }
 
+                task.scheduled = true;
                 task.when = when;
-                task.period = period;
-                task.fixedRate = fixed;
+				task.period = period;
+				task.fixedRate = fixed;
+				task.relativeGuestTime = relativeGuestTime;
+				if (relativeGuestTime && impl.timingSession != null) {
+					task.scheduledWallTime =
+							timingSessionWallTimeFor(when);
+				} else {
+					task.scheduledWallTime = TimerImpl.saturatingAdd(
+							impl.wallTimeMillis(), impl.wallDelayMillis(delay, relativeGuestTime));
+				}
+				task.scheduledWallPeriodMillis = period > 0
+						? impl.wallDelayMillis(period, relativeGuestTime)
+						: 0L;
             }
 
             // insert the newTask into queue
             impl.insertTask(task);
-        }
-    }
+		}
+	}
+
+	private long timingSessionWallTimeFor(long guestMonotonicMillis) {
+		return impl.timingSession.wallTimeMillisForGuestMonotonicMillis(guestMonotonicMillis);
+	}
+
+	/** Schedules an epoch-domain Date deadline without converting it through a sampled delay. */
+	private void scheduleAbsoluteImpl(
+			TimerTask task, long requestedTime, long period, boolean fixed) {
+		synchronized (impl) {
+			if (impl.cancelled) {
+				throw new IllegalStateException("Timer was canceled");
+			}
+			synchronized (task.lock) {
+				if (task.isScheduled()) {
+					throw new IllegalStateException("TimerTask is scheduled already");
+				}
+				if (task.cancelled) {
+					throw new IllegalStateException("TimerTask is canceled");
+				}
+				task.scheduled = true;
+				task.when = requestedTime;
+				task.period = period;
+				task.fixedRate = fixed;
+				task.relativeGuestTime = false;
+				task.scheduledWallTime = requestedTime;
+				task.scheduledWallPeriodMillis = period > 0L ? period : 0L;
+			}
+			impl.insertTask(task);
+		}
+	}
 }

@@ -17,6 +17,7 @@ package ru.playsoftware.j2meloader.config;
 import androidx.annotation.Nullable;
 
 import javax.microedition.shell.timing.EmulationSpeed;
+import javax.microedition.shell.timing.TimingMode;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -70,6 +71,7 @@ public final class ConfigFormState {
 	public final boolean showFps;
 	public final String emulationSpeed;
 	public final boolean showEmulationSpeed;
+	public final int timingMode;
 	public final boolean fontApplyDimensions;
 	public final boolean fontAA;
 	public final boolean showKeyboard;
@@ -112,6 +114,7 @@ public final class ConfigFormState {
 		showFps = builder.showFps;
 		emulationSpeed = builder.emulationSpeed;
 		showEmulationSpeed = builder.showEmulationSpeed;
+		timingMode = TimingMode.sanitize(builder.timingMode);
 		fontApplyDimensions = builder.fontApplyDimensions;
 		fontAA = builder.fontAA;
 		showKeyboard = builder.showKeyboard;
@@ -150,6 +153,7 @@ public final class ConfigFormState {
 				.showFps(params.showFps)
 				.emulationSpeed(Integer.toString(EmulationSpeed.sanitizePercent(params.emulationSpeedPercent)))
 				.showEmulationSpeed(params.showEmulationSpeed)
+				.timingMode(TimingMode.sanitize(params.timingMode))
 				.fpsLimit(optionalInt(params.fpsLimit))
 				.fontSizeSmall(Integer.toString(params.fontSizeSmall))
 				.fontSizeMedium(Integer.toString(params.fontSizeMedium))
@@ -198,6 +202,7 @@ public final class ConfigFormState {
 		params.emulationSpeedPercent = EmulationSpeed.sanitizePercent(
 				parseInt(emulationSpeed, EmulationSpeed.NORMAL_PERCENT));
 		params.showEmulationSpeed = showEmulationSpeed;
+		params.timingMode = TimingMode.sanitize(timingMode);
 		params.fpsLimit = parseInt(fpsLimit, 0);
 
 		params.fontSizeSmall = parseInt(fontSizeSmall, 0);
@@ -305,6 +310,7 @@ public final class ConfigFormState {
 		private boolean showFps;
 		private String emulationSpeed = Integer.toString(EmulationSpeed.NORMAL_PERCENT);
 		private boolean showEmulationSpeed;
+		private int timingMode = TimingMode.FULL_GUEST_TIME;
 		private boolean fontApplyDimensions;
 		private boolean fontAA;
 		private boolean showKeyboard;
@@ -350,6 +356,7 @@ public final class ConfigFormState {
 			showFps = source.showFps;
 			emulationSpeed = source.emulationSpeed;
 			showEmulationSpeed = source.showEmulationSpeed;
+			timingMode = source.timingMode;
 			fontApplyDimensions = source.fontApplyDimensions;
 			fontAA = source.fontAA;
 			showKeyboard = source.showKeyboard;
@@ -392,6 +399,7 @@ public final class ConfigFormState {
 		public Builder showFps(boolean value) { showFps = value; return this; }
 		public Builder emulationSpeed(String value) { emulationSpeed = value; return this; }
 		public Builder showEmulationSpeed(boolean value) { showEmulationSpeed = value; return this; }
+		public Builder timingMode(int value) { timingMode = TimingMode.sanitize(value); return this; }
 		public Builder fontApplyDimensions(boolean value) { fontApplyDimensions = value; return this; }
 		public Builder fontAA(boolean value) { fontAA = value; return this; }
 		public Builder showKeyboard(boolean value) { showKeyboard = value; return this; }

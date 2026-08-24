@@ -22,6 +22,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,12 +42,13 @@ public class AndroidMethodVisitorTest {
 	}
 
 	@Test
-	public void yieldRewriteUsesHostCompatibilitySleep() {
+	public void yieldRewriteUsesNonThrowingBridge() {
 		byte[] source = createYieldClass();
 		byte[] transformed = transform(source);
 		List<String> calls = methodCalls(transformed, "yielded");
 
-		assertTrue(calls.contains("INVOKESTATIC java/lang/Thread.sleep(J)V"));
+		assertTrue(calls.contains(
+				"INVOKESTATIC javax/microedition/shell/GuestTimingBridge.yieldCompat()V"));
 		assertEquals(1, calls.size());
 	}
 
@@ -69,20 +71,54 @@ public class AndroidMethodVisitorTest {
 		byte[] transformed = transform(source);
 		List<String> calls = methodCalls(transformed, "dates");
 
-		assertTrue(calls.contains(
-				"INVOKESTATIC javax/microedition/shell/GuestTimingBridge.newDate()Ljava/util/Date;"));
+		assertEquals(2, calls.stream().filter(call -> call.equals(
+				"INVOKESTATIC javax/microedition/shell/GuestTimingBridge.currentTimeMillis()J"))
+				.count());
 		assertTrue(calls.contains(
 				"INVOKESTATIC javax/microedition/shell/GuestTimingBridge.calendarInstance()Ljava/util/Calendar;"));
 		assertTrue(calls.contains(
 				"INVOKESTATIC javax/microedition/shell/GuestTimingBridge.calendarInstance(Ljava/util/TimeZone;)Ljava/util/Calendar;"));
-		assertEquals(4, calls.size());
-		assertEquals(0, typeInstructions(transformed, "dates", "java/util/Date").size());
+		assertEquals(6, calls.size());
+		assertEquals(2, typeInstructions(transformed, "dates", "java/util/Date").size());
 
 		byte[] subclass = transform(createDateSubclassClass());
 		List<String> constructorCalls = methodCalls(subclass, "<init>");
 		assertTrue(constructorCalls.contains(
-				"INVOKESPECIAL java/util/Date.<init>()V"));
-		assertEquals(1, constructorCalls.size());
+				"INVOKESPECIAL java/util/Date.<init>(J)V"));
+		assertEquals(2, constructorCalls.size());
+	}
+
+	@Test
+	public void timerTypeIdentityIsRemappedAcrossDescriptorsAndClassLiterals() {
+		byte[] transformed = transform(createTimerTypeReferenceClass());
+		List<String> fields = fieldDescriptors(transformed);
+		List<String> methods = methodDescriptors(transformed, "timerTypes");
+
+		assertTrue(fields.contains("Ljavax/microedition/shell/custom/Timer;"));
+		assertTrue(methods.contains(
+				"(Ljavax/microedition/shell/custom/Timer;)Ljavax/microedition/shell/custom/TimerTask;"));
+		List<String> literals = ldcTypeDescriptors(transformed, "timerTypes");
+		assertTrue(literals.contains("Ljavax/microedition/shell/custom/Timer;"));
+		assertTrue(literals.contains("[Ljavax/microedition/shell/custom/TimerTask;"));
+	}
+
+	@Test
+	public void legacyTimerReflectionUsesParentOwnedBridge() {
+		byte[] transformed = transform(createTimerReflectionClass());
+		List<String> calls = methodCalls(transformed, "reflectiveTimer");
+
+		assertTrue(calls.contains(
+				"INVOKESTATIC javax/microedition/shell/GuestTimingBridge.forName"
+						+ "(Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Class;"));
+		assertTrue(calls.contains(
+				"INVOKESTATIC javax/microedition/shell/GuestTimingBridge.className"
+						+ "(Ljava/lang/Class;)Ljava/lang/String;"));
+		assertTrue(calls.contains(
+				"INVOKESTATIC javax/microedition/shell/GuestTimingBridge.classToString"
+						+ "(Ljava/lang/Class;)Ljava/lang/String;"));
+		assertTrue(calls.contains(
+				"INVOKESTATIC javax/microedition/shell/GuestTimingBridge.newInstance"
+						+ "(Ljava/lang/Class;)Ljava/lang/Object;"));
 	}
 
 
@@ -193,6 +229,60 @@ public class AndroidMethodVisitorTest {
 		return writer.toByteArray();
 	}
 
+	private static byte[] createTimerTypeReferenceClass() {
+		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+		writer.visit(Opcodes.V17, Opcodes.ACC_PUBLIC, "sample/TimerTypes", null,
+				"java/lang/Object", null);
+		writer.visitField(Opcodes.ACC_PUBLIC, "timer", "Ljava/util/Timer;", null, null).visitEnd();
+		MethodVisitor method = writer.visitMethod(
+				Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+				"timerTypes",
+				"(Ljava/util/Timer;)Ljava/util/TimerTask;",
+				null,
+				null);
+		method.visitCode();
+		method.visitLdcInsn(Type.getType("Ljava/util/Timer;"));
+		method.visitInsn(Opcodes.POP);
+		method.visitLdcInsn(Type.getType("[Ljava/util/TimerTask;"));
+		method.visitInsn(Opcodes.POP);
+		method.visitInsn(Opcodes.ACONST_NULL);
+		method.visitInsn(Opcodes.ARETURN);
+		method.visitMaxs(1, 1);
+		method.visitEnd();
+		writer.visitEnd();
+		return writer.toByteArray();
+	}
+
+	private static byte[] createTimerReflectionClass() {
+		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+		writer.visit(Opcodes.V17, Opcodes.ACC_PUBLIC, "sample/TimerReflection", null,
+				"java/lang/Object", null);
+		MethodVisitor method = writer.visitMethod(
+				Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+				"reflectiveTimer", "()V", null,
+				new String[] {"java/lang/ClassNotFoundException"});
+		method.visitCode();
+		method.visitLdcInsn("java.util.Timer");
+		method.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Class", "forName",
+				"(Ljava/lang/String;)Ljava/lang/Class;", false);
+		method.visitInsn(Opcodes.DUP);
+		method.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "newInstance",
+				"()Ljava/lang/Object;", false);
+		method.visitInsn(Opcodes.POP);
+		method.visitInsn(Opcodes.DUP);
+		method.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "toString",
+				"()Ljava/lang/String;", false);
+		method.visitInsn(Opcodes.POP);
+		method.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getName",
+				"()Ljava/lang/String;", false);
+		method.visitInsn(Opcodes.POP);
+		method.visitInsn(Opcodes.RETURN);
+		method.visitMaxs(1, 0);
+		method.visitEnd();
+		writer.visitEnd();
+		return writer.toByteArray();
+	}
+
 	private static List<String> methodCalls(byte[] classData, String methodName) {
 		List<String> calls = new ArrayList<>();
 		new ClassReader(classData).accept(new org.objectweb.asm.ClassVisitor(Opcodes.ASM9) {
@@ -240,9 +330,62 @@ public class AndroidMethodVisitorTest {
 		return types;
 	}
 
+	private static List<String> fieldDescriptors(byte[] classData) {
+		List<String> descriptors = new ArrayList<>();
+		new ClassReader(classData).accept(new org.objectweb.asm.ClassVisitor(Opcodes.ASM9) {
+			@Override
+			public org.objectweb.asm.FieldVisitor visitField(int access, String name, String descriptor,
+					String signature, Object value) {
+				descriptors.add(descriptor);
+				return super.visitField(access, name, descriptor, signature, value);
+			}
+		}, 0);
+		return descriptors;
+	}
+
+	private static List<String> methodDescriptors(byte[] classData, String methodName) {
+		List<String> descriptors = new ArrayList<>();
+		new ClassReader(classData).accept(new org.objectweb.asm.ClassVisitor(Opcodes.ASM9) {
+			@Override
+			public MethodVisitor visitMethod(int access, String name, String descriptor,
+					String signature, String[] exceptions) {
+				if (methodName.equals(name)) {
+					descriptors.add(descriptor);
+				}
+				return super.visitMethod(access, name, descriptor, signature, exceptions);
+			}
+		}, 0);
+		return descriptors;
+	}
+
+	private static List<String> ldcTypeDescriptors(byte[] classData, String methodName) {
+		List<String> descriptors = new ArrayList<>();
+		new ClassReader(classData).accept(new org.objectweb.asm.ClassVisitor(Opcodes.ASM9) {
+			@Override
+			public MethodVisitor visitMethod(int access, String name, String descriptor,
+					String signature, String[] exceptions) {
+				MethodVisitor next = super.visitMethod(access, name, descriptor, signature, exceptions);
+				if (!methodName.equals(name)) {
+					return next;
+				}
+				return new MethodVisitor(Opcodes.ASM9, next) {
+					@Override
+					public void visitLdcInsn(Object value) {
+						if (value instanceof Type) {
+							descriptors.add(((Type) value).getDescriptor());
+						}
+						super.visitLdcInsn(value);
+					}
+				};
+			}
+		}, 0);
+		return descriptors;
+	}
+
 	private static byte[] transform(byte[] source) {
 		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-		new ClassReader(source).accept(new AndroidClassVisitor(writer), 0);
+		ClassReader reader = new ClassReader(source);
+		reader.accept(new AndroidClassVisitor(writer, reader.getClassName()), 0);
 		return writer.toByteArray();
 	}
 

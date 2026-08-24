@@ -23,8 +23,11 @@ import org.junit.Test;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 
 import javax.microedition.shell.timing.TimingSession;
+import javax.microedition.shell.timing.TimingMode;
 import javax.microedition.shell.timing.TimingTimeSource;
 
 public class GuestTimingBridgeTest {
@@ -83,6 +86,33 @@ public class GuestTimingBridgeTest {
 	}
 
 	@Test
+	public void realWallClockModeKeepsDateAndCalendarOnHostTime() {
+		FakeTimeSource time = new FakeTimeSource(1_700_000_000_000L);
+		TimingSession session = new TimingSession(
+				time, 200, 1L, TimingMode.REAL_WALL_CLOCK);
+		GuestTimingBridge.install(session);
+		try {
+			long before = System.currentTimeMillis();
+			assertTrue(Math.abs(before - GuestTimingBridge.currentTimeMillis()) < 1_000L);
+			assertTrue(Math.abs(before - GuestTimingBridge.newDate().getTime()) < 1_000L);
+			assertTrue(Math.abs(before - GuestTimingBridge.calendarInstance().getTimeInMillis()) < 1_000L);
+		} finally {
+			GuestTimingBridge.clear(session);
+		}
+	}
+
+	@Test
+	public void yieldCompatPreservesInterruptStatus() {
+		Thread.currentThread().interrupt();
+		try {
+			GuestTimingBridge.yieldCompat();
+			assertTrue(Thread.currentThread().isInterrupted());
+		} finally {
+			Thread.interrupted();
+		}
+	}
+
+	@Test
 	public void bridgeFallsBackToHostClockAfterSessionClose() {
 		TimingSession session = new TimingSession(new FakeTimeSource(1_700_000_000_000L), 200, 1L);
 		GuestTimingBridge.install(session);
@@ -93,6 +123,97 @@ public class GuestTimingBridgeTest {
 			assertTrue(Math.abs(System.nanoTime() - GuestTimingBridge.nanoTime()) < 1_000_000_000L);
 		} finally {
 			GuestTimingBridge.clear(session);
+		}
+	}
+
+	@Test
+	public void classNameRestoresGuestTimerIdentityIncludingArrays() {
+		assertEquals("java.util.Timer",
+				GuestTimingBridge.className(javax.microedition.shell.custom.Timer.class));
+		assertEquals("java.util.TimerTask",
+				GuestTimingBridge.className(javax.microedition.shell.custom.TimerTask.class));
+		assertEquals("[Ljava.util.Timer;",
+				GuestTimingBridge.className(
+						javax.microedition.shell.custom.Timer[].class));
+		assertEquals("[[Ljava.util.TimerTask;",
+				GuestTimingBridge.className(
+						javax.microedition.shell.custom.TimerTask[][].class));
+		assertEquals("java.lang.String",
+				GuestTimingBridge.className(String.class));
+		assertEquals("class java.util.Timer",
+				GuestTimingBridge.classToString(javax.microedition.shell.custom.Timer.class));
+		assertEquals("int", GuestTimingBridge.classToString(Integer.TYPE));
+	}
+
+	@Test
+	public void reflectionUsesCallerLoaderAndMapsTimerArrays() throws Exception {
+		assertSame(javax.microedition.shell.custom.Timer.class,
+				GuestTimingBridge.forName("java.util.Timer", GuestTimingBridgeTest.class));
+		assertSame(javax.microedition.shell.custom.Timer[][].class,
+				GuestTimingBridge.forName("[[Ljava.util.Timer;", GuestTimingBridgeTest.class));
+
+		ChildOnlyLoader loader = new ChildOnlyLoader();
+		Class<?> childOnly = loader.loadGuestClass();
+		assertSame(childOnly, GuestTimingBridge.forName(childOnly.getName(), childOnly));
+	}
+
+	@Test
+	public void reflectiveDateConstructionUsesGuestClock() throws Exception {
+		FakeTimeSource time = new FakeTimeSource(1_700_000_000_000L);
+		TimingSession session = new TimingSession(time, 200, 1L);
+		GuestTimingBridge.install(session);
+		try {
+			time.monotonicNanos = 500_000_000L;
+			assertEquals(1_700_000_001_000L,
+					((Date) GuestTimingBridge.newInstance(Date.class)).getTime());
+		} finally {
+			GuestTimingBridge.clear(session);
+		}
+	}
+
+	private static final class GuestOnly {
+	}
+
+	private static final class ChildOnlyLoader extends ClassLoader {
+		private final String guestName = GuestOnly.class.getName();
+		private final byte[] guestBytes;
+
+		ChildOnlyLoader() {
+			super(GuestTimingBridgeTest.class.getClassLoader());
+			String resourceName = guestName.replace('.', '/') + ".class";
+			try (InputStream input = getParent().getResourceAsStream(resourceName);
+				 ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+				if (input == null) {
+					throw new AssertionError("Missing test class resource " + resourceName);
+				}
+				byte[] buffer = new byte[256];
+				for (int read; (read = input.read(buffer)) != -1; ) {
+					output.write(buffer, 0, read);
+				}
+				guestBytes = output.toByteArray();
+			} catch (Exception exception) {
+				throw new AssertionError(exception);
+			}
+		}
+
+		Class<?> loadGuestClass() throws ClassNotFoundException {
+			return loadClass(guestName, false);
+		}
+
+		@Override
+		protected Class<?> loadClass(String name, boolean resolve)
+				throws ClassNotFoundException {
+			if (guestName.equals(name)) {
+				Class<?> loaded = findLoadedClass(name);
+				if (loaded == null) {
+					loaded = defineClass(name, guestBytes, 0, guestBytes.length);
+				}
+				if (resolve) {
+					resolveClass(loaded);
+				}
+				return loaded;
+			}
+			return super.loadClass(name, resolve);
 		}
 	}
 
