@@ -32,6 +32,8 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
 
+import javax.microedition.shell.timing.TimingMode;
+
 public class ProfileConfigMatcherTest {
 	@Test
 	public void effectiveDraftAppliesFormButPreservesUnexposedFields() {
@@ -150,11 +152,13 @@ public class ProfileConfigMatcherTest {
 		assertEquals(ProfileModel.VERSION, loaded.version);
 		assertEquals(100, loaded.emulationSpeedPercent);
 		assertFalse(loaded.showEmulationSpeed);
+		assertEquals(TimingMode.FULL_GUEST_TIME, loaded.timingMode);
 		String migrated = new String(
 				Files.readAllBytes(new File(directory, "config.json").toPath()),
 				StandardCharsets.UTF_8);
-		assertTrue(migrated.contains("\"Version\": 4"));
+		assertTrue(migrated.contains("\"Version\": 5"));
 		assertTrue(migrated.contains("\"EmulationSpeedPercent\": 100"));
+		assertTrue(migrated.contains("\"TimingMode\": 0"));
 	}
 
 	@Test
@@ -167,6 +171,7 @@ public class ProfileConfigMatcherTest {
 		JsonObject json = new Gson().toJsonTree(source).getAsJsonObject();
 		json.remove("EmulationSpeedPercent");
 		json.remove("ShowEmulationSpeed");
+		json.remove("TimingMode");
 		Files.write(
 				new File(directory, "config.json").toPath(),
 				new Gson().toJson(json).getBytes(StandardCharsets.UTF_8));
@@ -176,6 +181,7 @@ public class ProfileConfigMatcherTest {
 		assertEquals(ProfileModel.VERSION, loaded.version);
 		assertEquals(100, loaded.emulationSpeedPercent);
 		assertFalse(loaded.showEmulationSpeed);
+		assertEquals(TimingMode.FULL_GUEST_TIME, loaded.timingMode);
 	}
 
 	@Test

@@ -20,58 +20,57 @@ package javax.microedition.lcdui;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 
-import javax.microedition.lcdui.event.SimpleEvent;
 import javax.microedition.shell.GuestTimingBridge;
+import javax.microedition.shell.timing.TimingSession;
+import javax.microedition.shell.timing.TimingSnapshot;
 import javax.microedition.util.ContextHolder;
+
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Alert extends Screen {
 	public static final int FOREVER = -2;
 	public static final Command DISMISS_COMMAND = new Command("", Command.OK, 0);
 
-	private String text;
-	private Image image;
-	private AlertType type;
-	private int timeout = FOREVER;
-	private Gauge indicator;
-	private AlertDialog dialog;
-	private Runnable timeoutRunnable;
-	private Displayable nextDisplayable;
-	private Command positive;
-	private Command negative;
-	private Command neutral;
+	private static final class DialogCommandState {
+		private final AtomicBoolean dispatched = new AtomicBoolean();
+	}
 
-	private final SimpleEvent msgSetString = new SimpleEvent() {
-		@Override
-		public void process() {
-			dialog.setMessage(text);
-		}
-	};
-
-	private final SimpleEvent msgSetImage = new SimpleEvent() {
-		@Override
-		public void process() {
-			BitmapDrawable bitmapDrawable = new BitmapDrawable(image.getBitmap());
-			dialog.setIcon(bitmapDrawable);
-		}
-	};
-
-	private final SimpleEvent msgCommandsChanged = new SimpleEvent() {
-		@Override
-		public void process() {
-			if (listener == null) {
-				dialog.setCancelable(true);
-				dialog.setCanceledOnTouchOutside(true);
-				return;
-			}
-			dialog.setCanceledOnTouchOutside(commands.isEmpty());
-		}
-	};
+	private volatile String text;
+	private volatile Image image;
+	/** Snapshot used by the Android dialog so a mutable guest image cannot race the UI thread. */
+	private volatile Bitmap imageBitmap;
+	private volatile AlertType type;
+	private volatile int timeout = FOREVER;
+	private volatile Gauge indicator;
+	/** Indicator instance whose view is attached to the currently visible Android dialog. */
+	private volatile Gauge dialogIndicator;
+	private volatile AlertDialog dialog;
+	private volatile Runnable timeoutRunnable;
+	private volatile long timeoutGeneration;
+	private volatile Displayable nextDisplayable;
+	private volatile boolean contentModal;
+	/** True when the visible dialog uses a ListView for an Alert with more than three commands. */
+	private volatile boolean commandListDialog;
+	/** Token belonging to the current Android dialog; old dialog callbacks cannot affect a rebuild. */
+	private volatile DialogCommandState dialogCommandState;
+	private final Object timeoutLock = new Object();
+	private long timeoutGuestDeadlineMillis;
+	private long timeoutHostDeadlineNanos;
+	private TimingSession timeoutTimingSession;
+	private Runnable timeoutTimingListener;
 
 	public Alert(String title) {
 		super.setTitle(title);
@@ -81,6 +80,7 @@ public class Alert extends Screen {
 		this(title);
 		this.text = text;
 		this.image = image;
+		this.imageBitmap = snapshotBitmap(image);
 		this.type = type;
 	}
 
@@ -95,8 +95,18 @@ public class Alert extends Screen {
 	public void setString(String str) {
 		text = str;
 
-		if (dialog != null) {
-			ViewHandler.postEvent(msgSetString);
+		AlertDialog currentDialog = dialog;
+		if (currentDialog != null) {
+			ViewHandler.postEvent(() -> {
+				if (dialog == currentDialog) {
+					if (commandListDialog) {
+						postDialogRefresh(currentDialog);
+					} else {
+						currentDialog.setMessage(str);
+						onDialogShown(currentDialog);
+					}
+				}
+			});
 		}
 	}
 
@@ -106,9 +116,20 @@ public class Alert extends Screen {
 
 	public void setImage(Image img) {
 		image = img;
+		imageBitmap = snapshotBitmap(img);
 
-		if (dialog != null) {
-			ViewHandler.postEvent(msgSetImage);
+		AlertDialog currentDialog = dialog;
+		Bitmap currentBitmap = imageBitmap;
+		if (currentDialog != null) {
+			ViewHandler.postEvent(() -> {
+				if (dialog == currentDialog) {
+					BitmapDrawable bitmapDrawable = currentBitmap == null
+							? null
+							: new BitmapDrawable(
+									currentDialog.getContext().getResources(), currentBitmap);
+					currentDialog.setIcon(bitmapDrawable);
+				}
+			});
 		}
 	}
 
@@ -134,6 +155,11 @@ public class Alert extends Screen {
 			this.indicator.setOwner(null);
 		}
 		this.indicator = indicator;
+
+		AlertDialog currentDialog = dialog;
+		if (currentDialog != null) {
+			postDialogRefresh(currentDialog);
+		}
 	}
 
 	public Gauge getIndicator() {
@@ -148,112 +174,432 @@ public class Alert extends Screen {
 		if (timeout != FOREVER && timeout <= 0) {
 			throw new IllegalArgumentException("timeout must be positive or FOREVER");
 		}
-		this.timeout = timeout;
-		if (dialog != null) {
-			scheduleTimeout(dialog);
+		synchronized (timeoutLock) {
+			this.timeout = timeout;
+			timeoutGuestDeadlineMillis = 0L;
+			timeoutHostDeadlineNanos = 0L;
+		}
+		AlertDialog currentDialog = dialog;
+		if (currentDialog != null) {
+			ViewHandler.postEvent(() -> {
+				if (dialog == currentDialog) {
+					scheduleTimeout(currentDialog);
+				}
+			});
 		}
 	}
 
 	public int getTimeout() {
-		return timeout;
+		return contentModal || commandCount() > 1 ? FOREVER : timeout;
 	}
 
 	boolean finiteTimeout() {
-		return timeout > 0 && commands.isEmpty();
+		return timeout > 0 && !contentModal && commandCount() <= 1;
 	}
 
 	AlertDialog prepareDialog() {
 		Context context = ContextHolder.getActivity();
 		AlertDialog.Builder builder = new AlertDialog.Builder(context);
+		ArrayList<Command> commandSnapshot = snapshotCommands();
+		DialogCommandState commandState = new DialogCommandState();
 
 		builder.setTitle(getTitle());
-		builder.setMessage(getString());
 		builder.setOnDismissListener(this::onDismiss);
 
-		if (image != null) {
-			builder.setIcon(new BitmapDrawable(context.getResources(), image.getBitmap()));
+		if (imageBitmap != null) {
+			builder.setIcon(new BitmapDrawable(context.getResources(), imageBitmap));
 		}
 
-		if (indicator != null) {
-			View indicatorView = indicator.getItemContentView();
-			TypedValue typedValue = new TypedValue();
-			boolean resolved = context.getTheme().resolveAttribute(android.R.attr.dialogPreferredPadding, typedValue, true);
-			int p = resolved ? (int) typedValue.getDimension(context.getResources().getDisplayMetrics()) : 0;
-			if (p <= 0) {
-				p = (int) (16f * context.getResources().getDisplayMetrics().density + 0.5f);
+		if (commandSnapshot.size() > 3) {
+			// AppCompat does not attach setItems()'s ListView when a message or custom view is
+			// also present. Build one content view that contains the message/indicator header and
+			// the command list, otherwise an Alert with four or more commands can become visibly
+			// stuck with no actionable control.
+			commandListDialog = true;
+			builder.setView(createCommandListContent(context, commandSnapshot, commandState));
+		} else {
+			commandListDialog = false;
+			builder.setMessage(getString());
+			if (indicator != null) {
+				builder.setView(createIndicatorView(context));
 			}
-			indicatorView.setPadding(p, 0, p, 0);
-			builder.setView(indicatorView);
-		}
 
-		positive = null;
-		negative = null;
-		neutral = null;
+			Command positive = null;
+			Command negative = null;
+			Command neutral = null;
 
-		for (Command command : commands) {
-			int cmdType = command.getCommandType();
+			for (Command command : commandSnapshot) {
+				int cmdType = command.getCommandType();
 
-			if (positive == null && cmdType == Command.OK) {
-				positive = command;
-			} else if (negative == null && cmdType == Command.CANCEL) {
-				negative = command;
-			} else if (neutral == null) {
-				neutral = command;
+				if (positive == null && cmdType == Command.OK) {
+					positive = command;
+				} else if (negative == null && cmdType == Command.CANCEL) {
+					negative = command;
+				} else if (neutral == null) {
+					neutral = command;
+				}
+			}
+			for (Command command : commandSnapshot) {
+				if (positive == null && negative != command && neutral != command) {
+					positive = command;
+				} else if (negative == null && positive != command && neutral != command) {
+					negative = command;
+				}
+			}
+
+			if (positive == null) {
+				positive = DISMISS_COMMAND;
+			}
+			Command positiveCommand = positive;
+			builder.setPositiveButton(
+					positiveCommand.getAndroidLabel(),
+					(d, w) -> dispatchCommandOnce(commandState, positiveCommand));
+
+			if (negative != null) {
+				Command negativeCommand = negative;
+				builder.setNegativeButton(
+						negativeCommand.getAndroidLabel(),
+						(d, w) -> dispatchCommandOnce(commandState, negativeCommand));
+			}
+
+			if (neutral != null) {
+				Command neutralCommand = neutral;
+				builder.setNeutralButton(
+						neutralCommand.getAndroidLabel(),
+						(d, w) -> dispatchCommandOnce(commandState, neutralCommand));
 			}
 		}
-		for (Command command : commands) {
-			if (positive == null && negative != command && neutral != command) {
-				positive = command;
-			} else if (negative == null && positive != command && neutral != command) {
-				negative = command;
-			}
-		}
 
-		if (positive == null) {
-			positive = DISMISS_COMMAND;
-		}
-		builder.setPositiveButton(positive.getAndroidLabel(), (d, w) -> fireCommandAction(positive));
-
-		if (negative != null) {
-			builder.setNegativeButton(negative.getAndroidLabel(), (d, w) -> fireCommandAction(negative));
-		}
-
-		if (neutral != null) {
-			builder.setNeutralButton(neutral.getAndroidLabel(), (d, w) -> fireCommandAction(neutral));
-		}
-
+		contentModal = false;
 		dialog = builder.create();
-		if (listener == null) {
+		dialogIndicator = indicator;
+		dialogCommandState = commandState;
+		boolean commandModal = commandSnapshot.size() > 1;
+		if (commandModal) {
+			dialog.setCancelable(false);
+			dialog.setCanceledOnTouchOutside(false);
+		} else if (listener == null) {
 			dialog.setCancelable(true);
 			dialog.setCanceledOnTouchOutside(true);
 		} else {
-			dialog.setCanceledOnTouchOutside(commands.isEmpty());
+			boolean hasExplicitCommand = !commandSnapshot.isEmpty();
+			dialog.setCancelable(!hasExplicitCommand);
+			dialog.setCanceledOnTouchOutside(!hasExplicitCommand);
 		}
 		return dialog;
 	}
 
-	void scheduleTimeout(AlertDialog alertDialog) {
-		cancelTimeout();
-		if (!finiteTimeout()) {
-			return;
-		}
-		long hostDelay = GuestTimingBridge.hostDelayMillis(timeout);
-		Runnable timeoutCallback = () -> {
-			if (dialog == alertDialog) {
-				timeoutRunnable = null;
-				alertDialog.dismiss();
+	private View createIndicatorView(Context context) {
+		View indicatorView = indicator.getItemContentView();
+		indicatorView.setPadding(dialogPadding(context), 0, dialogPadding(context), 0);
+		return indicatorView;
+	}
+
+	private View createCommandListContent(
+			Context context,
+			ArrayList<Command> commandSnapshot,
+			DialogCommandState commandState) {
+		ListView listView = new ListView(context);
+		String currentText = getString();
+		if (currentText != null || indicator != null) {
+			LinearLayout header = new LinearLayout(context);
+			header.setOrientation(LinearLayout.VERTICAL);
+			int padding = dialogPadding(context);
+			if (currentText != null) {
+				TextView message = new TextView(context);
+				message.setText(currentText);
+				message.setPadding(padding, padding, padding, padding);
+				header.addView(message, new LinearLayout.LayoutParams(
+						ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 			}
+			if (indicator != null) {
+				header.addView(createIndicatorView(context), new LinearLayout.LayoutParams(
+						ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+			}
+			listView.addHeaderView(header, null, false);
+		}
+
+		String[] labels = new String[commandSnapshot.size()];
+		for (int i = 0; i < commandSnapshot.size(); i++) {
+			labels[i] = commandSnapshot.get(i).getAndroidLabel();
+		}
+		listView.setAdapter(new ArrayAdapter<>(
+				context, android.R.layout.simple_list_item_1, labels));
+		listView.setOnItemClickListener((parent, view, position, id) -> {
+			int commandIndex = position - listView.getHeaderViewsCount();
+			if (commandIndex >= 0 && commandIndex < commandSnapshot.size()) {
+				dispatchCommandOnce(commandState, commandSnapshot.get(commandIndex));
+			}
+			AlertDialog currentDialog = dialog;
+			if (currentDialog != null) {
+				currentDialog.dismiss();
+			}
+		});
+		return listView;
+	}
+
+	private static int dialogPadding(Context context) {
+		TypedValue typedValue = new TypedValue();
+		boolean resolved = context.getTheme().resolveAttribute(
+				android.R.attr.dialogPreferredPadding, typedValue, true);
+		int padding = resolved
+				? (int) typedValue.getDimension(context.getResources().getDisplayMetrics()) : 0;
+		return padding > 0
+				? padding
+				: (int) (16f * context.getResources().getDisplayMetrics().density + 0.5f);
+	}
+
+	private ArrayList<Command> snapshotCommands() {
+		return new ArrayList<>(commands);
+	}
+
+	private int commandCount() {
+		return commands.size();
+	}
+
+	private void dispatchCommandOnce(DialogCommandState state, Command command) {
+		if (state != null && state.dispatched.compareAndSet(false, true)) {
+			fireCommandAction(command);
+		}
+	}
+
+	/** Finishes Android layout before deciding whether a timed Alert must become modal. */
+	void onDialogShown(AlertDialog alertDialog) {
+		View decor = alertDialog.getWindow() == null
+				? null : alertDialog.getWindow().getDecorView();
+		Runnable measure = () -> {
+			if (dialog != alertDialog) {
+				return;
+			}
+			contentModal = decor != null && contentRequiresScrolling(decor);
+			boolean commandModal = commandCount() > 1;
+			if (contentModal || commandModal) {
+				alertDialog.setCancelable(false);
+				alertDialog.setCanceledOnTouchOutside(false);
+			} else if (listener == null) {
+				alertDialog.setCancelable(true);
+				alertDialog.setCanceledOnTouchOutside(true);
+			} else {
+				boolean hasExplicitCommand = !snapshotCommands().isEmpty();
+				alertDialog.setCancelable(!hasExplicitCommand);
+				alertDialog.setCanceledOnTouchOutside(!hasExplicitCommand);
+			}
+			scheduleTimeout(alertDialog);
 		};
-		timeoutRunnable = timeoutCallback;
-		ViewHandler.postDelayed(timeoutCallback, hostDelay);
+		if (decor == null) {
+			ViewHandler.postEvent(measure);
+		} else {
+			decor.post(measure);
+		}
+	}
+
+	private static boolean contentRequiresScrolling(View view) {
+		if (view.canScrollVertically(1) || view.canScrollVertically(-1)) {
+			return true;
+		}
+		if (view instanceof TextView textView && textView.getLayout() != null) {
+			int contentHeight = textView.getLayout().getHeight();
+			int viewportHeight = textView.getHeight()
+					- textView.getPaddingTop() - textView.getPaddingBottom();
+			if (viewportHeight > 0 && contentHeight > viewportHeight) {
+				return true;
+			}
+		}
+		if (view instanceof ViewGroup group) {
+			for (int i = 0; i < group.getChildCount(); i++) {
+				if (contentRequiresScrolling(group.getChildAt(i))) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	void scheduleTimeout(AlertDialog alertDialog) {
+		Runnable oldCallback;
+		TimingSession oldSession;
+		Runnable oldListener;
+		TimingSession listenerSession = null;
+		Runnable listener = null;
+		Runnable timeoutCallback = null;
+		long hostDelay = 0L;
+		long callbackGeneration = 0L;
+		long listenerRevision = 0L;
+		Command timeoutCommand = null;
+		DialogCommandState timeoutCommandState = dialogCommandState;
+		ArrayList<Command> commandSnapshot = snapshotCommands();
+
+		synchronized (timeoutLock) {
+			timeoutGeneration++;
+			oldCallback = timeoutRunnable;
+			oldSession = timeoutTimingSession;
+			oldListener = timeoutTimingListener;
+			timeoutRunnable = null;
+			timeoutTimingSession = null;
+			timeoutTimingListener = null;
+
+			if (finiteTimeout()) {
+				if (timeoutGuestDeadlineMillis == 0L && timeoutHostDeadlineNanos == 0L) {
+					TimingSession activeSession = GuestTimingBridge.activeSession();
+					TimingSnapshot snapshot = activeSession == null
+							? null : activeSession.snapshotIfOpen();
+					if (snapshot != null) {
+						timeoutTimingSession = activeSession;
+						timeoutGuestDeadlineMillis = saturatingAdd(
+								snapshot.guestMonotonicNanos() / 1_000_000L, timeout);
+					} else {
+						timeoutHostDeadlineNanos = saturatingAdd(
+								System.nanoTime(), millisToNanos(timeout));
+					}
+				}
+				if (timeoutTimingSession == null && timeoutGuestDeadlineMillis != 0L
+						&& oldSession != null && oldSession.snapshotIfOpen() != null) {
+					timeoutTimingSession = oldSession;
+				}
+
+				if (timeoutTimingSession != null) {
+					TimingSnapshot snapshot = timeoutTimingSession.snapshotIfOpen();
+					if (snapshot == null) {
+						timeoutTimingSession = null;
+						timeoutGuestDeadlineMillis = 0L;
+						timeoutHostDeadlineNanos = System.nanoTime();
+					} else {
+						long remainingGuestMillis = timeoutGuestDeadlineMillis
+								- snapshot.guestMonotonicNanos() / 1_000_000L;
+						hostDelay = remainingGuestMillis <= 0L
+								? 0L : timeoutTimingSession.hostDelayMillis(remainingGuestMillis);
+						listenerRevision = timeoutTimingSession.timingRevision();
+						listenerSession = timeoutTimingSession;
+						listener = () -> ViewHandler.postEvent(() -> {
+							if (dialog == alertDialog) {
+								scheduleTimeout(alertDialog);
+							}
+						});
+						timeoutTimingListener = listener;
+					}
+				}
+
+				if (timeoutTimingSession == null && hostDelay == 0L) {
+					long remainingNanos = timeoutHostDeadlineNanos - System.nanoTime();
+					if (remainingNanos > 0L) {
+						hostDelay = remainingNanos / 1_000_000L;
+						if (remainingNanos % 1_000_000L != 0L
+								&& hostDelay < Long.MAX_VALUE) {
+							hostDelay++;
+						}
+					}
+				}
+
+				timeoutCommand = commandSnapshot.size() == 1 ? commandSnapshot.get(0) : null;
+				callbackGeneration = timeoutGeneration;
+				final Command scheduledCommand = timeoutCommand;
+				final DialogCommandState scheduledCommandState = timeoutCommandState;
+				final long scheduledGeneration = callbackGeneration;
+				Runnable callback = () -> {
+					TimingSession callbackSession;
+					Runnable callbackListener;
+					Command command;
+					synchronized (timeoutLock) {
+						if (dialog != alertDialog || timeoutGeneration != scheduledGeneration) {
+							return;
+						}
+						timeoutGeneration++;
+						timeoutRunnable = null;
+						callbackSession = timeoutTimingSession;
+						callbackListener = timeoutTimingListener;
+						timeoutTimingSession = null;
+						timeoutTimingListener = null;
+						timeoutGuestDeadlineMillis = 0L;
+						timeoutHostDeadlineNanos = 0L;
+						command = scheduledCommand;
+					}
+					if (callbackSession != null && callbackListener != null) {
+						callbackSession.unregisterTimingChangeListener(callbackListener);
+					}
+					// MIDP defines timeout as equivalent to invoking the only visible command.
+					if (command != null) {
+						dispatchCommandOnce(scheduledCommandState, command);
+					}
+					alertDialog.dismiss();
+				};
+				timeoutCallback = callback;
+				timeoutRunnable = callback;
+			} else {
+				// A modal Alert has no active timeout. If it later becomes non-modal, start a
+				// fresh logical deadline instead of interpreting a detached guest deadline as host time.
+				timeoutGuestDeadlineMillis = 0L;
+				timeoutHostDeadlineNanos = 0L;
+			}
+		}
+
+		if (oldCallback != null) {
+			ViewHandler.removeCallbacks(oldCallback);
+		}
+		if (oldSession != null && oldListener != null) {
+			oldSession.unregisterTimingChangeListener(oldListener);
+		}
+		if (listenerSession != null && listener != null) {
+			listenerSession.registerTimingChangeListener(listener);
+			// A speed update can race the registration window above. Requeue one UI refresh when
+			// that happens; updates after registration are delivered through the listener itself.
+			if (listenerSession.timingRevision() != listenerRevision) {
+				ViewHandler.postEvent(() -> {
+					if (dialog == alertDialog) {
+						scheduleTimeout(alertDialog);
+					}
+				});
+			}
+		}
+		if (timeoutCallback != null) {
+			// Display.close() can race a layout callback between registration and posting. Remove
+			// the newly registered callback/listener if this dialog is no longer current.
+			if (dialog != alertDialog) {
+				cancelTimeout();
+				return;
+			}
+			ViewHandler.postDelayed(timeoutCallback, hostDelay);
+		}
 	}
 
 	private void cancelTimeout() {
-		Runnable callback = timeoutRunnable;
+		cancelTimeout(true);
+	}
+
+	private void cancelTimeout(boolean clearDeadline) {
+		Runnable callback;
+		TimingSession session;
+		Runnable listener;
+		synchronized (timeoutLock) {
+			timeoutGeneration++;
+			callback = timeoutRunnable;
+			timeoutRunnable = null;
+			session = timeoutTimingSession;
+			listener = timeoutTimingListener;
+			timeoutTimingSession = null;
+			timeoutTimingListener = null;
+			if (clearDeadline) {
+				timeoutGuestDeadlineMillis = 0L;
+				timeoutHostDeadlineNanos = 0L;
+			}
+		}
 		if (callback != null) {
 			ViewHandler.removeCallbacks(callback);
-			timeoutRunnable = null;
 		}
+		if (session != null && listener != null) {
+			session.unregisterTimingChangeListener(listener);
+		}
+	}
+
+	private static long millisToNanos(long millis) {
+		return millis > Long.MAX_VALUE / 1_000_000L
+				? Long.MAX_VALUE : Math.max(0L, millis) * 1_000_000L;
+	}
+
+	private static long saturatingAdd(long left, long right) {
+		if (right > 0L && left > Long.MAX_VALUE - right) {
+			return Long.MAX_VALUE;
+		}
+		return left + right;
 	}
 
 	@Override
@@ -262,14 +608,16 @@ public class Alert extends Screen {
 			throw new NullPointerException();
 		} else if (cmd == DISMISS_COMMAND) {
 			return;
-		} else if (commands.contains(cmd)) {
-			return;
 		}
-		commands.add(cmd);
+		synchronized (commands) {
+			if (commands.contains(cmd)) {
+				return;
+			}
+			commands.add(cmd);
+		}
 		AlertDialog currentDialog = dialog;
-		if (commands.size() == 1 && currentDialog != null) {
-			ViewHandler.postEvent(msgCommandsChanged);
-			scheduleTimeout(currentDialog);
+		if (currentDialog != null) {
+			postCommandsChanged(currentDialog);
 		}
 	}
 
@@ -278,11 +626,12 @@ public class Alert extends Screen {
 		if (cmd == DISMISS_COMMAND) {
 			return;
 		}
-		commands.remove(cmd);
+		synchronized (commands) {
+			commands.remove(cmd);
+		}
 		AlertDialog currentDialog = dialog;
-		if (commands.isEmpty() && currentDialog != null) {
-			ViewHandler.postEvent(msgCommandsChanged);
-			scheduleTimeout(currentDialog);
+		if (currentDialog != null) {
+			postCommandsChanged(currentDialog);
 		}
 	}
 
@@ -292,8 +641,9 @@ public class Alert extends Screen {
 			return;
 		}
 		this.listener = listener;
-		if (dialog != null) {
-			ViewHandler.postEvent(msgCommandsChanged);
+		AlertDialog currentDialog = dialog;
+		if (currentDialog != null) {
+			postCommandsChanged(currentDialog);
 		}
 	}
 
@@ -311,26 +661,99 @@ public class Alert extends Screen {
 	}
 
 	void onDismiss(DialogInterface dialogInterface) {
-		cancelTimeout();
-		dialog = null;
-		Gauge indicator = this.indicator;
-		if (indicator != null) {
-			indicator.clearItemContentView();
+		if (dialog != dialogInterface) {
+			return;
 		}
+		cancelTimeout();
+		Gauge dismissedIndicator = dialogIndicator;
+		dialogIndicator = null;
+		if (dismissedIndicator != null) {
+			dismissedIndicator.clearItemContentView();
+		}
+		dialog = null;
+		DialogCommandState dismissedCommandState = dialogCommandState;
+		dialogCommandState = null;
+		contentModal = false;
+		commandListDialog = false;
 		if (listener == null) {
 			Displayable displayable = nextDisplayable;
+			nextDisplayable = null;
 			if (displayable != null) {
-				Display.getDisplay(null).setCurrent(displayable);
+				Display display = Display.getDisplay(null);
+				if (display != null) {
+					display.setCurrent(displayable);
+				}
+			} else {
+				Display display = Display.getDisplay(null);
+				if (display != null) {
+					display.restoreAfterAlert(this);
+				}
 			}
 		} else if (commands.isEmpty()) {
-			fireCommandAction(DISMISS_COMMAND);
+			dispatchCommandOnce(dismissedCommandState, DISMISS_COMMAND);
 		}
+	}
+
+	private void postCommandsChanged(AlertDialog expectedDialog) {
+		postDialogRefresh(expectedDialog);
+	}
+
+	private void postDialogRefresh(AlertDialog expectedDialog) {
+		ViewHandler.postEvent(() -> {
+			if (dialog != expectedDialog) {
+				return;
+			}
+			Display display = Display.getDisplay(null);
+			if (display != null) {
+				display.refreshAlert(this, expectedDialog);
+			} else {
+				rebuildDialog(expectedDialog);
+			}
+		});
+	}
+
+	void rebuildDialog(AlertDialog expectedDialog) {
+		if (dialog != expectedDialog) {
+			return;
+		}
+		// Android AlertDialog cannot reliably add/remove button slots after show(). Rebuild
+		// on the UI thread from an atomic command snapshot so a MIDlet changing commands from
+		// a TimerTask never leaves stale or partially visible actions.
+		// Detach the old Gauge's cached content before invalidating its dialog identity. A stale
+		// dismiss callback must not clear the replacement dialog's indicator, and a replacement
+		// dialog must receive a fresh Android View rather than a View that still has the old parent.
+		Gauge oldDialogIndicator = dialogIndicator;
+		if (oldDialogIndicator != null) {
+			oldDialogIndicator.clearItemContentView();
+		}
+		dialogIndicator = null;
+		dialog = null;
+		dialogCommandState = null;
+		cancelTimeout(true);
+		expectedDialog.dismiss();
+		AlertDialog replacement = prepareDialog();
+		replacement.show();
+		Display.styleAlertDialog(replacement);
+		onDialogShown(replacement);
+	}
+
+	private static Bitmap snapshotBitmap(Image image) {
+		return image == null ? null : Image.createImage(image).getBitmap();
 	}
 
 	void close() {
 		cancelTimeout();
 		this.nextDisplayable = null;
 		AlertDialog dialog = this.dialog;
+		Gauge oldDialogIndicator = dialogIndicator;
+		if (oldDialogIndicator != null) {
+			oldDialogIndicator.clearItemContentView();
+		}
+		dialogIndicator = null;
+		this.dialog = null;
+		this.dialogCommandState = null;
+		this.contentModal = false;
+		this.commandListDialog = false;
 		if (dialog != null) {
 			dialog.dismiss();
 		}

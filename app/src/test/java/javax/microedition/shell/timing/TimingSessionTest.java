@@ -16,6 +16,7 @@ package javax.microedition.shell.timing;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -55,6 +56,66 @@ public class TimingSessionTest {
 		time.advanceMillis(500L);
 		assertEquals(2_000_000_000L, session.guestMonotonicNanos());
 		assertEquals(WALL_START + 2_000L, session.guestWallTimeMillis());
+	}
+
+	@Test
+	public void futureRealWallTimerDeadlineUsesCurrentSpeedProjection() {
+		FakeTimeSource time = new FakeTimeSource(WALL_START);
+		TimingSession session = new TimingSession(
+				time, 100, 3L, TimingMode.REAL_WALL_CLOCK);
+
+		assertEquals(
+				WALL_START + 1_000L,
+				session.wallTimeMillisForGuestMonotonicMillis(1_000L));
+		session.updateSpeedPercent(400);
+		assertEquals(
+				WALL_START + 250L,
+				session.wallTimeMillisForGuestMonotonicMillis(1_000L));
+	}
+
+	@Test
+	public void realWallProjectionRetainsHistoricalSegmentsForOverdueDeadlines() {
+		FakeTimeSource time = new FakeTimeSource(WALL_START);
+		TimingSession session = new TimingSession(
+				time, 100, 3L, TimingMode.REAL_WALL_CLOCK);
+
+		time.advanceMillis(1_000L);
+		time.wallTimeMillis = WALL_START + 1_000L;
+		session.updateSpeedPercent(400);
+
+		// The first deadline belongs to the pre-transition segment even though it is now overdue.
+		assertEquals(WALL_START + 1_000L,
+				session.wallTimeMillisForGuestMonotonicMillis(1_000L));
+		// Future deadlines use the new segment anchored at guest=1000 ms and host=WALL_START+1000.
+		assertEquals(WALL_START + 1_250L,
+				session.wallTimeMillisForGuestMonotonicMillis(2_000L));
+	}
+
+	@Test
+	public void speedTransitionWakesOnlyEmulatorSchedulerWaiters() throws Exception {
+		FakeTimeSource time = new FakeTimeSource(WALL_START);
+		TimingSession session = new TimingSession(time, 100, 3L);
+		CountDownLatch started = new CountDownLatch(1);
+		CountDownLatch finished = new CountDownLatch(1);
+		AtomicReference<Throwable> failure = new AtomicReference<>();
+		Thread scheduler = new Thread(() -> {
+			started.countDown();
+			try {
+				session.awaitSchedulerDuration(60_000L, true);
+				finished.countDown();
+			} catch (Throwable throwable) {
+				failure.set(throwable);
+			}
+		});
+		scheduler.start();
+		assertTrue(started.await(1L, TimeUnit.SECONDS));
+		Thread.sleep(20L);
+		session.updateSpeedPercent(400);
+		assertTrue(finished.await(1L, TimeUnit.SECONDS));
+		assertNull(failure.get());
+		scheduler.join(1_000L);
+		assertFalse(scheduler.isAlive());
+		session.close();
 	}
 
 	@Test
@@ -253,7 +314,7 @@ public class TimingSessionTest {
 
 	private static final class FakeTimeSource implements TimingTimeSource {
 		private long monotonicNanos;
-		private final long wallTimeMillis;
+		private long wallTimeMillis;
 
 		FakeTimeSource(long wallTimeMillis) {
 			this.wallTimeMillis = wallTimeMillis;

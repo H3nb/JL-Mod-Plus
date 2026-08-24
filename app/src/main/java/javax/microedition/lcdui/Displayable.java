@@ -28,6 +28,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.microedition.lcdui.commands.AbstractSoftKeysBar;
 import javax.microedition.lcdui.event.CommandActionEvent;
@@ -43,8 +44,9 @@ public abstract class Displayable {
 	private static int virtualWidth;
 	private static int virtualHeight;
 
-	final ArrayList<Command> commands = new ArrayList<>();
-	CommandListener listener;
+	/** Copy-on-write keeps LCDUI command snapshots safe across MIDlet and UI threads. */
+	final CopyOnWriteArrayList<Command> commands = new CopyOnWriteArrayList<>();
+	volatile CommandListener listener;
 	AbstractSoftKeysBar softBar;
 
 	private String title;
@@ -144,18 +146,16 @@ public abstract class Displayable {
 		if (cmd == null) {
 			throw new NullPointerException();
 		}
-		if (commands.contains(cmd)) {
+		if (!commands.addIfAbsent(cmd)) {
 			return;
 		}
-		commands.add(cmd);
 		if (softBar != null) {
 			softBar.notifyChanged(new ArrayList<>(commands));
 		}
 	}
 
 	public void removeCommand(Command cmd) {
-		commands.remove(cmd);
-		if (softBar != null) {
+		if (commands.remove(cmd) && softBar != null) {
 			softBar.notifyChanged(new ArrayList<>(commands));
 		}
 	}
@@ -165,8 +165,9 @@ public abstract class Displayable {
 	}
 
 	public void fireCommandAction(Command c) {
-		if (listener != null) {
-			Display.postEvent(CommandActionEvent.getInstance(listener, c, this));
+		CommandListener currentListener = listener;
+		if (currentListener != null) {
+			Display.postEvent(CommandActionEvent.getInstance(currentListener, c, this));
 		}
 	}
 

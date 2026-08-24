@@ -20,10 +20,13 @@ package javax.microedition.lcdui;
 
 import androidx.appcompat.app.AlertDialog;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import javax.microedition.lcdui.event.Event;
 import javax.microedition.lcdui.event.EventQueue;
 import javax.microedition.lcdui.event.RunnableEvent;
 import javax.microedition.midlet.MIDlet;
+import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
 import ru.playsoftware.j2meloader.ui.LegacyThemeColors;
 
@@ -58,7 +61,11 @@ public class Display {
 		queue.startProcessing();
 	}
 
-	private Displayable current;
+	private volatile Displayable current;
+	/** Invalidates queued show requests when the displayable changes, including reusing an Alert. */
+	private final AtomicLong currentRequestGeneration = new AtomicLong();
+	/** Serializes display state transitions with Alert preparation/showing. */
+	private final Object stateLock = new Object();
 
 	public static Display getDisplay(MIDlet midlet) {
 		if (instance == null && midlet != null) {
@@ -83,22 +90,49 @@ public class Display {
 	}
 
 	public void setCurrent(Displayable displayable) {
-		Displayable current = this.current;
-		if (displayable == current) {
+		if (displayable == null) {
+			// MIDP defines null as a background hint; it must not clear the guest current
+			// Displayable or close a visible Alert.
+			MicroActivity activity = ContextHolder.getActivity();
+			if (activity != null) {
+				activity.requestBackground();
+			}
 			return;
 		}
-		this.current = displayable;
-		if (current instanceof Canvas canvas) {
-			canvas.setInvisible();
-		} else if (current instanceof Alert alert) {
-			if (displayable instanceof Alert) {
+		Displayable previous;
+		long requestGeneration = 0L;
+		Alert alert = null;
+			synchronized (stateLock) {
+			previous = this.current;
+			if (previous instanceof Alert && displayable instanceof Alert) {
 				throw new IllegalArgumentException();
 			}
-			alert.close();
+			if (displayable == previous) {
+				// MIDP defines this call as a foreground request even when the same Displayable is
+				// already current. Keep the guest state untouched and ask the Android host to bring
+				// its task forward on a best-effort basis.
+				MicroActivity activity = ContextHolder.getActivity();
+				if (activity != null) {
+					activity.requestForeground();
+				}
+				return;
+			}
+			requestGeneration = currentRequestGeneration.incrementAndGet();
+			this.current = displayable;
+			if (displayable instanceof Alert nextAlert) {
+				alert = nextAlert;
+				alert.setNextDisplayable(previous);
+			}
 		}
-		if (displayable instanceof Alert alert) {
-			alert.setNextDisplayable(current);
-			ViewHandler.postEvent(this::showAlert);
+		if (previous instanceof Canvas canvas) {
+			canvas.setInvisible();
+		} else if (previous instanceof Alert previousAlert) {
+			previousAlert.close();
+		}
+		if (alert != null) {
+			Alert requestedAlert = alert;
+			final long generation = requestGeneration;
+			ViewHandler.postEvent(() -> showAlert(requestedAlert, generation));
 		} else {
 			ContextHolder.getActivity().setCurrent(displayable);
 		}
@@ -110,36 +144,90 @@ public class Display {
 		} else if (displayable instanceof Alert) {
 			throw new IllegalArgumentException();
 		}
-		if (current == alert) {
+		Displayable previous;
+		long requestGeneration;
+		synchronized (stateLock) {
+			if (current instanceof Alert && current != alert) {
+				// Display.setCurrent(Alert, ...) has the same restriction as the single-argument
+				// overload: an Alert cannot replace another currently displayed Alert directly.
+				throw new IllegalArgumentException();
+			}
+			if (current == alert) {
+				alert.setNextDisplayable(displayable);
+				return;
+			}
+			previous = current;
 			alert.setNextDisplayable(displayable);
-			return;
+			requestGeneration = currentRequestGeneration.incrementAndGet();
+			current = alert;
 		}
-		Displayable previous = current;
 		if (previous instanceof Canvas canvas) {
 			canvas.setInvisible();
 		} else if (previous instanceof Alert previousAlert) {
 			previousAlert.close();
 		}
-		alert.setNextDisplayable(displayable);
-		current = alert;
-		ViewHandler.postEvent(this::showAlert);
+		ViewHandler.postEvent(() -> showAlert(alert, requestGeneration));
 	}
 
-	private void showAlert() {
-		if (current instanceof Alert alert) {
-			AlertDialog alertDialog = alert.prepareDialog();
+	private void showAlert(Alert expectedAlert, long requestGeneration) {
+		synchronized (stateLock) {
+			if (current != expectedAlert || currentRequestGeneration.get() != requestGeneration) {
+				return;
+			}
+			AlertDialog alertDialog = expectedAlert.prepareDialog();
+			if (current != expectedAlert || currentRequestGeneration.get() != requestGeneration) {
+				expectedAlert.close();
+				return;
+			}
 			alertDialog.show();
-			int accent = LegacyThemeColors.accent(alertDialog.getContext());
-			if (alertDialog.getButton(AlertDialog.BUTTON_POSITIVE) != null) {
-				alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(accent);
+			styleAlertDialog(alertDialog);
+			expectedAlert.onDialogShown(alertDialog);
+			if (current != expectedAlert || currentRequestGeneration.get() != requestGeneration) {
+				alertDialog.dismiss();
 			}
-			if (alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE) != null) {
-				alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(accent);
+		}
+	}
+
+	/** Reconciles a visible Alert while sharing the same transaction lock as setCurrent(). */
+	void refreshAlert(Alert expectedAlert, AlertDialog expectedDialog) {
+		synchronized (stateLock) {
+			if (current != expectedAlert) {
+				return;
 			}
-			if (alertDialog.getButton(AlertDialog.BUTTON_NEUTRAL) != null) {
-				alertDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setTextColor(accent);
+			expectedAlert.rebuildDialog(expectedDialog);
+		}
+	}
+
+	/**
+	 * Restores the pre-Alert startup state. This is intentionally separate from setCurrent(null):
+	 * MIDP defines the latter as a background request and it must not clear the guest current
+	 * Displayable.
+	 */
+	void restoreAfterAlert(Alert expectedAlert) {
+		MicroActivity activity;
+		synchronized (stateLock) {
+			if (current != expectedAlert) {
+				return;
 			}
-			alert.scheduleTimeout(alertDialog);
+			currentRequestGeneration.incrementAndGet();
+			current = null;
+			activity = ContextHolder.getActivity();
+		}
+		if (activity != null) {
+			activity.setCurrent(null);
+		}
+	}
+
+	static void styleAlertDialog(AlertDialog alertDialog) {
+		int accent = LegacyThemeColors.accent(alertDialog.getContext());
+		if (alertDialog.getButton(AlertDialog.BUTTON_POSITIVE) != null) {
+			alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(accent);
+		}
+		if (alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE) != null) {
+			alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(accent);
+		}
+		if (alertDialog.getButton(AlertDialog.BUTTON_NEUTRAL) != null) {
+			alertDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setTextColor(accent);
 		}
 	}
 

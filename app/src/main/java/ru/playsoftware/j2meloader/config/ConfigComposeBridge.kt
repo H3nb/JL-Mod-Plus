@@ -114,6 +114,7 @@ import kotlinx.coroutines.launch
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.config.model.Size
 import javax.microedition.shell.timing.EmulationSpeed
+import javax.microedition.shell.timing.TimingMode
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
 import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
@@ -391,7 +392,7 @@ private fun ConfigDestinationContent(
             ConfigDestination.Controls -> InputSection(form, onFormChanged, events, onRequestAction)
             ConfigDestination.System -> {
                 EmulationSection(form, onFormChanged)
-                SystemSection(form, onFormChanged, events, !isProfile, onRequestAction, onEditSystemProperties)
+                SystemSection(state, form, onFormChanged, events, !isProfile, onRequestAction, onEditSystemProperties)
             }
         }
     }
@@ -1399,6 +1400,7 @@ private fun AudioSection(
 
 @Composable
 private fun SystemSection(
+    state: ConfigUiState,
     form: ConfigFormState,
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
@@ -1406,6 +1408,31 @@ private fun SystemSection(
     onRequestAction: (ConfigAction) -> Unit,
     onEditSystemProperties: () -> Unit,
 ) {
+    ConfigSection(title = stringResource(R.string.config_system_timing)) {
+        val timingModes = TimingMode.values().toList()
+        val timingModeOptions = listOf(
+            stringResource(R.string.config_timing_mode_full_guest),
+            stringResource(R.string.config_timing_mode_real_wall),
+        )
+        val currentTimingMode = TimingMode.sanitize(form.timingMode)
+        val timingModeIndex = timingModes.indexOf(currentTimingMode).coerceAtLeast(0)
+        val timingUnavailableMessage = if (state.timingControlsEnabled) null
+        else stringResource(R.string.config_help_timing_unavailable)
+        ConfigChoicePreference(
+            title = stringResource(R.string.PREF_TIMING_MODE),
+            description = stringResource(R.string.config_help_timing_mode),
+            selected = timingModeOptions.getOrElse(timingModeIndex) { timingModeOptions.first() },
+            options = timingModeOptions,
+            enabled = state.timingControlsEnabled,
+            message = timingUnavailableMessage,
+            messageLevel = ConfigMessageLevel.Warning,
+            onSelected = { index ->
+                timingModes.getOrNull(index)?.let { mode ->
+                    onFormChanged(form.toBuilder().timingMode(mode).build())
+                }
+            },
+        )
+    }
     ConfigSection(title = stringResource(R.string.PREF_SYS_PROPS)) {
         ConfigActionPreference(
   title = stringResource(R.string.pref_encoding_title),

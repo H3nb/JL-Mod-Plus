@@ -81,6 +81,7 @@ import ru.playsoftware.j2meloader.util.IOUtils;
 import ru.woesss.j2me.jar.Descriptor;
 import javax.microedition.shell.timing.EmulationSpeed;
 import javax.microedition.shell.timing.TimingSession;
+import javax.microedition.shell.timing.TimingMode;
 import javax.microedition.shell.timing.TimingTransformMetadata;
 
 public class MicroLoader {
@@ -101,6 +102,8 @@ public class MicroLoader {
 	private String jarSha256;
 	private TimingSession timingSession;
 	private boolean timingTransformCompatible;
+	/** Set only after the MIDlet thread has successfully received the timing session. */
+	private boolean timingSessionTransferred;
 
 	MicroLoader(String appPath) {
 		this.appDir = new File(appPath);
@@ -118,10 +121,9 @@ public class MicroLoader {
 			return false;
 		}
 		timingTransformCompatible = hasCompatibleTimingTransform();
-		try {
-			startTimingSession();
-		} catch (IllegalStateException e) {
-			Log.e(TAG, "A MIDlet timing session is already active", e);
+		TimingSession activeSession = GuestTimingBridge.activeSession();
+		if (activeSession != null && !activeSession.isClosed()) {
+			Log.e(TAG, "A MIDlet timing session is already active");
 			return false;
 		}
 		applyLinkedBuiltInTheme(config);
@@ -141,11 +143,17 @@ public class MicroLoader {
 	}
 
 	private void startTimingSession() {
+		if (timingSession != null && !timingSession.isClosed()) {
+			return;
+		}
 		TimingSession session = new TimingSession(
 				timingTransformCompatible
 						? EmulationSpeed.sanitizePercent(params.emulationSpeedPercent)
 						: EmulationSpeed.NORMAL_PERCENT,
-				NEXT_TIMING_GENERATION.getAndIncrement());
+				NEXT_TIMING_GENERATION.getAndIncrement(),
+				timingTransformCompatible
+						? TimingMode.sanitize(params.timingMode)
+						: TimingMode.FULL_GUEST_TIME);
 		GuestTimingBridge.install(session);
 		timingSession = session;
 	}
@@ -156,12 +164,28 @@ public class MicroLoader {
 		GuestTimingBridge.clear(session);
 	}
 
+	/**
+	 * Releases a session created for a launch that never reached a MidletThread. This is called
+	 * from Activity teardown; once the thread has started, its lifecycle/failure paths own cleanup.
+	 */
+	void closeTimingSessionIfNotTransferred() {
+		if (!timingSessionTransferred) {
+			closeTimingSession();
+		}
+	}
+
 	TimingSession getTimingSession() {
 		return timingSession;
 	}
 
 	boolean isTimingTransformCompatible() {
 		return timingTransformCompatible;
+	}
+
+	int getConfiguredEmulationSpeedPercent() {
+		return timingTransformCompatible && params != null
+				? EmulationSpeed.sanitizePercent(params.emulationSpeedPercent)
+				: EmulationSpeed.NORMAL_PERCENT;
 	}
 
 	/** Applies a runtime-only speed change without mutating the persisted MIDlet profile. */
@@ -301,8 +325,13 @@ public class MicroLoader {
 			ClassLoader loader = new AppClassLoader(dexSource.getAbsolutePath(),
 					dexOptDir.getAbsolutePath(), ContextHolder.getActivity().getClassLoader(), appDir);
 			Log.i(TAG, "loadMIDletList main: " + mainClass + " from dex:" + dexSource.getPath());
+			// Preserve the legacy one-argument reflection ABI for converted archives. New
+			// conversion passes an explicit caller token, but old artifacts need the child loader
+			// visible before their constructor/static code invokes Class.forName().
+			Thread.currentThread().setContextClassLoader(loader);
 			//noinspection unchecked
 			Class<MIDlet> clazz = (Class<MIDlet>) loader.loadClass(mainClass);
+			Thread.currentThread().setContextClassLoader(clazz.getClassLoader());
 			Constructor<MIDlet> init = clazz.getDeclaredConstructor();
 			init.setAccessible(true);
 			return init.newInstance();
@@ -310,6 +339,7 @@ public class MicroLoader {
 			AppClassLoader.setDataDir(appDir);
 			//noinspection unchecked
 			Class<MIDlet> clazz = (Class<MIDlet>) Class.forName(mainClass);
+			Thread.currentThread().setContextClassLoader(clazz.getClassLoader());
 			Constructor<MIDlet> init = clazz.getDeclaredConstructor();
 			init.setAccessible(true);
 			return init.newInstance();
@@ -429,24 +459,38 @@ public class MicroLoader {
 	}
 
 	void loadMidlet(String clazz, String appName) {
-		MidletSessionStore.markStarted(ContextHolder.getAppContext(), appDir.getPath(), appName, clazz);
-		MidletSessionJournal journal = MidletSessionJournal.create(
-				ContextHolder.getAppContext(),
-				midletName,
-				midletVendor,
-				midletVersion,
-				clazz,
-				jarSize,
-				jarSha256,
-				workDir,
-				appDirName
-		);
-		CrashReporter.setMidletMainClass(clazz);
-		MidletThread midletThread = new MidletThread(this, clazz, journal);
-		midletThread.start();
-		if (!BuildConfig.FULL_EMULATOR) {
+		if (timingSessionTransferred) {
 			return;
 		}
-		AppUtils.pushToRecentShortcuts(ContextHolder.getActivity(), appDir.getPath(), appName);
+		startTimingSession();
+		try {
+			MidletSessionStore.markStarted(ContextHolder.getAppContext(), appDir.getPath(), appName, clazz);
+			MidletSessionJournal journal = MidletSessionJournal.create(
+					ContextHolder.getAppContext(),
+					midletName,
+					midletVendor,
+					midletVersion,
+					clazz,
+					jarSize,
+					jarSha256,
+					workDir,
+					appDirName
+			);
+			CrashReporter.setMidletMainClass(clazz);
+			MidletThread midletThread = new MidletThread(this, clazz, journal);
+			midletThread.start();
+			// The thread now owns lifecycle cleanup. Set this after start() so a failed thread start
+			// still rolls back the session in the catch block below.
+			timingSessionTransferred = true;
+			if (!BuildConfig.FULL_EMULATOR) {
+				return;
+			}
+			AppUtils.pushToRecentShortcuts(ContextHolder.getActivity(), appDir.getPath(), appName);
+		} catch (RuntimeException | Error failure) {
+			if (!timingSessionTransferred) {
+				closeTimingSession();
+			}
+			throw failure;
+		}
 	}
 }

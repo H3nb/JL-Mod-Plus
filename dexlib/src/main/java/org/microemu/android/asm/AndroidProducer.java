@@ -54,7 +54,9 @@ public class AndroidProducer {
 		}
 
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-		ClassVisitor cv = new AndroidClassVisitor(cw);
+		// Pass the original guest class token to reflection rewrites. The token carries the
+		// AppClassLoader that owns classes present only in the MIDlet archive.
+		ClassVisitor cv = new AndroidClassVisitor(cw, cr.getClassName());
 		cr.accept(cv, ClassReader.SKIP_DEBUG);
 
 		return cw.toByteArray();

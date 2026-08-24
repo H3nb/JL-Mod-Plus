@@ -20,7 +20,7 @@ import javax.microedition.shell.GuestTimingBridge;
 
 /** Compatibility marker stored in the converted descriptor next to the DEX artifact. */
 public final class TimingTransformMetadata {
-	public static final int TRANSFORM_VERSION = 1;
+	public static final int TRANSFORM_VERSION = 4;
 	public static final String TRANSFORM_VERSION_ATTRIBUTE = "JLMod-Timing-Transform-Version";
 	public static final String BRIDGE_ABI_ATTRIBUTE = "JLMod-Timing-Bridge-ABI";
 

@@ -33,9 +33,12 @@ package org.microemu.android.asm;
 
 import static org.objectweb.asm.Opcodes.*;
 
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.TypePath;
 
 import java.util.ArrayList;
 
@@ -43,16 +46,21 @@ public class AndroidMethodVisitor extends MethodVisitor {
 	static boolean USE_PANIC_LOGGING = false;
 	private final ArrayList<Label> exceptionHandlers = new ArrayList<>();
 	private final boolean returnsBoolean;
-	private boolean dateAllocationPending;
-	private boolean dateConstructorCandidate;
+	/** Internal name of the guest class containing this method, when available. */
+	private final String ownerClassName;
 
 	public AndroidMethodVisitor(MethodVisitor methodVisitor) {
-		this(methodVisitor, false);
+		this(methodVisitor, false, null);
 	}
 
 	AndroidMethodVisitor(MethodVisitor methodVisitor, boolean returnsBoolean) {
+		this(methodVisitor, returnsBoolean, null);
+	}
+
+	AndroidMethodVisitor(MethodVisitor methodVisitor, boolean returnsBoolean, String ownerClassName) {
 		super(ASM9, methodVisitor);
 		this.returnsBoolean = returnsBoolean;
+		this.ownerClassName = ownerClassName;
 	}
 
 	@Override
@@ -67,11 +75,6 @@ public class AndroidMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitInsn(int opcode) {
-		if (opcode == DUP && dateAllocationPending) {
-			dateConstructorCandidate = true;
-			dateAllocationPending = false;
-			return;
-		}
 		flushDateAllocation();
 		if (opcode == IRETURN && returnsBoolean) {
 			// JVMS ireturn narrows boolean results as value & 1. Make that implicit JVM
@@ -84,20 +87,58 @@ public class AndroidMethodVisitor extends MethodVisitor {
 
 	@Override
 	public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-		boolean rewriteDateConstructor = dateConstructorCandidate
-				&& owner.equals("java/util/Date")
+		boolean rewriteDateConstructor = owner.equals("java/util/Date")
 				&& opcode == INVOKESPECIAL
 				&& name.equals("<init>")
 				&& desc.equals("()V");
 		if (rewriteDateConstructor) {
-			clearDateAllocation();
 			mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/GuestTimingBridge",
-					"newDate", "()Ljava/util/Date;", false);
+					"currentTimeMillis", "()J", false);
+			mv.visitMethodInsn(INVOKESPECIAL, "java/util/Date", "<init>", "(J)V", false);
 			return;
 		}
 		flushDateAllocation();
 		switch (owner) {
 			case "java/lang/Class":
+				if (opcode == INVOKESTATIC && name.equals("forName")
+						&& desc.equals("(Ljava/lang/String;)Ljava/lang/Class;")) {
+					if (ownerClassName == null) {
+						// Keep the old ABI for callers that instantiate this visitor directly and for
+						// already converted archives. Producer-based conversion supplies the caller
+						// token below so child guest class loaders remain visible to reflection.
+						mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/GuestTimingBridge",
+								"forName", desc, false);
+					} else {
+						mv.visitLdcInsn(Type.getObjectType(ownerClassName));
+						mv.visitMethodInsn(INVOKESTATIC,
+								"javax/microedition/shell/GuestTimingBridge",
+								"forName",
+								"(Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Class;",
+								false);
+					}
+					return;
+				}
+				if (opcode == INVOKEVIRTUAL && name.equals("getName")
+						&& desc.equals("()Ljava/lang/String;")) {
+						mv.visitMethodInsn(INVOKESTATIC,
+								"javax/microedition/shell/GuestTimingBridge",
+								"className", "(Ljava/lang/Class;)Ljava/lang/String;", false);
+					return;
+				}
+				if (opcode == INVOKEVIRTUAL && name.equals("toString")
+						&& desc.equals("()Ljava/lang/String;")) {
+					mv.visitMethodInsn(INVOKESTATIC,
+							"javax/microedition/shell/GuestTimingBridge",
+							"classToString", "(Ljava/lang/Class;)Ljava/lang/String;", false);
+					return;
+				}
+				if (opcode == INVOKEVIRTUAL && name.equals("newInstance")
+						&& desc.equals("()Ljava/lang/Object;")) {
+					mv.visitMethodInsn(INVOKESTATIC,
+							"javax/microedition/shell/GuestTimingBridge",
+							"newInstance", "(Ljava/lang/Class;)Ljava/lang/Object;", false);
+					return;
+				}
 				if (name.equals("getResourceAsStream")) {
 					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/util/ContextHolder",
 							name, "(Ljava/lang/Class;Ljava/lang/String;)Ljava/io/InputStream;", itf);
@@ -106,8 +147,8 @@ public class AndroidMethodVisitor extends MethodVisitor {
 				break;
 			case "java/lang/Thread":
 				if (name.equals("yield")) {
-					mv.visitLdcInsn(1L);
-					mv.visitMethodInsn(INVOKESTATIC, "java/lang/Thread", "sleep", "(J)V", false);
+					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/GuestTimingBridge",
+							"yieldCompat", "()V", false);
 					return;
 				}
 				if (opcode == INVOKESTATIC && name.equals("sleep")
@@ -209,8 +250,66 @@ public class AndroidMethodVisitor extends MethodVisitor {
 				owner = "javax/microedition/shell/custom/TimerTask";
 				break;
 		}
-		desc = desc.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
+		owner = TimingTypeMapper.mapInternalName(owner);
+		desc = TimingTypeMapper.mapDescriptor(desc);
 		mv.visitMethodInsn(opcode, owner, name, desc, itf);
+	}
+
+	@Override
+	public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+		return TimingTypeMapper.mapAnnotationVisitor(
+				super.visitAnnotation(TimingTypeMapper.mapDescriptor(descriptor), visible));
+	}
+
+	@Override
+	public AnnotationVisitor visitTypeAnnotation(
+			int typeRef, TypePath typePath, String descriptor, boolean visible) {
+		return TimingTypeMapper.mapAnnotationVisitor(
+				super.visitTypeAnnotation(typeRef, typePath,
+						TimingTypeMapper.mapDescriptor(descriptor), visible));
+	}
+
+	@Override
+	public AnnotationVisitor visitAnnotationDefault() {
+		return TimingTypeMapper.mapAnnotationVisitor(super.visitAnnotationDefault());
+	}
+
+	@Override
+	public AnnotationVisitor visitParameterAnnotation(
+			int parameter, String descriptor, boolean visible) {
+		return TimingTypeMapper.mapAnnotationVisitor(
+				super.visitParameterAnnotation(
+						parameter, TimingTypeMapper.mapDescriptor(descriptor), visible));
+	}
+
+	@Override
+	public AnnotationVisitor visitInsnAnnotation(
+			int typeRef, TypePath typePath, String descriptor, boolean visible) {
+		return TimingTypeMapper.mapAnnotationVisitor(
+				super.visitInsnAnnotation(typeRef, typePath,
+						TimingTypeMapper.mapDescriptor(descriptor), visible));
+	}
+
+	@Override
+	public AnnotationVisitor visitTryCatchAnnotation(
+			int typeRef, TypePath typePath, String descriptor, boolean visible) {
+		return TimingTypeMapper.mapAnnotationVisitor(
+				super.visitTryCatchAnnotation(typeRef, typePath,
+						TimingTypeMapper.mapDescriptor(descriptor), visible));
+	}
+
+	@Override
+	public AnnotationVisitor visitLocalVariableAnnotation(
+			int typeRef,
+			TypePath typePath,
+			Label[] start,
+			Label[] end,
+			int[] index,
+			String descriptor,
+			boolean visible) {
+		return TimingTypeMapper.mapAnnotationVisitor(
+				super.visitLocalVariableAnnotation(typeRef, typePath, start, end, index,
+						TimingTypeMapper.mapDescriptor(descriptor), visible));
 	}
 
 	private void injectGetPropertyEncoding() {
@@ -224,36 +323,20 @@ public class AndroidMethodVisitor extends MethodVisitor {
 		if (USE_PANIC_LOGGING && type != null) {
 			exceptionHandlers.add(handler);
 		}
-		mv.visitTryCatchBlock(start, end, handler, type);
+		mv.visitTryCatchBlock(start, end, handler, TimingTypeMapper.mapInternalName(type));
 	}
 
 	@Override
 	public void visitTypeInsn(int opcode, String type) {
-		if (opcode == NEW && type.equals("java/util/Date")) {
-			flushDateAllocation();
-			dateAllocationPending = true;
-			dateConstructorCandidate = false;
-			return;
-		} else {
-			flushDateAllocation();
-		}
-		type = type.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
+		flushDateAllocation();
+		type = TimingTypeMapper.mapInternalName(type);
 		super.visitTypeInsn(opcode, type);
 	}
 
-	private void clearDateAllocation() {
-		dateAllocationPending = false;
-		dateConstructorCandidate = false;
-	}
-
 	private void flushDateAllocation() {
-		if (dateAllocationPending) {
-			super.visitTypeInsn(NEW, "java/util/Date");
-		} else if (dateConstructorCandidate) {
-			super.visitTypeInsn(NEW, "java/util/Date");
-			super.visitInsn(DUP);
-		}
-		clearDateAllocation();
+		// Kept as a single call-site hook for the legacy visitor flow. Date allocation is now
+		// preserved verbatim and every Date.<init>()V invocation is rewritten directly, so no
+		// NEW/DUP state machine may swallow legal bytecode patterns.
 	}
 
 	@Override
@@ -271,8 +354,8 @@ public class AndroidMethodVisitor extends MethodVisitor {
 	@Override
 	public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
 		flushDateAllocation();
-		descriptor = descriptor.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
-		owner = owner.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
+		descriptor = TimingTypeMapper.mapDescriptor(descriptor);
+		owner = TimingTypeMapper.mapInternalName(owner);
 		super.visitFieldInsn(opcode, owner, name, descriptor);
 	}
 
@@ -285,7 +368,7 @@ public class AndroidMethodVisitor extends MethodVisitor {
 	@Override
 	public void visitLdcInsn(Object value) {
 		flushDateAllocation();
-		super.visitLdcInsn(value);
+		super.visitLdcInsn(TimingTypeMapper.mapValue(value));
 	}
 
 	@Override
@@ -309,20 +392,52 @@ public class AndroidMethodVisitor extends MethodVisitor {
 	@Override
 	public void visitMultiANewArrayInsn(String descriptor, int numDimensions) {
 		flushDateAllocation();
-		descriptor = descriptor.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
+		descriptor = TimingTypeMapper.mapDescriptor(descriptor);
 		super.visitMultiANewArrayInsn(descriptor, numDimensions);
 	}
 
 	@Override
 	public void visitInvokeDynamicInsn(String name, String descriptor, Handle bsm, Object... bsmArgs) {
 		flushDateAllocation();
-		super.visitInvokeDynamicInsn(name, descriptor, bsm, bsmArgs);
+		Object[] mappedArguments = new Object[bsmArgs.length];
+		for (int i = 0; i < bsmArgs.length; i++) {
+			mappedArguments[i] = TimingTypeMapper.mapValue(bsmArgs[i]);
+		}
+		super.visitInvokeDynamicInsn(
+				name, TimingTypeMapper.mapDescriptor(descriptor),
+				TimingTypeMapper.mapHandle(bsm), mappedArguments);
 	}
 
 	@Override
 	public void visitFrame(int type, int numLocal, Object[] local, int numStack, Object[] stack) {
 		flushDateAllocation();
-		super.visitFrame(type, numLocal, local, numStack, stack);
+		Object[] mappedLocal = mapFrameValues(local);
+		Object[] mappedStack = mapFrameValues(stack);
+		super.visitFrame(type, numLocal, mappedLocal, numStack, mappedStack);
+	}
+
+	@Override
+	public void visitLocalVariable(
+			String name, String descriptor, String signature, Label start, Label end, int index) {
+		flushDateAllocation();
+		super.visitLocalVariable(
+				name,
+				TimingTypeMapper.mapDescriptor(descriptor),
+				TimingTypeMapper.mapSignature(signature),
+				start,
+				end,
+				index);
+	}
+
+	private static Object[] mapFrameValues(Object[] values) {
+		if (values == null) {
+			return null;
+		}
+		Object[] mapped = new Object[values.length];
+		for (int i = 0; i < values.length; i++) {
+			mapped[i] = TimingTypeMapper.mapFrameValue(values[i]);
+		}
+		return mapped;
 	}
 
 	@Override

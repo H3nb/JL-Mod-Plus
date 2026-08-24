@@ -21,6 +21,7 @@ public final class TimingSnapshot {
 	private final long guestMonotonicNanos;
 	private final long guestWallTimeMillis;
 	private final int speedPercent;
+	private final int timingMode;
 
 	TimingSnapshot(
 			long generation,
@@ -28,11 +29,23 @@ public final class TimingSnapshot {
 			long guestMonotonicNanos,
 			long guestWallTimeMillis,
 			int speedPercent) {
+		this(generation, hostMonotonicNanos, guestMonotonicNanos, guestWallTimeMillis,
+				speedPercent, TimingMode.FULL_GUEST_TIME);
+	}
+
+	TimingSnapshot(
+			long generation,
+			long hostMonotonicNanos,
+			long guestMonotonicNanos,
+			long guestWallTimeMillis,
+			int speedPercent,
+			int timingMode) {
 		this.generation = generation;
 		this.hostMonotonicNanos = hostMonotonicNanos;
 		this.guestMonotonicNanos = guestMonotonicNanos;
 		this.guestWallTimeMillis = guestWallTimeMillis;
 		this.speedPercent = speedPercent;
+		this.timingMode = TimingMode.sanitize(timingMode);
 	}
 
 	public long generation() {
@@ -53,5 +66,9 @@ public final class TimingSnapshot {
 
 	public int speedPercent() {
 		return speedPercent;
+	}
+
+	public int timingMode() {
+		return timingMode;
 	}
 }

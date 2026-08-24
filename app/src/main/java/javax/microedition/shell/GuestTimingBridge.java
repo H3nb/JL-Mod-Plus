@@ -19,8 +19,10 @@ import androidx.annotation.Nullable;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.concurrent.locks.LockSupport;
 
 import javax.microedition.shell.timing.TimingSession;
+import javax.microedition.shell.timing.TimingMode;
 import javax.microedition.shell.timing.TimingSnapshot;
 
 /**
@@ -28,7 +30,7 @@ import javax.microedition.shell.timing.TimingSnapshot;
  * provide or shadow this class.
  */
 public final class GuestTimingBridge {
-	public static final int ABI_VERSION = 1;
+	public static final int ABI_VERSION = 4;
 
 	private static final Object LOCK = new Object();
 	private static TimingSession activeSession;
@@ -71,7 +73,8 @@ public final class GuestTimingBridge {
 	/** Replacement for transformed guest java.lang.System.currentTimeMillis(). */
 	public static long currentTimeMillis() {
 		TimingSnapshot snapshot = activeSnapshot();
-		return snapshot == null ? System.currentTimeMillis() : snapshot.guestWallTimeMillis();
+		return snapshot == null || snapshot.timingMode() == TimingMode.REAL_WALL_CLOCK
+				? System.currentTimeMillis() : snapshot.guestWallTimeMillis();
 	}
 
 	/** Replacement for transformed guest java.lang.System.nanoTime(). */
@@ -82,8 +85,7 @@ public final class GuestTimingBridge {
 
 	/** Replacement for a transformed no-argument java.util.Date constructor. */
 	public static Date newDate() {
-		TimingSnapshot snapshot = activeSnapshot();
-		return new Date(snapshot == null ? System.currentTimeMillis() : snapshot.guestWallTimeMillis());
+		return new Date(currentTimeMillis());
 	}
 
 	/** Replacement for a transformed no-argument java.util.Calendar factory. */
@@ -96,6 +98,96 @@ public final class GuestTimingBridge {
 		return calendarAtGuestTime(Calendar.getInstance(timeZone), activeSnapshot());
 	}
 
+	/** Resolves legacy reflection names after java.util.Timer call-site remapping. */
+	public static Class<?> forName(String name) throws ClassNotFoundException {
+		return forName(name, null);
+	}
+
+	/**
+	 * Resolves a guest reflection name using the loader that owns the transformed caller. A
+	 * parent-owned bridge cannot use its own loader as a fallback: the MIDlet class may exist only
+	 * in the child AppClassLoader. The one-argument overload remains for already converted
+	 * archives, whose loader is supplied through the thread context by MicroLoader.
+	 */
+	public static Class<?> forName(String name, @Nullable Class<?> caller)
+			throws ClassNotFoundException {
+		if (name == null) {
+			throw new NullPointerException("name");
+		}
+		String mappedName = mapReflectionName(name);
+		ClassLoader loader = caller == null
+				? Thread.currentThread().getContextClassLoader()
+				: caller.getClassLoader();
+		if (loader == null) {
+			loader = GuestTimingBridge.class.getClassLoader();
+		}
+		return Class.forName(mappedName, true, loader);
+	}
+
+	/**
+	 * Preserves the guest binary name for classes whose bytecode identity was remapped to the
+	 * parent-owned Timer implementation. This is the instance-side counterpart of forName().
+	 */
+	public static String className(Class<?> type) {
+		if (type == null) {
+			throw new NullPointerException("type");
+		}
+		if (type == javax.microedition.shell.custom.Timer.class) {
+			return "java.util.Timer";
+		}
+		if (type == javax.microedition.shell.custom.TimerTask.class) {
+			return "java.util.TimerTask";
+		}
+		return mapGuestArrayName(type.getName());
+	}
+
+	/** Replacement for transformed Class.toString(), preserving the guest Timer namespace. */
+	public static String classToString(Class<?> type) {
+		if (type == null) {
+			throw new NullPointerException("type");
+		}
+		String name = className(type);
+		if (type.isPrimitive()) {
+			return name;
+		}
+		return (type.isInterface() ? "interface " : "class ") + name;
+	}
+
+	/** Replacement for transformed Class.newInstance() so reflective Date construction uses guest time. */
+	@SuppressWarnings("deprecation")
+	public static Object newInstance(Class<?> type)
+			throws InstantiationException, IllegalAccessException {
+		if (type == null) {
+			throw new NullPointerException("type");
+		}
+		if (type == Date.class) {
+			return newDate();
+		}
+		return type.newInstance();
+	}
+
+	private static String mapReflectionName(String name) {
+		if ("java.util.Timer".equals(name)) {
+			return javax.microedition.shell.custom.Timer.class.getName();
+		}
+		if ("java.util.TimerTask".equals(name)) {
+			return javax.microedition.shell.custom.TimerTask.class.getName();
+		}
+		return name
+				.replace("[Ljava.util.Timer;",
+						"[L" + javax.microedition.shell.custom.Timer.class.getName() + ";")
+				.replace("[Ljava.util.TimerTask;",
+						"[L" + javax.microedition.shell.custom.TimerTask.class.getName() + ";");
+	}
+
+	private static String mapGuestArrayName(String name) {
+		return name
+				.replace("[L" + javax.microedition.shell.custom.Timer.class.getName() + ";",
+						"[Ljava.util.Timer;")
+				.replace("[L" + javax.microedition.shell.custom.TimerTask.class.getName() + ";",
+						"[Ljava.util.TimerTask;");
+	}
+
 	/** Converts a guest millisecond deadline for an Android host callback. */
 	public static long hostDelayMillis(long guestMillis) {
 		TimingSession session = activeSession();
@@ -103,7 +195,7 @@ public final class GuestTimingBridge {
 	}
 
 	private static Calendar calendarAtGuestTime(Calendar calendar, TimingSnapshot snapshot) {
-		if (snapshot != null) {
+		if (snapshot != null && snapshot.timingMode() == TimingMode.FULL_GUEST_TIME) {
 			calendar.setTimeInMillis(snapshot.guestWallTimeMillis());
 		}
 		return calendar;
@@ -119,6 +211,14 @@ public final class GuestTimingBridge {
 			TimingSession session = activeSession;
 			return session == null ? null : session.snapshotIfOpen();
 		}
+	}
+
+	/**
+	 * Compatibility replacement for transformed Thread.yield(). It never declares or throws
+	 * InterruptedException, and LockSupport preserves an existing interrupt status.
+	 */
+	public static void yieldCompat() {
+		LockSupport.parkNanos(1_000_000L);
 	}
 
 	/** Replacement for transformed guest java.lang.Thread.sleep(long). */

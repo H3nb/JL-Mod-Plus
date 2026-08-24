@@ -37,9 +37,10 @@ import androidx.preference.PreferenceManager;
 import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.util.SparseIntArrayAdapter;
 import javax.microedition.shell.timing.EmulationSpeed;
+import javax.microedition.shell.timing.TimingMode;
 
 public class ProfileModel {
-	public static final int VERSION = 4;
+	public static final int VERSION = 5;
 
 	/** Stable preference key used to keep the built-in palette linked to the host theme. */
 	public static String builtInThemePreferenceKey(File configDir) {
@@ -112,6 +113,9 @@ public class ProfileModel {
 
 	@SerializedName("ShowEmulationSpeed")
 	public boolean showEmulationSpeed;
+
+	@SerializedName("TimingMode")
+	public int timingMode = TimingMode.FULL_GUEST_TIME;
 
 	@SerializedName("FpsLimit")
 	public int fpsLimit;
@@ -197,6 +201,7 @@ public class ProfileModel {
 		isNew = false;
 		emulationSpeedPercent = EmulationSpeed.NORMAL_PERCENT;
 		showEmulationSpeed = false;
+		timingMode = TimingMode.FULL_GUEST_TIME;
 	}
 
 	public ProfileModel(File dir) {

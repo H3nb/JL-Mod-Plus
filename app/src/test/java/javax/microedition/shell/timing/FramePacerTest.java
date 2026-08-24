@@ -43,7 +43,7 @@ public class FramePacerTest {
 	}
 
 	@Test
-	public void callbackRequestNeverBlocksButPreservesPendingCadence() {
+	public void callbackRequestNeverBlocksOrAccumulatesDeadlineDebt() {
 		FakeTimeSource time = new FakeTimeSource();
 		RecordingSleeper sleeper = new RecordingSleeper(time);
 		TimingSession session = new TimingSession(time, 100, 1L);
@@ -52,8 +52,9 @@ public class FramePacerTest {
 		pacer.pace(60, true);
 		pacer.pace(60, false);
 		assertEquals(16_666_667L, sleeper.lastParkNanos);
+		pacer.pace(60, false);
 		pacer.pace(60, true);
-		assertEquals(33_333_334L, sleeper.lastParkNanos);
+		assertEquals(16_666_667L, sleeper.lastParkNanos);
 	}
 
 	@Test

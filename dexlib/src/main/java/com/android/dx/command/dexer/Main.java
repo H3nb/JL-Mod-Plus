@@ -473,7 +473,12 @@ public class Main {
             // handled in FileBytesConsumer
             throw ex;
         } catch(IllegalArgumentException e) {
-            e.printStackTrace();
+            // A failed ASM transform must invalidate the whole conversion. Swallowing this
+            // exception can produce a readable but incomplete DEX, after which the installer
+            // would incorrectly mark the archive as timing-compatible.
+            e.printStackTrace(context.err);
+            errors.incrementAndGet();
+            return false;
         } catch(Exception ex) {
             throw new RuntimeException("Exception parsing classes", ex);
         }
