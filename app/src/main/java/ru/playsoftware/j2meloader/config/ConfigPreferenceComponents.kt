@@ -153,7 +153,7 @@ internal fun ConfigSwitchPreference(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
-                color = if (enabled) MaterialTheme.colorScheme.onSurface
+                color = if (enabled) Color.Unspecified
                 else MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
