@@ -36,6 +36,8 @@ import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
 
 import ru.playsoftware.j2meloader.R;
+import ru.woesss.j2me.installer.AutoReconversionActivity;
+import ru.woesss.j2me.installer.AppReconverter;
 
 public class Config {
 	public static final String APPS_DB_NAME = "/J2ME-apps.db";
@@ -122,9 +124,40 @@ public class Config {
 			}
 		}
 
+		File appDir = localAppDirectory(path);
+		if (AppReconverter.needsReconversion(appDir)) {
+			AutoReconversionActivity.start(context, name, path);
+			return;
+		}
+
 		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(path), context, MicroActivity.class);
 		intent.putExtra(KEY_MIDLET_NAME, name);
 		context.startActivity(intent);
+	}
+
+	public static void startApp(Context context, String name, Uri appUri) {
+		if (appUri == null) {
+			// A malformed shortcut/configuration intent must not open a configuration screen for the
+			// process working directory. The caller can surface its own navigation error or simply
+			// finish, but no MIDlet launch is safe without an app URI.
+			return;
+		}
+		String path = appUri.getScheme() == null
+				? appUri.toString()
+				: "file".equals(appUri.getScheme()) && appUri.getPath() != null
+						? appUri.getPath()
+						: appUri.toString();
+		startApp(context, name, path);
+	}
+
+	private static File localAppDirectory(String path) {
+		if (path == null) return null;
+		Uri uri = Uri.parse(path);
+		if ("file".equals(uri.getScheme())) {
+			String filePath = uri.getPath();
+			return filePath == null ? null : new File(filePath);
+		}
+		return uri.getScheme() == null ? new File(path) : null;
 	}
 
 	private static void initDirs(String path) {

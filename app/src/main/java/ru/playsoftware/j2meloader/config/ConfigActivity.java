@@ -53,7 +53,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import javax.microedition.shell.MicroActivity;
 import javax.microedition.shell.timing.TimingTransformMetadata;
 import javax.microedition.util.ContextHolder;
 
@@ -665,10 +664,10 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		if (needShow && configDir != null) {
 			saveParams();
 		}
-		Intent i = new Intent(this, MicroActivity.class);
-		i.setData(getIntent().getData());
-		i.putExtra(KEY_MIDLET_NAME, getIntent().getStringExtra(KEY_MIDLET_NAME));
-		startActivity(i);
+		Config.startApp(
+				this,
+				getIntent().getStringExtra(KEY_MIDLET_NAME),
+				getIntent().getData());
 		finish();
 	}
 
