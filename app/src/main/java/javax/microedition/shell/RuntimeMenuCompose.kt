@@ -14,7 +14,6 @@
 
 package javax.microedition.shell
 
-import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,6 +36,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -45,6 +46,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.ui.semantics.Role
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -52,7 +54,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.res.painterResource
@@ -65,7 +66,10 @@ import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
 import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
+import ru.playsoftware.j2meloader.ui.availableWindowWidthDp
 import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
+import javax.microedition.shell.timing.EmulationSpeed
+import kotlin.math.roundToInt
 
 /** Android-host menu state only; Java ME Displayable and Command state stay in the runtime. */
 internal data class RuntimeMenuUiState(
@@ -76,6 +80,8 @@ internal data class RuntimeMenuUiState(
     val virtualKeyboardAvailable: Boolean = false,
     val virtualKeyboardEditing: Boolean = false,
     val orientationLocked: Boolean = false,
+    val emulationSpeedAvailable: Boolean = false,
+    val emulationSpeedPercent: Int = EmulationSpeed.NORMAL_PERCENT,
 )
 
 interface RuntimeMenuActions {
@@ -87,6 +93,9 @@ interface RuntimeMenuActions {
     fun onLimitFps()
     fun onSetFpsLimit(value: Int)
     fun onResetFpsLimit()
+    fun onEmulationSpeed()
+    fun onSetEmulationSpeed(value: Int)
+    fun onResetEmulationSpeed()
     fun onEditVirtualKeyboardLayout()
     fun onResizeVirtualKeyboardLayout()
     fun onFinishVirtualKeyboardLayout()
@@ -106,11 +115,17 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     private var state by mutableStateOf(RuntimeMenuUiState())
     private var menuVisible by mutableStateOf(false)
     private var limitFpsVisible by mutableStateOf(false)
+    private var emulationSpeedVisible by mutableStateOf(false)
     private var hostDialogState by mutableStateOf<RuntimeHostDialogState?>(null)
     private val menuActions = object : RuntimeMenuActions by actions {
         override fun onLimitFps() {
             closeMenu()
             limitFpsVisible = true
+        }
+
+        override fun onEmulationSpeed() {
+            closeMenu()
+            emulationSpeedVisible = true
         }
     }
 
@@ -139,6 +154,20 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
                         },
                     )
                 }
+                if (emulationSpeedVisible) {
+                    RuntimeEmulationSpeedDialog(
+                        currentPercent = state.emulationSpeedPercent,
+                        onDismiss = { emulationSpeedVisible = false },
+                        onConfirm = { value ->
+                            emulationSpeedVisible = false
+                            actions.onSetEmulationSpeed(value)
+                        },
+                        onReset = {
+                            emulationSpeedVisible = false
+                            actions.onResetEmulationSpeed()
+                        },
+                    )
+                }
                 if (hostDialogActions != null) {
                     RuntimeHostDialogs(
                         state = hostDialogState,
@@ -158,6 +187,8 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
         virtualKeyboardAvailable: Boolean,
         virtualKeyboardEditing: Boolean,
         orientationLocked: Boolean,
+        emulationSpeedAvailable: Boolean,
+        emulationSpeedPercent: Int,
     ) {
         state = RuntimeMenuUiState(
             title = title,
@@ -167,6 +198,8 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             virtualKeyboardAvailable = virtualKeyboardAvailable,
             virtualKeyboardEditing = virtualKeyboardEditing,
             orientationLocked = orientationLocked,
+            emulationSpeedAvailable = emulationSpeedAvailable,
+            emulationSpeedPercent = emulationSpeedPercent,
         )
     }
 
@@ -176,9 +209,15 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
 
     /** Allows the Activity's legacy Back/key paths to dismiss an already-open host menu. */
     fun isMenuVisible(): Boolean = menuVisible
+            || limitFpsVisible
+            || emulationSpeedVisible
+            || hostDialogState != null
 
     fun closeMenu() {
         menuVisible = false
+        limitFpsVisible = false
+        emulationSpeedVisible = false
+        hostDialogState = null
     }
 
     fun showMidletDialog(names: Array<String>) {
@@ -213,16 +252,16 @@ private data class RuntimeMenuDialogLayout(
 
 @Composable
 private fun runtimeMenuDialogLayout(): RuntimeMenuDialogLayout {
-    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val wide = availableWindowWidthDp() >= 600.dp
     return RuntimeMenuDialogLayout(
-        modifier = if (landscape) {
+        modifier = if (wide) {
             Modifier
                 .fillMaxWidth(0.94f)
                 .widthIn(max = 760.dp)
         } else {
             Modifier.widthIn(max = 560.dp)
         },
-        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
+        properties = DialogProperties(usePlatformDefaultWidth = !wide),
     )
 }
 
@@ -257,6 +296,88 @@ internal fun RuntimeLimitFpsDialog(
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(value.trim().toIntOrNull() ?: 0) }) {
+                Text(stringResource(android.R.string.ok))
+            }
+        },
+        dismissButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                TextButton(onClick = onReset) {
+                    Text(stringResource(R.string.reset))
+                }
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            }
+        },
+    )
+}
+
+@Composable
+internal fun RuntimeEmulationSpeedDialog(
+    currentPercent: Int,
+    onDismiss: () -> Unit,
+    onConfirm: (Int) -> Unit,
+    onReset: () -> Unit,
+) {
+    val presetValues = remember(currentPercent) {
+        (EmulationSpeed.presets().toList() + currentPercent).distinct().sorted()
+    }
+    val currentIndex = presetValues.indexOf(currentPercent).coerceAtLeast(0)
+    var draftIndex by remember(currentIndex, presetValues) { mutableFloatStateOf(currentIndex.toFloat()) }
+    val selectedIndex = draftIndex.roundToInt().coerceIn(presetValues.indices)
+    val selectedValue = presetValues[selectedIndex]
+    val layout = runtimeMenuDialogLayout()
+    AlertDialog(
+        modifier = layout.modifier,
+        properties = layout.properties,
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.PREF_EMULATION_SPEED)) },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = stringResource(R.string.config_help_emulation_speed),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+                Text(
+                    text = EmulationSpeed.formatMultiplier(selectedValue),
+                    modifier = Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Slider(
+                    value = draftIndex,
+                    onValueChange = { draftIndex = it },
+                    valueRange = 0f..presetValues.lastIndex.toFloat(),
+                    steps = (presetValues.size - 2).coerceAtLeast(0),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .testTag("runtime_emulation_speed_slider"),
+                    colors = SliderDefaults.colors(
+                        thumbColor = MaterialTheme.colorScheme.primary,
+                        activeTrackColor = MaterialTheme.colorScheme.primary,
+                        inactiveTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.28f),
+                    ),
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = EmulationSpeed.formatMultiplier(presetValues.first()),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = EmulationSpeed.formatMultiplier(presetValues.last()),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(selectedValue) }) {
                 Text(stringResource(android.R.string.ok))
             }
         },
@@ -507,6 +628,16 @@ private fun LazyListScope.runtimeMenuItems(
         }
         item {
             RuntimeActionItem(R.string.PREF_LIMIT_FPS, onDismiss, actions::onLimitFps, leadingIcon = R.drawable.ic_speed)
+        }
+        if (state.emulationSpeedAvailable) {
+            item {
+                RuntimeActionItem(
+                    R.string.PREF_EMULATION_SPEED,
+                    onDismiss,
+                    actions::onEmulationSpeed,
+                    leadingIcon = R.drawable.ic_speed,
+                )
+            }
         }
         if (state.virtualKeyboardAvailable) {
             item {

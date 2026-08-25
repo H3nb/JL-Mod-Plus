@@ -96,6 +96,26 @@ class LibraryScannerTest {
     }
 
     @Test
+    fun emptyArchiveFallsBackToNonEmptyDexPayload() {
+        val root = temporaryFolder.newFolder("workdir")
+        val appDir = createConvertedApp(
+            root = root,
+            storageKey = "Fallback",
+            descriptor = """
+                MIDlet-Name: Fallback
+                MIDlet-Vendor: Vendor
+                MIDlet-Version: 1.0
+            """.trimIndent(),
+        )
+        File(appDir, "converted.zip").writeText("")
+
+        val result = scanner.scan(root)
+
+        assertEquals(1, result.apps.size)
+        assertTrue(result.failures.isEmpty())
+    }
+
+    @Test
     fun legacyConvertedStagingDirectoryIsIgnoredCaseInsensitively() {
         val root = temporaryFolder.newFolder("workdir")
         val converted = File(root, "converted").apply { mkdir() }

@@ -259,6 +259,18 @@ private class RecordingRuntimeMenuActions(
         events += "resetFps"
     }
 
+    override fun onEmulationSpeed() {
+        events += "speed"
+    }
+
+    override fun onSetEmulationSpeed(value: Int) {
+        events += "setSpeed:$value"
+    }
+
+    override fun onResetEmulationSpeed() {
+        events += "resetSpeed"
+    }
+
     override fun onEditVirtualKeyboardLayout() {
         events += "edit"
     }

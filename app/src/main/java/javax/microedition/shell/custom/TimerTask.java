@@ -32,12 +32,27 @@ public abstract class TimerTask implements Runnable {
     /* If timer was cancelled */
     boolean cancelled;
 
+    /* A task cannot be scheduled again after its first scheduling attempt. */
+    boolean scheduled;
+
+    /* True once the Timer has started the first execution of this task. */
+    boolean executionStarted;
+
     /* Slots used by Timer */
     long when;
 
     long period;
 
     boolean fixedRate;
+
+    /* Relative schedules use the speed-scaled guest monotonic domain. */
+    boolean relativeGuestTime;
+
+    /* Nominal Date.getTime() value corresponding to the next scheduled execution. */
+    long scheduledWallTime;
+
+    /* Epoch-domain period used to publish fixed-rate scheduledExecutionTime values. */
+    long scheduledWallPeriodMillis;
 
     /*
      * The time when task will be executed, or the time when task was launched
@@ -71,7 +86,7 @@ public abstract class TimerTask implements Runnable {
      */
     boolean isScheduled() {
         synchronized (lock) {
-            return when > 0 || scheduledTime > 0;
+            return scheduled;
         }
     }
 
@@ -91,7 +106,8 @@ public abstract class TimerTask implements Runnable {
      */
     public boolean cancel() {
         synchronized (lock) {
-            boolean willRun = !cancelled && when > 0;
+            boolean willRun = !cancelled && scheduled
+                    && (period >= 0 || !executionStarted);
             cancelled = true;
             return willRun;
         }

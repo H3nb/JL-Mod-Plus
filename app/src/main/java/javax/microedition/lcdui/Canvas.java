@@ -2,6 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2020 Nikita Shakarun
  * Copyright 2019-2025 Yury Kharchenko
+ * Modified in 2026 for guest/render frame telemetry.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +63,7 @@ import javax.microedition.lcdui.commands.AbstractSoftKeysBar;
 import javax.microedition.lcdui.event.CanvasEvent;
 import javax.microedition.lcdui.event.Event;
 import javax.microedition.lcdui.event.EventFilter;
+import javax.microedition.lcdui.event.EventQueue;
 import javax.microedition.lcdui.event.PointerEvent;
 import javax.microedition.lcdui.graphics.CanvasView;
 import javax.microedition.lcdui.graphics.CanvasWrapper;
@@ -73,8 +75,13 @@ import javax.microedition.lcdui.overlay.FpsCounter;
 import javax.microedition.lcdui.overlay.Layer;
 import javax.microedition.lcdui.overlay.Overlay;
 import javax.microedition.lcdui.overlay.OverlayView;
+import javax.microedition.lcdui.overlay.TimingMonitor;
 import javax.microedition.lcdui.skin.SkinLayer;
 import javax.microedition.shell.MicroActivity;
+import javax.microedition.shell.GuestTimingBridge;
+import javax.microedition.shell.timing.FramePacer;
+import javax.microedition.shell.timing.FrameMetrics;
+import javax.microedition.shell.timing.PresentationMailbox;
 import javax.microedition.util.ContextHolder;
 
 import io.reactivex.Single;
@@ -86,6 +93,7 @@ import ru.playsoftware.j2meloader.config.ProfileModel;
 @SuppressWarnings({"WeakerAccess", "unused"})
 public abstract class Canvas extends Displayable {
 	private static final String TAG = Canvas.class.getName();
+	private static final int MAX_SYNCHRONOUS_DRAIN = 4;
 
 	public static final int KEY_POUND = 35;
 	public static final int KEY_STAR = 42;
@@ -125,6 +133,7 @@ public abstract class Canvas extends Displayable {
 	private static boolean parallelRedraw;
 	private static int fpsLimit;
 	private static boolean screenshotRawMode;
+	private static boolean timingOverlayEnabled;
 
 	private final Object bufferLock = new Object();
 	private final Object surfaceLock = new Object();
@@ -142,15 +151,19 @@ public abstract class Canvas extends Displayable {
 	private int displayWidth;
 	private int displayHeight;
 	private boolean fullscreen;
-	private boolean visible;
+	private volatile boolean visible;
 	private boolean sizeChangedCalled;
 	private static Image offscreen;
 	private Image offscreenCopy;
+	private volatile long publishedFrameSequence;
+	private volatile FrameMetrics frameMetrics;
+	private final PresentationMailbox presentationMailbox = new PresentationMailbox();
 	private int onX, onY, onWidth, onHeight;
-	private long lastFrameTime = System.currentTimeMillis();
+	private final FramePacer framePacer = new FramePacer(GuestTimingBridge.activeSession());
 	private Handler uiHandler;
 	private Overlay overlay;
 	private FpsCounter fpsCounter;
+	private TimingMonitor timingMonitor;
 	private boolean skipLeftSoft;
 	private boolean skipRightSoft;
 
@@ -185,6 +198,11 @@ public abstract class Canvas extends Displayable {
 		fpsLimit = settings.fpsLimit;
 		int mode = settings.graphicsMode;
 		parallelRedraw = (mode == 0 || mode == 3) && settings.parallelRedrawScreen;
+	}
+
+	/** Enables the diagnostic only when the loaded artifact advertises the timing transform ABI. */
+	public static void setTimingOverlayEnabled(boolean enabled) {
+		timingOverlayEnabled = enabled;
 	}
 
 	public int getKeyCode(int gameAction) {
@@ -258,18 +276,33 @@ public abstract class Canvas extends Displayable {
 
 	public void onDraw(android.graphics.Canvas canvas) {
 		if (settings.graphicsMode != 2) return; // Fix for Android Pie
+		FrameMetrics metrics = frameMetrics;
+		long frameSequence = 0L;
+		long presentationGeneration = presentationMailbox.generation();
+		boolean presented = false;
 		CanvasWrapper g = canvasWrapper;
-		g.bind(canvas);
-		g.clear(settings.screenBackgroundColor | Color.BLACK);
-		SkinLayer skinLayer = SkinLayer.getInstance();
-		int p = skinLayer != null && skinLayer.hasDisplayFrame() ? 0 : settings.screenPadding;
-		canvas.clipRect(p, p, displayWidth - p, displayHeight - p);
-		synchronized (bufferLock) {
-			offscreenCopy.getBitmap().prepareToDraw();
-			g.drawImage(offscreenCopy, virtualScreen);
-		}
-		if (fpsCounter != null) {
-			fpsCounter.increment();
+		try {
+			g.bind(canvas);
+			g.clear(settings.screenBackgroundColor | Color.BLACK);
+			SkinLayer skinLayer = SkinLayer.getInstance();
+			int p = skinLayer != null && skinLayer.hasDisplayFrame() ? 0 : settings.screenPadding;
+			canvas.clipRect(p, p, displayWidth - p, displayHeight - p);
+			synchronized (bufferLock) {
+				offscreenCopy.getBitmap().prepareToDraw();
+				g.drawImage(offscreenCopy, virtualScreen);
+				frameSequence = publishedFrameSequence;
+			}
+			presented = true;
+			if (metrics != null) {
+				metrics.recordRender(frameSequence);
+			}
+		} finally {
+			boolean needsAnother = presented
+					? presentationMailbox.complete(presentationGeneration, frameSequence)
+					: presentationMailbox.releaseAfterFailure(presentationGeneration);
+			if (needsAnother) {
+				requestAnotherPresentation(!presented);
+			}
 		}
 	}
 
@@ -569,10 +602,15 @@ public abstract class Canvas extends Displayable {
 	}
 
 	public final void repaint(int x, int y, int width, int height) {
+		if (!visible || !hasVisibleRegion(x, y, width, height)) {
+			return;
+		}
 		limitFps();
 		boolean post;
 		synchronized (paintEvent.clip) {
-			post = paintEvent.invalidateClip(this, x, y, x + width, y + height) && !paintEvent.isPending;
+			post = paintEvent.invalidateClip(
+					this, x, y, safeRegionEnd(x, width), safeRegionEnd(y, height))
+					&& !paintEvent.isPending;
 			if (post) {
 				paintEvent.isPending = true;
 			}
@@ -591,20 +629,33 @@ public abstract class Canvas extends Displayable {
 
 	// GameCanvas
 	protected void flushBuffer(Image image, int x, int y, int width, int height) {
-		limitFps();
-		if (width <= 0 || height <= 0 ||
-				x + width < 0 || y + height < 0 ||
-				x >= this.width || y >= this.height) {
+		if (!visible || !hasVisibleRegion(x, y, width, height)) {
 			return;
 		}
+		limitFps();
 		synchronized (bufferLock) {
 			if (Thread.holdsLock(paintEvent)) {
 				offscreen.getSingleGraphics().flush(image, x, y, width, height);
 				return;
 			}
 			offscreenCopy.getSingleGraphics().flush(image, x, y, width, height);
+			publishFrameLocked();
 		}
 		requestFlushToScreen();
+	}
+
+	private boolean hasVisibleRegion(int x, int y, int regionWidth, int regionHeight) {
+		if (regionWidth <= 0 || regionHeight <= 0 || this.width <= 0 || this.height <= 0) {
+			return false;
+		}
+		long right = (long) x + regionWidth;
+		long bottom = (long) y + regionHeight;
+		return right > 0L && bottom > 0L && x < this.width && y < this.height;
+	}
+
+	private static int safeRegionEnd(int start, int size) {
+		long end = (long) start + size;
+		return end >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) end;
 	}
 
 	// ExtendedImage
@@ -612,53 +663,172 @@ public abstract class Canvas extends Displayable {
 		limitFps();
 		synchronized (bufferLock) {
 			image.copyTo(offscreenCopy, x, y);
+			publishFrameLocked();
 		}
 		requestFlushToScreen();
 	}
 
 	private void limitFps() {
-		if (fpsLimit <= 0) return;
-		try {
-			long millis = (1000 / fpsLimit) - (System.currentTimeMillis() - lastFrameTime);
-			if (millis > 0) Thread.sleep(millis);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+		framePacer.pace(fpsLimit, !EventQueue.isInCallback());
+	}
+
+	private void publishFrameLocked() {
+		long sequence = presentationMailbox.publish();
+		if (sequence == 0L) {
+			return;
 		}
-		lastFrameTime = System.currentTimeMillis();
+		publishedFrameSequence = sequence;
+		FrameMetrics metrics = frameMetrics;
+		if (metrics != null) {
+			metrics.recordGameFrame();
+		}
 	}
 
 	@SuppressLint("NewApi")
 	private boolean repaintScreen() {
+		long presentationGeneration = presentationMailbox.generation();
+		PresentationResult result = presentToSurface();
+		if (!result.surfaceAvailable && parallelRedraw) {
+			presentationMailbox.close();
+		}
+		if (parallelRedraw && uiHandler != null) {
+			boolean needsAnother = result.presented
+					? presentationMailbox.complete(presentationGeneration, result.frameSequence)
+					: presentationMailbox.releaseAfterFailure(presentationGeneration);
+			if (needsAnother) {
+				requestAnotherPresentation(!result.presented);
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Presents all frames that were published while one synchronous surface presentation was in
+	 * flight. The loop is deliberately local and non-recursive: synchronous Surface rendering is
+	 * still completed by the caller, while the mailbox closes the same lost-wakeup race as the
+	 * asynchronous backends.
+	 */
+	private void requestSynchronousPresentation() {
+		long presentationGeneration = presentationMailbox.generation();
+		if (!presentationMailbox.trySchedule(presentationGeneration)) {
+			return;
+		}
+		int drained = 0;
+		while (true) {
+			PresentationResult result = presentToSurface();
+			if (!result.presented) {
+				boolean retry = presentationMailbox.releaseAfterFailure(presentationGeneration);
+				if (retry && result.surfaceAvailable) {
+					postSynchronousRetry(presentationGeneration, 16L);
+				}
+				return;
+			}
+			drained++;
+			if (drained >= MAX_SYNCHRONOUS_DRAIN) {
+				if (presentationMailbox.completeAndRelease(
+						presentationGeneration, result.frameSequence)) {
+					postSynchronousRetry(presentationGeneration, 0L);
+				}
+				return;
+			}
+			if (!presentationMailbox.complete(presentationGeneration, result.frameSequence)) {
+				return;
+			}
+		}
+	}
+
+	private void postSynchronousRetry(long presentationGeneration, long delayMillis) {
+		if (innerView == null) {
+			return;
+		}
+		Runnable retry = () -> {
+			if (presentationMailbox.generation() == presentationGeneration) {
+				requestSynchronousPresentation();
+			}
+		};
+		if (delayMillis > 0L) {
+			innerView.postDelayed(retry, delayMillis);
+		} else {
+			innerView.post(retry);
+		}
+	}
+
+	@SuppressLint("NewApi")
+	private PresentationResult presentToSurface() {
+		FrameMetrics metrics = frameMetrics;
+		long frameSequence = 0L;
 		Surface surface = this.surface;
 		if (surface == null || !surface.isValid()) {
-			return true;
+			return PresentationResult.surfaceUnavailable();
 		}
+		android.graphics.Canvas lockedCanvas = null;
 		try {
 			synchronized (surfaceLock) {
-				android.graphics.Canvas canvas = settings.graphicsMode == 3 ?
+				lockedCanvas = settings.graphicsMode == 3 ?
 						surface.lockHardwareCanvas() : surface.lockCanvas(null);
-				if (canvas == null) {
-					return true;
+				if (lockedCanvas == null) {
+					return PresentationResult.surfaceReady();
 				}
 				CanvasWrapper g = this.canvasWrapper;
-				g.bind(canvas);
+				g.bind(lockedCanvas);
 				g.clear(settings.screenBackgroundColor | Color.BLACK);
 				SkinLayer skinLayer = SkinLayer.getInstance();
 				int p = skinLayer != null && skinLayer.hasDisplayFrame() ? 0 : settings.screenPadding;
-				canvas.clipRect(p, p, displayWidth - p, displayHeight - p);
+				lockedCanvas.clipRect(p, p, displayWidth - p, displayHeight - p);
 				synchronized (bufferLock) {
 					g.drawImage(offscreenCopy, virtualScreen);
+					frameSequence = publishedFrameSequence;
 				}
-				surface.unlockCanvasAndPost(canvas);
+				try {
+					surface.unlockCanvasAndPost(lockedCanvas);
+				} finally {
+					// An unlock attempt transfers ownership to Surface even when Android throws. Do
+					// not submit the same canvas a second time from the outer cleanup path.
+					lockedCanvas = null;
+				}
 			}
-			if (fpsCounter != null) {
-				fpsCounter.increment();
+			if (metrics != null) {
+				metrics.recordRender(frameSequence);
 			}
-			if (parallelRedraw) uiHandler.removeMessages(0);
+			return PresentationResult.presented(frameSequence);
 		} catch (Exception e) {
 			Log.w(TAG, "repaintScreen: " + e);
+			return PresentationResult.surfaceReady();
+		} finally {
+			if (lockedCanvas != null) {
+				synchronized (surfaceLock) {
+					try {
+						surface.unlockCanvasAndPost(lockedCanvas);
+					} catch (Exception e) {
+						Log.w(TAG, "repaintScreen: failed to unlock surface canvas", e);
+					}
+				}
+			}
 		}
-		return true;
+	}
+
+	private static final class PresentationResult {
+		final boolean surfaceAvailable;
+		final boolean presented;
+		final long frameSequence;
+
+		private PresentationResult(boolean surfaceAvailable, boolean presented, long frameSequence) {
+			this.surfaceAvailable = surfaceAvailable;
+			this.presented = presented;
+			this.frameSequence = frameSequence;
+		}
+
+		static PresentationResult surfaceUnavailable() {
+			return new PresentationResult(false, false, 0L);
+		}
+
+		static PresentationResult surfaceReady() {
+			return new PresentationResult(true, false, 0L);
+		}
+
+		static PresentationResult presented(long frameSequence) {
+			return new PresentationResult(true, true, frameSequence);
+		}
 	}
 
 	/**
@@ -770,15 +940,30 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		public void onDrawFrame(GL10 gl) {
-			glDisable(GL_SCISSOR_TEST);
-			glClear(GL_COLOR_BUFFER_BIT);
-			glEnable(GL_SCISSOR_TEST);
-			synchronized (bufferLock) {
-				GLUtils.texImage2D(GL_TEXTURE_2D, 0, offscreenCopy.getBitmap(), 0);
-			}
-			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-			if (fpsCounter != null) {
-				fpsCounter.increment();
+			FrameMetrics metrics = frameMetrics;
+			long frameSequence = 0L;
+			long presentationGeneration = presentationMailbox.generation();
+			boolean presented = false;
+			try {
+				glDisable(GL_SCISSOR_TEST);
+				glClear(GL_COLOR_BUFFER_BIT);
+				glEnable(GL_SCISSOR_TEST);
+				synchronized (bufferLock) {
+					GLUtils.texImage2D(GL_TEXTURE_2D, 0, offscreenCopy.getBitmap(), 0);
+					frameSequence = publishedFrameSequence;
+				}
+				glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+				presented = true;
+				if (metrics != null) {
+					metrics.recordRender(frameSequence);
+				}
+			} finally {
+				boolean needsAnother = presented
+						? presentationMailbox.complete(presentationGeneration, frameSequence)
+						: presentationMailbox.releaseAfterFailure(presentationGeneration);
+				if (needsAnother) {
+					requestAnotherPresentation(!presented);
+				}
 			}
 		}
 
@@ -898,6 +1083,7 @@ public abstract class Canvas extends Displayable {
 			}
 			synchronized (bufferLock) {
 				offscreen.copyTo(offscreenCopy);
+				publishFrameLocked();
 			}
 			if (surface == null || !surface.isValid()) {
 				return;
@@ -1132,15 +1318,21 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		public void surfaceCreated(@NonNull SurfaceHolder holder) {
+			presentationMailbox.begin();
 			if (renderer != null) {
 				renderer.start();
 			}
 			surface = holder.getSurface();
+			if (settings.showFps) {
+				frameMetrics = new FrameMetrics();
+				fpsCounter = new FpsCounter(overlayView, frameMetrics);
+				overlayView.addLayer(fpsCounter);
+			}
 			Display.postEvent(CanvasEvent.getInstance(Canvas.this, CanvasEvent.SHOW_NOTIFY));
 			repaintInternal();
-			if (settings.showFps) {
-				fpsCounter = new FpsCounter(overlayView);
-				overlayView.addLayer(fpsCounter);
+			if (timingOverlayEnabled && settings.showEmulationSpeed) {
+				timingMonitor = new TimingMonitor(overlayView, fpsCounter != null);
+				overlayView.addLayer(timingMonitor);
 			}
 			overlayView.addLayer(softBar, 0);
 			overlayView.setVisibility(true);
@@ -1152,6 +1344,7 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
+			presentationMailbox.close();
 			if (renderer != null) {
 				renderer.stop();
 			}
@@ -1163,6 +1356,13 @@ public abstract class Canvas extends Displayable {
 				fpsCounter.stop();
 				overlayView.removeLayer(fpsCounter);
 				fpsCounter = null;
+			}
+			frameMetrics = null;
+			publishedFrameSequence = 0L;
+			if (timingMonitor != null) {
+				timingMonitor.stop();
+				overlayView.removeLayer(timingMonitor);
+				timingMonitor = null;
 			}
 			overlayView.removeLayer(softBar);
 			softBar.closeMenu();
@@ -1178,17 +1378,55 @@ public abstract class Canvas extends Displayable {
 
 	private void requestFlushToScreen() {
 		if (settings.graphicsMode == 1) {
-			if (innerView != null) {
+			long generation = presentationMailbox.generation();
+			if (innerView != null && presentationMailbox.trySchedule(generation)) {
 				renderer.requestRender();
 			}
 		} else if (settings.graphicsMode == 2) {
-			if (innerView != null) {
+			long generation = presentationMailbox.generation();
+			if (innerView != null && presentationMailbox.trySchedule(generation)) {
 				innerView.postInvalidate();
 			}
 		} else if (!parallelRedraw) {
-			repaintScreen();
-		} else if (!uiHandler.hasMessages(0)) {
-			uiHandler.sendEmptyMessage(0);
+			requestSynchronousPresentation();
+		} else if (uiHandler != null) {
+			long generation = presentationMailbox.generation();
+			if (presentationMailbox.trySchedule(generation)) {
+				uiHandler.sendEmptyMessage(0);
+			}
+		}
+	}
+
+	private void requestAnotherPresentation(boolean delayed) {
+		long retryDelayMillis = delayed ? 16L : 0L;
+		if (delayed) {
+			long generation = presentationMailbox.generation();
+			if (!presentationMailbox.trySchedule(generation)) {
+				return;
+			}
+		}
+		if (settings.graphicsMode == 1) {
+			if (innerView != null && renderer != null) {
+				if (delayed) {
+					innerView.postDelayed(renderer::requestRender, retryDelayMillis);
+				} else {
+					renderer.requestRender();
+				}
+			}
+		} else if (settings.graphicsMode == 2) {
+			if (innerView != null) {
+				if (delayed) {
+					innerView.postInvalidateDelayed(retryDelayMillis);
+				} else {
+					innerView.postInvalidate();
+				}
+			}
+		} else if (parallelRedraw && uiHandler != null) {
+			if (delayed) {
+				uiHandler.sendEmptyMessageDelayed(0, retryDelayMillis);
+			} else {
+				uiHandler.sendEmptyMessage(0);
+			}
 		}
 	}
 

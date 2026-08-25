@@ -30,34 +30,152 @@
 
 package org.microemu.android.asm;
 
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.RecordComponentVisitor;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.TypePath;
 
 public class AndroidClassVisitor extends ClassVisitor {
+	private final String ownerClassName;
 
 	AndroidClassVisitor(ClassVisitor cv) {
+		this(cv, null);
+	}
+
+	AndroidClassVisitor(ClassVisitor cv, String ownerClassName) {
 		super(Opcodes.ASM9, cv);
+		this.ownerClassName = ownerClassName;
 	}
 
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-		desc = desc.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
+		desc = TimingTypeMapper.mapDescriptor(desc);
+		signature = TimingTypeMapper.mapSignature(signature);
+		if (exceptions != null) {
+			exceptions = exceptions.clone();
+			for (int i = 0; i < exceptions.length; i++) {
+				exceptions[i] = TimingTypeMapper.mapInternalName(exceptions[i]);
+			}
+		}
 		boolean returnsBoolean = Type.getReturnType(desc).getSort() == Type.BOOLEAN;
-		return new AndroidMethodVisitor(super.visitMethod(access, name, desc, signature, exceptions), returnsBoolean);
+		return new AndroidMethodVisitor(
+				super.visitMethod(access, name, desc, signature, exceptions), returnsBoolean,
+				ownerClassName);
 	}
 
 	@Override
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-		superName = superName.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
+		signature = TimingTypeMapper.mapSignature(signature);
+		superName = TimingTypeMapper.mapInternalName(superName);
+		if (interfaces != null) {
+			interfaces = interfaces.clone();
+			for (int i = 0; i < interfaces.length; i++) {
+				interfaces[i] = TimingTypeMapper.mapInternalName(interfaces[i]);
+			}
+		}
 		super.visit(version, access, name, signature, superName, interfaces);
 	}
 
 	@Override
+	public void visitOuterClass(String owner, String name, String descriptor) {
+		super.visitOuterClass(
+				TimingTypeMapper.mapInternalName(owner),
+				name,
+				TimingTypeMapper.mapDescriptor(descriptor));
+	}
+
+	@Override
+	public void visitInnerClass(String name, String outerName, String innerName, int access) {
+		super.visitInnerClass(
+				TimingTypeMapper.mapInternalName(name),
+				TimingTypeMapper.mapInternalName(outerName),
+				innerName,
+				access);
+	}
+
+	@Override
+	public void visitNestHost(String nestHost) {
+		super.visitNestHost(TimingTypeMapper.mapInternalName(nestHost));
+	}
+
+	@Override
+	public void visitNestMember(String nestMember) {
+		super.visitNestMember(TimingTypeMapper.mapInternalName(nestMember));
+	}
+
+	@Override
+	public void visitPermittedSubclass(String permittedSubclass) {
+		super.visitPermittedSubclass(TimingTypeMapper.mapInternalName(permittedSubclass));
+	}
+
+	@Override
+	public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+		return TimingTypeMapper.mapAnnotationVisitor(
+				super.visitAnnotation(TimingTypeMapper.mapDescriptor(descriptor), visible));
+	}
+
+	@Override
+	public AnnotationVisitor visitTypeAnnotation(
+			int typeRef, TypePath typePath, String descriptor, boolean visible) {
+		return TimingTypeMapper.mapAnnotationVisitor(
+				super.visitTypeAnnotation(typeRef, typePath,
+						TimingTypeMapper.mapDescriptor(descriptor), visible));
+	}
+
+	@Override
 	public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-		descriptor = descriptor.replace("java/util/Timer", "javax/microedition/shell/custom/Timer");
-		return super.visitField(access, name, descriptor, signature, value);
+		descriptor = TimingTypeMapper.mapDescriptor(descriptor);
+		signature = TimingTypeMapper.mapSignature(signature);
+		value = TimingTypeMapper.mapValue(value);
+		FieldVisitor fieldVisitor = super.visitField(access, name, descriptor, signature, value);
+		if (fieldVisitor == null) {
+			return null;
+		}
+		return new FieldVisitor(Opcodes.ASM9, fieldVisitor) {
+			@Override
+			public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+				return TimingTypeMapper.mapAnnotationVisitor(
+						super.visitAnnotation(TimingTypeMapper.mapDescriptor(descriptor), visible));
+			}
+
+			@Override
+			public AnnotationVisitor visitTypeAnnotation(
+					int typeRef, TypePath typePath, String descriptor, boolean visible) {
+				return TimingTypeMapper.mapAnnotationVisitor(
+						super.visitTypeAnnotation(typeRef, typePath,
+								TimingTypeMapper.mapDescriptor(descriptor), visible));
+			}
+		};
+	}
+
+	@Override
+	public RecordComponentVisitor visitRecordComponent(
+			String name, String descriptor, String signature) {
+		RecordComponentVisitor recordComponentVisitor = super.visitRecordComponent(
+				name,
+				TimingTypeMapper.mapDescriptor(descriptor),
+				TimingTypeMapper.mapSignature(signature));
+		if (recordComponentVisitor == null) {
+			return null;
+		}
+		return new RecordComponentVisitor(Opcodes.ASM9, recordComponentVisitor) {
+			@Override
+			public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+				return TimingTypeMapper.mapAnnotationVisitor(
+						super.visitAnnotation(TimingTypeMapper.mapDescriptor(descriptor), visible));
+			}
+
+			@Override
+			public AnnotationVisitor visitTypeAnnotation(
+					int typeRef, TypePath typePath, String descriptor, boolean visible) {
+				return TimingTypeMapper.mapAnnotationVisitor(
+						super.visitTypeAnnotation(typeRef, typePath,
+								TimingTypeMapper.mapDescriptor(descriptor), visible));
+			}
+		};
 	}
 }
