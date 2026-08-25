@@ -39,10 +39,10 @@ final class ProfileConfigMatcher {
 
 	static final class Candidate {
 		final Profile profile;
-		final ProfileModel config;
+		@Nullable final ProfileModel config;
 		@Nullable final byte[] keyboard;
 
-		Candidate(@NonNull Profile profile, @NonNull ProfileModel config, @Nullable byte[] keyboard) {
+		Candidate(@NonNull Profile profile, @Nullable ProfileModel config, @Nullable byte[] keyboard) {
 			this.profile = profile;
 			this.config = config;
 			this.keyboard = keyboard;
@@ -56,14 +56,14 @@ final class ProfileConfigMatcher {
 		}
 		ArrayList<Candidate> candidates = new ArrayList<>();
 		for (Profile profile : profiles) {
-			if (!profile.hasConfig() && !profile.hasOldConfig()) {
-				continue;
-			}
-			ProfileModel config = ProfilesManager.loadConfig(profile.getDir(), false);
-			if (config == null) {
-				continue;
+			ProfileModel config = null;
+			if (profile.hasConfig() || profile.hasOldConfig()) {
+				config = ProfilesManager.loadConfig(profile.getDir(), false);
 			}
 			byte[] keyboard = profile.hasKeyLayout() ? readKeyboard(profile.getKeyLayout()) : null;
+			if (config == null && keyboard == null) {
+				continue;
+			}
 			candidates.add(new Candidate(profile, config, keyboard));
 		}
 		return candidates;
@@ -103,7 +103,9 @@ final class ProfileConfigMatcher {
 		draft.applyTo(effective);
 		ArrayList<Profile> matches = new ArrayList<>();
 		for (Candidate candidate : candidates) {
-			if (!sameConfig(effective, candidate.config)) {
+			// A keyboard-only profile is a valid reusable component and must stay visible to the
+			// profile manager, but it cannot represent the complete settings state by itself.
+			if (candidate.config == null || !sameConfig(effective, candidate.config)) {
 				continue;
 			}
 			// Keyboard state is part of a profile only when that profile explicitly owns a
