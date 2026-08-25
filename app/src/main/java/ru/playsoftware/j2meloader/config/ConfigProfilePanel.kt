@@ -200,7 +200,7 @@ private fun ConfigTemplateManagerDialog(
                             items(templates, key = { it.name }) { template ->
                                 TemplateRow(
                                     name = template.name,
-                                    summary = stringResource(R.string.profile_template_summary),
+                                    summary = profileTemplateSummary(template),
                                     isActive = status.activeProfile == template.name,
                                     isModifiedSource = status.modified && status.sourceProfile == template.name,
                                     isDefault = template.isDefault,
@@ -235,6 +235,11 @@ private fun ConfigTemplateManagerDialog(
             title = { Text(template.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
             text = {
                 Column {
+                    Text(
+                        text = profileTemplateSummary(template),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                    )
                     if (!template.isDefault) {
                         TextButton(
                         modifier = Modifier.fillMaxWidth(),
@@ -291,6 +296,16 @@ private fun ConfigTemplateManagerDialog(
             },
         )
     }
+}
+
+@Composable
+private fun profileTemplateSummary(template: ConfigUiState.ProfileTemplate): String {
+    val components = buildList {
+        if (template.hasSettings) add(stringResource(R.string.action_settings))
+        if (template.hasKeyboard) add(stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS))
+    }
+    return if (components.isEmpty()) stringResource(R.string.profile_template_summary)
+    else components.joinToString(" · ")
 }
 
 @Composable
