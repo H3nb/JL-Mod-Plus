@@ -37,14 +37,21 @@ public class Profile implements Comparable<Profile> {
 	}
 
 	public boolean renameTo(String newName) {
+		String oldName = name;
 		File oldDir = getDir();
 		File newDir = new File(Config.getProfilesDir(), newName);
+		if (!oldDir.renameTo(newDir)) {
+			return false;
+		}
 		name = newName;
-		return oldDir.renameTo(newDir);
+		ProfileLinks.renameProfile(oldName, newName);
+		return true;
 	}
 
 	public void delete() {
+		String deletedName = name;
 		FileUtils.deleteDirectory(getDir());
+		ProfileLinks.unlinkProfile(deletedName);
 	}
 
 	public String getName() {
