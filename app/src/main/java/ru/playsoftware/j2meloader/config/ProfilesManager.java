@@ -122,8 +122,9 @@ public class ProfilesManager {
 	}
 
 	/**
-	 * Saves a reusable template snapshot while preserving component scope. When an existing profile
-	 * is linked only for one component in this game, Update touches only that linked component.
+	 * Saves a reusable template snapshot while preserving component scope. For a linked game,
+	 * Update writes only components that are actually modified in that game; an unchanged sibling
+	 * component is never rewritten as a side effect of updating the other one.
 	 */
 	static void saveSnapshot(Profile profile, String fromPath) throws IOException {
 		File fromDir = new File(fromPath);
@@ -133,9 +134,13 @@ public class ProfilesManager {
 			boolean linkedConfig = profile.getName().equals(ProfileLinks.getSettingsProfile(fromDir));
 			boolean linkedKeyboard = profile.getName().equals(ProfileLinks.getKeyboardProfile(fromDir));
 			if (linkedConfig || linkedKeyboard) {
-				save(profile, fromPath,
-						existingConfig && linkedConfig,
-						existingKeyboard && linkedKeyboard);
+				boolean updateConfig = existingConfig && linkedConfig
+						&& ProfileLinks.isSettingsModified(fromDir);
+				boolean updateKeyboard = existingKeyboard && linkedKeyboard
+						&& ProfileLinks.isKeyboardModified(fromDir);
+				if (updateConfig || updateKeyboard) {
+					save(profile, fromPath, updateConfig, updateKeyboard);
+				}
 			} else {
 				// Legacy/unlinked profile editing keeps the old profile's component scope.
 				save(profile, fromPath, existingConfig, existingKeyboard);
