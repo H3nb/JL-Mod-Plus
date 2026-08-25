@@ -122,18 +122,27 @@ public class ProfilesManager {
 	}
 
 	/**
-	 * Saves a reusable template snapshot while preserving the component scope of an existing
-	 * profile. A new profile starts with every component currently available in the game.
+	 * Saves a reusable template snapshot while preserving component scope. When an existing profile
+	 * is linked only for one component in this game, Update touches only that linked component.
 	 */
 	static void saveSnapshot(Profile profile, String fromPath) throws IOException {
+		File fromDir = new File(fromPath);
 		boolean existingConfig = profile.hasConfig() || profile.hasOldConfig();
 		boolean existingKeyboard = profile.hasKeyLayout();
 		if (existingConfig || existingKeyboard) {
-			save(profile, fromPath, existingConfig, existingKeyboard);
+			boolean linkedConfig = profile.getName().equals(ProfileLinks.getSettingsProfile(fromDir));
+			boolean linkedKeyboard = profile.getName().equals(ProfileLinks.getKeyboardProfile(fromDir));
+			if (linkedConfig || linkedKeyboard) {
+				save(profile, fromPath,
+						existingConfig && linkedConfig,
+						existingKeyboard && linkedKeyboard);
+			} else {
+				// Legacy/unlinked profile editing keeps the old profile's component scope.
+				save(profile, fromPath, existingConfig, existingKeyboard);
+			}
 			return;
 		}
 
-		File fromDir = new File(fromPath);
 		File srcConfig = new File(fromDir, Config.MIDLET_CONFIG_FILE);
 		File srcKeyLayout = new File(fromDir, Config.MIDLET_KEY_LAYOUT_FILE);
 		profile.create();
