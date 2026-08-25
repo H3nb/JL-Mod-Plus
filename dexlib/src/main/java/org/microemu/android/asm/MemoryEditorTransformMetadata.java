@@ -500,8 +500,16 @@ public final class MemoryEditorTransformMetadata {
                     source.access,
                     runtime == null ? 0 : runtime.access));
         }
-        result.sort(Comparator.comparing(FieldEntry::getName)
-                .thenComparing(field -> String.valueOf(field.getSourceDescriptor())));
+        Collections.sort(result, new Comparator<FieldEntry>() {
+            @Override
+            public int compare(FieldEntry left, FieldEntry right) {
+                int nameComparison = String.valueOf(left.getName())
+                        .compareTo(String.valueOf(right.getName()));
+                if (nameComparison != 0) return nameComparison;
+                return String.valueOf(left.getSourceDescriptor())
+                        .compareTo(String.valueOf(right.getSourceDescriptor()));
+            }
+        });
         return result;
     }
 
