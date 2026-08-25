@@ -36,6 +36,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -277,6 +279,31 @@ private data class RuntimeMenuDialogLayout(
     val modifier: Modifier,
     val properties: DialogProperties,
 )
+
+private enum class MemoryRefineMode(val labelRes: Int) {
+    CHANGED(R.string.memory_editor_mode_changed),
+    UNCHANGED(R.string.memory_editor_mode_unchanged),
+    INCREASED(R.string.memory_editor_mode_increased),
+    DECREASED(R.string.memory_editor_mode_decreased),
+    EXACT(R.string.memory_editor_mode_exact),
+    ;
+
+    fun query(value: String): MemoryEditorSession.Query? = when (this) {
+        CHANGED -> MemoryEditorSession.Query.changed()
+        UNCHANGED -> MemoryEditorSession.Query.unchanged()
+        INCREASED -> MemoryEditorSession.Query.increased()
+        DECREASED -> MemoryEditorSession.Query.decreased()
+        EXACT -> value.trim().takeIf(String::isNotEmpty)?.let(MemoryEditorSession.Query::exact)
+    }
+}
+
+private fun memoryRefineMode(query: MemoryEditorSession.Query?): MemoryRefineMode = when (query?.getMode()) {
+    MemoryEditorSession.SearchMode.UNCHANGED -> MemoryRefineMode.UNCHANGED
+    MemoryEditorSession.SearchMode.INCREASED -> MemoryRefineMode.INCREASED
+    MemoryEditorSession.SearchMode.DECREASED -> MemoryRefineMode.DECREASED
+    MemoryEditorSession.SearchMode.EXACT -> MemoryRefineMode.EXACT
+    else -> MemoryRefineMode.CHANGED
+}
 
 @Composable
 private fun runtimeMenuDialogLayout(): RuntimeMenuDialogLayout {
@@ -782,10 +809,15 @@ private fun MemoryEditorDialog(
     onDismiss: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    var queryText by remember { mutableStateOf("") }
-    var result by remember { mutableStateOf<MemoryEditorSession.ScanResult?>(null) }
+    val savedQuery = remember(session) { session.getLastQuery() }
+    val savedResult = remember(session) { session.getLastScanResult() }
+    var queryText by remember(session) { mutableStateOf(savedQuery?.getFirst().orEmpty()) }
+    var refineMode by remember(session) { mutableStateOf(memoryRefineMode(savedQuery)) }
+    var refineMenuExpanded by remember { mutableStateOf(false) }
+    var result by remember(session) { mutableStateOf(savedResult) }
     var status by remember { mutableStateOf<String?>(null) }
     var scanning by remember { mutableStateOf(false) }
+    var visibleLimit by remember { mutableStateOf(300) }
     var adaptiveEvidence by remember {
         mutableStateOf(session.evidencePolicy == MemoryEditorSession.EvidencePolicy.ADAPTIVE)
     }
@@ -794,18 +826,23 @@ private fun MemoryEditorDialog(
     val regionDrafts = remember { mutableStateMapOf<Long, String>() }
     val layout = runtimeMenuDialogLayout()
 
-    fun runScan(query: MemoryEditorSession.Query) {
+    fun runScan(query: MemoryEditorSession.Query, reset: Boolean) {
         if (scanning) return
+        if (reset) {
+            session.resetSearch()
+            result = null
+        }
         scanning = true
         status = null
+        visibleLimit = 300
         scope.launch {
             val next = withContext(Dispatchers.Default) { session.scanNow(query) }
             result = next
             scanning = false
             status = when {
                 next.isCancelled -> "CANCELLED"
-                next.isCoverageIncomplete -> "${next.candidates.size} results; coverage incomplete"
-                else -> "${next.candidates.size} results"
+                next.isCoverageIncomplete -> "${next.candidates.size} results; coverage incomplete (${next.scannedObjects} objects, ${next.scannedFields} fields)"
+                else -> "${next.candidates.size} results (${next.scannedObjects} objects, ${next.scannedFields} fields)"
             }
         }
     }
@@ -827,6 +864,38 @@ private fun MemoryEditorDialog(
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                 )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.memory_editor_refine_mode),
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Box {
+                        TextButton(onClick = { refineMenuExpanded = true }) {
+                            Text(stringResource(refineMode.labelRes))
+                        }
+                        DropdownMenu(
+                            expanded = refineMenuExpanded,
+                            onDismissRequest = { refineMenuExpanded = false },
+                        ) {
+                            MemoryRefineMode.values().forEach { mode ->
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(mode.labelRes)) },
+                                    onClick = {
+                                        refineMode = mode
+                                        refineMenuExpanded = false
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
                 ListItem(
                     colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
                     headlineContent = {
@@ -858,29 +927,28 @@ private fun MemoryEditorDialog(
                     TextButton(
                         enabled = !scanning,
                         onClick = {
-                            session.resetSearch()
                             val query = if (queryText.isBlank()) {
                                 MemoryEditorSession.Query.all()
                             } else {
                                 MemoryEditorSession.Query.exact(queryText)
                             }
-                            runScan(query)
+                            runScan(query, reset = true)
                         },
                     ) {
-                        Text(stringResource(R.string.memory_editor_scan))
+                        Text(stringResource(R.string.memory_editor_new_search))
                     }
                     TextButton(
-                        enabled = !scanning && result != null,
+                        enabled = !scanning && session.hasSearchSession(),
                         onClick = {
-                            val query = if (queryText.isBlank()) {
-                                MemoryEditorSession.Query.changed()
+                            val query = refineMode.query(queryText)
+                            if (query == null) {
+                                status = "Enter a value for Exact refine"
                             } else {
-                                MemoryEditorSession.Query.exact(queryText)
+                                runScan(query, reset = false)
                             }
-                            runScan(query)
                         },
                     ) {
-                        Text(stringResource(R.string.memory_editor_next_scan))
+                        Text(stringResource(R.string.memory_editor_refine))
                     }
                     if (scanning) {
                         CircularProgressIndicator(
@@ -898,10 +966,17 @@ private fun MemoryEditorDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
+                if (result == null) {
+                    Text(
+                        text = stringResource(R.string.memory_editor_no_session),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 val scan = result
                 if (scan != null && scan.diagnostics.isNotEmpty()) {
                     Text(
-                        text = scan.diagnostics.take(3).joinToString(" · "),
+                        text = scan.diagnostics.take(5).joinToString(" · "),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error,
                         maxLines = 2,
@@ -915,7 +990,7 @@ private fun MemoryEditorDialog(
                         .fillMaxWidth()
                         .heightIn(max = runtimeMenuDialogContentHeight()),
                 ) {
-                    items(candidates.take(300), key = { it.id }) { candidate ->
+                    items(candidates.take(visibleLimit), key = { it.id }) { candidate ->
                         var editing by remember(candidate.id) { mutableStateOf(false) }
                         val draft = drafts[candidate.id] ?: candidate.value
                         ListItem(
@@ -998,8 +1073,22 @@ private fun MemoryEditorDialog(
                                             Text(if (editing) stringResource(android.R.string.ok) else stringResource(R.string.edit))
                                         }
                                         TextButton(onClick = {
-                                            if (session.isFrozen(candidate.id)) session.unfreeze(candidate.id)
-                                            else session.freeze(candidate.id)
+                                            val currentlyFrozen = session.isFrozen(candidate.id)
+                                            if (currentlyFrozen) {
+                                                session.unfreeze(candidate.id)
+                                                status = "Unfrozen ${candidate.path}"
+                                            } else {
+                                                scope.launch {
+                                                    val frozen = withContext(Dispatchers.Default) {
+                                                        session.freeze(candidate.id)
+                                                    }
+                                                    status = if (frozen) {
+                                                        session.getFreezeStatus(candidate.id)
+                                                    } else {
+                                                        "Freeze failed: ${session.getFreezeStatus(candidate.id)}"
+                                                    }
+                                                }
+                                            }
                                         }) {
                                             Text(stringResource(if (session.isFrozen(candidate.id)) R.string.memory_editor_unfreeze else R.string.memory_editor_freeze))
                                         }
@@ -1007,6 +1096,16 @@ private fun MemoryEditorDialog(
                                 }
                             },
                         )
+                    }
+                    if (candidates.size > visibleLimit) {
+                        item {
+                            TextButton(
+                                onClick = { visibleLimit += 300 },
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Text(stringResource(R.string.memory_editor_show_more))
+                            }
+                        }
                     }
                 }
             }
