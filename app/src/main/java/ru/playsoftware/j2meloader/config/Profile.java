@@ -50,8 +50,11 @@ public class Profile implements Comparable<Profile> {
 
 	public void delete() {
 		String deletedName = name;
-		FileUtils.deleteDirectory(getDir());
-		ProfileLinks.unlinkProfile(deletedName);
+		File dir = getDir();
+		FileUtils.deleteDirectory(dir);
+		if (!dir.exists()) {
+			ProfileLinks.unlinkProfile(deletedName);
+		}
 	}
 
 	public String getName() {
