@@ -18,8 +18,6 @@
 
 package ru.playsoftware.j2meloader.config;
 
-import android.util.Log;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -119,18 +117,27 @@ public class ProfilesManager {
 		ProfileLinks.refreshLinkedBaselines(profile, fromDir);
 	}
 
-	/** Saves the current MIDlet configuration as one reusable template snapshot. */
+	/**
+	 * Saves a reusable template snapshot while preserving the component scope of an existing
+	 * profile. A new profile starts with every component currently available in the game.
+	 */
 	static void saveSnapshot(Profile profile, String fromPath) throws IOException {
-		profile.create();
+		boolean existingConfig = profile.hasConfig() || profile.hasOldConfig();
+		boolean existingKeyboard = profile.hasKeyLayout();
+		if (existingConfig || existingKeyboard) {
+			save(profile, fromPath, existingConfig, existingKeyboard);
+			return;
+		}
+
 		File fromDir = new File(fromPath);
 		File srcConfig = new File(fromDir, Config.MIDLET_CONFIG_FILE);
 		File srcKeyLayout = new File(fromDir, Config.MIDLET_KEY_LAYOUT_FILE);
-		File dstKeyLayout = profile.getKeyLayout();
-		FileUtils.copyFileUsingChannel(srcConfig, profile.getConfig());
+		profile.create();
+		if (srcConfig.isFile()) {
+			FileUtils.copyFileUsingChannel(srcConfig, profile.getConfig());
+		}
 		if (srcKeyLayout.isFile()) {
-			FileUtils.copyFileUsingChannel(srcKeyLayout, dstKeyLayout);
-		} else if (dstKeyLayout.exists() && !dstKeyLayout.delete()) {
-			Log.w(TAG, "saveSnapshot: could not remove stale key layout " + dstKeyLayout);
+			FileUtils.copyFileUsingChannel(srcKeyLayout, profile.getKeyLayout());
 		}
 		ProfileLinks.refreshLinkedBaselines(profile, fromDir);
 	}
@@ -151,7 +158,7 @@ public class ProfilesManager {
 				params = gson.fromJson(reader, ProfileModel.class);
 				params.dir = dir;
 			} catch (Exception e) {
-				Log.e(TAG, "loadConfig: ", e);
+				android.util.Log.e(TAG, "loadConfig: ", e);
 			}
 		}
 		if (params == null) {
@@ -163,10 +170,10 @@ public class ProfilesManager {
 					params = gson.fromJson(json, ProfileModel.class);
 					params.dir = dir;
 					if (persistMigrations && saveConfig(params) && oldFile.delete()) {
-						Log.d(TAG, "loadConfig: old config file deleted");
+						android.util.Log.d(TAG, "loadConfig: old config file deleted");
 					}
 				} catch (Exception e) {
-					Log.e(TAG, "loadConfig: ", e);
+					android.util.Log.e(TAG, "loadConfig: ", e);
 				}
 			}
 		}
@@ -227,7 +234,7 @@ public class ProfilesManager {
 			writer.close();
 			return true;
 		} catch (Exception e) {
-			Log.e(TAG, "saveConfig: ", e);
+			android.util.Log.e(TAG, "saveConfig: ", e);
 		}
 		return false;
 	}
