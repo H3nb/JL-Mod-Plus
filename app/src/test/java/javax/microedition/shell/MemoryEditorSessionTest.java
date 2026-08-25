@@ -31,6 +31,9 @@ import org.microemu.android.asm.MemoryEditorTransformMetadata;
 
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
+import javax.microedition.lcdui.Command;
+import javax.microedition.lcdui.CommandListener;
+import javax.microedition.lcdui.Displayable;
 
 public class MemoryEditorSessionTest {
     @Test
@@ -55,6 +58,71 @@ public class MemoryEditorSessionTest {
                     region.getId(), 1, "9");
             assertTrue(write.isSuccess());
             assertEquals(9, fixture.bytes[1]);
+        } finally {
+            session.close();
+        }
+    }
+
+    @Test
+    public void refinesPrimitiveArrayRegionAtEveryChangedIndex() throws Exception {
+        Fixture fixture = new Fixture();
+        MemoryEditorTransformMetadata.Builder builder = new MemoryEditorTransformMetadata.Builder();
+        builder.observe(classBytes(Fixture.class), classBytes(Fixture.class), false);
+        MemoryEditorSession session = new MemoryEditorSession(
+                fixture, Fixture.class.getClassLoader(), builder.snapshot(), null);
+        try {
+            MemoryEditorSession.ScanResult initial = session.scanNow(MemoryEditorSession.Query.all());
+            MemoryEditorSession.Candidate region = initial.getCandidates().stream()
+                    .filter(MemoryEditorSession.Candidate::isRegion)
+                    .findFirst()
+                    .orElseThrow(AssertionError::new);
+            fixture.bytes[2] = 9;
+            MemoryEditorSession.ScanResult changed = session.scanNow(MemoryEditorSession.Query.changed());
+            assertTrue(changed.getCandidates().stream().anyMatch(candidate ->
+                    candidate.getPath().contains("[2]") && "9".equals(candidate.getValue())));
+            assertFalse(changed.getCandidates().stream().anyMatch(candidate ->
+                    candidate.getId() == region.getId()));
+        } finally {
+            session.close();
+        }
+    }
+
+    @Test
+    public void freezeReappliesDesiredValueAfterRuntimeMutation() throws Exception {
+        Fixture fixture = new Fixture();
+        MemoryEditorTransformMetadata.Builder builder = new MemoryEditorTransformMetadata.Builder();
+        builder.observe(classBytes(Fixture.class), classBytes(Fixture.class), false);
+        MemoryEditorSession session = new MemoryEditorSession(
+                fixture, Fixture.class.getClassLoader(), builder.snapshot(), null);
+        try {
+            MemoryEditorSession.Candidate value = session.scanNow(MemoryEditorSession.Query.all())
+                    .getCandidates().stream()
+                    .filter(candidate -> candidate.getPath().endsWith(".value"))
+                    .findFirst()
+                    .orElseThrow(AssertionError::new);
+            assertTrue(session.freeze(value.getId()));
+            fixture.value = 99;
+            Thread.sleep(100L);
+            assertEquals(1, fixture.value);
+            assertTrue(session.isFrozen(value.getId()));
+        } finally {
+            session.close();
+        }
+    }
+
+    @Test
+    public void searchSessionRemainsAvailableAfterAResultIsReturned() throws Exception {
+        Fixture fixture = new Fixture();
+        MemoryEditorTransformMetadata.Builder builder = new MemoryEditorTransformMetadata.Builder();
+        builder.observe(classBytes(Fixture.class), classBytes(Fixture.class), false);
+        MemoryEditorSession session = new MemoryEditorSession(
+                fixture, Fixture.class.getClassLoader(), builder.snapshot(), null);
+        try {
+            MemoryEditorSession.ScanResult result = session.scanNow(MemoryEditorSession.Query.all());
+            assertTrue(session.hasSearchSession());
+            assertEquals(result, session.getLastScanResult());
+            assertEquals(MemoryEditorSession.SearchMode.ALL, session.getLastQuery().getMode());
+            assertFalse(session.getLastScanResult().getCandidates().isEmpty());
         } finally {
             session.close();
         }
@@ -92,6 +160,53 @@ public class MemoryEditorSessionTest {
         }
     }
 
+    @Test
+    public void observedLoadedStaticClassIsASeparateDiscoveryRoot() throws Exception {
+        Fixture fixture = new Fixture();
+        MemoryEditorTransformMetadata.Builder builder = new MemoryEditorTransformMetadata.Builder();
+        int classId = builder.observe(
+                classBytes(HiddenStatic.class), classBytes(HiddenStatic.class), false);
+        builder.markProbeInserted(classId, 1);
+        MemoryEditorTransformMetadata metadata = builder.snapshot();
+        MemoryProbe.Ledger ledger = MemoryProbe.bind(
+                HiddenStatic.class.getClassLoader(), new int[]{classId});
+        try {
+            MemoryProbe.classInitReturned(HiddenStatic.class, classId);
+            String hiddenName = HiddenStatic.class.getName().replace('.', '/');
+            MemoryEditorSession session = new MemoryEditorSession(
+                    fixture,
+                    HiddenStatic.class.getClassLoader(),
+                    metadata,
+                    ledger,
+                    name -> hiddenName.equals(name) ? HiddenStatic.class : null);
+            try {
+                assertTrue(session.scanNow(MemoryEditorSession.Query.all()).getCandidates().stream()
+                        .anyMatch(candidate -> candidate.getPath().contains("hiddenValue")));
+            } finally {
+                session.close();
+            }
+        } finally {
+            MemoryProbe.unbind(HiddenStatic.class.getClassLoader(), ledger);
+        }
+    }
+
+    @Test
+    public void hostDisplayableBridgeReachesApplicationOwnedCommandListener() throws Exception {
+        HostFixture fixture = new HostFixture();
+        MemoryEditorTransformMetadata.Builder builder = new MemoryEditorTransformMetadata.Builder();
+        builder.observe(classBytes(HostFixture.class), classBytes(HostFixture.class), false);
+        builder.observe(classBytes(HiddenCommandListener.class),
+                classBytes(HiddenCommandListener.class), false);
+        MemoryEditorSession session = new MemoryEditorSession(
+                fixture, HostFixture.class.getClassLoader(), builder.snapshot(), null);
+        try {
+            assertTrue(session.scanNow(MemoryEditorSession.Query.all()).getCandidates().stream()
+                    .anyMatch(candidate -> candidate.getPath().contains("hiddenValue")));
+        } finally {
+            session.close();
+        }
+    }
+
     private static byte[] classBytes(Class<?> type) throws IOException {
         String resource = "/" + type.getName().replace('.', '/') + ".class";
         try (InputStream input = type.getResourceAsStream(resource)) {
@@ -123,6 +238,40 @@ public class MemoryEditorSessionTest {
 
         @Override
         public void destroyApp(boolean unconditional) throws MIDletStateChangeException {
+        }
+    }
+
+    public static final class HiddenStatic {
+        static int hiddenValue = 23;
+    }
+
+    public static final class HostFixture extends MIDlet {
+        final Displayable displayable;
+
+        HostFixture() {
+            displayable = new Displayable() {
+            };
+            displayable.setCommandListener(new HiddenCommandListener());
+        }
+
+        @Override
+        public void startApp() throws MIDletStateChangeException {
+        }
+
+        @Override
+        public void pauseApp() {
+        }
+
+        @Override
+        public void destroyApp(boolean unconditional) throws MIDletStateChangeException {
+        }
+    }
+
+    public static final class HiddenCommandListener implements CommandListener {
+        int hiddenValue = 29;
+
+        @Override
+        public void commandAction(Command command, Displayable displayable) {
         }
     }
 }
