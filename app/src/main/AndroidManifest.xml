@@ -13,6 +13,8 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
         android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Required by the MIDP foreground-request compatibility hook. -->
+    <uses-permission android:name="android.permission.REORDER_TASKS" />
     <uses-permission android:name="android.permission.BLUETOOTH"
         android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
@@ -197,6 +199,11 @@
             android:name=".config.ConfigActivity"
             android:exported="true"
             android:windowSoftInputMode="stateHidden|adjustResize" />
+        <activity
+            android:name="ru.woesss.j2me.installer.AutoReconversionActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:theme="@style/AppTheme.AutoReconversion" />
         <activity
             android:name="javax.microedition.shell.MicroActivity"
             android:exported="false"
