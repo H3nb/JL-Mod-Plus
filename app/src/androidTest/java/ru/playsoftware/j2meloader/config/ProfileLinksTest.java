@@ -21,6 +21,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.content.SharedPreferences;
+
+import androidx.preference.PreferenceManager;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.After;
@@ -34,6 +37,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+
+import javax.microedition.util.ContextHolder;
 
 import ru.playsoftware.j2meloader.util.FileUtils;
 
@@ -57,6 +62,7 @@ public class ProfileLinksTest {
 
 	@After
 	public void tearDown() {
+		preferences().edit().remove(legacyOriginKey()).apply();
 		settingsProfile.delete();
 		keyboardProfile.delete();
 		FileUtils.deleteDirectory(configDir);
@@ -104,6 +110,25 @@ public class ProfileLinksTest {
 		assertEquals(keyboardProfile.getName(), ProfileLinks.getKeyboardProfile(configDir));
 		assertTrue(ProfileLinks.isSettingsModified(configDir));
 		assertTrue(ProfileLinks.isKeyboardModified(configDir));
+	}
+
+	@Test
+	public void legacyOriginMigratesModifiedComponentsWithoutOverwritingThem() throws Exception {
+		writeConfig(settingsProfile, 240);
+		writeBytes(settingsProfile.getKeyLayout(), new byte[]{1});
+		writeConfig(configDir, 176);
+		writeBytes(localKeyboard(), new byte[]{9});
+		preferences().edit().putString(legacyOriginKey(), settingsProfile.getName()).apply();
+
+		ProfileLinks.resolve(configDir);
+
+		assertEquals(settingsProfile.getName(), ProfileLinks.getSettingsProfile(configDir));
+		assertEquals(settingsProfile.getName(), ProfileLinks.getKeyboardProfile(configDir));
+		assertTrue(ProfileLinks.isSettingsModified(configDir));
+		assertTrue(ProfileLinks.isKeyboardModified(configDir));
+		assertEquals(176, readConfig(configDir).screenWidth);
+		assertArrayEquals(new byte[]{9}, readBytes(localKeyboard()));
+		assertNull(preferences().getString(legacyOriginKey(), null));
 	}
 
 	@Test
@@ -169,6 +194,48 @@ public class ProfileLinksTest {
 	}
 
 	@Test
+	public void snapshotUpdateDoesNotRewriteUnchangedSiblingComponent() throws Exception {
+		writeConfig(settingsProfile, 240);
+		writeBytes(settingsProfile.getKeyLayout(), new byte[]{1});
+		ProfilesManager.load(settingsProfile, configDir.getPath(), true, true);
+
+		ProfileModel local = readConfig(configDir);
+		local.screenWidth = 360;
+		assertTrue(ProfilesManager.saveConfig(local));
+		// Simulate the shared keyboard component having already changed elsewhere. This game's
+		// keyboard is still unmodified relative to its own baseline and must not overwrite it.
+		writeBytes(settingsProfile.getKeyLayout(), new byte[]{7});
+
+		ProfilesManager.saveSnapshot(settingsProfile, configDir.getPath());
+		assertArrayEquals(new byte[]{7}, readBytes(settingsProfile.getKeyLayout()));
+		assertEquals(360, readConfig(settingsProfile.getDir()).screenWidth);
+
+		ProfileLinks.resolve(configDir);
+		assertArrayEquals(new byte[]{7}, readBytes(localKeyboard()));
+		assertFalse(ProfileLinks.isSettingsModified(configDir));
+		assertFalse(ProfileLinks.isKeyboardModified(configDir));
+	}
+
+	@Test
+	public void explicitSettingsDetachIsPermanentAndKeepsSiblingLink() throws Exception {
+		writeConfig(settingsProfile, 240);
+		writeBytes(settingsProfile.getKeyLayout(), new byte[]{1, 2});
+		ProfilesManager.load(settingsProfile, configDir.getPath(), true, true);
+		preferences().edit().putString(legacyOriginKey(), settingsProfile.getName()).apply();
+
+		ProfileLinks.detachSettings(configDir);
+		writeConfig(settingsProfile, 320);
+		writeBytes(settingsProfile.getKeyLayout(), new byte[]{7, 8});
+		ProfileLinks.resolve(configDir);
+
+		assertNull(ProfileLinks.getSettingsProfile(configDir));
+		assertEquals(settingsProfile.getName(), ProfileLinks.getKeyboardProfile(configDir));
+		assertEquals(240, readConfig(configDir).screenWidth);
+		assertArrayEquals(new byte[]{7, 8}, readBytes(localKeyboard()));
+		assertNull(preferences().getString(legacyOriginKey(), null));
+	}
+
+	@Test
 	public void explicitDetachKeepsTheLastMaterializedCopy() throws Exception {
 		writeConfig(settingsProfile, 240);
 		writeBytes(keyboardProfile.getKeyLayout(), new byte[]{1, 2});
@@ -203,7 +270,11 @@ public class ProfileLinksTest {
 	}
 
 	private void writeConfig(Profile profile, int width) {
-		ProfileModel model = new ProfileModel(profile.getDir());
+		writeConfig(profile.getDir(), width);
+	}
+
+	private void writeConfig(File dir, int width) {
+		ProfileModel model = new ProfileModel(dir);
 		model.screenWidth = width;
 		assertTrue(ProfilesManager.saveConfig(model));
 	}
@@ -216,6 +287,14 @@ public class ProfileLinksTest {
 
 	private File localKeyboard() {
 		return new File(configDir, Config.MIDLET_KEY_LAYOUT_FILE);
+	}
+
+	private String legacyOriginKey() {
+		return "config_profile_origin:" + configDir.getAbsolutePath();
+	}
+
+	private static SharedPreferences preferences() {
+		return PreferenceManager.getDefaultSharedPreferences(ContextHolder.getAppContext());
 	}
 
 	private static void writeBytes(File file, byte[] data) throws IOException {
