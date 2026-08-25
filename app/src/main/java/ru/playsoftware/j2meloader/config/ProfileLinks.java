@@ -100,8 +100,8 @@ final class ProfileLinks {
 		for (Map.Entry<String, ?> entry : prefs.getAll().entrySet()) {
 			String key = entry.getKey();
 			Object value = entry.getValue();
-			if ((key.startsWith(SETTINGS_PREFIX) || key.startsWith(KEYBOARD_PREFIX))
-					&& oldName.equals(value)) {
+			if ((key.startsWith(SETTINGS_PREFIX) || key.startsWith(KEYBOARD_PREFIX)
+					|| key.startsWith(LEGACY_ORIGIN_PREFIX)) && oldName.equals(value)) {
 				editor.putString(key, newName);
 			}
 		}
@@ -120,6 +120,8 @@ final class ProfileLinks {
 			} else if (key.startsWith(KEYBOARD_PREFIX) && name.equals(value)) {
 				String suffix = key.substring(KEYBOARD_PREFIX.length());
 				editor.remove(key).remove(KEYBOARD_HASH_PREFIX + suffix);
+			} else if (key.startsWith(LEGACY_ORIGIN_PREFIX) && name.equals(value)) {
+				editor.remove(key);
 			}
 		}
 		editor.apply();
@@ -130,6 +132,10 @@ final class ProfileLinks {
 		if (profileName == null) return;
 
 		Profile profile = new Profile(profileName);
+		if (settings && ProfilesManager.loadConfig(profile.getDir(), true) == null) {
+			clearLink(configDir, true);
+			return;
+		}
 		File source = settings ? profile.getConfig() : profile.getKeyLayout();
 		File local = localFile(configDir, settings);
 		if (!source.isFile()) {
@@ -172,6 +178,9 @@ final class ProfileLinks {
 		String legacyName = prefs.getString(LEGACY_ORIGIN_PREFIX + configDir.getAbsolutePath(), null);
 		if (legacyName == null) return;
 		Profile profile = new Profile(legacyName);
+		if (!profile.hasConfig() && profile.hasOldConfig()) {
+			ProfilesManager.loadConfig(profile.getDir(), true);
+		}
 		try {
 			if (prefs.getString(SETTINGS_PREFIX + suffix, null) == null
 					&& sameFile(profile.getConfig(), localFile(configDir, true))) {
