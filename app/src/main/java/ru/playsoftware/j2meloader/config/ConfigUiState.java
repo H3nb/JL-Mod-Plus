@@ -148,10 +148,28 @@ public final class ConfigUiState {
 	public static final class ProfileTemplate {
 		@NonNull public final String name;
 		public final boolean isDefault;
+		public final boolean hasSettings;
+		public final boolean hasKeyboard;
 
 		public ProfileTemplate(@NonNull String name, boolean isDefault) {
+			this(name, isDefault, hasSettings(name), hasKeyboard(name));
+		}
+
+		public ProfileTemplate(@NonNull String name, boolean isDefault,
+				boolean hasSettings, boolean hasKeyboard) {
 			this.name = name;
 			this.isDefault = isDefault;
+			this.hasSettings = hasSettings;
+			this.hasKeyboard = hasKeyboard;
+		}
+
+		private static boolean hasSettings(@NonNull String name) {
+			Profile profile = new Profile(name);
+			return profile.hasConfig() || profile.hasOldConfig();
+		}
+
+		private static boolean hasKeyboard(@NonNull String name) {
+			return new Profile(name).hasKeyLayout();
 		}
 	}
 
