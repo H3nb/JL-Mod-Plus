@@ -124,6 +124,26 @@ class RuntimeMenuComposeTest {
     }
 
     @Test
+    fun memoryEditorAction_isShownOnlyWhenRuntimeProvidesMetadata() {
+        val events = mutableListOf<String>()
+        val actions = RecordingRuntimeMenuActions(events)
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeMenuHost(
+                    state = RuntimeMenuUiState(title = "MIDlet", memoryEditorAvailable = true),
+                    menuVisible = true,
+                    actions = actions,
+                    onDismissMenu = { events += "dismiss" },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Memory Editor").performClick()
+
+        assertEquals(listOf("dismiss", "memoryEditor"), events)
+    }
+
+    @Test
     fun lockRotationToggle_dismissesBeforeDispatchingExistingCallback() {
         val events = mutableListOf<String>()
         val actions = RecordingRuntimeMenuActions(events)
@@ -269,6 +289,10 @@ private class RecordingRuntimeMenuActions(
 
     override fun onResetEmulationSpeed() {
         events += "resetSpeed"
+    }
+
+    override fun onMemoryEditor() {
+        events += "memoryEditor"
     }
 
     override fun onEditVirtualKeyboardLayout() {
