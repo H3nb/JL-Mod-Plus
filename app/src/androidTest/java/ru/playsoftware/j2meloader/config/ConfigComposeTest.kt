@@ -17,6 +17,7 @@ package ru.playsoftware.j2meloader.config
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -106,7 +107,7 @@ class ConfigComposeTest {
         composeRule.onNodeWithText("Touch input").assertExists()
         composeRule.onNodeWithContentDescription("Start").assertDoesNotExist()
         composeRule.onNodeWithText("Use profile").assertDoesNotExist()
-        composeRule.onNodeWithText("Save as new template").assertDoesNotExist()
+        composeRule.onNodeWithText("Save As New Template").assertDoesNotExist()
     }
 
     @Test
@@ -144,14 +145,14 @@ class ConfigComposeTest {
     fun generalProfileActionsUseIntegratedTemplateFlow() {
         val events = RecordingConfigEvents()
         composeRule.setContent {
-  JLModPlusTheme {
-      ConfigScreen(sampleState(), events)
-  }
+            JLModPlusTheme {
+                ConfigScreen(sampleState(), events)
+            }
         }
 
         composeRule.onNodeWithText("Choose or manage templates").performClick()
-        composeRule.onNodeWithText("Configuration templates").assertExists()
-        composeRule.onNodeWithText("Built-in settings").performClick()
+        composeRule.onNodeWithText("Configuration Templates").assertExists()
+        composeRule.onNodeWithText("Built-In Settings").performClick()
         assertEquals(1, events.applyBuiltInCalls)
     }
 
@@ -159,27 +160,29 @@ class ConfigComposeTest {
     fun activeProfileShowsIntegratedManagerAndDefaultStatus() {
         val base = sampleState()
         val state = ConfigUiState(
-  base.form,
-  base.screenPresets,
-  base.fontPresets,
-  base.skins,
-  base.soundBanks,
-  base.shaders,
-  base.removableScreenPresets,
-  ConfigUiState.ProfileStatus.active("Nokia Classic", "Nokia Classic"),
-  listOf(ConfigUiState.ProfileTemplate("Nokia Classic", true)),
+            base.form,
+            base.screenPresets,
+            base.fontPresets,
+            base.skins,
+            base.soundBanks,
+            base.shaders,
+            base.removableScreenPresets,
+            ConfigUiState.ProfileStatus.active("Nokia Classic", "Nokia Classic"),
+            listOf(ConfigUiState.ProfileTemplate("Nokia Classic", true, true, true)),
         )
         composeRule.setContent {
-  JLModPlusTheme { ConfigScreen(state, RecordingConfigEvents()) }
+            JLModPlusTheme { ConfigScreen(state, RecordingConfigEvents()) }
         }
-        composeRule.onNodeWithText("Nokia Classic").assertExists()
+        composeRule.onAllNodesWithText("Nokia Classic").fetchSemanticsNodes().also {
+            assertTrue(it.size >= 2)
+        }
         composeRule.onNodeWithText("Choose or manage templates").performClick()
-        composeRule.onNodeWithText("Configuration templates").assertExists()
+        composeRule.onNodeWithText("Configuration Templates").assertExists()
         composeRule.onNodeWithText("Default").assertExists()
     }
 
     @Test
-    fun builtInDefaultProfileIsNotShownAsCustom() {
+    fun builtInSettingsCanCoexistWithAppSpecificKeyboard() {
         val base = sampleState()
         val state = ConfigUiState(
             base.form,
@@ -197,11 +200,84 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Built-in settings").assertExists()
-        composeRule.onNodeWithText("JL-Mod Plus factory configuration · Default for new apps").assertExists()
+        composeRule.onNodeWithText("Built-In Settings").assertExists()
+        composeRule.onNodeWithText("Default for new apps").assertExists()
+        composeRule.onNodeWithText("App-specific").assertExists()
         composeRule.onNodeWithText("Custom").assertDoesNotExist()
-        composeRule.onNodeWithText("Save as new template").assertDoesNotExist()
+        composeRule.onNodeWithText("Save As New Template").assertExists()
         composeRule.onNodeWithText("Choose or manage templates").assertExists()
+    }
+
+    @Test
+    fun mixedProfileSourcesRenderIndependentlyAndGlobalUpdateRequiresConfirmation() {
+        val base = sampleState()
+        val events = RecordingConfigEvents()
+        val state = ConfigUiState(
+            base.form,
+            base.screenPresets,
+            base.fontPresets,
+            base.skins,
+            base.soundBanks,
+            base.shaders,
+            base.removableScreenPresets,
+            ConfigUiState.ProfileStatus.components(
+                "Nokia Settings",
+                true,
+                "Touch Layout",
+                false,
+                false,
+                null,
+            ),
+            listOf(
+                ConfigUiState.ProfileTemplate("Nokia Settings", false, true, false),
+                ConfigUiState.ProfileTemplate("Touch Layout", false, false, true),
+            ),
+        )
+        composeRule.setContent {
+            JLModPlusTheme { ConfigScreen(state, events) }
+        }
+
+        composeRule.onNodeWithText("Nokia Settings").assertExists()
+        composeRule.onNodeWithText("Touch Layout").assertExists()
+        composeRule.onNodeWithText("Modified").assertExists()
+        composeRule.onNodeWithText("Update Template").performClick()
+        composeRule.onNodeWithText("Update “Nokia Settings”?").assertExists()
+        composeRule.onNodeWithText(
+            "This changes the linked profile globally. Every app that uses the updated component will receive it automatically unless that app has its own modified copy.",
+        ).assertExists()
+        assertEquals(null, events.updatedTemplate)
+        composeRule.onAllNodesWithText("Update Template")[1].performClick()
+        assertEquals("Nokia Settings", events.updatedTemplate)
+    }
+
+    @Test
+    fun combinedProfileOffersGranularApplyAndQuickSaveUsesModularDialogFlow() {
+        val base = sampleState()
+        val events = RecordingConfigEvents()
+        val state = ConfigUiState(
+            base.form,
+            base.screenPresets,
+            base.fontPresets,
+            base.skins,
+            base.soundBanks,
+            base.shaders,
+            base.removableScreenPresets,
+            ConfigUiState.ProfileStatus.custom(null),
+            listOf(ConfigUiState.ProfileTemplate("Combined", false, true, true)),
+        )
+        composeRule.setContent {
+            JLModPlusTheme { ConfigScreen(state, events) }
+        }
+
+        composeRule.onNodeWithText("Save As New Template").performClick()
+        assertEquals(1, events.saveAsProfileCalls)
+
+        composeRule.onNodeWithText("Choose or manage templates").performClick()
+        composeRule.onNodeWithContentDescription("More").performClick()
+        composeRule.onNodeWithText("Apply Settings Only").performClick()
+        assertEquals("Combined", events.appliedComponentsName)
+        assertTrue(events.appliedSettings)
+        assertFalse(events.appliedKeyboard)
     }
 
     @Test
@@ -398,16 +474,16 @@ class ConfigComposeTest {
         val events = RecordingConfigEvents()
         val baseState = sampleState()
         val state = ConfigUiState(
-  baseState.form.toBuilder().vkHideDelay("250").build(),
-  baseState.screenPresets,
-  baseState.fontPresets,
-  baseState.skins,
-  baseState.soundBanks,
-  baseState.shaders,
-  baseState.removableScreenPresets,
+            baseState.form.toBuilder().vkHideDelay("250").build(),
+            baseState.screenPresets,
+            baseState.fontPresets,
+            baseState.skins,
+            baseState.soundBanks,
+            baseState.shaders,
+            baseState.removableScreenPresets,
         )
         composeRule.setContent {
-  JLModPlusTheme { ConfigScreen(state, events, initialDestination = ConfigDestination.Controls) }
+            JLModPlusTheme { ConfigScreen(state, events, initialDestination = ConfigDestination.Controls) }
         }
         composeRule.onNodeWithText("ms").assertExists()
         composeRule.onNodeWithContentDescription("System").performClick()
@@ -455,6 +531,15 @@ class ConfigComposeTest {
     private class RecordingConfigEvents : ConfigFormEvents {
         var formChanges = 0
         var lastForm: ConfigFormState? = null
+        var removed: Size? = null
+        var colorPickerField: ConfigFormEvents.ColorField? = null
+        var useProfileCalls = 0
+        var saveAsProfileCalls = 0
+        var applyBuiltInCalls = 0
+        var updatedTemplate: String? = null
+        var appliedComponentsName: String? = null
+        var appliedSettings = false
+        var appliedKeyboard = false
 
         override fun onFormChanged(state: ConfigFormState) {
             formChanges++
@@ -473,12 +558,6 @@ class ConfigComposeTest {
         override fun onEncodingPicker() = Unit
         override fun onShaderTuning() = Unit
 
-        var removed: Size? = null
-        var colorPickerField: ConfigFormEvents.ColorField? = null
-        var useProfileCalls = 0
-        var saveAsProfileCalls = 0
-        var applyBuiltInCalls = 0
-
         override fun onUseProfile() {
             useProfileCalls++
         }
@@ -489,6 +568,16 @@ class ConfigComposeTest {
 
         override fun onApplyBuiltInTemplate() {
             applyBuiltInCalls++
+        }
+
+        override fun onApplyTemplateComponents(name: String, settings: Boolean, keyboard: Boolean) {
+            appliedComponentsName = name
+            appliedSettings = settings
+            appliedKeyboard = keyboard
+        }
+
+        override fun onUpdateTemplate(name: String) {
+            updatedTemplate = name
         }
     }
 
