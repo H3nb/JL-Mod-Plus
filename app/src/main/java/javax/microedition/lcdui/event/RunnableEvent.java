@@ -2,6 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2018 Nikita Shakarun
  * Copyright 2020-2024 Yury Kharchenko
+ * Modified in 2026 for host-only callback root inspection.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,5 +60,10 @@ public class RunnableEvent extends Event {
 	@Override
 	public boolean placeableAfter(Event event) {
 		return true;
+	}
+
+	/** Host-only bridge used by the Memory Editor root broker; never invokes the runnable. */
+	Object queuedTarget() {
+		return runnable;
 	}
 }

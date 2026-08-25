@@ -171,6 +171,12 @@ public class Timer {
                 }
                 return -1;
             }
+
+            TimerTask[] snapshot() {
+                TimerTask[] result = new TimerTask[size];
+                System.arraycopy(timers, 0, result, 0, size);
+                return result;
+            }
         }
 
         /**
@@ -228,6 +234,15 @@ public class Timer {
 
             int deleteIfCancelled() {
                 return relativeTasks.deleteIfCancelled() + absoluteTasks.deleteIfCancelled();
+            }
+
+            TimerTask[] snapshot() {
+                TimerTask[] relative = relativeTasks.snapshot();
+                TimerTask[] absolute = absoluteTasks.snapshot();
+                TimerTask[] result = new TimerTask[relative.length + absolute.length];
+                System.arraycopy(relative, 0, result, 0, relative.length);
+                System.arraycopy(absolute, 0, result, relative.length, absolute.length);
+                return result;
             }
 
             private TimerHeap heapFor(TimerTask task) {
@@ -643,6 +658,10 @@ public class Timer {
             return tasks.deleteIfCancelled();
         }
 
+        TimerTask[] snapshotTasks() {
+            return tasks.snapshot();
+        }
+
     }
 
     private static final class FinalizerHelper {
@@ -723,6 +742,13 @@ public class Timer {
      */
     public void cancel() {
         impl.cancel();
+    }
+
+    /** Host-only bridge for an on-demand snapshot of tasks reachable from this Timer instance. */
+    public TimerTask[] snapshotScheduledTasks() {
+        synchronized (impl) {
+            return impl.snapshotTasks();
+        }
     }
 
     /**
