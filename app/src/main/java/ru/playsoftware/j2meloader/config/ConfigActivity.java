@@ -439,15 +439,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 
 		boolean linked = readBuiltInThemeLinked();
-		String settingsProfile = ProfileLinks.getSettingsProfile(configDir);
-		if (settingsProfile != null) {
+		if (ProfileLinks.getSettingsProfile(configDir) != null) {
 			linked = false;
 		}
-		// Migrate legacy app configs that were saved from the old one-time built-in snapshot. A
-		// genuinely custom config is never inferred from the global default-profile preference.
-		if (!linked && settingsProfile == null && matchesBuiltInVariant(params)) {
-			linked = true;
-		}
+		// Source identity is never inferred from value equality. Older profile origins are migrated
+		// by ProfileLinks, while pre-link built-in snapshots remain safely app-specific.
 		setBuiltInThemeLinked(linked);
 		if (builtInThemeLinked) {
 			ProfileModel.applyBuiltInTheme(params, isDarkTheme());
@@ -743,14 +739,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	private boolean isDarkTheme() {
 		return ProfileModel.isDarkTheme(this);
-	}
-
-	private boolean matchesBuiltInVariant(@NonNull ProfileModel candidate) {
-		if (configDir == null) return false;
-		return ProfileConfigMatcher.sameConfig(
-				candidate, ProfileModel.createBuiltIn(configDir, false))
-				|| ProfileConfigMatcher.sameConfig(
-				candidate, ProfileModel.createBuiltIn(configDir, true));
 	}
 
 	private void applyTemplate(@NonNull String name, boolean settings, boolean keyboard) {
