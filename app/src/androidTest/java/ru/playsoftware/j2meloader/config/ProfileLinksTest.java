@@ -16,6 +16,7 @@ package ru.playsoftware.j2meloader.config;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -30,6 +31,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 import ru.playsoftware.j2meloader.util.FileUtils;
 
@@ -112,6 +115,42 @@ public class ProfileLinksTest {
 		assertEquals(settingsProfile.getName(), ProfileLinks.getSettingsProfile(configDir));
 		assertEquals(360, readConfig(configDir).screenWidth);
 		assertEquals(360, readConfig(settingsProfile.getDir()).screenWidth);
+	}
+
+	@Test
+	public void updatingSettingsDoesNotAdoptUnsavedKeyboardChanges() throws Exception {
+		writeConfig(settingsProfile, 240);
+		writeBytes(settingsProfile.getKeyLayout(), new byte[]{1});
+		ProfilesManager.load(settingsProfile, configDir.getPath(), true, true);
+
+		ProfileModel local = readConfig(configDir);
+		local.screenWidth = 360;
+		assertTrue(ProfilesManager.saveConfig(local));
+		writeBytes(localKeyboard(), new byte[]{9});
+
+		ProfilesManager.save(settingsProfile, configDir.getPath(), true, false);
+		ProfileLinks.resolve(configDir);
+
+		assertEquals(settingsProfile.getName(), ProfileLinks.getSettingsProfile(configDir));
+		assertNull(ProfileLinks.getKeyboardProfile(configDir));
+		assertEquals(360, readConfig(configDir).screenWidth);
+		assertArrayEquals(new byte[]{9}, readBytes(localKeyboard()));
+		assertArrayEquals(new byte[]{1}, readBytes(settingsProfile.getKeyLayout()));
+	}
+
+	@Test
+	public void keyboardOnlyProfileRemainsAReusableCandidate() throws Exception {
+		writeBytes(keyboardProfile.getKeyLayout(), new byte[]{7, 8});
+
+		List<ProfileConfigMatcher.Candidate> candidates = ProfileConfigMatcher.loadCandidates(
+				Collections.singletonList(keyboardProfile));
+
+		assertEquals(1, candidates.size());
+		ProfileConfigMatcher.Candidate candidate = candidates.get(0);
+		assertEquals(keyboardProfile, candidate.profile);
+		assertNull(candidate.config);
+		assertNotNull(candidate.keyboard);
+		assertArrayEquals(new byte[]{7, 8}, candidate.keyboard);
 	}
 
 	private void writeConfig(Profile profile, int width) {
