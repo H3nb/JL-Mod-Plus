@@ -159,9 +159,16 @@ public class ProfilesManager {
 		ProfileLinks.refreshLinkedBaselines(profile, fromDir, configSaved, keyboardSaved);
 	}
 
+	/** Loads a game config after refreshing any reusable profile links. */
+	@Nullable
+	public static ProfileModel loadGameConfig(File dir) {
+		ProfileLinks.resolve(dir);
+		return loadConfig(dir, true);
+	}
+
+	/** Generic profile/config loading deliberately has no game-link side effects. */
 	@Nullable
 	public static ProfileModel loadConfig(File dir) {
-		ProfileLinks.resolve(dir);
 		return loadConfig(dir, true);
 	}
 
