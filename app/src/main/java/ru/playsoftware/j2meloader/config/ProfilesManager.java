@@ -108,13 +108,17 @@ public class ProfilesManager {
 		File fromDir = new File(fromPath);
 		File srcConfig = new File(fromDir, Config.MIDLET_CONFIG_FILE);
 		File srcKeyLayout = new File(fromDir, Config.MIDLET_KEY_LAYOUT_FILE);
+		boolean configSaved = false;
+		boolean keyboardSaved = false;
 		if (config && srcConfig.isFile()) {
 			FileUtils.copyFileUsingChannel(srcConfig, profile.getConfig());
+			configSaved = true;
 		}
 		if (keyboard && srcKeyLayout.isFile()) {
 			FileUtils.copyFileUsingChannel(srcKeyLayout, profile.getKeyLayout());
+			keyboardSaved = true;
 		}
-		ProfileLinks.refreshLinkedBaselines(profile, fromDir);
+		ProfileLinks.refreshLinkedBaselines(profile, fromDir, configSaved, keyboardSaved);
 	}
 
 	/**
@@ -133,13 +137,17 @@ public class ProfilesManager {
 		File srcConfig = new File(fromDir, Config.MIDLET_CONFIG_FILE);
 		File srcKeyLayout = new File(fromDir, Config.MIDLET_KEY_LAYOUT_FILE);
 		profile.create();
+		boolean configSaved = false;
+		boolean keyboardSaved = false;
 		if (srcConfig.isFile()) {
 			FileUtils.copyFileUsingChannel(srcConfig, profile.getConfig());
+			configSaved = true;
 		}
 		if (srcKeyLayout.isFile()) {
 			FileUtils.copyFileUsingChannel(srcKeyLayout, profile.getKeyLayout());
+			keyboardSaved = true;
 		}
-		ProfileLinks.refreshLinkedBaselines(profile, fromDir);
+		ProfileLinks.refreshLinkedBaselines(profile, fromDir, configSaved, keyboardSaved);
 	}
 
 	@Nullable
