@@ -485,6 +485,12 @@ public final class MemoryEditorSession implements AutoCloseable {
         return candidates;
     }
 
+    /** Starts a new search epoch without tearing down the live session or its roots. */
+    public synchronized void resetSearch() {
+        candidates = Collections.emptyList();
+        scanGeneration.incrementAndGet();
+    }
+
     public void writeAsync(long candidateId, String text, Listener listener) {
         if (closed.get()) {
             if (listener != null) listener.onWriteFinished(

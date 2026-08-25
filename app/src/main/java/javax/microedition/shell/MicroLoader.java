@@ -225,6 +225,15 @@ public class MicroLoader {
 				Log.w(TAG, "Memory Editor metadata schema is not compatible: " + metadataFile);
 				return MemoryEditorTransformMetadata.empty();
 			}
+			String expectedJarHash = metadata.getSourceJarHash();
+			File retainedJar = new File(appDir, Config.MIDLET_RES_FILE);
+			if (expectedJarHash != null && !expectedJarHash.isEmpty() && retainedJar.isFile()) {
+				String actualJarHash = sha256(retainedJar);
+				if (actualJarHash == null || !expectedJarHash.equalsIgnoreCase(actualJarHash)) {
+					Log.w(TAG, "Memory Editor metadata does not match retained MIDlet JAR: " + metadataFile);
+					return MemoryEditorTransformMetadata.empty();
+				}
+			}
 			return metadata;
 		} catch (IOException | RuntimeException error) {
 			Log.w(TAG, "Memory Editor metadata is unavailable; running without probes", error);
