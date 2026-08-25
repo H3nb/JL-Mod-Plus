@@ -4,6 +4,8 @@
  * Copyright 2018-2019 Nikita Shakarun
  * Copyright 2019-2026 Yury Kharchenko
  *
+ * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -323,6 +325,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 					@Override
 					public void onResetSettings() {
+						if (!isProfile) ProfileLinks.detachSettings(configDir);
 						setProfileOrigin(null);
 						params = newBuiltInProfile();
 						setBuiltInThemeLinked(true);
@@ -331,6 +334,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 					@Override
 					public void onResetLayout() {
+						if (!isProfile) ProfileLinks.detachKeyboard(configDir);
 						if (keylayoutFile != null) {
 							//noinspection ResultOfMethodCallIgnored
 							keylayoutFile.delete();
@@ -387,15 +391,24 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		defProfile = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
 				.getString(PREF_DEFAULT_PROFILE, null);
 		params = ProfilesManager.loadConfig(configDir);
-		boolean loadedDefaultProfile = false;
-		if (params == null && defProfile != null) {
-			FileUtils.copyFiles(new File(Config.getProfilesDir(), defProfile), configDir, null);
-			params = ProfilesManager.loadConfig(configDir);
-			loadedDefaultProfile = params != null;
+
+		// A default profile is a policy for a newly configured app only. Materialize and link the
+		// components once; changing the global default later never retargets existing apps.
+		if (params == null && !isProfile && defProfile != null) {
+			Profile defaultProfile = findProfile(defProfile);
+			if (defaultProfile != null) {
+				try {
+					ProfilesManager.load(defaultProfile, configDir.getPath(), true, true);
+					params = ProfilesManager.loadConfig(configDir);
+				} catch (IOException e) {
+					Log.e(TAG, "loadConfig: default profile " + defProfile, e);
+				}
+			}
 		}
+
 		if (params == null) {
 			params = newBuiltInProfile();
-			setBuiltInThemeLinked(!isProfile && !loadedDefaultProfile);
+			setBuiltInThemeLinked(!isProfile && ProfileLinks.getSettingsProfile(configDir) == null);
 			return;
 		}
 		if (isProfile) {
@@ -404,12 +417,13 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 
 		boolean linked = readBuiltInThemeLinked();
-		if (profileOrigin != null || loadedDefaultProfile) {
+		String settingsProfile = ProfileLinks.getSettingsProfile(configDir);
+		if (settingsProfile != null || profileOrigin != null) {
 			linked = false;
 		}
 		// Migrate legacy app configs that were saved from the old one-time built-in snapshot. A
 		// genuinely custom config is never inferred from the global default-profile preference.
-		if (!linked && !loadedDefaultProfile && profileOrigin == null
+		if (!linked && settingsProfile == null && profileOrigin == null
 				&& matchesBuiltInVariant(params)) {
 			linked = true;
 		}
@@ -528,23 +542,10 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	}
 
 	private void loadKeyLayout() {
-		File file = new File(configDir, Config.MIDLET_KEY_LAYOUT_FILE);
-		keylayoutFile = file;
-		if (isProfile || file.exists()) {
-			return;
-		}
-		if (defProfile == null) {
-			return;
-		}
-		File defaultKeyLayoutFile = new File(Config.getProfilesDir() + defProfile, Config.MIDLET_KEY_LAYOUT_FILE);
-		if (!defaultKeyLayoutFile.exists()) {
-			return;
-		}
-		try {
-			FileUtils.copyFileUsingChannel(defaultKeyLayoutFile, file);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		// Default-profile layout selection is handled together with settings in loadConfig().
+		// Existing apps must never begin following a newly selected global default just because
+		// their settings screen was opened later.
+		keylayoutFile = new File(configDir, Config.MIDLET_KEY_LAYOUT_FILE);
 	}
 
 	@Override
@@ -678,6 +679,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	}
 
 	private void applyBuiltInTemplate() {
+		if (!isProfile) ProfileLinks.detachSettings(configDir);
 		setProfileOrigin(null);
 		params = newBuiltInProfile();
 		setBuiltInThemeLinked(true);
@@ -719,10 +721,13 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private void applyTemplate(@NonNull String name) {
 		Profile profile = findProfile(name);
 		if (profile == null) return;
+		boolean hasSettings = profile.hasConfig() || profile.hasOldConfig();
 		try {
-			ProfilesManager.load(profile, configDir.getPath(), true, profile.hasKeyLayout());
-			setProfileOrigin(profile.getName());
-			setBuiltInThemeLinked(false);
+			ProfilesManager.load(profile, configDir.getPath(), true, true);
+			if (hasSettings) {
+				setProfileOrigin(profile.getName());
+				setBuiltInThemeLinked(false);
+			}
 			loadParams(true);
 		} catch (IOException e) {
 			Log.e(TAG, "applyTemplate: " + name, e);
@@ -740,7 +745,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			saveParams();
 			Profile profile = new Profile(name);
 			ProfilesManager.saveSnapshot(profile, configDir.getPath());
-			setProfileOrigin(name);
+			if (profile.hasConfig() || profile.hasOldConfig()) setProfileOrigin(name);
 			refreshProfileMatchCache();
 			composeController.update(createUiState());
 		} catch (IOException e) {
@@ -755,7 +760,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		try {
 			saveParams();
 			ProfilesManager.saveSnapshot(profile, configDir.getPath());
-			setProfileOrigin(name);
+			if (profile.hasConfig() || profile.hasOldConfig()) setProfileOrigin(name);
 			refreshProfileMatchCache();
 			composeController.update(createUiState());
 		} catch (IOException e) {
@@ -963,26 +968,62 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				: currentForm;
 		String defaultProfile = PreferenceManager.getDefaultSharedPreferences(this)
 				.getString(PREF_DEFAULT_PROFILE, null);
-		Profile activeProfile = isProfile ? null : ProfileConfigMatcher.findMatchCached(
-				params, state, profileCandidates, defaultProfile, currentKeyLayoutSnapshot);
 		ConfigUiState.ProfileStatus profileStatus;
-		if (activeProfile != null) {
-			if (!activeProfile.getName().equals(profileOrigin)) setProfileOrigin(activeProfile.getName());
-			profileStatus = ConfigUiState.ProfileStatus.active(activeProfile.getName(), defaultProfile);
-		} else if (!isProfile && builtInDefaultParams != null
-				&& ProfileConfigMatcher.sameEffectiveConfig(params, state, builtInDefaultParams)) {
-			if (profileOrigin != null) setProfileOrigin(null);
-			profileStatus = ConfigUiState.ProfileStatus.builtInDefault(defaultProfile);
-		} else if (!isProfile && profileOrigin != null && findProfileCandidate(profileOrigin) != null) {
-			profileStatus = ConfigUiState.ProfileStatus.modified(profileOrigin, defaultProfile);
-		} else {
-			if (!isProfile && profileOrigin != null) setProfileOrigin(null);
+
+		if (isProfile) {
 			profileStatus = ConfigUiState.ProfileStatus.custom(defaultProfile);
+		} else {
+			String settingsProfile = ProfileLinks.getSettingsProfile(configDir);
+			String keyboardProfile = ProfileLinks.getKeyboardProfile(configDir);
+			boolean settingsModified = ProfileLinks.isSettingsModified(configDir);
+			boolean keyboardModified = ProfileLinks.isKeyboardModified(configDir);
+
+			if (settingsProfile != null) {
+				ProfileConfigMatcher.Candidate candidate = findProfileCandidate(settingsProfile);
+				if (candidate == null || candidate.config == null
+						|| !ProfileConfigMatcher.sameEffectiveConfig(params, state, candidate.config)) {
+					settingsModified = true;
+				}
+			}
+
+			boolean builtInSettings = settingsProfile == null && builtInDefaultParams != null
+					&& ProfileConfigMatcher.sameEffectiveConfig(params, state, builtInDefaultParams);
+
+			// Keep a conservative migration path for alpha-era one-time copies. Exact matches can
+			// retain their visible origin and will be converted to explicit links on the next load.
+			if (settingsProfile == null && keyboardProfile == null && !builtInSettings) {
+				Profile activeProfile = ProfileConfigMatcher.findMatchCached(
+						params, state, profileCandidates, defaultProfile, currentKeyLayoutSnapshot);
+				if (activeProfile != null) {
+					ProfileConfigMatcher.Candidate candidate = findProfileCandidate(activeProfile.getName());
+					if (candidate != null) {
+						settingsProfile = candidate.config == null ? null : activeProfile.getName();
+						keyboardProfile = candidate.keyboard == null ? null : activeProfile.getName();
+						setProfileOrigin(activeProfile.getName());
+					}
+				} else if (profileOrigin != null) {
+					ProfileConfigMatcher.Candidate candidate = findProfileCandidate(profileOrigin);
+					if (candidate != null) {
+						settingsProfile = candidate.config == null ? null : profileOrigin;
+						keyboardProfile = candidate.keyboard == null ? null : profileOrigin;
+						settingsModified = settingsProfile != null;
+						keyboardModified = keyboardProfile != null;
+					} else {
+						setProfileOrigin(null);
+					}
+				}
+			}
+
+			profileStatus = ConfigUiState.ProfileStatus.components(
+					settingsProfile, settingsModified, keyboardProfile, keyboardModified,
+					builtInSettings, defaultProfile);
 		}
+
 		ArrayList<ConfigUiState.ProfileTemplate> templates = new ArrayList<>();
 		for (ProfileConfigMatcher.Candidate candidate : profileCandidates) {
 			String name = candidate.profile.getName();
-			templates.add(new ConfigUiState.ProfileTemplate(name, name.equals(defaultProfile)));
+			templates.add(new ConfigUiState.ProfileTemplate(
+					name, name.equals(defaultProfile), candidate.config != null, candidate.keyboard != null));
 		}
 		return new ConfigUiState(state, screenPresets, fontPresets, skinOptions, soundBankOptions,
 				shaders == null ? Collections.emptyList() : shaders, removableScreenPresets,
