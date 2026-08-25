@@ -70,6 +70,14 @@ public interface ConfigFormEvents {
 		onApplyTemplate(name);
 	}
 
+	/** Keeps the current local settings while removing their reusable-profile link. */
+	default void onKeepSettingsForApp() {
+	}
+
+	/** Keeps the current local keyboard layout while removing its reusable-profile link. */
+	default void onKeepKeyboardForApp() {
+	}
+
 	default void onSaveTemplate(@NonNull String name) {
 	}
 
