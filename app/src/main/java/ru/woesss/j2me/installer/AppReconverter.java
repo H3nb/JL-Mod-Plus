@@ -1,4 +1,5 @@
 /*
+ * Modified in 2026 for atomic Memory Editor metadata reconversion.
  * Copyright 2026 JL-Mod Plus contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
