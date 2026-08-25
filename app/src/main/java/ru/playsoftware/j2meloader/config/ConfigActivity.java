@@ -119,7 +119,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 
 		@Override
-		public void onRemoveResolutionPreset(@NonNull Size size) {
+		public void onRemoveResolutionPreset(Size size) {
 			removeResolutionPreset(size);
 		}
 
@@ -182,7 +182,12 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 		@Override
 		public void onApplyTemplate(@NonNull String name) {
-			applyTemplate(name);
+			applyTemplate(name, true, true);
+		}
+
+		@Override
+		public void onApplyTemplateComponents(@NonNull String name, boolean settings, boolean keyboard) {
+			applyTemplate(name, settings, keyboard);
 		}
 
 		@Override
@@ -390,7 +395,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	void loadConfig() {
 		defProfile = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
 				.getString(PREF_DEFAULT_PROFILE, null);
-		params = ProfilesManager.loadConfig(configDir);
+		params = isProfile
+				? ProfilesManager.loadConfig(configDir)
+				: ProfilesManager.loadGameConfig(configDir);
 
 		// A default profile is a policy for a newly configured app only. Materialize and link the
 		// components once; changing the global default later never retargets existing apps.
@@ -399,7 +406,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			if (defaultProfile != null) {
 				try {
 					ProfilesManager.load(defaultProfile, configDir.getPath(), true, true);
-					params = ProfilesManager.loadConfig(configDir);
+					params = ProfilesManager.loadGameConfig(configDir);
 				} catch (IOException e) {
 					Log.e(TAG, "loadConfig: default profile " + defProfile, e);
 				}
@@ -622,7 +629,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 						removableScreenPresets.add(size);
 					}
 				}
-			}
 		}
 		Collections.sort(screenPresets);
 		Collections.sort(removableScreenPresets);
@@ -718,13 +724,15 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				candidate, ProfileModel.createBuiltIn(configDir, true));
 	}
 
-	private void applyTemplate(@NonNull String name) {
+	private void applyTemplate(@NonNull String name, boolean settings, boolean keyboard) {
 		Profile profile = findProfile(name);
-		if (profile == null) return;
-		boolean hasSettings = profile.hasConfig() || profile.hasOldConfig();
+		if (profile == null || (!settings && !keyboard)) return;
+		boolean appliesSettings = settings && (profile.hasConfig() || profile.hasOldConfig());
+		boolean appliesKeyboard = keyboard && profile.hasKeyLayout();
+		if (!appliesSettings && !appliesKeyboard) return;
 		try {
-			ProfilesManager.load(profile, configDir.getPath(), true, true);
-			if (hasSettings) {
+			ProfilesManager.load(profile, configDir.getPath(), settings, keyboard);
+			if (appliesSettings) {
 				setProfileOrigin(profile.getName());
 				setBuiltInThemeLinked(false);
 			}
