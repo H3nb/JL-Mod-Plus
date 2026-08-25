@@ -56,54 +56,63 @@ internal fun ConfigProfilePanel(
 ) {
     var managerVisible by rememberSaveable { mutableStateOf(false) }
     var nameRequest by remember { mutableStateOf<TemplateNameRequest?>(null) }
-    val currentTitle = when {
-        status.modified && status.sourceProfile != null -> status.sourceProfile
-        status.activeProfile != null -> status.activeProfile
+    var updateTarget by remember { mutableStateOf<String?>(null) }
+
+    val settingsValue = when {
+        status.settingsProfile != null -> status.settingsProfile
         status.builtInDefault -> stringResource(R.string.profile_builtin_settings)
         else -> stringResource(R.string.profile_custom)
     }
-    val currentSummary = when {
-        status.modified -> stringResource(R.string.profile_modified_summary)
-        status.activeProfile != null -> stringResource(R.string.profile_active_summary)
-        status.builtInDefault -> stringResource(R.string.profile_builtin_settings_summary)
-        else -> stringResource(R.string.profile_custom_summary)
+    val keyboardValue = status.keyboardProfile ?: stringResource(R.string.profile_app_specific)
+    val modifiedSources = buildList {
+        status.settingsProfile?.takeIf { status.settingsModified }?.let(::add)
+        status.keyboardProfile?.takeIf { status.keyboardModified && it !in this }?.let(::add)
     }
-    val defaultSuffix = when {
-        status.builtInDefault && status.defaultProfile == null -> stringResource(R.string.profile_default_badge)
-        status.activeProfile != null && status.activeProfile == status.defaultProfile -> stringResource(R.string.profile_default_badge)
-        status.modified && status.sourceProfile == status.defaultProfile -> stringResource(R.string.profile_default_badge)
-        else -> null
-    }
-    val summary = if (defaultSuffix == null) currentSummary else "$currentSummary · $defaultSuffix"
+    val hasCustomComponent = status.settingsProfile == null && !status.builtInDefault || status.keyboardProfile == null
 
     ConfigSection(
-        title = stringResource(R.string.profiles),
+        title = stringResource(R.string.profile_current_setup),
         highlighted = true,
     ) {
         ConfigValuePreference(
-            title = currentTitle,
-            description = summary,
-            value = stringResource(R.string.profile_choose_or_manage),
+            title = stringResource(R.string.action_settings),
+            description = if (status.builtInDefault && status.defaultProfile == null) {
+                stringResource(R.string.profile_default_badge)
+            } else {
+                stringResource(R.string.profile_settings_source_summary)
+            },
+            value = settingsValue,
+            message = if (status.settingsModified) stringResource(R.string.profile_modified_badge) else null,
+            messageLevel = ConfigMessageLevel.Warning,
             onClick = { managerVisible = true },
         )
-        if (status.modified && status.sourceProfile != null) {
+        ConfigValuePreference(
+            title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
+            description = stringResource(R.string.profile_keyboard_source_summary),
+            value = keyboardValue,
+            message = if (status.keyboardModified) stringResource(R.string.profile_modified_badge) else null,
+            messageLevel = ConfigMessageLevel.Warning,
+            onClick = { managerVisible = true },
+        )
+        modifiedSources.forEach { source ->
             ConfigActionPreference(
                 title = stringResource(R.string.profile_update_template),
-                description = stringResource(R.string.profile_update_template_summary, status.sourceProfile),
-                onClick = { events.onUpdateTemplate(status.sourceProfile) },
+                description = stringResource(R.string.profile_update_template_summary, source),
+                onClick = { updateTarget = source },
             )
-            ConfigActionPreference(
-                title = stringResource(R.string.profile_save_as_new_template),
-                description = stringResource(R.string.profile_save_as_new_template_summary),
-                onClick = { nameRequest = TemplateNameRequest.Create },
-            )
-        } else if (status.activeProfile == null && !status.builtInDefault) {
+        }
+        if (status.modified || hasCustomComponent) {
             ConfigActionPreference(
                 title = stringResource(R.string.profile_save_as_new_template),
                 description = stringResource(R.string.profile_save_as_new_template_summary),
                 onClick = { nameRequest = TemplateNameRequest.Create },
             )
         }
+        ConfigActionPreference(
+            title = stringResource(R.string.profile_choose_or_manage),
+            description = stringResource(R.string.profile_templates_summary),
+            onClick = { managerVisible = true },
+        )
     }
 
     if (managerVisible) {
@@ -114,14 +123,15 @@ internal fun ConfigProfilePanel(
             onDismissRequest = { managerVisible = false },
             onCreate = { nameRequest = TemplateNameRequest.Create },
             onRename = { name -> nameRequest = TemplateNameRequest.Rename(name) },
+            onRequestUpdate = { name -> updateTarget = name },
         )
     }
 
     nameRequest?.let { request ->
         ConfigTemplateNameDialog(
             title = stringResource(
-            if (request is TemplateNameRequest.Rename) R.string.action_context_rename
-            else R.string.profile_save_as_new_template,
+                if (request is TemplateNameRequest.Rename) R.string.action_context_rename
+                else R.string.profile_save_as_new_template,
             ),
             initialName = (request as? TemplateNameRequest.Rename)?.oldName.orEmpty(),
             existingNames = templates.map { it.name },
@@ -131,6 +141,27 @@ internal fun ConfigProfilePanel(
                 when (request) {
                     TemplateNameRequest.Create -> events.onSaveTemplate(name)
                     is TemplateNameRequest.Rename -> events.onRenameTemplate(request.oldName, name)
+                }
+            },
+        )
+    }
+
+    updateTarget?.let { name ->
+        AlertDialog(
+            onDismissRequest = { updateTarget = null },
+            title = { Text(stringResource(R.string.profile_update_global_title, name)) },
+            text = { Text(stringResource(R.string.profile_update_global_message)) },
+            dismissButton = {
+                TextButton(onClick = { updateTarget = null }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    updateTarget = null
+                    events.onUpdateTemplate(name)
+                }) {
+                    Text(stringResource(R.string.profile_update_template))
                 }
             },
         )
@@ -145,6 +176,7 @@ private fun ConfigTemplateManagerDialog(
     onDismissRequest: () -> Unit,
     onCreate: () -> Unit,
     onRename: (String) -> Unit,
+    onRequestUpdate: (String) -> Unit,
 ) {
     var actionTarget by remember { mutableStateOf<ConfigUiState.ProfileTemplate?>(null) }
     var deleteTarget by remember { mutableStateOf<ConfigUiState.ProfileTemplate?>(null) }
@@ -201,8 +233,8 @@ private fun ConfigTemplateManagerDialog(
                                 TemplateRow(
                                     name = template.name,
                                     summary = profileTemplateSummary(template),
-                                    isActive = status.activeProfile == template.name,
-                                    isModifiedSource = status.modified && status.sourceProfile == template.name,
+                                    isActive = status.usesProfile(template.name),
+                                    isModifiedSource = status.isProfileModified(template.name),
                                     isDefault = template.isDefault,
                                     onClick = {
                                         events.onApplyTemplate(template.name)
@@ -242,36 +274,42 @@ private fun ConfigTemplateManagerDialog(
                     )
                     if (!template.isDefault) {
                         TextButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            actionTarget = null
-                            events.onSetDefaultTemplate(template.name)
-                        },
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                actionTarget = null
+                                events.onSetDefaultTemplate(template.name)
+                            },
                         ) { Text(stringResource(R.string.set_as_default), modifier = Modifier.fillMaxWidth()) }
                     }
-                    if (status.modified && status.sourceProfile == template.name) {
+                    if (status.isProfileModified(template.name)) {
                         TextButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            actionTarget = null
-                            events.onUpdateTemplate(template.name)
-                        },
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                actionTarget = null
+                                onRequestUpdate(template.name)
+                            },
                         ) { Text(stringResource(R.string.profile_update_template), modifier = Modifier.fillMaxWidth()) }
                     }
                     TextButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        actionTarget = null
-                        onRename(template.name)
-                    },
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            actionTarget = null
+                            onRename(template.name)
+                        },
                     ) { Text(stringResource(R.string.action_context_rename), modifier = Modifier.fillMaxWidth()) }
                     TextButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        actionTarget = null
-                        deleteTarget = template
-                    },
-                    ) { Text(stringResource(R.string.action_context_delete), modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.error) }
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            actionTarget = null
+                            deleteTarget = template
+                        },
+                    ) {
+                        Text(
+                            stringResource(R.string.action_context_delete),
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
                 }
             },
             confirmButton = {},
@@ -288,10 +326,10 @@ private fun ConfigTemplateManagerDialog(
             },
             confirmButton = {
                 TextButton(
-                onClick = {
-                    deleteTarget = null
-                    events.onDeleteTemplate(template.name)
-                },
+                    onClick = {
+                        deleteTarget = null
+                        events.onDeleteTemplate(template.name)
+                    },
                 ) { Text(stringResource(R.string.action_context_delete), color = MaterialTheme.colorScheme.error) }
             },
         )
@@ -300,12 +338,11 @@ private fun ConfigTemplateManagerDialog(
 
 @Composable
 private fun profileTemplateSummary(template: ConfigUiState.ProfileTemplate): String {
-    val components = buildList {
-        if (template.hasSettings) add(stringResource(R.string.action_settings))
-        if (template.hasKeyboard) add(stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS))
-    }
-    return if (components.isEmpty()) stringResource(R.string.profile_template_summary)
-    else components.joinToString(" · ")
+    val settings = if (template.hasSettings) stringResource(R.string.action_settings) else null
+    val keyboard = if (template.hasKeyboard) stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS) else null
+    return listOfNotNull(settings, keyboard).takeIf { it.isNotEmpty() }
+        ?.joinToString(" · ")
+        ?: stringResource(R.string.profile_template_summary)
 }
 
 @Composable
@@ -320,18 +357,23 @@ private fun TemplateRow(
     builtIn: Boolean = false,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 20.dp, vertical = 10.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(text = name, style = MaterialTheme.typography.bodyLarge, fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal)
             Text(
-                text = buildString {
-                    append(summary)
-                    if (isActive) append(" · ").append(stringResource(R.string.profile_active_badge))
-                    else if (isModifiedSource) append(" · ").append(stringResource(R.string.profile_modified_badge))
-                },
+                text = name,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
+            )
+            val activeBadge = if (isActive) stringResource(R.string.profile_active_badge) else null
+            val modifiedBadge = if (isModifiedSource) stringResource(R.string.profile_modified_badge) else null
+            Text(
+                text = listOfNotNull(summary, activeBadge, modifiedBadge).joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -368,7 +410,9 @@ private fun ConfigTemplateNameDialog(
 ) {
     var value by rememberSaveable(initialName) { mutableStateOf(initialName) }
     val trimmed = value.trim()
-    val duplicate = existingNames.any { it.equals(trimmed, ignoreCase = true) && !it.equals(initialName, ignoreCase = false) }
+    val duplicate = existingNames.any {
+        it.equals(trimmed, ignoreCase = true) && !it.equals(initialName, ignoreCase = false)
+    }
     val valid = trimmed.isNotEmpty() && !duplicate && trimmed != initialName
     AlertDialog(
         onDismissRequest = onDismissRequest,
@@ -376,25 +420,29 @@ private fun ConfigTemplateNameDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
-                value = value,
-                onValueChange = { value = it },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.profile_name_label)) },
-                isError = duplicate,
+                    value = value,
+                    onValueChange = { value = it },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(stringResource(R.string.profile_name_label)) },
+                    isError = duplicate,
                 )
                 if (duplicate) {
                     Text(
-                    text = stringResource(R.string.profile_name_exists),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
+                        text = stringResource(R.string.profile_name_exists),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
                     )
                 }
             }
         },
-        dismissButton = { TextButton(onClick = onDismissRequest) { Text(stringResource(android.R.string.cancel)) } },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) { Text(stringResource(android.R.string.cancel)) }
+        },
         confirmButton = {
-            TextButton(enabled = valid, onClick = { onConfirm(trimmed) }) { Text(stringResource(R.string.save)) }
+            TextButton(enabled = valid, onClick = { onConfirm(trimmed) }) {
+                Text(stringResource(R.string.save))
+            }
         },
     )
 }
