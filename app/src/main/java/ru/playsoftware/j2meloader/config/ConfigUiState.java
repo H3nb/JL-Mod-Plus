@@ -173,46 +173,89 @@ public final class ConfigUiState {
 		}
 	}
 
-	/** Profile matching result used by the MIDlet General destination. */
+	/** Profile/component status used by the MIDlet Basic destination. */
 	public static final class ProfileStatus {
-		@Nullable
-		public final String activeProfile;
-		@Nullable
-		public final String sourceProfile;
-		@Nullable
-		public final String defaultProfile;
+		/** Legacy single-profile view retained for existing callers/tests. */
+		@Nullable public final String activeProfile;
+		@Nullable public final String sourceProfile;
+		@Nullable public final String defaultProfile;
 		public final boolean builtInDefault;
 		public final boolean modified;
 
+		/** Explicit reusable sources for the redesigned modular profile manager. */
+		@Nullable public final String settingsProfile;
+		@Nullable public final String keyboardProfile;
+		public final boolean settingsModified;
+		public final boolean keyboardModified;
+
 		private ProfileStatus(@Nullable String activeProfile, @Nullable String sourceProfile,
-				@Nullable String defaultProfile, boolean builtInDefault, boolean modified) {
+				@Nullable String defaultProfile, boolean builtInDefault, boolean modified,
+				@Nullable String settingsProfile, boolean settingsModified,
+				@Nullable String keyboardProfile, boolean keyboardModified) {
 			this.activeProfile = activeProfile;
 			this.sourceProfile = sourceProfile;
 			this.defaultProfile = defaultProfile;
 			this.builtInDefault = builtInDefault;
 			this.modified = modified;
+			this.settingsProfile = settingsProfile;
+			this.settingsModified = settingsModified;
+			this.keyboardProfile = keyboardProfile;
+			this.keyboardModified = keyboardModified;
 		}
 
 		@NonNull
 		public static ProfileStatus custom(@Nullable String defaultProfile) {
-			return new ProfileStatus(null, null, defaultProfile, false, false);
+			return components(null, false, null, false, false, defaultProfile);
 		}
 
 		@NonNull
 		public static ProfileStatus builtInDefault(@Nullable String defaultProfile) {
-			return new ProfileStatus(null, null, defaultProfile, true, false);
+			return components(null, false, null, false, true, defaultProfile);
 		}
 
 		@NonNull
 		public static ProfileStatus active(@NonNull String activeProfile,
 				@Nullable String defaultProfile) {
-			return new ProfileStatus(activeProfile, activeProfile, defaultProfile, false, false);
+			return new ProfileStatus(activeProfile, activeProfile, defaultProfile, false, false,
+					activeProfile, false, activeProfile, false);
 		}
 
 		@NonNull
 		public static ProfileStatus modified(@NonNull String sourceProfile,
 				@Nullable String defaultProfile) {
-			return new ProfileStatus(null, sourceProfile, defaultProfile, false, true);
+			return new ProfileStatus(null, sourceProfile, defaultProfile, false, true,
+					sourceProfile, true, sourceProfile, true);
+		}
+
+		@NonNull
+		public static ProfileStatus components(@Nullable String settingsProfile,
+				boolean settingsModified, @Nullable String keyboardProfile,
+				boolean keyboardModified, boolean builtInSettings,
+				@Nullable String defaultProfile) {
+			String active = null;
+			String source = null;
+			boolean anyModified = settingsModified || keyboardModified;
+			if (settingsProfile != null && settingsProfile.equals(keyboardProfile)) {
+				source = settingsProfile;
+				if (!anyModified) active = settingsProfile;
+			} else if (keyboardProfile == null && settingsProfile != null) {
+				source = settingsProfile;
+				if (!settingsModified) active = settingsProfile;
+			} else if (settingsProfile == null && keyboardProfile != null) {
+				source = keyboardProfile;
+				if (!keyboardModified) active = keyboardProfile;
+			}
+			return new ProfileStatus(active, source, defaultProfile, builtInSettings, anyModified,
+					settingsProfile, settingsModified, keyboardProfile, keyboardModified);
+		}
+
+		public boolean usesProfile(@NonNull String name) {
+			return name.equals(settingsProfile) || name.equals(keyboardProfile);
+		}
+
+		public boolean isProfileModified(@NonNull String name) {
+			return name.equals(settingsProfile) && settingsModified
+					|| name.equals(keyboardProfile) && keyboardModified;
 		}
 	}
 }
