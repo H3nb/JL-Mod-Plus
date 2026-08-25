@@ -20,9 +20,12 @@
 package javax.microedition.lcdui.event;
 
 import javax.microedition.util.ContextHolder;
+import javax.microedition.util.LinkedEntry;
 import javax.microedition.util.LinkedList;
 
 import ru.playsoftware.j2meloader.R;
+
+import java.util.ArrayList;
 
 /**
  * The event queue. A really complicated thing.
@@ -170,6 +173,25 @@ public class EventQueue implements Runnable {
 		synchronized (queue) {
 			queue.clear();
 		}
+	}
+
+	/**
+	 * Snapshots only known queued RunnableEvent targets while holding the queue lock. The returned
+	 * array is detached; callers must scan it after releasing all EventQueue locks.
+	 */
+	public Object[] snapshotRunnableTargets() {
+		ArrayList<Object> result = new ArrayList<>();
+		synchronized (queue) {
+			for (LinkedEntry<Event> entry = queue.firstEntry(); entry != null; entry = entry.nextEntry()) {
+				Event event = entry.getElement();
+				if (event == null) break;
+				if (event instanceof RunnableEvent runnableEvent) {
+					Object target = runnableEvent.queuedTarget();
+					if (target != null) result.add(target);
+				}
+			}
+		}
+		return result.toArray();
 	}
 
 	/**

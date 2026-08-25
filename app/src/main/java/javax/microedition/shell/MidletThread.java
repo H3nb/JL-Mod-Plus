@@ -80,6 +80,13 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		instance = this;
 	}
 
+	/** Host-only access for the runtime Memory Editor; never creates a MIDlet or loader. */
+	static MemoryEditorSession getMemoryEditorSession() {
+		MidletThread current = instance;
+		if (current == null || current.midlet == null || current.state == DESTROYED) return null;
+		return current.microLoader.getOrCreateMemoryEditorSession(current.midlet);
+	}
+
 	public static void notifyDestroyed() {
 		MidletThread current = instance;
 		if (current != null && current.destroyCallbackInProgress) {
@@ -242,6 +249,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 				}
 				transitionJournal(MidletSessionJournal.Stage.STOPPING);
 				state = DESTROYED;
+				closeMemoryEditorSafely();
 				try {
 					invokeDestroyApp();
 				} catch (MIDletStateChangeException e) {
@@ -347,6 +355,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			primaryFailureThread = thread;
 			primaryFailureBoundary = boundary;
 		}
+		closeMemoryEditorSafely();
 		// A crashed MIDlet must not be relaunched indefinitely by the launcher dispatcher. The
 		// durable marker is reserved for a system/background kill, which has no callback here.
 		microLoader.closeTimingSession();
@@ -387,6 +396,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			}
 			Thread.setDefaultUncaughtExceptionHandler(POST_DESTROY_UNCAUGHT_HANDLER);
 		}
+		closeMemoryEditorSafely();
 		microLoader.closeTimingSession();
 		clearActiveSession();
 		return true;
@@ -408,6 +418,15 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			midlet.destroyApp(true);
 		} finally {
 			destroyCallbackInProgress = false;
+		}
+	}
+
+	private void closeMemoryEditorSafely() {
+		try {
+			microLoader.closeMemoryEditor();
+		} catch (Throwable error) {
+			// Diagnostic tooling must never replace the lifecycle or crash outcome.
+			Log.w(TAG, "Memory Editor teardown failed", error);
 		}
 	}
 

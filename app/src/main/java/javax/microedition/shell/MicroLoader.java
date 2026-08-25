@@ -108,6 +108,7 @@ public class MicroLoader {
 			MemoryEditorTransformMetadata.empty();
 	private MemoryProbe.Ledger memoryProbeLedger;
 	private WeakReference<AppClassLoader> memoryAppClassLoader;
+	private MemoryEditorSession memoryEditorSession;
 	/** Set only after the MIDlet thread has successfully received the timing session. */
 	private boolean timingSessionTransferred;
 
@@ -175,6 +176,7 @@ public class MicroLoader {
 	void closeTimingSessionIfNotTransferred() {
 		if (!timingSessionTransferred) {
 			closeTimingSession();
+			closeMemoryEditor();
 		}
 	}
 
@@ -236,6 +238,35 @@ public class MicroLoader {
 
 	MemoryEditorTransformMetadata getMemoryEditorMetadata() {
 		return memoryEditorMetadata;
+	}
+
+	boolean isMemoryEditorAvailable() {
+		return BuildConfig.FULL_EMULATOR && memoryProbeLedger != null;
+	}
+
+	/** Returns the current editor session, creating it only after a MIDlet instance exists. */
+	synchronized MemoryEditorSession getOrCreateMemoryEditorSession(MIDlet midlet) {
+		if (midlet == null || !BuildConfig.FULL_EMULATOR || memoryProbeLedger == null) return null;
+		if (memoryEditorSession == null || memoryEditorSession.isClosed()) {
+			AppClassLoader loader = memoryAppClassLoader == null ? null : memoryAppClassLoader.get();
+			memoryEditorSession = new MemoryEditorSession(
+					midlet, loader, memoryEditorMetadata, memoryProbeLedger);
+		}
+		return memoryEditorSession;
+	}
+
+	/** Idempotent teardown for the editor session and its sparse lifecycle ledger. */
+	synchronized void closeMemoryEditor() {
+		MemoryEditorSession session = memoryEditorSession;
+		memoryEditorSession = null;
+		if (session != null) {
+			try {
+				session.close();
+			} catch (Throwable error) {
+				Log.w(TAG, "Memory Editor session cleanup failed", error);
+			}
+		}
+		closeMemoryProbe();
 	}
 
 	/** Idempotent editor-ledger teardown; does not own existing host static cleanup. */

@@ -2,6 +2,7 @@
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2017-2018 Nikita Shakarun
  * Copyright 2020-2026 Yury Kharchenko
+ * Modified in 2026 for host-only Memory Editor root inspection.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,6 +75,11 @@ public class Display {
 		return instance;
 	}
 
+	/** Returns the existing display without creating one as a scanner side effect. */
+	public static Display peekDisplay() {
+		return instance;
+	}
+
 	private Display() {
 	}
 
@@ -87,6 +93,11 @@ public class Display {
 
 	static EventQueue getEventQueue() {
 		return queue;
+	}
+
+	/** Host-only root bridge; snapshots queued callback targets without exposing queue internals. */
+	public static Object[] snapshotQueuedRunnableTargets() {
+		return queue.snapshotRunnableTargets();
 	}
 
 	public void setCurrent(Displayable displayable) {
