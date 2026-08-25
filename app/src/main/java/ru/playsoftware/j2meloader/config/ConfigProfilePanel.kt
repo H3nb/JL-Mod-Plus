@@ -43,11 +43,6 @@ import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
 import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 
-private sealed interface TemplateNameRequest {
-    data object Create : TemplateNameRequest
-    data class Rename(val oldName: String) : TemplateNameRequest
-}
-
 @Composable
 internal fun ConfigProfilePanel(
     status: ConfigUiState.ProfileStatus,
@@ -55,7 +50,7 @@ internal fun ConfigProfilePanel(
     events: ConfigFormEvents,
 ) {
     var managerVisible by rememberSaveable { mutableStateOf(false) }
-    var nameRequest by remember { mutableStateOf<TemplateNameRequest?>(null) }
+    var renameTarget by remember { mutableStateOf<String?>(null) }
     var updateTarget by remember { mutableStateOf<String?>(null) }
 
     val settingsValue = when {
@@ -66,9 +61,10 @@ internal fun ConfigProfilePanel(
     val keyboardValue = status.keyboardProfile ?: stringResource(R.string.profile_app_specific)
     val modifiedSources = buildList {
         status.settingsProfile?.takeIf { status.settingsModified }?.let(::add)
-        status.keyboardProfile?.takeIf { status.keyboardModified && it !in this }?.let(::add)
+        status.keyboardProfile?.takeIf { status.keyboardModified && !contains(it) }?.let(::add)
     }
-    val hasCustomComponent = status.settingsProfile == null && !status.builtInDefault || status.keyboardProfile == null
+    val hasCustomComponent =
+        (status.settingsProfile == null && !status.builtInDefault) || status.keyboardProfile == null
 
     ConfigSection(
         title = stringResource(R.string.profile_current_setup),
@@ -105,7 +101,7 @@ internal fun ConfigProfilePanel(
             ConfigActionPreference(
                 title = stringResource(R.string.profile_save_as_new_template),
                 description = stringResource(R.string.profile_save_as_new_template_summary),
-                onClick = { nameRequest = TemplateNameRequest.Create },
+                onClick = events::onSaveAsProfile,
             )
         }
         ConfigActionPreference(
@@ -121,27 +117,24 @@ internal fun ConfigProfilePanel(
             templates = templates,
             events = events,
             onDismissRequest = { managerVisible = false },
-            onCreate = { nameRequest = TemplateNameRequest.Create },
-            onRename = { name -> nameRequest = TemplateNameRequest.Rename(name) },
+            onCreate = {
+                managerVisible = false
+                events.onSaveAsProfile()
+            },
+            onRename = { name -> renameTarget = name },
             onRequestUpdate = { name -> updateTarget = name },
         )
     }
 
-    nameRequest?.let { request ->
+    renameTarget?.let { oldName ->
         ConfigTemplateNameDialog(
-            title = stringResource(
-                if (request is TemplateNameRequest.Rename) R.string.action_context_rename
-                else R.string.profile_save_as_new_template,
-            ),
-            initialName = (request as? TemplateNameRequest.Rename)?.oldName.orEmpty(),
+            title = stringResource(R.string.action_context_rename),
+            initialName = oldName,
             existingNames = templates.map { it.name },
-            onDismissRequest = { nameRequest = null },
+            onDismissRequest = { renameTarget = null },
             onConfirm = { name ->
-                nameRequest = null
-                when (request) {
-                    TemplateNameRequest.Create -> events.onSaveTemplate(name)
-                    is TemplateNameRequest.Rename -> events.onRenameTemplate(request.oldName, name)
-                }
+                renameTarget = null
+                events.onRenameTemplate(oldName, name)
             },
         )
     }
@@ -272,6 +265,28 @@ private fun ConfigTemplateManagerDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                     )
+                    if (template.hasSettings && template.hasKeyboard) {
+                        TextButton(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                actionTarget = null
+                                events.onApplyTemplateComponents(template.name, true, false)
+                                onDismissRequest()
+                            },
+                        ) {
+                            Text(stringResource(R.string.profile_apply_settings_only), modifier = Modifier.fillMaxWidth())
+                        }
+                        TextButton(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                actionTarget = null
+                                events.onApplyTemplateComponents(template.name, false, true)
+                                onDismissRequest()
+                            },
+                        ) {
+                            Text(stringResource(R.string.profile_apply_keyboard_only), modifier = Modifier.fillMaxWidth())
+                        }
+                    }
                     if (!template.isDefault) {
                         TextButton(
                             modifier = Modifier.fillMaxWidth(),
