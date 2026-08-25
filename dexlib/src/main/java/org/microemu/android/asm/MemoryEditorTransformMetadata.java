@@ -54,6 +54,7 @@ public final class MemoryEditorTransformMetadata {
 
     public static final String PROBE_NOT_ATTEMPTED = "NOT_ATTEMPTED";
     public static final String PROBE_NO_CLINIT = "NO_CLINIT";
+    public static final String PROBE_NO_NORMAL_RETURN = "NO_NORMAL_RETURN";
     public static final String PROBE_INSERTED = "INSERTED";
     public static final String PROBE_SKIPPED = "PROBE_SKIPPED";
 
@@ -357,7 +358,8 @@ public final class MemoryEditorTransformMetadata {
                 entry.probeStatus = PROBE_INSERTED;
                 entry.probeReason = null;
             } else {
-                entry.probeStatus = PROBE_NO_CLINIT;
+                entry.probeStatus = entry.sourceHasClinit
+                        ? PROBE_NO_NORMAL_RETURN : PROBE_NO_CLINIT;
                 entry.probeReason = null;
             }
         }

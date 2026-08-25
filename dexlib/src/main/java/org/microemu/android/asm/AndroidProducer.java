@@ -76,11 +76,20 @@ public class AndroidProducer {
 
 		byte[] runtimeClassData = cw.toByteArray();
 		if (metadata != null) {
+			int sourceClassId = metadata.sourceClassId(classFileName.substring(0, classFileName.length() - 6));
 			try {
-				metadata.observe(sourceClassData, runtimeClassData, patch != null);
+				sourceClassId = metadata.observe(sourceClassData, runtimeClassData, patch != null);
 			} catch (RuntimeException ignored) {
 				// Metadata is diagnostic/binding input and must not change established converter
-				// compatibility semantics. A later sparse pass can report its own skip reason.
+				// compatibility semantics. The sparse pass still uses a deterministic fallback ID.
+			}
+			try {
+				return SparseEvidenceVisitor.instrument(runtimeClassData, sourceClassId, metadata);
+			} catch (RuntimeException error) {
+				metadata.markProbeSkipped(sourceClassId, error.getClass().getSimpleName());
+				// A probe failure must preserve the compatibility-transformed bytes exactly. Existing
+				// compatibility failures above still invalidate the conversion as before.
+				return runtimeClassData;
 			}
 		}
 		return runtimeClassData;
