@@ -43,7 +43,7 @@ import java.util.Set;
 import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.ui.ThemedToast;
 
-/** Compose presentation with the legacy modular profile-save contract preserved. */
+/** Compose presentation with the modular profile-save contract preserved. */
 public class SaveProfileAlert extends DialogFragment {
 	private String configPath;
 
@@ -91,7 +91,12 @@ public class SaveProfileAlert extends DialogFragment {
 							return;
 						}
 						try {
-							ProfilesManager.save(new Profile(name), configPath, config, keyboard);
+							Profile savedProfile = new Profile(name);
+							ProfilesManager.save(savedProfile, configPath, config, keyboard);
+							// Saving from an app turns the selected components into an actual reusable source,
+							// not just a detached copy. ProfilesManager.load is intentionally reused here: the
+							// files are identical to what was just saved and it establishes the normal links.
+							ProfilesManager.load(savedProfile, configPath, config, keyboard);
 							if (asDefault) {
 								PreferenceManager.getDefaultSharedPreferences(context)
 										.edit().putString(PREF_DEFAULT_PROFILE, name).apply();
