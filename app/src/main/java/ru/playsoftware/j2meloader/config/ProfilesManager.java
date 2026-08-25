@@ -68,7 +68,9 @@ public class ProfilesManager {
 
 	static void load(Profile from, String toPath, boolean config, boolean keyboard)
 			throws IOException {
-		if (!config && !keyboard) {
+		boolean configRequested = config && (from.hasConfig() || from.hasOldConfig());
+		boolean keyboardRequested = keyboard && from.hasKeyLayout();
+		if (!configRequested && !keyboardRequested) {
 			return;
 		}
 		File configDir = new File(toPath);
@@ -77,7 +79,7 @@ public class ProfilesManager {
 		boolean configApplied = false;
 		boolean keyboardApplied = false;
 
-		if (config) {
+		if (configRequested) {
 			File source = from.getConfig();
 			if (source.isFile()) {
 				FileUtils.copyFileUsingChannel(source, dstConfig);
@@ -90,13 +92,13 @@ public class ProfilesManager {
 				}
 			}
 		}
-		if (keyboard && from.getKeyLayout().isFile()) {
+		if (keyboardRequested) {
 			FileUtils.copyFileUsingChannel(from.getKeyLayout(), dstKeyLayout);
 			keyboardApplied = true;
 		}
 
 		ProfileLinks.linkAppliedComponents(from, configDir,
-				config, configApplied, keyboard, keyboardApplied);
+				configRequested, configApplied, keyboardRequested, keyboardApplied);
 	}
 
 	static void save(Profile profile, String fromPath, boolean config, boolean keyboard)
