@@ -24,9 +24,9 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,6 +42,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.microedition.lcdui.Display;
+import javax.microedition.lcdui.Displayable;
+import javax.microedition.lcdui.Item;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.rms.RecordEnumeration;
 import javax.microedition.rms.RecordStoreException;
@@ -63,31 +65,56 @@ public final class MemoryEditorSession implements AutoCloseable {
     private static final int MAX_CANDIDATES = 100_000;
     private static final int MAX_ARRAY_ELEMENTS = 250_000;
     private static final int MAX_DEPTH = 32;
+    private static final int MAX_DISCOVERY_PASSES = 4;
+    private static final int MAX_REGION_BASELINE_BYTES = 8 * 1024 * 1024;
+    private static final long FREEZE_PERIOD_MILLIS = 16L;
     private static final long MAX_SCAN_NANOS = TimeUnit.SECONDS.toNanos(2);
 
     private final ScheduledExecutorService worker;
+    private final ScheduledExecutorService freezeWorker;
     private final AtomicBoolean closed = new AtomicBoolean();
     private final AtomicLong nextCandidateId = new AtomicLong(1L);
     private final Map<String, MemoryEditorTransformMetadata.ClassEntry> classesByRuntimeName;
-    private final Map<Long, Candidate> frozen = new ConcurrentHashMap<>();
+    private final Map<Long, FrozenTarget> frozen = new ConcurrentHashMap<>();
+    private final Map<Long, String> freezeErrors = new ConcurrentHashMap<>();
+    private final LoadedClassResolver loadedClassResolver;
     private final AtomicLong scanGeneration = new AtomicLong();
     private volatile EvidencePolicy evidencePolicy = EvidencePolicy.PASSIVE;
     private volatile MIDlet rootMidlet;
     private volatile ClassLoader applicationLoader;
     private volatile MemoryProbe.Ledger probeLedger;
     private volatile List<Candidate> candidates = Collections.emptyList();
+    private volatile ScanResult lastScanResult;
+    private volatile Query lastQuery;
     private volatile ScheduledFuture<?> freezeTask;
+    private int regionBaselineBytes;
+
+    interface LoadedClassResolver {
+        Class<?> findAlreadyLoaded(String internalName);
+    }
 
     MemoryEditorSession(
             MIDlet rootMidlet,
             ClassLoader applicationLoader,
             MemoryEditorTransformMetadata metadata,
             MemoryProbe.Ledger probeLedger) {
+        this(rootMidlet, applicationLoader, metadata, probeLedger,
+                resolverFor(applicationLoader));
+    }
+
+    MemoryEditorSession(
+            MIDlet rootMidlet,
+            ClassLoader applicationLoader,
+            MemoryEditorTransformMetadata metadata,
+            MemoryProbe.Ledger probeLedger,
+            LoadedClassResolver loadedClassResolver) {
         if (rootMidlet == null) throw new NullPointerException("rootMidlet");
         this.rootMidlet = rootMidlet;
         this.applicationLoader = applicationLoader;
         this.probeLedger = probeLedger;
-        Map<String, MemoryEditorTransformMetadata.ClassEntry> entries = new HashMap<>();
+        this.loadedClassResolver = loadedClassResolver == null
+                ? resolverFor(applicationLoader) : loadedClassResolver;
+        Map<String, MemoryEditorTransformMetadata.ClassEntry> entries = new LinkedHashMap<>();
         if (metadata != null) {
             for (MemoryEditorTransformMetadata.ClassEntry entry : metadata.getClasses()) {
                 entries.put(entry.getRuntimeInternalName(), entry);
@@ -102,6 +129,22 @@ public final class MemoryEditorSession implements AutoCloseable {
                 return thread;
             }
         });
+        freezeWorker = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable runnable) {
+                Thread thread = new Thread(runnable, "MemoryEditorFreeze");
+                thread.setDaemon(true);
+                return thread;
+            }
+        });
+    }
+
+    private static LoadedClassResolver resolverFor(ClassLoader loader) {
+        if (loader instanceof AppClassLoader) {
+            AppClassLoader appLoader = (AppClassLoader) loader;
+            return appLoader::findAlreadyLoadedApplicationClass;
+        }
+        return internalName -> null;
     }
 
     public enum ValueKind {
@@ -133,6 +176,25 @@ public final class MemoryEditorSession implements AutoCloseable {
 
         public String displayName() {
             return name().toLowerCase(java.util.Locale.ROOT);
+        }
+
+        private int byteWidth() {
+            switch (this) {
+                case BOOLEAN:
+                case BYTE:
+                    return 1;
+                case CHAR:
+                case SHORT:
+                    return 2;
+                case INT:
+                case FLOAT:
+                    return 4;
+                case LONG:
+                case DOUBLE:
+                    return 8;
+                default:
+                    return 1;
+            }
         }
     }
 
@@ -339,16 +401,45 @@ public final class MemoryEditorSession implements AutoCloseable {
         }
     }
 
+    private static final class RegionBaseline {
+        private final ValueKind kind;
+        private final long[] raw;
+
+        private RegionBaseline(ValueKind kind, long[] raw) {
+            this.kind = kind;
+            this.raw = raw;
+        }
+
+        private Sample sampleAt(int index, ValueKind expectedKind) {
+            if (index < 0 || index >= raw.length || expectedKind != kind) return null;
+            return new Sample(kind, raw[index]);
+        }
+    }
+
+    private static final class FrozenTarget {
+        private final Candidate candidate;
+        private final Sample desired;
+        private int reapplyCount;
+        private String lastError;
+
+        private FrozenTarget(Candidate candidate, Sample desired) {
+            this.candidate = candidate;
+            this.desired = desired;
+        }
+    }
+
     public static final class Candidate {
         private final long id;
         private final Location location;
+        private final RegionBaseline regionBaseline;
         private volatile Sample lastSample;
         private volatile boolean stale;
 
-        private Candidate(long id, Location location, Sample sample) {
+        private Candidate(long id, Location location, Sample sample, RegionBaseline regionBaseline) {
             this.id = id;
             this.location = location;
             this.lastSample = sample;
+            this.regionBaseline = regionBaseline;
         }
 
         public long getId() {
@@ -420,15 +511,19 @@ public final class MemoryEditorSession implements AutoCloseable {
         if (query == null) throw new NullPointerException("query");
         if (closed.get()) return cancelledResult();
         if (evidencePolicy == EvidencePolicy.OFF) {
-            return new ScanResult(Collections.emptyList(), false, false, 0, 0,
+            ScanResult result = new ScanResult(Collections.emptyList(), false, false, 0, 0,
                     Collections.singletonList("POLICY_OFF"));
+            rememberScan(query, result);
+            return result;
         }
         List<Candidate> previous = candidates;
         boolean discover = previous.isEmpty() && !query.isDelta();
         if (previous.isEmpty() && query.isDelta()) {
-            return new ScanResult(
+            ScanResult result = new ScanResult(
                     Collections.emptyList(), false, false, 0, 0,
                     Collections.singletonList("INITIAL_SCAN_REQUIRED"));
+            rememberScan(query, result);
+            return result;
         }
 
         Scanner scanner = discover ? new Scanner(query) : null;
@@ -438,7 +533,14 @@ public final class MemoryEditorSession implements AutoCloseable {
         int fields = 0;
         boolean incomplete = false;
         if (discover) {
-            List<Location> locations = scanner.discover();
+            int pass = 0;
+            do {
+                if (pass++ > 0) scanner.prepareNextPass();
+                scanner.discover();
+            } while (scanner.timeBudgetHit && pass < MAX_DISCOVERY_PASSES
+                    && !closed.get() && !Thread.currentThread().isInterrupted());
+            scanner.finishCoverage(pass >= MAX_DISCOVERY_PASSES && scanner.timeBudgetHit);
+            List<Location> locations = scanner.locations;
             objects = scanner.scannedObjects;
             fields = scanner.scannedFields;
             incomplete = scanner.incomplete;
@@ -450,16 +552,21 @@ public final class MemoryEditorSession implements AutoCloseable {
                 try {
                     Sample current = location.read();
                     if (current != null && query.matches(current, null)) {
-                        result.add(new Candidate(nextCandidateId.getAndIncrement(), location, current));
+                        result.add(createCandidate(location, current, diagnostics));
                     }
                 } catch (RuntimeException error) {
                     diagnostics.add("READ_SKIPPED:" + location.path());
                 }
             }
+            incomplete = incomplete || hasDiagnosticPrefix(diagnostics, "REGION_UNBASELINED:");
         } else {
             for (Candidate candidate : previous) {
                 if (closed.get() || Thread.currentThread().isInterrupted()) return cancelledResult();
                 try {
+                    if (candidate.isRegion()) {
+                        result.addAll(refineRegionCandidate(candidate, query, diagnostics));
+                        continue;
+                    }
                     Sample before = candidate.lastSample;
                     Sample current = candidate.location.read();
                     if (current == null) {
@@ -474,10 +581,13 @@ public final class MemoryEditorSession implements AutoCloseable {
                 }
             }
             objects = previous.size();
+            incomplete = hasDiagnosticPrefix(
+                    diagnostics, "REGION_UNBASELINED:", "REGION_TIME_BUDGET:");
         }
         scanGeneration.incrementAndGet();
         ScanResult scanResult = new ScanResult(result, incomplete, false, objects, fields, diagnostics);
         candidates = scanResult.getCandidates();
+        rememberScan(query, scanResult);
         return scanResult;
     }
 
@@ -485,9 +595,27 @@ public final class MemoryEditorSession implements AutoCloseable {
         return candidates;
     }
 
+    /** Returns the immutable result of the most recent search, including after the UI is reopened. */
+    public ScanResult getLastScanResult() {
+        return lastScanResult;
+    }
+
+    /** Returns the query used by the most recent search, or {@code null} before the first scan. */
+    public Query getLastQuery() {
+        return lastQuery;
+    }
+
+    public boolean hasSearchSession() {
+        return lastScanResult != null && !candidates.isEmpty();
+    }
+
     /** Starts a new search epoch without tearing down the live session or its roots. */
     public synchronized void resetSearch() {
         candidates = Collections.emptyList();
+        lastScanResult = null;
+        lastQuery = null;
+        clearFrozenTargets();
+        regionBaselineBytes = 0;
         scanGeneration.incrementAndGet();
     }
 
@@ -568,23 +696,56 @@ public final class MemoryEditorSession implements AutoCloseable {
     public boolean freeze(long candidateId) {
         if (closed.get()) return false;
         Candidate candidate = findCandidate(candidateId);
-        if (candidate == null || candidate.isReadOnly() || candidate.isStale()) return false;
+        if (candidate == null) {
+            freezeErrors.put(candidateId, "STALE_CANDIDATE");
+            return false;
+        }
+        if (candidate.isRegion()) {
+            freezeErrors.put(candidateId, "REGION_INDEX_REQUIRED");
+            return false;
+        }
+        if (candidate.isReadOnly()) {
+            freezeErrors.put(candidateId, "READ_ONLY");
+            return false;
+        }
+        if (candidate.isStale()) {
+            freezeErrors.put(candidateId, "STALE_LOCATION");
+            return false;
+        }
         try {
             Sample sample = candidate.location.read();
-            if (sample == null) return false;
-            frozen.put(candidateId, candidate);
+            if (sample == null) {
+                freezeErrors.put(candidateId, "STALE_LOCATION");
+                return false;
+            }
+            candidate.lastSample = sample;
+            if (!candidate.location.write(sample)) {
+                freezeErrors.put(candidateId, "READ_ONLY");
+                return false;
+            }
+            Sample readBack = candidate.location.read();
+            if (readBack == null || !readBack.same(sample)) {
+                candidate.stale = true;
+                freezeErrors.put(candidateId, "READBACK_MISMATCH");
+                return false;
+            }
+            freezeErrors.remove(candidateId);
+            frozen.put(candidateId, new FrozenTarget(candidate, sample));
             ensureFreezeTask();
             return true;
         } catch (RuntimeException error) {
+            freezeErrors.put(candidateId, error.getMessage() == null
+                    ? "FREEZE_FAILED" : error.getMessage());
             return false;
         }
     }
 
     public void unfreeze(long candidateId) {
         frozen.remove(candidateId);
+        freezeErrors.remove(candidateId);
         if (frozen.isEmpty()) {
             ScheduledFuture<?> task = freezeTask;
-            if (task != null) task.cancel(false);
+            if (task != null) task.cancel(true);
             freezeTask = null;
         }
     }
@@ -593,24 +754,64 @@ public final class MemoryEditorSession implements AutoCloseable {
         return frozen.containsKey(candidateId);
     }
 
+    /** Human-readable status for UI feedback when a freeze cannot be maintained. */
+    public String getFreezeStatus(long candidateId) {
+        FrozenTarget target = frozen.get(candidateId);
+        if (target == null) {
+            String error = freezeErrors.get(candidateId);
+            return error == null ? "NOT_FROZEN" : error;
+        }
+        if (target.lastError != null) return target.lastError;
+        return "ACTIVE:" + target.reapplyCount;
+    }
+
     private synchronized void ensureFreezeTask() {
         if (freezeTask != null && !freezeTask.isCancelled()) return;
-        freezeTask = worker.scheduleWithFixedDelay(this::applyFreezes, 100L, 100L, TimeUnit.MILLISECONDS);
+        freezeTask = freezeWorker.scheduleAtFixedRate(
+                this::applyFreezes,
+                FREEZE_PERIOD_MILLIS,
+                FREEZE_PERIOD_MILLIS,
+                TimeUnit.MILLISECONDS);
     }
 
     private void applyFreezes() {
-        for (Candidate candidate : frozen.values()) {
+        for (FrozenTarget target : frozen.values()) {
             if (closed.get()) return;
+            if (frozen.get(target.candidate.id) != target) continue;
             try {
-                Sample sample = candidate.lastSample;
-                if (sample != null && !candidate.location.read().same(sample)) {
-                    candidate.location.write(sample);
+                Candidate candidate = target.candidate;
+                Sample sample = target.desired;
+                Sample current = candidate.location.read();
+                if (current == null) {
+                    throw new IllegalStateException("STALE_LOCATION");
                 }
+                if (!current.same(sample)) {
+                    if (!candidate.location.write(sample)) {
+                        throw new IllegalStateException("READ_ONLY");
+                    }
+                    Sample readBack = candidate.location.read();
+                    if (readBack == null || !readBack.same(sample)) {
+                        throw new IllegalStateException("READBACK_MISMATCH");
+                    }
+                }
+                target.reapplyCount++;
+                target.lastError = null;
             } catch (RuntimeException error) {
-                candidate.stale = true;
-                frozen.remove(candidate.id);
+                target.candidate.stale = true;
+                target.lastError = error.getMessage() == null
+                        ? "FREEZE_FAILED" : error.getMessage();
+                freezeErrors.put(target.candidate.id, target.lastError);
+                frozen.remove(target.candidate.id);
             }
         }
+    }
+
+    private void clearFrozenTargets() {
+        frozen.clear();
+        freezeErrors.clear();
+        ScheduledFuture<?> task = freezeTask;
+        if (task != null) task.cancel(true);
+        freezeTask = null;
     }
 
     private Candidate findCandidate(long id) {
@@ -618,6 +819,98 @@ public final class MemoryEditorSession implements AutoCloseable {
             if (candidate.id == id) return candidate;
         }
         return null;
+    }
+
+    private void rememberScan(Query query, ScanResult result) {
+        lastQuery = query;
+        lastScanResult = result;
+    }
+
+    private static boolean hasDiagnosticPrefix(List<String> diagnostics, String... prefixes) {
+        for (String diagnostic : diagnostics) {
+            for (String prefix : prefixes) {
+                if (diagnostic.startsWith(prefix)) return true;
+            }
+        }
+        return false;
+    }
+
+    private Candidate createCandidate(Location location, Sample current, List<String> diagnostics) {
+        RegionBaseline baseline = null;
+        if (location.isRegion()) {
+            baseline = captureRegionBaseline(location);
+            if (baseline == null) diagnostics.add("REGION_UNBASELINED:" + location.path());
+        }
+        return new Candidate(nextCandidateId.getAndIncrement(), location, current, baseline);
+    }
+
+    private List<Candidate> refineRegionCandidate(
+            Candidate regionCandidate,
+            Query query,
+            List<String> diagnostics) {
+        List<Candidate> result = new ArrayList<>();
+        Location location = regionCandidate.location;
+        RegionBaseline baseline = regionCandidate.regionBaseline;
+        if (baseline == null) diagnostics.add("REGION_UNBASELINED:" + location.path());
+        int length = location.regionLength();
+        long deadlineNanos = System.nanoTime() + MAX_SCAN_NANOS;
+        byte[] rmsBytes = location instanceof RmsRecordLocation
+                ? ((RmsRecordLocation) location).readAll()
+                : null;
+        for (int index = 0; index < length; index++) {
+            if (closed.get() || Thread.currentThread().isInterrupted()) break;
+            if (System.nanoTime() >= deadlineNanos) {
+                diagnostics.add("REGION_TIME_BUDGET:" + location.path());
+                break;
+            }
+            try {
+                Sample current = rmsBytes == null
+                        ? location.readElement(index)
+                        : (index < rmsBytes.length
+                                ? Sample.from(rmsBytes[index], location.kind()) : null);
+                Sample previous = baseline == null ? null : baseline.sampleAt(index, location.kind());
+                if (query.matches(current, previous)) {
+                    result.add(new Candidate(
+                            nextCandidateId.getAndIncrement(),
+                            location.scalarAt(index),
+                            current,
+                            null));
+                }
+            } catch (RuntimeException error) {
+                diagnostics.add("REGION_READ_SKIPPED:" + location.path() + "[" + index + "]");
+            }
+        }
+        return result;
+    }
+
+    private RegionBaseline captureRegionBaseline(Location location) {
+        if (!location.isRegion()) return null;
+        int length = location.regionLength();
+        int bytesPerElement = Math.max(1, location.kind().byteWidth());
+        long required = (long) length * bytesPerElement;
+        if (required > Integer.MAX_VALUE || regionBaselineBytes + required > MAX_REGION_BASELINE_BYTES) {
+            return null;
+        }
+        long[] raw = new long[length];
+        long deadlineNanos = System.nanoTime() + MAX_SCAN_NANOS;
+        try {
+            byte[] rmsBytes = location instanceof RmsRecordLocation
+                    ? ((RmsRecordLocation) location).readAll()
+                    : null;
+            for (int index = 0; index < length; index++) {
+                if (System.nanoTime() >= deadlineNanos) return null;
+                Sample sample = rmsBytes == null
+                        ? location.readElement(index)
+                        : (index < rmsBytes.length
+                                ? Sample.from(rmsBytes[index], location.kind()) : null);
+                if (sample == null) return null;
+                raw[index] = sample.raw;
+            }
+        } catch (RuntimeException error) {
+            return null;
+        }
+        regionBaselineBytes += (int) required;
+        return new RegionBaseline(location.kind(), raw);
     }
 
     private ScanResult cancelledResult() {
@@ -628,15 +921,15 @@ public final class MemoryEditorSession implements AutoCloseable {
     @Override
     public void close() {
         if (!closed.compareAndSet(false, true)) return;
-        frozen.clear();
-        ScheduledFuture<?> task = freezeTask;
-        if (task != null) task.cancel(true);
-        freezeTask = null;
+        clearFrozenTargets();
         candidates = Collections.emptyList();
+        lastScanResult = null;
+        lastQuery = null;
         rootMidlet = null;
         applicationLoader = null;
         probeLedger = null;
         worker.shutdownNow();
+        freezeWorker.shutdownNow();
     }
 
     public boolean isClosed() {
@@ -647,16 +940,47 @@ public final class MemoryEditorSession implements AutoCloseable {
         private final Query query;
         private final IdentityHashMap<Object, Boolean> visited = new IdentityHashMap<>();
         private final List<Location> locations = new ArrayList<>();
+        private final Set<String> locationKeys = new HashSet<>();
         private final Set<String> diagnosticsSeen = new HashSet<>();
         private final Set<String> staticFieldsSeen = new HashSet<>();
         private final List<String> diagnostics = new ArrayList<>();
-        private final long deadlineNanos = System.nanoTime() + MAX_SCAN_NANOS;
+        private long deadlineNanos = System.nanoTime() + MAX_SCAN_NANOS;
         private boolean incomplete;
+        private boolean hardIncomplete;
+        private boolean budgetStopped;
+        private boolean timeBudgetHit;
         private int scannedObjects;
         private int scannedFields;
 
         private Scanner(Query query) {
             this.query = query;
+        }
+
+        private void prepareNextPass() {
+            deadlineNanos = System.nanoTime() + MAX_SCAN_NANOS;
+            budgetStopped = false;
+            timeBudgetHit = false;
+            incomplete = hardIncomplete;
+            removeTimeBudgetDiagnostic();
+            diagnosticsSeen.remove("TIME_BUDGET");
+        }
+
+        private void finishCoverage(boolean exhaustedTimeBudget) {
+            if (exhaustedTimeBudget) {
+                incomplete = true;
+                return;
+            }
+            incomplete = hardIncomplete;
+            if (!timeBudgetHit) {
+                removeTimeBudgetDiagnostic();
+                diagnosticsSeen.remove("TIME_BUDGET");
+            }
+        }
+
+        private void removeTimeBudgetDiagnostic() {
+            for (int index = diagnostics.size() - 1; index >= 0; index--) {
+                if ("TIME_BUDGET".equals(diagnostics.get(index))) diagnostics.remove(index);
+            }
         }
 
         private List<Location> discover() {
@@ -680,6 +1004,7 @@ public final class MemoryEditorSession implements AutoCloseable {
             } catch (RuntimeException error) {
                 addDiagnostic("EVENT_ROOT_UNAVAILABLE");
             }
+            discoverInitializedStaticRoots();
             visitRmsStores();
             if (queryAdaptiveThreads()) {
                 try {
@@ -694,6 +1019,34 @@ public final class MemoryEditorSession implements AutoCloseable {
                 }
             }
             return locations;
+        }
+
+        private void discoverInitializedStaticRoots() {
+            MemoryProbe.Ledger ledger = probeLedger;
+            if (ledger == null || applicationLoader == null) {
+                addDiagnostic("STATIC_ROOT_UNAVAILABLE");
+                return;
+            }
+            for (MemoryEditorTransformMetadata.ClassEntry entry : classesByRuntimeName.values()) {
+                if (stopped()) return;
+                if (!entry.hasSourceClinit() || !ledger.wasObserved(entry.getSourceClassId())) continue;
+                Class<?> type;
+                try {
+                    type = loadedClassResolver.findAlreadyLoaded(entry.getRuntimeInternalName());
+                } catch (RuntimeException error) {
+                    addDiagnostic("STATIC_CLASS_LOOKUP_FAILED:" + entry.getRuntimeInternalName());
+                    continue;
+                }
+                if (type == null) {
+                    addDiagnostic("STATIC_CLASS_NOT_LOADED:" + entry.getRuntimeInternalName());
+                    continue;
+                }
+                if (type.getClassLoader() != applicationLoader) {
+                    addDiagnostic("STATIC_CLASS_LOADER_MISMATCH:" + entry.getRuntimeInternalName());
+                    continue;
+                }
+                visitStaticFields(type, "$static:" + type.getName());
+            }
         }
 
         private void visitRmsStores() {
@@ -714,18 +1067,21 @@ public final class MemoryEditorSession implements AutoCloseable {
                             int recordId = enumeration.nextRecordId();
                             int size = store.getRecordSize(recordId);
                             if (size <= 0) continue;
+                            int limit = Math.min(size, MAX_ARRAY_ELEMENTS);
+                            if (size > limit) {
+                                incomplete = true;
+                                hardIncomplete = true;
+                                addDiagnostic("RMS_RECORD_BUDGET:" + storeName + "." + recordId);
+                            }
                             RmsRecordLocation region = new RmsRecordLocation(
-                                    store, recordId, storeName + ".record[" + recordId + "]", size);
+                                    store, recordId, storeName + ".record[" + recordId + "]", limit);
                             if (query.getMode() == SearchMode.ALL) {
                                 addLocation(region);
                             } else {
-                                int limit = Math.min(size, MAX_ARRAY_ELEMENTS);
-                                if (size > limit) {
-                                    incomplete = true;
-                                    addDiagnostic("RMS_RECORD_BUDGET:" + storeName + "." + recordId);
-                                }
+                                byte[] data = region.readAll();
                                 for (int index = 0; index < limit && !stopped(); index++) {
-                                    Sample sample = region.readElement(index);
+                                    Sample sample = data == null || index >= data.length
+                                            ? null : Sample.from(data[index], ValueKind.BYTE);
                                     if (query.matches(sample, null)) {
                                         addLocation(new RmsByteLocation(
                                                 store, recordId, index, storeName + ".record["
@@ -760,24 +1116,65 @@ public final class MemoryEditorSession implements AutoCloseable {
             Class<?> type = object.getClass();
             if (visited.put(object, Boolean.TRUE) != null) return;
             scannedObjects++;
-            if (type.isArray()) {
-                visitArray(object, path, depth);
-                return;
+            try {
+                if (object instanceof Displayable) {
+                    visitDisplayableTargets((Displayable) object, path, depth);
+                }
+                if (object instanceof Item) {
+                    visitItemTargets((Item) object, path, depth);
+                }
+                if (type.isArray()) {
+                    visitArray(object, path, depth);
+                    return;
+                }
+                if (object instanceof Vector<?>) {
+                    visitVector((Vector<?>) object, path, depth);
+                    return;
+                }
+                if (object instanceof Hashtable<?, ?>) {
+                    visitHashtable((Hashtable<?, ?>) object, path, depth);
+                    return;
+                }
+                if (object instanceof Timer) {
+                    visitTimer((Timer) object, path, depth);
+                    return;
+                }
+                if (type.getClassLoader() != applicationLoader) return;
+                visitFields(object, path, depth);
+            } finally {
+                // A timed pass may have stopped in this object's children. Removing only the
+                // active recursion frontier lets the next pass revisit this container and resume
+                // at its unvisited siblings while retaining completed child identities.
+                if (budgetStopped) visited.remove(object);
             }
-            if (object instanceof Vector<?>) {
-                visitVector((Vector<?>) object, path, depth);
-                return;
+        }
+
+        private void visitDisplayableTargets(Displayable displayable, String path, int depth) {
+            try {
+                Object[] targets = displayable.snapshotMemoryEditorTargets();
+                for (int index = 0; index < targets.length && !stopped(); index++) {
+                    Object target = targets[index];
+                    if (target != null) {
+                        visit(target, path + ".host[" + index + "]", depth + 1);
+                    }
+                }
+            } catch (RuntimeException error) {
+                addDiagnostic("DISPLAYABLE_TARGETS_UNAVAILABLE:" + path);
             }
-            if (object instanceof Hashtable<?, ?>) {
-                visitHashtable((Hashtable<?, ?>) object, path, depth);
-                return;
+        }
+
+        private void visitItemTargets(Item item, String path, int depth) {
+            try {
+                Object[] targets = item.snapshotMemoryEditorTargets();
+                for (int index = 0; index < targets.length && !stopped(); index++) {
+                    Object target = targets[index];
+                    if (target != null) {
+                        visit(target, path + ".host[" + index + "]", depth + 1);
+                    }
+                }
+            } catch (RuntimeException error) {
+                addDiagnostic("ITEM_TARGETS_UNAVAILABLE:" + path);
             }
-            if (object instanceof Timer) {
-                visitTimer((Timer) object, path, depth);
-                return;
-            }
-            if (type.getClassLoader() != applicationLoader) return;
-            visitFields(object, path, depth);
         }
 
         private void visitArray(Object array, String path, int depth) {
@@ -786,6 +1183,7 @@ public final class MemoryEditorSession implements AutoCloseable {
             int limit = Math.min(length, MAX_ARRAY_ELEMENTS);
             if (length > limit) {
                 incomplete = true;
+                hardIncomplete = true;
                 addDiagnostic("ARRAY_BUDGET:" + path);
             }
             if (component.isPrimitive()) {
@@ -793,7 +1191,7 @@ public final class MemoryEditorSession implements AutoCloseable {
                 if (kind == null) return;
                 if (length == 0) return;
                 if (query.getMode() == SearchMode.ALL) {
-                    addLocation(new ArrayRegionLocation(array, kind, path, length));
+                    addLocation(new ArrayRegionLocation(array, kind, path, limit));
                 } else {
                     for (int index = 0; index < limit && !stopped(); index++) {
                         Sample sample = Sample.from(Array.get(array, index), kind);
@@ -823,6 +1221,7 @@ public final class MemoryEditorSession implements AutoCloseable {
             int limit = Math.min(size, MAX_ARRAY_ELEMENTS);
             if (size > limit) {
                 incomplete = true;
+                hardIncomplete = true;
                 addDiagnostic("VECTOR_BUDGET:" + path);
             }
             for (int index = 0; index < limit && !stopped(); index++) {
@@ -845,6 +1244,7 @@ public final class MemoryEditorSession implements AutoCloseable {
                     Object key = keys.nextElement();
                     if (++count > MAX_ARRAY_ELEMENTS) {
                         incomplete = true;
+                        hardIncomplete = true;
                         addDiagnostic("HASHTABLE_BUDGET:" + path);
                         break;
                     }
@@ -873,6 +1273,62 @@ public final class MemoryEditorSession implements AutoCloseable {
             }
         }
 
+        private void visitStaticFields(Class<?> rootType, String path) {
+            for (Class<?> type = rootType;
+                    type != null && type.getClassLoader() == applicationLoader && !stopped();
+                    type = type.getSuperclass()) {
+                MemoryEditorTransformMetadata.ClassEntry entry = classEntry(type);
+                if (entry == null) {
+                    addDiagnostic("STATIC_CLASS_UNBOUND:" + type.getName());
+                    continue;
+                }
+                Field[] declared;
+                try {
+                    declared = type.getDeclaredFields();
+                } catch (RuntimeException error) {
+                    addDiagnostic("STATIC_FIELDS_UNAVAILABLE:" + type.getName());
+                    continue;
+                }
+                for (Field field : declared) {
+                    if (field.isSynthetic() || !Modifier.isStatic(field.getModifiers()) || stopped()) {
+                        continue;
+                    }
+                    scannedFields++;
+                    if (scannedFields > MAX_FIELDS) {
+                        incomplete = true;
+                        hardIncomplete = true;
+                        budgetStopped = true;
+                        addDiagnostic("FIELD_BUDGET");
+                        return;
+                    }
+                    if (!boundField(entry, field)
+                            || !staticFieldsSeen.add(type.getName() + "." + field.getName())) {
+                        continue;
+                    }
+                    if (!staticAccessAllowed(entry)) {
+                        addDiagnostic("STATIC_INIT_UNKNOWN:" + type.getName());
+                        continue;
+                    }
+                    try {
+                        field.setAccessible(true);
+                        Object value = field.get(null);
+                        String fieldPath = path + "." + field.getName();
+                        ValueKind primitiveKind = ValueKind.fromPrimitive(field.getType());
+                        if (primitiveKind != null) {
+                            addLocation(new FieldLocation(null, field, primitiveKind, fieldPath));
+                        } else {
+                            Location boxedLocation = new FieldLocation(null, field,
+                                    ValueKind.fromWrapper(value), fieldPath);
+                            visitReference(value, boxedLocation, fieldPath, 0);
+                        }
+                    } catch (RuntimeException | IllegalAccessException error) {
+                        addDiagnostic("STATIC_FIELD_READ_FAILED:" + type.getName()
+                                + "." + field.getName());
+                    }
+                }
+            }
+        }
+
         private void visitFields(Object object, String path, int depth) {
             for (Class<?> type = object.getClass();
                     type != null && type.getClassLoader() == applicationLoader && !stopped();
@@ -894,6 +1350,8 @@ public final class MemoryEditorSession implements AutoCloseable {
                     scannedFields++;
                     if (scannedFields > MAX_FIELDS) {
                         incomplete = true;
+                        hardIncomplete = true;
+                        budgetStopped = true;
                         addDiagnostic("FIELD_BUDGET");
                         return;
                     }
@@ -938,8 +1396,12 @@ public final class MemoryEditorSession implements AutoCloseable {
 
         private void addLocation(Location location) {
             if (location == null || location.kind() == null) return;
+            String key = location.path() + "|" + location.kind().name();
+            if (!locationKeys.add(key)) return;
             if (locations.size() >= MAX_CANDIDATES) {
                 incomplete = true;
+                hardIncomplete = true;
+                budgetStopped = true;
                 addDiagnostic("CANDIDATE_BUDGET");
                 return;
             }
@@ -976,11 +1438,15 @@ public final class MemoryEditorSession implements AutoCloseable {
             if (closed.get() || Thread.currentThread().isInterrupted()) return true;
             if (System.nanoTime() >= deadlineNanos) {
                 incomplete = true;
+                budgetStopped = true;
+                timeBudgetHit = true;
                 addDiagnostic("TIME_BUDGET");
                 return true;
             }
             if (scannedObjects >= MAX_OBJECTS) {
                 incomplete = true;
+                hardIncomplete = true;
+                budgetStopped = true;
                 addDiagnostic("OBJECT_BUDGET");
                 return true;
             }
@@ -1014,6 +1480,10 @@ public final class MemoryEditorSession implements AutoCloseable {
         }
 
         default Sample readElement(int index) {
+            throw new IllegalStateException("not a region");
+        }
+
+        default Location scalarAt(int index) {
             throw new IllegalStateException("not a region");
         }
 
@@ -1182,6 +1652,12 @@ public final class MemoryEditorSession implements AutoCloseable {
         }
 
         @Override
+        public Location scalarAt(int index) {
+            if (index < 0 || index >= length) throw new IndexOutOfBoundsException();
+            return new ArrayLocation(array, index, kind, path + "[" + index + "]");
+        }
+
+        @Override
         public boolean writeElement(int index, Sample sample) {
             if (index < 0 || index >= length || sample == null) return false;
             Array.set(array, index, sample.boxed());
@@ -1247,12 +1723,22 @@ public final class MemoryEditorSession implements AutoCloseable {
         @Override
         public Sample readElement(int index) {
             if (index < 0 || index >= length) throw new IndexOutOfBoundsException();
+            byte[] data = readAll();
+            return data == null || index >= data.length ? null : Sample.from(data[index], kind);
+        }
+
+        private byte[] readAll() {
             try {
-                byte[] data = store.getRecord(recordId);
-                return data == null ? null : Sample.from(data[index], kind);
+                return store.getRecord(recordId);
             } catch (RecordStoreException error) {
                 throw new IllegalStateException(error);
             }
+        }
+
+        @Override
+        public Location scalarAt(int index) {
+            if (index < 0 || index >= length) throw new IndexOutOfBoundsException();
+            return new RmsByteLocation(store, recordId, index, path + "[" + index + "]");
         }
 
         @Override

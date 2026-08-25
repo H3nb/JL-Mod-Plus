@@ -2,6 +2,7 @@
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2021 Nikita Shakarun
  * Copyright 2020-2023 Yury Kharchenko
+ * Modified in 2026 for non-initializing Memory Editor class lookup.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,5 +173,17 @@ public class AppClassLoader extends DexClassLoader {
 
 	public static AppClassLoader getInstance() {
 		return instance;
+	}
+
+	/**
+	 * Returns an application class only when this loader has already defined it. The Memory Editor
+	 * uses this narrow lookup to enumerate initialized metadata classes without forcing class loading
+	 * or triggering guest static initialization.
+	 */
+	Class<?> findAlreadyLoadedApplicationClass(String internalName) {
+		if (internalName == null || internalName.isEmpty()) {
+			return null;
+		}
+		return findLoadedClass(internalName.replace('/', '.'));
 	}
 }

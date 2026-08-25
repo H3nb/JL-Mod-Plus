@@ -1,6 +1,7 @@
 /*
  * Copyright 2012 Kulikov Dmitriy
  * Copyright 2019-2026 Yury Kharchenko
+ * Modified in 2026 for host-only Memory Editor diagnostics.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -171,6 +172,11 @@ public abstract class Item {
 		if (layout != null) {
 			ViewHandler.postEvent(msgSetContextMenuListener);
 		}
+	}
+
+	/** Host-only callback snapshot used by runtime diagnostics. */
+	public Object[] snapshotMemoryEditorTargets() {
+		return new Object[]{listener};
 	}
 
 	public void setLabel(String value) {
