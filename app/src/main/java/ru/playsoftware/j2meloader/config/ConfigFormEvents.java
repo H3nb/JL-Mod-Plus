@@ -65,6 +65,11 @@ public interface ConfigFormEvents {
 	default void onApplyTemplate(@NonNull String name) {
 	}
 
+	/** Applies only the selected components from a reusable profile. */
+	default void onApplyTemplateComponents(@NonNull String name, boolean settings, boolean keyboard) {
+		onApplyTemplate(name);
+	}
+
 	default void onSaveTemplate(@NonNull String name) {
 	}
 
