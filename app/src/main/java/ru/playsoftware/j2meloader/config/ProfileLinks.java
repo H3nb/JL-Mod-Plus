@@ -53,7 +53,7 @@ final class ProfileLinks {
 
 	static void resolve(@NonNull File configDir) {
 		if (!isGameConfigDir(configDir)) return;
-		migrateLegacyOriginIfSafe(configDir);
+		migrateLegacyOrigin(configDir);
 		resolveComponent(configDir, true);
 		resolveComponent(configDir, false);
 	}
@@ -104,10 +104,12 @@ final class ProfileLinks {
 
 	static void detachSettings(@NonNull File configDir) {
 		clearLink(configDir, true);
+		clearLegacyOrigin(configDir);
 	}
 
 	static void detachKeyboard(@NonNull File configDir) {
 		clearLink(configDir, false);
+		clearLegacyOrigin(configDir);
 	}
 
 	static void renameProfile(@NonNull String oldName, @NonNull String newName) {
@@ -202,31 +204,45 @@ final class ProfileLinks {
 		}
 	}
 
-	private static void migrateLegacyOriginIfSafe(@NonNull File configDir) {
+	/**
+	 * Converts the old single profile-origin marker into explicit per-component links. The origin
+	 * marker itself is explicit provenance, so a locally modified component is still safe to link:
+	 * its baseline is the source profile hash, which preserves the local file as Modified instead of
+	 * overwriting it or pretending it is synchronized.
+	 */
+	private static void migrateLegacyOrigin(@NonNull File configDir) {
 		SharedPreferences prefs = preferences();
-		String suffix = keySuffix(configDir);
-		String legacyName = prefs.getString(LEGACY_ORIGIN_PREFIX + configDir.getAbsolutePath(), null);
+		String legacyKey = LEGACY_ORIGIN_PREFIX + configDir.getAbsolutePath();
+		String legacyName = prefs.getString(legacyKey, null);
 		if (legacyName == null) return;
+
 		Profile profile = new Profile(legacyName);
 		if (!profile.hasConfig() && profile.hasOldConfig()) {
 			ProfilesManager.loadConfig(profile.getDir(), true);
 		}
+
 		try {
-			if (prefs.getString(SETTINGS_PREFIX + suffix, null) == null
-					&& sameFile(profile.getConfig(), localFile(configDir, true))) {
-				setLink(configDir, legacyName, true);
-			}
-			if (prefs.getString(KEYBOARD_PREFIX + suffix, null) == null
-					&& sameFile(profile.getKeyLayout(), localFile(configDir, false))) {
-				setLink(configDir, legacyName, false);
-			}
+			migrateLegacyComponent(configDir, profile.getName(), profile.getConfig(), true);
+			migrateLegacyComponent(configDir, profile.getName(), profile.getKeyLayout(), false);
+			// The old marker is no longer needed once every available component has had a chance to
+			// become an explicit link. Removing it also makes an explicit detach permanent.
+			prefs.edit().remove(legacyKey).apply();
 		} catch (IOException e) {
+			// Preserve the marker so a transient I/O failure can be retried on the next load.
 			Log.w(TAG, "Unable to migrate legacy profile origin: " + legacyName, e);
 		}
 	}
 
-	private static boolean sameFile(@NonNull File first, @NonNull File second) throws IOException {
-		return first.isFile() && second.isFile() && hash(first).equals(hash(second));
+	private static void migrateLegacyComponent(@NonNull File configDir, @NonNull String profileName,
+			@NonNull File source, boolean settings) throws IOException {
+		File local = localFile(configDir, settings);
+		if (getLinkedProfile(configDir, settings) != null || !source.isFile() || !local.isFile()) {
+			return;
+		}
+		preferences().edit()
+				.putString(linkKey(configDir, settings), profileName)
+				.putString(hashKey(configDir, settings), hash(source))
+				.apply();
 	}
 
 	private static void setLink(@NonNull File configDir, @NonNull String profileName,
@@ -266,6 +282,12 @@ final class ProfileLinks {
 		preferences().edit()
 				.remove(linkKey(configDir, settings))
 				.remove(hashKey(configDir, settings))
+				.apply();
+	}
+
+	private static void clearLegacyOrigin(@NonNull File configDir) {
+		preferences().edit()
+				.remove(LEGACY_ORIGIN_PREFIX + configDir.getAbsolutePath())
 				.apply();
 	}
 
