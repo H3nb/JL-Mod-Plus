@@ -639,6 +639,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 						removableScreenPresets.add(size);
 					}
 				}
+			}
 		}
 		Collections.sort(screenPresets);
 		Collections.sort(removableScreenPresets);
