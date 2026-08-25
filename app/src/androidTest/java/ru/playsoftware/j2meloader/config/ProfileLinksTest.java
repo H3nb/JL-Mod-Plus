@@ -139,6 +139,26 @@ public class ProfileLinksTest {
 	}
 
 	@Test
+	public void snapshotUpdateTouchesOnlyComponentsLinkedToThatProfile() throws Exception {
+		writeConfig(settingsProfile, 240);
+		writeBytes(settingsProfile.getKeyLayout(), new byte[]{1});
+		writeConfig(keyboardProfile, 176);
+
+		ProfilesManager.load(keyboardProfile, configDir.getPath(), true, false);
+		ProfilesManager.load(settingsProfile, configDir.getPath(), false, true);
+		writeBytes(localKeyboard(), new byte[]{9});
+
+		ProfilesManager.saveSnapshot(settingsProfile, configDir.getPath());
+		ProfileLinks.resolve(configDir);
+
+		assertEquals(240, readConfig(settingsProfile.getDir()).screenWidth);
+		assertArrayEquals(new byte[]{9}, readBytes(settingsProfile.getKeyLayout()));
+		assertEquals(176, readConfig(configDir).screenWidth);
+		assertEquals(keyboardProfile.getName(), ProfileLinks.getSettingsProfile(configDir));
+		assertEquals(settingsProfile.getName(), ProfileLinks.getKeyboardProfile(configDir));
+	}
+
+	@Test
 	public void keyboardOnlyProfileRemainsAReusableCandidate() throws Exception {
 		writeBytes(keyboardProfile.getKeyLayout(), new byte[]{7, 8});
 
