@@ -858,6 +858,7 @@ private fun MemoryEditorDialog(
                     TextButton(
                         enabled = !scanning,
                         onClick = {
+                            session.resetSearch()
                             val query = if (queryText.isBlank()) {
                                 MemoryEditorSession.Query.all()
                             } else {
