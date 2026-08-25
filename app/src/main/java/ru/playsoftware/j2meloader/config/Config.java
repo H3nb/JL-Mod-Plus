@@ -1,6 +1,7 @@
 /*
  * Copyright 2018-2019 Nikita Shakarun
  * Copyright 2020-2026 Yury Kharchenko
+ * Modified in 2026 for the Memory Editor metadata sidecar path.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

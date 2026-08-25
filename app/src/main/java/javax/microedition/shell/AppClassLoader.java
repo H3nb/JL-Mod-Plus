@@ -2,6 +2,7 @@
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2021 Nikita Shakarun
  * Copyright 2020-2023 Yury Kharchenko
+ * Modified in 2026 for non-initializing application class lookup.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
