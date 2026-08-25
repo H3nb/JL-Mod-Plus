@@ -88,6 +88,142 @@ public class MemoryEditorSessionTest {
     }
 
     @Test
+    public void findsAndWritesPackedIntegersInLiveByteArrays() throws Exception {
+        Fixture fixture = new Fixture();
+        MemoryEditorTransformMetadata.Builder builder = new MemoryEditorTransformMetadata.Builder();
+        builder.observe(classBytes(Fixture.class), classBytes(Fixture.class), false);
+        MemoryEditorSession session = new MemoryEditorSession(
+                fixture, Fixture.class.getClassLoader(), builder.snapshot(), null);
+        try {
+            MemoryEditorSession.Candidate packed = session.scanNow(
+                            MemoryEditorSession.Query.exact("16909060"))
+                    .getCandidates().stream()
+                    .filter(candidate -> candidate.getTypeName().equals("int (BE bytes)"))
+                    .findFirst()
+                    .orElseThrow(AssertionError::new);
+            assertEquals("16909060", packed.getValue());
+            assertTrue(session.writeNow(packed.getId(), "168496141").isSuccess());
+            assertEquals(10, fixture.bytes[0]);
+            assertEquals(11, fixture.bytes[1]);
+            assertEquals(12, fixture.bytes[2]);
+            assertEquals(13, fixture.bytes[3]);
+            assertTrue(session.freeze(packed.getId()));
+            fixture.bytes[0] = 0;
+            fixture.bytes[1] = 0;
+            fixture.bytes[2] = 0;
+            fixture.bytes[3] = 0;
+            Thread.sleep(100L);
+            assertEquals(10, fixture.bytes[0]);
+            assertEquals(11, fixture.bytes[1]);
+            assertEquals(12, fixture.bytes[2]);
+            assertEquals(13, fixture.bytes[3]);
+        } finally {
+            session.close();
+        }
+    }
+
+    @Test
+    public void unknownValueRefineCreatesPackedIntegerCandidates() throws Exception {
+        Fixture fixture = new Fixture();
+        MemoryEditorTransformMetadata.Builder builder = new MemoryEditorTransformMetadata.Builder();
+        builder.observe(classBytes(Fixture.class), classBytes(Fixture.class), false);
+        MemoryEditorSession session = new MemoryEditorSession(
+                fixture, Fixture.class.getClassLoader(), builder.snapshot(), null);
+        try {
+            session.scanNow(MemoryEditorSession.Query.all());
+            fixture.bytes[0] = 0;
+            fixture.bytes[1] = 0;
+            fixture.bytes[2] = 3;
+            fixture.bytes[3] = (byte) 0xe8;
+            MemoryEditorSession.ScanResult changed = session.scanNow(
+                    MemoryEditorSession.Query.changed());
+            assertTrue(changed.getCandidates().stream().anyMatch(candidate ->
+                    candidate.getTypeName().equals("int (BE bytes)")
+                            && "1000".equals(candidate.getValue())));
+        } finally {
+            session.close();
+        }
+    }
+
+    @Test
+    public void findsUnsignedByteValuesUsedByJavaMeGames() throws Exception {
+        Fixture fixture = new Fixture();
+        fixture.bytes[1] = (byte) 200;
+        MemoryEditorTransformMetadata.Builder builder = new MemoryEditorTransformMetadata.Builder();
+        builder.observe(classBytes(Fixture.class), classBytes(Fixture.class), false);
+        MemoryEditorSession session = new MemoryEditorSession(
+                fixture, Fixture.class.getClassLoader(), builder.snapshot(), null);
+        try {
+            MemoryEditorSession.Candidate unsigned = session.scanNow(
+                            MemoryEditorSession.Query.exact("200"))
+                    .getCandidates().stream()
+                    .filter(candidate -> candidate.getTypeName().equals("uint8 (unsigned byte)"))
+                    .findFirst()
+                    .orElseThrow(AssertionError::new);
+            assertTrue(session.writeNow(unsigned.getId(), "250").isSuccess());
+            assertEquals(250, fixture.bytes[1] & 0xff);
+        } finally {
+            session.close();
+        }
+    }
+
+    @Test
+    public void findsUnsignedValuesInShortArrays() throws Exception {
+        UnsignedArrayFixture fixture = new UnsignedArrayFixture();
+        MemoryEditorTransformMetadata.Builder builder = new MemoryEditorTransformMetadata.Builder();
+        builder.observe(
+                classBytes(UnsignedArrayFixture.class),
+                classBytes(UnsignedArrayFixture.class),
+                false);
+        MemoryEditorSession session = new MemoryEditorSession(
+                fixture,
+                UnsignedArrayFixture.class.getClassLoader(),
+                builder.snapshot(),
+                null);
+        try {
+            MemoryEditorSession.Candidate unsigned = session.scanNow(
+                            MemoryEditorSession.Query.exact("50000"))
+                    .getCandidates().stream()
+                    .filter(candidate -> candidate.getKind() == MemoryEditorSession.ValueKind.UINT16)
+                    .findFirst()
+                    .orElseThrow(AssertionError::new);
+            assertTrue(session.writeNow(unsigned.getId(), "60000").isSuccess());
+            assertEquals(60000, fixture.values[0] & 0xffff);
+        } finally {
+            session.close();
+        }
+    }
+
+    @Test
+    public void undoRestoresPreviousRefineCandidates() throws Exception {
+        Fixture fixture = new Fixture();
+        MemoryEditorTransformMetadata.Builder builder = new MemoryEditorTransformMetadata.Builder();
+        builder.observe(classBytes(Fixture.class), classBytes(Fixture.class), false);
+        MemoryEditorSession session = new MemoryEditorSession(
+                fixture, Fixture.class.getClassLoader(), builder.snapshot(), null);
+        try {
+            MemoryEditorSession.ScanResult initial = session.scanNow(MemoryEditorSession.Query.all());
+            MemoryEditorSession.Candidate initialValue = initial.getCandidates().stream()
+                    .filter(candidate -> candidate.getPath().endsWith(".value"))
+                    .findFirst()
+                    .orElseThrow(AssertionError::new);
+            fixture.value = 2;
+            session.scanNow(MemoryEditorSession.Query.changed());
+            assertTrue(session.hasPreviousSearchStep());
+            MemoryEditorSession.ScanResult restored = session.undoSearch();
+            assertEquals(initial.getCandidates().size(), restored.getCandidates().size());
+            assertEquals(MemoryEditorSession.SearchMode.ALL, session.getLastQuery().getMode());
+            assertEquals("1", restored.getCandidates().stream()
+                    .filter(candidate -> candidate.getId() == initialValue.getId())
+                    .findFirst()
+                    .orElseThrow(AssertionError::new)
+                    .getValue());
+        } finally {
+            session.close();
+        }
+    }
+
+    @Test
     public void freezeReappliesDesiredValueAfterRuntimeMutation() throws Exception {
         Fixture fixture = new Fixture();
         MemoryEditorTransformMetadata.Builder builder = new MemoryEditorTransformMetadata.Builder();
@@ -129,7 +265,7 @@ public class MemoryEditorSessionTest {
     }
 
     @Test
-    public void staticFieldRequiresObservedClinitEvidence() throws Exception {
+    public void liveInstanceIsSafeStaticInitializationEvidence() throws Exception {
         Fixture fixture = new Fixture();
         MemoryEditorTransformMetadata.Builder builder = new MemoryEditorTransformMetadata.Builder();
         int classId = builder.observe(classBytes(Fixture.class), classBytes(Fixture.class), false);
@@ -141,8 +277,8 @@ public class MemoryEditorSessionTest {
                     fixture, Fixture.class.getClassLoader(), metadata, ledger);
             try {
                 MemoryEditorSession.ScanResult result = withoutEvidence.scanNow(MemoryEditorSession.Query.all());
-                assertTrue(result.getDiagnostics().stream().anyMatch(value ->
-                        value.startsWith("STATIC_INIT_UNKNOWN:")));
+                assertTrue(result.getCandidates().stream().anyMatch(candidate ->
+                        candidate.getPath().contains("staticValue")));
             } finally {
                 withoutEvidence.close();
             }
@@ -243,6 +379,22 @@ public class MemoryEditorSessionTest {
 
     public static final class HiddenStatic {
         static int hiddenValue = 23;
+    }
+
+    public static final class UnsignedArrayFixture extends MIDlet {
+        final short[] values = {(short) 50000};
+
+        @Override
+        public void startApp() throws MIDletStateChangeException {
+        }
+
+        @Override
+        public void pauseApp() {
+        }
+
+        @Override
+        public void destroyApp(boolean unconditional) throws MIDletStateChangeException {
+        }
     }
 
     public static final class HostFixture extends MIDlet {

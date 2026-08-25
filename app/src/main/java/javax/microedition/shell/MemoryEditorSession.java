@@ -66,9 +66,18 @@ public final class MemoryEditorSession implements AutoCloseable {
     private static final int MAX_ARRAY_ELEMENTS = 250_000;
     private static final int MAX_DEPTH = 32;
     private static final int MAX_DISCOVERY_PASSES = 4;
+    private static final int MAX_SEARCH_HISTORY = 12;
     private static final int MAX_REGION_BASELINE_BYTES = 8 * 1024 * 1024;
     private static final long FREEZE_PERIOD_MILLIS = 16L;
     private static final long MAX_SCAN_NANOS = TimeUnit.SECONDS.toNanos(2);
+    private static final ValueKind[] PACKED_INTEGER_KINDS = {
+            ValueKind.UINT8,
+            ValueKind.SHORT,
+            ValueKind.UINT16,
+            ValueKind.INT,
+            ValueKind.UINT32,
+            ValueKind.LONG
+    };
 
     private final ScheduledExecutorService worker;
     private final ScheduledExecutorService freezeWorker;
@@ -88,6 +97,7 @@ public final class MemoryEditorSession implements AutoCloseable {
     private volatile Query lastQuery;
     private volatile ScheduledFuture<?> freezeTask;
     private int regionBaselineBytes;
+    private final List<SearchState> searchHistory = new ArrayList<>();
 
     interface LoadedClassResolver {
         Class<?> findAlreadyLoaded(String internalName);
@@ -148,7 +158,7 @@ public final class MemoryEditorSession implements AutoCloseable {
     }
 
     public enum ValueKind {
-        BOOLEAN, CHAR, BYTE, SHORT, INT, LONG, FLOAT, DOUBLE;
+        BOOLEAN, CHAR, BYTE, UINT8, SHORT, UINT16, INT, UINT32, LONG, FLOAT, DOUBLE;
 
         static ValueKind fromPrimitive(Class<?> type) {
             if (type == boolean.class) return BOOLEAN;
@@ -182,11 +192,14 @@ public final class MemoryEditorSession implements AutoCloseable {
             switch (this) {
                 case BOOLEAN:
                 case BYTE:
+                case UINT8:
                     return 1;
                 case CHAR:
                 case SHORT:
+                case UINT16:
                     return 2;
                 case INT:
+                case UINT32:
                 case FLOAT:
                     return 4;
                 case LONG:
@@ -414,6 +427,18 @@ public final class MemoryEditorSession implements AutoCloseable {
             if (index < 0 || index >= raw.length || expectedKind != kind) return null;
             return new Sample(kind, raw[index]);
         }
+
+        private Sample packedSampleAt(int offset, ValueKind packedKind, boolean littleEndian) {
+            if (kind != ValueKind.BYTE) return null;
+            int width = packedKind.byteWidth();
+            if (offset < 0 || offset + width > raw.length) return null;
+            long value = 0L;
+            for (int index = 0; index < width; index++) {
+                int source = littleEndian ? offset + width - 1 - index : offset + index;
+                value = (value << 8) | (raw[source] & 0xffL);
+            }
+            return packedIntegralSample(packedKind, value);
+        }
     }
 
     private static final class FrozenTarget {
@@ -425,6 +450,16 @@ public final class MemoryEditorSession implements AutoCloseable {
         private FrozenTarget(Candidate candidate, Sample desired) {
             this.candidate = candidate;
             this.desired = desired;
+        }
+    }
+
+    private static final class SearchState {
+        private final Query query;
+        private final ScanResult result;
+
+        private SearchState(Query query, ScanResult result) {
+            this.query = query;
+            this.result = result;
         }
     }
 
@@ -442,6 +477,11 @@ public final class MemoryEditorSession implements AutoCloseable {
             this.regionBaseline = regionBaseline;
         }
 
+        private Candidate(Candidate source) {
+            this(source.id, source.location, source.lastSample, source.regionBaseline);
+            this.stale = source.stale;
+        }
+
         public long getId() {
             return id;
         }
@@ -455,7 +495,7 @@ public final class MemoryEditorSession implements AutoCloseable {
         }
 
         public String getTypeName() {
-            return location.kind().displayName();
+            return location.typeName();
         }
 
         public String getValue() {
@@ -576,17 +616,41 @@ public final class MemoryEditorSession implements AutoCloseable {
                     candidate.stale = false;
                     candidate.lastSample = current;
                     if (query.matches(current, before)) result.add(candidate);
+                    ValueKind unsignedKind = unsignedKind(candidate.location.kind());
+                    if (unsignedKind != null) {
+                        Location unsignedLocation = candidate.location.withKind(unsignedKind);
+                        if (unsignedLocation != null && unsignedLocation.kind() == unsignedKind) {
+                            Sample unsignedCurrent = unsignedLocation.read();
+                            Sample unsignedBefore = unsignedSample(before);
+                            if (query.matches(unsignedCurrent, unsignedBefore)) {
+                                result.add(new Candidate(
+                                        nextCandidateId.getAndIncrement(),
+                                        unsignedLocation,
+                                        unsignedCurrent,
+                                        null));
+                            }
+                        }
+                    }
+                    if (result.size() >= MAX_CANDIDATES) {
+                        diagnostics.add("CANDIDATE_BUDGET");
+                        break;
+                    }
                 } catch (RuntimeException error) {
                     candidate.stale = true;
                 }
             }
             objects = previous.size();
             incomplete = hasDiagnosticPrefix(
-                    diagnostics, "REGION_UNBASELINED:", "REGION_TIME_BUDGET:");
+                    diagnostics,
+                    "REGION_UNBASELINED:",
+                    "REGION_TIME_BUDGET:",
+                    "PACKED_REGION_TIME_BUDGET:",
+                    "CANDIDATE_BUDGET");
         }
         scanGeneration.incrementAndGet();
         ScanResult scanResult = new ScanResult(result, incomplete, false, objects, fields, diagnostics);
         candidates = scanResult.getCandidates();
+        retainFrozenCandidates(candidates);
         rememberScan(query, scanResult);
         return scanResult;
     }
@@ -609,11 +673,30 @@ public final class MemoryEditorSession implements AutoCloseable {
         return lastScanResult != null && !candidates.isEmpty();
     }
 
+    /** Returns whether the last refine can be rolled back without rescanning the game. */
+    public synchronized boolean hasPreviousSearchStep() {
+        return searchHistory.size() > 1;
+    }
+
+    /** Restores the candidate set from the previous search/refine step. */
+    public synchronized ScanResult undoSearch() {
+        if (searchHistory.size() <= 1) return lastScanResult;
+        searchHistory.remove(searchHistory.size() - 1);
+        SearchState previous = searchHistory.get(searchHistory.size() - 1);
+        clearFrozenTargets();
+        candidates = previous.result.getCandidates();
+        lastQuery = previous.query;
+        lastScanResult = previous.result;
+        scanGeneration.incrementAndGet();
+        return lastScanResult;
+    }
+
     /** Starts a new search epoch without tearing down the live session or its roots. */
     public synchronized void resetSearch() {
         candidates = Collections.emptyList();
         lastScanResult = null;
         lastQuery = null;
+        searchHistory.clear();
         clearFrozenTargets();
         regionBaselineBytes = 0;
         scanGeneration.incrementAndGet();
@@ -824,6 +907,29 @@ public final class MemoryEditorSession implements AutoCloseable {
     private void rememberScan(Query query, ScanResult result) {
         lastQuery = query;
         lastScanResult = result;
+        searchHistory.add(new SearchState(query, snapshotResult(result)));
+        if (searchHistory.size() > MAX_SEARCH_HISTORY) searchHistory.remove(0);
+    }
+
+    private ScanResult snapshotResult(ScanResult result) {
+        List<Candidate> snapshots = new ArrayList<>(result.getCandidates().size());
+        for (Candidate candidate : result.getCandidates()) snapshots.add(new Candidate(candidate));
+        return new ScanResult(
+                snapshots,
+                result.isCoverageIncomplete(),
+                result.isCancelled(),
+                result.getScannedObjects(),
+                result.getScannedFields(),
+                result.getDiagnostics());
+    }
+
+    private void retainFrozenCandidates(List<Candidate> retained) {
+        if (frozen.isEmpty()) return;
+        Set<Long> ids = new HashSet<>();
+        for (Candidate candidate : retained) ids.add(candidate.id);
+        for (Long candidateId : new ArrayList<>(frozen.keySet())) {
+            if (!ids.contains(candidateId)) unfreeze(candidateId);
+        }
     }
 
     private static boolean hasDiagnosticPrefix(List<String> diagnostics, String... prefixes) {
@@ -875,12 +981,82 @@ public final class MemoryEditorSession implements AutoCloseable {
                             location.scalarAt(index),
                             current,
                             null));
+                    if (result.size() >= MAX_CANDIDATES) {
+                        diagnostics.add("CANDIDATE_BUDGET");
+                        return result;
+                    }
+                }
+                if (location.kind() != ValueKind.BYTE) {
+                    ValueKind unsignedKind = unsignedKind(location.kind());
+                    if (unsignedKind != null) {
+                        Location scalar = location.scalarAt(index).withKind(unsignedKind);
+                        if (scalar != null && scalar.kind() == unsignedKind) {
+                            Sample unsignedCurrent = scalar.read();
+                            Sample unsignedPrevious = unsignedSample(previous);
+                            if (query.matches(unsignedCurrent, unsignedPrevious)) {
+                                result.add(new Candidate(
+                                        nextCandidateId.getAndIncrement(),
+                                        scalar,
+                                        unsignedCurrent,
+                                        null));
+                            }
+                        }
+                    }
+                }
+                if (result.size() >= MAX_CANDIDATES) {
+                    diagnostics.add("CANDIDATE_BUDGET");
+                    return result;
                 }
             } catch (RuntimeException error) {
                 diagnostics.add("REGION_READ_SKIPPED:" + location.path() + "[" + index + "]");
             }
         }
+        if (location.kind() == ValueKind.BYTE && baseline != null
+                && result.size() < MAX_CANDIDATES) {
+            byte[] currentBytes = location.readBytes();
+            if (currentBytes != null) {
+                addPackedRefineCandidates(
+                        location, baseline, currentBytes, query, result, diagnostics, deadlineNanos);
+            }
+        }
         return result;
+    }
+
+    private void addPackedRefineCandidates(
+            Location region,
+            RegionBaseline baseline,
+            byte[] currentBytes,
+            Query query,
+            List<Candidate> result,
+            List<String> diagnostics,
+            long deadlineNanos) {
+        int limit = Math.min(region.regionLength(), currentBytes.length);
+        for (ValueKind kind : PACKED_INTEGER_KINDS) {
+            int width = kind.byteWidth();
+            int byteOrders = width == 1 ? 1 : 2;
+            for (int byteOrder = 0; byteOrder < byteOrders; byteOrder++) {
+                boolean littleEndian = byteOrder == 1;
+                for (int offset = 0; offset + width <= limit; offset++) {
+                    if (closed.get() || Thread.currentThread().isInterrupted()) return;
+                    if (System.nanoTime() >= deadlineNanos) {
+                        diagnostics.add("PACKED_REGION_TIME_BUDGET:" + region.path());
+                        return;
+                    }
+                    Sample current = packedSample(currentBytes, offset, kind, littleEndian);
+                    Sample previous = baseline.packedSampleAt(offset, kind, littleEndian);
+                    if (!query.matches(current, previous)) continue;
+                    Location scalar = region.packedScalarAt(offset, kind, littleEndian);
+                    if (scalar != null) {
+                        result.add(new Candidate(
+                                nextCandidateId.getAndIncrement(), scalar, current, null));
+                    }
+                    if (result.size() >= MAX_CANDIDATES) {
+                        diagnostics.add("CANDIDATE_BUDGET");
+                        return;
+                    }
+                }
+            }
+        }
     }
 
     private RegionBaseline captureRegionBaseline(Location location) {
@@ -925,6 +1101,7 @@ public final class MemoryEditorSession implements AutoCloseable {
         candidates = Collections.emptyList();
         lastScanResult = null;
         lastQuery = null;
+        searchHistory.clear();
         rootMidlet = null;
         applicationLoader = null;
         probeLedger = null;
@@ -1088,6 +1265,9 @@ public final class MemoryEditorSession implements AutoCloseable {
                                                         + recordId + "][" + index + "]"));
                                     }
                                 }
+                                addPackedRmsLocations(
+                                        store, recordId, storeName + ".record[" + recordId + "]",
+                                        data, limit);
                             }
                         }
                     } catch (RecordStoreException | RuntimeException error) {
@@ -1103,6 +1283,26 @@ public final class MemoryEditorSession implements AutoCloseable {
                 }
             } catch (RuntimeException error) {
                 addDiagnostic("RMS_ROOT_UNAVAILABLE");
+            }
+        }
+
+        private void addPackedRmsLocations(
+                RecordStoreImpl store, int recordId, String path, byte[] data, int limit) {
+            if (data == null) return;
+            int byteLimit = Math.min(limit, data.length);
+            for (ValueKind kind : PACKED_INTEGER_KINDS) {
+                int width = kind.byteWidth();
+                int byteOrders = width == 1 ? 1 : 2;
+                for (int byteOrder = 0; byteOrder < byteOrders; byteOrder++) {
+                    boolean littleEndian = byteOrder == 1;
+                    for (int offset = 0; offset + width <= byteLimit && !stopped(); offset++) {
+                        Sample sample = packedSample(data, offset, kind, littleEndian);
+                        if (query.matches(sample, null)) {
+                            addLocation(new PackedRmsLocation(
+                                    store, recordId, offset, kind, littleEndian, path));
+                        }
+                    }
+                }
             }
         }
 
@@ -1198,6 +1398,17 @@ public final class MemoryEditorSession implements AutoCloseable {
                         if (query.matches(sample, null)) {
                             addLocation(new ArrayLocation(array, index, kind, path + "[" + index + "]"));
                         }
+                        ValueKind unsignedKind = unsignedKind(kind);
+                        if (unsignedKind != null) {
+                            Sample unsigned = Sample.from(Array.get(array, index), unsignedKind);
+                            if (query.matches(unsigned, null)) {
+                                addLocation(new ArrayLocation(
+                                        array, index, unsignedKind, path + "[" + index + "]"));
+                            }
+                        }
+                    }
+                    if (array instanceof byte[]) {
+                        addPackedArrayLocations((byte[]) array, path, limit);
                     }
                 }
                 return;
@@ -1207,6 +1418,24 @@ public final class MemoryEditorSession implements AutoCloseable {
                 visitReference(value, new ArrayLocation(array, index,
                         ValueKind.fromWrapper(value), path + "[" + index + "]"),
                         path + "[" + index + "]", depth + 1);
+            }
+        }
+
+        private void addPackedArrayLocations(byte[] array, String path, int limit) {
+            int byteLimit = Math.min(limit, array.length);
+            for (ValueKind kind : PACKED_INTEGER_KINDS) {
+                int width = kind.byteWidth();
+                int byteOrders = width == 1 ? 1 : 2;
+                for (int byteOrder = 0; byteOrder < byteOrders; byteOrder++) {
+                    boolean littleEndian = byteOrder == 1;
+                    for (int offset = 0; offset + width <= byteLimit && !stopped(); offset++) {
+                        Sample sample = packedSample(array, offset, kind, littleEndian);
+                        if (query.matches(sample, null)) {
+                            addLocation(new PackedByteArrayLocation(
+                                    array, offset, kind, littleEndian, path));
+                        }
+                    }
+                }
             }
         }
 
@@ -1305,7 +1534,7 @@ public final class MemoryEditorSession implements AutoCloseable {
                             || !staticFieldsSeen.add(type.getName() + "." + field.getName())) {
                         continue;
                     }
-                    if (!staticAccessAllowed(entry)) {
+                    if (!staticAccessAllowed(entry, false)) {
                         addDiagnostic("STATIC_INIT_UNKNOWN:" + type.getName());
                         continue;
                     }
@@ -1315,7 +1544,8 @@ public final class MemoryEditorSession implements AutoCloseable {
                         String fieldPath = path + "." + field.getName();
                         ValueKind primitiveKind = ValueKind.fromPrimitive(field.getType());
                         if (primitiveKind != null) {
-                            addLocation(new FieldLocation(null, field, primitiveKind, fieldPath));
+                            addScalarLocation(
+                                    new FieldLocation(null, field, primitiveKind, fieldPath));
                         } else {
                             Location boxedLocation = new FieldLocation(null, field,
                                     ValueKind.fromWrapper(value), fieldPath);
@@ -1360,7 +1590,9 @@ public final class MemoryEditorSession implements AutoCloseable {
                     if (isStatic && !staticFieldsSeen.add(type.getName() + "." + field.getName())) {
                         continue;
                     }
-                    if (isStatic && !staticAccessAllowed(entry)) {
+                    // A live instance proves that its class hierarchy completed initialization;
+                    // reading the corresponding static fields cannot trigger guest <clinit>.
+                    if (isStatic && !staticAccessAllowed(entry, true)) {
                         addDiagnostic("STATIC_INIT_UNKNOWN:" + type.getName());
                         continue;
                     }
@@ -1371,7 +1603,8 @@ public final class MemoryEditorSession implements AutoCloseable {
                         String fieldPath = path + "." + field.getName();
                         ValueKind primitiveKind = ValueKind.fromPrimitive(field.getType());
                         if (primitiveKind != null) {
-                            addLocation(new FieldLocation(owner, field, primitiveKind, fieldPath));
+                            addScalarLocation(
+                                    new FieldLocation(owner, field, primitiveKind, fieldPath));
                         } else {
                             Location boxedLocation = new FieldLocation(owner, field,
                                     ValueKind.fromWrapper(value), fieldPath);
@@ -1388,7 +1621,7 @@ public final class MemoryEditorSession implements AutoCloseable {
             ValueKind wrapperKind = ValueKind.fromWrapper(value);
             if (wrapperKind != null && location != null) {
                 location = location.withKind(wrapperKind);
-                addLocation(location);
+                addScalarLocation(location);
                 return;
             }
             if (value != null) visit(value, path, depth);
@@ -1408,7 +1641,18 @@ public final class MemoryEditorSession implements AutoCloseable {
             locations.add(location);
         }
 
-        private boolean staticAccessAllowed(MemoryEditorTransformMetadata.ClassEntry entry) {
+        private void addScalarLocation(Location location) {
+            addLocation(location);
+            if (query.getMode() == SearchMode.ALL) return;
+            ValueKind unsignedKind = unsignedKind(location.kind());
+            if (unsignedKind == null) return;
+            Location unsigned = location.withKind(unsignedKind);
+            if (unsigned != null && unsigned.kind() == unsignedKind) addLocation(unsigned);
+        }
+
+        private boolean staticAccessAllowed(
+                MemoryEditorTransformMetadata.ClassEntry entry, boolean initializedByInstance) {
+            if (initializedByInstance) return true;
             MemoryProbe.Ledger ledger = probeLedger;
             return ledger != null && entry.hasSourceClinit()
                     && ledger.wasObserved(entry.getSourceClassId());
@@ -1463,6 +1707,10 @@ public final class MemoryEditorSession implements AutoCloseable {
 
         ValueKind kind();
 
+        default String typeName() {
+            return kind().displayName();
+        }
+
         boolean readOnly();
 
         Sample read();
@@ -1489,6 +1737,15 @@ public final class MemoryEditorSession implements AutoCloseable {
 
         default boolean writeElement(int index, Sample sample) {
             return false;
+        }
+
+        default byte[] readBytes() {
+            return null;
+        }
+
+        default Location packedScalarAt(
+                int offset, ValueKind packedKind, boolean littleEndian) {
+            return null;
         }
     }
 
@@ -1663,6 +1920,23 @@ public final class MemoryEditorSession implements AutoCloseable {
             Array.set(array, index, sample.boxed());
             return true;
         }
+
+        @Override
+        public byte[] readBytes() {
+            if (kind != ValueKind.BYTE || !(array instanceof byte[])) return null;
+            synchronized (array) {
+                return ((byte[]) array).clone();
+            }
+        }
+
+        @Override
+        public Location packedScalarAt(
+                int offset, ValueKind packedKind, boolean littleEndian) {
+            if (!(array instanceof byte[]) || offset < 0
+                    || offset + packedKind.byteWidth() > length) return null;
+            return new PackedByteArrayLocation(
+                    (byte[]) array, offset, packedKind, littleEndian, path);
+        }
     }
 
     /** Compact RMS record region backed by RecordStore's normal semantic API. */
@@ -1733,6 +2007,19 @@ public final class MemoryEditorSession implements AutoCloseable {
             } catch (RecordStoreException error) {
                 throw new IllegalStateException(error);
             }
+        }
+
+        @Override
+        public byte[] readBytes() {
+            return readAll();
+        }
+
+        @Override
+        public Location packedScalarAt(
+                int offset, ValueKind packedKind, boolean littleEndian) {
+            if (offset < 0 || offset + packedKind.byteWidth() > length) return null;
+            return new PackedRmsLocation(
+                    store, recordId, offset, packedKind, littleEndian, path);
         }
 
         @Override
@@ -1811,6 +2098,141 @@ public final class MemoryEditorSession implements AutoCloseable {
         @Override
         public Location withKind(ValueKind nextKind) {
             return this;
+        }
+    }
+
+    /** A signed multi-byte integer interpreted directly from a live byte array. */
+    private static final class PackedByteArrayLocation implements Location {
+        private final byte[] array;
+        private final int offset;
+        private final ValueKind kind;
+        private final boolean littleEndian;
+        private final String path;
+
+        private PackedByteArrayLocation(
+                byte[] array, int offset, ValueKind kind, boolean littleEndian, String path) {
+            this.array = array;
+            this.offset = offset;
+            this.kind = kind;
+            this.littleEndian = littleEndian;
+            this.path = path + "@" + offset + (littleEndian ? ":le" : ":be");
+        }
+
+        @Override
+        public String path() {
+            return path;
+        }
+
+        @Override
+        public ValueKind kind() {
+            return kind;
+        }
+
+        @Override
+        public String typeName() {
+            if (kind == ValueKind.UINT8) return "uint8 (unsigned byte)";
+            return kind.displayName() + (littleEndian ? " (LE bytes)" : " (BE bytes)");
+        }
+
+        @Override
+        public boolean readOnly() {
+            return false;
+        }
+
+        @Override
+        public Sample read() {
+            synchronized (array) {
+                return packedSample(array, offset, kind, littleEndian);
+            }
+        }
+
+        @Override
+        public boolean write(Sample sample) {
+            if (sample == null || sample.kind != kind) return false;
+            synchronized (array) {
+                writePacked(array, offset, sample, littleEndian);
+            }
+            return true;
+        }
+
+        @Override
+        public Location withKind(ValueKind nextKind) {
+            return nextKind == kind ? this : null;
+        }
+    }
+
+    /** A signed multi-byte integer interpreted through the normal RMS record API. */
+    private static final class PackedRmsLocation implements Location {
+        private final RecordStoreImpl store;
+        private final int recordId;
+        private final int offset;
+        private final ValueKind kind;
+        private final boolean littleEndian;
+        private final String path;
+
+        private PackedRmsLocation(
+                RecordStoreImpl store,
+                int recordId,
+                int offset,
+                ValueKind kind,
+                boolean littleEndian,
+                String path) {
+            this.store = store;
+            this.recordId = recordId;
+            this.offset = offset;
+            this.kind = kind;
+            this.littleEndian = littleEndian;
+            this.path = path + "@" + offset + (littleEndian ? ":le" : ":be");
+        }
+
+        @Override
+        public String path() {
+            return path;
+        }
+
+        @Override
+        public ValueKind kind() {
+            return kind;
+        }
+
+        @Override
+        public String typeName() {
+            if (kind == ValueKind.UINT8) return "uint8 (unsigned RMS byte)";
+            return kind.displayName() + (littleEndian ? " (LE RMS)" : " (BE RMS)");
+        }
+
+        @Override
+        public boolean readOnly() {
+            return false;
+        }
+
+        @Override
+        public Sample read() {
+            try {
+                byte[] data = store.getRecord(recordId);
+                return data == null ? null : packedSample(data, offset, kind, littleEndian);
+            } catch (RecordStoreException error) {
+                throw new IllegalStateException(error);
+            }
+        }
+
+        @Override
+        public boolean write(Sample sample) {
+            if (sample == null || sample.kind != kind) return false;
+            try {
+                byte[] data = store.getRecord(recordId);
+                if (data == null || offset + kind.byteWidth() > data.length) return false;
+                writePacked(data, offset, sample, littleEndian);
+                store.setRecord(recordId, data, 0, data.length);
+                return true;
+            } catch (RecordStoreException error) {
+                throw new IllegalStateException(error);
+            }
+        }
+
+        @Override
+        public Location withKind(ValueKind nextKind) {
+            return nextKind == kind ? this : null;
         }
     }
 
@@ -1906,6 +2328,54 @@ public final class MemoryEditorSession implements AutoCloseable {
         }
     }
 
+    private static Sample packedSample(
+            byte[] data, int offset, ValueKind kind, boolean littleEndian) {
+        if (data == null || kind == null) return null;
+        int width = kind.byteWidth();
+        if ((kind != ValueKind.UINT8
+                && kind != ValueKind.SHORT
+                && kind != ValueKind.UINT16
+                && kind != ValueKind.INT
+                && kind != ValueKind.UINT32
+                && kind != ValueKind.LONG)
+                || offset < 0 || offset + width > data.length) return null;
+        long value = 0L;
+        for (int index = 0; index < width; index++) {
+            int source = littleEndian ? offset + width - 1 - index : offset + index;
+            value = (value << 8) | (data[source] & 0xffL);
+        }
+        return packedIntegralSample(kind, value);
+    }
+
+    private static Sample packedIntegralSample(ValueKind kind, long value) {
+        switch (kind) {
+            case UINT8:
+                return new Sample(kind, value & 0xffL);
+            case SHORT:
+                return new Sample(kind, (short) value);
+            case UINT16:
+                return new Sample(kind, value & 0xffffL);
+            case INT:
+                return new Sample(kind, (int) value);
+            case UINT32:
+                return new Sample(kind, value & 0xffffffffL);
+            case LONG:
+                return new Sample(kind, value);
+            default:
+                return null;
+        }
+    }
+
+    private static void writePacked(
+            byte[] data, int offset, Sample sample, boolean littleEndian) {
+        int width = sample.kind.byteWidth();
+        if (offset < 0 || offset + width > data.length) throw new IndexOutOfBoundsException();
+        for (int index = 0; index < width; index++) {
+            int shift = littleEndian ? index * 8 : (width - 1 - index) * 8;
+            data[offset + index] = (byte) (sample.raw >>> shift);
+        }
+    }
+
     private static final class Sample {
         private final ValueKind kind;
         private final long raw;
@@ -1924,10 +2394,16 @@ public final class MemoryEditorSession implements AutoCloseable {
                     return new Sample(kind, ((Character) value).charValue());
                 case BYTE:
                     return new Sample(kind, ((Number) value).byteValue());
+                case UINT8:
+                    return new Sample(kind, ((Number) value).byteValue() & 0xffL);
                 case SHORT:
                     return new Sample(kind, ((Number) value).shortValue());
+                case UINT16:
+                    return new Sample(kind, ((Number) value).shortValue() & 0xffffL);
                 case INT:
                     return new Sample(kind, ((Number) value).intValue());
+                case UINT32:
+                    return new Sample(kind, ((Number) value).intValue() & 0xffffffffL);
                 case LONG:
                     return new Sample(kind, ((Number) value).longValue());
                 case FLOAT:
@@ -1957,10 +2433,16 @@ public final class MemoryEditorSession implements AutoCloseable {
                             Character.MIN_VALUE, Character.MAX_VALUE));
                 case BYTE:
                     return new Sample(kind, checkedIntegral(Long.decode(value), Byte.MIN_VALUE, Byte.MAX_VALUE));
+                case UINT8:
+                    return new Sample(kind, checkedIntegral(Long.decode(value), 0L, 0xffL));
                 case SHORT:
                     return new Sample(kind, checkedIntegral(Long.decode(value), Short.MIN_VALUE, Short.MAX_VALUE));
+                case UINT16:
+                    return new Sample(kind, checkedIntegral(Long.decode(value), 0L, 0xffffL));
                 case INT:
                     return new Sample(kind, checkedIntegral(Long.decode(value), Integer.MIN_VALUE, Integer.MAX_VALUE));
+                case UINT32:
+                    return new Sample(kind, checkedIntegral(Long.decode(value), 0L, 0xffffffffL));
                 case LONG:
                     return new Sample(kind, Long.decode(value));
                 case FLOAT:
@@ -1994,8 +2476,11 @@ public final class MemoryEditorSession implements AutoCloseable {
                 case BOOLEAN: return raw != 0L;
                 case CHAR: return Character.valueOf((char) raw);
                 case BYTE: return Byte.valueOf((byte) raw);
+                case UINT8: return Byte.valueOf((byte) raw);
                 case SHORT: return Short.valueOf((short) raw);
+                case UINT16: return Short.valueOf((short) raw);
                 case INT: return Integer.valueOf((int) raw);
+                case UINT32: return Integer.valueOf((int) raw);
                 case LONG: return Long.valueOf(raw);
                 case FLOAT: return Float.valueOf(Float.intBitsToFloat((int) raw));
                 case DOUBLE: return Double.valueOf(Double.longBitsToDouble(raw));
@@ -2038,6 +2523,29 @@ public final class MemoryEditorSession implements AutoCloseable {
 
     private static ValueKind primitiveKind(Class<?> type) {
         return Sample.kindOf(type);
+    }
+
+    private static ValueKind unsignedKind(ValueKind kind) {
+        if (kind == ValueKind.BYTE) return ValueKind.UINT8;
+        if (kind == ValueKind.SHORT) return ValueKind.UINT16;
+        if (kind == ValueKind.INT) return ValueKind.UINT32;
+        return null;
+    }
+
+    private static Sample unsignedSample(Sample sample) {
+        if (sample == null) return null;
+        ValueKind kind = unsignedKind(sample.kind);
+        if (kind == null) return null;
+        switch (kind) {
+            case UINT8:
+                return new Sample(kind, sample.raw & 0xffL);
+            case UINT16:
+                return new Sample(kind, sample.raw & 0xffffL);
+            case UINT32:
+                return new Sample(kind, sample.raw & 0xffffffffL);
+            default:
+                return null;
+        }
     }
 
     private static String internalName(Class<?> type) {
