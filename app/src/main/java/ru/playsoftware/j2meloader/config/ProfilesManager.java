@@ -1,6 +1,8 @@
 /*
  * Copyright 2018 Nikita Shakarun
  *
+ * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,7 +26,6 @@ import com.google.gson.JsonElement;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -70,27 +71,32 @@ public class ProfilesManager {
 		if (!config && !keyboard) {
 			return;
 		}
-		File dstConfig = new File(toPath, Config.MIDLET_CONFIG_FILE);
-		File dstKeyLayout = new File(toPath, Config.MIDLET_KEY_LAYOUT_FILE);
-		try {
-			if (config) {
-				File source = from.getConfig();
-				if (source.exists()) {
-					FileUtils.copyFileUsingChannel(source, dstConfig);
-				} else {
-					ProfileModel params = loadConfig(from.getDir());
-					if (params != null) {
-						params.dir = dstConfig.getParentFile();
-						saveConfig(params);
-					}
+		File configDir = new File(toPath);
+		File dstConfig = new File(configDir, Config.MIDLET_CONFIG_FILE);
+		File dstKeyLayout = new File(configDir, Config.MIDLET_KEY_LAYOUT_FILE);
+		boolean configApplied = false;
+		boolean keyboardApplied = false;
+
+		if (config) {
+			File source = from.getConfig();
+			if (source.isFile()) {
+				FileUtils.copyFileUsingChannel(source, dstConfig);
+				configApplied = true;
+			} else {
+				ProfileModel params = loadConfig(from.getDir());
+				if (params != null) {
+					params.dir = configDir;
+					configApplied = saveConfig(params);
 				}
 			}
-			if (keyboard) {
-				FileUtils.copyFileUsingChannel(from.getKeyLayout(), dstKeyLayout);
-			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
 		}
+		if (keyboard && from.getKeyLayout().isFile()) {
+			FileUtils.copyFileUsingChannel(from.getKeyLayout(), dstKeyLayout);
+			keyboardApplied = true;
+		}
+
+		ProfileLinks.linkAppliedComponents(from, configDir,
+				config, configApplied, keyboard, keyboardApplied);
 	}
 
 	static void save(Profile profile, String fromPath, boolean config, boolean keyboard)
@@ -99,21 +105,24 @@ public class ProfilesManager {
 			return;
 		}
 		profile.create();
-		File srcConfig = new File(fromPath, Config.MIDLET_CONFIG_FILE);
-		File srcKeyLayout = new File(fromPath, Config.MIDLET_KEY_LAYOUT_FILE);
-		try {
-			if (config) FileUtils.copyFileUsingChannel(srcConfig, profile.getConfig());
-			if (keyboard) FileUtils.copyFileUsingChannel(srcKeyLayout, profile.getKeyLayout());
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+		File fromDir = new File(fromPath);
+		File srcConfig = new File(fromDir, Config.MIDLET_CONFIG_FILE);
+		File srcKeyLayout = new File(fromDir, Config.MIDLET_KEY_LAYOUT_FILE);
+		if (config && srcConfig.isFile()) {
+			FileUtils.copyFileUsingChannel(srcConfig, profile.getConfig());
 		}
+		if (keyboard && srcKeyLayout.isFile()) {
+			FileUtils.copyFileUsingChannel(srcKeyLayout, profile.getKeyLayout());
+		}
+		ProfileLinks.refreshLinkedBaselines(profile, fromDir);
 	}
 
 	/** Saves the current MIDlet configuration as one reusable template snapshot. */
 	static void saveSnapshot(Profile profile, String fromPath) throws IOException {
 		profile.create();
-		File srcConfig = new File(fromPath, Config.MIDLET_CONFIG_FILE);
-		File srcKeyLayout = new File(fromPath, Config.MIDLET_KEY_LAYOUT_FILE);
+		File fromDir = new File(fromPath);
+		File srcConfig = new File(fromDir, Config.MIDLET_CONFIG_FILE);
+		File srcKeyLayout = new File(fromDir, Config.MIDLET_KEY_LAYOUT_FILE);
 		File dstKeyLayout = profile.getKeyLayout();
 		FileUtils.copyFileUsingChannel(srcConfig, profile.getConfig());
 		if (srcKeyLayout.isFile()) {
@@ -121,10 +130,12 @@ public class ProfilesManager {
 		} else if (dstKeyLayout.exists() && !dstKeyLayout.delete()) {
 			Log.w(TAG, "saveSnapshot: could not remove stale key layout " + dstKeyLayout);
 		}
+		ProfileLinks.refreshLinkedBaselines(profile, fromDir);
 	}
 
 	@Nullable
 	public static ProfileModel loadConfig(File dir) {
+		ProfileLinks.resolve(dir);
 		return loadConfig(dir, true);
 	}
 
