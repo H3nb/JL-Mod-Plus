@@ -72,13 +72,14 @@ final class ProfileLinks {
 		}
 	}
 
-	static void refreshLinkedBaselines(@NonNull Profile profile, @NonNull File configDir) {
+	static void refreshLinkedBaselines(@NonNull Profile profile, @NonNull File configDir,
+			boolean settingsSaved, boolean keyboardSaved) {
 		if (!isGameConfigDir(configDir)) return;
 		String name = profile.getName();
-		if (name.equals(getLinkedProfile(configDir, true))) {
+		if (settingsSaved && name.equals(getLinkedProfile(configDir, true))) {
 			refreshBaseline(configDir, true);
 		}
-		if (name.equals(getLinkedProfile(configDir, false))) {
+		if (keyboardSaved && name.equals(getLinkedProfile(configDir, false))) {
 			refreshBaseline(configDir, false);
 		}
 	}
