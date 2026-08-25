@@ -38,6 +38,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
@@ -79,6 +80,7 @@ import ru.playsoftware.j2meloader.util.AppUtils;
 import ru.playsoftware.j2meloader.util.FileUtils;
 import ru.playsoftware.j2meloader.util.IOUtils;
 import ru.woesss.j2me.jar.Descriptor;
+import org.microemu.android.asm.MemoryEditorTransformMetadata;
 import javax.microedition.shell.timing.EmulationSpeed;
 import javax.microedition.shell.timing.TimingSession;
 import javax.microedition.shell.timing.TimingMode;
@@ -102,6 +104,10 @@ public class MicroLoader {
 	private String jarSha256;
 	private TimingSession timingSession;
 	private boolean timingTransformCompatible;
+	private MemoryEditorTransformMetadata memoryEditorMetadata =
+			MemoryEditorTransformMetadata.empty();
+	private MemoryProbe.Ledger memoryProbeLedger;
+	private WeakReference<AppClassLoader> memoryAppClassLoader;
 	/** Set only after the MIDlet thread has successfully received the timing session. */
 	private boolean timingSessionTransferred;
 
@@ -205,6 +211,40 @@ public class MicroLoader {
 			Log.w(TAG, "Timing transform metadata is unavailable", e);
 			return false;
 		}
+	}
+
+	private MemoryEditorTransformMetadata loadMemoryEditorMetadata() {
+		if (!BuildConfig.FULL_EMULATOR) return MemoryEditorTransformMetadata.empty();
+		File metadataFile = new File(appDir.getAbsolutePath() + Config.MIDLET_MEMORY_METADATA);
+		try {
+			MemoryEditorTransformMetadata metadata =
+					MemoryEditorTransformMetadata.read(metadataFile);
+			if (!metadata.isCompatible()) {
+				Log.w(TAG, "Memory Editor metadata schema is not compatible: " + metadataFile);
+				return MemoryEditorTransformMetadata.empty();
+			}
+			return metadata;
+		} catch (IOException | RuntimeException error) {
+			Log.w(TAG, "Memory Editor metadata is unavailable; running without probes", error);
+			return MemoryEditorTransformMetadata.empty();
+		}
+	}
+
+	MemoryProbe.Ledger getMemoryProbeLedger() {
+		return memoryProbeLedger;
+	}
+
+	MemoryEditorTransformMetadata getMemoryEditorMetadata() {
+		return memoryEditorMetadata;
+	}
+
+	/** Idempotent editor-ledger teardown; does not own existing host static cleanup. */
+	void closeMemoryProbe() {
+		MemoryProbe.Ledger ledger = memoryProbeLedger;
+		memoryProbeLedger = null;
+		AppClassLoader loader = memoryAppClassLoader == null ? null : memoryAppClassLoader.get();
+		memoryAppClassLoader = null;
+		MemoryProbe.unbind(loader, ledger);
 	}
 
 	/** Applies only the theme-owned colors for a linked built-in profile at runtime. */
@@ -317,19 +357,31 @@ public class MicroLoader {
 				}
 				dexSource = dexCache;
 			}
-			ClassLoader loader = new AppClassLoader(dexSource.getAbsolutePath(),
+			AppClassLoader loader = new AppClassLoader(dexSource.getAbsolutePath(),
 					dexOptDir.getAbsolutePath(), ContextHolder.getActivity().getClassLoader(), appDir);
+			memoryEditorMetadata = loadMemoryEditorMetadata();
+			MemoryProbe.Ledger ledger = MemoryProbe.bind(
+					loader, memoryEditorMetadata.getInsertedProbeClassIds());
+			memoryProbeLedger = ledger;
+			memoryAppClassLoader = new WeakReference<>(loader);
+			boolean launchCompleted = false;
 			Log.i(TAG, "loadMIDletList main: " + mainClass + " from dex:" + dexSource.getPath());
-			// Preserve the legacy one-argument reflection ABI for converted archives. New
-			// conversion passes an explicit caller token, but old artifacts need the child loader
-			// visible before their constructor/static code invokes Class.forName().
-			Thread.currentThread().setContextClassLoader(loader);
-			//noinspection unchecked
-			Class<MIDlet> clazz = (Class<MIDlet>) loader.loadClass(mainClass);
-			Thread.currentThread().setContextClassLoader(clazz.getClassLoader());
-			Constructor<MIDlet> init = clazz.getDeclaredConstructor();
-			init.setAccessible(true);
-			return init.newInstance();
+			try {
+				// Preserve the legacy one-argument reflection ABI for converted archives. New
+				// conversion passes an explicit caller token, but old artifacts need the child loader
+				// visible before their constructor/static code invokes Class.forName().
+				Thread.currentThread().setContextClassLoader(loader);
+				//noinspection unchecked
+				Class<MIDlet> clazz = (Class<MIDlet>) loader.loadClass(mainClass);
+				Thread.currentThread().setContextClassLoader(clazz.getClassLoader());
+				Constructor<MIDlet> init = clazz.getDeclaredConstructor();
+				init.setAccessible(true);
+				MIDlet result = init.newInstance();
+				launchCompleted = true;
+				return result;
+			} finally {
+				if (!launchCompleted) closeMemoryProbe();
+			}
 		} else {
 			AppClassLoader.setDataDir(appDir);
 			//noinspection unchecked

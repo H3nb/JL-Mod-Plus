@@ -60,7 +60,7 @@ public class MemoryEditorTransformMetadataTest {
             assertEquals("sample/State", state.getSourceInternalName());
             assertEquals("sample/State", state.getRuntimeInternalName());
             assertTrue(state.hasSourceClinit());
-            assertEquals(MemoryEditorTransformMetadata.PROBE_NOT_ATTEMPTED,
+            assertEquals(MemoryEditorTransformMetadata.PROBE_INSERTED,
                     state.getProbeStatus());
             assertEquals(1, state.getFields().size());
             MemoryEditorTransformMetadata.FieldEntry timer = state.getFields().get(0);

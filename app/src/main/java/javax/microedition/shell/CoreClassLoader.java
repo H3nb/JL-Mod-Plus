@@ -26,6 +26,7 @@ public class CoreClassLoader extends ClassLoader {
 	public static final Pattern INCLUDE = Pattern.compile("java\\..+|com\\..+|javax\\..+|mmpp\\..+|org.xml.sax.+");
 	public static final Pattern EXCLUDE = initExcludePattern();
 	private static final String TIMING_BRIDGE = "javax.microedition.shell.GuestTimingBridge";
+	private static final String MEMORY_PROBE = "javax.microedition.shell.MemoryProbe";
 	private static final String CUSTOM_TIMER = "javax.microedition.shell.custom.Timer";
 	private static final String CUSTOM_TIMER_TASK = "javax.microedition.shell.custom.TimerTask";
 
@@ -58,7 +59,7 @@ public class CoreClassLoader extends ClassLoader {
 		// Transformed guest bytecode links these names directly. They must always resolve through
 		// the parent-owned emulator implementation, even when a legacy classpath exclusion matches
 		// javax.microedition.shell or the guest archive contains a shadow class with the same name.
-		if (isTimingAbiClass(name)) {
+		if (isTimingAbiClass(name) || isMemoryProbeAbiClass(name)) {
 			return super.loadClass(name, resolve);
 		}
 		if (EXCLUDE != null && EXCLUDE.matcher(name).matches()) {
@@ -76,5 +77,9 @@ public class CoreClassLoader extends ClassLoader {
 				|| name.startsWith(CUSTOM_TIMER + "$")
 				|| CUSTOM_TIMER_TASK.equals(name)
 				|| name.startsWith(CUSTOM_TIMER_TASK + "$");
+	}
+
+	static boolean isMemoryProbeAbiClass(String name) {
+		return MEMORY_PROBE.equals(name) || name.startsWith(MEMORY_PROBE + "$");
 	}
 }

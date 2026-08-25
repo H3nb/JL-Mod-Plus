@@ -173,4 +173,15 @@ public class AppClassLoader extends DexClassLoader {
 	public static AppClassLoader getInstance() {
 		return instance;
 	}
+
+	/**
+	 * Returns an application class only when it is already loaded by this loader. Discovery must
+	 * not force initialization through Class.forName or a normal loadClass call.
+	 */
+	Class<?> findAlreadyLoadedApplicationClass(String name) {
+		if (name == null || name.isEmpty()) return null;
+		String binaryName = name.indexOf('/') >= 0 ? name.replace('/', '.') : name;
+		Class<?> loaded = findLoadedClass(binaryName);
+		return loaded != null && loaded.getClassLoader() == this ? loaded : null;
+	}
 }
