@@ -1,4 +1,5 @@
 /*
+ * Modified in 2026 for the runtime Memory Editor host dialog.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,8 +18,10 @@ package javax.microedition.shell
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -29,8 +32,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -48,7 +53,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,6 +77,9 @@ import ru.playsoftware.j2meloader.ui.availableWindowWidthDp
 import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 import javax.microedition.shell.timing.EmulationSpeed
 import kotlin.math.roundToInt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Android-host menu state only; Java ME Displayable and Command state stay in the runtime. */
 internal data class RuntimeMenuUiState(
@@ -82,6 +92,7 @@ internal data class RuntimeMenuUiState(
     val orientationLocked: Boolean = false,
     val emulationSpeedAvailable: Boolean = false,
     val emulationSpeedPercent: Int = EmulationSpeed.NORMAL_PERCENT,
+    val memoryEditorAvailable: Boolean = false,
 )
 
 interface RuntimeMenuActions {
@@ -96,6 +107,7 @@ interface RuntimeMenuActions {
     fun onEmulationSpeed()
     fun onSetEmulationSpeed(value: Int)
     fun onResetEmulationSpeed()
+    fun onMemoryEditor() {}
     fun onEditVirtualKeyboardLayout()
     fun onResizeVirtualKeyboardLayout()
     fun onFinishVirtualKeyboardLayout()
@@ -116,6 +128,7 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     private var menuVisible by mutableStateOf(false)
     private var limitFpsVisible by mutableStateOf(false)
     private var emulationSpeedVisible by mutableStateOf(false)
+    private var memoryEditorSession by mutableStateOf<MemoryEditorSession?>(null)
     private var hostDialogState by mutableStateOf<RuntimeHostDialogState?>(null)
     private val menuActions = object : RuntimeMenuActions by actions {
         override fun onLimitFps() {
@@ -168,6 +181,12 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
                         },
                     )
                 }
+                memoryEditorSession?.let { session ->
+                    MemoryEditorDialog(
+                        session = session,
+                        onDismiss = { memoryEditorSession = null },
+                    )
+                }
                 if (hostDialogActions != null) {
                     RuntimeHostDialogs(
                         state = hostDialogState,
@@ -189,6 +208,7 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
         orientationLocked: Boolean,
         emulationSpeedAvailable: Boolean,
         emulationSpeedPercent: Int,
+        memoryEditorAvailable: Boolean,
     ) {
         state = RuntimeMenuUiState(
             title = title,
@@ -200,6 +220,7 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             orientationLocked = orientationLocked,
             emulationSpeedAvailable = emulationSpeedAvailable,
             emulationSpeedPercent = emulationSpeedPercent,
+            memoryEditorAvailable = memoryEditorAvailable,
         )
     }
 
@@ -211,12 +232,14 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     fun isMenuVisible(): Boolean = menuVisible
             || limitFpsVisible
             || emulationSpeedVisible
+            || memoryEditorSession != null
             || hostDialogState != null
 
     fun closeMenu() {
         menuVisible = false
         limitFpsVisible = false
         emulationSpeedVisible = false
+        memoryEditorSession = null
         hostDialogState = null
     }
 
@@ -242,6 +265,11 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
 
     fun showLayoutSelection(entries: Array<String>, selected: Int) {
         hostDialogState = RuntimeHostDialogState.LayoutSelection(entries.toList(), selected)
+    }
+
+    fun showMemoryEditor(session: MemoryEditorSession) {
+        closeMenu()
+        memoryEditorSession = session
     }
 }
 
@@ -590,6 +618,16 @@ private fun LazyListScope.runtimeMenuItems(
     item {
         RuntimeActionItem(R.string.save_log, onDismiss, actions::onSaveLog, leadingIcon = R.drawable.ic_save)
     }
+    if (state.memoryEditorAvailable) {
+        item {
+            RuntimeActionItem(
+                R.string.memory_editor,
+                onDismiss,
+                actions::onMemoryEditor,
+                leadingIcon = R.drawable.ic_search,
+            )
+        }
+    }
     item {
         RuntimeToggleItem(
             label = R.string.action_lock_orientation,
@@ -735,5 +773,247 @@ private fun RuntimeMenuItem(
                 role = Role.Button,
                 onClick = onClick,
             ),
+    )
+}
+
+@Composable
+private fun MemoryEditorDialog(
+    session: MemoryEditorSession,
+    onDismiss: () -> Unit,
+) {
+    val scope = rememberCoroutineScope()
+    var queryText by remember { mutableStateOf("") }
+    var result by remember { mutableStateOf<MemoryEditorSession.ScanResult?>(null) }
+    var status by remember { mutableStateOf<String?>(null) }
+    var scanning by remember { mutableStateOf(false) }
+    var adaptiveEvidence by remember {
+        mutableStateOf(session.evidencePolicy == MemoryEditorSession.EvidencePolicy.ADAPTIVE)
+    }
+    val drafts = remember { mutableStateMapOf<Long, String>() }
+    val regionIndexes = remember { mutableStateMapOf<Long, String>() }
+    val regionDrafts = remember { mutableStateMapOf<Long, String>() }
+    val layout = runtimeMenuDialogLayout()
+
+    fun runScan(query: MemoryEditorSession.Query) {
+        if (scanning) return
+        scanning = true
+        status = null
+        scope.launch {
+            val next = withContext(Dispatchers.Default) { session.scanNow(query) }
+            result = next
+            scanning = false
+            status = when {
+                next.isCancelled -> "CANCELLED"
+                next.isCoverageIncomplete -> "${next.candidates.size} results; coverage incomplete"
+                else -> "${next.candidates.size} results"
+            }
+        }
+    }
+
+    AlertDialog(
+        modifier = layout.modifier,
+        properties = layout.properties,
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.memory_editor)) },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = queryText,
+                    onValueChange = { queryText = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("memory_editor_query"),
+                    label = { Text(stringResource(R.string.memory_editor_value)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                )
+                ListItem(
+                    colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                    headlineContent = {
+                        Text(stringResource(R.string.memory_editor_adaptive_threads))
+                    },
+                    supportingContent = {
+                        Text(stringResource(R.string.memory_editor_adaptive_threads_help))
+                    },
+                    trailingContent = {
+                        Switch(
+                            checked = adaptiveEvidence,
+                            onCheckedChange = {
+                                adaptiveEvidence = it
+                                session.evidencePolicy = if (it) {
+                                    MemoryEditorSession.EvidencePolicy.ADAPTIVE
+                                } else {
+                                    MemoryEditorSession.EvidencePolicy.PASSIVE
+                                }
+                            },
+                        )
+                    },
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    TextButton(
+                        enabled = !scanning,
+                        onClick = {
+                            val query = if (queryText.isBlank()) {
+                                MemoryEditorSession.Query.all()
+                            } else {
+                                MemoryEditorSession.Query.exact(queryText)
+                            }
+                            runScan(query)
+                        },
+                    ) {
+                        Text(stringResource(R.string.memory_editor_scan))
+                    }
+                    TextButton(
+                        enabled = !scanning && result != null,
+                        onClick = {
+                            val query = if (queryText.isBlank()) {
+                                MemoryEditorSession.Query.changed()
+                            } else {
+                                MemoryEditorSession.Query.exact(queryText)
+                            }
+                            runScan(query)
+                        },
+                    ) {
+                        Text(stringResource(R.string.memory_editor_next_scan))
+                    }
+                    if (scanning) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .padding(start = 4.dp)
+                                .size(24.dp),
+                            strokeWidth = 2.dp,
+                        )
+                    }
+                }
+                status?.let { message ->
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                val scan = result
+                if (scan != null && scan.diagnostics.isNotEmpty()) {
+                    Text(
+                        text = scan.diagnostics.take(3).joinToString(" · "),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Spacer(Modifier.height(4.dp))
+                val candidates = scan?.candidates ?: emptyList()
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = runtimeMenuDialogContentHeight()),
+                ) {
+                    items(candidates.take(300), key = { it.id }) { candidate ->
+                        var editing by remember(candidate.id) { mutableStateOf(false) }
+                        val draft = drafts[candidate.id] ?: candidate.value
+                        ListItem(
+                            colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                            headlineContent = {
+                                Text(
+                                    text = candidate.path,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    fontWeight = FontWeight.Medium,
+                                )
+                            },
+                            supportingContent = {
+                                Column {
+                                    Text("${candidate.typeName}: ${candidate.value}")
+                                    if (candidate.isRegion) {
+                                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            OutlinedTextField(
+                                                value = regionIndexes[candidate.id] ?: "0",
+                                                onValueChange = { regionIndexes[candidate.id] = it.filter(Char::isDigit) },
+                                                label = { Text(stringResource(R.string.memory_editor_index)) },
+                                                singleLine = true,
+                                                modifier = Modifier.weight(1f),
+                                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                            )
+                                            OutlinedTextField(
+                                                value = regionDrafts[candidate.id]
+                                                    ?: candidate.readRegionElement(0).orEmpty(),
+                                                onValueChange = { regionDrafts[candidate.id] = it },
+                                                label = { Text(stringResource(R.string.memory_editor_value)) },
+                                                singleLine = true,
+                                                modifier = Modifier.weight(1f),
+                                            )
+                                        }
+                                    } else if (editing && !candidate.isReadOnly) {
+                                        OutlinedTextField(
+                                            value = draft,
+                                            onValueChange = { drafts[candidate.id] = it },
+                                            singleLine = true,
+                                            modifier = Modifier.fillMaxWidth(),
+                                        )
+                                    }
+                                }
+                            },
+                            trailingContent = {
+                                Row(horizontalArrangement = Arrangement.spacedBy(0.dp)) {
+                                    if (candidate.isRegion && !candidate.isStale) {
+                                        TextButton(onClick = {
+                                            val index = regionIndexes[candidate.id]?.toIntOrNull() ?: 0
+                                            val value = regionDrafts[candidate.id]
+                                                ?: try {
+                                                    candidate.readRegionElement(index).orEmpty()
+                                                } catch (_: RuntimeException) {
+                                                    ""
+                                                }
+                                            scope.launch {
+                                                val write = withContext(Dispatchers.Default) {
+                                                    session.writeRegionElementNow(candidate.id, index, value)
+                                                }
+                                                status = write.message
+                                            }
+                                        }) {
+                                            Text(stringResource(R.string.memory_editor_write))
+                                        }
+                                    } else if (!candidate.isReadOnly && !candidate.isStale) {
+                                        TextButton(onClick = {
+                                            if (!editing) {
+                                                editing = true
+                                            } else {
+                                                val value = drafts[candidate.id] ?: candidate.value
+                                                scope.launch {
+                                                    val write = withContext(Dispatchers.Default) {
+                                                        session.writeNow(candidate.id, value)
+                                                    }
+                                                    status = write.message
+                                                    if (write.isSuccess) editing = false
+                                                }
+                                            }
+                                        }) {
+                                            Text(if (editing) stringResource(android.R.string.ok) else stringResource(R.string.edit))
+                                        }
+                                        TextButton(onClick = {
+                                            if (session.isFrozen(candidate.id)) session.unfreeze(candidate.id)
+                                            else session.freeze(candidate.id)
+                                        }) {
+                                            Text(stringResource(if (session.isFrozen(candidate.id)) R.string.memory_editor_unfreeze else R.string.memory_editor_freeze))
+                                        }
+                                    }
+                                }
+                            },
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        },
     )
 }

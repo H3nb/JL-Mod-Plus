@@ -283,6 +283,16 @@ public class MicroActivity extends AppCompatActivity {
 					}
 
 					@Override
+					public void onMemoryEditor() {
+						MemoryEditorSession session = MidletThread.getMemoryEditorSession();
+						if (session == null) {
+							toast(R.string.memory_editor_unavailable);
+						} else {
+							runtimeMenuController.showMemoryEditor(session);
+						}
+					}
+
+					@Override
 					public void onEditVirtualKeyboardLayout() {
 						setVirtualKeyboardEditMode(VirtualKeyboard.LAYOUT_KEYS,
 								R.string.layout_edit_mode);
@@ -376,6 +386,8 @@ public class MicroActivity extends AppCompatActivity {
 		int emulationSpeedPercent = emulationSpeedAvailable
 				? timingSession.speedPercentOr(EmulationSpeed.NORMAL_PERCENT)
 				: EmulationSpeed.NORMAL_PERCENT;
+		boolean memoryEditorAvailable = microLoader != null
+				&& microLoader.isMemoryEditorAvailable();
 		String title = displayable != null ? displayable.getTitle() : null;
 		// RuntimeMenuComposeController exposes a non-null Kotlin String. An incomplete internal
 		// launch intent may omit KEY_MIDLET_NAME, so keep that malformed-input path on a safe
@@ -390,7 +402,8 @@ public class MicroActivity extends AppCompatActivity {
 				vk != null && vk.getLayoutEditMode() != VirtualKeyboard.LAYOUT_EOF,
 				orientationLocked,
 				emulationSpeedAvailable,
-				emulationSpeedPercent);
+				emulationSpeedPercent,
+				memoryEditorAvailable);
 	}
 
 	private GuestWindowPolicy.Chrome getRuntimeChrome(@Nullable Displayable displayable) {

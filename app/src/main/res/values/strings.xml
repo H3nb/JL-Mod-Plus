@@ -33,6 +33,17 @@
     <string name="dismiss">Dismiss</string>
     <string name="dismiss_mapping">Dismiss mapping</string>
     <string name="edit">Edit</string>
+    <string name="memory_editor">Memory Editor</string>
+    <string name="memory_editor_value">Value (optional exact filter)</string>
+    <string name="memory_editor_scan">Initial Scan</string>
+    <string name="memory_editor_next_scan">Next Scan</string>
+    <string name="memory_editor_freeze">Freeze</string>
+    <string name="memory_editor_unfreeze">Unfreeze</string>
+    <string name="memory_editor_unavailable">Memory Editor is unavailable for this MIDlet</string>
+    <string name="memory_editor_adaptive_threads">Adaptive thread roots</string>
+    <string name="memory_editor_adaptive_threads_help">Include application-owned live threads in discovery</string>
+    <string name="memory_editor_index">Index</string>
+    <string name="memory_editor_write">Write</string>
     <string name="enter_name">Enter name</string>
     <string name="enter_new_name">Enter new name</string>
     <string name="err_missing_app">Application not found.\nPlease check storage device %1$savailability or re-create shortcut.</string>
