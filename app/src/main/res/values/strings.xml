@@ -39,6 +39,10 @@
     <string name="memory_editor_next_scan">Next Scan</string>
     <string name="memory_editor_new_search">New Search</string>
     <string name="memory_editor_refine">Refine</string>
+    <string name="memory_editor_undo">Undo refine</string>
+    <string name="memory_editor_workflow_help">Known value: enter it and start a new search. Unknown value: leave it blank, start a snapshot, change the value in-game, then refine by Changed, Increased, or Decreased.</string>
+    <string name="memory_editor_snapshot_ready">Snapshot saved. Change the value in-game, then refine this session.</string>
+    <string name="memory_editor_exact_empty">No exact match. Try a blank new search, change the value in-game, then refine by Changed.</string>
     <string name="memory_editor_refine_mode">Refine mode</string>
     <string name="memory_editor_mode_changed">Changed</string>
     <string name="memory_editor_mode_unchanged">Unchanged</string>
@@ -46,7 +50,7 @@
     <string name="memory_editor_mode_decreased">Decreased</string>
     <string name="memory_editor_mode_exact">Exact</string>
     <string name="memory_editor_show_more">Show more results</string>
-    <string name="memory_editor_no_session">No saved search session</string>
+    <string name="memory_editor_no_session">No saved search session yet</string>
     <string name="memory_editor_freeze">Freeze</string>
     <string name="memory_editor_unfreeze">Unfreeze</string>
     <string name="memory_editor_unavailable">Memory Editor is unavailable for this MIDlet</string>
