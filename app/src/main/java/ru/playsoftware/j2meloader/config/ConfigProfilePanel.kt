@@ -97,6 +97,20 @@ internal fun ConfigProfilePanel(
                 onClick = { updateTarget = source },
             )
         }
+        if (status.settingsModified && status.settingsProfile != null) {
+            ConfigActionPreference(
+                title = stringResource(R.string.profile_keep_settings_for_app),
+                description = stringResource(R.string.profile_keep_settings_for_app_summary),
+                onClick = events::onKeepSettingsForApp,
+            )
+        }
+        if (status.keyboardModified && status.keyboardProfile != null) {
+            ConfigActionPreference(
+                title = stringResource(R.string.profile_keep_keyboard_for_app),
+                description = stringResource(R.string.profile_keep_keyboard_for_app_summary),
+                onClick = events::onKeepKeyboardForApp,
+            )
+        }
         if (status.modified || hasCustomComponent) {
             ConfigActionPreference(
                 title = stringResource(R.string.profile_save_as_new_template),
