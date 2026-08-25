@@ -51,7 +51,17 @@ public class AppClassLoader extends DexClassLoader {
 		instance = this;
 		setDataDir(appDir);
 		File jar = new File(appDir, Config.MIDLET_RES_FILE);
-		zipFile = jar.exists() ? new ZipFile(jar) : null;
+		if (Config.isUsableFile(jar)) {
+			try {
+				zipFile = new ZipFile(jar);
+			} catch (RuntimeException error) {
+				// A truncated retained JAR must not prevent legacy /res resources from loading.
+				Log.w(TAG, "Can't open retained resource JAR; falling back to legacy resources", error);
+				zipFile = null;
+			}
+		} else {
+			zipFile = null;
+		}
 	}
 
 	public static void setDataDir(File appDir) {

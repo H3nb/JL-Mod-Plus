@@ -111,10 +111,13 @@ class LibraryScanner {
 
     @Throws(IOException::class)
     private fun requireConvertedPayload(appDir: File) {
-        if (!File(appDir, DEX_ARCHIVE).isFile && !File(appDir, DEX_FILE).isFile) {
+        if (!isUsablePayload(File(appDir, DEX_ARCHIVE))
+            && !isUsablePayload(File(appDir, DEX_FILE))) {
             throw IOException("Missing converted MIDlet payload")
         }
     }
+
+    private fun isUsablePayload(file: File): Boolean = file.isFile && file.length() > 0L
 
     private fun boundedReason(error: Throwable): String {
         val detail = error.message?.trim().orEmpty()

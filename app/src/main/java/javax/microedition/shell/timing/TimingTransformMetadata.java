@@ -28,7 +28,8 @@ import javax.microedition.shell.GuestTimingBridge;
  * compatible.</p>
  */
 public final class TimingTransformMetadata {
-	public static final int TRANSFORM_VERSION = 4;
+	/** Version 6 virtualizes Date.class.newInstance() with caller-aware access checks. */
+	public static final int TRANSFORM_VERSION = 6;
 	public static final String TRANSFORM_VERSION_ATTRIBUTE = "JLMod-Timing-Transform-Version";
 	public static final String BRIDGE_ABI_ATTRIBUTE = "JLMod-Timing-Bridge-ABI";
 

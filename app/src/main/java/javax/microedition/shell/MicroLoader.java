@@ -147,9 +147,7 @@ public class MicroLoader {
 			return;
 		}
 		TimingSession session = new TimingSession(
-				timingTransformCompatible
-						? EmulationSpeed.sanitizePercent(params.emulationSpeedPercent)
-						: EmulationSpeed.NORMAL_PERCENT,
+				EmulationSpeed.NORMAL_PERCENT,
 				NEXT_TIMING_GENERATION.getAndIncrement(),
 				timingTransformCompatible
 						? TimingMode.sanitize(params.timingMode)
@@ -180,12 +178,6 @@ public class MicroLoader {
 
 	boolean isTimingTransformCompatible() {
 		return timingTransformCompatible;
-	}
-
-	int getConfiguredEmulationSpeedPercent() {
-		return timingTransformCompatible && params != null
-				? EmulationSpeed.sanitizePercent(params.emulationSpeedPercent)
-				: EmulationSpeed.NORMAL_PERCENT;
 	}
 
 	/** Applies a runtime-only speed change without mutating the persisted MIDlet profile. */
@@ -304,8 +296,11 @@ public class MicroLoader {
 			IllegalAccessException, NoSuchMethodException, InvocationTargetException, IOException {
 		if (BuildConfig.FULL_EMULATOR) {
 			File dexSource = new File(appDir, Config.MIDLET_DEX_ARCH);
-			if (!dexSource.exists()) {
+			if (!Config.isUsableFile(dexSource)) {
 				dexSource = new File(appDir, Config.MIDLET_DEX_FILE);
+			}
+			if (!Config.isUsableFile(dexSource)) {
+				throw new IOException("Converted MIDlet payload is missing or empty");
 			}
 			File codeCacheDir = ContextCompat.getCodeCacheDir(ContextHolder.getActivity());
 			File dexOptDir = new File(codeCacheDir, Config.DEX_OPT_CACHE_DIR);

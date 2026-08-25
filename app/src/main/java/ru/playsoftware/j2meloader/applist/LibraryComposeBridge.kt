@@ -189,7 +189,6 @@ import ru.playsoftware.j2meloader.ui.TransientNoticeHost
 import ru.playsoftware.j2meloader.ui.TransientNoticeState
 import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 import ru.playsoftware.j2meloader.ui.availableWindowWidthDp
-import ru.playsoftware.j2meloader.ui.availableWindowWidthDp
 import kotlin.math.roundToInt
 
 enum class LibraryLayout {

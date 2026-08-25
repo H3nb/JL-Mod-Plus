@@ -103,6 +103,11 @@ public class Config {
 		return appDir;
 	}
 
+	/** Returns whether an on-disk emulator artifact can be passed to a loader. */
+	public static boolean isUsableFile(File file) {
+		return file != null && file.isFile() && file.length() > 0L;
+	}
+
 	public static void openSettings(Context context, String name, String path) {
 		Intent intent = new Intent(ACTION_EDIT, Uri.parse(path), context, ConfigActivity.class);
 		intent.putExtra(KEY_MIDLET_NAME, name);
@@ -125,7 +130,10 @@ public class Config {
 		}
 
 		File appDir = localAppDirectory(path);
-		if (AppReconverter.needsReconversion(appDir)) {
+		if (AppReconverter.needsReconversion(appDir)
+				&& (appDir == null
+				|| AppReconverter.hasRetainedSource(appDir)
+				|| !AppReconverter.hasUsableConvertedPayload(appDir))) {
 			AutoReconversionActivity.start(context, name, path);
 			return;
 		}

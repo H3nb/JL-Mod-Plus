@@ -761,24 +761,31 @@ public abstract class Canvas extends Displayable {
 		if (surface == null || !surface.isValid()) {
 			return PresentationResult.surfaceUnavailable();
 		}
+		android.graphics.Canvas lockedCanvas = null;
 		try {
 			synchronized (surfaceLock) {
-				android.graphics.Canvas canvas = settings.graphicsMode == 3 ?
+				lockedCanvas = settings.graphicsMode == 3 ?
 						surface.lockHardwareCanvas() : surface.lockCanvas(null);
-				if (canvas == null) {
+				if (lockedCanvas == null) {
 					return PresentationResult.surfaceReady();
 				}
 				CanvasWrapper g = this.canvasWrapper;
-				g.bind(canvas);
+				g.bind(lockedCanvas);
 				g.clear(settings.screenBackgroundColor | Color.BLACK);
 				SkinLayer skinLayer = SkinLayer.getInstance();
 				int p = skinLayer != null && skinLayer.hasDisplayFrame() ? 0 : settings.screenPadding;
-				canvas.clipRect(p, p, displayWidth - p, displayHeight - p);
+				lockedCanvas.clipRect(p, p, displayWidth - p, displayHeight - p);
 				synchronized (bufferLock) {
 					g.drawImage(offscreenCopy, virtualScreen);
 					frameSequence = publishedFrameSequence;
 				}
-				surface.unlockCanvasAndPost(canvas);
+				try {
+					surface.unlockCanvasAndPost(lockedCanvas);
+				} finally {
+					// An unlock attempt transfers ownership to Surface even when Android throws. Do
+					// not submit the same canvas a second time from the outer cleanup path.
+					lockedCanvas = null;
+				}
 			}
 			if (metrics != null) {
 				metrics.recordRender(frameSequence);
@@ -787,6 +794,16 @@ public abstract class Canvas extends Displayable {
 		} catch (Exception e) {
 			Log.w(TAG, "repaintScreen: " + e);
 			return PresentationResult.surfaceReady();
+		} finally {
+			if (lockedCanvas != null) {
+				synchronized (surfaceLock) {
+					try {
+						surface.unlockCanvasAndPost(lockedCanvas);
+					} catch (Exception e) {
+						Log.w(TAG, "repaintScreen: failed to unlock surface canvas", e);
+					}
+				}
+			}
 		}
 	}
 

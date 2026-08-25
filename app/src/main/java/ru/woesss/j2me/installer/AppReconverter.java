@@ -56,10 +56,9 @@ public final class AppReconverter {
     /** Returns true when the installed payload is absent or was produced by an old transformer. */
     public static boolean needsReconversion(File appDir) {
         if (appDir == null || !appDir.isDirectory()) return true;
-        File payload = fileWithSuffix(appDir, Config.MIDLET_DEX_ARCH);
-        if (!payload.isFile()) payload = fileWithSuffix(appDir, Config.MIDLET_DEX_FILE);
+        File payload = usablePayload(appDir);
         File descriptorFile = fileWithSuffix(appDir, Config.MIDLET_MANIFEST_FILE);
-        if (!payload.isFile() || !descriptorFile.isFile()) return true;
+        if (payload == null || !Config.isUsableFile(descriptorFile)) return true;
         try {
             Descriptor descriptor = new Descriptor(descriptorFile, false);
             return !TimingTransformMetadata.isCompatible(descriptor.getAttrs());
@@ -67,6 +66,17 @@ public final class AppReconverter {
             Log.w(TAG, "Unable to validate converted timing marker: " + appDir, error);
             return true;
         }
+    }
+
+    /** Returns true when an installed source JAR is available for automatic reconversion. */
+    public static boolean hasRetainedSource(File appDir) {
+        return appDir != null && appDir.isDirectory()
+                && Config.isUsableFile(fileWithSuffix(appDir, Config.MIDLET_RES_FILE));
+    }
+
+    /** Returns true when either converted payload format contains data for a legacy launch. */
+    public static boolean hasUsableConvertedPayload(File appDir) {
+        return usablePayload(appDir) != null;
     }
 
     /**
@@ -81,7 +91,7 @@ public final class AppReconverter {
         File workdir = appDir.getParentFile().getParentFile();
         String storageKey = appDir.getName();
         File retainedJar = fileWithSuffix(appDir, Config.MIDLET_RES_FILE);
-        if (!retainedJar.isFile()) {
+        if (!Config.isUsableFile(retainedJar)) {
             throw new IOException("Retained MIDlet JAR is unavailable: " + storageKey);
         }
 
@@ -99,6 +109,12 @@ public final class AppReconverter {
             File replacementBackup = null;
             try {
                 Descriptor descriptor = loadManifest(retainedJar);
+                // The retained JAR manifest is not the installed descriptor. The latter contains
+                // the JAD attributes that AppInstaller merged during the original install,
+                // including vendor-specific values and the source URL/size. Preserve those
+                // values or reconversion silently changes the installed MIDlet identity/config.
+                mergeInstalledDescriptor(
+                        descriptor, fileWithSuffix(appDir, Config.MIDLET_MANIFEST_FILE));
                 try {
                     Main.main(new String[]{
                             "--no-optimize",
@@ -184,7 +200,22 @@ public final class AppReconverter {
         }
     }
 
+    /** Applies the descriptor persisted for the installed MIDlet over the source JAR manifest. */
+    static Descriptor mergeInstalledDescriptor(Descriptor sourceManifest, File installedDescriptor)
+            throws IOException {
+        sourceManifest.merge(new Descriptor(installedDescriptor, false));
+        return sourceManifest;
+    }
+
     private static File fileWithSuffix(File directory, String suffix) {
         return new File(directory.getAbsolutePath() + suffix);
+    }
+
+    private static File usablePayload(File appDir) {
+        if (appDir == null || !appDir.isDirectory()) return null;
+        File archive = fileWithSuffix(appDir, Config.MIDLET_DEX_ARCH);
+        if (Config.isUsableFile(archive)) return archive;
+        File dex = fileWithSuffix(appDir, Config.MIDLET_DEX_FILE);
+        return Config.isUsableFile(dex) ? dex : null;
     }
 }

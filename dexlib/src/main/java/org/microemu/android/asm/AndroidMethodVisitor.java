@@ -118,6 +118,26 @@ public class AndroidMethodVisitor extends MethodVisitor {
 					}
 					return;
 				}
+				if (opcode == INVOKEVIRTUAL && name.equals("newInstance")
+						&& desc.equals("()Ljava/lang/Object;")) {
+					if (ownerClassName == null) {
+						// Preserve the one-argument bridge ABI for already converted archives.
+						mv.visitMethodInsn(INVOKESTATIC,
+								"javax/microedition/shell/GuestTimingBridge",
+								"newInstance", "(Ljava/lang/Class;)Ljava/lang/Object;", false);
+					} else {
+						// Class.newInstance() performs access checks relative to its caller. Supplying the
+						// guest class token lets the parent bridge retain those checks while virtualizing
+						// Date.class.newInstance() through the guest clock.
+						mv.visitLdcInsn(Type.getObjectType(ownerClassName));
+						mv.visitMethodInsn(INVOKESTATIC,
+								"javax/microedition/shell/GuestTimingBridge",
+								"newInstance",
+								"(Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/Object;",
+								false);
+					}
+					return;
+				}
 				if (opcode == INVOKEVIRTUAL && name.equals("getName")
 						&& desc.equals("()Ljava/lang/String;")) {
 						mv.visitMethodInsn(INVOKESTATIC,
@@ -130,13 +150,6 @@ public class AndroidMethodVisitor extends MethodVisitor {
 					mv.visitMethodInsn(INVOKESTATIC,
 							"javax/microedition/shell/GuestTimingBridge",
 							"classToString", "(Ljava/lang/Class;)Ljava/lang/String;", false);
-					return;
-				}
-				if (opcode == INVOKEVIRTUAL && name.equals("newInstance")
-						&& desc.equals("()Ljava/lang/Object;")) {
-					mv.visitMethodInsn(INVOKESTATIC,
-							"javax/microedition/shell/GuestTimingBridge",
-							"newInstance", "(Ljava/lang/Class;)Ljava/lang/Object;", false);
 					return;
 				}
 				if (name.equals("getResourceAsStream")) {
