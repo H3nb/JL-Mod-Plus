@@ -68,6 +68,8 @@ import javax.microedition.lcdui.ViewHandler;
 import javax.microedition.lcdui.event.SimpleEvent;
 import javax.microedition.lcdui.keyboard.VirtualKeyboard;
 import javax.microedition.lcdui.skin.SkinLayer;
+import javax.microedition.shell.timing.EmulationSpeed;
+import javax.microedition.shell.timing.TimingSession;
 import javax.microedition.util.ContextHolder;
 
 import io.reactivex.SingleObserver;
@@ -262,6 +264,25 @@ public class MicroActivity extends AppCompatActivity {
 					}
 
 					@Override
+					public void onEmulationSpeed() {
+						// The Compose controller owns the speed picker dialog.
+					}
+
+					@Override
+					public void onSetEmulationSpeed(int value) {
+						if (microLoader == null || !microLoader.setRuntimeEmulationSpeed(value)) {
+							toast(R.string.error);
+						} else {
+							updateRuntimeMenuState(current);
+						}
+					}
+
+					@Override
+					public void onResetEmulationSpeed() {
+						onSetEmulationSpeed(EmulationSpeed.NORMAL_PERCENT);
+					}
+
+					@Override
 					public void onEditVirtualKeyboardLayout() {
 						setVirtualKeyboardEditMode(VirtualKeyboard.LAYOUT_KEYS,
 								R.string.layout_edit_mode);
@@ -347,6 +368,14 @@ public class MicroActivity extends AppCompatActivity {
 		}
 		GuestWindowPolicy.Chrome chrome = getRuntimeChrome(displayable);
 		VirtualKeyboard vk = ContextHolder.getVk();
+		TimingSession timingSession = microLoader == null ? null : microLoader.getTimingSession();
+		boolean emulationSpeedAvailable = microLoader != null
+				&& microLoader.isTimingTransformCompatible()
+				&& timingSession != null
+				&& !timingSession.isClosed();
+		int emulationSpeedPercent = emulationSpeedAvailable
+				? timingSession.speedPercentOr(EmulationSpeed.NORMAL_PERCENT)
+				: EmulationSpeed.NORMAL_PERCENT;
 		String title = displayable != null ? displayable.getTitle() : null;
 		// RuntimeMenuComposeController exposes a non-null Kotlin String. An incomplete internal
 		// launch intent may omit KEY_MIDLET_NAME, so keep that malformed-input path on a safe
@@ -359,7 +388,9 @@ public class MicroActivity extends AppCompatActivity {
 				inputMethodManager != null,
 				vk != null,
 				vk != null && vk.getLayoutEditMode() != VirtualKeyboard.LAYOUT_EOF,
-				orientationLocked);
+				orientationLocked,
+				emulationSpeedAvailable,
+				emulationSpeedPercent);
 	}
 
 	private GuestWindowPolicy.Chrome getRuntimeChrome(@Nullable Displayable displayable) {
@@ -387,6 +418,16 @@ public class MicroActivity extends AppCompatActivity {
 	public void onPause() {
 		hideSoftInput();
 		super.onPause();
+	}
+
+	@Override
+	protected void onDestroy() {
+		// A MIDlet chooser, malformed archive, or Activity teardown can happen before a
+		// MidletThread is started. In that window MicroLoader still owns any launch session.
+		if (microLoader != null) {
+			microLoader.closeTimingSessionIfNotTransferred();
+		}
+		super.onDestroy();
 	}
 
 	private void hideSoftInput() {
@@ -636,6 +677,33 @@ public class MicroActivity extends AppCompatActivity {
 	public void setCurrent(Displayable displayable) {
 		ViewHandler.postEvent(new SetCurrentEvent(current, displayable));
 		current = displayable;
+	}
+
+	/** Implements MIDP's setCurrent(null) background request without changing guest current state. */
+	public void requestBackground() {
+		runOnUiThread(() -> {
+			if (!isFinishing() && !isDestroyed()) {
+				moveTaskToBack(true);
+			}
+		});
+	}
+
+	/** Implements MIDP's foreground request without changing the guest Displayable. */
+	public void requestForeground() {
+		runOnUiThread(() -> {
+			if (isFinishing() || isDestroyed()) {
+				return;
+			}
+			try {
+				ActivityManager activityManager =
+						(ActivityManager) getSystemService(ACTIVITY_SERVICE);
+				if (activityManager != null) {
+					activityManager.moveTaskToFront(getTaskId(), ActivityManager.MOVE_TASK_WITH_HOME);
+				}
+			} catch (SecurityException ignored) {
+				// Foregrounding is a host convenience; Android may reject it for background starts.
+			}
+		});
 	}
 
 	public Displayable getCurrent() {

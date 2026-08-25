@@ -162,6 +162,21 @@ public class CanvasWrapper {
 		fillPaint.setColor(previousFillColor);
 	}
 
+	/**
+	 * Returns the height of a diagnostic pill using the same scaled font metrics as the drawing
+	 * helper. Overlay layout code uses this instead of assuming a fixed pixel height, which keeps
+	 * stacked diagnostics separated when density or the user's font scale changes.
+	 */
+	public float getPillHeight(float scale) {
+		float previousTextSize = textPaint.getTextSize();
+		textPaint.setTextSize(textSize * Math.max(0.5f, scale));
+		Paint.FontMetrics metrics = textPaint.getFontMetrics();
+		float verticalPadding = Math.max(2f, textPaint.getTextSize() * 0.16f);
+		float height = metrics.descent - metrics.ascent + verticalPadding * 2f;
+		textPaint.setTextSize(previousTextSize);
+		return height;
+	}
+
 	public float getTextHeight() {
 		return textHeight;
 	}

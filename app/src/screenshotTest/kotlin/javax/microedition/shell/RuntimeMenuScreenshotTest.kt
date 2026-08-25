@@ -31,6 +31,9 @@ private object NoOpRuntimeMenuActions : RuntimeMenuActions {
     override fun onLimitFps() = Unit
     override fun onSetFpsLimit(value: Int) = Unit
     override fun onResetFpsLimit() = Unit
+    override fun onEmulationSpeed() = Unit
+    override fun onSetEmulationSpeed(value: Int) = Unit
+    override fun onResetEmulationSpeed() = Unit
     override fun onEditVirtualKeyboardLayout() = Unit
     override fun onResizeVirtualKeyboardLayout() = Unit
     override fun onFinishVirtualKeyboardLayout() = Unit

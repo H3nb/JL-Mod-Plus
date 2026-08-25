@@ -53,7 +53,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import javax.microedition.shell.MicroActivity;
+import javax.microedition.shell.timing.TimingTransformMetadata;
 import javax.microedition.util.ContextHolder;
 
 import kotlin.io.FilesKt;
@@ -64,6 +64,7 @@ import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 import ru.playsoftware.j2meloader.util.FileUtils;
 import ru.playsoftware.j2meloader.ui.ThemedToast;
 import ru.woesss.util.TextUtils;
+import ru.woesss.j2me.jar.Descriptor;
 import static ru.playsoftware.j2meloader.config.ConfigFormEvents.ColorField;
 
 public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert.Callback {
@@ -79,6 +80,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private File dataDir;
 	private ProfileModel params;
 	private boolean isProfile;
+	private File appDir;
 	private Display display;
 	private File configDir;
 	private String defProfile;
@@ -228,7 +230,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			setTitle(path);
 		} else {
 			setTitle(intent.getStringExtra(KEY_MIDLET_NAME));
-			File appDir = new File(path);
+			appDir = new File(path);
 			File convertedDir = appDir.getParentFile();
 			if (!appDir.isDirectory() || convertedDir == null
 					|| (workDir = convertedDir.getParent()) == null) {
@@ -662,10 +664,10 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		if (needShow && configDir != null) {
 			saveParams();
 		}
-		Intent i = new Intent(this, MicroActivity.class);
-		i.setData(getIntent().getData());
-		i.putExtra(KEY_MIDLET_NAME, getIntent().getStringExtra(KEY_MIDLET_NAME));
-		startActivity(i);
+		Config.startApp(
+				this,
+				getIntent().getStringExtra(KEY_MIDLET_NAME),
+				getIntent().getData());
 		finish();
 	}
 
@@ -984,7 +986,20 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 		return new ConfigUiState(state, screenPresets, fontPresets, skinOptions, soundBankOptions,
 				shaders == null ? Collections.emptyList() : shaders, removableScreenPresets,
-				profileStatus, templates);
+				profileStatus, templates, isProfile || hasCompatibleTimingTransform());
+	}
+
+	private boolean hasCompatibleTimingTransform() {
+		if (appDir == null) {
+			return false;
+		}
+		try {
+			Descriptor descriptor = new Descriptor(
+					new File(appDir, Config.MIDLET_MANIFEST_FILE), false);
+			return TimingTransformMetadata.isCompatible(descriptor.getAttrs());
+		} catch (IOException | RuntimeException e) {
+			return false;
+		}
 	}
 
 	@Nullable

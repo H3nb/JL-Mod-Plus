@@ -349,6 +349,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		}
 		// A crashed MIDlet must not be relaunched indefinitely by the launcher dispatcher. The
 		// durable marker is reserved for a system/background kill, which has no callback here.
+		microLoader.closeTimingSession();
 		clearActiveSession();
 		return true;
 	}
@@ -386,6 +387,7 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 			}
 			Thread.setDefaultUncaughtExceptionHandler(POST_DESTROY_UNCAUGHT_HANDLER);
 		}
+		microLoader.closeTimingSession();
 		clearActiveSession();
 		return true;
 	}

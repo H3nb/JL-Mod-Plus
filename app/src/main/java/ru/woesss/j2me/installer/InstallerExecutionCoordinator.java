@@ -17,13 +17,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import ru.playsoftware.j2meloader.librarydb.LibraryViewModel;
 
 /**
- * Process-scoped guard for the physical AppInstaller conversion/publish lifetime.
+ * Process-scoped guard for physical installed-app conversion, publish, and deletion.
  *
  * Source inspection intentionally stays outside this permit. Request-owned scratch keeps those
  * pending inspections isolated while DX, Library staging, filesystem publish, Room commit, and the
  * post-commit projection barrier remain strictly serialized.
  */
-final class InstallerExecutionCoordinator {
+public final class InstallerExecutionCoordinator {
     private static final long VISIBILITY_TIMEOUT_MILLIS = 10_000L;
     private static final Semaphore INSTALL_PERMIT = new Semaphore(1, true);
     private static final ExecutorService VISIBILITY_EXECUTOR = Executors.newSingleThreadExecutor(runnable -> {
@@ -36,7 +36,13 @@ final class InstallerExecutionCoordinator {
         void complete(Throwable error);
     }
 
-    static Permit acquire() throws IOException {
+    /**
+     * Acquires the process-wide lease for any mutation of an installed converted app directory.
+     *
+     * <p>Deletion uses the same lease as conversion so an automatic reconversion cannot publish a
+     * directory after a concurrent user delete has already removed it.</p>
+     */
+    public static Permit acquire() throws IOException {
         try {
             INSTALL_PERMIT.acquire();
             return new Permit();
@@ -69,7 +75,7 @@ final class InstallerExecutionCoordinator {
         });
     }
 
-    static final class Permit implements AutoCloseable {
+    public static final class Permit implements AutoCloseable {
         private final AtomicBoolean closed = new AtomicBoolean();
 
         @Override

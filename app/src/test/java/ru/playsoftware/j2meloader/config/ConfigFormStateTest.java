@@ -21,6 +21,8 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import javax.microedition.shell.timing.TimingMode;
+
 public class ConfigFormStateTest {
 	@Test
 	public void applyToKeepsLegacyParsingAndFallbackRules() {
@@ -40,6 +42,8 @@ public class ConfigFormStateTest {
 				.screenScaleRatio("invalid")
 				.screenPadding("invalid")
 				.fpsLimit("invalid")
+				.emulationSpeed("invalid")
+				.showEmulationSpeed(true)
 				.fontSizeSmall("invalid")
 				.fontSizeMedium("22")
 				.fontSizeLarge("26")
@@ -68,6 +72,9 @@ public class ConfigFormStateTest {
 		assertEquals(22, model.fontSizeMedium);
 		assertEquals(26, model.fontSizeLarge);
 		assertEquals(0, model.vkHideDelay);
+		assertEquals(100, model.emulationSpeedPercent);
+		assertTrue(model.showEmulationSpeed);
+		assertEquals(TimingMode.FULL_GUEST_TIME, model.timingMode);
 		assertEquals(0x445566, model.vkBgColor);
 		assertEquals(0x778899, model.vkFgColor);
 		assertEquals(0xAABBCC, model.vkBgColorSelected);
@@ -88,6 +95,9 @@ public class ConfigFormStateTest {
 		model.screenBackgroundColor = 0x00AB0C;
 		model.screenScaleRatio = 125;
 		model.fpsLimit = 60;
+		model.emulationSpeedPercent = 250;
+		model.showEmulationSpeed = true;
+		model.timingMode = TimingMode.REAL_WALL_CLOCK;
 		model.vkHideDelay = 250;
 		model.vkBgColor = 0x010203;
 		model.showKeyboard = true;
@@ -100,6 +110,9 @@ public class ConfigFormStateTest {
 		assertEquals("00AB0C", state.screenBackground);
 		assertEquals("125", state.screenScaleRatio);
 		assertEquals("60", state.fpsLimit);
+		assertEquals("250", state.emulationSpeed);
+		assertTrue(state.showEmulationSpeed);
+		assertEquals(TimingMode.REAL_WALL_CLOCK, state.timingMode);
 		assertEquals("250", state.vkHideDelay);
 		assertEquals("010203", state.vkBackground);
 		assertEquals("64", Integer.toString(state.vkAlpha));
@@ -137,5 +150,19 @@ public class ConfigFormStateTest {
 		assertTrue(changed.showKeyboard);
 		assertEquals(64, changed.vkAlpha);
 		assertEquals("microedition.platform: test\n", changed.systemProperties);
+	}
+
+	@Test
+	public void invalidFormSpeedFallsBackToNormalWithoutAffectingMonitorFlag() {
+		ProfileModel model = new ProfileModel();
+		ConfigFormState.builder()
+				.emulationSpeed("1601")
+				.showEmulationSpeed(true)
+				.build()
+				.applyTo(model);
+
+		assertEquals(100, model.emulationSpeedPercent);
+		assertTrue(model.showEmulationSpeed);
+		assertEquals(TimingMode.FULL_GUEST_TIME, model.timingMode);
 	}
 }

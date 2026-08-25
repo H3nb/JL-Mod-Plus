@@ -48,6 +48,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Display;
@@ -78,10 +79,15 @@ import ru.playsoftware.j2meloader.util.AppUtils;
 import ru.playsoftware.j2meloader.util.FileUtils;
 import ru.playsoftware.j2meloader.util.IOUtils;
 import ru.woesss.j2me.jar.Descriptor;
+import javax.microedition.shell.timing.EmulationSpeed;
+import javax.microedition.shell.timing.TimingSession;
+import javax.microedition.shell.timing.TimingMode;
+import javax.microedition.shell.timing.TimingTransformMetadata;
 
 public class MicroLoader {
 	private static final String TAG = MicroLoader.class.getName();
 	private static final char[] HEX = "0123456789abcdef".toCharArray();
+	private static final AtomicLong NEXT_TIMING_GENERATION = new AtomicLong(1L);
 	private static String soundBank;
 	private final Map<String, String> midlets = new LinkedHashMap<>();
 
@@ -94,6 +100,10 @@ public class MicroLoader {
 	private String midletVersion;
 	private String jarSize;
 	private String jarSha256;
+	private TimingSession timingSession;
+	private boolean timingTransformCompatible;
+	/** Set only after the MIDlet thread has successfully received the timing session. */
+	private boolean timingSessionTransferred;
 
 	MicroLoader(String appPath) {
 		this.appDir = new File(appPath);
@@ -110,6 +120,12 @@ public class MicroLoader {
 		if (params == null) {
 			return false;
 		}
+		timingTransformCompatible = hasCompatibleTimingTransform();
+		TimingSession activeSession = GuestTimingBridge.activeSession();
+		if (activeSession != null && !activeSession.isClosed()) {
+			Log.e(TAG, "A MIDlet timing session is already active");
+			return false;
+		}
 		applyLinkedBuiltInTheme(config);
 		Display.initDisplay();
 		Graphics3D.initGraphics3D();
@@ -124,6 +140,71 @@ public class MicroLoader {
 				.build();
 		StrictMode.setThreadPolicy(policy);
 		return true;
+	}
+
+	private void startTimingSession() {
+		if (timingSession != null && !timingSession.isClosed()) {
+			return;
+		}
+		TimingSession session = new TimingSession(
+				EmulationSpeed.NORMAL_PERCENT,
+				NEXT_TIMING_GENERATION.getAndIncrement(),
+				timingTransformCompatible
+						? TimingMode.sanitize(params.timingMode)
+						: TimingMode.FULL_GUEST_TIME);
+		GuestTimingBridge.install(session);
+		timingSession = session;
+	}
+
+	void closeTimingSession() {
+		TimingSession session = timingSession;
+		timingSession = null;
+		GuestTimingBridge.clear(session);
+	}
+
+	/**
+	 * Releases a session created for a launch that never reached a MidletThread. This is called
+	 * from Activity teardown; once the thread has started, its lifecycle/failure paths own cleanup.
+	 */
+	void closeTimingSessionIfNotTransferred() {
+		if (!timingSessionTransferred) {
+			closeTimingSession();
+		}
+	}
+
+	TimingSession getTimingSession() {
+		return timingSession;
+	}
+
+	boolean isTimingTransformCompatible() {
+		return timingTransformCompatible;
+	}
+
+	/** Applies a runtime-only speed change without mutating the persisted MIDlet profile. */
+	boolean setRuntimeEmulationSpeed(int speedPercent) {
+		if (!timingTransformCompatible
+				|| timingSession == null
+				|| GuestTimingBridge.activeSession() != timingSession
+				|| !EmulationSpeed.isValidPercent(speedPercent)) {
+			return false;
+		}
+		try {
+			timingSession.updateSpeedPercent(speedPercent);
+			return true;
+		} catch (IllegalStateException e) {
+			return false;
+		}
+	}
+
+	private boolean hasCompatibleTimingTransform() {
+		try {
+			Descriptor descriptor = new Descriptor(
+					new File(appDir, Config.MIDLET_MANIFEST_FILE), false);
+			return TimingTransformMetadata.isCompatible(descriptor.getAttrs());
+		} catch (IOException | RuntimeException e) {
+			Log.w(TAG, "Timing transform metadata is unavailable", e);
+			return false;
+		}
 	}
 
 	/** Applies only the theme-owned colors for a linked built-in profile at runtime. */
@@ -215,8 +296,11 @@ public class MicroLoader {
 			IllegalAccessException, NoSuchMethodException, InvocationTargetException, IOException {
 		if (BuildConfig.FULL_EMULATOR) {
 			File dexSource = new File(appDir, Config.MIDLET_DEX_ARCH);
-			if (!dexSource.exists()) {
+			if (!Config.isUsableFile(dexSource)) {
 				dexSource = new File(appDir, Config.MIDLET_DEX_FILE);
+			}
+			if (!Config.isUsableFile(dexSource)) {
+				throw new IOException("Converted MIDlet payload is missing or empty");
 			}
 			File codeCacheDir = ContextCompat.getCodeCacheDir(ContextHolder.getActivity());
 			File dexOptDir = new File(codeCacheDir, Config.DEX_OPT_CACHE_DIR);
@@ -236,8 +320,13 @@ public class MicroLoader {
 			ClassLoader loader = new AppClassLoader(dexSource.getAbsolutePath(),
 					dexOptDir.getAbsolutePath(), ContextHolder.getActivity().getClassLoader(), appDir);
 			Log.i(TAG, "loadMIDletList main: " + mainClass + " from dex:" + dexSource.getPath());
+			// Preserve the legacy one-argument reflection ABI for converted archives. New
+			// conversion passes an explicit caller token, but old artifacts need the child loader
+			// visible before their constructor/static code invokes Class.forName().
+			Thread.currentThread().setContextClassLoader(loader);
 			//noinspection unchecked
 			Class<MIDlet> clazz = (Class<MIDlet>) loader.loadClass(mainClass);
+			Thread.currentThread().setContextClassLoader(clazz.getClassLoader());
 			Constructor<MIDlet> init = clazz.getDeclaredConstructor();
 			init.setAccessible(true);
 			return init.newInstance();
@@ -245,6 +334,7 @@ public class MicroLoader {
 			AppClassLoader.setDataDir(appDir);
 			//noinspection unchecked
 			Class<MIDlet> clazz = (Class<MIDlet>) Class.forName(mainClass);
+			Thread.currentThread().setContextClassLoader(clazz.getClassLoader());
 			Constructor<MIDlet> init = clazz.getDeclaredConstructor();
 			init.setAccessible(true);
 			return init.newInstance();
@@ -303,6 +393,7 @@ public class MicroLoader {
 				shader.dir = workDir + Config.SHADERS_DIR;
 			}
 			Canvas.setSettings(params);
+			Canvas.setTimingOverlayEnabled(timingTransformCompatible);
 
 			Font.applySettings(params);
 
@@ -363,24 +454,38 @@ public class MicroLoader {
 	}
 
 	void loadMidlet(String clazz, String appName) {
-		MidletSessionStore.markStarted(ContextHolder.getAppContext(), appDir.getPath(), appName, clazz);
-		MidletSessionJournal journal = MidletSessionJournal.create(
-				ContextHolder.getAppContext(),
-				midletName,
-				midletVendor,
-				midletVersion,
-				clazz,
-				jarSize,
-				jarSha256,
-				workDir,
-				appDirName
-		);
-		CrashReporter.setMidletMainClass(clazz);
-		MidletThread midletThread = new MidletThread(this, clazz, journal);
-		midletThread.start();
-		if (!BuildConfig.FULL_EMULATOR) {
+		if (timingSessionTransferred) {
 			return;
 		}
-		AppUtils.pushToRecentShortcuts(ContextHolder.getActivity(), appDir.getPath(), appName);
+		startTimingSession();
+		try {
+			MidletSessionStore.markStarted(ContextHolder.getAppContext(), appDir.getPath(), appName, clazz);
+			MidletSessionJournal journal = MidletSessionJournal.create(
+					ContextHolder.getAppContext(),
+					midletName,
+					midletVendor,
+					midletVersion,
+					clazz,
+					jarSize,
+					jarSha256,
+					workDir,
+					appDirName
+			);
+			CrashReporter.setMidletMainClass(clazz);
+			MidletThread midletThread = new MidletThread(this, clazz, journal);
+			midletThread.start();
+			// The thread now owns lifecycle cleanup. Set this after start() so a failed thread start
+			// still rolls back the session in the catch block below.
+			timingSessionTransferred = true;
+			if (!BuildConfig.FULL_EMULATOR) {
+				return;
+			}
+			AppUtils.pushToRecentShortcuts(ContextHolder.getActivity(), appDir.getPath(), appName);
+		} catch (RuntimeException | Error failure) {
+			if (!timingSessionTransferred) {
+				closeTimingSession();
+			}
+			throw failure;
+		}
 	}
 }
