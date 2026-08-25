@@ -3,6 +3,7 @@
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2020 Nikita Shakarun
  * Copyright 2020-2026 Yriy Kharchenko
+ * Modified in 2026 for host-only Memory Editor diagnostics.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,6 +198,15 @@ public abstract class Displayable {
 
 	public Ticker getTicker() {
 		return ticker;
+	}
+
+	/**
+	 * Host-only bridge for diagnostics such as the runtime Memory Editor. The returned snapshot
+	 * contains callback objects which are otherwise held by this host-owned Displayable and are
+	 * therefore intentionally not exposed through recursive reflection.
+	 */
+	public Object[] snapshotMemoryEditorTargets() {
+		return new Object[]{listener, ticker};
 	}
 
 	protected void sizeChanged(int w, int h) {

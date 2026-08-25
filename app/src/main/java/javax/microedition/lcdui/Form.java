@@ -3,6 +3,7 @@
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2018 Nikita Shakarun
  * Copyright 2020-2026 Yury Kharchenko
+ * Modified in 2026 for host-only Memory Editor diagnostics.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,6 +158,17 @@ public class Form extends Screen {
 
 	public void setItemStateListener(ItemStateListener listener) {
 		this.listener = listener;
+	}
+
+	/** Host-only child snapshot used by runtime diagnostics without reflecting through Android UI state. */
+	@Override
+	public Object[] snapshotMemoryEditorTargets() {
+		Object[] result = new Object[items.size() + 1];
+		result[0] = listener;
+		for (int index = 0; index < items.size(); index++) {
+			result[index + 1] = items.get(index);
+		}
+		return result;
 	}
 
 	void notifyItemStateChanged(Item item) {
