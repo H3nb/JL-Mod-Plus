@@ -47,6 +47,8 @@ public class Config {
 	public static final String MIDLET_DATA_DIR = "/data/";
 	public static final String MIDLET_DEX_ARCH = "/converted.zip";
 	public static final String MIDLET_DEX_FILE = "/converted.dex";
+	/** Versioned Memory Editor source/runtime binding metadata paired with the converted payload. */
+	public static final String MIDLET_MEMORY_METADATA = "/memory-editor.meta";
 	public static final String MIDLET_ICON_FILE = "/icon.png";
 	public static final String MIDLET_KEY_LAYOUT_FILE = "/VirtualKeyboardLayout";
 	public static final String MIDLET_MANIFEST_FILE = MIDLET_DEX_FILE + ".conf";
