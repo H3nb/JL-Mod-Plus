@@ -16,6 +16,7 @@ package ru.playsoftware.j2meloader.config;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -77,10 +78,12 @@ public class ProfileLinksTest {
 
 		assertEquals(320, readConfig(configDir).screenWidth);
 		assertArrayEquals(new byte[]{4, 5, 6}, readBytes(localKeyboard()));
+		assertFalse(ProfileLinks.isSettingsModified(configDir));
+		assertFalse(ProfileLinks.isKeyboardModified(configDir));
 	}
 
 	@Test
-	public void localChangesDetachOnlyTheChangedComponent() throws Exception {
+	public void localChangesStayLinkedAndBecomeModified() throws Exception {
 		writeConfig(settingsProfile, 240);
 		writeBytes(keyboardProfile.getKeyLayout(), new byte[]{1});
 		ProfilesManager.load(settingsProfile, configDir.getPath(), true, false);
@@ -97,8 +100,10 @@ public class ProfileLinksTest {
 
 		assertEquals(176, readConfig(configDir).screenWidth);
 		assertArrayEquals(new byte[]{9}, readBytes(localKeyboard()));
-		assertNull(ProfileLinks.getSettingsProfile(configDir));
-		assertNull(ProfileLinks.getKeyboardProfile(configDir));
+		assertEquals(settingsProfile.getName(), ProfileLinks.getSettingsProfile(configDir));
+		assertEquals(keyboardProfile.getName(), ProfileLinks.getKeyboardProfile(configDir));
+		assertTrue(ProfileLinks.isSettingsModified(configDir));
+		assertTrue(ProfileLinks.isKeyboardModified(configDir));
 	}
 
 	@Test
@@ -109,12 +114,14 @@ public class ProfileLinksTest {
 		ProfileModel local = readConfig(configDir);
 		local.screenWidth = 360;
 		assertTrue(ProfilesManager.saveConfig(local));
+		assertTrue(ProfileLinks.isSettingsModified(configDir));
 		ProfilesManager.save(settingsProfile, configDir.getPath(), true, false);
 
 		ProfileLinks.resolve(configDir);
 		assertEquals(settingsProfile.getName(), ProfileLinks.getSettingsProfile(configDir));
 		assertEquals(360, readConfig(configDir).screenWidth);
 		assertEquals(360, readConfig(settingsProfile.getDir()).screenWidth);
+		assertFalse(ProfileLinks.isSettingsModified(configDir));
 	}
 
 	@Test
@@ -132,10 +139,12 @@ public class ProfileLinksTest {
 		ProfileLinks.resolve(configDir);
 
 		assertEquals(settingsProfile.getName(), ProfileLinks.getSettingsProfile(configDir));
-		assertNull(ProfileLinks.getKeyboardProfile(configDir));
+		assertEquals(settingsProfile.getName(), ProfileLinks.getKeyboardProfile(configDir));
 		assertEquals(360, readConfig(configDir).screenWidth);
 		assertArrayEquals(new byte[]{9}, readBytes(localKeyboard()));
 		assertArrayEquals(new byte[]{1}, readBytes(settingsProfile.getKeyLayout()));
+		assertFalse(ProfileLinks.isSettingsModified(configDir));
+		assertTrue(ProfileLinks.isKeyboardModified(configDir));
 	}
 
 	@Test
@@ -156,6 +165,26 @@ public class ProfileLinksTest {
 		assertEquals(176, readConfig(configDir).screenWidth);
 		assertEquals(keyboardProfile.getName(), ProfileLinks.getSettingsProfile(configDir));
 		assertEquals(settingsProfile.getName(), ProfileLinks.getKeyboardProfile(configDir));
+		assertFalse(ProfileLinks.isKeyboardModified(configDir));
+	}
+
+	@Test
+	public void explicitDetachKeepsTheLastMaterializedCopy() throws Exception {
+		writeConfig(settingsProfile, 240);
+		writeBytes(keyboardProfile.getKeyLayout(), new byte[]{1, 2});
+		ProfilesManager.load(settingsProfile, configDir.getPath(), true, false);
+		ProfilesManager.load(keyboardProfile, configDir.getPath(), false, true);
+
+		ProfileLinks.detachSettings(configDir);
+		ProfileLinks.detachKeyboard(configDir);
+		writeConfig(settingsProfile, 320);
+		writeBytes(keyboardProfile.getKeyLayout(), new byte[]{7, 8});
+		ProfileLinks.resolve(configDir);
+
+		assertNull(ProfileLinks.getSettingsProfile(configDir));
+		assertNull(ProfileLinks.getKeyboardProfile(configDir));
+		assertEquals(240, readConfig(configDir).screenWidth);
+		assertArrayEquals(new byte[]{1, 2}, readBytes(localKeyboard()));
 	}
 
 	@Test
