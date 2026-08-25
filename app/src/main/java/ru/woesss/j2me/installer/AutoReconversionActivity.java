@@ -34,6 +34,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.compose.ui.platform.ComposeView;
 
 import java.io.File;
+import java.io.IOException;
 
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -123,6 +124,18 @@ public final class AutoReconversionActivity extends AppCompatActivity {
     }
 
     private void startReconversion() {
+        // Config.startApp normally routes a legacy payload here only when a retained source JAR
+        // exists. Re-check at the last responsible moment as the source can be removed between
+        // the library click and Activity creation. A usable legacy payload must remain launchable
+        // at normal speed; it must not be blocked by an impossible reconversion request.
+        if (!AppReconverter.hasRetainedSource(appDir)) {
+            if (AppReconverter.hasUsableConvertedPayload(appDir)) {
+                launchMidlet();
+            } else {
+                showError(new IOException("Retained MIDlet JAR and converted payload are unavailable"));
+            }
+            return;
+        }
         disposables.add(Single.fromCallable(() -> {
             AppReconverter.reconvert(appDir);
             if (AppReconverter.needsReconversion(appDir)) {

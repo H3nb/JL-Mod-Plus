@@ -171,7 +171,33 @@ public class GuestTimingBridgeTest {
 		}
 	}
 
+	@Test
+	public void callerAwareReflectiveDateConstructionUsesGuestClock() throws Exception {
+		FakeTimeSource time = new FakeTimeSource(1_700_000_000_000L);
+		TimingSession session = new TimingSession(time, 200, 1L);
+		GuestTimingBridge.install(session);
+		try {
+			time.monotonicNanos = 500_000_000L;
+			assertEquals(1_700_000_001_000L,
+					((Date) GuestTimingBridge.newInstance(Date.class,
+							GuestTimingBridgeTest.class)).getTime());
+		} finally {
+			GuestTimingBridge.clear(session);
+		}
+	}
+
+	@Test
+	public void callerAwareReflectiveConstructionRetainsPackageAccess() throws Exception {
+		assertTrue(GuestTimingBridge.newInstance(PackagePrivateGuest.class,
+				GuestTimingBridgeTest.class) instanceof PackagePrivateGuest);
+	}
+
 	private static final class GuestOnly {
+	}
+
+	static final class PackagePrivateGuest {
+		PackagePrivateGuest() {
+		}
 	}
 
 	private static final class ChildOnlyLoader extends ClassLoader {

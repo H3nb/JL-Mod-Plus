@@ -16,6 +16,9 @@ package javax.microedition.shell;
 
 import androidx.annotation.Nullable;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
@@ -153,7 +156,10 @@ public final class GuestTimingBridge {
 		return (type.isInterface() ? "interface " : "class ") + name;
 	}
 
-	/** Replacement for transformed Class.newInstance() so reflective Date construction uses guest time. */
+	/**
+	 * Legacy ABI retained for already converted archives. New transforms use the caller-aware
+	 * overload below so the guest caller's access checks remain intact.
+	 */
 	@SuppressWarnings("deprecation")
 	public static Object newInstance(Class<?> type)
 			throws InstantiationException, IllegalAccessException {
@@ -164,6 +170,119 @@ public final class GuestTimingBridge {
 			return newDate();
 		}
 		return type.newInstance();
+	}
+
+	/**
+	 * Caller-aware replacement for newly transformed Class.newInstance() calls. The caller token
+	 * keeps access checks relative to the guest class instead of this parent-owned bridge. Date is
+	 * the one special case: its empty constructor must use the guest clock, just like a direct
+	 * {@code new Date()} call.
+	 */
+	public static Object newInstance(Class<?> type, @Nullable Class<?> caller)
+			throws InstantiationException, IllegalAccessException {
+		if (type == null) {
+			throw new NullPointerException("type");
+		}
+		if (type == Date.class) {
+			return newDate();
+		}
+
+		if (type.isPrimitive() || type.isArray() || type.isInterface()
+				|| Modifier.isAbstract(type.getModifiers())) {
+			throw new InstantiationException(type.getName());
+		}
+
+		Constructor<?> constructor;
+		try {
+			constructor = type.getDeclaredConstructor();
+		} catch (NoSuchMethodException error) {
+			InstantiationException failure = new InstantiationException(type.getName());
+			failure.initCause(error);
+			throw failure;
+		}
+		if (!isAccessibleFrom(constructor, type, caller)) {
+			throw new IllegalAccessException(type.getName());
+		}
+
+		try {
+			if (!Modifier.isPublic(type.getModifiers())
+					|| !Modifier.isPublic(constructor.getModifiers())) {
+				constructor.setAccessible(true);
+			}
+			return constructor.newInstance();
+		} catch (InvocationTargetException error) {
+			return GuestTimingBridge.<RuntimeException>rethrow(error.getCause());
+		} catch (SecurityException error) {
+			IllegalAccessException failure = new IllegalAccessException(type.getName());
+			failure.initCause(error);
+			throw failure;
+		}
+	}
+
+	private static boolean isAccessibleFrom(
+			Constructor<?> constructor, Class<?> type, @Nullable Class<?> caller) {
+		int constructorModifiers = constructor.getModifiers();
+		if (caller == null) {
+			return Modifier.isPublic(type.getModifiers())
+					&& Modifier.isPublic(constructorModifiers);
+		}
+		if (!isTypeAccessibleFrom(type, caller)) {
+			return false;
+		}
+		if (Modifier.isPublic(constructorModifiers)) {
+			return true;
+		}
+		if (sameNest(caller, type)) {
+			return true;
+		}
+		if (Modifier.isPrivate(constructorModifiers)) {
+			return false;
+		}
+		return sameRuntimePackage(caller, type)
+				|| (Modifier.isProtected(constructorModifiers) && type.isAssignableFrom(caller));
+	}
+
+	private static boolean isTypeAccessibleFrom(Class<?> type, Class<?> caller) {
+		if (Modifier.isPublic(type.getModifiers())) {
+			return true;
+		}
+		if (sameNest(caller, type) || sameRuntimePackage(caller, type)) {
+			return true;
+		}
+		return Modifier.isProtected(type.getModifiers()) && type.isAssignableFrom(caller);
+	}
+
+	/** Java ME targets predate nestmate APIs, so derive the class-file nest host from nesting. */
+	private static boolean sameNest(Class<?> left, Class<?> right) {
+		if (left.getClassLoader() != right.getClassLoader()) {
+			return false;
+		}
+		return nestHost(left) == nestHost(right);
+	}
+
+	private static Class<?> nestHost(Class<?> type) {
+		Class<?> enclosing = type.getEnclosingClass();
+		while (enclosing != null) {
+			type = enclosing;
+			enclosing = type.getEnclosingClass();
+		}
+		return type;
+	}
+
+	private static boolean sameRuntimePackage(Class<?> left, Class<?> right) {
+		if (left.getClassLoader() != right.getClassLoader()) {
+			return false;
+		}
+		Package leftPackage = left.getPackage();
+		Package rightPackage = right.getPackage();
+		String leftName = leftPackage == null ? "" : leftPackage.getName();
+		String rightName = rightPackage == null ? "" : rightPackage.getName();
+		return leftName.equals(rightName);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <T extends Throwable> Object rethrow(Throwable error) throws T {
+		throw (T) error;
 	}
 
 	private static String mapReflectionName(String name) {

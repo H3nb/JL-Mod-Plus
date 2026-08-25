@@ -15,6 +15,7 @@
 package org.microemu.android.asm;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -103,7 +104,7 @@ public class AndroidMethodVisitorTest {
 	}
 
 	@Test
-	public void legacyTimerReflectionUsesParentOwnedBridge() {
+	public void reflectionRewritesGuestIdentityAndPreservesNewInstanceAccessSemantics() {
 		byte[] transformed = transform(createTimerReflectionClass());
 		List<String> calls = methodCalls(transformed, "reflectiveTimer");
 
@@ -116,9 +117,11 @@ public class AndroidMethodVisitorTest {
 		assertTrue(calls.contains(
 				"INVOKESTATIC javax/microedition/shell/GuestTimingBridge.classToString"
 						+ "(Ljava/lang/Class;)Ljava/lang/String;"));
-		assertTrue(calls.contains(
+		assertTrue(calls.toString(), calls.contains(
 				"INVOKESTATIC javax/microedition/shell/GuestTimingBridge.newInstance"
-						+ "(Ljava/lang/Class;)Ljava/lang/Object;"));
+						+ "(Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/Object;"));
+		assertFalse(calls.contains(
+				"INVOKEVIRTUAL java/lang/Class.newInstance()Ljava/lang/Object;"));
 	}
 
 
@@ -395,6 +398,9 @@ public class AndroidMethodVisitorTest {
 		}
 		if (opcode == Opcodes.INVOKESPECIAL) {
 			return "INVOKESPECIAL";
+		}
+		if (opcode == Opcodes.INVOKEVIRTUAL) {
+			return "INVOKEVIRTUAL";
 		}
 		return Integer.toString(opcode);
 	}

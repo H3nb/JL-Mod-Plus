@@ -40,4 +40,22 @@ public class TimingTransformMetadataTest {
 		assertFalse(TimingTransformMetadata.isCompatible(attributes));
 		assertFalse(TimingTransformMetadata.isCompatible(null));
 	}
+
+	@Test
+	public void previousTransformerVersionIsRejectedForAutomaticReconversion() {
+		Map<String, String> attributes = new HashMap<>();
+		attributes.put(TimingTransformMetadata.TRANSFORM_VERSION_ATTRIBUTE, "4");
+		attributes.put(TimingTransformMetadata.BRIDGE_ABI_ATTRIBUTE, "4");
+
+		assertFalse(TimingTransformMetadata.isCompatible(attributes));
+	}
+
+	@Test
+	public void versionFiveIsRejectedAfterCallerAwareReflectionRewrite() {
+		Map<String, String> attributes = new HashMap<>();
+		attributes.put(TimingTransformMetadata.TRANSFORM_VERSION_ATTRIBUTE, "5");
+		attributes.put(TimingTransformMetadata.BRIDGE_ABI_ATTRIBUTE, "4");
+
+		assertFalse(TimingTransformMetadata.isCompatible(attributes));
+	}
 }

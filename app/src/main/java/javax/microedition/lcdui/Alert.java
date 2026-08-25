@@ -193,8 +193,8 @@ public class Alert extends Screen {
 		return contentModal || commandCount() > 1 ? FOREVER : timeout;
 	}
 
-	boolean finiteTimeout() {
-		return timeout > 0 && !contentModal && commandCount() <= 1;
+	private boolean finiteTimeout(ArrayList<Command> commandSnapshot) {
+		return timeout > 0 && !contentModal && commandSnapshot.size() <= 1;
 	}
 
 	AlertDialog prepareDialog() {
@@ -371,8 +371,9 @@ public class Alert extends Screen {
 			if (dialog != alertDialog) {
 				return;
 			}
+			ArrayList<Command> commandSnapshot = snapshotCommands();
 			contentModal = decor != null && contentRequiresScrolling(decor);
-			boolean commandModal = commandCount() > 1;
+			boolean commandModal = commandSnapshot.size() > 1;
 			if (contentModal || commandModal) {
 				alertDialog.setCancelable(false);
 				alertDialog.setCanceledOnTouchOutside(false);
@@ -380,7 +381,7 @@ public class Alert extends Screen {
 				alertDialog.setCancelable(true);
 				alertDialog.setCanceledOnTouchOutside(true);
 			} else {
-				boolean hasExplicitCommand = !snapshotCommands().isEmpty();
+				boolean hasExplicitCommand = !commandSnapshot.isEmpty();
 				alertDialog.setCancelable(!hasExplicitCommand);
 				alertDialog.setCanceledOnTouchOutside(!hasExplicitCommand);
 			}
@@ -438,7 +439,7 @@ public class Alert extends Screen {
 			timeoutTimingSession = null;
 			timeoutTimingListener = null;
 
-			if (finiteTimeout()) {
+			if (finiteTimeout(commandSnapshot)) {
 				if (timeoutGuestDeadlineMillis == 0L && timeoutHostDeadlineNanos == 0L) {
 					TimingSession activeSession = GuestTimingBridge.activeSession();
 					TimingSnapshot snapshot = activeSession == null

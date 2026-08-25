@@ -279,9 +279,7 @@ public class MicroActivity extends AppCompatActivity {
 
 					@Override
 					public void onResetEmulationSpeed() {
-						onSetEmulationSpeed(microLoader == null
-								? EmulationSpeed.NORMAL_PERCENT
-								: microLoader.getConfiguredEmulationSpeedPercent());
+						onSetEmulationSpeed(EmulationSpeed.NORMAL_PERCENT);
 					}
 
 					@Override
