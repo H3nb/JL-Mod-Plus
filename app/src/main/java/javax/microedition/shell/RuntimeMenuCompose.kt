@@ -27,6 +27,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.toggleable
@@ -825,6 +827,8 @@ private fun MemoryEditorDialog(
     val regionIndexes = remember { mutableStateMapOf<Long, String>() }
     val regionDrafts = remember { mutableStateMapOf<Long, String>() }
     val layout = runtimeMenuDialogLayout()
+    val snapshotReady = stringResource(R.string.memory_editor_snapshot_ready)
+    val exactEmpty = stringResource(R.string.memory_editor_exact_empty)
 
     fun runScan(query: MemoryEditorSession.Query, reset: Boolean) {
         if (scanning) return
@@ -841,6 +845,8 @@ private fun MemoryEditorDialog(
             scanning = false
             status = when {
                 next.isCancelled -> "CANCELLED"
+                query.getMode() == MemoryEditorSession.SearchMode.ALL -> snapshotReady
+                query.getMode() == MemoryEditorSession.SearchMode.EXACT && next.candidates.isEmpty() -> exactEmpty
                 next.isCoverageIncomplete -> "${next.candidates.size} results; coverage incomplete (${next.scannedObjects} objects, ${next.scannedFields} fields)"
                 else -> "${next.candidates.size} results (${next.scannedObjects} objects, ${next.scannedFields} fields)"
             }
@@ -854,6 +860,12 @@ private fun MemoryEditorDialog(
         title = { Text(stringResource(R.string.memory_editor)) },
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = stringResource(R.string.memory_editor_workflow_help),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
                 OutlinedTextField(
                     value = queryText,
                     onValueChange = { queryText = it },
@@ -921,7 +933,8 @@ private fun MemoryEditorDialog(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 4.dp),
+                        .padding(top = 4.dp)
+                        .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     TextButton(
@@ -949,6 +962,20 @@ private fun MemoryEditorDialog(
                         },
                     ) {
                         Text(stringResource(R.string.memory_editor_refine))
+                    }
+                    if (session.hasPreviousSearchStep()) {
+                        TextButton(
+                            enabled = !scanning,
+                            onClick = {
+                                result = session.undoSearch()
+                                val restoredQuery = session.getLastQuery()
+                                queryText = restoredQuery?.getFirst().orEmpty()
+                                refineMode = memoryRefineMode(restoredQuery)
+                                status = "Previous search step restored"
+                            },
+                        ) {
+                            Text(stringResource(R.string.memory_editor_undo))
+                        }
                     }
                     if (scanning) {
                         CircularProgressIndicator(
