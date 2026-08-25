@@ -1,5 +1,6 @@
 /*
  *  MicroEmulator
+ *  Modified in 2026 for the host Memory Editor RMS semantic gate.
  *  Copyright (C) 2001-2005 Bartek Teodorczyk <barteo@barteo.net>
  *  Copyright (C) 2018 Nikita Shakarun
  *
@@ -42,6 +43,7 @@ import javax.microedition.rms.RecordStore;
 import javax.microedition.rms.RecordStoreException;
 import javax.microedition.rms.RecordStoreFullException;
 import javax.microedition.rms.RecordStoreNotOpenException;
+import javax.microedition.shell.MemoryEditorRmsGate;
 
 public class RecordStoreImpl extends RecordStore {
 	private static final String TAG = RecordStoreImpl.class.getName();
@@ -145,6 +147,7 @@ public class RecordStoreImpl extends RecordStore {
 	void setOpen() {
 		openCount++;
 		this.open = true;
+		MemoryEditorRmsGate.storeOpened(this);
 	}
 
 	@Override
@@ -165,6 +168,7 @@ public class RecordStoreImpl extends RecordStore {
 			records.clear();
 
 			open = false;
+			MemoryEditorRmsGate.storeClosed(this);
 		}
 		Log.d(TAG, "RecordStore " + recordStoreName + " closed");
 	}
@@ -378,6 +382,7 @@ public class RecordStoreImpl extends RecordStore {
 
 		byte[] recordData = new byte[numBytes];
 		System.arraycopy(newData, offset, recordData, 0, numBytes);
+		recordData = MemoryEditorRmsGate.beforeSetRecord(this, recordId, recordData);
 
 		synchronized (records) {
 			if (!records.containsKey(recordId)) {
