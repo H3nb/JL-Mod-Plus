@@ -36,9 +36,9 @@ import ru.playsoftware.j2meloader.util.FileUtils;
  * Keeps reusable profile components linked to per-game configuration files.
  *
  * <p>The game keeps a local materialized copy for compatibility with the existing runtime. Before
- * that copy is read, a linked component is refreshed from its profile when the local copy still
- * matches the last materialized version. If the local file changed independently, the link is
- * detached instead of overwriting the user's game-specific customization.</p>
+ * that copy is read, an unchanged linked component is refreshed from its profile. A local edit
+ * keeps the link as its origin and becomes a modified component; later profile updates do not
+ * overwrite that local edit until the user explicitly updates the profile or detaches the link.</p>
  */
 final class ProfileLinks {
 	private static final String TAG = ProfileLinks.class.getSimpleName();
@@ -94,6 +94,22 @@ final class ProfileLinks {
 		return getLinkedProfile(configDir, false);
 	}
 
+	static boolean isSettingsModified(@NonNull File configDir) {
+		return isModified(configDir, true);
+	}
+
+	static boolean isKeyboardModified(@NonNull File configDir) {
+		return isModified(configDir, false);
+	}
+
+	static void detachSettings(@NonNull File configDir) {
+		clearLink(configDir, true);
+	}
+
+	static void detachKeyboard(@NonNull File configDir) {
+		clearLink(configDir, false);
+	}
+
 	static void renameProfile(@NonNull String oldName, @NonNull String newName) {
 		if (oldName.equals(newName)) return;
 		SharedPreferences prefs = preferences();
@@ -140,7 +156,7 @@ final class ProfileLinks {
 		File source = settings ? profile.getConfig() : profile.getKeyLayout();
 		File local = localFile(configDir, settings);
 		if (!source.isFile()) {
-			// A renamed/deleted component must never destroy the last usable per-game copy.
+			// A deleted component must never destroy the last usable per-game copy.
 			clearLink(configDir, settings);
 			return;
 		}
@@ -155,14 +171,13 @@ final class ProfileLinks {
 				return;
 			}
 			if (localHash != null && lastHash != null && !lastHash.equals(localHash)) {
-				// The game copy changed since the last profile materialization. Treat it as an
-				// intentional local customization instead of silently overwriting it.
-				clearLink(configDir, settings);
+				// The game copy changed since the last materialization. Keep the source link so the
+				// UI can show "Profile · Modified", but never overwrite that local customization.
 				return;
 			}
 			if (localHash != null && lastHash == null) {
-				// Unknown provenance: preserve user data rather than guessing that it may be replaced.
-				clearLink(configDir, settings);
+				// Unknown provenance: preserve user data and keep the source visible. The first
+				// explicit apply/update will establish a safe baseline.
 				return;
 			}
 
@@ -170,6 +185,20 @@ final class ProfileLinks {
 			storeBaseline(configDir, settings, hash(local));
 		} catch (IOException | RuntimeException e) {
 			Log.e(TAG, "Unable to refresh linked profile component: " + profileName, e);
+		}
+	}
+
+	private static boolean isModified(@NonNull File configDir, boolean settings) {
+		if (getLinkedProfile(configDir, settings) == null) return false;
+		File local = localFile(configDir, settings);
+		String baseline = preferences().getString(hashKey(configDir, settings), null);
+		if (baseline == null) return local.isFile();
+		if (!local.isFile()) return true;
+		try {
+			return !baseline.equals(hash(local));
+		} catch (IOException e) {
+			Log.w(TAG, "Unable to inspect linked profile component", e);
+			return true;
 		}
 	}
 
