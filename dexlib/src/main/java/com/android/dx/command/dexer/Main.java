@@ -40,6 +40,7 @@ import com.android.dx.rop.cst.CstNat;
 import com.android.dx.rop.cst.CstString;
 
 import org.microemu.android.asm.AndroidProducer;
+import org.microemu.android.asm.MemoryEditorTransformMetadata;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -169,6 +170,9 @@ public class Main {
     /** true if any files are successfully processed */
     private volatile boolean anyFilesProcessed;
 
+    /** Conversion-local Memory Editor metadata collector, or {@code null} for legacy callers. */
+    private MemoryEditorTransformMetadata.Builder memoryMetadata;
+
     /** class files older than this must be defined in the target dex file. */
     private long minimumFileAge = 0;
 
@@ -212,6 +216,18 @@ public class Main {
 
         args = arguments;
         args.makeOptionsObjects();
+        memoryMetadata = args.memoryMetadataName == null
+                ? null : new MemoryEditorTransformMetadata.Builder();
+        if (memoryMetadata != null && args.fileNames != null && args.fileNames.length == 1) {
+            File source = new File(args.fileNames[0]);
+            if (source.isFile() && TextUtils.endsWithIgnoreCase(source.getName(), ".jar")) {
+                try {
+                    memoryMetadata.setSourceJarHash(MemoryEditorTransformMetadata.sha256(source));
+                } catch (IOException error) {
+                    context.err.println("Unable to hash Memory Editor source: " + source);
+                }
+            }
+        }
 
         OutputStream humanOutRaw = null;
         if (args.humanOutName != null) {
@@ -257,6 +273,15 @@ public class Main {
             OutputStream out = openOutput(args.outName);
             out.write(outArray);
             closeOutput(out);
+        }
+
+        if (memoryMetadata != null && args.memoryMetadataName != null) {
+            try {
+                memoryMetadata.writeTo(new File(args.memoryMetadataName));
+            } catch (IOException error) {
+                context.err.println("Unable to write Memory Editor metadata: " + error.getMessage());
+                return 4;
+            }
         }
 
         return 0;
@@ -465,7 +490,7 @@ public class Main {
 
         try {
             // modify byte-code with ASM-java
-            bytes = AndroidProducer.instrument(bytes, name, crc);
+            bytes = AndroidProducer.instrument(bytes, name, crc, memoryMetadata);
 
             new DirectClassFileConsumer(name, bytes, null).call(
                     new ClassParserTask(name, bytes).call());
@@ -909,6 +934,9 @@ public class Main {
         /** {@code null-ok;} output file name for binary file */
         public String outName = null;
 
+        /** {@code null-ok;} staging sidecar for Memory Editor transform metadata */
+        public String memoryMetadataName = null;
+
         /** {@code null-ok;} output file name for human-oriented dump */
         public String humanOutName = null;
 
@@ -1136,6 +1164,8 @@ public class Main {
                         context.err.println("unknown output extension: " + outName);
                         throw new UsageException();
                     }
+                } else if (parser.isArg("--memory-metadata=")) {
+                    memoryMetadataName = parser.getLastValue();
                 } else if (parser.isArg("--dump-to=")) {
                     humanOutName = parser.getLastValue();
                 } else if (parser.isArg("--dump-width=")) {

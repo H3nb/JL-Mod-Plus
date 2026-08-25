@@ -29,6 +29,8 @@ import java.util.jar.JarFile;
 
 import javax.microedition.shell.timing.TimingTransformMetadata;
 
+import org.microemu.android.asm.MemoryEditorTransformMetadata;
+
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.librarydb.LibraryIconOverride;
 import ru.playsoftware.j2meloader.librarydb.LibraryInstallRecovery;
@@ -58,10 +60,13 @@ public final class AppReconverter {
         if (appDir == null || !appDir.isDirectory()) return true;
         File payload = usablePayload(appDir);
         File descriptorFile = fileWithSuffix(appDir, Config.MIDLET_MANIFEST_FILE);
-        if (payload == null || !Config.isUsableFile(descriptorFile)) return true;
+        File memoryMetadata = fileWithSuffix(appDir, Config.MIDLET_MEMORY_METADATA);
+        if (payload == null || !Config.isUsableFile(descriptorFile)
+                || !Config.isUsableFile(memoryMetadata)) return true;
         try {
             Descriptor descriptor = new Descriptor(descriptorFile, false);
-            return !TimingTransformMetadata.isCompatible(descriptor.getAttrs());
+            if (!TimingTransformMetadata.isCompatible(descriptor.getAttrs())) return true;
+            return !MemoryEditorTransformMetadata.read(memoryMetadata).isCompatible();
         } catch (IOException | RuntimeException error) {
             Log.w(TAG, "Unable to validate converted timing marker: " + appDir, error);
             return true;
@@ -118,6 +123,8 @@ public final class AppReconverter {
                 try {
                     Main.main(new String[]{
                             "--no-optimize",
+                            "--memory-metadata="
+                                    + staging.getAbsolutePath() + Config.MIDLET_MEMORY_METADATA,
                             "--output=" + staging.getAbsolutePath() + Config.MIDLET_DEX_ARCH,
                             retainedJar.getAbsolutePath(),
                     });
@@ -128,6 +135,10 @@ public final class AppReconverter {
                 File generatedPayload = fileWithSuffix(staging, Config.MIDLET_DEX_ARCH);
                 if (!generatedPayload.isFile() || generatedPayload.length() <= 0L) {
                     throw new ConverterException("DX produced no converted MIDlet payload");
+                }
+                File generatedMetadata = fileWithSuffix(staging, Config.MIDLET_MEMORY_METADATA);
+                if (!generatedMetadata.isFile() || generatedMetadata.length() <= 0L) {
+                    throw new ConverterException("DX produced no Memory Editor metadata");
                 }
                 TimingTransformMetadata.mark(descriptor.getAttrs());
                 FileUtils.copyFileUsingChannel(retainedJar, fileWithSuffix(staging, Config.MIDLET_RES_FILE));

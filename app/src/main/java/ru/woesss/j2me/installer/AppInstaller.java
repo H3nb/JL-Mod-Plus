@@ -422,10 +422,16 @@ public class AppInstaller {
                 }
             }
             try {
-                Main.main(new String[]{"--no-optimize", "--output=" + tmpDir + Config.MIDLET_DEX_ARCH,
+                Main.main(new String[]{"--no-optimize", "--memory-metadata="
+                        + tmpDir + Config.MIDLET_MEMORY_METADATA,
+                        "--output=" + tmpDir + Config.MIDLET_DEX_ARCH,
                         srcJar.getAbsolutePath()});
             } catch (Throwable e) {
                 throw new ConverterException("Dexing error", e);
+            }
+            File memoryMetadata = child(tmpDir, Config.MIDLET_MEMORY_METADATA);
+            if (!memoryMetadata.isFile() || memoryMetadata.length() <= 0L) {
+                throw new ConverterException("DX produced no Memory Editor metadata");
             }
             if (manifest != null) {
                 manifest.merge(newDesc);

@@ -44,6 +44,21 @@ public class AndroidProducer {
 
 	public static byte[] instrument(byte[] classData, String classFileName, long crc)
 			throws IllegalArgumentException {
+		return instrument(classData, classFileName, crc, null);
+	}
+
+	/**
+	 * Applies the established compatibility transform and optionally records the source/runtime
+	 * shape for the Memory Editor. Metadata collection is deliberately conversion-local; it never
+	 * uses a process-wide collector that could mix concurrent installations.
+	 */
+	public static byte[] instrument(
+			byte[] classData,
+			String classFileName,
+			long crc,
+			MemoryEditorTransformMetadata.Builder metadata)
+			throws IllegalArgumentException {
+		byte[] sourceClassData = classData;
 		Integer patch = patches.get((int) crc);
 		if (patch != null) {
 			classData = patchClass(classData, patch);
@@ -59,7 +74,16 @@ public class AndroidProducer {
 		ClassVisitor cv = new AndroidClassVisitor(cw, cr.getClassName());
 		cr.accept(cv, ClassReader.SKIP_DEBUG);
 
-		return cw.toByteArray();
+		byte[] runtimeClassData = cw.toByteArray();
+		if (metadata != null) {
+			try {
+				metadata.observe(sourceClassData, runtimeClassData, patch != null);
+			} catch (RuntimeException ignored) {
+				// Metadata is diagnostic/binding input and must not change established converter
+				// compatibility semantics. A later sparse pass can report its own skip reason.
+			}
+		}
+		return runtimeClassData;
 	}
 
 	private static byte[] patchClass(byte[] classData, int patch) {
