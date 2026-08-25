@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_keep_settings_for_app">Keep Settings for This App</string>
+    <string name="profile_keep_settings_for_app_summary">Stop following the profile for Settings without changing the current values.</string>
+    <string name="profile_keep_keyboard_for_app">Keep Keyboard for This App</string>
+    <string name="profile_keep_keyboard_for_app_summary">Stop following the profile for the keyboard layout without changing the current layout.</string>
+</resources>
