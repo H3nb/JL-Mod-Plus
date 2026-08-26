@@ -47,6 +47,7 @@ final class ProfileLinks {
 	private static final String SETTINGS_HASH_PREFIX = "profile_link_settings_hash:";
 	private static final String KEYBOARD_HASH_PREFIX = "profile_link_keyboard_hash:";
 	private static final String BUILT_IN_HASH_PREFIX = "config_profile_builtin_hash:";
+	private static final String BUILT_IN_UNMATERIALIZED = "__unmaterialized__";
 	private static final String LEGACY_ORIGIN_PREFIX = "config_profile_origin:";
 
 	private ProfileLinks() {
@@ -171,10 +172,10 @@ final class ProfileLinks {
 		File local = localFile(configDir, true);
 		try {
 			if (local.isFile()) editor.putString(builtInHashKey(configDir), hash(local));
-			else editor.remove(builtInHashKey(configDir));
+			else editor.putString(builtInHashKey(configDir), BUILT_IN_UNMATERIALIZED);
 		} catch (IOException e) {
 			Log.w(TAG, "Unable to record Built-In Settings baseline", e);
-			editor.remove(builtInHashKey(configDir));
+			editor.putString(builtInHashKey(configDir), BUILT_IN_UNMATERIALIZED);
 		}
 		editor.apply();
 	}
@@ -183,7 +184,8 @@ final class ProfileLinks {
 		if (!isBuiltInSettingsLinked(configDir)) return;
 		File local = localFile(configDir, true);
 		if (!local.isFile()) {
-			preferences().edit().remove(builtInHashKey(configDir)).apply();
+			preferences().edit()
+					.putString(builtInHashKey(configDir), BUILT_IN_UNMATERIALIZED).apply();
 			return;
 		}
 		try {
@@ -370,19 +372,14 @@ final class ProfileLinks {
 		SharedPreferences prefs = preferences();
 		String key = builtInHashKey(configDir);
 		String baseline = prefs.getString(key, null);
+		if (BUILT_IN_UNMATERIALIZED.equals(baseline)) return null;
 		if (baseline != null) return baseline;
 		File file = localFile(configDir, true);
 		if (!file.isFile()) return null;
 
-		// Older releases already used an explicit Built-In link flag. At that time any settings
-		// edit detached the flag, so an explicitly linked legacy file matching either light or dark
-		// Built-In is safe to adopt as the initial materialized baseline.
-		ProfileModel light = ProfileModel.createBuiltIn(configDir, false);
-		ProfileModel dark = ProfileModel.createBuiltIn(configDir, true);
-		if (!ProfileConfigMatcher.sameConfig(local, light)
-				&& !ProfileConfigMatcher.sameConfig(local, dark)) {
-			return null;
-		}
+		// A missing baseline with an existing explicit Built-In link can only come from the older
+		// implementation, where any app-specific Settings edit removed that link. The link itself is
+		// therefore sufficient provenance; do not infer source identity from current value equality.
 		try {
 			baseline = hash(file);
 			prefs.edit().putString(key, baseline).apply();
