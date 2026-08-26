@@ -703,6 +703,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	private void keepProfileComponent(boolean settings) {
 		if (isProfile || configDir == null) return;
+		// Persist the draft before changing provenance so "Keep" always retains exactly what the
+		// user is looking at, even if another lifecycle event follows immediately.
+		saveParams();
 		if (settings) {
 			ProfileLinks.detachSettings(configDir);
 			ProfileLinks.detachBuiltInSettings(configDir);
@@ -834,6 +837,10 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		Profile profile = findProfile(name);
 		if (profile == null) return;
 		profile.delete();
+		if (profile.getDir().exists()) {
+			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+			return;
+		}
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		if (name.equals(preferences.getString(PREF_DEFAULT_PROFILE, null))) {
 			preferences.edit().remove(PREF_DEFAULT_PROFILE).apply();
