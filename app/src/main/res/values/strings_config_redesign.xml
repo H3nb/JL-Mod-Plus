@@ -44,6 +44,7 @@
     <string name="profile_update_template_summary">Update %1$s for every app that uses this profile.</string>
     <string name="profile_update_global_title">Update “%1$s”?</string>
     <string name="profile_update_global_message">This changes the linked profile globally. Every app that uses the updated component will receive it automatically unless that app has its own modified copy.</string>
+    <string name="profile_update_conflict">This profile changed elsewhere after this app was modified. The shared profile was not overwritten.</string>
     <string name="profile_save_as_new_template">Save As New Template</string>
     <string name="profile_save_as_new_template_summary">Keep the current configuration as a reusable template.</string>
     <string name="profile_templates_title">Configuration Templates</string>
