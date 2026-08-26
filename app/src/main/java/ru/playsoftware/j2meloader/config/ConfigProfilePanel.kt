@@ -104,15 +104,13 @@ internal fun ConfigProfilePanel(
             )
         }
         if (status.modified || hasCustomComponent) {
-            ConfigActionPreference(
+            ProfileQuickAction(
                 title = stringResource(R.string.profile_save_as_new_template),
-                description = stringResource(R.string.profile_save_as_new_template_summary),
                 onClick = events::onSaveAsProfile,
             )
         }
-        ConfigActionPreference(
+        ProfileQuickAction(
             title = stringResource(R.string.profile_choose_or_manage),
-            description = stringResource(R.string.profile_templates_summary),
             onClick = { managerVisible = true },
         )
     }
@@ -204,6 +202,26 @@ private fun ProfileSourcePreference(
                 color = MaterialTheme.colorScheme.tertiary,
             )
         }
+    }
+}
+
+@Composable
+private fun ProfileQuickAction(
+    title: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 11.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+        )
     }
 }
 
