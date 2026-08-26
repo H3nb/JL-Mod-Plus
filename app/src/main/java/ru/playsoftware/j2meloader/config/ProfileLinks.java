@@ -102,6 +102,31 @@ final class ProfileLinks {
 		return isModified(configDir, false);
 	}
 
+	/**
+	 * Returns true when the shared source changed after this app received its last baseline.
+	 * A source that already equals the local modified copy is not a conflict; saving it again is a
+	 * harmless no-op that refreshes the baseline.
+	 */
+	static boolean hasSourceConflict(@NonNull File configDir, boolean settings) {
+		String profileName = getLinkedProfile(configDir, settings);
+		if (profileName == null) return false;
+		Profile profile = new Profile(profileName);
+		if (settings && ProfilesManager.loadConfig(profile.getDir(), true) == null) return true;
+		File source = settings ? profile.getConfig() : profile.getKeyLayout();
+		File local = localFile(configDir, settings);
+		if (!source.isFile() || !local.isFile()) return true;
+		String baseline = preferences().getString(hashKey(configDir, settings), null);
+		if (baseline == null) return true;
+		try {
+			String sourceHash = hash(source);
+			if (sourceHash.equals(baseline)) return false;
+			return !sourceHash.equals(hash(local));
+		} catch (IOException | RuntimeException e) {
+			Log.w(TAG, "Unable to inspect linked profile conflict: " + profileName, e);
+			return true;
+		}
+	}
+
 	static void detachSettings(@NonNull File configDir) {
 		clearLink(configDir, true);
 		clearLegacyOrigin(configDir);
