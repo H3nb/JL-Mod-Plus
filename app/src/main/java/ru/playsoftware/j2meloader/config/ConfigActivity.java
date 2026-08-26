@@ -414,9 +414,17 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			profileOrigin = readProfileOrigin();
 		}
 
-		// A default profile is a policy for a newly configured app only. Materialize and link the
-		// components once; changing the global default later never retargets existing apps.
-		if (params == null && !isProfile && defProfile != null) {
+		boolean existingAppState = !isProfile && (
+				new File(configDir, Config.MIDLET_CONFIG_FILE).exists()
+						|| new File(configDir, Config.MIDLET_KEY_LAYOUT_FILE).exists()
+						|| ProfileLinks.getSettingsProfile(configDir) != null
+						|| ProfileLinks.getKeyboardProfile(configDir) != null
+						|| ProfileLinks.isBuiltInSettingsLinked(configDir));
+
+		// A default profile is a policy for a genuinely new app only. Existing materialized files
+		// or explicit source provenance must never be retargeted merely because config parsing failed
+		// or a first-run settings save was interrupted.
+		if (params == null && !isProfile && defProfile != null && !existingAppState) {
 			Profile defaultProfile = findProfile(defProfile);
 			if (defaultProfile != null) {
 				try {
