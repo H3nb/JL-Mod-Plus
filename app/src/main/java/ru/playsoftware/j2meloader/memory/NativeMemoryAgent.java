@@ -27,6 +27,13 @@ final class NativeMemoryAgent {
     static final int RESULT_NO_RANGES = 4;
     static final int RESULT_NO_MATCHES = 5;
 
+    /**
+     * The service serializes search/refine work on one worker. This flag only avoids repeating a
+     * direct refine when the service has already observed RESULT_NO_MATCHES and immediately asks
+     * for relocation recovery. A New Search always resets it.
+     */
+    private static volatile boolean directNoMatchPending;
+
     static {
         System.loadLibrary("memory_scan");
     }
@@ -36,15 +43,40 @@ final class NativeMemoryAgent {
 
     static native String nativeSelfTest();
 
-    static native int nativeSearch(String value, int scope, int valueType);
+    static int nativeSearch(String value, int scope, int valueType) {
+        directNoMatchPending = false;
+        return nativeSearchRaw(value, scope, valueType);
+    }
 
-    static native int nativeRefine(String value);
+    static int nativeRefine(String value) {
+        int result = nativeRefineRaw(value);
+        directNoMatchPending = result == RESULT_NO_MATCHES;
+        return result;
+    }
 
     /**
-     * Rebuilds a fresh exact-match pool and commits only confidently matched logical address groups.
-     * A completed recovery with no logical matches commits an empty result set.
+     * Prefer the retained raw addresses even if ART's GC counter increased. A GC event is not proof
+     * that an object moved (confirmed by the Android 11 control). Relocation is attempted only after
+     * direct refinement actually loses every match. If the service already performed that direct
+     * no-match pass, skip repeating it and go straight to the relocation fallback.
      */
-    static native int nativeRefineRelocating(String value);
+    static int nativeRefineRelocating(String value) {
+        if (!directNoMatchPending) {
+            int direct = nativeRefineRaw(value);
+            if (direct != RESULT_NO_MATCHES) {
+                directNoMatchPending = false;
+                return direct;
+            }
+        }
+        directNoMatchPending = false;
+        return nativeRefineRelocatingRaw(value);
+    }
+
+    private static native int nativeSearchRaw(String value, int scope, int valueType);
+
+    private static native int nativeRefineRaw(String value);
+
+    private static native int nativeRefineRelocatingRaw(String value);
 
     static native long nativeGetResultCount();
 
