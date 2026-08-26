@@ -669,11 +669,16 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	private void saveParams() {
 		try {
+			boolean builtInUnmodified = builtInThemeLinked && currentForm != null
+					&& builtInDefaultParams != null
+					&& ProfileConfigMatcher.sameEffectiveConfig(
+							params, currentForm, builtInDefaultParams);
 			if (currentForm != null) {
-				reconcileBuiltInThemeLink();
 				currentForm.applyTo(params);
 			}
-			ProfilesManager.saveConfig(params);
+			if (ProfilesManager.saveConfig(params) && builtInUnmodified) {
+				ProfileLinks.refreshBuiltInBaseline(configDir);
+			}
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
@@ -730,10 +735,16 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	/** Re-resolves the Built-In source when its dynamic host-theme values change. */
 	private void syncLinkedBuiltInTheme() {
-		if (isProfile || !builtInThemeLinked || params == null || configDir == null
-				|| ProfileLinks.isBuiltInSettingsModified(configDir)) return;
+		if (isProfile || !builtInThemeLinked || params == null || configDir == null) return;
+		if (currentForm != null && builtInDefaultParams != null
+				&& !ProfileConfigMatcher.sameEffectiveConfig(
+						params, currentForm, builtInDefaultParams)) {
+			return;
+		}
 		params = newBuiltInProfile();
-		ProfilesManager.saveConfig(params);
+		if (ProfilesManager.saveConfig(params)) {
+			ProfileLinks.refreshBuiltInBaseline(configDir);
+		}
 		currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
 		builtInDefaultParams = newBuiltInProfile();
 		refreshProfileMatchCache();
@@ -972,7 +983,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 		if (currentForm != null && currentForm.shader != null) {
 			currentForm.shader.values = values;
-			reconcileBuiltInThemeLink();
 			if (composeController != null) {
 				composeController.update(createUiState());
 			}
@@ -1013,8 +1023,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 			boolean builtInSettings = settingsProfile == null && builtInThemeLinked;
 			if (builtInSettings) {
-				settingsModified = ProfileLinks.isBuiltInSettingsModified(configDir)
-						|| builtInDefaultParams == null
+				settingsModified = builtInDefaultParams == null
 						|| !ProfileConfigMatcher.sameEffectiveConfig(params, state, builtInDefaultParams);
 			}
 
@@ -1065,20 +1074,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	private void updateForm(ConfigFormState state) {
 		currentForm = state;
-		reconcileBuiltInThemeLink();
 		if (composeController != null) {
 			composeController.update(createUiState());
 		}
-	}
-
-	private void reconcileBuiltInThemeLink() {
-		if (!builtInThemeLinked || isProfile || params == null || currentForm == null
-				|| builtInDefaultParams == null) {
-			return;
-		}
-		boolean modified = !ProfileConfigMatcher.sameEffectiveConfig(
-				params, currentForm, builtInDefaultParams);
-		ProfileLinks.setBuiltInSettingsModified(configDir, modified);
 	}
 
 	private void ensureShaderValues(ShaderInfo shader) {
