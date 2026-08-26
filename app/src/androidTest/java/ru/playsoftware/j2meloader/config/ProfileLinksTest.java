@@ -313,6 +313,9 @@ public class ProfileLinksTest {
 
 	@Test
 	public void namedSettingsReplaceBuiltInSource() throws Exception {
+		ProfileModel builtIn = ProfileModel.createBuiltIn(
+				configDir, ProfileModel.isDarkTheme(ContextHolder.getAppContext()));
+		assertTrue(ProfilesManager.saveConfig(builtIn));
 		ProfileLinks.linkBuiltInSettings(configDir);
 		writeConfig(settingsProfile, 240);
 
@@ -323,9 +326,14 @@ public class ProfileLinksTest {
 	}
 
 	@Test
-	public void builtInModifiedStateKeepsItsSourceProvenance() {
+	public void builtInFileChangeKeepsItsSourceProvenanceAndBecomesModified() {
+		ProfileModel local = ProfileModel.createBuiltIn(
+				configDir, ProfileModel.isDarkTheme(ContextHolder.getAppContext()));
+		assertTrue(ProfilesManager.saveConfig(local));
 		ProfileLinks.linkBuiltInSettings(configDir);
-		ProfileLinks.setBuiltInSettingsModified(configDir, true);
+
+		local.screenWidth = 176;
+		assertTrue(ProfilesManager.saveConfig(local));
 
 		assertTrue(ProfileLinks.isBuiltInSettingsLinked(configDir));
 		assertTrue(ProfileLinks.isBuiltInSettingsModified(configDir));
@@ -341,6 +349,7 @@ public class ProfileLinksTest {
 		ProfileModel resolved = ProfilesManager.loadGameConfig(configDir);
 
 		assertNotNull(resolved);
+		assertFalse(resolved.isNew);
 		assertEquals(dark ? 0x000000 : 0xFFFFFF, resolved.screenBackgroundColor);
 		assertTrue(ProfileLinks.isBuiltInSettingsLinked(configDir));
 		assertFalse(ProfileLinks.isBuiltInSettingsModified(configDir));
@@ -348,13 +357,13 @@ public class ProfileLinksTest {
 
 	@Test
 	public void modifiedBuiltInSettingsAreNotOverwrittenBySourceRefresh() {
-		ProfileModel local = ProfileModel.createBuiltIn(configDir,
-				ProfileModel.isDarkTheme(ContextHolder.getAppContext()));
-		local.screenWidth = 176;
+		ProfileModel local = ProfileModel.createBuiltIn(
+				configDir, ProfileModel.isDarkTheme(ContextHolder.getAppContext()));
 		assertTrue(ProfilesManager.saveConfig(local));
 		ProfileLinks.linkBuiltInSettings(configDir);
-		ProfileLinks.setBuiltInSettingsModified(configDir, true);
 
+		local.screenWidth = 176;
+		assertTrue(ProfilesManager.saveConfig(local));
 		ProfileModel resolved = ProfilesManager.loadGameConfig(configDir);
 
 		assertNotNull(resolved);
