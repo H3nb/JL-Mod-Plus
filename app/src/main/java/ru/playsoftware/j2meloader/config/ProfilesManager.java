@@ -179,7 +179,8 @@ public class ProfilesManager {
 	@Nullable
 	public static ProfileModel loadGameConfig(File dir) {
 		ProfileLinks.resolve(dir);
-		return loadConfig(dir, true);
+		ProfileModel params = loadConfig(dir, true);
+		return ProfileLinks.resolveBuiltInSettings(dir, params);
 	}
 
 	/** Generic profile/config loading deliberately has no game-link side effects. */
