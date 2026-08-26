@@ -43,8 +43,6 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
-
 import javax.microedition.shell.MicroActivity;
 
 import ru.playsoftware.j2meloader.memory.IMemoryScanCallback;
@@ -53,12 +51,16 @@ import ru.playsoftware.j2meloader.memory.MemoryScanContract;
 import ru.playsoftware.j2meloader.memory.MemoryScanService;
 
 /**
- * Same-Activity debug overlay designed to keep post-search ART allocation pressure low.
+ * Debug-only same-Activity Memory Editor overlay.
  *
- * <p>The trigger is tiny. The complete view hierarchy, result rows and edit/diagnostic panes are
- * allocated once on first open, before New Search is enabled. Afterwards game/editor round trips
- * are only VISIBLE/GONE changes. Result refresh is manual by default; optional Live mode is an
- * explicit trade-off because formatting fresh values necessarily allocates some managed text.</p>
+ * <p>Before first use only the controller, host and tiny MEM trigger exist. First open allocates all
+ * managed working state and the complete reusable View hierarchy, then starts the scanner service
+ * and its self-tests. New Search remains disabled until that warm-up is complete, so editor-driven
+ * allocation/GC cannot invalidate an address that has already been bound by this editor.</p>
+ *
+ * <p>After a search, normal close/reopen on the same orientation is visibility/focus only. Result
+ * observation is manual by default; Live mode is explicit because formatting live values creates
+ * managed text.</p>
  */
 final class MemoryEditorOverlayController {
     private static final int MAX_TYPED_RESULTS = 100;
@@ -69,18 +71,29 @@ final class MemoryEditorOverlayController {
     private static final char[] HEX = "0123456789abcdef".toCharArray();
 
     private final MicroActivity activity;
-    private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private final long[] groupAddress = new long[MAX_TYPED_RESULTS];
-    private final int[] groupAliasMask = new int[MAX_TYPED_RESULTS];
-    private final int[] groupReadableMask = new int[MAX_TYPED_RESULTS];
-    private final long[] groupValueBits = new long[MAX_TYPED_RESULTS * TYPE_SLOTS];
-    private final TextView[] resultRows = new TextView[MAX_TYPED_RESULTS];
-    private final StringBuilder[] rowBuilders = new StringBuilder[MAX_TYPED_RESULTS];
-    private final StringBuilder statusBuilder = new StringBuilder(256);
-    private final StringBuilder editBuilder = new StringBuilder(96);
 
+    // Cold state: only these objects exist before the user first opens Memory Editor.
     private FrameLayout host;
     private TextView trigger;
+    private boolean built;
+    private boolean destroyed;
+
+    // Warm state: allocated together before New Search can become enabled.
+    private Handler mainHandler;
+    private long[] groupAddress;
+    private int[] groupAliasMask;
+    private int[] groupReadableMask;
+    private long[] groupValueBits;
+    private TextView[] resultRows;
+    private StringBuilder[] rowBuilders;
+    private StringBuilder statusBuilder;
+    private StringBuilder editBuilder;
+    private Runnable applyPendingStatus;
+    private Runnable targetClosed;
+    private Runnable liveRefresh;
+    private IMemoryScanCallback callback;
+    private ServiceConnection connection;
+
     private FrameLayout overlay;
     private LinearLayout adaptiveBody;
     private ScrollView controlsPane;
@@ -108,8 +121,6 @@ final class MemoryEditorOverlayController {
 
     private IMemoryScanService service;
     private boolean bound;
-    private boolean built;
-    private boolean destroyed;
     private boolean liveEnabled;
     private long generation;
     private long resultCount;
@@ -118,6 +129,7 @@ final class MemoryEditorOverlayController {
     private long warmupGcDelta;
     private int selectedType = MemoryScanContract.TYPE_AUTO;
     private int selectedScope = MemoryScanContract.SCOPE_JAVA_FAST;
+    private int appliedOrientation = Configuration.ORIENTATION_UNDEFINED;
     private int groupCount;
     private int editGroup = -1;
     private int editType = MemoryScanContract.TYPE_INT32;
@@ -126,72 +138,6 @@ final class MemoryEditorOverlayController {
     private String state = MemoryScanContract.STATE_NO_TARGET;
     private String diagnostics = "";
     private Bundle pendingStatus;
-
-    private final Runnable applyPendingStatus = () -> {
-        Bundle status = pendingStatus;
-        pendingStatus = null;
-        if (status != null && !destroyed) applyStatus(status);
-    };
-    private final Runnable targetClosed = () -> {
-        if (destroyed) return;
-        generation = 0L;
-        state = MemoryScanContract.STATE_NO_TARGET;
-        setNotice("MIDlet target closed; memory session discarded");
-        hideOverlay();
-    };
-    private final Runnable liveRefresh = new Runnable() {
-        @Override
-        public void run() {
-            if (!liveEnabled || destroyed || overlay == null || overlay.getVisibility() != View.VISIBLE) {
-                return;
-            }
-            refreshResults();
-            mainHandler.postDelayed(this, LIVE_REFRESH_MS);
-        }
-    };
-
-    private final IMemoryScanCallback callback = new IMemoryScanCallback.Stub() {
-        @Override
-        public void onStatusChanged(Bundle status) {
-            pendingStatus = status;
-            mainHandler.removeCallbacks(applyPendingStatus);
-            mainHandler.post(applyPendingStatus);
-        }
-
-        @Override
-        public void onTargetClosed() {
-            mainHandler.removeCallbacks(targetClosed);
-            mainHandler.post(targetClosed);
-        }
-    };
-
-    private final ServiceConnection connection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder binder) {
-            if (destroyed) return;
-            service = IMemoryScanService.Stub.asInterface(binder);
-            try {
-                Bundle caps = service.getCapabilities();
-                generation = caps.getLong(MemoryScanContract.KEY_GENERATION, 0L);
-                capability = caps.getString(MemoryScanContract.KEY_CAPABILITY, "PENDING");
-                managedSelfTest = caps.getString(MemoryScanContract.KEY_MANAGED_SELF_TEST, "RUNNING");
-                service.registerCallback(callback);
-                updateStatusUi();
-            } catch (RemoteException error) {
-                remoteFailure(error);
-            }
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            service = null;
-            capability = "DISCONNECTED";
-            updateStatusUi();
-        }
-
-        @Override public void onBindingDied(ComponentName name) { onServiceDisconnected(name); }
-        @Override public void onNullBinding(ComponentName name) { onServiceDisconnected(name); }
-    };
 
     MemoryEditorOverlayController(MicroActivity activity) {
         this.activity = activity;
@@ -219,7 +165,7 @@ final class MemoryEditorOverlayController {
         trigger.setGravity(Gravity.CENTER);
         trigger.setPadding(dp(10), dp(7), dp(10), dp(7));
         trigger.setBackgroundColor(0xB8222222);
-        trigger.setOnClickListener(v -> warmUpAndShow());
+        trigger.setOnClickListener(v -> showOverlay());
         FrameLayout.LayoutParams triggerParams = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
                 Gravity.TOP | Gravity.END);
@@ -238,12 +184,12 @@ final class MemoryEditorOverlayController {
         if (destroyed) return;
         destroyed = true;
         liveEnabled = false;
-        mainHandler.removeCallbacksAndMessages(null);
+        if (mainHandler != null) mainHandler.removeCallbacksAndMessages(null);
         IMemoryScanService current = service;
-        if (current != null) {
+        if (current != null && callback != null) {
             try { current.unregisterCallback(callback); } catch (RemoteException ignored) {}
         }
-        if (bound) {
+        if (bound && connection != null) {
             try { activity.unbindService(connection); } catch (RuntimeException ignored) {}
         }
         bound = false;
@@ -253,21 +199,102 @@ final class MemoryEditorOverlayController {
         overlay = null;
     }
 
-    private void warmUpAndShow() {
+    private void showOverlay() {
         if (destroyed) return;
-        if (!built) {
-            long before = runtimeGcCount();
-            buildOverlay();
-            long after = runtimeGcCount();
-            warmupGcDelta = delta(before, after);
-            built = true;
-            bindScanner();
-        }
+        if (!built) warmUp();
+        if (overlay == null) return;
         trigger.setVisibility(View.GONE);
         overlay.setVisibility(View.VISIBLE);
-        applyAdaptiveLayout();
-        updateStatusUi();
+        // This is allocation-free for normal same-orientation round trips.
+        applyAdaptiveLayoutIfNeeded();
         overlay.requestFocus();
+    }
+
+    private void warmUp() {
+        long before = runtimeGcCount();
+        allocateWarmState();
+        buildOverlay();
+        long after = runtimeGcCount();
+        warmupGcDelta = delta(before, after);
+        built = true;
+        updateStatusUi();
+        bindScanner();
+    }
+
+    private void allocateWarmState() {
+        mainHandler = new Handler(Looper.getMainLooper());
+        groupAddress = new long[MAX_TYPED_RESULTS];
+        groupAliasMask = new int[MAX_TYPED_RESULTS];
+        groupReadableMask = new int[MAX_TYPED_RESULTS];
+        groupValueBits = new long[MAX_TYPED_RESULTS * TYPE_SLOTS];
+        resultRows = new TextView[MAX_TYPED_RESULTS];
+        rowBuilders = new StringBuilder[MAX_TYPED_RESULTS];
+        statusBuilder = new StringBuilder(256);
+        editBuilder = new StringBuilder(96);
+
+        applyPendingStatus = () -> {
+            Bundle status = pendingStatus;
+            pendingStatus = null;
+            if (status != null && !destroyed) applyStatus(status);
+        };
+        targetClosed = () -> {
+            if (destroyed) return;
+            generation = 0L;
+            state = MemoryScanContract.STATE_NO_TARGET;
+            setNotice("MIDlet target closed; memory session discarded");
+            hideOverlay();
+        };
+        liveRefresh = new Runnable() {
+            @Override
+            public void run() {
+                if (!liveEnabled || destroyed || overlay == null
+                        || overlay.getVisibility() != View.VISIBLE) return;
+                refreshResults();
+                mainHandler.postDelayed(this, LIVE_REFRESH_MS);
+            }
+        };
+        callback = new IMemoryScanCallback.Stub() {
+            @Override
+            public void onStatusChanged(Bundle status) {
+                pendingStatus = status;
+                mainHandler.removeCallbacks(applyPendingStatus);
+                mainHandler.post(applyPendingStatus);
+            }
+
+            @Override
+            public void onTargetClosed() {
+                mainHandler.removeCallbacks(targetClosed);
+                mainHandler.post(targetClosed);
+            }
+        };
+        connection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder binder) {
+                if (destroyed) return;
+                service = IMemoryScanService.Stub.asInterface(binder);
+                try {
+                    Bundle caps = service.getCapabilities();
+                    generation = caps.getLong(MemoryScanContract.KEY_GENERATION, 0L);
+                    capability = caps.getString(MemoryScanContract.KEY_CAPABILITY, "PENDING");
+                    managedSelfTest = caps.getString(
+                            MemoryScanContract.KEY_MANAGED_SELF_TEST, "RUNNING");
+                    service.registerCallback(callback);
+                    updateStatusUi();
+                } catch (RemoteException error) {
+                    remoteFailure(error);
+                }
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                service = null;
+                capability = "DISCONNECTED";
+                updateStatusUi();
+            }
+
+            @Override public void onBindingDied(ComponentName name) { onServiceDisconnected(name); }
+            @Override public void onNullBinding(ComponentName name) { onServiceDisconnected(name); }
+        };
     }
 
     private void bindScanner() {
@@ -282,7 +309,8 @@ final class MemoryEditorOverlayController {
 
     private void buildOverlay() {
         overlay = new FrameLayout(activity);
-        overlay.setBackgroundColor(0x33000000);
+        // Light dim + 70% panel opacity keeps the running MIDlet visibly present underneath.
+        overlay.setBackgroundColor(0x1A000000);
         overlay.setVisibility(View.GONE);
         overlay.setClickable(true);
         overlay.setFocusable(true);
@@ -292,7 +320,7 @@ final class MemoryEditorOverlayController {
         LinearLayout panel = new LinearLayout(activity);
         panel.setOrientation(LinearLayout.VERTICAL);
         panel.setPadding(dp(10), dp(8), dp(10), dp(10));
-        panel.setBackgroundColor(0xCC1B1B1B);
+        panel.setBackgroundColor(0xB31B1B1B);
         FrameLayout.LayoutParams panelParams = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         panelParams.setMargins(dp(8), dp(8), dp(8), dp(8));
@@ -301,8 +329,8 @@ final class MemoryEditorOverlayController {
         LinearLayout header = new LinearLayout(activity);
         header.setGravity(Gravity.CENTER_VERTICAL);
         TextView title = text("Memory Editor · raw :midlet memory", 18f);
-        header.addView(title, new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        header.addView(title, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         Button close = button("Close");
         close.setOnClickListener(v -> hideOverlay());
         header.addView(close);
@@ -323,7 +351,7 @@ final class MemoryEditorOverlayController {
         buildMainPane();
         buildEditPane();
         buildDiagnosticsPane();
-        applyAdaptiveLayout();
+        applyAdaptiveLayoutIfNeeded();
     }
 
     private void buildMainPane() {
@@ -360,8 +388,8 @@ final class MemoryEditorOverlayController {
             selectedType = (selectedType + 1) % (MemoryScanContract.TYPE_FLOAT64 + 1);
             typeButton.setText("Type: " + MemoryScanContract.typeName(selectedType));
         });
-        selectors.addView(typeButton, new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        selectors.addView(typeButton, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         scopeButton = button("Scope: Java Fast");
         scopeButton.setOnClickListener(v -> {
             selectedScope = selectedScope == MemoryScanContract.SCOPE_JAVA_FAST
@@ -369,41 +397,41 @@ final class MemoryEditorOverlayController {
                     : MemoryScanContract.SCOPE_JAVA_FAST;
             scopeButton.setText("Scope: " + MemoryScanContract.scopeName(selectedScope));
         });
-        selectors.addView(scopeButton, new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        selectors.addView(scopeButton, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         controls.addView(selectors);
 
         LinearLayout searchActions = new LinearLayout(activity);
         newSearchButton = button("New Search");
         newSearchButton.setOnClickListener(v -> startSearch());
-        searchActions.addView(newSearchButton, new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        searchActions.addView(newSearchButton, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         nextScanButton = button("Next Scan");
         nextScanButton.setOnClickListener(v -> nextScan());
-        searchActions.addView(nextScanButton, new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        searchActions.addView(nextScanButton, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         controls.addView(searchActions);
 
         LinearLayout sessionActions = new LinearLayout(activity);
         cancelButton = button("Cancel");
         cancelButton.setOnClickListener(v -> cancelOperation());
-        sessionActions.addView(cancelButton, new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        sessionActions.addView(cancelButton, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         Button clear = button("Clear");
         clear.setOnClickListener(v -> clearSearch());
-        sessionActions.addView(clear, new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        sessionActions.addView(clear, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         controls.addView(sessionActions);
 
         LinearLayout observationActions = new LinearLayout(activity);
         refreshButton = button("Refresh");
         refreshButton.setOnClickListener(v -> refreshResults());
-        observationActions.addView(refreshButton, new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        observationActions.addView(refreshButton, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         liveButton = button("Live: Off");
         liveButton.setOnClickListener(v -> setLiveEnabled(!liveEnabled));
-        observationActions.addView(liveButton, new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        observationActions.addView(liveButton, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         controls.addView(observationActions);
 
         Button diagnosticsButton = button("Diagnostics");
@@ -446,8 +474,7 @@ final class MemoryEditorOverlayController {
         editPane.setVisibility(View.GONE);
         contentFrame.addView(editPane, matchFrame());
 
-        TextView heading = text("Edit typed value", 18f);
-        editPane.addView(heading);
+        editPane.addView(text("Edit typed value", 18f));
         editAddressText = text("", 13f);
         editAddressText.setTextIsSelectable(true);
         editPane.addView(editAddressText);
@@ -467,12 +494,12 @@ final class MemoryEditorOverlayController {
         LinearLayout actions = new LinearLayout(activity);
         Button apply = button("Apply exact typed write");
         apply.setOnClickListener(v -> applyEdit());
-        actions.addView(apply, new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        actions.addView(apply, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         Button back = button("Back");
         back.setOnClickListener(v -> leaveSubPane());
-        actions.addView(back, new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        actions.addView(back, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         editPane.addView(actions);
     }
 
@@ -483,8 +510,7 @@ final class MemoryEditorOverlayController {
         diagnosticsPane.setVisibility(View.GONE);
         contentFrame.addView(diagnosticsPane, matchFrame());
 
-        TextView heading = text("Diagnostics · bounded snapshot", 18f);
-        diagnosticsPane.addView(heading);
+        diagnosticsPane.addView(text("Diagnostics · bounded snapshot", 18f));
         ScrollView scroll = new ScrollView(activity);
         diagnosticsText = text("", 12f);
         diagnosticsText.setTextIsSelectable(true);
@@ -495,12 +521,12 @@ final class MemoryEditorOverlayController {
         LinearLayout actions = new LinearLayout(activity);
         Button copy = button("Copy");
         copy.setOnClickListener(v -> copyDiagnostics());
-        actions.addView(copy, new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        actions.addView(copy, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         Button back = button("Back");
         back.setOnClickListener(v -> leaveSubPane());
-        actions.addView(back, new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        actions.addView(back, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         diagnosticsPane.addView(actions);
     }
 
@@ -516,16 +542,18 @@ final class MemoryEditorOverlayController {
         }
     }
 
-    private void applyAdaptiveLayout() {
+    private void applyAdaptiveLayoutIfNeeded() {
         if (adaptiveBody == null) return;
-        boolean landscape = activity.getResources().getConfiguration().orientation
-                == Configuration.ORIENTATION_LANDSCAPE;
+        int orientation = activity.getResources().getConfiguration().orientation;
+        if (orientation == appliedOrientation) return;
+        appliedOrientation = orientation;
+        boolean landscape = orientation == Configuration.ORIENTATION_LANDSCAPE;
         adaptiveBody.setOrientation(landscape ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
         if (landscape) {
-            controlsPane.setLayoutParams(new LinearLayout.LayoutParams(0,
-                    ViewGroup.LayoutParams.MATCH_PARENT, 0.42f));
-            resultsPane.setLayoutParams(new LinearLayout.LayoutParams(0,
-                    ViewGroup.LayoutParams.MATCH_PARENT, 0.58f));
+            controlsPane.setLayoutParams(new LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.MATCH_PARENT, 0.42f));
+            resultsPane.setLayoutParams(new LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.MATCH_PARENT, 0.58f));
         } else {
             controlsPane.setLayoutParams(new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, 0, 0.42f));
@@ -600,7 +628,11 @@ final class MemoryEditorOverlayController {
     private void cancelOperation() {
         IMemoryScanService current = service;
         if (current == null) return;
-        try { current.cancelOperation(generation); } catch (RemoteException error) { remoteFailure(error); }
+        try {
+            current.cancelOperation(generation);
+        } catch (RemoteException error) {
+            remoteFailure(error);
+        }
     }
 
     private void clearSearch() {
@@ -619,7 +651,7 @@ final class MemoryEditorOverlayController {
     private void setLiveEnabled(boolean enabled) {
         liveEnabled = enabled;
         if (liveButton != null) liveButton.setText(enabled ? "Live: On" : "Live: Off");
-        mainHandler.removeCallbacks(liveRefresh);
+        if (mainHandler != null && liveRefresh != null) mainHandler.removeCallbacks(liveRefresh);
         if (enabled && overlay != null && overlay.getVisibility() == View.VISIBLE) {
             refreshResults();
             mainHandler.postDelayed(liveRefresh, LIVE_REFRESH_MS);
@@ -680,7 +712,7 @@ final class MemoryEditorOverlayController {
             appendAliasNames(out, groupAliasMask[i]);
             int displayType = firstReadableType(i);
             if (displayType > 0) {
-                out.append("\n");
+                out.append('\n');
                 appendValue(out, displayType, groupValueBits[i * TYPE_SLOTS + displayType]);
                 if (Integer.bitCount(groupAliasMask[i]) > 1) {
                     out.append("  [").append(MemoryScanContract.typeName(displayType)).append(']');
@@ -711,8 +743,7 @@ final class MemoryEditorOverlayController {
         int readable = groupReadableMask[group];
         int aliases = groupAliasMask[group];
         for (int type = MemoryScanContract.TYPE_INT8; type <= MemoryScanContract.TYPE_FLOAT64; type++) {
-            int bit = 1 << type;
-            if ((readable & bit) != 0) return type;
+            if ((readable & (1 << type)) != 0) return type;
         }
         for (int type = MemoryScanContract.TYPE_INT8; type <= MemoryScanContract.TYPE_FLOAT64; type++) {
             if ((aliases & (1 << type)) != 0) return type;
@@ -738,7 +769,9 @@ final class MemoryEditorOverlayController {
         int candidate = editType;
         for (int i = 0; i < MemoryScanContract.TYPE_FLOAT64; i++) {
             candidate++;
-            if (candidate > MemoryScanContract.TYPE_FLOAT64) candidate = MemoryScanContract.TYPE_INT8;
+            if (candidate > MemoryScanContract.TYPE_FLOAT64) {
+                candidate = MemoryScanContract.TYPE_INT8;
+            }
             if ((aliases & (1 << candidate)) != 0) {
                 editType = candidate;
                 updateEditPane();
@@ -752,7 +785,8 @@ final class MemoryEditorOverlayController {
         appendHex(editBuilder, groupAddress[editGroup]);
         editAddressText.setText(editBuilder.toString());
         editTypeButton.setText("Type: " + MemoryScanContract.typeName(editType)
-                + (Integer.bitCount(groupAliasMask[editGroup]) > 1 ? " · tap to change alias" : ""));
+                + (Integer.bitCount(groupAliasMask[editGroup]) > 1
+                        ? " · tap to change alias" : ""));
         editBuilder.setLength(0);
         if ((groupReadableMask[editGroup] & (1 << editType)) != 0) {
             editBuilder.append("Current: ");
@@ -779,8 +813,8 @@ final class MemoryEditorOverlayController {
             return;
         }
         try {
-            Bundle result = current.editValue(generation, groupAddress[editGroup], editType,
-                    expected, replacement);
+            Bundle result = current.editValue(
+                    generation, groupAddress[editGroup], editType, expected, replacement);
             setNotice(result.getString(MemoryScanContract.KEY_MESSAGE, "Write completed"));
             leaveSubPane();
             refreshResults();
@@ -797,16 +831,18 @@ final class MemoryEditorOverlayController {
     }
 
     private void copyDiagnostics() {
-        ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
-        CharSequence text = diagnosticsText.getText();
-        clipboard.setPrimaryClip(ClipData.newPlainText("Memory Editor diagnostics", text));
+        ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(
+                Context.CLIPBOARD_SERVICE);
+        clipboard.setPrimaryClip(ClipData.newPlainText(
+                "Memory Editor diagnostics", diagnosticsText.getText()));
         setNotice("Diagnostics copied");
     }
 
     private void applyStatus(Bundle status) {
         generation = status.getLong(MemoryScanContract.KEY_GENERATION, generation);
         capability = status.getString(MemoryScanContract.KEY_CAPABILITY, capability);
-        managedSelfTest = status.getString(MemoryScanContract.KEY_MANAGED_SELF_TEST, managedSelfTest);
+        managedSelfTest = status.getString(
+                MemoryScanContract.KEY_MANAGED_SELF_TEST, managedSelfTest);
         state = status.getString(MemoryScanContract.KEY_STATE, state);
         resultCount = status.getLong(MemoryScanContract.KEY_RESULT_COUNT, resultCount);
         operationId = status.getLong(MemoryScanContract.KEY_OPERATION_ID, operationId);
@@ -819,7 +855,8 @@ final class MemoryEditorOverlayController {
         typeButton.setText("Type: " + MemoryScanContract.typeName(selectedType));
         scopeButton.setText("Scope: " + MemoryScanContract.scopeName(selectedScope));
         updateStatusUi();
-        if (MemoryScanContract.STATE_COMPLETE.equals(state) && lastRenderedOperation != operationId) {
+        if (MemoryScanContract.STATE_COMPLETE.equals(state)
+                && lastRenderedOperation != operationId) {
             lastRenderedOperation = operationId;
             refreshResults();
         }
@@ -848,7 +885,7 @@ final class MemoryEditorOverlayController {
 
     private void clearRenderedRows() {
         groupCount = 0;
-        if (resultRows[0] == null) return;
+        if (resultRows == null || resultRows[0] == null) return;
         for (TextView row : resultRows) row.setVisibility(View.GONE);
         resultSummary.setText("No retained candidates");
     }
@@ -918,7 +955,8 @@ final class MemoryEditorOverlayController {
 
     private static void appendAliasNames(StringBuilder out, int mask) {
         boolean first = true;
-        for (int type = MemoryScanContract.TYPE_INT8; type <= MemoryScanContract.TYPE_FLOAT64; type++) {
+        for (int type = MemoryScanContract.TYPE_INT8;
+                type <= MemoryScanContract.TYPE_FLOAT64; type++) {
             if ((mask & (1 << type)) == 0) continue;
             if (!first) out.append(" · ");
             out.append(MemoryScanContract.typeName(type));
@@ -935,7 +973,7 @@ final class MemoryEditorOverlayController {
             case MemoryScanContract.TYPE_INT64 -> out.append(bits);
             case MemoryScanContract.TYPE_FLOAT32 -> out.append(Float.intBitsToFloat((int) bits));
             case MemoryScanContract.TYPE_FLOAT64 -> out.append(Double.longBitsToDouble(bits));
-            default -> out.append("?");
+            default -> out.append('?');
         }
     }
 
@@ -947,6 +985,7 @@ final class MemoryEditorOverlayController {
             if (source.charAt(index++) == '\n') lines++;
         }
         if (index >= source.length()) return source;
-        return source.substring(0, index) + "\n… diagnostics truncated at " + maxLines + " lines";
+        return source.substring(0, index)
+                + "\n… diagnostics truncated at " + maxLines + " lines";
     }
 }
