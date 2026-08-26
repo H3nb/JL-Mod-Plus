@@ -4,6 +4,7 @@
 package ru.playsoftware.j2meloader.config
 
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -110,10 +111,10 @@ class ProfileManagerComposeTest {
         }
 
         composeRule.onNodeWithText("Update Template").performClick()
-        composeRule.onNodeWithText("Update Nokia S40?").assertExists()
+        composeRule.onNodeWithText("Update “Nokia S40”?").assertExists()
         assertEquals(0, events.updateCalls)
 
-        composeRule.onNodeWithText("Update Template", useUnmergedTree = true).performClick()
+        composeRule.onAllNodesWithText("Update Template")[1].performClick()
         assertEquals(1, events.updateCalls)
     }
 
