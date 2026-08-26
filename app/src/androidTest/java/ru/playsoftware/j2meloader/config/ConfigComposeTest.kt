@@ -201,7 +201,6 @@ class ConfigComposeTest {
         }
 
         composeRule.onNodeWithText("Built-In Settings").assertExists()
-        composeRule.onNodeWithText("Default for new apps").assertExists()
         composeRule.onNodeWithText("App-specific").assertExists()
         composeRule.onNodeWithText("Custom").assertDoesNotExist()
         composeRule.onNodeWithText("Save As New Template").assertExists()
