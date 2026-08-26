@@ -71,7 +71,9 @@ final class ProfileLinks {
 		ProfileModel source = ProfileModel.createBuiltIn(
 				configDir, ProfileModel.isDarkTheme(ContextHolder.getAppContext()));
 		if (ProfileConfigMatcher.sameConfig(local, source)) return local;
-		return ProfilesManager.saveConfig(source) ? source : local;
+		if (!ProfilesManager.saveConfig(source)) return local;
+		ProfileModel persisted = ProfilesManager.loadConfig(configDir, true);
+		return persisted != null ? persisted : local;
 	}
 
 	static void linkAppliedComponents(@NonNull Profile profile, @NonNull File configDir,
