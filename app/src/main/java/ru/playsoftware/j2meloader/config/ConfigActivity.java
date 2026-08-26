@@ -92,7 +92,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private ConfigFormState currentForm;
 	private ConfigComposeController composeController;
 	private ProfileModel builtInDefaultParams;
-	/** True when this app config is the built-in template and should track host theme changes. */
+	/** True when this app's Settings source is the app-provided Built-In profile. */
 	private boolean builtInThemeLinked;
 	private SharedPreferences hostPreferences;
 	private final SharedPreferences.OnSharedPreferenceChangeListener hostThemeListener =
@@ -430,7 +430,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 		if (params == null) {
 			params = newBuiltInProfile();
-			setBuiltInThemeLinked(!isProfile && ProfileLinks.getSettingsProfile(configDir) == null);
+			if (!isProfile && ProfileLinks.getSettingsProfile(configDir) == null) {
+				setBuiltInThemeLinked(true);
+			} else {
+				builtInThemeLinked = false;
+			}
 			return;
 		}
 		if (isProfile) {
@@ -440,14 +444,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 		boolean linked = readBuiltInThemeLinked();
 		if (ProfileLinks.getSettingsProfile(configDir) != null) {
+			ProfileLinks.detachBuiltInSettings(configDir);
 			linked = false;
 		}
-		// Source identity is never inferred from value equality. Older profile origins are migrated
-		// by ProfileLinks, while pre-link built-in snapshots remain safely app-specific.
-		setBuiltInThemeLinked(linked);
-		if (builtInThemeLinked) {
-			ProfileModel.applyBuiltInTheme(params, isDarkTheme());
-		}
+		// Source identity is explicit. Equality with Built-In values never creates a link.
+		builtInThemeLinked = linked;
 	}
 
 	private void showShaderSettings() {
@@ -699,7 +700,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		if (isProfile || configDir == null) return;
 		if (settings) {
 			ProfileLinks.detachSettings(configDir);
-			setBuiltInThemeLinked(false);
+			ProfileLinks.detachBuiltInSettings(configDir);
+			builtInThemeLinked = false;
 		} else {
 			ProfileLinks.detachKeyboard(configDir);
 		}
@@ -726,10 +728,12 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		return ProfileModel.createBuiltIn(configDir, isDarkTheme());
 	}
 
-	/** Re-derives theme-owned built-in colors without turning the profile into a custom snapshot. */
+	/** Re-resolves the Built-In source when its dynamic host-theme values change. */
 	private void syncLinkedBuiltInTheme() {
-		if (isProfile || !builtInThemeLinked || params == null || configDir == null) return;
-		ProfileModel.applyBuiltInTheme(params, isDarkTheme());
+		if (isProfile || !builtInThemeLinked || params == null || configDir == null
+				|| ProfileLinks.isBuiltInSettingsModified(configDir)) return;
+		params = newBuiltInProfile();
+		ProfilesManager.saveConfig(params);
 		currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
 		builtInDefaultParams = newBuiltInProfile();
 		refreshProfileMatchCache();
@@ -752,9 +756,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			ProfilesManager.load(profile, configDir.getPath(), settings, keyboard);
 			// New operations use explicit per-component links; profileOrigin is migration-only.
 			setProfileOrigin(null);
-			if (appliesSettings) {
-				setBuiltInThemeLinked(false);
-			}
 			loadParams(true);
 		} catch (IOException e) {
 			Log.e(TAG, "applyTemplate: " + name, e);
@@ -774,7 +775,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			ProfilesManager.saveSnapshot(profile, configDir.getPath());
 			ProfilesManager.load(profile, configDir.getPath(), true, true);
 			setProfileOrigin(null);
-			if (profile.hasConfig() || profile.hasOldConfig()) setBuiltInThemeLinked(false);
 			loadParams(true);
 		} catch (IOException e) {
 			Log.e(TAG, "saveTemplate: " + name, e);
@@ -789,8 +789,13 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			saveParams();
 			ProfilesManager.saveSnapshot(profile, configDir.getPath());
 			setProfileOrigin(null);
-			refreshProfileMatchCache();
-			composeController.update(createUiState());
+			// Re-resolve after a successful global update so an unchanged sibling that changed
+			// elsewhere is refreshed immediately on this screen as well.
+			loadParams(true);
+		} catch (ProfilesManager.ProfileUpdateConflictException e) {
+			Log.w(TAG, "updateTemplate: stale profile " + name, e);
+			ThemedToast.show(this, R.string.profile_update_conflict, Toast.LENGTH_LONG);
+			loadParams(true);
 		} catch (IOException e) {
 			Log.e(TAG, "updateTemplate: " + name, e);
 			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
@@ -848,23 +853,15 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		return "config_profile_origin:" + configDir.getAbsolutePath();
 	}
 
-	private String builtInThemeKey() {
-		return ProfileModel.builtInThemePreferenceKey(configDir);
-	}
-
 	private boolean readBuiltInThemeLinked() {
-		if (isProfile || configDir == null) return false;
-		return PreferenceManager.getDefaultSharedPreferences(this)
-				.getBoolean(builtInThemeKey(), false);
+		return !isProfile && configDir != null && ProfileLinks.isBuiltInSettingsLinked(configDir);
 	}
 
 	private void setBuiltInThemeLinked(boolean linked) {
 		builtInThemeLinked = linked;
 		if (isProfile || configDir == null) return;
-		SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
-		if (linked) editor.putBoolean(builtInThemeKey(), true);
-		else editor.remove(builtInThemeKey());
-		editor.apply();
+		if (linked) ProfileLinks.linkBuiltInSettings(configDir);
+		else ProfileLinks.detachBuiltInSettings(configDir);
 	}
 
 	@Nullable
@@ -906,9 +903,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	/** Called by the save dialog after a profile snapshot is written and linked. */
 	void onProfileDataChanged() {
 		profileOrigin = readProfileOrigin();
-		if (!isProfile && ProfileLinks.getSettingsProfile(configDir) != null) {
-			setBuiltInThemeLinked(false);
-		}
+		builtInThemeLinked = readBuiltInThemeLinked();
 		refreshProfileMatchCache();
 		if (composeController != null) {
 			composeController.update(createUiState());
@@ -1016,11 +1011,12 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				}
 			}
 
-			// Built-in is a real source only while its explicit theme link is active. A custom app
-			// that happens to equal factory values must remain Custom rather than being reattached.
-			boolean builtInSettings = settingsProfile == null && builtInThemeLinked
-					&& builtInDefaultParams != null
-					&& ProfileConfigMatcher.sameEffectiveConfig(params, state, builtInDefaultParams);
+			boolean builtInSettings = settingsProfile == null && builtInThemeLinked;
+			if (builtInSettings) {
+				settingsModified = ProfileLinks.isBuiltInSettingsModified(configDir)
+						|| builtInDefaultParams == null
+						|| !ProfileConfigMatcher.sameEffectiveConfig(params, state, builtInDefaultParams);
+			}
 
 			profileStatus = ConfigUiState.ProfileStatus.components(
 					settingsProfile, settingsModified, keyboardProfile, keyboardModified,
@@ -1080,9 +1076,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				|| builtInDefaultParams == null) {
 			return;
 		}
-		if (!ProfileConfigMatcher.sameEffectiveConfig(params, currentForm, builtInDefaultParams)) {
-			setBuiltInThemeLinked(false);
-		}
+		boolean modified = !ProfileConfigMatcher.sameEffectiveConfig(
+				params, currentForm, builtInDefaultParams);
+		ProfileLinks.setBuiltInSettingsModified(configDir, modified);
 	}
 
 	private void ensureShaderValues(ShaderInfo shader) {
