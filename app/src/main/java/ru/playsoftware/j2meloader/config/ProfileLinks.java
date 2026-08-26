@@ -60,19 +60,18 @@ final class ProfileLinks {
 	}
 
 	/** Resolves the app-provided Built-In Settings source for direct launch as well as config UI. */
-	static void resolveBuiltInSettings(@NonNull File configDir, @Nullable ProfileModel local) {
-		if (!isGameConfigDir(configDir) || local == null) return;
+	@Nullable
+	static ProfileModel resolveBuiltInSettings(@NonNull File configDir, @Nullable ProfileModel local) {
+		if (!isGameConfigDir(configDir) || local == null) return local;
 		if (getSettingsProfile(configDir) != null) {
 			detachBuiltInSettings(configDir);
-			return;
+			return local;
 		}
-		if (!isBuiltInSettingsLinked(configDir) || isBuiltInSettingsModified(configDir)) return;
+		if (!isBuiltInSettingsLinked(configDir) || isBuiltInSettingsModified(configDir)) return local;
 		ProfileModel source = ProfileModel.createBuiltIn(
 				configDir, ProfileModel.isDarkTheme(ContextHolder.getAppContext()));
-		if (!ProfileConfigMatcher.sameConfig(local, source)) {
-			copyConfigValues(source, local);
-			ProfilesManager.saveConfig(local);
-		}
+		if (ProfileConfigMatcher.sameConfig(local, source)) return local;
+		return ProfilesManager.saveConfig(source) ? source : local;
 	}
 
 	static void linkAppliedComponents(@NonNull Profile profile, @NonNull File configDir,
@@ -408,14 +407,6 @@ final class ProfileLinks {
 	@NonNull
 	private static SharedPreferences preferences() {
 		return PreferenceManager.getDefaultSharedPreferences(ContextHolder.getAppContext());
-	}
-
-	private static void copyConfigValues(@NonNull ProfileModel source, @NonNull ProfileModel target) {
-		File dir = target.dir;
-		ConfigFormState.fromProfile(source,
-				ConfigFormState.normalizeSystemProperties(source.systemProperties)).applyTo(target);
-		target.version = source.version;
-		target.dir = dir;
 	}
 
 	@NonNull
