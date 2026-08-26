@@ -55,7 +55,7 @@ internal fun ConfigProfilePanel(
 
     val settingsValue = when {
         status.settingsProfile != null -> status.settingsProfile
-        status.builtInDefault -> stringResource(R.string.profile_builtin_settings)
+        status.settingsBuiltIn -> stringResource(R.string.profile_builtin_settings)
         else -> stringResource(R.string.profile_custom)
     }
     val keyboardValue = status.keyboardProfile ?: stringResource(R.string.profile_app_specific)
@@ -64,30 +64,22 @@ internal fun ConfigProfilePanel(
         status.keyboardProfile?.takeIf { status.keyboardModified && !contains(it) }?.let(::add)
     }
     val hasCustomComponent =
-        (status.settingsProfile == null && !status.builtInDefault) || status.keyboardProfile == null
+        (status.settingsProfile == null && !status.settingsBuiltIn) || status.keyboardProfile == null
 
     ConfigSection(
         title = stringResource(R.string.profile_current_setup),
         highlighted = true,
     ) {
-        ConfigValuePreference(
+        ProfileSourcePreference(
             title = stringResource(R.string.action_settings),
-            description = if (status.builtInDefault && status.defaultProfile == null) {
-                stringResource(R.string.profile_default_badge)
-            } else {
-                stringResource(R.string.profile_settings_source_summary)
-            },
-            value = settingsValue,
-            message = if (status.settingsModified) stringResource(R.string.profile_modified_badge) else null,
-            messageLevel = ConfigMessageLevel.Warning,
+            source = settingsValue,
+            modified = status.settingsModified,
             onClick = { managerVisible = true },
         )
-        ConfigValuePreference(
+        ProfileSourcePreference(
             title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
-            description = stringResource(R.string.profile_keyboard_source_summary),
-            value = keyboardValue,
-            message = if (status.keyboardModified) stringResource(R.string.profile_modified_badge) else null,
-            messageLevel = ConfigMessageLevel.Warning,
+            source = keyboardValue,
+            modified = status.keyboardModified,
             onClick = { managerVisible = true },
         )
         modifiedSources.forEach { source ->
@@ -97,7 +89,7 @@ internal fun ConfigProfilePanel(
                 onClick = { updateTarget = source },
             )
         }
-        if (status.settingsModified && status.settingsProfile != null) {
+        if (status.settingsModified && (status.settingsProfile != null || status.settingsBuiltIn)) {
             ConfigActionPreference(
                 title = stringResource(R.string.profile_keep_settings_for_app),
                 description = stringResource(R.string.profile_keep_settings_for_app_summary),
@@ -176,6 +168,46 @@ internal fun ConfigProfilePanel(
 }
 
 @Composable
+private fun ProfileSourcePreference(
+    title: String,
+    source: String,
+    modified: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+            )
+            Text(
+                text = source,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (modified) {
+            Text(
+                text = stringResource(R.string.profile_modified_badge),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.tertiary,
+            )
+        }
+    }
+}
+
+@Composable
 private fun ConfigTemplateManagerDialog(
     status: ConfigUiState.ProfileStatus,
     templates: List<ConfigUiState.ProfileTemplate>,
@@ -225,8 +257,8 @@ private fun ConfigTemplateManagerDialog(
                                 TemplateRow(
                                     name = stringResource(R.string.profile_builtin_settings),
                                     summary = stringResource(R.string.profile_builtin_settings_summary),
-                                    isActive = status.builtInDefault,
-                                    isModifiedSource = false,
+                                    isActive = status.settingsBuiltIn,
+                                    isModifiedSource = status.settingsBuiltIn && status.settingsModified,
                                     isDefault = status.defaultProfile == null,
                                     onClick = {
                                         events.onApplyBuiltInTemplate()
