@@ -103,6 +103,26 @@ public class BuiltInProfileLinkTest {
 		assertFalse(ProfileLinks.isBuiltInSettingsModified(configDir));
 	}
 
+	@Test
+	public void runtimeThemeDoesNotOverrideModifiedBuiltInColors() {
+		ProfileLinks.linkBuiltInSettings(configDir);
+		assertTrue(ProfilesManager.saveConfig(currentBuiltIn()));
+		ProfileLinks.refreshBuiltInBaseline(configDir);
+
+		ProfileModel local = ProfilesManager.loadConfig(configDir, false);
+		assertNotNull(local);
+		local.screenBackgroundColor = 0x123456;
+		assertTrue(ProfilesManager.saveConfig(local));
+
+		ProfileModel resolved = ProfilesManager.loadGameConfig(configDir);
+		assertNotNull(resolved);
+		assertTrue(ProfileLinks.isBuiltInSettingsModified(configDir));
+
+		boolean dark = ProfileModel.isDarkTheme(ContextHolder.getAppContext());
+		ProfileModel.applyBuiltInTheme(resolved, !dark);
+		assertEquals(0x123456, resolved.screenBackgroundColor);
+	}
+
 	private ProfileModel currentBuiltIn() {
 		return ProfileModel.createBuiltIn(
 				configDir, ProfileModel.isDarkTheme(ContextHolder.getAppContext()));
