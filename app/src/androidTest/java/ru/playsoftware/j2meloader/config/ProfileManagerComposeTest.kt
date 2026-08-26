@@ -3,6 +3,8 @@
  */
 package ru.playsoftware.j2meloader.config
 
+import androidx.compose.ui.test.assertDoesNotExist
+import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -52,6 +54,37 @@ class ProfileManagerComposeTest {
 
         assertEquals(1, events.keepSettingsCalls)
         assertEquals(1, events.keepKeyboardCalls)
+    }
+
+    @Test
+    fun modifiedBuiltInRemainsVisibleAsSourceAndCanBeKeptLocally() {
+        val events = RecordingEvents()
+        val status = ConfigUiState.ProfileStatus.components(
+            null,
+            true,
+            null,
+            false,
+            true,
+            null,
+        )
+
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigProfilePanel(
+                    status = status,
+                    templates = emptyList(),
+                    events = events,
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Built-In Settings").assertExists()
+        composeRule.onNodeWithText("Modified").assertExists()
+        composeRule.onNodeWithText("Update Template").assertDoesNotExist()
+        composeRule.onNodeWithText("Keep Settings for This App").performClick()
+
+        assertEquals(1, events.keepSettingsCalls)
+        assertEquals(0, events.updateCalls)
     }
 
     @Test
