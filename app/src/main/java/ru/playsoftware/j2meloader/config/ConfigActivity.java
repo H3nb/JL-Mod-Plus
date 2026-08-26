@@ -540,7 +540,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 					selected = line.substring(key.length()).trim();
 					break;
 				}
-			}
+		}
 		}
 		composeController.showEncodingPicker(Arrays.asList(charsets), selected);
 	}
@@ -675,7 +675,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 	}
 
-	private void saveParams() {
+	void saveParams() {
 		try {
 			boolean builtInUnmodified = builtInThemeLinked && currentForm != null
 					&& builtInDefaultParams != null
@@ -774,6 +774,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		boolean appliesSettings = settings && (profile.hasConfig() || profile.hasOldConfig());
 		boolean appliesKeyboard = keyboard && profile.hasKeyLayout();
 		if (!appliesSettings && !appliesKeyboard) return;
+		saveParams();
 		try {
 			ProfilesManager.load(profile, configDir.getPath(), settings, keyboard);
 			// New operations use explicit per-component links; profileOrigin is migration-only.
