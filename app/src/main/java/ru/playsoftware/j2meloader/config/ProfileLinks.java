@@ -36,8 +36,8 @@ import ru.playsoftware.j2meloader.util.FileUtils;
  * Keeps reusable profile components linked to per-game configuration files.
  *
  * <p>The game keeps a local materialized copy for compatibility with the existing runtime. Before
- * that copy is read, an unchanged linked component is refreshed from its profile. A local edit
- * keeps the link as its origin and becomes a modified component; later profile updates do not
+ * that copy is read, an unchanged linked component is refreshed from its source. A local edit
+ * keeps the link as its origin and becomes a modified component; later source updates do not
  * overwrite that local edit until the user explicitly updates the profile or detaches the link.</p>
  */
 final class ProfileLinks {
@@ -46,8 +46,8 @@ final class ProfileLinks {
 	private static final String KEYBOARD_PREFIX = "profile_link_keyboard:";
 	private static final String SETTINGS_HASH_PREFIX = "profile_link_settings_hash:";
 	private static final String KEYBOARD_HASH_PREFIX = "profile_link_keyboard_hash:";
+	private static final String BUILT_IN_HASH_PREFIX = "config_profile_builtin_hash:";
 	private static final String LEGACY_ORIGIN_PREFIX = "config_profile_origin:";
-	private static final String BUILT_IN_MODIFIED_PREFIX = "config_profile_builtin_modified:";
 
 	private ProfileLinks() {
 	}
@@ -67,11 +67,30 @@ final class ProfileLinks {
 			detachBuiltInSettings(configDir);
 			return local;
 		}
-		if (!isBuiltInSettingsLinked(configDir) || isBuiltInSettingsModified(configDir)) return local;
+		if (!isBuiltInSettingsLinked(configDir)) return local;
+
+		File localFile = localFile(configDir, true);
+		String baseline = ensureBuiltInBaseline(configDir, local);
+		if (baseline == null || !localFile.isFile()) return local;
+		try {
+			if (!baseline.equals(hash(localFile))) {
+				// The materialized game config changed outside the source resolver (for example via
+				// KeyMapperActivity). Keep Built-In as provenance, but never overwrite that local edit.
+				return local;
+			}
+		} catch (IOException e) {
+			Log.w(TAG, "Unable to inspect Built-In Settings baseline", e);
+			return local;
+		}
+
 		ProfileModel source = ProfileModel.createBuiltIn(
 				configDir, ProfileModel.isDarkTheme(ContextHolder.getAppContext()));
-		if (ProfileConfigMatcher.sameConfig(local, source)) return local;
+		if (ProfileConfigMatcher.sameConfig(local, source)) {
+			refreshBuiltInBaseline(configDir);
+			return local;
+		}
 		if (!ProfilesManager.saveConfig(source)) return local;
+		refreshBuiltInBaseline(configDir);
 		ProfileModel persisted = ProfilesManager.loadConfig(configDir, true);
 		return persisted != null ? persisted : local;
 	}
@@ -129,31 +148,55 @@ final class ProfileLinks {
 	}
 
 	static boolean isBuiltInSettingsModified(@NonNull File configDir) {
-		return isBuiltInSettingsLinked(configDir)
-				&& preferences().getBoolean(builtInModifiedKey(configDir), false);
+		if (!isBuiltInSettingsLinked(configDir)) return false;
+		ProfileModel local = ProfilesManager.loadConfig(configDir, false);
+		if (local == null) return false;
+		String baseline = ensureBuiltInBaseline(configDir, local);
+		if (baseline == null) return true;
+		File file = localFile(configDir, true);
+		if (!file.isFile()) return false;
+		try {
+			return !baseline.equals(hash(file));
+		} catch (IOException e) {
+			Log.w(TAG, "Unable to inspect Built-In Settings", e);
+			return true;
+		}
 	}
 
 	static void linkBuiltInSettings(@NonNull File configDir) {
 		if (!isGameConfigDir(configDir)) return;
 		clearLink(configDir, true);
-		preferences().edit()
-				.putBoolean(ProfileModel.builtInThemePreferenceKey(configDir), true)
-				.remove(builtInModifiedKey(configDir))
-				.apply();
+		SharedPreferences.Editor editor = preferences().edit()
+				.putBoolean(ProfileModel.builtInThemePreferenceKey(configDir), true);
+		File local = localFile(configDir, true);
+		try {
+			if (local.isFile()) editor.putString(builtInHashKey(configDir), hash(local));
+			else editor.remove(builtInHashKey(configDir));
+		} catch (IOException e) {
+			Log.w(TAG, "Unable to record Built-In Settings baseline", e);
+			editor.remove(builtInHashKey(configDir));
+		}
+		editor.apply();
 	}
 
-	static void setBuiltInSettingsModified(@NonNull File configDir, boolean modified) {
+	static void refreshBuiltInBaseline(@NonNull File configDir) {
 		if (!isBuiltInSettingsLinked(configDir)) return;
-		SharedPreferences.Editor editor = preferences().edit();
-		if (modified) editor.putBoolean(builtInModifiedKey(configDir), true);
-		else editor.remove(builtInModifiedKey(configDir));
-		editor.apply();
+		File local = localFile(configDir, true);
+		if (!local.isFile()) {
+			preferences().edit().remove(builtInHashKey(configDir)).apply();
+			return;
+		}
+		try {
+			preferences().edit().putString(builtInHashKey(configDir), hash(local)).apply();
+		} catch (IOException e) {
+			Log.w(TAG, "Unable to refresh Built-In Settings baseline", e);
+		}
 	}
 
 	static void detachBuiltInSettings(@NonNull File configDir) {
 		preferences().edit()
 				.remove(ProfileModel.builtInThemePreferenceKey(configDir))
-				.remove(builtInModifiedKey(configDir))
+				.remove(builtInHashKey(configDir))
 				.apply();
 	}
 
@@ -285,10 +328,9 @@ final class ProfileLinks {
 	}
 
 	/**
-	 * Converts the old single profile-origin marker into explicit per-component links. The origin
-	 * marker itself is explicit provenance, so a locally modified component is still safe to link:
-	 * its baseline is the source profile hash, which preserves the local file as Modified instead of
-	 * overwriting it or pretending it is synchronized.
+	 * Migrates the old single profile-origin marker into explicit per-component links. The origin
+	 * marker itself is explicit provenance, so a locally modified component remains linked to its
+	 * source and is reported as Modified instead of being overwritten.
 	 */
 	private static void migrateLegacyOrigin(@NonNull File configDir) {
 		SharedPreferences prefs = preferences();
@@ -304,8 +346,6 @@ final class ProfileLinks {
 		try {
 			migrateLegacyComponent(configDir, profile.getName(), profile.getConfig(), true);
 			migrateLegacyComponent(configDir, profile.getName(), profile.getKeyLayout(), false);
-			// The old marker is no longer needed once every available component has had a chance to
-			// become an explicit link. Removing it also makes an explicit detach permanent.
 			prefs.edit().remove(legacyKey).apply();
 		} catch (IOException e) {
 			// Preserve the marker so a transient I/O failure can be retried on the next load.
@@ -323,6 +363,34 @@ final class ProfileLinks {
 				.putString(linkKey(configDir, settings), profileName)
 				.putString(hashKey(configDir, settings), hash(source))
 				.apply();
+	}
+
+	@Nullable
+	private static String ensureBuiltInBaseline(@NonNull File configDir, @NonNull ProfileModel local) {
+		SharedPreferences prefs = preferences();
+		String key = builtInHashKey(configDir);
+		String baseline = prefs.getString(key, null);
+		if (baseline != null) return baseline;
+		File file = localFile(configDir, true);
+		if (!file.isFile()) return null;
+
+		// Older releases already used an explicit Built-In link flag. At that time any settings
+		// edit detached the flag, so an explicitly linked legacy file matching either light or dark
+		// Built-In is safe to adopt as the initial materialized baseline.
+		ProfileModel light = ProfileModel.createBuiltIn(configDir, false);
+		ProfileModel dark = ProfileModel.createBuiltIn(configDir, true);
+		if (!ProfileConfigMatcher.sameConfig(local, light)
+				&& !ProfileConfigMatcher.sameConfig(local, dark)) {
+			return null;
+		}
+		try {
+			baseline = hash(file);
+			prefs.edit().putString(key, baseline).apply();
+			return baseline;
+		} catch (IOException e) {
+			Log.w(TAG, "Unable to migrate Built-In Settings baseline", e);
+			return null;
+		}
 	}
 
 	private static void setLink(@NonNull File configDir, @NonNull String profileName,
@@ -397,8 +465,8 @@ final class ProfileLinks {
 	}
 
 	@NonNull
-	private static String builtInModifiedKey(@NonNull File configDir) {
-		return BUILT_IN_MODIFIED_PREFIX + keySuffix(configDir);
+	private static String builtInHashKey(@NonNull File configDir) {
+		return BUILT_IN_HASH_PREFIX + keySuffix(configDir);
 	}
 
 	@NonNull
