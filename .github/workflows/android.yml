@@ -5,6 +5,7 @@ on:
     branches:
       - alpha
       - main
+      - alpha-pre-emulation-speed
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
@@ -59,8 +60,6 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
         with:
-          # Internal PRs may persist Gradle state for subsequent commits in the same PR.
-          # Fork PRs stay read-only so untrusted code cannot populate repository caches.
           cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
 
       - name: Grant execute permission for Gradle wrapper
