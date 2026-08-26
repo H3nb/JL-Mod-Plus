@@ -47,6 +47,7 @@ final class ProfileLinks {
 	private static final String SETTINGS_HASH_PREFIX = "profile_link_settings_hash:";
 	private static final String KEYBOARD_HASH_PREFIX = "profile_link_keyboard_hash:";
 	private static final String LEGACY_ORIGIN_PREFIX = "config_profile_origin:";
+	private static final String BUILT_IN_MODIFIED_PREFIX = "config_profile_builtin_modified:";
 
 	private ProfileLinks() {
 	}
@@ -58,13 +59,33 @@ final class ProfileLinks {
 		resolveComponent(configDir, false);
 	}
 
+	/** Resolves the app-provided Built-In Settings source for direct launch as well as config UI. */
+	static void resolveBuiltInSettings(@NonNull File configDir, @Nullable ProfileModel local) {
+		if (!isGameConfigDir(configDir) || local == null) return;
+		if (getSettingsProfile(configDir) != null) {
+			detachBuiltInSettings(configDir);
+			return;
+		}
+		if (!isBuiltInSettingsLinked(configDir) || isBuiltInSettingsModified(configDir)) return;
+		ProfileModel source = ProfileModel.createBuiltIn(
+				configDir, ProfileModel.isDarkTheme(ContextHolder.getAppContext()));
+		if (!ProfileConfigMatcher.sameConfig(local, source)) {
+			copyConfigValues(source, local);
+			ProfilesManager.saveConfig(local);
+		}
+	}
+
 	static void linkAppliedComponents(@NonNull Profile profile, @NonNull File configDir,
 			boolean settingsRequested, boolean settingsApplied,
 			boolean keyboardRequested, boolean keyboardApplied) {
 		if (!isGameConfigDir(configDir)) return;
 		if (settingsRequested) {
-			if (settingsApplied) setLink(configDir, profile.getName(), true);
-			else clearLink(configDir, true);
+			if (settingsApplied) {
+				setLink(configDir, profile.getName(), true);
+				detachBuiltInSettings(configDir);
+			} else {
+				clearLink(configDir, true);
+			}
 		}
 		if (keyboardRequested) {
 			if (keyboardApplied) setLink(configDir, profile.getName(), false);
@@ -100,6 +121,39 @@ final class ProfileLinks {
 
 	static boolean isKeyboardModified(@NonNull File configDir) {
 		return isModified(configDir, false);
+	}
+
+	static boolean isBuiltInSettingsLinked(@NonNull File configDir) {
+		return preferences().getBoolean(ProfileModel.builtInThemePreferenceKey(configDir), false);
+	}
+
+	static boolean isBuiltInSettingsModified(@NonNull File configDir) {
+		return isBuiltInSettingsLinked(configDir)
+				&& preferences().getBoolean(builtInModifiedKey(configDir), false);
+	}
+
+	static void linkBuiltInSettings(@NonNull File configDir) {
+		if (!isGameConfigDir(configDir)) return;
+		clearLink(configDir, true);
+		preferences().edit()
+				.putBoolean(ProfileModel.builtInThemePreferenceKey(configDir), true)
+				.remove(builtInModifiedKey(configDir))
+				.apply();
+	}
+
+	static void setBuiltInSettingsModified(@NonNull File configDir, boolean modified) {
+		if (!isBuiltInSettingsLinked(configDir)) return;
+		SharedPreferences.Editor editor = preferences().edit();
+		if (modified) editor.putBoolean(builtInModifiedKey(configDir), true);
+		else editor.remove(builtInModifiedKey(configDir));
+		editor.apply();
+	}
+
+	static void detachBuiltInSettings(@NonNull File configDir) {
+		preferences().edit()
+				.remove(ProfileModel.builtInThemePreferenceKey(configDir))
+				.remove(builtInModifiedKey(configDir))
+				.apply();
 	}
 
 	/**
@@ -342,6 +396,11 @@ final class ProfileLinks {
 	}
 
 	@NonNull
+	private static String builtInModifiedKey(@NonNull File configDir) {
+		return BUILT_IN_MODIFIED_PREFIX + keySuffix(configDir);
+	}
+
+	@NonNull
 	private static String keySuffix(@NonNull File configDir) {
 		return configDir.getAbsolutePath();
 	}
@@ -349,6 +408,14 @@ final class ProfileLinks {
 	@NonNull
 	private static SharedPreferences preferences() {
 		return PreferenceManager.getDefaultSharedPreferences(ContextHolder.getAppContext());
+	}
+
+	private static void copyConfigValues(@NonNull ProfileModel source, @NonNull ProfileModel target) {
+		File dir = target.dir;
+		ConfigFormState.fromProfile(source,
+				ConfigFormState.normalizeSystemProperties(source.systemProperties)).applyTo(target);
+		target.version = source.version;
+		target.dir = dir;
 	}
 
 	@NonNull
