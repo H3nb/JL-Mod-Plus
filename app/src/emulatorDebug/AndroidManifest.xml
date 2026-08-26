@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
+        <provider
+            android:name="ru.playsoftware.j2meloader.memory.debug.MemoryEditorBootstrapProvider"
+            android:authorities="${applicationId}.memoryeditor.bootstrap"
+            android:exported="false"
+            android:initOrder="100"
+            android:process=":midlet" />
+
         <service
             android:name="ru.playsoftware.j2meloader.memory.MemoryScanService"
             android:exported="false"
