@@ -45,6 +45,12 @@ public class ProfilesManager {
 	private static final String TAG = ProfilesManager.class.getName();
 	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
+	static final class ProfileUpdateConflictException extends IOException {
+		ProfileUpdateConflictException(@NonNull String profileName) {
+			super("Profile changed since this app was linked: " + profileName);
+		}
+	}
+
 	static ArrayList<Profile> getProfiles() {
 		File root = new File(Config.getProfilesDir());
 		return getList(root);
@@ -66,7 +72,10 @@ public class ProfilesManager {
 
 	static void load(Profile from, String toPath, boolean config, boolean keyboard)
 			throws IOException {
-		boolean configRequested = config && (from.hasConfig() || from.hasOldConfig());
+		ProfileModel sourceConfig = config && (from.hasConfig() || from.hasOldConfig())
+				? loadConfig(from.getDir(), true)
+				: null;
+		boolean configRequested = config && sourceConfig != null;
 		boolean keyboardRequested = keyboard && from.hasKeyLayout();
 		if (!configRequested && !keyboardRequested) {
 			return;
@@ -80,14 +89,12 @@ public class ProfilesManager {
 		if (configRequested) {
 			File source = from.getConfig();
 			if (source.isFile()) {
+				// loadConfig() above validates and migrates the source before it is materialized.
 				FileUtils.copyFileUsingChannel(source, dstConfig);
 				configApplied = true;
 			} else {
-				ProfileModel params = loadConfig(from.getDir());
-				if (params != null) {
-					params.dir = configDir;
-					configApplied = saveConfig(params);
-				}
+				sourceConfig.dir = configDir;
+				configApplied = saveConfig(sourceConfig);
 			}
 		}
 		if (keyboardRequested) {
@@ -138,6 +145,10 @@ public class ProfilesManager {
 						&& ProfileLinks.isSettingsModified(fromDir);
 				boolean updateKeyboard = existingKeyboard && linkedKeyboard
 						&& ProfileLinks.isKeyboardModified(fromDir);
+				if ((updateConfig && ProfileLinks.hasSourceConflict(fromDir, true))
+						|| (updateKeyboard && ProfileLinks.hasSourceConflict(fromDir, false))) {
+					throw new ProfileUpdateConflictException(profile.getName());
+				}
 				if (updateConfig || updateKeyboard) {
 					save(profile, fromPath, updateConfig, updateKeyboard);
 				}
