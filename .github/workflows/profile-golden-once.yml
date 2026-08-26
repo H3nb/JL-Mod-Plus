@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   record:
-    if: ${{ !contains(github.event.head_commit.message, '[golden-bot]') }}
     runs-on: ubuntu-24.04
     steps:
       - name: Check out branch
@@ -22,7 +21,6 @@ jobs:
           fetch-depth: 1
 
       - name: Restore shared debug keystore
-        if: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 != '' }}
         env:
           ANDROID_DEBUG_KEYSTORE_BASE64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 }}
         run: |
