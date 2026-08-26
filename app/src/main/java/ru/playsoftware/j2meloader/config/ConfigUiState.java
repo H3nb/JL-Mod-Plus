@@ -179,23 +179,26 @@ public final class ConfigUiState {
 		@Nullable public final String activeProfile;
 		@Nullable public final String sourceProfile;
 		@Nullable public final String defaultProfile;
+		/** Legacy alias for settingsBuiltIn retained for existing callers/tests. */
 		public final boolean builtInDefault;
 		public final boolean modified;
 
 		/** Explicit reusable sources for the redesigned modular profile manager. */
 		@Nullable public final String settingsProfile;
 		@Nullable public final String keyboardProfile;
+		public final boolean settingsBuiltIn;
 		public final boolean settingsModified;
 		public final boolean keyboardModified;
 
 		private ProfileStatus(@Nullable String activeProfile, @Nullable String sourceProfile,
-				@Nullable String defaultProfile, boolean builtInDefault, boolean modified,
+				@Nullable String defaultProfile, boolean settingsBuiltIn, boolean modified,
 				@Nullable String settingsProfile, boolean settingsModified,
 				@Nullable String keyboardProfile, boolean keyboardModified) {
 			this.activeProfile = activeProfile;
 			this.sourceProfile = sourceProfile;
 			this.defaultProfile = defaultProfile;
-			this.builtInDefault = builtInDefault;
+			this.builtInDefault = settingsBuiltIn;
+			this.settingsBuiltIn = settingsBuiltIn;
 			this.modified = modified;
 			this.settingsProfile = settingsProfile;
 			this.settingsModified = settingsModified;
@@ -230,7 +233,7 @@ public final class ConfigUiState {
 		@NonNull
 		public static ProfileStatus components(@Nullable String settingsProfile,
 				boolean settingsModified, @Nullable String keyboardProfile,
-				boolean keyboardModified, boolean builtInSettings,
+				boolean keyboardModified, boolean settingsBuiltIn,
 				@Nullable String defaultProfile) {
 			String active = null;
 			String source = null;
@@ -241,11 +244,11 @@ public final class ConfigUiState {
 			} else if (keyboardProfile == null && settingsProfile != null) {
 				source = settingsProfile;
 				if (!settingsModified) active = settingsProfile;
-			} else if (settingsProfile == null && keyboardProfile != null) {
+			} else if (settingsProfile == null && keyboardProfile != null && !settingsBuiltIn) {
 				source = keyboardProfile;
 				if (!keyboardModified) active = keyboardProfile;
 			}
-			return new ProfileStatus(active, source, defaultProfile, builtInSettings, anyModified,
+			return new ProfileStatus(active, source, defaultProfile, settingsBuiltIn, anyModified,
 					settingsProfile, settingsModified, keyboardProfile, keyboardModified);
 		}
 
