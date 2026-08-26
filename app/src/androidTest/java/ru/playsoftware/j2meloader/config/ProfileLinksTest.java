@@ -20,6 +20,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.SharedPreferences;
 
@@ -35,6 +36,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
@@ -63,6 +65,9 @@ public class ProfileLinksTest {
 	@After
 	public void tearDown() {
 		preferences().edit().remove(legacyOriginKey()).apply();
+		ProfileLinks.detachSettings(configDir);
+		ProfileLinks.detachKeyboard(configDir);
+		ProfileLinks.detachBuiltInSettings(configDir);
 		settingsProfile.delete();
 		keyboardProfile.delete();
 		FileUtils.deleteDirectory(configDir);
@@ -217,6 +222,58 @@ public class ProfileLinksTest {
 	}
 
 	@Test
+	public void corruptSettingsProfileCannotOverwriteGameSettings() throws Exception {
+		writeConfig(configDir, 176);
+		writeBytes(settingsProfile.getConfig(), "{broken".getBytes(StandardCharsets.UTF_8));
+		writeBytes(settingsProfile.getKeyLayout(), new byte[]{7, 8});
+
+		ProfilesManager.load(settingsProfile, configDir.getPath(), true, true);
+
+		assertEquals(176, readConfig(configDir).screenWidth);
+		assertNull(ProfileLinks.getSettingsProfile(configDir));
+		assertEquals(settingsProfile.getName(), ProfileLinks.getKeyboardProfile(configDir));
+		assertArrayEquals(new byte[]{7, 8}, readBytes(localKeyboard()));
+	}
+
+	@Test
+	public void staleModifiedSettingsCannotOverwriteNewerSharedProfile() throws Exception {
+		writeConfig(settingsProfile, 240);
+		ProfilesManager.load(settingsProfile, configDir.getPath(), true, false);
+
+		ProfileModel local = readConfig(configDir);
+		local.screenWidth = 360;
+		assertTrue(ProfilesManager.saveConfig(local));
+		writeConfig(settingsProfile, 320);
+
+		try {
+			ProfilesManager.saveSnapshot(settingsProfile, configDir.getPath());
+			fail("Expected stale profile conflict");
+		} catch (ProfilesManager.ProfileUpdateConflictException expected) {
+			// Expected: the newer shared profile must win until the user explicitly resolves it.
+		}
+
+		assertEquals(320, readConfig(settingsProfile.getDir()).screenWidth);
+		assertEquals(360, readConfig(configDir).screenWidth);
+		assertTrue(ProfileLinks.isSettingsModified(configDir));
+	}
+
+	@Test
+	public void matchingExternalUpdateCanSafelyRebaselineModifiedSettings() throws Exception {
+		writeConfig(settingsProfile, 240);
+		ProfilesManager.load(settingsProfile, configDir.getPath(), true, false);
+
+		ProfileModel local = readConfig(configDir);
+		local.screenWidth = 360;
+		assertTrue(ProfilesManager.saveConfig(local));
+		writeConfig(settingsProfile, 360);
+
+		ProfilesManager.saveSnapshot(settingsProfile, configDir.getPath());
+
+		assertEquals(360, readConfig(settingsProfile.getDir()).screenWidth);
+		assertFalse(ProfileLinks.isSettingsModified(configDir));
+	}
+
+	@Test
 	public void explicitSettingsDetachIsPermanentAndKeepsSiblingLink() throws Exception {
 		writeConfig(settingsProfile, 240);
 		writeBytes(settingsProfile.getKeyLayout(), new byte[]{1, 2});
@@ -252,6 +309,58 @@ public class ProfileLinksTest {
 		assertNull(ProfileLinks.getKeyboardProfile(configDir));
 		assertEquals(240, readConfig(configDir).screenWidth);
 		assertArrayEquals(new byte[]{1, 2}, readBytes(localKeyboard()));
+	}
+
+	@Test
+	public void namedSettingsReplaceBuiltInSource() throws Exception {
+		ProfileLinks.linkBuiltInSettings(configDir);
+		writeConfig(settingsProfile, 240);
+
+		ProfilesManager.load(settingsProfile, configDir.getPath(), true, false);
+
+		assertFalse(ProfileLinks.isBuiltInSettingsLinked(configDir));
+		assertEquals(settingsProfile.getName(), ProfileLinks.getSettingsProfile(configDir));
+	}
+
+	@Test
+	public void builtInModifiedStateKeepsItsSourceProvenance() {
+		ProfileLinks.linkBuiltInSettings(configDir);
+		ProfileLinks.setBuiltInSettingsModified(configDir, true);
+
+		assertTrue(ProfileLinks.isBuiltInSettingsLinked(configDir));
+		assertTrue(ProfileLinks.isBuiltInSettingsModified(configDir));
+	}
+
+	@Test
+	public void directGameLoadRefreshesUnmodifiedBuiltInThemeSource() {
+		boolean dark = ProfileModel.isDarkTheme(ContextHolder.getAppContext());
+		ProfileModel stale = ProfileModel.createBuiltIn(configDir, !dark);
+		assertTrue(ProfilesManager.saveConfig(stale));
+		ProfileLinks.linkBuiltInSettings(configDir);
+
+		ProfileModel resolved = ProfilesManager.loadGameConfig(configDir);
+
+		assertNotNull(resolved);
+		assertEquals(dark ? 0x000000 : 0xFFFFFF, resolved.screenBackgroundColor);
+		assertTrue(ProfileLinks.isBuiltInSettingsLinked(configDir));
+		assertFalse(ProfileLinks.isBuiltInSettingsModified(configDir));
+	}
+
+	@Test
+	public void modifiedBuiltInSettingsAreNotOverwrittenBySourceRefresh() {
+		ProfileModel local = ProfileModel.createBuiltIn(configDir,
+				ProfileModel.isDarkTheme(ContextHolder.getAppContext()));
+		local.screenWidth = 176;
+		assertTrue(ProfilesManager.saveConfig(local));
+		ProfileLinks.linkBuiltInSettings(configDir);
+		ProfileLinks.setBuiltInSettingsModified(configDir, true);
+
+		ProfileModel resolved = ProfilesManager.loadGameConfig(configDir);
+
+		assertNotNull(resolved);
+		assertEquals(176, resolved.screenWidth);
+		assertTrue(ProfileLinks.isBuiltInSettingsLinked(configDir));
+		assertTrue(ProfileLinks.isBuiltInSettingsModified(configDir));
 	}
 
 	@Test
