@@ -21,6 +21,7 @@ final class NativeRemoteScanner {
     private NativeRemoteScanner() {}
 
     static native String nativeConfigureTarget(int targetPid, int pageSize, long[] residentRuns);
+    static native String nativeConfigureVisibleTarget(int targetPid, int pageSize, long[] residentRuns);
     static native int nativeSearch(String value, int scope, int valueType);
     static native int nativeRefine(String value);
     static native int nativeRefineRelocating(String value);
@@ -28,6 +29,9 @@ final class NativeRemoteScanner {
     static native void nativeCommitZero();
     static native long nativeGetResultCount();
     static native int nativeFillResultsPage(long[] output, int offset, int limit);
+    static native int nativeRefreshVisibleCandidates(long[] rawPage, int count, long[] output);
+    static native void nativeResetVisibleTracking();
+    static native String nativeGetVisibleTrackingDiagnostics();
     static native String nativeEdit(long address, int valueType, String expected, String replacement);
     static native String nativeGetDiagnostics();
     static native String nativeGetLastError();
