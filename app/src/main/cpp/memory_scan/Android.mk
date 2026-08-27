@@ -16,7 +16,7 @@ include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := jlremote
-LOCAL_SRC_FILES := remote_engine.cpp
+LOCAL_SRC_FILES := remote_engine.cpp remote_scanner.cpp
 LOCAL_CPP_FEATURES := exceptions
-LOCAL_CPPFLAGS += -std=c++17 -Wall -Wextra -include cstdio -include cstdlib
+LOCAL_CPPFLAGS += -std=c++17 -Wall -Wextra -include cstdio -include cstdlib -include new
 include $(BUILD_SHARED_LIBRARY)
