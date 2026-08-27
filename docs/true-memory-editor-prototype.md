@@ -87,7 +87,7 @@ ambiguous               = 0
 
 This is the intended behavior: the 52 fresh matches remained a recovery pool and only one logical old address group survived.
 
-`Seen=0 retained=1` on individual type lines after relocation is currently diagnostic bookkeeping: recovered buckets do not inherit the fresh-pool per-type seen counter. Global `relocationFreshMatches`, group counts and retained counts are authoritative for that operation.
+Recovered buckets now retain fresh-pool per-type `Seen` provenance in diagnostics, so type lines remain interpretable after relocation. Global `relocationFreshMatches`, group counts and retained counts remain the authoritative relocation summary.
 
 ## Remote live values and live addresses
 
