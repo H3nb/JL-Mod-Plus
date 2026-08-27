@@ -1,0 +1,41 @@
+name: Remove Redundant Profile Translation (one-off)
+
+on:
+  push:
+    branches:
+      - fix/profile-manager
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: fix/profile-manager
+          persist-credentials: true
+          fetch-depth: 1
+
+      - name: Remove stale translation and this workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('app/src/main/res/values-in/strings_config_redesign.xml')
+          text = path.read_text()
+          line = '    <string name="profile_choose_or_manage">Pilih atau kelola template</string>\n'
+          if text.count(line) != 1:
+              raise SystemExit('Expected exactly one stale Indonesian profile action translation')
+          path.write_text(text.replace(line, ''))
+          PY
+          git rm .github/workflows/remove-redundant-profile-translation-once.yml
+          git add app/src/main/res/values-in/strings_config_redesign.xml
+          git diff --cached --stat
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(profile): remove redundant translated action'
+          git push origin HEAD:fix/profile-manager
