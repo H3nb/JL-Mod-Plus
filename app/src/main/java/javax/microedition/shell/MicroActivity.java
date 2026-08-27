@@ -265,12 +265,21 @@ public class MicroActivity extends AppCompatActivity {
 
 					@Override
 					public void onEmulationSpeed() {
-						// The Compose controller owns the speed picker dialog.
+						updateRuntimeMenuState(current);
 					}
 
 					@Override
 					public void onSetEmulationSpeed(int value) {
 						if (microLoader == null || !microLoader.setRuntimeEmulationSpeed(value)) {
+							toast(R.string.error);
+						} else {
+							updateRuntimeMenuState(current);
+						}
+					}
+
+					@Override
+					public void onSetAutoEmulationSpeed() {
+						if (microLoader == null || !microLoader.setRuntimeAutoEmulationSpeed()) {
 							toast(R.string.error);
 						} else {
 							updateRuntimeMenuState(current);
@@ -376,6 +385,9 @@ public class MicroActivity extends AppCompatActivity {
 		int emulationSpeedPercent = emulationSpeedAvailable
 				? timingSession.speedPercentOr(EmulationSpeed.NORMAL_PERCENT)
 				: EmulationSpeed.NORMAL_PERCENT;
+		boolean emulationSpeedAuto = emulationSpeedAvailable
+				&& microLoader.getAutoSpeedController() != null
+				&& microLoader.getAutoSpeedController().isAutoEnabled();
 		String title = displayable != null ? displayable.getTitle() : null;
 		// RuntimeMenuComposeController exposes a non-null Kotlin String. An incomplete internal
 		// launch intent may omit KEY_MIDLET_NAME, so keep that malformed-input path on a safe
@@ -390,7 +402,8 @@ public class MicroActivity extends AppCompatActivity {
 				vk != null && vk.getLayoutEditMode() != VirtualKeyboard.LAYOUT_EOF,
 				orientationLocked,
 				emulationSpeedAvailable,
-				emulationSpeedPercent);
+				emulationSpeedPercent,
+				emulationSpeedAuto);
 	}
 
 	private GuestWindowPolicy.Chrome getRuntimeChrome(@Nullable Displayable displayable) {

@@ -41,6 +41,7 @@ public class EmulationSpeedTest {
 		assertEquals(EmulationSpeed.NORMAL_PERCENT, EmulationSpeed.sanitizePercent(0));
 		assertEquals(EmulationSpeed.NORMAL_PERCENT, EmulationSpeed.sanitizePercent(1601));
 		assertEquals(250, EmulationSpeed.requireValidPercent(250));
+		assertEquals(250_001, EmulationSpeed.requireRuntimePercent(250_001));
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -55,5 +56,6 @@ public class EmulationSpeedTest {
 		assertEquals("1.25x", EmulationSpeed.formatMultiplier(125));
 		assertEquals("16x", EmulationSpeed.formatMultiplier(1600));
 		assertEquals("20x", EmulationSpeed.formatMeasuredMultiplier(2000));
+		assertEquals("2500.01x", EmulationSpeed.formatRuntimeMultiplier(250_001));
 	}
 }

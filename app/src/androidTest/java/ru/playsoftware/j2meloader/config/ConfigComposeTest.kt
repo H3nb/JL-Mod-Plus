@@ -129,14 +129,14 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun displaySettingsKeepOnlyTheEmulationSpeedOverlayToggle() {
+    fun displaySettingsDoNotExposeRuntimeEmulationSpeed() {
         composeRule.setContent {
             JLModPlusTheme {
                 ConfigScreen(sampleState(), RecordingConfigEvents(), initialDestination = ConfigDestination.Display)
             }
         }
 
-        composeRule.onNodeWithText("Show Emulation Speed").assertExists()
+        composeRule.onNodeWithText("Show Emulation Speed").assertDoesNotExist()
         composeRule.onNodeWithText("Emulation Speed").assertDoesNotExist()
     }
 

@@ -65,23 +65,23 @@
     <string name="config_help_shader_tuning">Adjust parameters exposed by the selected shader.</string>
     <string name="config_help_parallel_redraw">Allows screen redraw work to run in parallel when supported.</string>
     <string name="config_help_force_fullscreen">Forces the app surface to use the full available display area.</string>
-    <string name="config_help_show_fps">Displays the current frame rate while the app is running.</string>
+    <string name="config_help_show_fps">Shows a compact game, render, dropped-frame, and runtime-speed diagnostic.</string>
     <string name="config_help_fps_limit">Caps the maximum frame rate. Leave empty for no limit.</string>
     <string name="PREF_EMULATION_SPEED">Emulation Speed</string>
-    <string name="PREF_SHOW_EMULATION_SPEED">Show Emulation Speed</string>
     <string name="PREF_TIMING_MODE">Timing mode</string>
     <string name="config_timing_mode_full_guest">Full guest time</string>
     <string name="config_timing_mode_real_wall">Real wall clock</string>
     <string name="config_help_emulation_speed">Scales guest time and compatible delays. Audio and Android-host UI remain at normal speed.</string>
-    <string name="config_help_show_emulation_speed">Shows the selected target and measured emulation clock rate while the app is running.</string>
+    <string name="emulation_speed_auto">Auto</string>
+    <string name="emulation_speed_auto_summary">Learns the current workload and continuously seeks the highest speed it can sustain.</string>
+    <string name="emulation_speed_auto_value">Auto · %1$s</string>
     <string name="config_help_timing_mode">Choose whether current time and date follow emulation speed. Relative delays remain speed-scaled.</string>
     <string name="config_help_timing_unavailable">This converted app does not contain timing instrumentation. Reinstall or reconvert it before enabling emulation speed.</string>
     <string name="reconverting_wait">This MIDlet needs a one-time compatibility conversion before it can start. Please wait…</string>
     <string name="reconversion_error">The MIDlet could not be converted automatically.
 
 %1$s</string>
-    <string name="emulation_speed_overlay">Speed %1$s · clock %2$s</string>
-    <string name="fps_overlay_value">Game %1$d · Render %2$d</string>
+    <string name="fps_overlay_value">FPS %1$d | RENDER %2$d | DROP %3$d%% | SPD %4$s</string>
     <string name="config_help_generic_toggle">Enable or disable this behavior for the current app.</string>
     <string name="config_help_generic_color">Choose the color used by this visual element.</string>
     <string name="config_help_action_generic">Open this configuration tool.</string>
