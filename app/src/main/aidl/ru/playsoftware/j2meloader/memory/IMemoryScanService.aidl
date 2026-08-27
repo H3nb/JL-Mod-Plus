@@ -10,7 +10,6 @@ interface IMemoryScanService {
     long startSearch(long generation, String value, int scope, int valueType);
     long refine(long generation, String value);
     long[] getResultsPage(long generation, int offset, int limit);
-    long[] getLiveResultsPage(long generation, int offset, int limit);
     Bundle editValue(long generation, long address, int valueType, String expected, String replacement);
     void clearSearch(long generation);
     void cancelOperation(long generation);
