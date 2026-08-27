@@ -18,6 +18,8 @@
 
 package javax.microedition.lcdui.event;
 
+import android.os.Looper;
+
 import javax.microedition.util.ContextHolder;
 import javax.microedition.util.LinkedList;
 
@@ -58,9 +60,11 @@ public class EventQueue implements Runnable {
 	/**
 	 * Add event to the queue.
 	 * <p>
-	 * If the immediate processing mode is enabled,
-	 * the event is processed here,
-	 * in this case there is no queue at all
+	 * If the immediate processing mode is enabled, the event is normally processed here. Android's
+	 * main/UI thread is deliberately excluded from that fast path: a slow MIDlet paint callback may
+	 * hold callbackLock for an arbitrary amount of time, and blocking input dispatch on that monitor
+	 * can trigger a 5-second Android ANR. UI-originated pointer/key events therefore fall back to the
+	 * normal MIDlet queue and return to Android immediately.
 	 * <p>
 	 * If an event has been added to the queue,
 	 * its enterQueue() method is called.
@@ -69,7 +73,7 @@ public class EventQueue implements Runnable {
 	 */
 	public void postEvent(Event event) {
 
-		if (immediate) { // the immediate processing mode is enabled
+		if (immediate && Looper.myLooper() != Looper.getMainLooper()) {
 			Integer integer = loopCounter.get();
 			int loop = (integer != null) ? integer : 0;
 			if (loop > 10) {
@@ -85,13 +89,13 @@ public class EventQueue implements Runnable {
 						loopCounter.set(loop);
 					}
 				}
-				return;      // and nothing to do here
+				return;
 			}
 		}
 
 		boolean empty;
 
-		synchronized (queue) {   // all operations with the queue must be synchronized (on itself)
+		synchronized (queue) {
 			empty = queue.isEmpty();
 
 			if (empty || event.placeableAfter(queue.getLast())) {
