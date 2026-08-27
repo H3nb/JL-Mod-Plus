@@ -24,12 +24,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Scanner hosted in :memory_engine. Candidate vectors, scan buffers, refinement and raw writes live
- * outside the MIDlet ART heap; :midlet only supplies PID/generation and mincore-compressed ART runs.
+ * Scanner hosted in :memory_engine. Candidate vectors, scan buffers, refinement, live address
+ * binding and raw writes live outside the MIDlet ART heap; :midlet only supplies PID/generation
+ * and mincore-compressed ART runs.
  */
 public final class RemoteMemoryScanService extends Service {
     private static final int MAX_PAGE_SIZE = 100;
     private static final int RESULT_STRIDE = MemoryScanContract.RAW_RESULT_STRIDE;
+    private static final int LIVE_STRIDE = MemoryScanContract.LIVE_RESULT_STRIDE;
     private static final int MAX_RESIDENT_RUNS = 2048;
     private static final long[] EMPTY_RESULTS = new long[0];
 
@@ -43,7 +45,9 @@ public final class RemoteMemoryScanService extends Service {
     private final AtomicLong nextOperation = new AtomicLong(1L);
     private final RemoteCallbackList<IMemoryScanCallback> callbacks = new RemoteCallbackList<>();
     private final Object resultPageLock = new Object();
+    private final Object callbackLock = new Object();
     private final long[] resultPage = new long[1 + MAX_PAGE_SIZE * RESULT_STRIDE];
+    private final long[] livePage = new long[1 + MAX_PAGE_SIZE * LIVE_STRIDE];
 
     private volatile IMemoryTargetBridge target;
     private volatile boolean targetBound;
@@ -86,10 +90,12 @@ public final class RemoteMemoryScanService extends Service {
             Bundle bundle = new Bundle();
             bundle.putBoolean(MemoryScanContract.KEY_ACTIVE, generation != 0L);
             bundle.putLong(MemoryScanContract.KEY_GENERATION, generation);
-            bundle.putString(MemoryScanContract.KEY_CAPABILITY, generation == 0L ? "TARGET_NOT_VISIBLE" : "OK");
+            bundle.putString(MemoryScanContract.KEY_CAPABILITY,
+                    generation == 0L ? "TARGET_NOT_VISIBLE" : "OK");
             // Preserve the existing UI readiness contract. The remote access probe already proved
             // raw read/write/readback; no managed self-scan is required in the engine process.
-            bundle.putString(MemoryScanContract.KEY_MANAGED_SELF_TEST, generation == 0L ? "WAITING" : "PASS");
+            bundle.putString(MemoryScanContract.KEY_MANAGED_SELF_TEST,
+                    generation == 0L ? "WAITING" : "PASS");
             return bundle;
         }
 
@@ -150,6 +156,24 @@ public final class RemoteMemoryScanService extends Service {
                 int count = NativeRemoteScanner.nativeFillResultsPage(resultPage, offset, limit);
                 if (count < 0) return EMPTY_RESULTS;
                 resultPage[0] = count;
+                if (count == 0) return resultPage;
+
+                int liveCount = NativeRemoteScanner.nativeRefreshVisibleCandidates(
+                        resultPage, count, livePage);
+                if (liveCount == count) {
+                    // Preserve the proven 4-slot Binder/UI contract while replacing raw/stale
+                    // addresses with the tracker's current binding. Ambiguous/lost/suspect rows
+                    // are returned unreadable and therefore cannot pass the exact-write guard.
+                    for (int i = 0; i < count; ++i) {
+                        int rawBase = 1 + i * RESULT_STRIDE;
+                        int liveBase = 1 + i * LIVE_STRIDE;
+                        resultPage[rawBase] = livePage[liveBase];
+                        resultPage[rawBase + 1] = livePage[liveBase + 1];
+                        resultPage[rawBase + 2] = livePage[liveBase + 2];
+                        resultPage[rawBase + 3] = livePage[liveBase + 3];
+                    }
+                }
+                diagnostics = engineDiagnostics();
                 return resultPage;
             }
         }
@@ -159,7 +183,8 @@ public final class RemoteMemoryScanService extends Service {
                 String expected, String replacement) {
             Bundle result = new Bundle();
             if (!validGeneration(generation) || running.get() || !hasSearchSession
-                    || searchGeneration != generation || !MemoryScanContract.isCandidateType(valueType)) {
+                    || searchGeneration != generation
+                    || !MemoryScanContract.isCandidateType(valueType)) {
                 result.putBoolean(MemoryScanContract.KEY_SUCCESS, false);
                 result.putString(MemoryScanContract.KEY_MESSAGE,
                         "Remote target/search generation is no longer safe for writes");
@@ -181,6 +206,7 @@ public final class RemoteMemoryScanService extends Service {
             NativeRemoteScanner.nativeCancel();
             worker.execute(() -> {
                 NativeRemoteScanner.nativeClear();
+                NativeRemoteScanner.nativeResetVisibleTracking();
                 resetSearchState("Remote search cleared");
                 notifyStatusChanged();
             });
@@ -213,6 +239,7 @@ public final class RemoteMemoryScanService extends Service {
     public void onDestroy() {
         NativeRemoteScanner.nativeCancel();
         NativeRemoteScanner.nativeClear();
+        NativeRemoteScanner.nativeResetVisibleTracking();
         worker.shutdownNow();
         callbacks.kill();
         if (targetBound) {
@@ -232,13 +259,13 @@ public final class RemoteMemoryScanService extends Service {
                 return;
             }
             int code = NativeRemoteScanner.nativeSearch(value, scope, valueType);
-            diagnostics = engineDiagnostics();
             if (!validGeneration(generation)) {
                 NativeRemoteScanner.nativeClear();
                 invalidateTarget("MIDlet target changed during remote search");
                 return;
             }
             if (code == NativeRemoteScanner.RESULT_OK) {
+                NativeRemoteScanner.nativeResetVisibleTracking();
                 resultCount = NativeRemoteScanner.nativeGetResultCount();
                 currentQuery = value;
                 currentScope = scope;
@@ -256,6 +283,7 @@ public final class RemoteMemoryScanService extends Service {
             } else {
                 failOrPreserve(hadSession, nativeError("Remote New Search failed", code));
             }
+            diagnostics = engineDiagnostics();
         } catch (RemoteException | RuntimeException | UnsatisfiedLinkError error) {
             failOrPreserve(hadSession, "Remote scanner failure: "
                     + error.getClass().getSimpleName() + ": " + error.getMessage());
@@ -275,7 +303,8 @@ public final class RemoteMemoryScanService extends Service {
                     if (targetError != null) {
                         NativeRemoteScanner.nativeCommitZero();
                         code = NativeRemoteScanner.RESULT_OK;
-                        message = targetError + " · previous raw addresses discarded; final result 0";
+                        message = targetError
+                                + " · previous raw addresses discarded; final result 0";
                     } else {
                         relocationAttempted = true;
                         code = NativeRemoteScanner.nativeRefineRelocating(value);
@@ -285,7 +314,6 @@ public final class RemoteMemoryScanService extends Service {
                     code = NativeRemoteScanner.RESULT_OK;
                 }
             }
-            diagnostics = engineDiagnostics();
             if (!validGeneration(generation)) {
                 NativeRemoteScanner.nativeClear();
                 invalidateTarget("MIDlet target changed during remote refinement");
@@ -309,6 +337,7 @@ public final class RemoteMemoryScanService extends Service {
                 state = MemoryScanContract.STATE_ERROR;
                 message = nativeError("Remote Next Scan failed", code);
             }
+            diagnostics = engineDiagnostics();
         } catch (RemoteException | RuntimeException | UnsatisfiedLinkError error) {
             state = MemoryScanContract.STATE_ERROR;
             message = "Remote Next Scan failure: " + error.getClass().getSimpleName()
@@ -333,7 +362,13 @@ public final class RemoteMemoryScanService extends Service {
             return "Target mincore bridge returned no resident Java ranges";
         }
         String configured = NativeRemoteScanner.nativeConfigureTarget(targetPid, pageSize, runs);
-        return "OK".equals(configured) ? null : "Remote target configuration failed: " + configured;
+        if (!"OK".equals(configured)) {
+            return "Remote target configuration failed: " + configured;
+        }
+        String liveConfigured = NativeRemoteScanner.nativeConfigureVisibleTarget(
+                targetPid, pageSize, runs);
+        return "OK".equals(liveConfigured)
+                ? null : "Remote live target configuration failed: " + liveConfigured;
     }
 
     private long targetGeneration() {
@@ -368,6 +403,7 @@ public final class RemoteMemoryScanService extends Service {
     private void invalidateTarget(String reason) {
         NativeRemoteScanner.nativeCancel();
         NativeRemoteScanner.nativeClear();
+        NativeRemoteScanner.nativeResetVisibleTracking();
         hasSearchSession = false;
         searchGeneration = 0L;
         resultCount = 0L;
@@ -384,7 +420,8 @@ public final class RemoteMemoryScanService extends Service {
         resultCount = 0L;
         currentQuery = "";
         currentValueType = MemoryScanContract.TYPE_AUTO;
-        state = targetGeneration() == 0L ? MemoryScanContract.STATE_NO_TARGET : MemoryScanContract.STATE_IDLE;
+        state = targetGeneration() == 0L
+                ? MemoryScanContract.STATE_NO_TARGET : MemoryScanContract.STATE_IDLE;
         message = reason;
         diagnostics = "backend=remote-memory-engine";
     }
@@ -393,8 +430,10 @@ public final class RemoteMemoryScanService extends Service {
         Bundle bundle = new Bundle();
         long generation = targetGeneration();
         bundle.putLong(MemoryScanContract.KEY_GENERATION, generation);
-        bundle.putString(MemoryScanContract.KEY_CAPABILITY, generation == 0L ? "TARGET_NOT_VISIBLE" : "OK");
-        bundle.putString(MemoryScanContract.KEY_MANAGED_SELF_TEST, generation == 0L ? "WAITING" : "PASS");
+        bundle.putString(MemoryScanContract.KEY_CAPABILITY,
+                generation == 0L ? "TARGET_NOT_VISIBLE" : "OK");
+        bundle.putString(MemoryScanContract.KEY_MANAGED_SELF_TEST,
+                generation == 0L ? "WAITING" : "PASS");
         bundle.putString(MemoryScanContract.KEY_STATE, state);
         bundle.putString(MemoryScanContract.KEY_MESSAGE, message);
         bundle.putLong(MemoryScanContract.KEY_OPERATION_ID, operationId);
@@ -412,6 +451,7 @@ public final class RemoteMemoryScanService extends Service {
 
     private String engineDiagnostics() {
         return NativeRemoteScanner.nativeGetDiagnostics()
+                + "\n" + NativeRemoteScanner.nativeGetVisibleTrackingDiagnostics()
                 + "\nscannerHostProcess=:memory_engine"
                 + "\nscannerHostPid=" + Process.myPid()
                 + "\ntargetGcTelemetry=not-required-for-correctness";
@@ -424,28 +464,32 @@ public final class RemoteMemoryScanService extends Service {
     }
 
     private void notifyStatusChanged() {
-        int count = callbacks.beginBroadcast();
-        try {
-            if (count == 0) return;
-            Bundle status = buildStatusBundle();
-            for (int i = 0; i < count; ++i) {
-                try { callbacks.getBroadcastItem(i).onStatusChanged(status); }
-                catch (RemoteException ignored) {}
+        synchronized (callbackLock) {
+            int count = callbacks.beginBroadcast();
+            try {
+                if (count == 0) return;
+                Bundle status = buildStatusBundle();
+                for (int i = 0; i < count; ++i) {
+                    try { callbacks.getBroadcastItem(i).onStatusChanged(status); }
+                    catch (RemoteException ignored) {}
+                }
+            } finally {
+                callbacks.finishBroadcast();
             }
-        } finally {
-            callbacks.finishBroadcast();
         }
     }
 
     private void notifyTargetClosed() {
-        int count = callbacks.beginBroadcast();
-        try {
-            for (int i = 0; i < count; ++i) {
-                try { callbacks.getBroadcastItem(i).onTargetClosed(); }
-                catch (RemoteException ignored) {}
+        synchronized (callbackLock) {
+            int count = callbacks.beginBroadcast();
+            try {
+                for (int i = 0; i < count; ++i) {
+                    try { callbacks.getBroadcastItem(i).onTargetClosed(); }
+                    catch (RemoteException ignored) {}
+                }
+            } finally {
+                callbacks.finishBroadcast();
             }
-        } finally {
-            callbacks.finishBroadcast();
         }
     }
 }
