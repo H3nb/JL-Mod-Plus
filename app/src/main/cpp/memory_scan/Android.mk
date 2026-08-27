@@ -10,6 +10,7 @@ include $(BUILD_SHARED_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_MODULE := jlprobe
 LOCAL_SRC_FILES := target_probe.cpp
+LOCAL_CPP_FEATURES := exceptions
 LOCAL_CPPFLAGS += -std=c++17 -Wall -Wextra
 include $(BUILD_SHARED_LIBRARY)
 
