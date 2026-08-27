@@ -80,6 +80,7 @@ import ru.playsoftware.j2meloader.util.FileUtils;
 import ru.playsoftware.j2meloader.util.IOUtils;
 import ru.woesss.j2me.jar.Descriptor;
 import javax.microedition.shell.timing.EmulationSpeed;
+import javax.microedition.shell.timing.AutoSpeedController;
 import javax.microedition.shell.timing.TimingSession;
 import javax.microedition.shell.timing.TimingMode;
 import javax.microedition.shell.transform.MidletTransformMetadata;
@@ -101,6 +102,7 @@ public class MicroLoader {
 	private String jarSize;
 	private String jarSha256;
 	private TimingSession timingSession;
+	private AutoSpeedController autoSpeedController;
 	private boolean timingTransformCompatible;
 	/** Set only after the MIDlet thread has successfully received the timing session. */
 	private boolean timingSessionTransferred;
@@ -152,13 +154,25 @@ public class MicroLoader {
 				timingTransformCompatible
 						? TimingMode.sanitize(params.timingMode)
 						: TimingMode.FULL_GUEST_TIME);
-		GuestTimingBridge.install(session);
+		AutoSpeedController speedController = timingTransformCompatible
+				? new AutoSpeedController(session) : null;
+		try {
+			GuestTimingBridge.install(session, speedController);
+		} catch (RuntimeException e) {
+			if (speedController != null) {
+				speedController.close();
+			}
+			session.close();
+			throw e;
+		}
 		timingSession = session;
+		autoSpeedController = speedController;
 	}
 
 	void closeTimingSession() {
 		TimingSession session = timingSession;
 		timingSession = null;
+		autoSpeedController = null;
 		GuestTimingBridge.clear(session);
 	}
 
@@ -176,24 +190,34 @@ public class MicroLoader {
 		return timingSession;
 	}
 
+	AutoSpeedController getAutoSpeedController() {
+		return autoSpeedController;
+	}
+
 	boolean isTimingTransformCompatible() {
 		return timingTransformCompatible;
 	}
 
 	/** Applies a runtime-only speed change without mutating the persisted MIDlet profile. */
 	boolean setRuntimeEmulationSpeed(int speedPercent) {
+		AutoSpeedController controller = autoSpeedController;
 		if (!timingTransformCompatible
+				|| controller == null
 				|| timingSession == null
-				|| GuestTimingBridge.activeSession() != timingSession
-				|| !EmulationSpeed.isValidPercent(speedPercent)) {
+				|| GuestTimingBridge.activeSession() != timingSession) {
 			return false;
 		}
-		try {
-			timingSession.updateSpeedPercent(speedPercent);
-			return true;
-		} catch (IllegalStateException e) {
-			return false;
-		}
+		return controller.setManualSpeed(speedPercent);
+	}
+
+	/** Starts a fresh session-only calibration for uncapped adaptive emulation speed. */
+	boolean setRuntimeAutoEmulationSpeed() {
+		AutoSpeedController controller = autoSpeedController;
+		return timingTransformCompatible
+				&& controller != null
+				&& timingSession != null
+				&& GuestTimingBridge.activeSession() == timingSession
+				&& controller.enableAuto();
 	}
 
 	private boolean hasCompatibleTimingTransform() {

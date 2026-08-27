@@ -36,7 +36,7 @@ public final class TimingClockState {
 		this.hostAnchorNanos = hostAnchorNanos;
 		this.guestMonotonicAnchorNanos = guestMonotonicAnchorNanos;
 		this.guestWallAnchorMillis = guestWallAnchorMillis;
-		this.speedPercent = EmulationSpeed.requireValidPercent(speedPercent);
+		this.speedPercent = EmulationSpeed.requireRuntimePercent(speedPercent);
 		this.generation = generation;
 	}
 

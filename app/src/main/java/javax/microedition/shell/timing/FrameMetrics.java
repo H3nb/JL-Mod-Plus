@@ -14,6 +14,8 @@
 
 package javax.microedition.shell.timing;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * Thread-safe frame ownership metrics for one Canvas lifecycle.
  *
@@ -23,54 +25,67 @@ package javax.microedition.shell.timing;
  * static buffer out of the Game FPS value.</p>
  */
 public final class FrameMetrics {
-	private long nextSequence;
-	private long lastRenderedSequence;
-	private long gameFrames;
-	private long renderFrames;
-	private long coalescedFrames;
+	private final AtomicLong nextSequence = new AtomicLong();
+	private final AtomicLong lastRenderedSequence = new AtomicLong();
+	private final AtomicLong gameFrames = new AtomicLong();
+	private final AtomicLong renderFrames = new AtomicLong();
+	private final AtomicLong coalescedFrames = new AtomicLong();
 
 	/** Records one complete guest publication and returns its monotonically increasing sequence. */
-	public synchronized long recordGameFrame() {
-		if (nextSequence == Long.MAX_VALUE) {
+	public long recordGameFrame() {
+		long current;
+		long sequence;
+		do {
+			current = nextSequence.get();
+			sequence = current == Long.MAX_VALUE ? 1L : current + 1L;
+		} while (!nextSequence.compareAndSet(current, sequence));
+		if (sequence == 1L) {
 			// This is not reachable during a normal Canvas lifetime. Resetting the local sequence is
 			// safer than allowing a negative value to make every subsequent render look stale.
-			nextSequence = 0L;
-			lastRenderedSequence = 0L;
+			lastRenderedSequence.set(0L);
 		}
-		nextSequence++;
-		gameFrames++;
-		return nextSequence;
+		incrementSaturated(gameFrames);
+		return sequence;
 	}
 
 	/** Records consumption of the newest complete frame. Repeated consumption is ignored. */
-	public synchronized void recordRender(long sequence) {
-		if (sequence <= lastRenderedSequence || sequence <= 0L) {
+	public void recordRender(long sequence) {
+		if (sequence <= 0L) {
 			return;
 		}
-		long skipped = sequence - lastRenderedSequence - 1L;
-		if (skipped > 0L) {
-			coalescedFrames = saturatingAdd(coalescedFrames, skipped);
+		long previous;
+		do {
+			previous = lastRenderedSequence.get();
+			if (sequence <= previous) {
+				return;
+			}
+		} while (!lastRenderedSequence.compareAndSet(previous, sequence));
+		long skipped = sequence - previous - 1L;
+		if (skipped > 0L && sequence > previous) {
+			addSaturated(coalescedFrames, skipped);
 		}
-		lastRenderedSequence = sequence;
-		renderFrames++;
+		incrementSaturated(renderFrames);
 	}
 
-	/** Returns the current window and starts a new measurement window without resetting sequence. */
-	public synchronized FrameMetricsSnapshot snapshotAndReset() {
-		FrameMetricsSnapshot snapshot = new FrameMetricsSnapshot(
-				gameFrames,
-				renderFrames,
-				coalescedFrames);
-		gameFrames = 0L;
-		renderFrames = 0L;
-		coalescedFrames = 0L;
-		return snapshot;
+	/** Returns lifetime totals without interfering with another diagnostics consumer. */
+	public FrameMetricsSnapshot snapshot() {
+		return new FrameMetricsSnapshot(
+				gameFrames.get(),
+				renderFrames.get(),
+				coalescedFrames.get());
 	}
 
-	private static long saturatingAdd(long left, long right) {
-		if (right > 0L && left > Long.MAX_VALUE - right) {
-			return Long.MAX_VALUE;
-		}
-		return left + right;
+	private static void incrementSaturated(AtomicLong counter) {
+		addSaturated(counter, 1L);
+	}
+
+	private static void addSaturated(AtomicLong counter, long increment) {
+		long current;
+		long updated;
+		do {
+			current = counter.get();
+			updated = increment > Long.MAX_VALUE - current
+					? Long.MAX_VALUE : current + increment;
+		} while (!counter.compareAndSet(current, updated));
 	}
 }
