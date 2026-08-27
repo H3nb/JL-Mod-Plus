@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <provider
+            android:name="ru.playsoftware.j2meloader.memory.debug.MemoryEditorBootstrapProvider"
+            android:authorities="${applicationId}.memoryeditor.bootstrap"
+            android:exported="false"
+            android:initOrder="100"
+            android:process=":midlet" />
+
+        <service
+            android:name="ru.playsoftware.j2meloader.memory.MemoryScanService"
+            android:exported="false"
+            android:process=":midlet" />
+
+        <service
+            android:name="ru.playsoftware.j2meloader.memory.MemoryLiveService"
+            android:exported="false"
+            android:process=":midlet" />
+
+        <service
+            android:name="ru.playsoftware.j2meloader.memory.MemoryTargetBridgeService"
+            android:exported="false"
+            android:process=":midlet" />
+
+        <service
+            android:name="ru.playsoftware.j2meloader.memory.MemoryEngineService"
+            android:exported="false"
+            android:process=":memory_engine"
+            android:stopWithTask="true" />
+
+        <service
+            android:name="ru.playsoftware.j2meloader.memory.RemoteMemoryScanService"
+            android:exported="false"
+            android:process=":memory_engine"
+            android:stopWithTask="true" />
+    </application>
+</manifest>
