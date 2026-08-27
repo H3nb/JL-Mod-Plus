@@ -20,6 +20,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 import android.os.Process;
+import android.os.SystemClock;
 
 import androidx.annotation.Nullable;
 
@@ -38,6 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class MemoryLiveService extends Service {
     private static final int MAX_PAGE_SIZE = 100;
+    private static final long UNRESOLVED_RETRY_MS = 5000L;
     private static final long[] EMPTY_RESULTS = new long[0];
 
     private final Object pageLock = new Object();
@@ -78,6 +80,7 @@ public final class MemoryLiveService extends Service {
     private long publishedGeneration;
     private int publishedOffset = -1;
     private int publishedCount = -1;
+    private long lastRefreshCompletedElapsed;
     private boolean destroyed;
 
     private final IMemoryLiveService.Stub binder = new IMemoryLiveService.Stub() {
@@ -96,7 +99,7 @@ public final class MemoryLiveService extends Service {
                     int liveLength = 1 + count * MemoryScanContract.LIVE_RESULT_STRIDE;
                     System.arraycopy(publishedLive, 0, responsePage, 0, liveLength);
                 } else {
-                    buildUntrackedSnapshot(count);
+                    buildPendingSnapshot(count);
                 }
 
                 scheduleRefreshLocked(generation, offset, count);
@@ -119,7 +122,8 @@ public final class MemoryLiveService extends Service {
             if (!validGeneration(generation)) return "liveTracking=NO_TARGET";
             return NativeMemoryAgent.nativeGetVisibleTrackingDiagnostics()
                     + "\nliveRefreshAsync=true"
-                    + "\nliveRefreshRunning=" + refreshRunning.get();
+                    + "\nliveRefreshRunning=" + refreshRunning.get()
+                    + "\nliveUnresolvedRetryMs=" + UNRESOLVED_RETRY_MS;
         }
     };
 
@@ -143,6 +147,12 @@ public final class MemoryLiveService extends Service {
 
     private void scheduleRefreshLocked(long generation, int offset, int count) {
         if (destroyed || count <= 0 || refreshRunning.get()) return;
+        long now = SystemClock.elapsedRealtime();
+        if (publishedMatches(generation, offset, count)
+                && publishedHasUnresolvedIdentity(count)
+                && now - lastRefreshCompletedElapsed < UNRESOLVED_RETRY_MS) {
+            return;
+        }
         if (!refreshRunning.compareAndSet(false, true)) return;
 
         int rawLength = 1 + count * MemoryScanContract.RAW_RESULT_STRIDE;
@@ -184,6 +194,7 @@ public final class MemoryLiveService extends Service {
                 publishedGeneration = generation;
                 publishedOffset = offset;
                 publishedCount = liveCount;
+                lastRefreshCompletedElapsed = SystemClock.elapsedRealtime();
             }
         } finally {
             refreshRunning.set(false);
@@ -207,16 +218,31 @@ public final class MemoryLiveService extends Service {
         return true;
     }
 
-    private void buildUntrackedSnapshot(int count) {
+    private boolean publishedHasUnresolvedIdentity(int count) {
+        for (int i = 0; i < count; ++i) {
+            int liveIndex = 1 + i * MemoryScanContract.LIVE_RESULT_STRIDE;
+            int state = (int) publishedLive[liveIndex + 4];
+            if (state == MemoryScanContract.TRACK_SUSPECT
+                    || state == MemoryScanContract.TRACK_AMBIGUOUS
+                    || state == MemoryScanContract.TRACK_LOST) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void buildPendingSnapshot(int count) {
         responsePage[0] = count;
         for (int i = 0; i < count; ++i) {
             int rawIndex = 1 + i * MemoryScanContract.RAW_RESULT_STRIDE;
             int liveIndex = 1 + i * MemoryScanContract.LIVE_RESULT_STRIDE;
             responsePage[liveIndex] = rawPage[rawIndex];
             responsePage[liveIndex + 1] = rawPage[rawIndex + 1];
+            // The raw value is useful for display, but until the async identity pass publishes a
+            // result this address is intentionally SUSPECT so the UI cannot write through it.
             responsePage[liveIndex + 2] = rawPage[rawIndex + 2];
             responsePage[liveIndex + 3] = rawPage[rawIndex + 3];
-            responsePage[liveIndex + 4] = MemoryScanContract.TRACK_UNTRACKED;
+            responsePage[liveIndex + 4] = MemoryScanContract.TRACK_SUSPECT;
             responsePage[liveIndex + 5] = 0L;
             responsePage[liveIndex + 6] = 0L;
             responsePage[liveIndex + 7] = 0L;
@@ -229,6 +255,7 @@ public final class MemoryLiveService extends Service {
         publishedCount = -1;
         publishedSource[0] = 0L;
         publishedLive[0] = 0L;
+        lastRefreshCompletedElapsed = 0L;
     }
 
     private boolean validGeneration(long generation) {
