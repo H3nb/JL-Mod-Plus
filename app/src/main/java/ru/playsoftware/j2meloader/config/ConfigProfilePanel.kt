@@ -109,10 +109,6 @@ internal fun ConfigProfilePanel(
                 onClick = events::onSaveAsProfile,
             )
         }
-        ProfileQuickAction(
-            title = stringResource(R.string.profile_choose_or_manage),
-            onClick = { managerVisible = true },
-        )
     }
 
     if (managerVisible) {
