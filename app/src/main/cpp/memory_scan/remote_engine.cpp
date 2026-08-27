@@ -28,6 +28,19 @@ bool mappingContains(pid_t pid, uintptr_t address, bool *readable, bool *writabl
     return false;
 }
 
+long targetUid(pid_t pid) {
+    std::ifstream status("/proc/" + std::to_string(pid) + "/status");
+    std::string line;
+    while (std::getline(status, line)) {
+        if (line.rfind("Uid:", 0) != 0) continue;
+        unsigned long real_uid = 0;
+        if (sscanf(line.c_str(), "Uid:\t%lu", &real_uid) == 1) {
+            return static_cast<long>(real_uid);
+        }
+    }
+    return -1;
+}
+
 ssize_t remoteRead(pid_t pid, uintptr_t address, void *buffer, size_t size) {
     iovec local{buffer, size};
     iovec remote{reinterpret_cast<void *>(address), size};
@@ -56,9 +69,14 @@ Java_ru_playsoftware_j2meloader_memory_NativeRemoteMemoryEngine_capabilityTest(
     const pid_t pid = static_cast<pid_t>(target_pid);
     const uintptr_t address = static_cast<uintptr_t>(probe_address);
     const uint64_t expected = static_cast<uint64_t>(expected_value);
+    const long target_uid = targetUid(pid);
+    const long engine_uid = static_cast<long>(getuid());
 
     out << "remoteEnginePid=" << getpid()
         << "\nremoteTargetPid=" << pid
+        << "\nremoteEngineUid=" << engine_uid
+        << "\nremoteTargetUid=" << target_uid
+        << "\nremoteSameUid=" << (target_uid >= 0 && target_uid == engine_uid ? "true" : "false")
         << "\nremoteSameProcess=" << (pid == getpid() ? "true" : "false");
 
     if (pid <= 0 || address == 0 || pid == getpid()) {
@@ -106,7 +124,6 @@ Java_ru_playsoftware_j2meloader_memory_NativeRemoteMemoryEngine_capabilityTest(
             if (!readback_ok) out << "\nremoteReadbackErrno=" << errnoText();
         }
 
-        // Always attempt to restore as soon as a write succeeded.
         if (write_ok) {
             errno = 0;
             const ssize_t restored = remoteWrite(pid, address, &expected, sizeof(expected));
@@ -122,7 +139,8 @@ Java_ru_playsoftware_j2meloader_memory_NativeRemoteMemoryEngine_capabilityTest(
     out << "\nremoteWrite=" << (write_ok ? "PASS" : "FAIL")
         << "\nremoteReadback=" << (readback_ok ? "PASS" : "FAIL")
         << "\nremoteRestore=" << (restore_ok ? "PASS" : "FAIL");
-    const bool supported = mapped && readable && writable && read_ok && before == expected
+    const bool supported = target_uid >= 0 && target_uid == engine_uid
+            && mapped && readable && writable && read_ok && before == expected
             && write_ok && readback_ok && restore_ok;
     out << "\nremoteEngineSupported=" << (supported ? "true" : "false");
 
