@@ -42,12 +42,19 @@ public final class RemoteMemoryScanService extends Service {
         return thread;
     });
     private final AtomicBoolean running = new AtomicBoolean(false);
+    private final AtomicBoolean liveTrackingQueued = new AtomicBoolean(false);
     private final AtomicLong nextOperation = new AtomicLong(1L);
     private final RemoteCallbackList<IMemoryScanCallback> callbacks = new RemoteCallbackList<>();
     private final Object resultPageLock = new Object();
+    private final Object livePageLock = new Object();
     private final Object callbackLock = new Object();
     private final long[] resultPage = new long[1 + MAX_PAGE_SIZE * RESULT_STRIDE];
-    private final long[] livePage = new long[1 + MAX_PAGE_SIZE * LIVE_STRIDE];
+    private final long[] trackingInput = new long[1 + MAX_PAGE_SIZE * RESULT_STRIDE];
+    private final long[] trackingOutput = new long[1 + MAX_PAGE_SIZE * LIVE_STRIDE];
+    private final long[] publishedRaw = new long[1 + MAX_PAGE_SIZE * RESULT_STRIDE];
+    private final long[] publishedLive = new long[1 + MAX_PAGE_SIZE * LIVE_STRIDE];
+    private int publishedCount;
+    private long lastLiveNotificationFingerprint;
 
     private volatile IMemoryTargetBridge target;
     private volatile boolean targetBound;
@@ -92,8 +99,6 @@ public final class RemoteMemoryScanService extends Service {
             bundle.putLong(MemoryScanContract.KEY_GENERATION, generation);
             bundle.putString(MemoryScanContract.KEY_CAPABILITY,
                     generation == 0L ? "TARGET_NOT_VISIBLE" : "OK");
-            // Preserve the existing UI readiness contract. The remote access probe already proved
-            // raw read/write/readback; no managed self-scan is required in the engine process.
             bundle.putString(MemoryScanContract.KEY_MANAGED_SELF_TEST,
                     generation == 0L ? "WAITING" : "PASS");
             return bundle;
@@ -158,22 +163,10 @@ public final class RemoteMemoryScanService extends Service {
                 resultPage[0] = count;
                 if (count == 0) return resultPage;
 
-                int liveCount = NativeRemoteScanner.nativeRefreshVisibleCandidates(
-                        resultPage, count, livePage);
-                if (liveCount == count) {
-                    // Preserve the proven 4-slot Binder/UI contract while replacing raw/stale
-                    // addresses with the tracker's current binding. Ambiguous/lost/suspect rows
-                    // are returned unreadable and therefore cannot pass the exact-write guard.
-                    for (int i = 0; i < count; ++i) {
-                        int rawBase = 1 + i * RESULT_STRIDE;
-                        int liveBase = 1 + i * LIVE_STRIDE;
-                        resultPage[rawBase] = livePage[liveBase];
-                        resultPage[rawBase + 1] = livePage[liveBase + 1];
-                        resultPage[rawBase + 2] = livePage[liveBase + 2];
-                        resultPage[rawBase + 3] = livePage[liveBase + 3];
-                    }
-                }
-                diagnostics = engineDiagnostics();
+                // Never run context recovery on this synchronous Binder path. Queue a reusable
+                // snapshot for the engine worker and immediately apply the last published binding.
+                scheduleLiveTracking(resultPage, count);
+                applyPublishedBindings(resultPage, count);
                 return resultPage;
             }
         }
@@ -206,7 +199,7 @@ public final class RemoteMemoryScanService extends Service {
             NativeRemoteScanner.nativeCancel();
             worker.execute(() -> {
                 NativeRemoteScanner.nativeClear();
-                NativeRemoteScanner.nativeResetVisibleTracking();
+                resetVisibleTrackingState();
                 resetSearchState("Remote search cleared");
                 notifyStatusChanged();
             });
@@ -239,7 +232,7 @@ public final class RemoteMemoryScanService extends Service {
     public void onDestroy() {
         NativeRemoteScanner.nativeCancel();
         NativeRemoteScanner.nativeClear();
-        NativeRemoteScanner.nativeResetVisibleTracking();
+        resetVisibleTrackingState();
         worker.shutdownNow();
         callbacks.kill();
         if (targetBound) {
@@ -265,7 +258,7 @@ public final class RemoteMemoryScanService extends Service {
                 return;
             }
             if (code == NativeRemoteScanner.RESULT_OK) {
-                NativeRemoteScanner.nativeResetVisibleTracking();
+                resetVisibleTrackingState();
                 resultCount = NativeRemoteScanner.nativeGetResultCount();
                 currentQuery = value;
                 currentScope = scope;
@@ -348,6 +341,84 @@ public final class RemoteMemoryScanService extends Service {
         }
     }
 
+    private void scheduleLiveTracking(long[] rawPage, int count) {
+        if (count <= 0 || liveTrackingQueued.get()) return;
+        if (!liveTrackingQueued.compareAndSet(false, true)) return;
+        System.arraycopy(rawPage, 0, trackingInput, 0, 1 + count * RESULT_STRIDE);
+        worker.execute(() -> {
+            boolean notify = false;
+            try {
+                int tracked = NativeRemoteScanner.nativeRefreshVisibleCandidates(
+                        trackingInput, count, trackingOutput);
+                if (tracked == count) {
+                    synchronized (livePageLock) {
+                        System.arraycopy(trackingInput, 0, publishedRaw, 0,
+                                1 + count * RESULT_STRIDE);
+                        System.arraycopy(trackingOutput, 0, publishedLive, 0,
+                                1 + count * LIVE_STRIDE);
+                        publishedCount = count;
+                        long fingerprint = interestingLiveFingerprint(count);
+                        if (fingerprint != 0L && fingerprint != lastLiveNotificationFingerprint) {
+                            lastLiveNotificationFingerprint = fingerprint;
+                            diagnostics = engineDiagnostics();
+                            notify = true;
+                        }
+                    }
+                }
+            } finally {
+                liveTrackingQueued.set(false);
+            }
+            if (notify) notifyStatusChanged();
+        });
+    }
+
+    private void applyPublishedBindings(long[] page, int count) {
+        synchronized (livePageLock) {
+            if (publishedCount <= 0) return;
+            for (int row = 0; row < count; ++row) {
+                int rawBase = 1 + row * RESULT_STRIDE;
+                long sourceAddress = page[rawBase];
+                int type = (int) page[rawBase + 1];
+                for (int old = 0; old < publishedCount; ++old) {
+                    int publishedRawBase = 1 + old * RESULT_STRIDE;
+                    if (publishedRaw[publishedRawBase] != sourceAddress
+                            || (int) publishedRaw[publishedRawBase + 1] != type) continue;
+                    int liveBase = 1 + old * LIVE_STRIDE;
+                    int trackState = (int) publishedLive[liveBase + 4];
+                    boolean safe = trackState == MemoryScanContract.TRACK_UNTRACKED
+                            || trackState == MemoryScanContract.TRACK_STABLE
+                            || trackState == MemoryScanContract.TRACK_RELOCATED;
+                    page[rawBase] = publishedLive[liveBase];
+                    page[rawBase + 2] = safe ? publishedLive[liveBase + 2] : 0L;
+                    page[rawBase + 3] = publishedLive[liveBase + 3];
+                    break;
+                }
+            }
+        }
+    }
+
+    private long interestingLiveFingerprint(int count) {
+        long hash = 0xcbf29ce484222325L;
+        boolean interesting = false;
+        for (int i = 0; i < count; ++i) {
+            int rawBase = 1 + i * RESULT_STRIDE;
+            int liveBase = 1 + i * LIVE_STRIDE;
+            long source = trackingInput[rawBase];
+            long current = trackingOutput[liveBase];
+            int trackState = (int) trackingOutput[liveBase + 4];
+            if (current != source || trackState == MemoryScanContract.TRACK_SUSPECT
+                    || trackState == MemoryScanContract.TRACK_AMBIGUOUS
+                    || trackState == MemoryScanContract.TRACK_LOST) {
+                interesting = true;
+            }
+            hash ^= current;
+            hash *= 0x100000001b3L;
+            hash ^= trackState;
+            hash *= 0x100000001b3L;
+        }
+        return interesting ? hash : 0L;
+    }
+
     /** Returns null on success. */
     private String configureTarget(long generation, int scope) throws RemoteException {
         IMemoryTargetBridge bridge = target;
@@ -403,7 +474,7 @@ public final class RemoteMemoryScanService extends Service {
     private void invalidateTarget(String reason) {
         NativeRemoteScanner.nativeCancel();
         NativeRemoteScanner.nativeClear();
-        NativeRemoteScanner.nativeResetVisibleTracking();
+        resetVisibleTrackingState();
         hasSearchSession = false;
         searchGeneration = 0L;
         resultCount = 0L;
@@ -412,6 +483,15 @@ public final class RemoteMemoryScanService extends Service {
         state = MemoryScanContract.STATE_NO_TARGET;
         message = reason;
         diagnostics = "backend=remote-memory-engine\nremoteTarget=lost";
+    }
+
+    private void resetVisibleTrackingState() {
+        NativeRemoteScanner.nativeResetVisibleTracking();
+        liveTrackingQueued.set(false);
+        synchronized (livePageLock) {
+            publishedCount = 0;
+            lastLiveNotificationFingerprint = 0L;
+        }
     }
 
     private void resetSearchState(String reason) {
