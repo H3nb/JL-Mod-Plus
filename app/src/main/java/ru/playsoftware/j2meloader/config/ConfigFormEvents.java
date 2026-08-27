@@ -47,17 +47,11 @@ public interface ConfigFormEvents {
 	default void onShaderTuningComplete(float[] values) {
 	}
 
-	/** Opens the existing profile-load flow from the General destination. */
-	default void onUseProfile() {
-	}
 
 	/** Opens the existing profile-save flow from the General destination. */
 	default void onSaveAsProfile() {
 	}
 
-	/** Opens profile template management from the General destination. */
-	default void onManageProfiles() {
-	}
 
 	default void onApplyBuiltInTemplate() {
 	}
@@ -78,8 +72,6 @@ public interface ConfigFormEvents {
 	default void onKeepKeyboardForApp() {
 	}
 
-	default void onSaveTemplate(@NonNull String name) {
-	}
 
 	default void onUpdateTemplate(@NonNull String name) {
 	}

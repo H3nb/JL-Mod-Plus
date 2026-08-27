@@ -159,20 +159,12 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			onTuneComplete(values);
 		}
 
-		@Override
-		public void onUseProfile() {
-			showLoadProfile();
-		}
 
 		@Override
 		public void onSaveAsProfile() {
 			showSaveProfile();
 		}
 
-		@Override
-		public void onManageProfiles() {
-			startActivity(new Intent(ConfigActivity.this, ProfilesActivity.class));
-		}
 
 		@Override
 		public void onApplyBuiltInTemplate() {
@@ -199,10 +191,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			keepProfileComponent(false);
 		}
 
-		@Override
-		public void onSaveTemplate(@NonNull String name) {
-			saveTemplate(name);
-		}
 
 		@Override
 		public void onUpdateTemplate(@NonNull String name) {
@@ -786,24 +774,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 	}
 
-	private void saveTemplate(@NonNull String rawName) {
-		String name = rawName.trim();
-		if (name.isEmpty() || findProfile(name) != null) {
-			ThemedToast.show(this, R.string.profile_name_exists, Toast.LENGTH_SHORT);
-			return;
-		}
-		try {
-			saveParams();
-			Profile profile = new Profile(name);
-			ProfilesManager.saveSnapshot(profile, configDir.getPath());
-			ProfilesManager.load(profile, configDir.getPath(), true, true);
-			setProfileOrigin(null);
-			loadParams(true);
-		} catch (IOException e) {
-			Log.e(TAG, "saveTemplate: " + name, e);
-			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-		}
-	}
 
 	private void updateTemplate(@NonNull String name) {
 		Profile profile = findProfile(name);
@@ -909,13 +879,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		editor.apply();
 	}
 
-	private void showLoadProfile() {
-		if (keylayoutFile == null) {
-			return;
-		}
-		LoadProfileAlert.newInstance(keylayoutFile.getParent())
-				.show(getSupportFragmentManager(), "load_profile");
-	}
 
 	private void showSaveProfile() {
 		if (keylayoutFile == null) {
