@@ -1330,7 +1330,7 @@ public abstract class Canvas extends Displayable {
 			}
 			Display.postEvent(CanvasEvent.getInstance(Canvas.this, CanvasEvent.SHOW_NOTIFY));
 			repaintInternal();
-			if (timingOverlayEnabled && settings.showEmulationSpeed) {
+			if (timingOverlayEnabled && settings.showFps) {
 				timingMonitor = new TimingMonitor(overlayView, fpsCounter != null);
 				overlayView.addLayer(timingMonitor);
 			}

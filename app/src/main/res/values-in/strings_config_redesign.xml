@@ -79,12 +79,10 @@
     <string name="config_help_show_fps">Menampilkan frame rate saat aplikasi berjalan.</string>
     <string name="config_help_fps_limit">Membatasi frame rate maksimum. Kosongkan untuk tanpa batas.</string>
     <string name="PREF_EMULATION_SPEED">Kecepatan Emulasi</string>
-    <string name="PREF_SHOW_EMULATION_SPEED">Tampilkan Kecepatan Emulasi</string>
     <string name="PREF_TIMING_MODE">Mode timing</string>
     <string name="config_timing_mode_full_guest">Waktu tamu penuh</string>
     <string name="config_timing_mode_real_wall">Waktu nyata</string>
     <string name="config_help_emulation_speed">Mengubah skala waktu tamu dan delay yang kompatibel. Audio dan UI Android tetap pada kecepatan normal.</string>
-    <string name="config_help_show_emulation_speed">Menampilkan target yang dipilih dan laju clock emulasi yang terukur saat aplikasi berjalan.</string>
     <string name="config_help_timing_mode">Pilih apakah waktu dan tanggal mengikuti kecepatan emulasi. Delay relatif tetap mengikuti speed.</string>
     <string name="config_help_timing_unavailable">Aplikasi hasil konversi ini belum memiliki instrumentasi timing. Instal ulang atau konversi ulang sebelum mengaktifkan kecepatan emulasi.</string>
     <string name="reconverting_wait">MIDlet ini memerlukan konversi kompatibilitas satu kali sebelum dapat dijalankan. Harap tunggu…</string>

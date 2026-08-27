@@ -68,12 +68,10 @@
     <string name="config_help_show_fps">Displays the current frame rate while the app is running.</string>
     <string name="config_help_fps_limit">Caps the maximum frame rate. Leave empty for no limit.</string>
     <string name="PREF_EMULATION_SPEED">Emulation Speed</string>
-    <string name="PREF_SHOW_EMULATION_SPEED">Show Emulation Speed</string>
     <string name="PREF_TIMING_MODE">Timing mode</string>
     <string name="config_timing_mode_full_guest">Full guest time</string>
     <string name="config_timing_mode_real_wall">Real wall clock</string>
     <string name="config_help_emulation_speed">Scales guest time and compatible delays. Audio and Android-host UI remain at normal speed.</string>
-    <string name="config_help_show_emulation_speed">Shows the selected target and measured emulation clock rate while the app is running.</string>
     <string name="config_help_timing_mode">Choose whether current time and date follow emulation speed. Relative delays remain speed-scaled.</string>
     <string name="config_help_timing_unavailable">This converted app does not contain timing instrumentation. Reinstall or reconvert it before enabling emulation speed.</string>
     <string name="reconverting_wait">This MIDlet needs a one-time compatibility conversion before it can start. Please wait…</string>
