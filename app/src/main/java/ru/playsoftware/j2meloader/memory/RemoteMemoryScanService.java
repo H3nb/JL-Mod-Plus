@@ -15,6 +15,7 @@ import android.os.IBinder;
 import android.os.Process;
 import android.os.RemoteCallbackList;
 import android.os.RemoteException;
+import android.os.SystemClock;
 
 import androidx.annotation.Nullable;
 
@@ -33,6 +34,8 @@ public final class RemoteMemoryScanService extends Service {
     private static final int RESULT_STRIDE = MemoryScanContract.RAW_RESULT_STRIDE;
     private static final int LIVE_STRIDE = MemoryScanContract.LIVE_RESULT_STRIDE;
     private static final int MAX_RESIDENT_RUNS = 2048;
+    private static final int LIVE_RECOVERY_RETRY_LIMIT = 5;
+    private static final long LIVE_RUN_REFRESH_BACKOFF_MS = 1000L;
     private static final long[] EMPTY_RESULTS = new long[0];
 
     private final ExecutorService worker = Executors.newSingleThreadExecutor(runnable -> {
@@ -44,6 +47,8 @@ public final class RemoteMemoryScanService extends Service {
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final AtomicBoolean liveTrackingQueued = new AtomicBoolean(false);
     private final AtomicLong nextOperation = new AtomicLong(1L);
+    private final AtomicLong liveResidentRefreshes = new AtomicLong();
+    private final AtomicLong liveResidentRefreshFailures = new AtomicLong();
     private final RemoteCallbackList<IMemoryScanCallback> callbacks = new RemoteCallbackList<>();
     private final Object resultPageLock = new Object();
     private final Object livePageLock = new Object();
@@ -68,6 +73,8 @@ public final class RemoteMemoryScanService extends Service {
     private volatile int currentScope = MemoryScanContract.SCOPE_JAVA_FAST;
     private volatile int currentValueType = MemoryScanContract.TYPE_AUTO;
     private volatile String diagnostics = "backend=remote-memory-engine";
+    private volatile long lastLiveResidentRefreshMs;
+    private volatile int lastLiveResidentRuns;
 
     private final ServiceConnection targetConnection = new ServiceConnection() {
         @Override
@@ -350,6 +357,29 @@ public final class RemoteMemoryScanService extends Service {
             try {
                 int tracked = NativeRemoteScanner.nativeRefreshVisibleCandidates(
                         trackingInput, count, trackingOutput);
+                String liveDiagnostics = NativeRemoteScanner.nativeGetVisibleTrackingDiagnostics();
+
+                // A stale address may have moved to a page that was not resident when Search or the
+                // previous live rebind captured mincore runs. Next Scan already refreshes these runs;
+                // live tracking now does the same only after identity becomes unsafe. This Binder
+                // call runs on :memory_engine's worker, never on Android's UI/Binder return path.
+                if (tracked == count && liveBindingUnsafe(liveDiagnostics)
+                        && refreshVisibleResidentRuns(searchGeneration)) {
+                    long recoveryScansBefore = diagnosticValue(
+                            liveDiagnostics, "liveRecoveryScans");
+                    for (int retry = 0; retry < LIVE_RECOVERY_RETRY_LIMIT; ++retry) {
+                        tracked = NativeRemoteScanner.nativeRefreshVisibleCandidates(
+                                trackingInput, count, trackingOutput);
+                        liveDiagnostics = NativeRemoteScanner.nativeGetVisibleTrackingDiagnostics();
+                        if (tracked != count || !liveBindingUnsafe(liveDiagnostics)) break;
+                        // Native tracker intentionally backs off ambiguous/lost identities. The
+                        // cheap validation retries merely advance that backoff after fresh runs;
+                        // stop immediately once exactly one fresh resident recovery scan occurred.
+                        if (diagnosticValue(liveDiagnostics, "liveRecoveryScans")
+                                > recoveryScansBefore) break;
+                    }
+                }
+
                 if (tracked == count) {
                     synchronized (livePageLock) {
                         System.arraycopy(trackingInput, 0, publishedRaw, 0,
@@ -417,6 +447,70 @@ public final class RemoteMemoryScanService extends Service {
             hash *= 0x100000001b3L;
         }
         return interesting ? hash : 0L;
+    }
+
+    private boolean liveBindingUnsafe(String liveDiagnostics) {
+        return diagnosticValue(liveDiagnostics, "liveSuspect") > 0L
+                || diagnosticValue(liveDiagnostics, "liveAmbiguous") > 0L
+                || diagnosticValue(liveDiagnostics, "liveLost") > 0L;
+    }
+
+    private long diagnosticValue(String text, String key) {
+        if (text == null || text.isEmpty()) return 0L;
+        String prefix = key + "=";
+        int start = text.indexOf(prefix);
+        if (start < 0) return 0L;
+        start += prefix.length();
+        int end = text.indexOf('\n', start);
+        if (end < 0) end = text.length();
+        try {
+            return Long.parseLong(text.substring(start, end).trim());
+        } catch (NumberFormatException ignored) {
+            return 0L;
+        }
+    }
+
+    /**
+     * Refresh only the visible tracker's resident-run snapshot after an unsafe binding. Search and
+     * Next Scan retain their own transactional target configuration. A short service-side backoff
+     * prevents an ambiguous candidate from repeatedly allocating target Binder run payloads.
+     */
+    private boolean refreshVisibleResidentRuns(long generation) {
+        long now = SystemClock.elapsedRealtime();
+        if (generation == 0L || now - lastLiveResidentRefreshMs < LIVE_RUN_REFRESH_BACKOFF_MS) {
+            return false;
+        }
+        lastLiveResidentRefreshMs = now;
+        IMemoryTargetBridge bridge = target;
+        if (bridge == null) {
+            liveResidentRefreshFailures.incrementAndGet();
+            return false;
+        }
+        try {
+            if (bridge.getGeneration() != generation) {
+                liveResidentRefreshFailures.incrementAndGet();
+                return false;
+            }
+            int targetPid = bridge.getTargetPid();
+            int pageSize = bridge.getPageSize();
+            long[] runs = bridge.getResidentJavaRuns(generation, currentScope, MAX_RESIDENT_RUNS);
+            if (runs == null || runs.length < 2 || runs[0] <= 0L) {
+                liveResidentRefreshFailures.incrementAndGet();
+                return false;
+            }
+            String configured = NativeRemoteScanner.nativeConfigureVisibleTarget(
+                    targetPid, pageSize, runs);
+            if (!"OK".equals(configured)) {
+                liveResidentRefreshFailures.incrementAndGet();
+                return false;
+            }
+            lastLiveResidentRuns = (int) Math.min(Integer.MAX_VALUE, runs[0]);
+            liveResidentRefreshes.incrementAndGet();
+            return true;
+        } catch (RemoteException | RuntimeException error) {
+            liveResidentRefreshFailures.incrementAndGet();
+            return false;
+        }
     }
 
     /** Returns null on success. */
@@ -488,6 +582,10 @@ public final class RemoteMemoryScanService extends Service {
     private void resetVisibleTrackingState() {
         NativeRemoteScanner.nativeResetVisibleTracking();
         liveTrackingQueued.set(false);
+        liveResidentRefreshes.set(0L);
+        liveResidentRefreshFailures.set(0L);
+        lastLiveResidentRefreshMs = 0L;
+        lastLiveResidentRuns = 0;
         synchronized (livePageLock) {
             publishedCount = 0;
             lastLiveNotificationFingerprint = 0L;
@@ -532,6 +630,9 @@ public final class RemoteMemoryScanService extends Service {
     private String engineDiagnostics() {
         return NativeRemoteScanner.nativeGetDiagnostics()
                 + "\n" + NativeRemoteScanner.nativeGetVisibleTrackingDiagnostics()
+                + "\nliveResidentRefreshes=" + liveResidentRefreshes.get()
+                + "\nliveResidentRefreshFailures=" + liveResidentRefreshFailures.get()
+                + "\nliveResidentRuns=" + lastLiveResidentRuns
                 + "\nscannerHostProcess=:memory_engine"
                 + "\nscannerHostPid=" + Process.myPid()
                 + "\ntargetGcTelemetry=not-required-for-correctness";
