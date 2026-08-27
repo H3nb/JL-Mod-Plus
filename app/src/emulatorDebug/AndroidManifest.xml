@@ -19,6 +19,11 @@
             android:process=":midlet" />
 
         <service
+            android:name="ru.playsoftware.j2meloader.memory.MemoryTargetBridgeService"
+            android:exported="false"
+            android:process=":midlet" />
+
+        <service
             android:name="ru.playsoftware.j2meloader.memory.MemoryEngineService"
             android:exported="false"
             android:process=":memory_engine"
