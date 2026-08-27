@@ -1,0 +1,81 @@
+name: Profile State Cleanup (one-off)
+
+on:
+  push:
+    branches:
+      - fix/profile-manager
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: fix/profile-manager
+          persist-credentials: true
+          fetch-depth: 1
+
+      - name: Restore shared debug keystore
+        env:
+          ANDROID_DEBUG_KEYSTORE_BASE64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          printf '%s' "$ANDROID_DEBUG_KEYSTORE_BASE64" | base64 --decode > debug.keystore
+          chmod 600 debug.keystore
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545
+
+      - name: Remove legacy profile presentation aliases
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          state = Path('app/src/main/java/ru/playsoftware/j2meloader/config/ConfigUiState.java')
+          text = state.read_text()
+          start = text.index('\tpublic static final class ProfileTemplate {')
+          end = text.rfind('\n}')
+          replacement = '''\tpublic static final class ProfileTemplate {\n\t\t@NonNull public final String name;\n\t\tpublic final boolean isDefault;\n\t\tpublic final boolean hasSettings;\n\t\tpublic final boolean hasKeyboard;\n\n\t\tpublic ProfileTemplate(@NonNull String name, boolean isDefault,\n\t\t\t\tboolean hasSettings, boolean hasKeyboard) {\n\t\t\tthis.name = name;\n\t\t\tthis.isDefault = isDefault;\n\t\t\tthis.hasSettings = hasSettings;\n\t\t\tthis.hasKeyboard = hasKeyboard;\n\t\t}\n\t}\n\n\t/** Minimal per-component profile state consumed by the Basic destination. */\n\tpublic static final class ProfileStatus {\n\t\t@Nullable public final String defaultProfile;\n\t\t@Nullable public final String settingsProfile;\n\t\t@Nullable public final String keyboardProfile;\n\t\tpublic final boolean settingsBuiltIn;\n\t\tpublic final boolean settingsModified;\n\t\tpublic final boolean keyboardModified;\n\n\t\tprivate ProfileStatus(@Nullable String defaultProfile,\n\t\t\t\t@Nullable String settingsProfile, boolean settingsModified,\n\t\t\t\t@Nullable String keyboardProfile, boolean keyboardModified,\n\t\t\t\tboolean settingsBuiltIn) {\n\t\t\tthis.defaultProfile = defaultProfile;\n\t\t\tthis.settingsProfile = settingsProfile;\n\t\t\tthis.settingsModified = settingsModified;\n\t\t\tthis.keyboardProfile = keyboardProfile;\n\t\t\tthis.keyboardModified = keyboardModified;\n\t\t\tthis.settingsBuiltIn = settingsBuiltIn;\n\t\t}\n\n\t\t@NonNull\n\t\tpublic static ProfileStatus custom(@Nullable String defaultProfile) {\n\t\t\treturn components(null, false, null, false, false, defaultProfile);\n\t\t}\n\n\t\t@NonNull\n\t\tpublic static ProfileStatus builtInDefault(@Nullable String defaultProfile) {\n\t\t\treturn components(null, false, null, false, true, defaultProfile);\n\t\t}\n\n\t\t@NonNull\n\t\tpublic static ProfileStatus active(@NonNull String profile,\n\t\t\t\t@Nullable String defaultProfile) {\n\t\t\treturn components(profile, false, profile, false, false, defaultProfile);\n\t\t}\n\n\t\t@NonNull\n\t\tpublic static ProfileStatus modified(@NonNull String profile,\n\t\t\t\t@Nullable String defaultProfile) {\n\t\t\treturn components(profile, true, profile, true, false, defaultProfile);\n\t\t}\n\n\t\t@NonNull\n\t\tpublic static ProfileStatus components(@Nullable String settingsProfile,\n\t\t\t\tboolean settingsModified, @Nullable String keyboardProfile,\n\t\t\t\tboolean keyboardModified, boolean settingsBuiltIn,\n\t\t\t\t@Nullable String defaultProfile) {\n\t\t\treturn new ProfileStatus(defaultProfile, settingsProfile, settingsModified,\n\t\t\t\t\tkeyboardProfile, keyboardModified, settingsBuiltIn);\n\t\t}\n\n\t\tpublic boolean usesProfile(@NonNull String name) {\n\t\t\treturn name.equals(settingsProfile) || name.equals(keyboardProfile);\n\t\t}\n\n\t\tpublic boolean isProfileModified(@NonNull String name) {\n\t\t\treturn name.equals(settingsProfile) && settingsModified\n\t\t\t\t\t|| name.equals(keyboardProfile) && keyboardModified;\n\t\t}\n\n\t\tpublic boolean hasModifiedComponents() {\n\t\t\treturn settingsModified || keyboardModified;\n\t\t}\n\t}\n'''
+          state.write_text(text[:start] + replacement + text[end:])
+
+          panel = Path('app/src/main/java/ru/playsoftware/j2meloader/config/ConfigProfilePanel.kt')
+          text = panel.read_text()
+          old = '            if (status.modified || hasLocalComponent) {'
+          new = '            if (status.hasModifiedComponents() || hasLocalComponent) {'
+          if text.count(old) != 1:
+              raise SystemExit('Expected profile footer modified condition not found')
+          panel.write_text(text.replace(old, new))
+          PY
+
+      - name: Compile all affected source sets
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace \
+            :app:compileEmulatorDebugKotlin \
+            :app:compileEmulatorDebugJavaWithJavac \
+            :app:compileEmulatorDebugAndroidTestKotlin \
+            :app:compileEmulatorDebugScreenshotTestKotlin
+
+      - name: Commit state cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/profile-state-cleanup-once.yml
+          git add \
+            app/src/main/java/ru/playsoftware/j2meloader/config/ConfigUiState.java \
+            app/src/main/java/ru/playsoftware/j2meloader/config/ConfigProfilePanel.kt
+          git diff --cached --check
+          git diff --cached --stat
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'refactor(profile): simplify presentation state [skip ci]'
+          git push origin HEAD:fix/profile-manager
