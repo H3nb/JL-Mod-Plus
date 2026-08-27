@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_keep_settings_for_app">Keep Settings for This App</string>
+    <string name="profile_keep_settings_for_app_summary">Stop following the profile for Settings without changing the current values.</string>
+    <string name="profile_keep_keyboard_for_app">Keep Keyboard for This App</string>
+    <string name="profile_keep_keyboard_for_app_summary">Stop following the profile for the keyboard layout without changing the current layout.</string>
+    <string name="profile_section_title">Profile</string>
+    <string name="profile_change_profile">Change Profile</string>
+    <string name="profile_save_as_profile">Save as Profile</string>
+    <string name="profile_manager_title">Profiles</string>
+    <string name="profile_new_profile">New Profile</string>
+    <string name="profile_in_use">In use</string>
+    <string name="profile_update_profile">Update Profile</string>
+    <string name="profile_name_label_v2">Profile Name</string>
+    <string name="profile_name_exists_v2">A profile with this name already exists.</string>
+    <string name="profile_delete_profile_message">Delete profile “%1$s”? Apps using it keep their current local copy.</string>
+</resources>

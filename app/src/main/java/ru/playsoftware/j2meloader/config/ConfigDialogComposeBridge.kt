@@ -14,6 +14,7 @@
 
 package ru.playsoftware.j2meloader.config
 
+import android.content.res.Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,11 +30,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -43,13 +46,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import android.content.res.Configuration
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
@@ -81,12 +84,12 @@ object ConfigDialogComposeBridge {
     fun setLoadProfileContent(
         view: androidx.compose.ui.platform.ComposeView,
         profiles: List<Profile>,
-        @Suppress("UNUSED_PARAMETER") defaultName: String?,
+        defaultName: String?,
         callbacks: LoadProfileCallbacks,
     ) {
         view.setContent {
             JLModPlusTheme {
-                LoadProfileContent(profiles, callbacks)
+                LoadProfileContent(profiles, defaultName, callbacks)
             }
         }
     }
@@ -94,12 +97,13 @@ object ConfigDialogComposeBridge {
     @JvmStatic
     fun setSaveProfileContent(
         view: androidx.compose.ui.platform.ComposeView,
-        existingConfigNames: Set<String>,
+        existingProfileNames: Set<String>,
+        keyboardAvailable: Boolean,
         callbacks: SaveProfileCallbacks,
     ) {
         view.setContent {
             JLModPlusTheme {
-                SaveProfileContent(existingConfigNames, callbacks)
+                SaveProfileContent(existingProfileNames, keyboardAvailable, callbacks)
             }
         }
     }
@@ -146,9 +150,26 @@ private fun DialogSurface(content: @Composable ColumnScope.() -> Unit) {
 @Composable
 private fun LoadProfileContent(
     profiles: List<Profile>,
+    defaultName: String?,
     callbacks: ConfigDialogComposeBridge.LoadProfileCallbacks,
 ) {
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val initial = remember(profiles, defaultName) {
+        profiles.firstOrNull {
+            it.name == defaultName && (it.hasConfig() || it.hasOldConfig() || it.hasKeyLayout())
+        }
+    }
+    var selectedName by rememberSaveable { mutableStateOf(initial?.name) }
+    var configChecked by rememberSaveable {
+        mutableStateOf(initial?.let { it.hasConfig() || it.hasOldConfig() } ?: false)
+    }
+    var keyboardChecked by rememberSaveable {
+        mutableStateOf(initial?.hasKeyLayout() ?: false)
+    }
+    val selected = profiles.firstOrNull { it.name == selectedName }
+    val selectedHasConfig = selected?.let { it.hasConfig() || it.hasOldConfig() } == true
+    val selectedHasKeyboard = selected?.hasKeyLayout() == true
+
     DialogSurface {
         Text(stringResource(R.string.profile_choose_template), style = MaterialTheme.typography.headlineSmall)
         Text(
@@ -168,7 +189,7 @@ private fun LoadProfileContent(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = if (landscape) 180.dp else 420.dp),
+                    .heightIn(max = if (landscape) 180.dp else 360.dp),
             ) {
                 LazyColumn(
                     state = listState,
@@ -178,18 +199,41 @@ private fun LoadProfileContent(
                         val hasConfig = profile.hasConfig() || profile.hasOldConfig()
                         val hasKeyboard = profile.hasKeyLayout()
                         val available = hasConfig || hasKeyboard
+                        val isSelected = selectedName == profile.name
+                        val components = buildList {
+                            if (hasConfig) add(stringResource(R.string.action_settings))
+                            if (hasKeyboard) add(stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS))
+                        }.joinToString(" · ")
                         ListItem(
                             colors = ListItemDefaults.colors(
-                                containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                                containerColor = if (isSelected) {
+                                    MaterialTheme.colorScheme.secondaryContainer
+                                } else {
+                                    Color.Transparent
+                                },
                             ),
                             headlineContent = { Text(profile.name) },
+                            supportingContent = if (components.isNotEmpty()) {
+                                { Text(components) }
+                            } else {
+                                null
+                            },
+                            trailingContent = {
+                                RadioButton(
+                                    selected = isSelected,
+                                    onClick = null,
+                                    enabled = available,
+                                )
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable(enabled = available) {
-                                    if (available) {
-                                        callbacks.onConfirm(profile.name, hasConfig, hasKeyboard)
-                                    } else {
+                                    if (!available) {
                                         callbacks.onError()
+                                    } else {
+                                        selectedName = profile.name
+                                        configChecked = hasConfig
+                                        keyboardChecked = hasKeyboard
                                     }
                                 },
                         )
@@ -201,9 +245,34 @@ private fun LoadProfileContent(
                 )
             }
         }
+        if (selected != null) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            ProfileComponentCheckbox(
+                title = stringResource(R.string.action_settings),
+                checked = configChecked,
+                enabled = selectedHasConfig,
+                onCheckedChange = { configChecked = it },
+            )
+            ProfileComponentCheckbox(
+                title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
+                checked = keyboardChecked,
+                enabled = selectedHasKeyboard,
+                onCheckedChange = { keyboardChecked = it },
+            )
+        }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             TextButton(onClick = callbacks::onDismiss) {
                 Text(stringResource(android.R.string.cancel))
+            }
+            TextButton(
+                enabled = selected != null && (configChecked || keyboardChecked),
+                onClick = {
+                    val name = selectedName
+                    if (name == null) callbacks.onError()
+                    else callbacks.onConfirm(name, configChecked, keyboardChecked)
+                },
+            ) {
+                Text(stringResource(android.R.string.ok))
             }
         }
     }
@@ -211,14 +280,22 @@ private fun LoadProfileContent(
 
 @Composable
 private fun SaveProfileContent(
-    existingConfigNames: Set<String>,
+    existingProfileNames: Set<String>,
+    keyboardAvailable: Boolean,
     callbacks: ConfigDialogComposeBridge.SaveProfileCallbacks,
 ) {
     var name by rememberSaveable { mutableStateOf("") }
     var touched by rememberSaveable { mutableStateOf(false) }
     var overwriteVisible by rememberSaveable { mutableStateOf(false) }
+    var configChecked by rememberSaveable { mutableStateOf(true) }
+    var keyboardChecked by rememberSaveable { mutableStateOf(keyboardAvailable) }
+    var asDefault by rememberSaveable { mutableStateOf(false) }
     val trimmed = name.trim()
-    val valid = trimmed.isNotEmpty()
+    val valid = trimmed.isNotEmpty() && (configChecked || keyboardChecked)
+
+    fun confirm() {
+        callbacks.onConfirm(trimmed, configChecked, keyboardChecked, asDefault)
+    }
 
     DialogSurface {
         Text(stringResource(R.string.profile_save_template), style = MaterialTheme.typography.headlineSmall)
@@ -235,13 +312,32 @@ private fun SaveProfileContent(
             modifier = Modifier.fillMaxWidth(),
             label = { Text(stringResource(R.string.enter_name)) },
             singleLine = true,
-            isError = touched && !valid,
-            supportingText = if (touched && !valid) {
+            isError = touched && trimmed.isEmpty(),
+            supportingText = if (touched && trimmed.isEmpty()) {
                 { Text(stringResource(R.string.error_name)) }
             } else {
                 null
             },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+        )
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        ProfileComponentCheckbox(
+            title = stringResource(R.string.action_settings),
+            checked = configChecked,
+            enabled = true,
+            onCheckedChange = { configChecked = it },
+        )
+        ProfileComponentCheckbox(
+            title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
+            checked = keyboardChecked,
+            enabled = keyboardAvailable,
+            onCheckedChange = { keyboardChecked = it },
+        )
+        ProfileComponentCheckbox(
+            title = stringResource(R.string.set_as_default),
+            checked = asDefault,
+            enabled = true,
+            onCheckedChange = { asDefault = it },
         )
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             TextButton(onClick = callbacks::onDismiss) {
@@ -250,11 +346,8 @@ private fun SaveProfileContent(
             TextButton(
                 enabled = valid,
                 onClick = {
-                    if (trimmed in existingConfigNames) {
-                        overwriteVisible = true
-                    } else {
-                        callbacks.onConfirm(trimmed, true, true, false)
-                    }
+                    if (trimmed in existingProfileNames) overwriteVisible = true
+                    else confirm()
                 },
             ) {
                 Text(stringResource(R.string.save))
@@ -274,11 +367,39 @@ private fun SaveProfileContent(
             confirmButton = {
                 TextButton(onClick = {
                     overwriteVisible = false
-                    callbacks.onConfirm(trimmed, true, true, false)
+                    confirm()
                 }) {
                     Text(stringResource(R.string.save))
                 }
             },
+        )
+    }
+}
+
+@Composable
+private fun ProfileComponentCheckbox(
+    title: String,
+    checked: Boolean,
+    enabled: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled) { onCheckedChange(!checked) }
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            enabled = enabled,
+        )
+        Text(
+            text = title,
+            color = if (enabled) MaterialTheme.colorScheme.onSurface
+            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
         )
     }
 }

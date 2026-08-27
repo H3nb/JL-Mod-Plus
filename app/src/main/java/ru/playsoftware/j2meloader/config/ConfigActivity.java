@@ -4,6 +4,8 @@
  * Copyright 2018-2019 Nikita Shakarun
  * Copyright 2019-2026 Yury Kharchenko
  *
+ * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -90,7 +92,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private ConfigFormState currentForm;
 	private ConfigComposeController composeController;
 	private ProfileModel builtInDefaultParams;
-	/** True when this app config is the built-in template and should track host theme changes. */
+	/** True when this app's Settings source is the app-provided Built-In profile. */
 	private boolean builtInThemeLinked;
 	private SharedPreferences hostPreferences;
 	private final SharedPreferences.OnSharedPreferenceChangeListener hostThemeListener =
@@ -102,7 +104,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				}
 			};
 	private List<ProfileConfigMatcher.Candidate> profileCandidates = Collections.emptyList();
-	private byte[] currentKeyLayoutSnapshot;
 	@Nullable private String profileOrigin;
 
 	private final ConfigFormEvents formEvents = new ConfigFormEvents() {
@@ -117,7 +118,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 
 		@Override
-		public void onRemoveResolutionPreset(@NonNull Size size) {
+		public void onRemoveResolutionPreset(Size size) {
 			removeResolutionPreset(size);
 		}
 
@@ -158,20 +159,12 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 			onTuneComplete(values);
 		}
 
-		@Override
-		public void onUseProfile() {
-			showLoadProfile();
-		}
 
 		@Override
 		public void onSaveAsProfile() {
 			showSaveProfile();
 		}
 
-		@Override
-		public void onManageProfiles() {
-			startActivity(new Intent(ConfigActivity.this, ProfilesActivity.class));
-		}
 
 		@Override
 		public void onApplyBuiltInTemplate() {
@@ -180,13 +173,24 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 		@Override
 		public void onApplyTemplate(@NonNull String name) {
-			applyTemplate(name);
+			applyTemplate(name, true, true);
 		}
 
 		@Override
-		public void onSaveTemplate(@NonNull String name) {
-			saveTemplate(name);
+		public void onApplyTemplateComponents(@NonNull String name, boolean settings, boolean keyboard) {
+			applyTemplate(name, settings, keyboard);
 		}
+
+		@Override
+		public void onKeepSettingsForApp() {
+			keepProfileComponent(true);
+		}
+
+		@Override
+		public void onKeepKeyboardForApp() {
+			keepProfileComponent(false);
+		}
+
 
 		@Override
 		public void onUpdateTemplate(@NonNull String name) {
@@ -323,6 +327,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 					@Override
 					public void onResetSettings() {
+						if (!isProfile) ProfileLinks.detachSettings(configDir);
 						setProfileOrigin(null);
 						params = newBuiltInProfile();
 						setBuiltInThemeLinked(true);
@@ -331,6 +336,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 					@Override
 					public void onResetLayout() {
+						if (!isProfile) ProfileLinks.detachKeyboard(configDir);
+						setProfileOrigin(null);
 						if (keylayoutFile != null) {
 							//noinspection ResultOfMethodCallIgnored
 							keylayoutFile.delete();
@@ -386,16 +393,44 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	void loadConfig() {
 		defProfile = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
 				.getString(PREF_DEFAULT_PROFILE, null);
-		params = ProfilesManager.loadConfig(configDir);
-		boolean loadedDefaultProfile = false;
-		if (params == null && defProfile != null) {
-			FileUtils.copyFiles(new File(Config.getProfilesDir(), defProfile), configDir, null);
-			params = ProfilesManager.loadConfig(configDir);
-			loadedDefaultProfile = params != null;
+		params = isProfile
+				? ProfilesManager.loadConfig(configDir)
+				: ProfilesManager.loadGameConfig(configDir);
+		if (!isProfile) {
+			// ProfileLinks consumes the old one-shot origin marker during migration. Keep the
+			// activity field synchronized so legacy metadata cannot affect later UI decisions.
+			profileOrigin = readProfileOrigin();
 		}
+
+		boolean existingAppState = !isProfile && (
+				new File(configDir, Config.MIDLET_CONFIG_FILE).exists()
+						|| new File(configDir, Config.MIDLET_KEY_LAYOUT_FILE).exists()
+						|| ProfileLinks.getSettingsProfile(configDir) != null
+						|| ProfileLinks.getKeyboardProfile(configDir) != null
+						|| ProfileLinks.isBuiltInSettingsLinked(configDir));
+
+		// A default profile is a policy for a genuinely new app only. Existing materialized files
+		// or explicit source provenance must never be retargeted merely because config parsing failed
+		// or a first-run settings save was interrupted.
+		if (params == null && !isProfile && defProfile != null && !existingAppState) {
+			Profile defaultProfile = findProfile(defProfile);
+			if (defaultProfile != null) {
+				try {
+					ProfilesManager.load(defaultProfile, configDir.getPath(), true, true);
+					params = ProfilesManager.loadGameConfig(configDir);
+				} catch (IOException e) {
+					Log.e(TAG, "loadConfig: default profile " + defProfile, e);
+				}
+			}
+		}
+
 		if (params == null) {
 			params = newBuiltInProfile();
-			setBuiltInThemeLinked(!isProfile && !loadedDefaultProfile);
+			if (!isProfile && ProfileLinks.getSettingsProfile(configDir) == null) {
+				setBuiltInThemeLinked(true);
+			} else {
+				builtInThemeLinked = false;
+			}
 			return;
 		}
 		if (isProfile) {
@@ -404,19 +439,12 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 
 		boolean linked = readBuiltInThemeLinked();
-		if (profileOrigin != null || loadedDefaultProfile) {
+		if (ProfileLinks.getSettingsProfile(configDir) != null) {
+			ProfileLinks.detachBuiltInSettings(configDir);
 			linked = false;
 		}
-		// Migrate legacy app configs that were saved from the old one-time built-in snapshot. A
-		// genuinely custom config is never inferred from the global default-profile preference.
-		if (!linked && !loadedDefaultProfile && profileOrigin == null
-				&& matchesBuiltInVariant(params)) {
-			linked = true;
-		}
-		setBuiltInThemeLinked(linked);
-		if (builtInThemeLinked) {
-			ProfileModel.applyBuiltInTheme(params, isDarkTheme());
-		}
+		// Source identity is explicit. Equality with Built-In values never creates a link.
+		builtInThemeLinked = linked;
 	}
 
 	private void showShaderSettings() {
@@ -500,7 +528,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 					selected = line.substring(key.length()).trim();
 					break;
 				}
-			}
+		}
 		}
 		composeController.showEncodingPicker(Arrays.asList(charsets), selected);
 	}
@@ -528,23 +556,10 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	}
 
 	private void loadKeyLayout() {
-		File file = new File(configDir, Config.MIDLET_KEY_LAYOUT_FILE);
-		keylayoutFile = file;
-		if (isProfile || file.exists()) {
-			return;
-		}
-		if (defProfile == null) {
-			return;
-		}
-		File defaultKeyLayoutFile = new File(Config.getProfilesDir() + defProfile, Config.MIDLET_KEY_LAYOUT_FILE);
-		if (!defaultKeyLayoutFile.exists()) {
-			return;
-		}
-		try {
-			FileUtils.copyFileUsingChannel(defaultKeyLayoutFile, file);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		// Default-profile layout selection is handled together with settings in loadConfig().
+		// Existing apps must never begin following a newly selected global default just because
+		// their settings screen was opened later.
+		keylayoutFile = new File(configDir, Config.MIDLET_KEY_LAYOUT_FILE);
 	}
 
 	@Override
@@ -648,13 +663,18 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 	}
 
-	private void saveParams() {
+	void saveParams() {
 		try {
+			boolean builtInUnmodified = builtInThemeLinked && currentForm != null
+					&& builtInDefaultParams != null
+					&& ProfileConfigMatcher.sameEffectiveConfig(
+							params, currentForm, builtInDefaultParams);
 			if (currentForm != null) {
-				reconcileBuiltInThemeLink();
 				currentForm.applyTo(params);
 			}
-			ProfilesManager.saveConfig(params);
+			if (ProfilesManager.saveConfig(params) && builtInUnmodified) {
+				ProfileLinks.refreshBuiltInBaseline(configDir);
+			}
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
@@ -677,7 +697,27 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		startActivity(i);
 	}
 
+	private void keepProfileComponent(boolean settings) {
+		if (isProfile || configDir == null) return;
+		// Persist the draft before changing provenance so "Keep" always retains exactly what the
+		// user is looking at, even if another lifecycle event follows immediately.
+		saveParams();
+		if (settings) {
+			ProfileLinks.detachSettings(configDir);
+			ProfileLinks.detachBuiltInSettings(configDir);
+			builtInThemeLinked = false;
+		} else {
+			ProfileLinks.detachKeyboard(configDir);
+		}
+		setProfileOrigin(null);
+		refreshProfileMatchCache();
+		if (composeController != null) {
+			composeController.update(createUiState());
+		}
+	}
+
 	private void applyBuiltInTemplate() {
+		if (!isProfile) ProfileLinks.detachSettings(configDir);
 		setProfileOrigin(null);
 		params = newBuiltInProfile();
 		setBuiltInThemeLinked(true);
@@ -692,10 +732,18 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		return ProfileModel.createBuiltIn(configDir, isDarkTheme());
 	}
 
-	/** Re-derives theme-owned built-in colors without turning the profile into a custom snapshot. */
+	/** Re-resolves the Built-In source when its dynamic host-theme values change. */
 	private void syncLinkedBuiltInTheme() {
 		if (isProfile || !builtInThemeLinked || params == null || configDir == null) return;
-		ProfileModel.applyBuiltInTheme(params, isDarkTheme());
+		if (currentForm != null && builtInDefaultParams != null
+				&& !ProfileConfigMatcher.sameEffectiveConfig(
+						params, currentForm, builtInDefaultParams)) {
+			return;
+		}
+		params = newBuiltInProfile();
+		if (ProfilesManager.saveConfig(params)) {
+			ProfileLinks.refreshBuiltInBaseline(configDir);
+		}
 		currentForm = ConfigFormState.fromProfile(params, normalizedSystemProperties());
 		builtInDefaultParams = newBuiltInProfile();
 		refreshProfileMatchCache();
@@ -708,21 +756,17 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		return ProfileModel.isDarkTheme(this);
 	}
 
-	private boolean matchesBuiltInVariant(@NonNull ProfileModel candidate) {
-		if (configDir == null) return false;
-		return ProfileConfigMatcher.sameConfig(
-				candidate, ProfileModel.createBuiltIn(configDir, false))
-				|| ProfileConfigMatcher.sameConfig(
-				candidate, ProfileModel.createBuiltIn(configDir, true));
-	}
-
-	private void applyTemplate(@NonNull String name) {
+	private void applyTemplate(@NonNull String name, boolean settings, boolean keyboard) {
 		Profile profile = findProfile(name);
-		if (profile == null) return;
+		if (profile == null || (!settings && !keyboard)) return;
+		boolean appliesSettings = settings && (profile.hasConfig() || profile.hasOldConfig());
+		boolean appliesKeyboard = keyboard && profile.hasKeyLayout();
+		if (!appliesSettings && !appliesKeyboard) return;
+		saveParams();
 		try {
-			ProfilesManager.load(profile, configDir.getPath(), true, profile.hasKeyLayout());
-			setProfileOrigin(profile.getName());
-			setBuiltInThemeLinked(false);
+			ProfilesManager.load(profile, configDir.getPath(), settings, keyboard);
+			// New operations use explicit per-component links; profileOrigin is migration-only.
+			setProfileOrigin(null);
 			loadParams(true);
 		} catch (IOException e) {
 			Log.e(TAG, "applyTemplate: " + name, e);
@@ -730,24 +774,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 	}
 
-	private void saveTemplate(@NonNull String rawName) {
-		String name = rawName.trim();
-		if (name.isEmpty() || findProfile(name) != null) {
-			ThemedToast.show(this, R.string.profile_name_exists, Toast.LENGTH_SHORT);
-			return;
-		}
-		try {
-			saveParams();
-			Profile profile = new Profile(name);
-			ProfilesManager.saveSnapshot(profile, configDir.getPath());
-			setProfileOrigin(name);
-			refreshProfileMatchCache();
-			composeController.update(createUiState());
-		} catch (IOException e) {
-			Log.e(TAG, "saveTemplate: " + name, e);
-			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
-		}
-	}
 
 	private void updateTemplate(@NonNull String name) {
 		Profile profile = findProfile(name);
@@ -755,9 +781,14 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		try {
 			saveParams();
 			ProfilesManager.saveSnapshot(profile, configDir.getPath());
-			setProfileOrigin(name);
-			refreshProfileMatchCache();
-			composeController.update(createUiState());
+			setProfileOrigin(null);
+			// Re-resolve after a successful global update so an unchanged sibling that changed
+			// elsewhere is refreshed immediately on this screen as well.
+			loadParams(true);
+		} catch (ProfilesManager.ProfileUpdateConflictException e) {
+			Log.w(TAG, "updateTemplate: stale profile " + name, e);
+			ThemedToast.show(this, R.string.profile_update_conflict, Toast.LENGTH_LONG);
+			loadParams(true);
 		} catch (IOException e) {
 			Log.e(TAG, "updateTemplate: " + name, e);
 			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
@@ -785,6 +816,10 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		Profile profile = findProfile(name);
 		if (profile == null) return;
 		profile.delete();
+		if (profile.getDir().exists()) {
+			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+			return;
+		}
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		if (name.equals(preferences.getString(PREF_DEFAULT_PROFILE, null))) {
 			preferences.edit().remove(PREF_DEFAULT_PROFILE).apply();
@@ -815,23 +850,15 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		return "config_profile_origin:" + configDir.getAbsolutePath();
 	}
 
-	private String builtInThemeKey() {
-		return ProfileModel.builtInThemePreferenceKey(configDir);
-	}
-
 	private boolean readBuiltInThemeLinked() {
-		if (isProfile || configDir == null) return false;
-		return PreferenceManager.getDefaultSharedPreferences(this)
-				.getBoolean(builtInThemeKey(), false);
+		return !isProfile && configDir != null && ProfileLinks.isBuiltInSettingsLinked(configDir);
 	}
 
 	private void setBuiltInThemeLinked(boolean linked) {
 		builtInThemeLinked = linked;
 		if (isProfile || configDir == null) return;
-		SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
-		if (linked) editor.putBoolean(builtInThemeKey(), true);
-		else editor.remove(builtInThemeKey());
-		editor.apply();
+		if (linked) ProfileLinks.linkBuiltInSettings(configDir);
+		else ProfileLinks.detachBuiltInSettings(configDir);
 	}
 
 	@Nullable
@@ -852,13 +879,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		editor.apply();
 	}
 
-	private void showLoadProfile() {
-		if (keylayoutFile == null) {
-			return;
-		}
-		LoadProfileAlert.newInstance(keylayoutFile.getParent())
-				.show(getSupportFragmentManager(), "load_profile");
-	}
 
 	private void showSaveProfile() {
 		if (keylayoutFile == null) {
@@ -870,8 +890,10 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				.show(getSupportFragmentManager(), "save_profile");
 	}
 
-	/** Called by the save dialog after a profile snapshot is written. */
+	/** Called by the save dialog after a profile snapshot is written and linked. */
 	void onProfileDataChanged() {
+		profileOrigin = readProfileOrigin();
+		builtInThemeLinked = readBuiltInThemeLinked();
 		refreshProfileMatchCache();
 		if (composeController != null) {
 			composeController.update(createUiState());
@@ -940,7 +962,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		}
 		if (currentForm != null && currentForm.shader != null) {
 			currentForm.shader.values = values;
-			reconcileBuiltInThemeLink();
 			if (composeController != null) {
 				composeController.update(createUiState());
 			}
@@ -950,11 +971,9 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 	private void refreshProfileMatchCache() {
 		if (isProfile) {
 			profileCandidates = Collections.emptyList();
-			currentKeyLayoutSnapshot = null;
 			return;
 		}
 		profileCandidates = ProfileConfigMatcher.loadCandidates(ProfilesManager.getProfiles());
-		currentKeyLayoutSnapshot = ProfileConfigMatcher.readKeyboard(keylayoutFile);
 	}
 
 	private ConfigUiState createUiState() {
@@ -963,26 +982,40 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 				: currentForm;
 		String defaultProfile = PreferenceManager.getDefaultSharedPreferences(this)
 				.getString(PREF_DEFAULT_PROFILE, null);
-		Profile activeProfile = isProfile ? null : ProfileConfigMatcher.findMatchCached(
-				params, state, profileCandidates, defaultProfile, currentKeyLayoutSnapshot);
 		ConfigUiState.ProfileStatus profileStatus;
-		if (activeProfile != null) {
-			if (!activeProfile.getName().equals(profileOrigin)) setProfileOrigin(activeProfile.getName());
-			profileStatus = ConfigUiState.ProfileStatus.active(activeProfile.getName(), defaultProfile);
-		} else if (!isProfile && builtInDefaultParams != null
-				&& ProfileConfigMatcher.sameEffectiveConfig(params, state, builtInDefaultParams)) {
-			if (profileOrigin != null) setProfileOrigin(null);
-			profileStatus = ConfigUiState.ProfileStatus.builtInDefault(defaultProfile);
-		} else if (!isProfile && profileOrigin != null && findProfileCandidate(profileOrigin) != null) {
-			profileStatus = ConfigUiState.ProfileStatus.modified(profileOrigin, defaultProfile);
-		} else {
-			if (!isProfile && profileOrigin != null) setProfileOrigin(null);
+
+		if (isProfile) {
 			profileStatus = ConfigUiState.ProfileStatus.custom(defaultProfile);
+		} else {
+			String settingsProfile = ProfileLinks.getSettingsProfile(configDir);
+			String keyboardProfile = ProfileLinks.getKeyboardProfile(configDir);
+			boolean settingsModified = ProfileLinks.isSettingsModified(configDir);
+			boolean keyboardModified = ProfileLinks.isKeyboardModified(configDir);
+
+			if (settingsProfile != null) {
+				ProfileConfigMatcher.Candidate candidate = findProfileCandidate(settingsProfile);
+				if (candidate == null || candidate.config == null
+						|| !ProfileConfigMatcher.sameEffectiveConfig(params, state, candidate.config)) {
+					settingsModified = true;
+				}
+			}
+
+			boolean builtInSettings = settingsProfile == null && builtInThemeLinked;
+			if (builtInSettings) {
+				settingsModified = builtInDefaultParams == null
+						|| !ProfileConfigMatcher.sameEffectiveConfig(params, state, builtInDefaultParams);
+			}
+
+			profileStatus = ConfigUiState.ProfileStatus.components(
+					settingsProfile, settingsModified, keyboardProfile, keyboardModified,
+					builtInSettings, defaultProfile);
 		}
+
 		ArrayList<ConfigUiState.ProfileTemplate> templates = new ArrayList<>();
 		for (ProfileConfigMatcher.Candidate candidate : profileCandidates) {
 			String name = candidate.profile.getName();
-			templates.add(new ConfigUiState.ProfileTemplate(name, name.equals(defaultProfile)));
+			templates.add(new ConfigUiState.ProfileTemplate(
+					name, name.equals(defaultProfile), candidate.config != null, candidate.keyboard != null));
 		}
 		return new ConfigUiState(state, screenPresets, fontPresets, skinOptions, soundBankOptions,
 				shaders == null ? Collections.emptyList() : shaders, removableScreenPresets,
@@ -1020,19 +1053,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 
 	private void updateForm(ConfigFormState state) {
 		currentForm = state;
-		reconcileBuiltInThemeLink();
 		if (composeController != null) {
 			composeController.update(createUiState());
-		}
-	}
-
-	private void reconcileBuiltInThemeLink() {
-		if (!builtInThemeLinked || isProfile || params == null || currentForm == null
-				|| builtInDefaultParams == null) {
-			return;
-		}
-		if (!ProfileConfigMatcher.sameEffectiveConfig(params, currentForm, builtInDefaultParams)) {
-			setBuiltInThemeLinked(false);
 		}
 	}
 

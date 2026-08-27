@@ -2,6 +2,8 @@
  * Copyright 2018-2019 Nikita Shakarun
  * Copyright 2019-2023 Yury Kharchenko
  *
+ * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -103,6 +105,9 @@ public class LoadProfileAlert extends DialogFragment {
 							if (selected == null) {
 								ThemedToast.show(context, R.string.error, Toast.LENGTH_SHORT);
 								return;
+							}
+							if (context instanceof ConfigActivity) {
+								((ConfigActivity) context).saveParams();
 							}
 							ProfilesManager.load(selected, configPath, config, keyboard);
 							if (context instanceof ConfigActivity) {

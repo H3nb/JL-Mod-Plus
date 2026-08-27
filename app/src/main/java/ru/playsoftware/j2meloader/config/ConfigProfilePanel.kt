@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -17,9 +18,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -43,11 +48,6 @@ import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
 import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 
-private sealed interface TemplateNameRequest {
-    data object Create : TemplateNameRequest
-    data class Rename(val oldName: String) : TemplateNameRequest
-}
-
 @Composable
 internal fun ConfigProfilePanel(
     status: ConfigUiState.ProfileStatus,
@@ -55,82 +55,120 @@ internal fun ConfigProfilePanel(
     events: ConfigFormEvents,
 ) {
     var managerVisible by rememberSaveable { mutableStateOf(false) }
-    var nameRequest by remember { mutableStateOf<TemplateNameRequest?>(null) }
-    val currentTitle = when {
-        status.modified && status.sourceProfile != null -> status.sourceProfile
-        status.activeProfile != null -> status.activeProfile
-        status.builtInDefault -> stringResource(R.string.profile_builtin_settings)
+    var renameTarget by remember { mutableStateOf<String?>(null) }
+    var updateTarget by remember { mutableStateOf<String?>(null) }
+
+    val settingsSource = when {
+        status.settingsProfile != null -> status.settingsProfile
+        status.settingsBuiltIn -> stringResource(R.string.profile_builtin_settings)
         else -> stringResource(R.string.profile_custom)
     }
-    val currentSummary = when {
-        status.modified -> stringResource(R.string.profile_modified_summary)
-        status.activeProfile != null -> stringResource(R.string.profile_active_summary)
-        status.builtInDefault -> stringResource(R.string.profile_builtin_settings_summary)
-        else -> stringResource(R.string.profile_custom_summary)
-    }
-    val defaultSuffix = when {
-        status.builtInDefault && status.defaultProfile == null -> stringResource(R.string.profile_default_badge)
-        status.activeProfile != null && status.activeProfile == status.defaultProfile -> stringResource(R.string.profile_default_badge)
-        status.modified && status.sourceProfile == status.defaultProfile -> stringResource(R.string.profile_default_badge)
-        else -> null
-    }
-    val summary = if (defaultSuffix == null) currentSummary else "$currentSummary · $defaultSuffix"
+    val keyboardSource = status.keyboardProfile ?: stringResource(R.string.profile_app_specific)
+    val settingsUpdateProfile = status.settingsProfile?.takeIf { status.settingsModified }
+    val keyboardUpdateProfile = status.keyboardProfile
+        ?.takeIf { status.keyboardModified && it != settingsUpdateProfile }
+    val hasLocalComponent =
+        (status.settingsProfile == null && !status.settingsBuiltIn) || status.keyboardProfile == null
 
-    ConfigSection(
-        title = stringResource(R.string.profiles),
-        highlighted = true,
-    ) {
-        ConfigValuePreference(
-            title = currentTitle,
-            description = summary,
-            value = stringResource(R.string.profile_choose_or_manage),
-            onClick = { managerVisible = true },
+    ConfigSection(title = stringResource(R.string.profile_section_title)) {
+        ProfileComponentRow(
+            title = stringResource(R.string.action_settings),
+            source = settingsSource,
+            modified = status.settingsModified,
+            updateProfile = settingsUpdateProfile,
+            keepLabel = if (status.settingsModified &&
+                (status.settingsProfile != null || status.settingsBuiltIn)
+            ) {
+                stringResource(R.string.profile_keep_settings_for_app)
+            } else {
+                null
+            },
+            onRequestUpdate = { updateTarget = it },
+            onKeep = events::onKeepSettingsForApp,
         )
-        if (status.modified && status.sourceProfile != null) {
-            ConfigActionPreference(
-                title = stringResource(R.string.profile_update_template),
-                description = stringResource(R.string.profile_update_template_summary, status.sourceProfile),
-                onClick = { events.onUpdateTemplate(status.sourceProfile) },
-            )
-            ConfigActionPreference(
-                title = stringResource(R.string.profile_save_as_new_template),
-                description = stringResource(R.string.profile_save_as_new_template_summary),
-                onClick = { nameRequest = TemplateNameRequest.Create },
-            )
-        } else if (status.activeProfile == null && !status.builtInDefault) {
-            ConfigActionPreference(
-                title = stringResource(R.string.profile_save_as_new_template),
-                description = stringResource(R.string.profile_save_as_new_template_summary),
-                onClick = { nameRequest = TemplateNameRequest.Create },
-            )
+        HorizontalDivider(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
+        )
+        ProfileComponentRow(
+            title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
+            source = keyboardSource,
+            modified = status.keyboardModified,
+            updateProfile = keyboardUpdateProfile,
+            keepLabel = if (status.keyboardModified && status.keyboardProfile != null) {
+                stringResource(R.string.profile_keep_keyboard_for_app)
+            } else {
+                null
+            },
+            onRequestUpdate = { updateTarget = it },
+            onKeep = events::onKeepKeyboardForApp,
+        )
+        HorizontalDivider(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 8.dp, top = 6.dp, end = 12.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (status.hasModifiedComponents() || hasLocalComponent) {
+                TextButton(onClick = events::onSaveAsProfile) {
+                    Text(stringResource(R.string.profile_save_as_profile))
+                }
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            OutlinedButton(onClick = { managerVisible = true }) {
+                Text(stringResource(R.string.profile_change_profile))
+            }
         }
     }
 
     if (managerVisible) {
-        ConfigTemplateManagerDialog(
+        ConfigProfileManagerDialog(
             status = status,
             templates = templates,
             events = events,
             onDismissRequest = { managerVisible = false },
-            onCreate = { nameRequest = TemplateNameRequest.Create },
-            onRename = { name -> nameRequest = TemplateNameRequest.Rename(name) },
+            onCreate = {
+                managerVisible = false
+                events.onSaveAsProfile()
+            },
+            onRename = { name -> renameTarget = name },
+            onRequestUpdate = { name -> updateTarget = name },
         )
     }
 
-    nameRequest?.let { request ->
-        ConfigTemplateNameDialog(
-            title = stringResource(
-            if (request is TemplateNameRequest.Rename) R.string.action_context_rename
-            else R.string.profile_save_as_new_template,
-            ),
-            initialName = (request as? TemplateNameRequest.Rename)?.oldName.orEmpty(),
+    renameTarget?.let { oldName ->
+        ConfigProfileNameDialog(
+            title = stringResource(R.string.action_context_rename),
+            initialName = oldName,
             existingNames = templates.map { it.name },
-            onDismissRequest = { nameRequest = null },
+            onDismissRequest = { renameTarget = null },
             onConfirm = { name ->
-                nameRequest = null
-                when (request) {
-                    TemplateNameRequest.Create -> events.onSaveTemplate(name)
-                    is TemplateNameRequest.Rename -> events.onRenameTemplate(request.oldName, name)
+                renameTarget = null
+                events.onRenameTemplate(oldName, name)
+            },
+        )
+    }
+
+    updateTarget?.let { name ->
+        AlertDialog(
+            onDismissRequest = { updateTarget = null },
+            title = { Text(stringResource(R.string.profile_update_global_title, name)) },
+            text = { Text(stringResource(R.string.profile_update_global_message)) },
+            dismissButton = {
+                TextButton(onClick = { updateTarget = null }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    updateTarget = null
+                    events.onUpdateTemplate(name)
+                }) {
+                    Text(stringResource(R.string.profile_update_profile))
                 }
             },
         )
@@ -138,39 +176,127 @@ internal fun ConfigProfilePanel(
 }
 
 @Composable
-private fun ConfigTemplateManagerDialog(
+private fun ProfileComponentRow(
+    title: String,
+    source: String,
+    modified: Boolean,
+    updateProfile: String?,
+    keepLabel: String?,
+    onRequestUpdate: (String) -> Unit,
+    onKeep: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = source,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (modified) {
+                Text(
+                    text = stringResource(R.string.profile_modified_badge),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        if (updateProfile != null || keepLabel != null) {
+            var expanded by remember { mutableStateOf(false) }
+            Box {
+                IconButton(onClick = { expanded = true }) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_more_vert),
+                        contentDescription = stringResource(R.string.more),
+                    )
+                }
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                ) {
+                    if (updateProfile != null) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.profile_update_profile)) },
+                            onClick = {
+                                expanded = false
+                                onRequestUpdate(updateProfile)
+                            },
+                        )
+                    }
+                    if (keepLabel != null) {
+                        DropdownMenuItem(
+                            text = { Text(keepLabel) },
+                            onClick = {
+                                expanded = false
+                                onKeep()
+                            },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ConfigProfileManagerDialog(
     status: ConfigUiState.ProfileStatus,
     templates: List<ConfigUiState.ProfileTemplate>,
     events: ConfigFormEvents,
     onDismissRequest: () -> Unit,
     onCreate: () -> Unit,
     onRename: (String) -> Unit,
+    onRequestUpdate: (String) -> Unit,
 ) {
-    var actionTarget by remember { mutableStateOf<ConfigUiState.ProfileTemplate?>(null) }
     var deleteTarget by remember { mutableStateOf<ConfigUiState.ProfileTemplate?>(null) }
+
     Dialog(
         onDismissRequest = onDismissRequest,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Surface(
-                modifier = Modifier.fillMaxWidth(0.94f).widthIn(max = 560.dp).heightIn(max = 680.dp),
+                modifier = Modifier
+                    .fillMaxWidth(0.94f)
+                    .widthIn(max = 560.dp)
+                    .heightIn(max = 680.dp),
                 shape = MaterialTheme.shapes.extraLarge,
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                tonalElevation = 6.dp,
+                tonalElevation = 2.dp,
             ) {
-                Column(modifier = Modifier.padding(vertical = 12.dp)) {
-                    Text(
-                        text = stringResource(R.string.profile_templates_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
-                    )
-                    Text(
-                        text = stringResource(R.string.profile_templates_summary),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
-                    )
+                Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 20.dp, end = 12.dp, top = 4.dp, bottom = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.profile_manager_title),
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.weight(1f),
+                        )
+                        TextButton(onClick = onCreate) {
+                            Text(stringResource(R.string.profile_new_profile))
+                        }
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
                     val listState = rememberLazyListState()
                     val canScrollForward = rememberLazyListCanScrollForward(listState)
                     Box(
@@ -183,32 +309,29 @@ private fun ConfigTemplateManagerDialog(
                             state = listState,
                         ) {
                             item(key = "__built_in__") {
-                                TemplateRow(
-                                    name = stringResource(R.string.profile_builtin_settings),
-                                    summary = stringResource(R.string.profile_builtin_settings_summary),
-                                    isActive = status.builtInDefault,
-                                    isModifiedSource = false,
+                                BuiltInProfileRow(
+                                    isInUse = status.settingsBuiltIn,
+                                    isModified = status.settingsBuiltIn && status.settingsModified,
                                     isDefault = status.defaultProfile == null,
-                                    onClick = {
+                                    onApply = {
                                         events.onApplyBuiltInTemplate()
                                         onDismissRequest()
                                     },
-                                    onMore = if (status.defaultProfile == null) null else ({ events.onSetDefaultTemplate(null) }),
-                                    builtIn = true,
+                                    onSetDefault = if (status.defaultProfile == null) null else ({
+                                        events.onSetDefaultTemplate(null)
+                                    }),
                                 )
                             }
-                            items(templates, key = { it.name }) { template ->
-                                TemplateRow(
-                                    name = template.name,
-                                    summary = stringResource(R.string.profile_template_summary),
-                                    isActive = status.activeProfile == template.name,
-                                    isModifiedSource = status.modified && status.sourceProfile == template.name,
-                                    isDefault = template.isDefault,
-                                    onClick = {
-                                        events.onApplyTemplate(template.name)
-                                        onDismissRequest()
-                                    },
-                                    onMore = { actionTarget = template },
+                            items(templates, key = { it.name }) { profile ->
+                                UserProfileRow(
+                                    profile = profile,
+                                    isInUse = status.usesProfile(profile.name),
+                                    isModified = status.isProfileModified(profile.name),
+                                    events = events,
+                                    onDismissManager = onDismissRequest,
+                                    onRename = onRename,
+                                    onRequestUpdate = onRequestUpdate,
+                                    onRequestDelete = { deleteTarget = it },
                                 )
                             }
                         }
@@ -217,134 +340,263 @@ private fun ConfigTemplateManagerDialog(
                             modifier = Modifier.align(Alignment.BottomCenter),
                         )
                     }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 4.dp),
                         horizontalArrangement = Arrangement.End,
                     ) {
-                        TextButton(onClick = onCreate) { Text(stringResource(R.string.profile_save_current_template)) }
-                        TextButton(onClick = onDismissRequest) { Text(stringResource(android.R.string.cancel)) }
+                        TextButton(onClick = onDismissRequest) {
+                            Text(stringResource(android.R.string.cancel))
+                        }
                     }
                 }
             }
         }
     }
 
-    actionTarget?.let { template ->
-        AlertDialog(
-            onDismissRequest = { actionTarget = null },
-            title = { Text(template.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-            text = {
-                Column {
-                    if (!template.isDefault) {
-                        TextButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            actionTarget = null
-                            events.onSetDefaultTemplate(template.name)
-                        },
-                        ) { Text(stringResource(R.string.set_as_default), modifier = Modifier.fillMaxWidth()) }
-                    }
-                    if (status.modified && status.sourceProfile == template.name) {
-                        TextButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            actionTarget = null
-                            events.onUpdateTemplate(template.name)
-                        },
-                        ) { Text(stringResource(R.string.profile_update_template), modifier = Modifier.fillMaxWidth()) }
-                    }
-                    TextButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        actionTarget = null
-                        onRename(template.name)
-                    },
-                    ) { Text(stringResource(R.string.action_context_rename), modifier = Modifier.fillMaxWidth()) }
-                    TextButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        actionTarget = null
-                        deleteTarget = template
-                    },
-                    ) { Text(stringResource(R.string.action_context_delete), modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.error) }
-                }
-            },
-            confirmButton = {},
-        )
-    }
-
-    deleteTarget?.let { template ->
+    deleteTarget?.let { profile ->
         AlertDialog(
             onDismissRequest = { deleteTarget = null },
             title = { Text(stringResource(R.string.action_context_delete)) },
-            text = { Text(stringResource(R.string.profile_delete_template_message, template.name)) },
+            text = { Text(stringResource(R.string.profile_delete_profile_message, profile.name)) },
             dismissButton = {
-                TextButton(onClick = { deleteTarget = null }) { Text(stringResource(android.R.string.cancel)) }
+                TextButton(onClick = { deleteTarget = null }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
             },
             confirmButton = {
                 TextButton(
-                onClick = {
-                    deleteTarget = null
-                    events.onDeleteTemplate(template.name)
-                },
-                ) { Text(stringResource(R.string.action_context_delete), color = MaterialTheme.colorScheme.error) }
+                    onClick = {
+                        deleteTarget = null
+                        events.onDeleteTemplate(profile.name)
+                    },
+                ) {
+                    Text(
+                        stringResource(R.string.action_context_delete),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
             },
         )
     }
 }
 
 @Composable
-private fun TemplateRow(
-    name: String,
-    summary: String,
-    isActive: Boolean,
-    isModifiedSource: Boolean,
+private fun BuiltInProfileRow(
+    isInUse: Boolean,
+    isModified: Boolean,
     isDefault: Boolean,
-    onClick: () -> Unit,
-    onMore: (() -> Unit)?,
-    builtIn: Boolean = false,
+    onApply: () -> Unit,
+    onSetDefault: (() -> Unit)?,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 20.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(text = name, style = MaterialTheme.typography.bodyLarge, fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal)
-            Text(
-                text = buildString {
-                    append(summary)
-                    if (isActive) append(" · ").append(stringResource(R.string.profile_active_badge))
-                    else if (isModifiedSource) append(" · ").append(stringResource(R.string.profile_modified_badge))
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        if (isDefault) {
-            Text(
-                text = stringResource(R.string.profile_default_badge_short),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-        }
-        if (onMore != null) {
-            if (builtIn) {
-                TextButton(onClick = onMore) { Text(stringResource(R.string.set_as_default)) }
-            } else {
-                IconButton(onClick = onMore) {
+    var expanded by remember { mutableStateOf(false) }
+    ProfileManagerRowContent(
+        name = stringResource(R.string.profile_builtin_settings),
+        summary = stringResource(R.string.profile_builtin_settings_summary),
+        isInUse = isInUse,
+        isModified = isModified,
+        isDefault = isDefault,
+        onClick = onApply,
+        trailing = if (onSetDefault == null) null else {
+            {
+                Box {
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_more_vert),
+                            contentDescription = stringResource(R.string.more),
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.set_as_default)) },
+                            onClick = {
+                                expanded = false
+                                onSetDefault()
+                            },
+                        )
+                    }
+                }
+            }
+        },
+    )
+}
+
+@Composable
+private fun UserProfileRow(
+    profile: ConfigUiState.ProfileTemplate,
+    isInUse: Boolean,
+    isModified: Boolean,
+    events: ConfigFormEvents,
+    onDismissManager: () -> Unit,
+    onRename: (String) -> Unit,
+    onRequestUpdate: (String) -> Unit,
+    onRequestDelete: (ConfigUiState.ProfileTemplate) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    ProfileManagerRowContent(
+        name = profile.name,
+        summary = profileSummary(profile),
+        isInUse = isInUse,
+        isModified = isModified,
+        isDefault = profile.isDefault,
+        onClick = {
+            events.onApplyTemplate(profile.name)
+            onDismissManager()
+        },
+        trailing = {
+            Box {
+                IconButton(onClick = { expanded = true }) {
                     Icon(
                         painter = painterResource(R.drawable.ic_more_vert),
                         contentDescription = stringResource(R.string.more),
                     )
                 }
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                ) {
+                    if (profile.hasSettings && profile.hasKeyboard) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.profile_apply_settings_only)) },
+                            onClick = {
+                                expanded = false
+                                events.onApplyTemplateComponents(profile.name, true, false)
+                                onDismissManager()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.profile_apply_keyboard_only)) },
+                            onClick = {
+                                expanded = false
+                                events.onApplyTemplateComponents(profile.name, false, true)
+                                onDismissManager()
+                            },
+                        )
+                    }
+                    if (isModified) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.profile_update_profile)) },
+                            onClick = {
+                                expanded = false
+                                onRequestUpdate(profile.name)
+                            },
+                        )
+                    }
+                    if (!profile.isDefault) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.set_as_default)) },
+                            onClick = {
+                                expanded = false
+                                events.onSetDefaultTemplate(profile.name)
+                            },
+                        )
+                    }
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.action_context_rename)) },
+                        onClick = {
+                            expanded = false
+                            onRename(profile.name)
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                stringResource(R.string.action_context_delete),
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        },
+                        onClick = {
+                            expanded = false
+                            onRequestDelete(profile)
+                        },
+                    )
+                }
+            }
+        },
+    )
+}
+
+@Composable
+private fun ProfileManagerRowContent(
+    name: String,
+    summary: String,
+    isInUse: Boolean,
+    isModified: Boolean,
+    isDefault: Boolean,
+    onClick: () -> Unit,
+    trailing: (@Composable () -> Unit)?,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(start = 20.dp, top = 11.dp, end = 8.dp, bottom = 11.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                text = name,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = if (isInUse) FontWeight.SemiBold else FontWeight.Normal,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = if (isModified) {
+                    "$summary · ${stringResource(R.string.profile_modified_badge)}"
+                } else {
+                    summary
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            if (isInUse) {
+                Text(
+                    text = stringResource(R.string.profile_in_use),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+            if (isDefault) {
+                Text(
+                    text = stringResource(R.string.profile_default_badge_short),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
+        trailing?.invoke()
     }
 }
 
 @Composable
-private fun ConfigTemplateNameDialog(
+private fun profileSummary(profile: ConfigUiState.ProfileTemplate): String {
+    val settings = if (profile.hasSettings) stringResource(R.string.action_settings) else null
+    val keyboard = if (profile.hasKeyboard) stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS) else null
+    return listOfNotNull(settings, keyboard).takeIf { it.isNotEmpty() }
+        ?.joinToString(" · ")
+        ?: stringResource(R.string.profile_template_summary)
+}
+
+@Composable
+private fun ConfigProfileNameDialog(
     title: String,
     initialName: String,
     existingNames: List<String>,
@@ -353,7 +605,9 @@ private fun ConfigTemplateNameDialog(
 ) {
     var value by rememberSaveable(initialName) { mutableStateOf(initialName) }
     val trimmed = value.trim()
-    val duplicate = existingNames.any { it.equals(trimmed, ignoreCase = true) && !it.equals(initialName, ignoreCase = false) }
+    val duplicate = existingNames.any {
+        it.equals(trimmed, ignoreCase = true) && !it.equals(initialName, ignoreCase = false)
+    }
     val valid = trimmed.isNotEmpty() && !duplicate && trimmed != initialName
     AlertDialog(
         onDismissRequest = onDismissRequest,
@@ -361,25 +615,31 @@ private fun ConfigTemplateNameDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
-                value = value,
-                onValueChange = { value = it },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.profile_name_label)) },
-                isError = duplicate,
+                    value = value,
+                    onValueChange = { value = it },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(stringResource(R.string.profile_name_label_v2)) },
+                    isError = duplicate,
                 )
                 if (duplicate) {
                     Text(
-                    text = stringResource(R.string.profile_name_exists),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
+                        text = stringResource(R.string.profile_name_exists_v2),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
                     )
                 }
             }
         },
-        dismissButton = { TextButton(onClick = onDismissRequest) { Text(stringResource(android.R.string.cancel)) } },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        },
         confirmButton = {
-            TextButton(enabled = valid, onClick = { onConfirm(trimmed) }) { Text(stringResource(R.string.save)) }
+            TextButton(enabled = valid, onClick = { onConfirm(trimmed) }) {
+                Text(stringResource(R.string.save))
+            }
         },
     )
 }

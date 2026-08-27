@@ -1,6 +1,8 @@
 /*
  * Copyright 2020-2026 Yury Kharchenko
  *
+ * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -229,6 +231,13 @@ public class ProfileModel {
 
 	/** Applies the theme-owned colors used by the app-provided profile template. */
 	public static void applyBuiltInTheme(ProfileModel profile, boolean darkTheme) {
+		// A materialized Built-In component that the app has edited remains linked as provenance,
+		// but the runtime must not silently overwrite those local colors. Newly generated Built-In
+		// source models are exempt so createBuiltIn() always represents the current app defaults.
+		if (!profile.isNew && profile.dir != null
+				&& ProfileLinks.isBuiltInSettingsModified(profile.dir)) {
+			return;
+		}
 		int background = darkTheme ? 0x000000 : 0xFFFFFF;
 		int foreground = darkTheme ? 0xFFFFFF : 0x000000;
 		profile.screenBackgroundColor = background;

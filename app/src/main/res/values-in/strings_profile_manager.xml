@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_keep_settings_for_app">Pertahankan Pengaturan untuk Aplikasi Ini</string>
+    <string name="profile_keep_settings_for_app_summary">Berhenti mengikuti profil untuk Pengaturan tanpa mengubah nilai saat ini.</string>
+    <string name="profile_keep_keyboard_for_app">Pertahankan Keyboard untuk Aplikasi Ini</string>
+    <string name="profile_keep_keyboard_for_app_summary">Berhenti mengikuti profil untuk tata letak keyboard tanpa mengubah tata letak saat ini.</string>
+    <string name="profile_section_title">Profil</string>
+    <string name="profile_change_profile">Ganti Profil</string>
+    <string name="profile_save_as_profile">Simpan sebagai Profil</string>
+    <string name="profile_manager_title">Profil</string>
+    <string name="profile_new_profile">Profil Baru</string>
+    <string name="profile_in_use">Digunakan</string>
+    <string name="profile_update_profile">Perbarui Profil</string>
+    <string name="profile_name_label_v2">Nama Profil</string>
+    <string name="profile_name_exists_v2">Profil dengan nama ini sudah ada.</string>
+    <string name="profile_delete_profile_message">Hapus profil “%1$s”? Aplikasi yang menggunakannya tetap menyimpan salinan lokal saat ini.</string>
+</resources>

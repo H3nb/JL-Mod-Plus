@@ -44,7 +44,6 @@
     <string name="profile_default_template_summary">Template default untuk aplikasi baru</string>
     <string name="profile_default_badge_short">Default</string>
     <string name="profile_modified_summary">Diubah dari template ini</string>
-    <string name="profile_choose_or_manage">Pilih atau kelola template</string>
     <string name="profile_update_template">Perbarui Template</string>
     <string name="profile_update_template_summary">Ganti isi %1$s dengan konfigurasi saat ini.</string>
     <string name="profile_save_as_new_template">Simpan Sebagai Template Baru</string>

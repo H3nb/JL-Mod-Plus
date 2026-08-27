@@ -1,6 +1,8 @@
 /*
  * Copyright 2018 Nikita Shakarun
  *
+ * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,15 +18,12 @@
 
 package ru.playsoftware.j2meloader.config;
 
-import android.util.Log;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -44,6 +43,12 @@ public class ProfilesManager {
 
 	private static final String TAG = ProfilesManager.class.getName();
 	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+	static final class ProfileUpdateConflictException extends IOException {
+		ProfileUpdateConflictException(@NonNull String profileName) {
+			super("Profile changed since this app was linked: " + profileName);
+		}
+	}
 
 	static ArrayList<Profile> getProfiles() {
 		File root = new File(Config.getProfilesDir());
@@ -66,30 +71,38 @@ public class ProfilesManager {
 
 	static void load(Profile from, String toPath, boolean config, boolean keyboard)
 			throws IOException {
-		if (!config && !keyboard) {
+		ProfileModel sourceConfig = config && (from.hasConfig() || from.hasOldConfig())
+				? loadConfig(from.getDir(), true)
+				: null;
+		boolean configRequested = config && sourceConfig != null;
+		boolean keyboardRequested = keyboard && from.hasKeyLayout();
+		if (!configRequested && !keyboardRequested) {
 			return;
 		}
-		File dstConfig = new File(toPath, Config.MIDLET_CONFIG_FILE);
-		File dstKeyLayout = new File(toPath, Config.MIDLET_KEY_LAYOUT_FILE);
-		try {
-			if (config) {
-				File source = from.getConfig();
-				if (source.exists()) {
-					FileUtils.copyFileUsingChannel(source, dstConfig);
-				} else {
-					ProfileModel params = loadConfig(from.getDir());
-					if (params != null) {
-						params.dir = dstConfig.getParentFile();
-						saveConfig(params);
-					}
-				}
+		File configDir = new File(toPath);
+		File dstConfig = new File(configDir, Config.MIDLET_CONFIG_FILE);
+		File dstKeyLayout = new File(configDir, Config.MIDLET_KEY_LAYOUT_FILE);
+		boolean configApplied = false;
+		boolean keyboardApplied = false;
+
+		if (configRequested) {
+			File source = from.getConfig();
+			if (source.isFile()) {
+				// loadConfig() above validates and migrates the source before it is materialized.
+				FileUtils.copyFileUsingChannel(source, dstConfig);
+				configApplied = true;
+			} else {
+				sourceConfig.dir = configDir;
+				configApplied = saveConfig(sourceConfig);
 			}
-			if (keyboard) {
-				FileUtils.copyFileUsingChannel(from.getKeyLayout(), dstKeyLayout);
-			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
 		}
+		if (keyboardRequested) {
+			FileUtils.copyFileUsingChannel(from.getKeyLayout(), dstKeyLayout);
+			keyboardApplied = true;
+		}
+
+		ProfileLinks.linkAppliedComponents(from, configDir,
+				configRequested, configApplied, keyboardRequested, keyboardApplied);
 	}
 
 	static void save(Profile profile, String fromPath, boolean config, boolean keyboard)
@@ -98,30 +111,78 @@ public class ProfilesManager {
 			return;
 		}
 		profile.create();
-		File srcConfig = new File(fromPath, Config.MIDLET_CONFIG_FILE);
-		File srcKeyLayout = new File(fromPath, Config.MIDLET_KEY_LAYOUT_FILE);
-		try {
-			if (config) FileUtils.copyFileUsingChannel(srcConfig, profile.getConfig());
-			if (keyboard) FileUtils.copyFileUsingChannel(srcKeyLayout, profile.getKeyLayout());
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+		File fromDir = new File(fromPath);
+		File srcConfig = new File(fromDir, Config.MIDLET_CONFIG_FILE);
+		File srcKeyLayout = new File(fromDir, Config.MIDLET_KEY_LAYOUT_FILE);
+		boolean configSaved = false;
+		boolean keyboardSaved = false;
+		if (config && srcConfig.isFile()) {
+			FileUtils.copyFileUsingChannel(srcConfig, profile.getConfig());
+			configSaved = true;
 		}
+		if (keyboard && srcKeyLayout.isFile()) {
+			FileUtils.copyFileUsingChannel(srcKeyLayout, profile.getKeyLayout());
+			keyboardSaved = true;
+		}
+		ProfileLinks.refreshLinkedBaselines(profile, fromDir, configSaved, keyboardSaved);
 	}
 
-	/** Saves the current MIDlet configuration as one reusable template snapshot. */
+	/**
+	 * Saves a reusable template snapshot while preserving component scope. For a linked game,
+	 * Update writes only components that are actually modified in that game; an unchanged sibling
+	 * component is never rewritten as a side effect of updating the other one.
+	 */
 	static void saveSnapshot(Profile profile, String fromPath) throws IOException {
-		profile.create();
-		File srcConfig = new File(fromPath, Config.MIDLET_CONFIG_FILE);
-		File srcKeyLayout = new File(fromPath, Config.MIDLET_KEY_LAYOUT_FILE);
-		File dstKeyLayout = profile.getKeyLayout();
-		FileUtils.copyFileUsingChannel(srcConfig, profile.getConfig());
-		if (srcKeyLayout.isFile()) {
-			FileUtils.copyFileUsingChannel(srcKeyLayout, dstKeyLayout);
-		} else if (dstKeyLayout.exists() && !dstKeyLayout.delete()) {
-			Log.w(TAG, "saveSnapshot: could not remove stale key layout " + dstKeyLayout);
+		File fromDir = new File(fromPath);
+		boolean existingConfig = profile.hasConfig() || profile.hasOldConfig();
+		boolean existingKeyboard = profile.hasKeyLayout();
+		if (existingConfig || existingKeyboard) {
+			boolean linkedConfig = profile.getName().equals(ProfileLinks.getSettingsProfile(fromDir));
+			boolean linkedKeyboard = profile.getName().equals(ProfileLinks.getKeyboardProfile(fromDir));
+			if (linkedConfig || linkedKeyboard) {
+				boolean updateConfig = existingConfig && linkedConfig
+						&& ProfileLinks.isSettingsModified(fromDir);
+				boolean updateKeyboard = existingKeyboard && linkedKeyboard
+						&& ProfileLinks.isKeyboardModified(fromDir);
+				if ((updateConfig && ProfileLinks.hasSourceConflict(fromDir, true))
+						|| (updateKeyboard && ProfileLinks.hasSourceConflict(fromDir, false))) {
+					throw new ProfileUpdateConflictException(profile.getName());
+				}
+				if (updateConfig || updateKeyboard) {
+					save(profile, fromPath, updateConfig, updateKeyboard);
+				}
+			} else {
+				// Legacy/unlinked profile editing keeps the old profile's component scope.
+				save(profile, fromPath, existingConfig, existingKeyboard);
+			}
+			return;
 		}
+
+		File srcConfig = new File(fromDir, Config.MIDLET_CONFIG_FILE);
+		File srcKeyLayout = new File(fromDir, Config.MIDLET_KEY_LAYOUT_FILE);
+		profile.create();
+		boolean configSaved = false;
+		boolean keyboardSaved = false;
+		if (srcConfig.isFile()) {
+			FileUtils.copyFileUsingChannel(srcConfig, profile.getConfig());
+			configSaved = true;
+		}
+		if (srcKeyLayout.isFile()) {
+			FileUtils.copyFileUsingChannel(srcKeyLayout, profile.getKeyLayout());
+			keyboardSaved = true;
+		}
+		ProfileLinks.refreshLinkedBaselines(profile, fromDir, configSaved, keyboardSaved);
 	}
 
+	/** Loads a game config after refreshing any reusable profile links. */
+	@Nullable
+	public static ProfileModel loadGameConfig(File dir) {
+		ProfileLinks.resolve(dir);
+		ProfileModel params = loadConfig(dir, true);
+		return ProfileLinks.resolveBuiltInSettings(dir, params);
+	}
+
+	/** Generic profile/config loading deliberately has no game-link side effects. */
 	@Nullable
 	public static ProfileModel loadConfig(File dir) {
 		return loadConfig(dir, true);
@@ -137,7 +198,7 @@ public class ProfilesManager {
 				params = gson.fromJson(reader, ProfileModel.class);
 				params.dir = dir;
 			} catch (Exception e) {
-				Log.e(TAG, "loadConfig: ", e);
+				android.util.Log.e(TAG, "loadConfig: ", e);
 			}
 		}
 		if (params == null) {
@@ -149,10 +210,10 @@ public class ProfilesManager {
 					params = gson.fromJson(json, ProfileModel.class);
 					params.dir = dir;
 					if (persistMigrations && saveConfig(params) && oldFile.delete()) {
-						Log.d(TAG, "loadConfig: old config file deleted");
+						android.util.Log.d(TAG, "loadConfig: old config file deleted");
 					}
 				} catch (Exception e) {
-					Log.e(TAG, "loadConfig: ", e);
+					android.util.Log.e(TAG, "loadConfig: ", e);
 				}
 			}
 		}
@@ -209,7 +270,7 @@ public class ProfilesManager {
 			writer.close();
 			return true;
 		} catch (Exception e) {
-			Log.e(TAG, "saveConfig: ", e);
+			android.util.Log.e(TAG, "saveConfig: ", e);
 		}
 		return false;
 	}

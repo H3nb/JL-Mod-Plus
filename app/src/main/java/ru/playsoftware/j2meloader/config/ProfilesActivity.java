@@ -2,6 +2,8 @@
  * Copyright 2018 Nikita Shakarun
  * Copyright 2019-2023 Yury Kharchenko
  *
+ * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -120,10 +122,9 @@ public class ProfilesActivity extends AppCompatActivity {
 			@Override
 			public void onRename(@NonNull String oldName, @NonNull String newName) {
 				Profile profile = profilesByName.get(oldName);
-				if (profile == null) {
+				if (profile == null || !profile.renameTo(newName)) {
 					return;
 				}
-				profile.renameTo(newName);
 				if (oldName.equals(preferences.getString(PREF_DEFAULT_PROFILE, null))) {
 					preferences.edit().putString(PREF_DEFAULT_PROFILE, newName).apply();
 				}
@@ -135,7 +136,8 @@ public class ProfilesActivity extends AppCompatActivity {
 				Profile profile = profilesByName.get(name);
 				if (profile != null) {
 					profile.delete();
-					if (name.equals(preferences.getString(PREF_DEFAULT_PROFILE, null))) {
+					if (!profile.getDir().exists()
+							&& name.equals(preferences.getString(PREF_DEFAULT_PROFILE, null))) {
 						preferences.edit().remove(PREF_DEFAULT_PROFILE).apply();
 					}
 					refreshProfiles();

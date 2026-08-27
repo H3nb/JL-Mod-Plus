@@ -2,6 +2,8 @@
  * Copyright 2018-2019 Nikita Shakarun
  * Copyright 2020-2026 Yury Kharchenko
  *
+ * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -123,7 +125,9 @@ public class Config {
 					.append(MIDLET_CONFIG_FILE)
 					.toString();
 			File configFile = new File(configPath);
-			if (!configFile.exists()) {
+			File configDir = configFile.getParentFile();
+			if (!configFile.exists() || configDir == null
+					|| ProfilesManager.loadGameConfig(configDir) == null) {
 				openSettings(context, name, path);
 				return;
 			}

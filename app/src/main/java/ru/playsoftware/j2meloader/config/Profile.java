@@ -37,14 +37,34 @@ public class Profile implements Comparable<Profile> {
 	}
 
 	public boolean renameTo(String newName) {
+		if (!isSafeName(newName)) {
+			return false;
+		}
+		String oldName = name;
 		File oldDir = getDir();
 		File newDir = new File(Config.getProfilesDir(), newName);
+		if (!oldDir.renameTo(newDir)) {
+			return false;
+		}
 		name = newName;
-		return oldDir.renameTo(newDir);
+		ProfileLinks.renameProfile(oldName, newName);
+		return true;
+	}
+
+	private static boolean isSafeName(String value) {
+		if (value == null || value.trim().isEmpty() || ".".equals(value) || "..".equals(value)) {
+			return false;
+		}
+		return value.indexOf('/') < 0 && value.indexOf('\\') < 0;
 	}
 
 	public void delete() {
-		FileUtils.deleteDirectory(getDir());
+		String deletedName = name;
+		File dir = getDir();
+		FileUtils.deleteDirectory(dir);
+		if (!dir.exists()) {
+			ProfileLinks.unlinkProfile(deletedName);
+		}
 	}
 
 	public String getName() {

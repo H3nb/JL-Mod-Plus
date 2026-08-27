@@ -148,53 +148,82 @@ public final class ConfigUiState {
 	public static final class ProfileTemplate {
 		@NonNull public final String name;
 		public final boolean isDefault;
+		public final boolean hasSettings;
+		public final boolean hasKeyboard;
 
-		public ProfileTemplate(@NonNull String name, boolean isDefault) {
+		public ProfileTemplate(@NonNull String name, boolean isDefault,
+				boolean hasSettings, boolean hasKeyboard) {
 			this.name = name;
 			this.isDefault = isDefault;
+			this.hasSettings = hasSettings;
+			this.hasKeyboard = hasKeyboard;
 		}
 	}
 
-	/** Profile matching result used by the MIDlet General destination. */
+	/** Minimal per-component profile state consumed by the Basic destination. */
 	public static final class ProfileStatus {
-		@Nullable
-		public final String activeProfile;
-		@Nullable
-		public final String sourceProfile;
-		@Nullable
-		public final String defaultProfile;
-		public final boolean builtInDefault;
-		public final boolean modified;
+		@Nullable public final String defaultProfile;
+		@Nullable public final String settingsProfile;
+		@Nullable public final String keyboardProfile;
+		public final boolean settingsBuiltIn;
+		public final boolean settingsModified;
+		public final boolean keyboardModified;
 
-		private ProfileStatus(@Nullable String activeProfile, @Nullable String sourceProfile,
-				@Nullable String defaultProfile, boolean builtInDefault, boolean modified) {
-			this.activeProfile = activeProfile;
-			this.sourceProfile = sourceProfile;
+		private ProfileStatus(@Nullable String defaultProfile,
+				@Nullable String settingsProfile, boolean settingsModified,
+				@Nullable String keyboardProfile, boolean keyboardModified,
+				boolean settingsBuiltIn) {
 			this.defaultProfile = defaultProfile;
-			this.builtInDefault = builtInDefault;
-			this.modified = modified;
+			this.settingsProfile = settingsProfile;
+			this.settingsModified = settingsModified;
+			this.keyboardProfile = keyboardProfile;
+			this.keyboardModified = keyboardModified;
+			this.settingsBuiltIn = settingsBuiltIn;
 		}
 
 		@NonNull
 		public static ProfileStatus custom(@Nullable String defaultProfile) {
-			return new ProfileStatus(null, null, defaultProfile, false, false);
+			return components(null, false, null, false, false, defaultProfile);
 		}
 
 		@NonNull
 		public static ProfileStatus builtInDefault(@Nullable String defaultProfile) {
-			return new ProfileStatus(null, null, defaultProfile, true, false);
+			return components(null, false, null, false, true, defaultProfile);
 		}
 
 		@NonNull
-		public static ProfileStatus active(@NonNull String activeProfile,
+		public static ProfileStatus active(@NonNull String profile,
 				@Nullable String defaultProfile) {
-			return new ProfileStatus(activeProfile, activeProfile, defaultProfile, false, false);
+			return components(profile, false, profile, false, false, defaultProfile);
 		}
 
 		@NonNull
-		public static ProfileStatus modified(@NonNull String sourceProfile,
+		public static ProfileStatus modified(@NonNull String profile,
 				@Nullable String defaultProfile) {
-			return new ProfileStatus(null, sourceProfile, defaultProfile, false, true);
+			return components(profile, true, profile, true, false, defaultProfile);
+		}
+
+		@NonNull
+		public static ProfileStatus components(@Nullable String settingsProfile,
+				boolean settingsModified, @Nullable String keyboardProfile,
+				boolean keyboardModified, boolean settingsBuiltIn,
+				@Nullable String defaultProfile) {
+			return new ProfileStatus(defaultProfile, settingsProfile, settingsModified,
+					keyboardProfile, keyboardModified, settingsBuiltIn);
+		}
+
+		public boolean usesProfile(@NonNull String name) {
+			return name.equals(settingsProfile) || name.equals(keyboardProfile);
+		}
+
+		public boolean isProfileModified(@NonNull String name) {
+			return name.equals(settingsProfile) && settingsModified
+					|| name.equals(keyboardProfile) && keyboardModified;
+		}
+
+		public boolean hasModifiedComponents() {
+			return settingsModified || keyboardModified;
 		}
 	}
+
 }
