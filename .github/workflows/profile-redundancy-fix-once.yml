@@ -43,21 +43,26 @@ jobs:
 
           test = Path('app/src/androidTest/java/ru/playsoftware/j2meloader/config/ConfigComposeTest.kt')
           text = test.read_text()
-          old = 'composeRule.onNodeWithText("Choose or manage templates").performClick()'
-          replacements = [
+          click = 'composeRule.onNodeWithText("Choose or manage templates").performClick()'
+          click_replacements = [
               'composeRule.onNodeWithText("Built-In Settings").performClick()',
               'composeRule.onAllNodesWithText("Nokia Classic")[0].performClick()',
-              None,
               'composeRule.onNodeWithText("Custom").performClick()',
           ]
-          for replacement in replacements:
-              index = text.find(old)
+          for replacement in click_replacements:
+              index = text.find(click)
               if index < 0:
-                  raise SystemExit('Expected profile manager test entry point not found')
-              if replacement is None:
-                  text = text[:index] + 'composeRule.onNodeWithText("Choose or manage templates").assertDoesNotExist()' + text[index + len(old):]
-              else:
-                  text = text[:index] + replacement + text[index + len(old):]
+                  raise SystemExit('Expected profile manager click entry point not found')
+              text = text[:index] + replacement + text[index + len(click):]
+
+          exists = 'composeRule.onNodeWithText("Choose or manage templates").assertExists()'
+          if exists not in text:
+              raise SystemExit('Expected redundant profile action assertion not found')
+          text = text.replace(
+              exists,
+              'composeRule.onNodeWithText("Choose or manage templates").assertDoesNotExist()',
+              1,
+          )
           test.write_text(text)
 
           strings = Path('app/src/main/res/values/strings_config_redesign.xml')
