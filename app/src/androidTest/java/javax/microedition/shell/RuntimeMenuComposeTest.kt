@@ -200,7 +200,7 @@ class RuntimeMenuComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Auto maximum").performClick()
+        composeRule.onNodeWithText("Auto").performClick()
         composeRule.onNodeWithText("OK").performClick()
 
         assertEquals(true, confirmedAuto)

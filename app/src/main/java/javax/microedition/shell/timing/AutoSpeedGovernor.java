@@ -18,17 +18,18 @@ package javax.microedition.shell.timing;
  * Pure adaptive search for the highest sustainable runtime speed.
  *
  * <p>The governor compares delivered game frames per unit of guest time with a short 1x
- * calibration. It only probes upward while the workload is active, backs off quickly after two
- * weak samples, and periodically reopens a settled upper bound so changing device conditions can
+ * calibration. It probes upward aggressively while the workload is active, tolerates transient
+ * weak samples, and periodically retries a settled upper bound so changing device conditions can
  * be discovered. Recommendations are continuous percentages rather than picker presets.</p>
  */
 final class AutoSpeedGovernor {
 	private static final double MIN_ACTIVE_FPS = 4.0d;
-	private static final int CALIBRATION_SAMPLES = 3;
-	private static final double HEALTHY_RATIO = 0.90d;
-	private static final double OVERLOAD_RATIO = 0.82d;
+	private static final int CALIBRATION_SAMPLES = 2;
+	private static final double HEALTHY_RATIO = 0.82d;
+	private static final double SEVERE_OVERLOAD_RATIO = 0.35d;
 	private static final int WEAK_SAMPLES_BEFORE_BACKOFF = 2;
-	private static final int SETTLED_SAMPLES_BEFORE_REPROBE = 8;
+	private static final int IDLE_SAMPLES_BEFORE_BACKOFF = 4;
+	private static final int SETTLED_SAMPLES_BEFORE_REPROBE = 4;
 
 	enum Phase {
 		CALIBRATING,
@@ -79,7 +80,8 @@ final class AutoSpeedGovernor {
 
 		if (gameFrames == 0L) {
 			idleSamples++;
-			if (currentPercent > EmulationSpeed.NORMAL_PERCENT && idleSamples >= 2) {
+			if (currentPercent > EmulationSpeed.NORMAL_PERCENT
+					&& idleSamples >= IDLE_SAMPLES_BEFORE_BACKOFF) {
 				int next = Math.max(
 						EmulationSpeed.NORMAL_PERCENT,
 						(int) (((long) currentPercent * 3L) / 4L));
@@ -90,6 +92,7 @@ final class AutoSpeedGovernor {
 		}
 		idleSamples = 0;
 		if (hostFps < MIN_ACTIVE_FPS) {
+			weakSamples = 0;
 			return new Decision(currentPercent, Phase.WAITING_FOR_ACTIVITY);
 		}
 
@@ -106,25 +109,36 @@ final class AutoSpeedGovernor {
 					if (settledSamples < SETTLED_SAMPLES_BEFORE_REPROBE) {
 						return new Decision(currentPercent, Phase.STABLE);
 					}
+					int retryPercent = failedPercent;
 					failedPercent = 0;
 					settledSamples = 0;
+					return new Decision(retryPercent, Phase.SEARCHING);
 				} else {
 					settledSamples = 0;
-					return new Decision(midpointUp(currentPercent, failedPercent), Phase.SEARCHING);
+					return new Decision(probeBetween(currentPercent, failedPercent), Phase.SEARCHING);
 				}
 			}
 			return new Decision(probeAbove(currentPercent, healthRatio), Phase.SEARCHING);
 		}
 
-		if (healthRatio > OVERLOAD_RATIO && ++weakSamples < WEAK_SAMPLES_BEFORE_BACKOFF) {
+		if (healthRatio > SEVERE_OVERLOAD_RATIO
+				&& ++weakSamples < WEAK_SAMPLES_BEFORE_BACKOFF) {
 			return new Decision(currentPercent, Phase.SEARCHING);
 		}
 		weakSamples = 0;
-		int estimatedSafe = (int) Math.round(currentPercent * healthRatio * 0.92d);
-		int next = Math.max(
+		int estimatedSafe = Math.max(
 				EmulationSpeed.NORMAL_PERCENT,
-				Math.min(currentPercent - 1, estimatedSafe));
-		resetSearchBounds(next, currentPercent);
+				Math.min(currentPercent - 1,
+						(int) Math.round(currentPercent * healthRatio * 0.97d)));
+		int next;
+		if (currentPercent > lastStablePercent) {
+			next = Math.max(lastStablePercent, estimatedSafe);
+		} else {
+			next = estimatedSafe;
+			lastStablePercent = next;
+		}
+		failedPercent = currentPercent;
+		settledSamples = 0;
 		return new Decision(next, Phase.BACKING_OFF);
 	}
 
@@ -152,12 +166,13 @@ final class AutoSpeedGovernor {
 		settledSamples = 0;
 	}
 
-	private static int midpointUp(int lower, int upper) {
-		return lower + Math.max(1, (upper - lower + 1) / 2);
+	private static int probeBetween(int lower, int upper) {
+		long gap = (long) upper - lower;
+		return lower + (int) Math.max(1L, (gap * 3L + 4L) / 5L);
 	}
 
 	private static int probeAbove(int currentPercent, double healthRatio) {
-		double factor = Math.max(1.15d, Math.min(1.50d, healthRatio * 1.25d));
+		double factor = Math.max(1.50d, Math.min(2.00d, healthRatio * 2.00d));
 		double candidate = currentPercent * factor;
 		if (candidate >= Integer.MAX_VALUE) {
 			return Integer.MAX_VALUE;

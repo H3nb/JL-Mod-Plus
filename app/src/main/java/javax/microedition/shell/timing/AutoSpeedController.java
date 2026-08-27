@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 /** Session-scoped owner for manual/Auto speed transitions and their frame telemetry. */
 public final class AutoSpeedController implements AutoCloseable {
-	private static final long SAMPLE_MILLIS = 1500L;
+	private static final long SAMPLE_MILLIS = 750L;
 
 	private final TimingSession session;
 	private final FrameMetrics frameMetrics = new FrameMetrics();

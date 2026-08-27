@@ -83,8 +83,8 @@
     <string name="config_timing_mode_full_guest">Waktu tamu penuh</string>
     <string name="config_timing_mode_real_wall">Waktu nyata</string>
     <string name="config_help_emulation_speed">Mengubah skala waktu tamu dan delay yang kompatibel. Audio dan UI Android tetap pada kecepatan normal.</string>
-    <string name="emulation_speed_auto">Maksimum otomatis</string>
-    <string name="emulation_speed_auto_summary">Terus mencari kecepatan stabil tercepat untuk beban kerja saat ini.</string>
+    <string name="emulation_speed_auto">Auto</string>
+    <string name="emulation_speed_auto_summary">Mempelajari beban kerja saat ini dan terus mencari kecepatan tertinggi yang tetap stabil.</string>
     <string name="emulation_speed_auto_value">Auto · %1$s</string>
     <string name="config_help_timing_mode">Pilih apakah waktu dan tanggal mengikuti kecepatan emulasi. Delay relatif tetap mengikuti speed.</string>
     <string name="config_help_timing_unavailable">Aplikasi hasil konversi ini belum memiliki instrumentasi timing. Instal ulang atau konversi ulang sebelum mengaktifkan kecepatan emulasi.</string>

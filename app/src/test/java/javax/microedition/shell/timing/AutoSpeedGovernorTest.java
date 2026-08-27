@@ -15,6 +15,7 @@
 package javax.microedition.shell.timing;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -37,7 +38,7 @@ public class AutoSpeedGovernorTest {
 	@Test
 	public void probesContinuousValuesBeyondManualMaximumWhileHealthy() {
 		AutoSpeedGovernor governor = calibratedAtThirtyFps();
-		int speed = 125;
+		int speed = 200;
 
 		while (speed <= EmulationSpeed.MAX_PERCENT) {
 			long frames = Math.max(1L, Math.round(30d * speed / 100d));
@@ -53,8 +54,8 @@ public class AutoSpeedGovernorTest {
 		AutoSpeedGovernor governor = calibratedAtThirtyFps();
 		int speed = 500;
 
-		AutoSpeedGovernor.Decision first = governor.sample(speed, 130, ONE_SECOND);
-		AutoSpeedGovernor.Decision second = governor.sample(speed, 130, ONE_SECOND);
+		AutoSpeedGovernor.Decision first = governor.sample(speed, 90, ONE_SECOND);
+		AutoSpeedGovernor.Decision second = governor.sample(speed, 90, ONE_SECOND);
 
 		assertEquals(speed, first.speedPercent);
 		assertTrue(second.speedPercent < speed);
@@ -66,17 +67,60 @@ public class AutoSpeedGovernorTest {
 		AutoSpeedGovernor governor = calibratedAtThirtyFps();
 
 		assertEquals(400, governor.sample(400, 0, ONE_SECOND).speedPercent);
+		assertEquals(400, governor.sample(400, 0, ONE_SECOND).speedPercent);
+		assertEquals(400, governor.sample(400, 0, ONE_SECOND).speedPercent);
 		assertEquals(300, governor.sample(400, 0, ONE_SECOND).speedPercent);
 		assertEquals(100, governor.sample(100, 0, ONE_SECOND).speedPercent);
+	}
+
+	@Test
+	public void healthyWorkloadDoublesQuickly() {
+		AutoSpeedGovernor governor = calibratedAtThirtyFps();
+
+		assertEquals(400, governor.sample(200, 60, ONE_SECOND).speedPercent);
+		assertEquals(800, governor.sample(400, 120, ONE_SECOND).speedPercent);
+		assertEquals(1600, governor.sample(800, 240, ONE_SECOND).speedPercent);
+	}
+
+	@Test
+	public void probeUsesMeasuredHeadroomInsteadOfPresetSteps() {
+		AutoSpeedGovernor governor = calibratedAtThirtyFps();
+
+		int speed = governor.sample(200, 56, ONE_SECOND).speedPercent;
+
+		assertEquals(373, speed);
+		for (int preset : EmulationSpeed.presets()) {
+			assertFalse(speed == preset);
+		}
+	}
+
+	@Test
+	public void oneWeakSampleDoesNotUndoAProvenSpeed() {
+		AutoSpeedGovernor governor = calibratedAtThirtyFps();
+		assertEquals(400, governor.sample(200, 60, ONE_SECOND).speedPercent);
+
+		AutoSpeedGovernor.Decision decision = governor.sample(400, 72, ONE_SECOND);
+
+		assertEquals(400, decision.speedPercent);
+		assertEquals(AutoSpeedGovernor.Phase.SEARCHING, decision.phase);
+	}
+
+	@Test
+	public void overloadReturnsToLastProvenSpeedBeforeDroppingFurther() {
+		AutoSpeedGovernor governor = calibratedAtThirtyFps();
+		assertEquals(400, governor.sample(200, 60, ONE_SECOND).speedPercent);
+		assertEquals(800, governor.sample(400, 120, ONE_SECOND).speedPercent);
+
+		assertEquals(800, governor.sample(800, 120, ONE_SECOND).speedPercent);
+		assertEquals(400, governor.sample(800, 120, ONE_SECOND).speedPercent);
 	}
 
 	private static AutoSpeedGovernor calibratedAtThirtyFps() {
 		AutoSpeedGovernor governor = new AutoSpeedGovernor();
 		governor.reset();
 		governor.sample(100, 30, ONE_SECOND);
-		governor.sample(100, 30, ONE_SECOND);
 		AutoSpeedGovernor.Decision decision = governor.sample(100, 30, ONE_SECOND);
-		assertEquals(125, decision.speedPercent);
+		assertEquals(200, decision.speedPercent);
 		return governor;
 	}
 }
