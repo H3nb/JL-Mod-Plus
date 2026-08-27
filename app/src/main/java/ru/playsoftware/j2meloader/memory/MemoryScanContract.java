@@ -29,6 +29,16 @@ public final class MemoryScanContract {
     public static final int TYPE_FLOAT32 = 6;
     public static final int TYPE_FLOAT64 = 7;
 
+    public static final int RAW_RESULT_STRIDE = 4;
+    public static final int LIVE_RESULT_STRIDE = 8;
+
+    public static final int TRACK_UNTRACKED = 0;
+    public static final int TRACK_STABLE = 1;
+    public static final int TRACK_RELOCATED = 2;
+    public static final int TRACK_SUSPECT = 3;
+    public static final int TRACK_AMBIGUOUS = 4;
+    public static final int TRACK_LOST = 5;
+
     public static final String STATE_NO_TARGET = "NO_TARGET";
     public static final String STATE_IDLE = "IDLE";
     public static final String STATE_RUNNING = "RUNNING";
@@ -80,6 +90,17 @@ public final class MemoryScanContract {
             case TYPE_FLOAT32 -> "Float32";
             case TYPE_FLOAT64 -> "Float64";
             default -> "Unknown";
+        };
+    }
+
+    public static String trackingStateName(int state) {
+        return switch (state) {
+            case TRACK_STABLE -> "Stable";
+            case TRACK_RELOCATED -> "Rebound";
+            case TRACK_SUSPECT -> "Suspect";
+            case TRACK_AMBIGUOUS -> "Ambiguous";
+            case TRACK_LOST -> "Lost";
+            default -> "Untracked";
         };
     }
 }
