@@ -37,7 +37,6 @@
     <string name="profile_settings_source_summary">Reusable emulator settings source</string>
     <string name="profile_keyboard_source_summary">Reusable virtual keyboard layout source</string>
     <string name="profile_app_specific">App-specific</string>
-    <string name="profile_choose_or_manage">Choose or manage templates</string>
     <string name="profile_apply_settings_only">Apply Settings Only</string>
     <string name="profile_apply_keyboard_only">Apply Keyboard Only</string>
     <string name="profile_update_template">Update Template</string>

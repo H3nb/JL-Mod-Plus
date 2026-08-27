@@ -150,7 +150,7 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Choose or manage templates").performClick()
+        composeRule.onNodeWithText("Built-In Settings").performClick()
         composeRule.onNodeWithText("Configuration Templates").assertExists()
         composeRule.onNodeWithText("Built-In Settings").performClick()
         assertEquals(1, events.applyBuiltInCalls)
@@ -176,7 +176,7 @@ class ConfigComposeTest {
         composeRule.onAllNodesWithText("Nokia Classic").fetchSemanticsNodes().also {
             assertTrue(it.size >= 2)
         }
-        composeRule.onNodeWithText("Choose or manage templates").performClick()
+        composeRule.onAllNodesWithText("Nokia Classic")[0].performClick()
         composeRule.onNodeWithText("Configuration Templates").assertExists()
         composeRule.onNodeWithText("Default").assertExists()
     }
@@ -204,7 +204,7 @@ class ConfigComposeTest {
         composeRule.onNodeWithText("App-specific").assertExists()
         composeRule.onNodeWithText("Custom").assertDoesNotExist()
         composeRule.onNodeWithText("Save As New Template").assertExists()
-        composeRule.onNodeWithText("Choose or manage templates").assertExists()
+        composeRule.onNodeWithText("Choose or manage templates").assertDoesNotExist()
     }
 
     @Test
@@ -271,7 +271,7 @@ class ConfigComposeTest {
         composeRule.onNodeWithText("Save As New Template").performClick()
         assertEquals(1, events.saveAsProfileCalls)
 
-        composeRule.onNodeWithText("Choose or manage templates").performClick()
+        composeRule.onNodeWithText("Custom").performClick()
         composeRule.onNodeWithContentDescription("More").performClick()
         composeRule.onNodeWithText("Apply Settings Only").performClick()
         assertEquals("Combined", events.appliedComponentsName)
