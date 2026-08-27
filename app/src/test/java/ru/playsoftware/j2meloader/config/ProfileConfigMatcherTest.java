@@ -137,41 +137,16 @@ public class ProfileConfigMatcherTest {
 	}
 
 	@Test
-	public void legacyProfileGetsSafeTimingDefaultsAndPersistsMigration() throws Exception {
+	public void legacyProfileDropsRuntimeSpeedFieldsButPreservesTimingMode() throws Exception {
 		File directory = Files.createTempDirectory("jlmod-profile-timing").toFile();
 		directory.deleteOnExit();
 		ProfileModel legacy = new ProfileModel();
 		legacy.dir = directory;
-		legacy.version = 3;
-		legacy.emulationSpeedPercent = 0;
-		legacy.showEmulationSpeed = false;
-		assertTrue(ProfilesManager.saveConfig(legacy));
-
-		ProfileModel loaded = ProfilesManager.loadConfig(directory);
-
-		assertEquals(ProfileModel.VERSION, loaded.version);
-		assertEquals(100, loaded.emulationSpeedPercent);
-		assertFalse(loaded.showEmulationSpeed);
-		assertEquals(TimingMode.FULL_GUEST_TIME, loaded.timingMode);
-		String migrated = new String(
-				Files.readAllBytes(new File(directory, "config.json").toPath()),
-				StandardCharsets.UTF_8);
-		assertTrue(migrated.contains("\"Version\": 5"));
-		assertTrue(migrated.contains("\"EmulationSpeedPercent\": 100"));
-		assertTrue(migrated.contains("\"TimingMode\": 0"));
-	}
-
-	@Test
-	public void missingTimingFieldsUseNormalDefaultsWhenLoadingOldJson() throws Exception {
-		File directory = Files.createTempDirectory("jlmod-profile-timing-missing").toFile();
-		directory.deleteOnExit();
-		ProfileModel source = new ProfileModel();
-		source.dir = directory;
-		source.version = 3;
-		JsonObject json = new Gson().toJsonTree(source).getAsJsonObject();
-		json.remove("EmulationSpeedPercent");
-		json.remove("ShowEmulationSpeed");
-		json.remove("TimingMode");
+		legacy.version = 5;
+		JsonObject json = new Gson().toJsonTree(legacy).getAsJsonObject();
+		json.addProperty("EmulationSpeedPercent", 800);
+		json.addProperty("ShowEmulationSpeed", true);
+		json.addProperty("TimingMode", 1);
 		Files.write(
 				new File(directory, "config.json").toPath(),
 				new Gson().toJson(json).getBytes(StandardCharsets.UTF_8));
@@ -179,9 +154,14 @@ public class ProfileConfigMatcherTest {
 		ProfileModel loaded = ProfilesManager.loadConfig(directory);
 
 		assertEquals(ProfileModel.VERSION, loaded.version);
-		assertEquals(100, loaded.emulationSpeedPercent);
-		assertFalse(loaded.showEmulationSpeed);
-		assertEquals(TimingMode.FULL_GUEST_TIME, loaded.timingMode);
+		assertEquals(TimingMode.REAL_WALL_CLOCK, loaded.timingMode);
+		String migrated = new String(
+				Files.readAllBytes(new File(directory, "config.json").toPath()),
+				StandardCharsets.UTF_8);
+		assertTrue(migrated.contains("\"Version\": 6"));
+		assertFalse(migrated.contains("EmulationSpeedPercent"));
+		assertFalse(migrated.contains("ShowEmulationSpeed"));
+		assertTrue(migrated.contains("\"TimingMode\": 1"));
 	}
 
 	@Test

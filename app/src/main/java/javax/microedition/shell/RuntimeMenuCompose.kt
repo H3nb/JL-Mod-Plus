@@ -82,6 +82,7 @@ internal data class RuntimeMenuUiState(
     val orientationLocked: Boolean = false,
     val emulationSpeedAvailable: Boolean = false,
     val emulationSpeedPercent: Int = EmulationSpeed.NORMAL_PERCENT,
+    val emulationSpeedAuto: Boolean = false,
 )
 
 interface RuntimeMenuActions {
@@ -95,6 +96,7 @@ interface RuntimeMenuActions {
     fun onResetFpsLimit()
     fun onEmulationSpeed()
     fun onSetEmulationSpeed(value: Int)
+    fun onSetAutoEmulationSpeed()
     fun onResetEmulationSpeed()
     fun onEditVirtualKeyboardLayout()
     fun onResizeVirtualKeyboardLayout()
@@ -125,6 +127,7 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
 
         override fun onEmulationSpeed() {
             closeMenu()
+            actions.onEmulationSpeed()
             emulationSpeedVisible = true
         }
     }
@@ -157,10 +160,12 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
                 if (emulationSpeedVisible) {
                     RuntimeEmulationSpeedDialog(
                         currentPercent = state.emulationSpeedPercent,
+                        currentAutoEnabled = state.emulationSpeedAuto,
                         onDismiss = { emulationSpeedVisible = false },
-                        onConfirm = { value ->
+                        onConfirm = { value, autoEnabled ->
                             emulationSpeedVisible = false
-                            actions.onSetEmulationSpeed(value)
+                            if (autoEnabled) actions.onSetAutoEmulationSpeed()
+                            else actions.onSetEmulationSpeed(value)
                         },
                         onReset = {
                             emulationSpeedVisible = false
@@ -189,6 +194,7 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
         orientationLocked: Boolean,
         emulationSpeedAvailable: Boolean,
         emulationSpeedPercent: Int,
+        emulationSpeedAuto: Boolean,
     ) {
         state = RuntimeMenuUiState(
             title = title,
@@ -200,6 +206,7 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             orientationLocked = orientationLocked,
             emulationSpeedAvailable = emulationSpeedAvailable,
             emulationSpeedPercent = emulationSpeedPercent,
+            emulationSpeedAuto = emulationSpeedAuto,
         )
     }
 
@@ -315,15 +322,19 @@ internal fun RuntimeLimitFpsDialog(
 @Composable
 internal fun RuntimeEmulationSpeedDialog(
     currentPercent: Int,
+    currentAutoEnabled: Boolean,
     onDismiss: () -> Unit,
-    onConfirm: (Int) -> Unit,
+    onConfirm: (Int, Boolean) -> Unit,
     onReset: () -> Unit,
 ) {
-    val presetValues = remember(currentPercent) {
-        (EmulationSpeed.presets().toList() + currentPercent).distinct().sorted()
+    val manualPercent = currentPercent.takeIf(EmulationSpeed::isValidPercent)
+        ?: EmulationSpeed.NORMAL_PERCENT
+    val presetValues = remember(manualPercent) {
+        (EmulationSpeed.presets().toList() + manualPercent).distinct().sorted()
     }
-    val currentIndex = presetValues.indexOf(currentPercent).coerceAtLeast(0)
+    val currentIndex = presetValues.indexOf(manualPercent).coerceAtLeast(0)
     var draftIndex by remember(currentIndex, presetValues) { mutableFloatStateOf(currentIndex.toFloat()) }
+    var autoEnabled by remember(currentAutoEnabled) { mutableStateOf(currentAutoEnabled) }
     val selectedIndex = draftIndex.roundToInt().coerceIn(presetValues.indices)
     val selectedValue = presetValues[selectedIndex]
     val layout = runtimeMenuDialogLayout()
@@ -341,14 +352,48 @@ internal fun RuntimeEmulationSpeedDialog(
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
                 Text(
-                    text = EmulationSpeed.formatMultiplier(selectedValue),
+                    text = if (autoEnabled) {
+                        stringResource(
+                            R.string.emulation_speed_auto_value,
+                            EmulationSpeed.formatRuntimeMultiplier(currentPercent),
+                        )
+                    } else {
+                        EmulationSpeed.formatMultiplier(selectedValue)
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .toggleable(
+                            value = autoEnabled,
+                            role = Role.Switch,
+                            onValueChange = { autoEnabled = it },
+                        )
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.emulation_speed_auto),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium,
+                        )
+                        Text(
+                            text = stringResource(R.string.emulation_speed_auto_summary),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(checked = autoEnabled, onCheckedChange = null)
+                }
                 Slider(
                     value = draftIndex,
                     onValueChange = { draftIndex = it },
+                    enabled = !autoEnabled,
                     valueRange = 0f..presetValues.lastIndex.toFloat(),
                     steps = (presetValues.size - 2).coerceAtLeast(0),
                     modifier = Modifier
@@ -377,7 +422,7 @@ internal fun RuntimeEmulationSpeedDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(selectedValue) }) {
+            TextButton(onClick = { onConfirm(selectedValue, autoEnabled) }) {
                 Text(stringResource(android.R.string.ok))
             }
         },

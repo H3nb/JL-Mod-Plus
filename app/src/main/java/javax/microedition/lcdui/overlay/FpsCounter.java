@@ -24,6 +24,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.microedition.lcdui.graphics.CanvasWrapper;
+import javax.microedition.shell.timing.AutoSpeedController;
+import javax.microedition.shell.timing.EmulationSpeed;
 import javax.microedition.shell.timing.FrameMetrics;
 import javax.microedition.shell.timing.FrameMetricsSnapshot;
 import javax.microedition.util.ContextHolder;
@@ -38,34 +40,79 @@ public class FpsCounter extends TimerTask implements Layer {
 	private final int pillContentColor;
 	private volatile String previousFrameRate;
 	private final FrameMetrics metrics;
+	private final AutoSpeedController speedController;
 	private final Timer timer;
+	private FrameMetricsSnapshot previousSnapshot;
+	private long previousSampleNanos;
 
-	public FpsCounter(View view, FrameMetrics metrics) {
+	public FpsCounter(
+			View view, FrameMetrics metrics, AutoSpeedController speedController) {
 		this.view = view;
 		this.metrics = metrics;
+		this.speedController = speedController;
 		frameRateFormat = ContextHolder.getAppContext().getString(R.string.fps_overlay_value);
 		pillBackgroundColor = ContextCompat.getColor(
 				ContextHolder.getAppContext(), R.color.fps_overlay_surface);
 		pillContentColor = ContextCompat.getColor(
 				ContextHolder.getAppContext(), R.color.fps_overlay_content);
-		previousFrameRate = format(0L, 0L);
+		previousSnapshot = metrics.snapshot();
+		previousSampleNanos = System.nanoTime();
+		previousFrameRate = format(0L, 0L, 0L);
 		timer = new Timer("FpsCounter", true);
 		// Avoid catch-up bursts after a cached process resumes on Android 16.
 		timer.schedule(this, 0, 1000);
 	}
 
 	public void run() {
-		FrameMetricsSnapshot snapshot = metrics.snapshotAndReset();
-		previousFrameRate = format(snapshot.gameFrames(), snapshot.renderFrames());
+		long nowNanos = System.nanoTime();
+		FrameMetricsSnapshot snapshot = metrics.snapshot();
+		long elapsedNanos = nowNanos - previousSampleNanos;
+		long gameFrames = delta(snapshot.gameFrames(), previousSnapshot.gameFrames());
+		long renderFrames = delta(snapshot.renderFrames(), previousSnapshot.renderFrames());
+		long coalescedFrames = delta(
+				snapshot.coalescedFrames(), previousSnapshot.coalescedFrames());
+		previousSnapshot = snapshot;
+		previousSampleNanos = nowNanos;
+		previousFrameRate = format(
+				ratePerSecond(gameFrames, elapsedNanos),
+				ratePerSecond(renderFrames, elapsedNanos),
+				dropPercent(gameFrames, coalescedFrames));
 		view.postInvalidate();
 	}
 
-	private String format(long gameFrames, long renderFrames) {
+	private String format(long gameFrames, long renderFrames, long dropPercent) {
+		String speed = "N/A";
+		if (speedController != null) {
+			speed = EmulationSpeed.formatRuntimeMultiplier(speedController.speedPercent());
+			if (speedController.isAutoEnabled()) {
+				speed = "AUTO " + speed;
+			}
+		}
 		return String.format(
 				java.util.Locale.ROOT,
 				frameRateFormat,
 				gameFrames,
-				renderFrames);
+				renderFrames,
+				dropPercent,
+				speed);
+	}
+
+	private static long ratePerSecond(long count, long elapsedNanos) {
+		if (count <= 0L || elapsedNanos <= 0L) {
+			return 0L;
+		}
+		return Math.round(count * 1_000_000_000d / elapsedNanos);
+	}
+
+	private static long dropPercent(long gameFrames, long coalescedFrames) {
+		if (gameFrames <= 0L || coalescedFrames <= 0L) {
+			return 0L;
+		}
+		return Math.min(100L, Math.round(coalescedFrames * 100d / gameFrames));
+	}
+
+	private static long delta(long current, long previous) {
+		return current >= previous ? current - previous : current;
 	}
 
 	public void paint(CanvasWrapper g) {

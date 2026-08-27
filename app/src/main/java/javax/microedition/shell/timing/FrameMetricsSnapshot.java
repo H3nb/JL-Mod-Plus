@@ -14,7 +14,7 @@
 
 package javax.microedition.shell.timing;
 
-/** Immutable one-window snapshot of guest publication and renderer consumption counts. */
+/** Immutable cumulative snapshot of guest publication and renderer consumption counts. */
 public final class FrameMetricsSnapshot {
 	private final long gameFrames;
 	private final long renderFrames;
