@@ -27,7 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.jar.JarFile;
 
-import javax.microedition.shell.timing.TimingTransformMetadata;
+import javax.microedition.shell.transform.MidletTransformMetadata;
 
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.librarydb.LibraryIconOverride;
@@ -61,9 +61,9 @@ public final class AppReconverter {
         if (payload == null || !Config.isUsableFile(descriptorFile)) return true;
         try {
             Descriptor descriptor = new Descriptor(descriptorFile, false);
-            return !TimingTransformMetadata.isCompatible(descriptor.getAttrs());
+            return !MidletTransformMetadata.isCompatible(descriptor.getAttrs());
         } catch (IOException | RuntimeException error) {
-            Log.w(TAG, "Unable to validate converted timing marker: " + appDir, error);
+            Log.w(TAG, "Unable to validate converted transform marker: " + appDir, error);
             return true;
         }
     }
@@ -129,7 +129,7 @@ public final class AppReconverter {
                 if (!generatedPayload.isFile() || generatedPayload.length() <= 0L) {
                     throw new ConverterException("DX produced no converted MIDlet payload");
                 }
-                TimingTransformMetadata.mark(descriptor.getAttrs());
+                MidletTransformMetadata.mark(descriptor.getAttrs());
                 FileUtils.copyFileUsingChannel(retainedJar, fileWithSuffix(staging, Config.MIDLET_RES_FILE));
                 extractIcon(descriptor, retainedJar, staging);
                 descriptor.writeTo(fileWithSuffix(staging, Config.MIDLET_MANIFEST_FILE));

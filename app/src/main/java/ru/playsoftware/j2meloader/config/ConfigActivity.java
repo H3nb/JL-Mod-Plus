@@ -53,7 +53,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import javax.microedition.shell.timing.TimingTransformMetadata;
+import javax.microedition.shell.transform.MidletTransformMetadata;
 import javax.microedition.util.ContextHolder;
 
 import kotlin.io.FilesKt;
@@ -996,7 +996,7 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		try {
 			Descriptor descriptor = new Descriptor(
 					new File(appDir, Config.MIDLET_MANIFEST_FILE), false);
-			return TimingTransformMetadata.isCompatible(descriptor.getAttrs());
+			return MidletTransformMetadata.isCompatible(descriptor.getAttrs());
 		} catch (IOException | RuntimeException e) {
 			return false;
 		}

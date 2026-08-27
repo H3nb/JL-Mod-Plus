@@ -34,7 +34,7 @@ import java.util.jar.JarOutputStream;
 
 public class AndroidProducerDexTest {
 	@Test
-	public void transformedTimingCallsitesProduceReadableDex() throws Exception {
+	public void transformedGuestCallsitesProduceReadableDex() throws Exception {
 		Path root = Files.createTempDirectory("jlmod-dex-transform-");
 		Path classDirectory = Files.createDirectories(root.resolve("sample"));
 		Path classFile = classDirectory.resolve("Timing.class");
@@ -63,6 +63,10 @@ public class AndroidProducerDexTest {
 			// allocation/constructor verifier shape valid for subclasses and non-canonical code.
 			assertEquals(1, countMethods(dex, bridge, "currentTimeMillis"));
 			assertEquals(2, countMethods(dex, bridge, "calendarInstance"));
+			String systemBridge = "Ljavax/microedition/shell/MidletSystem;";
+			assertEquals(2, countMethods(dex, systemBridge, "gc"));
+			assertEquals(0, countMethods(dex, "Ljava/lang/System;", "gc"));
+			assertEquals(0, countMethods(dex, "Ljava/lang/Runtime;", "gc"));
 		} finally {
 			Files.deleteIfExists(dexFile);
 			Files.deleteIfExists(classFile);
@@ -116,10 +120,24 @@ public class AndroidProducerDexTest {
 		writer.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC, "sample/Timing", null,
 				"java/lang/Object", null);
 		createClockAndSleepMethod(writer);
+		createExplicitGcMethod(writer);
 		createWaitMethod(writer);
 		createDateAndCalendarMethod(writer);
 		writer.visitEnd();
 		return writer.toByteArray();
+	}
+
+	private static void createExplicitGcMethod(ClassWriter writer) {
+		MethodVisitor method = writer.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+				"collect", "()V", null, null);
+		method.visitCode();
+		method.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/System", "gc", "()V", false);
+		method.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Runtime", "getRuntime",
+				"()Ljava/lang/Runtime;", false);
+		method.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Runtime", "gc", "()V", false);
+		method.visitInsn(Opcodes.RETURN);
+		method.visitMaxs(1, 0);
+		method.visitEnd();
 	}
 
 	private static byte[] createSimpleClass(String name) {
