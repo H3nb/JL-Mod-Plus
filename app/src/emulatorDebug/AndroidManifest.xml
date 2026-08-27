@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-
     <application>
         <provider
             android:name="ru.playsoftware.j2meloader.memory.debug.MemoryEditorBootstrapProvider"
@@ -21,9 +19,9 @@
             android:process=":midlet" />
 
         <service
-            android:name="ru.playsoftware.j2meloader.memory.debug.MemoryEditorOverlayService"
+            android:name="ru.playsoftware.j2meloader.memory.MemoryEngineService"
             android:exported="false"
-            android:process=":memory_ui"
+            android:process=":memory_engine"
             android:stopWithTask="true" />
     </application>
 </manifest>
