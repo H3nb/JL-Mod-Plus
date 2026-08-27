@@ -33,8 +33,6 @@ import javax.microedition.shell.timing.TimingSnapshot;
  * provide or shadow this class.
  */
 public final class GuestTimingBridge {
-	public static final int ABI_VERSION = 4;
-
 	private static final Object LOCK = new Object();
 	private static TimingSession activeSession;
 

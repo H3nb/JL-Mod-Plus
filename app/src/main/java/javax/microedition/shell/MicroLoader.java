@@ -82,7 +82,7 @@ import ru.woesss.j2me.jar.Descriptor;
 import javax.microedition.shell.timing.EmulationSpeed;
 import javax.microedition.shell.timing.TimingSession;
 import javax.microedition.shell.timing.TimingMode;
-import javax.microedition.shell.timing.TimingTransformMetadata;
+import javax.microedition.shell.transform.MidletTransformMetadata;
 
 public class MicroLoader {
 	private static final String TAG = MicroLoader.class.getName();
@@ -200,9 +200,9 @@ public class MicroLoader {
 		try {
 			Descriptor descriptor = new Descriptor(
 					new File(appDir, Config.MIDLET_MANIFEST_FILE), false);
-			return TimingTransformMetadata.isCompatible(descriptor.getAttrs());
+			return MidletTransformMetadata.isCompatible(descriptor.getAttrs());
 		} catch (IOException | RuntimeException e) {
-			Log.w(TAG, "Timing transform metadata is unavailable", e);
+			Log.w(TAG, "MIDlet transform metadata is unavailable", e);
 			return false;
 		}
 	}

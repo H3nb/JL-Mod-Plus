@@ -200,7 +200,7 @@ public abstract class Canvas extends Displayable {
 		parallelRedraw = (mode == 0 || mode == 3) && settings.parallelRedrawScreen;
 	}
 
-	/** Enables the diagnostic only when the loaded artifact advertises the timing transform ABI. */
+	/** Enables the diagnostic only when the loaded artifact has the current universal transform. */
 	public static void setTimingOverlayEnabled(boolean enabled) {
 		timingOverlayEnabled = enabled;
 	}
