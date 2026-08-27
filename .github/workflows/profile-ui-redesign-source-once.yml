@@ -1,0 +1,880 @@
+name: Profile UI Redesign Source (one-off)
+
+on:
+  push:
+    branches:
+      - fix/profile-manager
+
+permissions:
+  contents: write
+
+jobs:
+  redesign:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: fix/profile-manager
+          persist-credentials: true
+          fetch-depth: 1
+
+      - name: Restore shared debug keystore
+        env:
+          ANDROID_DEBUG_KEYSTORE_BASE64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          printf '%s' "$ANDROID_DEBUG_KEYSTORE_BASE64" | base64 --decode > debug.keystore
+          chmod 600 debug.keystore
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545
+
+      - name: Simplify profile presentation model
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('app/src/main/java/ru/playsoftware/j2meloader/config/ConfigUiState.java')
+          text = path.read_text()
+          start = text.index('\tpublic static final class ProfileTemplate {')
+          end = text.rfind('\n}')
+          replacement = r'''	public static final class ProfileTemplate {
+		@NonNull public final String name;
+		public final boolean isDefault;
+		public final boolean hasSettings;
+		public final boolean hasKeyboard;
+
+		public ProfileTemplate(@NonNull String name, boolean isDefault,
+				boolean hasSettings, boolean hasKeyboard) {
+			this.name = name;
+			this.isDefault = isDefault;
+			this.hasSettings = hasSettings;
+			this.hasKeyboard = hasKeyboard;
+		}
+	}
+
+	/** Stable source identity for one reusable profile component. */
+	public enum ProfileSourceKind {
+		PROFILE,
+		BUILT_IN,
+		LOCAL
+	}
+
+	/** Presentation state for one independently sourced profile component. */
+	public static final class ProfileComponentStatus {
+		@NonNull public final ProfileSourceKind sourceKind;
+		@Nullable public final String profileName;
+		public final boolean modified;
+
+		private ProfileComponentStatus(@NonNull ProfileSourceKind sourceKind,
+				@Nullable String profileName, boolean modified) {
+			this.sourceKind = sourceKind;
+			this.profileName = profileName;
+			this.modified = modified;
+		}
+
+		@NonNull
+		private static ProfileComponentStatus profile(@NonNull String name, boolean modified) {
+			return new ProfileComponentStatus(ProfileSourceKind.PROFILE, name, modified);
+		}
+
+		@NonNull
+		private static ProfileComponentStatus builtIn(boolean modified) {
+			return new ProfileComponentStatus(ProfileSourceKind.BUILT_IN, null, modified);
+		}
+
+		@NonNull
+		private static ProfileComponentStatus local() {
+			return new ProfileComponentStatus(ProfileSourceKind.LOCAL, null, false);
+		}
+	}
+
+	/** Minimal per-component profile state consumed by the Basic destination. */
+	public static final class ProfileStatus {
+		@NonNull public final ProfileComponentStatus settings;
+		@NonNull public final ProfileComponentStatus keyboard;
+		@Nullable public final String defaultProfile;
+
+		private ProfileStatus(@NonNull ProfileComponentStatus settings,
+				@NonNull ProfileComponentStatus keyboard, @Nullable String defaultProfile) {
+			this.settings = settings;
+			this.keyboard = keyboard;
+			this.defaultProfile = defaultProfile;
+		}
+
+		@NonNull
+		public static ProfileStatus custom(@Nullable String defaultProfile) {
+			return new ProfileStatus(ProfileComponentStatus.local(),
+					ProfileComponentStatus.local(), defaultProfile);
+		}
+
+		@NonNull
+		public static ProfileStatus builtInDefault(@Nullable String defaultProfile) {
+			return new ProfileStatus(ProfileComponentStatus.builtIn(false),
+					ProfileComponentStatus.local(), defaultProfile);
+		}
+
+		@NonNull
+		public static ProfileStatus active(@NonNull String activeProfile,
+				@Nullable String defaultProfile) {
+			return new ProfileStatus(ProfileComponentStatus.profile(activeProfile, false),
+					ProfileComponentStatus.profile(activeProfile, false), defaultProfile);
+		}
+
+		@NonNull
+		public static ProfileStatus modified(@NonNull String sourceProfile,
+				@Nullable String defaultProfile) {
+			return new ProfileStatus(ProfileComponentStatus.profile(sourceProfile, true),
+					ProfileComponentStatus.profile(sourceProfile, true), defaultProfile);
+		}
+
+		@NonNull
+		public static ProfileStatus components(@Nullable String settingsProfile,
+				boolean settingsModified, @Nullable String keyboardProfile,
+				boolean keyboardModified, boolean settingsBuiltIn,
+				@Nullable String defaultProfile) {
+			ProfileComponentStatus settings = settingsProfile != null
+					? ProfileComponentStatus.profile(settingsProfile, settingsModified)
+					: settingsBuiltIn
+							? ProfileComponentStatus.builtIn(settingsModified)
+							: ProfileComponentStatus.local();
+			ProfileComponentStatus keyboard = keyboardProfile != null
+					? ProfileComponentStatus.profile(keyboardProfile, keyboardModified)
+					: ProfileComponentStatus.local();
+			return new ProfileStatus(settings, keyboard, defaultProfile);
+		}
+
+		public boolean usesProfile(@NonNull String name) {
+			return name.equals(settings.profileName) || name.equals(keyboard.profileName);
+		}
+
+		public boolean isProfileModified(@NonNull String name) {
+			return name.equals(settings.profileName) && settings.modified
+					|| name.equals(keyboard.profileName) && keyboard.modified;
+		}
+
+		public boolean hasModifiedComponents() {
+			return settings.modified || keyboard.modified;
+		}
+
+		public boolean hasLocalComponent() {
+			return settings.sourceKind == ProfileSourceKind.LOCAL
+					|| keyboard.sourceKind == ProfileSourceKind.LOCAL;
+		}
+	}
+'''
+          path.write_text(text[:start] + replacement + text[end:])
+          PY
+
+      - name: Install clean profile UI
+        run: |
+          cat > app/src/main/java/ru/playsoftware/j2meloader/config/ConfigProfilePanel.kt <<'KOTLIN'
+          /*
+           * Licensed under the Apache License, Version 2.0 (the "License");
+           */
+          package ru.playsoftware.j2meloader.config
+
+          import androidx.compose.foundation.clickable
+          import androidx.compose.foundation.layout.Arrangement
+          import androidx.compose.foundation.layout.Box
+          import androidx.compose.foundation.layout.Column
+          import androidx.compose.foundation.layout.Row
+          import androidx.compose.foundation.layout.Spacer
+          import androidx.compose.foundation.layout.fillMaxSize
+          import androidx.compose.foundation.layout.fillMaxWidth
+          import androidx.compose.foundation.layout.heightIn
+          import androidx.compose.foundation.layout.padding
+          import androidx.compose.foundation.layout.widthIn
+          import androidx.compose.foundation.lazy.LazyColumn
+          import androidx.compose.foundation.lazy.items
+          import androidx.compose.foundation.lazy.rememberLazyListState
+          import androidx.compose.material3.AlertDialog
+          import androidx.compose.material3.DropdownMenu
+          import androidx.compose.material3.DropdownMenuItem
+          import androidx.compose.material3.HorizontalDivider
+          import androidx.compose.material3.Icon
+          import androidx.compose.material3.IconButton
+          import androidx.compose.material3.MaterialTheme
+          import androidx.compose.material3.OutlinedButton
+          import androidx.compose.material3.OutlinedTextField
+          import androidx.compose.material3.Surface
+          import androidx.compose.material3.Text
+          import androidx.compose.material3.TextButton
+          import androidx.compose.runtime.Composable
+          import androidx.compose.runtime.getValue
+          import androidx.compose.runtime.mutableStateOf
+          import androidx.compose.runtime.remember
+          import androidx.compose.runtime.saveable.rememberSaveable
+          import androidx.compose.runtime.setValue
+          import androidx.compose.ui.Alignment
+          import androidx.compose.ui.Modifier
+          import androidx.compose.ui.res.painterResource
+          import androidx.compose.ui.res.stringResource
+          import androidx.compose.ui.text.font.FontWeight
+          import androidx.compose.ui.text.style.TextOverflow
+          import androidx.compose.ui.unit.dp
+          import androidx.compose.ui.window.Dialog
+          import androidx.compose.ui.window.DialogProperties
+          import ru.playsoftware.j2meloader.R
+          import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+          import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
+
+          @Composable
+          internal fun ConfigProfilePanel(
+              status: ConfigUiState.ProfileStatus,
+              templates: List<ConfigUiState.ProfileTemplate>,
+              events: ConfigFormEvents,
+          ) {
+              var managerVisible by rememberSaveable { mutableStateOf(false) }
+              var renameTarget by remember { mutableStateOf<String?>(null) }
+              var updateTarget by remember { mutableStateOf<String?>(null) }
+
+              val settingsSource = profileSourceLabel(
+                  status.settings,
+                  localLabel = stringResource(R.string.profile_custom),
+              )
+              val keyboardSource = profileSourceLabel(
+                  status.keyboard,
+                  localLabel = stringResource(R.string.profile_app_specific),
+              )
+              val settingsUpdateProfile = status.settings.profileName
+                  ?.takeIf { status.settings.modified }
+              val keyboardUpdateProfile = status.keyboard.profileName
+                  ?.takeIf { status.keyboard.modified && it != settingsUpdateProfile }
+
+              ConfigSection(title = stringResource(R.string.profile_section_title)) {
+                  ProfileComponentRow(
+                      title = stringResource(R.string.action_settings),
+                      source = settingsSource,
+                      modified = status.settings.modified,
+                      updateProfile = settingsUpdateProfile,
+                      keepLabel = if (status.settings.modified &&
+                          status.settings.sourceKind != ConfigUiState.ProfileSourceKind.LOCAL
+                      ) {
+                          stringResource(R.string.profile_keep_settings_for_app)
+                      } else {
+                          null
+                      },
+                      onRequestUpdate = { updateTarget = it },
+                      onKeep = events::onKeepSettingsForApp,
+                  )
+                  HorizontalDivider(
+                      modifier = Modifier.padding(horizontal = 16.dp),
+                      color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
+                  )
+                  ProfileComponentRow(
+                      title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
+                      source = keyboardSource,
+                      modified = status.keyboard.modified,
+                      updateProfile = keyboardUpdateProfile,
+                      keepLabel = if (status.keyboard.modified &&
+                          status.keyboard.sourceKind == ConfigUiState.ProfileSourceKind.PROFILE
+                      ) {
+                          stringResource(R.string.profile_keep_keyboard_for_app)
+                      } else {
+                          null
+                      },
+                      onRequestUpdate = { updateTarget = it },
+                      onKeep = events::onKeepKeyboardForApp,
+                  )
+                  HorizontalDivider(
+                      modifier = Modifier.padding(horizontal = 16.dp),
+                      color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
+                  )
+                  Row(
+                      modifier = Modifier
+                          .fillMaxWidth()
+                          .padding(start = 8.dp, top = 6.dp, end = 12.dp, bottom = 8.dp),
+                      verticalAlignment = Alignment.CenterVertically,
+                  ) {
+                      if (status.hasModifiedComponents() || status.hasLocalComponent()) {
+                          TextButton(onClick = events::onSaveAsProfile) {
+                              Text(stringResource(R.string.profile_save_as_new_template))
+                          }
+                      }
+                      Spacer(modifier = Modifier.weight(1f))
+                      OutlinedButton(onClick = { managerVisible = true }) {
+                          Text(stringResource(R.string.profile_change_profile))
+                      }
+                  }
+              }
+
+              if (managerVisible) {
+                  ConfigProfileManagerDialog(
+                      status = status,
+                      templates = templates,
+                      events = events,
+                      onDismissRequest = { managerVisible = false },
+                      onCreate = {
+                          managerVisible = false
+                          events.onSaveAsProfile()
+                      },
+                      onRename = { name -> renameTarget = name },
+                      onRequestUpdate = { name -> updateTarget = name },
+                  )
+              }
+
+              renameTarget?.let { oldName ->
+                  ConfigProfileNameDialog(
+                      title = stringResource(R.string.action_context_rename),
+                      initialName = oldName,
+                      existingNames = templates.map { it.name },
+                      onDismissRequest = { renameTarget = null },
+                      onConfirm = { name ->
+                          renameTarget = null
+                          events.onRenameTemplate(oldName, name)
+                      },
+                  )
+              }
+
+              updateTarget?.let { name ->
+                  AlertDialog(
+                      onDismissRequest = { updateTarget = null },
+                      title = { Text(stringResource(R.string.profile_update_global_title, name)) },
+                      text = { Text(stringResource(R.string.profile_update_global_message)) },
+                      dismissButton = {
+                          TextButton(onClick = { updateTarget = null }) {
+                              Text(stringResource(android.R.string.cancel))
+                          }
+                      },
+                      confirmButton = {
+                          TextButton(onClick = {
+                              updateTarget = null
+                              events.onUpdateTemplate(name)
+                          }) {
+                              Text(stringResource(R.string.profile_update_template))
+                          }
+                      },
+                  )
+              }
+          }
+
+          @Composable
+          private fun profileSourceLabel(
+              component: ConfigUiState.ProfileComponentStatus,
+              localLabel: String,
+          ): String = when (component.sourceKind) {
+              ConfigUiState.ProfileSourceKind.PROFILE -> component.profileName ?: localLabel
+              ConfigUiState.ProfileSourceKind.BUILT_IN -> stringResource(R.string.profile_builtin_settings)
+              ConfigUiState.ProfileSourceKind.LOCAL -> localLabel
+          }
+
+          @Composable
+          private fun ProfileComponentRow(
+              title: String,
+              source: String,
+              modified: Boolean,
+              updateProfile: String?,
+              keepLabel: String?,
+              onRequestUpdate: (String) -> Unit,
+              onKeep: () -> Unit,
+          ) {
+              Row(
+                  modifier = Modifier
+                      .fillMaxWidth()
+                      .padding(horizontal = 16.dp, vertical = 12.dp),
+                  verticalAlignment = Alignment.CenterVertically,
+                  horizontalArrangement = Arrangement.spacedBy(8.dp),
+              ) {
+                  Column(
+                      modifier = Modifier.weight(1f),
+                      verticalArrangement = Arrangement.spacedBy(2.dp),
+                  ) {
+                      Text(
+                          text = title,
+                          style = MaterialTheme.typography.labelLarge,
+                          color = MaterialTheme.colorScheme.onSurfaceVariant,
+                      )
+                      Text(
+                          text = source,
+                          style = MaterialTheme.typography.bodyLarge,
+                          fontWeight = FontWeight.Medium,
+                          maxLines = 1,
+                          overflow = TextOverflow.Ellipsis,
+                      )
+                      if (modified) {
+                          Text(
+                              text = stringResource(R.string.profile_modified_badge),
+                              style = MaterialTheme.typography.bodySmall,
+                              color = MaterialTheme.colorScheme.onSurfaceVariant,
+                          )
+                      }
+                  }
+                  if (updateProfile != null || keepLabel != null) {
+                      ProfileComponentActions(
+                          updateProfile = updateProfile,
+                          keepLabel = keepLabel,
+                          onRequestUpdate = onRequestUpdate,
+                          onKeep = onKeep,
+                      )
+                  }
+              }
+          }
+
+          @Composable
+          private fun ProfileComponentActions(
+              updateProfile: String?,
+              keepLabel: String?,
+              onRequestUpdate: (String) -> Unit,
+              onKeep: () -> Unit,
+          ) {
+              var expanded by remember { mutableStateOf(false) }
+              Box {
+                  IconButton(onClick = { expanded = true }) {
+                      Icon(
+                          painter = painterResource(R.drawable.ic_more_vert),
+                          contentDescription = stringResource(R.string.more),
+                      )
+                  }
+                  DropdownMenu(
+                      expanded = expanded,
+                      onDismissRequest = { expanded = false },
+                  ) {
+                      if (updateProfile != null) {
+                          DropdownMenuItem(
+                              text = { Text(stringResource(R.string.profile_update_template)) },
+                              onClick = {
+                                  expanded = false
+                                  onRequestUpdate(updateProfile)
+                              },
+                          )
+                      }
+                      if (keepLabel != null) {
+                          DropdownMenuItem(
+                              text = { Text(keepLabel) },
+                              onClick = {
+                                  expanded = false
+                                  onKeep()
+                              },
+                          )
+                      }
+                  }
+              }
+          }
+
+          @Composable
+          private fun ConfigProfileManagerDialog(
+              status: ConfigUiState.ProfileStatus,
+              templates: List<ConfigUiState.ProfileTemplate>,
+              events: ConfigFormEvents,
+              onDismissRequest: () -> Unit,
+              onCreate: () -> Unit,
+              onRename: (String) -> Unit,
+              onRequestUpdate: (String) -> Unit,
+          ) {
+              var deleteTarget by remember { mutableStateOf<ConfigUiState.ProfileTemplate?>(null) }
+              Dialog(
+                  onDismissRequest = onDismissRequest,
+                  properties = DialogProperties(usePlatformDefaultWidth = false),
+              ) {
+                  Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                      Surface(
+                          modifier = Modifier
+                              .fillMaxWidth(0.94f)
+                              .widthIn(max = 560.dp)
+                              .heightIn(max = 680.dp),
+                          shape = MaterialTheme.shapes.extraLarge,
+                          color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                          tonalElevation = 2.dp,
+                      ) {
+                          Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                              Row(
+                                  modifier = Modifier
+                                      .fillMaxWidth()
+                                      .padding(start = 20.dp, end = 12.dp, top = 4.dp, bottom = 4.dp),
+                                  verticalAlignment = Alignment.CenterVertically,
+                              ) {
+                                  Text(
+                                      text = stringResource(R.string.profile_templates_title),
+                                      style = MaterialTheme.typography.titleLarge,
+                                      modifier = Modifier.weight(1f),
+                                  )
+                                  TextButton(onClick = onCreate) {
+                                      Text(stringResource(R.string.profile_save_current_template))
+                                  }
+                              }
+                              HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                              val listState = rememberLazyListState()
+                              val canScrollForward = rememberLazyListCanScrollForward(listState)
+                              Box(
+                                  modifier = Modifier
+                                      .weight(1f, fill = false)
+                                      .fillMaxWidth(),
+                              ) {
+                                  LazyColumn(
+                                      modifier = Modifier.fillMaxWidth(),
+                                      state = listState,
+                                  ) {
+                                      item(key = "__built_in__") {
+                                          ProfileManagerRow(
+                                              name = stringResource(R.string.profile_builtin_settings),
+                                              summary = stringResource(R.string.profile_builtin_settings_summary),
+                                              isInUse = status.settings.sourceKind == ConfigUiState.ProfileSourceKind.BUILT_IN,
+                                              isModified = status.settings.sourceKind == ConfigUiState.ProfileSourceKind.BUILT_IN &&
+                                                  status.settings.modified,
+                                              isDefault = status.defaultProfile == null,
+                                              onClick = {
+                                                  events.onApplyBuiltInTemplate()
+                                                  onDismissRequest()
+                                              },
+                                              menuContent = if (status.defaultProfile == null) {
+                                                  null
+                                              } else {
+                                                  { dismiss ->
+                                                      DropdownMenuItem(
+                                                          text = { Text(stringResource(R.string.set_as_default)) },
+                                                          onClick = {
+                                                              dismiss()
+                                                              events.onSetDefaultTemplate(null)
+                                                          },
+                                                      )
+                                                  }
+                                              },
+                                          )
+                                      }
+                                      items(templates, key = { it.name }) { profile ->
+                                          ProfileManagerRow(
+                                              name = profile.name,
+                                              summary = profileSummary(profile),
+                                              isInUse = status.usesProfile(profile.name),
+                                              isModified = status.isProfileModified(profile.name),
+                                              isDefault = profile.isDefault,
+                                              onClick = {
+                                                  events.onApplyTemplate(profile.name)
+                                                  onDismissRequest()
+                                              },
+                                              menuContent = { dismiss ->
+                                                  if (profile.hasSettings && profile.hasKeyboard) {
+                                                      DropdownMenuItem(
+                                                          text = { Text(stringResource(R.string.profile_apply_settings_only)) },
+                                                          onClick = {
+                                                              dismiss()
+                                                              events.onApplyTemplateComponents(profile.name, true, false)
+                                                              onDismissRequest()
+                                                          },
+                                                      )
+                                                      DropdownMenuItem(
+                                                          text = { Text(stringResource(R.string.profile_apply_keyboard_only)) },
+                                                          onClick = {
+                                                              dismiss()
+                                                              events.onApplyTemplateComponents(profile.name, false, true)
+                                                              onDismissRequest()
+                                                          },
+                                                      )
+                                                  }
+                                                  if (status.isProfileModified(profile.name)) {
+                                                      DropdownMenuItem(
+                                                          text = { Text(stringResource(R.string.profile_update_template)) },
+                                                          onClick = {
+                                                              dismiss()
+                                                              onRequestUpdate(profile.name)
+                                                          },
+                                                      )
+                                                  }
+                                                  if (!profile.isDefault) {
+                                                      DropdownMenuItem(
+                                                          text = { Text(stringResource(R.string.set_as_default)) },
+                                                          onClick = {
+                                                              dismiss()
+                                                              events.onSetDefaultTemplate(profile.name)
+                                                          },
+                                                      )
+                                                  }
+                                                  HorizontalDivider(
+                                                      modifier = Modifier.padding(vertical = 4.dp),
+                                                      color = MaterialTheme.colorScheme.outlineVariant,
+                                                  )
+                                                  DropdownMenuItem(
+                                                      text = { Text(stringResource(R.string.action_context_rename)) },
+                                                      onClick = {
+                                                          dismiss()
+                                                          onRename(profile.name)
+                                                      },
+                                                  )
+                                                  DropdownMenuItem(
+                                                      text = {
+                                                          Text(
+                                                              stringResource(R.string.action_context_delete),
+                                                              color = MaterialTheme.colorScheme.error,
+                                                          )
+                                                      },
+                                                      onClick = {
+                                                          dismiss()
+                                                          deleteTarget = profile
+                                                      },
+                                                  )
+                                              },
+                                          )
+                                      }
+                                  }
+                                  ScrollableContentHint(
+                                      visible = canScrollForward,
+                                      modifier = Modifier.align(Alignment.BottomCenter),
+                                  )
+                              }
+                              HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                              Row(
+                                  modifier = Modifier
+                                      .fillMaxWidth()
+                                      .padding(horizontal = 12.dp, vertical = 4.dp),
+                                  horizontalArrangement = Arrangement.End,
+                              ) {
+                                  TextButton(onClick = onDismissRequest) {
+                                      Text(stringResource(android.R.string.cancel))
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+
+              deleteTarget?.let { profile ->
+                  AlertDialog(
+                      onDismissRequest = { deleteTarget = null },
+                      title = { Text(stringResource(R.string.action_context_delete)) },
+                      text = { Text(stringResource(R.string.profile_delete_template_message, profile.name)) },
+                      dismissButton = {
+                          TextButton(onClick = { deleteTarget = null }) {
+                              Text(stringResource(android.R.string.cancel))
+                          }
+                      },
+                      confirmButton = {
+                          TextButton(
+                              onClick = {
+                                  deleteTarget = null
+                                  events.onDeleteTemplate(profile.name)
+                              },
+                          ) {
+                              Text(
+                                  stringResource(R.string.action_context_delete),
+                                  color = MaterialTheme.colorScheme.error,
+                              )
+                          }
+                      },
+                  )
+              }
+          }
+
+          @Composable
+          private fun profileSummary(profile: ConfigUiState.ProfileTemplate): String {
+              val settings = if (profile.hasSettings) stringResource(R.string.action_settings) else null
+              val keyboard = if (profile.hasKeyboard) stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS) else null
+              return listOfNotNull(settings, keyboard).takeIf { it.isNotEmpty() }
+                  ?.joinToString(" · ")
+                  ?: stringResource(R.string.profile_template_summary)
+          }
+
+          @Composable
+          private fun ProfileManagerRow(
+              name: String,
+              summary: String,
+              isInUse: Boolean,
+              isModified: Boolean,
+              isDefault: Boolean,
+              onClick: () -> Unit,
+              menuContent: (@Composable ((() -> Unit) -> Unit))?,
+          ) {
+              Row(
+                  modifier = Modifier
+                      .fillMaxWidth()
+                      .clickable(onClick = onClick)
+                      .padding(start = 20.dp, top = 11.dp, end = 8.dp, bottom = 11.dp),
+                  verticalAlignment = Alignment.CenterVertically,
+                  horizontalArrangement = Arrangement.spacedBy(8.dp),
+              ) {
+                  Column(
+                      modifier = Modifier.weight(1f),
+                      verticalArrangement = Arrangement.spacedBy(2.dp),
+                  ) {
+                      Text(
+                          text = name,
+                          style = MaterialTheme.typography.bodyLarge,
+                          fontWeight = if (isInUse) FontWeight.SemiBold else FontWeight.Normal,
+                          maxLines = 1,
+                          overflow = TextOverflow.Ellipsis,
+                      )
+                      Text(
+                          text = if (isModified) {
+                              "$summary · ${stringResource(R.string.profile_modified_badge)}"
+                          } else {
+                              summary
+                          },
+                          style = MaterialTheme.typography.bodySmall,
+                          color = MaterialTheme.colorScheme.onSurfaceVariant,
+                          maxLines = 1,
+                          overflow = TextOverflow.Ellipsis,
+                      )
+                  }
+                  Column(horizontalAlignment = Alignment.End) {
+                      if (isInUse) {
+                          Text(
+                              text = stringResource(R.string.profile_active_badge),
+                              style = MaterialTheme.typography.labelMedium,
+                              color = MaterialTheme.colorScheme.primary,
+                          )
+                      }
+                      if (isDefault) {
+                          Text(
+                              text = stringResource(R.string.profile_default_badge_short),
+                              style = MaterialTheme.typography.labelSmall,
+                              color = MaterialTheme.colorScheme.onSurfaceVariant,
+                          )
+                      }
+                  }
+                  if (menuContent != null) {
+                      var expanded by remember { mutableStateOf(false) }
+                      Box {
+                          IconButton(onClick = { expanded = true }) {
+                              Icon(
+                                  painter = painterResource(R.drawable.ic_more_vert),
+                                  contentDescription = stringResource(R.string.more),
+                              )
+                          }
+                          DropdownMenu(
+                              expanded = expanded,
+                              onDismissRequest = { expanded = false },
+                          ) {
+                              menuContent { expanded = false }
+                          }
+                      }
+                  }
+              }
+          }
+
+          @Composable
+          private fun ConfigProfileNameDialog(
+              title: String,
+              initialName: String,
+              existingNames: List<String>,
+              onDismissRequest: () -> Unit,
+              onConfirm: (String) -> Unit,
+          ) {
+              var value by rememberSaveable(initialName) { mutableStateOf(initialName) }
+              val trimmed = value.trim()
+              val duplicate = existingNames.any {
+                  it.equals(trimmed, ignoreCase = true) && !it.equals(initialName, ignoreCase = false)
+              }
+              val valid = trimmed.isNotEmpty() && !duplicate && trimmed != initialName
+              AlertDialog(
+                  onDismissRequest = onDismissRequest,
+                  title = { Text(title) },
+                  text = {
+                      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                          OutlinedTextField(
+                              value = value,
+                              onValueChange = { value = it },
+                              singleLine = true,
+                              modifier = Modifier.fillMaxWidth(),
+                              label = { Text(stringResource(R.string.profile_name_label)) },
+                              isError = duplicate,
+                          )
+                          if (duplicate) {
+                              Text(
+                                  text = stringResource(R.string.profile_name_exists),
+                                  color = MaterialTheme.colorScheme.error,
+                                  style = MaterialTheme.typography.bodySmall,
+                              )
+                          }
+                      }
+                  },
+                  dismissButton = {
+                      TextButton(onClick = onDismissRequest) {
+                          Text(stringResource(android.R.string.cancel))
+                      }
+                  },
+                  confirmButton = {
+                      TextButton(enabled = valid, onClick = { onConfirm(trimmed) }) {
+                          Text(stringResource(R.string.save))
+                      }
+                  },
+              )
+          }
+          KOTLIN
+
+      - name: Refresh profile wording
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text, old, new, label):
+              if text.count(old) != 1:
+                  raise SystemExit(f'Expected exactly one {label}')
+              return text.replace(old, new)
+
+          path = Path('app/src/main/res/values/strings_config_redesign.xml')
+          text = path.read_text()
+          anchor = '    <string name="profile_modified_summary">Modified from this template</string>\n'
+          insert = anchor + '    <string name="profile_section_title">Profile</string>\n    <string name="profile_change_profile">Change Profile</string>\n'
+          text = replace_once(text, anchor, insert, 'English profile section anchor')
+          replacements = {
+              '    <string name="profile_update_template">Update Template</string>': '    <string name="profile_update_template">Update Profile</string>',
+              '    <string name="profile_update_template_summary">Update %1$s for every app that uses this profile.</string>': '    <string name="profile_update_template_summary">Update %1$s for every linked app.</string>',
+              '    <string name="profile_save_as_new_template">Save As New Template</string>': '    <string name="profile_save_as_new_template">Save as Profile</string>',
+              '    <string name="profile_save_as_new_template_summary">Keep the current configuration as a reusable template.</string>': '    <string name="profile_save_as_new_template_summary">Save the current setup as a reusable profile.</string>',
+              '    <string name="profile_templates_title">Configuration Templates</string>': '    <string name="profile_templates_title">Profiles</string>',
+              '    <string name="profile_templates_summary">Tap a template to apply its available components. Use the menu to rename, delete, or make it the default for new apps.</string>': '    <string name="profile_templates_summary">Choose a profile to apply it. More actions are available from each profile menu.</string>',
+              '    <string name="profile_template_summary">Saved configuration template</string>': '    <string name="profile_template_summary">Reusable profile</string>',
+              '    <string name="profile_active_badge">Active</string>': '    <string name="profile_active_badge">In use</string>',
+              '    <string name="profile_save_current_template">Save Current</string>': '    <string name="profile_save_current_template">New Profile</string>',
+              '    <string name="profile_name_label">Template Name</string>': '    <string name="profile_name_label">Profile Name</string>',
+              '    <string name="profile_name_exists">A template with this name already exists.</string>': '    <string name="profile_name_exists">A profile with this name already exists.</string>',
+              '    <string name="profile_delete_template_message">Delete template “%1$s”? This does not delete any app data.</string>': '    <string name="profile_delete_template_message">Delete profile “%1$s”? Apps using it keep their current local copy.</string>',
+              '    <string name="profile_template_operation_failed">Could not update the configuration template.</string>': '    <string name="profile_template_operation_failed">Could not update the profile.</string>',
+          }
+          for old, new in replacements.items():
+              text = replace_once(text, old, new, old)
+          path.write_text(text)
+
+          path = Path('app/src/main/res/values-in/strings_config_redesign.xml')
+          text = path.read_text()
+          anchor = '    <string name="profile_modified_summary">Diubah dari template ini</string>\n'
+          insert = anchor + '    <string name="profile_section_title">Profil</string>\n    <string name="profile_change_profile">Ganti Profil</string>\n'
+          text = replace_once(text, anchor, insert, 'Indonesian profile section anchor')
+          replacements = {
+              '    <string name="profile_update_template">Perbarui Template</string>': '    <string name="profile_update_template">Perbarui Profil</string>',
+              '    <string name="profile_update_template_summary">Ganti isi %1$s dengan konfigurasi saat ini.</string>': '    <string name="profile_update_template_summary">Perbarui %1$s untuk semua aplikasi yang tertaut.</string>',
+              '    <string name="profile_save_as_new_template">Simpan Sebagai Template Baru</string>': '    <string name="profile_save_as_new_template">Simpan sebagai Profil</string>',
+              '    <string name="profile_save_as_new_template_summary">Simpan konfigurasi saat ini sebagai template yang dapat digunakan kembali.</string>': '    <string name="profile_save_as_new_template_summary">Simpan susunan saat ini sebagai profil yang dapat digunakan kembali.</string>',
+              '    <string name="profile_templates_title">Template Konfigurasi</string>': '    <string name="profile_templates_title">Profil</string>',
+              '    <string name="profile_templates_summary">Ketuk template untuk menerapkannya. Gunakan menu untuk mengganti nama, menghapus, atau menjadikannya default untuk aplikasi baru.</string>': '    <string name="profile_templates_summary">Pilih profil untuk menerapkannya. Aksi lain tersedia dari menu setiap profil.</string>',
+              '    <string name="profile_template_summary">Template konfigurasi tersimpan</string>': '    <string name="profile_template_summary">Profil yang dapat digunakan kembali</string>',
+              '    <string name="profile_active_badge">Aktif</string>': '    <string name="profile_active_badge">Digunakan</string>',
+              '    <string name="profile_save_current_template">Simpan Saat Ini</string>': '    <string name="profile_save_current_template">Profil Baru</string>',
+              '    <string name="profile_name_label">Nama Template</string>': '    <string name="profile_name_label">Nama Profil</string>',
+              '    <string name="profile_name_exists">Template dengan nama ini sudah ada.</string>': '    <string name="profile_name_exists">Profil dengan nama ini sudah ada.</string>',
+              '    <string name="profile_delete_template_message">Hapus template “%1$s”? Tindakan ini tidak menghapus data aplikasi.</string>': '    <string name="profile_delete_template_message">Hapus profil “%1$s”? Aplikasi yang menggunakannya tetap menyimpan salinan lokal saat ini.</string>',
+              '    <string name="profile_template_operation_failed">Template konfigurasi tidak dapat diperbarui.</string>': '    <string name="profile_template_operation_failed">Profil tidak dapat diperbarui.</string>',
+          }
+          for old, new in replacements.items():
+              text = replace_once(text, old, new, old)
+          path.write_text(text)
+          PY
+
+      - name: Compile redesigned main sources
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace :app:compileEmulatorDebugKotlin :app:compileEmulatorDebugJavaWithJavac
+
+      - name: Commit source redesign
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/profile-ui-redesign-source-once.yml
+          git add \
+            app/src/main/java/ru/playsoftware/j2meloader/config/ConfigUiState.java \
+            app/src/main/java/ru/playsoftware/j2meloader/config/ConfigProfilePanel.kt \
+            app/src/main/res/values/strings_config_redesign.xml \
+            app/src/main/res/values-in/strings_config_redesign.xml
+          git diff --cached --check
+          git diff --cached --stat
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'feat(profile): redesign profile overview and manager [skip ci]'
+          git push origin HEAD:fix/profile-manager
