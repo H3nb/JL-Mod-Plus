@@ -81,7 +81,7 @@
     <string name="reconversion_error">The MIDlet could not be converted automatically.
 
 %1$s</string>
-    <string name="fps_overlay_value">G %1$d | R %2$d | DROP %3$d%% | SPD %4$s</string>
+    <string name="fps_overlay_value">FPS %1$d | RENDER %2$d | DROP %3$d%% | SPD %4$s</string>
     <string name="config_help_generic_toggle">Enable or disable this behavior for the current app.</string>
     <string name="config_help_generic_color">Choose the color used by this visual element.</string>
     <string name="config_help_action_generic">Open this configuration tool.</string>
