@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
     <application>
         <provider
             android:name="ru.playsoftware.j2meloader.memory.debug.MemoryEditorBootstrapProvider"
@@ -12,5 +14,16 @@
             android:name="ru.playsoftware.j2meloader.memory.MemoryScanService"
             android:exported="false"
             android:process=":midlet" />
+
+        <service
+            android:name="ru.playsoftware.j2meloader.memory.MemoryLiveService"
+            android:exported="false"
+            android:process=":midlet" />
+
+        <service
+            android:name="ru.playsoftware.j2meloader.memory.debug.MemoryEditorOverlayService"
+            android:exported="false"
+            android:process=":memory_ui"
+            android:stopWithTask="true" />
     </application>
 </manifest>
