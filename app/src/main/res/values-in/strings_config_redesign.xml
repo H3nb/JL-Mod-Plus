@@ -76,21 +76,23 @@
     <string name="config_help_shader_tuning">Menyesuaikan parameter yang disediakan oleh shader yang dipilih.</string>
     <string name="config_help_parallel_redraw">Mengizinkan proses gambar ulang layar berjalan paralel jika didukung.</string>
     <string name="config_help_force_fullscreen">Memaksa permukaan aplikasi menggunakan seluruh area tampilan yang tersedia.</string>
-    <string name="config_help_show_fps">Menampilkan frame rate saat aplikasi berjalan.</string>
+    <string name="config_help_show_fps">Menampilkan diagnostik ringkas game, render, frame terlewat, dan kecepatan runtime.</string>
     <string name="config_help_fps_limit">Membatasi frame rate maksimum. Kosongkan untuk tanpa batas.</string>
     <string name="PREF_EMULATION_SPEED">Kecepatan Emulasi</string>
     <string name="PREF_TIMING_MODE">Mode timing</string>
     <string name="config_timing_mode_full_guest">Waktu tamu penuh</string>
     <string name="config_timing_mode_real_wall">Waktu nyata</string>
     <string name="config_help_emulation_speed">Mengubah skala waktu tamu dan delay yang kompatibel. Audio dan UI Android tetap pada kecepatan normal.</string>
+    <string name="emulation_speed_auto">Maksimum otomatis</string>
+    <string name="emulation_speed_auto_summary">Terus mencari kecepatan stabil tercepat untuk beban kerja saat ini.</string>
+    <string name="emulation_speed_auto_value">Auto · %1$s</string>
     <string name="config_help_timing_mode">Pilih apakah waktu dan tanggal mengikuti kecepatan emulasi. Delay relatif tetap mengikuti speed.</string>
     <string name="config_help_timing_unavailable">Aplikasi hasil konversi ini belum memiliki instrumentasi timing. Instal ulang atau konversi ulang sebelum mengaktifkan kecepatan emulasi.</string>
     <string name="reconverting_wait">MIDlet ini memerlukan konversi kompatibilitas satu kali sebelum dapat dijalankan. Harap tunggu…</string>
     <string name="reconversion_error">MIDlet tidak dapat dikonversi ulang secara otomatis.
 
 %1$s</string>
-    <string name="emulation_speed_overlay">Kecepatan %1$s · clock %2$s</string>
-    <string name="fps_overlay_value">Game %1$d · Render %2$d</string>
+    <string name="fps_overlay_value">G %1$d | R %2$d | DROP %3$d%% | SPD %4$s</string>
     <string name="config_help_generic_toggle">Aktifkan atau nonaktifkan perilaku ini untuk aplikasi saat ini.</string>
     <string name="config_help_generic_color">Pilih warna yang digunakan oleh elemen visual ini.</string>
     <string name="config_help_action_generic">Buka alat konfigurasi ini.</string>

@@ -148,13 +148,25 @@ public class TimingSessionTest {
 		TimingSession session = new TimingSession(time, 100, 1L);
 
 		try {
-			session.updateSpeedPercent(1601);
+			session.updateSpeedPercent(24);
 			throw new AssertionError("Expected invalid speed to be rejected");
 		} catch (IllegalArgumentException expected) {
 			// Expected.
 		}
 
 		assertEquals(100, session.speedPercent());
+	}
+
+	@Test
+	public void runtimeUpdateSupportsAutoSpeedAboveManualPickerRange() {
+		FakeTimeSource time = new FakeTimeSource(WALL_START);
+		TimingSession session = new TimingSession(time, 100, 1L);
+
+		session.updateSpeedPercent(250_001);
+		time.advanceNanos(1_000_000L);
+
+		assertEquals(250_001, session.speedPercent());
+		assertEquals(2_500_010_000L, session.guestMonotonicNanos());
 	}
 
 	@Test

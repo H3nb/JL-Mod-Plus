@@ -28,7 +28,7 @@ public class FrameMetricsTest {
 		metrics.recordRender(2L);
 		metrics.recordRender(2L);
 
-		FrameMetricsSnapshot snapshot = metrics.snapshotAndReset();
+		FrameMetricsSnapshot snapshot = metrics.snapshot();
 		assertEquals(2L, snapshot.gameFrames());
 		assertEquals(1L, snapshot.renderFrames());
 		assertEquals(1L, snapshot.coalescedFrames());
@@ -44,24 +44,34 @@ public class FrameMetricsTest {
 		metrics.recordRender(1L);
 		metrics.recordRender(0L);
 
-		FrameMetricsSnapshot snapshot = metrics.snapshotAndReset();
+		FrameMetricsSnapshot snapshot = metrics.snapshot();
 		assertEquals(1L, snapshot.gameFrames());
 		assertEquals(1L, snapshot.renderFrames());
 		assertEquals(0L, snapshot.coalescedFrames());
 	}
 
 	@Test
-	public void resetClearsWindowButKeepsSequenceOwnership() {
+	public void snapshotsKeepSequenceOwnershipAndCumulativeCounts() {
 		FrameMetrics metrics = new FrameMetrics();
 		assertEquals(1L, metrics.recordGameFrame());
 		metrics.recordRender(1L);
-		metrics.snapshotAndReset();
+		metrics.snapshot();
 
 		assertEquals(2L, metrics.recordGameFrame());
 		metrics.recordRender(2L);
-		FrameMetricsSnapshot snapshot = metrics.snapshotAndReset();
-		assertEquals(1L, snapshot.gameFrames());
-		assertEquals(1L, snapshot.renderFrames());
+		FrameMetricsSnapshot snapshot = metrics.snapshot();
+		assertEquals(2L, snapshot.gameFrames());
+		assertEquals(2L, snapshot.renderFrames());
 		assertEquals(0L, snapshot.coalescedFrames());
+	}
+
+	@Test
+	public void cumulativeSnapshotDoesNotConsumeAnotherObserversData() {
+		FrameMetrics metrics = new FrameMetrics();
+		metrics.recordGameFrame();
+
+		assertEquals(1L, metrics.snapshot().gameFrames());
+		assertEquals(1L, metrics.snapshot().gameFrames());
+		assertEquals(1L, metrics.snapshot().gameFrames());
 	}
 }

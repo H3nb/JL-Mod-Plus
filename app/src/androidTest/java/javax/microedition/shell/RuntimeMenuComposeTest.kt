@@ -185,6 +185,27 @@ class RuntimeMenuComposeTest {
 		assertEquals(1, resets)
 	}
 
+    @Test
+    fun emulationSpeedDialog_canSelectUncappedAutoMode() {
+        var confirmedAuto = false
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeEmulationSpeedDialog(
+                    currentPercent = 100,
+                    currentAutoEnabled = false,
+                    onDismiss = {},
+                    onConfirm = { _, auto -> confirmedAuto = auto },
+                    onReset = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Auto maximum").performClick()
+        composeRule.onNodeWithText("OK").performClick()
+
+        assertEquals(true, confirmedAuto)
+    }
+
 	@Test
 	fun runtimeExitDialog_keepsCancelSeparateFromExplicitExit() {
 		val events = mutableListOf<String>()
@@ -265,6 +286,10 @@ private class RecordingRuntimeMenuActions(
 
     override fun onSetEmulationSpeed(value: Int) {
         events += "setSpeed:$value"
+    }
+
+    override fun onSetAutoEmulationSpeed() {
+        events += "autoSpeed"
     }
 
     override fun onResetEmulationSpeed() {

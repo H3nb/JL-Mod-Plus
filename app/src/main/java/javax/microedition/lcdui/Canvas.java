@@ -75,10 +75,10 @@ import javax.microedition.lcdui.overlay.FpsCounter;
 import javax.microedition.lcdui.overlay.Layer;
 import javax.microedition.lcdui.overlay.Overlay;
 import javax.microedition.lcdui.overlay.OverlayView;
-import javax.microedition.lcdui.overlay.TimingMonitor;
 import javax.microedition.lcdui.skin.SkinLayer;
 import javax.microedition.shell.MicroActivity;
 import javax.microedition.shell.GuestTimingBridge;
+import javax.microedition.shell.timing.AutoSpeedController;
 import javax.microedition.shell.timing.FramePacer;
 import javax.microedition.shell.timing.FrameMetrics;
 import javax.microedition.shell.timing.PresentationMailbox;
@@ -157,13 +157,13 @@ public abstract class Canvas extends Displayable {
 	private Image offscreenCopy;
 	private volatile long publishedFrameSequence;
 	private volatile FrameMetrics frameMetrics;
+	private AutoSpeedController autoSpeedController;
 	private final PresentationMailbox presentationMailbox = new PresentationMailbox();
 	private int onX, onY, onWidth, onHeight;
 	private final FramePacer framePacer = new FramePacer(GuestTimingBridge.activeSession());
 	private Handler uiHandler;
 	private Overlay overlay;
 	private FpsCounter fpsCounter;
-	private TimingMonitor timingMonitor;
 	private boolean skipLeftSoft;
 	private boolean skipRightSoft;
 
@@ -1323,17 +1323,23 @@ public abstract class Canvas extends Displayable {
 				renderer.start();
 			}
 			surface = holder.getSurface();
+			autoSpeedController = GuestTimingBridge.activeSpeedController();
+			if (settings.showFps || autoSpeedController != null) {
+				frameMetrics = autoSpeedController == null
+						? new FrameMetrics() : autoSpeedController.frameMetrics();
+			}
 			if (settings.showFps) {
-				frameMetrics = new FrameMetrics();
-				fpsCounter = new FpsCounter(overlayView, frameMetrics);
+				fpsCounter = new FpsCounter(
+						overlayView,
+						frameMetrics,
+						timingOverlayEnabled ? autoSpeedController : null);
 				overlayView.addLayer(fpsCounter);
+			}
+			if (autoSpeedController != null) {
+				autoSpeedController.setFrameSourceActive(true);
 			}
 			Display.postEvent(CanvasEvent.getInstance(Canvas.this, CanvasEvent.SHOW_NOTIFY));
 			repaintInternal();
-			if (timingOverlayEnabled && settings.showFps) {
-				timingMonitor = new TimingMonitor(overlayView, fpsCounter != null);
-				overlayView.addLayer(timingMonitor);
-			}
 			overlayView.addLayer(softBar, 0);
 			overlayView.setVisibility(true);
 			overlay = ContextHolder.getVk();
@@ -1344,6 +1350,10 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
+			if (autoSpeedController != null) {
+				autoSpeedController.setFrameSourceActive(false);
+				autoSpeedController = null;
+			}
 			presentationMailbox.close();
 			if (renderer != null) {
 				renderer.stop();
@@ -1359,11 +1369,6 @@ public abstract class Canvas extends Displayable {
 			}
 			frameMetrics = null;
 			publishedFrameSequence = 0L;
-			if (timingMonitor != null) {
-				timingMonitor.stop();
-				overlayView.removeLayer(timingMonitor);
-				timingMonitor = null;
-			}
 			overlayView.removeLayer(softBar);
 			softBar.closeMenu();
 			overlayView.setVisibility(false);
