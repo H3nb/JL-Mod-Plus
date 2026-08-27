@@ -35,7 +35,7 @@ final class NativeMemoryAgent {
     private static volatile boolean directNoMatchPending;
 
     static {
-        System.loadLibrary("memory_scan");
+        System.loadLibrary("jlmem");
     }
 
     private NativeMemoryAgent() {
@@ -56,9 +56,7 @@ final class NativeMemoryAgent {
 
     /**
      * Prefer the retained raw addresses even if ART's GC counter increased. A GC event is not proof
-     * that an object moved (confirmed by the Android 11 control). Relocation is attempted only after
-     * direct refinement actually loses every match. If the service already performed that direct
-     * no-match pass, skip repeating it and go straight to the relocation fallback.
+     * that an object moved. Relocation is attempted only after direct refinement loses every match.
      */
     static int nativeRefineRelocating(String value) {
         if (!directNoMatchPending) {
@@ -82,6 +80,17 @@ final class NativeMemoryAgent {
 
     /** Fills [count, address, type, readable(0/1), valueBits, ...] into a reusable array. */
     static native int nativeFillResultsPage(long[] output, int offset, int limit);
+
+    /**
+     * Expands the scanner's 4-slot typed rows into 8-slot live rows:
+     * address, type, readable, valueBits, trackingState, previousAddress, confidence, relocations.
+     * All identity validation and heap reacquisition stay native in the target :midlet process.
+     */
+    static native int nativeRefreshVisibleCandidates(long[] rawPage, int count, long[] output);
+
+    static native void nativeResetVisibleTracking();
+
+    static native String nativeGetVisibleTrackingDiagnostics();
 
     static native String nativeEdit(long address, int valueType, String expected, String replacement);
 
