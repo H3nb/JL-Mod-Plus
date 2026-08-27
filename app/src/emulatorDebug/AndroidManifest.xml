@@ -28,5 +28,11 @@
             android:exported="false"
             android:process=":memory_engine"
             android:stopWithTask="true" />
+
+        <service
+            android:name="ru.playsoftware.j2meloader.memory.RemoteMemoryScanService"
+            android:exported="false"
+            android:process=":memory_engine"
+            android:stopWithTask="true" />
     </application>
 </manifest>
