@@ -62,7 +62,7 @@ import ru.playsoftware.j2meloader.util.ZipUtils;
 import ru.woesss.j2me.jar.Descriptor;
 import ru.woesss.util.TextUtils;
 import ru.woesss.util.zip.ZipFile;
-import javax.microedition.shell.timing.TimingTransformMetadata;
+import javax.microedition.shell.transform.MidletTransformMetadata;
 
 public class AppInstaller {
     private static final String TAG = AppInstaller.class.getSimpleName();
@@ -431,7 +431,7 @@ public class AppInstaller {
                 manifest.merge(newDesc);
                 newDesc = manifest;
             }
-            TimingTransformMetadata.mark(newDesc.getAttrs());
+            MidletTransformMetadata.mark(newDesc.getAttrs());
 
             File resJar = child(tmpDir, Config.MIDLET_RES_FILE);
             FileUtils.copyFileUsingChannel(srcJar, resJar);
