@@ -1,215 +1,227 @@
 # True Memory Editor prototype
 
-> **Status:** debug-only device prototype. Keep PR #109 draft until physical-device address tracking is proven. Freeze/Edit All remain out of scope.
+> **Status:** debug-only physical-device experiment. Keep PR #109 draft. Do not merge until the remote-access gate, Green Farm regression, Auto refinement and ANR checks pass on the physical Android 16 device.
 
-## Architecture
+## Current architecture
 
-The Memory Editor now follows a GameGuardian-inspired split-process architecture while preserving self-process raw-memory access in the target.
+This iteration is intentionally **capability-first**. The Memory Editor UI has returned to the running MIDlet Activity, while a new sibling process tests whether it can become the long-term scanner host.
 
 ```text
-:memory_ui
-├─ MemoryEditorOverlayService
-├─ TYPE_APPLICATION_OVERLAY bubble/panel
-├─ result formatting / scrolling / edit UI
-└─ live-refresh scheduler
-        │
-        │ Binder control + primitive snapshots
-        ▼
 :midlet
 ├─ MicroActivity / running MIDlet
-├─ MemoryScanService
-├─ MemoryLiveService
-└─ libjlmem.so
-   ├─ raw Search / Next Scan candidate DB
-   ├─ process_vm_readv/writev self access
-   ├─ resident ART range scanning
-   ├─ typed alias grouping support
-   ├─ visible-candidate temporal identity tracker
-   └─ live value + live-address recovery
+│  └─ classic Memory Editor View overlay
+├─ MemoryScanService                  # existing proven scanner fallback
+├─ MemoryLiveService                  # existing fallback tracker, not the target architecture
+├─ MemoryTargetBridgeService          # PID/generation + resident ART runs only
+└─ libjlprobe.so
+   ├─ disposable 64-bit capability probe
+   ├─ /proc/self/maps
+   └─ mincore() resident-run compression
+        │
+        │ Binder / same application UID
+        ▼
+:memory_engine
+├─ MemoryEngineService
+└─ libjlremote.so
+   └─ remote /proc/<pid>/maps + process_vm_readv/writev capability gate
 ```
 
-The UI process is intentionally separate from `:midlet`: UI allocation, text formatting, scrolling and UI GC must not pressure the MIDlet's ART heap. Cross-process raw-memory access is deliberately avoided. `libjlmem.so` is loaded by the thin target-process agent and reads/writes its own process.
+There is no `SYSTEM_ALERT_WINDOW`, no `TYPE_APPLICATION_OVERLAY`, and no `:memory_ui` process in this iteration. The classic overlay is a child View of `MicroActivity`, so it disappears naturally with the MIDlet Activity/process.
 
-The debug overlay requires Android's **Display over other apps** permission (`SYSTEM_ALERT_WINDOW`). Until permission is granted, a tiny `MEM` setup button may temporarily be attached to `MicroActivity`. Once granted, the bubble and full panel are owned by `:memory_ui`.
+The PR base remains `alpha-pre-emulation-speed`; emulation-speed commit `4a4a1142b59e5c748b69de06597e80476e9ae4e8` is intentionally absent from the performance baseline.
 
-## Search semantics remain unchanged
+## Why capability-first
 
-The proven scanner path remains the source of truth for Search/Next Scan:
+A non-root virtual environment such as Parallel Space is not proof that a normal Android app may inspect any other process. JL-Mod Plus has a narrower and potentially useful case: `:memory_engine` and `:midlet` are sibling processes of the same APK/UID.
 
-- scopes: Java Fast / Java Thorough;
-- types: Auto, Int8, Int16, UInt16, Int32, Int64, Float32, Float64;
-- native candidate storage;
-- resident-page filtering with `mincore()`;
+Before migrating the working scanner, the debug build proves what the actual Android 16 device permits.
+
+On MIDlet creation:
+
+1. `libjlprobe.so` exposes a disposable 64-bit native value and its address in `:midlet`.
+2. `:memory_engine` reads `/proc/<midletPid>/maps` and confirms that address belongs to a readable/writable mapping.
+3. `libjlremote.so` reads the exact value with `process_vm_readv`.
+4. It writes a temporary value with `process_vm_writev`.
+5. It reads that value back independently.
+6. It restores the original value and verifies the restore.
+7. It records engine/target PID and UID.
+
+Success requires all of:
+
+```text
+remoteSameProcess=false
+remoteSameUid=true
+remoteMaps=PASS
+remoteRead=PASS
+remoteWrite=PASS
+remoteReadback=PASS
+remoteRestore=PASS
+remoteEngineSupported=true
+```
+
+The in-game status badge starts as `ENG…`, becomes `ENG✓` on success or `ENG×` on failure. Tap the badge to copy full remote-engine diagnostics, including errno when access is denied.
+
+Until this gate passes on the physical device, Search/Next Scan/candidate ownership stays on the existing in-process fallback. This prevents a speculative architecture rewrite from breaking a scanner that is already known to find and edit real game values.
+
+## Target bridge and resident ART ranges
+
+The remote process cannot use `mincore()` directly on virtual addresses owned by `:midlet`. Blindly reading the target's large ART reservations would also be wasteful and may increase page pressure.
+
+Therefore `MemoryTargetBridgeService` exposes compressed **resident Java/ART runs** generated target-side:
+
+```text
+[count, flags, start0, end0, start1, end1, ...]
+```
+
+Implementation rules:
+
+- target-local `/proc/self/maps` selects Java Fast or Java Thorough ART mappings;
+- target-local `mincore()` tests page residency;
+- consecutive resident pages are merged into `[start,end)` runs;
+- maximum 2048 runs are returned (~32 KiB payload);
+- `flags & 1` means the run list was truncated;
+- no target-side candidate DB or scan loop is created by this bridge.
+
+If the remote capability gate passes, `:memory_engine` can later consume these runs and use `process_vm_readv(midletPid, ...)` only on memory the target reports resident.
+
+## Existing scanner fallback
+
+The current functional scanner remains available during this experiment:
+
+- Java Fast / Java Thorough;
+- Auto, Int8, Int16, UInt16, Int32, Int64, Float32, Float64;
+- native candidate buckets;
 - dynamic OS page size;
-- exact typed write with expected-current guard and readback;
-- Next Scan is a real filter: valid no-match => **0 candidates**;
-- GC count is evidence to revalidate, never proof that a candidate moved;
-- search state is tied to one live MIDlet runtime generation.
+- typed aliases;
+- exact typed edit with expected-current guard and independent readback;
+- GC-aware relocation fallback;
+- Next Scan valid no-match => **0 candidates**;
+- large untracked sets direct-refine rather than sticking on previous results;
+- runtime-generation invalidation when the MIDlet target is lost.
 
-The live tracker intentionally does **not** mutate the Search candidate DB yet. This keeps relocation heuristics from silently changing Search/Next Scan semantics during the prototype.
+This fallback still lives in `:midlet` for the capability build. Moving it is the next phase only after `ENG✓` is proven.
 
-## Live value and live address model
+## Overlay behavior
 
-A raw address is treated as a temporary binding, not the logical identity of a result.
+The Memory Editor is a classic View hierarchy attached directly to `MicroActivity`.
 
-For the first visible address groups (currently capped at 32 groups from the first 100 typed rows), `libjlmem.so` keeps a native tracking record containing:
+Properties:
 
-```text
-logical track id
-source address
-current address
-previous address
-type/alias mask
-temporal context signature
-tracking state
-confidence
-relocation count
-```
+- no overlay permission;
+- no second Activity;
+- no `:memory_ui` process;
+- transparent/semi-transparent panel over the running game;
+- created before a New Search can bind addresses;
+- reused with visibility changes rather than recreated on every round-trip;
+- automatically removed when `MicroActivity` is destroyed.
 
-The UI displays the current value and current address on every live refresh. Live observation is ON by default at a conservative 1 second interval; UI polling itself occurs in `:memory_ui`.
+Because the UI shares the MIDlet ART heap again, it remains deliberately classic/reusable rather than Compose-heavy. The long-term goal is that the expensive scanner/candidate/tracker state moves out to `:memory_engine`, leaving only the UI and tiny target bridge in `:midlet`.
 
-### Tracking states
+## ANR finding and hardening
 
-```text
-UNTRACKED
-STABLE
-SUSPECT
-RELOCATED / Rebound
-AMBIGUOUS
-LOST
-```
+The Android 16 ANR trace from the previous external-overlay build showed an input-dispatch timeout, not a Binder deadlock.
 
-A GC count increase by itself does not change the state.
+At the captured point:
 
-### Stable-address validation
+- Android main thread was blocked posting a pointer event to the MIDlet EventQueue;
+- a game thread held the EventQueue callback monitor while inside game `paint()` and recursive `repaint()` flow;
+- `memory-scan-worker` was parked/idle;
+- Binder threads were waiting in the driver;
+- ART HeapTaskDaemon was waiting.
 
-Each tracked candidate captures context around the target value:
+The branch retains two hardenings from that investigation:
 
-- 64 bytes before;
-- the 8-byte maximum target span excluded;
-- 64 bytes after;
-- context split into 4-byte lanes;
-- zero and `0xFFFFFFFF` lanes ignored;
-- lanes that change during otherwise-valid observation are progressively removed from the temporal identity.
+1. Android UI input is not allowed to synchronously enter the immediate MIDlet callback path that can wait behind a long paint callback.
+2. Existing live-address recovery is asynchronous and unresolved recovery is backed off rather than performing a full resident-heap recovery scan on every UI tick.
 
-On refresh, the tracker first validates those anchors at the existing `currentAddress`.
+The new remote-engine architecture should further reduce coupling once the full scanner leaves the target process.
+
+## Physical-device test gate
+
+### 1. Remote engine capability
+
+Start a MIDlet. Expected UI:
 
 ```text
-identity still matches at A
-=> STABLE at A
+MEM    ENG…
 ```
 
-This remains true even if ART's GC counter increased.
+No Android overlay-permission prompt should appear.
 
-### Relocation detection
+After the one-shot probe:
 
-Only when the identity no longer validates at A does the candidate become `SUSPECT` and trigger recovery.
+- `ENG✓` + toast `Memory engine remote access: PASS` is the desired result.
+- `ENG×` means the kernel/SELinux/ptrace policy rejected some part of the path. Tap `ENG×` and paste the copied diagnostics.
 
-All suspect visible candidates in that refresh share one resident-ART recovery scan. The native engine chooses several informative anchors per candidate, searches resident Java heap pages, reconstructs possible target addresses from anchor offsets, then validates the full temporal signature.
+The most useful failure fields are:
 
 ```text
-old identity fails at A
-+ same identity uniquely wins at B
-=> RELOCATED A -> B
+remoteEnginePid=
+remoteTargetPid=
+remoteEngineUid=
+remoteTargetUid=
+remoteSameUid=
+remoteMaps=
+remoteRead=
+remoteReadErrno=
+remoteWrite=
+remoteWriteErrno=
+remoteReadback=
+remoteRestore=
+remoteEngineSupported=
 ```
 
-The UI then exposes:
+### 2. Existing scanner regression
 
-- new/current address B;
-- previous address A;
-- confidence;
-- relocation count;
-- live value read from B.
+Regardless of `ENG✓/ENG×`, verify the fallback scanner still works:
 
-If multiple locations are too close in confidence, state becomes `AMBIGUOUS`. If no acceptable location exists, state becomes `LOST`. Ambiguous/lost/suspect candidates are shown but are not considered safe for writes.
+- Green Farm Java Fast + Int32 authoritative coin candidate;
+- typed edit changes the game;
+- Next Scan no-match becomes 0;
+- Auto can be narrowed over several scans;
+- >25k result sets no longer stick on the previous count.
 
-Recovery is deliberately bounded:
+### 3. ANR regression
 
-- max 32 actively tracked unique address groups;
-- max 6 distinct recovery anchors per group;
-- resident Java/ART pages only;
-- max candidate tests per tracked group;
-- recovery scan occurs only after address validation fails.
+Interact rapidly with the running game before and after opening/closing the Memory Editor several times. There must be no 5-second input timeout. If another ANR occurs, retain the complete process trace again.
 
-This avoids continuously rescanning the heap merely because GC happened.
+### 4. Address stability
 
-## Write safety
+For Green Farm explicit Int32:
 
-The UI may edit a visible candidate only when its live identity is acceptable (`STABLE`, `RELOCATED`, or legacy/untracked fallback) and the typed value is readable. `SUSPECT`, `AMBIGUOUS`, and `LOST` candidates refuse the write.
+1. search the known coin value;
+2. record the raw address and GC total;
+3. return to gameplay without editing it;
+4. change coins normally;
+5. reopen Memory Editor before Next Scan;
+6. compare address/value/GC behavior.
 
-The underlying typed write still uses the existing expected-current guard and independent readback.
+This tells us whether removing the external overlay process and excluding the emulation-speed commit changes the Android 16 address-relocation pattern.
 
-There is intentionally no Freeze yet. A future Freeze must use the same identity state machine and must suspend writes immediately when a candidate becomes suspect/ambiguous/lost.
+## Next phase after `remoteEngineSupported=true`
 
-## Diagnostics
+Once the physical Android 16 device proves remote read/write, migrate in this order:
 
-Scanner diagnostics remain available, plus live tracker fields such as:
+1. introduce a target-PID/resident-run memory-source abstraction in the native scanner;
+2. move New Search and candidate buckets to `:memory_engine`;
+3. move Next Scan and relocation context DB;
+4. move live value reads;
+5. move logical-candidate/live-address tracking;
+6. leave only the classic overlay + `MemoryTargetBridgeService` + `libjlprobe.so` in `:midlet`;
+7. then design Watch;
+8. implement Freeze only after live-address rebinding is physically validated.
 
-```text
-uiProcess=:memory_ui
-targetProcess=:midlet
-nativeBackbone=libjlmem.so
-liveTrackedGroups=
-liveTrackLimit=
-liveStable=
-liveRelocated=
-liveSuspect=
-liveAmbiguous=
-liveLost=
-liveUntracked=
-liveValidationReads=
-liveRecoveryScans=
-liveRebinds=
-liveAmbiguousTotal=
-liveLostTotal=
-```
+Search and live-address tracking should eventually share one logical candidate identity, but the migration must not let a heuristic live rebind silently corrupt Search/Next Scan semantics.
 
-Diagnostics remain bounded to ~200 lines and copyable from the overlay.
+## Safety
 
-## Highest-priority physical-device tests
+Still out of scope for this prototype:
 
-### Green Farm explicit Int32
-
-1. Grant **Display over other apps** when the temporary `MEM` setup button requests it.
-2. Confirm the independent `MEM` bubble appears.
-3. Open Memory Editor; verify diagnostics say `uiProcess=:memory_ui`, `targetProcess=:midlet`, `nativeBackbone=libjlmem.so`.
-4. Java Fast + Int32, search the known coin value. Expected: one authoritative candidate.
-5. Record current address and value.
-6. Close the panel and change coins through normal gameplay.
-7. Reopen/observe live results without Next Scan first.
-8. If address did not move, expect `Stable` and the same address with updated live value.
-9. If it moved, expect `Rebound`, a new current address, the previous address, and `liveRebinds > 0`.
-10. Only after live observation is correct, perform an exact typed edit and verify the game changes.
-
-A GC-count increase without an address change is a valid `STABLE` result.
-
-### Auto / several thousand candidates
-
-Repeat New Search using Auto, then narrow with normal Next Scan. The search result set must still obey normal filtering semantics. Visible rows may independently report live address states; the live tracker must not expand or rewrite the search set.
-
-### Large result set (>25k)
-
-Regression gate: GC must not cause Next Scan to stick on the previous count. Direct refine still runs; valid no-match ends at zero.
-
-## Known limitations of this iteration
-
-- Live identity is heuristic; raw primitive address -> Java object identity is not available through a stable public ART API.
-- Only a bounded number of visible address groups receive full temporal tracking.
-- Stable surrounding data may legitimately change enough that a candidate becomes LOST even though the logical value still exists.
-- A sufficiently similar neighborhood can become ambiguous; the implementation intentionally fails closed instead of guessing.
-- The live tracker does not yet feed a rebound address back into the Search candidate DB.
-- No Watch List or Freeze yet.
-- No Edit All / mass write.
-- No bytecode instrumentation, JVMTI, private ART object pinning, root daemon, pointer/reference editing, stack/register scanning, encoded/encrypted-value discovery, or RMS/save editing.
-
-## Acceptance rule before Freeze
-
-The next milestone is not “GC count stays zero”. The required behavior is:
-
-```text
-same logical value
-├─ stays at A -> tracker remains STABLE
-└─ moves A -> B -> tracker reports a unique REBOUND and continues live observation at B
-```
-
-Watch and Freeze should be built only after that behavior survives repeated real-device gameplay and multiple ART GC cycles without false rebinds.
+- Freeze;
+- Edit All / mass blind writes;
+- reference/pointer editing;
+- stack/register scanning;
+- private ART/JVMTI object pinning;
+- root daemon;
+- encoded/encrypted-value discovery;
+- RMS/save editing.
