@@ -4,7 +4,8 @@
 package ru.playsoftware.j2meloader.config
 
 import androidx.compose.ui.test.junit4.v2.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -21,7 +22,7 @@ class ProfileManagerComposeTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun mixedModifiedSourcesExposeIndependentKeepActions() {
+    fun mixedModifiedSourcesKeepRareActionsBehindComponentMenus() {
         val events = RecordingEvents()
         val status = ConfigUiState.ProfileStatus.components(
             "Nokia S40",
@@ -47,8 +48,12 @@ class ProfileManagerComposeTest {
 
         composeRule.onNodeWithText("Nokia S40").assertExists()
         composeRule.onNodeWithText("Touch Landscape").assertExists()
+        composeRule.onNodeWithText("Keep Settings for This App").assertDoesNotExist()
+        composeRule.onNodeWithText("Keep Keyboard for This App").assertDoesNotExist()
 
+        composeRule.onAllNodesWithContentDescription("More")[0].performClick()
         composeRule.onNodeWithText("Keep Settings for This App").performClick()
+        composeRule.onAllNodesWithContentDescription("More")[1].performClick()
         composeRule.onNodeWithText("Keep Keyboard for This App").performClick()
 
         assertEquals(1, events.keepSettingsCalls)
@@ -56,7 +61,7 @@ class ProfileManagerComposeTest {
     }
 
     @Test
-    fun modifiedBuiltInRemainsVisibleAsSourceAndCanBeKeptLocally() {
+    fun modifiedBuiltInRemainsVisibleWithoutExposingGlobalUpdate() {
         val events = RecordingEvents()
         val status = ConfigUiState.ProfileStatus.components(
             null,
@@ -79,7 +84,8 @@ class ProfileManagerComposeTest {
 
         composeRule.onNodeWithText("Built-In Settings").assertExists()
         composeRule.onNodeWithText("Modified").assertExists()
-        composeRule.onNodeWithText("Update Template").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription("More").performClick()
+        composeRule.onNodeWithText("Update Profile").assertDoesNotExist()
         composeRule.onNodeWithText("Keep Settings for This App").performClick()
 
         assertEquals(1, events.keepSettingsCalls)
@@ -110,12 +116,34 @@ class ProfileManagerComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Update Template").performClick()
+        composeRule.onNodeWithContentDescription("More").performClick()
+        composeRule.onNodeWithText("Update Profile").performClick()
         composeRule.onNodeWithText("Update “Nokia S40”?").assertExists()
         assertEquals(0, events.updateCalls)
 
-        composeRule.onAllNodesWithText("Update Template")[1].performClick()
+        composeRule.onNodeWithText("Update Profile").performClick()
         assertEquals(1, events.updateCalls)
+    }
+
+    @Test
+    fun sourceRowsAreStatusAndChangeProfileIsTheSingleManagerEntry() {
+        val events = RecordingEvents()
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigProfilePanel(
+                    status = ConfigUiState.ProfileStatus.active("Nokia S40", null),
+                    templates = listOf(
+                        ConfigUiState.ProfileTemplate("Nokia S40", false, true, true),
+                    ),
+                    events = events,
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Nokia S40").performClick()
+        composeRule.onNodeWithText("Profiles").assertDoesNotExist()
+        composeRule.onNodeWithText("Change Profile").performClick()
+        composeRule.onNodeWithText("Profiles").assertExists()
     }
 
     private class RecordingEvents : ConfigFormEvents {

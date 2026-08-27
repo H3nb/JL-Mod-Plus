@@ -107,7 +107,7 @@ class ConfigComposeTest {
         composeRule.onNodeWithText("Touch input").assertExists()
         composeRule.onNodeWithContentDescription("Start").assertDoesNotExist()
         composeRule.onNodeWithText("Use profile").assertDoesNotExist()
-        composeRule.onNodeWithText("Save As New Template").assertDoesNotExist()
+        composeRule.onNodeWithText("Save as Profile").assertDoesNotExist()
     }
 
     @Test
@@ -150,8 +150,8 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Built-In Settings").performClick()
-        composeRule.onNodeWithText("Configuration Templates").assertExists()
+        composeRule.onNodeWithText("Change Profile").performClick()
+        composeRule.onNodeWithText("Profiles").assertExists()
         composeRule.onNodeWithText("Built-In Settings").performClick()
         assertEquals(1, events.applyBuiltInCalls)
     }
@@ -173,11 +173,9 @@ class ConfigComposeTest {
         composeRule.setContent {
             JLModPlusTheme { ConfigScreen(state, RecordingConfigEvents()) }
         }
-        composeRule.onAllNodesWithText("Nokia Classic").fetchSemanticsNodes().also {
-            assertTrue(it.size >= 2)
-        }
-        composeRule.onAllNodesWithText("Nokia Classic")[0].performClick()
-        composeRule.onNodeWithText("Configuration Templates").assertExists()
+        composeRule.onNodeWithText("Nokia Classic").assertExists()
+        composeRule.onNodeWithText("Change Profile").performClick()
+        composeRule.onNodeWithText("Profiles").assertExists()
         composeRule.onNodeWithText("Default").assertExists()
     }
 
@@ -203,7 +201,7 @@ class ConfigComposeTest {
         composeRule.onNodeWithText("Built-In Settings").assertExists()
         composeRule.onNodeWithText("App-specific").assertExists()
         composeRule.onNodeWithText("Custom").assertDoesNotExist()
-        composeRule.onNodeWithText("Save As New Template").assertExists()
+        composeRule.onNodeWithText("Save as Profile").assertExists()
         composeRule.onNodeWithText("Choose or manage templates").assertDoesNotExist()
     }
 
@@ -239,13 +237,14 @@ class ConfigComposeTest {
         composeRule.onNodeWithText("Nokia Settings").assertExists()
         composeRule.onNodeWithText("Touch Layout").assertExists()
         composeRule.onNodeWithText("Modified").assertExists()
-        composeRule.onNodeWithText("Update Template").performClick()
+        composeRule.onNodeWithContentDescription("More").performClick()
+        composeRule.onNodeWithText("Update Profile").performClick()
         composeRule.onNodeWithText("Update “Nokia Settings”?").assertExists()
         composeRule.onNodeWithText(
             "This changes the linked profile globally. Every app that uses the updated component will receive it automatically unless that app has its own modified copy.",
         ).assertExists()
         assertEquals(null, events.updatedTemplate)
-        composeRule.onAllNodesWithText("Update Template")[1].performClick()
+        composeRule.onNodeWithText("Update Profile").performClick()
         assertEquals("Nokia Settings", events.updatedTemplate)
     }
 
@@ -268,10 +267,10 @@ class ConfigComposeTest {
             JLModPlusTheme { ConfigScreen(state, events) }
         }
 
-        composeRule.onNodeWithText("Save As New Template").performClick()
+        composeRule.onNodeWithText("Save as Profile").performClick()
         assertEquals(1, events.saveAsProfileCalls)
 
-        composeRule.onNodeWithText("Custom").performClick()
+        composeRule.onNodeWithText("Change Profile").performClick()
         composeRule.onNodeWithContentDescription("More").performClick()
         composeRule.onNodeWithText("Apply Settings Only").performClick()
         assertEquals("Combined", events.appliedComponentsName)
@@ -532,7 +531,6 @@ class ConfigComposeTest {
         var lastForm: ConfigFormState? = null
         var removed: Size? = null
         var colorPickerField: ConfigFormEvents.ColorField? = null
-        var useProfileCalls = 0
         var saveAsProfileCalls = 0
         var applyBuiltInCalls = 0
         var updatedTemplate: String? = null
@@ -557,9 +555,6 @@ class ConfigComposeTest {
         override fun onEncodingPicker() = Unit
         override fun onShaderTuning() = Unit
 
-        override fun onUseProfile() {
-            useProfileCalls++
-        }
 
         override fun onSaveAsProfile() {
             saveAsProfileCalls++
