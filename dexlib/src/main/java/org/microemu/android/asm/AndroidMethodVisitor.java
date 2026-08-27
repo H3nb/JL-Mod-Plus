@@ -24,7 +24,7 @@
  * limitations.
  *
  * Modified in JL-Mod Plus to preserve Java ME bytecode return semantics and route guest timing
- * call sites through the parent-owned emulator bridge during DEX conversion.
+ * and runtime call sites through emulator-owned bridges during DEX conversion.
  *
  * @version $Id$
  */
@@ -240,7 +240,20 @@ public class AndroidMethodVisitor extends MethodVisitor {
 					name = "setListenerCompat";
 				}
 				break;
+			case "java/lang/Runtime":
+				if (opcode == INVOKEVIRTUAL && name.equals("gc") && desc.equals("()V")) {
+					// The static overload consumes the original receiver and preserves its null check.
+					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/MidletSystem",
+							"gc", "(Ljava/lang/Runtime;)V", false);
+					return;
+				}
+				break;
 			case "java/lang/System":
+				if (opcode == INVOKESTATIC && name.equals("gc") && desc.equals("()V")) {
+					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/MidletSystem",
+							"gc", "()V", false);
+					return;
+				}
 				if (opcode == INVOKESTATIC && name.equals("currentTimeMillis") && desc.equals("()J")) {
 					mv.visitMethodInsn(INVOKESTATIC, "javax/microedition/shell/GuestTimingBridge",
 							"currentTimeMillis", "()J", false);

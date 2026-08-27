@@ -43,6 +43,22 @@ public class AndroidMethodVisitorTest {
 	}
 
 	@Test
+	public void guestExplicitGcUsesAdvisoryEmulatorBridge() {
+		byte[] transformed = transform(createExplicitGcClass());
+		List<String> calls = methodCalls(transformed, "collect");
+
+		assertTrue(calls.contains(
+				"INVOKESTATIC javax/microedition/shell/MidletSystem.gc()V"));
+		assertTrue(calls.contains(
+				"INVOKESTATIC java/lang/Runtime.getRuntime()Ljava/lang/Runtime;"));
+		assertTrue(calls.contains(
+				"INVOKESTATIC javax/microedition/shell/MidletSystem.gc(Ljava/lang/Runtime;)V"));
+		assertFalse(calls.contains("INVOKESTATIC java/lang/System.gc()V"));
+		assertFalse(calls.contains("INVOKEVIRTUAL java/lang/Runtime.gc()V"));
+		assertEquals(3, calls.size());
+	}
+
+	@Test
 	public void yieldRewriteUsesNonThrowingBridge() {
 		byte[] source = createYieldClass();
 		byte[] transformed = transform(source);
@@ -159,6 +175,24 @@ public class AndroidMethodVisitorTest {
 		method.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Thread", "yield", "()V", false);
 		method.visitInsn(Opcodes.RETURN);
 		method.visitMaxs(2, 0);
+		method.visitEnd();
+		writer.visitEnd();
+		return writer.toByteArray();
+	}
+
+	private static byte[] createExplicitGcClass() {
+		ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+		writer.visit(Opcodes.V17, Opcodes.ACC_PUBLIC, "sample/ExplicitGc", null,
+				"java/lang/Object", null);
+		MethodVisitor method = writer.visitMethod(
+				Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, "collect", "()V", null, null);
+		method.visitCode();
+		method.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/System", "gc", "()V", false);
+		method.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Runtime", "getRuntime",
+				"()Ljava/lang/Runtime;", false);
+		method.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Runtime", "gc", "()V", false);
+		method.visitInsn(Opcodes.RETURN);
+		method.visitMaxs(1, 0);
 		method.visitEnd();
 		writer.visitEnd();
 		return writer.toByteArray();
