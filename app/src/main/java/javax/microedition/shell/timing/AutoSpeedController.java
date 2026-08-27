@@ -28,11 +28,12 @@ public final class AutoSpeedController implements AutoCloseable {
 	private final TimingSession session;
 	private final FrameMetrics frameMetrics = new FrameMetrics();
 	private final AutoSpeedGovernor governor = new AutoSpeedGovernor();
-	private final ScheduledExecutorService sampler;
+	private ScheduledExecutorService sampler;
 
 	private boolean autoEnabled;
 	private boolean frameSourceActive;
 	private boolean closed;
+	private long samplerGeneration;
 	private long previousSampleNanos;
 	private long previousGameFrames;
 
@@ -41,16 +42,6 @@ public final class AutoSpeedController implements AutoCloseable {
 			throw new NullPointerException("session");
 		}
 		this.session = session;
-		sampler = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
-			@Override
-			public Thread newThread(Runnable runnable) {
-				Thread thread = new Thread(runnable, "AutoEmulationSpeed");
-				thread.setDaemon(true);
-				return thread;
-			}
-		});
-		sampler.scheduleWithFixedDelay(
-				this::sampleSafely, SAMPLE_MILLIS, SAMPLE_MILLIS, TimeUnit.MILLISECONDS);
 	}
 
 	@NonNull
@@ -79,6 +70,7 @@ public final class AutoSpeedController implements AutoCloseable {
 		autoEnabled = true;
 		governor.reset();
 		resetSampleWindow();
+		startSampler();
 		return true;
 	}
 
@@ -88,6 +80,7 @@ public final class AutoSpeedController implements AutoCloseable {
 			return false;
 		}
 		autoEnabled = false;
+		stopSampler();
 		try {
 			session.updateSpeedPercent(speedPercent);
 			return true;
@@ -105,15 +98,18 @@ public final class AutoSpeedController implements AutoCloseable {
 		resetSampleWindow();
 	}
 
-	private void sampleSafely() {
+	private void sampleSafely(long generation) {
 		try {
-			sample();
+			sample(generation);
 		} catch (RuntimeException ignored) {
 			// Host diagnostics must never terminate or crash the guest session.
 		}
 	}
 
-	private synchronized void sample() {
+	private synchronized void sample(long generation) {
+		if (generation != samplerGeneration) {
+			return;
+		}
 		if (closed || !autoEnabled || !frameSourceActive || session.isClosed()) {
 			resetSampleWindow();
 			return;
@@ -138,6 +134,34 @@ public final class AutoSpeedController implements AutoCloseable {
 		previousSampleNanos = System.nanoTime();
 	}
 
+	private void startSampler() {
+		if (sampler != null) {
+			return;
+		}
+		long generation = ++samplerGeneration;
+		sampler = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+			@Override
+			public Thread newThread(Runnable runnable) {
+				Thread thread = new Thread(runnable, "AutoEmulationSpeed");
+				thread.setDaemon(true);
+				return thread;
+			}
+		});
+		sampler.scheduleWithFixedDelay(
+				() -> sampleSafely(generation),
+				SAMPLE_MILLIS,
+				SAMPLE_MILLIS,
+				TimeUnit.MILLISECONDS);
+	}
+
+	private void stopSampler() {
+		samplerGeneration++;
+		if (sampler != null) {
+			sampler.shutdownNow();
+			sampler = null;
+		}
+	}
+
 	private static long nonNegativeDelta(long current, long previous) {
 		return current >= previous ? current - previous : current;
 	}
@@ -150,6 +174,6 @@ public final class AutoSpeedController implements AutoCloseable {
 		closed = true;
 		autoEnabled = false;
 		frameSourceActive = false;
-		sampler.shutdownNow();
+		stopSampler();
 	}
 }
