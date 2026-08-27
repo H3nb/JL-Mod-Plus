@@ -113,7 +113,7 @@ internal fun ConfigProfilePanel(
                 .padding(start = 8.dp, top = 6.dp, end = 12.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (status.modified || hasLocalComponent) {
+            if (status.hasModifiedComponents() || hasLocalComponent) {
                 TextButton(onClick = events::onSaveAsProfile) {
                     Text(stringResource(R.string.profile_save_as_profile))
                 }
