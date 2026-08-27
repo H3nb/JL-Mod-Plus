@@ -10,8 +10,8 @@
 package ru.playsoftware.j2meloader.memory;
 
 /**
- * Tiny target-side native probe used only to prove same-UID cross-process memory access.
- * It intentionally owns no scanner state and performs no heap scan.
+ * Tiny target-side native probe. It owns no scanner/candidate state: only process identity,
+ * disposable cross-process capability probe data, and compressed resident ART page runs.
  */
 public final class NativeTargetProbe {
     static {
@@ -23,4 +23,7 @@ public final class NativeTargetProbe {
     public static native long probeAddress();
     public static native long probeValue();
     public static native int pageSize();
+
+    /** Fills [count, flags, start0, end0, ...]; flags bit 0 means truncated. */
+    public static native int fillResidentJavaRuns(long[] output, int scope, int maxRuns);
 }
