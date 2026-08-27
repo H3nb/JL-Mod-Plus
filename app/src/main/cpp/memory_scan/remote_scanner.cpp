@@ -557,11 +557,17 @@ bool buildGroups(const CandidateStore &store, std::vector<AddressGroup> *groups)
     }
 }
 
-bool appendRecoveredMask(CandidateStore *out, uintptr_t address, uint32_t mask) {
+bool appendRecoveredMask(CandidateStore *out, uintptr_t address, uint32_t mask,
+        const CandidateStore *fresh = nullptr) {
     for (int type = kFirstType; type <= kLastType; ++type) {
         if ((mask & typeBit(type)) == 0) continue;
-        try { (*out)[static_cast<size_t>(type)].addresses.push_back(address); }
+        auto &bucket = (*out)[static_cast<size_t>(type)];
+        try { bucket.addresses.push_back(address); }
         catch (const std::bad_alloc &) { return false; }
+        if (fresh != nullptr) {
+            bucket.matches_seen = (*fresh)[static_cast<size_t>(type)].matches_seen;
+            bucket.overflow = (*fresh)[static_cast<size_t>(type)].overflow;
+        }
     }
     return true;
 }
@@ -699,40 +705,49 @@ int performRelocationRefine(const std::string &value) {
     for (size_t i = 0; i < old_groups.size(); ++i) {
         const size_t j = proposal[i];
         if (j == none) continue;
-        if (fresh_claims[j] != 1) { ++g_diag.relocation_ambiguous; continue; }
+        if (!one_to_one && fresh_claims[j] != 1) {
+            ++g_diag.relocation_ambiguous;
+            continue;
+        }
         const uint32_t mask = old_groups[i].type_mask & fresh_groups[j].type_mask;
         if (mask == 0) continue;
-        if (!appendRecoveredMask(&recovered, fresh_groups[j].address, mask)) return kResultResourceLimit;
+        if (!appendRecoveredMask(&recovered, fresh_groups[j].address, mask, &fresh)) {
+            g_last_error = "Unable to allocate recovered candidate set";
+            return kResultResourceLimit;
+        }
         ++g_diag.relocation_recovered_groups;
     }
     g_diag.relocation_recovered = candidateCount(recovered);
     if (g_diag.relocation_recovered == 0) {
         releaseCandidates();
         g_diag.relocation_tracking = false;
-        g_last_error = "GC/address-aware Next Scan complete: 0 candidates; no unambiguous previous identity matched";
+        g_last_error = "Address-aware Next Scan complete: 0 candidates; no previous address group matched confidently";
         return kResultOk;
     }
     captureContexts(&recovered);
     releaseCandidates();
     g_candidates.swap(recovered);
-    g_last_error = std::string("Remote relocation rebound ")
-            + std::to_string(g_diag.relocation_recovered_groups) + " address groups / "
-            + std::to_string(g_diag.relocation_recovered) + " typed aliases"
-            + (g_diag.relocation_ambiguous == 0 ? "" : "; ambiguous groups rejected");
+    g_last_error = std::string("Remote address relocation rebound ")
+            + std::to_string(g_diag.relocation_recovered_groups) + " groups / "
+            + std::to_string(g_diag.relocation_recovered) + " typed aliases";
     return kResultOk;
 }
 
 bool valueBits(uintptr_t address, int type, int64_t *bits) {
+    uint64_t raw = 0;
+    const size_t width = widthForType(type);
+    if (width == 0 || !readExact(address, &raw, width)) return false;
     switch (type) {
-        case kTypeInt8: { int8_t v; if (!readExact(address, &v, 1)) return false; *bits = v; return true; }
-        case kTypeInt16: { int16_t v; if (!readExact(address, &v, 2)) return false; *bits = v; return true; }
-        case kTypeUInt16: { uint16_t v; if (!readExact(address, &v, 2)) return false; *bits = v; return true; }
-        case kTypeInt32: { int32_t v; if (!readExact(address, &v, 4)) return false; *bits = v; return true; }
-        case kTypeInt64: { int64_t v; if (!readExact(address, &v, 8)) return false; *bits = v; return true; }
-        case kTypeFloat32: { uint32_t v; if (!readExact(address, &v, 4)) return false; *bits = static_cast<int64_t>(v); return true; }
-        case kTypeFloat64: { uint64_t v; if (!readExact(address, &v, 8)) return false; *bits = static_cast<int64_t>(v); return true; }
+        case kTypeInt8: *bits = static_cast<int8_t>(raw); break;
+        case kTypeInt16: *bits = static_cast<int16_t>(raw); break;
+        case kTypeUInt16: *bits = static_cast<uint16_t>(raw); break;
+        case kTypeInt32: *bits = static_cast<int32_t>(raw); break;
+        case kTypeInt64: *bits = static_cast<int64_t>(raw); break;
+        case kTypeFloat32: *bits = static_cast<int64_t>(static_cast<uint32_t>(raw)); break;
+        case kTypeFloat64: *bits = static_cast<int64_t>(raw); break;
         default: return false;
     }
+    return true;
 }
 
 bool encodeValue(const ParsedValues &values, int type, uint8_t out[8], size_t *width) {
@@ -751,12 +766,15 @@ bool encodeValue(const ParsedValues &values, int type, uint8_t out[8], size_t *w
 
 std::string performEdit(uintptr_t address, int type, const std::string &expected_text,
         const std::string &replacement_text) {
-    ParsedValues expected, replacement;
+    if (!isCandidateType(type)) return "Invalid candidate type";
+    ParsedValues expected;
+    ParsedValues replacement;
     std::string error;
     if (!parseValues(expected_text, type, &expected, &error)) return "Invalid expected value: " + error;
     if (!parseValues(replacement_text, type, &replacement, &error)) return "Invalid replacement value: " + error;
     const size_t width = widthForType(type);
-    if (width == 0 || (address / g_page_size) != ((address + width - 1) / g_page_size)) {
+    if (width == 0 || address > std::numeric_limits<uintptr_t>::max() - (width - 1)
+            || (address / g_page_size) != ((address + width - 1) / g_page_size)) {
         return "Candidate crosses a page boundary or has invalid width";
     }
     if (!writableMapping(address, width)) return "Candidate is no longer in a target readable/writable mapping";
