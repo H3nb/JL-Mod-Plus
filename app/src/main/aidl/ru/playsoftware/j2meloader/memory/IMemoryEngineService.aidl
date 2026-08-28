@@ -20,13 +20,26 @@ interface IMemoryEngineService {
     long startKnownSearch(long runtimeToken, int scope, int valueType, int predicate,
             String firstValue, String secondValue);
     long startUnknownSearch(long runtimeToken, int scope, int valueType);
+    long startGroupSearch(long runtimeToken, int scope, in int[] valueTypes,
+            in String[] values, int maxDistance);
     long refineKnown(long runtimeToken, int predicate, String firstValue, String secondValue);
     long refineRelative(long runtimeToken, int predicate, int compareTarget,
             String firstValue, String secondValue);
     long undoSearch(long runtimeToken);
+    long refreshCandidates(long runtimeToken, in long[] candidateIds);
+    long removeCandidates(long runtimeToken, in long[] candidateIds);
+    long keepCandidates(long runtimeToken, in long[] candidateIds);
+    long editCandidates(long runtimeToken, in long[] candidateIds, String replacementValue);
 
     long getResultCount(long runtimeToken);
     long[] getResultPage(long runtimeToken, int offset, int limit);
+    Bundle getWatchPage(long runtimeToken);
+    long addWatch(long runtimeToken, in long[] candidateIds);
+    long removeWatch(long runtimeToken, in long[] candidateIds);
+    long setWatchLabel(long runtimeToken, long candidateId, String label);
+    long setFreeze(long runtimeToken, in long[] candidateIds, int mode,
+            String firstValue, String secondValue);
+    long clearFreeze(long runtimeToken, in long[] candidateIds);
     void clearSearch(long runtimeToken);
     void cancelOperation(long runtimeToken);
 }

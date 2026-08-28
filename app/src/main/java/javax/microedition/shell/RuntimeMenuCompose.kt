@@ -98,6 +98,7 @@ interface RuntimeMenuActions {
     fun onSetEmulationSpeed(value: Int)
     fun onSetAutoEmulationSpeed()
     fun onResetEmulationSpeed()
+    fun onMemoryEditor()
     fun onEditVirtualKeyboardLayout()
     fun onResizeVirtualKeyboardLayout()
     fun onFinishVirtualKeyboardLayout()
@@ -644,6 +645,14 @@ private fun LazyListScope.runtimeMenuItems(
                 onDismiss()
                 actions.onToggleOrientationLock()
             },
+        )
+    }
+    item {
+        RuntimeActionItem(
+            R.string.memory_editor,
+            onDismiss,
+            actions::onMemoryEditor,
+            leadingIcon = R.drawable.ic_memory_editor_search,
         )
     }
     if (state.isCanvas) {

@@ -26,9 +26,13 @@ final class NativeMemoryEngine {
 
 	static native boolean canReadTarget(int pid, long address, long expectedBits);
 
+	static native boolean canWriteTarget(int pid, long address, long expectedBits);
+
 	static native int startKnown(int valueType, int predicate, String first, String second);
 
 	static native int startUnknown(int valueType);
+
+	static native int startGroup(int[] valueTypes, String[] values, int maxDistance);
 
 	static native int refineKnown(int predicate, String first, String second);
 
@@ -36,11 +40,25 @@ final class NativeMemoryEngine {
 
 	static native int undo();
 
+	static native int refresh(long[] candidateIds, boolean allowRecovery);
+
+	static native int filter(long[] candidateIds, boolean keep);
+
+	static native int edit(long[] candidateIds, String replacementValue);
+
+	static native int pin(long[] candidateIds, boolean add);
+
+	static native long[] watchPage();
+
+	static native int freeze(long[] candidateIds, int mode, String firstValue, String secondValue);
+
 	static native long resultCount();
 
 	static native long[] resultPage(int offset, int limit);
 
-	static native void clear();
+	static native void clearSearch();
+
+	static native void clearTarget();
 
 	static native void cancel();
 

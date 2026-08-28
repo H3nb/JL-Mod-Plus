@@ -78,6 +78,7 @@ import ru.playsoftware.j2meloader.BuildConfig;
 import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.crashes.MidletSessionStore;
+import ru.playsoftware.j2meloader.memory.MemoryEditorComposeController;
 import ru.playsoftware.j2meloader.runtime.MidletKeepAliveService;
 import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 import ru.playsoftware.j2meloader.util.LogUtils;
@@ -102,6 +103,7 @@ public class MicroActivity extends AppCompatActivity {
 	private String appPath;
 	private RuntimeHostView binding;
 	private RuntimeMenuComposeController runtimeMenuController;
+	private MemoryEditorComposeController memoryEditorController;
 	private TransientNoticeComposeController runtimeNoticeController;
 	private WindowInsetsCompat lastWindowInsets;
 	private boolean skinLayerAvailable;
@@ -123,6 +125,7 @@ public class MicroActivity extends AppCompatActivity {
 		binding = new RuntimeHostView(this);
 		setContentView(binding.getRoot());
 		runtimeNoticeController = new TransientNoticeComposeController(binding.notices);
+		memoryEditorController = new MemoryEditorComposeController(binding.memoryEditor);
 		virtualDisplayPaddingLeft = binding.virtualDisplay.getPaddingLeft();
 		virtualDisplayPaddingTop = binding.virtualDisplay.getPaddingTop();
 		virtualDisplayPaddingRight = binding.virtualDisplay.getPaddingRight();
@@ -210,7 +213,9 @@ public class MicroActivity extends AppCompatActivity {
 			public void handleOnBackPressed() {
 				// Android system Back is distinct from physical/remapped key events. Keep the
 				// established short-Back action without synthesizing a KEYCODE_BACK event.
-				if (isRuntimeMenuVisible()) {
+				if (memoryEditorController != null && memoryEditorController.isVisible()) {
+					memoryEditorController.close();
+				} else if (isRuntimeMenuVisible()) {
 					closeOptionsMenu();
 				} else {
 					openOptionsMenu();
@@ -289,6 +294,13 @@ public class MicroActivity extends AppCompatActivity {
 					@Override
 					public void onResetEmulationSpeed() {
 						onSetEmulationSpeed(EmulationSpeed.NORMAL_PERCENT);
+					}
+
+					@Override
+					public void onMemoryEditor() {
+						if (memoryEditorController != null) {
+							memoryEditorController.open();
+						}
 					}
 
 					@Override
@@ -435,6 +447,10 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	protected void onDestroy() {
+		if (memoryEditorController != null) {
+			memoryEditorController.destroy();
+			memoryEditorController = null;
+		}
 		// A MIDlet chooser, malformed archive, or Activity teardown can happen before a
 		// MidletThread is started. In that window MicroLoader still owns any launch session.
 		if (microLoader != null) {
@@ -830,7 +846,9 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void toggleRuntimeMenuFromInput() {
-		if (isRuntimeMenuVisible()) {
+		if (memoryEditorController != null && memoryEditorController.isVisible()) {
+			memoryEditorController.close();
+		} else if (isRuntimeMenuVisible()) {
 			closeOptionsMenu();
 		} else {
 			openOptionsMenu();

@@ -40,6 +40,8 @@ constexpr jint kInvalidRequest = 2;
 constexpr jint kResourceLimit = 3;
 constexpr jint kTargetLost = 5;
 constexpr jint kNoSession = 6;
+constexpr jint kIdentityUnsafe = 7;
+constexpr jint kSafetyLimit = 8;
 
 constexpr jint kTypeAuto = 0;
 constexpr jint kTypeByte = 1;
@@ -70,6 +72,9 @@ constexpr jint kDecreasedByRange = 15;
 constexpr jint kComparePrevious = 0;
 constexpr jint kCompareInitial = 1;
 constexpr jint kStable = 0;
+constexpr jint kRelocating = 1;
+constexpr jint kAmbiguous = 2;
+constexpr jint kLost = 3;
 // Candidate records are compact native data and never cross Binder in bulk. Two million typed
 // aliases covers the dense searches seen in the prototype while retaining a deterministic bound
 // on old API 23 devices. An incomplete set is never committed.
@@ -78,7 +83,11 @@ constexpr size_t kSnapshotByteLimit = 96U * 1024U * 1024U;
 constexpr size_t kReadChunkSize = 256U * 1024U;
 constexpr size_t kHistoryLimit = 8;
 constexpr size_t kHistoryByteLimit = 192U * 1024U * 1024U;
-constexpr size_t kResultStride = 7;
+constexpr size_t kResultStride = 9;
+constexpr size_t kIdentityRadius = 8;
+constexpr size_t kMultiWriteLimit = 32;
+constexpr size_t kRecoveryLimit = 32;
+constexpr size_t kWatchLimit = 128;
 
 struct Range {
     uintptr_t start;
@@ -96,11 +105,15 @@ struct Target {
 struct Candidate {
     uint64_t id;
     uintptr_t address;
+    uintptr_t previousAddress;
     jint type;
     jint state;
+    uint32_t relocationCount;
     uint64_t initialBits;
     uint64_t previousBits;
     uint64_t currentBits;
+    uint64_t identityHash;
+    bool identityValid;
 };
 
 struct SnapshotRun {
@@ -120,10 +133,12 @@ struct SearchState {
     uint64_t logicalCount = 0;
     std::vector<SnapshotRun> snapshots;
     std::vector<Candidate> candidates;
+    std::vector<Candidate> watches;
 
     size_t retainedBytes() const {
         size_t result =
-                sizeof(SearchState) + candidates.size() * sizeof(Candidate);
+                sizeof(SearchState) +
+                (candidates.size() + watches.size()) * sizeof(Candidate);
         for (const SnapshotRun &snapshot : snapshots) {
             if (result >
                 std::numeric_limits<size_t>::max() - snapshot.bytes.size()) {
@@ -380,6 +395,36 @@ uint64_t loadBits(const uint8_t *data, size_t width) {
     return result;
 }
 
+Candidate makeCandidate(uint64_t id, uintptr_t address, jint type,
+                        uint64_t initialBits, uint64_t currentBits) {
+    return {id,          address,     address,     type, kStable, 0,
+            initialBits, initialBits, currentBits, 0,    false};
+}
+
+uint64_t identityHash(const uint8_t *before, const uint8_t *after) {
+    uint64_t hash = UINT64_C(1469598103934665603);
+    for (size_t index = 0; index < kIdentityRadius; ++index) {
+        hash ^= before[index];
+        hash *= UINT64_C(1099511628211);
+    }
+    for (size_t index = 0; index < kIdentityRadius; ++index) {
+        hash ^= after[index];
+        hash *= UINT64_C(1099511628211);
+    }
+    return hash;
+}
+
+bool snapshotIdentity(const uint8_t *bytes, size_t size, size_t offset,
+                      size_t width, uint64_t &hash) {
+    if (offset < kIdentityRadius || offset + width > size ||
+        size - offset - width < kIdentityRadius) {
+        return false;
+    }
+    hash = identityHash(bytes + offset - kIdentityRadius,
+                        bytes + offset + width);
+    return true;
+}
+
 int64_t integerValue(jint type, uint64_t bits) {
     switch (type) {
     case kTypeByte:
@@ -530,6 +575,53 @@ bool readExact(pid_t pid, uintptr_t address, void *destination, size_t size) {
     return true;
 }
 
+bool writeExact(pid_t pid, uintptr_t address, const void *source, size_t size) {
+    const auto *input = static_cast<const uint8_t *>(source);
+    size_t completed = 0;
+    while (completed < size) {
+        iovec local{const_cast<uint8_t *>(input + completed), size - completed};
+        iovec remote{reinterpret_cast<void *>(address + completed),
+                     size - completed};
+        const ssize_t written =
+                process_vm_writev(pid, &local, 1, &remote, 1, 0);
+        if (written < 0 && errno == EINTR) {
+            continue;
+        }
+        if (written <= 0) {
+            return false;
+        }
+        completed += static_cast<size_t>(written);
+    }
+    return true;
+}
+
+bool readIdentity(const Target &target, uintptr_t address, jint type,
+                  uint64_t &hash) {
+    const size_t width = widthOf(type);
+    if (width == 0 || address < kIdentityRadius ||
+        address > std::numeric_limits<uintptr_t>::max() - width -
+                          kIdentityRadius) {
+        return false;
+    }
+    const uintptr_t contextStart = address - kIdentityRadius;
+    const uintptr_t contextEnd = address + width + kIdentityRadius;
+    const auto range = std::find_if(
+            target.ranges.begin(), target.ranges.end(), [&](const Range &item) {
+                return item.start <= contextStart && item.end >= contextEnd;
+            });
+    if (range == target.ranges.end()) {
+        return false;
+    }
+    uint8_t context[kIdentityRadius * 2] = {};
+    if (!readExact(target.pid, contextStart, context, kIdentityRadius) ||
+        !readExact(target.pid, address + width, context + kIdentityRadius,
+                   kIdentityRadius)) {
+        return false;
+    }
+    hash = identityHash(context, context + kIdentityRadius);
+    return true;
+}
+
 bool safeAdd(uint64_t &value, uint64_t addition) {
     if (value > std::numeric_limits<uint64_t>::max() - addition) {
         value = std::numeric_limits<uint64_t>::max();
@@ -575,7 +667,7 @@ void trimHistoryLocked() {
 }
 
 jint commitOperation(const OperationContext &context,
-                     std::shared_ptr<SearchState> next, bool preserveHistory) {
+                     std::shared_ptr<SearchState> next, jint historyMode) {
     if (gCancelled.load(std::memory_order_acquire)) {
         setMessage("Operation cancelled; previous results were preserved");
         return kCancelled;
@@ -586,10 +678,12 @@ jint commitOperation(const OperationContext &context,
         gLastMessage = "MIDlet runtime changed during the operation";
         return kTargetLost;
     }
-    if (preserveHistory && gState->mode != StateMode::Empty) {
-        gHistory.push_back(gState);
+    if (historyMode > 0 && gState->mode != StateMode::Empty) {
+        auto searchSnapshot = std::make_shared<SearchState>(*gState);
+        searchSnapshot->watches.clear();
+        gHistory.push_back(std::move(searchSnapshot));
         trimHistoryLocked();
-    } else if (!preserveHistory) {
+    } else if (historyMode < 0) {
         gHistory.clear();
     }
     gState = std::move(next);
@@ -633,6 +727,7 @@ jint scanKnown(const OperationContext &context, jint requestedType,
     auto next = std::make_shared<SearchState>();
     next->mode = StateMode::Candidates;
     next->requestedType = requestedType;
+    next->watches = context.state->watches;
     std::vector<uint8_t> buffer;
 
     for (const Range &range : context.target.ranges) {
@@ -675,10 +770,9 @@ jint scanKnown(const OperationContext &context, jint requestedType,
                                        "results were preserved");
                             return kResourceLimit;
                         }
-                        next->candidates.push_back(
-                                {context.nextId + next->candidates.size(),
-                                 address, query.type, kStable, bits, bits,
-                                 bits});
+                        next->candidates.push_back(makeCandidate(
+                                context.nextId + next->candidates.size(),
+                                address, query.type, bits, bits));
                     }
                     if (address >
                         std::numeric_limits<uintptr_t>::max() - width) {
@@ -693,7 +787,157 @@ jint scanKnown(const OperationContext &context, jint requestedType,
     next->logicalCount = next->candidates.size();
     OperationContext committed = context;
     committed.nextId += next->candidates.size();
-    return commitOperation(committed, std::move(next), false);
+    return commitOperation(committed, std::move(next), -1);
+}
+
+struct GroupMatch {
+    uintptr_t address;
+    jint type;
+    uint64_t bits;
+};
+
+jint scanGroup(const OperationContext &context, const std::vector<jint> &types,
+               const std::vector<std::string> &values, jint maxDistance) {
+    if (types.size() < 2 || types.size() > 8 || values.size() != types.size() ||
+        maxDistance <= 0 || maxDistance > 4096 ||
+        context.nextId >
+                std::numeric_limits<uint64_t>::max() - kCandidateLimit) {
+        setMessage(
+                "Group Search requires 2-8 typed values within 1-4096 bytes");
+        return kInvalidRequest;
+    }
+    std::vector<Query> queries;
+    queries.reserve(types.size());
+    for (size_t index = 0; index < types.size(); ++index) {
+        if (types[index] == kTypeAuto) {
+            setMessage("Group Search requires an exact type for every value");
+            return kInvalidRequest;
+        }
+        Query query;
+        if (!parseQuery(types[index], kEqual, values[index], "", query)) {
+            setMessage("A Group Search value does not fit its selected type");
+            return kInvalidRequest;
+        }
+        queries.push_back(query);
+    }
+
+    std::vector<std::vector<GroupMatch>> matches(queries.size());
+    size_t totalMatches = 0;
+    std::vector<uint8_t> buffer;
+    for (const Range &range : context.target.ranges) {
+        for (uintptr_t chunkStart = range.start; chunkStart < range.end;) {
+            if (gCancelled.load(std::memory_order_acquire)) {
+                setMessage(
+                        "Operation cancelled; previous results were preserved");
+                return kCancelled;
+            }
+            const size_t remaining =
+                    static_cast<size_t>(range.end - chunkStart);
+            const size_t chunkSize = std::min(remaining, kReadChunkSize);
+            buffer.resize(chunkSize);
+            if (!readExact(context.target.pid, chunkStart, buffer.data(),
+                           chunkSize)) {
+                setMessage("A target range changed during Group Search");
+                return kTargetLost;
+            }
+            for (size_t queryIndex = 0; queryIndex < queries.size();
+                 ++queryIndex) {
+                const Query &query = queries[queryIndex];
+                const size_t width = widthOf(query.type);
+                uintptr_t address = chunkStart;
+                const size_t misalignment =
+                        static_cast<size_t>(address % width);
+                if (misalignment != 0) {
+                    address += width - misalignment;
+                }
+                while (address >= chunkStart) {
+                    const size_t offset =
+                            static_cast<size_t>(address - chunkStart);
+                    if (offset + width > chunkSize) {
+                        break;
+                    }
+                    const uint64_t bits =
+                            loadBits(buffer.data() + offset, width);
+                    if (matchesKnown(bits, query, kEqual)) {
+                        if (totalMatches++ >= kCandidateLimit) {
+                            setMessage("Group Search intermediate matches "
+                                       "exceed the resource limit");
+                            return kResourceLimit;
+                        }
+                        matches[queryIndex].push_back(
+                                {address, query.type, bits});
+                    }
+                    if (address >
+                        std::numeric_limits<uintptr_t>::max() - width) {
+                        break;
+                    }
+                    address += width;
+                }
+            }
+            chunkStart += chunkSize;
+        }
+    }
+
+    std::vector<GroupMatch> retained;
+    for (const GroupMatch &anchor : matches.front()) {
+        std::vector<GroupMatch> group{anchor};
+        const uintptr_t minimum =
+                anchor.address < static_cast<uintptr_t>(maxDistance)
+                        ? 0
+                        : anchor.address - static_cast<uintptr_t>(maxDistance);
+        const uintptr_t maximum =
+                anchor.address > std::numeric_limits<uintptr_t>::max() -
+                                         static_cast<uintptr_t>(maxDistance)
+                        ? std::numeric_limits<uintptr_t>::max()
+                        : anchor.address + static_cast<uintptr_t>(maxDistance);
+        bool complete = true;
+        for (size_t term = 1; term < matches.size(); ++term) {
+            const auto found = std::lower_bound(
+                    matches[term].begin(), matches[term].end(), minimum,
+                    [](const GroupMatch &match, uintptr_t address) {
+                        return match.address < address;
+                    });
+            if (found == matches[term].end() || found->address > maximum) {
+                complete = false;
+                break;
+            }
+            group.push_back(*found);
+        }
+        if (complete) {
+            retained.insert(retained.end(), group.begin(), group.end());
+        }
+    }
+    std::sort(retained.begin(), retained.end(),
+              [](const GroupMatch &left, const GroupMatch &right) {
+                  return left.address < right.address ||
+                         (left.address == right.address &&
+                          left.type < right.type);
+              });
+    retained.erase(
+            std::unique(retained.begin(), retained.end(),
+                        [](const GroupMatch &left, const GroupMatch &right) {
+                            return left.address == right.address &&
+                                   left.type == right.type;
+                        }),
+            retained.end());
+    if (retained.size() > kCandidateLimit) {
+        setMessage("Complete Group Search results exceed the candidate limit");
+        return kResourceLimit;
+    }
+    auto next = std::make_shared<SearchState>();
+    next->mode = StateMode::Candidates;
+    next->requestedType = kTypeAuto;
+    next->watches = context.state->watches;
+    next->candidates.reserve(retained.size());
+    for (const GroupMatch &match : retained) {
+        next->candidates.push_back(makeCandidate(
+                context.nextId + next->candidates.size(), match.address,
+                match.type, match.bits, match.bits));
+    }
+    next->logicalCount = next->candidates.size();
+    OperationContext committed = context;
+    committed.nextId += next->candidates.size();
+    return commitOperation(committed, std::move(next), -1);
 }
 
 jint snapshotUnknown(const OperationContext &context, jint requestedType) {
@@ -705,6 +949,7 @@ jint snapshotUnknown(const OperationContext &context, jint requestedType) {
     auto next = std::make_shared<SearchState>();
     next->mode = StateMode::Unknown;
     next->requestedType = requestedType;
+    next->watches = context.state->watches;
     size_t retained = 0;
     for (const Range &range : context.target.ranges) {
         if (gCancelled.load(std::memory_order_acquire)) {
@@ -744,7 +989,7 @@ jint snapshotUnknown(const OperationContext &context, jint requestedType) {
         }
         next->snapshots.push_back(std::move(snapshot));
     }
-    return commitOperation(context, std::move(next), false);
+    return commitOperation(context, std::move(next), -1);
 }
 
 jint captureCurrentImage(const Target &target,
@@ -829,6 +1074,7 @@ jint refineCandidates(const OperationContext &context, jint predicate,
     auto next = std::make_shared<SearchState>();
     next->mode = StateMode::Candidates;
     next->requestedType = context.state->requestedType;
+    next->watches = context.state->watches;
 
     if (context.state->mode == StateMode::Unknown) {
         for (const SnapshotRun &snapshot : context.state->snapshots) {
@@ -871,10 +1117,13 @@ jint refineCandidates(const OperationContext &context, jint predicate,
                                        "results were preserved");
                             return kResourceLimit;
                         }
-                        next->candidates.push_back(
-                                {context.nextId + next->candidates.size(),
-                                 address, query.type, kStable, initial, initial,
-                                 now});
+                        Candidate materialized = makeCandidate(
+                                context.nextId + next->candidates.size(),
+                                address, query.type, initial, now);
+                        materialized.identityValid = snapshotIdentity(
+                                snapshot.bytes.data(), snapshot.bytes.size(),
+                                offset, width, materialized.identityHash);
+                        next->candidates.push_back(materialized);
                     }
                     if (address >
                         std::numeric_limits<uintptr_t>::max() - width) {
@@ -908,6 +1157,21 @@ jint refineCandidates(const OperationContext &context, jint predicate,
                 // stale binding. Never keep it as a result that looks editable.
                 continue;
             }
+            uint64_t currentIdentity = 0;
+            if (!readIdentity(context.target, candidate.address, candidate.type,
+                              currentIdentity)) {
+                updated.state = kLost;
+                next->candidates.push_back(updated);
+                continue;
+            }
+            if (candidate.identityValid &&
+                currentIdentity != candidate.identityHash) {
+                updated.state = kRelocating;
+                next->candidates.push_back(updated);
+                continue;
+            }
+            updated.identityHash = currentIdentity;
+            updated.identityValid = true;
             updated.previousBits = candidate.currentBits;
             updated.currentBits = current;
             updated.state = kStable;
@@ -935,7 +1199,522 @@ jint refineCandidates(const OperationContext &context, jint predicate,
     if (context.state->mode == StateMode::Unknown) {
         committed.nextId += next->candidates.size();
     }
-    return commitOperation(committed, std::move(next), true);
+    return commitOperation(committed, std::move(next), 1);
+}
+
+bool isSelected(const std::vector<uint64_t> &ids, uint64_t id) {
+    return ids.empty() || std::binary_search(ids.begin(), ids.end(), id);
+}
+
+bool containsCandidateId(const std::vector<Candidate> &candidates,
+                         uint64_t id) {
+    return std::any_of(candidates.begin(), candidates.end(),
+                       [&](const Candidate &candidate) {
+                           return candidate.id == id;
+                       });
+}
+
+bool allIdsResolve(const SearchState &state, const std::vector<uint64_t> &ids,
+                   bool watchesOnly, bool candidatesOnly) {
+    return std::all_of(ids.begin(), ids.end(), [&](uint64_t id) {
+        const bool inCandidates = containsCandidateId(state.candidates, id);
+        const bool inWatches = containsCandidateId(state.watches, id);
+        if (watchesOnly) {
+            return inWatches;
+        }
+        if (candidatesOnly) {
+            return inCandidates;
+        }
+        return inCandidates || inWatches;
+    });
+}
+
+bool readIds(JNIEnv *env, jlongArray rawIds, std::vector<uint64_t> &ids) {
+    if (rawIds == nullptr) {
+        return false;
+    }
+    const jsize length = env->GetArrayLength(rawIds);
+    std::vector<jlong> raw(static_cast<size_t>(length));
+    if (length > 0) {
+        env->GetLongArrayRegion(rawIds, 0, length, raw.data());
+        if (env->ExceptionCheck()) {
+            return false;
+        }
+    }
+    ids.reserve(static_cast<size_t>(length));
+    for (jlong value : raw) {
+        if (value <= 0) {
+            return false;
+        }
+        ids.push_back(static_cast<uint64_t>(value));
+    }
+    std::sort(ids.begin(), ids.end());
+    ids.erase(std::unique(ids.begin(), ids.end()), ids.end());
+    return true;
+}
+
+bool recoverCandidate(const Target &target, Candidate &candidate) {
+    if (!candidate.identityValid) {
+        candidate.state = kLost;
+        return false;
+    }
+    const size_t width = widthOf(candidate.type);
+    std::vector<uint8_t> buffer;
+    uintptr_t recoveredAddress = 0;
+    size_t matches = 0;
+    for (const Range &range : target.ranges) {
+        for (uintptr_t chunkStart = range.start; chunkStart < range.end;) {
+            if (gCancelled.load(std::memory_order_acquire)) {
+                return false;
+            }
+            const size_t remaining =
+                    static_cast<size_t>(range.end - chunkStart);
+            const size_t chunkSize = std::min(remaining, kReadChunkSize);
+            buffer.resize(chunkSize);
+            if (!readExact(target.pid, chunkStart, buffer.data(), chunkSize)) {
+                candidate.state = kLost;
+                return false;
+            }
+            uintptr_t address = chunkStart;
+            const size_t misalignment = static_cast<size_t>(address % width);
+            if (misalignment != 0) {
+                address += width - misalignment;
+            }
+            while (address >= chunkStart) {
+                const size_t offset = static_cast<size_t>(address - chunkStart);
+                if (offset + width > chunkSize) {
+                    break;
+                }
+                if (loadBits(buffer.data() + offset, width) ==
+                    candidate.currentBits) {
+                    uint64_t hash = 0;
+                    if (readIdentity(target, address, candidate.type, hash) &&
+                        hash == candidate.identityHash) {
+                        recoveredAddress = address;
+                        if (++matches > 1) {
+                            candidate.state = kAmbiguous;
+                            return false;
+                        }
+                    }
+                }
+                if (address > std::numeric_limits<uintptr_t>::max() - width) {
+                    break;
+                }
+                address += width;
+            }
+            chunkStart += chunkSize;
+        }
+    }
+    if (matches != 1) {
+        candidate.state = kLost;
+        return false;
+    }
+    candidate.previousAddress = candidate.address;
+    candidate.address = recoveredAddress;
+    ++candidate.relocationCount;
+    candidate.state = kStable;
+    return true;
+}
+
+jint refreshCandidates(const OperationContext &context,
+                       const std::vector<uint64_t> &ids, bool allowRecovery) {
+    if (context.state->mode != StateMode::Candidates &&
+        context.state->watches.empty()) {
+        setMessage("No materialized candidates are available");
+        return kNoSession;
+    }
+    auto next = std::make_shared<SearchState>(*context.state);
+    bool needsRecovery = false;
+    size_t unsafeCount = 0;
+    std::vector<Candidate *> recovery;
+    const auto refreshOne = [&](Candidate &candidate) {
+        if (!isSelected(ids, candidate.id)) {
+            return;
+        }
+        uint64_t current = 0;
+        uint64_t hash = 0;
+        const bool readable = readCandidate(context.target, candidate, current);
+        const bool identityReadable =
+                readable && readIdentity(context.target, candidate.address,
+                                         candidate.type, hash);
+        const bool identityMatches =
+                identityReadable &&
+                (!candidate.identityValid || hash == candidate.identityHash);
+        if (!identityMatches) {
+            candidate.state = kRelocating;
+            needsRecovery = true;
+            recovery.push_back(&candidate);
+            return;
+        }
+        candidate.identityHash = hash;
+        candidate.identityValid = true;
+        candidate.previousBits = candidate.currentBits;
+        candidate.currentBits = current;
+        candidate.state = kStable;
+    };
+    for (Candidate &candidate : next->candidates) {
+        refreshOne(candidate);
+    }
+    for (Candidate &watch : next->watches) {
+        const auto result =
+                std::find_if(next->candidates.begin(), next->candidates.end(),
+                             [&](const Candidate &candidate) {
+                                 return candidate.id == watch.id;
+                             });
+        if (result != next->candidates.end()) {
+            watch = *result;
+        } else {
+            refreshOne(watch);
+        }
+    }
+    if (needsRecovery && !allowRecovery) {
+        setMessage("Fresh resident ranges are required for identity recovery");
+        return kIdentityUnsafe;
+    }
+    if (recovery.size() > kRecoveryLimit) {
+        setMessage("Identity recovery is limited to 32 candidates per "
+                   "operation; narrow the visible selection");
+        return kResourceLimit;
+    }
+    for (Candidate *candidate : recovery) {
+        if (!recoverCandidate(context.target, *candidate)) {
+            ++unsafeCount;
+        }
+    }
+    for (Candidate &watch : next->watches) {
+        const auto result =
+                std::find_if(next->candidates.begin(), next->candidates.end(),
+                             [&](const Candidate &candidate) {
+                                 return candidate.id == watch.id;
+                             });
+        if (result != next->candidates.end()) {
+            watch = *result;
+        }
+    }
+    const jint result = commitOperation(context, std::move(next), 0);
+    if (result == kOk && unsafeCount > 0) {
+        setMessage(
+                "Some candidates remain ambiguous or lost; writes stay paused");
+    }
+    return result;
+}
+
+jint filterCandidates(const OperationContext &context,
+                      const std::vector<uint64_t> &ids, bool keep) {
+    if (context.state->mode != StateMode::Candidates || ids.empty()) {
+        setMessage("No materialized candidates are available");
+        return kNoSession;
+    }
+    if (!allIdsResolve(*context.state, ids, false, true)) {
+        setMessage("One or more candidate IDs are not in this search");
+        return kInvalidRequest;
+    }
+    auto next = std::make_shared<SearchState>();
+    next->mode = StateMode::Candidates;
+    next->requestedType = context.state->requestedType;
+    next->watches = context.state->watches;
+    next->candidates.reserve(context.state->candidates.size());
+    for (const Candidate &candidate : context.state->candidates) {
+        const bool selected = isSelected(ids, candidate.id);
+        if ((keep && selected) || (!keep && !selected)) {
+            next->candidates.push_back(candidate);
+        }
+    }
+    next->logicalCount = next->candidates.size();
+    return commitOperation(context, std::move(next), 1);
+}
+
+bool replacementBitsFor(const Candidate &candidate,
+                        const std::string &replacement, uint64_t &bits) {
+    Query query;
+    if (!parseQuery(candidate.type, kEqual, replacement, "", query)) {
+        return false;
+    }
+    bits = 0;
+    if (query.floating) {
+        if (candidate.type == kTypeFloat) {
+            const float value = static_cast<float>(query.floatingFirst);
+            uint32_t raw = 0;
+            std::memcpy(&raw, &value, sizeof(raw));
+            bits = raw;
+        } else {
+            std::memcpy(&bits, &query.floatingFirst, sizeof(bits));
+        }
+    } else {
+        bits = static_cast<uint64_t>(query.integerFirst);
+    }
+    return true;
+}
+
+int editOneCandidate(const Target &target, Candidate &candidate,
+                     const std::string &replacement) {
+    if (candidate.state != kStable || !candidate.identityValid) {
+        return 0;
+    }
+    uint64_t replacementBits = 0;
+    if (!replacementBitsFor(candidate, replacement, replacementBits)) {
+        return -1;
+    }
+    uint64_t actual = 0;
+    uint64_t hash = 0;
+    if (!readCandidate(target, candidate, actual) ||
+        actual != candidate.currentBits ||
+        !readIdentity(target, candidate.address, candidate.type, hash) ||
+        hash != candidate.identityHash) {
+        candidate.state = kLost;
+        return 0;
+    }
+    const size_t width = widthOf(candidate.type);
+    const size_t pageOffset = candidate.address % target.pageSize;
+    if (candidate.address % width != 0 || pageOffset > target.pageSize - width) {
+        candidate.state = kLost;
+        return 0;
+    }
+    uint64_t readback = 0;
+    if (!writeExact(target.pid, candidate.address, &replacementBits, width) ||
+        !readExact(target.pid, candidate.address, &readback, width) ||
+        loadBits(reinterpret_cast<const uint8_t *>(&readback), width) !=
+                loadBits(reinterpret_cast<const uint8_t *>(&replacementBits),
+                         width)) {
+        writeExact(target.pid, candidate.address, &actual, width);
+        candidate.state = kLost;
+        return 0;
+    }
+    candidate.previousBits = candidate.currentBits;
+    candidate.currentBits = replacementBits;
+    return 1;
+}
+
+jint editCandidates(const OperationContext &context,
+                    const std::vector<uint64_t> &ids,
+                    const std::string &replacement) {
+    if ((context.state->mode != StateMode::Candidates &&
+         context.state->watches.empty()) ||
+        ids.empty()) {
+        setMessage("Select at least one materialized candidate");
+        return kInvalidRequest;
+    }
+    if (ids.size() > kMultiWriteLimit) {
+        setMessage("The bounded multi-edit safety limit is 32 candidates");
+        return kSafetyLimit;
+    }
+    if (!allIdsResolve(*context.state, ids, false, false)) {
+        setMessage("One or more candidate IDs are no longer available");
+        return kInvalidRequest;
+    }
+    uint64_t ignoredBits = 0;
+    for (const Candidate &candidate : context.state->candidates) {
+        if (std::binary_search(ids.begin(), ids.end(), candidate.id) &&
+            !replacementBitsFor(candidate, replacement, ignoredBits)) {
+            setMessage("Replacement value does not fit every selected type");
+            return kInvalidRequest;
+        }
+    }
+    for (const Candidate &watch : context.state->watches) {
+        if (std::binary_search(ids.begin(), ids.end(), watch.id) &&
+            !replacementBitsFor(watch, replacement, ignoredBits)) {
+            setMessage("Replacement value does not fit every selected type");
+            return kInvalidRequest;
+        }
+    }
+    auto next = std::make_shared<SearchState>(*context.state);
+    size_t edited = 0;
+    size_t skipped = 0;
+    for (Candidate &candidate : next->candidates) {
+        if (!std::binary_search(ids.begin(), ids.end(), candidate.id)) {
+            continue;
+        }
+        const int outcome =
+                editOneCandidate(context.target, candidate, replacement);
+        if (outcome < 0) {
+            setMessage("Replacement value does not fit every selected type");
+            return kInvalidRequest;
+        }
+        if (outcome > 0) {
+            ++edited;
+        } else {
+            ++skipped;
+        }
+    }
+    for (Candidate &watch : next->watches) {
+        if (!std::binary_search(ids.begin(), ids.end(), watch.id)) {
+            continue;
+        }
+        const auto result =
+                std::find_if(next->candidates.begin(), next->candidates.end(),
+                             [&](const Candidate &candidate) {
+                                 return candidate.id == watch.id;
+                             });
+        if (result != next->candidates.end()) {
+            watch = *result;
+            continue;
+        }
+        const int outcome =
+                editOneCandidate(context.target, watch, replacement);
+        if (outcome < 0) {
+            setMessage("Replacement value does not fit every selected type");
+            return kInvalidRequest;
+        }
+        if (outcome > 0) {
+            ++edited;
+        } else {
+            ++skipped;
+        }
+    }
+    const jint result = commitOperation(context, std::move(next), 0);
+    if (result == kOk) {
+        setMessage((std::to_string(edited) + " edited, " +
+                    std::to_string(skipped) + " skipped safely")
+                           .c_str());
+    }
+    return result;
+}
+
+jint pinCandidates(const OperationContext &context,
+                   const std::vector<uint64_t> &ids, bool add) {
+    if ((add && context.state->mode != StateMode::Candidates) || ids.empty()) {
+        setMessage("Select at least one materialized candidate");
+        return kInvalidRequest;
+    }
+    if (!allIdsResolve(*context.state, ids, !add, add)) {
+        setMessage(add ? "One or more candidates are not in this search"
+                       : "One or more candidates are not in the Watch List");
+        return kInvalidRequest;
+    }
+    auto next = std::make_shared<SearchState>(*context.state);
+    if (add) {
+        for (uint64_t id : ids) {
+            const auto existing =
+                    std::find_if(next->watches.begin(), next->watches.end(),
+                                 [&](const Candidate &candidate) {
+                                     return candidate.id == id;
+                                 });
+            if (existing != next->watches.end()) {
+                continue;
+            }
+            const auto source = std::find_if(next->candidates.begin(),
+                                             next->candidates.end(),
+                                             [&](const Candidate &candidate) {
+                                                 return candidate.id == id;
+                                             });
+            if (source == next->candidates.end()) {
+                continue;
+            }
+            if (next->watches.size() >= kWatchLimit) {
+                setMessage("The session Watch List limit is 128 candidates");
+                return kResourceLimit;
+            }
+            next->watches.push_back(*source);
+        }
+    } else {
+        next->watches.erase(
+                std::remove_if(next->watches.begin(), next->watches.end(),
+                               [&](const Candidate &candidate) {
+                                   return std::binary_search(ids.begin(),
+                                                             ids.end(),
+                                                             candidate.id);
+                               }),
+                next->watches.end());
+    }
+    return commitOperation(context, std::move(next), 0);
+}
+
+jint freezeCandidates(const OperationContext &context,
+                      const std::vector<uint64_t> &ids, jint mode,
+                      const std::string &first, const std::string &second) {
+    if (ids.empty() || ids.size() > kMultiWriteLimit || mode < 0 || mode > 3) {
+        setMessage("Freeze accepts 1-32 watched candidates and a valid mode");
+        return kSafetyLimit;
+    }
+    if (!allIdsResolve(*context.state, ids, true, false)) {
+        setMessage("Freeze accepts only current Watch List candidates");
+        return kInvalidRequest;
+    }
+    auto next = std::make_shared<SearchState>(*context.state);
+    for (const Candidate &watch : next->watches) {
+        if (!std::binary_search(ids.begin(), ids.end(), watch.id)) {
+            continue;
+        }
+        Query query;
+        const jint predicate = mode == 3 ? kBetween : kEqual;
+        if (!parseQuery(watch.type, predicate, first, second, query)) {
+            setMessage("Freeze bounds do not fit every selected type");
+            return kInvalidRequest;
+        }
+    }
+
+    size_t corrected = 0;
+    size_t unsafe = 0;
+    for (Candidate &watch : next->watches) {
+        if (!std::binary_search(ids.begin(), ids.end(), watch.id)) {
+            continue;
+        }
+        Query query;
+        parseQuery(watch.type, mode == 3 ? kBetween : kEqual, first, second,
+                   query);
+        Query upper = query;
+        upper.integerFirst = query.integerSecond;
+        upper.floatingFirst = query.floatingSecond;
+        if (query.floating &&
+            std::isnan(floatingValue(watch.type, watch.currentBits))) {
+            watch.state = kLost;
+            ++unsafe;
+            continue;
+        }
+        bool correct = false;
+        std::string replacement;
+        switch (mode) {
+        case 0:
+            correct = matchesKnown(watch.currentBits, query, kEqual);
+            replacement = first;
+            break;
+        case 1:
+            correct = !matchesKnown(watch.currentBits, query, kLess);
+            replacement = first;
+            break;
+        case 2:
+            correct = !matchesKnown(watch.currentBits, query, kGreater);
+            replacement = first;
+            break;
+        case 3:
+            if (matchesKnown(watch.currentBits, query, kLess)) {
+                replacement = first;
+            } else if (matchesKnown(watch.currentBits, upper, kGreater)) {
+                replacement = second;
+            } else {
+                correct = true;
+            }
+            break;
+        default:
+            break;
+        }
+        if (correct) {
+            continue;
+        }
+        const int outcome =
+                editOneCandidate(context.target, watch, replacement);
+        if (outcome > 0) {
+            ++corrected;
+        } else {
+            ++unsafe;
+        }
+    }
+    for (Candidate &candidate : next->candidates) {
+        const auto watch = std::find_if(
+                next->watches.begin(), next->watches.end(),
+                [&](const Candidate &item) { return item.id == candidate.id; });
+        if (watch != next->watches.end()) {
+            candidate = *watch;
+        }
+    }
+    const jint committed = commitOperation(context, std::move(next), 0);
+    if (committed != kOk) {
+        return committed;
+    }
+    setMessage((std::to_string(corrected) + " corrected, " +
+                std::to_string(unsafe) + " paused safely")
+                       .c_str());
+    return unsafe == 0 ? kOk : kIdentityUnsafe;
 }
 
 std::string fromJString(JNIEnv *env, jstring value) {
@@ -948,6 +1727,34 @@ std::string fromJString(JNIEnv *env, jstring value) {
     }
     std::string result(characters);
     env->ReleaseStringUTFChars(value, characters);
+    return result;
+}
+
+jlongArray candidatePage(JNIEnv *env, const std::vector<Candidate> &candidates,
+                         size_t start, size_t limit) {
+    start = std::min(start, candidates.size());
+    const size_t count = std::min(limit, candidates.size() - start);
+    const size_t outputSize = 1U + count * kResultStride;
+    std::vector<jlong> output(outputSize);
+    output[0] = static_cast<jlong>(count);
+    for (size_t index = 0; index < count; ++index) {
+        const Candidate &candidate = candidates[start + index];
+        const size_t base = 1U + index * kResultStride;
+        output[base] = static_cast<jlong>(candidate.id);
+        output[base + 1U] = static_cast<jlong>(candidate.address);
+        output[base + 2U] = static_cast<jlong>(candidate.previousAddress);
+        output[base + 3U] = candidate.type;
+        output[base + 4U] = candidate.state;
+        output[base + 5U] = candidate.relocationCount;
+        output[base + 6U] = static_cast<jlong>(candidate.initialBits);
+        output[base + 7U] = static_cast<jlong>(candidate.previousBits);
+        output[base + 8U] = static_cast<jlong>(candidate.currentBits);
+    }
+    jlongArray result = env->NewLongArray(static_cast<jsize>(outputSize));
+    if (result != nullptr) {
+        env->SetLongArrayRegion(result, 0, static_cast<jsize>(outputSize),
+                                output.data());
+    }
     return result;
 }
 
@@ -1052,6 +1859,29 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_canReadTarget(
                    : JNI_FALSE;
 }
 
+extern "C" JNIEXPORT jboolean JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_canWriteTarget(
+        JNIEnv *, jclass, jint pid, jlong address, jlong expectedBits) {
+    if (pid <= 0 || address <= 0 ||
+        static_cast<uint64_t>(address) >
+                std::numeric_limits<uintptr_t>::max()) {
+        return JNI_FALSE;
+    }
+    const uintptr_t targetAddress = static_cast<uintptr_t>(address);
+    uint64_t before = 0;
+    uint64_t after = 0;
+    const uint64_t expected = static_cast<uint64_t>(expectedBits);
+    return readExact(pid, targetAddress, &before, sizeof(before)) &&
+                           before == expected &&
+                           writeExact(pid, targetAddress, &expected,
+                                      sizeof(expected)) &&
+                           readExact(pid, targetAddress, &after,
+                                     sizeof(after)) &&
+                           after == expected
+                   ? JNI_TRUE
+                   : JNI_FALSE;
+}
+
 extern "C" JNIEXPORT jint JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_startKnown(
         JNIEnv *env, jclass, jint type, jint predicate, jstring first,
@@ -1075,6 +1905,47 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_startUnknown(
             return kNoSession;
         }
         return snapshotUnknown(context, type);
+    });
+}
+
+extern "C" JNIEXPORT jint JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_startGroup(
+        JNIEnv *env, jclass, jintArray rawTypes, jobjectArray rawValues,
+        jint maxDistance) {
+    return guardedOperation([&] {
+        if (rawTypes == nullptr || rawValues == nullptr) {
+            setMessage("Group Search values are missing");
+            return kInvalidRequest;
+        }
+        const jsize count = env->GetArrayLength(rawTypes);
+        if (count != env->GetArrayLength(rawValues) || count < 2 || count > 8) {
+            setMessage("Group Search requires 2-8 typed values");
+            return kInvalidRequest;
+        }
+        std::vector<jint> types(static_cast<size_t>(count));
+        env->GetIntArrayRegion(rawTypes, 0, count, types.data());
+        if (env->ExceptionCheck()) {
+            return kInvalidRequest;
+        }
+        std::vector<std::string> values;
+        values.reserve(static_cast<size_t>(count));
+        for (jsize index = 0; index < count; ++index) {
+            auto value = static_cast<jstring>(
+                    env->GetObjectArrayElement(rawValues, index));
+            if (value == nullptr || env->ExceptionCheck()) {
+                if (value != nullptr) {
+                    env->DeleteLocalRef(value);
+                }
+                return kInvalidRequest;
+            }
+            values.push_back(fromJString(env, value));
+            env->DeleteLocalRef(value);
+        }
+        OperationContext context;
+        if (!beginOperation(context)) {
+            return kNoSession;
+        }
+        return scanGroup(context, types, values, maxDistance);
     });
 }
 
@@ -1114,10 +1985,84 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_undo(JNIEnv *,
         gLastMessage = "No earlier search state is available";
         return kNoSession;
     }
-    gState = gHistory.back();
+    auto restored = std::make_shared<SearchState>(*gHistory.back());
+    // Search history is independent from the session-scoped Watch List. A Watch added after a
+    // refine/remove step must not disappear when that search step is undone.
+    restored->watches = gState->watches;
+    gState = std::move(restored);
     gHistory.pop_back();
     gLastMessage = "";
     return kOk;
+}
+
+extern "C" JNIEXPORT jint JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_refresh(
+        JNIEnv *env, jclass, jlongArray rawIds, jboolean allowRecovery) {
+    return guardedOperation([&] {
+        std::vector<uint64_t> ids;
+        if (!readIds(env, rawIds, ids)) {
+            setMessage("Invalid candidate selection");
+            return kInvalidRequest;
+        }
+        OperationContext context;
+        if (!beginOperation(context)) {
+            return kNoSession;
+        }
+        return refreshCandidates(context, ids, allowRecovery == JNI_TRUE);
+    });
+}
+
+extern "C" JNIEXPORT jint JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_filter(
+        JNIEnv *env, jclass, jlongArray rawIds, jboolean keep) {
+    return guardedOperation([&] {
+        std::vector<uint64_t> ids;
+        if (!readIds(env, rawIds, ids)) {
+            setMessage("Invalid candidate selection");
+            return kInvalidRequest;
+        }
+        OperationContext context;
+        if (!beginOperation(context)) {
+            return kNoSession;
+        }
+        return filterCandidates(context, ids, keep == JNI_TRUE);
+    });
+}
+
+extern "C" JNIEXPORT jint JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_edit(
+        JNIEnv *env, jclass, jlongArray rawIds, jstring replacement) {
+    return guardedOperation([&] {
+        std::vector<uint64_t> ids;
+        if (!readIds(env, rawIds, ids)) {
+            setMessage("Invalid candidate selection");
+            return kInvalidRequest;
+        }
+        OperationContext context;
+        if (!beginOperation(context)) {
+            return kNoSession;
+        }
+        return editCandidates(context, ids, fromJString(env, replacement));
+    });
+}
+
+extern "C" JNIEXPORT jint JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_freeze(
+        JNIEnv *env, jclass, jlongArray rawIds, jint mode, jstring first,
+        jstring second) {
+    return guardedOperation([&] {
+        std::vector<uint64_t> ids;
+        if (!readIds(env, rawIds, ids)) {
+            setMessage("Invalid Freeze candidate selection");
+            return kInvalidRequest;
+        }
+        OperationContext context;
+        if (!beginOperation(context)) {
+            return kNoSession;
+        }
+        return freezeCandidates(context, ids, mode, fromJString(env, first),
+                                fromJString(env, second));
+    });
 }
 
 extern "C" JNIEXPORT jlong JNICALL
@@ -1145,35 +2090,53 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_resultPage(
         std::lock_guard<std::mutex> lock(gMutex);
         state = gState;
     }
-    const size_t start =
-            std::min(static_cast<size_t>(offset), state->candidates.size());
-    const size_t count = std::min(static_cast<size_t>(limit),
-                                  state->candidates.size() - start);
-    const size_t outputSize = 1U + count * kResultStride;
-    std::vector<jlong> output(outputSize);
-    output[0] = static_cast<jlong>(count);
-    for (size_t index = 0; index < count; ++index) {
-        const Candidate &candidate = state->candidates[start + index];
-        const size_t base = 1U + index * kResultStride;
-        output[base] = static_cast<jlong>(candidate.id);
-        output[base + 1U] = static_cast<jlong>(candidate.address);
-        output[base + 2U] = candidate.type;
-        output[base + 3U] = candidate.state;
-        output[base + 4U] = static_cast<jlong>(candidate.initialBits);
-        output[base + 5U] = static_cast<jlong>(candidate.previousBits);
-        output[base + 6U] = static_cast<jlong>(candidate.currentBits);
+    return candidatePage(env, state->candidates, static_cast<size_t>(offset),
+                         static_cast<size_t>(limit));
+}
+
+extern "C" JNIEXPORT jint JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_pin(JNIEnv *env,
+                                                              jclass,
+                                                              jlongArray rawIds,
+                                                              jboolean add) {
+    return guardedOperation([&] {
+        std::vector<uint64_t> ids;
+        if (!readIds(env, rawIds, ids)) {
+            setMessage("Invalid candidate selection");
+            return kInvalidRequest;
+        }
+        OperationContext context;
+        if (!beginOperation(context)) {
+            return kNoSession;
+        }
+        return pinCandidates(context, ids, add == JNI_TRUE);
+    });
+}
+
+extern "C" JNIEXPORT jlongArray JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_watchPage(JNIEnv *env,
+                                                                    jclass) {
+    std::shared_ptr<const SearchState> state;
+    {
+        std::lock_guard<std::mutex> lock(gMutex);
+        state = gState;
     }
-    jlongArray result = env->NewLongArray(static_cast<jsize>(outputSize));
-    if (result != nullptr) {
-        env->SetLongArrayRegion(result, 0, static_cast<jsize>(outputSize),
-                                output.data());
-    }
-    return result;
+    return candidatePage(env, state->watches, 0, state->watches.size());
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clear(JNIEnv *,
-                                                                jclass) {
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearSearch(JNIEnv *,
+                                                                      jclass) {
+    std::lock_guard<std::mutex> lock(gMutex);
+    auto next = std::make_shared<SearchState>();
+    next->watches = gState->watches;
+    gState = std::move(next);
+    gHistory.clear();
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearTarget(JNIEnv *,
+                                                                      jclass) {
     std::lock_guard<std::mutex> lock(gMutex);
     ++gTarget.generation;
     gTarget.pid = 0;

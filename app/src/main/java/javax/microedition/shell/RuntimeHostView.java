@@ -33,6 +33,7 @@ public final class RuntimeHostView {
 	public final ComposeView toolbar;
 	public final FrameLayout displayableContainer;
 	public final OverlayView overlay;
+	public final ComposeView memoryEditor;
 	public final ComposeView notices;
 
 	public RuntimeHostView(Context context) {
@@ -59,6 +60,11 @@ public final class RuntimeHostView {
 		overlay = new OverlayView(context, null);
 		overlay.setId(R.id.overlay);
 		root.addView(overlay, new FrameLayout.LayoutParams(
+				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+		memoryEditor = new ComposeView(context);
+		memoryEditor.setVisibility(android.view.View.GONE);
+		root.addView(memoryEditor, new FrameLayout.LayoutParams(
 				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
 		notices = new ComposeView(context);

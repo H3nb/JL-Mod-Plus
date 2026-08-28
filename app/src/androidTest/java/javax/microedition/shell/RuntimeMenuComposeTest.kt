@@ -124,6 +124,25 @@ class RuntimeMenuComposeTest {
     }
 
     @Test
+    fun canvasMenu_opensMemoryEditorAfterDismissal() {
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeMenuHost(
+                    state = RuntimeMenuUiState(title = "MIDlet", isCanvas = true),
+                    menuVisible = true,
+                    actions = RecordingRuntimeMenuActions(events),
+                    onDismissMenu = { events += "dismiss" },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Memory Editor").performScrollTo().performClick()
+
+        assertEquals(listOf("dismiss", "memoryEditor"), events)
+    }
+
+    @Test
     fun lockRotationToggle_dismissesBeforeDispatchingExistingCallback() {
         val events = mutableListOf<String>()
         val actions = RecordingRuntimeMenuActions(events)
@@ -294,6 +313,10 @@ private class RecordingRuntimeMenuActions(
 
     override fun onResetEmulationSpeed() {
         events += "resetSpeed"
+    }
+
+    override fun onMemoryEditor() {
+        events += "memoryEditor"
     }
 
     override fun onEditVirtualKeyboardLayout() {

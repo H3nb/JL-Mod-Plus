@@ -26,9 +26,15 @@ import android.os.RemoteException;
 
 import androidx.annotation.Nullable;
 
-import java.util.concurrent.ExecutorService;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /** Owns all scan state in a dedicated app process and exposes only logical candidate IDs. */
@@ -38,7 +44,7 @@ public final class MemoryEngineService extends Service {
 	private final AtomicLong nextOperationId = new AtomicLong(1L);
 	private final AtomicLong cancelEpoch = new AtomicLong();
 	private final RemoteCallbackList<IMemoryEngineCallback> callbacks = new RemoteCallbackList<>();
-	private final ExecutorService worker = Executors.newSingleThreadExecutor(runnable -> {
+	private final ScheduledExecutorService worker = Executors.newSingleThreadScheduledExecutor(runnable -> {
 		Thread thread = new Thread(runnable, "MemoryEditorEngine");
 		thread.setPriority(Thread.NORM_PRIORITY - 1);
 		return thread;
@@ -46,6 +52,10 @@ public final class MemoryEngineService extends Service {
 	private volatile IMemoryTargetBridge target;
 	private volatile boolean targetBound;
 	private volatile long configuredToken;
+	private volatile int configuredScope = MemoryEngineContract.SCOPE_JAVA_FAST;
+	private final Map<Long, String> watchLabels = new ConcurrentHashMap<>();
+	private final Map<Long, FreezeRecord> freezeRecords = new ConcurrentHashMap<>();
+	private volatile ScheduledFuture<?> freezeTask;
 	private final IMemoryTargetCallback targetCallback = new IMemoryTargetCallback.Stub() {
 		@Override
 		public void onRuntimeEnded(long runtimeToken) {
@@ -98,7 +108,9 @@ public final class MemoryEngineService extends Service {
 				long[] probe = token == 0L ? null : bridge.getReadProbe(token);
 				boolean supported = token != 0L && pid > 0 && pageSize > 0 &&
 						canReadProbe(pid, probe);
+				boolean writeSupported = supported && canWriteProbe(pid, probe);
 				result.putBoolean(MemoryEngineContract.KEY_SUPPORTED, supported);
+				result.putBoolean(MemoryEngineContract.KEY_WRITE_SUPPORTED, writeSupported);
 				result.putLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, token);
 				result.putInt(MemoryEngineContract.KEY_TARGET_PID, pid);
 				result.putInt(MemoryEngineContract.KEY_PAGE_SIZE, pageSize);
@@ -141,6 +153,13 @@ public final class MemoryEngineService extends Service {
 		}
 
 		@Override
+		public long startGroupSearch(long token, int scope, int[] types,
+		                             String[] values, int maxDistance) {
+			return enqueue(token, true, scope,
+					() -> NativeMemoryEngine.startGroup(types, values, maxDistance));
+		}
+
+		@Override
 		public long refineKnown(long token, int predicate, String first, String second) {
 			return enqueue(token, false, 0,
 					() -> NativeMemoryEngine.refineKnown(predicate, first, second));
@@ -159,6 +178,40 @@ public final class MemoryEngineService extends Service {
 		}
 
 		@Override
+		public long refreshCandidates(long token, long[] candidateIds) {
+			return enqueue(token, false, 0,
+					() -> refreshWithRecovery(token, candidateIds));
+		}
+
+		@Override
+		public long removeCandidates(long token, long[] candidateIds) {
+			return enqueue(token, false, 0,
+					() -> NativeMemoryEngine.filter(candidateIds, false));
+		}
+
+		@Override
+		public long keepCandidates(long token, long[] candidateIds) {
+			return enqueue(token, false, 0,
+					() -> NativeMemoryEngine.filter(candidateIds, true));
+		}
+
+		@Override
+		public long editCandidates(long token, long[] candidateIds, String replacementValue) {
+			return enqueue(token, false, 0, () -> {
+				if (candidateIds == null || candidateIds.length == 0 ||
+						candidateIds.length > MemoryEngineContract.MAX_MULTI_WRITE) {
+					return MemoryEngineContract.RESULT_SAFETY_LIMIT;
+				}
+				if (!isWriteSupported(token)) {
+					return MemoryEngineContract.RESULT_UNSUPPORTED;
+				}
+				int ready = refreshWithRecovery(token, candidateIds);
+				return ready == MemoryEngineContract.RESULT_OK
+						? NativeMemoryEngine.edit(candidateIds, replacementValue) : ready;
+			});
+		}
+
+		@Override
 		public long getResultCount(long token) {
 			return isCurrentToken(token) ? NativeMemoryEngine.resultCount() : 0L;
 		}
@@ -174,9 +227,107 @@ public final class MemoryEngineService extends Service {
 		}
 
 		@Override
+		public Bundle getWatchPage(long token) {
+			Bundle result = new Bundle();
+			if (!isCurrentToken(token)) {
+				result.putLongArray(MemoryEngineContract.KEY_WATCH_ROWS, new long[]{0L});
+				result.putStringArray(MemoryEngineContract.KEY_WATCH_LABELS, new String[0]);
+				result.putIntArray(MemoryEngineContract.KEY_WATCH_FREEZE_MODES, new int[0]);
+				result.putBooleanArray(MemoryEngineContract.KEY_WATCH_FREEZE_PAUSED, new boolean[0]);
+				return result;
+			}
+			long[] rows = NativeMemoryEngine.watchPage();
+			int count = validatedPageCount(rows);
+			if (count < 0) {
+				rows = new long[]{0L};
+				count = 0;
+			}
+			String[] labels = new String[count];
+			int[] freezeModes = new int[count];
+			boolean[] freezePaused = new boolean[count];
+			for (int index = 0; index < count; index++) {
+				long id = rows[1 + index * MemoryEngineContract.RESULT_PAGE_STRIDE];
+				String label = watchLabels.get(id);
+				labels[index] = label == null ? "" : label;
+				FreezeRecord freeze = freezeRecords.get(id);
+				freezeModes[index] = freeze == null ? -1 : freeze.mode;
+				freezePaused[index] = freeze != null && freeze.paused;
+			}
+			result.putLongArray(MemoryEngineContract.KEY_WATCH_ROWS,
+					rows == null ? new long[]{0L} : rows);
+			result.putStringArray(MemoryEngineContract.KEY_WATCH_LABELS, labels);
+			result.putIntArray(MemoryEngineContract.KEY_WATCH_FREEZE_MODES, freezeModes);
+			result.putBooleanArray(MemoryEngineContract.KEY_WATCH_FREEZE_PAUSED, freezePaused);
+			return result;
+		}
+
+		@Override
+		public long addWatch(long token, long[] candidateIds) {
+			return enqueue(token, false, 0,
+					() -> NativeMemoryEngine.pin(candidateIds, true));
+		}
+
+		@Override
+		public long removeWatch(long token, long[] candidateIds) {
+			return enqueue(token, false, 0, () -> {
+				int result = NativeMemoryEngine.pin(candidateIds, false);
+				if (result == MemoryEngineContract.RESULT_OK && candidateIds != null) {
+					for (long id : candidateIds) {
+						watchLabels.remove(id);
+						freezeRecords.remove(id);
+					}
+				}
+				stopFreezeTaskIfIdle();
+				return result;
+			});
+		}
+
+		@Override
+		public long setWatchLabel(long token, long candidateId, String label) {
+			return enqueue(token, false, 0, () -> {
+				if (candidateId <= 0L || label == null || label.length() > 64 ||
+						!isWatchedCandidate(candidateId)) {
+					return MemoryEngineContract.RESULT_INVALID_REQUEST;
+				}
+				if (label.isBlank()) {
+					watchLabels.remove(candidateId);
+				} else {
+					watchLabels.put(candidateId, label.trim());
+				}
+				return MemoryEngineContract.RESULT_OK;
+			});
+		}
+
+		@Override
+		public long setFreeze(long token, long[] candidateIds, int mode,
+		                      String firstValue, String secondValue) {
+			return enqueue(token, false, 0, () -> setFreezeRecords(
+					token, candidateIds, mode, firstValue, secondValue));
+		}
+
+		@Override
+		public long clearFreeze(long token, long[] candidateIds) {
+			return enqueue(token, false, 0, () -> {
+				if (candidateIds == null || candidateIds.length == 0) {
+					return MemoryEngineContract.RESULT_INVALID_REQUEST;
+				}
+				for (long id : candidateIds) {
+					if (!freezeRecords.containsKey(id)) {
+						return MemoryEngineContract.RESULT_INVALID_REQUEST;
+					}
+				}
+				for (long id : candidateIds) {
+					freezeRecords.remove(id);
+				}
+				stopFreezeTaskIfIdle();
+				return MemoryEngineContract.RESULT_OK;
+			});
+		}
+
+		@Override
 		public void clearSearch(long token) {
 			if (isCurrentToken(token)) {
-				worker.execute(NativeMemoryEngine::clear);
+				worker.execute(NativeMemoryEngine::clearSearch);
 			}
 		}
 
@@ -204,6 +355,10 @@ public final class MemoryEngineService extends Service {
 
 	@Override
 	public void onDestroy() {
+		ScheduledFuture<?> activeFreezeTask = freezeTask;
+		if (activeFreezeTask != null) {
+			activeFreezeTask.cancel(false);
+		}
 		IMemoryTargetBridge bridge = target;
 		if (bridge != null) {
 			try {
@@ -219,7 +374,7 @@ public final class MemoryEngineService extends Service {
 			unbindService(targetConnection);
 			targetBound = false;
 		}
-		NativeMemoryEngine.clear();
+		NativeMemoryEngine.clearTarget();
 		super.onDestroy();
 	}
 
@@ -250,7 +405,7 @@ public final class MemoryEngineService extends Service {
 			}
 
 			if (result == MemoryEngineContract.RESULT_OK && !isCurrentToken(token)) {
-				NativeMemoryEngine.clear();
+				NativeMemoryEngine.clearTarget();
 				configuredToken = 0L;
 				result = MemoryEngineContract.RESULT_TARGET_LOST;
 				serviceMessage = "MIDlet runtime changed during the operation";
@@ -287,10 +442,130 @@ public final class MemoryEngineService extends Service {
 			int result = NativeMemoryEngine.configureTarget(pid, pageSize, token, runs);
 			if (result == MemoryEngineContract.RESULT_OK) {
 				configuredToken = token;
+				configuredScope = scope;
 			}
 			return result;
 		} catch (RemoteException exception) {
 			return MemoryEngineContract.RESULT_TARGET_LOST;
+		}
+	}
+
+	private int refreshWithRecovery(long token, long[] candidateIds) {
+		long[] ids = candidateIds == null ? new long[0] : candidateIds;
+		int result = NativeMemoryEngine.refresh(ids, false);
+		if (result != MemoryEngineContract.RESULT_IDENTITY_UNSAFE) {
+			return result;
+		}
+		result = configureTarget(token, configuredScope);
+		return result == MemoryEngineContract.RESULT_OK
+				? NativeMemoryEngine.refresh(ids, true) : result;
+	}
+
+	private int setFreezeRecords(long token, long[] candidateIds, int mode,
+	                             String firstValue, String secondValue) {
+		Set<Long> uniqueIds = new HashSet<>();
+		if (candidateIds != null) {
+			for (long id : candidateIds) {
+				uniqueIds.add(id);
+			}
+		}
+		int additionalRecords = 0;
+		for (long id : uniqueIds) {
+			if (!freezeRecords.containsKey(id)) {
+				additionalRecords++;
+			}
+		}
+		if (candidateIds == null || candidateIds.length == 0 ||
+				candidateIds.length > MemoryEngineContract.MAX_FREEZE_RECORDS ||
+				mode < MemoryEngineContract.FREEZE_LOCK ||
+				mode > MemoryEngineContract.FREEZE_RANGE ||
+				freezeRecords.size() + additionalRecords >
+						MemoryEngineContract.MAX_FREEZE_RECORDS) {
+			return MemoryEngineContract.RESULT_SAFETY_LIMIT;
+		}
+		if (!isWriteSupported(token)) {
+			return MemoryEngineContract.RESULT_UNSUPPORTED;
+		}
+		int ready = refreshWithRecovery(token, candidateIds);
+		if (ready != MemoryEngineContract.RESULT_OK) {
+			return ready;
+		}
+		int result = NativeMemoryEngine.freeze(
+				candidateIds, mode, firstValue, secondValue);
+		if (result != MemoryEngineContract.RESULT_OK) {
+			return result;
+		}
+		for (long id : candidateIds) {
+			freezeRecords.put(id,
+					new FreezeRecord(mode, firstValue, secondValue));
+		}
+		startFreezeTaskIfNeeded();
+		return MemoryEngineContract.RESULT_OK;
+	}
+
+	private static boolean isWatchedCandidate(long candidateId) {
+		long[] rows = NativeMemoryEngine.watchPage();
+		int count = validatedPageCount(rows);
+		if (count < 0) {
+			return false;
+		}
+		for (int index = 0; index < count; index++) {
+			if (rows[1 + index * MemoryEngineContract.RESULT_PAGE_STRIDE] == candidateId) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static int validatedPageCount(long[] rows) {
+		if (rows == null || rows.length == 0 || rows[0] < 0L ||
+				rows[0] > (rows.length - 1L) / MemoryEngineContract.RESULT_PAGE_STRIDE) {
+			return -1;
+		}
+		int count = (int) rows[0];
+		return 1 + count * MemoryEngineContract.RESULT_PAGE_STRIDE == rows.length ? count : -1;
+	}
+
+	private void startFreezeTaskIfNeeded() {
+		ScheduledFuture<?> current = freezeTask;
+		if (current == null || current.isDone()) {
+			freezeTask = worker.scheduleWithFixedDelay(
+					this::runFreezeTick, 750L, 750L, TimeUnit.MILLISECONDS);
+		}
+	}
+
+	private void stopFreezeTaskIfIdle() {
+		if (!freezeRecords.isEmpty()) {
+			return;
+		}
+		ScheduledFuture<?> current = freezeTask;
+		freezeTask = null;
+		if (current != null) {
+			current.cancel(false);
+		}
+	}
+
+	private void runFreezeTick() {
+		long token = configuredToken;
+		if (token == 0L || !isCurrentToken(token)) {
+			freezeRecords.clear();
+			stopFreezeTaskIfIdle();
+			return;
+		}
+		for (Map.Entry<Long, FreezeRecord> entry : freezeRecords.entrySet()) {
+			FreezeRecord record = entry.getValue();
+			if (record.paused) {
+				continue;
+			}
+			long[] ids = new long[]{entry.getKey()};
+			int result = refreshWithRecovery(token, ids);
+			if (result == MemoryEngineContract.RESULT_OK) {
+				result = NativeMemoryEngine.freeze(
+						ids, record.mode, record.firstValue, record.secondValue);
+			}
+			if (result != MemoryEngineContract.RESULT_OK) {
+				record.paused = true;
+			}
 		}
 	}
 
@@ -318,11 +593,32 @@ public final class MemoryEngineService extends Service {
 				NativeMemoryEngine.canReadTarget(pid, probe[0], probe[1]);
 	}
 
+	private static boolean canWriteProbe(int pid, long[] probe) {
+		return pid > 0 && probe != null && probe.length == 2 && probe[0] > 0L &&
+				NativeMemoryEngine.canWriteTarget(pid, probe[0], probe[1]);
+	}
+
+	private boolean isWriteSupported(long token) {
+		IMemoryTargetBridge bridge = target;
+		if (bridge == null) {
+			return false;
+		}
+		try {
+			return bridge.getRuntimeToken() == token &&
+					canWriteProbe(bridge.getTargetPid(), bridge.getReadProbe(token));
+		} catch (RemoteException exception) {
+			return false;
+		}
+	}
+
 	private void invalidateTarget() {
 		configuredToken = 0L;
+		watchLabels.clear();
+		freezeRecords.clear();
+		stopFreezeTaskIfIdle();
 		NativeMemoryEngine.cancel();
 		try {
-			worker.execute(NativeMemoryEngine::clear);
+			worker.execute(NativeMemoryEngine::clearTarget);
 		} catch (RejectedExecutionException ignored) {
 			// Service teardown already clears native state directly.
 		}
@@ -359,5 +655,18 @@ public final class MemoryEngineService extends Service {
 
 	private interface NativeOperation {
 		int run();
+	}
+
+	private static final class FreezeRecord {
+		final int mode;
+		final String firstValue;
+		final String secondValue;
+		volatile boolean paused;
+
+		FreezeRecord(int mode, String firstValue, String secondValue) {
+			this.mode = mode;
+			this.firstValue = firstValue == null ? "" : firstValue;
+			this.secondValue = secondValue == null ? "" : secondValue;
+		}
 	}
 }

@@ -16,6 +16,7 @@ package ru.playsoftware.j2meloader.memory;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
@@ -40,5 +41,13 @@ public class MemoryEngineContractTest {
 		assertFalse(MemoryEngineContract.isScope(-1));
 		assertFalse(MemoryEngineContract.isValueType(8));
 		assertFalse(MemoryEngineContract.isCandidateType(MemoryEngineContract.TYPE_AUTO));
+	}
+
+	@Test
+	public void candidatePagesAndWriteLimitsRemainBounded() {
+		assertEquals(9, MemoryEngineContract.RESULT_PAGE_STRIDE);
+		assertEquals(32, MemoryEngineContract.MAX_MULTI_WRITE);
+		assertEquals(32, MemoryEngineContract.MAX_FREEZE_RECORDS);
+		assertEquals(8, MemoryEngineContract.MAX_GROUP_VALUES);
 	}
 }

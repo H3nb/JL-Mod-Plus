@@ -55,21 +55,36 @@ public final class MemoryEngineContract {
 	public static final int RESULT_UNSUPPORTED = 4;
 	public static final int RESULT_TARGET_LOST = 5;
 	public static final int RESULT_NO_SESSION = 6;
+	public static final int RESULT_IDENTITY_UNSAFE = 7;
+	public static final int RESULT_SAFETY_LIMIT = 8;
 
 	public static final int CANDIDATE_STABLE = 0;
 	public static final int CANDIDATE_RELOCATING = 1;
 	public static final int CANDIDATE_AMBIGUOUS = 2;
 	public static final int CANDIDATE_LOST = 3;
 
-	/** [count, id, address, type, state, initialBits, previousBits, currentBits, ...]. */
-	public static final int RESULT_PAGE_STRIDE = 7;
+	public static final int FREEZE_LOCK = 0;
+	public static final int FREEZE_MINIMUM = 1;
+	public static final int FREEZE_MAXIMUM = 2;
+	public static final int FREEZE_RANGE = 3;
+	public static final int MAX_MULTI_WRITE = 32;
+	public static final int MAX_FREEZE_RECORDS = 32;
+	public static final int MAX_GROUP_VALUES = 8;
+
+	/** [count, id, address, previousAddress, type, state, relocations, initial, previous, current, ...]. */
+	public static final int RESULT_PAGE_STRIDE = 9;
 	public static final int MAX_RESULT_PAGE_SIZE = 200;
 
 	public static final String KEY_SUPPORTED = "supported";
+	public static final String KEY_WRITE_SUPPORTED = "writeSupported";
 	public static final String KEY_RUNTIME_TOKEN = "runtimeToken";
 	public static final String KEY_TARGET_PID = "targetPid";
 	public static final String KEY_PAGE_SIZE = "pageSize";
 	public static final String KEY_MESSAGE = "message";
+	public static final String KEY_WATCH_ROWS = "watchRows";
+	public static final String KEY_WATCH_LABELS = "watchLabels";
+	public static final String KEY_WATCH_FREEZE_MODES = "watchFreezeModes";
+	public static final String KEY_WATCH_FREEZE_PAUSED = "watchFreezePaused";
 
 	private MemoryEngineContract() {
 	}
