@@ -220,6 +220,14 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="j2me_midlet_runtime" />
         </service>
+        <service
+            android:name=".memory.MemoryTargetBridgeService"
+            android:exported="false"
+            android:process=":midlet" />
+        <service
+            android:name=".memory.MemoryEngineService"
+            android:exported="false"
+            android:process=":memory_engine" />
         <activity android:name=".settings.SettingsActivity"
             android:exported="true">
             <intent-filter>

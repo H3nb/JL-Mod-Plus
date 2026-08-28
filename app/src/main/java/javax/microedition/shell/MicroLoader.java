@@ -75,6 +75,7 @@ import ru.playsoftware.j2meloader.config.ShaderInfo;
 import ru.playsoftware.j2meloader.crashes.CrashReporter;
 import ru.playsoftware.j2meloader.crashes.MidletSessionJournal;
 import ru.playsoftware.j2meloader.crashes.MidletSessionStore;
+import ru.playsoftware.j2meloader.memory.MemoryRuntimeSession;
 import ru.playsoftware.j2meloader.util.AppUtils;
 import ru.playsoftware.j2meloader.util.FileUtils;
 import ru.playsoftware.j2meloader.util.IOUtils;
@@ -103,6 +104,7 @@ public class MicroLoader {
 	private String jarSha256;
 	private TimingSession timingSession;
 	private AutoSpeedController autoSpeedController;
+	private long memoryRuntimeToken;
 	private boolean timingTransformCompatible;
 	/** Set only after the MIDlet thread has successfully received the timing session. */
 	private boolean timingSessionTransferred;
@@ -167,6 +169,7 @@ public class MicroLoader {
 		}
 		timingSession = session;
 		autoSpeedController = speedController;
+		memoryRuntimeToken = MemoryRuntimeSession.start();
 	}
 
 	void closeTimingSession() {
@@ -174,6 +177,8 @@ public class MicroLoader {
 		timingSession = null;
 		autoSpeedController = null;
 		GuestTimingBridge.clear(session);
+		MemoryRuntimeSession.close(memoryRuntimeToken);
+		memoryRuntimeToken = 0L;
 	}
 
 	/**

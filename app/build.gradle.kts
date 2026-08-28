@@ -58,6 +58,7 @@ android {
     androidResources.generateLocaleConfig = true
 
     buildFeatures {
+        aidl = true
         compose = true
         prefab = true
         buildConfig = true
