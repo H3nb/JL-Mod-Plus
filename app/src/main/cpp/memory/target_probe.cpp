@@ -166,11 +166,10 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryTarget_collectResidentRuns(
             }
             if (mincore(reinterpret_cast<void *>(start), end - start,
                         residency.data()) != 0) {
-                // A map may disappear between maps parsing and mincore. It is
-                // safer to report an incomplete snapshot than to publish
-                // silently partial ranges.
-                truncated = true;
-                break;
+                // A map may disappear between maps parsing and mincore. Skip
+                // that stale map, as the proven PR #109 scanner did. The
+                // maxRuns cap below still reports true payload truncation.
+                continue;
             }
 
             size_t runStartPage = pageCount;

@@ -48,6 +48,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
@@ -136,6 +137,10 @@ internal object MemoryEditorPageParser {
     }
 }
 
+internal fun newSearchPredicate(selectedPredicate: Int): Int =
+    selectedPredicate.takeIf { it <= MemoryEngineContract.PREDICATE_BETWEEN }
+        ?: MemoryEngineContract.PREDICATE_EQUAL
+
 internal data class MemoryEditorUiState(
     val visible: Boolean = false,
     val connected: Boolean = false,
@@ -143,6 +148,7 @@ internal data class MemoryEditorUiState(
     val writeSupported: Boolean = false,
     val runtimeToken: Long = 0,
     val busy: Boolean = false,
+    val searching: Boolean = false,
     val resultCount: Long = 0,
     val pageOffset: Int = 0,
     val results: List<MemoryCandidateRow> = emptyList(),
@@ -200,6 +206,7 @@ class MemoryEditorComposeController(private val composeView: ComposeView) : Memo
             post {
                 state = state.copy(
                     busy = false,
+                    searching = false,
                     resultCount = resultCount,
                     message = if (resultCode == MemoryEngineContract.RESULT_OK) {
                         message?.takeIf(String::isNotBlank)
@@ -295,7 +302,7 @@ class MemoryEditorComposeController(private val composeView: ComposeView) : Memo
         unknown: Boolean,
         scope: Int,
     ) {
-        operate {
+        operate(searching = true) {
             if (unknown) startUnknownSearch(state.runtimeToken, scope, type)
             else startKnownSearch(
                 state.runtimeToken,
@@ -309,7 +316,7 @@ class MemoryEditorComposeController(private val composeView: ComposeView) : Memo
     }
 
     override fun nextScan(value: String, secondValue: String, predicate: Int, compare: Int) {
-        operate {
+        operate(searching = true) {
             if (predicate >= MemoryEngineContract.PREDICATE_CHANGED) {
                 refineRelative(state.runtimeToken, predicate, compare, value.trim(), secondValue.trim())
             } else {
@@ -319,7 +326,9 @@ class MemoryEditorComposeController(private val composeView: ComposeView) : Memo
     }
 
     override fun groupSearch(types: IntArray, values: Array<String>, distance: Int, scope: Int) {
-        operate { startGroupSearch(state.runtimeToken, scope, types, values, distance) }
+        operate(searching = true) {
+            startGroupSearch(state.runtimeToken, scope, types, values, distance)
+        }
     }
 
     override fun undo() = operate { undoSearch(state.runtimeToken) }
@@ -439,9 +448,12 @@ class MemoryEditorComposeController(private val composeView: ComposeView) : Memo
         return ids
     }
 
-    private fun operate(block: IMemoryEngineService.() -> Long) {
+    private fun operate(
+        searching: Boolean = false,
+        block: IMemoryEngineService.() -> Long,
+    ) {
         if (state.busy || state.runtimeToken == 0L) return
-        state = state.copy(busy = true, message = null)
+        state = state.copy(busy = true, searching = searching, message = null)
         runIpc {
             val engine = service ?: throw RemoteException("Engine disconnected")
             engine.block()
@@ -500,7 +512,7 @@ class MemoryEditorComposeController(private val composeView: ComposeView) : Memo
 
     private fun disconnected() = post {
         service = null
-        state = state.copy(connected = false, supported = false, busy = false,
+        state = state.copy(connected = false, supported = false, busy = false, searching = false,
             message = context.getString(R.string.memory_editor_unsupported))
     }
 
@@ -572,6 +584,48 @@ internal fun MemoryEditorScreen(state: MemoryEditorUiState, actions: MemoryEdito
             shape = MaterialTheme.shapes.large,
         ) {
             MemoryEditorContent(state, actions)
+        }
+        if (state.busy) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.38f))
+                    .clickable(onClick = {}),
+                contentAlignment = Alignment.Center,
+            ) {
+                Surface(
+                    modifier = Modifier.widthIn(min = 240.dp, max = 360.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 12.dp,
+                    shadowElevation = 12.dp,
+                    shape = MaterialTheme.shapes.large,
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        CircularProgressIndicator()
+                        Text(
+                            stringResource(
+                                if (state.searching) R.string.memory_editor_searching
+                                else R.string.memory_editor_working,
+                            ),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        if (state.searching) {
+                            Text(
+                                stringResource(R.string.memory_editor_searching_detail),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        TextButton(onClick = actions::cancel) {
+                            Text(stringResource(R.string.memory_editor_cancel))
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -712,7 +766,16 @@ private fun MemoryEditorContent(state: MemoryEditorUiState, actions: MemoryEdito
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Button(
-                        onClick = { actions.startSearch(value, secondValue, type, predicate, unknown, scope) },
+                        onClick = {
+                            actions.startSearch(
+                                value,
+                                secondValue,
+                                type,
+                                newSearchPredicate(predicate),
+                                unknown,
+                                scope,
+                            )
+                        },
                         enabled = !state.busy && (unknown || value.isNotBlank()) &&
                             (!needsSecondValue || secondValue.isNotBlank()),
                         modifier = Modifier.weight(1f).sizeIn(minHeight = 48.dp),

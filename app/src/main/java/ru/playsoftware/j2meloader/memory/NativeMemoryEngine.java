@@ -36,6 +36,8 @@ final class NativeMemoryEngine {
 
 	static native int refineKnown(int predicate, String first, String second);
 
+	static native int recoverKnown(int predicate, String first, String second);
+
 	static native int refineRelative(int predicate, int compareTarget, String first, String second);
 
 	static native int undo();

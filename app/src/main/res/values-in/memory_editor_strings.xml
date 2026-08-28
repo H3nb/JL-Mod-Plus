@@ -39,6 +39,9 @@
     </plurals>
     <string name="memory_editor_close">Tutup Editor Memori</string>
     <string name="memory_editor_cancel">Batalkan operasi</string>
+    <string name="memory_editor_searching">Mencari di memori…</string>
+    <string name="memory_editor_working">Menjalankan operasi…</string>
+    <string name="memory_editor_searching_detail">Pencarian besar dapat memerlukan waktu lebih lama. Hasil terakhir tetap aman sampai operasi ini selesai.</string>
     <string name="memory_editor_candidate_stable">Stabil</string>
     <string name="memory_editor_candidate_relocating">Mencari ulang</string>
     <string name="memory_editor_candidate_ambiguous">Ambigu — penulisan dijeda</string>

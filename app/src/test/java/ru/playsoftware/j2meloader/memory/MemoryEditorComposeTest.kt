@@ -74,4 +74,20 @@ class MemoryEditorComposeTest {
         assertNull(parseGroup("Auto:1, Int:2"))
         assertNull(parseGroup("Int:1, Unknown:2"))
     }
+
+    @Test
+    fun newSearchNeverForwardsARelativeRefinePredicate() {
+        assertEquals(
+            MemoryEngineContract.PREDICATE_BETWEEN,
+            newSearchPredicate(MemoryEngineContract.PREDICATE_BETWEEN),
+        )
+        assertEquals(
+            MemoryEngineContract.PREDICATE_EQUAL,
+            newSearchPredicate(MemoryEngineContract.PREDICATE_CHANGED),
+        )
+        assertEquals(
+            MemoryEngineContract.PREDICATE_EQUAL,
+            newSearchPredicate(MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE),
+        )
+    }
 }

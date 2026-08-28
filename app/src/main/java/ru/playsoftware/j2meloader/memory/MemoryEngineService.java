@@ -161,8 +161,16 @@ public final class MemoryEngineService extends Service {
 
 		@Override
 		public long refineKnown(long token, int predicate, String first, String second) {
-			return enqueue(token, false, 0,
-					() -> NativeMemoryEngine.refineKnown(predicate, first, second));
+			return enqueue(token, false, 0, () -> {
+				int result = NativeMemoryEngine.refineKnown(predicate, first, second);
+				if (result != MemoryEngineContract.RESULT_IDENTITY_UNSAFE) {
+					return result;
+				}
+				result = configureTarget(token, configuredScope);
+				return result == MemoryEngineContract.RESULT_OK
+						? NativeMemoryEngine.recoverKnown(predicate, first, second)
+						: result;
+			});
 		}
 
 		@Override
@@ -636,7 +644,9 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private void notifyFinished(long operationId, int result, @Nullable String serviceMessage) {
-		long count = result == MemoryEngineContract.RESULT_OK ? NativeMemoryEngine.resultCount() : 0L;
+		// Native operations are transactional. Cancellation or failure may leave
+		// a valid previous result set, so do not present it as zero.
+		long count = NativeMemoryEngine.resultCount();
 		String message = serviceMessage == null ? NativeMemoryEngine.lastMessage() : serviceMessage;
 		int callbackCount = callbacks.beginBroadcast();
 		try {
