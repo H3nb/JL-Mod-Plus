@@ -25,9 +25,11 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.espresso.Espresso.pressBack
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 
 class RuntimeMenuComposeTest {
@@ -137,7 +139,9 @@ class RuntimeMenuComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Memory Editor bubble").performScrollTo().performClick()
+        val memoryEditorLabel = InstrumentationRegistry.getInstrumentation()
+            .targetContext.getString(R.string.memory_editor_bubble)
+        composeRule.onNodeWithText(memoryEditorLabel).performScrollTo().performClick()
 
         assertEquals(listOf("dismiss", "memoryEditor"), events)
     }
