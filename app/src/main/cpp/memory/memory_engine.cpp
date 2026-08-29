@@ -23,6 +23,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <deque>
+#include <iterator>
 #include <limits>
 #include <memory>
 #include <mutex>
@@ -69,8 +70,10 @@ constexpr jint kDecreasedByRange = 15;
 constexpr jint kComparePrevious = 0;
 constexpr jint kCompareInitial = 1;
 constexpr jint kStable = 0;
-constexpr jint kLost = 3;
-constexpr size_t kCandidateLimit = 1'000'000;
+// Candidate records are compact native data and never cross Binder in bulk. Two million typed
+// aliases covers the dense searches seen in the prototype while retaining a deterministic bound
+// on old API 23 devices. An incomplete set is never committed.
+constexpr size_t kCandidateLimit = 2'000'000;
 constexpr size_t kSnapshotByteLimit = 96U * 1024U * 1024U;
 constexpr size_t kReadChunkSize = 256U * 1024U;
 constexpr size_t kHistoryLimit = 8;
@@ -744,10 +747,59 @@ jint snapshotUnknown(const OperationContext &context, jint requestedType) {
     return commitOperation(context, std::move(next), false);
 }
 
-bool readCandidate(const Target &target, const Candidate &candidate,
-                   uint64_t &bits) {
+jint captureCurrentImage(const Target &target,
+                         std::vector<SnapshotRun> &snapshots) {
+    size_t retained = 0;
+    snapshots.clear();
+    snapshots.reserve(target.ranges.size());
+    for (const Range &range : target.ranges) {
+        if (gCancelled.load(std::memory_order_acquire)) {
+            setMessage("Operation cancelled; previous results were preserved");
+            return kCancelled;
+        }
+        const size_t size = static_cast<size_t>(range.end - range.start);
+        if (size > kSnapshotByteLimit - std::min(retained, kSnapshotByteLimit)) {
+            setMessage("Refine snapshot exceeds the memory budget");
+            return kResourceLimit;
+        }
+        SnapshotRun snapshot;
+        snapshot.start = range.start;
+        snapshot.bytes.resize(size);
+        if (!readExact(target.pid, range.start, snapshot.bytes.data(), size)) {
+            setMessage("A target range changed while it was being refined");
+            return kTargetLost;
+        }
+        retained += size;
+        snapshots.push_back(std::move(snapshot));
+    }
+    return kOk;
+}
+
+bool readImageBits(const std::vector<SnapshotRun> &snapshots,
+                   const Candidate &candidate, uint64_t &bits) {
     const size_t width = widthOf(candidate.type);
-    return width != 0 && readExact(target.pid, candidate.address, &bits, width);
+    if (width == 0) {
+        return false;
+    }
+    const auto run = std::upper_bound(
+            snapshots.begin(), snapshots.end(), candidate.address,
+            [](uintptr_t address, const SnapshotRun &item) {
+                return address < item.start;
+            });
+    if (run == snapshots.begin()) {
+        return false;
+    }
+    const SnapshotRun &snapshot = *std::prev(run);
+    if (candidate.address < snapshot.start) {
+        return false;
+    }
+    const size_t offset = static_cast<size_t>(candidate.address - snapshot.start);
+    if (offset > snapshot.bytes.size() ||
+        width > snapshot.bytes.size() - offset) {
+        return false;
+    }
+    bits = loadBits(snapshot.bytes.data() + offset, width);
+    return true;
 }
 
 jint refineCandidates(const OperationContext &context, jint predicate,
@@ -833,6 +885,16 @@ jint refineCandidates(const OperationContext &context, jint predicate,
             }
         }
     } else {
+        // Reading one complete resident image turns a million-candidate refine from a million
+        // process_vm_readv syscalls into sequential remote reads plus an in-process filter pass.
+        // It also makes a published zero trustworthy: partial coverage aborts transactionally.
+        std::vector<SnapshotRun> currentImage;
+        const jint captureResult =
+                captureCurrentImage(context.target, currentImage);
+        if (captureResult != kOk) {
+            return captureResult;
+        }
+        next->candidates.reserve(context.state->candidates.size());
         for (const Candidate &candidate : context.state->candidates) {
             if (gCancelled.load(std::memory_order_acquire)) {
                 setMessage(
@@ -841,9 +903,9 @@ jint refineCandidates(const OperationContext &context, jint predicate,
             }
             Candidate updated = candidate;
             uint64_t current = 0;
-            if (!readCandidate(context.target, candidate, current)) {
-                updated.state = kLost;
-                next->candidates.push_back(updated);
+            if (!readImageBits(currentImage, candidate, current)) {
+                // The complete image was captured successfully, so an unresolved address is a
+                // stale binding. Never keep it as a result that looks editable.
                 continue;
             }
             updated.previousBits = candidate.currentBits;

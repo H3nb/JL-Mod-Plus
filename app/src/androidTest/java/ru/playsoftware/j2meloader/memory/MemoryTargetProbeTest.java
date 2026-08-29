@@ -27,6 +27,10 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class MemoryTargetProbeTest {
+	private static final int MANAGED_PROBE_A = 0x5A17C0DE;
+	private static final int MANAGED_PROBE_B = 0x31C0FFEE;
+	private static volatile int managedProbe;
+
 	@Test
 	public void thoroughProbeReturnsAlignedCompleteResidentRuns() {
 		int pageSize = NativeMemoryTarget.pageSize();
@@ -54,6 +58,41 @@ public class MemoryTargetProbeTest {
 		assertEquals(2, probe.length);
 		assertTrue(NativeMemoryEngine.canReadTarget(Process.myPid(), probe[0], probe[1]));
 		assertTrue(!NativeMemoryEngine.canReadTarget(Process.myPid(), probe[0], probe[1] ^ 1L));
+	}
+
+	@Test
+	public void nativeEngineFindsAndRefinesManagedArtValue() {
+		int pageSize = NativeMemoryTarget.pageSize();
+		long[] runs = NativeMemoryTarget.collectResidentRuns(
+				MemoryEngineContract.SCOPE_JAVA_FAST, 4096);
+		assertNotNull(runs);
+		assertTrue(MemoryEngineContract.isCompleteRunList(runs));
+
+		long token = 0x4A4C4D454D544553L;
+		managedProbe = MANAGED_PROBE_A;
+		try {
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.configureTarget(
+							Process.myPid(), pageSize, token, runs));
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.startKnown(
+							MemoryEngineContract.TYPE_INT,
+							MemoryEngineContract.PREDICATE_EQUAL,
+							Integer.toString(MANAGED_PROBE_A), ""));
+			assertTrue("managed ART probe was not inside the selected Java ranges",
+					NativeMemoryEngine.resultCount() > 0L);
+
+			managedProbe = MANAGED_PROBE_B;
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.refineKnown(
+							MemoryEngineContract.PREDICATE_EQUAL,
+							Integer.toString(MANAGED_PROBE_B), ""));
+			assertTrue("managed ART probe did not survive direct refine",
+					NativeMemoryEngine.resultCount() > 0L);
+		} finally {
+			managedProbe = 0;
+			NativeMemoryEngine.clear();
+		}
 	}
 
 	@Test
