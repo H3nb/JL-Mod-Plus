@@ -91,7 +91,7 @@ public class MemoryTargetProbeTest {
 					NativeMemoryEngine.resultCount() > 0L);
 		} finally {
 			managedProbe = 0;
-			NativeMemoryEngine.clear();
+			NativeMemoryEngine.clearTarget();
 		}
 	}
 

@@ -21,6 +21,10 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
 import androidx.compose.ui.platform.ComposeView;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.ViewGroupCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import javax.microedition.lcdui.overlay.OverlayView;
 
@@ -40,6 +44,7 @@ public final class RuntimeHostView {
 	public RuntimeHostView(Context context) {
 		root = new FrameLayout(context);
 		root.setId(R.id.midletFrame);
+		ViewGroupCompat.installCompatInsetsDispatch(root);
 
 		virtualDisplay = new LinearLayout(context);
 		virtualDisplay.setId(R.id.virtual_display);
@@ -74,6 +79,19 @@ public final class RuntimeHostView {
 		FrameLayout.LayoutParams bubbleParams = new FrameLayout.LayoutParams(
 				bubbleSize, bubbleSize, Gravity.END | Gravity.CENTER_VERTICAL);
 		root.addView(memoryEditorBubble, bubbleParams);
+		int bubbleMargin = Math.round(8 * context.getResources().getDisplayMetrics().density);
+		ViewCompat.setOnApplyWindowInsetsListener(memoryEditorBubble, (view, windowInsets) -> {
+			Insets bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+			Insets cutout = windowInsets.getInsets(WindowInsetsCompat.Type.displayCutout());
+			Insets gestures = windowInsets.getInsets(WindowInsetsCompat.Type.mandatorySystemGestures());
+			FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) view.getLayoutParams();
+			params.leftMargin = bubbleMargin + Math.max(bars.left, Math.max(cutout.left, gestures.left));
+			params.topMargin = bubbleMargin + Math.max(bars.top, cutout.top);
+			params.rightMargin = bubbleMargin + Math.max(bars.right, Math.max(cutout.right, gestures.right));
+			params.bottomMargin = bubbleMargin + Math.max(bars.bottom, Math.max(cutout.bottom, gestures.bottom));
+			view.setLayoutParams(params);
+			return windowInsets;
+		});
 
 		notices = new ComposeView(context);
 		FrameLayout.LayoutParams noticeParams = new FrameLayout.LayoutParams(

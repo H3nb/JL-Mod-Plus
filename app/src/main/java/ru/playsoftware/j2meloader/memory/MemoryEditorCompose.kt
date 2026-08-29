@@ -35,11 +35,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -215,6 +216,7 @@ class MemoryEditorComposeController(
     private var service: IMemoryEngineService? = null
     private var bound = false
     private var destroyed = false
+    private var refreshInFlight = false
 
     private val callback = object : IMemoryEngineCallback.Stub() {
         override fun onOperationFinished(
@@ -224,6 +226,7 @@ class MemoryEditorComposeController(
             message: String?,
         ) {
             post {
+                refreshInFlight = false
                 state = state.copy(
                     busy = false,
                     searching = false,
@@ -386,12 +389,16 @@ class MemoryEditorComposeController(
     override fun undo() = operate { undoSearch(state.runtimeToken) }
 
     override fun refresh() {
-        if (state.busy) return
+        if (state.busy || refreshInFlight) return
         val ids = visiblePrimaryIds().toLongArray()
         if (ids.isEmpty()) {
             reload()
         } else {
-            operate { refreshCandidates(state.runtimeToken, ids) }
+            refreshInFlight = true
+            runIpc {
+                val engine = service ?: throw RemoteException("Engine disconnected")
+                engine.refreshCandidates(state.runtimeToken, ids)
+            }
         }
     }
 
@@ -521,7 +528,7 @@ class MemoryEditorComposeController(
         searching: Boolean = false,
         block: IMemoryEngineService.() -> Long,
     ) {
-        if (state.busy || state.runtimeToken == 0L) return
+        if (state.busy || refreshInFlight || state.runtimeToken == 0L) return
         state = state.copy(busy = true, searching = searching, message = null)
         runIpc {
             val engine = service ?: throw RemoteException("Engine disconnected")
@@ -581,6 +588,7 @@ class MemoryEditorComposeController(
 
     private fun disconnected() = post {
         service = null
+        refreshInFlight = false
         state = state.copy(connected = false, supported = false, busy = false, searching = false,
             message = context.getString(R.string.memory_editor_unsupported))
     }
@@ -593,7 +601,10 @@ class MemoryEditorComposeController(
             } catch (_: RemoteException) {
                 disconnected()
             } catch (exception: RuntimeException) {
-                post { state = state.copy(busy = false, message = exception.message) }
+                post {
+                    refreshInFlight = false
+                    state = state.copy(busy = false, message = exception.message)
+                }
             }
         }
     }
@@ -641,8 +652,7 @@ internal fun MemoryEditorScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.18f))
-            .safeDrawingPadding()
-            .imePadding(),
+            .windowInsetsPadding(WindowInsets.safeContent),
         contentAlignment = Alignment.Center,
     ) {
         Surface(

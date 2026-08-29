@@ -26,8 +26,10 @@ import android.os.RemoteException;
 
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -578,13 +580,26 @@ public final class MemoryEngineService extends Service {
 			stopFreezeTaskIfIdle();
 			return;
 		}
+		List<Map.Entry<Long, FreezeRecord>> active = new ArrayList<>();
 		for (Map.Entry<Long, FreezeRecord> entry : freezeRecords.entrySet()) {
-			FreezeRecord record = entry.getValue();
-			if (record.paused) {
-				continue;
+			if (!entry.getValue().paused) {
+				active.add(entry);
 			}
+		}
+		if (active.isEmpty()) {
+			return;
+		}
+		long[] activeIds = new long[active.size()];
+		for (int index = 0; index < active.size(); index++) {
+			activeIds[index] = active.get(index).getKey();
+		}
+		int batchRefresh = refreshWithRecovery(token, activeIds);
+		for (Map.Entry<Long, FreezeRecord> entry : active) {
+			FreezeRecord record = entry.getValue();
 			long[] ids = new long[]{entry.getKey()};
-			int result = refreshWithRecovery(token, ids);
+			// A failed batch is retried individually so one stale address cannot pause unrelated freezes.
+			int result = batchRefresh == MemoryEngineContract.RESULT_OK
+					? batchRefresh : refreshWithRecovery(token, ids);
 			if (result == MemoryEngineContract.RESULT_OK) {
 				result = NativeMemoryEngine.freeze(
 						ids, record.mode, record.firstValue, record.secondValue);

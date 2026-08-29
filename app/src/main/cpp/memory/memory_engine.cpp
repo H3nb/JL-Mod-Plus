@@ -29,6 +29,7 @@
 #include <mutex>
 #include <new>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -89,6 +90,7 @@ constexpr size_t kMultiWriteLimit = 32;
 constexpr size_t kRecoveryLimit = 32;
 constexpr size_t kRelocationTrackLimit = 25'000;
 constexpr size_t kWatchLimit = 128;
+constexpr size_t kLiveOverlayLimit = 2'048;
 
 struct Range {
     uintptr_t start;
@@ -169,6 +171,7 @@ const std::shared_ptr<const SearchState> gEmptyState =
         std::make_shared<SearchState>();
 std::shared_ptr<const SearchState> gState = gEmptyState;
 std::deque<std::shared_ptr<const SearchState>> gHistory;
+std::unordered_map<uint64_t, Candidate> gLiveCandidates;
 uint64_t gNextCandidateId = 1;
 std::atomic<bool> gCancelled{false};
 std::string gLastMessage;
@@ -671,6 +674,7 @@ bool safeAdd(uint64_t &value, uint64_t addition) {
 struct OperationContext {
     Target target;
     std::shared_ptr<const SearchState> state;
+    std::unordered_map<uint64_t, Candidate> liveCandidates;
     uint64_t nextId;
 };
 
@@ -683,8 +687,34 @@ bool beginOperation(OperationContext &context) {
     }
     context.target = gTarget;
     context.state = gState;
+    context.liveCandidates = gLiveCandidates;
     context.nextId = gNextCandidateId;
     return true;
+}
+
+const Candidate &liveCandidate(
+        const Candidate &candidate,
+        const std::unordered_map<uint64_t, Candidate> &liveCandidates) {
+    const auto live = liveCandidates.find(candidate.id);
+    return live == liveCandidates.end() ? candidate : live->second;
+}
+
+jint publishLiveCandidates(const OperationContext &context,
+                           const std::vector<Candidate> &candidates) {
+    std::lock_guard<std::mutex> lock(gMutex);
+    if (gTarget.generation != context.target.generation ||
+        gTarget.token != context.target.token || gState != context.state) {
+        gLastMessage = "MIDlet runtime or search changed during live refresh";
+        return kTargetLost;
+    }
+    if (gLiveCandidates.size() + candidates.size() > kLiveOverlayLimit) {
+        gLiveCandidates.clear();
+    }
+    for (const Candidate &candidate : candidates) {
+        gLiveCandidates.insert_or_assign(candidate.id, candidate);
+    }
+    gLastMessage = "";
+    return kOk;
 }
 
 void trimHistoryLocked() {
@@ -758,7 +788,8 @@ void normalizeCandidateResults(SearchState &state) {
 }
 
 jint commitOperation(const OperationContext &context,
-                     std::shared_ptr<SearchState> next, jint historyMode) {
+                     std::shared_ptr<SearchState> next, jint historyMode,
+                     bool preserveLive = false) {
     if (gCancelled.load(std::memory_order_acquire)) {
         setMessage("Operation cancelled; previous results were preserved");
         return kCancelled;
@@ -779,6 +810,9 @@ jint commitOperation(const OperationContext &context,
         gHistory.clear();
     }
     gState = std::move(next);
+    if (!preserveLive) {
+        gLiveCandidates.clear();
+    }
     gNextCandidateId = context.nextId;
     gLastMessage = "";
     return kOk;
@@ -1286,9 +1320,18 @@ jint refineCandidates(const OperationContext &context, jint predicate,
                         "Operation cancelled; previous results were preserved");
                 return kCancelled;
             }
-            Candidate updated = candidate;
+            const Candidate &live =
+                    liveCandidate(candidate, context.liveCandidates);
+            Candidate bound = candidate;
+            bound.address = live.address;
+            bound.previousAddress = live.previousAddress;
+            bound.relocationCount = live.relocationCount;
+            bound.state = live.state;
+            bound.identityHash = live.identityHash;
+            bound.identityValid = live.identityValid;
+            Candidate updated = bound;
             uint64_t current = 0;
-            if (!readImageBits(currentImage, candidate, current)) {
+            if (!readImageBits(currentImage, bound, current)) {
                 // The complete image was captured successfully, so an unresolved address is a
                 // stale binding. Never keep it as a result that looks editable.
                 continue;
@@ -1544,7 +1587,38 @@ jint refreshCandidates(const OperationContext &context,
         setMessage("No materialized candidates are available");
         return kNoSession;
     }
-    auto next = std::make_shared<SearchState>(*context.state);
+    if (ids.empty()) {
+        setMessage("Select at least one candidate to refresh");
+        return kInvalidRequest;
+    }
+    std::vector<Candidate> selected;
+    selected.reserve(ids.size());
+    for (uint64_t id : ids) {
+        const auto live = context.liveCandidates.find(id);
+        if (live != context.liveCandidates.end()) {
+            selected.push_back(live->second);
+        }
+    }
+    const auto collect = [&](const Candidate &candidate) {
+        if (!isSelected(ids, candidate.id) ||
+            std::any_of(selected.begin(), selected.end(),
+                        [&](const Candidate &item) {
+                            return item.id == candidate.id;
+                        })) {
+            return;
+        }
+        selected.push_back(liveCandidate(candidate, context.liveCandidates));
+    };
+    for (const Candidate &candidate : context.state->candidates) {
+        collect(candidate);
+    }
+    for (const Candidate &watch : context.state->watches) {
+        collect(watch);
+    }
+    if (selected.size() != ids.size()) {
+        setMessage("One or more candidate IDs are no longer available");
+        return kInvalidRequest;
+    }
     bool needsRecovery = false;
     size_t unsafeCount = 0;
     std::vector<Candidate *> recovery;
@@ -1573,20 +1647,8 @@ jint refreshCandidates(const OperationContext &context,
         candidate.currentBits = current;
         candidate.state = kStable;
     };
-    for (Candidate &candidate : next->candidates) {
+    for (Candidate &candidate : selected) {
         refreshOne(candidate);
-    }
-    for (Candidate &watch : next->watches) {
-        const auto result =
-                std::find_if(next->candidates.begin(), next->candidates.end(),
-                             [&](const Candidate &candidate) {
-                                 return candidate.id == watch.id;
-                             });
-        if (result != next->candidates.end()) {
-            watch = *result;
-        } else {
-            refreshOne(watch);
-        }
     }
     if (needsRecovery && !allowRecovery) {
         setMessage("Fresh resident ranges are required for identity recovery");
@@ -1602,21 +1664,7 @@ jint refreshCandidates(const OperationContext &context,
             ++unsafeCount;
         }
     }
-    if (!recovery.empty()) {
-        next->logicalCount = next->candidates.size();
-        next->candidateOrderDirty = true;
-    }
-    for (Candidate &watch : next->watches) {
-        const auto result =
-                std::find_if(next->candidates.begin(), next->candidates.end(),
-                             [&](const Candidate &candidate) {
-                                 return candidate.id == watch.id;
-                             });
-        if (result != next->candidates.end()) {
-            watch = *result;
-        }
-    }
-    const jint result = commitOperation(context, std::move(next), 0);
+    const jint result = publishLiveCandidates(context, selected);
     if (result == kOk && unsafeCount > 0) {
         setMessage(
                 "Some candidates remain ambiguous or lost; writes stay paused");
@@ -1750,6 +1798,7 @@ jint editCandidates(const OperationContext &context,
         if (!std::binary_search(ids.begin(), ids.end(), candidate.id)) {
             continue;
         }
+        candidate = liveCandidate(candidate, context.liveCandidates);
         const int outcome =
                 editOneCandidate(context.target, candidate, replacement);
         if (outcome < 0) {
@@ -1775,6 +1824,7 @@ jint editCandidates(const OperationContext &context,
             watch = *result;
             continue;
         }
+        watch = liveCandidate(watch, context.liveCandidates);
         const int outcome =
                 editOneCandidate(context.target, watch, replacement);
         if (outcome < 0) {
@@ -1842,7 +1892,7 @@ jint pinCandidates(const OperationContext &context,
                                }),
                 next->watches.end());
     }
-    return commitOperation(context, std::move(next), 0);
+    return commitOperation(context, std::move(next), 0, true);
 }
 
 jint freezeCandidates(const OperationContext &context,
@@ -1856,11 +1906,15 @@ jint freezeCandidates(const OperationContext &context,
         setMessage("Freeze accepts only current Watch List candidates");
         return kInvalidRequest;
     }
-    auto next = std::make_shared<SearchState>(*context.state);
-    for (const Candidate &watch : next->watches) {
+    std::vector<Candidate> selected;
+    selected.reserve(ids.size());
+    for (const Candidate &watch : context.state->watches) {
         if (!std::binary_search(ids.begin(), ids.end(), watch.id)) {
             continue;
         }
+        selected.push_back(liveCandidate(watch, context.liveCandidates));
+    }
+    for (const Candidate &watch : selected) {
         Query query;
         const jint predicate = mode == 3 ? kBetween : kEqual;
         if (!parseQuery(watch.type, predicate, first, second, query)) {
@@ -1871,10 +1925,7 @@ jint freezeCandidates(const OperationContext &context,
 
     size_t corrected = 0;
     size_t unsafe = 0;
-    for (Candidate &watch : next->watches) {
-        if (!std::binary_search(ids.begin(), ids.end(), watch.id)) {
-            continue;
-        }
+    for (Candidate &watch : selected) {
         Query query;
         parseQuery(watch.type, mode == 3 ? kBetween : kEqual, first, second,
                    query);
@@ -1925,15 +1976,7 @@ jint freezeCandidates(const OperationContext &context,
             ++unsafe;
         }
     }
-    for (Candidate &candidate : next->candidates) {
-        const auto watch = std::find_if(
-                next->watches.begin(), next->watches.end(),
-                [&](const Candidate &item) { return item.id == candidate.id; });
-        if (watch != next->watches.end()) {
-            candidate = *watch;
-        }
-    }
-    const jint committed = commitOperation(context, std::move(next), 0);
+    const jint committed = publishLiveCandidates(context, selected);
     if (committed != kOk) {
         return committed;
     }
@@ -1956,15 +1999,18 @@ std::string fromJString(JNIEnv *env, jstring value) {
     return result;
 }
 
-jlongArray candidatePage(JNIEnv *env, const std::vector<Candidate> &candidates,
-                         size_t start, size_t limit) {
+jlongArray candidatePage(
+        JNIEnv *env, const std::vector<Candidate> &candidates,
+        const std::unordered_map<uint64_t, Candidate> &liveCandidates,
+        size_t start, size_t limit) {
     start = std::min(start, candidates.size());
     const size_t count = std::min(limit, candidates.size() - start);
     const size_t outputSize = 1U + count * kResultStride;
     std::vector<jlong> output(outputSize);
     output[0] = static_cast<jlong>(count);
     for (size_t index = 0; index < count; ++index) {
-        const Candidate &candidate = candidates[start + index];
+        const Candidate &candidate =
+                liveCandidate(candidates[start + index], liveCandidates);
         const size_t base = 1U + index * kResultStride;
         output[base] = static_cast<jlong>(candidate.id);
         output[base + 1U] = static_cast<jlong>(candidate.address);
@@ -2055,6 +2101,7 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_configureTarget(
         if (!sameRuntime) {
             gState = gEmptyState;
             gHistory.clear();
+            gLiveCandidates.clear();
             gNextCandidateId = 1;
         }
         gCancelled.store(false, std::memory_order_release);
@@ -2190,8 +2237,9 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_refineKnown(
 }
 
 jlongArray candidateAddressPage(JNIEnv *env,
-                                const std::vector<Candidate> &candidates,
+                                const std::shared_ptr<const SearchState> &state,
                                 size_t addressStart, size_t addressLimit) {
+    const std::vector<Candidate> &candidates = state->candidates;
     size_t candidateStart = 0;
     size_t skippedAddresses = 0;
     while (candidateStart < candidates.size() &&
@@ -2215,7 +2263,22 @@ jlongArray candidateAddressPage(JNIEnv *env,
                  candidates[candidateEnd].address == address);
         ++includedAddresses;
     }
-    return candidatePage(env, candidates, candidateStart,
+    std::unordered_map<uint64_t, Candidate> liveCandidates;
+    {
+        std::lock_guard<std::mutex> lock(gMutex);
+        if (gState == state) {
+            const size_t pageSize = candidateEnd - candidateStart;
+            if (gLiveCandidates.size() + pageSize > kLiveOverlayLimit) {
+                gLiveCandidates.clear();
+            }
+            for (size_t index = candidateStart; index < candidateEnd; ++index) {
+                gLiveCandidates.try_emplace(candidates[index].id,
+                                            candidates[index]);
+            }
+            liveCandidates = gLiveCandidates;
+        }
+    }
+    return candidatePage(env, candidates, liveCandidates, candidateStart,
                          candidateEnd - candidateStart);
 }
 
@@ -2259,7 +2322,11 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_undo(JNIEnv *,
     // Search history is independent from the session-scoped Watch List. A Watch added after a
     // refine/remove step must not disappear when that search step is undone.
     restored->watches = gState->watches;
+    for (Candidate &watch : restored->watches) {
+        watch = liveCandidate(watch, gLiveCandidates);
+    }
     gState = std::move(restored);
+    gLiveCandidates.clear();
     gHistory.pop_back();
     gLastMessage = "";
     return kOk;
@@ -2360,7 +2427,7 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_resultPage(
         std::lock_guard<std::mutex> lock(gMutex);
         state = gState;
     }
-    return candidateAddressPage(env, state->candidates,
+    return candidateAddressPage(env, state,
                                 static_cast<size_t>(offset),
                                 static_cast<size_t>(limit));
 }
@@ -2388,11 +2455,21 @@ extern "C" JNIEXPORT jlongArray JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_watchPage(JNIEnv *env,
                                                                     jclass) {
     std::shared_ptr<const SearchState> state;
+    std::unordered_map<uint64_t, Candidate> liveCandidates;
     {
         std::lock_guard<std::mutex> lock(gMutex);
         state = gState;
+        if (gLiveCandidates.size() + state->watches.size() >
+            kLiveOverlayLimit) {
+            gLiveCandidates.clear();
+        }
+        for (const Candidate &watch : state->watches) {
+            gLiveCandidates.try_emplace(watch.id, watch);
+        }
+        liveCandidates = gLiveCandidates;
     }
-    return candidatePage(env, state->watches, 0, state->watches.size());
+    return candidatePage(env, state->watches, liveCandidates, 0,
+                         state->watches.size());
 }
 
 extern "C" JNIEXPORT void JNICALL
@@ -2401,8 +2478,12 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearSearch(JNIEnv *,
     std::lock_guard<std::mutex> lock(gMutex);
     auto next = std::make_shared<SearchState>();
     next->watches = gState->watches;
+    for (Candidate &watch : next->watches) {
+        watch = liveCandidate(watch, gLiveCandidates);
+    }
     gState = std::move(next);
     gHistory.clear();
+    gLiveCandidates.clear();
 }
 
 extern "C" JNIEXPORT void JNICALL
@@ -2416,6 +2497,7 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearTarget(JNIEnv *,
     gTarget.ranges.clear();
     gState = gEmptyState;
     gHistory.clear();
+    gLiveCandidates.clear();
     gNextCandidateId = 1;
     gLastMessage = "";
 }
