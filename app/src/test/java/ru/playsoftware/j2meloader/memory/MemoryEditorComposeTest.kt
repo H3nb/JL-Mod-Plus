@@ -59,8 +59,35 @@ class MemoryEditorComposeTest {
     }
 
     @Test
+    fun resultRowsAreGroupedByRawAddressWithoutLosingTypeAliases() {
+        fun row(id: Long, address: Long, type: Int) = MemoryCandidateRow(
+            id, address, 0, type, MemoryEngineContract.CANDIDATE_STABLE, 0, 0, 0, 7,
+        )
+        val groups = groupCandidateRows(listOf(
+            row(1, 0x1000, MemoryEngineContract.TYPE_INT),
+            row(2, 0x1000, MemoryEngineContract.TYPE_FLOAT),
+            row(3, 0x2000, MemoryEngineContract.TYPE_LONG),
+        ))
+
+        assertEquals(2, groups.size)
+        assertEquals(0x1000, groups.first().address)
+        assertEquals(2, groups.first().aliases.size)
+        assertEquals(
+            listOf(MemoryEngineContract.TYPE_INT),
+            commonTypesForSelection(
+                listOf(
+                    row(1, 0x1000, MemoryEngineContract.TYPE_INT),
+                    row(2, 0x1000, MemoryEngineContract.TYPE_FLOAT),
+                    row(3, 0x2000, MemoryEngineContract.TYPE_INT),
+                ),
+                setOf(1, 3),
+            ),
+        )
+    }
+
+    @Test
     fun groupParserAcceptsOnlyTwoToEightExplicitTypedValues() {
-        val parsed = parseGroup("Int:100, i16:50, U16:12")!!
+        val parsed = parseGroup("Dword:100, Word:50, Word unsigned:12")!!
         assertArrayEquals(
             intArrayOf(
                 MemoryEngineContract.TYPE_INT,

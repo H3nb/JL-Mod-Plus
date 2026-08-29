@@ -27,13 +27,12 @@ private object NoOpMemoryEditorActions : MemoryEditorActions {
     override fun groupSearch(types: IntArray, values: Array<String>, distance: Int, scope: Int) = Unit
     override fun undo() = Unit
     override fun refresh() = Unit
-    override fun setLive(enabled: Boolean) = Unit
     override fun setWatchTab(watch: Boolean) = Unit
     override fun toggleSelection(id: Long) = Unit
     override fun selectVisible() = Unit
     override fun invertVisible() = Unit
     override fun clearSelection() = Unit
-    override fun editSelected(value: String) = Unit
+    override fun editSelected(value: String, type: Int) = Unit
     override fun removeSelected(keep: Boolean) = Unit
     override fun watchSelected(add: Boolean) = Unit
     override fun labelWatch(id: Long, label: String) = Unit
@@ -88,12 +87,13 @@ fun MemoryEditorPortraitScreenshot() {
     JLModPlusTheme(darkTheme = false) {
         MemoryEditorScreen(
             state = MemoryEditorUiState(
+                bubbleEnabled = true,
                 visible = true,
                 connected = true,
                 supported = true,
                 writeSupported = true,
                 runtimeToken = 1,
-                resultCount = 3,
+                resultCount = 2,
                 results = previewRows,
             ),
             actions = NoOpMemoryEditorActions,
@@ -108,6 +108,7 @@ fun MemoryEditorLandscapeWatchScreenshot() {
     JLModPlusTheme(darkTheme = true) {
         MemoryEditorScreen(
             state = MemoryEditorUiState(
+                bubbleEnabled = true,
                 visible = true,
                 connected = true,
                 supported = true,
@@ -134,12 +135,13 @@ fun MemoryEditorLandscapeResultsScreenshot() {
     JLModPlusTheme(darkTheme = false) {
         MemoryEditorScreen(
             state = MemoryEditorUiState(
+                bubbleEnabled = true,
                 visible = true,
                 connected = true,
                 supported = true,
                 writeSupported = true,
                 runtimeToken = 1,
-                resultCount = 3,
+                resultCount = 2,
                 results = previewRows,
             ),
             actions = NoOpMemoryEditorActions,

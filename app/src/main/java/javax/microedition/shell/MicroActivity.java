@@ -2,6 +2,7 @@
  * Copyright 2015-2016 Nickolay Savchenko
  * Copyright 2017-2021 Nikita Shakarun
  * Copyright 2019-2026 Yury Kharchenko
+ * Modified by JL-Mod Plus contributors; original upstream attribution is retained.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,7 +126,8 @@ public class MicroActivity extends AppCompatActivity {
 		binding = new RuntimeHostView(this);
 		setContentView(binding.getRoot());
 		runtimeNoticeController = new TransientNoticeComposeController(binding.notices);
-		memoryEditorController = new MemoryEditorComposeController(binding.memoryEditor);
+		memoryEditorController = new MemoryEditorComposeController(
+				binding.memoryEditor, binding.memoryEditorBubble);
 		virtualDisplayPaddingLeft = binding.virtualDisplay.getPaddingLeft();
 		virtualDisplayPaddingTop = binding.virtualDisplay.getPaddingTop();
 		virtualDisplayPaddingRight = binding.virtualDisplay.getPaddingRight();
@@ -299,7 +301,8 @@ public class MicroActivity extends AppCompatActivity {
 					@Override
 					public void onMemoryEditor() {
 						if (memoryEditorController != null) {
-							memoryEditorController.open();
+							memoryEditorController.toggleBubble();
+							updateRuntimeMenuState(current);
 						}
 					}
 
@@ -415,7 +418,8 @@ public class MicroActivity extends AppCompatActivity {
 				orientationLocked,
 				emulationSpeedAvailable,
 				emulationSpeedPercent,
-				emulationSpeedAuto);
+				emulationSpeedAuto,
+				memoryEditorController != null && memoryEditorController.isBubbleEnabled());
 	}
 
 	private GuestWindowPolicy.Chrome getRuntimeChrome(@Nullable Displayable displayable) {

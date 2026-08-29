@@ -26,6 +26,7 @@ import android.os.RemoteException;
 
 import androidx.annotation.Nullable;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -498,9 +499,26 @@ public final class MemoryEngineService extends Service {
 		if (ready != MemoryEngineContract.RESULT_OK) {
 			return ready;
 		}
+		long[] newWatchBuffer = new long[candidateIds.length];
+		int newWatchCount = 0;
+		for (long id : candidateIds) {
+			if (!isWatchedCandidate(id)) {
+				newWatchBuffer[newWatchCount++] = id;
+			}
+		}
+		long[] newlyWatched = Arrays.copyOf(newWatchBuffer, newWatchCount);
+		if (newlyWatched.length > 0) {
+			int pinResult = NativeMemoryEngine.pin(newlyWatched, true);
+			if (pinResult != MemoryEngineContract.RESULT_OK) {
+				return pinResult;
+			}
+		}
 		int result = NativeMemoryEngine.freeze(
 				candidateIds, mode, firstValue, secondValue);
 		if (result != MemoryEngineContract.RESULT_OK) {
+			if (newlyWatched.length > 0) {
+				NativeMemoryEngine.pin(newlyWatched, false);
+			}
 			return result;
 		}
 		for (long id : candidateIds) {

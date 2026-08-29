@@ -73,6 +73,7 @@ public final class MemoryEngineContract {
 
 	/** [count, id, address, previousAddress, type, state, relocations, initial, previous, current, ...]. */
 	public static final int RESULT_PAGE_STRIDE = 9;
+	/** Maximum unique raw addresses requested per result page; typed aliases may add rows. */
 	public static final int MAX_RESULT_PAGE_SIZE = 200;
 
 	public static final String KEY_SUPPORTED = "supported";

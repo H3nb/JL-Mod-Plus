@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="memory_editor_data_type">Data type</string>
+    <string name="memory_editor_bubble">Memory Editor bubble</string>
     <string name="memory_editor">Memory Editor</string>
     <string name="memory_editor_search_hint">Value</string>
     <string name="memory_editor_unknown">Unknown initial value</string>

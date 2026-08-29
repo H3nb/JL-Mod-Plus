@@ -34,6 +34,7 @@ public final class RuntimeHostView {
 	public final FrameLayout displayableContainer;
 	public final OverlayView overlay;
 	public final ComposeView memoryEditor;
+	public final ComposeView memoryEditorBubble;
 	public final ComposeView notices;
 
 	public RuntimeHostView(Context context) {
@@ -66,6 +67,13 @@ public final class RuntimeHostView {
 		memoryEditor.setVisibility(android.view.View.GONE);
 		root.addView(memoryEditor, new FrameLayout.LayoutParams(
 				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+		memoryEditorBubble = new ComposeView(context);
+		memoryEditorBubble.setVisibility(android.view.View.GONE);
+		int bubbleSize = Math.round(64 * context.getResources().getDisplayMetrics().density);
+		FrameLayout.LayoutParams bubbleParams = new FrameLayout.LayoutParams(
+				bubbleSize, bubbleSize, Gravity.END | Gravity.CENTER_VERTICAL);
+		root.addView(memoryEditorBubble, bubbleParams);
 
 		notices = new ComposeView(context);
 		FrameLayout.LayoutParams noticeParams = new FrameLayout.LayoutParams(

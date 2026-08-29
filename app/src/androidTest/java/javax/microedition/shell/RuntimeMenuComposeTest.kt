@@ -137,7 +137,7 @@ class RuntimeMenuComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Memory Editor").performScrollTo().performClick()
+        composeRule.onNodeWithText("Memory Editor bubble").performScrollTo().performClick()
 
         assertEquals(listOf("dismiss", "memoryEditor"), events)
     }

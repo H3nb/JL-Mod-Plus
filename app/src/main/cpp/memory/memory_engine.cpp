@@ -132,6 +132,7 @@ struct SearchState {
     StateMode mode = StateMode::Empty;
     jint requestedType = kTypeAuto;
     uint64_t logicalCount = 0;
+    bool candidateOrderDirty = false;
     std::vector<SnapshotRun> snapshots;
     std::vector<Candidate> candidates;
     std::vector<Candidate> watches;
@@ -702,12 +703,67 @@ void trimHistoryLocked() {
     }
 }
 
+int displayTypePriority(jint type) {
+    switch (type) {
+    case kTypeInt:
+        return 0;
+    case kTypeFloat:
+        return 1;
+    case kTypeLong:
+        return 2;
+    case kTypeDouble:
+        return 3;
+    case kTypeShort:
+        return 4;
+    case kTypeChar:
+        return 5;
+    case kTypeByte:
+        return 6;
+    default:
+        return 7;
+    }
+}
+
+void normalizeCandidateResults(SearchState &state) {
+    if (state.mode != StateMode::Candidates) {
+        return;
+    }
+    if (!state.candidateOrderDirty) {
+        return;
+    }
+    const auto ordered = [](const Candidate &left, const Candidate &right) {
+        if (left.address != right.address) {
+            return left.address < right.address;
+        }
+        const int leftPriority = displayTypePriority(left.type);
+        const int rightPriority = displayTypePriority(right.type);
+        return leftPriority != rightPriority ? leftPriority < rightPriority
+                                             : left.id < right.id;
+    };
+    if (!std::is_sorted(state.candidates.begin(), state.candidates.end(),
+                        ordered)) {
+        std::sort(state.candidates.begin(), state.candidates.end(), ordered);
+    }
+    state.logicalCount = 0;
+    uintptr_t previousAddress = 0;
+    bool first = true;
+    for (const Candidate &candidate : state.candidates) {
+        if (first || candidate.address != previousAddress) {
+            ++state.logicalCount;
+            previousAddress = candidate.address;
+            first = false;
+        }
+    }
+    state.candidateOrderDirty = false;
+}
+
 jint commitOperation(const OperationContext &context,
                      std::shared_ptr<SearchState> next, jint historyMode) {
     if (gCancelled.load(std::memory_order_acquire)) {
         setMessage("Operation cancelled; previous results were preserved");
         return kCancelled;
     }
+    normalizeCandidateResults(*next);
     std::lock_guard<std::mutex> lock(gMutex);
     if (gTarget.generation != context.target.generation ||
         gTarget.token != context.target.token) {
@@ -840,6 +896,7 @@ jint collectKnown(const OperationContext &context, jint requestedType,
     }
     captureIdentities(context.target, next->candidates);
     next->logicalCount = next->candidates.size();
+    next->candidateOrderDirty = true;
     return kOk;
 }
 
@@ -1007,6 +1064,7 @@ jint scanGroup(const OperationContext &context, const std::vector<jint> &types,
                 match.type, match.bits, match.bits));
     }
     next->logicalCount = next->candidates.size();
+    next->candidateOrderDirty = true;
     OperationContext committed = context;
     committed.nextId += next->candidates.size();
     return commitOperation(committed, std::move(next), -1);
@@ -1269,6 +1327,7 @@ jint refineCandidates(const OperationContext &context, jint predicate,
         return kIdentityUnsafe;
     }
     next->logicalCount = next->candidates.size();
+    next->candidateOrderDirty = true;
     OperationContext committed = context;
     if (context.state->mode == StateMode::Unknown) {
         committed.nextId += next->candidates.size();
@@ -1355,6 +1414,7 @@ jint recoverKnownCandidates(const OperationContext &context, jint predicate,
     }
 
     next->logicalCount = next->candidates.size();
+    next->candidateOrderDirty = true;
     const size_t recoveredCount = next->candidates.size();
     const jint result = commitOperation(context, std::move(next), 1);
     if (result == kOk && recoveredCount > 0) {
@@ -1542,6 +1602,10 @@ jint refreshCandidates(const OperationContext &context,
             ++unsafeCount;
         }
     }
+    if (!recovery.empty()) {
+        next->logicalCount = next->candidates.size();
+        next->candidateOrderDirty = true;
+    }
     for (Candidate &watch : next->watches) {
         const auto result =
                 std::find_if(next->candidates.begin(), next->candidates.end(),
@@ -1582,6 +1646,7 @@ jint filterCandidates(const OperationContext &context,
         }
     }
     next->logicalCount = next->candidates.size();
+    next->candidateOrderDirty = true;
     return commitOperation(context, std::move(next), 1);
 }
 
@@ -2124,6 +2189,36 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_refineKnown(
     });
 }
 
+jlongArray candidateAddressPage(JNIEnv *env,
+                                const std::vector<Candidate> &candidates,
+                                size_t addressStart, size_t addressLimit) {
+    size_t candidateStart = 0;
+    size_t skippedAddresses = 0;
+    while (candidateStart < candidates.size() &&
+           skippedAddresses < addressStart) {
+        const uintptr_t address = candidates[candidateStart].address;
+        do {
+            ++candidateStart;
+        } while (candidateStart < candidates.size() &&
+                 candidates[candidateStart].address == address);
+        ++skippedAddresses;
+    }
+
+    size_t candidateEnd = candidateStart;
+    size_t includedAddresses = 0;
+    while (candidateEnd < candidates.size() &&
+           includedAddresses < addressLimit) {
+        const uintptr_t address = candidates[candidateEnd].address;
+        do {
+            ++candidateEnd;
+        } while (candidateEnd < candidates.size() &&
+                 candidates[candidateEnd].address == address);
+        ++includedAddresses;
+    }
+    return candidatePage(env, candidates, candidateStart,
+                         candidateEnd - candidateStart);
+}
+
 extern "C" JNIEXPORT jint JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_recoverKnown(
         JNIEnv *env, jclass, jint predicate, jstring first, jstring second) {
@@ -2265,8 +2360,9 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_resultPage(
         std::lock_guard<std::mutex> lock(gMutex);
         state = gState;
     }
-    return candidatePage(env, state->candidates, static_cast<size_t>(offset),
-                         static_cast<size_t>(limit));
+    return candidateAddressPage(env, state->candidates,
+                                static_cast<size_t>(offset),
+                                static_cast<size_t>(limit));
 }
 
 extern "C" JNIEXPORT jint JNICALL

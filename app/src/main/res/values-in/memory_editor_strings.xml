@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="memory_editor_data_type">Tipe data</string>
+    <string name="memory_editor_bubble">Bubble Memory Editor</string>
     <string name="memory_editor">Editor Memori</string>
     <string name="memory_editor_search_hint">Nilai</string>
     <string name="memory_editor_unknown">Nilai awal tidak diketahui</string>

@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -59,7 +58,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -103,6 +101,26 @@ internal data class MemoryCandidateRow(
     val freezePaused: Boolean = false,
 )
 
+internal data class MemoryAddressGroup(
+    val address: Long,
+    val aliases: List<MemoryCandidateRow>,
+) {
+    val primary: MemoryCandidateRow get() = aliases.first()
+}
+
+internal fun groupCandidateRows(rows: List<MemoryCandidateRow>): List<MemoryAddressGroup> =
+    rows.groupBy { it.address }.map { (address, aliases) -> MemoryAddressGroup(address, aliases) }
+
+internal fun commonTypesForSelection(
+    rows: List<MemoryCandidateRow>,
+    selected: Set<Long>,
+): List<Int> {
+    val selectedAddresses = rows.filter { it.id in selected }.mapTo(linkedSetOf()) { it.address }
+    return selectedAddresses.map { address ->
+        rows.filter { it.address == address }.mapTo(linkedSetOf()) { it.type }
+    }.reduceOrNull { common, types -> common.apply { retainAll(types) } }?.toList().orEmpty()
+}
+
 internal object MemoryEditorPageParser {
     fun parse(rows: LongArray?): List<MemoryCandidateRow> {
         if (rows == null || rows.isEmpty()) return emptyList()
@@ -142,6 +160,7 @@ internal fun newSearchPredicate(selectedPredicate: Int): Int =
         ?: MemoryEngineContract.PREDICATE_EQUAL
 
 internal data class MemoryEditorUiState(
+    val bubbleEnabled: Boolean = false,
     val visible: Boolean = false,
     val connected: Boolean = false,
     val supported: Boolean = false,
@@ -155,7 +174,6 @@ internal data class MemoryEditorUiState(
     val watches: List<MemoryCandidateRow> = emptyList(),
     val selected: Set<Long> = emptySet(),
     val watchTab: Boolean = false,
-    val live: Boolean = false,
     val message: String? = null,
 )
 
@@ -167,13 +185,12 @@ internal interface MemoryEditorActions {
     fun groupSearch(types: IntArray, values: Array<String>, distance: Int, scope: Int)
     fun undo()
     fun refresh()
-    fun setLive(enabled: Boolean)
     fun setWatchTab(watch: Boolean)
     fun toggleSelection(id: Long)
     fun selectVisible()
     fun invertVisible()
     fun clearSelection()
-    fun editSelected(value: String)
+    fun editSelected(value: String, type: Int)
     fun removeSelected(keep: Boolean)
     fun watchSelected(add: Boolean)
     fun labelWatch(id: Long, label: String)
@@ -186,7 +203,10 @@ internal interface MemoryEditorActions {
 }
 
 /** Lightweight UI bridge. Heavy scans, recovery and Freeze remain in :memory_engine. */
-class MemoryEditorComposeController(private val composeView: ComposeView) : MemoryEditorActions {
+class MemoryEditorComposeController(
+    private val composeView: ComposeView,
+    private val bubbleView: ComposeView,
+) : MemoryEditorActions {
     private val context = composeView.context
     private val ipc: ExecutorService = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "MemoryEditorUiIpc").apply { priority = Thread.NORM_PRIORITY - 1 }
@@ -240,6 +260,7 @@ class MemoryEditorComposeController(private val composeView: ComposeView) : Memo
 
     init {
         composeView.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+        bubbleView.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         composeView.setContent {
             JLModPlusTheme {
                 MemoryEditorScreen(
@@ -248,11 +269,35 @@ class MemoryEditorComposeController(private val composeView: ComposeView) : Memo
                 )
             }
         }
+        bubbleView.setContent {
+            JLModPlusTheme {
+                MemoryEditorBubble(
+                    visible = state.bubbleEnabled && !state.visible,
+                    onOpen = ::open,
+                )
+            }
+        }
+    }
+
+    fun toggleBubble(): Boolean {
+        if (destroyed) return false
+        val enabled = !state.bubbleEnabled
+        state = state.copy(
+            bubbleEnabled = enabled,
+            visible = false,
+            selected = emptySet(),
+            message = null,
+        )
+        composeView.visibility = View.GONE
+        bubbleView.visibility = if (enabled) View.VISIBLE else View.GONE
+        if (!enabled) disconnectEngine()
+        return enabled
     }
 
     fun open() {
-        if (destroyed) return
+        if (destroyed || !state.bubbleEnabled) return
         composeView.visibility = View.VISIBLE
+        bubbleView.visibility = View.GONE
         state = state.copy(visible = true, message = null)
         if (!bound) {
             bound = context.bindService(
@@ -267,15 +312,23 @@ class MemoryEditorComposeController(private val composeView: ComposeView) : Memo
     }
 
     override fun close() {
-        state = state.copy(visible = false, live = false, selected = emptySet())
+        state = state.copy(visible = false, selected = emptySet())
         composeView.visibility = View.GONE
+        bubbleView.visibility = if (state.bubbleEnabled) View.VISIBLE else View.GONE
     }
 
     fun isVisible(): Boolean = state.visible
 
+    fun isBubbleEnabled(): Boolean = state.bubbleEnabled
+
     fun destroy() {
         if (destroyed) return
         destroyed = true
+        disconnectEngine()
+        ipc.shutdownNow()
+    }
+
+    private fun disconnectEngine() {
         try {
             service?.unregisterCallback(callback)
         } catch (_: RemoteException) {
@@ -286,7 +339,6 @@ class MemoryEditorComposeController(private val composeView: ComposeView) : Memo
             context.unbindService(connection)
             bound = false
         }
-        ipc.shutdownNow()
     }
 
     override fun refreshCapabilities() = runIpc {
@@ -335,16 +387,12 @@ class MemoryEditorComposeController(private val composeView: ComposeView) : Memo
 
     override fun refresh() {
         if (state.busy) return
-        val ids = (if (state.watchTab) state.watches else state.results).map { it.id }.toLongArray()
+        val ids = visiblePrimaryIds().toLongArray()
         if (ids.isEmpty()) {
             reload()
         } else {
             operate { refreshCandidates(state.runtimeToken, ids) }
         }
-    }
-
-    override fun setLive(enabled: Boolean) {
-        state = state.copy(live = enabled)
     }
 
     override fun setWatchTab(watch: Boolean) {
@@ -359,12 +407,12 @@ class MemoryEditorComposeController(private val composeView: ComposeView) : Memo
     }
 
     override fun selectVisible() {
-        val visible = (if (state.watchTab) state.watches else state.results).mapTo(mutableSetOf()) { it.id }
+        val visible = visiblePrimaryIds().toMutableSet()
         state = state.copy(selected = visible)
     }
 
     override fun invertVisible() {
-        val visible = (if (state.watchTab) state.watches else state.results).map { it.id }
+        val visible = visiblePrimaryIds()
         state = state.copy(selected = state.selected.toMutableSet().apply {
             for (id in visible) if (!add(id)) remove(id)
         })
@@ -374,8 +422,29 @@ class MemoryEditorComposeController(private val composeView: ComposeView) : Memo
         state = state.copy(selected = emptySet())
     }
 
-    override fun editSelected(value: String) {
-        val ids = selectedIds(max = MemoryEngineContract.MAX_MULTI_WRITE) ?: return
+    private fun visiblePrimaryIds(): List<Long> = groupCandidateRows(
+        if (state.watchTab) state.watches else state.results,
+    ).map { it.primary.id }
+
+    override fun editSelected(value: String, type: Int) {
+        val visibleRows = if (state.watchTab) state.watches else state.results
+        val selectedAddresses = visibleRows.asSequence()
+            .filter { it.id in state.selected }
+            .mapTo(mutableSetOf()) { it.address }
+        val ids = visibleRows.asSequence()
+            .filter { it.address in selectedAddresses && it.type == type }
+            .map { it.id }
+            .distinct()
+            .toList()
+            .toLongArray()
+        if (ids.size != selectedAddresses.size) {
+            state = state.copy(message = resultMessage(MemoryEngineContract.RESULT_INVALID_REQUEST))
+            return
+        }
+        if (ids.size > MemoryEngineContract.MAX_MULTI_WRITE) {
+            state = state.copy(message = resultMessage(MemoryEngineContract.RESULT_SAFETY_LIMIT))
+            return
+        }
         operate { editCandidates(state.runtimeToken, ids, value.trim()) }
     }
 
@@ -549,10 +618,13 @@ class MemoryEditorComposeController(private val composeView: ComposeView) : Memo
 }
 
 @Composable
-internal fun MemoryEditorScreen(state: MemoryEditorUiState, actions: MemoryEditorActions) {
+internal fun MemoryEditorScreen(
+    state: MemoryEditorUiState,
+    actions: MemoryEditorActions,
+) {
     if (!state.visible) return
-    LaunchedEffect(state.visible, state.live, state.watchTab, state.busy) {
-        while (state.visible && state.live) {
+    LaunchedEffect(state.visible, state.watchTab, state.busy) {
+        while (state.visible) {
             delay(1_000)
             if (!state.busy) actions.refresh()
         }
@@ -568,20 +640,17 @@ internal fun MemoryEditorScreen(state: MemoryEditorUiState, actions: MemoryEdito
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.32f))
+            .background(Color.Black.copy(alpha = 0.18f))
             .safeDrawingPadding()
             .imePadding(),
         contentAlignment = Alignment.Center,
     ) {
         Surface(
             modifier = Modifier
-                .fillMaxWidth(0.96f)
-                .fillMaxHeight(0.94f)
-                .widthIn(max = 920.dp),
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
+                .fillMaxSize(),
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.90f),
             contentColor = MaterialTheme.colorScheme.onSurface,
-            tonalElevation = 6.dp,
-            shape = MaterialTheme.shapes.large,
+            tonalElevation = 3.dp,
         ) {
             MemoryEditorContent(state, actions)
         }
@@ -625,6 +694,26 @@ internal fun MemoryEditorScreen(state: MemoryEditorUiState, actions: MemoryEdito
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MemoryEditorBubble(visible: Boolean, onOpen: () -> Unit) {
+    if (!visible) return
+    Box(modifier = Modifier.fillMaxSize().padding(4.dp), contentAlignment = Alignment.Center) {
+        Surface(
+            modifier = Modifier.fillMaxSize().clickable(onClick = onOpen),
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.92f),
+            shadowElevation = 8.dp,
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_memory_editor_search),
+                    contentDescription = stringResource(R.string.memory_editor),
+                )
             }
         }
     }
@@ -822,10 +911,16 @@ private fun MemoryEditorContent(state: MemoryEditorUiState, actions: MemoryEdito
                 modifier = Modifier.weight(1f),
             )
             TextButton(onClick = actions::selectVisible, enabled = rows.isNotEmpty()) {
-                Text(stringResource(R.string.memory_editor_select_visible))
+                Icon(
+                    painterResource(R.drawable.ic_select_all),
+                    contentDescription = stringResource(R.string.memory_editor_select_visible),
+                )
             }
             TextButton(onClick = actions::invertVisible, enabled = rows.isNotEmpty()) {
-                Text(stringResource(R.string.memory_editor_invert_visible))
+                Icon(
+                    painterResource(R.drawable.ic_swap),
+                    contentDescription = stringResource(R.string.memory_editor_invert_visible),
+                )
             }
         }
 
@@ -840,14 +935,19 @@ private fun MemoryEditorContent(state: MemoryEditorUiState, actions: MemoryEdito
 
         if (!state.watchTab && state.resultCount > MemoryEditorComposeController.PAGE_SIZE) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                TextButton(onClick = actions::previousPage, enabled = state.pageOffset > 0) {
-                    Text(stringResource(R.string.memory_editor_previous_page))
-                }
-                Text("${state.pageOffset + 1}–${(state.pageOffset + rows.size).coerceAtMost(Int.MAX_VALUE)}")
-                TextButton(
+                ActionIconButton(
+                    icon = R.drawable.ic_arrow_back,
+                    description = R.string.memory_editor_previous_page,
+                    onClick = actions::previousPage,
+                    enabled = state.pageOffset > 0,
+                )
+                Text("${state.pageOffset + 1}–${minOf(state.pageOffset.toLong() + MemoryEditorComposeController.PAGE_SIZE, state.resultCount)}")
+                ActionIconButton(
+                    icon = R.drawable.ic_arrow_downward,
+                    description = R.string.memory_editor_next_page,
                     onClick = actions::nextPage,
-                    enabled = state.pageOffset.toLong() + rows.size < state.resultCount,
-                ) { Text(stringResource(R.string.memory_editor_next_page)) }
+                    enabled = state.pageOffset.toLong() + MemoryEditorComposeController.PAGE_SIZE < state.resultCount,
+                )
             }
         }
 
@@ -864,30 +964,46 @@ private fun MemoryEditorContent(state: MemoryEditorUiState, actions: MemoryEdito
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                TextButton(onClick = actions::undo, enabled = !state.busy && !state.watchTab) {
-                    Text(stringResource(R.string.memory_editor_undo))
-                }
-                TextButton(onClick = actions::refresh, enabled = !state.busy) {
-                    Text(stringResource(R.string.memory_editor_refresh))
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.memory_editor_live))
-                    Switch(checked = state.live, onCheckedChange = actions::setLive)
-                }
-                if (state.busy) TextButton(onClick = actions::cancel) {
-                    Text(stringResource(R.string.memory_editor_cancel))
-                }
+                ActionIconButton(
+                    R.drawable.ic_history,
+                    R.string.memory_editor_undo,
+                    actions::undo,
+                    enabled = !state.busy && !state.watchTab,
+                )
+                ActionIconButton(
+                    R.drawable.ic_restart_alt,
+                    R.string.memory_editor_refresh,
+                    actions::refresh,
+                    enabled = !state.busy,
+                )
+                if (state.busy) ActionIconButton(
+                    R.drawable.ic_memory_editor_close,
+                    R.string.memory_editor_cancel,
+                    actions::cancel,
+                )
             }
         }
     }
 
-    if (editDialog) EditDialog(
-        enabled = state.writeSupported,
-        onDismiss = { editDialog = false },
-        onApply = { editDialog = false; actions.editSelected(it) },
-    )
+    if (editDialog) {
+        val visibleRows = if (state.watchTab) state.watches else state.results
+        val editableTypes = commonTypesForSelection(visibleRows, state.selected)
+        EditDialog(
+            enabled = state.writeSupported,
+            types = editableTypes,
+            onDismiss = { editDialog = false },
+            onApply = { replacement, selectedType ->
+                editDialog = false
+                actions.editSelected(replacement, selectedType)
+            },
+        )
+    }
     if (freezeDialog) FreezeDialog(
         enabled = state.writeSupported,
+        initialValue = (if (state.watchTab) state.watches else state.results)
+            .firstOrNull { it.id in state.selected }
+            ?.let(MemoryEditorPageParser::value)
+            .orEmpty(),
         onDismiss = { freezeDialog = false },
         onApply = { mode, first, second ->
             freezeDialog = false
@@ -905,7 +1021,7 @@ private fun CandidateList(
     onLabel: (Long, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val groups = rows.groupBy { it.address }.toList()
+    val groups = groupCandidateRows(rows)
     if (groups.isEmpty()) {
         Box(modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             Text(stringResource(R.string.memory_editor_no_results), color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -913,10 +1029,16 @@ private fun CandidateList(
         return
     }
     LazyColumn(modifier = modifier.fillMaxWidth()) {
-        items(groups, key = { it.first }) { (address, aliases) ->
-            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)) {
-                val primary = aliases.first()
+        items(groups, key = { it.address }) { group ->
+            val primary = group.primary
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onToggle(primary.id) }
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = primary.id in selected, onCheckedChange = null)
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             primary.label.ifBlank { MemoryEditorPageParser.value(primary) },
@@ -925,7 +1047,7 @@ private fun CandidateList(
                             overflow = TextOverflow.Ellipsis,
                         )
                         Text(
-                            "0x${address.toULong().toString(16).uppercase()} · ${stateName(primary.state)}" +
+                            "0x${group.address.toULong().toString(16).uppercase()} · ${typeName(primary.type)} · ${stateName(primary.state)}" +
                                 if (primary.relocations > 0) " · ↪${primary.relocations}" else "",
                             style = MaterialTheme.typography.bodySmall,
                             fontFamily = FontFamily.Monospace,
@@ -933,21 +1055,15 @@ private fun CandidateList(
                         )
                     }
                     if (watch) WatchLabelButton(primary, onLabel)
-                }
-                aliases.forEach { row ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth().clickable { onToggle(row.id) }.padding(vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Checkbox(checked = row.id in selected, onCheckedChange = null)
-                        Text(typeName(row.type), modifier = Modifier.widthIn(min = 52.dp), fontWeight = FontWeight.Medium)
-                        Text(MemoryEditorPageParser.value(row), modifier = Modifier.weight(1f))
-                        if (row.freezeMode >= 0) {
-                            Text(
-                                "❄ ${freezeName(row.freezeMode)}" +
-                                    if (row.freezePaused) " · ${stringResource(R.string.memory_editor_freeze_paused)}" else "",
-                            )
-                        }
+                    if (primary.freezeMode >= 0) {
+                        Icon(
+                            painterResource(R.drawable.ic_screen_lock_rotation),
+                            contentDescription = stringResource(R.string.memory_editor_freeze),
+                            modifier = Modifier.padding(start = 8.dp).sizeIn(
+                                minWidth = 24.dp, minHeight = 24.dp, maxWidth = 24.dp, maxHeight = 24.dp,
+                            ),
+                        )
+                        if (primary.freezePaused) Text("Ⅱ", modifier = Modifier.padding(start = 4.dp))
                     }
                 }
                 HorizontalDivider()
@@ -959,7 +1075,11 @@ private fun CandidateList(
 @Composable
 private fun WatchLabelButton(row: MemoryCandidateRow, onLabel: (Long, String) -> Unit) {
     var dialog by remember(row.id) { mutableStateOf(false) }
-    TextButton(onClick = { dialog = true }) { Text(stringResource(R.string.memory_editor_watch_label)) }
+    ActionIconButton(
+        icon = R.drawable.ic_edit,
+        description = R.string.memory_editor_watch_label,
+        onClick = { dialog = true },
+    )
     if (dialog) {
         var value by remember(row.label) { mutableStateOf(row.label) }
         AlertDialog(
@@ -994,36 +1114,66 @@ private fun SelectionActions(
             horizontalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             if (!state.watchTab) {
-                TextButton(onClick = onEdit, enabled = state.writeSupported) { Text(stringResource(R.string.memory_editor_edit)) }
-                TextButton(onClick = { actions.watchSelected(true) }) { Text(stringResource(R.string.memory_editor_watch)) }
-                TextButton(onClick = onFreeze, enabled = state.writeSupported) { Text(stringResource(R.string.memory_editor_freeze)) }
-                TextButton(onClick = { actions.removeSelected(false) }) { Text(stringResource(R.string.memory_editor_remove)) }
-                TextButton(onClick = { actions.removeSelected(true) }) { Text(stringResource(R.string.memory_editor_keep)) }
+                ActionIconButton(R.drawable.ic_edit, R.string.memory_editor_edit, onEdit, state.writeSupported)
+                ActionIconButton(R.drawable.ic_star, R.string.memory_editor_watch, { actions.watchSelected(true) })
+                FreezeIconButton(onFreeze, state.writeSupported)
+                ActionIconButton(R.drawable.ic_delete, R.string.memory_editor_remove, { actions.removeSelected(false) })
+                ActionIconButton(R.drawable.ic_check, R.string.memory_editor_keep, { actions.removeSelected(true) })
             } else {
-                TextButton(onClick = { actions.watchSelected(false) }) { Text(stringResource(R.string.memory_editor_remove)) }
-                TextButton(onClick = onFreeze, enabled = state.writeSupported) { Text(stringResource(R.string.memory_editor_freeze)) }
-                TextButton(onClick = actions::clearFreezeSelected) { Text(stringResource(R.string.memory_editor_unfreeze)) }
+                ActionIconButton(R.drawable.ic_remove_circle, R.string.memory_editor_remove, { actions.watchSelected(false) })
+                FreezeIconButton(onFreeze, state.writeSupported)
+                ActionIconButton(R.drawable.ic_deselect, R.string.memory_editor_unfreeze, actions::clearFreezeSelected)
             }
-            TextButton(onClick = { actions.copySelected(false) }) { Text(stringResource(R.string.memory_editor_copy_values)) }
-            TextButton(onClick = { actions.copySelected(true) }) { Text(stringResource(R.string.memory_editor_copy_addresses)) }
-            TextButton(onClick = actions::clearSelection) { Text(stringResource(R.string.memory_editor_clear_selection)) }
+            ActionIconButton(R.drawable.ic_content_copy, R.string.memory_editor_copy_values, { actions.copySelected(false) })
+            ActionIconButton(R.drawable.ic_share, R.string.memory_editor_copy_addresses, { actions.copySelected(true) })
+            ActionIconButton(R.drawable.ic_memory_editor_close, R.string.memory_editor_clear_selection, actions::clearSelection)
         }
     }
 }
 
 @Composable
-private fun EditDialog(enabled: Boolean, onDismiss: () -> Unit, onApply: (String) -> Unit) {
+private fun ActionIconButton(
+    icon: Int,
+    description: Int,
+    onClick: () -> Unit,
+    enabled: Boolean = true,
+) {
+    IconButton(onClick = onClick, enabled = enabled) {
+        Icon(painterResource(icon), contentDescription = stringResource(description))
+    }
+}
+
+@Composable
+private fun FreezeIconButton(onClick: () -> Unit, enabled: Boolean) {
+    IconButton(onClick = onClick, enabled = enabled) {
+        Icon(
+            painterResource(R.drawable.ic_screen_lock_rotation),
+            contentDescription = stringResource(R.string.memory_editor_freeze),
+        )
+    }
+}
+
+@Composable
+private fun EditDialog(
+    enabled: Boolean,
+    types: List<Int>,
+    onDismiss: () -> Unit,
+    onApply: (String, Int) -> Unit,
+) {
     var value by remember { mutableStateOf("") }
+    var type by remember(types) { mutableIntStateOf(types.firstOrNull() ?: MemoryEngineContract.TYPE_INT) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.memory_editor_edit)) },
         text = {
             Column {
                 if (!enabled) Text(stringResource(R.string.memory_editor_write_unsupported), color = MaterialTheme.colorScheme.error)
+                Text(stringResource(R.string.memory_editor_data_type), style = MaterialTheme.typography.labelMedium)
+                ChoiceMenu(type, types.toIntArray(), { typeName(it) }) { type = it }
                 OutlinedTextField(value, { value = it }, label = { Text(stringResource(R.string.memory_editor_replacement)) })
             }
         },
-        confirmButton = { TextButton(onClick = { onApply(value) }, enabled = enabled && value.isNotBlank()) {
+        confirmButton = { TextButton(onClick = { onApply(value, type) }, enabled = enabled && value.isNotBlank() && types.isNotEmpty()) {
             Text(stringResource(R.string.memory_editor_apply))
         } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) } },
@@ -1033,11 +1183,12 @@ private fun EditDialog(enabled: Boolean, onDismiss: () -> Unit, onApply: (String
 @Composable
 private fun FreezeDialog(
     enabled: Boolean,
+    initialValue: String,
     onDismiss: () -> Unit,
     onApply: (Int, String, String) -> Unit,
 ) {
     var mode by remember { mutableIntStateOf(MemoryEngineContract.FREEZE_LOCK) }
-    var first by remember { mutableStateOf("") }
+    var first by remember(initialValue) { mutableStateOf(initialValue) }
     var second by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1113,10 +1264,10 @@ internal fun parseGroup(input: String): Pair<IntArray, Array<String>>? {
         if (separator <= 0 || separator == part.lastIndex) return null
         types[index] = when (part.substring(0, separator).trim().lowercase()) {
             "byte", "i8" -> MemoryEngineContract.TYPE_BYTE
-            "short", "i16" -> MemoryEngineContract.TYPE_SHORT
-            "char", "u16" -> MemoryEngineContract.TYPE_CHAR
-            "int", "i32" -> MemoryEngineContract.TYPE_INT
-            "long", "i64" -> MemoryEngineContract.TYPE_LONG
+            "short", "i16", "word" -> MemoryEngineContract.TYPE_SHORT
+            "char", "u16", "uword", "word unsigned" -> MemoryEngineContract.TYPE_CHAR
+            "int", "i32", "dword" -> MemoryEngineContract.TYPE_INT
+            "long", "i64", "qword" -> MemoryEngineContract.TYPE_LONG
             "float", "f32" -> MemoryEngineContract.TYPE_FLOAT
             "double", "f64" -> MemoryEngineContract.TYPE_DOUBLE
             else -> return null
@@ -1151,13 +1302,13 @@ private fun ChoiceMenu(
 
 private fun typeName(type: Int): String = when (type) {
     MemoryEngineContract.TYPE_AUTO -> "Auto"
-    MemoryEngineContract.TYPE_BYTE -> "I8"
-    MemoryEngineContract.TYPE_SHORT -> "I16"
-    MemoryEngineContract.TYPE_CHAR -> "U16"
-    MemoryEngineContract.TYPE_INT -> "I32"
-    MemoryEngineContract.TYPE_LONG -> "I64"
-    MemoryEngineContract.TYPE_FLOAT -> "F32"
-    MemoryEngineContract.TYPE_DOUBLE -> "F64"
+    MemoryEngineContract.TYPE_BYTE -> "Byte"
+    MemoryEngineContract.TYPE_SHORT -> "Word"
+    MemoryEngineContract.TYPE_CHAR -> "Word (unsigned)"
+    MemoryEngineContract.TYPE_INT -> "Dword"
+    MemoryEngineContract.TYPE_LONG -> "Qword"
+    MemoryEngineContract.TYPE_FLOAT -> "Float"
+    MemoryEngineContract.TYPE_DOUBLE -> "Double"
     else -> "?"
 }
 
