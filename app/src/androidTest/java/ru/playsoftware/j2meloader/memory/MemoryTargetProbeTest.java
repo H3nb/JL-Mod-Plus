@@ -96,6 +96,51 @@ public class MemoryTargetProbeTest {
 	}
 
 	@Test
+	public void passiveRefreshDoesNotReplaceNextScanBaseline() {
+		int pageSize = NativeMemoryTarget.pageSize();
+		long[] runs = NativeMemoryTarget.collectResidentRuns(
+				MemoryEngineContract.SCOPE_JAVA_FAST, 4096);
+		assertNotNull(runs);
+		assertTrue(MemoryEngineContract.isCompleteRunList(runs));
+
+		long token = 0x4A4C4C4956455445L;
+		managedProbe = MANAGED_PROBE_A;
+		try {
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.configureTarget(
+							Process.myPid(), pageSize, token, runs));
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.startKnown(
+							MemoryEngineContract.TYPE_INT,
+							MemoryEngineContract.PREDICATE_EQUAL,
+							Integer.toString(MANAGED_PROBE_A), ""));
+
+			long[] page = NativeMemoryEngine.resultPage(0, 200);
+			assertNotNull(page);
+			int count = Math.toIntExact(page[0]);
+			assertTrue(count > 0);
+			long[] ids = new long[count];
+			for (int index = 0; index < count; index++) {
+				ids[index] = page[1 + index * MemoryEngineContract.RESULT_PAGE_STRIDE];
+			}
+
+			managedProbe = MANAGED_PROBE_B;
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.refresh(ids, false));
+			managedProbe = MANAGED_PROBE_A;
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.refineRelative(
+							MemoryEngineContract.PREDICATE_UNCHANGED,
+							MemoryEngineContract.COMPARE_PREVIOUS, "", ""));
+			assertTrue("passive live refresh replaced the scan baseline",
+					NativeMemoryEngine.resultCount() > 0L);
+		} finally {
+			managedProbe = 0;
+			NativeMemoryEngine.clearTarget();
+		}
+	}
+
+	@Test
 	public void runtimeTokenCannotBeClosedByAnOlderOwner() {
 		long[] endedToken = {0L};
 		MemoryRuntimeSession.Listener listener = token -> endedToken[0] = token;

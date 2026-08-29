@@ -224,9 +224,24 @@ class MemoryEditorComposeController(
             resultCode: Int,
             resultCount: Long,
             message: String?,
+            passiveRefresh: Boolean,
         ) {
             post {
-                refreshInFlight = false
+                if (passiveRefresh) {
+                    refreshInFlight = false
+                    if (!state.busy && state.visible) {
+                        state = state.copy(
+                            resultCount = resultCount,
+                            message = if (resultCode == MemoryEngineContract.RESULT_OK) {
+                                state.message
+                            } else {
+                                message ?: resultMessage(resultCode)
+                            },
+                        )
+                        reload()
+                    }
+                    return@post
+                }
                 state = state.copy(
                     busy = false,
                     searching = false,
@@ -528,7 +543,7 @@ class MemoryEditorComposeController(
         searching: Boolean = false,
         block: IMemoryEngineService.() -> Long,
     ) {
-        if (state.busy || refreshInFlight || state.runtimeToken == 0L) return
+        if (state.busy || state.runtimeToken == 0L) return
         state = state.copy(busy = true, searching = searching, message = null)
         runIpc {
             val engine = service ?: throw RemoteException("Engine disconnected")

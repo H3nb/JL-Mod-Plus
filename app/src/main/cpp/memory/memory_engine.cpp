@@ -1619,7 +1619,6 @@ jint refreshCandidates(const OperationContext &context,
         setMessage("One or more candidate IDs are no longer available");
         return kInvalidRequest;
     }
-    bool needsRecovery = false;
     size_t unsafeCount = 0;
     std::vector<Candidate *> recovery;
     const auto refreshOne = [&](Candidate &candidate) {
@@ -1632,12 +1631,28 @@ jint refreshCandidates(const OperationContext &context,
         const bool identityReadable =
                 readable && readIdentity(context.target, candidate.address,
                                          candidate.type, hash);
+        if (!allowRecovery) {
+            if (!readable) {
+                candidate.state = kRelocating;
+                return;
+            }
+            candidate.previousBits = candidate.currentBits;
+            candidate.currentBits = current;
+            candidate.state = kStable;
+            if (identityReadable) {
+                // Neighboring fields naturally change during gameplay. A passive display refresh
+                // follows the still-readable raw address and refreshes its recovery fingerprint;
+                // strict identity/recovery remains reserved for explicit writes.
+                candidate.identityHash = hash;
+                candidate.identityValid = true;
+            }
+            return;
+        }
         const bool identityMatches =
                 identityReadable &&
                 (!candidate.identityValid || hash == candidate.identityHash);
         if (!identityMatches) {
             candidate.state = kRelocating;
-            needsRecovery = true;
             recovery.push_back(&candidate);
             return;
         }
@@ -1649,10 +1664,6 @@ jint refreshCandidates(const OperationContext &context,
     };
     for (Candidate &candidate : selected) {
         refreshOne(candidate);
-    }
-    if (needsRecovery && !allowRecovery) {
-        setMessage("Fresh resident ranges are required for identity recovery");
-        return kIdentityUnsafe;
     }
     if (recovery.size() > kRecoveryLimit) {
         setMessage("Identity recovery is limited to 32 candidates per "

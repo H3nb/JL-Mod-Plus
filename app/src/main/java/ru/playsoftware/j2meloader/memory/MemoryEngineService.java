@@ -190,8 +190,9 @@ public final class MemoryEngineService extends Service {
 
 		@Override
 		public long refreshCandidates(long token, long[] candidateIds) {
-			return enqueue(token, false, 0,
-					() -> refreshWithRecovery(token, candidateIds));
+			return enqueue(token, false, 0, true,
+					() -> NativeMemoryEngine.refresh(
+							candidateIds == null ? new long[0] : candidateIds, false));
 		}
 
 		@Override
@@ -390,6 +391,11 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private long enqueue(long token, boolean configure, int scope, NativeOperation operation) {
+		return enqueue(token, configure, scope, false, operation);
+	}
+
+	private long enqueue(long token, boolean configure, int scope, boolean passiveRefresh,
+	                     NativeOperation operation) {
 		long operationId = nextOperationId.getAndIncrement();
 		long enqueueEpoch = cancelEpoch.get();
 		worker.execute(() -> {
@@ -421,7 +427,7 @@ public final class MemoryEngineService extends Service {
 				result = MemoryEngineContract.RESULT_TARGET_LOST;
 				serviceMessage = "MIDlet runtime changed during the operation";
 			}
-			notifyFinished(operationId, result, serviceMessage);
+			notifyFinished(operationId, result, serviceMessage, passiveRefresh);
 		});
 		return operationId;
 	}
@@ -463,11 +469,7 @@ public final class MemoryEngineService extends Service {
 
 	private int refreshWithRecovery(long token, long[] candidateIds) {
 		long[] ids = candidateIds == null ? new long[0] : candidateIds;
-		int result = NativeMemoryEngine.refresh(ids, false);
-		if (result != MemoryEngineContract.RESULT_IDENTITY_UNSAFE) {
-			return result;
-		}
-		result = configureTarget(token, configuredScope);
+		int result = configureTarget(token, configuredScope);
 		return result == MemoryEngineContract.RESULT_OK
 				? NativeMemoryEngine.refresh(ids, true) : result;
 	}
@@ -593,13 +595,13 @@ public final class MemoryEngineService extends Service {
 		for (int index = 0; index < active.size(); index++) {
 			activeIds[index] = active.get(index).getKey();
 		}
-		int batchRefresh = refreshWithRecovery(token, activeIds);
+		int batchRefresh = NativeMemoryEngine.refresh(activeIds, false);
 		for (Map.Entry<Long, FreezeRecord> entry : active) {
 			FreezeRecord record = entry.getValue();
 			long[] ids = new long[]{entry.getKey()};
 			// A failed batch is retried individually so one stale address cannot pause unrelated freezes.
 			int result = batchRefresh == MemoryEngineContract.RESULT_OK
-					? batchRefresh : refreshWithRecovery(token, ids);
+					? batchRefresh : NativeMemoryEngine.refresh(ids, false);
 			if (result == MemoryEngineContract.RESULT_OK) {
 				result = NativeMemoryEngine.freeze(
 						ids, record.mode, record.firstValue, record.secondValue);
@@ -676,7 +678,8 @@ public final class MemoryEngineService extends Service {
 		};
 	}
 
-	private void notifyFinished(long operationId, int result, @Nullable String serviceMessage) {
+	private void notifyFinished(long operationId, int result, @Nullable String serviceMessage,
+	                            boolean passiveRefresh) {
 		// Native operations are transactional. Cancellation or failure may leave
 		// a valid previous result set, so do not present it as zero.
 		long count = NativeMemoryEngine.resultCount();
@@ -686,7 +689,8 @@ public final class MemoryEngineService extends Service {
 			for (int index = 0; index < callbackCount; index++) {
 				try {
 					callbacks.getBroadcastItem(index)
-							.onOperationFinished(operationId, result, count, message);
+							.onOperationFinished(operationId, result, count, message,
+									passiveRefresh);
 				} catch (RemoteException ignored) {
 					// RemoteCallbackList removes dead clients.
 				}
