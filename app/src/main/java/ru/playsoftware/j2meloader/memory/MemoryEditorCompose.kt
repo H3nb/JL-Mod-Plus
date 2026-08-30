@@ -222,9 +222,20 @@ private fun MemoryEditorContent(state: MemoryEditorUiState, actions: MemoryEdito
     var searchControlsExpanded by remember(landscape) { mutableStateOf(!landscape) }
 
     LaunchedEffect(state.sessionStage, state.searchMode) {
-        if (state.sessionStage == MemorySessionStage.EMPTY) searchMode = state.searchMode
-        if (state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE) {
-            predicate = MemoryEngineContract.PREDICATE_CHANGED
+        searchMode = state.searchMode
+        when (state.sessionStage) {
+            MemorySessionStage.EMPTY -> {
+                value = ""
+                secondValue = ""
+                type = MemoryEngineContract.TYPE_AUTO
+                predicate = MemoryEngineContract.PREDICATE_EQUAL
+                compare = MemoryEngineContract.COMPARE_PREVIOUS
+                advanced = false
+            }
+            MemorySessionStage.UNKNOWN_BASELINE -> {
+                predicate = MemoryEngineContract.PREDICATE_CHANGED
+            }
+            MemorySessionStage.CANDIDATES -> Unit
         }
     }
     LaunchedEffect(landscape, state.sessionStage, state.resultCount) {
@@ -788,15 +799,6 @@ private fun RefinePane(
     busy: Boolean,
     actions: MemoryEditorActions,
 ) {
-    Text(
-        pluralStringResource(
-            R.plurals.memory_editor_results,
-            resultCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
-            resultCount,
-        ),
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.SemiBold,
-    )
     QuickRefinePredicates(predicate, onPredicate)
     RefineValueFields(predicate, value, onValue, secondValue, onSecondValue)
     if (advanced) {

@@ -55,6 +55,8 @@ class MemoryEditorComposeController(
     private var pendingStage: MemorySessionStage? = null
     private var pendingMode: MemorySearchMode? = null
     private var pendingUndoStage: MemorySessionStage? = null
+    private var pendingPreviousStage: MemorySessionStage? = null
+    private var pendingResetHistory = false
     private val stageHistory = ArrayDeque<MemorySessionStage>()
 
     private var bubbleOnRight = true
@@ -97,17 +99,23 @@ class MemoryEditorComposeController(
 
                 val succeeded = resultCode == MemoryEngineContract.RESULT_OK
                 if (succeeded) {
-                    if (pendingUndoStage != null && stageHistory.isNotEmpty()) {
-                        stageHistory.removeLast()
+                    when {
+                        pendingUndoStage != null -> {
+                            if (stageHistory.isNotEmpty() && stageHistory.peekLast() == pendingUndoStage) {
+                                stageHistory.removeLast()
+                            }
+                        }
+                        pendingResetHistory -> stageHistory.clear()
+                        pendingPreviousStage != null -> stageHistory.addLast(pendingPreviousStage)
                     }
                     state = state.copy(
                         sessionStage = pendingUndoStage ?: pendingStage ?: state.sessionStage,
                         searchMode = pendingMode ?: state.searchMode,
+                        pageOffset = if (pendingStage != null || pendingUndoStage != null) 0 else state.pageOffset,
+                        selected = if (pendingStage != null || pendingUndoStage != null) emptySet() else state.selected,
                     )
                 }
-                pendingStage = null
-                pendingMode = null
-                pendingUndoStage = null
+                clearPendingTransition()
 
                 state = state.copy(
                     busy = false,
@@ -342,7 +350,8 @@ class MemoryEditorComposeController(
         unknown: Boolean,
         scope: Int,
     ) {
-        stageHistory.clear()
+        clearPendingTransition()
+        pendingResetHistory = true
         pendingStage = if (unknown) MemorySessionStage.UNKNOWN_BASELINE else MemorySessionStage.CANDIDATES
         pendingMode = if (unknown) MemorySearchMode.UNKNOWN else MemorySearchMode.KNOWN
         operate(searching = true) {
@@ -359,7 +368,8 @@ class MemoryEditorComposeController(
     }
 
     override fun nextScan(value: String, secondValue: String, predicate: Int, compare: Int) {
-        stageHistory.addLast(state.sessionStage)
+        clearPendingTransition()
+        pendingPreviousStage = state.sessionStage
         pendingStage = MemorySessionStage.CANDIDATES
         pendingMode = state.searchMode
         operate(searching = true) {
@@ -372,7 +382,8 @@ class MemoryEditorComposeController(
     }
 
     override fun groupSearch(types: IntArray, values: Array<String>, distance: Int, scope: Int) {
-        stageHistory.clear()
+        clearPendingTransition()
+        pendingResetHistory = true
         pendingStage = MemorySessionStage.CANDIDATES
         pendingMode = MemorySearchMode.GROUP
         operate(searching = true) {
@@ -381,6 +392,7 @@ class MemoryEditorComposeController(
     }
 
     override fun undo() {
+        clearPendingTransition()
         pendingUndoStage = if (stageHistory.isEmpty()) null else stageHistory.peekLast()
         operate { undoSearch(state.runtimeToken) }
     }
@@ -388,9 +400,7 @@ class MemoryEditorComposeController(
     override fun startOver() {
         if (state.busy || state.runtimeToken == 0L) return
         stageHistory.clear()
-        pendingStage = null
-        pendingMode = null
-        pendingUndoStage = null
+        clearPendingTransition()
         val token = state.runtimeToken
         state = state.copy(
             sessionStage = MemorySessionStage.EMPTY,
@@ -405,7 +415,7 @@ class MemoryEditorComposeController(
     }
 
     override fun refresh() {
-        if (state.busy || refreshInFlight) return
+        if (state.busy || refreshInFlight || state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE) return
         val ids = visiblePrimaryIds().toLongArray()
         if (ids.isEmpty()) {
             reload()
@@ -580,13 +590,16 @@ class MemoryEditorComposeController(
         val resultRows = MemoryEditorPageParser.parse(engine.getResultPage(token, safeOffset, PAGE_SIZE))
         val watchRows = attachWatchMetadata(engine.getWatchPage(token))
         post {
-            var inferredStage = state.sessionStage
-            if (inferredStage == MemorySessionStage.EMPTY) {
-                inferredStage = when {
-                    resultRows.isNotEmpty() -> MemorySessionStage.CANDIDATES
-                    count > 0L && safeOffset == 0 -> MemorySessionStage.UNKNOWN_BASELINE
-                    else -> MemorySessionStage.EMPTY
-                }
+            val inferredStage = when {
+                resultRows.isNotEmpty() -> MemorySessionStage.CANDIDATES
+                count > 0L && safeOffset == 0 -> MemorySessionStage.UNKNOWN_BASELINE
+                state.sessionStage == MemorySessionStage.CANDIDATES -> MemorySessionStage.CANDIDATES
+                else -> MemorySessionStage.EMPTY
+            }
+            val inferredMode = if (inferredStage == MemorySessionStage.UNKNOWN_BASELINE) {
+                MemorySearchMode.UNKNOWN
+            } else {
+                state.searchMode
             }
             state = state.copy(
                 resultCount = count,
@@ -594,6 +607,7 @@ class MemoryEditorComposeController(
                 results = resultRows,
                 watches = watchRows,
                 sessionStage = inferredStage,
+                searchMode = inferredMode,
                 selected = state.selected.intersect((resultRows + watchRows).mapTo(mutableSetOf()) { it.id }),
             )
             if (refreshAfterLoad && inferredStage == MemorySessionStage.CANDIDATES) refresh()
@@ -616,12 +630,25 @@ class MemoryEditorComposeController(
 
     private fun applyCapabilities(bundle: Bundle?) {
         val supported = bundle?.getBoolean(MemoryEngineContract.KEY_SUPPORTED) == true
+        val token = bundle?.getLong(MemoryEngineContract.KEY_RUNTIME_TOKEN) ?: 0L
+        val runtimeChanged = token != state.runtimeToken
+        if (runtimeChanged) {
+            stageHistory.clear()
+            clearPendingTransition()
+        }
         state = state.copy(
             connected = bundle != null,
             connecting = false,
             supported = supported,
             writeSupported = bundle?.getBoolean(MemoryEngineContract.KEY_WRITE_SUPPORTED) == true,
-            runtimeToken = bundle?.getLong(MemoryEngineContract.KEY_RUNTIME_TOKEN) ?: 0L,
+            runtimeToken = token,
+            sessionStage = if (runtimeChanged) MemorySessionStage.EMPTY else state.sessionStage,
+            searchMode = if (runtimeChanged) MemorySearchMode.KNOWN else state.searchMode,
+            resultCount = if (runtimeChanged) 0L else state.resultCount,
+            pageOffset = if (runtimeChanged) 0 else state.pageOffset,
+            results = if (runtimeChanged) emptyList() else state.results,
+            watches = if (runtimeChanged) emptyList() else state.watches,
+            selected = if (runtimeChanged) emptySet() else state.selected,
             message = if (supported) null else bundle?.getString(MemoryEngineContract.KEY_MESSAGE),
         )
         if (supported && state.visible) reload(refreshAfterLoad = true)
@@ -630,14 +657,31 @@ class MemoryEditorComposeController(
     private fun disconnected() = post {
         service = null
         refreshInFlight = false
+        stageHistory.clear()
+        clearPendingTransition()
         state = state.copy(
             connected = false,
             connecting = false,
             supported = false,
             busy = false,
             searching = false,
+            sessionStage = MemorySessionStage.EMPTY,
+            searchMode = MemorySearchMode.KNOWN,
+            resultCount = 0L,
+            pageOffset = 0,
+            results = emptyList(),
+            watches = emptyList(),
+            selected = emptySet(),
             message = context.getString(R.string.memory_editor_unsupported),
         )
+    }
+
+    private fun clearPendingTransition() {
+        pendingStage = null
+        pendingMode = null
+        pendingUndoStage = null
+        pendingPreviousStage = null
+        pendingResetHistory = false
     }
 
     private fun runIpc(block: () -> Unit) {
@@ -650,7 +694,8 @@ class MemoryEditorComposeController(
             } catch (exception: RuntimeException) {
                 post {
                     refreshInFlight = false
-                    state = state.copy(busy = false, message = exception.message)
+                    clearPendingTransition()
+                    state = state.copy(busy = false, searching = false, message = exception.message)
                 }
             }
         }
