@@ -1,0 +1,84 @@
+name: Memory Editor native C++ hardening
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/memory-editor-native-hardening.yml'
+      - '.github/scripts/memory-editor-native-hardening.py'
+
+permissions:
+  contents: write
+
+jobs:
+  harden-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out PR branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: ci/memory-editor-stack-f914594
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Apply guarded native hardening
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/memory-editor-native-hardening.py
+          git diff --check
+          python3 - <<'PY'
+          import subprocess
+          allowed = {
+              'app/src/main/cpp/memory/Android.mk',
+              'app/src/main/cpp/memory/memory_engine.cpp',
+              'app/src/main/cpp/memory/target_probe.cpp',
+          }
+          changed = set(subprocess.check_output(['git', 'diff', '--name-only']).decode().splitlines())
+          unexpected = changed - allowed
+          if unexpected:
+              raise SystemExit(f'unexpected source changes: {sorted(unexpected)}')
+          if changed != allowed:
+              raise SystemExit(f'expected all native files to change, got: {sorted(changed)}')
+          print('Native source scope verified')
+          PY
+
+      - name: Validate arm64 integration
+        shell: bash
+        run: >-
+          ./gradlew --no-daemon --stacktrace --continue
+          :app:lintEmulatorDebug
+          :dexlib:lintDebug
+          :app:testEmulatorDebugUnitTest
+          :app:validateEmulatorDebugScreenshotTest
+          :app:assembleEmulatorDebug
+          :app:assembleEmulatorDebugAndroidTest
+
+      - name: Compile native code for x86_64 too
+        shell: bash
+        run: ./gradlew --no-daemon --stacktrace -PjlmodRuntimeTestAbi=x86_64 :app:assembleEmulatorDebug
+
+      - name: Commit hardened native source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/src/main/cpp/memory/Android.mk \
+                  app/src/main/cpp/memory/memory_engine.cpp \
+                  app/src/main/cpp/memory/target_probe.cpp
+          git commit -m 'Harden Memory Editor native core with modern C++23'
+          git rm .github/workflows/memory-editor-native-hardening.yml \
+                 .github/scripts/memory-editor-native-hardening.py
+          # Clean up the earlier temporary adaptive helper if it is still present.
+          git rm -f .github/workflows/memory-editor-adaptive-input.yml \
+                    .github/scripts/memory-editor-adaptive-input.py 2>/dev/null || true
+          git commit -m 'Remove temporary Memory Editor helper workflows'
+          git push origin HEAD:ci/memory-editor-stack-f914594
