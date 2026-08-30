@@ -25,7 +25,9 @@ jobs:
           java-version: '21'
           distribution: temurin
       - name: Apply stabilization patches
-        run: python3 .github/memory_editor_stabilize.py
+        run: |
+          python3 .github/memory_editor_stabilize.py
+          python3 .github/memory_editor_stabilize_strings.py
       - name: Validate focused build
         run: >-
           ./gradlew --no-daemon --stacktrace
@@ -39,7 +41,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git rm .github/workflows/memory-editor-stabilize.yml .github/memory_editor_stabilize.py
+          git rm .github/workflows/memory-editor-stabilize.yml .github/memory_editor_stabilize.py .github/memory_editor_stabilize_strings.py
           git add \
             app/src/main/aidl/ru/playsoftware/j2meloader/memory/IMemoryEngineService.aidl \
             app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryEngineContract.java \
@@ -49,6 +51,8 @@ jobs:
             app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryEditorCompose.kt \
             app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryInputCompose.kt \
             app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryInspectorCompose.kt \
+            app/src/main/res/values/memory_editor_strings.xml \
+            app/src/main/res/values-in/memory_editor_strings.xml \
             app/src/test/java/ru/playsoftware/j2meloader/memory/MemoryEditorComposeTest.kt \
             app/src/test/java/ru/playsoftware/j2meloader/memory/MemoryEngineContractTest.java \
             app/src/test/java/ru/playsoftware/j2meloader/memory/MemoryInputComposeTest.kt
