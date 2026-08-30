@@ -66,4 +66,28 @@ class MemoryInspectorComposeTest {
         )
         assertTrue(buildInspectorCells(invalid, MemoryEngineContract.TYPE_INT).isEmpty())
     }
+
+    @Test
+    fun inspectorFloatViewUsesLittleEndianSnapshotBytes() {
+        val bits = 1.5f.toBits()
+        val bytes = byteArrayOf(
+            bits.toByte(),
+            (bits ushr 8).toByte(),
+            (bits ushr 16).toByte(),
+            (bits ushr 24).toByte(),
+        )
+        val snapshot = MemoryInspectorSnapshot(
+            candidateId = 2,
+            type = MemoryEngineContract.TYPE_FLOAT,
+            label = "Speed",
+            startAddress = 0x3000,
+            anchorAddress = 0x3000,
+            bytes = bytes,
+        )
+
+        val cell = buildInspectorCells(snapshot, MemoryEngineContract.TYPE_FLOAT).single()
+
+        assertEquals(0, cell.offset)
+        assertEquals("1.5", cell.value)
+    }
 }
