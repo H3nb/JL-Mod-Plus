@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -163,6 +164,21 @@ public final class MemoryEngineService extends Service {
 		}
 
 		@Override
+		public long startNearbySearch(long token, long anchorCandidateId, int radius,
+		                              int type, int predicate, String first, String second) {
+			return enqueue(token, false, 0, () -> {
+				if (anchorCandidateId <= 0L || !MemoryEngineContract.isNearbyRadius(radius)) {
+					return MemoryEngineContract.RESULT_INVALID_REQUEST;
+				}
+				int ready = refreshWithRecovery(token, new long[]{anchorCandidateId});
+				return ready == MemoryEngineContract.RESULT_OK
+						? NativeMemoryEngine.startNearby(anchorCandidateId, radius, type, predicate,
+								first, second)
+						: ready;
+			});
+		}
+
+		@Override
 		public long refineKnown(long token, int predicate, String first, String second) {
 			return enqueue(token, false, 0, () -> {
 				int result = NativeMemoryEngine.refineKnown(predicate, first, second);
@@ -236,6 +252,27 @@ public final class MemoryEngineService extends Service {
 			}
 			long[] result = NativeMemoryEngine.resultPage(offset, limit);
 			return result == null ? new long[]{0L} : result;
+		}
+
+		@Override
+		public Bundle inspectCandidate(long token, long candidateId, int radius) {
+			if (candidateId <= 0L || !MemoryEngineContract.isInspectRadius(radius)) {
+				return inspectionFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
+						"Inspector requires a valid CandidateId and bounded radius");
+			}
+			try {
+				return worker.submit(() -> inspectCandidateOnWorker(token, candidateId, radius)).get();
+			} catch (RejectedExecutionException exception) {
+				return inspectionFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+						"Memory engine is shutting down");
+			} catch (InterruptedException exception) {
+				Thread.currentThread().interrupt();
+				return inspectionFailure(MemoryEngineContract.RESULT_CANCELLED,
+						"Inspector request was interrupted");
+			} catch (ExecutionException exception) {
+				return inspectionFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
+						"Inspector request failed safely");
+			}
 		}
 
 		@Override
@@ -472,6 +509,57 @@ public final class MemoryEngineService extends Service {
 		int result = configureTarget(token, configuredScope);
 		return result == MemoryEngineContract.RESULT_OK
 				? NativeMemoryEngine.refresh(ids, true) : result;
+	}
+
+	private Bundle inspectCandidateOnWorker(long token, long candidateId, int radius) {
+		if (!isTargetToken(token)) {
+			return inspectionFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+					"MIDlet runtime changed or ended");
+		}
+		int ready = refreshWithRecovery(token, new long[]{candidateId});
+		if (ready != MemoryEngineContract.RESULT_OK) {
+			return inspectionFailure(ready, NativeMemoryEngine.lastMessage());
+		}
+		long[] raw = NativeMemoryEngine.inspect(candidateId, radius);
+		if (raw == null || raw.length < 4) {
+			return inspectionFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Inspector returned an invalid native response");
+		}
+		int result = (int) raw[0];
+		if (result != MemoryEngineContract.RESULT_OK) {
+			return inspectionFailure(result, NativeMemoryEngine.lastMessage());
+		}
+		long byteCountLong = raw[3];
+		if (raw[1] <= 0L || raw[2] <= 0L || byteCountLong < 0L ||
+				byteCountLong > MemoryEngineContract.MAX_INSPECT_BYTES ||
+				raw.length != 4L + byteCountLong) {
+			return inspectionFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Inspector returned malformed bounded data");
+		}
+		if (!isCurrentToken(token)) {
+			return inspectionFailure(MemoryEngineContract.RESULT_TARGET_LOST,
+					"MIDlet runtime changed during Inspector read");
+		}
+		int byteCount = (int) byteCountLong;
+		byte[] bytes = new byte[byteCount];
+		for (int index = 0; index < byteCount; index++) {
+			bytes[index] = (byte) (raw[4 + index] & 0xffL);
+		}
+		Bundle bundle = new Bundle();
+		bundle.putInt(MemoryEngineContract.KEY_INSPECT_RESULT, MemoryEngineContract.RESULT_OK);
+		bundle.putLong(MemoryEngineContract.KEY_INSPECT_START, raw[1]);
+		bundle.putLong(MemoryEngineContract.KEY_INSPECT_ANCHOR, raw[2]);
+		bundle.putByteArray(MemoryEngineContract.KEY_INSPECT_BYTES, bytes);
+		return bundle;
+	}
+
+	private static Bundle inspectionFailure(int result, @Nullable String message) {
+		Bundle bundle = new Bundle();
+		bundle.putInt(MemoryEngineContract.KEY_INSPECT_RESULT, result);
+		if (message != null && !message.isBlank()) {
+			bundle.putString(MemoryEngineContract.KEY_MESSAGE, message);
+		}
+		return bundle;
 	}
 
 	private int setFreezeRecords(long token, long[] candidateIds, int mode,

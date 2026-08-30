@@ -34,6 +34,9 @@ final class NativeMemoryEngine {
 
 	static native int startGroup(int[] valueTypes, String[] values, int maxDistance);
 
+	static native int startNearby(long anchorCandidateId, int radius, int valueType,
+	                              int predicate, String first, String second);
+
 	static native int refineKnown(int predicate, String first, String second);
 
 	static native int recoverKnown(int predicate, String first, String second);
@@ -57,6 +60,8 @@ final class NativeMemoryEngine {
 	static native long resultCount();
 
 	static native long[] resultPage(int offset, int limit);
+
+	static native long[] inspect(long candidateId, int radius);
 
 	static native void clearSearch();
 

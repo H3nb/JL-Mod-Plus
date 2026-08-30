@@ -70,6 +70,11 @@ public final class MemoryEngineContract {
 	public static final int MAX_MULTI_WRITE = 32;
 	public static final int MAX_FREEZE_RECORDS = 32;
 	public static final int MAX_GROUP_VALUES = 8;
+	public static final int DEFAULT_INSPECT_RADIUS = 128;
+	public static final int MAX_INSPECT_RADIUS = 256;
+	public static final int DEFAULT_NEARBY_RADIUS = 256;
+	public static final int MAX_NEARBY_RADIUS = 4096;
+	public static final int MAX_INSPECT_BYTES = MAX_INSPECT_RADIUS * 2 + 8;
 
 	/** [count, id, address, previousAddress, type, state, relocations, initial, previous, current, ...]. */
 	public static final int RESULT_PAGE_STRIDE = 9;
@@ -82,6 +87,10 @@ public final class MemoryEngineContract {
 	public static final String KEY_TARGET_PID = "targetPid";
 	public static final String KEY_PAGE_SIZE = "pageSize";
 	public static final String KEY_MESSAGE = "message";
+	public static final String KEY_INSPECT_RESULT = "inspectResult";
+	public static final String KEY_INSPECT_START = "inspectStart";
+	public static final String KEY_INSPECT_ANCHOR = "inspectAnchor";
+	public static final String KEY_INSPECT_BYTES = "inspectBytes";
 	public static final String KEY_WATCH_ROWS = "watchRows";
 	public static final String KEY_WATCH_LABELS = "watchLabels";
 	public static final String KEY_WATCH_FREEZE_MODES = "watchFreezeModes";
@@ -100,6 +109,14 @@ public final class MemoryEngineContract {
 
 	public static boolean isCandidateType(int type) {
 		return type >= TYPE_BYTE && type <= TYPE_DOUBLE;
+	}
+
+	public static boolean isInspectRadius(int radius) {
+		return radius > 0 && radius <= MAX_INSPECT_RADIUS;
+	}
+
+	public static boolean isNearbyRadius(int radius) {
+		return radius > 0 && radius <= MAX_NEARBY_RADIUS;
 	}
 
 	static boolean isCompleteRunList(long[] runs) {

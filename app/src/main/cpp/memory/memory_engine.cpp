@@ -94,6 +94,8 @@ constexpr size_t kRelocationTrackLimit = 25'000;
 constexpr size_t kWatchLimit = 128;
 constexpr size_t kLiveOverlayLimit = 2'048;
 constexpr size_t kAddressCheckpointStride = 256;
+constexpr jint kMaxInspectRadius = 256;
+constexpr jint kMaxNearbyRadius = 4096;
 
 struct Range {
     uintptr_t start;
@@ -704,6 +706,12 @@ struct OperationContext {
     uint64_t nextId;
 };
 
+bool resolveCandidateById(const OperationContext &context, uint64_t id,
+                          Candidate &resolved);
+bool verifyCandidateBinding(const Target &target, const Candidate &candidate);
+bool candidateWindow(const Target &target, const Candidate &candidate,
+                     size_t radius, Range &window);
+
 bool beginOperation(OperationContext &context) {
     gCancelled.store(false, std::memory_order_release);
     std::lock_guard<std::mutex> lock(gMutex);
@@ -986,6 +994,52 @@ jint scanKnown(const OperationContext &context, jint requestedType,
     return commitOperation(committed, std::move(next), -1);
 }
 
+jint scanNearby(const OperationContext &context, uint64_t anchorId, jint radius,
+                jint requestedType, jint predicate, const std::string &first,
+                const std::string &second) {
+    if (anchorId == 0 || radius <= 0 || radius > kMaxNearbyRadius) {
+        setMessage("Nearby Search requires a valid candidate and a bounded radius");
+        return kInvalidRequest;
+    }
+    Candidate anchor{};
+    if (!resolveCandidateById(context, anchorId, anchor)) {
+        setMessage("Nearby Search anchor is no longer available");
+        return kInvalidRequest;
+    }
+    if (!verifyCandidateBinding(context.target, anchor)) {
+        return kIdentityUnsafe;
+    }
+    Range window{};
+    if (!candidateWindow(context.target, anchor, static_cast<size_t>(radius),
+                         window)) {
+        setMessage("Nearby Search anchor is outside the current resident ranges");
+        return kTargetLost;
+    }
+
+    OperationContext nearby = context;
+    nearby.target.ranges.clear();
+    nearby.target.ranges.push_back(window);
+    std::shared_ptr<SearchState> next;
+    const jint scanResult = collectKnown(nearby, requestedType, predicate, first,
+                                         second, next);
+    if (scanResult != kOk) {
+        return scanResult;
+    }
+    // The scan window is intentionally narrow, but relocation fingerprints may extend just
+    // outside it. Fill those boundary identities against the full configured resident set.
+    fillMissingIdentities(context.target, next->candidates);
+    const size_t resultCount = next->candidates.size();
+    OperationContext committed = context;
+    committed.nextId += resultCount;
+    const jint result = commitOperation(committed, std::move(next), -1);
+    if (result == kOk) {
+        setMessage(("Nearby Search found " + std::to_string(resultCount) +
+                    " typed candidates in the bounded window")
+                           .c_str());
+    }
+    return result;
+}
+
 struct GroupMatch {
     uintptr_t address;
     jint type;
@@ -1226,6 +1280,137 @@ bool readCandidate(const Target &target, const Candidate &candidate,
                    uint64_t &bits) {
     const size_t width = widthOf(candidate.type);
     return width != 0 && readExact(target.pid, candidate.address, &bits, width);
+}
+
+bool resolveCandidateById(const OperationContext &context, uint64_t id,
+                          Candidate &resolved) {
+    if (id == 0) {
+        return false;
+    }
+    const auto live = context.liveCandidates.find(id);
+    if (live != context.liveCandidates.end()) {
+        resolved = live->second;
+        return true;
+    }
+    const auto findIn = [&](const std::vector<Candidate> &items) {
+        const auto found = std::find_if(items.begin(), items.end(),
+                                        [&](const Candidate &candidate) {
+                                            return candidate.id == id;
+                                        });
+        if (found == items.end()) {
+            return false;
+        }
+        resolved = liveCandidate(*found, context.liveCandidates);
+        return true;
+    };
+    return findIn(context.state->candidates) || findIn(context.state->watches);
+}
+
+bool verifyCandidateBinding(const Target &target, const Candidate &candidate) {
+    if (candidate.state != kStable || !candidate.identityValid) {
+        setMessage("Candidate identity is not stable enough for a bounded read");
+        return false;
+    }
+    uint64_t current = 0;
+    uint64_t hash = 0;
+    if (!readCandidate(target, candidate, current) ||
+        current != candidate.currentBits ||
+        !readIdentity(target, candidate.address, candidate.type, hash) ||
+        hash != candidate.identityHash) {
+        setMessage("Candidate binding changed before the bounded read");
+        return false;
+    }
+    return true;
+}
+
+bool candidateWindow(const Target &target, const Candidate &candidate,
+                     size_t radius, Range &window) {
+    const size_t width = widthOf(candidate.type);
+    if (width == 0 || radius == 0 ||
+        candidate.address > std::numeric_limits<uintptr_t>::max() - width) {
+        return false;
+    }
+    const uintptr_t valueEnd = candidate.address + width;
+    const auto containing = std::find_if(
+            target.ranges.begin(), target.ranges.end(), [&](const Range &range) {
+                return range.start <= candidate.address && range.end >= valueEnd;
+            });
+    if (containing == target.ranges.end()) {
+        return false;
+    }
+    const uintptr_t requestedStart =
+            candidate.address < radius ? 0 : candidate.address - radius;
+    const uintptr_t requestedEnd =
+            valueEnd > std::numeric_limits<uintptr_t>::max() - radius
+                    ? std::numeric_limits<uintptr_t>::max()
+                    : valueEnd + radius;
+    window.start = std::max(containing->start, requestedStart);
+    window.end = std::min(containing->end, requestedEnd);
+    return window.end > window.start;
+}
+
+jlongArray inspectionResult(JNIEnv *env, jint code, uintptr_t start = 0,
+                            uintptr_t anchor = 0,
+                            const std::vector<uint8_t> *bytes = nullptr) {
+    const size_t byteCount = bytes == nullptr ? 0 : bytes->size();
+    if (byteCount > static_cast<size_t>(std::numeric_limits<jsize>::max()) - 4U) {
+        return nullptr;
+    }
+    std::vector<jlong> output(4U + byteCount);
+    output[0] = code;
+    output[1] = static_cast<jlong>(start);
+    output[2] = static_cast<jlong>(anchor);
+    output[3] = static_cast<jlong>(byteCount);
+    for (size_t index = 0; index < byteCount; ++index) {
+        output[4U + index] = static_cast<jlong>((*bytes)[index]);
+    }
+    jlongArray result = env->NewLongArray(static_cast<jsize>(output.size()));
+    if (result != nullptr) {
+        env->SetLongArrayRegion(result, 0, static_cast<jsize>(output.size()),
+                                output.data());
+    }
+    return result;
+}
+
+jlongArray inspectCandidateSnapshot(JNIEnv *env, const OperationContext &context,
+                                    uint64_t candidateId, jint radius) {
+    if (candidateId == 0 || radius <= 0 || radius > kMaxInspectRadius) {
+        setMessage("Inspector radius or candidate is invalid");
+        return inspectionResult(env, kInvalidRequest);
+    }
+    Candidate candidate{};
+    if (!resolveCandidateById(context, candidateId, candidate)) {
+        setMessage("Inspector candidate is no longer available");
+        return inspectionResult(env, kInvalidRequest);
+    }
+    if (!verifyCandidateBinding(context.target, candidate)) {
+        return inspectionResult(env, kIdentityUnsafe);
+    }
+    Range window{};
+    if (!candidateWindow(context.target, candidate, static_cast<size_t>(radius),
+                         window)) {
+        setMessage("Inspector candidate is outside the current resident ranges");
+        return inspectionResult(env, kTargetLost);
+    }
+    std::vector<uint8_t> bytes(static_cast<size_t>(window.end - window.start));
+    if (!readExact(context.target.pid, window.start, bytes.data(), bytes.size())) {
+        setMessage("Inspector window changed while it was being read");
+        return inspectionResult(env, kTargetLost);
+    }
+    if (gCancelled.load(std::memory_order_acquire)) {
+        setMessage("Inspector read was cancelled");
+        return inspectionResult(env, kCancelled);
+    }
+    {
+        std::lock_guard<std::mutex> lock(gMutex);
+        if (gTarget.generation != context.target.generation ||
+            gTarget.token != context.target.token || gState != context.state) {
+            gLastMessage = "MIDlet runtime or search changed during Inspector read";
+            return inspectionResult(env, kTargetLost);
+        }
+        gLastMessage = "";
+    }
+    return inspectionResult(env, kOk, window.start, candidate.address, &bytes);
 }
 
 class CandidateValueReader {
@@ -2376,6 +2561,25 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_startGroup(
 }
 
 extern "C" JNIEXPORT jint JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_startNearby(
+        JNIEnv *env, jclass, jlong anchorCandidateId, jint radius, jint type,
+        jint predicate, jstring first, jstring second) {
+    return guardedOperation([&] {
+        if (anchorCandidateId <= 0) {
+            setMessage("Nearby Search anchor is invalid");
+            return kInvalidRequest;
+        }
+        OperationContext context;
+        if (!beginOperation(context)) {
+            return kNoSession;
+        }
+        return scanNearby(context, static_cast<uint64_t>(anchorCandidateId),
+                          radius, type, predicate, fromJString(env, first),
+                          fromJString(env, second));
+    });
+}
+
+extern "C" JNIEXPORT jint JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_refineKnown(
         JNIEnv *env, jclass, jint predicate, jstring first, jstring second) {
     return guardedOperation([&] {
@@ -2590,6 +2794,29 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_resultPage(
     return candidateAddressPage(env, state,
                                 static_cast<size_t>(offset),
                                 static_cast<size_t>(limit));
+}
+
+extern "C" JNIEXPORT jlongArray JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_inspect(
+        JNIEnv *env, jclass, jlong candidateId, jint radius) {
+    try {
+        OperationContext context;
+        if (!beginOperation(context)) {
+            return inspectionResult(env, kNoSession);
+        }
+        if (candidateId <= 0) {
+            setMessage("Inspector candidate is invalid");
+            return inspectionResult(env, kInvalidRequest);
+        }
+        return inspectCandidateSnapshot(
+                env, context, static_cast<uint64_t>(candidateId), radius);
+    } catch (const std::bad_alloc &) {
+        setMessage("Inspector memory budget could not be reserved");
+        return inspectionResult(env, kResourceLimit);
+    } catch (...) {
+        setMessage("Inspector rejected the request safely");
+        return inspectionResult(env, kInvalidRequest);
+    }
 }
 
 extern "C" JNIEXPORT jint JNICALL

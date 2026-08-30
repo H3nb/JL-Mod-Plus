@@ -22,6 +22,8 @@ interface IMemoryEngineService {
     long startUnknownSearch(long runtimeToken, int scope, int valueType);
     long startGroupSearch(long runtimeToken, int scope, in int[] valueTypes,
             in String[] values, int maxDistance);
+    long startNearbySearch(long runtimeToken, long anchorCandidateId, int radius,
+            int valueType, int predicate, String firstValue, String secondValue);
     long refineKnown(long runtimeToken, int predicate, String firstValue, String secondValue);
     long refineRelative(long runtimeToken, int predicate, int compareTarget,
             String firstValue, String secondValue);
@@ -34,6 +36,7 @@ interface IMemoryEngineService {
     long getResultCount(long runtimeToken);
     // Offset/limit count unique raw addresses. Rows may include typed aliases for those addresses.
     long[] getResultPage(long runtimeToken, int offset, int limit);
+    Bundle inspectCandidate(long runtimeToken, long candidateId, int radius);
     Bundle getWatchPage(long runtimeToken);
     long addWatch(long runtimeToken, in long[] candidateIds);
     long removeWatch(long runtimeToken, in long[] candidateIds);

@@ -50,5 +50,16 @@ public class MemoryEngineContractTest {
 		assertEquals(32, MemoryEngineContract.MAX_MULTI_WRITE);
 		assertEquals(32, MemoryEngineContract.MAX_FREEZE_RECORDS);
 		assertEquals(8, MemoryEngineContract.MAX_GROUP_VALUES);
+		assertEquals(128, MemoryEngineContract.DEFAULT_INSPECT_RADIUS);
+		assertEquals(256, MemoryEngineContract.MAX_INSPECT_RADIUS);
+		assertEquals(256, MemoryEngineContract.DEFAULT_NEARBY_RADIUS);
+		assertEquals(4096, MemoryEngineContract.MAX_NEARBY_RADIUS);
+		assertEquals(520, MemoryEngineContract.MAX_INSPECT_BYTES);
+		assertTrue(MemoryEngineContract.isInspectRadius(128));
+		assertFalse(MemoryEngineContract.isInspectRadius(0));
+		assertFalse(MemoryEngineContract.isInspectRadius(257));
+		assertTrue(MemoryEngineContract.isNearbyRadius(256));
+		assertFalse(MemoryEngineContract.isNearbyRadius(0));
+		assertFalse(MemoryEngineContract.isNearbyRadius(4097));
 	}
 }
