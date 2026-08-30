@@ -61,6 +61,7 @@ constexpr jint kTypeDouble = 7;
 // JNI uses stable integer constants, but materialized candidates and parsed queries use a
 // scoped type so width-sensitive operations cannot accidentally accept predicates or other ints.
 enum class ValueType : uint8_t {
+    Invalid = kTypeAuto,
     Byte = kTypeByte,
     Short = kTypeShort,
     Char = kTypeChar,
@@ -98,6 +99,13 @@ constexpr size_t kTypeSlotCount = typeIndex(ValueType::Double) + 1U;
 }
 
 static_assert(sizeof(ValueType) == sizeof(uint8_t));
+static_assert(toJint(ValueType::Invalid) == kTypeAuto);
+static_assert(toJint(ValueType::Byte) == kTypeByte);
+static_assert(toJint(ValueType::Short) == kTypeShort);
+static_assert(toJint(ValueType::Char) == kTypeChar);
+static_assert(toJint(ValueType::Int) == kTypeInt);
+static_assert(toJint(ValueType::Long) == kTypeLong);
+static_assert(toJint(ValueType::Float) == kTypeFloat);
 static_assert(toJint(ValueType::Double) == kTypeDouble);
 
 constexpr jint kEqual = 0;
@@ -165,7 +173,7 @@ struct Candidate {
     uint64_t currentBits = 0;
     uint64_t identityHash = 0;
     uint32_t relocationCount = 0;
-    ValueType type = ValueType::Int;
+    ValueType type = ValueType::Invalid;
     uint8_t state = kStable;
     bool identityValid = false;
 };
@@ -218,7 +226,7 @@ struct SearchState {
 };
 
 struct Query {
-    ValueType type = ValueType::Int;
+    ValueType type = ValueType::Invalid;
     bool floating = false;
     int64_t integerFirst = 0;
     int64_t integerSecond = 0;
@@ -246,6 +254,8 @@ void setMessage(const char *message) {
 
 [[nodiscard]] constexpr size_t widthOf(ValueType type) noexcept {
     switch (type) {
+    case ValueType::Invalid:
+        return 0;
     case ValueType::Byte:
         return 1;
     case ValueType::Short:
@@ -260,6 +270,15 @@ void setMessage(const char *message) {
     }
     return 0;
 }
+
+static_assert(widthOf(ValueType::Invalid) == 0);
+static_assert(widthOf(ValueType::Byte) == 1);
+static_assert(widthOf(ValueType::Short) == 2);
+static_assert(widthOf(ValueType::Char) == 2);
+static_assert(widthOf(ValueType::Int) == 4);
+static_assert(widthOf(ValueType::Long) == 8);
+static_assert(widthOf(ValueType::Float) == 4);
+static_assert(widthOf(ValueType::Double) == 8);
 
 [[nodiscard]] size_t widthOf(jint rawType) noexcept {
     const auto type = valueTypeFromJint(rawType);
@@ -517,12 +536,16 @@ Candidate makeCandidate(uint64_t id, uintptr_t address, ValueType type,
 
 bool snapshotIdentity(std::span<const uint8_t> bytes, size_t offset,
                       size_t width, uint64_t &hash) noexcept {
-    if (offset < kIdentityRadius || width > bytes.size() - std::min(offset, bytes.size()) ||
-        offset + width > bytes.size() || bytes.size() - offset - width < kIdentityRadius) {
+    if (offset < kIdentityRadius || offset > bytes.size() ||
+        width > bytes.size() - offset) {
+        return false;
+    }
+    const size_t valueEnd = offset + width;
+    if (bytes.size() - valueEnd < kIdentityRadius) {
         return false;
     }
     hash = identityHash(bytes.subspan(offset - kIdentityRadius, kIdentityRadius),
-                        bytes.subspan(offset + width, kIdentityRadius));
+                        bytes.subspan(valueEnd, kIdentityRadius));
     return true;
 }
 
@@ -670,8 +693,18 @@ bool matchesRelative(uint64_t currentBits, uint64_t referenceBits,
     return true;
 }
 
+[[nodiscard]] constexpr bool isAddressSpanValid(uintptr_t address,
+                                                size_t size) noexcept {
+    if (size == 0U) {
+        return true;
+    }
+    uintptr_t lastByte = 0;
+    return checkedAddressAdd(address, size - 1U, lastByte);
+}
+
 bool readExact(pid_t pid, uintptr_t address, void *destination, size_t size) {
-    if (destination == nullptr && size != 0U) {
+    if ((destination == nullptr && size != 0U) ||
+        !isAddressSpanValid(address, size)) {
         return false;
     }
     auto *output = static_cast<uint8_t *>(destination);
@@ -696,7 +729,8 @@ bool readExact(pid_t pid, uintptr_t address, void *destination, size_t size) {
 }
 
 bool writeExact(pid_t pid, uintptr_t address, const void *source, size_t size) {
-    if (source == nullptr && size != 0U) {
+    if ((source == nullptr && size != 0U) ||
+        !isAddressSpanValid(address, size)) {
         return false;
     }
     const auto *input = static_cast<const uint8_t *>(source);
@@ -872,6 +906,8 @@ void trimHistoryLocked() {
 
 int displayTypePriority(ValueType type) {
     switch (type) {
+    case ValueType::Invalid:
+        return 7;
     case ValueType::Int:
         return 0;
     case ValueType::Float:
@@ -1429,7 +1465,8 @@ bool candidateWindow(const Target &target, const Candidate &candidate,
                      size_t radius, Range &window) {
     const size_t width = widthOf(candidate.type);
     uintptr_t valueEnd = 0;
-    if (radius == 0 || !checkedAddressAdd(candidate.address, width, valueEnd)) {
+    if (width == 0 || radius == 0 ||
+        !checkedAddressAdd(candidate.address, width, valueEnd)) {
         return false;
     }
     const auto containing = std::find_if(
@@ -1525,7 +1562,7 @@ class CandidateValueReader {
         }
         const size_t width = widthOf(candidate.type);
         uintptr_t valueEnd = 0;
-        if (!checkedAddressAdd(candidate.address, width, valueEnd)) {
+        if (width == 0 || !checkedAddressAdd(candidate.address, width, valueEnd)) {
             return false;
         }
         if (candidate.address >= cachedStart_ && valueEnd <= cachedEnd_) {
@@ -1900,6 +1937,11 @@ jint recoverCandidatesBatch(const Target &target,
     unsafeCount = 0;
     if (recovery.empty()) {
         return kOk;
+    }
+    if (std::any_of(recovery.begin(), recovery.end(),
+                    [&](size_t index) { return index >= candidates.size(); })) {
+        setMessage("Invalid relocation recovery index");
+        return kInvalidRequest;
     }
     std::array<std::unordered_map<uint64_t, std::vector<size_t>>, kTypeSlotCount> wanted{};
     std::vector<bool> eligible(recovery.size(), false);
@@ -2465,7 +2507,11 @@ jlongArray candidatePage(
         output[base] = static_cast<jlong>(candidate.id);
         output[base + 1U] = static_cast<jlong>(candidate.address);
         output[base + 2U] = static_cast<jlong>(candidate.previousAddress);
-        output[base + 3U] = toJint(candidate.type);
+        const jint serializedType = toJint(candidate.type);
+        if (serializedType < kTypeByte || serializedType > kTypeDouble) {
+            return nullptr;
+        }
+        output[base + 3U] = serializedType;
         output[base + 4U] = candidate.state;
         output[base + 5U] = candidate.relocationCount;
         output[base + 6U] = static_cast<jlong>(candidate.initialBits);
