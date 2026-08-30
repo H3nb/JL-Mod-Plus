@@ -37,6 +37,7 @@ interface IMemoryEngineService {
     long editCandidates(long runtimeToken, in long[] candidateIds, String replacementValue);
 
     long getResultCount(long runtimeToken);
+    Bundle getSearchSessionInfo(long runtimeToken);
     // Offset/limit count unique raw addresses. Rows may include typed aliases for those addresses.
     long[] getResultPage(long runtimeToken, int offset, int limit);
     Bundle inspectCandidate(long runtimeToken, long candidateId, int radius);

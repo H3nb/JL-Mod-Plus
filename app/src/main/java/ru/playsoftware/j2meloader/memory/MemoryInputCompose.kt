@@ -32,6 +32,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
@@ -173,6 +175,9 @@ internal fun MemoryInputSpec.isComplete(text: String): Boolean {
     }
 }
 
+internal fun memoryInputCompleteForTypes(value: String, types: Collection<Int>): Boolean =
+    types.isNotEmpty() && types.all { MemoryInputSpec.forType(it).isComplete(value) }
+
 internal object MemoryInputEditing {
     fun insert(value: TextFieldValue, token: String, spec: MemoryInputSpec): TextFieldValue {
         val start = minOf(value.selection.start, value.selection.end).coerceIn(0, value.text.length)
@@ -263,6 +268,10 @@ internal class MemoryInputSession {
     fun toggleSign() = transform { MemoryInputEditing.toggleSign(it.value, it.spec) }
     fun clear() = transform { TextFieldValue("", TextRange(0)) }
 
+    fun deactivate(id: Any) {
+        if (binding?.id === id) hide()
+    }
+
     fun hide() {
         binding = null
         onTextChange = null
@@ -284,11 +293,18 @@ private val LocalMemoryInputSession = compositionLocalOf<MemoryInputSession?> { 
 @Composable
 internal fun MemoryInputArea(
     modifier: Modifier = Modifier,
+    active: Boolean = true,
     sideDockInLandscape: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val session = remember { MemoryInputSession() }
     val focusManager = LocalFocusManager.current
+    LaunchedEffect(active) {
+        if (!active) {
+            session.hide()
+            focusManager.clearFocus(force = true)
+        }
+    }
     val landscape = sideDockInLandscape &&
         LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     CompositionLocalProvider(LocalMemoryInputSession provides session) {
@@ -344,6 +360,12 @@ internal fun MemoryValueInput(
         return
     }
     val id = remember { Any() }
+    DisposableEffect(id) {
+        onDispose { session.deactivate(id) }
+    }
+    LaunchedEffect(spec) {
+        if (value.isNotEmpty() && !spec.acceptsPartial(value)) onValueChange("")
+    }
     SideEffect { session.sync(id, value, spec, onValueChange) }
     OutlinedTextField(
         value = session.valueFor(id, value),

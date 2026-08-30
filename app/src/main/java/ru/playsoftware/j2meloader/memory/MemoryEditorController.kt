@@ -496,6 +496,9 @@ class MemoryEditorComposeController(
         state = state.copy(
             sessionStage = MemorySessionStage.EMPTY,
             searchMode = MemorySearchMode.KNOWN,
+            requestedType = MemoryEngineContract.TYPE_AUTO,
+            searchScope = MemoryEngineContract.SCOPE_JAVA_FAST,
+            canUndo = false,
             resultCount = 0,
             pageOffset = 0,
             results = emptyList(),
@@ -590,12 +593,24 @@ class MemoryEditorComposeController(
     }
 
     override fun removeSelected(keep: Boolean) {
-        val ids = selectedIds() ?: return
+        val ids = if (state.watchTab) {
+            selectedIds()
+        } else {
+            val addresses = state.results.asSequence()
+                .filter { it.id in state.selected }
+                .mapTo(mutableSetOf()) { it.address }
+            state.results.asSequence()
+                .filter { it.address in addresses }
+                .map { it.id }
+                .distinct()
+                .toList()
+                .takeIf { it.isNotEmpty() }
+                ?.toLongArray()
+        } ?: return
         operate {
             if (keep) keepCandidates(state.runtimeToken, ids)
             else removeCandidates(state.runtimeToken, ids)
         }
-        clearSelection()
     }
 
     override fun watchSelected(add: Boolean) {
@@ -615,7 +630,13 @@ class MemoryEditorComposeController(
     }
 
     override fun clearFreezeSelected() {
-        val ids = selectedIds() ?: return
+        val ids = state.watches.asSequence()
+            .filter { it.id in state.selected && it.freezeMode >= 0 }
+            .map { it.id }
+            .distinct()
+            .toList()
+            .takeIf { it.isNotEmpty() }
+            ?.toLongArray() ?: return
         operate { clearFreeze(state.runtimeToken, ids) }
     }
 
@@ -684,36 +705,55 @@ class MemoryEditorComposeController(
         val engine = service ?: return@runIpc
         val token = state.runtimeToken
         if (token == 0L) return@runIpc
+        val session = engine.getSearchSessionInfo(token)
+        val sessionStage = memorySessionStageFromEngine(
+            session?.getInt(
+                MemoryEngineContract.KEY_SEARCH_SESSION_STAGE,
+                MemoryEngineContract.SEARCH_SESSION_EMPTY,
+            ) ?: MemoryEngineContract.SEARCH_SESSION_EMPTY,
+        )
+        val sessionMode = memorySearchModeFromEngine(
+            session?.getInt(
+                MemoryEngineContract.KEY_SEARCH_MODE,
+                MemoryEngineContract.SEARCH_MODE_KNOWN,
+            ) ?: MemoryEngineContract.SEARCH_MODE_KNOWN,
+        )
+        val requestedType = session?.getInt(
+            MemoryEngineContract.KEY_SEARCH_REQUESTED_TYPE,
+            MemoryEngineContract.TYPE_AUTO,
+        )?.takeIf(MemoryEngineContract::isValueType) ?: MemoryEngineContract.TYPE_AUTO
+        val searchScope = session?.getInt(
+            MemoryEngineContract.KEY_SEARCH_SCOPE,
+            MemoryEngineContract.SCOPE_JAVA_FAST,
+        )?.takeIf(MemoryEngineContract::isScope) ?: MemoryEngineContract.SCOPE_JAVA_FAST
+        val canUndo = (session?.getInt(MemoryEngineContract.KEY_SEARCH_HISTORY_DEPTH, 0) ?: 0) > 0
+        val nativeCount = engine.getResultCount(token)
+        val count = if (sessionStage == MemorySessionStage.EMPTY) 0L else nativeCount
         val offset = state.pageOffset
-        val count = engine.getResultCount(token)
         val lastOffset = if (count == 0L) 0L else (count - 1L) / PAGE_SIZE * PAGE_SIZE
-        val safeOffset = offset.coerceAtMost(lastOffset.coerceAtMost(
-            (Int.MAX_VALUE / PAGE_SIZE * PAGE_SIZE).toLong(),
-        ).toInt())
-        val resultRows = MemoryEditorPageParser.parse(engine.getResultPage(token, safeOffset, PAGE_SIZE))
+        val safeOffset = if (sessionStage == MemorySessionStage.CANDIDATES) {
+            offset.coerceAtMost(lastOffset.coerceAtMost(
+                (Int.MAX_VALUE / PAGE_SIZE * PAGE_SIZE).toLong(),
+            ).toInt())
+        } else 0
+        val resultRows = if (sessionStage == MemorySessionStage.CANDIDATES) {
+            MemoryEditorPageParser.parse(engine.getResultPage(token, safeOffset, PAGE_SIZE))
+        } else emptyList()
         val watchRows = attachWatchMetadata(engine.getWatchPage(token))
         post {
-            val inferredStage = when {
-                resultRows.isNotEmpty() -> MemorySessionStage.CANDIDATES
-                count > 0L && safeOffset == 0 -> MemorySessionStage.UNKNOWN_BASELINE
-                state.sessionStage == MemorySessionStage.CANDIDATES -> MemorySessionStage.CANDIDATES
-                else -> MemorySessionStage.EMPTY
-            }
-            val inferredMode = if (inferredStage == MemorySessionStage.UNKNOWN_BASELINE) {
-                MemorySearchMode.UNKNOWN
-            } else {
-                state.searchMode
-            }
             state = state.copy(
                 resultCount = count,
                 pageOffset = safeOffset,
                 results = resultRows,
                 watches = watchRows,
-                sessionStage = inferredStage,
-                searchMode = inferredMode,
+                sessionStage = sessionStage,
+                searchMode = sessionMode,
+                requestedType = requestedType,
+                searchScope = searchScope,
+                canUndo = canUndo,
                 selected = state.selected.intersect((resultRows + watchRows).mapTo(mutableSetOf()) { it.id }),
             )
-            if (refreshAfterLoad && inferredStage == MemorySessionStage.CANDIDATES) refresh()
+            if (refreshAfterLoad && sessionStage == MemorySessionStage.CANDIDATES) refresh()
         }
     }
 
@@ -747,6 +787,9 @@ class MemoryEditorComposeController(
             runtimeToken = token,
             sessionStage = if (runtimeChanged) MemorySessionStage.EMPTY else state.sessionStage,
             searchMode = if (runtimeChanged) MemorySearchMode.KNOWN else state.searchMode,
+            requestedType = if (runtimeChanged) MemoryEngineContract.TYPE_AUTO else state.requestedType,
+            searchScope = if (runtimeChanged) MemoryEngineContract.SCOPE_JAVA_FAST else state.searchScope,
+            canUndo = if (runtimeChanged) false else state.canUndo,
             resultCount = if (runtimeChanged) 0L else state.resultCount,
             pageOffset = if (runtimeChanged) 0 else state.pageOffset,
             results = if (runtimeChanged) emptyList() else state.results,
@@ -772,6 +815,9 @@ class MemoryEditorComposeController(
             searching = false,
             sessionStage = MemorySessionStage.EMPTY,
             searchMode = MemorySearchMode.KNOWN,
+            requestedType = MemoryEngineContract.TYPE_AUTO,
+            searchScope = MemoryEngineContract.SCOPE_JAVA_FAST,
+            canUndo = false,
             resultCount = 0L,
             pageOffset = 0,
             results = emptyList(),

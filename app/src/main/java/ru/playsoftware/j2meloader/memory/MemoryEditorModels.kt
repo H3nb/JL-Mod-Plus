@@ -26,6 +26,18 @@ internal enum class MemorySessionStage {
     CANDIDATES,
 }
 
+internal fun memorySessionStageFromEngine(value: Int): MemorySessionStage = when (value) {
+    MemoryEngineContract.SEARCH_SESSION_UNKNOWN_BASELINE -> MemorySessionStage.UNKNOWN_BASELINE
+    MemoryEngineContract.SEARCH_SESSION_CANDIDATES -> MemorySessionStage.CANDIDATES
+    else -> MemorySessionStage.EMPTY
+}
+
+internal fun memorySearchModeFromEngine(value: Int): MemorySearchMode = when (value) {
+    MemoryEngineContract.SEARCH_MODE_UNKNOWN -> MemorySearchMode.UNKNOWN
+    MemoryEngineContract.SEARCH_MODE_GROUP -> MemorySearchMode.GROUP
+    else -> MemorySearchMode.KNOWN
+}
+
 internal data class MemoryCandidateRow(
     val id: Long,
     val address: Long,
@@ -133,6 +145,9 @@ internal data class MemoryEditorUiState(
     val message: String? = null,
     val searchMode: MemorySearchMode = MemorySearchMode.KNOWN,
     val sessionStage: MemorySessionStage = MemorySessionStage.EMPTY,
+    val requestedType: Int = MemoryEngineContract.TYPE_AUTO,
+    val searchScope: Int = MemoryEngineContract.SCOPE_JAVA_FAST,
+    val canUndo: Boolean = false,
     val inspectorLoading: Boolean = false,
     val inspector: MemoryInspectorSnapshot? = null,
 )

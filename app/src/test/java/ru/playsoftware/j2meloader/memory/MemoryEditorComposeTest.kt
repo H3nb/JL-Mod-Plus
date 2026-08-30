@@ -103,6 +103,24 @@ class MemoryEditorComposeTest {
     }
 
     @Test
+    fun engineSessionMetadataMapsWithoutCountHeuristics() {
+        assertEquals(
+            MemorySessionStage.CANDIDATES,
+            memorySessionStageFromEngine(MemoryEngineContract.SEARCH_SESSION_CANDIDATES),
+        )
+        assertEquals(
+            MemorySessionStage.UNKNOWN_BASELINE,
+            memorySessionStageFromEngine(MemoryEngineContract.SEARCH_SESSION_UNKNOWN_BASELINE),
+        )
+        assertEquals(
+            MemorySearchMode.GROUP,
+            memorySearchModeFromEngine(MemoryEngineContract.SEARCH_MODE_GROUP),
+        )
+        assertEquals(MemorySessionStage.EMPTY, memorySessionStageFromEngine(-1))
+        assertEquals(MemorySearchMode.KNOWN, memorySearchModeFromEngine(-1))
+    }
+
+    @Test
     fun newSearchNeverForwardsARelativeRefinePredicate() {
         assertEquals(
             MemoryEngineContract.PREDICATE_BETWEEN,

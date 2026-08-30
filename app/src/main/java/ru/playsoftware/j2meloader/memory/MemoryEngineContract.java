@@ -48,6 +48,14 @@ public final class MemoryEngineContract {
 	public static final int COMPARE_PREVIOUS = 0;
 	public static final int COMPARE_INITIAL = 1;
 
+	public static final int SEARCH_SESSION_EMPTY = 0;
+	public static final int SEARCH_SESSION_UNKNOWN_BASELINE = 1;
+	public static final int SEARCH_SESSION_CANDIDATES = 2;
+	public static final int SEARCH_MODE_KNOWN = 0;
+	public static final int SEARCH_MODE_UNKNOWN = 1;
+	public static final int SEARCH_MODE_GROUP = 2;
+	public static final int MAX_SEARCH_HISTORY = 8;
+
 	public static final int RESULT_OK = 0;
 	public static final int RESULT_CANCELLED = 1;
 	public static final int RESULT_INVALID_REQUEST = 2;
@@ -87,6 +95,11 @@ public final class MemoryEngineContract {
 	public static final String KEY_TARGET_PID = "targetPid";
 	public static final String KEY_PAGE_SIZE = "pageSize";
 	public static final String KEY_MESSAGE = "message";
+	public static final String KEY_SEARCH_SESSION_STAGE = "searchSessionStage";
+	public static final String KEY_SEARCH_MODE = "searchMode";
+	public static final String KEY_SEARCH_REQUESTED_TYPE = "searchRequestedType";
+	public static final String KEY_SEARCH_SCOPE = "searchScope";
+	public static final String KEY_SEARCH_HISTORY_DEPTH = "searchHistoryDepth";
 	public static final String KEY_INSPECT_RESULT = "inspectResult";
 	public static final String KEY_INSPECT_START = "inspectStart";
 	public static final String KEY_INSPECT_ANCHOR = "inspectAnchor";

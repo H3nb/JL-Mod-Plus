@@ -77,6 +77,34 @@ class MemoryInputComposeTest {
     }
 
     @Test
+    fun mixedTypeValidationFailsClosedForNarrowCandidates() {
+        assertTrue(memoryInputCompleteForTypes(
+            "100",
+            listOf(MemoryEngineContract.TYPE_BYTE, MemoryEngineContract.TYPE_INT),
+        ))
+        assertFalse(memoryInputCompleteForTypes(
+            "200",
+            listOf(MemoryEngineContract.TYPE_BYTE, MemoryEngineContract.TYPE_INT),
+        ))
+        assertFalse(memoryInputCompleteForTypes(
+            "1.5",
+            listOf(MemoryEngineContract.TYPE_INT, MemoryEngineContract.TYPE_DOUBLE),
+        ))
+    }
+
+    @Test
+    fun inputSessionDeactivatesOnlyItsCurrentField() {
+        val session = MemoryInputSession()
+        val first = Any()
+        val second = Any()
+        session.activate(first, "1", MemoryInputSpec.forType(MemoryEngineContract.TYPE_INT)) { }
+        session.deactivate(second)
+        assertTrue(session.active)
+        session.deactivate(first)
+        assertFalse(session.active)
+    }
+
+    @Test
     fun signToggleTargetsExponentWhenCursorIsAfterExponent() {
         val spec = MemoryInputSpec.forType(MemoryEngineContract.TYPE_DOUBLE)
         var value = TextFieldValue("1E3", TextRange(2))

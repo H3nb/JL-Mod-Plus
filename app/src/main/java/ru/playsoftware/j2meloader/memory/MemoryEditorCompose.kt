@@ -14,7 +14,6 @@
 
 package ru.playsoftware.j2meloader.memory
 
-import android.content.res.Configuration
 import android.view.MotionEvent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -59,7 +58,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInteropFilter
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -115,7 +113,7 @@ internal fun MemoryEditorScreen(
             contentColor = MaterialTheme.colorScheme.onSurface,
             tonalElevation = 3.dp,
         ) {
-            MemoryInputArea(modifier = Modifier.fillMaxSize()) {
+            MemoryInputArea(modifier = Modifier.fillMaxSize(), active = state.visible) {
                 MemoryEditorContent(state, actions)
             }
         }
@@ -218,13 +216,14 @@ private fun MemoryEditorContent(state: MemoryEditorUiState, actions: MemoryEdito
     var advanced by remember { mutableStateOf(false) }
     var editDialog by remember { mutableStateOf(false) }
     var freezeDialog by remember { mutableStateOf(false) }
+    var refineDialog by remember { mutableStateOf(false) }
     var detailRow by remember { mutableStateOf<MemoryCandidateRow?>(null) }
     var detailAliases by remember { mutableStateOf<List<MemoryCandidateRow>>(emptyList()) }
-    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
-    var searchControlsExpanded by remember(landscape) { mutableStateOf(true) }
 
-    LaunchedEffect(state.sessionStage, state.searchMode) {
+    LaunchedEffect(state.sessionStage, state.searchMode, state.requestedType, state.searchScope) {
         searchMode = state.searchMode
+        type = state.requestedType
+        scope = state.searchScope
         when (state.sessionStage) {
             MemorySessionStage.EMPTY -> {
                 value = ""
@@ -240,14 +239,6 @@ private fun MemoryEditorContent(state: MemoryEditorUiState, actions: MemoryEdito
             MemorySessionStage.CANDIDATES -> Unit
         }
     }
-    LaunchedEffect(landscape, state.sessionStage, state.resultCount) {
-        if (state.sessionStage == MemorySessionStage.CANDIDATES && state.resultCount > 0L) {
-            searchControlsExpanded = false
-        } else if (state.sessionStage != MemorySessionStage.CANDIDATES) {
-            searchControlsExpanded = true
-        }
-    }
-
     Column(modifier = Modifier.fillMaxSize()) {
         EditorHeader(actions)
 
@@ -263,53 +254,46 @@ private fun MemoryEditorContent(state: MemoryEditorUiState, actions: MemoryEdito
         WorkspaceTabs(state, actions)
 
 
-if (!state.watchTab) {
-    if (state.sessionStage == MemorySessionStage.CANDIDATES && !searchControlsExpanded) {
-        CompactRefineStrip(
-            resultCount = state.resultCount,
-            value = value,
-            onValue = { value = it },
-            secondValue = secondValue,
-            onSecondValue = { secondValue = it },
-            type = type,
-            predicate = predicate,
-            onPredicate = { predicate = it },
-            compare = compare,
-            busy = state.busy,
-            onExpand = { searchControlsExpanded = true },
-            actions = actions,
-        )
-    } else {
-        if (state.sessionStage == MemorySessionStage.CANDIDATES && state.resultCount > 0L) {
-            TextButton(
-                onClick = { searchControlsExpanded = false },
-                modifier = Modifier.padding(horizontal = 8.dp),
-            ) {
-                Text(stringResource(R.string.memory_editor_hide_search))
+        if (!state.watchTab) {
+            if (state.sessionStage == MemorySessionStage.CANDIDATES) {
+                CompactRefineStrip(
+                    resultCount = state.resultCount,
+                    value = value,
+                    onValue = { value = it },
+                    secondValue = secondValue,
+                    onSecondValue = { secondValue = it },
+                    type = type,
+                    predicate = predicate,
+                    onPredicate = { predicate = it },
+                    compare = compare,
+                    busy = state.busy,
+                    onExpand = { refineDialog = true },
+                    actions = actions,
+                )
+            } else {
+                SearchWorkspace(
+                    state = state,
+                    searchMode = searchMode,
+                    onSearchMode = { searchMode = it },
+                    value = value,
+                    onValue = { value = it },
+                    secondValue = secondValue,
+                    onSecondValue = { secondValue = it },
+                    type = type,
+                    onType = { type = it },
+                    predicate = predicate,
+                    onPredicate = { predicate = it },
+                    compare = compare,
+                    onCompare = { compare = it },
+                    scope = scope,
+                    onScope = { scope = it },
+                    advanced = advanced,
+                    onAdvanced = { advanced = !advanced },
+                    actions = actions,
+                )
             }
         }
-        SearchWorkspace(
-            state = state,
-            searchMode = searchMode,
-            onSearchMode = { searchMode = it },
-            value = value,
-            onValue = { value = it },
-            secondValue = secondValue,
-            onSecondValue = { secondValue = it },
-            type = type,
-            onType = { type = it },
-            predicate = predicate,
-            onPredicate = { predicate = it },
-            compare = compare,
-            onCompare = { compare = it },
-            scope = scope,
-            onScope = { scope = it },
-            advanced = advanced,
-            onAdvanced = { advanced = !advanced },
-            actions = actions,
-        )
-    }
-}
+
 
         state.message?.let {
             Text(
@@ -350,6 +334,28 @@ if (!state.watchTab) {
         }
     }
 
+    if (refineDialog) {
+        RefineControlsDialog(
+            resultCount = state.resultCount,
+            type = type,
+            predicate = predicate,
+            onPredicate = { predicate = it },
+            compare = compare,
+            onCompare = { compare = it },
+            value = value,
+            onValue = { value = it },
+            secondValue = secondValue,
+            onSecondValue = { secondValue = it },
+            busy = state.busy,
+            onDismiss = { refineDialog = false },
+            onStartOver = {
+                refineDialog = false
+                actions.startOver()
+            },
+            actions = actions,
+        )
+    }
+
     if (editDialog) {
         val editableTypes = editableTypes(state)
         EditDialog(
@@ -368,7 +374,7 @@ if (freezeDialog) {
     val freezeTypes = freezeRows.map { it.type }.distinct()
     FreezeDialog(
         enabled = state.writeSupported,
-        type = freezeTypes.singleOrNull() ?: MemoryEngineContract.TYPE_AUTO,
+        types = freezeTypes,
         initialValue = freezeRows.firstOrNull()?.let(MemoryEditorPageParser::value).orEmpty(),
         onDismiss = { freezeDialog = false },
         onApply = { mode, first, second ->
@@ -905,9 +911,13 @@ private fun CompactRefineStrip(
                         refineInputValid(type, predicate, value, secondValue),
                     modifier = Modifier.sizeIn(minHeight = 48.dp),
                 ) {
-                    Text(stringResource(R.string.memory_editor_search_action))
+                    Text(stringResource(R.string.memory_editor_next_scan))
                 }
-                IconButton(onClick = onExpand) {
+                val moreDescription = stringResource(R.string.memory_editor_more)
+                IconButton(
+                    onClick = onExpand,
+                    modifier = Modifier.semantics { contentDescription = moreDescription },
+                ) {
                     Text("⋮", style = MaterialTheme.typography.titleLarge)
                 }
             }
@@ -922,6 +932,65 @@ private fun CompactRefineStrip(
             }
         }
     }
+}
+
+@Composable
+private fun RefineControlsDialog(
+    resultCount: Long,
+    type: Int,
+    predicate: Int,
+    onPredicate: (Int) -> Unit,
+    compare: Int,
+    onCompare: (Int) -> Unit,
+    value: String,
+    onValue: (String) -> Unit,
+    secondValue: String,
+    onSecondValue: (String) -> Unit,
+    busy: Boolean,
+    onDismiss: () -> Unit,
+    onStartOver: () -> Unit,
+    actions: MemoryEditorActions,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.memory_editor_refine_results)) },
+        text = {
+            MemoryInputArea(sideDockInLandscape = false) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    QuickRefinePredicates(predicate, onPredicate)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ChoiceMenu(predicate, REFINE_PREDICATES, { predicateName(it) }, onPredicate)
+                        if (predicate >= MemoryEngineContract.PREDICATE_CHANGED) {
+                            CompareMenu(compare, onCompare)
+                        }
+                    }
+                    RefineValueFields(type, predicate, value, onValue, secondValue, onSecondValue)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onDismiss()
+                    actions.nextScan(value, secondValue, predicate, compare)
+                },
+                enabled = !busy && resultCount > 0L &&
+                    refineInputValid(type, predicate, value, secondValue),
+            ) {
+                Text(stringResource(R.string.memory_editor_next_scan))
+            }
+        },
+        dismissButton = {
+            Row {
+                TextButton(onClick = onStartOver, enabled = !busy) {
+                    Text(stringResource(R.string.memory_editor_start_over))
+                }
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.memory_editor_done))
+                }
+            }
+        },
+    )
 }
 
 @Composable
@@ -1183,6 +1252,8 @@ private fun ResultGroupRow(
                     group.aliases.joinToString(" · ") { typeShortName(it.type) },
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1232,6 +1303,9 @@ private fun WatchRow(
                     MemoryEditorPageParser.value(row),
                     style = MaterialTheme.typography.titleMedium,
                     fontFamily = FontFamily.Monospace,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.widthIn(max = 156.dp),
                 )
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1372,7 +1446,11 @@ private fun SelectionActions(
                 )
             }
             Box {
-                IconButton(onClick = { more = true }) {
+                val moreDescription = stringResource(R.string.memory_editor_more)
+                IconButton(
+                    onClick = { more = true },
+                    modifier = Modifier.semantics { contentDescription = moreDescription },
+                ) {
                     Text("⋮", style = MaterialTheme.typography.titleLarge)
                 }
                 DropdownMenu(expanded = more, onDismissRequest = { more = false }) {
@@ -1420,7 +1498,7 @@ private fun BottomUtilityActions(state: MemoryEditorUiState, actions: MemoryEdit
             R.drawable.ic_history,
             R.string.memory_editor_undo,
             actions::undo,
-            enabled = !state.busy && !state.watchTab,
+            enabled = !state.busy && !state.watchTab && state.canUndo,
         )
         ActionIconButton(
             R.drawable.ic_restart_alt,
@@ -1596,15 +1674,17 @@ private fun EditDialog(
 @Composable
 private fun FreezeDialog(
     enabled: Boolean,
-    type: Int,
+    types: List<Int>,
     initialValue: String,
     onDismiss: () -> Unit,
     onApply: (Int, String, String) -> Unit,
 ) {
     var mode by remember { mutableIntStateOf(MemoryEngineContract.FREEZE_LOCK) }
-    var first by remember(initialValue) { mutableStateOf(initialValue) }
+    var first by remember(initialValue, types) {
+        mutableStateOf(initialValue.takeIf { memoryInputCompleteForTypes(it, types) }.orEmpty())
+    }
     var second by remember { mutableStateOf("") }
-    val spec = MemoryInputSpec.forType(type)
+    val inputSpec = MemoryInputSpec.forType(types.singleOrNull() ?: MemoryEngineContract.TYPE_AUTO)
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.memory_editor_freeze)) },
@@ -1616,7 +1696,7 @@ private fun FreezeDialog(
                     MemoryValueInput(
                         value = first,
                         onValueChange = { first = it },
-                        spec = spec,
+                        spec = inputSpec,
                         label = stringResource(
                             if (mode == MemoryEngineContract.FREEZE_RANGE) R.string.memory_editor_min_value
                             else R.string.memory_editor_freeze_target,
@@ -1627,7 +1707,7 @@ private fun FreezeDialog(
                         MemoryValueInput(
                             value = second,
                             onValueChange = { second = it },
-                            spec = spec,
+                            spec = inputSpec,
                             label = stringResource(R.string.memory_editor_max_value),
                             modifier = Modifier.fillMaxWidth(),
                         )
@@ -1638,8 +1718,9 @@ private fun FreezeDialog(
         confirmButton = {
             TextButton(
                 onClick = { onApply(mode, first, second) },
-                enabled = enabled && spec.isComplete(first) &&
-                    (mode != MemoryEngineContract.FREEZE_RANGE || spec.isComplete(second)),
+                enabled = enabled && memoryInputCompleteForTypes(first, types) &&
+                    (mode != MemoryEngineContract.FREEZE_RANGE ||
+                        memoryInputCompleteForTypes(second, types)),
             ) {
                 Text(stringResource(R.string.memory_editor_apply))
             }

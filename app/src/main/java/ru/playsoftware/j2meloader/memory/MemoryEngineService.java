@@ -26,6 +26,7 @@ import android.os.RemoteException;
 
 import androidx.annotation.Nullable;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -60,6 +61,12 @@ public final class MemoryEngineService extends Service {
 	private final Map<Long, String> watchLabels = new ConcurrentHashMap<>();
 	private final Map<Long, FreezeRecord> freezeRecords = new ConcurrentHashMap<>();
 	private volatile ScheduledFuture<?> freezeTask;
+	private final Object searchSessionLock = new Object();
+	private final ArrayDeque<Integer> searchStageHistory = new ArrayDeque<>();
+	private int searchSessionStage = MemoryEngineContract.SEARCH_SESSION_EMPTY;
+	private int searchSessionMode = MemoryEngineContract.SEARCH_MODE_KNOWN;
+	private int searchRequestedType = MemoryEngineContract.TYPE_AUTO;
+	private int searchSessionScope = MemoryEngineContract.SCOPE_JAVA_FAST;
 	private final IMemoryTargetCallback targetCallback = new IMemoryTargetCallback.Stub() {
 		@Override
 		public void onRuntimeEnded(long runtimeToken) {
@@ -147,20 +154,40 @@ public final class MemoryEngineService extends Service {
 		@Override
 		public long startKnownSearch(long token, int scope, int type, int predicate,
 		                             String first, String second) {
-			return enqueue(token, true, scope,
-					() -> NativeMemoryEngine.startKnown(type, predicate, first, second));
+			return enqueue(token, true, scope, () -> {
+				int result = NativeMemoryEngine.startKnown(type, predicate, first, second);
+				if (result == MemoryEngineContract.RESULT_OK) {
+					resetSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
+							MemoryEngineContract.SEARCH_MODE_KNOWN, type, scope);
+				}
+				return result;
+			});
 		}
 
 		@Override
 		public long startUnknownSearch(long token, int scope, int type) {
-			return enqueue(token, true, scope, () -> NativeMemoryEngine.startUnknown(type));
+			return enqueue(token, true, scope, () -> {
+				int result = NativeMemoryEngine.startUnknown(type);
+				if (result == MemoryEngineContract.RESULT_OK) {
+					resetSearchSession(MemoryEngineContract.SEARCH_SESSION_UNKNOWN_BASELINE,
+							MemoryEngineContract.SEARCH_MODE_UNKNOWN, type, scope);
+				}
+				return result;
+			});
 		}
 
 		@Override
 		public long startGroupSearch(long token, int scope, int[] types,
 		                             String[] values, int maxDistance) {
-			return enqueue(token, true, scope,
-					() -> NativeMemoryEngine.startGroup(types, values, maxDistance));
+			return enqueue(token, true, scope, () -> {
+				int result = NativeMemoryEngine.startGroup(types, values, maxDistance);
+				if (result == MemoryEngineContract.RESULT_OK) {
+					resetSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
+							MemoryEngineContract.SEARCH_MODE_GROUP,
+							MemoryEngineContract.TYPE_AUTO, scope);
+				}
+				return result;
+			});
 		}
 
 		@Override
@@ -171,10 +198,16 @@ public final class MemoryEngineService extends Service {
 					return MemoryEngineContract.RESULT_INVALID_REQUEST;
 				}
 				int ready = refreshWithRecovery(token, new long[]{anchorCandidateId});
-				return ready == MemoryEngineContract.RESULT_OK
-						? NativeMemoryEngine.startNearby(anchorCandidateId, radius, type, predicate,
-								first, second)
-						: ready;
+				if (ready != MemoryEngineContract.RESULT_OK) {
+					return ready;
+				}
+				int result = NativeMemoryEngine.startNearby(anchorCandidateId, radius, type, predicate,
+						first, second);
+				if (result == MemoryEngineContract.RESULT_OK) {
+					resetSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
+							MemoryEngineContract.SEARCH_MODE_KNOWN, type, configuredScope);
+				}
+				return result;
 			});
 		}
 
@@ -183,25 +216,41 @@ public final class MemoryEngineService extends Service {
 			return enqueue(token, false, 0, () -> {
 				int result = NativeMemoryEngine.refineKnown(predicate, first, second);
 				if (result != MemoryEngineContract.RESULT_IDENTITY_UNSAFE) {
+					if (result == MemoryEngineContract.RESULT_OK) {
+						advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES);
+					}
 					return result;
 				}
 				result = configureTarget(token, configuredScope);
-				return result == MemoryEngineContract.RESULT_OK
-						? NativeMemoryEngine.recoverKnown(predicate, first, second)
-						: result;
+				if (result == MemoryEngineContract.RESULT_OK) {
+					result = NativeMemoryEngine.recoverKnown(predicate, first, second);
+				}
+				if (result == MemoryEngineContract.RESULT_OK) {
+					advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES);
+				}
+				return result;
 			});
 		}
 
 		@Override
 		public long refineRelative(long token, int predicate, int compareTarget,
 		                           String first, String second) {
-			return enqueue(token, false, 0,
-					() -> NativeMemoryEngine.refineRelative(predicate, compareTarget, first, second));
+			return enqueue(token, false, 0, () -> {
+				int result = NativeMemoryEngine.refineRelative(predicate, compareTarget, first, second);
+				if (result == MemoryEngineContract.RESULT_OK) {
+					advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES);
+				}
+				return result;
+			});
 		}
 
 		@Override
 		public long undoSearch(long token) {
-			return enqueue(token, false, 0, NativeMemoryEngine::undo);
+			return enqueue(token, false, 0, () -> {
+				int result = NativeMemoryEngine.undo();
+				if (result == MemoryEngineContract.RESULT_OK) undoSearchSession();
+				return result;
+			});
 		}
 
 		@Override
@@ -242,6 +291,11 @@ public final class MemoryEngineService extends Service {
 		@Override
 		public long getResultCount(long token) {
 			return isCurrentToken(token) ? NativeMemoryEngine.resultCount() : 0L;
+		}
+
+		@Override
+		public Bundle getSearchSessionInfo(long token) {
+			return searchSessionInfo(token);
 		}
 
 		@Override
@@ -376,6 +430,7 @@ public final class MemoryEngineService extends Service {
 		@Override
 		public void clearSearch(long token) {
 			if (isCurrentToken(token)) {
+				clearSearchSession();
 				worker.execute(NativeMemoryEngine::clearSearch);
 			}
 		}
@@ -493,8 +548,10 @@ public final class MemoryEngineService extends Service {
 				}
 				return MemoryEngineContract.RESULT_RESOURCE_LIMIT;
 			}
+			long previousToken = configuredToken;
 			int result = NativeMemoryEngine.configureTarget(pid, pageSize, token, runs);
 			if (result == MemoryEngineContract.RESULT_OK) {
+				if (previousToken != token) clearSearchSession();
 				configuredToken = token;
 				configuredScope = scope;
 			}
@@ -700,6 +757,60 @@ public final class MemoryEngineService extends Service {
 		}
 	}
 
+	private Bundle searchSessionInfo(long token) {
+		Bundle bundle = new Bundle();
+		boolean current = isCurrentToken(token);
+		synchronized (searchSessionLock) {
+			bundle.putInt(MemoryEngineContract.KEY_SEARCH_SESSION_STAGE,
+					current ? searchSessionStage : MemoryEngineContract.SEARCH_SESSION_EMPTY);
+			bundle.putInt(MemoryEngineContract.KEY_SEARCH_MODE,
+					current ? searchSessionMode : MemoryEngineContract.SEARCH_MODE_KNOWN);
+			bundle.putInt(MemoryEngineContract.KEY_SEARCH_REQUESTED_TYPE,
+					current ? searchRequestedType : MemoryEngineContract.TYPE_AUTO);
+			bundle.putInt(MemoryEngineContract.KEY_SEARCH_SCOPE,
+					current ? searchSessionScope : MemoryEngineContract.SCOPE_JAVA_FAST);
+			bundle.putInt(MemoryEngineContract.KEY_SEARCH_HISTORY_DEPTH,
+					current ? searchStageHistory.size() : 0);
+		}
+		return bundle;
+	}
+
+	private void resetSearchSession(int stage, int mode, int requestedType, int scope) {
+		synchronized (searchSessionLock) {
+			searchStageHistory.clear();
+			searchSessionStage = stage;
+			searchSessionMode = mode;
+			searchRequestedType = requestedType;
+			searchSessionScope = scope;
+		}
+	}
+
+	private void advanceSearchSession(int nextStage) {
+		synchronized (searchSessionLock) {
+			if (searchStageHistory.size() >= MemoryEngineContract.MAX_SEARCH_HISTORY) {
+				searchStageHistory.removeFirst();
+			}
+			searchStageHistory.addLast(searchSessionStage);
+			searchSessionStage = nextStage;
+		}
+	}
+
+	private void undoSearchSession() {
+		synchronized (searchSessionLock) {
+			if (!searchStageHistory.isEmpty()) searchSessionStage = searchStageHistory.removeLast();
+		}
+	}
+
+	private void clearSearchSession() {
+		synchronized (searchSessionLock) {
+			searchStageHistory.clear();
+			searchSessionStage = MemoryEngineContract.SEARCH_SESSION_EMPTY;
+			searchSessionMode = MemoryEngineContract.SEARCH_MODE_KNOWN;
+			searchRequestedType = MemoryEngineContract.TYPE_AUTO;
+			searchSessionScope = MemoryEngineContract.SCOPE_JAVA_FAST;
+		}
+	}
+
 	private boolean isCurrentToken(long token) {
 		if (token == 0L || token != configuredToken) {
 			return false;
@@ -744,6 +855,7 @@ public final class MemoryEngineService extends Service {
 
 	private void invalidateTarget() {
 		configuredToken = 0L;
+		clearSearchSession();
 		watchLabels.clear();
 		freezeRecords.clear();
 		stopFreezeTaskIfIdle();

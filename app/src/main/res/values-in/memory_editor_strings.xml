@@ -7,6 +7,7 @@
     <string name="memory_editor_unknown">Nilai awal tidak diketahui</string>
     <string name="memory_editor_new_search">Pencarian Baru</string>
     <string name="memory_editor_next_scan">Pindai Berikutnya</string>
+    <string name="memory_editor_refine_results">Persempit hasil</string>
     <plurals name="memory_editor_results">
         <item quantity="other">%1$d hasil</item>
     </plurals>
