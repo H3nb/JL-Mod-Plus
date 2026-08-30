@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="memory_editor_data_type">Tipe data</string>
-    <string name="memory_editor_bubble">Bubble Memory Editor</string>
+    <string name="memory_editor_bubble">Bubble Editor Memori</string>
     <string name="memory_editor">Editor Memori</string>
     <string name="memory_editor_search_hint">Nilai</string>
     <string name="memory_editor_unknown">Nilai awal tidak diketahui</string>
@@ -11,30 +11,55 @@
         <item quantity="other">%1$d hasil</item>
     </plurals>
     <string name="memory_editor_no_results">Belum ada hasil</string>
+    <string name="memory_editor_no_watch">Pantauan masih kosong</string>
     <string name="memory_editor_unsupported">Editor Memori tidak tersedia untuk runtime/perangkat ini.</string>
     <string name="memory_editor_previous">Pemindaian sebelumnya</string>
     <string name="memory_editor_initial">Snapshot awal</string>
     <string name="memory_editor_scope_fast">Java Cepat</string>
     <string name="memory_editor_scope_thorough">Java Menyeluruh</string>
     <string name="memory_editor_advanced">Lanjutan</string>
+    <string name="memory_editor_more">Lainnya</string>
+    <string name="memory_editor_more_conditions">Kondisi lainnya</string>
     <string name="memory_editor_group_search">Pencarian Grup</string>
     <string name="memory_editor_group_hint">Contoh: Int:100, Int:50, Short:12</string>
     <string name="memory_editor_group_distance">Jarak maksimum (byte)</string>
+    <string name="memory_editor_group_builder_help">Tambahkan 2–8 nilai yang seharusnya berada berdekatan. Setiap nilai mempertahankan tipe datanya sendiri.</string>
+    <string name="memory_editor_add_group_value">Tambah nilai</string>
+    <string name="memory_editor_remove_group_value">Hapus nilai grup</string>
     <string name="memory_editor_refresh">Segarkan</string>
     <string name="memory_editor_live">Langsung</string>
     <string name="memory_editor_undo">Urungkan</string>
     <string name="memory_editor_watch">Pantauan</string>
     <string name="memory_editor_results_tab">Hasil</string>
+    <string name="memory_editor_search_tab">Cari</string>
+    <string name="memory_editor_search_mode">Mode pencarian</string>
+    <string name="memory_editor_known">Diketahui</string>
+    <string name="memory_editor_unknown_short">Tidak diketahui</string>
+    <string name="memory_editor_group_short">Grup</string>
+    <string name="memory_editor_search_action">Cari</string>
+    <string name="memory_editor_unknown_explanation">Gunakan ini jika nilai saat ini tidak diketahui. Editor Memori akan menangkap baseline, lalu Anda dapat kembali ke game dan menjelaskan bagaimana nilainya berubah.</string>
+    <string name="memory_editor_capture_baseline">Tangkap baseline</string>
+    <string name="memory_editor_baseline_captured">Baseline tersimpan</string>
+    <string name="memory_editor_baseline_instruction">Kembali ke game dan ubah nilai yang dicari, lalu buka kembali Editor Memori.</string>
+    <string name="memory_editor_back_to_game">Kembali ke game</string>
+    <string name="memory_editor_what_changed">Apa yang terjadi pada nilainya?</string>
+    <string name="memory_editor_start_over">Mulai ulang pencarian</string>
     <string name="memory_editor_edit">Ubah</string>
     <string name="memory_editor_replacement">Nilai pengganti</string>
     <string name="memory_editor_freeze">Bekukan</string>
-    <string name="memory_editor_freeze_lock">Kunci</string>
-    <string name="memory_editor_freeze_minimum">Minimum</string>
-    <string name="memory_editor_freeze_maximum">Maksimum</string>
-    <string name="memory_editor_freeze_range">Rentang</string>
+    <string name="memory_editor_freeze_lock">Kunci nilai</string>
+    <string name="memory_editor_freeze_minimum">Jangan turun di bawah</string>
+    <string name="memory_editor_freeze_maximum">Jangan naik di atas</string>
+    <string name="memory_editor_freeze_range">Jaga dalam rentang</string>
+    <string name="memory_editor_freeze_lock_help">Pertahankan nilai tepat pada target.</string>
+    <string name="memory_editor_freeze_minimum_help">Koreksi hanya jika nilai turun di bawah minimum.</string>
+    <string name="memory_editor_freeze_maximum_help">Koreksi hanya jika nilai naik di atas maksimum.</string>
+    <string name="memory_editor_freeze_range_help">Pertahankan nilai di antara batas minimum dan maksimum.</string>
+    <string name="memory_editor_freeze_target">Nilai target</string>
     <string name="memory_editor_remove">Hapus</string>
     <string name="memory_editor_keep">Pertahankan saja</string>
     <string name="memory_editor_select_visible">Pilih terlihat</string>
+    <string name="memory_editor_select">Pilih</string>
     <string name="memory_editor_clear_selection">Hapus pilihan</string>
     <plurals name="memory_editor_selected">
         <item quantity="other">%1$d dipilih</item>
@@ -45,6 +70,7 @@
     <string name="memory_editor_working">Menjalankan operasi…</string>
     <string name="memory_editor_searching_detail">Pencarian besar dapat memerlukan waktu lebih lama. Hasil terakhir tetap aman sampai operasi ini selesai.</string>
     <string name="memory_editor_candidate_stable">Stabil</string>
+    <string name="memory_editor_candidate_moved">Berpindah</string>
     <string name="memory_editor_candidate_relocating">Mencari ulang</string>
     <string name="memory_editor_candidate_ambiguous">Ambigu — penulisan dijeda</string>
     <string name="memory_editor_candidate_lost">Hilang — penulisan dijeda</string>
@@ -78,4 +104,10 @@
     <string name="memory_editor_predicate_decreased_range">Menurun dalam rentang</string>
     <string name="memory_editor_show_search">Kontrol pencarian</string>
     <string name="memory_editor_hide_search">Sembunyikan kontrol pencarian</string>
+    <string name="memory_editor_current_value">Saat ini</string>
+    <string name="memory_editor_initial_value">Awal</string>
+    <string name="memory_editor_previous_value">Sebelumnya</string>
+    <string name="memory_editor_address">Alamat</string>
+    <string name="memory_editor_interpretations">Interpretasi</string>
+    <string name="memory_editor_relocations">Relokasi</string>
 </resources>

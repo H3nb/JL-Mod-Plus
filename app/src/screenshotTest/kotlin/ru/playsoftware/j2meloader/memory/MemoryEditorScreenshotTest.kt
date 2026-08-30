@@ -95,6 +95,7 @@ fun MemoryEditorPortraitScreenshot() {
                 runtimeToken = 1,
                 resultCount = 2,
                 results = previewRows,
+                sessionStage = MemorySessionStage.CANDIDATES,
             ),
             actions = NoOpMemoryEditorActions,
         )
@@ -143,6 +144,7 @@ fun MemoryEditorLandscapeResultsScreenshot() {
                 runtimeToken = 1,
                 resultCount = 2,
                 results = previewRows,
+                sessionStage = MemorySessionStage.CANDIDATES,
             ),
             actions = NoOpMemoryEditorActions,
         )
