@@ -26,6 +26,16 @@ jobs:
           java-version: '21'
       - name: Apply guarded source patch
         run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('.github/scripts/memory-editor-adaptive-input.py')
+          text = path.read_text()
+          old = '''private fun RowScope.KeypadButton(\n    label: String,\n    onClick: () -> Unit,\n    weight: Float = 1f,\n) {'''
+          new = '''private fun RowScope.KeypadButton(\n    label: String,\n    weight: Float = 1f,\n    onClick: () -> Unit,\n) {'''
+          if text.count(old) != 1:
+              raise SystemExit('KeypadButton generator marker mismatch')
+          path.write_text(text.replace(old, new, 1))
+          PY
           python3 .github/scripts/memory-editor-adaptive-input.py
           git diff --check
           git diff --name-only
