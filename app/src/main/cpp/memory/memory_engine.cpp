@@ -93,6 +93,7 @@ constexpr size_t kRecoveryLimit = 32;
 constexpr size_t kRelocationTrackLimit = 25'000;
 constexpr size_t kWatchLimit = 128;
 constexpr size_t kLiveOverlayLimit = 2'048;
+constexpr size_t kAddressCheckpointStride = 256;
 
 struct Range {
     uintptr_t start;
@@ -143,11 +144,20 @@ struct SearchState {
     std::vector<SnapshotRun> snapshots;
     std::vector<Candidate> candidates;
     std::vector<Candidate> watches;
+    // Candidate-vector offsets for every Nth unique raw address. This keeps deep result paging
+    // bounded without duplicating the full result list or changing CandidateId semantics.
+    std::vector<size_t> addressCheckpoints;
 
     size_t retainedBytes() const {
         size_t result =
                 sizeof(SearchState) +
                 (candidates.size() + watches.size()) * sizeof(Candidate);
+        const size_t checkpointBytes =
+                addressCheckpoints.size() * sizeof(size_t);
+        if (result > std::numeric_limits<size_t>::max() - checkpointBytes) {
+            return std::numeric_limits<size_t>::max();
+        }
+        result += checkpointBytes;
         for (const SnapshotRun &snapshot : snapshots) {
             if (result >
                 std::numeric_limits<size_t>::max() - snapshot.bytes.size()) {
@@ -779,6 +789,7 @@ bool candidateDisplayOrder(const Candidate &left, const Candidate &right) {
 
 void normalizeCandidateResults(SearchState &state) {
     if (state.mode != StateMode::Candidates) {
+        state.addressCheckpoints.clear();
         return;
     }
     if (!state.candidateOrderDirty) {
@@ -790,14 +801,23 @@ void normalizeCandidateResults(SearchState &state) {
                   candidateDisplayOrder);
     }
     state.logicalCount = 0;
-    uintptr_t previousAddress = 0;
-    bool first = true;
-    for (const Candidate &candidate : state.candidates) {
-        if (first || candidate.address != previousAddress) {
-            ++state.logicalCount;
-            previousAddress = candidate.address;
-            first = false;
+    state.addressCheckpoints.clear();
+    state.addressCheckpoints.reserve(
+            (state.candidates.size() + kAddressCheckpointStride - 1U) /
+            kAddressCheckpointStride);
+    size_t candidateIndex = 0;
+    size_t addressIndex = 0;
+    while (candidateIndex < state.candidates.size()) {
+        if (addressIndex % kAddressCheckpointStride == 0) {
+            state.addressCheckpoints.push_back(candidateIndex);
         }
+        const uintptr_t address = state.candidates[candidateIndex].address;
+        do {
+            ++candidateIndex;
+        } while (candidateIndex < state.candidates.size() &&
+                 state.candidates[candidateIndex].address == address);
+        ++state.logicalCount;
+        ++addressIndex;
     }
     state.candidateOrderDirty = false;
 }
@@ -1062,8 +1082,14 @@ jint scanGroup(const OperationContext &context, const std::vector<jint> &types,
         }
     }
 
+    size_t anchorIndex = 0;
+    for (size_t index = 1; index < matches.size(); ++index) {
+        if (matches[index].size() < matches[anchorIndex].size()) {
+            anchorIndex = index;
+        }
+    }
     std::vector<GroupMatch> retained;
-    for (const GroupMatch &anchor : matches.front()) {
+    for (const GroupMatch &anchor : matches[anchorIndex]) {
         std::vector<GroupMatch> group{anchor};
         const uintptr_t minimum =
                 anchor.address < static_cast<uintptr_t>(maxDistance)
@@ -1075,7 +1101,10 @@ jint scanGroup(const OperationContext &context, const std::vector<jint> &types,
                         ? std::numeric_limits<uintptr_t>::max()
                         : anchor.address + static_cast<uintptr_t>(maxDistance);
         bool complete = true;
-        for (size_t term = 1; term < matches.size(); ++term) {
+        for (size_t term = 0; term < matches.size(); ++term) {
+            if (term == anchorIndex) {
+                continue;
+            }
             const auto found = std::lower_bound(
                     matches[term].begin(), matches[term].end(), minimum,
                     [](const GroupMatch &match, uintptr_t address) {
@@ -1451,25 +1480,42 @@ jint recoverKnownCandidates(const OperationContext &context, jint predicate,
     const bool uniqueOneToOne = oldAddresses.size() == 1 &&
                                 freshAddresses.size() == 1;
     std::vector<bool> claimed(fresh->candidates.size(), false);
+    std::unordered_map<uint64_t, std::vector<size_t>>
+            freshByIdentity[kTypeDouble + 1];
+    if (!uniqueOneToOne) {
+        for (size_t index = 0; index < fresh->candidates.size(); ++index) {
+            const Candidate &candidate = fresh->candidates[index];
+            if (candidate.type <= kTypeDouble && candidate.identityValid) {
+                freshByIdentity[candidate.type][candidate.identityHash]
+                        .push_back(index);
+            }
+        }
+    }
 
     for (const Candidate &old : context.state->candidates) {
         size_t matchIndex = fresh->candidates.size();
-        size_t matchCount = 0;
-        for (size_t index = 0; index < fresh->candidates.size(); ++index) {
-            const Candidate &candidate = fresh->candidates[index];
-            if (claimed[index] || candidate.type != old.type) {
+        if (uniqueOneToOne) {
+            size_t sameTypeMatches = 0;
+            for (size_t index = 0; index < fresh->candidates.size(); ++index) {
+                if (!claimed[index] && fresh->candidates[index].type == old.type) {
+                    matchIndex = index;
+                    ++sameTypeMatches;
+                }
+            }
+            if (sameTypeMatches != 1) {
                 continue;
             }
-            const bool identityMatch = old.identityValid &&
-                                       candidate.identityValid &&
-                                       old.identityHash == candidate.identityHash;
-            if (uniqueOneToOne || identityMatch) {
-                matchIndex = index;
-                ++matchCount;
+        } else {
+            if (!old.identityValid || old.type > kTypeDouble) {
+                continue;
             }
-        }
-        if (matchCount != 1) {
-            continue;
+            const auto found =
+                    freshByIdentity[old.type].find(old.identityHash);
+            if (found == freshByIdentity[old.type].end() ||
+                found->second.size() != 1U || claimed[found->second.front()]) {
+                continue;
+            }
+            matchIndex = found->second.front();
         }
         claimed[matchIndex] = true;
         const Candidate &replacement = fresh->candidates[matchIndex];
@@ -1548,67 +1594,119 @@ bool readIds(JNIEnv *env, jlongArray rawIds, std::vector<uint64_t> &ids) {
     return true;
 }
 
-bool recoverCandidate(const Target &target, Candidate &candidate) {
-    if (!candidate.identityValid) {
-        candidate.state = kLost;
-        return false;
+jint recoverCandidatesBatch(const Target &target,
+                            const std::vector<Candidate *> &recovery,
+                            size_t &unsafeCount) {
+    unsafeCount = 0;
+    if (recovery.empty()) {
+        return kOk;
     }
-    const size_t width = widthOf(candidate.type);
+    std::unordered_map<uint64_t, std::vector<size_t>> wanted[kTypeDouble + 1];
+    std::vector<bool> eligible(recovery.size(), false);
+    std::vector<uintptr_t> foundAddress(recovery.size(), 0);
+    std::vector<uint8_t> matchCount(recovery.size(), 0);
+    size_t eligibleCount = 0;
+    for (size_t index = 0; index < recovery.size(); ++index) {
+        Candidate &candidate = *recovery[index];
+        if (!candidate.identityValid || candidate.type > kTypeDouble ||
+            widthOf(candidate.type) == 0) {
+            candidate.state = kLost;
+            ++unsafeCount;
+            continue;
+        }
+        eligible[index] = true;
+        ++eligibleCount;
+        wanted[candidate.type][candidate.currentBits].push_back(index);
+    }
+    if (eligibleCount == 0) {
+        return kOk;
+    }
+
     std::vector<uint8_t> buffer;
-    uintptr_t recoveredAddress = 0;
-    size_t matches = 0;
     for (const Range &range : target.ranges) {
         for (uintptr_t chunkStart = range.start; chunkStart < range.end;) {
             if (gCancelled.load(std::memory_order_acquire)) {
-                return false;
+                setMessage("Operation cancelled; previous results were preserved");
+                return kCancelled;
             }
-            const size_t remaining =
-                    static_cast<size_t>(range.end - chunkStart);
+            const size_t remaining = static_cast<size_t>(range.end - chunkStart);
             const size_t chunkSize = std::min(remaining, kReadChunkSize);
             buffer.resize(chunkSize);
             if (!readExact(target.pid, chunkStart, buffer.data(), chunkSize)) {
-                candidate.state = kLost;
-                return false;
+                setMessage("A target range changed during relocation recovery");
+                return kTargetLost;
             }
-            uintptr_t address = chunkStart;
-            const size_t misalignment = static_cast<size_t>(address % width);
-            if (misalignment != 0) {
-                address += width - misalignment;
-            }
-            while (address >= chunkStart) {
-                const size_t offset = static_cast<size_t>(address - chunkStart);
-                if (offset + width > chunkSize) {
-                    break;
+            for (jint type = kTypeByte; type <= kTypeDouble; ++type) {
+                if (wanted[type].empty()) {
+                    continue;
                 }
-                if (loadBits(buffer.data() + offset, width) ==
-                    candidate.currentBits) {
-                    uint64_t hash = 0;
-                    if (readIdentity(target, address, candidate.type, hash) &&
-                        hash == candidate.identityHash) {
-                        recoveredAddress = address;
-                        if (++matches > 1) {
-                            candidate.state = kAmbiguous;
-                            return false;
+                const size_t width = widthOf(type);
+                uintptr_t address = chunkStart;
+                const size_t misalignment = static_cast<size_t>(address % width);
+                if (misalignment != 0) {
+                    address += width - misalignment;
+                }
+                while (address >= chunkStart) {
+                    const size_t offset = static_cast<size_t>(address - chunkStart);
+                    if (offset + width > chunkSize) {
+                        break;
+                    }
+                    const uint64_t bits = loadBits(buffer.data() + offset, width);
+                    const auto interested = wanted[type].find(bits);
+                    if (interested != wanted[type].end()) {
+                        uint64_t hash = 0;
+                        bool hasIdentity = snapshotIdentity(
+                                buffer.data(), chunkSize, offset, width, hash);
+                        if (!hasIdentity) {
+                            hasIdentity = readIdentity(target, address, type, hash);
+                        }
+                        if (hasIdentity) {
+                            for (size_t recoveryIndex : interested->second) {
+                                if (!eligible[recoveryIndex] ||
+                                    matchCount[recoveryIndex] > 1) {
+                                    continue;
+                                }
+                                Candidate &candidate = *recovery[recoveryIndex];
+                                if (hash != candidate.identityHash) {
+                                    continue;
+                                }
+                                if (matchCount[recoveryIndex] == 0) {
+                                    foundAddress[recoveryIndex] = address;
+                                    matchCount[recoveryIndex] = 1;
+                                } else if (foundAddress[recoveryIndex] != address) {
+                                    matchCount[recoveryIndex] = 2;
+                                }
+                            }
                         }
                     }
+                    if (address > std::numeric_limits<uintptr_t>::max() - width) {
+                        break;
+                    }
+                    address += width;
                 }
-                if (address > std::numeric_limits<uintptr_t>::max() - width) {
-                    break;
-                }
-                address += width;
             }
             chunkStart += chunkSize;
         }
     }
-    if (matches != 1) {
-        candidate.state = kLost;
-        return false;
+
+    for (size_t index = 0; index < recovery.size(); ++index) {
+        if (!eligible[index]) {
+            continue;
+        }
+        Candidate &candidate = *recovery[index];
+        if (matchCount[index] == 1) {
+            candidate.previousAddress = candidate.address;
+            candidate.address = foundAddress[index];
+            if (candidate.address != candidate.previousAddress) {
+                ++candidate.relocationCount;
+            }
+            candidate.state = kStable;
+        } else {
+            candidate.state = matchCount[index] > 1 ? kAmbiguous : kLost;
+            ++unsafeCount;
+        }
     }
-    candidate.previousAddress = candidate.address;
-    candidate.address = recoveredAddress;
-    ++candidate.relocationCount;
-    candidate.state = kStable;
-    return true;
+    return kOk;
 }
 
 jint refreshCandidates(const OperationContext &context,
@@ -1703,11 +1801,13 @@ jint refreshCandidates(const OperationContext &context,
                    "operation; narrow the visible selection");
         return kResourceLimit;
     }
-    for (Candidate *candidate : recovery) {
-        if (!recoverCandidate(context.target, *candidate)) {
-            ++unsafeCount;
-        }
+    size_t recoveryUnsafe = 0;
+    const jint recoveryResult =
+            recoverCandidatesBatch(context.target, recovery, recoveryUnsafe);
+    if (recoveryResult != kOk) {
+        return recoveryResult;
     }
+    unsafeCount += recoveryUnsafe;
     const jint result = publishLiveCandidates(context, selected);
     if (result == kOk && unsafeCount > 0) {
         setMessage(
@@ -1760,6 +1860,10 @@ bool replacementBitsFor(const Candidate &candidate,
         }
     } else {
         bits = static_cast<uint64_t>(query.integerFirst);
+        const size_t width = widthOf(candidate.type);
+        if (width > 0 && width < sizeof(bits)) {
+            bits &= (UINT64_C(1) << (width * 8U)) - UINT64_C(1);
+        }
     }
     return true;
 }
@@ -2286,6 +2390,13 @@ jlongArray candidateAddressPage(JNIEnv *env,
     const std::vector<Candidate> &candidates = state->candidates;
     size_t candidateStart = 0;
     size_t skippedAddresses = 0;
+    if (!state->addressCheckpoints.empty()) {
+        const size_t checkpoint = std::min(
+                addressStart / kAddressCheckpointStride,
+                state->addressCheckpoints.size() - 1U);
+        candidateStart = state->addressCheckpoints[checkpoint];
+        skippedAddresses = checkpoint * kAddressCheckpointStride;
+    }
     while (candidateStart < candidates.size() &&
            skippedAddresses < addressStart) {
         const uintptr_t address = candidates[candidateStart].address;
