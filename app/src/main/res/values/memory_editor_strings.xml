@@ -112,4 +112,18 @@
     <string name="memory_editor_address">Address</string>
     <string name="memory_editor_interpretations">Interpretations</string>
     <string name="memory_editor_relocations">Relocations</string>
+    <string name="memory_editor_explore">Explore</string>
+    <string name="memory_editor_inspector">Memory Inspector</string>
+    <string name="memory_editor_inspect_memory">Inspect nearby memory</string>
+    <string name="memory_editor_inspector_help">Read-only view anchored to the verified candidate. Relative offsets follow the candidate if it relocates.</string>
+    <string name="memory_editor_inspector_loading">Verifying candidate and reading a bounded snapshot…</string>
+    <string name="memory_editor_anchor">Anchor</string>
+    <string name="memory_editor_view_as">View as</string>
+    <string name="memory_editor_inspect_radius">Snapshot</string>
+    <string name="memory_editor_relative_offset">Offset</string>
+    <string name="memory_editor_refresh_snapshot">Refresh snapshot</string>
+    <string name="memory_editor_search_nearby">Search nearby</string>
+    <string name="memory_editor_nearby_help">Start a normal known-value search only inside a bounded window around this verified candidate.</string>
+    <string name="memory_editor_nearby_radius">Distance from anchor</string>
+    <string name="memory_editor_done">Done</string>
 </resources>

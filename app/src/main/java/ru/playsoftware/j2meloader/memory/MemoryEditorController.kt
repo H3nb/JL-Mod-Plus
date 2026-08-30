@@ -156,7 +156,7 @@ class MemoryEditorComposeController(
         bubbleView.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         composeView.setContent {
             JLModPlusTheme {
-                MemoryEditorScreen(state = state, actions = this)
+                MemoryEditorStage3Root(state = state, actions = this)
             }
         }
         bubbleView.setContent {
@@ -178,6 +178,8 @@ class MemoryEditorComposeController(
             bubbleEnabled = enabled,
             visible = false,
             selected = emptySet(),
+            inspectorLoading = false,
+            inspector = null,
             message = null,
         )
         composeView.visibility = View.GONE
@@ -200,7 +202,12 @@ class MemoryEditorComposeController(
     }
 
     override fun close() {
-        state = state.copy(visible = false, selected = emptySet())
+        state = state.copy(
+            visible = false,
+            selected = emptySet(),
+            inspectorLoading = false,
+            inspector = null,
+        )
         composeView.visibility = View.GONE
         bubbleView.visibility = if (state.bubbleEnabled) View.VISIBLE else View.GONE
     }
@@ -354,6 +361,7 @@ class MemoryEditorComposeController(
         pendingResetHistory = true
         pendingStage = if (unknown) MemorySessionStage.UNKNOWN_BASELINE else MemorySessionStage.CANDIDATES
         pendingMode = if (unknown) MemorySearchMode.UNKNOWN else MemorySearchMode.KNOWN
+        state = state.copy(inspectorLoading = false, inspector = null)
         operate(searching = true) {
             if (unknown) startUnknownSearch(state.runtimeToken, scope, type)
             else startKnownSearch(
@@ -386,9 +394,92 @@ class MemoryEditorComposeController(
         pendingResetHistory = true
         pendingStage = MemorySessionStage.CANDIDATES
         pendingMode = MemorySearchMode.GROUP
+        state = state.copy(inspectorLoading = false, inspector = null)
         operate(searching = true) {
             startGroupSearch(state.runtimeToken, scope, types, values, distance)
         }
+    }
+
+    override fun startNearbySearch(
+        anchorCandidateId: Long,
+        radius: Int,
+        type: Int,
+        predicate: Int,
+        value: String,
+        secondValue: String,
+    ) {
+        if (anchorCandidateId <= 0L || !MemoryEngineContract.isNearbyRadius(radius) ||
+            !MemoryEngineContract.isValueType(type) || predicate !in
+            MemoryEngineContract.PREDICATE_EQUAL..MemoryEngineContract.PREDICATE_BETWEEN) {
+            state = state.copy(message = resultMessage(MemoryEngineContract.RESULT_INVALID_REQUEST))
+            return
+        }
+        clearPendingTransition()
+        pendingResetHistory = true
+        pendingStage = MemorySessionStage.CANDIDATES
+        pendingMode = MemorySearchMode.KNOWN
+        state = state.copy(inspectorLoading = false, inspector = null, selected = emptySet())
+        operate(searching = true) {
+            startNearbySearch(
+                state.runtimeToken,
+                anchorCandidateId,
+                radius,
+                type,
+                predicate,
+                value.trim(),
+                secondValue.trim(),
+            )
+        }
+    }
+
+    override fun inspectCandidate(candidateId: Long, radius: Int) {
+        if (state.busy || state.inspectorLoading || state.runtimeToken == 0L ||
+            candidateId <= 0L || !MemoryEngineContract.isInspectRadius(radius)) return
+        val row = findCandidate(candidateId) ?: run {
+            state = state.copy(message = resultMessage(MemoryEngineContract.RESULT_INVALID_REQUEST))
+            return
+        }
+        val token = state.runtimeToken
+        state = state.copy(inspectorLoading = true, inspector = null, message = null)
+        runIpc {
+            val engine = service ?: throw RemoteException("Engine disconnected")
+            val bundle = engine.inspectCandidate(token, candidateId, radius)
+            val result = bundle?.getInt(
+                MemoryEngineContract.KEY_INSPECT_RESULT,
+                MemoryEngineContract.RESULT_INVALID_REQUEST,
+            ) ?: MemoryEngineContract.RESULT_INVALID_REQUEST
+            val message = bundle?.getString(MemoryEngineContract.KEY_MESSAGE)
+            val start = bundle?.getLong(MemoryEngineContract.KEY_INSPECT_START, 0L) ?: 0L
+            val anchor = bundle?.getLong(MemoryEngineContract.KEY_INSPECT_ANCHOR, 0L) ?: 0L
+            val bytes = bundle?.getByteArray(MemoryEngineContract.KEY_INSPECT_BYTES)
+            post {
+                if (state.runtimeToken != token) return@post
+                if (result == MemoryEngineContract.RESULT_OK && start > 0L && anchor > 0L &&
+                    bytes != null && bytes.size <= MemoryEngineContract.MAX_INSPECT_BYTES) {
+                    state = state.copy(
+                        inspectorLoading = false,
+                        inspector = MemoryInspectorSnapshot(
+                            candidateId = candidateId,
+                            type = row.type,
+                            label = row.label,
+                            startAddress = start,
+                            anchorAddress = anchor,
+                            bytes = bytes,
+                        ),
+                    )
+                } else {
+                    state = state.copy(
+                        inspectorLoading = false,
+                        inspector = null,
+                        message = message ?: resultMessage(result),
+                    )
+                }
+            }
+        }
+    }
+
+    override fun closeInspector() {
+        state = state.copy(inspectorLoading = false, inspector = null)
     }
 
     override fun undo() {
@@ -409,6 +500,8 @@ class MemoryEditorComposeController(
             pageOffset = 0,
             results = emptyList(),
             selected = emptySet(),
+            inspectorLoading = false,
+            inspector = null,
             message = null,
         )
         runIpc { service?.clearSearch(token) }
@@ -429,7 +522,7 @@ class MemoryEditorComposeController(
     }
 
     override fun setWatchTab(watch: Boolean) {
-        state = state.copy(watchTab = watch, selected = emptySet())
+        state = state.copy(watchTab = watch, selected = emptySet(), inspectorLoading = false, inspector = null)
         reload()
     }
 
@@ -459,6 +552,9 @@ class MemoryEditorComposeController(
     } else {
         groupCandidateRows(state.results).map { it.primary.id }
     }
+
+    private fun findCandidate(id: Long): MemoryCandidateRow? =
+        state.results.firstOrNull { it.id == id } ?: state.watches.firstOrNull { it.id == id }
 
     override fun editSelected(value: String, type: Int) {
         val ids: LongArray
@@ -539,13 +635,20 @@ class MemoryEditorComposeController(
         state = state.copy(
             pageOffset = (state.pageOffset - PAGE_SIZE).coerceAtLeast(0),
             selected = emptySet(),
+            inspectorLoading = false,
+            inspector = null,
         )
         reload()
     }
 
     override fun nextPage() {
         if (state.pageOffset.toLong() + PAGE_SIZE < state.resultCount) {
-            state = state.copy(pageOffset = state.pageOffset + PAGE_SIZE, selected = emptySet())
+            state = state.copy(
+                pageOffset = state.pageOffset + PAGE_SIZE,
+                selected = emptySet(),
+                inspectorLoading = false,
+                inspector = null,
+            )
             reload()
         }
     }
@@ -649,6 +752,8 @@ class MemoryEditorComposeController(
             results = if (runtimeChanged) emptyList() else state.results,
             watches = if (runtimeChanged) emptyList() else state.watches,
             selected = if (runtimeChanged) emptySet() else state.selected,
+            inspectorLoading = if (runtimeChanged) false else state.inspectorLoading,
+            inspector = if (runtimeChanged) null else state.inspector,
             message = if (supported) null else bundle?.getString(MemoryEngineContract.KEY_MESSAGE),
         )
         if (supported && state.visible) reload(refreshAfterLoad = true)
@@ -672,6 +777,8 @@ class MemoryEditorComposeController(
             results = emptyList(),
             watches = emptyList(),
             selected = emptySet(),
+            inspectorLoading = false,
+            inspector = null,
             message = context.getString(R.string.memory_editor_unsupported),
         )
     }
@@ -695,7 +802,12 @@ class MemoryEditorComposeController(
                 post {
                     refreshInFlight = false
                     clearPendingTransition()
-                    state = state.copy(busy = false, searching = false, message = exception.message)
+                    state = state.copy(
+                        busy = false,
+                        searching = false,
+                        inspectorLoading = false,
+                        message = exception.message,
+                    )
                 }
             }
         }

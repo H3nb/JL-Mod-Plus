@@ -110,4 +110,18 @@
     <string name="memory_editor_address">Alamat</string>
     <string name="memory_editor_interpretations">Interpretasi</string>
     <string name="memory_editor_relocations">Relokasi</string>
+    <string name="memory_editor_explore">Jelajahi</string>
+    <string name="memory_editor_inspector">Inspektor Memori</string>
+    <string name="memory_editor_inspect_memory">Periksa memori sekitar</string>
+    <string name="memory_editor_inspector_help">Tampilan hanya-baca yang terikat ke kandidat terverifikasi. Offset relatif mengikuti kandidat jika alamatnya berpindah.</string>
+    <string name="memory_editor_inspector_loading">Memverifikasi kandidat dan membaca snapshot terbatas…</string>
+    <string name="memory_editor_anchor">Jangkar</string>
+    <string name="memory_editor_view_as">Tampilkan sebagai</string>
+    <string name="memory_editor_inspect_radius">Snapshot</string>
+    <string name="memory_editor_relative_offset">Offset</string>
+    <string name="memory_editor_refresh_snapshot">Segarkan snapshot</string>
+    <string name="memory_editor_search_nearby">Cari di sekitar</string>
+    <string name="memory_editor_nearby_help">Mulai pencarian nilai-diketahui biasa hanya di dalam jendela terbatas di sekitar kandidat terverifikasi ini.</string>
+    <string name="memory_editor_nearby_radius">Jarak dari jangkar</string>
+    <string name="memory_editor_done">Selesai</string>
 </resources>

@@ -53,6 +53,16 @@ internal data class MemoryGroupDraft(
     val type: Int = MemoryEngineContract.TYPE_INT,
 )
 
+/** Bounded read-only snapshot whose address is resolved from a verified CandidateId. */
+internal data class MemoryInspectorSnapshot(
+    val candidateId: Long,
+    val type: Int,
+    val label: String,
+    val startAddress: Long,
+    val anchorAddress: Long,
+    val bytes: ByteArray,
+)
+
 internal fun groupCandidateRows(rows: List<MemoryCandidateRow>): List<MemoryAddressGroup> =
     rows.groupBy { it.address }.map { (address, aliases) -> MemoryAddressGroup(address, aliases) }
 
@@ -123,6 +133,8 @@ internal data class MemoryEditorUiState(
     val message: String? = null,
     val searchMode: MemorySearchMode = MemorySearchMode.KNOWN,
     val sessionStage: MemorySessionStage = MemorySessionStage.EMPTY,
+    val inspectorLoading: Boolean = false,
+    val inspector: MemoryInspectorSnapshot? = null,
 )
 
 internal interface MemoryEditorActions {
@@ -149,6 +161,16 @@ internal interface MemoryEditorActions {
     fun nextPage()
     fun cancel()
     fun startOver() = Unit
+    fun inspectCandidate(candidateId: Long, radius: Int = MemoryEngineContract.DEFAULT_INSPECT_RADIUS) = Unit
+    fun closeInspector() = Unit
+    fun startNearbySearch(
+        anchorCandidateId: Long,
+        radius: Int,
+        type: Int,
+        predicate: Int,
+        value: String,
+        secondValue: String,
+    ) = Unit
 }
 
 /**
