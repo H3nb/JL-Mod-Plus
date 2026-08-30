@@ -284,11 +284,13 @@ private val LocalMemoryInputSession = compositionLocalOf<MemoryInputSession?> { 
 @Composable
 internal fun MemoryInputArea(
     modifier: Modifier = Modifier,
+    sideDockInLandscape: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val session = remember { MemoryInputSession() }
     val focusManager = LocalFocusManager.current
-    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val landscape = sideDockInLandscape &&
+        LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     CompositionLocalProvider(LocalMemoryInputSession provides session) {
         if (landscape) {
             Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

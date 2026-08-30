@@ -75,49 +75,15 @@ internal data class MemoryInspectorCell(
  * Stage 3 wrapper. Existing search/watch UI stays untouched; contextual exploration is layered
  * around one explicitly selected CandidateId.
  */
+
 @Composable
 internal fun MemoryEditorStage3Root(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
 ) {
-    var exploreRow by remember { mutableStateOf<MemoryCandidateRow?>(null) }
     var nearbyAnchor by remember { mutableStateOf<MemoryNearbyAnchor?>(null) }
-    val selectedRow = remember(state.selected, state.results, state.watches) {
-        state.selected.singleOrNull()?.let { id ->
-            state.results.firstOrNull { it.id == id } ?: state.watches.firstOrNull { it.id == id }
-        }
-    }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        MemoryEditorScreen(state = state, actions = actions)
-        if (state.visible && !state.busy && !state.inspectorLoading && state.inspector == null &&
-            selectedRow != null) {
-            Button(
-                onClick = { exploreRow = selectedRow },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 12.dp, bottom = 72.dp)
-                    .sizeIn(minHeight = 48.dp),
-            ) {
-                Text(stringResource(R.string.memory_editor_explore))
-            }
-        }
-    }
-
-    exploreRow?.let { row ->
-        MemoryExploreDialog(
-            row = row,
-            onDismiss = { exploreRow = null },
-            onInspect = {
-                exploreRow = null
-                actions.inspectCandidate(row.id)
-            },
-            onNearby = {
-                exploreRow = null
-                nearbyAnchor = MemoryNearbyAnchor(row.id, row.type, row.label, row.address)
-            },
-        )
-    }
+    MemoryEditorScreen(state = state, actions = actions)
 
     if (state.inspectorLoading) {
         MemoryInspectorLoadingDialog(onDismiss = actions::closeInspector)
@@ -161,46 +127,6 @@ internal fun MemoryEditorStage3Root(
 }
 
 @Composable
-private fun MemoryExploreDialog(
-    row: MemoryCandidateRow,
-    onDismiss: () -> Unit,
-    onInspect: () -> Unit,
-    onNearby: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.memory_editor_explore)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    row.label.ifBlank { MemoryEditorPageParser.value(row) },
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Text(
-                    "0x${row.address.toULong().toString(16).uppercase()} · ${stage3TypeName(row.type)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontFamily = FontFamily.Monospace,
-                )
-                HorizontalDivider()
-                OutlinedButton(onClick = onInspect, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.memory_editor_inspect_memory))
-                }
-                OutlinedButton(onClick = onNearby, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.memory_editor_search_nearby))
-                }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(android.R.string.cancel))
-            }
-        },
-    )
-}
-
-@Composable
 private fun MemoryInspectorLoadingDialog(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -222,6 +148,7 @@ private fun MemoryInspectorLoadingDialog(onDismiss: () -> Unit) {
         },
     )
 }
+
 
 @Composable
 private fun MemoryInspectorDialog(
@@ -246,62 +173,48 @@ private fun MemoryInspectorDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .heightIn(max = 620.dp),
+            modifier = Modifier.fillMaxSize().padding(8.dp),
             shape = MaterialTheme.shapes.large,
             tonalElevation = 8.dp,
         ) {
             Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Text(
-                    snapshot.label.ifBlank { stringResource(R.string.memory_editor_inspector) },
-                    style = MaterialTheme.typography.titleLarge,
-                )
-                Text(
-                    stringResource(R.string.memory_editor_inspector_help),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(stringResource(R.string.memory_editor_anchor))
-                    Text(
-                        "0x${snapshot.anchorAddress.toULong().toString(16).uppercase()}",
-                        fontFamily = FontFamily.Monospace,
-                    )
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(stringResource(R.string.memory_editor_view_as), modifier = Modifier.weight(1f))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            snapshot.label.ifBlank { stringResource(R.string.memory_editor_inspector) },
+                            style = MaterialTheme.typography.titleLarge,
+                        )
+                        Text(
+                            "0x${snapshot.anchorAddress.toULong().toString(16).uppercase()}",
+                            fontFamily = FontFamily.Monospace,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                     Stage3ChoiceMenu(
                         value = viewType,
                         values = STAGE3_VIEW_TYPES,
                         label = ::stage3TypeName,
                         onChange = { viewType = it },
                     )
+                    Stage3ChoiceMenu(
+                        value = radius,
+                        values = INSPECT_RADIUS_PRESETS,
+                        label = { "±$it B" },
+                        onChange = { radius = it },
+                    )
                 }
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(stringResource(R.string.memory_editor_inspect_radius))
-                    INSPECT_RADIUS_PRESETS.forEach { preset ->
-                        FilterChip(
-                            selected = radius == preset,
-                            onClick = { radius = preset },
-                            label = { Text("±$preset") },
-                        )
-                    }
-                }
+                Text(
+                    stringResource(R.string.memory_editor_inspector_help),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 HorizontalDivider()
                 Row(modifier = Modifier.fillMaxWidth()) {
                     Text(
@@ -377,6 +290,7 @@ private fun InspectorCellRow(cell: MemoryInspectorCell) {
     }
 }
 
+
 @Composable
 private fun MemoryNearbySearchDialog(
     anchor: MemoryNearbyAnchor,
@@ -392,80 +306,79 @@ private fun MemoryNearbySearchDialog(
     var first by remember(anchor.candidateId) { mutableStateOf("") }
     var second by remember(anchor.candidateId) { mutableStateOf("") }
     val between = predicate == MemoryEngineContract.PREDICATE_BETWEEN
+    val spec = MemoryInputSpec.forType(type)
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.memory_editor_search_nearby)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(
-                    stringResource(R.string.memory_editor_nearby_help),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    "0x${anchor.address.toULong().toString(16).uppercase()}",
-                    fontFamily = FontFamily.Monospace,
-                )
-                Text(stringResource(R.string.memory_editor_nearby_radius), style = MaterialTheme.typography.labelMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    NEARBY_RADIUS_PRESETS.take(3).forEach { preset ->
-                        FilterChip(
-                            selected = radius == preset,
-                            onClick = { radius = preset },
-                            label = { Text(stage3ByteRadius(preset)) },
-                        )
-                    }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    NEARBY_RADIUS_PRESETS.drop(3).forEach { preset ->
-                        FilterChip(
-                            selected = radius == preset,
-                            onClick = { radius = preset },
-                            label = { Text(stage3ByteRadius(preset)) },
-                        )
-                    }
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Stage3ChoiceMenu(
-                        value = type,
-                        values = STAGE3_SEARCH_TYPES,
-                        label = ::stage3TypeName,
-                        onChange = { type = it },
+            MemoryInputArea(sideDockInLandscape = false) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "0x${anchor.address.toULong().toString(16).uppercase()}",
+                        fontFamily = FontFamily.Monospace,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Stage3ChoiceMenu(
-                        value = predicate,
-                        values = STAGE3_KNOWN_PREDICATES,
-                        label = ::stage3PredicateName,
-                        onChange = { predicate = it },
-                    )
-                }
-                OutlinedTextField(
-                    value = first,
-                    onValueChange = { first = it },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text(stringResource(R.string.memory_editor_search_hint)) },
-                )
-                if (between) {
-                    OutlinedTextField(
-                        value = second,
-                        onValueChange = { second = it },
-                        singleLine = true,
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        NEARBY_RADIUS_PRESETS.take(3).forEach { preset ->
+                            FilterChip(
+                                selected = radius == preset,
+                                onClick = { radius = preset },
+                                label = { Text(stage3ByteRadius(preset)) },
+                            )
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        NEARBY_RADIUS_PRESETS.drop(3).forEach { preset ->
+                            FilterChip(
+                                selected = radius == preset,
+                                onClick = { radius = preset },
+                                label = { Text(stage3ByteRadius(preset)) },
+                            )
+                        }
+                    }
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text(stringResource(R.string.memory_editor_max_value)) },
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Stage3ChoiceMenu(
+                            value = type,
+                            values = STAGE3_SEARCH_TYPES,
+                            label = ::stage3TypeName,
+                            onChange = { type = it },
+                        )
+                        Stage3ChoiceMenu(
+                            value = predicate,
+                            values = STAGE3_KNOWN_PREDICATES,
+                            label = ::stage3PredicateName,
+                            onChange = { predicate = it },
+                        )
+                    }
+                    MemoryValueInput(
+                        value = first,
+                        onValueChange = { first = it },
+                        spec = spec,
+                        label = stringResource(R.string.memory_editor_search_hint),
+                        modifier = Modifier.fillMaxWidth(),
                     )
+                    if (between) {
+                        MemoryValueInput(
+                            value = second,
+                            onValueChange = { second = it },
+                            spec = spec,
+                            label = stringResource(R.string.memory_editor_max_value),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                 }
             }
         },
         confirmButton = {
             TextButton(
                 onClick = { onSearch(radius, type, predicate, first, second) },
-                enabled = !busy && first.isNotBlank() && (!between || second.isNotBlank()),
+                enabled = !busy && spec.isComplete(first) && (!between || spec.isComplete(second)),
             ) {
                 Text(stringResource(R.string.memory_editor_search_action))
             }
