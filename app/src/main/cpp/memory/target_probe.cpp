@@ -16,12 +16,14 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#include <array>
 #include <cerrno>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <limits>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -30,20 +32,39 @@ namespace {
 
 constexpr jint kFastScope = 0;
 constexpr jint kThoroughScope = 1;
+
+enum class ScanScope : uint8_t {
+    Fast = kFastScope,
+    Thorough = kThoroughScope,
+};
+
+[[nodiscard]] constexpr std::optional<ScanScope> scanScopeFromJint(jint scope) noexcept {
+    switch (scope) {
+    case kFastScope: return ScanScope::Fast;
+    case kThoroughScope: return ScanScope::Thorough;
+    default: return std::nullopt;
+    }
+}
+
+struct ResidentRun {
+    uintptr_t start;
+    uintptr_t end;
+};
+
 alignas(uint64_t) volatile uint64_t gReadProbe = UINT64_C(0x4a4c4d454d50524f);
 
 bool isSelectedMap(const char *permissions, const std::string &name,
-                   jint scope) {
+                   ScanScope scope) {
     if (std::strncmp(permissions, "rw-p", 4) != 0) {
         return false;
     }
 
     const bool dalvik = name.find("dalvik-") != std::string::npos;
     const bool zygote = name.find("zygote") != std::string::npos;
-    if (scope == kFastScope) {
+    if (scope == ScanScope::Fast) {
         return dalvik && !zygote;
     }
-    if (scope != kThoroughScope) {
+    if (scope != ScanScope::Thorough) {
         return false;
     }
 
@@ -54,21 +75,21 @@ bool isSelectedMap(const char *permissions, const std::string &name,
     return (dalvik && !zygote) || name.empty();
 }
 
-bool appendRun(std::vector<std::pair<uintptr_t, uintptr_t>> &runs,
+bool appendRun(std::vector<ResidentRun> &runs,
                uintptr_t start, uintptr_t end, size_t maxRuns,
                bool &truncated) {
     if (start >= end) {
         return true;
     }
-    if (!runs.empty() && runs.back().second == start) {
-        runs.back().second = end;
+    if (!runs.empty() && runs.back().end == start) {
+        runs.back().end = end;
         return true;
     }
     if (runs.size() >= maxRuns) {
         truncated = true;
         return false;
     }
-    runs.emplace_back(start, end);
+    runs.push_back({start, end});
     return true;
 }
 
@@ -102,8 +123,8 @@ extern "C" JNIEXPORT jlongArray JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryTarget_collectResidentRuns(
         JNIEnv *env, jclass, jint scope, jint maxRuns) {
     const long pageValue = sysconf(_SC_PAGESIZE);
-    if ((scope != kFastScope && scope != kThoroughScope) || maxRuns <= 0 ||
-        pageValue <= 0) {
+    const auto selectedScope = scanScopeFromJint(scope);
+    if (!selectedScope.has_value() || maxRuns <= 0 || pageValue <= 0) {
         return nullptr;
     }
     const size_t pageSize = static_cast<size_t>(pageValue);
@@ -116,16 +137,16 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryTarget_collectResidentRuns(
             return nullptr;
         }
 
-        std::vector<std::pair<uintptr_t, uintptr_t>> runs;
+        std::vector<ResidentRun> runs;
         bool truncated = false;
         size_t lineCapacity = 0;
         while (!truncated && getline(&line, &lineCapacity, maps) >= 0) {
             unsigned long long rawStart = 0;
             unsigned long long rawEnd = 0;
-            char permissions[5] = {};
+            std::array<char, 5> permissions{};
             int nameOffset = 0;
             if (std::sscanf(line, "%llx-%llx %4s %*s %*s %*s %n", &rawStart,
-                            &rawEnd, permissions, &nameOffset) < 3 ||
+                            &rawEnd, permissions.data(), &nameOffset) < 3 ||
                 rawStart >= rawEnd ||
                 rawEnd > std::numeric_limits<uintptr_t>::max()) {
                 continue;
@@ -143,7 +164,7 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryTarget_collectResidentRuns(
                     name.pop_back();
                 }
             }
-            if (!isSelectedMap(permissions, name, scope)) {
+            if (!isSelectedMap(permissions.data(), name, *selectedScope)) {
                 continue;
             }
 
@@ -204,8 +225,8 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryTarget_collectResidentRuns(
         output[0] = static_cast<jlong>(runs.size());
         output[1] = truncated ? 1 : 0;
         for (size_t index = 0; index < runs.size(); ++index) {
-            output[2U + index * 2U] = static_cast<jlong>(runs[index].first);
-            output[3U + index * 2U] = static_cast<jlong>(runs[index].second);
+            output[2U + index * 2U] = static_cast<jlong>(runs[index].start);
+            output[3U + index * 2U] = static_cast<jlong>(runs[index].end);
         }
         jlongArray result = env->NewLongArray(outputSize);
         if (result != nullptr) {

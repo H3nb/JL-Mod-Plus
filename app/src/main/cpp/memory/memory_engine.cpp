@@ -16,7 +16,9 @@
 #include <sys/uio.h>
 
 #include <algorithm>
+#include <array>
 #include <atomic>
+#include <bit>
 #include <cerrno>
 #include <cmath>
 #include <cstdint>
@@ -28,6 +30,8 @@
 #include <memory>
 #include <mutex>
 #include <new>
+#include <optional>
+#include <span>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -53,6 +57,48 @@ constexpr jint kTypeInt = 4;
 constexpr jint kTypeLong = 5;
 constexpr jint kTypeFloat = 6;
 constexpr jint kTypeDouble = 7;
+
+// JNI uses stable integer constants, but materialized candidates and parsed queries use a
+// scoped type so width-sensitive operations cannot accidentally accept predicates or other ints.
+enum class ValueType : uint8_t {
+    Byte = kTypeByte,
+    Short = kTypeShort,
+    Char = kTypeChar,
+    Int = kTypeInt,
+    Long = kTypeLong,
+    Float = kTypeFloat,
+    Double = kTypeDouble,
+};
+
+[[nodiscard]] constexpr jint toJint(ValueType type) noexcept {
+    return static_cast<jint>(std::to_underlying(type));
+}
+
+[[nodiscard]] constexpr size_t typeIndex(ValueType type) noexcept {
+    return static_cast<size_t>(std::to_underlying(type));
+}
+
+constexpr size_t kTypeSlotCount = typeIndex(ValueType::Double) + 1U;
+
+[[nodiscard]] constexpr std::optional<ValueType> valueTypeFromJint(jint type) noexcept {
+    switch (type) {
+    case kTypeByte: return ValueType::Byte;
+    case kTypeShort: return ValueType::Short;
+    case kTypeChar: return ValueType::Char;
+    case kTypeInt: return ValueType::Int;
+    case kTypeLong: return ValueType::Long;
+    case kTypeFloat: return ValueType::Float;
+    case kTypeDouble: return ValueType::Double;
+    default: return std::nullopt;
+    }
+}
+
+[[nodiscard]] constexpr bool isFloating(ValueType type) noexcept {
+    return type == ValueType::Float || type == ValueType::Double;
+}
+
+static_assert(sizeof(ValueType) == sizeof(uint8_t));
+static_assert(toJint(ValueType::Double) == kTypeDouble);
 
 constexpr jint kEqual = 0;
 constexpr jint kNotEqual = 1;
@@ -111,17 +157,17 @@ struct Target {
 };
 
 struct Candidate {
-    uint64_t id;
-    uintptr_t address;
-    uintptr_t previousAddress;
-    uint64_t initialBits;
-    uint64_t previousBits;
-    uint64_t currentBits;
-    uint64_t identityHash;
-    uint32_t relocationCount;
-    uint8_t type;
-    uint8_t state;
-    bool identityValid;
+    uint64_t id = 0;
+    uintptr_t address = 0;
+    uintptr_t previousAddress = 0;
+    uint64_t initialBits = 0;
+    uint64_t previousBits = 0;
+    uint64_t currentBits = 0;
+    uint64_t identityHash = 0;
+    uint32_t relocationCount = 0;
+    ValueType type = ValueType::Int;
+    uint8_t state = kStable;
+    bool identityValid = false;
 };
 
 static_assert(sizeof(Candidate) <= 64,
@@ -172,7 +218,7 @@ struct SearchState {
 };
 
 struct Query {
-    jint type = 0;
+    ValueType type = ValueType::Int;
     bool floating = false;
     int64_t integerFirst = 0;
     int64_t integerSecond = 0;
@@ -198,38 +244,42 @@ void setMessage(const char *message) {
     gLastMessage = message;
 }
 
-size_t widthOf(jint type) {
+[[nodiscard]] constexpr size_t widthOf(ValueType type) noexcept {
     switch (type) {
-    case kTypeByte:
+    case ValueType::Byte:
         return 1;
-    case kTypeShort:
-    case kTypeChar:
+    case ValueType::Short:
+    case ValueType::Char:
         return 2;
-    case kTypeInt:
-    case kTypeFloat:
+    case ValueType::Int:
+    case ValueType::Float:
         return 4;
-    case kTypeLong:
-    case kTypeDouble:
+    case ValueType::Long:
+    case ValueType::Double:
         return 8;
-    default:
-        return 0;
     }
+    return 0;
 }
 
-std::vector<jint> expandedTypes(jint requestedType) {
+[[nodiscard]] size_t widthOf(jint rawType) noexcept {
+    const auto type = valueTypeFromJint(rawType);
+    return type.has_value() ? widthOf(*type) : 0U;
+}
+
+std::vector<ValueType> expandedTypes(jint requestedType) {
     if (requestedType == kTypeAuto) {
         // Prefer the representations most useful for J2ME gameplay before
         // noisy narrow aliases fill the first result pages.
-        return {kTypeInt,  kTypeFloat, kTypeLong, kTypeDouble,
-                kTypeShort, kTypeChar, kTypeByte};
+        return {ValueType::Int, ValueType::Float, ValueType::Long,
+                ValueType::Double, ValueType::Short, ValueType::Char,
+                ValueType::Byte};
     }
-    if (widthOf(requestedType) == 0) {
-        return {};
-    }
-    return {requestedType};
+    const auto type = valueTypeFromJint(requestedType);
+    return type.has_value() ? std::vector<ValueType>{*type}
+                            : std::vector<ValueType>{};
 }
 
-bool parseInteger(const std::string &text, jint type, int64_t &value) {
+bool parseInteger(const std::string &text, ValueType type, int64_t &value) {
     if (text.empty()) {
         return false;
     }
@@ -256,23 +306,23 @@ bool parseInteger(const std::string &text, jint type, int64_t &value) {
     int64_t minimum = std::numeric_limits<int64_t>::min();
     int64_t maximum = std::numeric_limits<int64_t>::max();
     switch (type) {
-    case kTypeByte:
+    case ValueType::Byte:
         minimum = std::numeric_limits<int8_t>::min();
         maximum = std::numeric_limits<int8_t>::max();
         break;
-    case kTypeShort:
+    case ValueType::Short:
         minimum = std::numeric_limits<int16_t>::min();
         maximum = std::numeric_limits<int16_t>::max();
         break;
-    case kTypeChar:
+    case ValueType::Char:
         minimum = 0;
         maximum = std::numeric_limits<uint16_t>::max();
         break;
-    case kTypeInt:
+    case ValueType::Int:
         minimum = std::numeric_limits<int32_t>::min();
         maximum = std::numeric_limits<int32_t>::max();
         break;
-    case kTypeLong:
+    case ValueType::Long:
         break;
     default:
         return false;
@@ -296,7 +346,7 @@ bool parseFloating(const std::string &text, double &value) {
            *end == '\0' && std::isfinite(value);
 }
 
-bool parseDelta(const std::string &text, jint type, uint64_t &value) {
+bool parseDelta(const std::string &text, ValueType type, uint64_t &value) {
     if (text.empty()) {
         return false;
     }
@@ -327,17 +377,17 @@ bool parseDelta(const std::string &text, jint type, uint64_t &value) {
     }
     uint64_t maximum = 0;
     switch (type) {
-    case kTypeByte:
+    case ValueType::Byte:
         maximum = std::numeric_limits<uint8_t>::max();
         break;
-    case kTypeShort:
-    case kTypeChar:
+    case ValueType::Short:
+    case ValueType::Char:
         maximum = std::numeric_limits<uint16_t>::max();
         break;
-    case kTypeInt:
+    case ValueType::Int:
         maximum = std::numeric_limits<uint32_t>::max();
         break;
-    case kTypeLong:
+    case ValueType::Long:
         maximum = std::numeric_limits<uint64_t>::max();
         break;
     default:
@@ -356,10 +406,10 @@ bool predicateNeedsSecond(jint predicate) {
            predicate == kDecreasedByRange;
 }
 
-bool parseQuery(jint type, jint predicate, const std::string &first,
+bool parseQuery(ValueType type, jint predicate, const std::string &first,
                 const std::string &second, Query &query) {
     query.type = type;
-    query.floating = type == kTypeFloat || type == kTypeDouble;
+    query.floating = isFloating(type);
     const bool deltaPredicate = predicate >= kIncreasedBy;
     if (predicateNeedsFirst(predicate)) {
         if (query.floating) {
@@ -369,7 +419,7 @@ bool parseQuery(jint type, jint predicate, const std::string &first,
             if (deltaPredicate && query.floatingFirst < 0) {
                 return false;
             }
-            if (type == kTypeFloat) {
+            if (type == ValueType::Float) {
                 const float rounded = static_cast<float>(query.floatingFirst);
                 if (!std::isfinite(rounded)) {
                     return false;
@@ -393,7 +443,7 @@ bool parseQuery(jint type, jint predicate, const std::string &first,
             if (deltaPredicate && query.floatingSecond < 0) {
                 return false;
             }
-            if (type == kTypeFloat) {
+            if (type == ValueType::Float) {
                 const float rounded = static_cast<float>(query.floatingSecond);
                 if (!std::isfinite(rounded)) {
                     return false;
@@ -413,13 +463,29 @@ bool parseQuery(jint type, jint predicate, const std::string &first,
     return true;
 }
 
-uint64_t loadBits(const uint8_t *data, size_t width) {
+bool parseQuery(jint rawType, jint predicate, const std::string &first,
+                const std::string &second, Query &query) {
+    const auto type = valueTypeFromJint(rawType);
+    return type.has_value() && parseQuery(*type, predicate, first, second, query);
+}
+
+[[nodiscard]] uint64_t loadBits(std::span<const uint8_t> bytes) noexcept {
+    if (bytes.size() > sizeof(uint64_t)) {
+        return 0;
+    }
     uint64_t result = 0;
-    std::memcpy(&result, data, width);
+    std::memcpy(&result, bytes.data(), bytes.size());
     return result;
 }
 
-Candidate makeCandidate(uint64_t id, uintptr_t address, jint type,
+[[nodiscard]] uint64_t loadBits(const uint8_t *data, size_t width) noexcept {
+    if (data == nullptr && width != 0U) {
+        return 0;
+    }
+    return loadBits(std::span<const uint8_t>(data, width));
+}
+
+Candidate makeCandidate(uint64_t id, uintptr_t address, ValueType type,
                         uint64_t initialBits, uint64_t currentBits) {
     Candidate candidate{};
     candidate.id = id;
@@ -428,62 +494,69 @@ Candidate makeCandidate(uint64_t id, uintptr_t address, jint type,
     candidate.initialBits = initialBits;
     candidate.previousBits = initialBits;
     candidate.currentBits = currentBits;
-    candidate.type = static_cast<uint8_t>(type);
-    candidate.state = kStable;
+    candidate.type = type;
     return candidate;
 }
 
-uint64_t identityHash(const uint8_t *before, const uint8_t *after) {
+[[nodiscard]] uint64_t identityHash(std::span<const uint8_t> before,
+                                    std::span<const uint8_t> after) noexcept {
+    if (before.size() != kIdentityRadius || after.size() != kIdentityRadius) {
+        return 0;
+    }
     uint64_t hash = UINT64_C(1469598103934665603);
-    for (size_t index = 0; index < kIdentityRadius; ++index) {
-        hash ^= before[index];
+    for (const uint8_t value : before) {
+        hash ^= value;
         hash *= UINT64_C(1099511628211);
     }
-    for (size_t index = 0; index < kIdentityRadius; ++index) {
-        hash ^= after[index];
+    for (const uint8_t value : after) {
+        hash ^= value;
         hash *= UINT64_C(1099511628211);
     }
     return hash;
 }
 
-bool snapshotIdentity(const uint8_t *bytes, size_t size, size_t offset,
-                      size_t width, uint64_t &hash) {
-    if (offset < kIdentityRadius || offset + width > size ||
-        size - offset - width < kIdentityRadius) {
+bool snapshotIdentity(std::span<const uint8_t> bytes, size_t offset,
+                      size_t width, uint64_t &hash) noexcept {
+    if (offset < kIdentityRadius || width > bytes.size() - std::min(offset, bytes.size()) ||
+        offset + width > bytes.size() || bytes.size() - offset - width < kIdentityRadius) {
         return false;
     }
-    hash = identityHash(bytes + offset - kIdentityRadius,
-                        bytes + offset + width);
+    hash = identityHash(bytes.subspan(offset - kIdentityRadius, kIdentityRadius),
+                        bytes.subspan(offset + width, kIdentityRadius));
     return true;
 }
 
-int64_t integerValue(jint type, uint64_t bits) {
+bool snapshotIdentity(const uint8_t *bytes, size_t size, size_t offset,
+                      size_t width, uint64_t &hash) noexcept {
+    if (bytes == nullptr && size != 0U) {
+        return false;
+    }
+    return snapshotIdentity(std::span<const uint8_t>(bytes, size), offset, width,
+                            hash);
+}
+
+int64_t integerValue(ValueType type, uint64_t bits) {
     switch (type) {
-    case kTypeByte:
+    case ValueType::Byte:
         return static_cast<int8_t>(bits);
-    case kTypeShort:
+    case ValueType::Short:
         return static_cast<int16_t>(bits);
-    case kTypeChar:
+    case ValueType::Char:
         return static_cast<uint16_t>(bits);
-    case kTypeInt:
+    case ValueType::Int:
         return static_cast<int32_t>(bits);
-    case kTypeLong:
+    case ValueType::Long:
         return static_cast<int64_t>(bits);
     default:
         return 0;
     }
 }
 
-double floatingValue(jint type, uint64_t bits) {
-    if (type == kTypeFloat) {
-        uint32_t raw = static_cast<uint32_t>(bits);
-        float value = 0;
-        std::memcpy(&value, &raw, sizeof(value));
-        return value;
+double floatingValue(ValueType type, uint64_t bits) noexcept {
+    if (type == ValueType::Float) {
+        return std::bit_cast<float>(static_cast<uint32_t>(bits));
     }
-    double value = 0;
-    std::memcpy(&value, &bits, sizeof(value));
-    return value;
+    return std::bit_cast<double>(bits);
 }
 
 template <typename T>
@@ -588,13 +661,28 @@ bool matchesRelative(uint64_t currentBits, uint64_t referenceBits,
     }
 }
 
+[[nodiscard]] constexpr bool checkedAddressAdd(uintptr_t base, size_t offset,
+                                               uintptr_t &result) noexcept {
+    if (offset > std::numeric_limits<uintptr_t>::max() - base) {
+        return false;
+    }
+    result = base + static_cast<uintptr_t>(offset);
+    return true;
+}
+
 bool readExact(pid_t pid, uintptr_t address, void *destination, size_t size) {
+    if (destination == nullptr && size != 0U) {
+        return false;
+    }
     auto *output = static_cast<uint8_t *>(destination);
     size_t completed = 0;
     while (completed < size) {
+        uintptr_t remoteAddress = 0;
+        if (!checkedAddressAdd(address, completed, remoteAddress)) {
+            return false;
+        }
         iovec local{output + completed, size - completed};
-        iovec remote{reinterpret_cast<void *>(address + completed),
-                     size - completed};
+        iovec remote{reinterpret_cast<void *>(remoteAddress), size - completed};
         const ssize_t read = process_vm_readv(pid, &local, 1, &remote, 1, 0);
         if (read < 0 && errno == EINTR) {
             continue;
@@ -608,12 +696,18 @@ bool readExact(pid_t pid, uintptr_t address, void *destination, size_t size) {
 }
 
 bool writeExact(pid_t pid, uintptr_t address, const void *source, size_t size) {
+    if (source == nullptr && size != 0U) {
+        return false;
+    }
     const auto *input = static_cast<const uint8_t *>(source);
     size_t completed = 0;
     while (completed < size) {
+        uintptr_t remoteAddress = 0;
+        if (!checkedAddressAdd(address, completed, remoteAddress)) {
+            return false;
+        }
         iovec local{const_cast<uint8_t *>(input + completed), size - completed};
-        iovec remote{reinterpret_cast<void *>(address + completed),
-                     size - completed};
+        iovec remote{reinterpret_cast<void *>(remoteAddress), size - completed};
         const ssize_t written =
                 process_vm_writev(pid, &local, 1, &remote, 1, 0);
         if (written < 0 && errno == EINTR) {
@@ -627,16 +721,17 @@ bool writeExact(pid_t pid, uintptr_t address, const void *source, size_t size) {
     return true;
 }
 
-bool readIdentity(const Target &target, uintptr_t address, jint type,
+bool readIdentity(const Target &target, uintptr_t address, ValueType type,
                   uint64_t &hash) {
     const size_t width = widthOf(type);
-    if (width == 0 || address < kIdentityRadius ||
-        address > std::numeric_limits<uintptr_t>::max() - width -
-                          kIdentityRadius) {
+    uintptr_t valueEnd = 0;
+    uintptr_t contextEnd = 0;
+    if (address < kIdentityRadius ||
+        !checkedAddressAdd(address, width, valueEnd) ||
+        !checkedAddressAdd(valueEnd, kIdentityRadius, contextEnd)) {
         return false;
     }
     const uintptr_t contextStart = address - kIdentityRadius;
-    const uintptr_t contextEnd = address + width + kIdentityRadius;
     const auto range = std::find_if(
             target.ranges.begin(), target.ranges.end(), [&](const Range &item) {
                 return item.start <= contextStart && item.end >= contextEnd;
@@ -644,24 +739,32 @@ bool readIdentity(const Target &target, uintptr_t address, jint type,
     if (range == target.ranges.end()) {
         return false;
     }
-    uint8_t context[kIdentityRadius * 2] = {};
-    iovec local[2] = {
-            {context, kIdentityRadius},
-            {context + kIdentityRadius, kIdentityRadius},
-    };
-    iovec remote[2] = {
+    std::array<uint8_t, kIdentityRadius * 2U> context{};
+    std::array<iovec, 2> local{{
+            {context.data(), kIdentityRadius},
+            {context.data() + kIdentityRadius, kIdentityRadius},
+    }};
+    std::array<iovec, 2> remote{{
             {reinterpret_cast<void *>(contextStart), kIdentityRadius},
-            {reinterpret_cast<void *>(address + width), kIdentityRadius},
-    };
+            {reinterpret_cast<void *>(valueEnd), kIdentityRadius},
+    }};
     ssize_t result;
     do {
-        result = process_vm_readv(target.pid, local, 2, remote, 2, 0);
+        result = process_vm_readv(target.pid, local.data(), local.size(),
+                                  remote.data(), remote.size(), 0);
     } while (result < 0 && errno == EINTR);
-    if (result != static_cast<ssize_t>(sizeof(context))) {
+    if (result != static_cast<ssize_t>(context.size())) {
         return false;
     }
-    hash = identityHash(context, context + kIdentityRadius);
+    hash = identityHash(std::span<const uint8_t>(context).first(kIdentityRadius),
+                        std::span<const uint8_t>(context).last(kIdentityRadius));
     return true;
+}
+
+bool readIdentity(const Target &target, uintptr_t address, jint rawType,
+                  uint64_t &hash) {
+    const auto type = valueTypeFromJint(rawType);
+    return type.has_value() && readIdentity(target, address, *type, hash);
 }
 
 void captureIdentities(const Target &target,
@@ -767,24 +870,23 @@ void trimHistoryLocked() {
     }
 }
 
-int displayTypePriority(jint type) {
+int displayTypePriority(ValueType type) {
     switch (type) {
-    case kTypeInt:
+    case ValueType::Int:
         return 0;
-    case kTypeFloat:
+    case ValueType::Float:
         return 1;
-    case kTypeLong:
+    case ValueType::Long:
         return 2;
-    case kTypeDouble:
+    case ValueType::Double:
         return 3;
-    case kTypeShort:
+    case ValueType::Short:
         return 4;
-    case kTypeChar:
+    case ValueType::Char:
         return 5;
-    case kTypeByte:
+    case ValueType::Byte:
         return 6;
-    default:
-        return 7;
+    return 7;
     }
 }
 
@@ -871,7 +973,7 @@ bool buildQueries(jint requestedType, jint predicate, const std::string &first,
         (relative && (predicate < kChanged || predicate > kDecreasedByRange))) {
         return false;
     }
-    for (jint type : expandedTypes(requestedType)) {
+    for (ValueType type : expandedTypes(requestedType)) {
         Query query;
         if (parseQuery(type, predicate, first, second, query)) {
             queries.push_back(query);
@@ -1042,7 +1144,7 @@ jint scanNearby(const OperationContext &context, uint64_t anchorId, jint radius,
 
 struct GroupMatch {
     uintptr_t address;
-    jint type;
+    ValueType type;
     uint64_t bits;
 };
 
@@ -1225,7 +1327,7 @@ jint scanGroup(const OperationContext &context, const std::vector<jint> &types,
 }
 
 jint snapshotUnknown(const OperationContext &context, jint requestedType) {
-    const std::vector<jint> types = expandedTypes(requestedType);
+    const std::vector<ValueType> types = expandedTypes(requestedType);
     if (types.empty()) {
         setMessage("Invalid value type");
         return kInvalidRequest;
@@ -1255,7 +1357,7 @@ jint snapshotUnknown(const OperationContext &context, jint requestedType) {
             return kTargetLost;
         }
         retained += size;
-        for (jint type : types) {
+        for (ValueType type : types) {
             const size_t width = widthOf(type);
             const size_t adjustment =
                     range.start % width == 0 ? 0 : width - range.start % width;
@@ -1326,11 +1428,10 @@ bool verifyCandidateBinding(const Target &target, const Candidate &candidate) {
 bool candidateWindow(const Target &target, const Candidate &candidate,
                      size_t radius, Range &window) {
     const size_t width = widthOf(candidate.type);
-    if (width == 0 || radius == 0 ||
-        candidate.address > std::numeric_limits<uintptr_t>::max() - width) {
+    uintptr_t valueEnd = 0;
+    if (radius == 0 || !checkedAddressAdd(candidate.address, width, valueEnd)) {
         return false;
     }
-    const uintptr_t valueEnd = candidate.address + width;
     const auto containing = std::find_if(
             target.ranges.begin(), target.ranges.end(), [&](const Range &range) {
                 return range.start <= candidate.address && range.end >= valueEnd;
@@ -1423,12 +1524,11 @@ class CandidateValueReader {
             return readCandidate(target_, candidate, bits);
         }
         const size_t width = widthOf(candidate.type);
-        if (width == 0 || candidate.address >
-                                  std::numeric_limits<uintptr_t>::max() - width) {
+        uintptr_t valueEnd = 0;
+        if (!checkedAddressAdd(candidate.address, width, valueEnd)) {
             return false;
         }
-        if (candidate.address >= cachedStart_ &&
-            candidate.address + width <= cachedEnd_) {
+        if (candidate.address >= cachedStart_ && valueEnd <= cachedEnd_) {
             if (!cacheReadable_) {
                 return false;
             }
@@ -1446,7 +1546,7 @@ class CandidateValueReader {
         }
         const Range &containing = *std::prev(range);
         if (candidate.address < containing.start ||
-            candidate.address + width > containing.end) {
+            valueEnd > containing.end) {
             return false;
         }
         const uintptr_t offset = candidate.address - containing.start;
@@ -1573,9 +1673,9 @@ jint refineCandidates(const OperationContext &context, jint predicate,
         // sequential without allocating a second full-heap image.
         CandidateValueReader reader(context.target,
                                     context.state->candidates.size());
-        const Query *queriesByType[kTypeDouble + 1] = {};
+        std::array<const Query *, kTypeSlotCount> queriesByType{};
         for (const Query &query : queries) {
-            queriesByType[query.type] = &query;
+            queriesByType[typeIndex(query.type)] = &query;
         }
         next->candidates.reserve(context.state->candidates.size());
         for (const Candidate &candidate : context.state->candidates) {
@@ -1602,9 +1702,7 @@ jint refineCandidates(const OperationContext &context, jint predicate,
             updated.previousBits = candidate.currentBits;
             updated.currentBits = current;
             updated.state = kStable;
-            const Query *query = candidate.type <= kTypeDouble
-                                         ? queriesByType[candidate.type]
-                                         : nullptr;
+            const Query *query = queriesByType[typeIndex(candidate.type)];
             if (query == nullptr) {
                 continue;
             }
@@ -1675,21 +1773,21 @@ jint recoverKnownCandidates(const OperationContext &context, jint predicate,
             hasSingleUniqueAddress(context.state->candidates) &&
             hasSingleUniqueAddress(fresh->candidates);
     std::vector<bool> claimed(fresh->candidates.size(), false);
-    std::unordered_set<uint64_t> wantedIdentity[kTypeDouble + 1];
-    std::unordered_map<uint64_t, std::vector<size_t>>
-            freshByIdentity[kTypeDouble + 1];
+    std::array<std::unordered_set<uint64_t>, kTypeSlotCount> wantedIdentity{};
+    std::array<std::unordered_map<uint64_t, std::vector<size_t>>, kTypeSlotCount>
+            freshByIdentity{};
     if (!uniqueOneToOne) {
         for (const Candidate &old : context.state->candidates) {
-            if (old.type <= kTypeDouble && old.identityValid) {
-                wantedIdentity[old.type].insert(old.identityHash);
+            if (old.identityValid) {
+                wantedIdentity[typeIndex(old.type)].insert(old.identityHash);
             }
         }
         for (size_t index = 0; index < fresh->candidates.size(); ++index) {
             const Candidate &candidate = fresh->candidates[index];
-            if (candidate.type <= kTypeDouble && candidate.identityValid &&
-                wantedIdentity[candidate.type].find(candidate.identityHash) !=
-                        wantedIdentity[candidate.type].end()) {
-                freshByIdentity[candidate.type][candidate.identityHash]
+            if (candidate.identityValid &&
+                wantedIdentity[typeIndex(candidate.type)].find(candidate.identityHash) !=
+                        wantedIdentity[typeIndex(candidate.type)].end()) {
+                freshByIdentity[typeIndex(candidate.type)][candidate.identityHash]
                         .push_back(index);
             }
         }
@@ -1709,12 +1807,12 @@ jint recoverKnownCandidates(const OperationContext &context, jint predicate,
                 continue;
             }
         } else {
-            if (!old.identityValid || old.type > kTypeDouble) {
+            if (!old.identityValid) {
                 continue;
             }
             const auto found =
-                    freshByIdentity[old.type].find(old.identityHash);
-            if (found == freshByIdentity[old.type].end() ||
+                    freshByIdentity[typeIndex(old.type)].find(old.identityHash);
+            if (found == freshByIdentity[typeIndex(old.type)].end() ||
                 found->second.size() != 1U || claimed[found->second.front()]) {
                 continue;
             }
@@ -1796,28 +1894,28 @@ bool readIds(JNIEnv *env, jlongArray rawIds, std::vector<uint64_t> &ids) {
 }
 
 jint recoverCandidatesBatch(const Target &target,
-                            const std::vector<Candidate *> &recovery,
+                            std::span<Candidate> candidates,
+                            std::span<const size_t> recovery,
                             size_t &unsafeCount) {
     unsafeCount = 0;
     if (recovery.empty()) {
         return kOk;
     }
-    std::unordered_map<uint64_t, std::vector<size_t>> wanted[kTypeDouble + 1];
+    std::array<std::unordered_map<uint64_t, std::vector<size_t>>, kTypeSlotCount> wanted{};
     std::vector<bool> eligible(recovery.size(), false);
     std::vector<uintptr_t> foundAddress(recovery.size(), 0);
     std::vector<uint8_t> matchCount(recovery.size(), 0);
     size_t eligibleCount = 0;
     for (size_t index = 0; index < recovery.size(); ++index) {
-        Candidate &candidate = *recovery[index];
-        if (!candidate.identityValid || candidate.type > kTypeDouble ||
-            widthOf(candidate.type) == 0) {
+        Candidate &candidate = candidates[recovery[index]];
+        if (!candidate.identityValid || widthOf(candidate.type) == 0) {
             candidate.state = kLost;
             ++unsafeCount;
             continue;
         }
         eligible[index] = true;
         ++eligibleCount;
-        wanted[candidate.type][candidate.currentBits].push_back(index);
+        wanted[typeIndex(candidate.type)][candidate.currentBits].push_back(index);
     }
     if (eligibleCount == 0) {
         return kOk;
@@ -1867,7 +1965,7 @@ jint recoverCandidatesBatch(const Target &target,
                                     matchCount[recoveryIndex] > 1) {
                                     continue;
                                 }
-                                Candidate &candidate = *recovery[recoveryIndex];
+                                Candidate &candidate = candidates[recovery[recoveryIndex]];
                                 if (hash != candidate.identityHash) {
                                     continue;
                                 }
@@ -1894,7 +1992,7 @@ jint recoverCandidatesBatch(const Target &target,
         if (!eligible[index]) {
             continue;
         }
-        Candidate &candidate = *recovery[index];
+        Candidate &candidate = candidates[recovery[index]];
         if (matchCount[index] == 1) {
             candidate.previousAddress = candidate.address;
             candidate.address = foundAddress[index];
@@ -1951,8 +2049,8 @@ jint refreshCandidates(const OperationContext &context,
         return kInvalidRequest;
     }
     size_t unsafeCount = 0;
-    std::vector<Candidate *> recovery;
-    const auto refreshOne = [&](Candidate &candidate) {
+    std::vector<size_t> recovery;
+    const auto refreshOne = [&](Candidate &candidate, size_t candidateIndex) {
         uint64_t current = 0;
         uint64_t hash = 0;
         const bool readable = readCandidate(context.target, candidate, current);
@@ -1981,7 +2079,7 @@ jint refreshCandidates(const OperationContext &context,
                 (!candidate.identityValid || hash == candidate.identityHash);
         if (!identityMatches) {
             candidate.state = kRelocating;
-            recovery.push_back(&candidate);
+            recovery.push_back(candidateIndex);
             return;
         }
         candidate.identityHash = hash;
@@ -1990,8 +2088,8 @@ jint refreshCandidates(const OperationContext &context,
         candidate.currentBits = current;
         candidate.state = kStable;
     };
-    for (Candidate &candidate : selected) {
-        refreshOne(candidate);
+    for (size_t index = 0; index < selected.size(); ++index) {
+        refreshOne(selected[index], index);
     }
     if (recovery.size() > kRecoveryLimit) {
         setMessage("Identity recovery is limited to 32 candidates per "
@@ -2000,7 +2098,7 @@ jint refreshCandidates(const OperationContext &context,
     }
     size_t recoveryUnsafe = 0;
     const jint recoveryResult =
-            recoverCandidatesBatch(context.target, recovery, recoveryUnsafe);
+            recoverCandidatesBatch(context.target, selected, recovery, recoveryUnsafe);
     if (recoveryResult != kOk) {
         return recoveryResult;
     }
@@ -2047,13 +2145,11 @@ bool replacementBitsFor(const Candidate &candidate,
     }
     bits = 0;
     if (query.floating) {
-        if (candidate.type == kTypeFloat) {
+        if (candidate.type == ValueType::Float) {
             const float value = static_cast<float>(query.floatingFirst);
-            uint32_t raw = 0;
-            std::memcpy(&raw, &value, sizeof(raw));
-            bits = raw;
+            bits = std::bit_cast<uint32_t>(value);
         } else {
-            std::memcpy(&bits, &query.floatingFirst, sizeof(bits));
+            bits = std::bit_cast<uint64_t>(query.floatingFirst);
         }
     } else {
         bits = static_cast<uint64_t>(query.integerFirst);
@@ -2324,17 +2420,33 @@ jint freezeCandidates(const OperationContext &context,
     return unsafe == 0 ? kOk : kIdentityUnsafe;
 }
 
+class ScopedUtfChars final {
+  public:
+    ScopedUtfChars(JNIEnv *env, jstring value) noexcept
+        : env_(env), value_(value), chars_(value == nullptr ? nullptr
+                                                            : env->GetStringUTFChars(value, nullptr)) {}
+    ~ScopedUtfChars() {
+        if (chars_ != nullptr) {
+            env_->ReleaseStringUTFChars(value_, chars_);
+        }
+    }
+    ScopedUtfChars(const ScopedUtfChars &) = delete;
+    ScopedUtfChars &operator=(const ScopedUtfChars &) = delete;
+
+    [[nodiscard]] const char *get() const noexcept { return chars_; }
+
+  private:
+    JNIEnv *env_;
+    jstring value_;
+    const char *chars_;
+};
+
 std::string fromJString(JNIEnv *env, jstring value) {
     if (value == nullptr) {
         return {};
     }
-    const char *characters = env->GetStringUTFChars(value, nullptr);
-    if (characters == nullptr) {
-        return {};
-    }
-    std::string result(characters);
-    env->ReleaseStringUTFChars(value, characters);
-    return result;
+    const ScopedUtfChars characters(env, value);
+    return characters.get() == nullptr ? std::string{} : std::string(characters.get());
 }
 
 jlongArray candidatePage(
@@ -2353,7 +2465,7 @@ jlongArray candidatePage(
         output[base] = static_cast<jlong>(candidate.id);
         output[base + 1U] = static_cast<jlong>(candidate.address);
         output[base + 2U] = static_cast<jlong>(candidate.previousAddress);
-        output[base + 3U] = candidate.type;
+        output[base + 3U] = toJint(candidate.type);
         output[base + 4U] = candidate.state;
         output[base + 5U] = candidate.relocationCount;
         output[base + 6U] = static_cast<jlong>(candidate.initialBits);
