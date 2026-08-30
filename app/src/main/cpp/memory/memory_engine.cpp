@@ -76,6 +76,7 @@ constexpr jint kStable = 0;
 constexpr size_t kCandidateLimit = 2'000'000;
 constexpr size_t kSnapshotByteLimit = 96U * 1024U * 1024U;
 constexpr size_t kReadChunkSize = 256U * 1024U;
+constexpr size_t kDirectRefineLimit = 4'096;
 constexpr size_t kHistoryLimit = 8;
 constexpr size_t kHistoryByteLimit = 192U * 1024U * 1024U;
 constexpr size_t kResultStride = 7;
@@ -102,6 +103,9 @@ struct Candidate {
     uint64_t previousBits;
     uint64_t currentBits;
 };
+
+static_assert(sizeof(Candidate) <= 48,
+              "Search candidates must stay compact at multi-million scale");
 
 struct SnapshotRun {
     uintptr_t start;
@@ -539,6 +543,11 @@ bool safeAdd(uint64_t &value, uint64_t addition) {
     return true;
 }
 
+bool candidateAddressOrder(const Candidate &left, const Candidate &right) {
+    return left.address != right.address ? left.address < right.address
+                                         : left.type < right.type;
+}
+
 struct OperationContext {
     Target target;
     std::shared_ptr<const SearchState> state;
@@ -651,6 +660,7 @@ jint scanKnown(const OperationContext &context, jint requestedType,
                 setMessage("A target range changed while it was being scanned");
                 return kTargetLost;
             }
+            const size_t chunkCandidateStart = next->candidates.size();
             for (const Query &query : queries) {
                 const size_t width = widthOf(query.type);
                 uintptr_t address = chunkStart;
@@ -686,6 +696,11 @@ jint scanKnown(const OperationContext &context, jint requestedType,
                     }
                     address += width;
                 }
+            }
+            if (queries.size() > 1U) {
+                std::sort(next->candidates.begin() +
+                                  static_cast<std::ptrdiff_t>(chunkCandidateStart),
+                          next->candidates.end(), candidateAddressOrder);
             }
             chunkStart += chunkSize;
         }
@@ -747,60 +762,70 @@ jint snapshotUnknown(const OperationContext &context, jint requestedType) {
     return commitOperation(context, std::move(next), false);
 }
 
-jint captureCurrentImage(const Target &target,
-                         std::vector<SnapshotRun> &snapshots) {
-    size_t retained = 0;
-    snapshots.clear();
-    snapshots.reserve(target.ranges.size());
-    for (const Range &range : target.ranges) {
-        if (gCancelled.load(std::memory_order_acquire)) {
-            setMessage("Operation cancelled; previous results were preserved");
-            return kCancelled;
-        }
-        const size_t size = static_cast<size_t>(range.end - range.start);
-        if (size > kSnapshotByteLimit - std::min(retained, kSnapshotByteLimit)) {
-            setMessage("Refine snapshot exceeds the memory budget");
-            return kResourceLimit;
-        }
-        SnapshotRun snapshot;
-        snapshot.start = range.start;
-        snapshot.bytes.resize(size);
-        if (!readExact(target.pid, range.start, snapshot.bytes.data(), size)) {
-            setMessage("A target range changed while it was being refined");
-            return kTargetLost;
-        }
-        retained += size;
-        snapshots.push_back(std::move(snapshot));
-    }
-    return kOk;
-}
+enum class CandidateReadResult {
+    Ok,
+    InvalidAddress,
+    ReadFailed,
+};
 
-bool readImageBits(const std::vector<SnapshotRun> &snapshots,
-                   const Candidate &candidate, uint64_t &bits) {
-    const size_t width = widthOf(candidate.type);
-    if (width == 0) {
-        return false;
+class CandidateValueReader {
+  public:
+    CandidateValueReader(const Target &target, size_t candidateCount)
+        : target_(target), direct_(candidateCount <= kDirectRefineLimit) {}
+
+    CandidateReadResult read(const Candidate &candidate, uint64_t &bits) {
+        const size_t width = widthOf(candidate.type);
+        if (width == 0 ||
+            candidate.address > std::numeric_limits<uintptr_t>::max() - width) {
+            return CandidateReadResult::InvalidAddress;
+        }
+        if (direct_) {
+            return readExact(target_.pid, candidate.address, &bits, width)
+                           ? CandidateReadResult::Ok
+                           : CandidateReadResult::ReadFailed;
+        }
+        if (candidate.address >= cachedStart_ &&
+            candidate.address + width <= cachedEnd_) {
+            bits = loadBits(buffer_.data() + candidate.address - cachedStart_,
+                            width);
+            return CandidateReadResult::Ok;
+        }
+        const auto range = std::upper_bound(
+                target_.ranges.begin(), target_.ranges.end(), candidate.address,
+                [](uintptr_t address, const Range &item) {
+                    return address < item.start;
+                });
+        if (range == target_.ranges.begin()) {
+            return CandidateReadResult::InvalidAddress;
+        }
+        const Range &containing = *std::prev(range);
+        if (candidate.address < containing.start ||
+            candidate.address + width > containing.end) {
+            return CandidateReadResult::InvalidAddress;
+        }
+        const uintptr_t offset = candidate.address - containing.start;
+        cachedStart_ = containing.start +
+                       offset / kReadChunkSize * kReadChunkSize;
+        const size_t chunkSize = static_cast<size_t>(std::min<uintptr_t>(
+                kReadChunkSize, containing.end - cachedStart_));
+        cachedEnd_ = cachedStart_ + chunkSize;
+        buffer_.resize(chunkSize);
+        if (!readExact(target_.pid, cachedStart_, buffer_.data(), chunkSize)) {
+            cachedStart_ = 0;
+            cachedEnd_ = 0;
+            return CandidateReadResult::ReadFailed;
+        }
+        bits = loadBits(buffer_.data() + candidate.address - cachedStart_, width);
+        return CandidateReadResult::Ok;
     }
-    const auto run = std::upper_bound(
-            snapshots.begin(), snapshots.end(), candidate.address,
-            [](uintptr_t address, const SnapshotRun &item) {
-                return address < item.start;
-            });
-    if (run == snapshots.begin()) {
-        return false;
-    }
-    const SnapshotRun &snapshot = *std::prev(run);
-    if (candidate.address < snapshot.start) {
-        return false;
-    }
-    const size_t offset = static_cast<size_t>(candidate.address - snapshot.start);
-    if (offset > snapshot.bytes.size() ||
-        width > snapshot.bytes.size() - offset) {
-        return false;
-    }
-    bits = loadBits(snapshot.bytes.data() + offset, width);
-    return true;
-}
+
+  private:
+    const Target &target_;
+    const bool direct_;
+    std::vector<uint8_t> buffer_;
+    uintptr_t cachedStart_ = 0;
+    uintptr_t cachedEnd_ = 0;
+};
 
 jint refineCandidates(const OperationContext &context, jint predicate,
                       const std::string &first, const std::string &second,
@@ -843,6 +868,7 @@ jint refineCandidates(const OperationContext &context, jint predicate,
                 setMessage("A target range changed while it was being refined");
                 return kTargetLost;
             }
+            const size_t snapshotCandidateStart = next->candidates.size();
             for (const Query &query : queries) {
                 const size_t width = widthOf(query.type);
                 uintptr_t address = snapshot.start;
@@ -883,16 +909,21 @@ jint refineCandidates(const OperationContext &context, jint predicate,
                     address += width;
                 }
             }
+            if (queries.size() > 1U) {
+                std::sort(next->candidates.begin() +
+                                  static_cast<std::ptrdiff_t>(snapshotCandidateStart),
+                          next->candidates.end(), candidateAddressOrder);
+            }
         }
     } else {
-        // Reading one complete resident image turns a million-candidate refine from a million
-        // process_vm_readv syscalls into sequential remote reads plus an in-process filter pass.
-        // It also makes a published zero trustworthy: partial coverage aborts transactionally.
-        std::vector<SnapshotRun> currentImage;
-        const jint captureResult =
-                captureCurrentImage(context.target, currentImage);
-        if (captureResult != kOk) {
-            return captureResult;
+        // Small result sets are cheaper to refine with exact scalar reads. Large, address-ordered
+        // sets reuse a 256 KiB remote chunk, avoiding a second full resident-heap image while still
+        // preserving complete transactional coverage: any missing candidate read aborts the refine.
+        CandidateValueReader reader(context.target,
+                                    context.state->candidates.size());
+        const Query *queriesByType[kTypeDouble + 1] = {};
+        for (const Query &query : queries) {
+            queriesByType[query.type] = &query;
         }
         next->candidates.reserve(context.state->candidates.size());
         for (const Candidate &candidate : context.state->candidates) {
@@ -903,19 +934,20 @@ jint refineCandidates(const OperationContext &context, jint predicate,
             }
             Candidate updated = candidate;
             uint64_t current = 0;
-            if (!readImageBits(currentImage, candidate, current)) {
-                // The complete image was captured successfully, so an unresolved address is a
-                // stale binding. Never keep it as a result that looks editable.
-                continue;
+            const CandidateReadResult readResult = reader.read(candidate, current);
+            if (readResult != CandidateReadResult::Ok) {
+                setMessage(readResult == CandidateReadResult::InvalidAddress
+                                   ? "A candidate address left the configured target ranges during refinement"
+                                   : "A target range changed while it was being refined");
+                return kTargetLost;
             }
             updated.previousBits = candidate.currentBits;
             updated.currentBits = current;
             updated.state = kStable;
-            auto query = std::find_if(queries.begin(), queries.end(),
-                                      [&](const Query &item) {
-                                          return item.type == candidate.type;
-                                      });
-            if (query == queries.end()) {
+            const Query *query = candidate.type <= kTypeDouble
+                                         ? queriesByType[candidate.type]
+                                         : nullptr;
+            if (query == nullptr) {
                 continue;
             }
             const uint64_t reference = compareTarget == kCompareInitial
