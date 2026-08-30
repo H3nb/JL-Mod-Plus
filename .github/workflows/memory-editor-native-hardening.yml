@@ -32,7 +32,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # The scope enum transform runs before the collector-validation marker in the helper.
+          # Normalize that one literal marker, run the guarded patch, then restore the helper so
+          # only production native files appear in the diff.
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('.github/scripts/memory-editor-native-hardening.py')
+          text = p.read_text()
+          old = 'if ((scope != kFastScope && scope != kThoroughScope) || maxRuns <= 0 ||'
+          new = 'if ((scope != kFastScope && scope != ScanScope::Thorough) || maxRuns <= 0 ||'
+          if text.count(old) != 1:
+              raise SystemExit(f'helper marker normalization expected once, found {text.count(old)}')
+          p.write_text(text.replace(old, new, 1))
+          PY
           python3 .github/scripts/memory-editor-native-hardening.py
+          git checkout -- .github/scripts/memory-editor-native-hardening.py
           git diff --check
           python3 - <<'PY'
           import subprocess
