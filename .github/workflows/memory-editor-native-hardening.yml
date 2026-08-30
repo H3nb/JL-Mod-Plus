@@ -47,6 +47,20 @@ jobs:
           PY
           python3 .github/scripts/memory-editor-native-hardening.py
           git checkout -- .github/scripts/memory-editor-native-hardening.py
+
+          # Unknown Search consumes the same typed expansion as Known Search. Keep the entire
+          # internal path strongly typed; only the JNI boundary stays jint.
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/src/main/cpp/memory/memory_engine.cpp')
+          text = p.read_text()
+          old = '    const std::vector<jint> types = expandedTypes(requestedType);'
+          new = '    const std::vector<ValueType> types = expandedTypes(requestedType);'
+          if text.count(old) != 1:
+              raise SystemExit(f'Unknown Search typed expansion expected once, found {text.count(old)}')
+          p.write_text(text.replace(old, new, 1))
+          PY
+
           git diff --check
           python3 - <<'PY'
           import subprocess
