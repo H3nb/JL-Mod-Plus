@@ -11,7 +11,10 @@ package ru.playsoftware.j2meloader.memory;
 import android.os.Bundle;
 import ru.playsoftware.j2meloader.memory.IMemoryEngineCallback;
 
-/** Logical API; result addresses are informational and no operation accepts a raw destination. */
+/**
+ * Logical API. Result addresses are informational only: mutations never accept a raw destination,
+ * and bounded Inspector/Nearby reads are anchored exclusively by a current CandidateId.
+ */
 interface IMemoryEngineService {
     Bundle getCapabilities();
     void registerCallback(IMemoryEngineCallback callback);
