@@ -1,0 +1,71 @@
+name: Memory Editor native regression audit
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/memory-editor-native-regression-audit.yml'
+      - '.github/scripts/memory-editor-native-regression-audit.py'
+
+permissions:
+  contents: write
+
+jobs:
+  audit-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out PR branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: ci/memory-editor-stack-f914594
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Apply guarded regression fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/memory-editor-native-regression-audit.py
+          git diff --check
+          python3 - <<'PY'
+          import subprocess
+          changed = set(subprocess.check_output(['git', 'diff', '--name-only']).decode().splitlines())
+          expected = {'app/src/main/cpp/memory/memory_engine.cpp'}
+          if changed != expected:
+              raise SystemExit(f'unexpected regression-audit source scope: {sorted(changed)}')
+          PY
+
+      - name: Validate arm64 integration
+        shell: bash
+        run: >-
+          ./gradlew --no-daemon --stacktrace --continue
+          :app:lintEmulatorDebug
+          :dexlib:lintDebug
+          :app:testEmulatorDebugUnitTest
+          :app:validateEmulatorDebugScreenshotTest
+          :app:assembleEmulatorDebug
+          :app:assembleEmulatorDebugAndroidTest
+
+      - name: Compile native code for x86_64 too
+        shell: bash
+        run: ./gradlew --no-daemon --stacktrace -PjlmodRuntimeTestAbi=x86_64 :app:assembleEmulatorDebug
+
+      - name: Commit regression fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/src/main/cpp/memory/memory_engine.cpp
+          git commit -m 'Harden Memory Editor C++23 regression invariants'
+          git rm .github/workflows/memory-editor-native-regression-audit.yml \
+                 .github/scripts/memory-editor-native-regression-audit.py
+          git commit -m 'Remove temporary native regression audit helper'
+          git push origin HEAD:ci/memory-editor-stack-f914594
