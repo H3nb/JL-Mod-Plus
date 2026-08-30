@@ -31,14 +31,8 @@ jobs:
           from pathlib import Path
           p = Path('app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryInputCompose.kt')
           text = p.read_text()
-          old = '''        } else {
-              Column(modifier = modifier.fillMaxWidth()) {
-                  content()
-                  if (session.active) {'''
-          new = '''        } else {
-              Column(modifier = modifier.fillMaxWidth()) {
-                  Box(modifier = Modifier.weight(1f).fillMaxWidth()) { content() }
-                  if (session.active) {'''
+          old = '                content()\n                if (session.active) {'
+          new = '                Box(modifier = Modifier.weight(1f).fillMaxWidth()) { content() }\n                if (session.active) {'
           if text.count(old) != 1:
               raise SystemExit(f'portrait keypad marker count={text.count(old)}')
           p.write_text(text.replace(old, new, 1))
