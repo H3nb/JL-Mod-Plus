@@ -1082,14 +1082,14 @@ jint scanGroup(const OperationContext &context, const std::vector<jint> &types,
         }
     }
 
-    size_t anchorIndex = 0;
+    size_t rarestTerm = 0;
     for (size_t index = 1; index < matches.size(); ++index) {
-        if (matches[index].size() < matches[anchorIndex].size()) {
-            anchorIndex = index;
+        if (matches[index].size() < matches[rarestTerm].size()) {
+            rarestTerm = index;
         }
     }
     std::vector<GroupMatch> retained;
-    for (const GroupMatch &anchor : matches[anchorIndex]) {
+    const auto retainForFirstAnchor = [&](const GroupMatch &anchor) {
         std::vector<GroupMatch> group{anchor};
         const uintptr_t minimum =
                 anchor.address < static_cast<uintptr_t>(maxDistance)
@@ -1100,24 +1100,48 @@ jint scanGroup(const OperationContext &context, const std::vector<jint> &types,
                                          static_cast<uintptr_t>(maxDistance)
                         ? std::numeric_limits<uintptr_t>::max()
                         : anchor.address + static_cast<uintptr_t>(maxDistance);
-        bool complete = true;
-        for (size_t term = 0; term < matches.size(); ++term) {
-            if (term == anchorIndex) {
-                continue;
-            }
+        for (size_t term = 1; term < matches.size(); ++term) {
             const auto found = std::lower_bound(
                     matches[term].begin(), matches[term].end(), minimum,
                     [](const GroupMatch &match, uintptr_t address) {
                         return match.address < address;
                     });
             if (found == matches[term].end() || found->address > maximum) {
-                complete = false;
-                break;
+                return;
             }
             group.push_back(*found);
         }
-        if (complete) {
-            retained.insert(retained.end(), group.begin(), group.end());
+        retained.insert(retained.end(), group.begin(), group.end());
+    };
+    if (rarestTerm == 0) {
+        for (const GroupMatch &anchor : matches.front()) {
+            retainForFirstAnchor(anchor);
+        }
+    } else {
+        // The first term remains the semantic anchor. The rarest term is only a prefilter:
+        // every valid first-term anchor must lie within maxDistance of at least one rare match.
+        std::unordered_set<uintptr_t> visitedFirstAnchors;
+        for (const GroupMatch &rare : matches[rarestTerm]) {
+            const uintptr_t minimum =
+                    rare.address < static_cast<uintptr_t>(maxDistance)
+                            ? 0
+                            : rare.address - static_cast<uintptr_t>(maxDistance);
+            const uintptr_t maximum =
+                    rare.address > std::numeric_limits<uintptr_t>::max() -
+                                           static_cast<uintptr_t>(maxDistance)
+                            ? std::numeric_limits<uintptr_t>::max()
+                            : rare.address + static_cast<uintptr_t>(maxDistance);
+            auto first = std::lower_bound(
+                    matches.front().begin(), matches.front().end(), minimum,
+                    [](const GroupMatch &match, uintptr_t address) {
+                        return match.address < address;
+                    });
+            while (first != matches.front().end() && first->address <= maximum) {
+                if (visitedFirstAnchors.insert(first->address).second) {
+                    retainForFirstAnchor(*first);
+                }
+                ++first;
+            }
         }
     }
     std::sort(retained.begin(), retained.end(),
@@ -1480,12 +1504,20 @@ jint recoverKnownCandidates(const OperationContext &context, jint predicate,
     const bool uniqueOneToOne = oldAddresses.size() == 1 &&
                                 freshAddresses.size() == 1;
     std::vector<bool> claimed(fresh->candidates.size(), false);
+    std::unordered_set<uint64_t> wantedIdentity[kTypeDouble + 1];
     std::unordered_map<uint64_t, std::vector<size_t>>
             freshByIdentity[kTypeDouble + 1];
     if (!uniqueOneToOne) {
+        for (const Candidate &old : context.state->candidates) {
+            if (old.type <= kTypeDouble && old.identityValid) {
+                wantedIdentity[old.type].insert(old.identityHash);
+            }
+        }
         for (size_t index = 0; index < fresh->candidates.size(); ++index) {
             const Candidate &candidate = fresh->candidates[index];
-            if (candidate.type <= kTypeDouble && candidate.identityValid) {
+            if (candidate.type <= kTypeDouble && candidate.identityValid &&
+                wantedIdentity[candidate.type].find(candidate.identityHash) !=
+                        wantedIdentity[candidate.type].end()) {
                 freshByIdentity[candidate.type][candidate.identityHash]
                         .push_back(index);
             }
