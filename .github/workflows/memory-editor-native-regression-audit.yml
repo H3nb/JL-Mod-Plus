@@ -33,6 +33,24 @@ jobs:
         run: |
           set -euo pipefail
           python3 .github/scripts/memory-editor-native-regression-audit.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/src/main/cpp/memory/memory_engine.cpp')
+          text = p.read_text()
+          old = '''int displayTypePriority(ValueType type) {
+              switch (type) {
+              case ValueType::Int:
+          '''
+          new = '''int displayTypePriority(ValueType type) {
+              switch (type) {
+              case ValueType::Invalid:
+                  return 7;
+              case ValueType::Int:
+          '''
+          if text.count(old) != 1:
+              raise SystemExit(f'display priority sentinel marker expected once, found {text.count(old)}')
+          p.write_text(text.replace(old, new, 1))
+          PY
           git diff --check
           python3 - <<'PY'
           import subprocess
