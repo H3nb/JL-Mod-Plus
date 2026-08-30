@@ -1,0 +1,58 @@
+name: Memory keypad portrait reflow
+
+on:
+  push:
+    branches:
+      - ci/memory-editor-stack-f914594
+    paths:
+      - .github/workflows/memory-keypad-reflow.yml
+
+permissions:
+  contents: write
+
+jobs:
+  harden:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: ci/memory-editor-stack-f914594
+          submodules: recursive
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+        with:
+          java-version: '21'
+          distribution: temurin
+      - name: Make portrait content yield space to keypad
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p = Path('app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryInputCompose.kt')
+          text = p.read_text()
+          old = '''        } else {
+              Column(modifier = modifier.fillMaxWidth()) {
+                  content()
+                  if (session.active) {'''
+          new = '''        } else {
+              Column(modifier = modifier.fillMaxWidth()) {
+                  Box(modifier = Modifier.weight(1f).fillMaxWidth()) { content() }
+                  if (session.active) {'''
+          if text.count(old) != 1:
+              raise SystemExit(f'portrait keypad marker count={text.count(old)}')
+          p.write_text(text.replace(old, new, 1))
+          PY
+      - name: Validate
+        run: ./gradlew --no-daemon --stacktrace :app:testEmulatorDebugUnitTest :app:assembleEmulatorDebug
+      - name: Commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/memory-keypad-reflow.yml
+          git add app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryInputCompose.kt
+          git diff --cached --check
+          git commit -m 'Ensure Memory keypad reflows portrait workspace'
+          git push origin HEAD:ci/memory-editor-stack-f914594
