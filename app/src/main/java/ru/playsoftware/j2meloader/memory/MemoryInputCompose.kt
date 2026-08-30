@@ -308,7 +308,7 @@ internal fun MemoryInputArea(
             }
         } else {
             Column(modifier = modifier.fillMaxWidth()) {
-                content()
+                Box(modifier = Modifier.weight(1f).fillMaxWidth()) { content() }
                 if (session.active) {
                     MemoryKeypad(
                         session = session,
