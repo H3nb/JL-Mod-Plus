@@ -1,1 +1,0 @@
-Temporary marker to trigger the final user-authored PR validation after the audited history fix.
