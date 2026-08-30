@@ -74,12 +74,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -307,10 +313,12 @@ class MemoryEditorComposeController(
             JLModPlusTheme {
                 MemoryEditorBubble(
                     visible = state.bubbleEnabled && !state.visible,
+                    onOpen = ::open,
+                    onTouch = ::handleBubbleTouch,
                 )
             }
         }
-        installBubbleDragging()
+        installBubblePositioning()
     }
 
     fun toggleBubble(): Boolean {
@@ -360,8 +368,6 @@ class MemoryEditorComposeController(
         destroyed = true
         bubbleHost?.removeOnLayoutChangeListener(bubbleLayoutListener)
         bubbleView.removeOnLayoutChangeListener(bubbleLayoutListener)
-        bubbleView.setOnTouchListener(null)
-        bubbleView.setOnClickListener(null)
         disconnectEngine()
         ipc.shutdownNow()
     }
@@ -399,59 +405,58 @@ class MemoryEditorComposeController(
         post { applyCapabilities(capabilities) }
     }
 
-    @Suppress("ClickableViewAccessibility")
-    private fun installBubbleDragging() {
+    private fun installBubblePositioning() {
         bubbleHost?.addOnLayoutChangeListener(bubbleLayoutListener)
         bubbleView.addOnLayoutChangeListener(bubbleLayoutListener)
-        bubbleView.setOnClickListener { open() }
-        bubbleView.setOnTouchListener { view, event ->
-            val host = bubbleHost ?: return@setOnTouchListener false
-            val hostLocation = IntArray(2)
-            host.getLocationOnScreen(hostLocation)
-            when (event.actionMasked) {
-                MotionEvent.ACTION_DOWN -> {
-                    view.animate().cancel()
-                    bubbleDownRawX = event.rawX
-                    bubbleDownRawY = event.rawY
-                    bubbleDragOffsetX = event.rawX - hostLocation[0] - view.x
-                    bubbleDragOffsetY = event.rawY - hostLocation[1] - view.y
-                    bubbleMoved = false
-                    true
+    }
+
+    private fun handleBubbleTouch(event: MotionEvent): Boolean {
+        val host = bubbleHost ?: return false
+        val hostLocation = IntArray(2)
+        host.getLocationOnScreen(hostLocation)
+        return when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                bubbleView.animate().cancel()
+                bubbleDownRawX = event.rawX
+                bubbleDownRawY = event.rawY
+                bubbleDragOffsetX = event.rawX - hostLocation[0] - bubbleView.x
+                bubbleDragOffsetY = event.rawY - hostLocation[1] - bubbleView.y
+                bubbleMoved = false
+                true
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (!bubbleMoved) {
+                    val dx = event.rawX - bubbleDownRawX
+                    val dy = event.rawY - bubbleDownRawY
+                    bubbleMoved = dx * dx + dy * dy >
+                        (bubbleTouchSlop * bubbleTouchSlop).toFloat()
                 }
-                MotionEvent.ACTION_MOVE -> {
-                    if (!bubbleMoved) {
-                        val dx = event.rawX - bubbleDownRawX
-                        val dy = event.rawY - bubbleDownRawY
-                        bubbleMoved = dx * dx + dy * dy >
-                            (bubbleTouchSlop * bubbleTouchSlop).toFloat()
+                if (bubbleMoved) {
+                    val bounds = bubbleBounds()
+                    if (bounds != null) {
+                        bubbleView.x = (event.rawX - hostLocation[0] - bubbleDragOffsetX)
+                            .coerceIn(bounds.left, bounds.right)
+                        bubbleView.y = (event.rawY - hostLocation[1] - bubbleDragOffsetY)
+                            .coerceIn(bounds.top, bounds.bottom)
                     }
-                    if (bubbleMoved) {
-                        val bounds = bubbleBounds()
-                        if (bounds != null) {
-                            view.x = (event.rawX - hostLocation[0] - bubbleDragOffsetX)
-                                .coerceIn(bounds.left, bounds.right)
-                            view.y = (event.rawY - hostLocation[1] - bubbleDragOffsetY)
-                                .coerceIn(bounds.top, bounds.bottom)
-                        }
-                    }
-                    true
                 }
-                MotionEvent.ACTION_UP -> {
-                    if (bubbleMoved) {
-                        rememberBubblePosition()
-                        positionBubble(true)
-                    } else {
-                        view.performClick()
-                    }
-                    true
-                }
-                MotionEvent.ACTION_CANCEL -> {
+                true
+            }
+            MotionEvent.ACTION_UP -> {
+                if (bubbleMoved) {
                     rememberBubblePosition()
                     positionBubble(true)
-                    true
+                } else {
+                    open()
                 }
-                else -> false
+                true
             }
+            MotionEvent.ACTION_CANCEL -> {
+                rememberBubblePosition()
+                positionBubble(true)
+                true
+            }
+            else -> false
         }
     }
 
@@ -860,9 +865,28 @@ internal fun MemoryEditorScreen(
 }
 
 @Composable
-private fun MemoryEditorBubble(visible: Boolean) {
+internal fun MemoryEditorBubble(
+    visible: Boolean,
+    onOpen: () -> Unit,
+    onTouch: (MotionEvent) -> Boolean,
+) {
     if (!visible) return
-    Box(modifier = Modifier.fillMaxSize().padding(4.dp), contentAlignment = Alignment.Center) {
+    val description = stringResource(R.string.memory_editor)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInteropFilter(onTouchEvent = onTouch)
+            .semantics(mergeDescendants = true) {
+                contentDescription = description
+                role = Role.Button
+                onClick {
+                    onOpen()
+                    true
+                }
+            }
+            .padding(4.dp),
+        contentAlignment = Alignment.Center,
+    ) {
         Surface(
             modifier = Modifier.fillMaxSize(),
             shape = MaterialTheme.shapes.extraLarge,
@@ -872,7 +896,7 @@ private fun MemoryEditorBubble(visible: Boolean) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     painter = painterResource(R.drawable.ic_memory_editor_search),
-                    contentDescription = stringResource(R.string.memory_editor),
+                    contentDescription = null,
                 )
             }
         }
