@@ -1,0 +1,85 @@
+name: Stage 2 Memory Engine Retry
+
+on:
+  push:
+    branches:
+      - ci/memory-editor-stack-f914594
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out branch with native submodules
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545 # v6.0.0
+
+      - name: Reuse exact Stage 2 patch payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import textwrap
+
+          source = Path('.github/workflows/stage2-memory-engine.yml').read_text()
+          start_marker = "          python3 <<'PY'\n"
+          end_marker = "\n          PY\n"
+          if source.count(start_marker) != 1 or source.count(end_marker) != 1:
+              raise SystemExit('Could not locate the authoritative Stage 2 patch payload')
+          payload = source.split(start_marker, 1)[1].split(end_marker, 1)[0]
+          exec(compile(textwrap.dedent(payload), 'stage2-memory-engine.yml', 'exec'))
+          PY
+
+      - name: Compile and run focused tests
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace \
+            :app:testEmulatorDebugUnitTest \
+            :app:assembleEmulatorDebug \
+            :app:assembleEmulatorDebugAndroidTest
+
+      - name: Verify diff and commit Stage 2 engine API
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/stage2-memory-engine.yml
+          git rm .github/workflows/stage2-memory-engine-retry.yml
+          expected=(
+            '.github/workflows/stage2-memory-engine-retry.yml'
+            '.github/workflows/stage2-memory-engine.yml'
+            'app/src/main/aidl/ru/playsoftware/j2meloader/memory/IMemoryEngineService.aidl'
+            'app/src/main/cpp/memory/memory_engine.cpp'
+            'app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryEngineContract.java'
+            'app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryEngineService.java'
+            'app/src/main/java/ru/playsoftware/j2meloader/memory/NativeMemoryEngine.java'
+            'app/src/test/java/ru/playsoftware/j2meloader/memory/MemoryEngineContractTest.java'
+          )
+          mapfile -t changed < <(git status --porcelain=v1 | sed -E 's/^.. //' | sed -E 's/^"(.*)"$/\1/' | sort)
+          mapfile -t allowed < <(printf '%s\n' "${expected[@]}" | sort)
+          if [[ "$(printf '%s\n' "${changed[@]}")" != "$(printf '%s\n' "${allowed[@]}")" ]]; then
+            echo 'Unexpected Stage 2 diff:' >&2
+            git status --short >&2
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add --all
+          git commit -m 'Add bounded Memory Inspector and Nearby Search engine API'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
