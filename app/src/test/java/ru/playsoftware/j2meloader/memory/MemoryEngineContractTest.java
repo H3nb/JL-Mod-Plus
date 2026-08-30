@@ -46,6 +46,7 @@ public class MemoryEngineContractTest {
 	@Test
 	public void candidatePagesAndWriteLimitsRemainBounded() {
 		assertEquals(9, MemoryEngineContract.RESULT_PAGE_STRIDE);
+		assertEquals(100, MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
 		assertEquals(32, MemoryEngineContract.MAX_MULTI_WRITE);
 		assertEquals(32, MemoryEngineContract.MAX_FREEZE_RECORDS);
 		assertEquals(8, MemoryEngineContract.MAX_GROUP_VALUES);

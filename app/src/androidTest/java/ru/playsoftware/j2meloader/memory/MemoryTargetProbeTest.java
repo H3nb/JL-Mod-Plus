@@ -15,6 +15,7 @@
 package ru.playsoftware.j2meloader.memory;
 
 import android.os.Process;
+import android.os.SystemClock;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -30,6 +31,34 @@ public class MemoryTargetProbeTest {
 	private static final int MANAGED_PROBE_A = 0x5A17C0DE;
 	private static final int MANAGED_PROBE_B = 0x31C0FFEE;
 	private static volatile int managedProbe;
+	private static volatile int managedProbe01, managedProbe02, managedProbe03, managedProbe04;
+	private static volatile int managedProbe05, managedProbe06, managedProbe07, managedProbe08;
+	private static volatile int managedProbe09, managedProbe10, managedProbe11, managedProbe12;
+	private static volatile int managedProbe13, managedProbe14, managedProbe15, managedProbe16;
+	private static volatile int managedProbe17, managedProbe18, managedProbe19, managedProbe20;
+
+	private static void setManagedProbeSet(int value) {
+		managedProbe01 = value;
+		managedProbe02 = value;
+		managedProbe03 = value;
+		managedProbe04 = value;
+		managedProbe05 = value;
+		managedProbe06 = value;
+		managedProbe07 = value;
+		managedProbe08 = value;
+		managedProbe09 = value;
+		managedProbe10 = value;
+		managedProbe11 = value;
+		managedProbe12 = value;
+		managedProbe13 = value;
+		managedProbe14 = value;
+		managedProbe15 = value;
+		managedProbe16 = value;
+		managedProbe17 = value;
+		managedProbe18 = value;
+		managedProbe19 = value;
+		managedProbe20 = value;
+	}
 
 	@Test
 	public void thoroughProbeReturnsAlignedCompleteResidentRuns() {
@@ -115,7 +144,7 @@ public class MemoryTargetProbeTest {
 							MemoryEngineContract.PREDICATE_EQUAL,
 							Integer.toString(MANAGED_PROBE_A), ""));
 
-			long[] page = NativeMemoryEngine.resultPage(0, 200);
+			long[] page = NativeMemoryEngine.resultPage(0, 100);
 			assertNotNull(page);
 			int count = Math.toIntExact(page[0]);
 			assertTrue(count > 0);
@@ -136,6 +165,48 @@ public class MemoryTargetProbeTest {
 					NativeMemoryEngine.resultCount() > 0L);
 		} finally {
 			managedProbe = 0;
+			NativeMemoryEngine.clearTarget();
+		}
+	}
+
+	@Test
+	public void smallCandidateRefineDoesNotRescanTheWholeHeap() {
+		int pageSize = NativeMemoryTarget.pageSize();
+		long[] runs = NativeMemoryTarget.collectResidentRuns(
+				MemoryEngineContract.SCOPE_JAVA_FAST, 4096);
+		assertNotNull(runs);
+		assertTrue(MemoryEngineContract.isCompleteRunList(runs));
+
+		long token = 0x4A4C464153545245L;
+		setManagedProbeSet(MANAGED_PROBE_A);
+		try {
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.configureTarget(
+							Process.myPid(), pageSize, token, runs));
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.startKnown(
+							MemoryEngineContract.TYPE_INT,
+							MemoryEngineContract.PREDICATE_EQUAL,
+							Integer.toString(MANAGED_PROBE_A), ""));
+			long candidateCount = NativeMemoryEngine.resultCount();
+			assertTrue("managed probe set was not found", candidateCount >= 20L);
+			assertTrue("probe value unexpectedly selected the large-set refine path",
+					candidateCount <= 4096L);
+
+			setManagedProbeSet(MANAGED_PROBE_B);
+			long started = SystemClock.elapsedRealtimeNanos();
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.refineKnown(
+							MemoryEngineContract.PREDICATE_EQUAL,
+							Integer.toString(MANAGED_PROBE_B), ""));
+			long elapsedMillis = (SystemClock.elapsedRealtimeNanos() - started) / 1_000_000L;
+			System.out.println("Memory refine candidates=" + candidateCount
+					+ " elapsedMs=" + elapsedMillis);
+			assertTrue("20-value refine took " + elapsedMillis + " ms",
+					elapsedMillis < 1_000L);
+			assertTrue(NativeMemoryEngine.resultCount() >= 20L);
+		} finally {
+			setManagedProbeSet(0);
 			NativeMemoryEngine.clearTarget();
 		}
 	}

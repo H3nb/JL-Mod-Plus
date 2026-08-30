@@ -77,7 +77,7 @@ public final class RuntimeHostView {
 		memoryEditorBubble.setVisibility(android.view.View.GONE);
 		int bubbleSize = Math.round(64 * context.getResources().getDisplayMetrics().density);
 		FrameLayout.LayoutParams bubbleParams = new FrameLayout.LayoutParams(
-				bubbleSize, bubbleSize, Gravity.END | Gravity.CENTER_VERTICAL);
+				bubbleSize, bubbleSize, Gravity.START | Gravity.TOP);
 		root.addView(memoryEditorBubble, bubbleParams);
 		int bubbleMargin = Math.round(8 * context.getResources().getDisplayMetrics().density);
 		ViewCompat.setOnApplyWindowInsetsListener(memoryEditorBubble, (view, windowInsets) -> {

@@ -30,6 +30,7 @@
 #include <new>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -82,6 +83,7 @@ constexpr jint kLost = 3;
 constexpr size_t kCandidateLimit = 2'000'000;
 constexpr size_t kSnapshotByteLimit = 96U * 1024U * 1024U;
 constexpr size_t kReadChunkSize = 256U * 1024U;
+constexpr size_t kDirectRefineLimit = 4'096;
 constexpr size_t kHistoryLimit = 8;
 constexpr size_t kHistoryByteLimit = 192U * 1024U * 1024U;
 constexpr size_t kResultStride = 9;
@@ -109,15 +111,18 @@ struct Candidate {
     uint64_t id;
     uintptr_t address;
     uintptr_t previousAddress;
-    jint type;
-    jint state;
-    uint32_t relocationCount;
     uint64_t initialBits;
     uint64_t previousBits;
     uint64_t currentBits;
     uint64_t identityHash;
+    uint32_t relocationCount;
+    uint8_t type;
+    uint8_t state;
     bool identityValid;
 };
+
+static_assert(sizeof(Candidate) <= 64,
+              "Candidate storage must remain compact at multi-million scale");
 
 struct SnapshotRun {
     uintptr_t start;
@@ -404,8 +409,16 @@ uint64_t loadBits(const uint8_t *data, size_t width) {
 
 Candidate makeCandidate(uint64_t id, uintptr_t address, jint type,
                         uint64_t initialBits, uint64_t currentBits) {
-    return {id,          address,     address,     type, kStable, 0,
-            initialBits, initialBits, currentBits, 0,    false};
+    Candidate candidate{};
+    candidate.id = id;
+    candidate.address = address;
+    candidate.previousAddress = address;
+    candidate.initialBits = initialBits;
+    candidate.previousBits = initialBits;
+    candidate.currentBits = currentBits;
+    candidate.type = static_cast<uint8_t>(type);
+    candidate.state = kStable;
+    return candidate;
 }
 
 uint64_t identityHash(const uint8_t *before, const uint8_t *after) {
@@ -754,6 +767,16 @@ int displayTypePriority(jint type) {
     }
 }
 
+bool candidateDisplayOrder(const Candidate &left, const Candidate &right) {
+    if (left.address != right.address) {
+        return left.address < right.address;
+    }
+    const int leftPriority = displayTypePriority(left.type);
+    const int rightPriority = displayTypePriority(right.type);
+    return leftPriority != rightPriority ? leftPriority < rightPriority
+                                         : left.id < right.id;
+}
+
 void normalizeCandidateResults(SearchState &state) {
     if (state.mode != StateMode::Candidates) {
         return;
@@ -761,18 +784,10 @@ void normalizeCandidateResults(SearchState &state) {
     if (!state.candidateOrderDirty) {
         return;
     }
-    const auto ordered = [](const Candidate &left, const Candidate &right) {
-        if (left.address != right.address) {
-            return left.address < right.address;
-        }
-        const int leftPriority = displayTypePriority(left.type);
-        const int rightPriority = displayTypePriority(right.type);
-        return leftPriority != rightPriority ? leftPriority < rightPriority
-                                             : left.id < right.id;
-    };
     if (!std::is_sorted(state.candidates.begin(), state.candidates.end(),
-                        ordered)) {
-        std::sort(state.candidates.begin(), state.candidates.end(), ordered);
+                        candidateDisplayOrder)) {
+        std::sort(state.candidates.begin(), state.candidates.end(),
+                  candidateDisplayOrder);
     }
     state.logicalCount = 0;
     uintptr_t previousAddress = 0;
@@ -802,9 +817,9 @@ jint commitOperation(const OperationContext &context,
         return kTargetLost;
     }
     if (historyMode > 0 && gState->mode != StateMode::Empty) {
-        auto searchSnapshot = std::make_shared<SearchState>(*gState);
-        searchSnapshot->watches.clear();
-        gHistory.push_back(std::move(searchSnapshot));
+        // Search states are immutable after publication. Retaining the shared snapshot makes
+        // Undo O(1) here instead of copying up to two million candidate records on every refine.
+        gHistory.push_back(gState);
         trimHistoryLocked();
     } else if (historyMode < 0) {
         gHistory.clear();
@@ -880,6 +895,7 @@ jint collectKnown(const OperationContext &context, jint requestedType,
             }
             const size_t readableSize = static_cast<size_t>(bytesRead);
             readAnyBytes = true;
+            const size_t chunkCandidateStart = next->candidates.size();
             for (const Query &query : queries) {
                 const size_t width = widthOf(query.type);
                 uintptr_t address = chunkStart;
@@ -914,6 +930,11 @@ jint collectKnown(const OperationContext &context, jint requestedType,
                     }
                     address += width;
                 }
+            }
+            if (queries.size() > 1U) {
+                std::sort(next->candidates.begin() +
+                                  static_cast<std::ptrdiff_t>(chunkCandidateStart),
+                          next->candidates.end(), candidateDisplayOrder);
             }
             chunkStart += readableSize;
             if (readableSize < chunkSize) {
@@ -1156,66 +1177,72 @@ jint snapshotUnknown(const OperationContext &context, jint requestedType) {
     return commitOperation(context, std::move(next), -1);
 }
 
-jint captureCurrentImage(const Target &target,
-                         std::vector<SnapshotRun> &snapshots) {
-    size_t retained = 0;
-    snapshots.clear();
-    snapshots.reserve(target.ranges.size());
-    for (const Range &range : target.ranges) {
-        if (gCancelled.load(std::memory_order_acquire)) {
-            setMessage("Operation cancelled; previous results were preserved");
-            return kCancelled;
-        }
-        const size_t size = static_cast<size_t>(range.end - range.start);
-        if (size > kSnapshotByteLimit - std::min(retained, kSnapshotByteLimit)) {
-            setMessage("Refine snapshot exceeds the memory budget");
-            return kResourceLimit;
-        }
-        SnapshotRun snapshot;
-        snapshot.start = range.start;
-        snapshot.bytes.resize(size);
-        if (!readExact(target.pid, range.start, snapshot.bytes.data(), size)) {
-            setMessage("A target range changed while it was being refined");
-            return kTargetLost;
-        }
-        retained += size;
-        snapshots.push_back(std::move(snapshot));
-    }
-    return kOk;
-}
-
-bool readImageBits(const std::vector<SnapshotRun> &snapshots,
-                   const Candidate &candidate, uint64_t &bits) {
-    const size_t width = widthOf(candidate.type);
-    if (width == 0) {
-        return false;
-    }
-    const auto run = std::upper_bound(
-            snapshots.begin(), snapshots.end(), candidate.address,
-            [](uintptr_t address, const SnapshotRun &item) {
-                return address < item.start;
-            });
-    if (run == snapshots.begin()) {
-        return false;
-    }
-    const SnapshotRun &snapshot = *std::prev(run);
-    if (candidate.address < snapshot.start) {
-        return false;
-    }
-    const size_t offset = static_cast<size_t>(candidate.address - snapshot.start);
-    if (offset > snapshot.bytes.size() ||
-        width > snapshot.bytes.size() - offset) {
-        return false;
-    }
-    bits = loadBits(snapshot.bytes.data() + offset, width);
-    return true;
-}
-
 bool readCandidate(const Target &target, const Candidate &candidate,
                    uint64_t &bits) {
     const size_t width = widthOf(candidate.type);
     return width != 0 && readExact(target.pid, candidate.address, &bits, width);
 }
+
+class CandidateValueReader {
+  public:
+    CandidateValueReader(const Target &target, size_t candidateCount)
+        : target_(target), direct_(candidateCount <= kDirectRefineLimit) {}
+
+    bool read(const Candidate &candidate, uint64_t &bits) {
+        if (direct_) {
+            return readCandidate(target_, candidate, bits);
+        }
+        const size_t width = widthOf(candidate.type);
+        if (width == 0 || candidate.address >
+                                  std::numeric_limits<uintptr_t>::max() - width) {
+            return false;
+        }
+        if (candidate.address >= cachedStart_ &&
+            candidate.address + width <= cachedEnd_) {
+            if (!cacheReadable_) {
+                return false;
+            }
+            bits = loadBits(buffer_.data() + candidate.address - cachedStart_,
+                            width);
+            return true;
+        }
+        const auto range = std::upper_bound(
+                target_.ranges.begin(), target_.ranges.end(), candidate.address,
+                [](uintptr_t address, const Range &item) {
+                    return address < item.start;
+                });
+        if (range == target_.ranges.begin()) {
+            return false;
+        }
+        const Range &containing = *std::prev(range);
+        if (candidate.address < containing.start ||
+            candidate.address + width > containing.end) {
+            return false;
+        }
+        const uintptr_t offset = candidate.address - containing.start;
+        cachedStart_ = containing.start +
+                       offset / kReadChunkSize * kReadChunkSize;
+        const size_t chunkSize = static_cast<size_t>(std::min<uintptr_t>(
+                kReadChunkSize, containing.end - cachedStart_));
+        cachedEnd_ = cachedStart_ + chunkSize;
+        buffer_.resize(chunkSize);
+        if (!readExact(target_.pid, cachedStart_, buffer_.data(), chunkSize)) {
+            cacheReadable_ = false;
+            return false;
+        }
+        cacheReadable_ = true;
+        bits = loadBits(buffer_.data() + candidate.address - cachedStart_, width);
+        return true;
+    }
+
+  private:
+    const Target &target_;
+    const bool direct_;
+    std::vector<uint8_t> buffer_;
+    uintptr_t cachedStart_ = 0;
+    uintptr_t cachedEnd_ = 0;
+    bool cacheReadable_ = false;
+};
 
 jint refineCandidates(const OperationContext &context, jint predicate,
                       const std::string &first, const std::string &second,
@@ -1259,6 +1286,7 @@ jint refineCandidates(const OperationContext &context, jint predicate,
                 setMessage("A target range changed while it was being refined");
                 return kTargetLost;
             }
+            const size_t snapshotCandidateStart = next->candidates.size();
             for (const Query &query : queries) {
                 const size_t width = widthOf(query.type);
                 uintptr_t address = snapshot.start;
@@ -1302,16 +1330,21 @@ jint refineCandidates(const OperationContext &context, jint predicate,
                     address += width;
                 }
             }
+            if (queries.size() > 1U) {
+                std::sort(next->candidates.begin() +
+                                  static_cast<std::ptrdiff_t>(snapshotCandidateStart),
+                          next->candidates.end(), candidateDisplayOrder);
+            }
         }
     } else {
-        // Reading one complete resident image turns a million-candidate refine from a million
-        // process_vm_readv syscalls into sequential remote reads plus an in-process filter pass.
-        // It also makes a published zero trustworthy: partial coverage aborts transactionally.
-        std::vector<SnapshotRun> currentImage;
-        const jint captureResult =
-                captureCurrentImage(context.target, currentImage);
-        if (captureResult != kOk) {
-            return captureResult;
+        // Small result sets use direct reads; large sorted sets reuse a 256 KiB chunk. This keeps
+        // a 20-result refine proportional to 20 values while million-result passes remain
+        // sequential without allocating a second full-heap image.
+        CandidateValueReader reader(context.target,
+                                    context.state->candidates.size());
+        const Query *queriesByType[kTypeDouble + 1] = {};
+        for (const Query &query : queries) {
+            queriesByType[query.type] = &query;
         }
         next->candidates.reserve(context.state->candidates.size());
         for (const Candidate &candidate : context.state->candidates) {
@@ -1331,19 +1364,17 @@ jint refineCandidates(const OperationContext &context, jint predicate,
             bound.identityValid = live.identityValid;
             Candidate updated = bound;
             uint64_t current = 0;
-            if (!readImageBits(currentImage, bound, current)) {
-                // The complete image was captured successfully, so an unresolved address is a
-                // stale binding. Never keep it as a result that looks editable.
+            if (!reader.read(bound, current)) {
+                // A stale raw binding is excluded transactionally from the next state.
                 continue;
             }
             updated.previousBits = candidate.currentBits;
             updated.currentBits = current;
             updated.state = kStable;
-            auto query = std::find_if(queries.begin(), queries.end(),
-                                      [&](const Query &item) {
-                                          return item.type == candidate.type;
-                                      });
-            if (query == queries.end()) {
+            const Query *query = candidate.type <= kTypeDouble
+                                         ? queriesByType[candidate.type]
+                                         : nullptr;
+            if (query == nullptr) {
                 continue;
             }
             const uint64_t reference = compareTarget == kCompareInitial
@@ -1593,38 +1624,40 @@ jint refreshCandidates(const OperationContext &context,
     }
     std::vector<Candidate> selected;
     selected.reserve(ids.size());
+    std::unordered_set<uint64_t> unresolved(ids.begin(), ids.end());
+    if (unresolved.size() != ids.size()) {
+        setMessage("Candidate IDs must be unique");
+        return kInvalidRequest;
+    }
     for (uint64_t id : ids) {
         const auto live = context.liveCandidates.find(id);
         if (live != context.liveCandidates.end()) {
             selected.push_back(live->second);
+            unresolved.erase(id);
         }
     }
     const auto collect = [&](const Candidate &candidate) {
-        if (!isSelected(ids, candidate.id) ||
-            std::any_of(selected.begin(), selected.end(),
-                        [&](const Candidate &item) {
-                            return item.id == candidate.id;
-                        })) {
-            return;
+        if (unresolved.erase(candidate.id) != 0U) {
+            selected.push_back(liveCandidate(candidate, context.liveCandidates));
         }
-        selected.push_back(liveCandidate(candidate, context.liveCandidates));
     };
-    for (const Candidate &candidate : context.state->candidates) {
-        collect(candidate);
+    if (!unresolved.empty()) {
+        for (const Candidate &candidate : context.state->candidates) {
+            collect(candidate);
+            if (unresolved.empty()) break;
+        }
+        for (const Candidate &watch : context.state->watches) {
+            collect(watch);
+            if (unresolved.empty()) break;
+        }
     }
-    for (const Candidate &watch : context.state->watches) {
-        collect(watch);
-    }
-    if (selected.size() != ids.size()) {
+    if (!unresolved.empty()) {
         setMessage("One or more candidate IDs are no longer available");
         return kInvalidRequest;
     }
     size_t unsafeCount = 0;
     std::vector<Candidate *> recovery;
     const auto refreshOne = [&](Candidate &candidate) {
-        if (!isSelected(ids, candidate.id)) {
-            return;
-        }
         uint64_t current = 0;
         uint64_t hash = 0;
         const bool readable = readCandidate(context.target, candidate, current);
@@ -2430,7 +2463,7 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_resultCount(JNIEnv *,
 extern "C" JNIEXPORT jlongArray JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_resultPage(
         JNIEnv *env, jclass, jint offset, jint limit) {
-    if (offset < 0 || limit <= 0 || limit > 200) {
+    if (offset < 0 || limit <= 0 || limit > 100) {
         return nullptr;
     }
     std::shared_ptr<const SearchState> state;

@@ -24,7 +24,10 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.os.IBinder
 import android.os.RemoteException
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
+import android.widget.FrameLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -163,6 +166,7 @@ internal fun newSearchPredicate(selectedPredicate: Int): Int =
 internal data class MemoryEditorUiState(
     val bubbleEnabled: Boolean = false,
     val visible: Boolean = false,
+    val connecting: Boolean = false,
     val connected: Boolean = false,
     val supported: Boolean = false,
     val writeSupported: Boolean = false,
@@ -217,6 +221,18 @@ class MemoryEditorComposeController(
     private var bound = false
     private var destroyed = false
     private var refreshInFlight = false
+    private var bubbleOnRight = true
+    private var bubbleVerticalFraction = 0.5f
+    private var bubbleDownRawX = 0f
+    private var bubbleDownRawY = 0f
+    private var bubbleDragOffsetX = 0f
+    private var bubbleDragOffsetY = 0f
+    private var bubbleMoved = false
+    private val bubbleTouchSlop = ViewConfiguration.get(context).scaledTouchSlop
+    private val bubbleHost: View? = bubbleView.parent as? View
+    private val bubbleLayoutListener = View.OnLayoutChangeListener {
+            _, _, _, _, _, _, _, _, _ -> positionBubble(false)
+    }
 
     private val callback = object : IMemoryEngineCallback.Stub() {
         override fun onOperationFinished(
@@ -291,10 +307,10 @@ class MemoryEditorComposeController(
             JLModPlusTheme {
                 MemoryEditorBubble(
                     visible = state.bubbleEnabled && !state.visible,
-                    onOpen = ::open,
                 )
             }
         }
+        installBubbleDragging()
     }
 
     fun toggleBubble(): Boolean {
@@ -308,7 +324,12 @@ class MemoryEditorComposeController(
         )
         composeView.visibility = View.GONE
         bubbleView.visibility = if (enabled) View.VISIBLE else View.GONE
-        if (!enabled) disconnectEngine()
+        if (enabled) {
+            bubbleView.post { positionBubble(false) }
+            connectEngine()
+        } else {
+            disconnectEngine()
+        }
         return enabled
     }
 
@@ -316,14 +337,9 @@ class MemoryEditorComposeController(
         if (destroyed || !state.bubbleEnabled) return
         composeView.visibility = View.VISIBLE
         bubbleView.visibility = View.GONE
-        state = state.copy(visible = true, message = null)
-        if (!bound) {
-            bound = context.bindService(
-                Intent(context, MemoryEngineService::class.java),
-                connection,
-                Context.BIND_AUTO_CREATE,
-            )
-            if (!bound) state = state.copy(message = context.getString(R.string.memory_editor_unsupported))
+        state = state.copy(visible = true, connecting = true, message = null)
+        if (service == null) {
+            connectEngine()
         } else {
             refreshCapabilities()
         }
@@ -342,8 +358,27 @@ class MemoryEditorComposeController(
     fun destroy() {
         if (destroyed) return
         destroyed = true
+        bubbleHost?.removeOnLayoutChangeListener(bubbleLayoutListener)
+        bubbleView.removeOnLayoutChangeListener(bubbleLayoutListener)
+        bubbleView.setOnTouchListener(null)
+        bubbleView.setOnClickListener(null)
         disconnectEngine()
         ipc.shutdownNow()
+    }
+
+    private fun connectEngine() {
+        if (bound || destroyed) return
+        bound = context.bindService(
+            Intent(context, MemoryEngineService::class.java),
+            connection,
+            Context.BIND_AUTO_CREATE,
+        )
+        if (!bound) {
+            state = state.copy(
+                connecting = false,
+                message = context.getString(R.string.memory_editor_unsupported),
+            )
+        }
     }
 
     private fun disconnectEngine() {
@@ -360,8 +395,103 @@ class MemoryEditorComposeController(
     }
 
     override fun refreshCapabilities() = runIpc {
-        val capabilities = service?.capabilities
+        val capabilities = service?.capabilities ?: return@runIpc
         post { applyCapabilities(capabilities) }
+    }
+
+    @Suppress("ClickableViewAccessibility")
+    private fun installBubbleDragging() {
+        bubbleHost?.addOnLayoutChangeListener(bubbleLayoutListener)
+        bubbleView.addOnLayoutChangeListener(bubbleLayoutListener)
+        bubbleView.setOnClickListener { open() }
+        bubbleView.setOnTouchListener { view, event ->
+            val host = bubbleHost ?: return@setOnTouchListener false
+            val hostLocation = IntArray(2)
+            host.getLocationOnScreen(hostLocation)
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    view.animate().cancel()
+                    bubbleDownRawX = event.rawX
+                    bubbleDownRawY = event.rawY
+                    bubbleDragOffsetX = event.rawX - hostLocation[0] - view.x
+                    bubbleDragOffsetY = event.rawY - hostLocation[1] - view.y
+                    bubbleMoved = false
+                    true
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    if (!bubbleMoved) {
+                        val dx = event.rawX - bubbleDownRawX
+                        val dy = event.rawY - bubbleDownRawY
+                        bubbleMoved = dx * dx + dy * dy >
+                            (bubbleTouchSlop * bubbleTouchSlop).toFloat()
+                    }
+                    if (bubbleMoved) {
+                        val bounds = bubbleBounds()
+                        if (bounds != null) {
+                            view.x = (event.rawX - hostLocation[0] - bubbleDragOffsetX)
+                                .coerceIn(bounds.left, bounds.right)
+                            view.y = (event.rawY - hostLocation[1] - bubbleDragOffsetY)
+                                .coerceIn(bounds.top, bounds.bottom)
+                        }
+                    }
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    if (bubbleMoved) {
+                        rememberBubblePosition()
+                        positionBubble(true)
+                    } else {
+                        view.performClick()
+                    }
+                    true
+                }
+                MotionEvent.ACTION_CANCEL -> {
+                    rememberBubblePosition()
+                    positionBubble(true)
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
+    private data class BubbleBounds(val left: Float, val top: Float, val right: Float, val bottom: Float)
+
+    private fun bubbleBounds(): BubbleBounds? {
+        val host = bubbleHost ?: return null
+        val params = bubbleView.layoutParams as? FrameLayout.LayoutParams ?: return null
+        if (host.width <= 0 || host.height <= 0 || bubbleView.width <= 0 || bubbleView.height <= 0) return null
+        val left = params.leftMargin.toFloat()
+        val top = params.topMargin.toFloat()
+        return BubbleBounds(
+            left = left,
+            top = top,
+            right = (host.width - bubbleView.width - params.rightMargin).coerceAtLeast(params.leftMargin).toFloat(),
+            bottom = (host.height - bubbleView.height - params.bottomMargin).coerceAtLeast(params.topMargin).toFloat(),
+        )
+    }
+
+    private fun rememberBubblePosition() {
+        val bounds = bubbleBounds() ?: return
+        bubbleOnRight = bubbleView.x + bubbleView.width / 2f >= (bounds.left + bounds.right + bubbleView.width) / 2f
+        bubbleVerticalFraction = if (bounds.bottom > bounds.top) {
+            ((bubbleView.y - bounds.top) / (bounds.bottom - bounds.top)).coerceIn(0f, 1f)
+        } else {
+            0.5f
+        }
+    }
+
+    private fun positionBubble(animate: Boolean) {
+        val bounds = bubbleBounds() ?: return
+        val targetX = if (bubbleOnRight) bounds.right else bounds.left
+        val targetY = bounds.top + (bounds.bottom - bounds.top) * bubbleVerticalFraction
+        if (animate) {
+            bubbleView.animate().x(targetX).y(targetY).setDuration(180L).start()
+        } else {
+            bubbleView.animate().cancel()
+            bubbleView.x = targetX
+            bubbleView.y = targetY
+        }
     }
 
     override fun startSearch(
@@ -551,7 +681,7 @@ class MemoryEditorComposeController(
         }
     }
 
-    private fun reload() = runIpc {
+    private fun reload(refreshAfterLoad: Boolean = false) = runIpc {
         val engine = service ?: return@runIpc
         val token = state.runtimeToken
         if (token == 0L) return@runIpc
@@ -572,6 +702,7 @@ class MemoryEditorComposeController(
                 watches = watchRows,
                 selected = state.selected.intersect((resultRows + watchRows).mapTo(mutableSetOf()) { it.id }),
             )
+            if (refreshAfterLoad) refresh()
         }
     }
 
@@ -593,18 +724,19 @@ class MemoryEditorComposeController(
         val supported = bundle?.getBoolean(MemoryEngineContract.KEY_SUPPORTED) == true
         state = state.copy(
             connected = bundle != null,
+            connecting = false,
             supported = supported,
             writeSupported = bundle?.getBoolean(MemoryEngineContract.KEY_WRITE_SUPPORTED) == true,
             runtimeToken = bundle?.getLong(MemoryEngineContract.KEY_RUNTIME_TOKEN) ?: 0L,
             message = if (supported) null else bundle?.getString(MemoryEngineContract.KEY_MESSAGE),
         )
-        if (supported) reload()
+        if (supported && state.visible) reload(refreshAfterLoad = true)
     }
 
     private fun disconnected() = post {
         service = null
         refreshInFlight = false
-        state = state.copy(connected = false, supported = false, busy = false, searching = false,
+        state = state.copy(connected = false, connecting = false, supported = false, busy = false, searching = false,
             message = context.getString(R.string.memory_editor_unsupported))
     }
 
@@ -648,11 +780,14 @@ internal fun MemoryEditorScreen(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
 ) {
-    if (!state.visible) return
-    LaunchedEffect(state.visible, state.watchTab, state.busy) {
+    // Compose the hidden editor as soon as its bubble is enabled so the first tap only changes
+    // visibility; it does not inflate the full control tree on top of a running MIDlet frame.
+    if (!state.visible && !state.bubbleEnabled) return
+    LaunchedEffect(state.visible, state.watchTab, state.connecting, state.supported) {
+        if (!state.visible || state.connecting || !state.supported) return@LaunchedEffect
         while (state.visible) {
-            delay(1_000)
             if (!state.busy) actions.refresh()
+            delay(1_000)
         }
     }
     LaunchedEffect(state.visible, state.connected, state.supported) {
@@ -725,11 +860,11 @@ internal fun MemoryEditorScreen(
 }
 
 @Composable
-private fun MemoryEditorBubble(visible: Boolean, onOpen: () -> Unit) {
+private fun MemoryEditorBubble(visible: Boolean) {
     if (!visible) return
     Box(modifier = Modifier.fillMaxSize().padding(4.dp), contentAlignment = Alignment.Center) {
         Surface(
-            modifier = Modifier.fillMaxSize().clickable(onClick = onOpen),
+            modifier = Modifier.fillMaxSize(),
             shape = MaterialTheme.shapes.extraLarge,
             color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.92f),
             shadowElevation = 8.dp,
@@ -782,6 +917,20 @@ private fun MemoryEditorContent(state: MemoryEditorUiState, actions: MemoryEdito
                     contentDescription = stringResource(R.string.memory_editor_close),
                 )
             }
+        }
+        if (state.connecting) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(24.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                CircularProgressIndicator()
+                Text(
+                    stringResource(R.string.memory_editor_working),
+                    modifier = Modifier.padding(top = 16.dp),
+                )
+            }
+            return
         }
         if (!state.supported) {
             Column(
