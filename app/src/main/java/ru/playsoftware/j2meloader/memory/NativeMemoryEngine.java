@@ -59,6 +59,8 @@ final class NativeMemoryEngine {
 
 	static native long resultCount();
 
+	static native int historyDepth();
+
 	static native long[] resultPage(int offset, int limit);
 
 	static native long[] inspect(long candidateId, int radius);

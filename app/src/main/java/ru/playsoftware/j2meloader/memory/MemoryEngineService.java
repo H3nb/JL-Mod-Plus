@@ -247,6 +247,7 @@ public final class MemoryEngineService extends Service {
 		@Override
 		public long undoSearch(long token) {
 			return enqueue(token, false, 0, () -> {
+				synchronizeSearchHistoryDepth(NativeMemoryEngine.historyDepth());
 				int result = NativeMemoryEngine.undo();
 				if (result == MemoryEngineContract.RESULT_OK) undoSearchSession();
 				return result;
@@ -262,14 +263,24 @@ public final class MemoryEngineService extends Service {
 
 		@Override
 		public long removeCandidates(long token, long[] candidateIds) {
-			return enqueue(token, false, 0,
-					() -> NativeMemoryEngine.filter(candidateIds, false));
+			return enqueue(token, false, 0, () -> {
+				int result = NativeMemoryEngine.filter(candidateIds, false);
+				if (result == MemoryEngineContract.RESULT_OK) {
+					advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES);
+				}
+				return result;
+			});
 		}
 
 		@Override
 		public long keepCandidates(long token, long[] candidateIds) {
-			return enqueue(token, false, 0,
-					() -> NativeMemoryEngine.filter(candidateIds, true));
+			return enqueue(token, false, 0, () -> {
+				int result = NativeMemoryEngine.filter(candidateIds, true);
+				if (result == MemoryEngineContract.RESULT_OK) {
+					advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES);
+				}
+				return result;
+			});
 		}
 
 		@Override
@@ -760,7 +771,9 @@ public final class MemoryEngineService extends Service {
 	private Bundle searchSessionInfo(long token) {
 		Bundle bundle = new Bundle();
 		boolean current = isCurrentToken(token);
+		int nativeHistoryDepth = current ? NativeMemoryEngine.historyDepth() : 0;
 		synchronized (searchSessionLock) {
+			if (current) trimSearchHistoryLocked(nativeHistoryDepth);
 			bundle.putInt(MemoryEngineContract.KEY_SEARCH_SESSION_STAGE,
 					current ? searchSessionStage : MemoryEngineContract.SEARCH_SESSION_EMPTY);
 			bundle.putInt(MemoryEngineContract.KEY_SEARCH_MODE,
@@ -770,7 +783,7 @@ public final class MemoryEngineService extends Service {
 			bundle.putInt(MemoryEngineContract.KEY_SEARCH_SCOPE,
 					current ? searchSessionScope : MemoryEngineContract.SCOPE_JAVA_FAST);
 			bundle.putInt(MemoryEngineContract.KEY_SEARCH_HISTORY_DEPTH,
-					current ? searchStageHistory.size() : 0);
+					current ? Math.min(nativeHistoryDepth, searchStageHistory.size()) : 0);
 		}
 		return bundle;
 	}
@@ -786,12 +799,25 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private void advanceSearchSession(int nextStage) {
+		int nativeHistoryDepth = NativeMemoryEngine.historyDepth();
 		synchronized (searchSessionLock) {
-			if (searchStageHistory.size() >= MemoryEngineContract.MAX_SEARCH_HISTORY) {
-				searchStageHistory.removeFirst();
-			}
 			searchStageHistory.addLast(searchSessionStage);
+			trimSearchHistoryLocked(nativeHistoryDepth);
 			searchSessionStage = nextStage;
+		}
+	}
+
+	private void synchronizeSearchHistoryDepth(int nativeDepth) {
+		synchronized (searchSessionLock) {
+			trimSearchHistoryLocked(nativeDepth);
+		}
+	}
+
+	private void trimSearchHistoryLocked(int nativeDepth) {
+		int boundedDepth = Math.max(0, Math.min(nativeDepth,
+				MemoryEngineContract.MAX_SEARCH_HISTORY));
+		while (searchStageHistory.size() > boundedDepth) {
+			searchStageHistory.removeFirst();
 		}
 	}
 

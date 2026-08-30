@@ -2780,6 +2780,15 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_resultCount(JNIEnv *,
                    : static_cast<jlong>(state->logicalCount);
 }
 
+extern "C" JNIEXPORT jint JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_historyDepth(JNIEnv *,
+                                                                       jclass) {
+    std::lock_guard<std::mutex> lock(gMutex);
+    return gHistory.size() > static_cast<size_t>(std::numeric_limits<jint>::max())
+                   ? std::numeric_limits<jint>::max()
+                   : static_cast<jint>(gHistory.size());
+}
+
 extern "C" JNIEXPORT jlongArray JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_resultPage(
         JNIEnv *env, jclass, jint offset, jint limit) {
