@@ -605,17 +605,6 @@ bool readExact(pid_t pid, uintptr_t address, void *destination, size_t size) {
     return true;
 }
 
-ssize_t readAvailable(pid_t pid, uintptr_t address, void *destination,
-                      size_t size) {
-    iovec local{destination, size};
-    iovec remote{reinterpret_cast<void *>(address), size};
-    ssize_t result;
-    do {
-        result = process_vm_readv(pid, &local, 1, &remote, 1, 0);
-    } while (result < 0 && errno == EINTR);
-    return result;
-}
-
 bool writeExact(pid_t pid, uintptr_t address, const void *source, size_t size) {
     const auto *input = static_cast<const uint8_t *>(source);
     size_t completed = 0;
@@ -682,6 +671,20 @@ void captureIdentities(const Target &target,
         candidate.identityValid = readIdentity(
                 target, candidate.address, candidate.type,
                 candidate.identityHash);
+    }
+}
+
+void fillMissingIdentities(const Target &target,
+                           std::vector<Candidate> &candidates) {
+    if (candidates.empty() || candidates.size() > kRelocationTrackLimit) {
+        return;
+    }
+    for (Candidate &candidate : candidates) {
+        if (!candidate.identityValid) {
+            candidate.identityValid = readIdentity(
+                    target, candidate.address, candidate.type,
+                    candidate.identityHash);
+        }
     }
 }
 
@@ -891,7 +894,6 @@ jint collectKnown(const OperationContext &context, jint requestedType,
     next->requestedType = requestedType;
     next->watches = context.state->watches;
     std::vector<uint8_t> buffer;
-    bool readAnyBytes = false;
 
     for (const Range &range : context.target.ranges) {
         for (uintptr_t chunkStart = range.start; chunkStart < range.end;) {
@@ -904,17 +906,11 @@ jint collectKnown(const OperationContext &context, jint requestedType,
                     static_cast<size_t>(range.end - chunkStart);
             const size_t chunkSize = std::min(remaining, kReadChunkSize);
             buffer.resize(chunkSize);
-            const ssize_t bytesRead = readAvailable(
-                    context.target.pid, chunkStart, buffer.data(), chunkSize);
-            if (bytesRead <= 0) {
-                const uintptr_t nextPage =
-                        (chunkStart / context.target.pageSize + 1) *
-                        context.target.pageSize;
-                chunkStart = std::min(range.end, nextPage);
-                continue;
+            if (!readExact(context.target.pid, chunkStart, buffer.data(),
+                           chunkSize)) {
+                setMessage("A target range changed while it was being scanned");
+                return kTargetLost;
             }
-            const size_t readableSize = static_cast<size_t>(bytesRead);
-            readAnyBytes = true;
             const size_t chunkCandidateStart = next->candidates.size();
             for (const Query &query : queries) {
                 const size_t width = widthOf(query.type);
@@ -925,11 +921,11 @@ jint collectKnown(const OperationContext &context, jint requestedType,
                     address += width - misalignment;
                 }
                 while (address >= chunkStart &&
-                       address <= chunkStart + readableSize -
-                                          std::min(width, readableSize)) {
+                       address <= chunkStart + chunkSize -
+                                          std::min(width, chunkSize)) {
                     const size_t offset =
                             static_cast<size_t>(address - chunkStart);
-                    if (offset + width > readableSize) {
+                    if (offset + width > chunkSize) {
                         break;
                     }
                     const uint64_t bits =
@@ -940,9 +936,13 @@ jint collectKnown(const OperationContext &context, jint requestedType,
                                        "results were preserved");
                             return kResourceLimit;
                         }
-                        next->candidates.push_back(makeCandidate(
+                        Candidate materialized = makeCandidate(
                                 context.nextId + next->candidates.size(),
-                                address, query.type, bits, bits));
+                                address, query.type, bits, bits);
+                        materialized.identityValid = snapshotIdentity(
+                                buffer.data(), chunkSize, offset, width,
+                                materialized.identityHash);
+                        next->candidates.push_back(materialized);
                     }
                     if (address >
                         std::numeric_limits<uintptr_t>::max() - width) {
@@ -956,20 +956,12 @@ jint collectKnown(const OperationContext &context, jint requestedType,
                                   static_cast<std::ptrdiff_t>(chunkCandidateStart),
                           next->candidates.end(), candidateDisplayOrder);
             }
-            chunkStart += readableSize;
-            if (readableSize < chunkSize) {
-                const uintptr_t nextPage =
-                        (chunkStart / context.target.pageSize + 1) *
-                        context.target.pageSize;
-                chunkStart = std::min(range.end, nextPage);
-            }
+            chunkStart += chunkSize;
         }
     }
-    if (!readAnyBytes) {
-        setMessage("The MIDlet memory ranges could not be read");
-        return kTargetLost;
-    }
-    captureIdentities(context.target, next->candidates);
+    // Most identities were captured from the already-read scan chunk. Only chunk/range boundary
+    // candidates need additional remote context reads.
+    fillMissingIdentities(context.target, next->candidates);
     next->logicalCount = next->candidates.size();
     next->candidateOrderDirty = true;
     return kOk;
@@ -1389,6 +1381,7 @@ jint refineCandidates(const OperationContext &context, jint predicate,
                           next->candidates.end(), candidateDisplayOrder);
             }
         }
+        fillMissingIdentities(context.target, next->candidates);
     } else {
         // Small result sets use direct reads; large sorted sets reuse a 256 KiB chunk. This keeps
         // a 20-result refine proportional to 20 values while million-result passes remain
@@ -1441,10 +1434,8 @@ jint refineCandidates(const OperationContext &context, jint predicate,
                 next->candidates.push_back(updated);
             }
         }
-        // Identity is recovery evidence, not a prerequisite for direct
-        // refinement. Gameplay commonly changes neighboring fields without
-        // moving the candidate; requiring an identical neighborhood here was
-        // the main reliability regression from PR #109.
+        // A successful explicit refine is allowed to establish a fresh recovery fingerprint for
+        // its surviving raw bindings. Passive display refreshes below are deliberately stricter.
         captureIdentities(context.target, next->candidates);
     }
     if (!relative && context.state->mode == StateMode::Candidates &&
@@ -1462,17 +1453,15 @@ jint refineCandidates(const OperationContext &context, jint predicate,
     return commitOperation(committed, std::move(next), 1);
 }
 
-std::vector<uintptr_t> uniqueAddresses(
-        const std::vector<Candidate> &candidates) {
-    std::vector<uintptr_t> addresses;
-    addresses.reserve(candidates.size());
-    for (const Candidate &candidate : candidates) {
-        addresses.push_back(candidate.address);
+bool hasSingleUniqueAddress(const std::vector<Candidate> &candidates) {
+    if (candidates.empty()) {
+        return false;
     }
-    std::sort(addresses.begin(), addresses.end());
-    addresses.erase(std::unique(addresses.begin(), addresses.end()),
-                    addresses.end());
-    return addresses;
+    const uintptr_t address = candidates.front().address;
+    return std::all_of(candidates.begin(), candidates.end(),
+                       [&](const Candidate &candidate) {
+                           return candidate.address == address;
+                       });
 }
 
 jint recoverKnownCandidates(const OperationContext &context, jint predicate,
@@ -1497,12 +1486,9 @@ jint recoverKnownCandidates(const OperationContext &context, jint predicate,
     next->mode = StateMode::Candidates;
     next->requestedType = context.state->requestedType;
     next->watches = context.state->watches;
-    const std::vector<uintptr_t> oldAddresses =
-            uniqueAddresses(context.state->candidates);
-    const std::vector<uintptr_t> freshAddresses =
-            uniqueAddresses(fresh->candidates);
-    const bool uniqueOneToOne = oldAddresses.size() == 1 &&
-                                freshAddresses.size() == 1;
+    const bool uniqueOneToOne =
+            hasSingleUniqueAddress(context.state->candidates) &&
+            hasSingleUniqueAddress(fresh->candidates);
     std::vector<bool> claimed(fresh->candidates.size(), false);
     std::unordered_set<uint64_t> wantedIdentity[kTypeDouble + 1];
     std::unordered_map<uint64_t, std::vector<size_t>>
@@ -1579,27 +1565,26 @@ bool isSelected(const std::vector<uint64_t> &ids, uint64_t id) {
     return ids.empty() || std::binary_search(ids.begin(), ids.end(), id);
 }
 
-bool containsCandidateId(const std::vector<Candidate> &candidates,
-                         uint64_t id) {
-    return std::any_of(candidates.begin(), candidates.end(),
-                       [&](const Candidate &candidate) {
-                           return candidate.id == id;
-                       });
-}
-
 bool allIdsResolve(const SearchState &state, const std::vector<uint64_t> &ids,
                    bool watchesOnly, bool candidatesOnly) {
-    return std::all_of(ids.begin(), ids.end(), [&](uint64_t id) {
-        const bool inCandidates = containsCandidateId(state.candidates, id);
-        const bool inWatches = containsCandidateId(state.watches, id);
-        if (watchesOnly) {
-            return inWatches;
+    std::unordered_set<uint64_t> unresolved(ids.begin(), ids.end());
+    if (!watchesOnly) {
+        for (const Candidate &candidate : state.candidates) {
+            unresolved.erase(candidate.id);
+            if (unresolved.empty()) {
+                return true;
+            }
         }
-        if (candidatesOnly) {
-            return inCandidates;
+    }
+    if (!candidatesOnly) {
+        for (const Candidate &watch : state.watches) {
+            unresolved.erase(watch.id);
+            if (unresolved.empty()) {
+                return true;
+            }
         }
-        return inCandidates || inWatches;
-    });
+    }
+    return unresolved.empty();
 }
 
 bool readIds(JNIEnv *env, jlongArray rawIds, std::vector<uint64_t> &ids) {
@@ -1622,8 +1607,7 @@ bool readIds(JNIEnv *env, jlongArray rawIds, std::vector<uint64_t> &ids) {
         ids.push_back(static_cast<uint64_t>(value));
     }
     std::sort(ids.begin(), ids.end());
-    ids.erase(std::unique(ids.begin(), ids.end()), ids.end());
-    return true;
+    return std::adjacent_find(ids.begin(), ids.end()) == ids.end();
 }
 
 jint recoverCandidatesBatch(const Target &target,
@@ -1755,10 +1739,6 @@ jint refreshCandidates(const OperationContext &context,
     std::vector<Candidate> selected;
     selected.reserve(ids.size());
     std::unordered_set<uint64_t> unresolved(ids.begin(), ids.end());
-    if (unresolved.size() != ids.size()) {
-        setMessage("Candidate IDs must be unique");
-        return kInvalidRequest;
-    }
     for (uint64_t id : ids) {
         const auto live = context.liveCandidates.find(id);
         if (live != context.liveCandidates.end()) {
@@ -1802,10 +1782,10 @@ jint refreshCandidates(const OperationContext &context,
             candidate.previousBits = candidate.currentBits;
             candidate.currentBits = current;
             candidate.state = kStable;
-            if (identityReadable) {
-                // Neighboring fields naturally change during gameplay. A passive display refresh
-                // follows the still-readable raw address and refreshes its recovery fingerprint;
-                // strict identity/recovery remains reserved for explicit writes.
+            // Passive display/Freeze polling may establish a missing fingerprint, but it must not
+            // silently replace an established logical identity just because the raw address is
+            // still readable. Explicit write/recovery paths validate the existing fingerprint.
+            if (identityReadable && !candidate.identityValid) {
                 candidate.identityHash = hash;
                 candidate.identityValid = true;
             }
@@ -2039,28 +2019,21 @@ jint pinCandidates(const OperationContext &context,
     }
     auto next = std::make_shared<SearchState>(*context.state);
     if (add) {
-        for (uint64_t id : ids) {
-            const auto existing =
-                    std::find_if(next->watches.begin(), next->watches.end(),
-                                 [&](const Candidate &candidate) {
-                                     return candidate.id == id;
-                                 });
-            if (existing != next->watches.end()) {
-                continue;
+        std::unordered_set<uint64_t> pending(ids.begin(), ids.end());
+        for (const Candidate &watch : next->watches) {
+            pending.erase(watch.id);
+        }
+        if (next->watches.size() + pending.size() > kWatchLimit) {
+            setMessage("The session Watch List limit is 128 candidates");
+            return kResourceLimit;
+        }
+        for (const Candidate &candidate : next->candidates) {
+            if (pending.erase(candidate.id) != 0U) {
+                next->watches.push_back(candidate);
+                if (pending.empty()) {
+                    break;
+                }
             }
-            const auto source = std::find_if(next->candidates.begin(),
-                                             next->candidates.end(),
-                                             [&](const Candidate &candidate) {
-                                                 return candidate.id == id;
-                                             });
-            if (source == next->candidates.end()) {
-                continue;
-            }
-            if (next->watches.size() >= kWatchLimit) {
-                setMessage("The session Watch List limit is 128 candidates");
-                return kResourceLimit;
-            }
-            next->watches.push_back(*source);
         }
     } else {
         next->watches.erase(
