@@ -32,7 +32,23 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # The patch script was authored before AndroidTest assembly was removed directly from
+          # android.yml. Recreate that one marker transiently so the guarded script can apply its
+          # original transformation, then restore the already-correct workflow from HEAD.
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('.github/workflows/android.yml')
+          text = path.read_text()
+          marker = '          :app:assembleEmulatorDebug\n'
+          legacy = marker + '          :app:assembleEmulatorDebugAndroidTest\n'
+          if 'assembleEmulatorDebugAndroidTest' not in text:
+              if text.count(marker) != 1:
+                  raise SystemExit('assembleEmulatorDebug marker was not unique')
+              text = text.replace(marker, legacy, 1)
+          path.write_text(text)
+          PY
           python3 .github/scripts/memory-editor-adaptive-input-polish.py
+          git checkout HEAD -- .github/workflows/android.yml
           python3 - <<'PY'
           from pathlib import Path
           path = Path('app/src/screenshotTest/kotlin/ru/playsoftware/j2meloader/memory/MemoryEditorScreenshotTest.kt')
@@ -49,7 +65,6 @@ jobs:
           import subprocess
           changed = set(subprocess.check_output(['git', 'diff', '--name-only']).decode().splitlines())
           expected = {
-              '.github/workflows/android.yml',
               'app/src/main/cpp/memory/memory_engine.cpp',
               'app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryEditorCompose.kt',
               'app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryInputCompose.kt',
@@ -82,7 +97,6 @@ jobs:
           import subprocess
           changed = subprocess.check_output(['git', 'diff', '--name-only']).decode().splitlines()
           exact = {
-              '.github/workflows/android.yml',
               'app/src/main/cpp/memory/memory_engine.cpp',
               'app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryEditorCompose.kt',
               'app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryInputCompose.kt',
@@ -103,7 +117,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A \
-            .github/workflows/android.yml \
             app/src/main/cpp/memory/memory_engine.cpp \
             app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryEditorCompose.kt \
             app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryInputCompose.kt \
