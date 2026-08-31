@@ -33,6 +33,11 @@ jobs:
         run: |
           set -euo pipefail
           python3 .github/scripts/memory-editor-adaptive-input-polish.py
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('app/src/screenshotTest/kotlin/ru/playsoftware/j2meloader/memory/MemoryEditorScreenshotTest.kt')
+          path.write_text(path.read_text().rstrip() + '\n')
+          PY
           git diff --check
           python3 - <<'PY'
           import subprocess
