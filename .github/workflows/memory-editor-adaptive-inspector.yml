@@ -45,81 +45,81 @@ jobs:
 
           inspector = Path('app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryInspectorCompose.kt')
           text = inspector.read_text()
-          text = replace_once(
-              text,
-              '''    val supportingHidden =
-                  navigator.scaffoldValue[SupportingPaneScaffoldRole.Supporting] == PaneAdaptedValue.Hidden
 
-              Dialog(
-                  onDismissRequest = onDismiss,
-''',
-              '''    val supportingHidden =
-                  navigator.scaffoldValue[SupportingPaneScaffoldRole.Supporting] == PaneAdaptedValue.Hidden
-              val mainHidden =
-                  navigator.scaffoldValue[SupportingPaneScaffoldRole.Main] == PaneAdaptedValue.Hidden
-              val returnToMain: () -> Unit = {
-                  scope.launch {
-                      navigator.navigateTo(SupportingPaneScaffoldRole.Main)
-                  }
-              }
+          old = (
+              '    val supportingHidden =\n'
+              '        navigator.scaffoldValue[SupportingPaneScaffoldRole.Supporting] == PaneAdaptedValue.Hidden\n'
+              '\n'
+              '    Dialog(\n'
+              '        onDismissRequest = onDismiss,\n'
+          )
+          new = (
+              '    val supportingHidden =\n'
+              '        navigator.scaffoldValue[SupportingPaneScaffoldRole.Supporting] == PaneAdaptedValue.Hidden\n'
+              '    val mainHidden =\n'
+              '        navigator.scaffoldValue[SupportingPaneScaffoldRole.Main] == PaneAdaptedValue.Hidden\n'
+              '    val returnToMain: () -> Unit = {\n'
+              '        scope.launch {\n'
+              '            navigator.navigateTo(SupportingPaneScaffoldRole.Main)\n'
+              '        }\n'
+              '    }\n'
+              '\n'
+              '    Dialog(\n'
+              '        onDismissRequest = {\n'
+              '            if (mainHidden) returnToMain() else onDismiss()\n'
+              '        },\n'
+          )
+          text = replace_once(text, old, new, 'Inspector dismiss navigation')
 
-              Dialog(
-                  onDismissRequest = {
-                      if (mainHidden) returnToMain() else onDismiss()
-                  },
-''',
-              'Inspector dismiss navigation',
+          old = (
+              '                            onRefresh = { onRefresh(radius) },\n'
+              '                            onNearby = onNearby,\n'
+              '                            onDismiss = onDismiss,\n'
           )
-          text = replace_once(
-              text,
-              '''                            onRefresh = { onRefresh(radius) },
-                              onNearby = onNearby,
-                              onDismiss = onDismiss,
-''',
-              '''                            onRefresh = { onRefresh(radius) },
-                              onNearby = onNearby,
-                              showBackToMemory = mainHidden,
-                              onBackToMemory = returnToMain,
-                              onDismiss = onDismiss,
-''',
-              'Inspector controls call',
+          new = (
+              '                            onRefresh = { onRefresh(radius) },\n'
+              '                            onNearby = onNearby,\n'
+              '                            showBackToMemory = mainHidden,\n'
+              '                            onBackToMemory = returnToMain,\n'
+              '                            onDismiss = onDismiss,\n'
           )
-          text = replace_once(
-              text,
-              '''    onRefresh: () -> Unit,
-              onNearby: () -> Unit,
-              onDismiss: () -> Unit,
-''',
-              '''    onRefresh: () -> Unit,
-              onNearby: () -> Unit,
-              showBackToMemory: Boolean,
-              onBackToMemory: () -> Unit,
-              onDismiss: () -> Unit,
-''',
-              'Inspector controls parameters',
+          text = replace_once(text, old, new, 'Inspector controls call')
+
+          old = (
+              '    onRefresh: () -> Unit,\n'
+              '    onNearby: () -> Unit,\n'
+              '    onDismiss: () -> Unit,\n'
           )
-          text = replace_once(
-              text,
-              '''            TextButton(onClick = onNearby) {
-                  Text(stringResource(R.string.memory_editor_search_nearby))
-              }
-              TextButton(onClick = onDismiss) {
-''',
-              '''            TextButton(onClick = onNearby) {
-                  Text(stringResource(R.string.memory_editor_search_nearby))
-              }
-              if (showBackToMemory) {
-                  TextButton(onClick = onBackToMemory) {
-                      Text(stringResource(R.string.memory_editor_back_to_memory))
-                  }
-              }
-              TextButton(onClick = onDismiss) {
-''',
-              'Inspector compact back action',
+          new = (
+              '    onRefresh: () -> Unit,\n'
+              '    onNearby: () -> Unit,\n'
+              '    showBackToMemory: Boolean,\n'
+              '    onBackToMemory: () -> Unit,\n'
+              '    onDismiss: () -> Unit,\n'
           )
+          text = replace_once(text, old, new, 'Inspector controls parameters')
+
+          old = (
+              '            TextButton(onClick = onNearby) {\n'
+              '                Text(stringResource(R.string.memory_editor_search_nearby))\n'
+              '            }\n'
+              '            TextButton(onClick = onDismiss) {\n'
+          )
+          new = (
+              '            TextButton(onClick = onNearby) {\n'
+              '                Text(stringResource(R.string.memory_editor_search_nearby))\n'
+              '            }\n'
+              '            if (showBackToMemory) {\n'
+              '                TextButton(onClick = onBackToMemory) {\n'
+              '                    Text(stringResource(R.string.memory_editor_back_to_memory))\n'
+              '                }\n'
+              '            }\n'
+              '            TextButton(onClick = onDismiss) {\n'
+          )
+          text = replace_once(text, old, new, 'Inspector compact back action')
           inspector.write_text(text)
 
-          for path, marker, line in [
+          resources = [
               (
                   'app/src/main/res/values/memory_editor_strings.xml',
                   '    <string name="memory_editor_inspector_controls">Inspector controls</string>\n',
@@ -130,11 +130,11 @@ jobs:
                   '    <string name="memory_editor_inspector_controls">Kontrol inspektor</string>\n',
                   '    <string name="memory_editor_back_to_memory">Kembali ke memori</string>\n',
               ),
-          ]:
+          ]
+          for path, marker, addition in resources:
               p = Path(path)
               value = p.read_text()
-              value = replace_once(value, marker, marker + line, f'localized compact back label {path}')
-              p.write_text(value)
+              p.write_text(replace_once(value, marker, marker + addition, path))
           PY
 
           git diff --check
