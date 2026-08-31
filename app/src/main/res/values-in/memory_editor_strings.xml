@@ -113,6 +113,7 @@
     <string name="memory_editor_relocations">Relokasi</string>
     <string name="memory_editor_explore">Jelajahi</string>
     <string name="memory_editor_inspector">Inspektor Memori</string>
+    <string name="memory_editor_inspector_controls">Kontrol inspektor</string>
     <string name="memory_editor_inspect_memory">Periksa memori sekitar</string>
     <string name="memory_editor_inspector_help">Tampilan hanya-baca yang terikat ke kandidat terverifikasi. Offset relatif mengikuti kandidat jika alamatnya berpindah.</string>
     <string name="memory_editor_inspector_loading">Memverifikasi kandidat dan membaca snapshot terbatas…</string>

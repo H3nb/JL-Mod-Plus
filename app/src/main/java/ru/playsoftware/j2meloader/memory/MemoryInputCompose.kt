@@ -14,13 +14,14 @@
 
 package ru.playsoftware.j2meloader.memory
 
-import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
@@ -52,7 +53,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -319,35 +319,41 @@ internal fun MemoryInputArea(
             focusManager.clearFocus(force = true)
         }
     }
-    val landscape = sideDockInLandscape &&
-        LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     CompositionLocalProvider(LocalMemoryInputSession provides session) {
-        if (landscape) {
-            Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Box(modifier = Modifier.weight(1f)) { content() }
-                if (session.active) {
-                    MemoryKeypad(
-                        session = session,
-                        modifier = Modifier.width(252.dp),
-                        onHide = {
-                            session.hide()
-                            focusManager.clearFocus(force = true)
-                        },
-                    )
+        BoxWithConstraints(modifier = modifier) {
+            val sideDock = sideDockInLandscape &&
+                maxWidth >= 600.dp &&
+                maxWidth > maxHeight
+            if (sideDock) {
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Box(modifier = Modifier.weight(1f).fillMaxSize()) { content() }
+                    if (session.active) {
+                        MemoryKeypad(
+                            session = session,
+                            modifier = Modifier.width(252.dp),
+                            onHide = {
+                                session.hide()
+                                focusManager.clearFocus(force = true)
+                            },
+                        )
+                    }
                 }
-            }
-        } else {
-            Column(modifier = modifier.fillMaxWidth()) {
-                Box(modifier = Modifier.weight(1f).fillMaxWidth()) { content() }
-                if (session.active) {
-                    MemoryKeypad(
-                        session = session,
-                        modifier = Modifier.fillMaxWidth(),
-                        onHide = {
-                            session.hide()
-                            focusManager.clearFocus(force = true)
-                        },
-                    )
+            } else {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Box(modifier = Modifier.weight(1f).fillMaxWidth()) { content() }
+                    if (session.active) {
+                        MemoryKeypad(
+                            session = session,
+                            modifier = Modifier.fillMaxWidth(),
+                            onHide = {
+                                session.hide()
+                                focusManager.clearFocus(force = true)
+                            },
+                        )
+                    }
                 }
             }
         }

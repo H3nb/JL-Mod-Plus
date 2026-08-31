@@ -26,6 +26,12 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.layout.AnimatedPane
+import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
+import androidx.compose.material3.adaptive.layout.SupportingPaneScaffoldRole
+import androidx.compose.material3.adaptive.navigation.NavigableSupportingPaneScaffold
+import androidx.compose.material3.adaptive.navigation.rememberSupportingPaneScaffoldNavigator
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -42,6 +48,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import kotlinx.coroutines.launch
 import ru.playsoftware.j2meloader.R
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -151,8 +159,9 @@ private fun MemoryInspectorLoadingDialog(onDismiss: () -> Unit) {
 }
 
 
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
-private fun MemoryInspectorDialog(
+internal fun MemoryInspectorDialog(
     snapshot: MemoryInspectorSnapshot,
     onDismiss: () -> Unit,
     onRefresh: (Int) -> Unit,
@@ -168,6 +177,10 @@ private fun MemoryInspectorDialog(
         mutableIntStateOf(MemoryEngineContract.DEFAULT_INSPECT_RADIUS)
     }
     val cells = remember(snapshot, viewType) { buildInspectorCells(snapshot, viewType) }
+    val navigator = rememberSupportingPaneScaffoldNavigator<Any>()
+    val scope = rememberCoroutineScope()
+    val supportingHidden =
+        navigator.scaffoldValue[SupportingPaneScaffoldRole.Supporting] == PaneAdaptedValue.Hidden
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -178,85 +191,171 @@ private fun MemoryInspectorDialog(
             shape = MaterialTheme.shapes.large,
             tonalElevation = 8.dp,
         ) {
-            Column(
-                modifier = Modifier.padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            snapshot.label.ifBlank { stringResource(R.string.memory_editor_inspector) },
-                            style = MaterialTheme.typography.titleLarge,
-                        )
-                        Text(
-                            "0x${snapshot.anchorAddress.toULong().toString(16).uppercase()}",
-                            fontFamily = FontFamily.Monospace,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            NavigableSupportingPaneScaffold(
+                navigator = navigator,
+                modifier = Modifier.fillMaxSize(),
+                mainPane = {
+                    AnimatedPane {
+                        InspectorMainPane(
+                            snapshot = snapshot,
+                            cells = cells,
+                            supportingHidden = supportingHidden,
+                            onOpenControls = {
+                                scope.launch {
+                                    navigator.navigateTo(SupportingPaneScaffoldRole.Supporting)
+                                }
+                            },
+                            onDismiss = onDismiss,
                         )
                     }
-                    Stage3ChoiceMenu(
-                        value = viewType,
-                        values = STAGE3_VIEW_TYPES,
-                        label = ::stage3TypeName,
-                        onChange = { viewType = it },
-                    )
-                    Stage3ChoiceMenu(
-                        value = radius,
-                        values = INSPECT_RADIUS_PRESETS,
-                        label = { "±$it B" },
-                        onChange = { radius = it },
-                    )
-                }
+                },
+                supportingPane = {
+                    AnimatedPane {
+                        InspectorControlsPane(
+                            snapshot = snapshot,
+                            viewType = viewType,
+                            onViewType = { viewType = it },
+                            radius = radius,
+                            onRadius = { radius = it },
+                            onRefresh = { onRefresh(radius) },
+                            onNearby = onNearby,
+                            onDismiss = onDismiss,
+                        )
+                    }
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun InspectorMainPane(
+    snapshot: MemoryInspectorSnapshot,
+    cells: List<MemoryInspectorCell>,
+    supportingHidden: Boolean,
+    onOpenControls: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    stringResource(R.string.memory_editor_inspector_help),
+                    snapshot.label.ifBlank { stringResource(R.string.memory_editor_inspector) },
+                    style = MaterialTheme.typography.titleLarge,
+                )
+                Text(
+                    "0x${snapshot.anchorAddress.toULong().toString(16).uppercase()}",
+                    fontFamily = FontFamily.Monospace,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                HorizontalDivider()
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        stringResource(R.string.memory_editor_relative_offset),
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.weight(0.20f),
-                    )
-                    Text(
-                        stringResource(R.string.memory_editor_address),
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.weight(0.42f),
-                    )
-                    Text(
-                        stringResource(R.string.memory_editor_current_value),
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.weight(0.38f),
-                    )
+            }
+            if (supportingHidden) {
+                TextButton(onClick = onOpenControls) {
+                    Text(stringResource(R.string.memory_editor_inspector_controls))
                 }
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(cells, key = { it.address }) { cell ->
-                        InspectorCellRow(cell = cell)
-                    }
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    TextButton(onClick = { onRefresh(radius) }) {
-                        Text(stringResource(R.string.memory_editor_refresh_snapshot))
-                    }
-                    TextButton(onClick = onNearby) {
-                        Text(stringResource(R.string.memory_editor_search_nearby))
-                    }
-                    TextButton(onClick = onDismiss) {
-                        Text(stringResource(R.string.memory_editor_done))
-                    }
-                }
+            }
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.memory_editor_done))
+            }
+        }
+        HorizontalDivider()
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                stringResource(R.string.memory_editor_relative_offset),
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.weight(0.20f),
+            )
+            Text(
+                stringResource(R.string.memory_editor_address),
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.weight(0.42f),
+            )
+            Text(
+                stringResource(R.string.memory_editor_current_value),
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.weight(0.38f),
+            )
+        }
+        LazyColumn(modifier = Modifier.weight(1f)) {
+            items(cells, key = { it.address }) { cell ->
+                InspectorCellRow(cell = cell)
             }
         }
     }
 }
+
+@Composable
+private fun InspectorControlsPane(
+    snapshot: MemoryInspectorSnapshot,
+    viewType: Int,
+    onViewType: (Int) -> Unit,
+    radius: Int,
+    onRadius: (Int) -> Unit,
+    onRefresh: () -> Unit,
+    onNearby: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                stringResource(R.string.memory_editor_inspector_controls),
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Text(
+                "0x${snapshot.anchorAddress.toULong().toString(16).uppercase()}",
+                fontFamily = FontFamily.Monospace,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Stage3ChoiceMenu(
+                    value = viewType,
+                    values = STAGE3_VIEW_TYPES,
+                    label = ::stage3TypeName,
+                    onChange = onViewType,
+                )
+                Stage3ChoiceMenu(
+                    value = radius,
+                    values = INSPECT_RADIUS_PRESETS,
+                    label = { "±$it B" },
+                    onChange = onRadius,
+                )
+            }
+            Text(
+                stringResource(R.string.memory_editor_inspector_help),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            HorizontalDivider()
+            TextButton(onClick = onRefresh) {
+                Text(stringResource(R.string.memory_editor_refresh_snapshot))
+            }
+            TextButton(onClick = onNearby) {
+                Text(stringResource(R.string.memory_editor_search_nearby))
+            }
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.memory_editor_done))
+            }
+        }
+    }
+}
+
 
 @Composable
 private fun InspectorCellRow(cell: MemoryInspectorCell) {

@@ -115,6 +115,7 @@
     <string name="memory_editor_relocations">Relocations</string>
     <string name="memory_editor_explore">Explore</string>
     <string name="memory_editor_inspector">Memory Inspector</string>
+    <string name="memory_editor_inspector_controls">Inspector controls</string>
     <string name="memory_editor_inspect_memory">Inspect nearby memory</string>
     <string name="memory_editor_inspector_help">Read-only view anchored to the verified candidate. Relative offsets follow the candidate if it relocates.</string>
     <string name="memory_editor_inspector_loading">Verifying candidate and reading a bounded snapshot…</string>

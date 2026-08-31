@@ -14,21 +14,9 @@
 
 package ru.playsoftware.j2meloader.memory
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
-import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 
 private object NoOpMemoryEditorActions : MemoryEditorActions {
@@ -183,23 +171,39 @@ fun MemoryEditorShortLandscapeSearchScreenshot() {
     }
 }
 
+private val previewInspectorSnapshot = MemoryInspectorSnapshot(
+    candidateId = 1,
+    type = MemoryEngineContract.TYPE_INT,
+    label = "HP",
+    startAddress = 0x21B9980,
+    anchorAddress = 0x21B99C0,
+    bytes = ByteArray(128) { index -> (index * 3 + 7).toByte() },
+)
+
 @PreviewTest
-@Preview(name = "Memory keypad landscape", widthDp = 640, heightDp = 320, showBackground = true)
+@Preview(name = "Memory Inspector compact", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
-fun MemoryKeypadLandscapeScreenshot() {
+fun MemoryInspectorCompactScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        val focusRequester = remember { FocusRequester() }
-        LaunchedEffect(Unit) { focusRequester.requestFocus() }
-        MemoryInputArea(modifier = Modifier.fillMaxSize()) {
-            Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-                MemoryValueInput(
-                    value = "12345",
-                    onValueChange = {},
-                    spec = MemoryInputSpec.forType(MemoryEngineContract.TYPE_INT),
-                    label = stringResource(R.string.memory_editor_search_hint),
-                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
-                )
-            }
-        }
+        MemoryInspectorDialog(
+            snapshot = previewInspectorSnapshot,
+            onDismiss = {},
+            onRefresh = {},
+            onNearby = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Memory Inspector wide", widthDp = 840, heightDp = 480, showBackground = true)
+@Composable
+fun MemoryInspectorWideScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        MemoryInspectorDialog(
+            snapshot = previewInspectorSnapshot,
+            onDismiss = {},
+            onRefresh = {},
+            onNearby = {},
+        )
     }
 }
