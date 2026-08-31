@@ -17,6 +17,8 @@ package ru.playsoftware.j2meloader.memory
 import android.view.MotionEvent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -219,6 +221,7 @@ private fun MemoryEditorContent(state: MemoryEditorUiState, actions: MemoryEdito
     var refineDialog by remember { mutableStateOf(false) }
     var detailRow by remember { mutableStateOf<MemoryCandidateRow?>(null) }
     var detailAliases by remember { mutableStateOf<List<MemoryCandidateRow>>(emptyList()) }
+    val searchScrollState = rememberScrollState()
 
     LaunchedEffect(state.sessionStage, state.searchMode, state.requestedType, state.searchScope) {
         searchMode = state.searchMode
@@ -272,6 +275,7 @@ private fun MemoryEditorContent(state: MemoryEditorUiState, actions: MemoryEdito
                 )
             } else {
                 SearchWorkspace(
+                    modifier = Modifier.weight(1f).verticalScroll(searchScrollState),
                     state = state,
                     searchMode = searchMode,
                     onSearchMode = { searchMode = it },
@@ -318,8 +322,6 @@ private fun MemoryEditorContent(state: MemoryEditorUiState, actions: MemoryEdito
                 onOpen = { group -> detailRow = group.primary; detailAliases = group.aliases },
                 modifier = Modifier.weight(1f),
             )
-        } else {
-            Box(modifier = Modifier.weight(1f).fillMaxWidth())
         }
 
         if (state.selected.isNotEmpty()) {
@@ -488,6 +490,7 @@ private fun WorkspaceTabs(state: MemoryEditorUiState, actions: MemoryEditorActio
 
 @Composable
 private fun SearchWorkspace(
+    modifier: Modifier = Modifier,
     state: MemoryEditorUiState,
     searchMode: MemorySearchMode,
     onSearchMode: (MemorySearchMode) -> Unit,
@@ -508,7 +511,7 @@ private fun SearchWorkspace(
     actions: MemoryEditorActions,
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+        modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         when (state.sessionStage) {

@@ -536,7 +536,7 @@ Candidate makeCandidate(uint64_t id, uintptr_t address, ValueType type,
 
 bool snapshotIdentity(std::span<const uint8_t> bytes, size_t offset,
                       size_t width, uint64_t &hash) noexcept {
-    if (offset < kIdentityRadius || offset > bytes.size() ||
+    if (width == 0 || offset < kIdentityRadius || offset > bytes.size() ||
         width > bytes.size() - offset) {
         return false;
     }
@@ -760,7 +760,7 @@ bool readIdentity(const Target &target, uintptr_t address, ValueType type,
     const size_t width = widthOf(type);
     uintptr_t valueEnd = 0;
     uintptr_t contextEnd = 0;
-    if (address < kIdentityRadius ||
+    if (width == 0 || address < kIdentityRadius ||
         !checkedAddressAdd(address, width, valueEnd) ||
         !checkedAddressAdd(valueEnd, kIdentityRadius, contextEnd)) {
         return false;

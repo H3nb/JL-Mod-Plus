@@ -14,9 +14,21 @@
 
 package ru.playsoftware.j2meloader.memory
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
+import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 
 private object NoOpMemoryEditorActions : MemoryEditorActions {
@@ -148,5 +160,46 @@ fun MemoryEditorLandscapeResultsScreenshot() {
             ),
             actions = NoOpMemoryEditorActions,
         )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Memory Editor short landscape search", widthDp = 640, heightDp = 320, showBackground = true)
+@Composable
+fun MemoryEditorShortLandscapeSearchScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        MemoryEditorScreen(
+            state = MemoryEditorUiState(
+                bubbleEnabled = true,
+                visible = true,
+                connected = true,
+                supported = true,
+                writeSupported = true,
+                runtimeToken = 1,
+                sessionStage = MemorySessionStage.EMPTY,
+            ),
+            actions = NoOpMemoryEditorActions,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Memory keypad landscape", widthDp = 640, heightDp = 320, showBackground = true)
+@Composable
+fun MemoryKeypadLandscapeScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        val focusRequester = remember { FocusRequester() }
+        LaunchedEffect(Unit) { focusRequester.requestFocus() }
+        MemoryInputArea(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                MemoryValueInput(
+                    value = "12345",
+                    onValueChange = {},
+                    spec = MemoryInputSpec.forType(MemoryEngineContract.TYPE_INT),
+                    label = stringResource(R.string.memory_editor_search_hint),
+                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                )
+            }
+        }
     }
 }

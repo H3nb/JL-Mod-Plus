@@ -25,6 +25,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.InputTransformation
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.byValue
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -40,10 +48,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
@@ -283,8 +294,11 @@ internal class MemoryInputSession {
     }
 
     private fun publish(updated: MemoryInputBinding) {
+        val previousText = binding?.value?.text
         binding = updated
-        onTextChange?.invoke(updated.value.text)
+        if (previousText != updated.value.text) {
+            onTextChange?.invoke(updated.value.text)
+        }
     }
 }
 
@@ -360,21 +374,55 @@ internal fun MemoryValueInput(
         return
     }
     val id = remember { Any() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val fieldState = rememberTextFieldState(value)
+    val sessionValue = session.valueFor(id, value)
+    val inputTransformation = remember(spec) {
+        InputTransformation.byValue { current, proposed ->
+            if (spec.acceptsPartial(proposed.toString())) proposed else current
+        }
+    }
     DisposableEffect(id) {
         onDispose { session.deactivate(id) }
     }
     LaunchedEffect(spec) {
         if (value.isNotEmpty() && !spec.acceptsPartial(value)) onValueChange("")
     }
+    LaunchedEffect(sessionValue) {
+        val fieldText = fieldState.text.toString()
+        if (fieldText != sessionValue.text || fieldState.selection != sessionValue.selection) {
+            fieldState.edit {
+                if (fieldText != sessionValue.text) {
+                    replace(0, length, sessionValue.text)
+                }
+                selection = sessionValue.selection
+            }
+        }
+    }
+    LaunchedEffect(fieldState, id) {
+        snapshotFlow { TextFieldValue(fieldState.text.toString(), fieldState.selection) }
+            .collect { session.acceptFieldValue(id, it) }
+    }
     SideEffect { session.sync(id, value, spec, onValueChange) }
     OutlinedTextField(
-        value = session.valueFor(id, value),
-        onValueChange = { session.acceptFieldValue(id, it) },
-        modifier = modifier.onFocusChanged { focus ->
-            if (focus.isFocused) session.activate(id, value, spec, onValueChange)
-        },
-        readOnly = true,
-        singleLine = true,
+        state = fieldState,
+        inputTransformation = inputTransformation,
+        keyboardOptions = KeyboardOptions(showKeyboardOnFocus = false),
+        lineLimits = TextFieldLineLimits.SingleLine,
+        modifier = modifier
+            .pointerInput(keyboardController) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    waitForUpOrCancellation()
+                    keyboardController?.hide()
+                }
+            }
+            .onFocusChanged { focus ->
+                if (focus.isFocused) {
+                    session.activate(id, value, spec, onValueChange)
+                    keyboardController?.hide()
+                }
+            },
         label = { Text(label) },
     )
 }
