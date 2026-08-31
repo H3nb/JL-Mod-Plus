@@ -181,9 +181,18 @@ internal fun MemoryInspectorDialog(
     val scope = rememberCoroutineScope()
     val supportingHidden =
         navigator.scaffoldValue[SupportingPaneScaffoldRole.Supporting] == PaneAdaptedValue.Hidden
+    val mainHidden =
+        navigator.scaffoldValue[SupportingPaneScaffoldRole.Main] == PaneAdaptedValue.Hidden
+    val returnToMain: () -> Unit = {
+        scope.launch {
+            navigator.navigateTo(SupportingPaneScaffoldRole.Main)
+        }
+    }
 
     Dialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = {
+            if (mainHidden) returnToMain() else onDismiss()
+        },
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
@@ -219,6 +228,8 @@ internal fun MemoryInspectorDialog(
                             onRadius = { radius = it },
                             onRefresh = { onRefresh(radius) },
                             onNearby = onNearby,
+                            showBackToMemory = mainHidden,
+                            onBackToMemory = returnToMain,
                             onDismiss = onDismiss,
                         )
                     }
@@ -300,6 +311,8 @@ private fun InspectorControlsPane(
     onRadius: (Int) -> Unit,
     onRefresh: () -> Unit,
     onNearby: () -> Unit,
+    showBackToMemory: Boolean,
+    onBackToMemory: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     Surface(
@@ -348,6 +361,11 @@ private fun InspectorControlsPane(
             }
             TextButton(onClick = onNearby) {
                 Text(stringResource(R.string.memory_editor_search_nearby))
+            }
+            if (showBackToMemory) {
+                TextButton(onClick = onBackToMemory) {
+                    Text(stringResource(R.string.memory_editor_back_to_memory))
+                }
             }
             TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.memory_editor_done))
