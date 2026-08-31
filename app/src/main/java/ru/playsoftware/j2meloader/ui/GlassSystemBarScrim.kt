@@ -14,49 +14,66 @@
 
 package ru.playsoftware.j2meloader.ui
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.zIndex
+import kotlin.math.max
 
-private const val SYSTEM_BAR_SCRIM_ALPHA = 0.30f
+private const val SYSTEM_BAR_SCRIM_ALPHA = 0.94f
 
 /**
- * Theme-aware translucent system-bar protection while a scrolling header is off-screen.
+ * Theme-aware status-bar protection for custom scrolling headers.
  *
- * Keep enough of the surface tint to preserve status-bar legibility, but leave the content
- * underneath perceptible while the header is being scrolled away. The flat translucent layer
- * avoids the hard edge produced by an opaque replacement bar and adapts to light/dark surfaces.
+ * The protection is slightly taller than the physical status bar and fades into the content,
+ * avoiding the hard seam that a flat, status-bar-only fill creates as the header scrolls.
  */
 @Composable
 internal fun GlassSystemBarScrim(
     visible: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    if (!visible) return
-    // Read the effective Compose surface rather than the platform setting so an explicitly
-    // selected in-app dark/light theme receives the matching scrim as well.
+    val alpha = animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        label = "system bar scrim",
+    ).value
+    if (alpha <= 0f && !visible) return
     val darkTheme = MaterialTheme.colorScheme.surface.luminance() < 0.5f
     val scrimBase = if (darkTheme) {
         MaterialTheme.colorScheme.surfaceContainerHighest
     } else {
         MaterialTheme.colorScheme.surfaceContainerLow
     }
+    val density = LocalDensity.current
+    val statusBarHeight = with(density) {
+        max(WindowInsets.statusBars.getTop(this), 1).toDp()
+    }
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .windowInsetsTopHeight(WindowInsets.statusBars)
-            // Keep the app content perceptible while providing a predictable 30% protection
-            // layer for status-bar icons in both themes. A flat scrim also avoids a visible
-            // gradient edge when the header is revealed again.
-            .background(scrimBase.copy(alpha = SYSTEM_BAR_SCRIM_ALPHA))
+            .height(statusBarHeight * 1.28f)
+            .alpha(alpha)
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        scrimBase.copy(alpha = SYSTEM_BAR_SCRIM_ALPHA),
+                        scrimBase.copy(alpha = SYSTEM_BAR_SCRIM_ALPHA * 0.72f),
+                        Color.Transparent,
+                    ),
+                ),
+            )
             .zIndex(2f),
     )
 }

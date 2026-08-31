@@ -12,7 +12,7 @@ tasks.register<Delete>("clean") {
     delete(layout.buildDirectory)
 }
 
-extra.set("compileSdk", 36)
+extra.set("compileSdk", 37)
 extra.set("minSdk", 23)
 extra.set("targetSdk", 36)
 extra.set("ndkVersion", "28.2.13676358")

@@ -16,22 +16,19 @@
 
 package ru.woesss.j2me.installer;
 
-import android.app.Activity;
-import android.content.Context;
+import android.app.Dialog;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.Window;
-import android.view.WindowManager;
 
-import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.compose.ui.platform.ComposeView;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,46 +39,49 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
 import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.config.Config;
+import ru.playsoftware.j2meloader.config.ConfigActivity;
 import javax.microedition.shell.MicroActivity;
 
-/** Shows a non-interactive progress dialog while an installed MIDlet is automatically reconverted. */
-public final class AutoReconversionActivity extends AppCompatActivity {
-    private static final String TAG = AutoReconversionActivity.class.getSimpleName();
+/** Compatibility conversion shown over the current screen using the installer popup host. */
+public final class AutoReconversionDialog extends DialogFragment {
+    private static final String TAG = AutoReconversionDialog.class.getSimpleName();
+    private static final String FRAGMENT_TAG = "AutoReconversionDialog";
+    private static final String ARG_NAME = "name";
+    private static final String ARG_PATH = "path";
 
     private final CompositeDisposable disposables = new CompositeDisposable();
     private InstallerComposeController controller;
     private String appName;
     private Uri appUri;
     private File appDir;
+    private boolean started;
 
-    public static void start(Context context, String name, String path) {
-        Intent intent = new Intent(context, AutoReconversionActivity.class)
-                .setAction(Intent.ACTION_DEFAULT)
-                .setData(Uri.parse(path))
-                .putExtra(ru.playsoftware.j2meloader.util.Constants.KEY_MIDLET_NAME, name);
-        if (!(context instanceof Activity)) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(intent);
+    public static boolean show(FragmentActivity activity, String name, String path) {
+        FragmentManager manager = activity.getSupportFragmentManager();
+        if (manager.isStateSaved()) return false;
+        if (manager.findFragmentByTag(FRAGMENT_TAG) != null) return true;
+
+        AutoReconversionDialog fragment = new AutoReconversionDialog();
+        Bundle args = new Bundle();
+        args.putString(ARG_NAME, name);
+        args.putString(ARG_PATH, path);
+        fragment.setArguments(args);
+        fragment.setCancelable(false);
+        fragment.show(manager, FRAGMENT_TAG);
+        return true;
     }
 
+    @NonNull
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setFinishOnTouchOutside(false);
-        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                // Conversion is atomic and intentionally has no confirmation/cancel action. The
-                // user sees an error only if the conversion itself fails.
-            }
-        });
-
-        appName = getIntent().getStringExtra(
-                ru.playsoftware.j2meloader.util.Constants.KEY_MIDLET_NAME);
+    public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+        Bundle args = requireArguments();
+        appName = args.getString(ARG_NAME);
         if (appName == null || appName.trim().isEmpty()) appName = getString(R.string.app_name);
-        appUri = getIntent().getData();
+        String path = args.getString(ARG_PATH);
+        appUri = path == null ? null : Uri.parse(path);
         appDir = resolveLocalDirectory(appUri);
 
-        ComposeView composeView = new ComposeView(this);
+        ComposeView composeView = new ComposeView(requireContext());
         controller = InstallerComposeBridge.install(
                 composeView,
                 new InstallerActions() {
@@ -91,7 +91,7 @@ public final class AutoReconversionActivity extends AppCompatActivity {
 
                     @Override
                     public void onClose() {
-                        finish();
+                        dismissAllowingStateLoss();
                     }
 
                     @Override
@@ -102,13 +102,27 @@ public final class AutoReconversionActivity extends AppCompatActivity {
                     public void onLaunchInstalled() {
                     }
                 },
+                // Reinstall uses this same renderer while converting; only the explanation differs.
                 new InstallerUiState.Converting(
                         appName,
                         getString(R.string.reconverting_wait),
                         getString(R.string.converting_wait)));
-        setContentView(composeView);
-        configureWindow();
 
+        Dialog dialog = new Dialog(requireContext(), getTheme());
+        dialog.setContentView(composeView);
+        dialog.setCancelable(false);
+        dialog.setCanceledOnTouchOutside(false);
+        return dialog;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        Dialog dialog = getDialog();
+        Window window = dialog == null ? null : dialog.getWindow();
+        InstallerWindowCompat.configure(window);
+        if (started) return;
+        started = true;
         if (appDir == null) {
             showError(new IllegalArgumentException("MIDlet path is not a local installed directory"));
             return;
@@ -117,17 +131,13 @@ public final class AutoReconversionActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         disposables.dispose();
         controller = null;
         super.onDestroy();
     }
 
     private void startReconversion() {
-        // Config.startApp normally routes a legacy payload here only when a retained source JAR
-        // exists. Re-check at the last responsible moment as the source can be removed between
-        // the library click and Activity creation. A usable legacy payload must remain launchable
-        // at normal speed; it must not be blocked by an impossible reconversion request.
         if (!AppReconverter.hasRetainedSource(appDir)) {
             if (AppReconverter.hasUsableConvertedPayload(appDir)) {
                 launchMidlet();
@@ -149,18 +159,18 @@ public final class AutoReconversionActivity extends AppCompatActivity {
     }
 
     private void launchMidlet() {
-        if (isFinishing() || isDestroyed()) return;
-        Intent intent = new Intent(Intent.ACTION_DEFAULT, appUri, this, MicroActivity.class);
-        intent.putExtra(
-                ru.playsoftware.j2meloader.util.Constants.KEY_MIDLET_NAME,
-                appName);
+        if (!isAdded()) return;
+        FragmentActivity host = requireActivity();
+        Intent intent = new Intent(Intent.ACTION_DEFAULT, appUri, requireContext(), MicroActivity.class);
+        intent.putExtra(ru.playsoftware.j2meloader.util.Constants.KEY_MIDLET_NAME, appName);
         startActivity(intent);
-        finish();
+        dismissAllowingStateLoss();
+        if (host instanceof ConfigActivity) host.finish();
     }
 
     private void showError(Throwable error) {
         Log.e(TAG, "Automatic MIDlet reconversion failed", error);
-        if (controller == null || isFinishing() || isDestroyed()) return;
+        if (!isAdded() || controller == null) return;
         String detail = error.getMessage();
         if (detail == null || detail.trim().isEmpty()) {
             detail = error.getClass().getSimpleName();
@@ -169,24 +179,6 @@ public final class AutoReconversionActivity extends AppCompatActivity {
                 appName,
                 getString(R.string.reconversion_error, detail),
                 getString(R.string.close));
-    }
-
-    private void configureWindow() {
-        Window window = getWindow();
-        if (window == null) return;
-        window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        int margin = (int) TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP,
-                32,
-                getResources().getDisplayMetrics());
-        int maxWidth = (int) TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP,
-                560,
-                getResources().getDisplayMetrics());
-        int width = Math.max(1, Math.min(
-                maxWidth,
-                getResources().getDisplayMetrics().widthPixels - margin));
-        window.setLayout(width, WindowManager.LayoutParams.WRAP_CONTENT);
     }
 
     @Nullable

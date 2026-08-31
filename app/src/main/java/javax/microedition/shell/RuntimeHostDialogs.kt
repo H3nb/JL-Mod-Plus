@@ -14,7 +14,6 @@
 
 package javax.microedition.shell
 
-import android.content.res.Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -24,14 +23,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import ru.playsoftware.j2meloader.ui.AdaptiveAlertDialog as AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -43,7 +42,6 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -52,7 +50,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -60,9 +57,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import ru.playsoftware.j2meloader.R
+import ru.playsoftware.j2meloader.ui.adaptiveDialogLayout
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
-import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
+import ru.playsoftware.j2meloader.ui.rememberScrollCanScrollForward
 
 /** Callbacks for host-owned runtime dialogs. MIDP state and rendering remain in Java. */
 interface RuntimeHostDialogActions {
@@ -136,27 +134,17 @@ private data class RuntimeDialogLayout(
 
 @Composable
 private fun runtimeDialogLayout(): RuntimeDialogLayout {
-    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     return RuntimeDialogLayout(
-        modifier = if (landscape) {
-            Modifier
-                .fillMaxWidth(0.94f)
-                .widthIn(max = 760.dp)
-                .imePadding()
-        } else {
-            Modifier
-                .widthIn(max = 560.dp)
-                .imePadding()
-        },
-        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
+        modifier = Modifier.imePadding(),
+        properties = DialogProperties(),
     )
 }
 
 @Composable
-private fun runtimeDialogListHeight(maxHeight: Int = 420) =
-    (availableWindowHeightDp() - 220.dp)
-        .coerceAtLeast(120.dp)
-        .coerceAtMost(maxHeight.dp)
+private fun runtimeDialogListHeight() =
+    adaptiveDialogLayout().maxContentHeight(
+        reservedHeight = 184.dp,
+    )
 
 @Composable
 private fun MidletSelectionDialog(
@@ -169,6 +157,7 @@ private fun MidletSelectionDialog(
     val maxListHeight = runtimeDialogListHeight()
     val canScrollForward = rememberLazyListCanScrollForward(listState)
     AlertDialog(
+        textScrollable = false,
         modifier = layout.modifier,
         properties = layout.properties,
         onDismissRequest = {
@@ -225,6 +214,7 @@ private fun ErrorDialog(
 ) {
     val layout = runtimeDialogLayout()
     AlertDialog(
+        textScrollable = false,
         modifier = layout.modifier,
         properties = layout.properties,
         onDismissRequest = onAcknowledge,
@@ -238,19 +228,17 @@ private fun ErrorDialog(
         title = { Text(stringResource(R.string.error)) },
         text = {
             val scrollState = rememberScrollState()
-            val canScrollForward by remember {
-                derivedStateOf { scrollState.value < scrollState.maxValue }
-            }
+            val canScrollForward = rememberScrollCanScrollForward(scrollState)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = runtimeDialogListHeight(300)),
+                    .heightIn(max = runtimeDialogListHeight()),
             ) {
                 Text(
                     text = message,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = runtimeDialogListHeight(300))
+                        .heightIn(max = runtimeDialogListHeight())
                         .verticalScroll(scrollState),
                 )
                 ScrollableContentHint(
@@ -330,6 +318,7 @@ private fun HideButtonsDialog(
     val maxListHeight = runtimeDialogListHeight()
     val canScrollForward = rememberLazyListCanScrollForward(listState)
     AlertDialog(
+        textScrollable = false,
         modifier = layout.modifier,
         properties = layout.properties,
         onDismissRequest = onDismiss,
@@ -392,7 +381,9 @@ private fun SaveVirtualKeyboardDialog(
 ) {
     var saveScreenParams by remember(state) { mutableStateOf(state.keepScreenPreferred) }
     val layout = runtimeDialogLayout()
+    val maxContentHeight = runtimeDialogListHeight()
     AlertDialog(
+        textScrollable = false,
         modifier = layout.modifier,
         properties = layout.properties,
         onDismissRequest = onDismiss,
@@ -401,34 +392,39 @@ private fun SaveVirtualKeyboardDialog(
         },
         text = {
             val scrollState = rememberScrollState()
-            val canScrollForward by remember {
-                derivedStateOf { scrollState.value < scrollState.maxValue }
-            }
-            Column(
+            val canScrollForward = rememberScrollCanScrollForward(scrollState)
+            Box(
                 modifier = Modifier
-                    .heightIn(max = runtimeDialogListHeight(360))
-                    .verticalScroll(scrollState),
+                    .fillMaxWidth()
+                    .heightIn(max = maxContentHeight),
             ) {
-                Text(stringResource(R.string.pref_vk_save_alert))
-                if (state.phone) {
-                    ListItem(
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        headlineContent = {
-                            Text(stringResource(R.string.opt_save_screen_params))
-                        },
-                        leadingContent = {
-                            Checkbox(checked = saveScreenParams, onCheckedChange = null)
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .toggleable(value = saveScreenParams, role = Role.Checkbox) {
-                                saveScreenParams = !saveScreenParams
-                        },
-                    )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxContentHeight)
+                        .verticalScroll(scrollState),
+                ) {
+                    Text(stringResource(R.string.pref_vk_save_alert))
+                    if (state.phone) {
+                        ListItem(
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            headlineContent = {
+                                Text(stringResource(R.string.opt_save_screen_params))
+                            },
+                            leadingContent = {
+                                Checkbox(checked = saveScreenParams, onCheckedChange = null)
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .toggleable(value = saveScreenParams, role = Role.Checkbox) {
+                                    saveScreenParams = !saveScreenParams
+                            },
+                        )
+                    }
                 }
                 ScrollableContentHint(
                     visible = canScrollForward,
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    modifier = Modifier.align(Alignment.BottomCenter),
                 )
             }
         },
@@ -460,6 +456,7 @@ private fun LayoutSelectionDialog(
     val maxListHeight = runtimeDialogListHeight()
     val canScrollForward = rememberLazyListCanScrollForward(listState)
     AlertDialog(
+        textScrollable = false,
         modifier = layout.modifier,
         properties = layout.properties,
         onDismissRequest = onDismiss,
@@ -483,12 +480,16 @@ private fun LayoutSelectionDialog(
                             leadingContent = {
                                 RadioButton(
                                     selected = selected == index,
-                                    onClick = { selected = index },
+                                    onClick = null,
                                 )
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable(role = Role.RadioButton) { selected = index },
+                                .selectable(
+                                    selected = selected == index,
+                                    role = Role.RadioButton,
+                                    onClick = { selected = index },
+                                ),
                         )
                     }
                 }

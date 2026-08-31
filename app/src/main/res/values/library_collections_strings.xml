@@ -8,6 +8,8 @@
     <string name="library_collection_manage_apps_summary">Check apps to include them in this collection.</string>
     <string name="library_collection_name">Collection name</string>
     <string name="library_collection_members_empty">No apps in this collection.</string>
+    <string name="library_collection_select_title">Select a collection</string>
+    <string name="library_collection_select_message">Choose a collection to view its apps.</string>
     <string name="library_collection_remove">Remove from collection</string>
     <string name="library_collection_remove_from_current">Remove from Collection</string>
     <string name="library_no_matches">No matches for \"%1$s\"</string>

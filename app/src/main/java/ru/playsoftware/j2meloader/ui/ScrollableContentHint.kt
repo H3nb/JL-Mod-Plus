@@ -14,6 +14,7 @@
 
 package ru.playsoftware.j2meloader.ui
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,24 +24,20 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.collect
 import ru.playsoftware.j2meloader.R
 
 /**
  * Small, theme-aware affordance shown only when a bounded popup has content below its viewport.
- * A small trailing arrow keeps the cue visually attached to the popup without introducing a
- * hard, floating label across the content.
+ * A small centered arrow keeps the cue visually attached to the popup without looking like a
+ * trailing control for the last field or row.
  */
 @Composable
 internal fun ScrollableContentHint(
@@ -52,13 +49,13 @@ internal fun ScrollableContentHint(
         modifier = modifier
             .fillMaxWidth()
             .height(28.dp),
-        contentAlignment = Alignment.BottomEnd,
+        contentAlignment = Alignment.BottomCenter,
     ) {
         Icon(
             painter = painterResource(R.drawable.ic_arrow_downward),
             contentDescription = stringResource(R.string.dialog_scroll_hint),
             modifier = Modifier
-                .padding(end = 12.dp, bottom = 6.dp)
+                .padding(bottom = 6.dp)
                 .size(20.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.68f),
         )
@@ -72,9 +69,28 @@ internal fun ScrollableContentHint(
  */
 @Composable
 internal fun rememberLazyListCanScrollForward(state: LazyListState): Boolean {
-    var canScrollForward by remember(state) { mutableStateOf(false) }
-    LaunchedEffect(state) {
-        snapshotFlow { state.canScrollForward }.collect { canScrollForward = it }
+    val canScrollForward by remember(state) {
+        derivedStateOf {
+            val layoutInfo = state.layoutInfo
+            val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
+            state.canScrollForward ||
+                layoutInfo.totalItemsCount > 0 && lastVisibleIndex < layoutInfo.totalItemsCount - 1
+        }
+    }
+    return canScrollForward
+}
+
+/** Avoids displaying a scroll cue while [ScrollState] still has its pre-layout maximum value. */
+@Composable
+internal fun rememberScrollCanScrollForward(
+    state: ScrollState,
+    minimumOverflowPx: Int = 0,
+): Boolean {
+    val canScrollForward by remember(state, minimumOverflowPx) {
+        derivedStateOf {
+            state.maxValue != Int.MAX_VALUE &&
+                state.maxValue - state.value > minimumOverflowPx
+        }
     }
     return canScrollForward
 }

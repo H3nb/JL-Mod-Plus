@@ -11,6 +11,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -71,7 +72,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -80,6 +85,7 @@ import androidx.compose.ui.unit.dp
 import java.text.Collator
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.withContext
 import ru.playsoftware.j2meloader.R
@@ -106,9 +112,11 @@ internal fun LibraryCollectionBrowser(
     onPrepareAppPicker: () -> Unit,
     onSort: (Int) -> Unit,
     onNavigationVisibilityChanged: (Boolean) -> Unit = {},
+    showBackButton: Boolean = true,
+    handleSystemBack: Boolean = true,
 ) {
     var manageApps by rememberSaveable(collection.id) { mutableStateOf(false) }
-    BackHandler {
+    BackHandler(enabled = manageApps || handleSystemBack) {
         if (manageApps) {
             manageApps = false
             onNavigationVisibilityChanged(true)
@@ -211,6 +219,7 @@ internal fun LibraryCollectionBrowser(
                 fallbackIndex = fallbackIndex.coerceAtLeast(0),
             )
         }.collectLatest { anchor ->
+            delay(120)
             onNavigationStateChanged(currentNavigationState.saveAnchor(surface, anchor))
         }
     }
@@ -322,6 +331,7 @@ internal fun LibraryCollectionBrowser(
                 manageApps = true
             },
             interactive = interactive,
+            showBackButton = showBackButton,
         )
     }
 
@@ -452,6 +462,7 @@ private fun LibraryCollectionHeader(
     onSort: (Int) -> Unit,
     onManageApps: () -> Unit,
     interactive: Boolean,
+    showBackButton: Boolean,
 ) {
     val sortEntries = stringArrayResource(R.array.pref_app_sort_entries).toList()
     val selectedSort = sortVariant and Int.MAX_VALUE
@@ -467,11 +478,13 @@ private fun LibraryCollectionHeader(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = onBack, enabled = interactive) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_arrow_back),
-                    contentDescription = stringResource(R.string.library_back),
-                )
+            if (showBackButton) {
+                IconButton(onClick = onBack, enabled = interactive) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_arrow_back),
+                        contentDescription = stringResource(R.string.library_back),
+                    )
+                }
             }
             Text(
                 text = title,
@@ -585,7 +598,7 @@ private fun LibraryCollectionListItem(
             Spacer(Modifier.width(6.dp))
             IconButton(
                 onClick = { onRemove(app.id) },
-                modifier = Modifier.size(40.dp),
+                modifier = Modifier.size(48.dp),
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_remove_circle),
@@ -626,7 +639,11 @@ private fun LibraryCollectionGridItem(
             .combinedClickable(
                 onClick = { onOpenApp(app.id) },
                 onLongClick = { onOpenActions(app) },
-            ),
+            )
+            .semantics {
+                role = Role.Button
+                if (hideTitle) contentDescription = app.title
+            },
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -642,17 +659,23 @@ private fun LibraryCollectionGridItem(
                 onClick = { onRemove(app.id) },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .size(36.dp)
-                    .background(
+                    .size(48.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(
                         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.86f),
                         shape = MaterialTheme.shapes.extraLarge,
                     ),
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_remove_circle),
-                    contentDescription = stringResource(R.string.library_collection_remove),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_remove_circle),
+                        contentDescription = stringResource(R.string.library_collection_remove),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
         if (!hideTitle) {
@@ -758,11 +781,14 @@ internal fun LibraryCollectionAppPicker(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable {
-                            val next = !checked
-                            selectedIds = if (next) selectedIds + app.id else selectedIds - app.id
-                            onSetMembership(app.id, next)
-                        }
+                        .toggleable(
+                            value = checked,
+                            role = Role.Checkbox,
+                            onValueChange = { next ->
+                                selectedIds = if (next) selectedIds + app.id else selectedIds - app.id
+                                onSetMembership(app.id, next)
+                            },
+                        )
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -793,10 +819,7 @@ internal fun LibraryCollectionAppPicker(
                     }
                     Checkbox(
                         checked = checked,
-                        onCheckedChange = { next ->
-                            selectedIds = if (next) selectedIds + app.id else selectedIds - app.id
-                            onSetMembership(app.id, next)
-                        },
+                        onCheckedChange = null,
                     )
                 }
                 HorizontalDivider(

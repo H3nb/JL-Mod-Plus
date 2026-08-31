@@ -22,16 +22,11 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.res.Configuration;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.Window;
-import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -146,19 +141,6 @@ public class InstallerDialog extends DialogFragment {
 		dialog.setContentView(composeView);
 		dialog.setCancelable(false);
 		dialog.setCanceledOnTouchOutside(false);
-		dialog.setOnShowListener(ignored -> {
-			Window window = dialog.getWindow();
-			if (window == null) return;
-			window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-			int margin = (int) TypedValue.applyDimension(
-					TypedValue.COMPLEX_UNIT_DIP, 32, getResources().getDisplayMetrics());
-			int maxWidthDp = getResources().getConfiguration().orientation
-					== Configuration.ORIENTATION_LANDSCAPE ? 760 : 480;
-			int maxWidth = (int) TypedValue.applyDimension(
-					TypedValue.COMPLEX_UNIT_DIP, maxWidthDp, getResources().getDisplayMetrics());
-			int width = Math.min(maxWidth, getResources().getDisplayMetrics().widthPixels - margin);
-			window.setLayout(Math.max(width, 1), WindowManager.LayoutParams.WRAP_CONTENT);
-		});
 		return dialog;
 	}
 
@@ -182,6 +164,9 @@ public class InstallerDialog extends DialogFragment {
 	@Override
 	public void onStart() {
 		super.onStart();
+		Dialog dialog = getDialog();
+		Window window = dialog == null ? null : dialog.getWindow();
+		InstallerWindowCompat.configure(window);
 		if (restoredInstance || installer != null || composeController == null) return;
 		Bundle args = requireArguments();
 		Uri uri = args.getParcelable(ARG_URI);

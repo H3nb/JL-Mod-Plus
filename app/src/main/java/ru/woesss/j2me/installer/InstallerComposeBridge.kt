@@ -14,19 +14,26 @@
 
 package ru.woesss.j2me.installer
 
-import android.content.res.Configuration
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -36,17 +43,16 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -55,9 +61,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import ru.playsoftware.j2meloader.R
-import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+import ru.playsoftware.j2meloader.ui.adaptiveDialogLayout
+import ru.playsoftware.j2meloader.ui.rememberScrollCanScrollForward
 
 /** Presentation-only state. Installation and repository ownership remain in InstallerDialog. */
 sealed interface InstallerUiState {
@@ -205,84 +212,164 @@ fun InstallerScreen(
     val icon = remember(iconPath) {
         iconPath?.let(BitmapFactory::decodeFile)
     }
-    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
-    val maxDialogWidth = if (landscape) 720.dp else 480.dp
-
-    Surface(
+    BoxWithConstraints(
         modifier = modifier
-            .fillMaxWidth()
-            .widthIn(min = 280.dp, max = maxDialogWidth),
-        shape = MaterialTheme.shapes.extraLarge,
-        color = MaterialTheme.colorScheme.surface,
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.56f))
+            .windowInsetsPadding(WindowInsets.safeDrawing),
+        contentAlignment = Alignment.Center,
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+        val compactWidth = maxWidth < 360.dp
+        val compactHeight = maxHeight < 480.dp
+        val dialogLayout = adaptiveDialogLayout(maxWidth, maxHeight)
+
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (icon != null) {
-                    Image(
-                        bitmap = icon.asImageBitmap(),
-                        contentDescription = null,
-                        modifier = Modifier.size(56.dp),
-                        contentScale = ContentScale.Fit,
-                    )
-                }
-                Text(
-                    text = state.title,
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
+            val compactScrollState = rememberScrollState()
+            val compactCanScrollForward = rememberScrollCanScrollForward(compactScrollState)
+            val dialogShape = MaterialTheme.shapes.extraLarge
+            val surfaceModifier = if (compactHeight) {
+                Modifier
+                    .width(dialogLayout.width)
+                    .height(dialogLayout.maxHeight)
+            } else {
+                dialogLayout.modifier
             }
-
-            when (state) {
-                is InstallerUiState.Loading -> InstallerProgress(state.status)
-                is InstallerUiState.Converting -> {
-                    InstallerMessage(state.message)
-                    InstallerProgress(state.status)
-                }
-
-                is InstallerUiState.Confirmation -> {
-                    InstallerMessage(state.message)
-                    InstallerButtons(
-                        closeLabel = state.closeLabel,
-                        primaryLabel = state.installLabel,
-                        runLabel = state.runLabel,
-                        onClose = actions::onClose,
-                        onPrimary = actions::onInstall,
-                        onRun = actions::onRunExisting,
-                    )
-                }
-
-                is InstallerUiState.Success -> {
-                    InstallerProgressMessage(state.status)
-                    InstallerButtons(
-                        closeLabel = state.closeLabel,
-                        primaryLabel = state.startLabel,
-                        runLabel = null,
-                        onClose = actions::onClose,
-                        onPrimary = actions::onLaunchInstalled,
-                        onRun = actions::onRunExisting,
-                    )
-                }
-
-                is InstallerUiState.Error -> {
-                    InstallerMessage(state.message, isError = true)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
+            Surface(
+                modifier = surfaceModifier.clip(dialogShape),
+                shape = dialogShape,
+                color = MaterialTheme.colorScheme.surface,
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .then(
+                                if (compactHeight) Modifier.verticalScroll(compactScrollState)
+                                else Modifier,
+                            )
+                            .padding(
+                                horizontal = if (compactWidth) 16.dp else 24.dp,
+                                vertical = if (compactHeight) 8.dp else 20.dp,
+                            ),
+                        verticalArrangement = Arrangement.spacedBy(if (compactHeight) 4.dp else 12.dp),
                     ) {
-                        TextButton(onClick = actions::onClose) {
-                            Text(state.closeLabel)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            if (icon != null) {
+                                Image(
+                                    bitmap = icon.asImageBitmap(),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(if (compactHeight) 40.dp else 56.dp),
+                                    contentScale = ContentScale.Fit,
+                                )
+                            }
+                            Text(
+                                text = state.title,
+                                modifier = Modifier.weight(1f),
+                                style = if (compactHeight) {
+                                    MaterialTheme.typography.titleSmall
+                                } else {
+                                    MaterialTheme.typography.titleLarge
+                                },
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+
+                        when (state) {
+                            is InstallerUiState.Loading -> InstallerProgress(state.status, compactHeight)
+                            is InstallerUiState.Converting -> {
+                                InstallerMessage(
+                                    message = state.message,
+                                    modifier = if (compactHeight) {
+                                        Modifier
+                                    } else {
+                                        Modifier.weight(1f, fill = false)
+                                    },
+                                    compact = compactHeight,
+                                    scrollable = !compactHeight,
+                                )
+                                InstallerProgress(state.status, compactHeight)
+                            }
+
+                            is InstallerUiState.Confirmation -> {
+                                InstallerMessage(
+                                    message = state.message,
+                                    modifier = if (compactHeight) {
+                                        Modifier
+                                    } else {
+                                        Modifier.weight(1f, fill = false)
+                                    },
+                                    compact = compactHeight,
+                                    scrollable = !compactHeight,
+                                )
+                                InstallerButtons(
+                                    closeLabel = state.closeLabel,
+                                    primaryLabel = state.installLabel,
+                                    runLabel = state.runLabel,
+                                    onClose = actions::onClose,
+                                    onPrimary = actions::onInstall,
+                                    onRun = actions::onRunExisting,
+                                    compact = compactHeight,
+                                )
+                            }
+
+                            is InstallerUiState.Success -> {
+                                InstallerProgressMessage(state.status, compactHeight)
+                                InstallerButtons(
+                                    closeLabel = state.closeLabel,
+                                    primaryLabel = state.startLabel,
+                                    runLabel = null,
+                                    onClose = actions::onClose,
+                                    onPrimary = actions::onLaunchInstalled,
+                                    onRun = actions::onRunExisting,
+                                    compact = compactHeight,
+                                )
+                            }
+
+                            is InstallerUiState.Error -> {
+                                InstallerMessage(
+                                    message = state.message,
+                                    isError = true,
+                                    modifier = if (compactHeight) {
+                                        Modifier
+                                    } else {
+                                        Modifier.weight(1f, fill = false)
+                                    },
+                                    compact = compactHeight,
+                                    scrollable = !compactHeight,
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End,
+                                ) {
+                                    TextButton(onClick = actions::onClose) {
+                                        Text(
+                                            state.closeLabel,
+                                            style = if (compactHeight) {
+                                                MaterialTheme.typography.labelMedium
+                                            } else {
+                                                MaterialTheme.typography.labelLarge
+                                            },
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
+                    ScrollableContentHint(
+                        visible = compactCanScrollForward,
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                    )
                 }
             }
         }
@@ -290,50 +377,50 @@ fun InstallerScreen(
 }
 
 @Composable
-private fun InstallerProgress(status: String) {
+private fun InstallerProgress(status: String, compact: Boolean) {
     LinearProgressIndicator(
         modifier = Modifier
             .fillMaxWidth()
             .semantics { contentDescription = status },
     )
-    InstallerProgressMessage(status)
+    InstallerProgressMessage(status, compact)
 }
 
 @Composable
-private fun InstallerProgressMessage(status: String) {
+private fun InstallerProgressMessage(status: String, compact: Boolean) {
     Text(
         text = status,
         modifier = Modifier.fillMaxWidth(),
         textAlign = TextAlign.Center,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
+        style = if (compact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
     )
 }
 
 @Composable
-private fun InstallerMessage(message: String, isError: Boolean = false) {
-    val maxMessageHeight = (availableWindowHeightDp() - 280.dp)
-        .coerceAtLeast(120.dp)
-        .coerceAtMost(360.dp)
+private fun InstallerMessage(
+    message: String,
+    modifier: Modifier = Modifier,
+    isError: Boolean = false,
+    compact: Boolean = false,
+    scrollable: Boolean = true,
+) {
     val scrollState = rememberScrollState()
-    val canScrollForward by androidx.compose.runtime.remember {
-        derivedStateOf { scrollState.value < scrollState.maxValue }
-    }
+    val canScrollForward = rememberScrollCanScrollForward(scrollState) && scrollable
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(max = maxMessageHeight),
+        modifier = modifier.fillMaxWidth(),
     ) {
         Text(
             text = message,
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = maxMessageHeight)
-                .verticalScroll(scrollState),
+                .then(if (scrollable) Modifier.verticalScroll(scrollState) else Modifier),
             color = if (isError) {
                 MaterialTheme.colorScheme.error
             } else {
                 MaterialTheme.colorScheme.onSurfaceVariant
             },
+            style = if (compact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyLarge,
         )
         ScrollableContentHint(
             visible = canScrollForward,
@@ -343,6 +430,7 @@ private fun InstallerMessage(message: String, isError: Boolean = false) {
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 private fun InstallerButtons(
     closeLabel: String,
     primaryLabel: String,
@@ -350,23 +438,23 @@ private fun InstallerButtons(
     onClose: () -> Unit,
     onPrimary: () -> Unit,
     onRun: () -> Unit,
+    compact: Boolean,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
+    val labelStyle = if (compact) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         if (runLabel != null) {
-            TextButton(onClick = onRun) { Text(runLabel) }
+            TextButton(onClick = onRun) { Text(runLabel, style = labelStyle) }
         }
-        TextButton(onClick = onClose) { Text(closeLabel) }
+        TextButton(onClick = onClose) { Text(closeLabel, style = labelStyle) }
         Button(
             onClick = onPrimary,
             shape = MaterialTheme.shapes.medium,
         ) {
-            Text(primaryLabel)
+            Text(primaryLabel, style = labelStyle)
         }
     }
 }

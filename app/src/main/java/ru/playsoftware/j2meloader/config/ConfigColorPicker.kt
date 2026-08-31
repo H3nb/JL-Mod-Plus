@@ -15,7 +15,6 @@
 package ru.playsoftware.j2meloader.config
 
 import android.graphics.Color as AndroidColor
-import android.content.res.Configuration
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -28,17 +27,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import ru.playsoftware.j2meloader.ui.AdaptiveAlertDialog as AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,18 +48,20 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.window.DialogProperties
 import java.util.Locale
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+import ru.playsoftware.j2meloader.ui.rememberScrollCanScrollForward
 
 /** A dependency-free HSV picker used only by the host configuration presentation. */
 @Composable
@@ -75,11 +74,8 @@ internal fun ConfigColorPickerDialog(
     var hexText by remember(initialHex) { mutableStateOf(formatHsv(hsv)) }
     val color = Color.hsv(hsv[0], hsv[1], hsv[2])
     val hexIsValid = hexText.length == 6
-    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val scrollState = rememberScrollState()
-    val canScrollForward by remember {
-        derivedStateOf { scrollState.value < scrollState.maxValue }
-    }
+    val canScrollForward = rememberScrollCanScrollForward(scrollState)
 
     fun updateHsv(hue: Float = hsv[0], saturation: Float = hsv[1], value: Float = hsv[2]) {
         hsv = floatArrayOf(
@@ -91,27 +87,21 @@ internal fun ConfigColorPickerDialog(
     }
 
     AlertDialog(
-        modifier = if (landscape) {
-            Modifier
-                .fillMaxWidth(0.94f)
-                .widthIn(max = 760.dp)
-        } else {
-            Modifier.widthIn(max = 560.dp)
-        },
-        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
+        textScrollable = false,
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(R.string.config_color_picker_title)) },
         text = {
             BoxWithConstraints {
-                val landscape = maxWidth > maxHeight && maxHeight != Dp.Infinity
+                val useTwoPane = maxWidth >= 480.dp &&
+                    maxWidth > maxHeight && maxHeight != Dp.Infinity
                 val pickerHeight = if (maxHeight == Dp.Infinity) {
                     180.dp
                 } else {
-                    (maxHeight * if (landscape) 0.68f else 0.38f)
+                    (maxHeight * if (useTwoPane) 0.68f else 0.38f)
                         .coerceIn(96.dp, 180.dp)
                 }
                 Box(modifier = Modifier.fillMaxWidth()) {
-                    if (landscape) {
+                    if (useTwoPane) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -334,12 +324,21 @@ private fun HuePicker(
         (0..6).map { index -> Color.hsv(index * 60f, 1f, 1f) }
     }
     val pickerDescription = stringResource(R.string.config_color_picker_hue)
-    Canvas(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(24.dp)
-            .clip(MaterialTheme.shapes.medium)
-            .semantics { contentDescription = pickerDescription }
+            .height(48.dp)
+            .semantics {
+                contentDescription = pickerDescription
+                progressBarRangeInfo = ProgressBarRangeInfo(
+                    current = hue.coerceIn(0f, 360f),
+                    range = 0f..360f,
+                )
+                setProgress { targetHue ->
+                    onChanged(targetHue.coerceIn(0f, 360f))
+                    true
+                }
+            }
             .pointerInput(Unit) {
                 detectTapGestures { position ->
                     onChanged(normalizeCoordinate(position.x, size.width) * 360f)
@@ -351,22 +350,30 @@ private fun HuePicker(
                     onChanged(normalizeCoordinate(change.position.x, size.width) * 360f)
                 }
             },
+        contentAlignment = Alignment.Center,
     ) {
-        drawRect(Brush.horizontalGradient(colors))
-        val radius = 8.dp.toPx()
-        drawCircle(
-            color = Color.White,
-            radius = radius,
-            center = Offset(
-                clampMarkerCenter(
-                    hue.coerceIn(0f, 360f) / 360f * size.width,
-                    size.width,
-                    radius,
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(24.dp)
+                .clip(MaterialTheme.shapes.medium),
+        ) {
+            drawRect(Brush.horizontalGradient(colors))
+            val radius = 8.dp.toPx()
+            drawCircle(
+                color = Color.White,
+                radius = radius,
+                center = Offset(
+                    clampMarkerCenter(
+                        hue.coerceIn(0f, 360f) / 360f * size.width,
+                        size.width,
+                        radius,
+                    ),
+                    size.height / 2f,
                 ),
-                size.height / 2f,
-            ),
-            style = Stroke(width = 2.dp.toPx()),
-        )
+                style = Stroke(width = 2.dp.toPx()),
+            )
+        }
     }
 }
 

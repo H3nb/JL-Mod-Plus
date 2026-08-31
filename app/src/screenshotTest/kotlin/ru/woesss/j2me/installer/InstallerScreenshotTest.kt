@@ -62,6 +62,32 @@ fun InstallerConfirmationScreenshot() {
 }
 
 @PreviewTest
+@Preview(
+    name = "Installer compact landscape large text",
+    widthDp = 480,
+    heightDp = 240,
+    fontScale = 2.0f,
+    showBackground = true,
+)
+@Composable
+fun InstallerCompactLandscapeLargeTextScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        InstallerScreen(
+            state = InstallerUiState.Confirmation(
+                title = "Install application",
+                message = "This confirmation contains enough information to require scrolling " +
+                    "when the available landscape height is very small.",
+                installLabel = "Install",
+                closeLabel = "Cancel",
+                runLabel = "Run existing",
+                iconPath = null,
+            ),
+            actions = NoOpInstallerActions,
+        )
+    }
+}
+
+@PreviewTest
 @Preview(name = "Installer Indonesian actions", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
 fun InstallerIndonesianActionsScreenshot() {
@@ -114,6 +140,28 @@ fun InstallerConvertingScreenshot() {
             state = InstallerUiState.Converting(
                 title = "Demo MIDlet",
                 message = "Name: Demo MIDlet\nVendor: Example Studio\nVersion: 1.0",
+                status = "Converting JAR…",
+            ),
+            actions = NoOpInstallerActions,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(
+    name = "Reconversion compatibility compact landscape large text",
+    widthDp = 480,
+    heightDp = 240,
+    fontScale = 2.0f,
+    showBackground = true,
+)
+@Composable
+fun ReconversionCompatibilityCompactLandscapeLargeTextScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        InstallerScreen(
+            state = InstallerUiState.Converting(
+                title = "Demo MIDlet",
+                message = "This MIDlet needs a one-time compatibility conversion before it can start. Please wait…",
                 status = "Converting JAR…",
             ),
             actions = NoOpInstallerActions,

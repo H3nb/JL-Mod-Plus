@@ -212,6 +212,7 @@ dependencies {
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.material3.adaptive)
+    implementation(libs.androidx.material3.adaptive.navigation3)
     implementation(libs.androidx.compose.runtime)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.core.ktx)

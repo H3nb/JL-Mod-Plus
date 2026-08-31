@@ -34,6 +34,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalContext
@@ -41,6 +43,10 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.preference.PreferenceManager
 import ru.playsoftware.j2meloader.util.Constants
+
+internal fun shouldUseDarkSystemBarIcons(barColor: Color, backgroundColor: Color): Boolean =
+    // 0.179 is the luminance where black and white have equal WCAG contrast.
+    barColor.compositeOver(backgroundColor).luminance() > 0.179f
 
 private val LightColors = lightColorScheme(
     primary = Color(0xFF34536B),
@@ -356,8 +362,18 @@ fun JLModPlusTheme(
         SideEffect {
             val window = (view.context as? Activity)?.window ?: return@SideEffect
             val controller = WindowCompat.getInsetsController(window, view)
-            controller.isAppearanceLightStatusBars = !darkTheme
-            controller.isAppearanceLightNavigationBars = !darkTheme
+            @Suppress("DEPRECATION")
+            val statusBarColor = Color(window.statusBarColor)
+            @Suppress("DEPRECATION")
+            val navigationBarColor = Color(window.navigationBarColor)
+            controller.isAppearanceLightStatusBars = shouldUseDarkSystemBarIcons(
+                statusBarColor,
+                colorScheme.background,
+            )
+            controller.isAppearanceLightNavigationBars = shouldUseDarkSystemBarIcons(
+                navigationBarColor,
+                colorScheme.background,
+            )
             // Edge-to-edge keeps system bars transparent. The host content is intentionally
             // inset below them, so the window background must follow the Compose surface.
             window.decorView.setBackgroundColor(colorScheme.background.toArgb())

@@ -72,10 +72,9 @@ public class ProfilesActivity extends AppCompatActivity {
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		EdgeToEdgeCompat.enableIfSupported(this);
+		EdgeToEdgeCompat.enableForComposeSurface(this);
 		ComposeView composeView = new ComposeView(this);
 		setContentView(composeView);
-		EdgeToEdgeCompat.protectHostContent(this);
 		preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		composeController = new ProfilesComposeController(composeView, createActions());
 		refreshProfiles();

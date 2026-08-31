@@ -12,21 +12,29 @@ import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import android.view.WindowManager
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
@@ -47,12 +55,12 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.widthIn
 import androidx.core.net.toUri
 import androidx.core.graphics.drawable.toDrawable
 import androidx.fragment.app.DialogFragment
@@ -60,9 +68,9 @@ import androidx.lifecycle.ViewModelProvider
 import ru.playsoftware.j2meloader.MainActivity
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.librarydb.LibraryViewModel
-import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+import ru.playsoftware.j2meloader.ui.adaptiveDialogLayout
 import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 
 class BulkInstallerDialog : DialogFragment() {
@@ -159,9 +167,7 @@ class BulkInstallerDialog : DialogFragment() {
         super.onStart()
         val window = dialog?.window ?: return
         window.setBackgroundDrawable(android.graphics.Color.TRANSPARENT.toDrawable())
-        // Let the dialog window follow the actual container; Compose applies the adaptive max width
-        // below. This avoids using physical display metrics in split-screen and freeform windows.
-        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT)
+        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
     }
 
     companion object {
@@ -212,47 +218,77 @@ private fun BulkInstallSurface(
     onCancel: () -> Unit,
     onClose: () -> Unit,
 ) {
-    val maxHeight = (availableWindowHeightDp() - 48.dp)
-        .coerceIn(240.dp, 760.dp)
-    Surface(
-        shape = MaterialTheme.shapes.extraLarge,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        tonalElevation = 6.dp,
+    BoxWithConstraints(
         modifier = Modifier
-            .fillMaxWidth()
-            .widthIn(max = 720.dp),
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing),
+        contentAlignment = Alignment.Center,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 220.dp, max = maxHeight)
-                .padding(horizontal = 24.dp, vertical = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+        val compactWidth = maxWidth < 360.dp
+        val compactHeight = maxHeight < 480.dp
+        val compactHeader = compactWidth || compactHeight
+        val dialogLayout = adaptiveDialogLayout(maxWidth, maxHeight)
+
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = stringResource(R.string.bulk_install_title),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Medium,
-            )
-            when (state) {
-                BulkInstallViewModel.State.Idle -> PlanningContent(onClose = onClose)
-                is BulkInstallViewModel.State.Planning -> PlanningContent(state.sourceLabel, onClose)
-                is BulkInstallViewModel.State.Review -> ReviewContent(
-                    plan = state.plan,
-                    onToggle = onToggle,
-                    onRecommended = onRecommended,
-                    onClear = onClear,
-                    onInstall = onInstall,
-                    onClose = onClose,
-                    modifier = Modifier.weight(1f, fill = false),
-                )
-                is BulkInstallViewModel.State.Running -> RunningContent(state, onCancel)
-                is BulkInstallViewModel.State.Finished -> FinishedContent(
-                    state,
-                    onClose,
-                    Modifier.weight(1f, fill = false),
-                )
-                is BulkInstallViewModel.State.Error -> ErrorContent(state.message, onClose)
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                tonalElevation = 6.dp,
+                modifier = dialogLayout.modifier,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            horizontal = if (compactWidth) 16.dp else 24.dp,
+                            vertical = if (compactHeight) 12.dp else 20.dp,
+                        ),
+                    verticalArrangement = Arrangement.spacedBy(if (compactHeader) 8.dp else 12.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.bulk_install_title),
+                        style = if (compactHeader) {
+                            MaterialTheme.typography.titleMedium
+                        } else {
+                            MaterialTheme.typography.titleLarge
+                        },
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    when (state) {
+                        BulkInstallViewModel.State.Idle -> PlanningContent(onClose = onClose)
+                        is BulkInstallViewModel.State.Planning -> PlanningContent(state.sourceLabel, onClose)
+                        is BulkInstallViewModel.State.Review -> ReviewContent(
+                            plan = state.plan,
+                            onToggle = onToggle,
+                            onRecommended = onRecommended,
+                            onClear = onClear,
+                            onInstall = onInstall,
+                            onClose = onClose,
+                            compactHeader = compactHeader,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                        is BulkInstallViewModel.State.Running -> RunningContent(
+                            state = state,
+                            onCancel = onCancel,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                        is BulkInstallViewModel.State.Finished -> FinishedContent(
+                            state,
+                            onClose,
+                            Modifier.weight(1f, fill = false),
+                        )
+                        is BulkInstallViewModel.State.Error -> ErrorContent(
+                            message = state.message,
+                            onClose = onClose,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                    }
+                }
             }
         }
     }
@@ -282,6 +318,7 @@ private fun PlanningContent(label: String? = null, onClose: () -> Unit) {
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 private fun ReviewContent(
     plan: BulkInstallPlan,
     onToggle: (String) -> Unit,
@@ -289,88 +326,112 @@ private fun ReviewContent(
     onClear: () -> Unit,
     onInstall: () -> Unit,
     onClose: () -> Unit,
+    compactHeader: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val listState = rememberLazyListState()
+    val canScrollForward = rememberLazyListCanScrollForward(listState)
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text(
-                pluralStringResource(
-                    R.plurals.bulk_install_found,
-                    plan.items.size,
-                    plan.items.size,
-                ),
-            )
-            Text(
-                text = pluralStringResource(
-                    R.plurals.bulk_install_selected,
-                    plan.selectedCount,
-                    plan.selectedCount,
-                ),
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-        }
-        ReviewStatusSummary(plan)
-        if (plan.warnings.isNotEmpty()) {
-            Text(
-                text = pluralStringResource(
-                    R.plurals.bulk_install_warning_count,
-                    plan.warnings.size,
-                    plan.warnings.size,
-                ),
-                modifier = Modifier.padding(top = 4.dp),
-                color = MaterialTheme.colorScheme.tertiary,
-                style = MaterialTheme.typography.labelMedium,
-            )
-            Text(
-                text = plan.warnings.first(),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                .weight(1f, fill = false),
         ) {
-            OutlinedButton(onClick = onRecommended) {
-                Text(stringResource(R.string.bulk_install_recommended))
-            }
-            OutlinedButton(onClick = onClear, enabled = plan.selectedCount > 0) {
-                Text(stringResource(R.string.bulk_install_clear))
-            }
-        }
-        HorizontalDivider()
-        if (plan.items.isEmpty()) {
-            Text(
-                text = stringResource(R.string.bulk_install_empty),
-                modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        } else {
-            val listState = rememberLazyListState()
-            val canScrollForward = rememberLazyListCanScrollForward(listState)
             LazyColumn(
-                modifier = Modifier.fillMaxWidth().weight(1f, fill = false),
+                modifier = Modifier.fillMaxWidth(),
                 state = listState,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Text(
+                                pluralStringResource(
+                                    R.plurals.bulk_install_found,
+                                    plan.items.size,
+                                    plan.items.size,
+                                ),
+                                style = if (compactHeader) {
+                                    MaterialTheme.typography.bodySmall
+                                } else {
+                                    MaterialTheme.typography.bodyMedium
+                                },
+                            )
+                            Text(
+                                text = pluralStringResource(
+                                    R.plurals.bulk_install_selected,
+                                    plan.selectedCount,
+                                    plan.selectedCount,
+                                ),
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.primary,
+                                style = if (compactHeader) {
+                                    MaterialTheme.typography.bodySmall
+                                } else {
+                                    MaterialTheme.typography.bodyMedium
+                                },
+                            )
+                        }
+                        ReviewStatusSummary(plan, compactHeader)
+                        if (plan.warnings.isNotEmpty()) {
+                            Text(
+                                text = pluralStringResource(
+                                    R.plurals.bulk_install_warning_count,
+                                    plan.warnings.size,
+                                    plan.warnings.size,
+                                ),
+                                modifier = Modifier.padding(top = 4.dp),
+                                color = MaterialTheme.colorScheme.tertiary,
+                                style = MaterialTheme.typography.labelMedium,
+                            )
+                            Text(
+                                text = plan.warnings.first(),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState())
+                                .padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            OutlinedButton(onClick = onRecommended) {
+                                Text(stringResource(R.string.bulk_install_recommended))
+                            }
+                            OutlinedButton(onClick = onClear, enabled = plan.selectedCount > 0) {
+                                Text(stringResource(R.string.bulk_install_clear))
+                            }
+                        }
+                        HorizontalDivider()
+                    }
+                }
+                if (plan.items.isEmpty()) {
+                    item {
+                        Text(
+                            text = stringResource(R.string.bulk_install_empty),
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
                 items(plan.items, key = { it.id }) { item ->
                     BulkItemRow(item, onToggle)
                 }
             }
             ScrollableContentHint(
                 visible = canScrollForward,
+                modifier = Modifier.align(Alignment.BottomCenter),
             )
         }
         HorizontalDivider()
@@ -391,7 +452,7 @@ private fun ReviewContent(
 }
 
 @Composable
-private fun ReviewStatusSummary(plan: BulkInstallPlan) {
+private fun ReviewStatusSummary(plan: BulkInstallPlan, compact: Boolean) {
     val ready = plan.items.count {
         it.status == BulkInstallStatus.New || it.status == BulkInstallStatus.Update
     }
@@ -406,7 +467,7 @@ private fun ReviewStatusSummary(plan: BulkInstallPlan) {
             pluralStringResource(R.plurals.bulk_install_attention_count, attention, attention),
         ).joinToString(" · "),
         modifier = Modifier.padding(top = 2.dp),
-        style = MaterialTheme.typography.bodySmall,
+        style = if (compact) MaterialTheme.typography.labelSmall else MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
@@ -414,18 +475,22 @@ private fun ReviewStatusSummary(plan: BulkInstallPlan) {
 @Composable
 private fun BulkItemRow(item: BulkInstallItem, onToggle: (String) -> Unit) {
     val enabled = item.installable
-    val rowModifier = if (enabled) {
-        Modifier.fillMaxWidth().clickable { onToggle(item.id) }
-    } else {
-        Modifier.fillMaxWidth().alpha(0.62f)
-    }
     Row(
-        modifier = rowModifier.padding(vertical = 8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .alpha(if (enabled) 1f else 0.62f)
+            .toggleable(
+                value = item.selected,
+                enabled = enabled,
+                role = Role.Checkbox,
+                onValueChange = { onToggle(item.id) },
+            )
+            .padding(vertical = 8.dp),
         verticalAlignment = Alignment.Top,
     ) {
         Checkbox(
             checked = item.selected,
-            onCheckedChange = if (enabled) ({ onToggle(item.id) }) else null,
+            onCheckedChange = null,
             enabled = enabled,
         )
         Column(
@@ -496,34 +561,51 @@ private fun BulkItemRow(item: BulkInstallItem, onToggle: (String) -> Unit) {
 }
 
 @Composable
-private fun RunningContent(state: BulkInstallViewModel.State.Running, onCancel: () -> Unit) {
+private fun RunningContent(
+    state: BulkInstallViewModel.State.Running,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val progress = if (state.total == 0) 0f else state.completed.toFloat() / state.total.toFloat()
     val progressLabel = stringResource(
         R.string.bulk_install_running,
         state.completed.coerceAtMost(state.total),
         state.total,
     )
-    Text(progressLabel)
-    LinearProgressIndicator(
-        progress = { progress },
-        modifier = Modifier.fillMaxWidth().semantics { contentDescription = progressLabel },
-    )
-    Text(
-        state.currentName,
-        style = MaterialTheme.typography.titleMedium,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-    )
-    ResultCounters(state.results)
-    if (state.cancelRequested) {
-        Text(
-            stringResource(R.string.bulk_install_cancel_requested),
-            style = MaterialTheme.typography.bodySmall,
-        )
-    }
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-        OutlinedButton(onClick = onCancel, enabled = !state.cancelRequested) {
-            Text(stringResource(R.string.bulk_install_cancel))
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f, fill = false)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(progressLabel)
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier.fillMaxWidth().semantics { contentDescription = progressLabel },
+            )
+            Text(
+                state.currentName,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            ResultCounters(state.results)
+            if (state.cancelRequested) {
+                Text(
+                    stringResource(R.string.bulk_install_cancel_requested),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            OutlinedButton(onClick = onCancel, enabled = !state.cancelRequested) {
+                Text(stringResource(R.string.bulk_install_cancel))
+            }
         }
     }
 }
@@ -612,11 +694,27 @@ private fun resultLabel(kind: BulkInstallResultKind): String = stringResource(
 )
 
 @Composable
-private fun ErrorContent(message: String, onClose: () -> Unit) {
-    Text(message, color = MaterialTheme.colorScheme.error)
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-        Button(onClick = onClose) {
-            Text(stringResource(R.string.bulk_install_close))
+private fun ErrorContent(
+    message: String,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = message,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f, fill = false)
+                .verticalScroll(rememberScrollState()),
+            color = MaterialTheme.colorScheme.error,
+        )
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            Button(onClick = onClose) {
+                Text(stringResource(R.string.bulk_install_close))
+            }
         }
     }
 }

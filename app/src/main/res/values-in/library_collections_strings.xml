@@ -8,6 +8,8 @@
     <string name="library_collection_manage_apps_summary">Centang aplikasi untuk memasukkannya ke koleksi ini.</string>
     <string name="library_collection_name">Nama koleksi</string>
     <string name="library_collection_members_empty">Belum ada aplikasi dalam koleksi ini.</string>
+    <string name="library_collection_select_title">Pilih koleksi</string>
+    <string name="library_collection_select_message">Pilih koleksi untuk melihat aplikasinya.</string>
     <string name="library_collection_remove">Hapus dari koleksi</string>
     <string name="library_collection_remove_from_current">Hapus dari Koleksi</string>
     <string name="library_no_matches">Tidak ada hasil untuk \"%1$s\"</string>

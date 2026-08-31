@@ -12,11 +12,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import ru.playsoftware.j2meloader.ui.AdaptiveAlertDialog as AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -38,10 +39,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+import ru.playsoftware.j2meloader.ui.adaptiveDialogLayout
 import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
+import ru.playsoftware.j2meloader.ui.rememberScrollCanScrollForward
 
 private sealed interface TemplateNameRequest {
     data object Create : TemplateNameRequest
@@ -148,13 +150,14 @@ private fun ConfigTemplateManagerDialog(
 ) {
     var actionTarget by remember { mutableStateOf<ConfigUiState.ProfileTemplate?>(null) }
     var deleteTarget by remember { mutableStateOf<ConfigUiState.ProfileTemplate?>(null) }
+    val dialogLayout = adaptiveDialogLayout()
     Dialog(
         onDismissRequest = onDismissRequest,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+        properties = dialogLayout.properties,
     ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Surface(
-                modifier = Modifier.fillMaxWidth(0.94f).widthIn(max = 560.dp).heightIn(max = 680.dp),
+                modifier = dialogLayout.modifier,
                 shape = MaterialTheme.shapes.extraLarge,
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
                 tonalElevation = 6.dp,
@@ -230,43 +233,70 @@ private fun ConfigTemplateManagerDialog(
     }
 
     actionTarget?.let { template ->
+        val maxActionHeight = adaptiveDialogLayout().maxContentHeight(
+            reservedHeight = 120.dp,
+        )
+        val scrollState = rememberScrollState()
+        val canScrollForward = rememberScrollCanScrollForward(scrollState)
         AlertDialog(
+            textScrollable = false,
             onDismissRequest = { actionTarget = null },
             title = { Text(template.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
             text = {
-                Column {
-                    if (!template.isDefault) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxActionHeight),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = maxActionHeight)
+                            .verticalScroll(scrollState),
+                    ) {
+                        if (!template.isDefault) {
+                            TextButton(
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
+                                    actionTarget = null
+                                    events.onSetDefaultTemplate(template.name)
+                                },
+                            ) { Text(stringResource(R.string.set_as_default), modifier = Modifier.fillMaxWidth()) }
+                        }
+                        if (status.modified && status.sourceProfile == template.name) {
+                            TextButton(
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
+                                    actionTarget = null
+                                    events.onUpdateTemplate(template.name)
+                                },
+                            ) { Text(stringResource(R.string.profile_update_template), modifier = Modifier.fillMaxWidth()) }
+                        }
                         TextButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            actionTarget = null
-                            events.onSetDefaultTemplate(template.name)
-                        },
-                        ) { Text(stringResource(R.string.set_as_default), modifier = Modifier.fillMaxWidth()) }
-                    }
-                    if (status.modified && status.sourceProfile == template.name) {
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                actionTarget = null
+                                onRename(template.name)
+                            },
+                        ) { Text(stringResource(R.string.action_context_rename), modifier = Modifier.fillMaxWidth()) }
                         TextButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            actionTarget = null
-                            events.onUpdateTemplate(template.name)
-                        },
-                        ) { Text(stringResource(R.string.profile_update_template), modifier = Modifier.fillMaxWidth()) }
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                actionTarget = null
+                                deleteTarget = template
+                            },
+                        ) {
+                            Text(
+                                stringResource(R.string.action_context_delete),
+                                modifier = Modifier.fillMaxWidth(),
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
                     }
-                    TextButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        actionTarget = null
-                        onRename(template.name)
-                    },
-                    ) { Text(stringResource(R.string.action_context_rename), modifier = Modifier.fillMaxWidth()) }
-                    TextButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        actionTarget = null
-                        deleteTarget = template
-                    },
-                    ) { Text(stringResource(R.string.action_context_delete), modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.error) }
+                    ScrollableContentHint(
+                        visible = canScrollForward,
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                    )
                 }
             },
             confirmButton = {},

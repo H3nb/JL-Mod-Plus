@@ -42,6 +42,8 @@ class FilePickerController(
     restoredSearchVisible: Boolean = false,
     restoredSearchQuery: String = "",
     restoredSortOrder: FilePickerSortOrder = FilePickerSortOrder.TYPE_THEN_NAME,
+    restoredShowCreateFolder: Boolean = false,
+    restoredCreateFolderName: String = "",
     private val onStateChanged: (FilePickerState) -> Unit,
     private val onFilesPicked: (List<File>) -> Unit,
 ) : AutoCloseable {
@@ -64,6 +66,8 @@ class FilePickerController(
         searchVisible = restoredSearchVisible,
         searchQuery = restoredSearchQuery,
         sortOrder = restoredSortOrder,
+        showCreateFolder = request.allowCreateDirectory && restoredShowCreateFolder,
+        createFolderName = restoredCreateFolderName,
         permissionRequired = !StoragePermissionHelper.isGranted(context),
     )
 

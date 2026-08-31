@@ -51,11 +51,10 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		EdgeToEdgeCompat.enableIfSupported(this);
+		EdgeToEdgeCompat.enableForComposeSurface(this);
 		composeView = new ComposeView(this);
 		composeView.setId(R.id.crash_report_details_compose_root);
 		setContentView(composeView);
-		EdgeToEdgeCompat.protectHostContent(this);
 		String recordId = getIntent().getStringExtra(EXTRA_REPORT_ID);
 		// Historical reconciliation is owned by CrashReporter in the background. Opening a report
 		// must never copy framework traces or run maintenance on the UI thread.

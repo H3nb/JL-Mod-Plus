@@ -120,6 +120,13 @@ required for the final smoke pass over exported JAR/JAD/KJX intents, raw-path/
 file-picker results, permission recovery, install/overwrite/cancel/error
 cleanup, guest launch, hardware key/touch dispatch, rotation, and IME behavior.
 
-Navigation 3 and adaptive UI remain intentionally deferred: no current screen
-requires multiple back stacks, list-detail navigation, or a product-specific
-window-size adaptation prerequisite.
+Navigation 3 is deliberately limited to the Collections overview-to-members flow,
+where distinct destinations and an adaptive Material 3 list-detail scene provide a
+concrete benefit on wider windows. `LibraryNavigationState.selectedCollectionId`
+remains the single route owner, while the collection members payload stays in the UI
+store. File Picker navigation remains controller-owned because a second back stack
+would only mirror its current directory; the Activity still owns results and root
+exit policy. Adaptive UI is active where it has a concrete presentation benefit:
+Library and Config choose bottom navigation or a rail from the available container
+width, and Library, Collections, and File Picker use adaptive grids. Multiple back
+stacks remain unnecessary until a verified independent-history requirement exists.

@@ -14,7 +14,6 @@
 
 package ru.playsoftware.j2meloader.applist
 
-import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color as AndroidColor
@@ -38,6 +37,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -52,10 +52,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.offset
@@ -81,7 +83,8 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import ru.playsoftware.j2meloader.ui.AdaptiveAlertDialog as AlertDialog
+import ru.playsoftware.j2meloader.ui.adaptiveDialogLayout
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -140,7 +143,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -152,6 +154,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.AnnotatedString
@@ -169,6 +172,7 @@ import androidx.core.graphics.get
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
@@ -181,13 +185,13 @@ import ru.playsoftware.j2meloader.librarydb.LibraryQuickView
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.GlassSystemBarScrim
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+import ru.playsoftware.j2meloader.ui.rememberScrollCanScrollForward
 import ru.playsoftware.j2meloader.ui.jlModPlusFilterChipColors
 import ru.playsoftware.j2meloader.ui.jlModPlusNavigationBarItemColors
 import ru.playsoftware.j2meloader.ui.jlModPlusNavigationRailItemColors
 import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 import ru.playsoftware.j2meloader.ui.TransientNoticeHost
 import ru.playsoftware.j2meloader.ui.TransientNoticeState
-import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
 import ru.playsoftware.j2meloader.ui.availableWindowWidthDp
 import kotlin.math.roundToInt
 
@@ -367,18 +371,11 @@ class LibraryComposeController(
         )
         composeView.setContent {
             JLModPlusTheme {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    LibraryScreen(state = state, actions = actions)
-                    val noticeBottomPadding = if (
-                        LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
-                    ) 8.dp else 88.dp
-                    TransientNoticeHost(
-                        state = noticeState,
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = noticeBottomPadding),
-                    )
-                }
+                LibraryScreen(
+                    state = state,
+                    actions = actions,
+                    noticeHost = { TransientNoticeHost(state = noticeState) },
+                )
             }
         }
     }
@@ -499,8 +496,6 @@ internal enum class LibraryInfoDialog {
     Licenses,
 }
 
-private val LibraryScaffoldInsets = WindowInsets(left = 0, top = 0, right = 0, bottom = 0)
-
 @OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
@@ -508,6 +503,7 @@ fun LibraryScreen(
     actions: LibraryActions,
     modifier: Modifier = Modifier,
     initialSelectionState: LibrarySelectionState = LibrarySelectionState(),
+    noticeHost: @Composable () -> Unit = {},
 ) {
     var navigationState by rememberSaveable(stateSaver = LibraryNavigationState.Saver) {
         mutableStateOf(LibraryNavigationState())
@@ -543,6 +539,9 @@ fun LibraryScreen(
     val appsGridState = rememberLazyGridState()
     val isImeVisible = WindowInsets.isImeVisible
     val useNavigationRail = availableWindowWidthDp() >= 600.dp
+    val scaffoldInsets = WindowInsets.safeDrawing
+        .exclude(WindowInsets.ime)
+        .only(WindowInsetsSides.Bottom)
     val collectionsHost = actions as? LibraryCollectionsHost
     val bulkActions = actions as? LibraryBulkActions
     val currentNavigationState by rememberUpdatedState(navigationState)
@@ -694,9 +693,14 @@ fun LibraryScreen(
     }
 
     val imeHidesLibraryChrome = isImeVisible && (!metadataViewportLocked || metadataImeWasVisible)
+    val libraryContentModifier = if (metadataApp == null) {
+        Modifier
+    } else {
+        Modifier.clearAndSetSemantics { }
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
-        Row(modifier = Modifier.fillMaxSize()) {
+        Row(modifier = libraryContentModifier.fillMaxSize()) {
         if (useNavigationRail) {
             LibraryNavigationRail(
                 selected = destination,
@@ -710,7 +714,8 @@ fun LibraryScreen(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxSize(),
-            contentWindowInsets = LibraryScaffoldInsets,
+            contentWindowInsets = scaffoldInsets,
+            snackbarHost = noticeHost,
             bottomBar = {
                 if (selectionState.isActive && !imeHidesLibraryChrome && bulkActions != null) {
                     LibrarySelectionBottomBar(
@@ -775,6 +780,11 @@ fun LibraryScreen(
             floatingActionButton = {
                 if (!imeHidesLibraryChrome && destination == LibraryDestination.Apps && !selectionState.isActive) {
                     AnimatedVisibility(
+                        modifier = Modifier.windowInsetsPadding(
+                            WindowInsets.safeDrawing
+                                .exclude(WindowInsets.ime)
+                                .only(WindowInsetsSides.Horizontal),
+                        ),
                         visible = showInstallFab,
                         enter = fadeIn(
                             animationSpec = tween(
@@ -889,6 +899,7 @@ fun LibraryScreen(
                             onNavigationVisibilityChanged = { visible ->
                                 if (!useNavigationRail) showNavigationBar = visible
                             },
+                            active = destination == LibraryDestination.Collections,
                         )
                     } else {
                         LibraryCollectionsDestination(padding)
@@ -1463,6 +1474,7 @@ internal fun LibraryAppsDestination(
                 fallbackIndex = fallbackIndex.coerceAtLeast(0),
             )
         }.collectLatest { anchor ->
+            delay(120)
             currentOnNavigationStateChanged(currentNavigationState.saveAnchor(surface, anchor))
         }
     }
@@ -2280,18 +2292,32 @@ private fun LibraryGridItem(
         if (selected) R.string.library_selection_checked
         else R.string.library_selection_unchecked,
     )
+    val interactionModifier = if (selectionMode) {
+        Modifier.toggleable(
+            value = selected,
+            role = Role.Checkbox,
+            onValueChange = { onToggleSelection(app) },
+        )
+    } else {
+        Modifier.combinedClickable(
+            onClick = { onOpenApp(app.id) },
+            onLongClick = { onOpenActions(app) },
+        )
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = gridSpacing / 2, vertical = gridSpacing / 2)
-            .combinedClickable(
-                onClick = {
-                    if (selectionMode) onToggleSelection(app) else onOpenApp(app.id)
-                },
-                onLongClick = {
-                    if (selectionMode) onToggleSelection(app) else onOpenActions(app)
-                },
-            ),
+            .then(interactionModifier)
+            .semantics {
+                role = if (selectionMode) Role.Checkbox else Role.Button
+                if (selectionMode) {
+                    contentDescription = selectionDescription
+                    stateDescription = selectionStateDescription
+                } else if (hideTitle) {
+                    contentDescription = app.title
+                }
+            },
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -2306,13 +2332,10 @@ private fun LibraryGridItem(
             if (selectionMode) {
                 Checkbox(
                     checked = selected,
-                    onCheckedChange = { onToggleSelection(app) },
+                    onCheckedChange = null,
                     modifier = Modifier
                         .align(Alignment.TopStart)
-                        .semantics {
-                            contentDescription = selectionDescription
-                            stateDescription = selectionStateDescription
-                        },
+                        .clearAndSetSemantics { },
                 )
             }
         }
@@ -2501,7 +2524,7 @@ private fun LibraryFavoriteButton(
 ) {
     IconButton(
         onClick = { onFavorite(app.id, !app.favorite) },
-        modifier = Modifier.size(36.dp),
+        modifier = Modifier.size(48.dp),
     ) {
         // Keep the slot dimensions identical for both states. AnimatedVisibility can temporarily
         // measure an exiting/entering child at a different size, which makes a long list reflow
@@ -2534,7 +2557,7 @@ private fun LibraryFavoritePlaceholder(@Suppress("UNUSED_PARAMETER") appId: Int)
     IconButton(
         onClick = {},
         enabled = false,
-        modifier = Modifier.size(32.dp),
+        modifier = Modifier.size(48.dp),
     ) {
         Icon(
             painter = painterResource(R.drawable.ic_star),
@@ -3570,24 +3593,18 @@ private data class LibraryDialogLayout(
 
 @Composable
 private fun libraryDialogLayout(): LibraryDialogLayout {
-    val wide = availableWindowWidthDp() >= 600.dp
     return LibraryDialogLayout(
-        modifier = if (wide) {
-            Modifier
-                .fillMaxWidth(0.94f)
-                .widthIn(max = 760.dp)
-        } else {
-            Modifier.widthIn(max = 560.dp)
-        },
-        properties = DialogProperties(usePlatformDefaultWidth = !wide),
+        modifier = Modifier,
+        properties = DialogProperties(),
     )
 }
 
 @Composable
-private fun libraryDialogListHeight(maxHeight: Int = 420) =
-    (availableWindowHeightDp() - 220.dp)
-        .coerceAtLeast(120.dp)
-        .coerceAtMost(maxHeight.dp)
+private fun libraryDialogListHeight(
+    reservedHeight: Int = 184,
+) = adaptiveDialogLayout().maxContentHeight(
+    reservedHeight = reservedHeight.dp,
+)
 
 @Composable
 internal fun AppActionsDialog(
@@ -3607,6 +3624,7 @@ internal fun AppActionsDialog(
 ) {
     val layout = libraryDialogLayout()
     AlertDialog(
+        textScrollable = false,
         modifier = layout.modifier,
         properties = layout.properties,
         onDismissRequest = onDismiss,
@@ -3641,7 +3659,7 @@ internal fun AppActionsDialog(
         },
         text = {
             val listState = rememberLazyListState()
-            val maxListHeight = libraryDialogListHeight()
+            val maxListHeight = libraryDialogListHeight(reservedHeight = 156)
             val canScrollForward = rememberLazyListCanScrollForward(listState)
             Box(
                 modifier = Modifier
@@ -3833,6 +3851,7 @@ private fun RenameAppDialog(
     val valid = value.text.trim().isNotEmpty()
     val layout = libraryDialogLayout()
     AlertDialog(
+        textScrollable = false,
         modifier = layout.modifier,
         properties = layout.properties,
         onDismissRequest = onDismiss,
@@ -3875,9 +3894,7 @@ internal fun LibraryInformationDialog(
         LibraryInfoDialog.Licenses -> null
     }
     val layout = libraryDialogLayout()
-    val maxMessageHeight = libraryDialogListHeight(
-        maxHeight = if (dialog == LibraryInfoDialog.Help) 420 else 640,
-    )
+    val maxMessageHeight = libraryDialogListHeight()
     val message = when (dialog) {
         LibraryInfoDialog.About -> AnnotatedString(stringResource(R.string.about_message))
         LibraryInfoDialog.Help -> AnnotatedString.fromHtml(stringResource(R.string.help_message))
@@ -3891,6 +3908,7 @@ internal fun LibraryInformationDialog(
     }
 
     AlertDialog(
+        textScrollable = false,
         modifier = layout.modifier,
         properties = layout.properties,
         onDismissRequest = onDismiss,
@@ -3926,9 +3944,7 @@ internal fun LibraryInformationDialog(
                 )
                 LibraryInfoDialog.Licenses -> {
                     val scrollState = rememberScrollState()
-                    val canScrollForward by remember {
-                        derivedStateOf { scrollState.value < scrollState.maxValue }
-                    }
+                    val canScrollForward = rememberScrollCanScrollForward(scrollState)
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -3963,9 +3979,7 @@ private fun LibraryAboutBody(
     maxHeight: Dp,
 ) {
     val scrollState = rememberScrollState()
-    val canScrollForward by remember {
-        derivedStateOf { scrollState.value < scrollState.maxValue }
-    }
+    val canScrollForward = rememberScrollCanScrollForward(scrollState)
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -4032,9 +4046,7 @@ private fun LibraryHelpBody(
             .filter(String::isNotEmpty)
     }
     val scrollState = rememberScrollState()
-    val canScrollForward by remember {
-        derivedStateOf { scrollState.value < scrollState.maxValue }
-    }
+    val canScrollForward = rememberScrollCanScrollForward(scrollState)
     Box(
         modifier = Modifier
             .fillMaxWidth()

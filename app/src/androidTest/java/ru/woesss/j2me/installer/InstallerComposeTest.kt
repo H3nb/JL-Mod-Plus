@@ -14,6 +14,9 @@
 
 package ru.woesss.j2me.installer
 
+import androidx.compose.ui.test.DeviceConfigurationOverride
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -21,6 +24,9 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -29,9 +35,40 @@ import org.junit.runner.RunWith
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 
 @RunWith(AndroidJUnit4::class)
+@OptIn(ExperimentalTestApi::class)
 class InstallerComposeTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun compactHeightConfirmationScrollsToAllActions() {
+        val actions = RecordingInstallerActions()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp)),
+            ) {
+                JLModPlusTheme {
+                    InstallerScreen(
+                        state = InstallerUiState.Confirmation(
+                            title = "Demo MIDlet",
+                            message = List(8) {
+                                "Long compatibility information remains readable and accessible."
+                            }.joinToString("\n"),
+                            installLabel = "Install",
+                            closeLabel = "Cancel",
+                            runLabel = "Run existing",
+                            iconPath = null,
+                        ),
+                        actions = actions,
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Swipe to continue").assertIsDisplayed()
+        composeRule.onNodeWithText("Install").performScrollTo().assertIsDisplayed().performClick()
+        assertEquals(1, actions.installCount)
+    }
 
     @Test
     fun loadingStateHidesCancellationActions() {

@@ -6,7 +6,6 @@
  */
 package ru.playsoftware.j2meloader.applist
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -30,7 +29,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
+import ru.playsoftware.j2meloader.ui.AdaptiveAlertDialog as AlertDialog
+import ru.playsoftware.j2meloader.ui.adaptiveDialogLayout
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,6 +41,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
+import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
+import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -66,11 +72,17 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.ui.NavDisplay
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -201,7 +213,11 @@ interface LibraryCollectionsHost : LibraryActions, LibraryBulkActions {
     fun onRemoveAppFromCollection(appId: Int, collectionId: Long)
 }
 
+private data object CollectionsOverviewRoute : NavKey
+private data class CollectionMembersRoute(val collectionId: Long) : NavKey
+
 /** READY Collections destination. Collections overview and member browsing share Library scroll chrome. */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 internal fun LibraryCollectionsDestination(
     host: LibraryCollectionsHost,
@@ -211,6 +227,7 @@ internal fun LibraryCollectionsDestination(
     onNavigationStateChanged: (LibraryNavigationState) -> Unit = {},
     onOpenActions: (LibraryAppUiItem, Long) -> Unit,
     onNavigationVisibilityChanged: (Boolean) -> Unit = {},
+    active: Boolean = true,
 ) {
     val state by host.collectionsStore().state.collectAsState()
     if (!state.ready) {
@@ -218,39 +235,139 @@ internal fun LibraryCollectionsDestination(
         return
     }
 
-    val members = state.members
-    val openCollection = members?.let { current ->
-        state.collections.firstOrNull { it.id == current.collectionId }
+    val selectedCollectionId = navigationState.selectedCollectionId
+    val selectedCollection = selectedCollectionId?.let { collectionId ->
+        state.collections.firstOrNull { it.id == collectionId }
     }
-    if (members != null && openCollection != null) {
-        LibraryCollectionBrowser(
-            collection = openCollection,
-            members = members.members,
-            allApps = state.allApps,
-            libraryState = libraryState,
-            scaffoldPadding = scaffoldPadding,
-            navigationState = navigationState,
-            onNavigationStateChanged = onNavigationStateChanged,
-            onBack = {
-                onNavigationVisibilityChanged(true)
+    val currentNavigationState by androidx.compose.runtime.rememberUpdatedState(navigationState)
+
+    LaunchedEffect(selectedCollectionId, state.collections, state.members?.collectionId) {
+        when {
+            selectedCollectionId == null && state.members != null -> {
                 host.onDismissCollectionMembers()
-            },
-            onOpenApp = host::onOpenApp,
-            onOpenActions = { app -> onOpenActions(app, openCollection.id) },
-            onRemove = { appId -> host.onRemoveAppFromCollection(appId, openCollection.id) },
-            onSetMembership = { appId, included ->
-                if (included) {
-                    host.onAddAppToCollection(appId, openCollection.id)
-                } else {
-                    host.onRemoveAppFromCollection(appId, openCollection.id)
-                }
-            },
-            onPrepareAppPicker = host::onPrepareCollectionAppPicker,
-            onSort = host::onSort,
-            onNavigationVisibilityChanged = onNavigationVisibilityChanged,
-        )
-        return
+            }
+            selectedCollectionId != null && selectedCollection == null -> {
+                onNavigationStateChanged(
+                    currentNavigationState.copy(selectedCollectionId = null),
+                )
+                host.onDismissCollectionMembers()
+            }
+            selectedCollectionId != null && state.members?.collectionId != selectedCollectionId -> {
+                host.onOpenCollection(selectedCollectionId)
+            }
+        }
     }
+
+    val closeCollection = {
+        onNavigationVisibilityChanged(true)
+        onNavigationStateChanged(currentNavigationState.copy(selectedCollectionId = null))
+        host.onDismissCollectionMembers()
+    }
+    val backStack = remember(active, selectedCollectionId) {
+        buildList<NavKey> {
+            add(CollectionsOverviewRoute)
+            if (active && selectedCollectionId != null) {
+                add(CollectionMembersRoute(selectedCollectionId))
+            }
+        }
+    }
+    val adaptiveInfo = currentWindowAdaptiveInfoV2()
+    val directive = remember(adaptiveInfo) {
+        calculatePaneScaffoldDirective(adaptiveInfo).copy(horizontalPartitionSpacerSize = 0.dp)
+    }
+    val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>(directive = directive)
+    val showDetailBack = directive.maxHorizontalPartitions == 1
+
+    NavDisplay(
+        backStack = backStack,
+        onBack = closeCollection,
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
+        sceneStrategies = listOf(listDetailStrategy),
+        entryProvider = { key ->
+            when (key) {
+                CollectionsOverviewRoute -> NavEntry(
+                    key = key,
+                    metadata = ListDetailSceneStrategy.listPane(
+                        detailPlaceholder = {
+                            LibraryCollectionDetailPlaceholder(scaffoldPadding)
+                        },
+                    ),
+                ) {
+                    LibraryCollectionsOverview(
+                        host = host,
+                        state = state,
+                        libraryState = libraryState,
+                        scaffoldPadding = scaffoldPadding,
+                        navigationState = navigationState,
+                        onNavigationStateChanged = onNavigationStateChanged,
+                        selectedCollectionId = selectedCollectionId,
+                        onOpenCollection = { collectionId ->
+                            onNavigationStateChanged(
+                                currentNavigationState.copy(selectedCollectionId = collectionId),
+                            )
+                        },
+                        onNavigationVisibilityChanged = onNavigationVisibilityChanged,
+                    )
+                }
+                is CollectionMembersRoute -> NavEntry(
+                    key = key,
+                    metadata = ListDetailSceneStrategy.detailPane(),
+                ) {
+                    val collection = state.collections.firstOrNull { it.id == key.collectionId }
+                    val members = state.members?.takeIf { it.collectionId == key.collectionId }
+                    if (collection == null || members == null) {
+                        LibraryCollectionDetailLoading(
+                            name = collection?.name,
+                            scaffoldPadding = scaffoldPadding,
+                        )
+                    } else {
+                        LibraryCollectionBrowser(
+                            collection = collection,
+                            members = members.members,
+                            allApps = state.allApps,
+                            libraryState = libraryState,
+                            scaffoldPadding = scaffoldPadding,
+                            navigationState = navigationState,
+                            onNavigationStateChanged = onNavigationStateChanged,
+                            onBack = closeCollection,
+                            onOpenApp = host::onOpenApp,
+                            onOpenActions = { app -> onOpenActions(app, collection.id) },
+                            onRemove = { appId -> host.onRemoveAppFromCollection(appId, collection.id) },
+                            onSetMembership = { appId, included ->
+                                if (included) {
+                                    host.onAddAppToCollection(appId, collection.id)
+                                } else {
+                                    host.onRemoveAppFromCollection(appId, collection.id)
+                                }
+                            },
+                            onPrepareAppPicker = host::onPrepareCollectionAppPicker,
+                            onSort = host::onSort,
+                            onNavigationVisibilityChanged = onNavigationVisibilityChanged,
+                            showBackButton = showDetailBack,
+                            handleSystemBack = false,
+                        )
+                    }
+                }
+                else -> error("Unsupported Collections route: $key")
+            }
+        },
+    )
+}
+
+@Composable
+private fun LibraryCollectionsOverview(
+    host: LibraryCollectionsHost,
+    state: LibraryCollectionsUiState,
+    libraryState: LibraryUiState,
+    scaffoldPadding: PaddingValues,
+    navigationState: LibraryNavigationState,
+    onNavigationStateChanged: (LibraryNavigationState) -> Unit,
+    selectedCollectionId: Long?,
+    onOpenCollection: (Long) -> Unit,
+    onNavigationVisibilityChanged: (Boolean) -> Unit,
+) {
 
     var createDialog by rememberSaveable { mutableStateOf(false) }
     var actionsTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
@@ -296,6 +413,7 @@ internal fun LibraryCollectionsDestination(
                 fallbackIndex = fallbackIndex.coerceAtLeast(0),
             )
         }.collectLatest { anchor ->
+            delay(120)
             onNavigationStateChanged(
                 currentNavigationState.saveAnchor(
                     LibraryNavigationSurface.CollectionsList,
@@ -468,8 +586,15 @@ internal fun LibraryCollectionsDestination(
                 }
             } else {
                 items(state.collections, key = { it.id }) { collection ->
+                    val selected = collection.id == selectedCollectionId
                     ListItem(
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        colors = ListItemDefaults.colors(
+                            containerColor = if (selected) {
+                                MaterialTheme.colorScheme.secondaryContainer
+                            } else {
+                                Color.Transparent
+                            },
+                        ),
                         headlineContent = {
                             Text(
                                 text = collection.name,
@@ -504,7 +629,8 @@ internal fun LibraryCollectionsDestination(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { host.onOpenCollection(collection.id) },
+                            .clickable { onOpenCollection(collection.id) }
+                            .semantics { this.selected = selected },
                     )
                     HorizontalDivider(
                         modifier = Modifier.padding(start = 64.dp, end = 16.dp),
@@ -592,6 +718,72 @@ internal fun LibraryCollectionsDestination(
     }
 }
 
+@Composable
+private fun LibraryCollectionDetailPlaceholder(scaffoldPadding: PaddingValues) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(scaffoldPadding)
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
+            .padding(24.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_collections),
+                contentDescription = null,
+                modifier = Modifier.size(52.dp),
+                tint = MaterialTheme.colorScheme.primary,
+            )
+            Text(
+                text = stringResource(R.string.library_collection_select_title),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = stringResource(R.string.library_collection_select_message),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+@Composable
+private fun LibraryCollectionDetailLoading(
+    name: String?,
+    scaffoldPadding: PaddingValues,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(scaffoldPadding)
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            CircularProgressIndicator()
+            name?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
 /** Collection dialogs live at LibraryScreen scope so Add-to-Collection works from any app browser. */
 @Composable
 internal fun LibraryCollectionsDialogHost(host: LibraryCollectionsHost) {
@@ -645,7 +837,9 @@ private fun AddToCollectionDialog(
     onCreate: () -> Unit,
     onSelected: (Long) -> Unit,
 ) {
+    val maxListHeight = adaptiveDialogLayout().maxContentHeight(reservedHeight = 176.dp)
     AlertDialog(
+        textScrollable = false,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.library_collection_add_app)) },
         text = {
@@ -670,7 +864,7 @@ private fun AddToCollectionDialog(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(max = 380.dp),
+                            .heightIn(max = maxListHeight),
                     ) {
                         LazyColumn(
                             modifier = Modifier.fillMaxWidth(),
@@ -731,7 +925,9 @@ private fun AddAppsToCollectionDialog(
     onDismiss: () -> Unit,
     onSelected: (Long) -> Unit,
 ) {
+    val maxListHeight = adaptiveDialogLayout().maxContentHeight(reservedHeight = 176.dp)
     AlertDialog(
+        textScrollable = false,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.library_bulk_add_collection)) },
         text = {
@@ -758,7 +954,7 @@ private fun AddAppsToCollectionDialog(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(max = 380.dp),
+                            .heightIn(max = maxListHeight),
                     ) {
                         LazyColumn(
                             modifier = Modifier.fillMaxWidth(),

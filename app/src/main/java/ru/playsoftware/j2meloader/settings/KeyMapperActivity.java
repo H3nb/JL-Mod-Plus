@@ -64,9 +64,6 @@ public class KeyMapperActivity extends AppCompatActivity {
 		}
 		ComposeView composeView = new ComposeView(this);
 		setContentView(composeView);
-		if (getSupportActionBar() != null) {
-			getSupportActionBar().hide();
-		}
 		params = ProfilesManager.loadConfig(new File(path));
 
 		if (savedInstanceState == null) {

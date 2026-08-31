@@ -14,26 +14,24 @@
 
 package ru.playsoftware.j2meloader.filepicker
 
-import android.content.res.Configuration
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material3.AlertDialog
+import ru.playsoftware.j2meloader.ui.AdaptiveAlertDialog as AlertDialog
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -51,18 +49,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -72,9 +67,6 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
-import androidx.navigation3.runtime.NavEntry
-import androidx.navigation3.ui.NavDisplay
 import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOWER_BOUND
 import ru.playsoftware.j2meloader.R
 
@@ -96,84 +88,17 @@ interface FilePickerActions {
     fun onCreateFolder()
 }
 
-private val NoWindowInsets = WindowInsets(left = 0, top = 0, right = 0, bottom = 0)
-
-private data class FilePickerFolderRoute(val path: String)
-
-/**
- * Navigation 3 host for folder traversal. The controller remains the owner of filesystem
- * state; this stack only makes parent navigation and explicit picker exit distinct actions.
- */
 @Composable
-fun FilePickerNavHost(
+fun FilePickerHost(
     state: FilePickerState,
     actions: FilePickerActions,
     modifier: Modifier = Modifier,
 ) {
-    val backStack = remember { mutableStateListOf<Any>(FilePickerFolderRoute(state.currentPath)) }
-    // NavDisplay may retain an entry while the controller publishes a new state. Keep the
-    // entry content subscribed to the latest state instead of capturing the initial loading
-    // snapshot forever.
-    val latestState = rememberUpdatedState(state)
     val latestActions = rememberUpdatedState(actions)
-
-    LaunchedEffect(state.currentPath) {
-        val route = FilePickerFolderRoute(state.currentPath)
-        val existingIndex = backStack.indexOfLast { it == route }
-        if (existingIndex >= 0) {
-            while (backStack.size > existingIndex + 1) {
-                backStack.removeLastOrNull()
-            }
-        } else {
-            backStack.add(route)
-        }
+    BackHandler {
+        latestActions.value.onNavigateBack()
     }
-
-    val navigationActions = remember {
-        object : FilePickerActions {
-            override fun onNavigateBack() = latestActions.value.onNavigateBack()
-
-            override fun onExit() = latestActions.value.onExit()
-
-            override fun onOpen(entry: FilePickerEntry) {
-                latestActions.value.onOpen(entry)
-                if (entry.kind != FilePickerEntryKind.FILE) {
-                    val route = FilePickerFolderRoute(entry.path)
-                    if (backStack.lastOrNull() != route) {
-                        backStack.add(route)
-                    }
-                }
-            }
-
-            override fun onConfirmSelection() = latestActions.value.onConfirmSelection()
-            override fun onToggleSelectAll() = latestActions.value.onToggleSelectAll()
-            override fun onToggleSearch() = latestActions.value.onToggleSearch()
-            override fun onSearchQueryChanged(query: String) =
-                latestActions.value.onSearchQueryChanged(query)
-            override fun onSortOrderSelected(sortOrder: FilePickerSortOrder) =
-                latestActions.value.onSortOrderSelected(sortOrder)
-            override fun onGrantPermission() = latestActions.value.onGrantPermission()
-            override fun onRetry() = latestActions.value.onRetry()
-            override fun onShowCreateFolder() = latestActions.value.onShowCreateFolder()
-            override fun onDismissCreateFolder() = latestActions.value.onDismissCreateFolder()
-            override fun onCreateFolderNameChanged(name: String) =
-                latestActions.value.onCreateFolderNameChanged(name)
-            override fun onCreateFolder() = latestActions.value.onCreateFolder()
-        }
-    }
-
-    NavDisplay(
-        backStack = backStack,
-        // Keep hardware/gesture back under the Activity contract. It distinguishes
-        // parent navigation from an explicit picker exit and owns double-back-to-exit.
-        onBack = { latestActions.value.onNavigateBack() },
-        modifier = modifier,
-        entryProvider = { key ->
-            NavEntry(key) {
-                FilePickerScreen(state = latestState.value, actions = navigationActions)
-            }
-        },
-    )
+    FilePickerScreen(state = state, actions = actions, modifier = modifier)
 }
 
 /**
@@ -188,13 +113,14 @@ fun FilePickerScreen(
     modifier: Modifier = Modifier,
 ) {
     var sortMenuExpanded by remember { mutableStateOf(false) }
+    val selectablePaths = remember(state.entries) {
+        FilePickerRules.selectablePaths(state.entries)
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        contentWindowInsets = NoWindowInsets,
         topBar = {
             TopAppBar(
-                windowInsets = NoWindowInsets,
                 navigationIcon = {
                     if (state.canGoUp) {
                         IconButton(onClick = actions::onNavigateBack) {
@@ -224,7 +150,6 @@ fun FilePickerScreen(
                 },
                 actions = {
                     if (state.request.allowMultiple && state.request.allowsFiles) {
-                        val selectablePaths = FilePickerRules.selectablePaths(state.entries)
                         val allSelected = selectablePaths.isNotEmpty() &&
                             state.selectedPaths.containsAll(selectablePaths)
                         IconButton(
@@ -286,7 +211,7 @@ fun FilePickerScreen(
             )
         },
         bottomBar = {
-            BottomAppBar(windowInsets = NoWindowInsets) {
+            BottomAppBar {
                 Text(
                     text = when {
                         state.request.mode == FilePickerContract.MODE_DIR ||
@@ -340,6 +265,13 @@ private fun PickerContent(
     actions: FilePickerActions,
     modifier: Modifier,
 ) {
+    val visibleEntries = remember(state.entries, state.searchQuery, state.sortOrder) {
+        FilePickerRules.filterAndSort(
+            state.entries,
+            state.searchQuery,
+            state.sortOrder,
+        )
+    }
     Column(modifier) {
         if (state.searchVisible) {
             OutlinedTextField(
@@ -371,11 +303,6 @@ private fun PickerContent(
                     },
                 )
                 else -> {
-                    val visibleEntries = FilePickerRules.filterAndSort(
-                        state.entries,
-                        state.searchQuery,
-                        state.sortOrder,
-                    )
                     if (visibleEntries.isEmpty()) {
                         EmptyContent(
                             request = state.request,
@@ -383,7 +310,7 @@ private fun PickerContent(
                             message = stringResource(R.string.file_picker_no_matches),
                         )
                     } else {
-                        val mediumOrLarger = currentWindowAdaptiveInfo()
+                        val mediumOrLarger = currentWindowAdaptiveInfoV2()
                             .windowSizeClass
                             .isWidthAtLeastBreakpoint(WIDTH_DP_MEDIUM_LOWER_BOUND)
                         if (mediumOrLarger) {
@@ -643,14 +570,7 @@ private fun CreateFolderDialog(
     state: FilePickerState,
     actions: FilePickerActions,
 ) {
-    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     AlertDialog(
-        modifier = if (landscape) {
-            Modifier.fillMaxWidth(0.94f).widthIn(max = 720.dp)
-        } else {
-            Modifier.widthIn(max = 560.dp)
-        },
-        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = actions::onDismissCreateFolder,
         title = { Text(stringResource(R.string.file_picker_create_folder_title)) },
         text = {

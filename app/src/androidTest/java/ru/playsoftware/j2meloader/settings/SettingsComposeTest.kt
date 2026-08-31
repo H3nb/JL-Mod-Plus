@@ -14,10 +14,22 @@
 
 package ru.playsoftware.j2meloader.settings
 
+import androidx.compose.ui.test.DeviceConfigurationOverride
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.WindowSize
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -26,59 +38,80 @@ import org.junit.runner.RunWith
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 
 @RunWith(AndroidJUnit4::class)
+@OptIn(ExperimentalTestApi::class)
 class SettingsComposeTest {
     @get:Rule
     val composeRule = createComposeRule()
 
     @Test
-    fun settingsExposePersistedSummariesAndSwitches() {
-        composeRule.setContent {
-            JLModPlusTheme {
-                SettingsScreen(
-                    state = sampleState(),
-                    actions = RecordingSettingsActions(),
-                )
-            }
+    fun compactHeightLanguageDialogUsesAdaptiveScrollableBounds() {
+        val state = sampleState().copy(
+            languages = List(20) { index ->
+                SettingsOption("language-$index", "Language option ${index + 1}")
+            },
+        )
+        setSettingsContent(
+            state = state,
+            actions = RecordingSettingsActions(),
+            windowSize = DpSize(480.dp, 240.dp),
+        )
+
+        composeRule.onNodeWithText("Language").performScrollTo().performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            runCatching {
+                composeRule.onNodeWithContentDescription("Swipe to continue")
+                    .fetchSemanticsNode()
+            }.isSuccess
         }
+        composeRule.onNodeWithContentDescription("Swipe to continue").assertIsDisplayed()
+    }
+
+    @Test
+    fun settingsExposePersistedSummariesAndSwitches() {
+        setSettingsContent(actions = RecordingSettingsActions())
 
         composeRule.onNodeWithText("Theme").assertExists()
         composeRule.onNodeWithText("Dark").assertExists()
         composeRule.onNodeWithText("Language").assertExists()
-        composeRule.onNodeWithText("Working directory").assertExists()
-        composeRule.onNodeWithText("/data/jlmod").assertExists()
-        composeRule.onNodeWithText("Experimental/temporary options").assertExists()
+        scrollSettingsToIndex(1)
+        composeRule.onNodeWithText("Keep screen on").performScrollTo().assertIsDisplayed()
+        scrollSettingsToIndex(2)
+        composeRule.onNodeWithText("Working Directory").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("/data/jlmod").assertIsDisplayed()
+        scrollSettingsToIndex(3)
+        composeRule.onNode(hasText("Profiles") and hasClickAction())
+            .performScrollTo()
+            .assertIsDisplayed()
     }
 
     @Test
     fun settingsRouteOptionSwitchAndNavigationEvents() {
         val actions = RecordingSettingsActions()
-        composeRule.setContent {
-            JLModPlusTheme {
-                SettingsScreen(state = sampleState(), actions = actions)
-            }
-        }
+        setSettingsContent(actions = actions)
 
         composeRule.onNodeWithText("Theme").performClick()
         composeRule.onNodeWithText("Light").performClick()
-        composeRule.onNodeWithText("Language").performClick()
+        scrollSettingsToIndex(0)
+        composeRule.onNodeWithText("Language").performScrollTo().performClick()
         composeRule.onNodeWithText("English").performClick()
-        composeRule.onNodeWithText("Keep screen on").performClick()
-        composeRule.onNodeWithText("Profiles").assertDoesNotExist()
-        composeRule.onNodeWithText("Working directory").performClick()
+        scrollSettingsToIndex(1)
+        composeRule.onNodeWithText("Keep screen on").performScrollTo().performClick()
+        scrollSettingsToIndex(3)
+        composeRule.onNode(hasText("Profiles") and hasClickAction())
+            .performScrollTo()
+            .performClick()
+        scrollSettingsToIndex(2)
+        composeRule.onNodeWithText("Working Directory").performScrollTo().performClick()
 
         assertEquals(listOf("light", "en", "pref_wakelock_switch"), actions.changes)
-        assertEquals(0, actions.profileClicks)
+        assertEquals(1, actions.profileClicks)
         assertEquals(1, actions.directoryClicks)
     }
 
     @Test
     fun settingsExposeAccentPaletteAndDispatchSelection() {
         val actions = RecordingSettingsActions()
-        composeRule.setContent {
-            JLModPlusTheme {
-                SettingsScreen(state = sampleState(), actions = actions)
-            }
-        }
+        setSettingsContent(actions = actions)
 
         composeRule.onNodeWithText("Accent Color").performClick()
         composeRule.onNodeWithText("Teal").performClick()
@@ -110,15 +143,13 @@ class SettingsComposeTest {
                 ),
             ),
         )
-        composeRule.setContent {
-            JLModPlusTheme {
-                SettingsScreen(state = state, actions = actions)
-            }
-        }
+        setSettingsContent(state = state, actions = actions)
 
-        composeRule.onNodeWithText("Library View").performClick()
+        scrollSettingsToIndex(1)
+        composeRule.onNodeWithText("Library View").performScrollTo().performClick()
         composeRule.onNodeWithText("Grid").performClick()
-        composeRule.onNodeWithText("Enhanced Icons").performClick()
+        scrollSettingsToIndex(1)
+        composeRule.onNodeWithText("Enhanced Icons").performScrollTo().performClick()
 
         assertEquals(listOf("pref_apps_view=grid"), actions.libraryChoices)
         assertEquals(listOf("pref_apps_enhanced_icons=false"), actions.toggles)
@@ -149,14 +180,11 @@ class SettingsComposeTest {
                 SettingsSwitch("pref_apps_hide_grid_titles", "Hide MIDlet Titles", null, false),
             ),
         )
-        composeRule.setContent {
-            JLModPlusTheme {
-                SettingsScreen(state = gridState, actions = RecordingSettingsActions())
-            }
-        }
+        setSettingsContent(state = gridState, actions = RecordingSettingsActions())
 
-        composeRule.onNodeWithText("Grid Spacing").assertExists()
-        composeRule.onNodeWithText("Hide MIDlet Titles").assertExists()
+        scrollSettingsToIndex(1)
+        composeRule.onNodeWithText("Grid Spacing").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Hide MIDlet Titles").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Show MIDlet Descriptions").assertDoesNotExist()
     }
 
@@ -184,13 +212,10 @@ class SettingsComposeTest {
                 ),
             ),
         )
-        composeRule.setContent {
-            JLModPlusTheme {
-                SettingsScreen(state = listState, actions = RecordingSettingsActions())
-            }
-        }
+        setSettingsContent(state = listState, actions = RecordingSettingsActions())
 
-        composeRule.onNodeWithText("Show MIDlet Descriptions").assertExists()
+        scrollSettingsToIndex(1)
+        composeRule.onNodeWithText("Show MIDlet Descriptions").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Grid Spacing").assertDoesNotExist()
         composeRule.onNodeWithText("Hide MIDlet Titles").assertDoesNotExist()
     }
@@ -223,6 +248,29 @@ class SettingsComposeTest {
         showProfiles = true,
         workingDirectory = "/data/jlmod",
     )
+
+    private fun scrollSettingsToIndex(index: Int) {
+        composeRule
+            .onNode(hasScrollAction())
+            .performScrollToIndex(index)
+        composeRule.waitForIdle()
+    }
+
+    private fun setSettingsContent(
+        state: SettingsUiState = sampleState(),
+        actions: SettingsActions,
+        windowSize: DpSize = DpSize(480.dp, 240.dp),
+    ) {
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(windowSize),
+            ) {
+                JLModPlusTheme {
+                    SettingsScreen(state = state, actions = actions)
+                }
+            }
+        }
+    }
 
     private class RecordingSettingsActions : SettingsActions {
         val changes = mutableListOf<String>()

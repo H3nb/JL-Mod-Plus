@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -141,7 +142,12 @@ internal fun ConfigSwitchPreference(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 64.dp)
-            .clickable(enabled = enabled) { onCheckedChange(!checked) }
+            .toggleable(
+                value = checked,
+                enabled = enabled,
+                role = Role.Switch,
+                onValueChange = onCheckedChange,
+            )
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -163,7 +169,7 @@ internal fun ConfigSwitchPreference(
                 ConfigInlineMessage(message, messageLevel)
             }
         }
-        Switch(enabled = enabled, checked = checked, onCheckedChange = onCheckedChange)
+        Switch(enabled = enabled, checked = checked, onCheckedChange = null)
     }
 }
 

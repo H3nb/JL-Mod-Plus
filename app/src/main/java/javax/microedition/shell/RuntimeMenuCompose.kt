@@ -23,14 +23,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.verticalScroll
+import ru.playsoftware.j2meloader.ui.AdaptiveAlertDialog as AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -45,6 +46,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.ui.semantics.Role
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -65,8 +67,7 @@ import androidx.compose.ui.window.DialogProperties
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
-import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
-import ru.playsoftware.j2meloader.ui.availableWindowWidthDp
+import ru.playsoftware.j2meloader.ui.adaptiveDialogLayout
 import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 import javax.microedition.shell.timing.EmulationSpeed
 import kotlin.math.roundToInt
@@ -259,24 +260,17 @@ private data class RuntimeMenuDialogLayout(
 
 @Composable
 private fun runtimeMenuDialogLayout(): RuntimeMenuDialogLayout {
-    val wide = availableWindowWidthDp() >= 600.dp
     return RuntimeMenuDialogLayout(
-        modifier = if (wide) {
-            Modifier
-                .fillMaxWidth(0.94f)
-                .widthIn(max = 760.dp)
-        } else {
-            Modifier.widthIn(max = 560.dp)
-        },
-        properties = DialogProperties(usePlatformDefaultWidth = !wide),
+        modifier = Modifier,
+        properties = DialogProperties(),
     )
 }
 
 @Composable
-private fun runtimeMenuDialogContentHeight(maxHeight: Int = 420) =
-    (availableWindowHeightDp() - 220.dp)
-        .coerceAtLeast(120.dp)
-        .coerceAtMost(maxHeight.dp)
+private fun runtimeMenuDialogContentHeight() =
+    adaptiveDialogLayout().maxContentHeight(
+        reservedHeight = 160.dp,
+    )
 
 @Composable
 internal fun RuntimeLimitFpsDialog(
@@ -338,87 +332,107 @@ internal fun RuntimeEmulationSpeedDialog(
     val selectedIndex = draftIndex.roundToInt().coerceIn(presetValues.indices)
     val selectedValue = presetValues[selectedIndex]
     val layout = runtimeMenuDialogLayout()
+    val dialogBounds = adaptiveDialogLayout()
+    val scrollState = rememberScrollState()
+    val canScrollForward by remember(scrollState) {
+        derivedStateOf { scrollState.canScrollForward }
+    }
     AlertDialog(
+        textScrollable = false,
         modifier = layout.modifier,
         properties = layout.properties,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.PREF_EMULATION_SPEED)) },
         text = {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = stringResource(R.string.config_help_emulation_speed),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 8.dp),
-                )
-                Text(
-                    text = if (autoEnabled) {
-                        stringResource(
-                            R.string.emulation_speed_auto_value,
-                            EmulationSpeed.formatRuntimeMultiplier(currentPercent),
-                        )
-                    } else {
-                        EmulationSpeed.formatMultiplier(selectedValue)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                Row(
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = dialogBounds.maxContentHeight()),
+            ) {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .toggleable(
-                            value = autoEnabled,
-                            role = Role.Switch,
-                            onValueChange = { autoEnabled = it },
-                        )
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                        .verticalScroll(scrollState),
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.config_help_emulation_speed),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 8.dp),
+                    )
+                    Text(
+                        text = if (autoEnabled) {
+                            stringResource(
+                                R.string.emulation_speed_auto_value,
+                                EmulationSpeed.formatRuntimeMultiplier(currentPercent),
+                            )
+                        } else {
+                            EmulationSpeed.formatMultiplier(selectedValue)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .toggleable(
+                                value = autoEnabled,
+                                role = Role.Switch,
+                                onValueChange = { autoEnabled = it },
+                            )
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(R.string.emulation_speed_auto),
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium,
+                            )
+                            Text(
+                                text = stringResource(R.string.emulation_speed_auto_summary),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Switch(checked = autoEnabled, onCheckedChange = null)
+                    }
+                    Slider(
+                        value = draftIndex,
+                        onValueChange = { draftIndex = it },
+                        enabled = !autoEnabled,
+                        valueRange = 0f..presetValues.lastIndex.toFloat(),
+                        steps = (presetValues.size - 2).coerceAtLeast(0),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp)
+                            .testTag("runtime_emulation_speed_slider"),
+                        colors = SliderDefaults.colors(
+                            thumbColor = MaterialTheme.colorScheme.primary,
+                            activeTrackColor = MaterialTheme.colorScheme.primary,
+                            inactiveTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.28f),
+                        ),
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
                         Text(
-                            text = stringResource(R.string.emulation_speed_auto),
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium,
+                            text = EmulationSpeed.formatMultiplier(presetValues.first()),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         Text(
-                            text = stringResource(R.string.emulation_speed_auto_summary),
-                            style = MaterialTheme.typography.bodySmall,
+                            text = EmulationSpeed.formatMultiplier(presetValues.last()),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    Switch(checked = autoEnabled, onCheckedChange = null)
                 }
-                Slider(
-                    value = draftIndex,
-                    onValueChange = { draftIndex = it },
-                    enabled = !autoEnabled,
-                    valueRange = 0f..presetValues.lastIndex.toFloat(),
-                    steps = (presetValues.size - 2).coerceAtLeast(0),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 48.dp)
-                        .testTag("runtime_emulation_speed_slider"),
-                    colors = SliderDefaults.colors(
-                        thumbColor = MaterialTheme.colorScheme.primary,
-                        activeTrackColor = MaterialTheme.colorScheme.primary,
-                        inactiveTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.28f),
-                    ),
+                ScrollableContentHint(
+                    visible = canScrollForward,
+                    modifier = Modifier.align(Alignment.BottomCenter),
                 )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        text = EmulationSpeed.formatMultiplier(presetValues.first()),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        text = EmulationSpeed.formatMultiplier(presetValues.last()),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
             }
         },
         confirmButton = {
@@ -470,7 +484,8 @@ private fun RuntimeToolbar(
     state: RuntimeMenuUiState,
     actions: RuntimeMenuActions,
 ) {
-    val actionSize = if (state.isCanvas) 36.dp else 48.dp
+    // Keep canvas chrome compact in content, but never make its touch targets smaller than 48dp.
+    val actionSize = 48.dp
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainer,
         contentColor = MaterialTheme.colorScheme.onSurface,
@@ -538,6 +553,7 @@ private fun RuntimeMenuDialog(
     var virtualKeyboardPage by remember { mutableStateOf(false) }
     val layout = runtimeMenuDialogLayout()
     AlertDialog(
+        textScrollable = false,
         modifier = layout.modifier,
         properties = layout.properties,
         onDismissRequest = onDismiss,

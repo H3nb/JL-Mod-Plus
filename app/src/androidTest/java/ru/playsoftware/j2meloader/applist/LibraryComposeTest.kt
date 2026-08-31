@@ -15,8 +15,12 @@
 package ru.playsoftware.j2meloader.applist
 
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.DeviceConfigurationOverride
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.longClick
@@ -29,6 +33,8 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeUp
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -37,9 +43,38 @@ import org.junit.runner.RunWith
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 
 @RunWith(AndroidJUnit4::class)
+@OptIn(ExperimentalTestApi::class)
 class LibraryComposeTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun compactHeightAppActionsExposeScrollHint() {
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp)),
+            ) {
+                JLModPlusTheme {
+                    AppActionsDialog(
+                        app = LibraryAppUiItem(7, "Demo MIDlet", "Example Vendor", "1.0", null, true),
+                        onDismiss = {},
+                        onShortcut = {},
+                        onRename = {},
+                        onSettings = {},
+                        onReinstall = {},
+                        onDelete = {},
+                        onEditMetadata = {},
+                        onAddToCollection = {},
+                        onShareApp = {},
+                        onExportAppBundle = {},
+                        onSelect = {},
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Swipe to continue").assertIsDisplayed()
+    }
 
     @Test
     fun searchDispatchesCurrentTextWithoutArtificialDebounce() {
@@ -366,6 +401,28 @@ class LibraryComposeTest {
         composeRule.onNodeWithText("Descending").assertIsDisplayed()
         composeRule.onNodeWithText("Name").performClick()
         assertEquals(0, actions.sortIndex)
+    }
+
+    @Test
+    fun hiddenGridTitlesKeepAnAccessibleAppLabel() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                layout = LibraryLayout.Grid,
+                hideGridTitles = true,
+                apps = listOf(
+                    LibraryAppUiItem(7, "Demo MIDlet", "Example Vendor", "1.0", null, true),
+                ),
+            ),
+            actions = actions,
+        )
+
+        composeRule.onNodeWithContentDescription("Demo MIDlet")
+            .assertHasClickAction()
+            .performClick()
+
+        assertEquals(7, actions.openedId)
     }
 
     @Test

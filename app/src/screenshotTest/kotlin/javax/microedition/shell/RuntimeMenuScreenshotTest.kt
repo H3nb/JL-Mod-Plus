@@ -109,6 +109,24 @@ fun RuntimeFullscreenMenuDarkLandscapeScreenshot() {
 
 @PreviewTest
 @Preview(
+    name = "Runtime menu compact landscape large text",
+    widthDp = 480,
+    heightDp = 240,
+    fontScale = 2.0f,
+    showBackground = true,
+)
+@Composable
+fun RuntimeMenuCompactLandscapeLargeTextScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        RuntimeMenuPreview(
+            state = CanvasMenuState.copy(toolbarVisible = false),
+            menuVisible = true,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(
     name = "Runtime FPS dialog landscape",
     widthDp = 640,
     heightDp = 360,
