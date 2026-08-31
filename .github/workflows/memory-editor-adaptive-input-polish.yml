@@ -1,0 +1,106 @@
+name: Memory Editor adaptive input polish
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/memory-editor-adaptive-input-polish.yml'
+      - '.github/scripts/memory-editor-adaptive-input-polish.py'
+
+permissions:
+  contents: write
+
+jobs:
+  polish-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out PR branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: ci/memory-editor-stack-f914594
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Apply guarded polish
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/memory-editor-adaptive-input-polish.py
+          git diff --check
+          python3 - <<'PY'
+          import subprocess
+          changed = set(subprocess.check_output(['git', 'diff', '--name-only']).decode().splitlines())
+          expected = {
+              '.github/workflows/android.yml',
+              'app/src/main/cpp/memory/memory_engine.cpp',
+              'app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryEditorCompose.kt',
+              'app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryInputCompose.kt',
+              'app/src/screenshotTest/kotlin/ru/playsoftware/j2meloader/memory/MemoryEditorScreenshotTest.kt',
+          }
+          if changed != expected:
+              raise SystemExit(f'unexpected polish source scope: {sorted(changed)}')
+          PY
+
+      - name: Refresh Memory Editor screenshot references
+        shell: bash
+        run: ./gradlew --no-daemon --stacktrace :app:updateEmulatorDebugScreenshotTest
+
+      - name: Validate production gate
+        shell: bash
+        run: >-
+          ./gradlew --no-daemon --stacktrace --continue
+          :app:lintEmulatorDebug
+          :dexlib:lintDebug
+          :app:testEmulatorDebugUnitTest
+          :app:validateEmulatorDebugScreenshotTest
+          :app:assembleEmulatorDebug
+
+      - name: Guard final diff scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          python3 - <<'PY'
+          import subprocess
+          changed = subprocess.check_output(['git', 'diff', '--name-only']).decode().splitlines()
+          exact = {
+              '.github/workflows/android.yml',
+              'app/src/main/cpp/memory/memory_engine.cpp',
+              'app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryEditorCompose.kt',
+              'app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryInputCompose.kt',
+              'app/src/screenshotTest/kotlin/ru/playsoftware/j2meloader/memory/MemoryEditorScreenshotTest.kt',
+          }
+          unexpected = [
+              path for path in changed
+              if path not in exact and not path.startswith('app/src/screenshotTest/reference/')
+          ]
+          if unexpected:
+              raise SystemExit(f'unexpected generated diff scope: {unexpected}')
+          PY
+
+      - name: Commit polished workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A \
+            .github/workflows/android.yml \
+            app/src/main/cpp/memory/memory_engine.cpp \
+            app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryEditorCompose.kt \
+            app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryInputCompose.kt \
+            app/src/screenshotTest
+          git commit -m 'Polish Memory Editor adaptive input workspace'
+          git rm \
+            .github/workflows/memory-editor-adaptive-input-polish.yml \
+            .github/scripts/memory-editor-adaptive-input-polish.py \
+            .github/scripts/memory-editor-native-final-audit.py
+          git commit -m 'Remove temporary Memory Editor polish helpers'
+          git push origin HEAD:ci/memory-editor-stack-f914594
