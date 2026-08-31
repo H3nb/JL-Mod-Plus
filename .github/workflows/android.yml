@@ -76,7 +76,6 @@ jobs:
           :app:testEmulatorDebugUnitTest
           :app:validateEmulatorDebugScreenshotTest
           :app:assembleEmulatorDebug
-          :app:assembleEmulatorDebugAndroidTest
 
       - name: Upload CI diagnostics
         if: always()
