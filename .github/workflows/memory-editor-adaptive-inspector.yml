@@ -39,11 +39,24 @@ jobs:
           from pathlib import Path
           path = Path('.github/scripts/memory-editor-adaptive-inspector.py')
           text = path.read_text()
+
           old = "\\}\n\n\n@Composable\nprivate fun InspectorCellRow'''"
           new = "\\}\n\n@Composable\nprivate fun InspectorCellRow'''"
           if text.count(old) != 1:
               raise SystemExit(f'Inspector boundary marker expected once, found {text.count(old)}')
-          path.write_text(text.replace(old, new, 1))
+          text = text.replace(old, new, 1)
+
+          version_upgrade = '''text = replace_once(
+              text,
+              'material3-adaptive = "1.3.0-alpha01"',
+              'material3-adaptive = "1.3.0"',
+              "stable adaptive version",
+          )
+          '''
+          if text.count(version_upgrade) != 1:
+              raise SystemExit(f'adaptive version block expected once, found {text.count(version_upgrade)}')
+          text = text.replace(version_upgrade, '', 1)
+          path.write_text(text)
           PY
           python3 .github/scripts/memory-editor-adaptive-inspector.py
           git checkout -- .github/scripts/memory-editor-adaptive-inspector.py
