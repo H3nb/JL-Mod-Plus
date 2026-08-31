@@ -167,7 +167,7 @@ internal fun MemoryInspectorDialog(
     onRefresh: (Int) -> Unit,
     onNearby: () -> Unit,
 ) {
-    var viewType by remember(snapshot.candidateId, snapshot.anchorAddress) {
+    var viewType by remember(snapshot.candidateId) {
         mutableIntStateOf(
             snapshot.type.takeIf(MemoryEngineContract::isCandidateType)
                 ?: MemoryEngineContract.TYPE_INT,
