@@ -1,17 +1,16 @@
-name: Memory Editor adaptive Inspector
+name: Memory Editor Inspector finalization
 
 on:
   workflow_dispatch:
   push:
     paths:
       - '.github/workflows/memory-editor-adaptive-inspector.yml'
-      - '.github/scripts/memory-editor-adaptive-inspector.py'
 
 permissions:
   contents: write
 
 jobs:
-  adapt-and-test:
+  finalize-and-test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -31,60 +30,125 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545
 
-      - name: Apply guarded adaptive pass
+      - name: Harden compact Inspector navigation
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          path = Path('.github/scripts/memory-editor-adaptive-inspector.py')
-          text = path.read_text()
 
-          old = "\\}\n\n\n@Composable\nprivate fun InspectorCellRow'''"
-          new = "\\}\n\n@Composable\nprivate fun InspectorCellRow'''"
-          if text.count(old) != 1:
-              raise SystemExit(f'Inspector boundary marker expected once, found {text.count(old)}')
-          text = text.replace(old, new, 1)
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, found {count}')
+              return text.replace(old, new, 1)
 
-          version_upgrade = '''text = replace_once(
+          inspector = Path('app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryInspectorCompose.kt')
+          text = inspector.read_text()
+          text = replace_once(
               text,
-              'material3-adaptive = "1.3.0-alpha01"',
-              'material3-adaptive = "1.3.0"',
-              "stable adaptive version",
+              '''    val supportingHidden =
+                  navigator.scaffoldValue[SupportingPaneScaffoldRole.Supporting] == PaneAdaptedValue.Hidden
+
+              Dialog(
+                  onDismissRequest = onDismiss,
+''',
+              '''    val supportingHidden =
+                  navigator.scaffoldValue[SupportingPaneScaffoldRole.Supporting] == PaneAdaptedValue.Hidden
+              val mainHidden =
+                  navigator.scaffoldValue[SupportingPaneScaffoldRole.Main] == PaneAdaptedValue.Hidden
+              val returnToMain: () -> Unit = {
+                  scope.launch {
+                      navigator.navigateTo(SupportingPaneScaffoldRole.Main)
+                  }
+              }
+
+              Dialog(
+                  onDismissRequest = {
+                      if (mainHidden) returnToMain() else onDismiss()
+                  },
+''',
+              'Inspector dismiss navigation',
           )
-          '''
-          if text.count(version_upgrade) != 1:
-              raise SystemExit(f'adaptive version block expected once, found {text.count(version_upgrade)}')
-          text = text.replace(version_upgrade, '', 1)
-          path.write_text(text)
+          text = replace_once(
+              text,
+              '''                            onRefresh = { onRefresh(radius) },
+                              onNearby = onNearby,
+                              onDismiss = onDismiss,
+''',
+              '''                            onRefresh = { onRefresh(radius) },
+                              onNearby = onNearby,
+                              showBackToMemory = mainHidden,
+                              onBackToMemory = returnToMain,
+                              onDismiss = onDismiss,
+''',
+              'Inspector controls call',
+          )
+          text = replace_once(
+              text,
+              '''    onRefresh: () -> Unit,
+              onNearby: () -> Unit,
+              onDismiss: () -> Unit,
+''',
+              '''    onRefresh: () -> Unit,
+              onNearby: () -> Unit,
+              showBackToMemory: Boolean,
+              onBackToMemory: () -> Unit,
+              onDismiss: () -> Unit,
+''',
+              'Inspector controls parameters',
+          )
+          text = replace_once(
+              text,
+              '''            TextButton(onClick = onNearby) {
+                  Text(stringResource(R.string.memory_editor_search_nearby))
+              }
+              TextButton(onClick = onDismiss) {
+''',
+              '''            TextButton(onClick = onNearby) {
+                  Text(stringResource(R.string.memory_editor_search_nearby))
+              }
+              if (showBackToMemory) {
+                  TextButton(onClick = onBackToMemory) {
+                      Text(stringResource(R.string.memory_editor_back_to_memory))
+                  }
+              }
+              TextButton(onClick = onDismiss) {
+''',
+              'Inspector compact back action',
+          )
+          inspector.write_text(text)
+
+          for path, marker, line in [
+              (
+                  'app/src/main/res/values/memory_editor_strings.xml',
+                  '    <string name="memory_editor_inspector_controls">Inspector controls</string>\n',
+                  '    <string name="memory_editor_back_to_memory">Back to memory</string>\n',
+              ),
+              (
+                  'app/src/main/res/values-in/memory_editor_strings.xml',
+                  '    <string name="memory_editor_inspector_controls">Kontrol inspektor</string>\n',
+                  '    <string name="memory_editor_back_to_memory">Kembali ke memori</string>\n',
+              ),
+          ]:
+              p = Path(path)
+              value = p.read_text()
+              value = replace_once(value, marker, marker + line, f'localized compact back label {path}')
+              p.write_text(value)
           PY
-          python3 .github/scripts/memory-editor-adaptive-inspector.py
-          git checkout -- .github/scripts/memory-editor-adaptive-inspector.py
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path('app/src/screenshotTest/kotlin/ru/playsoftware/j2meloader/memory/MemoryEditorScreenshotTest.kt')
-          path.write_text(path.read_text().rstrip() + '\n')
-          PY
+
           git diff --check
           python3 - <<'PY'
           import subprocess
           changed = set(subprocess.check_output(['git', 'diff', '--name-only']).decode().splitlines())
           expected = {
-              'app/build.gradle.kts',
-              'gradle/libs.versions.toml',
-              'app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryInputCompose.kt',
               'app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryInspectorCompose.kt',
               'app/src/main/res/values/memory_editor_strings.xml',
               'app/src/main/res/values-in/memory_editor_strings.xml',
-              'app/src/screenshotTest/kotlin/ru/playsoftware/j2meloader/memory/MemoryEditorScreenshotTest.kt',
           }
           if changed != expected:
-              raise SystemExit(f'unexpected adaptive source scope: {sorted(changed)}')
+              raise SystemExit(f'unexpected finalization scope: {sorted(changed)}')
           PY
-
-      - name: Generate screenshot references
-        shell: bash
-        run: ./gradlew --no-daemon --stacktrace :app:updateEmulatorDebugScreenshotTest
 
       - name: Validate production gate
         shell: bash
@@ -95,46 +159,34 @@ jobs:
           :app:testEmulatorDebugUnitTest
           :app:validateEmulatorDebugScreenshotTest
           :app:assembleEmulatorDebug
+          :app:assembleEmulatorDebugAndroidTest
 
-      - name: Guard generated diff scope
-        shell: bash
-        run: |
-          set -euo pipefail
-          git diff --check
-          python3 - <<'PY'
-          import subprocess
-          changed = subprocess.check_output(['git', 'diff', '--name-only']).decode().splitlines()
-          exact = {
-              'app/build.gradle.kts',
-              'gradle/libs.versions.toml',
-              'app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryInputCompose.kt',
-              'app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryInspectorCompose.kt',
-              'app/src/main/res/values/memory_editor_strings.xml',
-              'app/src/main/res/values-in/memory_editor_strings.xml',
-              'app/src/screenshotTest/kotlin/ru/playsoftware/j2meloader/memory/MemoryEditorScreenshotTest.kt',
-          }
-          unexpected = [
-              path for path in changed
-              if path not in exact and not path.startswith('app/src/screenshotTestEmulatorDebug/reference/')
-          ]
-          if unexpected:
-              raise SystemExit(f'unexpected generated diff scope: {unexpected}')
-          PY
-
-      - name: Commit validated adaptive workspace
+      - name: Commit source and remove temporary helpers
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm \
+            .github/workflows/memory-editor-adaptive-inspector.yml \
+            .github/scripts/memory-editor-adaptive-inspector.py
           git add \
-            app/build.gradle.kts \
-            gradle/libs.versions.toml \
-            app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryInputCompose.kt \
             app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryInspectorCompose.kt \
             app/src/main/res/values/memory_editor_strings.xml \
-            app/src/main/res/values-in/memory_editor_strings.xml \
-            app/src/screenshotTest/kotlin/ru/playsoftware/j2meloader/memory/MemoryEditorScreenshotTest.kt \
-            app/src/screenshotTestEmulatorDebug
-          git commit -m 'Add adaptive Memory Inspector workspace'
+            app/src/main/res/values-in/memory_editor_strings.xml
+          git diff --cached --check
+          python3 - <<'PY'
+          import subprocess
+          changed = set(subprocess.check_output(['git', 'diff', '--cached', '--name-only']).decode().splitlines())
+          expected = {
+              '.github/workflows/memory-editor-adaptive-inspector.yml',
+              '.github/scripts/memory-editor-adaptive-inspector.py',
+              'app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryInspectorCompose.kt',
+              'app/src/main/res/values/memory_editor_strings.xml',
+              'app/src/main/res/values-in/memory_editor_strings.xml',
+          }
+          if changed != expected:
+              raise SystemExit(f'unexpected staged finalization scope: {sorted(changed)}')
+          PY
+          git commit -m 'Harden compact Memory Inspector navigation'
           git push origin HEAD:ci/memory-editor-stack-f914594
