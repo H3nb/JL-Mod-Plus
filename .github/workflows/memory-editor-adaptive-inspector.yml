@@ -92,16 +92,6 @@ jobs:
               raise SystemExit(f'unexpected generated diff scope: {unexpected}')
           PY
 
-      - name: Upload generated visual references
-        if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6fb58ed0dc250532a479d7789f
-        with:
-          name: Memory-Editor-adaptive-visuals
-          path: app/src/screenshotTestEmulatorDebug/reference/**
-          if-no-files-found: warn
-          retention-days: 3
-          compression-level: 0
-
       - name: Commit validated adaptive workspace
         shell: bash
         run: |
