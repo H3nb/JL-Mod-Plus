@@ -35,7 +35,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('.github/scripts/memory-editor-adaptive-inspector.py')
+          text = path.read_text()
+          old = "\\}\n\n\n@Composable\nprivate fun InspectorCellRow'''"
+          new = "\\}\n\n@Composable\nprivate fun InspectorCellRow'''"
+          if text.count(old) != 1:
+              raise SystemExit(f'Inspector boundary marker expected once, found {text.count(old)}')
+          path.write_text(text.replace(old, new, 1))
+          PY
           python3 .github/scripts/memory-editor-adaptive-inspector.py
+          git checkout -- .github/scripts/memory-editor-adaptive-inspector.py
           git diff --check
           python3 - <<'PY'
           import subprocess
