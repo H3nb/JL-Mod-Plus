@@ -26,6 +26,7 @@ import android.os.RemoteException
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -178,6 +179,7 @@ class MemoryEditorComposeController(
 
     fun open() {
         if (destroyed || !state.bubbleEnabled) return
+        hidePlatformKeyboard()
         showEditorUi()
         composeView.visibility = View.VISIBLE
         bubbleView.visibility = View.GONE
@@ -232,6 +234,12 @@ class MemoryEditorComposeController(
         )
         composeView.visibility = View.GONE
         composeView.disposeComposition()
+    }
+
+    private fun hidePlatformKeyboard() {
+        val windowToken = composeView.windowToken ?: return
+        context.getSystemService(InputMethodManager::class.java)
+            ?.hideSoftInputFromWindow(windowToken, 0)
     }
 
     private fun clearSearchPresentation() {
