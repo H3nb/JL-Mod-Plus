@@ -59,27 +59,25 @@ class MemoryEditorComposeTest {
     }
 
     @Test
-    fun resultRowsAreGroupedByRawAddressWithoutLosingTypeAliases() {
-        fun row(id: Long, address: Long, type: Int) = MemoryCandidateRow(
-            id, address, 0, type, MemoryEngineContract.CANDIDATE_STABLE, 0, 0, 0, 7,
+    fun resultRowsKeepAliasTypesWithoutRawAddresses() {
+        fun row(id: Long, types: IntArray) = MemoryResultRow(
+            id = id,
+            valueText = "7",
+            addressText = "0x1000",
+            aliasMask = types.fold(0) { mask, type -> mask or (1 shl type) },
+            primaryType = types.first(),
+            state = MemoryEngineContract.CANDIDATE_STABLE,
+            relocations = 0,
         )
-        val groups = groupCandidateRows(listOf(
-            row(1, 0x1000, MemoryEngineContract.TYPE_INT),
-            row(2, 0x1000, MemoryEngineContract.TYPE_FLOAT),
-            row(3, 0x2000, MemoryEngineContract.TYPE_LONG),
-        ))
+        val rows = listOf(
+            row(1, intArrayOf(MemoryEngineContract.TYPE_INT, MemoryEngineContract.TYPE_FLOAT)),
+            row(3, intArrayOf(MemoryEngineContract.TYPE_INT, MemoryEngineContract.TYPE_LONG)),
+        )
 
-        assertEquals(2, groups.size)
-        assertEquals(0x1000, groups.first().address)
-        assertEquals(2, groups.first().aliases.size)
         assertEquals(
             listOf(MemoryEngineContract.TYPE_INT),
             commonTypesForSelection(
-                listOf(
-                    row(1, 0x1000, MemoryEngineContract.TYPE_INT),
-                    row(2, 0x1000, MemoryEngineContract.TYPE_FLOAT),
-                    row(3, 0x2000, MemoryEngineContract.TYPE_INT),
-                ),
+                rows,
                 setOf(1, 3),
             ),
         )

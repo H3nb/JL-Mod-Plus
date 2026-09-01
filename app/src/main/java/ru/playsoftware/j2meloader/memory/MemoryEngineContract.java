@@ -104,6 +104,13 @@ public final class MemoryEngineContract {
 	public static final String KEY_INSPECT_START = "inspectStart";
 	public static final String KEY_INSPECT_ANCHOR = "inspectAnchor";
 	public static final String KEY_INSPECT_BYTES = "inspectBytes";
+	public static final String KEY_RESULT_IDS = "resultIds";
+	public static final String KEY_RESULT_VALUES = "resultValues";
+	public static final String KEY_RESULT_ADDRESSES = "resultAddresses";
+	public static final String KEY_RESULT_ALIAS_MASKS = "resultAliasMasks";
+	public static final String KEY_RESULT_TYPES = "resultTypes";
+	public static final String KEY_RESULT_STATES = "resultStates";
+	public static final String KEY_RESULT_RELOCATIONS = "resultRelocations";
 	public static final String KEY_WATCH_ROWS = "watchRows";
 	public static final String KEY_WATCH_LABELS = "watchLabels";
 	public static final String KEY_WATCH_FREEZE_MODES = "watchFreezeModes";

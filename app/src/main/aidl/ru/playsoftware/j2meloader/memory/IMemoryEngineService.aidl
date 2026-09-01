@@ -35,11 +35,14 @@ interface IMemoryEngineService {
     long removeCandidates(long runtimeToken, in long[] candidateIds);
     long keepCandidates(long runtimeToken, in long[] candidateIds);
     long editCandidates(long runtimeToken, in long[] candidateIds, String replacementValue);
+    long filterResultGroups(long runtimeToken, in long[] resultIds, boolean keep);
+    long editResultGroups(long runtimeToken, in long[] resultIds, int valueType,
+            String replacementValue);
 
     long getResultCount(long runtimeToken);
     Bundle getSearchSessionInfo(long runtimeToken);
-    // Offset/limit count unique raw addresses. Rows may include typed aliases for those addresses.
-    long[] getResultPage(long runtimeToken, int offset, int limit);
+    // Offset/limit count unique raw addresses. The engine formats one presentation row per address.
+    Bundle getResultPage(long runtimeToken, int offset, int limit);
     Bundle inspectCandidate(long runtimeToken, long candidateId, int radius);
     Bundle getWatchPage(long runtimeToken);
     long addWatch(long runtimeToken, in long[] candidateIds);

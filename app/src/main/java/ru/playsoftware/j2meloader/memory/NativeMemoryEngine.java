@@ -51,6 +51,8 @@ final class NativeMemoryEngine {
 
 	static native int edit(long[] candidateIds, String replacementValue);
 
+	static native long[] expandResultGroups(long[] resultIds, int valueType);
+
 	static native int pin(long[] candidateIds, boolean add);
 
 	static native long[] watchPage();

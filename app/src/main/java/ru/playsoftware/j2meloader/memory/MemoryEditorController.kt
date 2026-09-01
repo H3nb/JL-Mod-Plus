@@ -596,11 +596,15 @@ class MemoryEditorComposeController(
     private fun visiblePrimaryIds(): List<Long> = if (state.watchTab) {
         state.watches.map { it.id }
     } else {
-        groupCandidateRows(state.results).map { it.primary.id }
+        state.results.map { it.id }
     }
 
-    private fun findCandidate(id: Long): MemoryCandidateRow? =
-        state.results.firstOrNull { it.id == id } ?: state.watches.firstOrNull { it.id == id }
+    private fun findCandidate(id: Long): MemoryCandidatePresentation? =
+        state.results.firstOrNull { it.id == id }?.let {
+            MemoryCandidatePresentation(it.primaryType, "")
+        } ?: state.watches.firstOrNull { it.id == id }?.let {
+            MemoryCandidatePresentation(it.type, it.label)
+        }
 
     override fun editSelected(value: String, type: Int) {
         val ids: LongArray
@@ -613,37 +617,29 @@ class MemoryEditorComposeController(
             }
             ids = typed.map { it.id }.distinct().toLongArray()
         } else {
-            val selectedAddresses = state.results.asSequence()
+            ids = state.results.asSequence()
                 .filter { it.id in state.selected }
-                .mapTo(mutableSetOf()) { it.address }
-            val typed = state.results.asSequence()
-                .filter { it.address in selectedAddresses && it.type == type }
                 .map { it.id }
-                .distinct()
                 .toList()
-            if (typed.size != selectedAddresses.size) {
-                state = state.copy(message = resultMessage(MemoryEngineContract.RESULT_INVALID_REQUEST))
-                return
-            }
-            ids = typed.toLongArray()
+                .toLongArray()
         }
         if (ids.isEmpty()) return
         if (ids.size > MemoryEngineContract.MAX_MULTI_WRITE) {
             state = state.copy(message = resultMessage(MemoryEngineContract.RESULT_SAFETY_LIMIT))
             return
         }
-        operate { editCandidates(state.runtimeToken, ids, value.trim()) }
+        operate {
+            if (state.watchTab) editCandidates(state.runtimeToken, ids, value.trim())
+            else editResultGroups(state.runtimeToken, ids, type, value.trim())
+        }
     }
 
     override fun removeSelected(keep: Boolean) {
         val ids = if (state.watchTab) {
             selectedIds()
         } else {
-            val addresses = state.results.asSequence()
-                .filter { it.id in state.selected }
-                .mapTo(mutableSetOf()) { it.address }
             state.results.asSequence()
-                .filter { it.address in addresses }
+                .filter { it.id in state.selected }
                 .map { it.id }
                 .distinct()
                 .toList()
@@ -651,8 +647,12 @@ class MemoryEditorComposeController(
                 ?.toLongArray()
         } ?: return
         operate {
-            if (keep) keepCandidates(state.runtimeToken, ids)
-            else removeCandidates(state.runtimeToken, ids)
+            if (state.watchTab) {
+                if (keep) keepCandidates(state.runtimeToken, ids)
+                else removeCandidates(state.runtimeToken, ids)
+            } else {
+                filterResultGroups(state.runtimeToken, ids, keep)
+            }
         }
     }
 
@@ -684,13 +684,17 @@ class MemoryEditorComposeController(
     }
 
     override fun copySelected(addresses: Boolean) {
-        val rows = (state.results + state.watches).distinctBy { it.id }
-            .filter { it.id in state.selected }
-        if (rows.isEmpty()) return
-        val text = rows.joinToString("\n") {
-            if (addresses) "0x${it.address.toULong().toString(16).uppercase()}"
-            else MemoryEditorPageParser.value(it)
+        val text = if (state.watchTab) {
+            state.watches.filter { it.id in state.selected }.joinToString("\n") {
+                if (addresses) "0x${it.address.toULong().toString(16).uppercase()}"
+                else MemoryEditorPageParser.value(it)
+            }
+        } else {
+            state.results.filter { it.id in state.selected }.joinToString("\n") {
+                if (addresses) it.addressText else it.valueText
+            }
         }
+        if (text.isEmpty()) return
         context.getSystemService(ClipboardManager::class.java)
             ?.setPrimaryClip(ClipData.newPlainText(context.getString(R.string.memory_editor), text))
     }
@@ -787,7 +791,7 @@ class MemoryEditorComposeController(
             ).toInt())
         } else 0
         val resultRows = if (sessionStage == MemorySessionStage.CANDIDATES) {
-            MemoryEditorPageParser.parse(engine.getResultPage(token, safeOffset, PAGE_SIZE))
+            MemoryResultPageParser.parse(engine.getResultPage(token, safeOffset, PAGE_SIZE))
         } else emptyList()
         val watchRows = attachWatchMetadata(engine.getWatchPage(token))
         post {
@@ -802,7 +806,9 @@ class MemoryEditorComposeController(
                 requestedType = requestedType,
                 searchScope = searchScope,
                 canUndo = canUndo,
-                selected = state.selected.intersect((resultRows + watchRows).mapTo(mutableSetOf()) { it.id }),
+                selected = state.selected.intersect(
+                    (resultRows.map { it.id } + watchRows.map { it.id }).toMutableSet(),
+                ),
             )
             if (refreshAfterLoad && sessionStage == MemorySessionStage.CANDIDATES) refresh()
         }
@@ -928,3 +934,8 @@ class MemoryEditorComposeController(
         const val PAGE_SIZE = 100
     }
 }
+
+private data class MemoryCandidatePresentation(
+    val type: Int,
+    val label: String,
+)

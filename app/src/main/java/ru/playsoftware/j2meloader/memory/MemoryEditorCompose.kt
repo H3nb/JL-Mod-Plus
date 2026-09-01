@@ -238,7 +238,7 @@ private fun MemoryEditorContent(state: MemoryEditorUiState, actions: MemoryEdito
     var freezeDialog by remember { mutableStateOf(false) }
     var refineDialog by remember { mutableStateOf(false) }
     var detailRow by remember { mutableStateOf<MemoryCandidateRow?>(null) }
-    var detailAliases by remember { mutableStateOf<List<MemoryCandidateRow>>(emptyList()) }
+    var detailResult by remember { mutableStateOf<MemoryResultRow?>(null) }
     val searchScrollState = rememberScrollState()
 
     LaunchedEffect(state.sessionStage, state.searchMode, state.requestedType, state.searchScope) {
@@ -330,14 +330,14 @@ private fun MemoryEditorContent(state: MemoryEditorUiState, actions: MemoryEdito
             WatchWorkspace(
                 state = state,
                 actions = actions,
-                onOpen = { row -> detailRow = row; detailAliases = listOf(row) },
+                onOpen = { row -> detailRow = row },
                 modifier = Modifier.weight(1f),
             )
         } else if (state.sessionStage == MemorySessionStage.CANDIDATES) {
             ResultsWorkspace(
                 state = state,
                 actions = actions,
-                onOpen = { group -> detailRow = group.primary; detailAliases = group.aliases },
+                onOpen = { row -> detailResult = row },
                 modifier = Modifier.weight(1f),
             )
         }
@@ -390,12 +390,20 @@ private fun MemoryEditorContent(state: MemoryEditorUiState, actions: MemoryEdito
     }
 
 if (freezeDialog) {
-    val freezeRows = selectedRows(state)
-    val freezeTypes = freezeRows.map { it.type }.distinct()
+    val freezeTypes = if (state.watchTab) {
+        selectedRows(state).map { it.type }.distinct()
+    } else {
+        state.results.filter { it.id in state.selected }.map { it.primaryType }.distinct()
+    }
+    val initialValue = if (state.watchTab) {
+        selectedRows(state).firstOrNull()?.let(MemoryEditorPageParser::value).orEmpty()
+    } else {
+        state.results.firstOrNull { it.id in state.selected }?.valueText.orEmpty()
+    }
     FreezeDialog(
         enabled = state.writeSupported,
         types = freezeTypes,
-        initialValue = freezeRows.firstOrNull()?.let(MemoryEditorPageParser::value).orEmpty(),
+        initialValue = initialValue,
         onDismiss = { freezeDialog = false },
         onApply = { mode, first, second ->
             freezeDialog = false
@@ -407,10 +415,10 @@ if (freezeDialog) {
     detailRow?.let { row ->
         CandidateDetailDialog(
             row = row,
-            aliases = detailAliases,
+            aliases = listOf(row),
             watch = state.watchTab,
             writeSupported = state.writeSupported,
-            onDismiss = { detailRow = null; detailAliases = emptyList() },
+            onDismiss = { detailRow = null },
             onSelect = {
                 detailRow = null
                 actions.clearSelection()
@@ -430,6 +438,37 @@ if (freezeDialog) {
             },
             onFreeze = {
                 detailRow = null
+                actions.clearSelection()
+                actions.toggleSelection(row.id)
+                freezeDialog = true
+            },
+        )
+    }
+
+    detailResult?.let { row ->
+        ResultDetailDialog(
+            row = row,
+            writeSupported = state.writeSupported,
+            onDismiss = { detailResult = null },
+            onSelect = {
+                detailResult = null
+                actions.clearSelection()
+                actions.toggleSelection(row.id)
+            },
+            onEdit = {
+                detailResult = null
+                actions.clearSelection()
+                actions.toggleSelection(row.id)
+                editDialog = true
+            },
+            onWatch = {
+                detailResult = null
+                actions.clearSelection()
+                actions.toggleSelection(row.id)
+                actions.watchSelected(true)
+            },
+            onFreeze = {
+                detailResult = null
                 actions.clearSelection()
                 actions.toggleSelection(row.id)
                 freezeDialog = true
@@ -1156,10 +1195,9 @@ private fun refineInputValid(type: Int, predicate: Int, value: String, secondVal
 private fun ResultsWorkspace(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
-    onOpen: (MemoryAddressGroup) -> Unit,
+    onOpen: (MemoryResultRow) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val groups = groupCandidateRows(state.results)
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -1173,18 +1211,18 @@ private fun ResultsWorkspace(
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.weight(1f),
         )
-        SelectionHeaderButtons(groups.isNotEmpty(), actions)
+        SelectionHeaderButtons(state.results.isNotEmpty(), actions)
     }
-    if (groups.isEmpty()) {
+    if (state.results.isEmpty()) {
         EmptyList(modifier)
     } else {
         LazyColumn(modifier = modifier.fillMaxWidth()) {
-            items(groups, key = { it.address }) { group ->
+            items(state.results, key = { it.id }) { row ->
                 ResultGroupRow(
-                    group = group,
-                    selected = group.primary.id in state.selected,
-                    onToggle = { actions.toggleSelection(group.primary.id) },
-                    onOpen = { onOpen(group) },
+                    row = row,
+                    selected = row.id in state.selected,
+                    onToggle = { actions.toggleSelection(row.id) },
+                    onOpen = { onOpen(row) },
                 )
             }
         }
@@ -1246,12 +1284,11 @@ private fun SelectionHeaderButtons(enabled: Boolean, actions: MemoryEditorAction
 
 @Composable
 private fun ResultGroupRow(
-    group: MemoryAddressGroup,
+    row: MemoryResultRow,
     selected: Boolean,
     onToggle: () -> Unit,
     onOpen: () -> Unit,
 ) {
-    val primary = group.primary
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -1263,14 +1300,14 @@ private fun ResultGroupRow(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    MemoryEditorPageParser.value(primary),
+                    row.valueText,
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
                 Text(
-                    group.aliases.joinToString(" · ") { typeShortName(it.type) },
+                    row.aliasTypes.joinToString(" · ") { typeShortName(it) },
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                     maxLines = 1,
@@ -1279,13 +1316,13 @@ private fun ResultGroupRow(
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "0x${group.address.toULong().toString(16).uppercase()}",
+                    row.addressText,
                     style = MaterialTheme.typography.bodySmall,
                     fontFamily = FontFamily.Monospace,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
                 )
-                exceptionalState(primary)?.let {
+                exceptionalState(row.state, row.relocations)?.let {
                     Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
                 }
             }
@@ -1609,6 +1646,64 @@ private fun DetailLine(label: String, value: String) {
     }
 }
 
+@Composable
+private fun ResultDetailDialog(
+    row: MemoryResultRow,
+    writeSupported: Boolean,
+    onDismiss: () -> Unit,
+    onSelect: () -> Unit,
+    onEdit: () -> Unit,
+    onWatch: () -> Unit,
+    onFreeze: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(row.valueText) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                DetailLine(stringResource(R.string.memory_editor_current_value), row.valueText)
+                DetailLine(stringResource(R.string.memory_editor_address), row.addressText)
+                DetailLine(stringResource(R.string.memory_editor_data_type), typeName(row.primaryType))
+                if (row.aliasTypes.size > 1) {
+                    Text(
+                        stringResource(R.string.memory_editor_interpretations) + ": " +
+                            row.aliasTypes.joinToString(" · ") { typeShortName(it) },
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                exceptionalState(row.state, row.relocations)?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error)
+                }
+                if (row.relocations > 0) {
+                    DetailLine(stringResource(R.string.memory_editor_relocations), row.relocations.toString())
+                }
+                HorizontalDivider()
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    TextButton(onClick = onEdit, enabled = writeSupported) {
+                        Text(stringResource(R.string.memory_editor_edit))
+                    }
+                    TextButton(onClick = onWatch) {
+                        Text(stringResource(R.string.memory_editor_watch))
+                    }
+                    TextButton(onClick = onFreeze, enabled = writeSupported) {
+                        Text(stringResource(R.string.memory_editor_freeze))
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onSelect) {
+                Text(stringResource(R.string.memory_editor_select))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        },
+    )
+}
+
 private fun formatBits(type: Int, bits: Long): String = MemoryEditorPageParser.value(
     MemoryCandidateRow(
         id = 0,
@@ -1624,7 +1719,7 @@ private fun formatBits(type: Int, bits: Long): String = MemoryEditorPageParser.v
 )
 
 private fun selectedRows(state: MemoryEditorUiState): List<MemoryCandidateRow> =
-    (if (state.watchTab) state.watches else state.results).filter { it.id in state.selected }
+    state.watches.filter { it.id in state.selected }
 
 private fun editableTypes(state: MemoryEditorUiState): List<Int> {
     if (!state.watchTab) return commonTypesForSelection(state.results, state.selected)
@@ -1856,6 +1951,16 @@ private fun predicateName(predicate: Int): String = when (predicate) {
 @Composable
 private fun exceptionalState(row: MemoryCandidateRow): String? = when (row.state) {
     MemoryEngineContract.CANDIDATE_STABLE -> if (row.relocations > 0) {
+        stringResource(R.string.memory_editor_candidate_moved)
+    } else null
+    MemoryEngineContract.CANDIDATE_RELOCATING -> stringResource(R.string.memory_editor_candidate_relocating)
+    MemoryEngineContract.CANDIDATE_AMBIGUOUS -> stringResource(R.string.memory_editor_candidate_ambiguous)
+    else -> stringResource(R.string.memory_editor_candidate_lost)
+}
+
+@Composable
+private fun exceptionalState(state: Int, relocations: Int): String? = when (state) {
+    MemoryEngineContract.CANDIDATE_STABLE -> if (relocations > 0) {
         stringResource(R.string.memory_editor_candidate_moved)
     } else null
     MemoryEngineContract.CANDIDATE_RELOCATING -> stringResource(R.string.memory_editor_candidate_relocating)

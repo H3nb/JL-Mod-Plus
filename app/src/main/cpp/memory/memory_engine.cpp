@@ -2926,6 +2926,60 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_filter(
     });
 }
 
+extern "C" JNIEXPORT jlongArray JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_expandResultGroups(
+        JNIEnv *env, jclass, jlongArray rawIds, jint requestedType) {
+    try {
+        std::vector<uint64_t> sourceIds;
+        if (!readIds(env, rawIds, sourceIds) ||
+            (requestedType != kTypeAuto &&
+             !valueTypeFromJint(requestedType).has_value())) {
+            setMessage("Invalid result selection");
+            return nullptr;
+        }
+        OperationContext context;
+        if (!beginOperation(context)) {
+            return nullptr;
+        }
+        std::vector<uint64_t> expanded;
+        std::unordered_set<uint64_t> seen;
+        for (const uint64_t sourceId : sourceIds) {
+            Candidate source{};
+            if (!resolveCandidateById(context, sourceId, source)) {
+                setMessage("Selected result is no longer available");
+                return nullptr;
+            }
+            bool matched = false;
+            for (const Candidate &stored : context.state->candidates) {
+                const Candidate &candidate = liveCandidate(stored, context.liveCandidates);
+                if (candidate.address != source.address ||
+                    (requestedType != kTypeAuto &&
+                     toJint(candidate.type) != requestedType)) {
+                    continue;
+                }
+                matched = true;
+                if (seen.insert(candidate.id).second) {
+                    expanded.push_back(candidate.id);
+                }
+            }
+            if (!matched) {
+                setMessage("Selected result aliases are no longer available");
+                return nullptr;
+            }
+        }
+        std::vector<jlong> output(expanded.begin(), expanded.end());
+        jlongArray result = env->NewLongArray(static_cast<jsize>(output.size()));
+        if (result != nullptr && !output.empty()) {
+            env->SetLongArrayRegion(result, 0, static_cast<jsize>(output.size()),
+                                    output.data());
+        }
+        return result;
+    } catch (const std::bad_alloc &) {
+        setMessage("Result selection could not be expanded safely");
+        return nullptr;
+    }
+}
+
 extern "C" JNIEXPORT jint JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_edit(
         JNIEnv *env, jclass, jlongArray rawIds, jstring replacement) {

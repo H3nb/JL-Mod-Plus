@@ -53,11 +53,19 @@ internal data class MemoryCandidateRow(
     val freezePaused: Boolean = false,
 )
 
-internal data class MemoryAddressGroup(
-    val address: Long,
-    val aliases: List<MemoryCandidateRow>,
+/** One engine-formatted logical address result. No raw address or numeric bits cross into :midlet. */
+internal data class MemoryResultRow(
+    val id: Long,
+    val valueText: String,
+    val addressText: String,
+    val aliasMask: Int,
+    val primaryType: Int,
+    val state: Int,
+    val relocations: Int,
 ) {
-    val primary: MemoryCandidateRow get() = aliases.first()
+    val aliasTypes: List<Int>
+        get() = (MemoryEngineContract.TYPE_BYTE..MemoryEngineContract.TYPE_DOUBLE)
+            .filter { aliasMask and (1 shl it) != 0 }
 }
 
 internal data class MemoryGroupDraft(
@@ -75,17 +83,15 @@ internal data class MemoryInspectorSnapshot(
     val bytes: ByteArray,
 )
 
-internal fun groupCandidateRows(rows: List<MemoryCandidateRow>): List<MemoryAddressGroup> =
-    rows.groupBy { it.address }.map { (address, aliases) -> MemoryAddressGroup(address, aliases) }
-
 internal fun commonTypesForSelection(
-    rows: List<MemoryCandidateRow>,
+    rows: List<MemoryResultRow>,
     selected: Set<Long>,
 ): List<Int> {
-    val selectedAddresses = rows.filter { it.id in selected }.mapTo(linkedSetOf()) { it.address }
-    return selectedAddresses.map { address ->
-        rows.filter { it.address == address }.mapTo(linkedSetOf()) { it.type }
-    }.reduceOrNull { common, types -> common.apply { retainAll(types) } }?.toList().orEmpty()
+    return rows.filter { it.id in selected }
+        .map { it.aliasTypes.toMutableSet() }
+        .reduceOrNull { common, types -> common.apply { retainAll(types) } }
+        ?.toList()
+        .orEmpty()
 }
 
 internal object MemoryEditorPageParser {
@@ -122,6 +128,41 @@ internal object MemoryEditorPageParser {
     }
 }
 
+internal object MemoryResultPageParser {
+    fun parse(bundle: android.os.Bundle?): List<MemoryResultRow> {
+        val ids = bundle?.getLongArray(MemoryEngineContract.KEY_RESULT_IDS) ?: return emptyList()
+        val values = bundle.getStringArray(MemoryEngineContract.KEY_RESULT_VALUES) ?: return emptyList()
+        val addresses = bundle.getStringArray(MemoryEngineContract.KEY_RESULT_ADDRESSES) ?: return emptyList()
+        val aliasMasks = bundle.getIntArray(MemoryEngineContract.KEY_RESULT_ALIAS_MASKS) ?: return emptyList()
+        val types = bundle.getIntArray(MemoryEngineContract.KEY_RESULT_TYPES) ?: return emptyList()
+        val states = bundle.getIntArray(MemoryEngineContract.KEY_RESULT_STATES) ?: return emptyList()
+        val relocations = bundle.getIntArray(MemoryEngineContract.KEY_RESULT_RELOCATIONS) ?: return emptyList()
+        if (listOf(values.size, addresses.size, aliasMasks.size, types.size, states.size, relocations.size)
+                .any { it != ids.size }) {
+            return emptyList()
+        }
+        return ids.indices.mapNotNull { index ->
+            val type = types[index]
+            val mask = aliasMasks[index]
+            if (ids[index] <= 0L || values[index] == null || addresses[index] == null ||
+                !MemoryEngineContract.isCandidateType(type) ||
+                mask and (1 shl type) == 0) {
+                null
+            } else {
+                MemoryResultRow(
+                    id = ids[index],
+                    valueText = values[index],
+                    addressText = addresses[index],
+                    aliasMask = mask,
+                    primaryType = type,
+                    state = states[index],
+                    relocations = relocations[index],
+                )
+            }
+        }.takeIf { it.size == ids.size }.orEmpty()
+    }
+}
+
 internal fun newSearchPredicate(selectedPredicate: Int): Int =
     selectedPredicate.takeIf { it <= MemoryEngineContract.PREDICATE_BETWEEN }
         ?: MemoryEngineContract.PREDICATE_EQUAL
@@ -140,7 +181,7 @@ internal data class MemoryEditorUiState(
     val scanBytesTotal: Long = 0L,
     val resultCount: Long = 0,
     val pageOffset: Int = 0,
-    val results: List<MemoryCandidateRow> = emptyList(),
+    val results: List<MemoryResultRow> = emptyList(),
     val watches: List<MemoryCandidateRow> = emptyList(),
     val selected: Set<Long> = emptySet(),
     val watchTab: Boolean = false,

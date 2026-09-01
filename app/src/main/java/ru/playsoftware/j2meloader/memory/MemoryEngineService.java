@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,6 +42,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.Locale;
 
 /** Owns all scan state in a dedicated app process and exposes only logical candidate IDs. */
 public final class MemoryEngineService extends Service {
@@ -317,13 +319,49 @@ public final class MemoryEngineService extends Service {
 		}
 
 		@Override
-		public long[] getResultPage(long token, int offset, int limit) {
+		public Bundle getResultPage(long token, int offset, int limit) {
 			if (!isCurrentToken(token) || offset < 0 || limit <= 0 ||
 					limit > MemoryEngineContract.MAX_RESULT_PAGE_SIZE) {
-				return new long[]{0L};
+				return emptyResultPage();
 			}
-			long[] result = NativeMemoryEngine.resultPage(offset, limit);
-			return result == null ? new long[]{0L} : result;
+			return formatResultPage(NativeMemoryEngine.resultPage(offset, limit));
+		}
+
+		@Override
+		public long filterResultGroups(long token, long[] resultIds, boolean keep) {
+			return enqueue(token, false, 0, () -> {
+				long[] candidateIds = NativeMemoryEngine.expandResultGroups(resultIds,
+						MemoryEngineContract.TYPE_AUTO);
+				if (candidateIds == null || candidateIds.length == 0) {
+					return MemoryEngineContract.RESULT_INVALID_REQUEST;
+				}
+				int result = NativeMemoryEngine.filter(candidateIds, keep);
+				if (result == MemoryEngineContract.RESULT_OK) {
+					advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES);
+				}
+				return result;
+			});
+		}
+
+		@Override
+		public long editResultGroups(long token, long[] resultIds, int valueType,
+		                             String replacementValue) {
+			return enqueue(token, false, 0, () -> {
+				if (!MemoryEngineContract.isCandidateType(valueType)) {
+					return MemoryEngineContract.RESULT_INVALID_REQUEST;
+				}
+				long[] candidateIds = NativeMemoryEngine.expandResultGroups(resultIds, valueType);
+				if (candidateIds == null || candidateIds.length == 0 ||
+						candidateIds.length > MemoryEngineContract.MAX_MULTI_WRITE) {
+					return MemoryEngineContract.RESULT_SAFETY_LIMIT;
+				}
+				if (!isWriteSupported(token)) {
+					return MemoryEngineContract.RESULT_UNSUPPORTED;
+				}
+				int ready = refreshWithRecovery(token, candidateIds);
+				return ready == MemoryEngineContract.RESULT_OK
+						? NativeMemoryEngine.edit(candidateIds, replacementValue) : ready;
+			});
 		}
 
 		@Override
@@ -941,6 +979,85 @@ public final class MemoryEngineService extends Service {
 		} finally {
 			callbacks.finishBroadcast();
 		}
+	}
+
+	private static Bundle emptyResultPage() {
+		Bundle result = new Bundle();
+		result.putLongArray(MemoryEngineContract.KEY_RESULT_IDS, new long[0]);
+		result.putStringArray(MemoryEngineContract.KEY_RESULT_VALUES, new String[0]);
+		result.putStringArray(MemoryEngineContract.KEY_RESULT_ADDRESSES, new String[0]);
+		result.putIntArray(MemoryEngineContract.KEY_RESULT_ALIAS_MASKS, new int[0]);
+		result.putIntArray(MemoryEngineContract.KEY_RESULT_TYPES, new int[0]);
+		result.putIntArray(MemoryEngineContract.KEY_RESULT_STATES, new int[0]);
+		result.putIntArray(MemoryEngineContract.KEY_RESULT_RELOCATIONS, new int[0]);
+		return result;
+	}
+
+	private static Bundle formatResultPage(long[] rows) {
+		int count = validatedPageCount(rows);
+		if (count < 0) {
+			return emptyResultPage();
+		}
+		long[] ids = new long[count];
+		String[] values = new String[count];
+		String[] addresses = new String[count];
+		int[] aliasMasks = new int[count];
+		int[] types = new int[count];
+		int[] states = new int[count];
+		int[] relocations = new int[count];
+		LinkedHashMap<Long, Integer> addressPositions = new LinkedHashMap<>();
+		int output = 0;
+		for (int index = 0; index < count; index++) {
+			int base = 1 + index * MemoryEngineContract.RESULT_PAGE_STRIDE;
+			long address = rows[base + 1];
+			int type = (int) rows[base + 3];
+			if (rows[base] <= 0L || !MemoryEngineContract.isCandidateType(type)) {
+				return emptyResultPage();
+			}
+			Integer position = addressPositions.get(address);
+			if (position == null) {
+				position = output++;
+				addressPositions.put(address, position);
+				ids[position] = rows[base];
+				values[position] = formatCandidateValue(type, rows[base + 8]);
+				addresses[position] = "0x" + Long.toUnsignedString(address, 16).toUpperCase(Locale.ROOT);
+				types[position] = type;
+				states[position] = (int) rows[base + 4];
+				relocations[position] = (int) rows[base + 5];
+			}
+			aliasMasks[position] |= 1 << type;
+		}
+		if (output != count) {
+			ids = Arrays.copyOf(ids, output);
+			values = Arrays.copyOf(values, output);
+			addresses = Arrays.copyOf(addresses, output);
+			aliasMasks = Arrays.copyOf(aliasMasks, output);
+			types = Arrays.copyOf(types, output);
+			states = Arrays.copyOf(states, output);
+			relocations = Arrays.copyOf(relocations, output);
+		}
+		Bundle result = new Bundle();
+		result.putLongArray(MemoryEngineContract.KEY_RESULT_IDS, ids);
+		result.putStringArray(MemoryEngineContract.KEY_RESULT_VALUES, values);
+		result.putStringArray(MemoryEngineContract.KEY_RESULT_ADDRESSES, addresses);
+		result.putIntArray(MemoryEngineContract.KEY_RESULT_ALIAS_MASKS, aliasMasks);
+		result.putIntArray(MemoryEngineContract.KEY_RESULT_TYPES, types);
+		result.putIntArray(MemoryEngineContract.KEY_RESULT_STATES, states);
+		result.putIntArray(MemoryEngineContract.KEY_RESULT_RELOCATIONS, relocations);
+		return result;
+	}
+
+	private static String formatCandidateValue(int type, long bits) {
+		return switch (type) {
+			case MemoryEngineContract.TYPE_BYTE -> Byte.toString((byte) bits);
+			case MemoryEngineContract.TYPE_SHORT -> Short.toString((short) bits);
+			case MemoryEngineContract.TYPE_CHAR -> Integer.toString((int) bits & 0xffff);
+			case MemoryEngineContract.TYPE_INT -> Integer.toString((int) bits);
+			case MemoryEngineContract.TYPE_LONG -> Long.toString(bits);
+			case MemoryEngineContract.TYPE_FLOAT -> Float.toString(Float.intBitsToFloat((int) bits));
+			case MemoryEngineContract.TYPE_DOUBLE -> Double.toString(Double.longBitsToDouble(bits));
+			default -> "?";
+		};
 	}
 
 	private void notifyProgress(long operationId) {
