@@ -146,6 +146,9 @@ constexpr size_t kResultStride = 9;
 constexpr size_t kIdentityRadius = 8;
 constexpr size_t kMultiWriteLimit = 32;
 constexpr size_t kRecoveryLimit = 32;
+// Binder callers normally send at most one visible page (or the bounded watch list). Keep a
+// larger defensive ceiling here so malformed requests cannot force an unbounded native copy.
+constexpr size_t kMaxIdRequest = 4'096;
 constexpr size_t kRelocationTrackLimit = 25'000;
 constexpr size_t kWatchLimit = 128;
 constexpr size_t kLiveOverlayLimit = 2'048;
@@ -2089,6 +2092,10 @@ bool readIds(JNIEnv *env, jlongArray rawIds, std::vector<uint64_t> &ids) {
         return false;
     }
     const jsize length = env->GetArrayLength(rawIds);
+    if (length < 0 || static_cast<size_t>(length) > kMaxIdRequest) {
+        setMessage("Candidate selection exceeds the safe request limit");
+        return false;
+    }
     std::vector<jlong> raw(static_cast<size_t>(length));
     if (length > 0) {
         env->GetLongArrayRegion(rawIds, 0, length, raw.data());
