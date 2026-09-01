@@ -397,8 +397,15 @@ public final class MemoryEngineService extends Service {
 				return inspectionFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
 						"Inspector requires a valid CandidateId and bounded radius");
 			}
+			long operationEpoch = cancelEpoch.get();
 			try {
-				return worker.submit(() -> inspectCandidateOnWorker(token, candidateId, radius)).get();
+				return worker.submit(() -> {
+					if (!NativeMemoryEngine.prepareOperation(operationEpoch)) {
+						return inspectionFailure(MemoryEngineContract.RESULT_CANCELLED,
+								"Inspector request was cancelled before it started");
+					}
+					return inspectCandidateOnWorker(token, candidateId, radius);
+				}).get();
 			} catch (RejectedExecutionException exception) {
 				return inspectionFailure(MemoryEngineContract.RESULT_TARGET_LOST,
 						"Memory engine is shutting down");
@@ -810,12 +817,19 @@ public final class MemoryEngineService extends Service {
 		if (active.isEmpty()) {
 			return;
 		}
+		long operationEpoch = cancelEpoch.get();
+		if (!NativeMemoryEngine.prepareOperation(operationEpoch)) {
+			return;
+		}
 		long[] activeIds = new long[active.size()];
 		for (int index = 0; index < active.size(); index++) {
 			activeIds[index] = active.get(index).getKey();
 		}
 		int batchRefresh = NativeMemoryEngine.refresh(activeIds, false);
 		for (Map.Entry<Long, FreezeRecord> entry : active) {
+			if (cancelEpoch.get() != operationEpoch) {
+				return;
+			}
 			FreezeRecord record = entry.getValue();
 			long[] ids = new long[]{entry.getKey()};
 			// A failed batch is retried individually so one stale address cannot pause unrelated freezes.
