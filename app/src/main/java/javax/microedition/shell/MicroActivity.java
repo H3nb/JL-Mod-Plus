@@ -127,8 +127,6 @@ public class MicroActivity extends AppCompatActivity {
 		binding = new RuntimeHostView(this);
 		setContentView(binding.getRoot());
 		runtimeNoticeController = new TransientNoticeComposeController(binding.notices);
-		memoryEditorController = new MemoryEditorComposeController(
-				binding.memoryEditor, binding.memoryEditorBubble);
 		virtualDisplayPaddingLeft = binding.virtualDisplay.getPaddingLeft();
 		virtualDisplayPaddingTop = binding.virtualDisplay.getPaddingTop();
 		virtualDisplayPaddingRight = binding.virtualDisplay.getPaddingRight();
@@ -301,10 +299,8 @@ public class MicroActivity extends AppCompatActivity {
 
 					@Override
 					public void onMemoryEditor() {
-						if (memoryEditorController != null) {
-							memoryEditorController.toggleBubble();
-							updateRuntimeMenuState(current);
-						}
+						memoryEditorController().toggleBubble();
+						updateRuntimeMenuState(current);
 					}
 
 					@Override
@@ -421,6 +417,14 @@ public class MicroActivity extends AppCompatActivity {
 				emulationSpeedPercent,
 				emulationSpeedAuto,
 				memoryEditorController != null && memoryEditorController.isBubbleEnabled());
+	}
+
+	private MemoryEditorComposeController memoryEditorController() {
+		if (memoryEditorController == null) {
+			memoryEditorController = new MemoryEditorComposeController(
+					binding.memoryEditor, binding.memoryEditorBubble);
+		}
+		return memoryEditorController;
 	}
 
 	private GuestWindowPolicy.Chrome getRuntimeChrome(@Nullable Displayable displayable) {
