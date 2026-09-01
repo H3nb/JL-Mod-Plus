@@ -121,6 +121,7 @@
     <string name="memory_editor_inspect_memory">Inspect nearby memory</string>
     <string name="memory_editor_inspector_help">Read-only view anchored to the verified candidate. Relative offsets follow the candidate if it relocates.</string>
     <string name="memory_editor_inspector_loading">Verifying candidate and reading a bounded snapshot…</string>
+    <string name="memory_editor_inspector_empty">Select a result, then inspect nearby memory to view and edit its bounded snapshot.</string>
     <string name="memory_editor_anchor">Anchor</string>
     <string name="memory_editor_view_as">View as</string>
     <string name="memory_editor_inspect_radius">Snapshot</string>

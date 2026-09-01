@@ -45,39 +45,47 @@ private object NoOpMemoryEditorActions : MemoryEditorActions {
 }
 
 private val previewRows = listOf(
-    MemoryCandidateRow(
+    MemoryResultRow(
         id = 1,
-        address = 0x21B99C0,
-        previousAddress = 0,
-        type = MemoryEngineContract.TYPE_INT,
+        valueText = "500",
+        addressText = "0x021B99C0",
+        aliasMask = 1 shl MemoryEngineContract.TYPE_INT,
+        primaryType = MemoryEngineContract.TYPE_INT,
         state = MemoryEngineContract.CANDIDATE_STABLE,
         relocations = 0,
-        initialBits = 500,
-        previousBits = 500,
-        currentBits = 500,
     ),
-    MemoryCandidateRow(
+    MemoryResultRow(
         id = 2,
-        address = 0x21B99C0,
-        previousAddress = 0,
-        type = MemoryEngineContract.TYPE_LONG,
+        valueText = "500",
+        addressText = "0x021B99C0",
+        aliasMask = 1 shl MemoryEngineContract.TYPE_LONG,
+        primaryType = MemoryEngineContract.TYPE_LONG,
         state = MemoryEngineContract.CANDIDATE_STABLE,
         relocations = 0,
-        initialBits = 500,
-        previousBits = 500,
-        currentBits = 500,
     ),
-    MemoryCandidateRow(
+    MemoryResultRow(
         id = 3,
-        address = 0x73492150,
-        previousAddress = 0x73482150,
-        type = MemoryEngineContract.TYPE_INT,
+        valueText = "90",
+        addressText = "0x73492150",
+        aliasMask = 1 shl MemoryEngineContract.TYPE_INT,
+        primaryType = MemoryEngineContract.TYPE_INT,
         state = MemoryEngineContract.CANDIDATE_STABLE,
         relocations = 1,
-        initialBits = 100,
-        previousBits = 95,
-        currentBits = 90,
     ),
+)
+
+private val previewWatch = MemoryWatchRow(
+    id = 3,
+    type = MemoryEngineContract.TYPE_INT,
+    state = MemoryEngineContract.CANDIDATE_STABLE,
+    relocations = 1,
+    valueText = "90",
+    initialValueText = "100",
+    previousValueText = "95",
+    addressText = "0x73492150",
+    label = "HP",
+    freezeMode = MemoryEngineContract.FREEZE_LOCK,
+    freezePaused = true,
 )
 
 @PreviewTest
@@ -85,7 +93,7 @@ private val previewRows = listOf(
 @Composable
 fun MemoryEditorPortraitScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        MemoryEditorScreen(
+        MemoryEditorStage3Root(
             state = MemoryEditorUiState(
                 bubbleEnabled = true,
                 visible = true,
@@ -107,7 +115,7 @@ fun MemoryEditorPortraitScreenshot() {
 @Composable
 fun MemoryEditorLandscapeWatchScreenshot() {
     JLModPlusTheme(darkTheme = true) {
-        MemoryEditorScreen(
+        MemoryEditorStage3Root(
             state = MemoryEditorUiState(
                 bubbleEnabled = true,
                 visible = true,
@@ -116,13 +124,7 @@ fun MemoryEditorLandscapeWatchScreenshot() {
                 writeSupported = true,
                 runtimeToken = 1,
                 watchTab = true,
-                watches = listOf(
-                    previewRows.last().copy(
-                        label = "HP",
-                        freezeMode = MemoryEngineContract.FREEZE_LOCK,
-                        freezePaused = true,
-                    ),
-                ),
+                watches = listOf(previewWatch),
             ),
             actions = NoOpMemoryEditorActions,
         )
@@ -134,7 +136,7 @@ fun MemoryEditorLandscapeWatchScreenshot() {
 @Composable
 fun MemoryEditorLandscapeResultsScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        MemoryEditorScreen(
+        MemoryEditorStage3Root(
             state = MemoryEditorUiState(
                 bubbleEnabled = true,
                 visible = true,
@@ -156,7 +158,7 @@ fun MemoryEditorLandscapeResultsScreenshot() {
 @Composable
 fun MemoryEditorShortLandscapeSearchScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        MemoryEditorScreen(
+        MemoryEditorStage3Root(
             state = MemoryEditorUiState(
                 bubbleEnabled = true,
                 visible = true,
@@ -185,11 +187,17 @@ private val previewInspectorSnapshot = MemoryInspectorSnapshot(
 @Composable
 fun MemoryInspectorCompactScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        MemoryInspectorDialog(
-            snapshot = previewInspectorSnapshot,
-            onDismiss = {},
-            onRefresh = {},
-            onNearby = {},
+        MemoryEditorStage3Root(
+            state = MemoryEditorUiState(
+                bubbleEnabled = true,
+                visible = true,
+                connected = true,
+                supported = true,
+                writeSupported = true,
+                runtimeToken = 1,
+                inspector = previewInspectorSnapshot,
+            ),
+            actions = NoOpMemoryEditorActions,
         )
     }
 }
@@ -199,11 +207,17 @@ fun MemoryInspectorCompactScreenshot() {
 @Composable
 fun MemoryInspectorWideScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        MemoryInspectorDialog(
-            snapshot = previewInspectorSnapshot,
-            onDismiss = {},
-            onRefresh = {},
-            onNearby = {},
+        MemoryEditorStage3Root(
+            state = MemoryEditorUiState(
+                bubbleEnabled = true,
+                visible = true,
+                connected = true,
+                supported = true,
+                writeSupported = true,
+                runtimeToken = 1,
+                inspector = previewInspectorSnapshot,
+            ),
+            actions = NoOpMemoryEditorActions,
         )
     }
 }

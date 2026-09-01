@@ -81,6 +81,22 @@ internal fun MemoryEditorScreen(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
 ) {
+    MemoryEditorSurface(state = state, actions = actions) {
+        MemoryEditorContent(state = state, actions = actions)
+    }
+}
+
+/**
+ * Hosts the editor over the MIDlet without retaining editor presentation data outside the active
+ * destination. Feature destinations supply their content so the adaptive navigation can remain
+ * above this input/keypad boundary.
+ */
+@Composable
+internal fun MemoryEditorSurface(
+    state: MemoryEditorUiState,
+    actions: MemoryEditorActions,
+    content: @Composable () -> Unit,
+) {
     // Pre-compose while the bubble is enabled so the first open does not inflate the full tree
     // over a running MIDlet frame.
     if (!state.visible && !state.bubbleEnabled) return
@@ -117,7 +133,7 @@ internal fun MemoryEditorScreen(
             tonalElevation = 3.dp,
         ) {
             MemoryInputArea(modifier = Modifier.fillMaxSize(), active = state.visible) {
-                MemoryEditorContent(state, actions)
+                content()
             }
         }
         if (state.busy) BusyOverlay(state, actions)
@@ -225,7 +241,12 @@ private fun BusyOverlay(state: MemoryEditorUiState, actions: MemoryEditorActions
 }
 
 @Composable
-private fun MemoryEditorContent(state: MemoryEditorUiState, actions: MemoryEditorActions) {
+internal fun MemoryEditorContent(
+    state: MemoryEditorUiState,
+    actions: MemoryEditorActions,
+    showHeader: Boolean = true,
+    showWorkspaceTabs: Boolean = true,
+) {
     var searchMode by remember { mutableStateOf(state.searchMode) }
     var value by remember { mutableStateOf("") }
     var secondValue by remember { mutableStateOf("") }
@@ -261,7 +282,7 @@ private fun MemoryEditorContent(state: MemoryEditorUiState, actions: MemoryEdito
         }
     }
     Column(modifier = Modifier.fillMaxSize()) {
-        EditorHeader(actions)
+        if (showHeader) EditorHeader(actions)
 
         if (state.connecting) {
             CenterStatus(progress = true, text = stringResource(R.string.memory_editor_working))
@@ -272,7 +293,7 @@ private fun MemoryEditorContent(state: MemoryEditorUiState, actions: MemoryEdito
             return
         }
 
-        WorkspaceTabs(state, actions)
+        if (showWorkspaceTabs) WorkspaceTabs(state, actions)
 
 
         if (!state.watchTab) {

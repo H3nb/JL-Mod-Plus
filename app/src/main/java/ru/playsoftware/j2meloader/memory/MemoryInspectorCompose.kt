@@ -20,30 +20,36 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.layout.AnimatedPane
 import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
 import androidx.compose.material3.adaptive.layout.SupportingPaneScaffoldRole
 import androidx.compose.material3.adaptive.navigation.NavigableSupportingPaneScaffold
 import androidx.compose.material3.adaptive.navigation.rememberSupportingPaneScaffoldNavigator
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,12 +61,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import ru.playsoftware.j2meloader.R
+import ru.playsoftware.j2meloader.ui.availableWindowWidthDp
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -78,14 +86,18 @@ internal data class MemoryInspectorCell(
     val value: String,
 )
 
-private enum class MemoryEditorWorkspace {
-    MEMORY,
-    INSPECTOR,
+private enum class MemoryEditorDestination(
+    val labelRes: Int,
+    val iconRes: Int,
+) {
+    SEARCH(R.string.memory_editor_search_tab, R.drawable.ic_memory_editor_search),
+    WATCH(R.string.memory_editor_watch, R.drawable.ic_memory_editor_watch),
+    INSPECTOR(R.string.memory_editor_inspector, R.drawable.ic_memory_editor_inspector),
 }
 
 /**
- * Stage 3 wrapper. Existing search/watch UI stays untouched; contextual exploration is layered
- * around one explicitly selected CandidateId.
+ * The top-level workspace owns exactly three destinations. It follows the app's adaptive
+ * navigation pattern: a bottom bar on compact windows and a rail on wider windows.
  */
 
 @Composable
@@ -94,66 +106,122 @@ internal fun MemoryEditorStage3Root(
     actions: MemoryEditorActions,
 ) {
     var nearbyAnchor by remember { mutableStateOf<MemoryNearbyAnchor?>(null) }
-    var workspace by remember { mutableStateOf(MemoryEditorWorkspace.MEMORY) }
+    var destination by remember {
+        mutableStateOf(
+            when {
+                state.inspectorLoading || state.inspector != null -> MemoryEditorDestination.INSPECTOR
+                state.watchTab -> MemoryEditorDestination.WATCH
+                else -> MemoryEditorDestination.SEARCH
+            },
+        )
+    }
     LaunchedEffect(state.visible, state.runtimeToken) {
         if (!state.visible || state.runtimeToken == 0L) {
             nearbyAnchor = null
-            workspace = MemoryEditorWorkspace.MEMORY
+            destination = MemoryEditorDestination.SEARCH
         }
     }
     LaunchedEffect(state.inspectorLoading, state.inspector) {
         if (state.inspectorLoading || state.inspector != null) {
-            workspace = MemoryEditorWorkspace.INSPECTOR
+            destination = MemoryEditorDestination.INSPECTOR
+        }
+    }
+    LaunchedEffect(state.visible, state.watchTab) {
+        if (state.visible && !state.inspectorLoading && state.inspector == null) {
+            destination = if (state.watchTab) {
+                MemoryEditorDestination.WATCH
+            } else {
+                MemoryEditorDestination.SEARCH
+            }
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        TabRow(selectedTabIndex = workspace.ordinal) {
-            Tab(
-                selected = workspace == MemoryEditorWorkspace.MEMORY,
-                onClick = {
-                    if (workspace == MemoryEditorWorkspace.INSPECTOR) actions.closeInspector()
-                    workspace = MemoryEditorWorkspace.MEMORY
-                },
-                text = { Text(stringResource(R.string.memory_editor)) },
-            )
-            Tab(
-                selected = workspace == MemoryEditorWorkspace.INSPECTOR,
-                onClick = { workspace = MemoryEditorWorkspace.INSPECTOR },
-                enabled = state.inspectorLoading || state.inspector != null,
-                text = { Text(stringResource(R.string.memory_editor_inspector)) },
-            )
+    val useNavigationRail = availableWindowWidthDp() >= 600.dp
+    val selectDestination: (MemoryEditorDestination) -> Unit = { item ->
+        destination = item
+        when (item) {
+            MemoryEditorDestination.SEARCH -> actions.setWatchTab(false)
+            MemoryEditorDestination.WATCH -> actions.setWatchTab(true)
+            MemoryEditorDestination.INSPECTOR -> Unit
         }
-        when (workspace) {
-            MemoryEditorWorkspace.MEMORY -> MemoryEditorScreen(state = state, actions = actions)
-            MemoryEditorWorkspace.INSPECTOR -> {
-                if (state.inspectorLoading) {
-                    MemoryInspectorLoadingPane()
-                } else {
-                    state.inspector?.let { snapshot ->
-                        MemoryInspectorWorkspace(
-                            snapshot = snapshot,
-                            actions = actions,
-                            onBack = {
-                                actions.closeInspector()
-                                workspace = MemoryEditorWorkspace.MEMORY
-                            },
-                            onRefresh = { radius -> actions.inspectCandidate(snapshot.candidateId, radius) },
-                            onNearby = {
-                                actions.closeInspector()
-                                workspace = MemoryEditorWorkspace.MEMORY
-                                nearbyAnchor = MemoryNearbyAnchor(
-                                    candidateId = snapshot.candidateId,
-                                    type = snapshot.type,
-                                    label = snapshot.label,
-                                    address = snapshot.anchorAddress,
-                                )
+    }
+
+    MemoryEditorSurface(state = state, actions = actions) {
+        Row(modifier = Modifier.fillMaxSize()) {
+            if (useNavigationRail) {
+                MemoryEditorNavigationRail(
+                    destination = destination,
+                    onSelect = selectDestination,
+                )
+            }
+            Scaffold(
+                modifier = Modifier.weight(1f).fillMaxSize(),
+                contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                bottomBar = {
+                    if (!useNavigationRail) {
+                        MemoryEditorNavigationBar(
+                            destination = destination,
+                            onSelect = selectDestination,
+                        )
+                    }
+                },
+            ) { contentPadding ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(contentPadding),
+                ) {
+                MemoryEditorWorkspaceHeader(destination = destination, actions = actions)
+                when (destination) {
+                    MemoryEditorDestination.SEARCH,
+                    MemoryEditorDestination.WATCH -> MemoryEditorContent(
+                        state = state,
+                        actions = actions,
+                        showHeader = false,
+                        showWorkspaceTabs = false,
+                    )
+                    MemoryEditorDestination.INSPECTOR -> when {
+                        state.inspectorLoading -> MemoryInspectorLoadingPane()
+                        state.inspector != null -> {
+                            val snapshot = requireNotNull(state.inspector)
+                            MemoryInspectorWorkspace(
+                                snapshot = snapshot,
+                                actions = actions,
+                                onBack = {
+                                    actions.closeInspector()
+                                    destination = if (state.watchTab) {
+                                        MemoryEditorDestination.WATCH
+                                    } else {
+                                        MemoryEditorDestination.SEARCH
+                                    }
+                                },
+                                onRefresh = { radius ->
+                                    actions.inspectCandidate(snapshot.candidateId, radius)
+                                },
+                                onNearby = {
+                                    actions.closeInspector()
+                                    actions.setWatchTab(false)
+                                    destination = MemoryEditorDestination.SEARCH
+                                    nearbyAnchor = MemoryNearbyAnchor(
+                                        candidateId = snapshot.candidateId,
+                                        type = snapshot.type,
+                                        label = snapshot.label,
+                                        address = snapshot.anchorAddress,
+                                    )
+                                },
+                            )
+                        }
+                        else -> MemoryInspectorEmptyPane(
+                            onOpenSearch = {
+                                destination = MemoryEditorDestination.SEARCH
+                                actions.setWatchTab(false)
                             },
                         )
                     }
                 }
             }
         }
+    }
     }
 
     nearbyAnchor?.let { anchor ->
@@ -182,6 +250,99 @@ private fun MemoryInspectorLoadingPane() {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             CircularProgressIndicator()
             Text(stringResource(R.string.memory_editor_inspector_loading))
+        }
+    }
+}
+
+@Composable
+private fun MemoryEditorNavigationRail(
+    destination: MemoryEditorDestination,
+    onSelect: (MemoryEditorDestination) -> Unit,
+) {
+    NavigationRail(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
+        MemoryEditorDestination.entries.forEach { item ->
+            val label = stringResource(item.labelRes)
+            NavigationRailItem(
+                selected = destination == item,
+                onClick = { onSelect(item) },
+                icon = {
+                    Icon(
+                        painter = painterResource(item.iconRes),
+                        contentDescription = label,
+                    )
+                },
+                label = { Text(label) },
+                alwaysShowLabel = false,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MemoryEditorNavigationBar(
+    destination: MemoryEditorDestination,
+    onSelect: (MemoryEditorDestination) -> Unit,
+) {
+    NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
+        MemoryEditorDestination.entries.forEach { item ->
+            val label = stringResource(item.labelRes)
+            NavigationBarItem(
+                selected = destination == item,
+                onClick = { onSelect(item) },
+                icon = {
+                    Icon(
+                        painter = painterResource(item.iconRes),
+                        contentDescription = label,
+                    )
+                },
+                label = { Text(label) },
+                alwaysShowLabel = false,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MemoryEditorWorkspaceHeader(
+    destination: MemoryEditorDestination,
+    actions: MemoryEditorActions,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            painter = painterResource(destination.iconRes),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+        )
+        Text(
+            text = stringResource(destination.labelRes),
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(start = 12.dp).weight(1f),
+        )
+        IconButton(onClick = actions::close) {
+            Icon(
+                painter = painterResource(R.drawable.ic_memory_editor_close),
+                contentDescription = stringResource(R.string.memory_editor_close),
+            )
+        }
+    }
+}
+
+@Composable
+private fun MemoryInspectorEmptyPane(onOpenSearch: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            stringResource(R.string.memory_editor_inspector_empty),
+            style = MaterialTheme.typography.bodyLarge,
+        )
+        TextButton(onClick = onOpenSearch, modifier = Modifier.padding(top = 12.dp)) {
+            Text(stringResource(R.string.memory_editor_search_tab))
         }
     }
 }
