@@ -72,6 +72,7 @@
     <string name="memory_editor_searching">Searching memory…</string>
     <string name="memory_editor_working">Applying operation…</string>
     <string name="memory_editor_searching_detail">Large searches can take longer. The previous completed results remain safe until this operation finishes.</string>
+    <string name="memory_editor_search_progress">Scanned %1$d of %2$d MiB</string>
     <string name="memory_editor_candidate_stable">Stable</string>
     <string name="memory_editor_candidate_moved">Moved</string>
     <string name="memory_editor_candidate_relocating">Relocating</string>

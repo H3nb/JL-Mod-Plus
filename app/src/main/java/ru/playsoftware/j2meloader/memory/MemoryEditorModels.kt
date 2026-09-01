@@ -136,6 +136,8 @@ internal data class MemoryEditorUiState(
     val runtimeToken: Long = 0,
     val busy: Boolean = false,
     val searching: Boolean = false,
+    val scanBytesScanned: Long = 0L,
+    val scanBytesTotal: Long = 0L,
     val resultCount: Long = 0,
     val pageOffset: Int = 0,
     val results: List<MemoryCandidateRow> = emptyList(),

@@ -74,6 +74,17 @@ class MemoryEditorComposeController(
     }
 
     private val callback = object : IMemoryEngineCallback.Stub() {
+        override fun onOperationProgress(operationId: Long, scannedBytes: Long, totalBytes: Long) {
+            post {
+                if (state.busy && state.searching && totalBytes > 0L) {
+                    state = state.copy(
+                        scanBytesScanned = scannedBytes.coerceIn(0L, totalBytes),
+                        scanBytesTotal = totalBytes,
+                    )
+                }
+            }
+        }
+
         override fun onOperationFinished(
             operationId: Long,
             resultCode: Int,
@@ -121,6 +132,8 @@ class MemoryEditorComposeController(
                 state = state.copy(
                     busy = false,
                     searching = false,
+                    scanBytesScanned = 0L,
+                    scanBytesTotal = 0L,
                     resultCount = resultCount,
                     message = if (succeeded) {
                         message?.takeIf(String::isNotBlank)
@@ -724,7 +737,13 @@ class MemoryEditorComposeController(
         block: IMemoryEngineService.() -> Long,
     ) {
         if (state.busy || state.runtimeToken == 0L) return
-        state = state.copy(busy = true, searching = searching, message = null)
+        state = state.copy(
+            busy = true,
+            searching = searching,
+            scanBytesScanned = 0L,
+            scanBytesTotal = 0L,
+            message = null,
+        )
         runIpc {
             val engine = service ?: throw RemoteException("Engine disconnected")
             engine.block()

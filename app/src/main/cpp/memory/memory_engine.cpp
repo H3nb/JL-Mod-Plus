@@ -245,6 +245,8 @@ std::deque<std::shared_ptr<const SearchState>> gHistory;
 std::unordered_map<uint64_t, Candidate> gLiveCandidates;
 uint64_t gNextCandidateId = 1;
 std::atomic<bool> gCancelled{false};
+std::atomic<uint64_t> gScanBytesScanned{0};
+std::atomic<uint64_t> gScanBytesTotal{0};
 std::string gLastMessage;
 
 void setMessage(const char *message) {
@@ -836,6 +838,34 @@ bool safeAdd(uint64_t &value, uint64_t addition) {
     return true;
 }
 
+void beginScanProgress(const Target &target) {
+    uint64_t total = 0;
+    for (const Range &range : target.ranges) {
+        if (range.end < range.start ||
+            !safeAdd(total, static_cast<uint64_t>(range.end - range.start))) {
+            total = std::numeric_limits<uint64_t>::max();
+            break;
+        }
+    }
+    gScanBytesScanned.store(0, std::memory_order_release);
+    gScanBytesTotal.store(total, std::memory_order_release);
+}
+
+void advanceScanProgress(size_t bytes) {
+    const uint64_t total = gScanBytesTotal.load(std::memory_order_acquire);
+    if (total == 0) {
+        return;
+    }
+    uint64_t current = gScanBytesScanned.load(std::memory_order_relaxed);
+    while (current < total &&
+           !gScanBytesScanned.compare_exchange_weak(
+                   current,
+                   std::min(total, current + static_cast<uint64_t>(bytes)),
+                   std::memory_order_release,
+                   std::memory_order_relaxed)) {
+    }
+}
+
 struct OperationContext {
     Target target;
     std::shared_ptr<const SearchState> state;
@@ -851,6 +881,8 @@ bool candidateWindow(const Target &target, const Candidate &candidate,
 
 bool beginOperation(OperationContext &context) {
     gCancelled.store(false, std::memory_order_release);
+    gScanBytesScanned.store(0, std::memory_order_release);
+    gScanBytesTotal.store(0, std::memory_order_release);
     std::lock_guard<std::mutex> lock(gMutex);
     if (gTarget.pid <= 0 || gTarget.token == 0 || gTarget.ranges.empty()) {
         gLastMessage = "No configured MIDlet runtime";
@@ -1040,6 +1072,7 @@ jint collectKnown(const OperationContext &context, jint requestedType,
     next->requestedType = requestedType;
     next->watches = context.state->watches;
     std::vector<uint8_t> buffer;
+    beginScanProgress(context.target);
 
     for (const Range &range : context.target.ranges) {
         for (uintptr_t chunkStart = range.start; chunkStart < range.end;) {
@@ -1102,6 +1135,7 @@ jint collectKnown(const OperationContext &context, jint requestedType,
                                   static_cast<std::ptrdiff_t>(chunkCandidateStart),
                           next->candidates.end(), candidateDisplayOrder);
             }
+            advanceScanProgress(chunkSize);
             chunkStart += chunkSize;
         }
     }
@@ -1212,6 +1246,7 @@ jint scanGroup(const OperationContext &context, const std::vector<jint> &types,
     std::vector<std::vector<GroupMatch>> matches(queries.size());
     size_t totalMatches = 0;
     std::vector<uint8_t> buffer;
+    beginScanProgress(context.target);
     for (const Range &range : context.target.ranges) {
         for (uintptr_t chunkStart = range.start; chunkStart < range.end;) {
             if (gCancelled.load(std::memory_order_acquire)) {
@@ -1262,6 +1297,7 @@ jint scanGroup(const OperationContext &context, const std::vector<jint> &types,
                     address += width;
                 }
             }
+            advanceScanProgress(chunkSize);
             chunkStart += chunkSize;
         }
     }
@@ -1373,6 +1409,7 @@ jint snapshotUnknown(const OperationContext &context, jint requestedType) {
     next->requestedType = requestedType;
     next->watches = context.state->watches;
     size_t retained = 0;
+    beginScanProgress(context.target);
     for (const Range &range : context.target.ranges) {
         if (gCancelled.load(std::memory_order_acquire)) {
             setMessage("Operation cancelled; previous results were preserved");
@@ -1410,6 +1447,7 @@ jint snapshotUnknown(const OperationContext &context, jint requestedType) {
             }
         }
         next->snapshots.push_back(std::move(snapshot));
+        advanceScanProgress(size);
     }
     return commitOperation(context, std::move(next), -1);
 }
@@ -2936,6 +2974,21 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_resultCount(JNIEnv *,
                                          std::numeric_limits<jlong>::max())
                    ? std::numeric_limits<jlong>::max()
                    : static_cast<jlong>(state->logicalCount);
+}
+
+extern "C" JNIEXPORT jlongArray JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_scanProgress(
+        JNIEnv *env, jclass) {
+    const std::array<jlong, 2> progress{
+            static_cast<jlong>(gScanBytesScanned.load(std::memory_order_acquire)),
+            static_cast<jlong>(gScanBytesTotal.load(std::memory_order_acquire)),
+    };
+    jlongArray result = env->NewLongArray(static_cast<jsize>(progress.size()));
+    if (result != nullptr) {
+        env->SetLongArrayRegion(result, 0, static_cast<jsize>(progress.size()),
+                                progress.data());
+    }
+    return result;
 }
 
 extern "C" JNIEXPORT jint JNICALL

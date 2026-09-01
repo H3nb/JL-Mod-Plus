@@ -59,6 +59,8 @@ final class NativeMemoryEngine {
 
 	static native long resultCount();
 
+	static native long[] scanProgress();
+
 	static native int historyDepth();
 
 	static native long[] resultPage(int offset, int limit);

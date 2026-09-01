@@ -43,6 +43,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -183,7 +184,19 @@ private fun BusyOverlay(state: MemoryEditorUiState, actions: MemoryEditorActions
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                CircularProgressIndicator()
+                val progress = if (state.scanBytesTotal > 0L) {
+                    state.scanBytesScanned.toFloat() / state.scanBytesTotal.toFloat()
+                } else {
+                    null
+                }
+                if (progress == null) {
+                    CircularProgressIndicator()
+                } else {
+                    LinearProgressIndicator(
+                        progress = { progress.coerceIn(0f, 1f) },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
                 Text(
                     stringResource(
                         if (state.searching) R.string.memory_editor_searching
@@ -193,7 +206,12 @@ private fun BusyOverlay(state: MemoryEditorUiState, actions: MemoryEditorActions
                 )
                 if (state.searching) {
                     Text(
-                        stringResource(R.string.memory_editor_searching_detail),
+                        stringResource(
+                            if (progress == null) R.string.memory_editor_searching_detail
+                            else R.string.memory_editor_search_progress,
+                            state.scanBytesScanned / (1024L * 1024L),
+                            state.scanBytesTotal / (1024L * 1024L),
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

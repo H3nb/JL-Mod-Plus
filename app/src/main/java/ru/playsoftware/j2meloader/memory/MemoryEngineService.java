@@ -45,6 +45,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /** Owns all scan state in a dedicated app process and exposes only logical candidate IDs. */
 public final class MemoryEngineService extends Service {
 	private static final int MAX_RUNS = 4096;
+	private static final long PROGRESS_UPDATE_PERIOD_MS = 200L;
 
 	private final AtomicLong nextOperationId = new AtomicLong(1L);
 	private final AtomicLong cancelEpoch = new AtomicLong();
@@ -54,6 +55,12 @@ public final class MemoryEngineService extends Service {
 		thread.setPriority(Thread.NORM_PRIORITY - 1);
 		return thread;
 	});
+	private final ScheduledExecutorService progressNotifier =
+			Executors.newSingleThreadScheduledExecutor(runnable -> {
+				Thread thread = new Thread(runnable, "MemoryEditorProgress");
+				thread.setPriority(Thread.NORM_PRIORITY - 1);
+				return thread;
+			});
 	private volatile IMemoryTargetBridge target;
 	private volatile boolean targetBound;
 	private volatile long configuredToken;
@@ -484,6 +491,7 @@ public final class MemoryEngineService extends Service {
 		}
 		NativeMemoryEngine.cancel();
 		worker.shutdownNow();
+		progressNotifier.shutdownNow();
 		callbacks.kill();
 		if (targetBound) {
 			unbindService(targetConnection);
@@ -502,33 +510,42 @@ public final class MemoryEngineService extends Service {
 		long operationId = nextOperationId.getAndIncrement();
 		long enqueueEpoch = cancelEpoch.get();
 		worker.execute(() -> {
+			ScheduledFuture<?> progressUpdates = progressNotifier.scheduleWithFixedDelay(
+					() -> notifyProgress(operationId),
+					PROGRESS_UPDATE_PERIOD_MS,
+					PROGRESS_UPDATE_PERIOD_MS,
+					TimeUnit.MILLISECONDS);
 			int result;
 			String serviceMessage = null;
-			if (enqueueEpoch != cancelEpoch.get()) {
-				result = MemoryEngineContract.RESULT_CANCELLED;
-				serviceMessage = "Operation cancelled before it started";
-			} else if (token == 0L) {
-				result = MemoryEngineContract.RESULT_NO_SESSION;
-				serviceMessage = "No active MIDlet runtime";
-			} else if (configure) {
-				result = configureTarget(token, scope);
-				if (result == MemoryEngineContract.RESULT_OK) {
-					result = operation.run();
+			try {
+				if (enqueueEpoch != cancelEpoch.get()) {
+					result = MemoryEngineContract.RESULT_CANCELLED;
+					serviceMessage = "Operation cancelled before it started";
+				} else if (token == 0L) {
+					result = MemoryEngineContract.RESULT_NO_SESSION;
+					serviceMessage = "No active MIDlet runtime";
+				} else if (configure) {
+					result = configureTarget(token, scope);
+					if (result == MemoryEngineContract.RESULT_OK) {
+						result = operation.run();
+					} else {
+						serviceMessage = configurationFailureMessage(result);
+					}
+				} else if (!isCurrentToken(token)) {
+					result = MemoryEngineContract.RESULT_TARGET_LOST;
+					serviceMessage = "MIDlet runtime changed or ended";
 				} else {
-					serviceMessage = configurationFailureMessage(result);
+					result = operation.run();
 				}
-			} else if (!isCurrentToken(token)) {
-				result = MemoryEngineContract.RESULT_TARGET_LOST;
-				serviceMessage = "MIDlet runtime changed or ended";
-			} else {
-				result = operation.run();
-			}
 
-			if (result == MemoryEngineContract.RESULT_OK && !isCurrentToken(token)) {
-				NativeMemoryEngine.clearTarget();
-				configuredToken = 0L;
-				result = MemoryEngineContract.RESULT_TARGET_LOST;
-				serviceMessage = "MIDlet runtime changed during the operation";
+				if (result == MemoryEngineContract.RESULT_OK && !isCurrentToken(token)) {
+					NativeMemoryEngine.clearTarget();
+					configuredToken = 0L;
+					result = MemoryEngineContract.RESULT_TARGET_LOST;
+					serviceMessage = "MIDlet runtime changed during the operation";
+				}
+			} finally {
+				progressUpdates.cancel(false);
 			}
 			notifyFinished(operationId, result, serviceMessage, passiveRefresh);
 		});
@@ -917,6 +934,27 @@ public final class MemoryEngineService extends Service {
 					callbacks.getBroadcastItem(index)
 							.onOperationFinished(operationId, result, count, message,
 									passiveRefresh);
+				} catch (RemoteException ignored) {
+					// RemoteCallbackList removes dead clients.
+				}
+			}
+		} finally {
+			callbacks.finishBroadcast();
+		}
+	}
+
+	private void notifyProgress(long operationId) {
+		long[] progress = NativeMemoryEngine.scanProgress();
+		if (progress == null || progress.length != 2 || progress[1] <= 0L) {
+			return;
+		}
+		long scannedBytes = Math.min(progress[0], progress[1]);
+		int callbackCount = callbacks.beginBroadcast();
+		try {
+			for (int index = 0; index < callbackCount; index++) {
+				try {
+					callbacks.getBroadcastItem(index)
+							.onOperationProgress(operationId, scannedBytes, progress[1]);
 				} catch (RemoteException ignored) {
 					// RemoteCallbackList removes dead clients.
 				}
