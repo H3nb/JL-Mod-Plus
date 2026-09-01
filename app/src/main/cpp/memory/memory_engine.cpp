@@ -2738,6 +2738,18 @@ template <typename Operation> jint guardedOperation(Operation operation) {
     }
 }
 
+template <typename Operation> jlongArray guardedArray(Operation operation) {
+    try {
+        return operation();
+    } catch (const std::bad_alloc &) {
+        setMessage("Native result could not be materialized safely");
+        return nullptr;
+    } catch (...) {
+        setMessage("Native result was rejected safely");
+        return nullptr;
+    }
+}
+
 } // namespace
 
 extern "C" JNIEXPORT jint JNICALL
@@ -3049,23 +3061,25 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_refineRelative(
 extern "C" JNIEXPORT jint JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_undo(JNIEnv *,
                                                                jclass) {
-    std::lock_guard<std::mutex> lock(gMutex);
-    if (gHistory.empty()) {
-        gLastMessage = "No earlier search state is available";
-        return kNoSession;
-    }
-    auto restored = std::make_shared<SearchState>(*gHistory.back());
-    // Search history is independent from the session-scoped Watch List. A Watch added after a
-    // refine/remove step must not disappear when that search step is undone.
-    restored->watches = gState->watches;
-    for (Candidate &watch : restored->watches) {
-        watch = liveCandidate(watch, gLiveCandidates);
-    }
-    gState = std::move(restored);
-    gLiveCandidates.clear();
-    gHistory.pop_back();
-    gLastMessage = "";
-    return kOk;
+    return guardedOperation([&] {
+        std::lock_guard<std::mutex> lock(gMutex);
+        if (gHistory.empty()) {
+            gLastMessage = "No earlier search state is available";
+            return kNoSession;
+        }
+        auto restored = std::make_shared<SearchState>(*gHistory.back());
+        // Search history is independent from the session-scoped Watch List. A Watch added after
+        // a refine/remove step must not disappear when that search step is undone.
+        restored->watches = gState->watches;
+        for (Candidate &watch : restored->watches) {
+            watch = liveCandidate(watch, gLiveCandidates);
+        }
+        gState = std::move(restored);
+        gLiveCandidates.clear();
+        gHistory.pop_back();
+        gLastMessage = "";
+        return kOk;
+    });
 }
 
 extern "C" JNIEXPORT jint JNICALL
@@ -3313,18 +3327,20 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_historyDepth(JNIEnv *,
 
 extern "C" JNIEXPORT jlongArray JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_resultPage(
-        JNIEnv *env, jclass, jint offset, jint limit) {
-    if (offset < 0 || limit <= 0 || limit > 100) {
-        return nullptr;
-    }
-    std::shared_ptr<const SearchState> state;
-    {
-        std::lock_guard<std::mutex> lock(gMutex);
-        state = gState;
-    }
-    return candidateAddressPage(env, state,
-                                static_cast<size_t>(offset),
-                                static_cast<size_t>(limit));
+    JNIEnv *env, jclass, jint offset, jint limit) {
+    return guardedArray([&] {
+        if (offset < 0 || limit <= 0 || limit > 100) {
+            return static_cast<jlongArray>(nullptr);
+        }
+        std::shared_ptr<const SearchState> state;
+        {
+            std::lock_guard<std::mutex> lock(gMutex);
+            state = gState;
+        }
+        return candidateAddressPage(env, state,
+                                    static_cast<size_t>(offset),
+                                    static_cast<size_t>(limit));
+    });
 }
 
 extern "C" JNIEXPORT jlongArray JNICALL
@@ -3372,36 +3388,45 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_pin(JNIEnv *env,
 extern "C" JNIEXPORT jlongArray JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_watchPage(JNIEnv *env,
                                                                     jclass) {
-    std::shared_ptr<const SearchState> state;
-    std::unordered_map<uint64_t, Candidate> liveCandidates;
-    {
-        std::lock_guard<std::mutex> lock(gMutex);
-        state = gState;
-        if (gLiveCandidates.size() + state->watches.size() >
-            kLiveOverlayLimit) {
-            gLiveCandidates.clear();
+    return guardedArray([&] {
+        std::shared_ptr<const SearchState> state;
+        std::unordered_map<uint64_t, Candidate> liveCandidates;
+        {
+            std::lock_guard<std::mutex> lock(gMutex);
+            state = gState;
+            if (gLiveCandidates.size() + state->watches.size() >
+                kLiveOverlayLimit) {
+                gLiveCandidates.clear();
+            }
+            for (const Candidate &watch : state->watches) {
+                gLiveCandidates.try_emplace(watch.id, watch);
+            }
+            liveCandidates = gLiveCandidates;
         }
-        for (const Candidate &watch : state->watches) {
-            gLiveCandidates.try_emplace(watch.id, watch);
-        }
-        liveCandidates = gLiveCandidates;
-    }
-    return candidatePage(env, state->watches, liveCandidates, 0,
-                         state->watches.size());
+        return candidatePage(env, state->watches, liveCandidates, 0,
+                             state->watches.size());
+    });
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearSearch(JNIEnv *,
                                                                       jclass) {
-    std::lock_guard<std::mutex> lock(gMutex);
-    auto next = std::make_shared<SearchState>();
-    next->watches = gState->watches;
-    for (Candidate &watch : next->watches) {
-        watch = liveCandidate(watch, gLiveCandidates);
+    try {
+        std::lock_guard<std::mutex> lock(gMutex);
+        auto next = std::make_shared<SearchState>();
+        next->watches = gState->watches;
+        for (Candidate &watch : next->watches) {
+            watch = liveCandidate(watch, gLiveCandidates);
+        }
+        gState = std::move(next);
+        gHistory.clear();
+        gLiveCandidates.clear();
+        gLastMessage = "";
+    } catch (const std::bad_alloc &) {
+        setMessage("Search state could not be cleared safely");
+    } catch (...) {
+        setMessage("Search state clear was rejected safely");
     }
-    gState = std::move(next);
-    gHistory.clear();
-    gLiveCandidates.clear();
 }
 
 extern "C" JNIEXPORT void JNICALL
