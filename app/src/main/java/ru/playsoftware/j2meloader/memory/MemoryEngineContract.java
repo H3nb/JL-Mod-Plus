@@ -84,7 +84,7 @@ public final class MemoryEngineContract {
 	public static final int MAX_NEARBY_RADIUS = 4096;
 	public static final int MAX_INSPECT_BYTES = MAX_INSPECT_RADIUS * 2 + 8;
 
-	/** [count, id, address, previousAddress, type, state, relocations, initial, previous, current, ...]. */
+	/** [count, id, address, reserved, type, state, relocations, initial, previous, current, ...]. */
 	public static final int RESULT_PAGE_STRIDE = 9;
 	/** Maximum unique raw addresses requested per result page; typed aliases may add rows. */
 	public static final int MAX_RESULT_PAGE_SIZE = 100;

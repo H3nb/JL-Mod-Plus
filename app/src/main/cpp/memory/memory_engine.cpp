@@ -167,7 +167,6 @@ struct Target {
 struct Candidate {
     uint64_t id = 0;
     uintptr_t address = 0;
-    uintptr_t previousAddress = 0;
     uint64_t initialBits = 0;
     uint64_t previousBits = 0;
     uint64_t currentBits = 0;
@@ -178,7 +177,7 @@ struct Candidate {
     bool identityValid = false;
 };
 
-static_assert(sizeof(Candidate) <= 64,
+static_assert(sizeof(Candidate) <= 56,
               "Candidate storage must remain compact at multi-million scale");
 
 struct SnapshotRun {
@@ -511,7 +510,6 @@ Candidate makeCandidate(uint64_t id, uintptr_t address, ValueType type,
     Candidate candidate{};
     candidate.id = id;
     candidate.address = address;
-    candidate.previousAddress = address;
     candidate.initialBits = initialBits;
     candidate.previousBits = initialBits;
     candidate.currentBits = currentBits;
@@ -1817,7 +1815,6 @@ jint refineCandidates(const OperationContext &context, jint predicate,
                     liveCandidate(candidate, context.liveCandidates);
             Candidate bound = candidate;
             bound.address = live.address;
-            bound.previousAddress = live.previousAddress;
             bound.relocationCount = live.relocationCount;
             bound.state = live.state;
             bound.identityHash = live.identityHash;
@@ -1950,7 +1947,6 @@ jint recoverKnownCandidates(const OperationContext &context, jint predicate,
         claimed[matchIndex] = true;
         const Candidate &replacement = fresh->candidates[matchIndex];
         Candidate recovered = old;
-        recovered.previousAddress = old.address;
         recovered.address = replacement.address;
         recovered.previousBits = old.currentBits;
         recovered.currentBits = replacement.currentBits;
@@ -2128,11 +2124,10 @@ jint recoverCandidatesBatch(const Target &target,
         }
         Candidate &candidate = candidates[recovery[index]];
         if (matchCount[index] == 1) {
-            candidate.previousAddress = candidate.address;
-            candidate.address = foundAddress[index];
-            if (candidate.address != candidate.previousAddress) {
+            if (candidate.address != foundAddress[index]) {
                 ++candidate.relocationCount;
             }
+            candidate.address = foundAddress[index];
             candidate.state = kStable;
         } else {
             candidate.state = matchCount[index] > 1 ? kAmbiguous : kLost;
@@ -2598,7 +2593,7 @@ jlongArray candidatePage(
         const size_t base = 1U + index * kResultStride;
         output[base] = static_cast<jlong>(candidate.id);
         output[base + 1U] = static_cast<jlong>(candidate.address);
-        output[base + 2U] = static_cast<jlong>(candidate.previousAddress);
+        output[base + 2U] = static_cast<jlong>(candidate.address);
         const jint serializedType = toJint(candidate.type);
         if (serializedType < kTypeByte || serializedType > kTypeDouble) {
             return nullptr;
@@ -3089,7 +3084,6 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_editInspectorValue(
         }
         Candidate editable = anchor;
         editable.address = address;
-        editable.previousAddress = address;
         editable.type = *type;
         editable.initialBits = static_cast<uint64_t>(expectedBits);
         editable.previousBits = static_cast<uint64_t>(expectedBits);
