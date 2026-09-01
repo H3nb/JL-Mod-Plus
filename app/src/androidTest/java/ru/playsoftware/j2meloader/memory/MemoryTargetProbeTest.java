@@ -167,6 +167,36 @@ public class MemoryTargetProbeTest {
 	}
 
 	@Test
+	public void autoUnknownRefineFindsChangedManagedArtCandidate() {
+		int pageSize = NativeMemoryTarget.pageSize();
+		long[] runs = NativeMemoryTarget.collectResidentRuns(
+				MemoryEngineContract.SCOPE_JAVA_FAST, 4096);
+		assertNotNull(runs);
+		assertTrue(MemoryEngineContract.isCompleteRunList(runs));
+
+		long token = 0x4A4C4155544F554EL;
+		managedProbe = MANAGED_PROBE_A;
+		try {
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.configureTarget(
+							Process.myPid(), pageSize, token, runs));
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.startUnknown(MemoryEngineContract.TYPE_AUTO));
+
+			managedProbe = MANAGED_PROBE_B;
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.refineRelative(
+							MemoryEngineContract.PREDICATE_CHANGED,
+							MemoryEngineContract.COMPARE_PREVIOUS, "", ""));
+			assertTrue("Auto Unknown refine did not find changed values",
+					NativeMemoryEngine.resultCount() > 0L);
+		} finally {
+			managedProbe = 0;
+			NativeMemoryEngine.clearTarget();
+		}
+	}
+
+	@Test
 	public void passiveRefreshDoesNotReplaceNextScanBaseline() {
 		int pageSize = NativeMemoryTarget.pageSize();
 		long[] runs = NativeMemoryTarget.collectResidentRuns(

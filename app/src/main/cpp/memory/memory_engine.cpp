@@ -1725,6 +1725,19 @@ jint refineCandidates(const OperationContext &context, jint predicate,
         setMessage("Invalid value, type, or predicate");
         return kInvalidRequest;
     }
+    std::array<const Query *, kTypeSlotCount> queriesByType{};
+    for (const Query &query : queries) {
+        queriesByType[typeIndex(query.type)] = &query;
+    }
+    const bool fusedAuto = context.state->requestedType == kTypeAuto &&
+                           queries.size() > 1U;
+    const Query *byteQuery = queriesByType[typeIndex(ValueType::Byte)];
+    const Query *shortQuery = queriesByType[typeIndex(ValueType::Short)];
+    const Query *charQuery = queriesByType[typeIndex(ValueType::Char)];
+    const Query *intQuery = queriesByType[typeIndex(ValueType::Int)];
+    const Query *longQuery = queriesByType[typeIndex(ValueType::Long)];
+    const Query *floatQuery = queriesByType[typeIndex(ValueType::Float)];
+    const Query *doubleQuery = queriesByType[typeIndex(ValueType::Double)];
     auto next = std::make_shared<SearchState>();
     next->mode = StateMode::Candidates;
     next->requestedType = context.state->requestedType;
@@ -1743,51 +1756,97 @@ jint refineCandidates(const OperationContext &context, jint predicate,
                 setMessage("A target range changed while it was being refined");
                 return kTargetLost;
             }
-            const size_t snapshotCandidateStart = next->candidates.size();
-            for (const Query &query : queries) {
-                const size_t width = widthOf(query.type);
-                uintptr_t address = snapshot.start;
-                const size_t misalignment =
-                        static_cast<size_t>(address % width);
-                if (misalignment != 0) {
-                    address += width - misalignment;
+            const auto materialize = [&](const Query *query, uintptr_t address,
+                                         size_t offset, size_t width,
+                                         uint64_t initial, uint64_t now) -> bool {
+                if (query == nullptr) {
+                    return true;
                 }
-                while (address >= snapshot.start) {
-                    const size_t offset =
-                            static_cast<size_t>(address - snapshot.start);
-                    if (offset + width > snapshot.bytes.size()) {
-                        break;
-                    }
-                    const uint64_t initial =
-                            loadBits(snapshot.bytes.data() + offset, width);
-                    const uint64_t now =
-                            loadBits(current.data() + offset, width);
-                    const bool match =
-                            relative ? matchesRelative(now, initial, query,
-                                                       predicate)
-                                     : matchesKnown(now, query, predicate);
-                    if (match) {
-                        if (next->candidates.size() >= kCandidateLimit) {
-                            setMessage("Candidate limit reached; previous "
-                                       "results were preserved");
+                const bool match = relative
+                                           ? matchesRelative(now, initial, *query, predicate)
+                                           : matchesKnown(now, *query, predicate);
+                if (!match) {
+                    return true;
+                }
+                if (next->candidates.size() >= kCandidateLimit) {
+                    setMessage("Candidate limit reached; previous results were preserved");
+                    return false;
+                }
+                Candidate candidate = makeCandidate(
+                        context.nextId + next->candidates.size(), address,
+                        query->type, initial, now);
+                candidate.identityValid = snapshotIdentity(
+                        snapshot.bytes.data(), snapshot.bytes.size(), offset,
+                        width, candidate.identityHash);
+                next->candidates.push_back(candidate);
+                return true;
+            };
+            if (fusedAuto) {
+                for (size_t offset = 0; offset < snapshot.bytes.size(); ++offset) {
+                    const uintptr_t address = snapshot.start + offset;
+                    if ((intQuery != nullptr || floatQuery != nullptr) &&
+                        address % 4U == 0U && offset + 4U <= snapshot.bytes.size()) {
+                        const uint64_t initial = loadBits(snapshot.bytes.data() + offset, 4U);
+                        const uint64_t now = loadBits(current.data() + offset, 4U);
+                        if (!materialize(intQuery, address, offset, 4U, initial, now) ||
+                            !materialize(floatQuery, address, offset, 4U, initial, now)) {
                             return kResourceLimit;
                         }
-                        Candidate materialized = makeCandidate(
-                                context.nextId + next->candidates.size(),
-                                address, query.type, initial, now);
-                        materialized.identityValid = snapshotIdentity(
-                                snapshot.bytes.data(), snapshot.bytes.size(),
-                                offset, width, materialized.identityHash);
-                        next->candidates.push_back(materialized);
                     }
-                    if (address >
-                        std::numeric_limits<uintptr_t>::max() - width) {
-                        break;
+                    if ((longQuery != nullptr || doubleQuery != nullptr) &&
+                        address % 8U == 0U && offset + 8U <= snapshot.bytes.size()) {
+                        const uint64_t initial = loadBits(snapshot.bytes.data() + offset, 8U);
+                        const uint64_t now = loadBits(current.data() + offset, 8U);
+                        if (!materialize(longQuery, address, offset, 8U, initial, now) ||
+                            !materialize(doubleQuery, address, offset, 8U, initial, now)) {
+                            return kResourceLimit;
+                        }
                     }
-                    address += width;
+                    if ((shortQuery != nullptr || charQuery != nullptr) &&
+                        address % 2U == 0U && offset + 2U <= snapshot.bytes.size()) {
+                        const uint64_t initial = loadBits(snapshot.bytes.data() + offset, 2U);
+                        const uint64_t now = loadBits(current.data() + offset, 2U);
+                        if (!materialize(shortQuery, address, offset, 2U, initial, now) ||
+                            !materialize(charQuery, address, offset, 2U, initial, now)) {
+                            return kResourceLimit;
+                        }
+                    }
+                    if (byteQuery != nullptr &&
+                        !materialize(byteQuery, address, offset, 1U,
+                                     snapshot.bytes[offset], current[offset])) {
+                        return kResourceLimit;
+                    }
                 }
-            }
-            if (queries.size() > 1U) {
+            } else {
+                const size_t snapshotCandidateStart = next->candidates.size();
+                for (const Query &query : queries) {
+                    const size_t width = widthOf(query.type);
+                    uintptr_t address = snapshot.start;
+                    const size_t misalignment =
+                            static_cast<size_t>(address % width);
+                    if (misalignment != 0) {
+                        address += width - misalignment;
+                    }
+                    while (address >= snapshot.start) {
+                        const size_t offset =
+                                static_cast<size_t>(address - snapshot.start);
+                        if (offset + width > snapshot.bytes.size()) {
+                            break;
+                        }
+                        const uint64_t initial =
+                                loadBits(snapshot.bytes.data() + offset, width);
+                        const uint64_t now =
+                                loadBits(current.data() + offset, width);
+                        if (!materialize(&query, address, offset, width, initial, now)) {
+                            return kResourceLimit;
+                        }
+                        if (address >
+                            std::numeric_limits<uintptr_t>::max() - width) {
+                            break;
+                        }
+                        address += width;
+                    }
+                }
                 std::sort(next->candidates.begin() +
                                   static_cast<std::ptrdiff_t>(snapshotCandidateStart),
                           next->candidates.end(), candidateDisplayOrder);
@@ -1800,10 +1859,6 @@ jint refineCandidates(const OperationContext &context, jint predicate,
         // sequential without allocating a second full-heap image.
         CandidateValueReader reader(context.target,
                                     context.state->candidates.size());
-        std::array<const Query *, kTypeSlotCount> queriesByType{};
-        for (const Query &query : queries) {
-            queriesByType[typeIndex(query.type)] = &query;
-        }
         next->candidates.reserve(context.state->candidates.size());
         for (const Candidate &candidate : context.state->candidates) {
             if (gCancelled.load(std::memory_order_acquire)) {
