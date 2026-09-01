@@ -38,6 +38,8 @@ interface IMemoryEngineService {
     long filterResultGroups(long runtimeToken, in long[] resultIds, boolean keep);
     long editResultGroups(long runtimeToken, in long[] resultIds, int valueType,
             String replacementValue);
+    long editInspectorValue(long runtimeToken, long anchorCandidateId, int relativeOffset,
+            int valueType, long expectedBits, String replacementValue);
 
     long getResultCount(long runtimeToken);
     Bundle getSearchSessionInfo(long runtimeToken);

@@ -220,6 +220,13 @@ internal interface MemoryEditorActions {
     fun cancel()
     fun startOver() = Unit
     fun inspectCandidate(candidateId: Long, radius: Int = MemoryEngineContract.DEFAULT_INSPECT_RADIUS) = Unit
+    fun editInspectorValue(
+        anchorCandidateId: Long,
+        relativeOffset: Int,
+        type: Int,
+        expectedBits: Long,
+        replacementValue: String,
+    ) = Unit
     fun closeInspector() = Unit
     fun startNearbySearch(
         anchorCandidateId: Long,

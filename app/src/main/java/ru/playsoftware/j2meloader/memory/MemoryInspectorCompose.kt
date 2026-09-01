@@ -15,6 +15,7 @@
 package ru.playsoftware.j2meloader.memory
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,6 +40,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -56,8 +59,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.launch
 import ru.playsoftware.j2meloader.R
 import java.nio.ByteBuffer
@@ -73,8 +74,14 @@ private data class MemoryNearbyAnchor(
 internal data class MemoryInspectorCell(
     val offset: Int,
     val address: Long,
+    val bits: Long,
     val value: String,
 )
+
+private enum class MemoryEditorWorkspace {
+    MEMORY,
+    INSPECTOR,
+}
 
 /**
  * Stage 3 wrapper. Existing search/watch UI stays untouched; contextual exploration is layered
@@ -87,31 +94,66 @@ internal fun MemoryEditorStage3Root(
     actions: MemoryEditorActions,
 ) {
     var nearbyAnchor by remember { mutableStateOf<MemoryNearbyAnchor?>(null) }
+    var workspace by remember { mutableStateOf(MemoryEditorWorkspace.MEMORY) }
     LaunchedEffect(state.visible, state.runtimeToken) {
-        if (!state.visible || state.runtimeToken == 0L) nearbyAnchor = null
+        if (!state.visible || state.runtimeToken == 0L) {
+            nearbyAnchor = null
+            workspace = MemoryEditorWorkspace.MEMORY
+        }
+    }
+    LaunchedEffect(state.inspectorLoading, state.inspector) {
+        if (state.inspectorLoading || state.inspector != null) {
+            workspace = MemoryEditorWorkspace.INSPECTOR
+        }
     }
 
-    MemoryEditorScreen(state = state, actions = actions)
-
-    if (state.inspectorLoading) {
-        MemoryInspectorLoadingDialog(onDismiss = actions::closeInspector)
-    }
-
-    state.inspector?.let { snapshot ->
-        MemoryInspectorDialog(
-            snapshot = snapshot,
-            onDismiss = actions::closeInspector,
-            onRefresh = { radius -> actions.inspectCandidate(snapshot.candidateId, radius) },
-            onNearby = {
-                actions.closeInspector()
-                nearbyAnchor = MemoryNearbyAnchor(
-                    candidateId = snapshot.candidateId,
-                    type = snapshot.type,
-                    label = snapshot.label,
-                    address = snapshot.anchorAddress,
-                )
-            },
-        )
+    Column(modifier = Modifier.fillMaxSize()) {
+        TabRow(selectedTabIndex = workspace.ordinal) {
+            Tab(
+                selected = workspace == MemoryEditorWorkspace.MEMORY,
+                onClick = {
+                    if (workspace == MemoryEditorWorkspace.INSPECTOR) actions.closeInspector()
+                    workspace = MemoryEditorWorkspace.MEMORY
+                },
+                text = { Text(stringResource(R.string.memory_editor)) },
+            )
+            Tab(
+                selected = workspace == MemoryEditorWorkspace.INSPECTOR,
+                onClick = { workspace = MemoryEditorWorkspace.INSPECTOR },
+                enabled = state.inspectorLoading || state.inspector != null,
+                text = { Text(stringResource(R.string.memory_editor_inspector)) },
+            )
+        }
+        when (workspace) {
+            MemoryEditorWorkspace.MEMORY -> MemoryEditorScreen(state = state, actions = actions)
+            MemoryEditorWorkspace.INSPECTOR -> {
+                if (state.inspectorLoading) {
+                    MemoryInspectorLoadingPane()
+                } else {
+                    state.inspector?.let { snapshot ->
+                        MemoryInspectorWorkspace(
+                            snapshot = snapshot,
+                            actions = actions,
+                            onBack = {
+                                actions.closeInspector()
+                                workspace = MemoryEditorWorkspace.MEMORY
+                            },
+                            onRefresh = { radius -> actions.inspectCandidate(snapshot.candidateId, radius) },
+                            onNearby = {
+                                actions.closeInspector()
+                                workspace = MemoryEditorWorkspace.MEMORY
+                                nearbyAnchor = MemoryNearbyAnchor(
+                                    candidateId = snapshot.candidateId,
+                                    type = snapshot.type,
+                                    label = snapshot.label,
+                                    address = snapshot.anchorAddress,
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+        }
     }
 
     nearbyAnchor?.let { anchor ->
@@ -135,34 +177,22 @@ internal fun MemoryEditorStage3Root(
 }
 
 @Composable
-private fun MemoryInspectorLoadingDialog(onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.memory_editor_inspector)) },
-        text = {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                CircularProgressIndicator()
-                Text(stringResource(R.string.memory_editor_inspector_loading))
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(android.R.string.cancel))
-            }
-        },
-    )
+private fun MemoryInspectorLoadingPane() {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            CircularProgressIndicator()
+            Text(stringResource(R.string.memory_editor_inspector_loading))
+        }
+    }
 }
 
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
-internal fun MemoryInspectorDialog(
+internal fun MemoryInspectorWorkspace(
     snapshot: MemoryInspectorSnapshot,
-    onDismiss: () -> Unit,
+    actions: MemoryEditorActions,
+    onBack: () -> Unit,
     onRefresh: (Int) -> Unit,
     onNearby: () -> Unit,
 ) {
@@ -176,6 +206,7 @@ internal fun MemoryInspectorDialog(
         mutableIntStateOf(MemoryEngineContract.DEFAULT_INSPECT_RADIUS)
     }
     val cells = remember(snapshot, viewType) { buildInspectorCells(snapshot, viewType) }
+    var editingCell by remember(snapshot, viewType) { mutableStateOf<MemoryInspectorCell?>(null) }
     val navigator = rememberSupportingPaneScaffoldNavigator<Any>()
     val scope = rememberCoroutineScope()
     val supportingHidden =
@@ -188,53 +219,64 @@ internal fun MemoryInspectorDialog(
         }
     }
 
-    Dialog(
-        onDismissRequest = {
-            if (mainHidden) returnToMain() else onDismiss()
-        },
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+    Surface(
+        modifier = Modifier.fillMaxSize().padding(8.dp),
+        shape = MaterialTheme.shapes.large,
+        tonalElevation = 8.dp,
     ) {
-        Surface(
-            modifier = Modifier.fillMaxSize().padding(8.dp),
-            shape = MaterialTheme.shapes.large,
-            tonalElevation = 8.dp,
-        ) {
-            NavigableSupportingPaneScaffold(
-                navigator = navigator,
-                modifier = Modifier.fillMaxSize(),
-                mainPane = {
-                    AnimatedPane {
-                        InspectorMainPane(
-                            snapshot = snapshot,
-                            cells = cells,
-                            supportingHidden = supportingHidden,
-                            onOpenControls = {
-                                scope.launch {
-                                    navigator.navigateTo(SupportingPaneScaffoldRole.Supporting)
-                                }
-                            },
-                            onDismiss = onDismiss,
-                        )
-                    }
-                },
-                supportingPane = {
-                    AnimatedPane {
-                        InspectorControlsPane(
-                            snapshot = snapshot,
-                            viewType = viewType,
-                            onViewType = { viewType = it },
-                            radius = radius,
-                            onRadius = { radius = it },
-                            onRefresh = { onRefresh(radius) },
-                            onNearby = onNearby,
-                            showBackToMemory = mainHidden,
-                            onBackToMemory = returnToMain,
-                            onDismiss = onDismiss,
-                        )
-                    }
-                },
-            )
-        }
+        NavigableSupportingPaneScaffold(
+            navigator = navigator,
+            modifier = Modifier.fillMaxSize(),
+            mainPane = {
+                AnimatedPane {
+                    InspectorMainPane(
+                        snapshot = snapshot,
+                        cells = cells,
+                        supportingHidden = supportingHidden,
+                        onOpenControls = {
+                            scope.launch {
+                                navigator.navigateTo(SupportingPaneScaffoldRole.Supporting)
+                            }
+                        },
+                        onEdit = { editingCell = it },
+                        onDismiss = onBack,
+                    )
+                }
+            },
+            supportingPane = {
+                AnimatedPane {
+                    InspectorControlsPane(
+                        snapshot = snapshot,
+                        viewType = viewType,
+                        onViewType = { viewType = it },
+                        radius = radius,
+                        onRadius = { radius = it },
+                        onRefresh = { onRefresh(radius) },
+                        onNearby = onNearby,
+                        showBackToMemory = mainHidden,
+                        onBackToMemory = returnToMain,
+                        onDismiss = onBack,
+                    )
+                }
+            },
+        )
+    }
+    editingCell?.let { cell ->
+        InspectorEditDialog(
+            cell = cell,
+            type = viewType,
+            onDismiss = { editingCell = null },
+            onApply = { replacement ->
+                editingCell = null
+                actions.editInspectorValue(
+                    snapshot.candidateId,
+                    cell.offset,
+                    viewType,
+                    cell.bits,
+                    replacement,
+                )
+            },
+        )
     }
 }
 
@@ -244,6 +286,7 @@ private fun InspectorMainPane(
     cells: List<MemoryInspectorCell>,
     supportingHidden: Boolean,
     onOpenControls: () -> Unit,
+    onEdit: (MemoryInspectorCell) -> Unit,
     onDismiss: () -> Unit,
 ) {
     Column(
@@ -295,7 +338,7 @@ private fun InspectorMainPane(
         }
         LazyColumn(modifier = Modifier.weight(1f)) {
             items(cells, key = { it.address }) { cell ->
-                InspectorCellRow(cell = cell)
+                InspectorCellRow(cell = cell, onEdit = { onEdit(cell) })
             }
         }
     }
@@ -375,7 +418,7 @@ private fun InspectorControlsPane(
 
 
 @Composable
-private fun InspectorCellRow(cell: MemoryInspectorCell) {
+private fun InspectorCellRow(cell: MemoryInspectorCell, onEdit: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -383,6 +426,7 @@ private fun InspectorCellRow(cell: MemoryInspectorCell) {
                 if (cell.offset == 0) MaterialTheme.colorScheme.secondaryContainer
                 else Color.Transparent,
             )
+            .clickable(onClick = onEdit)
             .padding(vertical = 6.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -405,6 +449,51 @@ private fun InspectorCellRow(cell: MemoryInspectorCell) {
             fontWeight = if (cell.offset == 0) FontWeight.Bold else FontWeight.Normal,
         )
     }
+}
+
+@Composable
+private fun InspectorEditDialog(
+    cell: MemoryInspectorCell,
+    type: Int,
+    onDismiss: () -> Unit,
+    onApply: (String) -> Unit,
+) {
+    var replacement by remember(cell, type) { mutableStateOf(cell.value) }
+    val spec = MemoryInputSpec.forType(type)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.memory_editor_edit)) },
+        text = {
+            MemoryInputArea(sideDockInLandscape = false) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "0x${cell.address.toULong().toString(16).uppercase()} · ${stage3TypeName(type)}",
+                        fontFamily = FontFamily.Monospace,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    MemoryValueInput(
+                        value = replacement,
+                        onValueChange = { replacement = it },
+                        spec = spec,
+                        label = stringResource(R.string.memory_editor_current_value),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onApply(replacement) },
+                enabled = spec.isComplete(replacement),
+            ) {
+                Text(stringResource(R.string.memory_editor_apply))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+        },
+    )
 }
 
 
@@ -553,9 +642,11 @@ internal fun buildInspectorCells(
         if (address >= endExclusive) break
         if (address >= start && address + width <= endExclusive) {
             val index = (address - start).toInt()
+            val bits = inspectorBits(snapshot.bytes, index, width)
             cells += MemoryInspectorCell(
                 offset = offset,
                 address = address,
+                bits = bits,
                 value = decodeInspectorValue(snapshot.bytes, index, type),
             )
         }
@@ -563,6 +654,14 @@ internal fun buildInspectorCells(
         offset += width
     }
     return cells
+}
+
+private fun inspectorBits(bytes: ByteArray, index: Int, width: Int): Long {
+    var result = 0L
+    repeat(width) { byteIndex ->
+        result = result or ((bytes[index + byteIndex].toLong() and 0xffL) shl (byteIndex * 8))
+    }
+    return result
 }
 
 internal fun inspectorTypeWidth(type: Int): Int = when (type) {

@@ -43,6 +43,8 @@ class MemoryInspectorComposeTest {
         assertEquals(0x1004, cells.first { it.offset == 0 }.address)
         assertEquals("42", cells.first { it.offset == 0 }.value)
         assertEquals("-7", cells.first { it.offset == 4 }.value)
+        assertEquals(42L, cells.first { it.offset == 0 }.bits)
+        assertEquals(0xfffffff9L, cells.first { it.offset == 4 }.bits)
     }
 
     @Test
@@ -89,5 +91,6 @@ class MemoryInspectorComposeTest {
 
         assertEquals(0, cell.offset)
         assertEquals("1.5", cell.value)
+        assertEquals(bits.toLong() and 0xffff_ffffL, cell.bits)
     }
 }

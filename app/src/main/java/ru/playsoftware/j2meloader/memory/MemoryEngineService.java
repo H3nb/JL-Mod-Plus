@@ -365,6 +365,31 @@ public final class MemoryEngineService extends Service {
 		}
 
 		@Override
+		public long editInspectorValue(long token, long anchorCandidateId, int relativeOffset,
+		                               int valueType, long expectedBits,
+		                               String replacementValue) {
+			return enqueue(token, false, 0, () -> {
+				if (anchorCandidateId <= 0L || !MemoryEngineContract.isCandidateType(valueType) ||
+						Math.abs((long) relativeOffset) > MemoryEngineContract.MAX_INSPECT_RADIUS) {
+					return MemoryEngineContract.RESULT_INVALID_REQUEST;
+				}
+				if (!isWriteSupported(token)) {
+					return MemoryEngineContract.RESULT_UNSUPPORTED;
+				}
+				int ready = refreshWithRecovery(token, new long[]{anchorCandidateId});
+				if (ready != MemoryEngineContract.RESULT_OK) {
+					return ready;
+				}
+				int result = NativeMemoryEngine.editInspectorValue(
+						anchorCandidateId, relativeOffset, valueType, expectedBits, replacementValue);
+				if (result == MemoryEngineContract.RESULT_OK) {
+					NativeMemoryEngine.refresh(new long[]{anchorCandidateId}, false);
+				}
+				return result;
+			});
+		}
+
+		@Override
 		public Bundle inspectCandidate(long token, long candidateId, int radius) {
 			if (candidateId <= 0L || !MemoryEngineContract.isInspectRadius(radius)) {
 				return inspectionFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,

@@ -2981,6 +2981,88 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_expandResultGroups(
 }
 
 extern "C" JNIEXPORT jint JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_editInspectorValue(
+        JNIEnv *env, jclass, jlong rawAnchorId, jint relativeOffset,
+        jint rawType, jlong expectedBits, jstring replacement) {
+    return guardedOperation([&] {
+        const auto type = valueTypeFromJint(rawType);
+        if (rawAnchorId <= 0 || !type.has_value() ||
+            std::abs(static_cast<int64_t>(relativeOffset)) > kMaxInspectRadius) {
+            setMessage("Inspector edit requires a bounded typed cell");
+            return kInvalidRequest;
+        }
+        OperationContext context;
+        if (!beginOperation(context)) {
+            return kNoSession;
+        }
+        Candidate anchor{};
+        if (!resolveCandidateById(context, static_cast<uint64_t>(rawAnchorId), anchor) ||
+            anchor.state != kStable || !anchor.identityValid) {
+            setMessage("Inspector anchor is no longer safe to edit");
+            return kIdentityUnsafe;
+        }
+        uintptr_t address = anchor.address;
+        if (relativeOffset < 0) {
+            const uintptr_t distance = static_cast<uintptr_t>(
+                    -static_cast<int64_t>(relativeOffset));
+            if (address < distance) {
+                setMessage("Inspector cell is outside the target range");
+                return kInvalidRequest;
+            }
+            address -= distance;
+        } else {
+            const uintptr_t distance = static_cast<uintptr_t>(relativeOffset);
+            if (address > std::numeric_limits<uintptr_t>::max() - distance) {
+                setMessage("Inspector cell is outside the target range");
+                return kInvalidRequest;
+            }
+            address += distance;
+        }
+        if (address == 0) {
+            setMessage("Inspector cell is outside the target range");
+            return kInvalidRequest;
+        }
+        const size_t width = widthOf(*type);
+        const bool inTargetRange = std::any_of(
+                context.target.ranges.begin(), context.target.ranges.end(),
+                [&](const Range &range) {
+                    return address >= range.start && address <= range.end &&
+                           width <= static_cast<size_t>(range.end - address);
+                });
+        if (!inTargetRange || address % width != 0) {
+            setMessage("Inspector cell is not an aligned readable target value");
+            return kInvalidRequest;
+        }
+        Candidate editable = anchor;
+        editable.address = address;
+        editable.previousAddress = address;
+        editable.type = *type;
+        editable.initialBits = static_cast<uint64_t>(expectedBits);
+        editable.previousBits = static_cast<uint64_t>(expectedBits);
+        editable.currentBits = static_cast<uint64_t>(expectedBits);
+        editable.state = kStable;
+        editable.identityValid = readIdentity(
+                context.target, editable.address, editable.type, editable.identityHash);
+        if (!editable.identityValid) {
+            setMessage("Inspector cell could not be identity-validated");
+            return kIdentityUnsafe;
+        }
+        const int outcome = editOneCandidate(
+                context.target, editable, fromJString(env, replacement));
+        if (outcome > 0) {
+            setMessage("Inspector value updated");
+            return kOk;
+        }
+        if (outcome < 0) {
+            setMessage("Replacement value does not fit the selected type");
+            return kInvalidRequest;
+        }
+        setMessage("Inspector value changed before it could be written");
+        return kIdentityUnsafe;
+    });
+}
+
+extern "C" JNIEXPORT jint JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_edit(
         JNIEnv *env, jclass, jlongArray rawIds, jstring replacement) {
     return guardedOperation([&] {

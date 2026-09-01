@@ -58,6 +58,7 @@ class MemoryEditorComposeController(
     private var pendingUndoStage: MemorySessionStage? = null
     private var pendingPreviousStage: MemorySessionStage? = null
     private var pendingResetHistory = false
+    private var pendingInspectorRefresh: MemoryInspectorRefresh? = null
     private val stageHistory = ArrayDeque<MemorySessionStage>()
 
     private var bubbleOnRight = true
@@ -129,6 +130,9 @@ class MemoryEditorComposeController(
                 }
                 clearPendingTransition()
 
+                val inspectorRefresh = if (succeeded) pendingInspectorRefresh else null
+                pendingInspectorRefresh = null
+
                 state = state.copy(
                     busy = false,
                     searching = false,
@@ -142,6 +146,9 @@ class MemoryEditorComposeController(
                     },
                 )
                 reload()
+                inspectorRefresh?.let { refresh ->
+                    inspectCandidate(refresh.candidateId, refresh.radius)
+                }
             }
         }
     }
@@ -522,7 +529,39 @@ class MemoryEditorComposeController(
     }
 
     override fun closeInspector() {
+        pendingInspectorRefresh = null
         state = state.copy(inspectorLoading = false, inspector = null)
+    }
+
+    override fun editInspectorValue(
+        anchorCandidateId: Long,
+        relativeOffset: Int,
+        type: Int,
+        expectedBits: Long,
+        replacementValue: String,
+    ) {
+        val snapshot = state.inspector ?: return
+        if (state.busy || state.inspectorLoading || state.runtimeToken == 0L ||
+            anchorCandidateId != snapshot.candidateId ||
+            !MemoryEngineContract.isCandidateType(type) ||
+            !MemoryInputSpec.forType(type).isComplete(replacementValue)) {
+            return
+        }
+        val radius = maxOf(
+            snapshot.anchorAddress - snapshot.startAddress,
+            snapshot.startAddress + snapshot.bytes.size - snapshot.anchorAddress,
+        ).toInt().coerceIn(1, MemoryEngineContract.MAX_INSPECT_RADIUS)
+        pendingInspectorRefresh = MemoryInspectorRefresh(anchorCandidateId, radius)
+        operate {
+            editInspectorValue(
+                state.runtimeToken,
+                anchorCandidateId,
+                relativeOffset,
+                type,
+                expectedBits,
+                replacementValue.trim(),
+            )
+        }
     }
 
     override fun undo() {
@@ -938,4 +977,9 @@ class MemoryEditorComposeController(
 private data class MemoryCandidatePresentation(
     val type: Int,
     val label: String,
+)
+
+private data class MemoryInspectorRefresh(
+    val candidateId: Long,
+    val radius: Int,
 )
