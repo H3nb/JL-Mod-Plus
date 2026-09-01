@@ -57,6 +57,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -91,8 +93,30 @@ internal data class MemoryInspectorCell(
     val value: String,
 )
 
-private data object InspectorCellsRoute : NavKey
-private data object InspectorControlsRoute : NavKey
+internal data object InspectorCellsRoute : NavKey
+internal data object InspectorControlsRoute : NavKey
+
+internal fun encodeInspectorBackStack(stack: Iterable<NavKey>): List<String> = stack.map { route ->
+    when (route) {
+        InspectorCellsRoute -> "cells"
+        InspectorControlsRoute -> "controls"
+        else -> error("Unsupported Inspector route: $route")
+    }
+}
+
+internal fun decodeInspectorBackStack(saved: Iterable<String>): NavBackStack<NavKey> =
+    NavBackStack<NavKey>(*saved.map { route ->
+        when (route) {
+            "cells" -> InspectorCellsRoute
+            "controls" -> InspectorControlsRoute
+            else -> error("Unsupported saved Inspector route: $route")
+        }
+    }.toTypedArray())
+
+private val inspectorBackStackSaver = Saver<NavBackStack<NavKey>, List<String>>(
+    save = { stack -> encodeInspectorBackStack(stack) },
+    restore = { saved -> decodeInspectorBackStack(saved) },
+)
 
 private enum class MemoryEditorDestination(
     val labelRes: Int,
@@ -376,9 +400,6 @@ internal fun MemoryInspectorWorkspace(
     }
     val cells = remember(snapshot, viewType) { buildInspectorCells(snapshot, viewType) }
     var editingCell by remember(snapshot, viewType) { mutableStateOf<MemoryInspectorCell?>(null) }
-    // The editor is an ephemeral overlay over mutable target memory. Restoring a
-    // route after process recreation could expose a stale address, so keep this
-    // local navigation state intentionally non-saveable.
     val adaptiveInfo = currentWindowAdaptiveInfoV2()
     val directive = remember(adaptiveInfo) {
         calculatePaneScaffoldDirective(adaptiveInfo).copy(
@@ -387,7 +408,11 @@ internal fun MemoryInspectorWorkspace(
         )
     }
     val showSupportingPane = directive.maxHorizontalPartitions > 1
-    val backStack = remember(snapshot.candidateId, showSupportingPane) {
+    val backStack = rememberSaveable(
+        snapshot.candidateId,
+        showSupportingPane,
+        saver = inspectorBackStackSaver,
+    ) {
         NavBackStack<NavKey>(InspectorCellsRoute).apply {
             if (showSupportingPane) add(InspectorControlsRoute)
         }
@@ -397,6 +422,14 @@ internal fun MemoryInspectorWorkspace(
         directive = directive,
     )
     val navigationEventDispatcherOwner = rememberNavigationEventDispatcherOwner(parent = null)
+
+    LaunchedEffect(snapshot.candidateId, showSupportingPane) {
+        if (showSupportingPane && InspectorControlsRoute !in backStack) {
+            backStack.add(InspectorControlsRoute)
+        } else if (!showSupportingPane && backStack.lastOrNull() == InspectorControlsRoute) {
+            backStack.removeLastOrNull()
+        }
+    }
 
     val openControls = {
         if (InspectorControlsRoute !in backStack) backStack.add(InspectorControlsRoute)

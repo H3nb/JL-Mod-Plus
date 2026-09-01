@@ -14,11 +14,25 @@
 
 package ru.playsoftware.j2meloader.memory
 
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class MemoryInspectorComposeTest {
+    @Test
+    fun inspectorBackStackSaverRestoresOnlyStableRouteIdentity() {
+        val stack = NavBackStack<NavKey>(InspectorCellsRoute).apply {
+            add(InspectorControlsRoute)
+        }
+
+        val encoded = encodeInspectorBackStack(stack)
+        val restored = decodeInspectorBackStack(encoded)
+
+        assertEquals(stack.toList(), restored.toList())
+    }
+
     @Test
     fun inspectorCellsStayRelativeToTheCandidateAnchor() {
         val bytes = ByteArray(16)
