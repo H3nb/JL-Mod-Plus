@@ -1401,7 +1401,11 @@ jint scanGroup(const OperationContext &context, const std::vector<jint> &types,
         }
     }
     std::vector<GroupMatch> retained;
+    bool retainedLimitReached = false;
     const auto retainForFirstAnchor = [&](const GroupMatch &anchor) {
+        if (retainedLimitReached) {
+            return;
+        }
         std::vector<GroupMatch> group{anchor};
         const uintptr_t minimum =
                 anchor.address < static_cast<uintptr_t>(maxDistance)
@@ -1422,6 +1426,10 @@ jint scanGroup(const OperationContext &context, const std::vector<jint> &types,
                 return;
             }
             group.push_back(*found);
+        }
+        if (group.size() > kCandidateLimit - retained.size()) {
+            retainedLimitReached = true;
+            return;
         }
         retained.insert(retained.end(), group.begin(), group.end());
     };
@@ -1455,6 +1463,10 @@ jint scanGroup(const OperationContext &context, const std::vector<jint> &types,
                 ++first;
             }
         }
+    }
+    if (retainedLimitReached) {
+        setMessage("Complete Group Search results exceed the candidate limit");
+        return kResourceLimit;
     }
     std::sort(retained.begin(), retained.end(),
               [](const GroupMatch &left, const GroupMatch &right) {
