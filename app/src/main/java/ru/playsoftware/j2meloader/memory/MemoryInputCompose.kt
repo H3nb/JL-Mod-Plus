@@ -14,6 +14,8 @@
 
 package ru.playsoftware.j2meloader.memory
 
+import android.view.KeyEvent as AndroidKeyEvent
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -44,6 +46,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -376,6 +379,33 @@ internal fun MemoryValueInput(
     Box(
         modifier = modifier
             .semantics { contentDescription = label }
+            .focusable()
+            .onPreviewKeyEvent { event ->
+                val nativeEvent = event.nativeKeyEvent
+                if (nativeEvent.action != AndroidKeyEvent.ACTION_DOWN) return@onPreviewKeyEvent false
+                val keyCode = nativeEvent.keyCode
+                val token = memoryHardwareInputToken(keyCode)
+                when {
+                    token != null -> {
+                        session.activate(id, value, spec, onValueChange)
+                        session.insert(token)
+                        true
+                    }
+                    keyCode == AndroidKeyEvent.KEYCODE_DEL && session.active -> {
+                        session.backspace()
+                        true
+                    }
+                    keyCode == AndroidKeyEvent.KEYCODE_DPAD_LEFT && session.active -> {
+                        session.move(-1)
+                        true
+                    }
+                    keyCode == AndroidKeyEvent.KEYCODE_DPAD_RIGHT && session.active -> {
+                        session.move(1)
+                        true
+                    }
+                    else -> false
+                }
+            }
             .clickable(role = Role.Button) {
                 session.activate(id, value, spec, onValueChange)
             },
@@ -397,6 +427,37 @@ internal fun MemoryValueInput(
             ),
         )
     }
+}
+
+internal fun memoryHardwareInputToken(keyCode: Int): String? = when (keyCode) {
+    AndroidKeyEvent.KEYCODE_0,
+    AndroidKeyEvent.KEYCODE_NUMPAD_0 -> "0"
+    AndroidKeyEvent.KEYCODE_1,
+    AndroidKeyEvent.KEYCODE_NUMPAD_1 -> "1"
+    AndroidKeyEvent.KEYCODE_2,
+    AndroidKeyEvent.KEYCODE_NUMPAD_2 -> "2"
+    AndroidKeyEvent.KEYCODE_3,
+    AndroidKeyEvent.KEYCODE_NUMPAD_3 -> "3"
+    AndroidKeyEvent.KEYCODE_4,
+    AndroidKeyEvent.KEYCODE_NUMPAD_4 -> "4"
+    AndroidKeyEvent.KEYCODE_5,
+    AndroidKeyEvent.KEYCODE_NUMPAD_5 -> "5"
+    AndroidKeyEvent.KEYCODE_6,
+    AndroidKeyEvent.KEYCODE_NUMPAD_6 -> "6"
+    AndroidKeyEvent.KEYCODE_7,
+    AndroidKeyEvent.KEYCODE_NUMPAD_7 -> "7"
+    AndroidKeyEvent.KEYCODE_8,
+    AndroidKeyEvent.KEYCODE_NUMPAD_8 -> "8"
+    AndroidKeyEvent.KEYCODE_9,
+    AndroidKeyEvent.KEYCODE_NUMPAD_9 -> "9"
+    AndroidKeyEvent.KEYCODE_MINUS,
+    AndroidKeyEvent.KEYCODE_NUMPAD_SUBTRACT -> "-"
+    AndroidKeyEvent.KEYCODE_PLUS,
+    AndroidKeyEvent.KEYCODE_NUMPAD_ADD -> "+"
+    AndroidKeyEvent.KEYCODE_PERIOD,
+    AndroidKeyEvent.KEYCODE_NUMPAD_DOT -> "."
+    AndroidKeyEvent.KEYCODE_E -> "e"
+    else -> null
 }
 
 @Composable

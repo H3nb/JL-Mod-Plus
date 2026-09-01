@@ -14,6 +14,7 @@
 
 package ru.playsoftware.j2meloader.memory
 
+import android.view.KeyEvent
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import org.junit.Assert.assertEquals
@@ -22,6 +23,17 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class MemoryInputComposeTest {
+    @Test
+    fun hardwareKeypadTokensCoverNumericAndFloatingInput() {
+        assertEquals("0", memoryHardwareInputToken(KeyEvent.KEYCODE_0))
+        assertEquals("7", memoryHardwareInputToken(KeyEvent.KEYCODE_NUMPAD_7))
+        assertEquals("-", memoryHardwareInputToken(KeyEvent.KEYCODE_NUMPAD_SUBTRACT))
+        assertEquals("+", memoryHardwareInputToken(KeyEvent.KEYCODE_NUMPAD_ADD))
+        assertEquals(".", memoryHardwareInputToken(KeyEvent.KEYCODE_PERIOD))
+        assertEquals("e", memoryHardwareInputToken(KeyEvent.KEYCODE_E))
+        assertEquals(null, memoryHardwareInputToken(KeyEvent.KEYCODE_DPAD_CENTER))
+    }
+
     @Test
     fun integerSpecsRejectWrongCharactersAndOutOfRangeValues() {
         val signed = MemoryInputSpec.forType(MemoryEngineContract.TYPE_BYTE)

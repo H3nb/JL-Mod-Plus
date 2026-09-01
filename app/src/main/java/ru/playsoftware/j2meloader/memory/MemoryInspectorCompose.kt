@@ -45,18 +45,18 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.layout.AnimatedPane
-import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
-import androidx.compose.material3.adaptive.layout.SupportingPaneScaffoldRole
-import androidx.compose.material3.adaptive.navigation.NavigableSupportingPaneScaffold
-import androidx.compose.material3.adaptive.navigation.rememberSupportingPaneScaffoldNavigator
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
+import androidx.compose.material3.adaptive.navigation.BackNavigationBehavior
+import androidx.compose.material3.adaptive.navigation3.SupportingPaneSceneStrategy
+import androidx.compose.material3.adaptive.navigation3.rememberSupportingPaneSceneStrategy
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,7 +66,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
+import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.ui.NavDisplay
+import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
+import androidx.navigationevent.compose.rememberNavigationEventDispatcherOwner
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.availableWindowWidthDp
 import java.nio.ByteBuffer
@@ -85,6 +90,9 @@ internal data class MemoryInspectorCell(
     val bits: Long,
     val value: String,
 )
+
+private data object InspectorCellsRoute : NavKey
+private data object InspectorControlsRoute : NavKey
 
 private enum class MemoryEditorDestination(
     val labelRes: Int,
@@ -368,16 +376,33 @@ internal fun MemoryInspectorWorkspace(
     }
     val cells = remember(snapshot, viewType) { buildInspectorCells(snapshot, viewType) }
     var editingCell by remember(snapshot, viewType) { mutableStateOf<MemoryInspectorCell?>(null) }
-    val navigator = rememberSupportingPaneScaffoldNavigator<Any>()
-    val scope = rememberCoroutineScope()
-    val supportingHidden =
-        navigator.scaffoldValue[SupportingPaneScaffoldRole.Supporting] == PaneAdaptedValue.Hidden
-    val mainHidden =
-        navigator.scaffoldValue[SupportingPaneScaffoldRole.Main] == PaneAdaptedValue.Hidden
-    val returnToMain: () -> Unit = {
-        scope.launch {
-            navigator.navigateTo(SupportingPaneScaffoldRole.Main)
+    // The editor is an ephemeral overlay over mutable target memory. Restoring a
+    // route after process recreation could expose a stale address, so keep this
+    // local navigation state intentionally non-saveable.
+    val adaptiveInfo = currentWindowAdaptiveInfoV2()
+    val directive = remember(adaptiveInfo) {
+        calculatePaneScaffoldDirective(adaptiveInfo).copy(
+            horizontalPartitionSpacerSize = 0.dp,
+            verticalPartitionSpacerSize = 0.dp,
+        )
+    }
+    val showSupportingPane = directive.maxHorizontalPartitions > 1
+    val backStack = remember(snapshot.candidateId, showSupportingPane) {
+        NavBackStack<NavKey>(InspectorCellsRoute).apply {
+            if (showSupportingPane) add(InspectorControlsRoute)
         }
+    }
+    val sceneStrategy = rememberSupportingPaneSceneStrategy<NavKey>(
+        backNavigationBehavior = BackNavigationBehavior.PopUntilCurrentDestinationChange,
+        directive = directive,
+    )
+    val navigationEventDispatcherOwner = rememberNavigationEventDispatcherOwner(parent = null)
+
+    val openControls = {
+        if (InspectorControlsRoute !in backStack) backStack.add(InspectorControlsRoute)
+    }
+    val returnToCells = {
+        if (backStack.lastOrNull() == InspectorControlsRoute) backStack.removeLastOrNull()
     }
 
     Surface(
@@ -385,42 +410,54 @@ internal fun MemoryInspectorWorkspace(
         shape = MaterialTheme.shapes.large,
         tonalElevation = 8.dp,
     ) {
-        NavigableSupportingPaneScaffold(
-            navigator = navigator,
-            modifier = Modifier.fillMaxSize(),
-            mainPane = {
-                AnimatedPane {
-                    InspectorMainPane(
-                        snapshot = snapshot,
-                        cells = cells,
-                        supportingHidden = supportingHidden,
-                        onOpenControls = {
-                            scope.launch {
-                                navigator.navigateTo(SupportingPaneScaffoldRole.Supporting)
-                            }
-                        },
-                        onEdit = { editingCell = it },
-                        onDismiss = onBack,
-                    )
-                }
-            },
-            supportingPane = {
-                AnimatedPane {
-                    InspectorControlsPane(
-                        snapshot = snapshot,
-                        viewType = viewType,
-                        onViewType = { viewType = it },
-                        radius = radius,
-                        onRadius = { radius = it },
-                        onRefresh = { onRefresh(radius) },
-                        onNearby = onNearby,
-                        showBackToMemory = mainHidden,
-                        onBackToMemory = returnToMain,
-                        onDismiss = onBack,
-                    )
-                }
-            },
-        )
+        CompositionLocalProvider(
+            LocalNavigationEventDispatcherOwner provides navigationEventDispatcherOwner,
+        ) {
+            NavDisplay(
+                backStack = backStack,
+                onBack = {
+                    if (backStack.lastOrNull() == InspectorControlsRoute) returnToCells()
+                    else onBack()
+                },
+                modifier = Modifier.fillMaxSize(),
+                sceneStrategies = listOf(sceneStrategy),
+                entryProvider = { key ->
+                    when (key) {
+                        InspectorCellsRoute -> NavEntry(
+                            key = key,
+                            metadata = SupportingPaneSceneStrategy.mainPane(),
+                        ) {
+                            InspectorMainPane(
+                                snapshot = snapshot,
+                                cells = cells,
+                                showControlsButton = !showSupportingPane,
+                                onOpenControls = openControls,
+                                onEdit = { editingCell = it },
+                                onDismiss = onBack,
+                            )
+                        }
+                        InspectorControlsRoute -> NavEntry(
+                            key = key,
+                            metadata = SupportingPaneSceneStrategy.supportingPane(),
+                        ) {
+                            InspectorControlsPane(
+                                snapshot = snapshot,
+                                viewType = viewType,
+                                onViewType = { viewType = it },
+                                radius = radius,
+                                onRadius = { radius = it },
+                                onRefresh = { onRefresh(radius) },
+                                onNearby = onNearby,
+                                showBackToMemory = !showSupportingPane,
+                                onBackToMemory = returnToCells,
+                                onDismiss = onBack,
+                            )
+                        }
+                        else -> error("Unsupported Inspector route: $key")
+                    }
+                },
+            )
+        }
     }
     editingCell?.let { cell ->
         InspectorEditDialog(
@@ -445,7 +482,7 @@ internal fun MemoryInspectorWorkspace(
 private fun InspectorMainPane(
     snapshot: MemoryInspectorSnapshot,
     cells: List<MemoryInspectorCell>,
-    supportingHidden: Boolean,
+    showControlsButton: Boolean,
     onOpenControls: () -> Unit,
     onEdit: (MemoryInspectorCell) -> Unit,
     onDismiss: () -> Unit,
@@ -470,7 +507,7 @@ private fun InspectorMainPane(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            if (supportingHidden) {
+            if (showControlsButton) {
                 TextButton(onClick = onOpenControls) {
                     Text(stringResource(R.string.memory_editor_inspector_controls))
                 }
