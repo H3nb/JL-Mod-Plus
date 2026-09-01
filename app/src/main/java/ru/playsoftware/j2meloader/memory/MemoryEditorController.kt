@@ -53,6 +53,8 @@ class MemoryEditorComposeController(
     private var bound = false
     private var destroyed = false
     private var refreshInFlight = false
+    private var activeOperationId = 0L
+    private var operationGeneration = 0L
     private var pendingStage: MemorySessionStage? = null
     private var pendingMode: MemorySearchMode? = null
     private var pendingUndoStage: MemorySessionStage? = null
@@ -77,7 +79,9 @@ class MemoryEditorComposeController(
     private val callback = object : IMemoryEngineCallback.Stub() {
         override fun onOperationProgress(operationId: Long, scannedBytes: Long, totalBytes: Long) {
             post {
-                if (state.busy && state.searching && totalBytes > 0L) {
+                if (operationId == activeOperationId && state.busy && state.searching &&
+                    totalBytes > 0L
+                ) {
                     state = state.copy(
                         scanBytesScanned = scannedBytes.coerceIn(0L, totalBytes),
                         scanBytesTotal = totalBytes,
@@ -109,6 +113,8 @@ class MemoryEditorComposeController(
                     }
                     return@post
                 }
+
+                if (activeOperationId != 0L && operationId != activeOperationId) return@post
 
                 val succeeded = resultCode == MemoryEngineContract.RESULT_OK
                 if (succeeded) {
@@ -145,6 +151,7 @@ class MemoryEditorComposeController(
                         message ?: resultMessage(resultCode)
                     },
                 )
+                activeOperationId = 0L
                 reload()
                 inspectorRefresh?.let { refresh ->
                     inspectCandidate(refresh.candidateId, refresh.radius)
@@ -779,6 +786,8 @@ class MemoryEditorComposeController(
         block: IMemoryEngineService.() -> Long,
     ) {
         if (state.busy || state.runtimeToken == 0L) return
+        val generation = ++operationGeneration
+        activeOperationId = 0L
         state = state.copy(
             busy = true,
             searching = searching,
@@ -788,7 +797,12 @@ class MemoryEditorComposeController(
         )
         runIpc {
             val engine = service ?: throw RemoteException("Engine disconnected")
-            engine.block()
+            val operationId = engine.block()
+            post {
+                if (generation == operationGeneration && state.busy) {
+                    activeOperationId = operationId
+                }
+            }
         }
     }
 
@@ -864,6 +878,8 @@ class MemoryEditorComposeController(
         if (runtimeChanged) {
             stageHistory.clear()
             clearPendingTransition()
+            activeOperationId = 0L
+            ++operationGeneration
         }
         state = state.copy(
             connected = bundle != null,
@@ -891,6 +907,8 @@ class MemoryEditorComposeController(
     private fun disconnected() = post {
         service = null
         refreshInFlight = false
+        activeOperationId = 0L
+        ++operationGeneration
         stageHistory.clear()
         clearPendingTransition()
         state = state.copy(
@@ -933,6 +951,8 @@ class MemoryEditorComposeController(
             } catch (exception: RuntimeException) {
                 post {
                     refreshInFlight = false
+                    activeOperationId = 0L
+                    ++operationGeneration
                     clearPendingTransition()
                     state = state.copy(
                         busy = false,
