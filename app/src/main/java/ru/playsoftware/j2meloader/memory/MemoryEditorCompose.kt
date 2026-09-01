@@ -22,6 +22,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -645,7 +646,10 @@ private fun SearchWorkspace(
 @Composable
 private fun SearchModeSelector(selected: MemorySearchMode, onChange: (MemorySearchMode) -> Unit) {
     Text(stringResource(R.string.memory_editor_search_mode), style = MaterialTheme.typography.labelLarge)
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
         FilterChip(
             selected = selected == MemorySearchMode.KNOWN,
             onClick = { onChange(MemorySearchMode.KNOWN) },
@@ -1119,7 +1123,10 @@ private fun compactPredicateName(predicate: Int): String = when (predicate) {
 
 @Composable
 private fun QuickKnownPredicates(selected: Int, onChange: (Int) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
         QuickPredicate("=", MemoryEngineContract.PREDICATE_EQUAL, selected, onChange)
         QuickPredicate("≠", MemoryEngineContract.PREDICATE_NOT_EQUAL, selected, onChange)
         QuickPredicate(">", MemoryEngineContract.PREDICATE_GREATER, selected, onChange)
@@ -1129,11 +1136,12 @@ private fun QuickKnownPredicates(selected: Int, onChange: (Int) -> Unit) {
 
 @Composable
 private fun QuickRelativePredicates(selected: Int, onChange: (Int) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
         QuickPredicate(stringResource(R.string.memory_editor_predicate_changed), MemoryEngineContract.PREDICATE_CHANGED, selected, onChange)
         QuickPredicate(stringResource(R.string.memory_editor_predicate_unchanged), MemoryEngineContract.PREDICATE_UNCHANGED, selected, onChange)
-    }
-    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         QuickPredicate(stringResource(R.string.memory_editor_predicate_increased), MemoryEngineContract.PREDICATE_INCREASED, selected, onChange)
         QuickPredicate(stringResource(R.string.memory_editor_predicate_decreased), MemoryEngineContract.PREDICATE_DECREASED, selected, onChange)
     }
@@ -1141,13 +1149,14 @@ private fun QuickRelativePredicates(selected: Int, onChange: (Int) -> Unit) {
 
 @Composable
 private fun QuickRefinePredicates(selected: Int, onChange: (Int) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
         QuickPredicate("=", MemoryEngineContract.PREDICATE_EQUAL, selected, onChange)
         QuickPredicate("≠", MemoryEngineContract.PREDICATE_NOT_EQUAL, selected, onChange)
         QuickPredicate(stringResource(R.string.memory_editor_predicate_changed), MemoryEngineContract.PREDICATE_CHANGED, selected, onChange)
         QuickPredicate(stringResource(R.string.memory_editor_predicate_unchanged), MemoryEngineContract.PREDICATE_UNCHANGED, selected, onChange)
-    }
-    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         QuickPredicate(stringResource(R.string.memory_editor_predicate_increased), MemoryEngineContract.PREDICATE_INCREASED, selected, onChange)
         QuickPredicate(stringResource(R.string.memory_editor_predicate_decreased), MemoryEngineContract.PREDICATE_DECREASED, selected, onChange)
     }
