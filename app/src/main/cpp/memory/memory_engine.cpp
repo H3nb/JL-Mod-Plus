@@ -206,21 +206,29 @@ struct SearchState {
     std::vector<size_t> addressCheckpoints;
 
     size_t retainedBytes() const {
-        size_t result =
-                sizeof(SearchState) +
-                (candidates.size() + watches.size()) * sizeof(Candidate);
-        const size_t checkpointBytes =
-                addressCheckpoints.size() * sizeof(size_t);
-        if (result > std::numeric_limits<size_t>::max() - checkpointBytes) {
+        size_t result = sizeof(SearchState);
+        const auto addAllocation = [&](size_t count, size_t elementSize) {
+            if (count > std::numeric_limits<size_t>::max() / elementSize ||
+                result > std::numeric_limits<size_t>::max() - count * elementSize) {
+                return false;
+            }
+            result += count * elementSize;
+            return true;
+        };
+        // capacity(), not size(), is the heap retained by a published state. This matters after
+        // a dense scan shrinks sharply and its state is kept only for Undo.
+        if (!addAllocation(candidates.capacity(), sizeof(Candidate)) ||
+            !addAllocation(watches.capacity(), sizeof(Candidate)) ||
+            !addAllocation(addressCheckpoints.capacity(), sizeof(size_t)) ||
+            !addAllocation(snapshots.capacity(), sizeof(SnapshotRun))) {
             return std::numeric_limits<size_t>::max();
         }
-        result += checkpointBytes;
         for (const SnapshotRun &snapshot : snapshots) {
-            if (result >
-                std::numeric_limits<size_t>::max() - snapshot.bytes.size()) {
+            if (result > std::numeric_limits<size_t>::max() -
+                    snapshot.bytes.capacity()) {
                 return std::numeric_limits<size_t>::max();
             }
-            result += snapshot.bytes.size();
+            result += snapshot.bytes.capacity();
         }
         return result;
     }
