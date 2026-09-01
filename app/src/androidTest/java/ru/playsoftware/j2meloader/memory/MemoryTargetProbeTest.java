@@ -125,6 +125,48 @@ public class MemoryTargetProbeTest {
 	}
 
 	@Test
+	public void autoKnownScanFindsOrderedManagedArtCandidates() {
+		int pageSize = NativeMemoryTarget.pageSize();
+		long[] runs = NativeMemoryTarget.collectResidentRuns(
+				MemoryEngineContract.SCOPE_JAVA_FAST, 4096);
+		assertNotNull(runs);
+		assertTrue(MemoryEngineContract.isCompleteRunList(runs));
+
+		long token = 0x4A4C4155544F5445L;
+		managedProbe = MANAGED_PROBE_A;
+		try {
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.configureTarget(
+							Process.myPid(), pageSize, token, runs));
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.startKnown(
+							MemoryEngineContract.TYPE_AUTO,
+							MemoryEngineContract.PREDICATE_EQUAL,
+							Integer.toString(MANAGED_PROBE_A), ""));
+			assertTrue("Auto scan did not find the managed probe",
+					NativeMemoryEngine.resultCount() > 0L);
+
+			long[] page = NativeMemoryEngine.resultPage(0, 100);
+			assertNotNull(page);
+			int count = Math.toIntExact(page[0]);
+			assertTrue(count > 0);
+			long previousAddress = -1L;
+			for (int index = 0; index < count; index++) {
+				int base = 1 + index * MemoryEngineContract.RESULT_PAGE_STRIDE;
+				long address = page[base + 1];
+				int type = (int) page[base + 3];
+				assertTrue(address > 0L);
+				assertTrue(MemoryEngineContract.isCandidateType(type));
+				assertTrue(address >= previousAddress);
+				previousAddress = address;
+			}
+		} finally {
+			managedProbe = 0;
+			NativeMemoryEngine.clearTarget();
+		}
+	}
+
+	@Test
 	public void passiveRefreshDoesNotReplaceNextScanBaseline() {
 		int pageSize = NativeMemoryTarget.pageSize();
 		long[] runs = NativeMemoryTarget.collectResidentRuns(

@@ -1071,6 +1071,18 @@ jint collectKnown(const OperationContext &context, jint requestedType,
     next->mode = StateMode::Candidates;
     next->requestedType = requestedType;
     next->watches = context.state->watches;
+    std::array<const Query *, kTypeSlotCount> queriesByType{};
+    for (const Query &query : queries) {
+        queriesByType[typeIndex(query.type)] = &query;
+    }
+    const bool fusedAuto = requestedType == kTypeAuto && queries.size() > 1U;
+    const Query *byteQuery = queriesByType[typeIndex(ValueType::Byte)];
+    const Query *shortQuery = queriesByType[typeIndex(ValueType::Short)];
+    const Query *charQuery = queriesByType[typeIndex(ValueType::Char)];
+    const Query *intQuery = queriesByType[typeIndex(ValueType::Int)];
+    const Query *longQuery = queriesByType[typeIndex(ValueType::Long)];
+    const Query *floatQuery = queriesByType[typeIndex(ValueType::Float)];
+    const Query *doubleQuery = queriesByType[typeIndex(ValueType::Double)];
     std::vector<uint8_t> buffer;
     beginScanProgress(context.target);
 
@@ -1090,47 +1102,89 @@ jint collectKnown(const OperationContext &context, jint requestedType,
                 setMessage("A target range changed while it was being scanned");
                 return kTargetLost;
             }
-            const size_t chunkCandidateStart = next->candidates.size();
-            for (const Query &query : queries) {
-                const size_t width = widthOf(query.type);
-                uintptr_t address = chunkStart;
-                const size_t misalignment =
-                        static_cast<size_t>(address % width);
-                if (misalignment != 0) {
-                    address += width - misalignment;
+            const auto materialize = [&](const Query *query, uintptr_t address,
+                                         size_t offset, size_t width,
+                                         uint64_t bits) -> bool {
+                if (query == nullptr || !matchesKnown(bits, *query, predicate)) {
+                    return true;
                 }
-                while (address >= chunkStart &&
-                       address <= chunkStart + chunkSize -
-                                          std::min(width, chunkSize)) {
-                    const size_t offset =
-                            static_cast<size_t>(address - chunkStart);
-                    if (offset + width > chunkSize) {
-                        break;
-                    }
-                    const uint64_t bits =
-                            loadBits(buffer.data() + offset, width);
-                    if (matchesKnown(bits, query, predicate)) {
-                        if (next->candidates.size() >= kCandidateLimit) {
-                            setMessage("Candidate limit reached; previous "
-                                       "results were preserved");
+                if (next->candidates.size() >= kCandidateLimit) {
+                    setMessage("Candidate limit reached; previous results were preserved");
+                    return false;
+                }
+                Candidate candidate = makeCandidate(
+                        context.nextId + next->candidates.size(), address,
+                        query->type, bits, bits);
+                candidate.identityValid = snapshotIdentity(
+                        buffer.data(), chunkSize, offset, width,
+                        candidate.identityHash);
+                next->candidates.push_back(candidate);
+                return true;
+            };
+            if (fusedAuto) {
+                // Auto evaluates each physical location once. The order below mirrors
+                // candidateDisplayOrder, so no per-chunk sort is needed.
+                for (size_t offset = 0; offset < chunkSize; ++offset) {
+                    const uintptr_t address = chunkStart + offset;
+                    if ((intQuery != nullptr || floatQuery != nullptr) &&
+                        address % 4U == 0U && offset + 4U <= chunkSize) {
+                        const uint64_t bits = loadBits(buffer.data() + offset, 4U);
+                        if (!materialize(intQuery, address, offset, 4U, bits) ||
+                            !materialize(floatQuery, address, offset, 4U, bits)) {
                             return kResourceLimit;
                         }
-                        Candidate materialized = makeCandidate(
-                                context.nextId + next->candidates.size(),
-                                address, query.type, bits, bits);
-                        materialized.identityValid = snapshotIdentity(
-                                buffer.data(), chunkSize, offset, width,
-                                materialized.identityHash);
-                        next->candidates.push_back(materialized);
                     }
-                    if (address >
-                        std::numeric_limits<uintptr_t>::max() - width) {
-                        break;
+                    if ((longQuery != nullptr || doubleQuery != nullptr) &&
+                        address % 8U == 0U && offset + 8U <= chunkSize) {
+                        const uint64_t bits = loadBits(buffer.data() + offset, 8U);
+                        if (!materialize(longQuery, address, offset, 8U, bits) ||
+                            !materialize(doubleQuery, address, offset, 8U, bits)) {
+                            return kResourceLimit;
+                        }
                     }
-                    address += width;
+                    if ((shortQuery != nullptr || charQuery != nullptr) &&
+                        address % 2U == 0U && offset + 2U <= chunkSize) {
+                        const uint64_t bits = loadBits(buffer.data() + offset, 2U);
+                        if (!materialize(shortQuery, address, offset, 2U, bits) ||
+                            !materialize(charQuery, address, offset, 2U, bits)) {
+                            return kResourceLimit;
+                        }
+                    }
+                    if (byteQuery != nullptr &&
+                        !materialize(byteQuery, address, offset, 1U, buffer[offset])) {
+                        return kResourceLimit;
+                    }
                 }
-            }
-            if (queries.size() > 1U) {
+            } else {
+                const size_t chunkCandidateStart = next->candidates.size();
+                for (const Query &query : queries) {
+                    const size_t width = widthOf(query.type);
+                    uintptr_t address = chunkStart;
+                    const size_t misalignment =
+                            static_cast<size_t>(address % width);
+                    if (misalignment != 0) {
+                        address += width - misalignment;
+                    }
+                    while (address >= chunkStart &&
+                           address <= chunkStart + chunkSize -
+                                              std::min(width, chunkSize)) {
+                        const size_t offset =
+                                static_cast<size_t>(address - chunkStart);
+                        if (offset + width > chunkSize) {
+                            break;
+                        }
+                        const uint64_t bits =
+                                loadBits(buffer.data() + offset, width);
+                        if (!materialize(&query, address, offset, width, bits)) {
+                            return kResourceLimit;
+                        }
+                        if (address >
+                            std::numeric_limits<uintptr_t>::max() - width) {
+                            break;
+                        }
+                        address += width;
+                    }
+                }
                 std::sort(next->candidates.begin() +
                                   static_cast<std::ptrdiff_t>(chunkCandidateStart),
                           next->candidates.end(), candidateDisplayOrder);
