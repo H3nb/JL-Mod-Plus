@@ -48,9 +48,11 @@ import java.util.Locale;
 public final class MemoryEngineService extends Service {
 	private static final int MAX_RUNS = 4096;
 	private static final long PROGRESS_UPDATE_PERIOD_MS = 200L;
+	// Native cancellation uses this generation to distinguish a newly started operation from a
+	// cancellation delivered by Binder immediately before its native entry point.
+	private static final AtomicLong cancelEpoch = new AtomicLong();
 
 	private final AtomicLong nextOperationId = new AtomicLong(1L);
-	private final AtomicLong cancelEpoch = new AtomicLong();
 	private final RemoteCallbackList<IMemoryEngineCallback> callbacks = new RemoteCallbackList<>();
 	private final ScheduledExecutorService worker = Executors.newSingleThreadScheduledExecutor(runnable -> {
 		Thread thread = new Thread(runnable, "MemoryEditorEngine");
@@ -492,8 +494,7 @@ public final class MemoryEngineService extends Service {
 		@Override
 		public void cancelOperation(long token) {
 			if (token != 0L && (token == configuredToken || isTargetToken(token))) {
-				cancelEpoch.incrementAndGet();
-				NativeMemoryEngine.cancel();
+				NativeMemoryEngine.cancel(cancelEpoch.incrementAndGet());
 			}
 		}
 	};
@@ -525,7 +526,7 @@ public final class MemoryEngineService extends Service {
 				// The target may already be gone.
 			}
 		}
-		NativeMemoryEngine.cancel();
+		NativeMemoryEngine.cancel(cancelEpoch.incrementAndGet());
 		worker.shutdownNow();
 		progressNotifier.shutdownNow();
 		callbacks.kill();
@@ -560,6 +561,9 @@ public final class MemoryEngineService extends Service {
 				} else if (token == 0L) {
 					result = MemoryEngineContract.RESULT_NO_SESSION;
 					serviceMessage = "No active MIDlet runtime";
+				} else if (!NativeMemoryEngine.prepareOperation(enqueueEpoch)) {
+					result = MemoryEngineContract.RESULT_CANCELLED;
+					serviceMessage = "Operation cancelled before it started";
 				} else if (configure) {
 					result = configureTarget(token, scope);
 					if (result == MemoryEngineContract.RESULT_OK) {
@@ -572,6 +576,12 @@ public final class MemoryEngineService extends Service {
 					serviceMessage = "MIDlet runtime changed or ended";
 				} else {
 					result = operation.run();
+				}
+
+				if (result == MemoryEngineContract.RESULT_NO_SESSION &&
+						enqueueEpoch != cancelEpoch.get()) {
+					result = MemoryEngineContract.RESULT_CANCELLED;
+					serviceMessage = "Operation cancelled before it started";
 				}
 
 				if (result == MemoryEngineContract.RESULT_OK && !isCurrentToken(token)) {
@@ -938,7 +948,7 @@ public final class MemoryEngineService extends Service {
 		watchLabels.clear();
 		freezeRecords.clear();
 		stopFreezeTaskIfIdle();
-		NativeMemoryEngine.cancel();
+		NativeMemoryEngine.cancel(cancelEpoch.incrementAndGet());
 		try {
 			worker.execute(NativeMemoryEngine::clearTarget);
 		} catch (RejectedExecutionException ignored) {

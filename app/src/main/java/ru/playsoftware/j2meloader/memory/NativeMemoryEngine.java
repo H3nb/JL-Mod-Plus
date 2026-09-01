@@ -24,6 +24,8 @@ final class NativeMemoryEngine {
 
 	static native int configureTarget(int pid, int pageSize, long runtimeToken, long[] runs);
 
+	static native boolean prepareOperation(long cancellationEpoch);
+
 	static native boolean canReadTarget(int pid, long address, long expectedBits);
 
 	static native boolean canWriteTarget(int pid, long address, long expectedBits);
@@ -77,7 +79,7 @@ final class NativeMemoryEngine {
 
 	static native void clearTarget();
 
-	static native void cancel();
+	static native void cancel(long cancellationEpoch);
 
 	static native String lastMessage();
 }

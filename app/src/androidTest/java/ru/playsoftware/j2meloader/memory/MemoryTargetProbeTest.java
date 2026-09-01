@@ -18,6 +18,7 @@ import android.os.Process;
 import android.os.SystemClock;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -301,5 +302,17 @@ public class MemoryTargetProbeTest {
 			MemoryRuntimeSession.close(MemoryRuntimeSession.currentToken());
 			MemoryRuntimeSession.removeListener(listener);
 		}
+	}
+
+	@Test
+	public void cancellationGenerationRejectsAStaleOperationPreparation() {
+		long cancelledEpoch = 1_000L;
+		NativeMemoryEngine.cancel(cancelledEpoch);
+		assertFalse(NativeMemoryEngine.prepareOperation(cancelledEpoch - 1L));
+		assertTrue(NativeMemoryEngine.prepareOperation(cancelledEpoch));
+
+		NativeMemoryEngine.cancel(cancelledEpoch + 1L);
+		assertFalse(NativeMemoryEngine.prepareOperation(cancelledEpoch));
+		assertTrue(NativeMemoryEngine.prepareOperation(cancelledEpoch + 1L));
 	}
 }

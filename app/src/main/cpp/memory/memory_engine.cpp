@@ -243,7 +243,11 @@ std::shared_ptr<const SearchState> gState = gEmptyState;
 std::deque<std::shared_ptr<const SearchState>> gHistory;
 std::unordered_map<uint64_t, Candidate> gLiveCandidates;
 uint64_t gNextCandidateId = 1;
-std::atomic<bool> gCancelled{false};
+// The service serializes scan work, but cancellation arrives on a Binder thread. A boolean can
+// lose a cancellation in the small interval between the service's preflight check and native
+// operation setup. Generations make that hand-off monotonic instead.
+std::atomic<uint64_t> gCancellationEpoch{0};
+std::atomic<uint64_t> gPreparedCancellationEpoch{0};
 std::atomic<uint64_t> gScanBytesScanned{0};
 std::atomic<uint64_t> gScanBytesTotal{0};
 std::string gLastMessage;
@@ -869,6 +873,7 @@ struct OperationContext {
     std::shared_ptr<const SearchState> state;
     std::unordered_map<uint64_t, Candidate> liveCandidates;
     uint64_t nextId;
+    uint64_t cancellationEpoch;
 };
 
 bool resolveCandidateById(const OperationContext &context, uint64_t id,
@@ -877,8 +882,22 @@ bool verifyCandidateBinding(const Target &target, const Candidate &candidate);
 bool candidateWindow(const Target &target, const Candidate &candidate,
                      size_t radius, Range &window);
 
+bool isCancelled(uint64_t cancellationEpoch) {
+    return gCancellationEpoch.load(std::memory_order_acquire) !=
+           cancellationEpoch;
+}
+
+bool isCancelled(const OperationContext &context) {
+    return isCancelled(context.cancellationEpoch);
+}
+
 bool beginOperation(OperationContext &context) {
-    gCancelled.store(false, std::memory_order_release);
+    context.cancellationEpoch =
+            gPreparedCancellationEpoch.load(std::memory_order_acquire);
+    if (isCancelled(context)) {
+        setMessage("Operation cancelled before it started");
+        return false;
+    }
     gScanBytesScanned.store(0, std::memory_order_release);
     gScanBytesTotal.store(0, std::memory_order_release);
     std::lock_guard<std::mutex> lock(gMutex);
@@ -1004,7 +1023,7 @@ void normalizeCandidateResults(SearchState &state) {
 jint commitOperation(const OperationContext &context,
                      std::shared_ptr<SearchState> next, jint historyMode,
                      bool preserveLive = false) {
-    if (gCancelled.load(std::memory_order_acquire)) {
+    if (isCancelled(context)) {
         setMessage("Operation cancelled; previous results were preserved");
         return kCancelled;
     }
@@ -1086,7 +1105,7 @@ jint collectKnown(const OperationContext &context, jint requestedType,
 
     for (const Range &range : context.target.ranges) {
         for (uintptr_t chunkStart = range.start; chunkStart < range.end;) {
-            if (gCancelled.load(std::memory_order_acquire)) {
+            if (isCancelled(context)) {
                 setMessage(
                         "Operation cancelled; previous results were preserved");
                 return kCancelled;
@@ -1301,7 +1320,7 @@ jint scanGroup(const OperationContext &context, const std::vector<jint> &types,
     beginScanProgress(context.target);
     for (const Range &range : context.target.ranges) {
         for (uintptr_t chunkStart = range.start; chunkStart < range.end;) {
-            if (gCancelled.load(std::memory_order_acquire)) {
+            if (isCancelled(context)) {
                 setMessage(
                         "Operation cancelled; previous results were preserved");
                 return kCancelled;
@@ -1463,7 +1482,7 @@ jint snapshotUnknown(const OperationContext &context, jint requestedType) {
     size_t retained = 0;
     beginScanProgress(context.target);
     for (const Range &range : context.target.ranges) {
-        if (gCancelled.load(std::memory_order_acquire)) {
+        if (isCancelled(context)) {
             setMessage("Operation cancelled; previous results were preserved");
             return kCancelled;
         }
@@ -1625,7 +1644,7 @@ jlongArray inspectCandidateSnapshot(JNIEnv *env, const OperationContext &context
         setMessage("Inspector window changed while it was being read");
         return inspectionResult(env, kTargetLost);
     }
-    if (gCancelled.load(std::memory_order_acquire)) {
+    if (isCancelled(context)) {
         setMessage("Inspector read was cancelled");
         return inspectionResult(env, kCancelled);
     }
@@ -1746,7 +1765,7 @@ jint refineCandidates(const OperationContext &context, jint predicate,
     if (context.state->mode == StateMode::Unknown) {
         for (const SnapshotRun &snapshot : context.state->snapshots) {
             std::vector<uint8_t> current(snapshot.bytes.size());
-            if (gCancelled.load(std::memory_order_acquire)) {
+            if (isCancelled(context)) {
                 setMessage(
                         "Operation cancelled; previous results were preserved");
                 return kCancelled;
@@ -1861,7 +1880,7 @@ jint refineCandidates(const OperationContext &context, jint predicate,
                                     context.state->candidates.size());
         next->candidates.reserve(context.state->candidates.size());
         for (const Candidate &candidate : context.state->candidates) {
-            if (gCancelled.load(std::memory_order_acquire)) {
+            if (isCancelled(context)) {
                 setMessage(
                         "Operation cancelled; previous results were preserved");
                 return kCancelled;
@@ -2073,7 +2092,7 @@ bool readIds(JNIEnv *env, jlongArray rawIds, std::vector<uint64_t> &ids) {
     return std::adjacent_find(ids.begin(), ids.end()) == ids.end();
 }
 
-jint recoverCandidatesBatch(const Target &target,
+jint recoverCandidatesBatch(const Target &target, uint64_t cancellationEpoch,
                             std::span<Candidate> candidates,
                             std::span<const size_t> recovery,
                             size_t &unsafeCount) {
@@ -2109,7 +2128,7 @@ jint recoverCandidatesBatch(const Target &target,
     std::vector<uint8_t> buffer;
     for (const Range &range : target.ranges) {
         for (uintptr_t chunkStart = range.start; chunkStart < range.end;) {
-            if (gCancelled.load(std::memory_order_acquire)) {
+            if (isCancelled(cancellationEpoch)) {
                 setMessage("Operation cancelled; previous results were preserved");
                 return kCancelled;
             }
@@ -2282,7 +2301,8 @@ jint refreshCandidates(const OperationContext &context,
     }
     size_t recoveryUnsafe = 0;
     const jint recoveryResult =
-            recoverCandidatesBatch(context.target, selected, recovery, recoveryUnsafe);
+            recoverCandidatesBatch(context.target, context.cancellationEpoch, selected,
+                                   recovery, recoveryUnsafe);
     if (recoveryResult != kOk) {
         return recoveryResult;
     }
@@ -2742,7 +2762,6 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_configureTarget(
             gLiveCandidates.clear();
             gNextCandidateId = 1;
         }
-        gCancelled.store(false, std::memory_order_release);
         gLastMessage = "";
         return kOk;
     } catch (const std::bad_alloc &) {
@@ -3348,10 +3367,35 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearTarget(JNIEnv *,
     gLastMessage = "";
 }
 
+extern "C" JNIEXPORT jboolean JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_prepareOperation(
+        JNIEnv *, jclass, jlong rawEpoch) {
+    if (rawEpoch < 0) {
+        return JNI_FALSE;
+    }
+    const uint64_t epoch = static_cast<uint64_t>(rawEpoch);
+    if (gCancellationEpoch.load(std::memory_order_acquire) != epoch) {
+        return JNI_FALSE;
+    }
+    gPreparedCancellationEpoch.store(epoch, std::memory_order_release);
+    return gCancellationEpoch.load(std::memory_order_acquire) == epoch
+                   ? JNI_TRUE
+                   : JNI_FALSE;
+}
+
 extern "C" JNIEXPORT void JNICALL
-Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_cancel(JNIEnv *,
-                                                                 jclass) {
-    gCancelled.store(true, std::memory_order_release);
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_cancel(
+        JNIEnv *, jclass, jlong rawEpoch) {
+    if (rawEpoch < 0) {
+        return;
+    }
+    const uint64_t epoch = static_cast<uint64_t>(rawEpoch);
+    uint64_t observed = gCancellationEpoch.load(std::memory_order_acquire);
+    while (observed < epoch &&
+           !gCancellationEpoch.compare_exchange_weak(
+                   observed, epoch, std::memory_order_release,
+                   std::memory_order_acquire)) {
+    }
 }
 
 extern "C" JNIEXPORT jstring JNICALL
