@@ -102,7 +102,14 @@ internal fun MemoryEditorSurface(
     // over a running MIDlet frame.
     if (!state.visible && !state.bubbleEnabled) return
 
-    LaunchedEffect(state.visible, state.watchTab, state.connecting, state.supported, state.sessionStage) {
+    LaunchedEffect(
+        state.visible,
+        state.watchTab,
+        state.connecting,
+        state.supported,
+        state.sessionStage,
+        state.busy,
+    ) {
         if (!state.visible || state.connecting || !state.supported) return@LaunchedEffect
         while (state.visible) {
             if (!state.busy && (state.watchTab || state.sessionStage == MemorySessionStage.CANDIDATES)) {

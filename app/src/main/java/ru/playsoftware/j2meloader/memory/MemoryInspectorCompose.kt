@@ -219,6 +219,7 @@ internal fun MemoryEditorStage3Root(
                             MemoryInspectorWorkspace(
                                 snapshot = snapshot,
                                 actions = actions,
+                                writeSupported = state.writeSupported,
                                 onBack = {
                                     actions.closeInspector()
                                     destination = if (state.watchTab) {
@@ -385,6 +386,7 @@ private fun MemoryInspectorEmptyPane(onOpenSearch: () -> Unit) {
 internal fun MemoryInspectorWorkspace(
     snapshot: MemoryInspectorSnapshot,
     actions: MemoryEditorActions,
+    writeSupported: Boolean,
     onBack: () -> Unit,
     onRefresh: (Int) -> Unit,
     onNearby: () -> Unit,
@@ -496,6 +498,7 @@ internal fun MemoryInspectorWorkspace(
         InspectorEditDialog(
             cell = cell,
             type = viewType,
+            writeSupported = writeSupported,
             onDismiss = { editingCell = null },
             onApply = { replacement ->
                 editingCell = null
@@ -624,7 +627,7 @@ private fun InspectorControlsPane(
                 )
             }
             Text(
-                stringResource(R.string.memory_editor_inspector_help),
+                stringResource(R.string.memory_editor_inspector_edit_help),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -686,6 +689,7 @@ private fun InspectorCellRow(cell: MemoryInspectorCell, onEdit: () -> Unit) {
 private fun InspectorEditDialog(
     cell: MemoryInspectorCell,
     type: Int,
+    writeSupported: Boolean,
     onDismiss: () -> Unit,
     onApply: (String) -> Unit,
 ) {
@@ -697,6 +701,12 @@ private fun InspectorEditDialog(
         text = {
             MemoryInputArea(sideDockInLandscape = false) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (!writeSupported) {
+                        Text(
+                            stringResource(R.string.memory_editor_write_unsupported),
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
                     Text(
                         "0x${cell.address.toULong().toString(16).uppercase()} · ${stage3TypeName(type)}",
                         fontFamily = FontFamily.Monospace,
@@ -716,7 +726,7 @@ private fun InspectorEditDialog(
         confirmButton = {
             TextButton(
                 onClick = { onApply(replacement) },
-                enabled = spec.isComplete(replacement),
+                enabled = writeSupported && spec.isComplete(replacement),
             ) {
                 Text(stringResource(R.string.memory_editor_apply))
             }
