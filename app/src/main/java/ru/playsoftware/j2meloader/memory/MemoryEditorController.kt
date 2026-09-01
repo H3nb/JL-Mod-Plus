@@ -154,20 +154,6 @@ class MemoryEditorComposeController(
     init {
         composeView.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         bubbleView.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-        composeView.setContent {
-            JLModPlusTheme {
-                MemoryEditorStage3Root(state = state, actions = this)
-            }
-        }
-        bubbleView.setContent {
-            JLModPlusTheme {
-                MemoryEditorBubble(
-                    visible = state.bubbleEnabled && !state.visible,
-                    onOpen = ::open,
-                    onTouch = ::handleBubbleTouch,
-                )
-            }
-        }
         installBubblePositioning()
     }
 
@@ -176,18 +162,15 @@ class MemoryEditorComposeController(
         val enabled = !state.bubbleEnabled
         state = state.copy(
             bubbleEnabled = enabled,
-            visible = false,
-            selected = emptySet(),
-            inspectorLoading = false,
-            inspector = null,
             message = null,
         )
-        composeView.visibility = View.GONE
-        bubbleView.visibility = if (enabled) View.VISIBLE else View.GONE
+        closeEditorUi()
         if (enabled) {
+            showBubbleUi()
             bubbleView.post { positionBubble(false) }
-            connectEngine()
         } else {
+            bubbleView.visibility = View.GONE
+            bubbleView.disposeComposition()
             disconnectEngine()
         }
         return enabled
@@ -195,6 +178,7 @@ class MemoryEditorComposeController(
 
     fun open() {
         if (destroyed || !state.bubbleEnabled) return
+        showEditorUi()
         composeView.visibility = View.VISIBLE
         bubbleView.visibility = View.GONE
         state = state.copy(visible = true, connecting = true, message = null)
@@ -202,13 +186,7 @@ class MemoryEditorComposeController(
     }
 
     override fun close() {
-        state = state.copy(
-            visible = false,
-            selected = emptySet(),
-            inspectorLoading = false,
-            inspector = null,
-        )
-        composeView.visibility = View.GONE
+        closeEditorUi()
         bubbleView.visibility = if (state.bubbleEnabled) View.VISIBLE else View.GONE
     }
 
@@ -220,8 +198,52 @@ class MemoryEditorComposeController(
         destroyed = true
         bubbleHost?.removeOnLayoutChangeListener(bubbleLayoutListener)
         bubbleView.removeOnLayoutChangeListener(bubbleLayoutListener)
+        composeView.disposeComposition()
+        bubbleView.disposeComposition()
         disconnectEngine()
         ipc.shutdownNow()
+    }
+
+    private fun showEditorUi() {
+        composeView.setContent {
+            JLModPlusTheme {
+                MemoryEditorStage3Root(state = state, actions = this)
+            }
+        }
+    }
+
+    private fun showBubbleUi() {
+        bubbleView.setContent {
+            JLModPlusTheme {
+                MemoryEditorBubble(
+                    visible = state.bubbleEnabled && !state.visible,
+                    onOpen = ::open,
+                    onTouch = ::handleBubbleTouch,
+                )
+            }
+        }
+        bubbleView.visibility = View.VISIBLE
+    }
+
+    private fun closeEditorUi() {
+        clearSearchPresentation()
+        state = state.copy(
+            visible = false,
+        )
+        composeView.visibility = View.GONE
+        composeView.disposeComposition()
+    }
+
+    private fun clearSearchPresentation() {
+        state = state.copy(
+            pageOffset = 0,
+            results = emptyList(),
+            watches = emptyList(),
+            selected = emptySet(),
+            watchTab = false,
+            inspectorLoading = false,
+            inspector = null,
+        )
     }
 
     private fun connectEngine() {
@@ -361,7 +383,7 @@ class MemoryEditorComposeController(
         pendingResetHistory = true
         pendingStage = if (unknown) MemorySessionStage.UNKNOWN_BASELINE else MemorySessionStage.CANDIDATES
         pendingMode = if (unknown) MemorySearchMode.UNKNOWN else MemorySearchMode.KNOWN
-        state = state.copy(inspectorLoading = false, inspector = null)
+        clearSearchPresentation()
         operate(searching = true) {
             if (unknown) startUnknownSearch(state.runtimeToken, scope, type)
             else startKnownSearch(
@@ -394,7 +416,7 @@ class MemoryEditorComposeController(
         pendingResetHistory = true
         pendingStage = MemorySessionStage.CANDIDATES
         pendingMode = MemorySearchMode.GROUP
-        state = state.copy(inspectorLoading = false, inspector = null)
+        clearSearchPresentation()
         operate(searching = true) {
             startGroupSearch(state.runtimeToken, scope, types, values, distance)
         }
@@ -418,7 +440,7 @@ class MemoryEditorComposeController(
         pendingResetHistory = true
         pendingStage = MemorySessionStage.CANDIDATES
         pendingMode = MemorySearchMode.KNOWN
-        state = state.copy(inspectorLoading = false, inspector = null, selected = emptySet())
+        clearSearchPresentation()
         operate(searching = true) {
             startNearbySearch(
                 state.runtimeToken,
@@ -702,6 +724,7 @@ class MemoryEditorComposeController(
     }
 
     private fun reload(refreshAfterLoad: Boolean = false) = runIpc {
+        if (!state.visible) return@runIpc
         val engine = service ?: return@runIpc
         val token = state.runtimeToken
         if (token == 0L) return@runIpc
@@ -741,6 +764,7 @@ class MemoryEditorComposeController(
         } else emptyList()
         val watchRows = attachWatchMetadata(engine.getWatchPage(token))
         post {
+            if (!state.visible) return@post
             state = state.copy(
                 resultCount = count,
                 pageOffset = safeOffset,
