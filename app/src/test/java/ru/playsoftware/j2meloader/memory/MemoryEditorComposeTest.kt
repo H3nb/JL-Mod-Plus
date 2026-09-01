@@ -22,40 +22,31 @@ import org.junit.Test
 
 class MemoryEditorComposeTest {
     @Test
-    fun resultPageParserRequiresAnExactCompleteShape() {
-        assertTrue(MemoryEditorPageParser.parse(longArrayOf(1L, 2L)).isEmpty())
-        assertTrue(MemoryEditorPageParser.parse(longArrayOf(-1L)).isEmpty())
+    fun watchPageParserRequiresOnlyFormattedPresentationFields() {
+        assertTrue(MemoryWatchPageParser.parse(null).isEmpty())
 
-        val rows = longArrayOf(
-            1L,
-            42L, 0x1234L, 0x1200L,
-            MemoryEngineContract.TYPE_INT.toLong(),
-            MemoryEngineContract.CANDIDATE_STABLE.toLong(),
-            3L, 10L, 20L, 30L,
+        val parsed = MemoryWatchPageParser.parse(
+            ids = longArrayOf(42L),
+            values = arrayOf("30"),
+            initialValues = arrayOf("10"),
+            previousValues = arrayOf("20"),
+            addresses = arrayOf("0x1234"),
+            types = intArrayOf(MemoryEngineContract.TYPE_INT),
+            states = intArrayOf(MemoryEngineContract.CANDIDATE_STABLE),
+            relocations = intArrayOf(3),
+            labels = arrayOf("HP"),
+            freezeModes = intArrayOf(-1),
+            freezePaused = booleanArrayOf(false),
         )
-        val parsed = MemoryEditorPageParser.parse(rows)
+
         assertEquals(1, parsed.size)
         assertEquals(42L, parsed.single().id)
-        assertEquals(0x1234L, parsed.single().address)
+        assertEquals("30", parsed.single().valueText)
+        assertEquals("10", parsed.single().initialValueText)
+        assertEquals("20", parsed.single().previousValueText)
+        assertEquals("0x1234", parsed.single().addressText)
+        assertEquals("HP", parsed.single().label)
         assertEquals(3, parsed.single().relocations)
-        assertEquals("30", MemoryEditorPageParser.value(parsed.single()))
-    }
-
-    @Test
-    fun valueFormatterPreservesPrimitiveInterpretation() {
-        fun row(type: Int, bits: Long) = MemoryCandidateRow(
-            1, 2, 0, type, MemoryEngineContract.CANDIDATE_STABLE, 0, 0, 0, bits,
-        )
-        assertEquals("-1", MemoryEditorPageParser.value(row(MemoryEngineContract.TYPE_BYTE, 0xff)))
-        assertEquals("65535", MemoryEditorPageParser.value(row(MemoryEngineContract.TYPE_CHAR, -1)))
-        assertEquals("1.5", MemoryEditorPageParser.value(row(
-            MemoryEngineContract.TYPE_FLOAT,
-            1.5f.toBits().toLong(),
-        )))
-        assertEquals("-2.25", MemoryEditorPageParser.value(row(
-            MemoryEngineContract.TYPE_DOUBLE,
-            (-2.25).toBits(),
-        )))
     }
 
     @Test

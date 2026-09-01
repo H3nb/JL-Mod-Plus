@@ -38,16 +38,16 @@ internal fun memorySearchModeFromEngine(value: Int): MemorySearchMode = when (va
     else -> MemorySearchMode.KNOWN
 }
 
-internal data class MemoryCandidateRow(
+/** One engine-formatted Watch row. Raw target addresses and numeric bits stay in :memory_engine. */
+internal data class MemoryWatchRow(
     val id: Long,
-    val address: Long,
-    val previousAddress: Long,
     val type: Int,
     val state: Int,
     val relocations: Int,
-    val initialBits: Long,
-    val previousBits: Long,
-    val currentBits: Long,
+    val valueText: String,
+    val initialValueText: String,
+    val previousValueText: String,
+    val addressText: String,
     val label: String = "",
     val freezeMode: Int = -1,
     val freezePaused: Boolean = false,
@@ -94,40 +94,6 @@ internal fun commonTypesForSelection(
         .orEmpty()
 }
 
-internal object MemoryEditorPageParser {
-    fun parse(rows: LongArray?): List<MemoryCandidateRow> {
-        if (rows == null || rows.isEmpty()) return emptyList()
-        val count = rows[0].coerceAtLeast(0L).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
-        val required = 1L + count.toLong() * MemoryEngineContract.RESULT_PAGE_STRIDE
-        if (required != rows.size.toLong()) return emptyList()
-        return List(count) { index ->
-            val base = 1 + index * MemoryEngineContract.RESULT_PAGE_STRIDE
-            MemoryCandidateRow(
-                id = rows[base],
-                address = rows[base + 1],
-                previousAddress = rows[base + 2],
-                type = rows[base + 3].toInt(),
-                state = rows[base + 4].toInt(),
-                relocations = rows[base + 5].toInt(),
-                initialBits = rows[base + 6],
-                previousBits = rows[base + 7],
-                currentBits = rows[base + 8],
-            )
-        }
-    }
-
-    fun value(row: MemoryCandidateRow): String = when (row.type) {
-        MemoryEngineContract.TYPE_BYTE -> row.currentBits.toByte().toString()
-        MemoryEngineContract.TYPE_SHORT -> row.currentBits.toShort().toString()
-        MemoryEngineContract.TYPE_CHAR -> (row.currentBits and 0xffffL).toString()
-        MemoryEngineContract.TYPE_INT -> row.currentBits.toInt().toString()
-        MemoryEngineContract.TYPE_LONG -> row.currentBits.toString()
-        MemoryEngineContract.TYPE_FLOAT -> Float.fromBits(row.currentBits.toInt()).toString()
-        MemoryEngineContract.TYPE_DOUBLE -> Double.fromBits(row.currentBits).toString()
-        else -> "?"
-    }
-}
-
 internal object MemoryResultPageParser {
     fun parse(bundle: android.os.Bundle?): List<MemoryResultRow> {
         val ids = bundle?.getLongArray(MemoryEngineContract.KEY_RESULT_IDS) ?: return emptyList()
@@ -163,6 +129,69 @@ internal object MemoryResultPageParser {
     }
 }
 
+internal object MemoryWatchPageParser {
+    fun parse(bundle: android.os.Bundle?): List<MemoryWatchRow> {
+        val ids = bundle?.getLongArray(MemoryEngineContract.KEY_WATCH_IDS) ?: return emptyList()
+        val values = bundle.getStringArray(MemoryEngineContract.KEY_WATCH_VALUES) ?: return emptyList()
+        val initialValues = bundle.getStringArray(MemoryEngineContract.KEY_WATCH_INITIAL_VALUES) ?: return emptyList()
+        val previousValues = bundle.getStringArray(MemoryEngineContract.KEY_WATCH_PREVIOUS_VALUES) ?: return emptyList()
+        val addresses = bundle.getStringArray(MemoryEngineContract.KEY_WATCH_ADDRESSES) ?: return emptyList()
+        val types = bundle.getIntArray(MemoryEngineContract.KEY_WATCH_TYPES) ?: return emptyList()
+        val states = bundle.getIntArray(MemoryEngineContract.KEY_WATCH_STATES) ?: return emptyList()
+        val relocations = bundle.getIntArray(MemoryEngineContract.KEY_WATCH_RELOCATIONS) ?: return emptyList()
+        val labels = bundle.getStringArray(MemoryEngineContract.KEY_WATCH_LABELS) ?: return emptyList()
+        val freezeModes = bundle.getIntArray(MemoryEngineContract.KEY_WATCH_FREEZE_MODES) ?: return emptyList()
+        val freezePaused = bundle.getBooleanArray(MemoryEngineContract.KEY_WATCH_FREEZE_PAUSED) ?: return emptyList()
+        return parse(
+            ids, values, initialValues, previousValues, addresses, types, states, relocations,
+            labels, freezeModes, freezePaused,
+        )
+    }
+
+    internal fun parse(
+        ids: LongArray,
+        values: Array<String>,
+        initialValues: Array<String>,
+        previousValues: Array<String>,
+        addresses: Array<String>,
+        types: IntArray,
+        states: IntArray,
+        relocations: IntArray,
+        labels: Array<String>,
+        freezeModes: IntArray,
+        freezePaused: BooleanArray,
+    ): List<MemoryWatchRow> {
+        if (listOf(
+                values.size, initialValues.size, previousValues.size, addresses.size, types.size,
+                states.size, relocations.size, labels.size, freezeModes.size, freezePaused.size,
+            ).any { it != ids.size }) {
+            return emptyList()
+        }
+        return ids.indices.mapNotNull { index ->
+            val type = types[index]
+            if (ids[index] <= 0L || values[index] == null || initialValues[index] == null ||
+                previousValues[index] == null || addresses[index] == null || labels[index] == null ||
+                !MemoryEngineContract.isCandidateType(type)) {
+                null
+            } else {
+                MemoryWatchRow(
+                    id = ids[index],
+                    type = type,
+                    state = states[index],
+                    relocations = relocations[index],
+                    valueText = values[index],
+                    initialValueText = initialValues[index],
+                    previousValueText = previousValues[index],
+                    addressText = addresses[index],
+                    label = labels[index],
+                    freezeMode = freezeModes[index],
+                    freezePaused = freezePaused[index],
+                )
+            }
+        }.takeIf { it.size == ids.size }.orEmpty()
+    }
+}
+
 internal fun newSearchPredicate(selectedPredicate: Int): Int =
     selectedPredicate.takeIf { it <= MemoryEngineContract.PREDICATE_BETWEEN }
         ?: MemoryEngineContract.PREDICATE_EQUAL
@@ -182,7 +211,7 @@ internal data class MemoryEditorUiState(
     val resultCount: Long = 0,
     val pageOffset: Int = 0,
     val results: List<MemoryResultRow> = emptyList(),
-    val watches: List<MemoryCandidateRow> = emptyList(),
+    val watches: List<MemoryWatchRow> = emptyList(),
     val selected: Set<Long> = emptySet(),
     val watchTab: Boolean = false,
     val message: String? = null,

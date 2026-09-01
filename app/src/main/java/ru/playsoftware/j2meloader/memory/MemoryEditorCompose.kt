@@ -237,7 +237,7 @@ private fun MemoryEditorContent(state: MemoryEditorUiState, actions: MemoryEdito
     var editDialog by remember { mutableStateOf(false) }
     var freezeDialog by remember { mutableStateOf(false) }
     var refineDialog by remember { mutableStateOf(false) }
-    var detailRow by remember { mutableStateOf<MemoryCandidateRow?>(null) }
+    var detailRow by remember { mutableStateOf<MemoryWatchRow?>(null) }
     var detailResult by remember { mutableStateOf<MemoryResultRow?>(null) }
     val searchScrollState = rememberScrollState()
 
@@ -396,7 +396,7 @@ if (freezeDialog) {
         state.results.filter { it.id in state.selected }.map { it.primaryType }.distinct()
     }
     val initialValue = if (state.watchTab) {
-        selectedRows(state).firstOrNull()?.let(MemoryEditorPageParser::value).orEmpty()
+        selectedRows(state).firstOrNull()?.valueText.orEmpty()
     } else {
         state.results.firstOrNull { it.id in state.selected }?.valueText.orEmpty()
     }
@@ -413,9 +413,8 @@ if (freezeDialog) {
 }
 
     detailRow?.let { row ->
-        CandidateDetailDialog(
+        WatchDetailDialog(
             row = row,
-            aliases = listOf(row),
             watch = state.watchTab,
             writeSupported = state.writeSupported,
             onDismiss = { detailRow = null },
@@ -1234,7 +1233,7 @@ private fun ResultsWorkspace(
 private fun WatchWorkspace(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
-    onOpen: (MemoryCandidateRow) -> Unit,
+    onOpen: (MemoryWatchRow) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -1334,7 +1333,7 @@ private fun ResultGroupRow(
 
 @Composable
 private fun WatchRow(
-    row: MemoryCandidateRow,
+    row: MemoryWatchRow,
     selected: Boolean,
     onToggle: () -> Unit,
     onOpen: () -> Unit,
@@ -1358,7 +1357,7 @@ private fun WatchRow(
                     modifier = Modifier.weight(1f),
                 )
                 Text(
-                    MemoryEditorPageParser.value(row),
+                    row.valueText,
                     style = MaterialTheme.typography.titleMedium,
                     fontFamily = FontFamily.Monospace,
                     maxLines = 1,
@@ -1368,7 +1367,7 @@ private fun WatchRow(
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "0x${row.address.toULong().toString(16).uppercase()} · ${typeShortName(row.type)}",
+                    "${row.addressText} · ${typeShortName(row.type)}",
                     style = MaterialTheme.typography.bodySmall,
                     fontFamily = FontFamily.Monospace,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1431,7 +1430,7 @@ private fun ResultPager(state: MemoryEditorUiState, actions: MemoryEditorActions
 }
 
 @Composable
-private fun WatchLabelButton(row: MemoryCandidateRow, onLabel: (Long, String) -> Unit) {
+private fun WatchLabelButton(row: MemoryWatchRow, onLabel: (Long, String) -> Unit) {
     var dialog by remember(row.id) { mutableStateOf(false) }
     ActionIconButton(
         icon = R.drawable.ic_edit,
@@ -1568,9 +1567,8 @@ private fun BottomUtilityActions(state: MemoryEditorUiState, actions: MemoryEdit
 }
 
 @Composable
-private fun CandidateDetailDialog(
-    row: MemoryCandidateRow,
-    aliases: List<MemoryCandidateRow>,
+private fun WatchDetailDialog(
+    row: MemoryWatchRow,
     watch: Boolean,
     writeSupported: Boolean,
     onDismiss: () -> Unit,
@@ -1582,22 +1580,15 @@ private fun CandidateDetailDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(row.label.ifBlank { MemoryEditorPageParser.value(row) })
+            Text(row.label.ifBlank { row.valueText })
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                DetailLine(stringResource(R.string.memory_editor_current_value), MemoryEditorPageParser.value(row))
-                DetailLine(stringResource(R.string.memory_editor_initial_value), formatBits(row.type, row.initialBits))
-                DetailLine(stringResource(R.string.memory_editor_previous_value), formatBits(row.type, row.previousBits))
-                DetailLine(stringResource(R.string.memory_editor_address), "0x${row.address.toULong().toString(16).uppercase()}")
+                DetailLine(stringResource(R.string.memory_editor_current_value), row.valueText)
+                DetailLine(stringResource(R.string.memory_editor_initial_value), row.initialValueText)
+                DetailLine(stringResource(R.string.memory_editor_previous_value), row.previousValueText)
+                DetailLine(stringResource(R.string.memory_editor_address), row.addressText)
                 DetailLine(stringResource(R.string.memory_editor_data_type), typeName(row.type))
-                if (aliases.size > 1) {
-                    Text(
-                        stringResource(R.string.memory_editor_interpretations) + ": " +
-                            aliases.joinToString(" · ") { typeShortName(it.type) },
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
                 exceptionalState(row)?.let {
                     Text(it, color = MaterialTheme.colorScheme.error)
                 }
@@ -1704,21 +1695,7 @@ private fun ResultDetailDialog(
     )
 }
 
-private fun formatBits(type: Int, bits: Long): String = MemoryEditorPageParser.value(
-    MemoryCandidateRow(
-        id = 0,
-        address = 0,
-        previousAddress = 0,
-        type = type,
-        state = MemoryEngineContract.CANDIDATE_STABLE,
-        relocations = 0,
-        initialBits = bits,
-        previousBits = bits,
-        currentBits = bits,
-    ),
-)
-
-private fun selectedRows(state: MemoryEditorUiState): List<MemoryCandidateRow> =
+private fun selectedRows(state: MemoryEditorUiState): List<MemoryWatchRow> =
     state.watches.filter { it.id in state.selected }
 
 private fun editableTypes(state: MemoryEditorUiState): List<Int> {
@@ -1949,7 +1926,7 @@ private fun predicateName(predicate: Int): String = when (predicate) {
 }
 
 @Composable
-private fun exceptionalState(row: MemoryCandidateRow): String? = when (row.state) {
+private fun exceptionalState(row: MemoryWatchRow): String? = when (row.state) {
     MemoryEngineContract.CANDIDATE_STABLE -> if (row.relocations > 0) {
         stringResource(R.string.memory_editor_candidate_moved)
     } else null

@@ -111,7 +111,14 @@ public final class MemoryEngineContract {
 	public static final String KEY_RESULT_TYPES = "resultTypes";
 	public static final String KEY_RESULT_STATES = "resultStates";
 	public static final String KEY_RESULT_RELOCATIONS = "resultRelocations";
-	public static final String KEY_WATCH_ROWS = "watchRows";
+	public static final String KEY_WATCH_IDS = "watchIds";
+	public static final String KEY_WATCH_VALUES = "watchValues";
+	public static final String KEY_WATCH_INITIAL_VALUES = "watchInitialValues";
+	public static final String KEY_WATCH_PREVIOUS_VALUES = "watchPreviousValues";
+	public static final String KEY_WATCH_ADDRESSES = "watchAddresses";
+	public static final String KEY_WATCH_TYPES = "watchTypes";
+	public static final String KEY_WATCH_STATES = "watchStates";
+	public static final String KEY_WATCH_RELOCATIONS = "watchRelocations";
 	public static final String KEY_WATCH_LABELS = "watchLabels";
 	public static final String KEY_WATCH_FREEZE_MODES = "watchFreezeModes";
 	public static final String KEY_WATCH_FREEZE_PAUSED = "watchFreezePaused";

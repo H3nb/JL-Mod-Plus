@@ -412,37 +412,10 @@ public final class MemoryEngineService extends Service {
 
 		@Override
 		public Bundle getWatchPage(long token) {
-			Bundle result = new Bundle();
 			if (!isCurrentToken(token)) {
-				result.putLongArray(MemoryEngineContract.KEY_WATCH_ROWS, new long[]{0L});
-				result.putStringArray(MemoryEngineContract.KEY_WATCH_LABELS, new String[0]);
-				result.putIntArray(MemoryEngineContract.KEY_WATCH_FREEZE_MODES, new int[0]);
-				result.putBooleanArray(MemoryEngineContract.KEY_WATCH_FREEZE_PAUSED, new boolean[0]);
-				return result;
+				return emptyWatchPage();
 			}
-			long[] rows = NativeMemoryEngine.watchPage();
-			int count = validatedPageCount(rows);
-			if (count < 0) {
-				rows = new long[]{0L};
-				count = 0;
-			}
-			String[] labels = new String[count];
-			int[] freezeModes = new int[count];
-			boolean[] freezePaused = new boolean[count];
-			for (int index = 0; index < count; index++) {
-				long id = rows[1 + index * MemoryEngineContract.RESULT_PAGE_STRIDE];
-				String label = watchLabels.get(id);
-				labels[index] = label == null ? "" : label;
-				FreezeRecord freeze = freezeRecords.get(id);
-				freezeModes[index] = freeze == null ? -1 : freeze.mode;
-				freezePaused[index] = freeze != null && freeze.paused;
-			}
-			result.putLongArray(MemoryEngineContract.KEY_WATCH_ROWS,
-					rows == null ? new long[]{0L} : rows);
-			result.putStringArray(MemoryEngineContract.KEY_WATCH_LABELS, labels);
-			result.putIntArray(MemoryEngineContract.KEY_WATCH_FREEZE_MODES, freezeModes);
-			result.putBooleanArray(MemoryEngineContract.KEY_WATCH_FREEZE_PAUSED, freezePaused);
-			return result;
+			return formatWatchPage(NativeMemoryEngine.watchPage());
 		}
 
 		@Override
@@ -1018,6 +991,22 @@ public final class MemoryEngineService extends Service {
 		return result;
 	}
 
+	private static Bundle emptyWatchPage() {
+		Bundle result = new Bundle();
+		result.putLongArray(MemoryEngineContract.KEY_WATCH_IDS, new long[0]);
+		result.putStringArray(MemoryEngineContract.KEY_WATCH_VALUES, new String[0]);
+		result.putStringArray(MemoryEngineContract.KEY_WATCH_INITIAL_VALUES, new String[0]);
+		result.putStringArray(MemoryEngineContract.KEY_WATCH_PREVIOUS_VALUES, new String[0]);
+		result.putStringArray(MemoryEngineContract.KEY_WATCH_ADDRESSES, new String[0]);
+		result.putIntArray(MemoryEngineContract.KEY_WATCH_TYPES, new int[0]);
+		result.putIntArray(MemoryEngineContract.KEY_WATCH_STATES, new int[0]);
+		result.putIntArray(MemoryEngineContract.KEY_WATCH_RELOCATIONS, new int[0]);
+		result.putStringArray(MemoryEngineContract.KEY_WATCH_LABELS, new String[0]);
+		result.putIntArray(MemoryEngineContract.KEY_WATCH_FREEZE_MODES, new int[0]);
+		result.putBooleanArray(MemoryEngineContract.KEY_WATCH_FREEZE_PAUSED, new boolean[0]);
+		return result;
+	}
+
 	private static Bundle formatResultPage(long[] rows) {
 		int count = validatedPageCount(rows);
 		if (count < 0) {
@@ -1069,6 +1058,59 @@ public final class MemoryEngineService extends Service {
 		result.putIntArray(MemoryEngineContract.KEY_RESULT_TYPES, types);
 		result.putIntArray(MemoryEngineContract.KEY_RESULT_STATES, states);
 		result.putIntArray(MemoryEngineContract.KEY_RESULT_RELOCATIONS, relocations);
+		return result;
+	}
+
+	private Bundle formatWatchPage(long[] rows) {
+		int count = validatedPageCount(rows);
+		if (count < 0) {
+			return emptyWatchPage();
+		}
+		long[] ids = new long[count];
+		String[] values = new String[count];
+		String[] initialValues = new String[count];
+		String[] previousValues = new String[count];
+		String[] addresses = new String[count];
+		int[] types = new int[count];
+		int[] states = new int[count];
+		int[] relocations = new int[count];
+		String[] labels = new String[count];
+		int[] freezeModes = new int[count];
+		boolean[] freezePaused = new boolean[count];
+		for (int index = 0; index < count; index++) {
+			int base = 1 + index * MemoryEngineContract.RESULT_PAGE_STRIDE;
+			long id = rows[base];
+			int type = (int) rows[base + 3];
+			if (id <= 0L || !MemoryEngineContract.isCandidateType(type)) {
+				return emptyWatchPage();
+			}
+			ids[index] = id;
+			values[index] = formatCandidateValue(type, rows[base + 8]);
+			initialValues[index] = formatCandidateValue(type, rows[base + 6]);
+			previousValues[index] = formatCandidateValue(type, rows[base + 7]);
+			addresses[index] = "0x" + Long.toUnsignedString(rows[base + 1], 16)
+					.toUpperCase(Locale.ROOT);
+			types[index] = type;
+			states[index] = (int) rows[base + 4];
+			relocations[index] = (int) rows[base + 5];
+			String label = watchLabels.get(id);
+			labels[index] = label == null ? "" : label;
+			FreezeRecord freeze = freezeRecords.get(id);
+			freezeModes[index] = freeze == null ? -1 : freeze.mode;
+			freezePaused[index] = freeze != null && freeze.paused;
+		}
+		Bundle result = new Bundle();
+		result.putLongArray(MemoryEngineContract.KEY_WATCH_IDS, ids);
+		result.putStringArray(MemoryEngineContract.KEY_WATCH_VALUES, values);
+		result.putStringArray(MemoryEngineContract.KEY_WATCH_INITIAL_VALUES, initialValues);
+		result.putStringArray(MemoryEngineContract.KEY_WATCH_PREVIOUS_VALUES, previousValues);
+		result.putStringArray(MemoryEngineContract.KEY_WATCH_ADDRESSES, addresses);
+		result.putIntArray(MemoryEngineContract.KEY_WATCH_TYPES, types);
+		result.putIntArray(MemoryEngineContract.KEY_WATCH_STATES, states);
+		result.putIntArray(MemoryEngineContract.KEY_WATCH_RELOCATIONS, relocations);
+		result.putStringArray(MemoryEngineContract.KEY_WATCH_LABELS, labels);
+		result.putIntArray(MemoryEngineContract.KEY_WATCH_FREEZE_MODES, freezeModes);
+		result.putBooleanArray(MemoryEngineContract.KEY_WATCH_FREEZE_PAUSED, freezePaused);
 		return result;
 	}
 

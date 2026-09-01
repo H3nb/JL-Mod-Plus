@@ -725,8 +725,7 @@ class MemoryEditorComposeController(
     override fun copySelected(addresses: Boolean) {
         val text = if (state.watchTab) {
             state.watches.filter { it.id in state.selected }.joinToString("\n") {
-                if (addresses) "0x${it.address.toULong().toString(16).uppercase()}"
-                else MemoryEditorPageParser.value(it)
+                if (addresses) it.addressText else it.valueText
             }
         } else {
             state.results.filter { it.id in state.selected }.joinToString("\n") {
@@ -793,79 +792,70 @@ class MemoryEditorComposeController(
         }
     }
 
-    private fun reload(refreshAfterLoad: Boolean = false) = runIpc {
-        if (!state.visible) return@runIpc
-        val engine = service ?: return@runIpc
-        val token = state.runtimeToken
-        if (token == 0L) return@runIpc
-        val session = engine.getSearchSessionInfo(token)
-        val sessionStage = memorySessionStageFromEngine(
-            session?.getInt(
-                MemoryEngineContract.KEY_SEARCH_SESSION_STAGE,
-                MemoryEngineContract.SEARCH_SESSION_EMPTY,
-            ) ?: MemoryEngineContract.SEARCH_SESSION_EMPTY,
-        )
-        val sessionMode = memorySearchModeFromEngine(
-            session?.getInt(
-                MemoryEngineContract.KEY_SEARCH_MODE,
-                MemoryEngineContract.SEARCH_MODE_KNOWN,
-            ) ?: MemoryEngineContract.SEARCH_MODE_KNOWN,
-        )
-        val requestedType = session?.getInt(
-            MemoryEngineContract.KEY_SEARCH_REQUESTED_TYPE,
-            MemoryEngineContract.TYPE_AUTO,
-        )?.takeIf(MemoryEngineContract::isValueType) ?: MemoryEngineContract.TYPE_AUTO
-        val searchScope = session?.getInt(
-            MemoryEngineContract.KEY_SEARCH_SCOPE,
-            MemoryEngineContract.SCOPE_JAVA_FAST,
-        )?.takeIf(MemoryEngineContract::isScope) ?: MemoryEngineContract.SCOPE_JAVA_FAST
-        val canUndo = (session?.getInt(MemoryEngineContract.KEY_SEARCH_HISTORY_DEPTH, 0) ?: 0) > 0
-        val nativeCount = engine.getResultCount(token)
-        val count = if (sessionStage == MemorySessionStage.EMPTY) 0L else nativeCount
-        val offset = state.pageOffset
-        val lastOffset = if (count == 0L) 0L else (count - 1L) / PAGE_SIZE * PAGE_SIZE
-        val safeOffset = if (sessionStage == MemorySessionStage.CANDIDATES) {
-            offset.coerceAtMost(lastOffset.coerceAtMost(
-                (Int.MAX_VALUE / PAGE_SIZE * PAGE_SIZE).toLong(),
-            ).toInt())
-        } else 0
-        val resultRows = if (sessionStage == MemorySessionStage.CANDIDATES) {
-            MemoryResultPageParser.parse(engine.getResultPage(token, safeOffset, PAGE_SIZE))
-        } else emptyList()
-        val watchRows = attachWatchMetadata(engine.getWatchPage(token))
-        post {
-            if (!state.visible) return@post
-            state = state.copy(
-                resultCount = count,
-                pageOffset = safeOffset,
-                results = resultRows,
-                watches = watchRows,
-                sessionStage = sessionStage,
-                searchMode = sessionMode,
-                requestedType = requestedType,
-                searchScope = searchScope,
-                canUndo = canUndo,
-                selected = state.selected.intersect(
-                    (resultRows.map { it.id } + watchRows.map { it.id }).toMutableSet(),
-                ),
+    private fun reload(refreshAfterLoad: Boolean = false) {
+        val requestedWatchTab = state.watchTab
+        runIpc {
+            if (!state.visible) return@runIpc
+            val engine = service ?: return@runIpc
+            val token = state.runtimeToken
+            if (token == 0L) return@runIpc
+            val session = engine.getSearchSessionInfo(token)
+            val sessionStage = memorySessionStageFromEngine(
+                session?.getInt(
+                    MemoryEngineContract.KEY_SEARCH_SESSION_STAGE,
+                    MemoryEngineContract.SEARCH_SESSION_EMPTY,
+                ) ?: MemoryEngineContract.SEARCH_SESSION_EMPTY,
             )
-            if (refreshAfterLoad && sessionStage == MemorySessionStage.CANDIDATES) refresh()
+            val sessionMode = memorySearchModeFromEngine(
+                session?.getInt(
+                    MemoryEngineContract.KEY_SEARCH_MODE,
+                    MemoryEngineContract.SEARCH_MODE_KNOWN,
+                ) ?: MemoryEngineContract.SEARCH_MODE_KNOWN,
+            )
+            val requestedType = session?.getInt(
+                MemoryEngineContract.KEY_SEARCH_REQUESTED_TYPE,
+                MemoryEngineContract.TYPE_AUTO,
+            )?.takeIf(MemoryEngineContract::isValueType) ?: MemoryEngineContract.TYPE_AUTO
+            val searchScope = session?.getInt(
+                MemoryEngineContract.KEY_SEARCH_SCOPE,
+                MemoryEngineContract.SCOPE_JAVA_FAST,
+            )?.takeIf(MemoryEngineContract::isScope) ?: MemoryEngineContract.SCOPE_JAVA_FAST
+            val canUndo = (session?.getInt(MemoryEngineContract.KEY_SEARCH_HISTORY_DEPTH, 0) ?: 0) > 0
+            val nativeCount = engine.getResultCount(token)
+            val count = if (sessionStage == MemorySessionStage.EMPTY) 0L else nativeCount
+            val offset = state.pageOffset
+            val lastOffset = if (count == 0L) 0L else (count - 1L) / PAGE_SIZE * PAGE_SIZE
+            val safeOffset = if (sessionStage == MemorySessionStage.CANDIDATES) {
+                offset.coerceAtMost(lastOffset.coerceAtMost(
+                    (Int.MAX_VALUE / PAGE_SIZE * PAGE_SIZE).toLong(),
+                ).toInt())
+            } else 0
+            val resultRows = if (!requestedWatchTab && sessionStage == MemorySessionStage.CANDIDATES) {
+                MemoryResultPageParser.parse(engine.getResultPage(token, safeOffset, PAGE_SIZE))
+            } else emptyList()
+            val watchRows = if (requestedWatchTab) attachWatchMetadata(engine.getWatchPage(token)) else emptyList()
+            val visibleIds = if (requestedWatchTab) watchRows.map { it.id } else resultRows.map { it.id }
+            post {
+                if (!state.visible || state.watchTab != requestedWatchTab) return@post
+                state = state.copy(
+                    resultCount = count,
+                    pageOffset = safeOffset,
+                    results = resultRows,
+                    watches = watchRows,
+                    sessionStage = sessionStage,
+                    searchMode = sessionMode,
+                    requestedType = requestedType,
+                    searchScope = searchScope,
+                    canUndo = canUndo,
+                    selected = state.selected.intersect(visibleIds.toSet()),
+                )
+                if (refreshAfterLoad && sessionStage == MemorySessionStage.CANDIDATES) refresh()
+            }
         }
     }
 
-    private fun attachWatchMetadata(bundle: Bundle?): List<MemoryCandidateRow> {
-        val rows = MemoryEditorPageParser.parse(bundle?.getLongArray(MemoryEngineContract.KEY_WATCH_ROWS))
-        val labels = bundle?.getStringArray(MemoryEngineContract.KEY_WATCH_LABELS) ?: emptyArray()
-        val modes = bundle?.getIntArray(MemoryEngineContract.KEY_WATCH_FREEZE_MODES) ?: intArrayOf()
-        val paused = bundle?.getBooleanArray(MemoryEngineContract.KEY_WATCH_FREEZE_PAUSED) ?: booleanArrayOf()
-        return rows.mapIndexed { index, row ->
-            row.copy(
-                label = labels.getOrElse(index) { "" },
-                freezeMode = modes.getOrElse(index) { -1 },
-                freezePaused = paused.getOrElse(index) { false },
-            )
-        }
-    }
+    private fun attachWatchMetadata(bundle: Bundle?): List<MemoryWatchRow> =
+        MemoryWatchPageParser.parse(bundle)
 
     private fun applyCapabilities(bundle: Bundle?) {
         val supported = bundle?.getBoolean(MemoryEngineContract.KEY_SUPPORTED) == true
