@@ -22,6 +22,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <algorithm>
 #include <limits>
 #include <optional>
 #include <string>
@@ -32,6 +33,9 @@ namespace {
 
 constexpr jint kFastScope = 0;
 constexpr jint kThoroughScope = 1;
+// Keep target-side mincore residency storage bounded even when a single ART mapping is large.
+// This is a native temporary buffer; the logical resident-run output remains capped by maxRuns.
+constexpr size_t kMincoreChunkBytes = 4U * 1024U * 1024U;
 
 enum class ScanScope : uint8_t {
     Fast = kFastScope,
@@ -178,36 +182,56 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryTarget_collectResidentRuns(
             if (pageCount == 0) {
                 continue;
             }
+            const size_t chunkPages = std::max<size_t>(
+                    1U, kMincoreChunkBytes / pageSize);
             std::vector<unsigned char> residency;
-            try {
-                residency.resize(pageCount);
-            } catch (...) {
-                truncated = true;
-                break;
+            size_t runStartPage = pageCount;
+            bool mapReadable = true;
+            for (size_t chunkStartPage = 0;
+                 chunkStartPage < pageCount && !truncated;) {
+                const size_t pages = std::min(
+                        chunkPages, pageCount - chunkStartPage);
+                try {
+                    residency.resize(pages);
+                } catch (...) {
+                    truncated = true;
+                    break;
+                }
+                const uintptr_t chunkStart = start + chunkStartPage * pageSize;
+                if (mincore(reinterpret_cast<void *>(chunkStart),
+                            pages * pageSize, residency.data()) != 0) {
+                    // A map may disappear between maps parsing and mincore. Skip
+                    // that stale map, as the proven PR #109 scanner did. The
+                    // maxRuns cap below still reports true payload truncation.
+                    mapReadable = false;
+                    break;
+                }
+                for (size_t localPage = 0; localPage < pages; ++localPage) {
+                    const size_t page = chunkStartPage + localPage;
+                    const bool resident = (residency[localPage] & 1U) != 0;
+                    if (resident && runStartPage == pageCount) {
+                        runStartPage = page;
+                    } else if (!resident && runStartPage != pageCount) {
+                        const uintptr_t runStart = start + runStartPage * pageSize;
+                        const uintptr_t runEnd = start + page * pageSize;
+                        if (!appendRun(runs, runStart, runEnd,
+                                       static_cast<size_t>(maxRuns), truncated)) {
+                            break;
+                        }
+                        runStartPage = pageCount;
+                    }
+                }
+                chunkStartPage += pages;
             }
-            if (mincore(reinterpret_cast<void *>(start), end - start,
-                        residency.data()) != 0) {
-                // A map may disappear between maps parsing and mincore. Skip
-                // that stale map, as the proven PR #109 scanner did. The
-                // maxRuns cap below still reports true payload truncation.
+            if (!mapReadable) {
                 continue;
             }
-
-            size_t runStartPage = pageCount;
-            for (size_t page = 0; page <= pageCount; ++page) {
-                const bool resident =
-                        page < pageCount && (residency[page] & 1U) != 0;
-                if (resident && runStartPage == pageCount) {
-                    runStartPage = page;
-                } else if (!resident && runStartPage != pageCount) {
-                    const uintptr_t runStart = start + runStartPage * pageSize;
-                    const uintptr_t runEnd = start + page * pageSize;
-                    if (!appendRun(runs, runStart, runEnd,
-                                   static_cast<size_t>(maxRuns), truncated)) {
-                        break;
-                    }
-                    runStartPage = pageCount;
-                }
+            if (truncated) {
+                break;
+            }
+            if (runStartPage != pageCount) {
+                appendRun(runs, start + runStartPage * pageSize, end,
+                          static_cast<size_t>(maxRuns), truncated);
             }
         }
         std::free(line);
