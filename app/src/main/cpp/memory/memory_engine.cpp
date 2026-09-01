@@ -139,7 +139,9 @@ constexpr size_t kSnapshotByteLimit = 96U * 1024U * 1024U;
 constexpr size_t kReadChunkSize = 256U * 1024U;
 constexpr size_t kDirectRefineLimit = 4'096;
 constexpr size_t kHistoryLimit = 8;
-constexpr size_t kHistoryByteLimit = 192U * 1024U * 1024U;
+// Includes the current search state as well as undo snapshots. The active result may itself be
+// large, so bounding only deque history still lets a low-memory device retain several hundred MB.
+constexpr size_t kRetainedStateByteLimit = 192U * 1024U * 1024U;
 constexpr size_t kResultStride = 9;
 constexpr size_t kIdentityRadius = 8;
 constexpr size_t kMultiWriteLimit = 32;
@@ -937,8 +939,8 @@ jint publishLiveCandidates(const OperationContext &context,
     return kOk;
 }
 
-void trimHistoryLocked() {
-    size_t retained = 0;
+void trimHistoryLocked(size_t currentBytes) {
+    size_t retained = currentBytes;
     for (const auto &state : gHistory) {
         const size_t bytes = state->retainedBytes();
         retained = retained > std::numeric_limits<size_t>::max() - bytes
@@ -946,7 +948,7 @@ void trimHistoryLocked() {
                            : retained + bytes;
     }
     while (!gHistory.empty() &&
-           (gHistory.size() > kHistoryLimit || retained > kHistoryByteLimit)) {
+           (gHistory.size() > kHistoryLimit || retained > kRetainedStateByteLimit)) {
         const size_t removed = gHistory.front()->retainedBytes();
         gHistory.pop_front();
         retained = removed > retained ? 0 : retained - removed;
@@ -1038,10 +1040,10 @@ jint commitOperation(const OperationContext &context,
         // Search states are immutable after publication. Retaining the shared snapshot makes
         // Undo O(1) here instead of copying up to two million candidate records on every refine.
         gHistory.push_back(gState);
-        trimHistoryLocked();
     } else if (historyMode < 0) {
         gHistory.clear();
     }
+    trimHistoryLocked(next->retainedBytes());
     gState = std::move(next);
     if (!preserveLive) {
         gLiveCandidates.clear();

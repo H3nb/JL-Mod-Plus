@@ -278,6 +278,8 @@ public class MemoryTargetProbeTest {
 			assertTrue("20-value refine took " + elapsedMillis + " ms",
 					elapsedMillis < 1_000L);
 			assertTrue(NativeMemoryEngine.resultCount() >= 20L);
+			assertTrue("small candidate refinements should retain Undo",
+					NativeMemoryEngine.historyDepth() > 0);
 		} finally {
 			setManagedProbeSet(0);
 			NativeMemoryEngine.clearTarget();
