@@ -46,6 +46,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -368,6 +370,7 @@ internal fun MemoryValueInput(
         "MemoryValueInput must be hosted by MemoryInputArea"
     }
     val id = remember { Any() }
+    val focusRequester = remember { FocusRequester() }
     val sessionValue = session.valueFor(id, value)
     DisposableEffect(id) {
         onDispose { session.deactivate(id) }
@@ -379,6 +382,7 @@ internal fun MemoryValueInput(
     Box(
         modifier = modifier
             .semantics { contentDescription = label }
+            .focusRequester(focusRequester)
             .focusable()
             .onPreviewKeyEvent { event ->
                 val nativeEvent = event.nativeKeyEvent
@@ -387,19 +391,22 @@ internal fun MemoryValueInput(
                 val token = memoryHardwareInputToken(keyCode)
                 when {
                     token != null -> {
-                        session.activate(id, value, spec, onValueChange)
+                        session.activate(id, sessionValue.text, spec, onValueChange)
                         session.insert(token)
                         true
                     }
-                    keyCode == AndroidKeyEvent.KEYCODE_DEL && session.active -> {
+                    keyCode == AndroidKeyEvent.KEYCODE_DEL -> {
+                        session.activate(id, sessionValue.text, spec, onValueChange)
                         session.backspace()
                         true
                     }
-                    keyCode == AndroidKeyEvent.KEYCODE_DPAD_LEFT && session.active -> {
+                    keyCode == AndroidKeyEvent.KEYCODE_DPAD_LEFT -> {
+                        session.activate(id, sessionValue.text, spec, onValueChange)
                         session.move(-1)
                         true
                     }
-                    keyCode == AndroidKeyEvent.KEYCODE_DPAD_RIGHT && session.active -> {
+                    keyCode == AndroidKeyEvent.KEYCODE_DPAD_RIGHT -> {
+                        session.activate(id, sessionValue.text, spec, onValueChange)
                         session.move(1)
                         true
                     }
@@ -407,7 +414,8 @@ internal fun MemoryValueInput(
                 }
             }
             .clickable(role = Role.Button) {
-                session.activate(id, value, spec, onValueChange)
+                focusRequester.requestFocus()
+                session.activate(id, sessionValue.text, spec, onValueChange)
             },
     ) {
         // A disabled text field has no focus or input connection, so it cannot summon Android's IME.

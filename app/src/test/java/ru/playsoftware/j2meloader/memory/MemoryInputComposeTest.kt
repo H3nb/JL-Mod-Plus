@@ -117,6 +117,25 @@ class MemoryInputComposeTest {
     }
 
     @Test
+    fun inputSessionRoutesEditingToTheFieldThatWasActivatedLast() {
+        val session = MemoryInputSession()
+        val first = Any()
+        val second = Any()
+        val spec = MemoryInputSpec.forType(MemoryEngineContract.TYPE_INT)
+        var firstValue = ""
+        var secondValue = ""
+
+        session.activate(first, "1", spec) { firstValue = it }
+        session.insert("2")
+        session.activate(second, "8", spec) { secondValue = it }
+        session.backspace()
+
+        assertEquals("12", firstValue)
+        assertEquals("", secondValue)
+        assertEquals("", session.valueFor(second, "8").text)
+    }
+
+    @Test
     fun signToggleTargetsExponentWhenCursorIsAfterExponent() {
         val spec = MemoryInputSpec.forType(MemoryEngineContract.TYPE_DOUBLE)
         var value = TextFieldValue("1E3", TextRange(2))

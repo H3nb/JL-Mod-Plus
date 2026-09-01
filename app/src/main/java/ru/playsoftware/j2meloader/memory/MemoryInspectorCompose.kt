@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -76,6 +75,7 @@ import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import androidx.navigationevent.compose.rememberNavigationEventDispatcherOwner
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.availableWindowWidthDp
+import ru.playsoftware.j2meloader.ui.AdaptiveAlertDialog as AlertDialog
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
