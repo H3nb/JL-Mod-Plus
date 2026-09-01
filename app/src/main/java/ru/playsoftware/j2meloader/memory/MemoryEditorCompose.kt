@@ -1252,6 +1252,7 @@ private fun ResultsWorkspace(
                     selected = row.id in state.selected,
                     onToggle = { actions.toggleSelection(row.id) },
                     onOpen = { onOpen(row) },
+                    onInspect = { actions.inspectCandidate(row.id) },
                 )
             }
         }
@@ -1287,6 +1288,7 @@ private fun WatchWorkspace(
                     selected = row.id in state.selected,
                     onToggle = { actions.toggleSelection(row.id) },
                     onOpen = { onOpen(row) },
+                    onInspect = { actions.inspectCandidate(row.id) },
                     onLabel = actions::labelWatch,
                 )
             }
@@ -1317,6 +1319,7 @@ private fun ResultGroupRow(
     selected: Boolean,
     onToggle: () -> Unit,
     onOpen: () -> Unit,
+    onInspect: () -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
@@ -1356,6 +1359,11 @@ private fun ResultGroupRow(
                 }
             }
         }
+        ActionIconButton(
+            icon = R.drawable.ic_memory_editor_inspector,
+            description = R.string.memory_editor_inspect_memory,
+            onClick = onInspect,
+        )
     }
     HorizontalDivider()
 }
@@ -1367,6 +1375,7 @@ private fun WatchRow(
     selected: Boolean,
     onToggle: () -> Unit,
     onOpen: () -> Unit,
+    onInspect: () -> Unit,
     onLabel: (Long, String) -> Unit,
 ) {
     Row(
@@ -1415,6 +1424,11 @@ private fun WatchRow(
                 }
             }
         }
+        ActionIconButton(
+            icon = R.drawable.ic_memory_editor_inspector,
+            description = R.string.memory_editor_inspect_memory,
+            onClick = onInspect,
+        )
         WatchLabelButton(row, onLabel)
         if (row.freezeMode >= 0) {
             Icon(
