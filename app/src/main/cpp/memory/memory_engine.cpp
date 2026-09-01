@@ -1038,6 +1038,11 @@ jint commitOperation(const OperationContext &context,
         return kCancelled;
     }
     normalizeCandidateResults(*next);
+    const size_t nextBytes = next->retainedBytes();
+    if (nextBytes > kRetainedStateByteLimit) {
+        setMessage("Completed search state exceeds the safe memory budget; previous results were preserved");
+        return kResourceLimit;
+    }
     std::lock_guard<std::mutex> lock(gMutex);
     if (gTarget.generation != context.target.generation ||
         gTarget.token != context.target.token) {
@@ -1051,7 +1056,7 @@ jint commitOperation(const OperationContext &context,
     } else if (historyMode < 0) {
         gHistory.clear();
     }
-    trimHistoryLocked(next->retainedBytes());
+    trimHistoryLocked(nextBytes);
     gState = std::move(next);
     if (!preserveLive) {
         gLiveCandidates.clear();
