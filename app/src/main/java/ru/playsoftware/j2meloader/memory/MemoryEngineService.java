@@ -46,7 +46,6 @@ import java.util.Locale;
 
 /** Owns all scan state in a dedicated app process and exposes only logical candidate IDs. */
 public final class MemoryEngineService extends Service {
-	private static final int MAX_RUNS = 4096;
 	private static final long PROGRESS_UPDATE_PERIOD_MS = 200L;
 	// Native cancellation uses this generation to distinguish a newly started operation from a
 	// cancellation delivered by Binder immediately before its native entry point.
@@ -622,7 +621,8 @@ public final class MemoryEngineService extends Service {
 			if (!canReadProbe(pid, bridge.getReadProbe(token))) {
 				return MemoryEngineContract.RESULT_UNSUPPORTED;
 			}
-			long[] runs = bridge.getResidentRuns(token, scope, MAX_RUNS);
+			long[] runs = bridge.getResidentRuns(token, scope,
+					MemoryEngineContract.MAX_RESIDENT_RUNS);
 			if (!MemoryEngineContract.isCompleteRunList(runs)) {
 				if (bridge.getRuntimeToken() != token) {
 					return MemoryEngineContract.RESULT_TARGET_LOST;

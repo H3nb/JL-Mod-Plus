@@ -31,6 +31,9 @@ public class MemoryEngineContractTest {
 				new long[]{2L, 0L, 0x1000L, 0x2000L}));
 		assertFalse(MemoryEngineContract.isCompleteRunList(
 				new long[]{1L, 0L, 0x1000L, 0x2000L, 0x3000L, 0x4000L}));
+		long[] oversized = new long[2 + (MemoryEngineContract.MAX_RESIDENT_RUNS + 1) * 2];
+		oversized[0] = MemoryEngineContract.MAX_RESIDENT_RUNS + 1L;
+		assertFalse(MemoryEngineContract.isCompleteRunList(oversized));
 	}
 
 	@Test
@@ -51,6 +54,7 @@ public class MemoryEngineContractTest {
 		assertEquals(32, MemoryEngineContract.MAX_FREEZE_RECORDS);
 		assertEquals(8, MemoryEngineContract.MAX_GROUP_VALUES);
 		assertEquals(8, MemoryEngineContract.MAX_SEARCH_HISTORY);
+		assertEquals(4096, MemoryEngineContract.MAX_RESIDENT_RUNS);
 		assertEquals(128, MemoryEngineContract.DEFAULT_INSPECT_RADIUS);
 		assertEquals(256, MemoryEngineContract.MAX_INSPECT_RADIUS);
 		assertEquals(256, MemoryEngineContract.DEFAULT_NEARBY_RADIUS);

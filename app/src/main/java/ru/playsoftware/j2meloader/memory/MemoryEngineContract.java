@@ -78,6 +78,8 @@ public final class MemoryEngineContract {
 	public static final int MAX_MULTI_WRITE = 32;
 	public static final int MAX_FREEZE_RECORDS = 32;
 	public static final int MAX_GROUP_VALUES = 8;
+	/** Maximum resident address runs accepted from the target process. */
+	public static final int MAX_RESIDENT_RUNS = 4096;
 	public static final int DEFAULT_INSPECT_RADIUS = 128;
 	public static final int MAX_INSPECT_RADIUS = 256;
 	public static final int DEFAULT_NEARBY_RADIUS = 256;
@@ -148,6 +150,7 @@ public final class MemoryEngineContract {
 
 	static boolean isCompleteRunList(long[] runs) {
 		if (runs == null || runs.length < 2 || runs[0] <= 0L || runs[1] != 0L ||
+				runs[0] > MAX_RESIDENT_RUNS ||
 				runs[0] > (runs.length - 2L) / 2L) {
 			return false;
 		}

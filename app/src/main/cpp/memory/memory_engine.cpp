@@ -146,6 +146,9 @@ constexpr size_t kResultStride = 9;
 constexpr size_t kIdentityRadius = 8;
 constexpr size_t kMultiWriteLimit = 32;
 constexpr size_t kRecoveryLimit = 32;
+// The target bridge exposes at most this many resident runs. Keep the native JNI boundary
+// bounded as well so a malformed caller cannot force an arbitrarily large range copy.
+constexpr size_t kMaxTargetRuns = 4'096;
 // Binder callers normally send at most one visible page (or the bounded watch list). Keep a
 // larger defensive ceiling here so malformed requests cannot force an unbounded native copy.
 constexpr size_t kMaxIdRequest = 4'096;
@@ -2736,14 +2739,29 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_configureTarget(
             return kInvalidRequest;
         }
         const jsize length = env->GetArrayLength(rawRuns);
-        if (length < 4 || (length - 2) % 2 != 0) {
+        const size_t rawLength = length < 0 ? 0U : static_cast<size_t>(length);
+        if (length < 4 || (length - 2) % 2 != 0 ||
+            rawLength > 2U + kMaxTargetRuns * 2U) {
             setMessage("Invalid target range list");
             return kInvalidRequest;
         }
-        std::vector<jlong> values(static_cast<size_t>(length));
+        std::array<jlong, 2> header{};
+        env->GetLongArrayRegion(rawRuns, 0, 2, header.data());
+        if (env->ExceptionCheck()) {
+            return kInvalidRequest;
+        }
+        const jlong declaredRuns = header[0];
+        if (header[1] != 0 || declaredRuns <= 0 ||
+            static_cast<uint64_t>(declaredRuns) > kMaxTargetRuns ||
+            declaredRuns != (length - 2) / 2) {
+            setMessage("Incomplete target range list");
+            return kResourceLimit;
+        }
+
+        std::vector<jlong> values(rawLength);
         env->GetLongArrayRegion(rawRuns, 0, length, values.data());
         if (env->ExceptionCheck() || values[1] != 0 ||
-            values[0] != (length - 2) / 2) {
+            values[0] != declaredRuns) {
             setMessage("Incomplete target range list");
             return kResourceLimit;
         }
@@ -2752,6 +2770,7 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_configureTarget(
         target.pid = pid;
         target.pageSize = static_cast<size_t>(pageSize);
         target.token = token;
+        target.ranges.reserve(static_cast<size_t>(declaredRuns));
         uintptr_t previousEnd = 0;
         for (jsize index = 2; index < length; index += 2) {
             if (values[index] <= 0 || values[index + 1] <= values[index] ||

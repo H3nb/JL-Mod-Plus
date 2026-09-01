@@ -25,7 +25,6 @@ import androidx.annotation.Nullable;
 
 /** Minimal :midlet bridge for runtime identity and target-local mincore collection. */
 public final class MemoryTargetBridgeService extends Service {
-	private static final int MAX_RUNS = 4096;
 	private static final long[] EMPTY_RUNS = new long[]{0L, 0L};
 	private final Object rangeLock = new Object();
 	private final RemoteCallbackList<IMemoryTargetCallback> callbacks = new RemoteCallbackList<>();
@@ -74,7 +73,7 @@ public final class MemoryTargetBridgeService extends Service {
 		public long[] getResidentRuns(long runtimeToken, int scope, int maxRuns) {
 			if (!MemoryRuntimeSession.isActive(runtimeToken)
 					|| !MemoryEngineContract.isScope(scope)
-					|| maxRuns <= 0 || maxRuns > MAX_RUNS) {
+					|| maxRuns <= 0 || maxRuns > MemoryEngineContract.MAX_RESIDENT_RUNS) {
 				return EMPTY_RUNS;
 			}
 			synchronized (rangeLock) {
