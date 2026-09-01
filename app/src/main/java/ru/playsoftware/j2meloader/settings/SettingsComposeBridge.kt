@@ -17,12 +17,12 @@ package ru.playsoftware.j2meloader.settings
 import android.content.res.Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -36,7 +36,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.AlertDialog
+import ru.playsoftware.j2meloader.ui.AdaptiveAlertDialog as AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,7 +51,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -68,12 +67,13 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.AccentPalette
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+import ru.playsoftware.j2meloader.ui.adaptiveDialogLayout
 import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
+import ru.playsoftware.j2meloader.ui.rememberScrollCanScrollForward
 
 data class SettingsOption(
     val value: String,
@@ -148,9 +148,6 @@ class SettingsComposeController(
     }
 }
 
-/** The Activity shell applies host safe-area padding, so Compose does not apply it again. */
-private val NoWindowInsets = WindowInsets(left = 0, top = 0, right = 0, bottom = 0)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -164,10 +161,8 @@ fun SettingsScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        contentWindowInsets = NoWindowInsets,
         topBar = {
             TopAppBar(
-                windowInsets = NoWindowInsets,
                 title = { Text(stringResource(R.string.action_settings)) },
                 navigationIcon = {
                     IconButton(onClick = actions::onBack) {
@@ -276,27 +271,30 @@ fun SettingsScreen(
     }
 
     state.directoryError?.let { message ->
+        val maxMessageHeight = adaptiveDialogLayout().maxContentHeight(reservedHeight = 176.dp)
         AlertDialog(
-            modifier = Modifier.settingsDialogModifier(landscape),
-            properties = DialogProperties(usePlatformDefaultWidth = !landscape),
+            textScrollable = false,
             onDismissRequest = {},
             title = { Text(stringResource(R.string.error)) },
             text = {
                 val scrollState = rememberScrollState()
-                val canScrollForward by remember {
-                    derivedStateOf { scrollState.value < scrollState.maxValue }
-                }
-                Column {
+                val canScrollForward = rememberScrollCanScrollForward(scrollState)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxMessageHeight),
+                ) {
                     Text(
                         text = message,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(max = if (landscape) 220.dp else 360.dp)
+                            .heightIn(max = maxMessageHeight)
                             .verticalScroll(scrollState),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     ScrollableContentHint(
                         visible = canScrollForward,
+                        modifier = Modifier.align(Alignment.BottomCenter),
                     )
                 }
             },
@@ -456,13 +454,11 @@ private fun SettingsChoiceDialog(
     onDismiss: () -> Unit,
     onSelected: (String) -> Unit,
 ) {
-    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val listState = rememberLazyListState()
-    val maxListHeight = if (landscape) 220.dp else 360.dp
+    val maxListHeight = adaptiveDialogLayout().maxContentHeight(reservedHeight = 120.dp)
     val canScrollForward = rememberLazyListCanScrollForward(listState)
     AlertDialog(
-        modifier = Modifier.settingsDialogModifier(landscape),
-        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
+        textScrollable = false,
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
@@ -538,10 +534,11 @@ private fun SettingsSwitchRow(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 64.dp)
-            .clickable(
+            .toggleable(
+                value = setting.checked,
                 enabled = setting.enabled,
                 role = Role.Switch,
-                onClick = { onCheckedChange(!setting.checked) },
+                onValueChange = onCheckedChange,
             )
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -569,7 +566,7 @@ private fun SettingsSwitchRow(
         }
         Switch(
             checked = setting.checked,
-            onCheckedChange = onCheckedChange,
+            onCheckedChange = null,
             enabled = setting.enabled,
         )
     }
@@ -602,15 +599,5 @@ private fun SettingsActionRow(
                 overflow = TextOverflow.Ellipsis,
             )
         }
-    }
-}
-
-private fun Modifier.settingsDialogModifier(landscape: Boolean): Modifier {
-    return if (landscape) {
-        this
-            .fillMaxWidth(0.94f)
-            .widthIn(max = 760.dp)
-    } else {
-        this.widthIn(max = 560.dp)
     }
 }

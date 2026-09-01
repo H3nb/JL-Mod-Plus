@@ -22,16 +22,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.layout.AnimatedPane
-import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
-import androidx.compose.material3.adaptive.layout.SupportingPaneScaffoldRole
-import androidx.compose.material3.adaptive.navigation.NavigableSupportingPaneScaffold
-import androidx.compose.material3.adaptive.navigation.rememberSupportingPaneScaffoldNavigator
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
+import androidx.compose.material3.adaptive.navigation3.SupportingPaneSceneStrategy
+import androidx.compose.material3.adaptive.navigation3.rememberSupportingPaneSceneStrategy
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -48,7 +46,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,7 +56,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import kotlinx.coroutines.launch
+import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.ui.NavDisplay
 import ru.playsoftware.j2meloader.R
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -70,6 +69,9 @@ private data class MemoryNearbyAnchor(
     val label: String,
     val address: Long,
 )
+
+private data object MemoryInspectorMainRoute : NavKey
+private data object MemoryInspectorControlsRoute : NavKey
 
 internal data class MemoryInspectorCell(
     val offset: Int,
@@ -177,21 +179,23 @@ internal fun MemoryInspectorDialog(
         mutableIntStateOf(MemoryEngineContract.DEFAULT_INSPECT_RADIUS)
     }
     val cells = remember(snapshot, viewType) { buildInspectorCells(snapshot, viewType) }
-    val navigator = rememberSupportingPaneScaffoldNavigator<Any>()
-    val scope = rememberCoroutineScope()
-    val supportingHidden =
-        navigator.scaffoldValue[SupportingPaneScaffoldRole.Supporting] == PaneAdaptedValue.Hidden
-    val mainHidden =
-        navigator.scaffoldValue[SupportingPaneScaffoldRole.Main] == PaneAdaptedValue.Hidden
-    val returnToMain: () -> Unit = {
-        scope.launch {
-            navigator.navigateTo(SupportingPaneScaffoldRole.Main)
+    val adaptiveInfo = currentWindowAdaptiveInfoV2()
+    val directive = remember(adaptiveInfo) {
+        calculatePaneScaffoldDirective(adaptiveInfo).copy(horizontalPartitionSpacerSize = 0.dp)
+    }
+    val supportsTwoPanes = directive.maxHorizontalPartitions > 1
+    var controlsOpenOnCompact by remember(snapshot.candidateId) { mutableStateOf(false) }
+    val backStack = remember(snapshot.candidateId, supportsTwoPanes, controlsOpenOnCompact) {
+        buildList<NavKey> {
+            add(MemoryInspectorMainRoute)
+            if (supportsTwoPanes || controlsOpenOnCompact) add(MemoryInspectorControlsRoute)
         }
     }
+    val supportingPaneStrategy = rememberSupportingPaneSceneStrategy<NavKey>(directive = directive)
 
     Dialog(
         onDismissRequest = {
-            if (mainHidden) returnToMain() else onDismiss()
+            if (controlsOpenOnCompact) controlsOpenOnCompact = false else onDismiss()
         },
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
@@ -200,26 +204,33 @@ internal fun MemoryInspectorDialog(
             shape = MaterialTheme.shapes.large,
             tonalElevation = 8.dp,
         ) {
-            NavigableSupportingPaneScaffold(
-                navigator = navigator,
+            NavDisplay(
+                backStack = backStack,
+                onBack = {
+                    if (controlsOpenOnCompact) controlsOpenOnCompact = false else onDismiss()
+                },
                 modifier = Modifier.fillMaxSize(),
-                mainPane = {
-                    AnimatedPane {
+                sceneStrategies = listOf(supportingPaneStrategy),
+                entryProvider = { key ->
+                    when (key) {
+                        MemoryInspectorMainRoute -> NavEntry(
+                            key = key,
+                            metadata = SupportingPaneSceneStrategy.mainPane(),
+                        ) {
                         InspectorMainPane(
                             snapshot = snapshot,
                             cells = cells,
-                            supportingHidden = supportingHidden,
+                            supportingHidden = !supportsTwoPanes,
                             onOpenControls = {
-                                scope.launch {
-                                    navigator.navigateTo(SupportingPaneScaffoldRole.Supporting)
-                                }
+                                controlsOpenOnCompact = true
                             },
                             onDismiss = onDismiss,
                         )
-                    }
-                },
-                supportingPane = {
-                    AnimatedPane {
+                        }
+                        MemoryInspectorControlsRoute -> NavEntry(
+                            key = key,
+                            metadata = SupportingPaneSceneStrategy.supportingPane(),
+                        ) {
                         InspectorControlsPane(
                             snapshot = snapshot,
                             viewType = viewType,
@@ -228,10 +239,12 @@ internal fun MemoryInspectorDialog(
                             onRadius = { radius = it },
                             onRefresh = { onRefresh(radius) },
                             onNearby = onNearby,
-                            showBackToMemory = mainHidden,
-                            onBackToMemory = returnToMain,
+                            showBackToMemory = !supportsTwoPanes,
+                            onBackToMemory = { controlsOpenOnCompact = false },
                             onDismiss = onDismiss,
                         )
+                        }
+                        else -> error("Unknown Memory Inspector destination: $key")
                     }
                 },
             )

@@ -14,16 +14,24 @@
 
 package javax.microedition.shell
 
+import androidx.compose.ui.test.DeviceConfigurationOverride
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso.pressBack
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
@@ -32,9 +40,35 @@ import org.junit.Test
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 
+@OptIn(ExperimentalTestApi::class)
 class RuntimeMenuComposeTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun compactHeightBackMenuExposesScrollHint() {
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp)),
+            ) {
+                JLModPlusTheme {
+                    RuntimeMenuHost(
+                        state = RuntimeMenuUiState(
+                            title = "Demo MIDlet",
+                            isCanvas = true,
+                            imeAvailable = true,
+                            virtualKeyboardAvailable = true,
+                        ),
+                        menuVisible = true,
+                        actions = RecordingRuntimeMenuActions(),
+                        onDismissMenu = {},
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Swipe to continue").assertIsDisplayed()
+    }
 
     @Test
     fun runtimeToolbarDoesNotExposeRedundantMenuButton() {
@@ -55,6 +89,29 @@ class RuntimeMenuComposeTest {
         }
 
         composeRule.onAllNodesWithContentDescription("Menu").assertCountEquals(0)
+    }
+
+    @Test
+    fun canvasToolbarActionsKeepMinimumTouchTarget() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeMenuHost(
+                    state = RuntimeMenuUiState(
+                        title = "Canvas MIDlet",
+                        isCanvas = true,
+                        toolbarVisible = true,
+                        imeAvailable = true,
+                    ),
+                    menuVisible = false,
+                    actions = RecordingRuntimeMenuActions(),
+                    onDismissMenu = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Take Screenshot")
+            .assertWidthIsAtLeast(48.dp)
+            .assertHeightIsAtLeast(48.dp)
     }
 
     @Test

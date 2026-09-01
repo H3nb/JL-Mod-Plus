@@ -17,7 +17,11 @@ package ru.playsoftware.j2meloader.applist
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
+import androidx.navigationevent.compose.rememberNavigationEventDispatcherOwner
 import com.android.tools.screenshot.PreviewTest
 import ru.playsoftware.j2meloader.config.ProfileActionsDialog
 import ru.playsoftware.j2meloader.config.ProfileNameDialog
@@ -25,6 +29,7 @@ import ru.playsoftware.j2meloader.config.ProfileUiItem
 import ru.playsoftware.j2meloader.config.ProfilesActions
 import ru.playsoftware.j2meloader.config.ProfilesScreen
 import ru.playsoftware.j2meloader.config.ProfilesUiState
+import ru.playsoftware.j2meloader.librarydb.LibraryCollectionRow
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 
 private val PreviewApps = listOf(
@@ -64,6 +69,47 @@ fun LibraryGridScreenshot() {
                 loading = false,
                 apps = PreviewApps,
                 layout = LibraryLayout.Grid,
+            ),
+            actions = NoOpLibraryActions,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(
+    name = "Library compact dark 200 percent text",
+    widthDp = 320,
+    heightDp = 568,
+    fontScale = 2.0f,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    showBackground = true,
+)
+@Composable
+fun LibraryCompactLargeTextScreenshot() {
+    JLModPlusTheme(darkTheme = true) {
+        LibraryScreen(
+            state = LibraryUiState(
+                loading = false,
+                apps = PreviewApps,
+                layout = LibraryLayout.List,
+                databaseControlsReady = true,
+            ),
+            actions = NoOpLibraryActions,
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "Library medium portrait", widthDp = 700, heightDp = 1_000, showBackground = true)
+@Composable
+fun LibraryMediumPortraitScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryScreen(
+            state = LibraryUiState(
+                loading = false,
+                apps = PreviewApps,
+                layout = LibraryLayout.Grid,
+                databaseControlsReady = true,
             ),
             actions = NoOpLibraryActions,
         )
@@ -352,6 +398,34 @@ fun LibraryAppActionsScreenshot() {
 }
 
 @PreviewTest
+@Preview(
+    name = "Library app actions compact landscape large text",
+    widthDp = 480,
+    heightDp = 240,
+    fontScale = 2.0f,
+    showBackground = true,
+)
+@Composable
+fun LibraryAppActionsCompactLandscapeLargeTextScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        AppActionsDialog(
+            app = PreviewApps.first(),
+            onDismiss = {},
+            onShortcut = {},
+            onRename = {},
+            onSettings = {},
+            onReinstall = {},
+            onDelete = {},
+            onEditMetadata = {},
+            onSelect = {},
+            onAddToCollection = {},
+            onShareApp = {},
+            onExportAppBundle = {},
+        )
+    }
+}
+
+@PreviewTest
 @Preview(name = "Library options", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
 fun LibraryOptionsScreenshot() {
@@ -370,11 +444,31 @@ fun LibraryOptionsScreenshot() {
 }
 
 @PreviewTest
-@Preview(name = "Library collections", widthDp = 360, heightDp = 640, showBackground = true)
+@Preview(name = "Library collections list detail", widthDp = 900, heightDp = 700, showBackground = true)
 @Composable
 fun LibraryCollectionsScreenshot() {
-    JLModPlusTheme(darkTheme = false) {
-        LibraryCollectionsDestination(scaffoldPadding = PaddingValues())
+    val host = remember { PreviewCollectionsHost() }
+    val navigationEventDispatcherOwner = rememberNavigationEventDispatcherOwner(parent = null)
+    CompositionLocalProvider(
+        LocalNavigationEventDispatcherOwner provides navigationEventDispatcherOwner,
+    ) {
+        JLModPlusTheme(darkTheme = false) {
+            LibraryCollectionsDestination(
+                host = host,
+                libraryState = LibraryUiState(
+                    loading = false,
+                    apps = PreviewApps,
+                    layout = LibraryLayout.List,
+                    databaseControlsReady = true,
+                ),
+                scaffoldPadding = PaddingValues(),
+                navigationState = LibraryNavigationState(
+                    destination = LibraryDestinationKey.Collections,
+                    selectedCollectionId = 1L,
+                ),
+                onOpenActions = { _, _ -> },
+            )
+        }
     }
 }
 
@@ -559,6 +653,68 @@ private object NoOpLibraryActions : LibraryActions {
 }
 
 private object PreviewBulkActions : LibraryActions by NoOpLibraryActions, LibraryBulkActions
+
+private class PreviewCollectionsHost : LibraryCollectionsHost, LibraryActions by NoOpLibraryActions {
+    private val store = LibraryCollectionsUiStore().apply {
+        publishCollections(
+            listOf(
+                LibraryCollectionRow(
+                    id = 1L,
+                    name = "RPG Favorites",
+                    sortOrder = 0,
+                    createdAt = 1L,
+                    appCount = 3,
+                ),
+                LibraryCollectionRow(
+                    id = 2L,
+                    name = "Utilities",
+                    sortOrder = 1,
+                    createdAt = 2L,
+                    appCount = 2,
+                ),
+            ),
+        )
+        publishAllApps(PreviewApps)
+        showMembers(1L, PreviewApps.take(3))
+    }
+
+    override fun collectionsStore(): LibraryCollectionsUiStore = store
+    override fun onCreateCollection(name: String) = Unit
+    override fun onRenameCollection(collectionId: Long, name: String) = Unit
+    override fun onDeleteCollection(collectionId: Long) = Unit
+    override fun onOpenCollection(collectionId: Long) {
+        store.showMembers(collectionId, PreviewApps.take(3))
+    }
+    override fun onPrepareCollectionAppPicker() = Unit
+    override fun onDismissCollectionMembers() = store.dismissMembers()
+    override fun onRequestAddToCollection(appId: Int) = Unit
+    override fun onDismissAddToCollection() = Unit
+    override fun onAddAppToCollection(appId: Int, collectionId: Long) = Unit
+    override fun onAddAppsToCollection(appIds: Set<Long>, collectionId: Long) = Unit
+    override fun onRemoveAppFromCollection(appId: Int, collectionId: Long) = Unit
+}
+
+@PreviewTest
+@Preview(
+    name = "Profile actions compact landscape large text",
+    widthDp = 480,
+    heightDp = 240,
+    fontScale = 2.0f,
+    showBackground = true,
+)
+@Composable
+fun ProfileActionsCompactLandscapeLargeTextScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        ProfileActionsDialog(
+            profile = PreviewProfiles.first().copy(isDefault = false),
+            onDismiss = {},
+            onDefault = {},
+            onEdit = {},
+            onRename = {},
+            onDelete = {},
+        )
+    }
+}
 
 private object NoOpProfilesActions : ProfilesActions {
     override fun onBack() = Unit

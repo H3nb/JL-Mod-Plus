@@ -90,9 +90,10 @@ public class MicroActivity extends AppCompatActivity {
 	private static final int ORIENTATION_AUTO = 1;
 	private static final int ORIENTATION_PORTRAIT = 2;
 	private static final int ORIENTATION_LANDSCAPE = 3;
+	private static final int MIN_RUNTIME_TOOLBAR_TOUCH_TARGET_DP = 48;
 
 	private Displayable current;
-	private boolean actionBarEnabled;
+	private boolean runtimeToolbarEnabled;
 	private boolean statusBarEnabled;
 	private boolean displayCutoutEnabled;
 	private boolean orientationLocked;
@@ -145,7 +146,7 @@ public class MicroActivity extends AppCompatActivity {
 				oldLeft, oldTop, oldRight, oldBottom) -> updateOverlayLocation());
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		actionBarEnabled = sp.getBoolean(PREF_TOOLBAR, false);
+		runtimeToolbarEnabled = sp.getBoolean(PREF_TOOLBAR, false);
 		statusBarEnabled = sp.getBoolean(PREF_STATUSBAR, false);
 		// Keep legacy preference files safe: status bar and cutout are mutually exclusive even if
 		// an older version persisted both switches as enabled.
@@ -382,7 +383,7 @@ public class MicroActivity extends AppCompatActivity {
 						applyLayoutSelection(index);
 					}
 				});
-		setRuntimeToolbarHeight((int) getToolBarHeight());
+		setRuntimeToolbarHeight(getRuntimeToolbarHeight(getRuntimeChrome(current)));
 		updateRuntimeMenuState(current);
 	}
 
@@ -424,7 +425,19 @@ public class MicroActivity extends AppCompatActivity {
 
 	private GuestWindowPolicy.Chrome getRuntimeChrome(@Nullable Displayable displayable) {
 		return GuestWindowPolicy.resolve(displayable instanceof Canvas,
-				statusBarEnabled, actionBarEnabled, displayCutoutEnabled);
+				statusBarEnabled, runtimeToolbarEnabled, displayCutoutEnabled);
+	}
+
+	private int getRuntimeToolbarHeight(GuestWindowPolicy.Chrome chrome) {
+		if (!chrome.toolbarVisible) {
+			return 0;
+		}
+		int minimumTouchTarget = Math.round(MIN_RUNTIME_TOOLBAR_TOUCH_TARGET_DP
+				* getResources().getDisplayMetrics().density);
+		int standardHeight = Math.max(Math.round(getToolBarHeight()), minimumTouchTarget);
+		// Canvas previously compressed the action row below the minimum Android touch target.
+		// Keep its compact visual treatment while giving each visible action a reliable 48dp target.
+		return chrome.canvas ? Math.max(standardHeight * 2 / 3, minimumTouchTarget) : standardHeight;
 	}
 
 	private void setRuntimeToolbarHeight(int height) {
@@ -773,7 +786,7 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	public void openOptionsMenu() {
-		if (!actionBarEnabled && current instanceof Canvas) {
+		if (!runtimeToolbarEnabled && current instanceof Canvas) {
 			showSystemUiForMenu();
 		}
 		if (runtimeMenuController != null) {
@@ -803,8 +816,8 @@ public class MicroActivity extends AppCompatActivity {
 			super.closeOptionsMenu();
 		}
 		// The runtime menu temporarily reveals system bars for immersive Canvas screens. Restore
-		// the configured chrome after dismissal so actionbar/statusbar/cutout policy stays coherent.
-		if (!actionBarEnabled && current instanceof Canvas) {
+		// the configured chrome after dismissal so toolbar/status-bar/cutout policy stays coherent.
+		if (!runtimeToolbarEnabled && current instanceof Canvas) {
 			View host = binding == null ? null : binding.displayableContainer;
 			if (host != null) {
 				host.post(() -> {
@@ -1037,10 +1050,7 @@ public class MicroActivity extends AppCompatActivity {
 			GuestWindowPolicy.Chrome chrome = getRuntimeChrome(next);
 			applySystemUi(chrome, next);
 			configureDisplayCutoutWindow(chrome.cutoutAllowed);
-			int toolbarHeight = chrome.toolbarVisible
-					? (int) (chrome.canvas ? getToolBarHeight() / 1.5 : getToolBarHeight())
-					: 0;
-			setRuntimeToolbarHeight(toolbarHeight);
+			setRuntimeToolbarHeight(getRuntimeToolbarHeight(chrome));
 			updateRuntimeMenuState(next);
 			applyGuestInsets(next);
 			if (next != null) {

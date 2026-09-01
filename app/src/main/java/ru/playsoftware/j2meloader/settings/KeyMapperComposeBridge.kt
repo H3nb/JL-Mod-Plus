@@ -17,6 +17,7 @@ package ru.playsoftware.j2meloader.settings
 import android.graphics.Rect
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,11 +26,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -50,18 +53,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntSize
+import ru.playsoftware.j2meloader.ui.AdaptiveAlertDialog
 import androidx.compose.ui.unit.dp
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+import ru.playsoftware.j2meloader.ui.adaptiveDialogLayout
+import ru.playsoftware.j2meloader.ui.rememberScrollCanScrollForward
 import javax.microedition.lcdui.Canvas
 import javax.microedition.lcdui.keyboard.KeyMapper
 import kotlin.math.roundToInt
@@ -176,60 +186,62 @@ fun KeyMapperScreen(
 ) {
     val buttons = keyMapperButtons()
     var menuExpanded by remember { mutableStateOf(false) }
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        contentWindowInsets = WindowInsets.safeDrawing,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.pref_map_keys),
-                        maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = actions::onBack) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_arrow_back),
-                            contentDescription = stringResource(R.string.action_back),
+    Box(modifier = modifier.fillMaxSize()) {
+        val scaffoldModifier = if (state.mappingDialog == null) {
+            Modifier
+        } else {
+            Modifier.clearAndSetSemantics { }
+        }
+        Scaffold(
+            modifier = scaffoldModifier.fillMaxSize(),
+            contentWindowInsets = WindowInsets.safeDrawing,
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = stringResource(R.string.pref_map_keys),
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         )
-                    }
-                },
-                actions = {
-                    Box {
-                        IconButton(onClick = { menuExpanded = true }) {
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = actions::onBack) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_more_vert),
-                                contentDescription = stringResource(R.string.more),
+                                painter = painterResource(R.drawable.ic_arrow_back),
+                                contentDescription = stringResource(R.string.action_back),
                             )
                         }
-                        DropdownMenu(
-                            expanded = menuExpanded,
-                            onDismissRequest = { menuExpanded = false },
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.reset)) },
-                                onClick = {
-                                    menuExpanded = false
-                                    actions.onResetMapping()
-                                },
-                            )
+                    },
+                    actions = {
+                        Box {
+                            IconButton(onClick = { menuExpanded = true }) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_more_vert),
+                                    contentDescription = stringResource(R.string.more),
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = menuExpanded,
+                                onDismissRequest = { menuExpanded = false },
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.reset)) },
+                                    onClick = {
+                                        menuExpanded = false
+                                        actions.onResetMapping()
+                                    },
+                                )
+                            }
                         }
-                    }
-                },
-            )
-        },
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .background(MaterialTheme.colorScheme.background),
-        ) {
+                    },
+                )
+            },
+        ) { padding ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .padding(padding)
+                    .background(MaterialTheme.colorScheme.background)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 8.dp, vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -246,18 +258,18 @@ fun KeyMapperScreen(
                 KeyRow(buttons.subList(18, 21), actions)
                 KeyRow(buttons.subList(21, 24), actions)
             }
+        }
 
-            state.mappingDialog?.let { dialog ->
-                MappingOverlay(
-                    dialog = dialog,
-                    actions = actions,
-                    onPopupBoundsChanged = onPopupBoundsChanged,
-                )
-            }
+        state.mappingDialog?.let { dialog ->
+            MappingOverlay(
+                dialog = dialog,
+                actions = actions,
+                onPopupBoundsChanged = onPopupBoundsChanged,
+            )
         }
     }
     if (state.warningVisible) {
-        androidx.compose.material3.AlertDialog(
+        AdaptiveAlertDialog(
             onDismissRequest = actions::onDismissWarning,
             title = { Text(stringResource(R.string.warning)) },
             text = { Text(stringResource(R.string.alert_map_menu)) },
@@ -307,47 +319,70 @@ private fun MappingOverlay(
     onPopupBoundsChanged: (Rect) -> Unit,
 ) {
     val dismissDescription = stringResource(R.string.dismiss_mapping)
+    val paneTitle = stringResource(R.string.mapping_dialog_title)
+    val dialogLayout = adaptiveDialogLayout()
+    val scrollState = rememberScrollState()
+    val canScrollForward = rememberScrollCanScrollForward(scrollState)
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.56f))
-            .semantics { contentDescription = dismissDescription }
-            .clickable(onClick = actions::onDismissMapping),
-        contentAlignment = Alignment.Center,
+        modifier = Modifier.fillMaxSize(),
     ) {
-        Card(
+        Box(
             modifier = Modifier
-                .widthIn(min = 240.dp, max = 320.dp)
-                .onGloballyPositioned { coordinates ->
-                    val position = coordinates.positionInWindow()
-                    val size: IntSize = coordinates.size
-                    onPopupBoundsChanged(
-                        Rect(
-                            position.x.roundToInt(),
-                            position.y.roundToInt(),
-                            position.x.roundToInt() + size.width,
-                            position.y.roundToInt() + size.height,
-                        ),
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.56f))
+                .semantics { contentDescription = dismissDescription }
+                .clickable(onClick = actions::onDismissMapping),
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing),
+            contentAlignment = Alignment.Center,
+        ) {
+            Card(
+                modifier = dialogLayout.modifier
+                    .semantics { this.paneTitle = paneTitle }
+                    .onGloballyPositioned { coordinates ->
+                        val position = coordinates.positionInWindow()
+                        val size: IntSize = coordinates.size
+                        onPopupBoundsChanged(
+                            Rect(
+                                position.x.roundToInt(),
+                                position.y.roundToInt(),
+                                position.x.roundToInt() + size.width,
+                                position.y.roundToInt() + size.height,
+                            ),
+                        )
+                    }
+                    .pointerInput(Unit) { detectTapGestures(onTap = {}) },
+            ) {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = dialogLayout.maxHeight)
+                            .verticalScroll(scrollState)
+                            .padding(24.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Text(
+                            text = paneTitle,
+                            style = MaterialTheme.typography.titleLarge,
+                        )
+                        Text(
+                            text = stringResource(
+                                R.string.mapping_dialog_message,
+                                dialog.currentKeyName,
+                            ),
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
+                    }
+                    ScrollableContentHint(
+                        visible = canScrollForward,
+                        modifier = Modifier.align(Alignment.BottomCenter),
                     )
                 }
-                .clickable(enabled = false) {},
-        ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Text(
-                    text = stringResource(R.string.mapping_dialog_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                )
-                Text(
-                    text = stringResource(
-                        R.string.mapping_dialog_message,
-                        dialog.currentKeyName,
-                    ),
-                    style = MaterialTheme.typography.bodyLarge,
-                )
             }
         }
     }

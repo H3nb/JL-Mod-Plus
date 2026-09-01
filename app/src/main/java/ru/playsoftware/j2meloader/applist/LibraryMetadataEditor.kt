@@ -109,7 +109,7 @@ internal fun LibraryMetadataEditorScreen(
                 .padding(padding)
                 .consumeWindowInsets(padding),
         ) {
-            val wide = maxWidth >= 700.dp
+            val wide = maxWidth >= 700.dp && maxHeight >= 480.dp
             if (wide) {
                 Row(
                     modifier = Modifier

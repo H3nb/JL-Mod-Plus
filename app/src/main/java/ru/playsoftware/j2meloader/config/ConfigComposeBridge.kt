@@ -50,7 +50,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import ru.playsoftware.j2meloader.ui.AdaptiveAlertDialog as AlertDialog
+import ru.playsoftware.j2meloader.ui.adaptiveDialogLayout
+import ru.playsoftware.j2meloader.ui.rememberScrollCanScrollForward
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -98,6 +100,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
@@ -109,18 +112,20 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.launch
 import javax.microedition.shell.timing.TimingMode
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.config.model.Size
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
-import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
+import ru.playsoftware.j2meloader.ui.availableWindowWidthDp
 import ru.playsoftware.j2meloader.ui.jlModPlusNavigationBarItemColors
 import ru.playsoftware.j2meloader.ui.jlModPlusNavigationRailItemColors
 import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 import kotlin.math.roundToInt
+
+internal const val CONFIG_NAVIGATION_BAR_TAG = "config_navigation_bar"
+internal const val CONFIG_NAVIGATION_RAIL_TAG = "config_navigation_rail"
 
 /** Host bridge; ConfigActivity remains the owner of persistence and platform-sensitive flows. */
 class ConfigComposeController @JvmOverloads constructor(
@@ -241,7 +246,7 @@ internal fun ConfigScreen(
             pagerScope.launch { pagerState.animateScrollToPage(index) }
         }
     }
-    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val useNavigationRail = availableWindowWidthDp() >= 600.dp
     val density = LocalDensity.current
     val imeVisible = WindowInsets.ime.getBottom(density) > 0
 
@@ -257,7 +262,7 @@ internal fun ConfigScreen(
         )
     } else {
         Row(modifier = modifier.fillMaxSize()) {
-            if (isLandscape) {
+            if (useNavigationRail) {
                 ConfigNavigationRail(
                     destinations = destinations,
                     selected = selectedDestination,
@@ -278,7 +283,7 @@ internal fun ConfigScreen(
                 },
                 bottomBar = {
                     // Keep the destination bar from floating above the IME while editing text.
-                    if (!isLandscape && !imeVisible) {
+                    if (!useNavigationRail && !imeVisible) {
                         ConfigNavigationBar(
                             destinations = destinations,
                             selected = selectedDestination,
@@ -298,8 +303,8 @@ internal fun ConfigScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .verticalScroll(pageScrollState)
                             .imePadding()
+                            .verticalScroll(pageScrollState)
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
@@ -510,6 +515,7 @@ private fun ConfigNavigationBar(
     onSelected: (ConfigDestination) -> Unit,
 ) {
     NavigationBar(
+        modifier = Modifier.testTag(CONFIG_NAVIGATION_BAR_TAG),
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         tonalElevation = 0.dp,
     ) {
@@ -540,7 +546,10 @@ private fun ConfigNavigationRail(
     selected: ConfigDestination,
     onSelected: (ConfigDestination) -> Unit,
 ) {
-    NavigationRail(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
+    NavigationRail(
+        modifier = Modifier.testTag(CONFIG_NAVIGATION_RAIL_TAG),
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
         destinations.forEach { destination ->
             val label = stringResource(destination.label)
             NavigationRailItem(
@@ -730,8 +739,7 @@ internal fun ScreenPresetDialog(
     useModalBottomSheet: Boolean = true,
 ) {
     var customResolutionVisible by rememberSaveable { mutableStateOf(false) }
-    val landscape = configDialogLandscape()
-    val dialogMaxHeight = (availableWindowHeightDp() * 0.88f).coerceAtLeast(180.dp)
+    val dialogLayout = adaptiveDialogLayout()
     val listedPresets = if (selectedPreset != null && !presets.contains(selectedPreset)) {
         listOf(selectedPreset) + presets
     } else {
@@ -748,10 +756,7 @@ internal fun ScreenPresetDialog(
         val listState = rememberLazyListState()
         val canScrollForward = rememberLazyListCanScrollForward(listState)
         Surface(
-            modifier = Modifier
-                .fillMaxWidth(if (landscape) 0.90f else 0.92f)
-                .widthIn(max = if (landscape) 840.dp else 560.dp)
-                .heightIn(max = dialogMaxHeight),
+            modifier = dialogLayout.modifier,
             shape = MaterialTheme.shapes.extraLarge,
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = 6.dp,
@@ -873,7 +878,7 @@ internal fun ScreenPresetDialog(
     if (useModalBottomSheet) {
         Dialog(
             onDismissRequest = onDismissRequest,
-            properties = DialogProperties(usePlatformDefaultWidth = false),
+            properties = dialogLayout.properties,
         ) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 dialogContent()
@@ -902,30 +907,16 @@ internal fun ScreenPresetDialog(
 private fun configDialogLandscape(): Boolean =
     LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-private fun Modifier.configDialogModifier(landscape: Boolean): Modifier = if (landscape) {
-    this
-        .fillMaxWidth(0.90f)
-        .widthIn(max = 840.dp)
-} else {
-    this.widthIn(max = 560.dp)
-}
-
 @Composable
 private fun ConfigDialogScrollableBody(
-    landscape: Boolean,
     verticalArrangement: Arrangement.Vertical,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val screenHeight = availableWindowHeightDp()
-    val maxBodyHeight = if (landscape) {
-        (screenHeight * 0.48f).coerceAtLeast(120.dp)
-    } else {
-        (screenHeight * 0.62f).coerceAtLeast(220.dp)
-    }
+    // Leave title and actions outside the scroll container, including with large fonts.
+    val maxBodyHeight = adaptiveDialogLayout().maxContentHeight(reservedHeight = 168.dp)
     val scrollState = rememberScrollState()
-    val canScrollForward by androidx.compose.runtime.remember {
-        androidx.compose.runtime.derivedStateOf { scrollState.value < scrollState.maxValue }
-    }
+    val hintThresholdPx = with(LocalDensity.current) { 24.dp.roundToPx() }
+    val canScrollForward = rememberScrollCanScrollForward(scrollState, hintThresholdPx)
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -966,16 +957,11 @@ internal fun CustomResolutionDialog(
     val validWidth = width.toIntOrNull()?.takeIf { it > 0 }
     val validHeight = height.toIntOrNull()?.takeIf { it > 0 }
     val valid = validWidth != null && validHeight != null
-    val landscape = configDialogLandscape()
-
     AlertDialog(
-        modifier = Modifier.configDialogModifier(landscape),
-        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(R.string.config_custom_resolution)) },
         text = {
             ConfigDialogScrollableBody(
-                landscape = landscape,
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Row(
@@ -1148,22 +1134,24 @@ internal fun FontSizesDialog(
     var mediumDraft by remember(medium) { mutableStateOf(medium) }
     var largeDraft by remember(large) { mutableStateOf(large) }
     val landscape = configDialogLandscape()
+    val useHorizontalFields = availableWindowWidthDp() >= 600.dp
     AlertDialog(
-        modifier = Modifier.configDialogModifier(landscape),
-        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(R.string.config_font_sizes)) },
         text = {
             ConfigDialogScrollableBody(
-                landscape = landscape,
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
                     text = stringResource(R.string.config_help_font_sizes_long),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = if (landscape) {
+                        MaterialTheme.typography.bodySmall
+                    } else {
+                        MaterialTheme.typography.bodyMedium
+                    },
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                if (landscape) {
+                if (useHorizontalFields) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -1537,10 +1525,7 @@ private fun ConfigActionConfirmationDialog(
     } else {
         action.message
     }
-    val landscape = configDialogLandscape()
     AlertDialog(
-        modifier = Modifier.configDialogModifier(landscape),
-        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(action.title)) },
         text = { Text(stringResource(message)) },
@@ -1656,16 +1641,11 @@ internal fun ConfigNumberDialog(
     onConfirm: (String) -> Unit,
 ) {
     var draft by remember(initialValue) { mutableStateOf(initialValue) }
-    val landscape = configDialogLandscape()
-
     AlertDialog(
-        modifier = Modifier.configDialogModifier(landscape),
-        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(title) },
         text = {
             ConfigDialogScrollableBody(
-                landscape = landscape,
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 if (description != null) {
@@ -1746,16 +1726,11 @@ internal fun ConfigSliderDialog(
     onConfirm: (Int) -> Unit,
 ) {
     var draftText by remember(initialValue) { mutableStateOf(initialValue.toString()) }
-    val landscape = configDialogLandscape()
-
     AlertDialog(
-        modifier = Modifier.configDialogModifier(landscape),
-        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
         onDismissRequest = onDismissRequest,
         title = { Text(title) },
         text = {
             ConfigDialogScrollableBody(
-                landscape = landscape,
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 if (description != null) {
@@ -1912,10 +1887,9 @@ internal fun ConfigChoiceDialog(
     onDismissRequest: () -> Unit,
     onSelected: (Int) -> Unit,
 ) {
-    val landscape = configDialogLandscape()
+    val maxListHeight = adaptiveDialogLayout().maxContentHeight(reservedHeight = 152.dp)
     AlertDialog(
-        modifier = Modifier.configDialogModifier(landscape),
-        properties = DialogProperties(usePlatformDefaultWidth = !landscape),
+        textScrollable = false,
         onDismissRequest = onDismissRequest,
         title = { Text(title) },
         text = {
@@ -1932,7 +1906,7 @@ internal fun ConfigChoiceDialog(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = if (landscape) 180.dp else 360.dp),
+                        .heightIn(max = maxListHeight),
                 ) {
                     LazyColumn(
                         modifier = Modifier.fillMaxWidth(),

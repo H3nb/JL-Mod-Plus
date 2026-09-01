@@ -16,6 +16,7 @@
 package ru.playsoftware.j2meloader.util;
 
 import android.app.Activity;
+import android.graphics.Color;
 import android.os.Build;
 import android.view.View;
 
@@ -46,9 +47,14 @@ public final class EdgeToEdgeCompat {
 	}
 
 	/** Enables the shared edge-to-edge contract for a Compose-owned host surface. */
-	public static void enableForComposeSurface(Activity activity) {
-		WindowCompat.enableEdgeToEdge(activity.getWindow());
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+    public static void enableForComposeSurface(Activity activity) {
+        WindowCompat.enableEdgeToEdge(activity.getWindow());
+        // Android 6 and 7 cannot draw dark navigation-bar icons. Keep their legacy white
+        // buttons readable instead of leaving a transparent bar over a light Compose surface.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            activity.getWindow().setNavigationBarColor(Color.BLACK);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 			activity.getWindow().setNavigationBarContrastEnforced(false);
 		}
 	}

@@ -15,10 +15,12 @@
 package ru.playsoftware.j2meloader.settings
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -69,9 +71,10 @@ class KeyMapperComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Press a key").assertIsDisplayed()
+        composeRule.onNodeWithText("Press A Key").assertIsDisplayed()
         composeRule.onNodeWithText("Current mapping:\nKEYCODE_BACK").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Dismiss mapping").performClick()
+        composeRule.onNodeWithContentDescription("Dismiss mapping")
+            .performSemanticsAction(SemanticsActions.OnClick)
         assertTrue(dismissed)
     }
 

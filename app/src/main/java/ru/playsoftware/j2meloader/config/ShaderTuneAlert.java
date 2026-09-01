@@ -106,15 +106,10 @@ public class ShaderTuneAlert extends DialogFragment {
 		WindowManager.LayoutParams attributes = window.getAttributes();
 		attributes.dimAmount = 0.32f;
 		window.setAttributes(attributes);
-		int availableWidth = Math.max(getResources().getDisplayMetrics().widthPixels - dp(32), 1);
-		int availableHeight = Math.max(getResources().getDisplayMetrics().heightPixels - dp(24), 1);
-		int width = Math.min(availableWidth, dp(840));
-		int height = Math.min(availableHeight, dp(720));
-		window.setLayout(width, height);
-	}
-
-	private int dp(int value) {
-		return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
+		window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+		window.setLayout(
+				WindowManager.LayoutParams.MATCH_PARENT,
+				WindowManager.LayoutParams.MATCH_PARENT);
 	}
 
 	interface Callback {

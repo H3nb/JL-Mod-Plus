@@ -26,6 +26,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.espresso.Espresso.pressBack
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -152,7 +153,7 @@ class FilePickerComposeTest {
     }
 
     @Test
-    fun navHostReflectsLoadedStateAfterInitialLoading() {
+    fun hostReflectsLoadedStateAfterInitialLoading() {
         val events = AtomicReference<String>("")
         lateinit var publishState: (FilePickerState) -> Unit
         composeRule.setContent {
@@ -161,7 +162,7 @@ class FilePickerComposeTest {
             }
             publishState = { next -> state = next }
             JLModPlusTheme {
-                FilePickerNavHost(
+                FilePickerHost(
                     state = state,
                     actions = RecordingActions(events),
                 )
@@ -171,6 +172,42 @@ class FilePickerComposeTest {
         publishState(sampleState())
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Games").assertExists()
+    }
+
+    @Test
+    fun hostHandlesSystemBackFromInitialSubfolder() {
+        val events = AtomicReference<String>("")
+        composeRule.setContent {
+            JLModPlusTheme {
+                FilePickerHost(
+                    state = sampleState(),
+                    actions = RecordingActions(events),
+                )
+            }
+        }
+
+        pressBack()
+        composeRule.waitForIdle()
+
+        assertEquals("back", events.get())
+    }
+
+    @Test
+    fun hostKeepsRootBackUnderThePickerExitPolicy() {
+        val events = AtomicReference<String>("")
+        composeRule.setContent {
+            JLModPlusTheme {
+                FilePickerHost(
+                    state = sampleState().copy(currentPath = "/storage"),
+                    actions = RecordingActions(events),
+                )
+            }
+        }
+
+        pressBack()
+        composeRule.waitForIdle()
+
+        assertEquals("back", events.get())
     }
 
     @Test

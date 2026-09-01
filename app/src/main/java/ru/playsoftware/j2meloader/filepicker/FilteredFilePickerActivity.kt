@@ -60,7 +60,7 @@ class FilteredFilePickerActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        EdgeToEdgeCompat.enableIfSupported(this)
+        EdgeToEdgeCompat.enableForComposeSurface(this)
 
         val request = FilePickerRequest.fromIntent(intent)
         val restoredPath = savedInstanceState?.getString(STATE_CURRENT_PATH)
@@ -81,6 +81,10 @@ class FilteredFilePickerActivity : AppCompatActivity() {
             restoredSearchVisible = savedInstanceState?.getBoolean(STATE_SEARCH_VISIBLE) ?: false,
             restoredSearchQuery = savedInstanceState?.getString(STATE_SEARCH_QUERY).orEmpty(),
             restoredSortOrder = restoredSortOrder,
+            restoredShowCreateFolder = savedInstanceState?.getBoolean(STATE_CREATE_FOLDER_VISIBLE)
+                ?: false,
+            restoredCreateFolderName = savedInstanceState?.getString(STATE_CREATE_FOLDER_NAME)
+                .orEmpty(),
             onStateChanged = { pickerState = it },
             onFilesPicked = ::finishWithFiles,
         )
@@ -92,13 +96,11 @@ class FilteredFilePickerActivity : AppCompatActivity() {
             setContent {
                 val state = pickerState ?: return@setContent
                 JLModPlusTheme {
-                    FilePickerNavHost(state = state, actions = createActions())
+                    FilePickerHost(state = state, actions = createActions())
                 }
             }
         }
         setContentView(composeView)
-        supportActionBar?.hide()
-        EdgeToEdgeCompat.protectHostContent(this)
 
     }
 
@@ -113,6 +115,12 @@ class FilteredFilePickerActivity : AppCompatActivity() {
             outState.putBoolean(STATE_SEARCH_VISIBLE, state.searchVisible)
             outState.putString(STATE_SEARCH_QUERY, state.searchQuery)
             outState.putString(STATE_SORT_ORDER, state.sortOrder.name)
+            val saveCreateFolderDraft = state.showCreateFolder && !state.loading
+            outState.putBoolean(STATE_CREATE_FOLDER_VISIBLE, saveCreateFolderDraft)
+            outState.putString(
+                STATE_CREATE_FOLDER_NAME,
+                state.createFolderName.takeIf { saveCreateFolderDraft }.orEmpty(),
+            )
         }
         super.onSaveInstanceState(outState)
     }
@@ -200,6 +208,8 @@ class FilteredFilePickerActivity : AppCompatActivity() {
         private const val STATE_SEARCH_VISIBLE = "file_picker.search_visible"
         private const val STATE_SEARCH_QUERY = "file_picker.search_query"
         private const val STATE_SORT_ORDER = "file_picker.sort_order"
+        private const val STATE_CREATE_FOLDER_VISIBLE = "file_picker.create_folder_visible"
+        private const val STATE_CREATE_FOLDER_NAME = "file_picker.create_folder_name"
         private const val BACK_PRESS_WINDOW_MS = 1_500L
     }
 }

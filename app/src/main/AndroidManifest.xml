@@ -198,12 +198,8 @@
         <activity
             android:name=".config.ConfigActivity"
             android:exported="true"
+            android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="stateHidden|adjustResize" />
-        <activity
-            android:name="ru.woesss.j2me.installer.AutoReconversionActivity"
-            android:exported="false"
-            android:excludeFromRecents="true"
-            android:theme="@style/AppTheme.AutoReconversion" />
         <activity
             android:name="javax.microedition.shell.MicroActivity"
             android:exported="false"
@@ -230,16 +226,21 @@
             android:exported="false"
             android:process=":memory_engine" />
         <activity android:name=".settings.SettingsActivity"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
 
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".settings.KeyMapperActivity" android:exported="false" />
+        <activity
+            android:name=".settings.KeyMapperActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".filepicker.FilteredFilePickerActivity"
+            android:enableOnBackInvokedCallback="true"
             android:exported="false"
             android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="stateHidden|adjustResize" />

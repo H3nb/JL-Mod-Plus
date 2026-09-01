@@ -20,17 +20,6 @@
         <item name="windowNoTitle">true</item>
     </style>
 
-    <style name="AppTheme.AutoReconversion" parent="Theme.AppCompat.DayNight.Dialog.Alert">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
-        <item name="android:windowIsFloating">true</item>
-        <item name="android:windowBackground">@android:color/transparent</item>
-        <item name="android:colorBackground">@android:color/transparent</item>
-        <item name="android:windowCloseOnTouchOutside">false</item>
-        <item name="android:windowMinWidthMajor">0%</item>
-        <item name="android:windowMinWidthMinor">0%</item>
-    </style>
-
     <style name="ButtonStyle" parent="Widget.AppCompat.Button.Colored">
         <item name="elevation">1dp</item>
         <item name="android:background">@drawable/bg_button</item>

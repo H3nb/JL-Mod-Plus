@@ -19,7 +19,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -28,7 +27,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import ru.playsoftware.j2meloader.ui.AdaptiveAlertDialog as AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -149,8 +148,6 @@ private fun LocalDiagnosticRepository.Record.toComposeListItem(
     )
 }
 
-private val NoWindowInsets = WindowInsets(left = 0, top = 0, right = 0, bottom = 0)
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun CrashReportsScreen(
@@ -179,10 +176,8 @@ fun CrashReportsScreen(
     }
 
     Scaffold(
-        contentWindowInsets = NoWindowInsets,
         topBar = {
             TopAppBar(
-                windowInsets = NoWindowInsets,
                 title = {
                     Text(
                         text = if (selectionMode) {
@@ -291,9 +286,8 @@ fun CrashReportsScreen(
             }
         } else {
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = innerPadding,
             ) {
                 items(state.records, key = { it.id }) { record ->
                     val selected = record.id in selectedIds
@@ -391,10 +385,8 @@ fun CrashReportDetailsScreen(
     var confirmation by rememberSaveable { mutableStateOf<CrashReportConfirmation?>(null) }
 
     Scaffold(
-        contentWindowInsets = NoWindowInsets,
         topBar = {
             TopAppBar(
-                windowInsets = NoWindowInsets,
                 title = {
                     Text(
                         text = stringResource(R.string.crash_reports),

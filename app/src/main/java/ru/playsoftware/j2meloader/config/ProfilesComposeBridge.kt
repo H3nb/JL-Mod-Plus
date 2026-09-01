@@ -17,15 +17,16 @@ package ru.playsoftware.j2meloader.config
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import ru.playsoftware.j2meloader.ui.AdaptiveAlertDialog as AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -54,6 +55,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
+import ru.playsoftware.j2meloader.ui.ScrollableContentHint
+import ru.playsoftware.j2meloader.ui.adaptiveDialogLayout
+import ru.playsoftware.j2meloader.ui.rememberScrollCanScrollForward
 
 data class ProfileUiItem(
     val name: String,
@@ -65,9 +69,6 @@ data class ProfileUiItem(
 data class ProfilesUiState(
     val profiles: List<ProfileUiItem> = emptyList(),
 )
-
-/** The Activity shell already applies the host safe-area padding. */
-private val NoWindowInsets = WindowInsets(left = 0, top = 0, right = 0, bottom = 0)
 
 interface ProfilesActions {
     fun onBack()
@@ -130,10 +131,8 @@ fun ProfilesScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        contentWindowInsets = NoWindowInsets,
         topBar = {
             TopAppBar(
-                windowInsets = NoWindowInsets,
                 title = { Text(stringResource(R.string.profiles)) },
                 navigationIcon = {
                     IconButton(onClick = actions::onBack) {
@@ -171,10 +170,8 @@ fun ProfilesScreen(
             }
         } else {
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentPadding = PaddingValues(vertical = 4.dp),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = padding,
             ) {
                 items(state.profiles, key = { it.name }) { profile ->
                     ProfileRow(profile = profile, onClick = { selectedProfile = profile })
@@ -293,21 +290,42 @@ internal fun ProfileActionsDialog(
     } else {
         profile.name
     }
+    val maxActionHeight = adaptiveDialogLayout().maxContentHeight(
+        reservedHeight = 120.dp,
+    )
+    val scrollState = rememberScrollState()
+    val canScrollForward = rememberScrollCanScrollForward(scrollState)
     AlertDialog(
+        textScrollable = false,
         onDismissRequest = onDismiss,
         title = { Text(displayName, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         text = {
-            Column {
-                if (!profile.isDefault) {
-                    ProfileDialogAction(R.string.set_as_default, onDismiss, onDefault)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = maxActionHeight),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxActionHeight)
+                        .verticalScroll(scrollState),
+                ) {
+                    if (!profile.isDefault) {
+                        ProfileDialogAction(R.string.set_as_default, onDismiss, onDefault)
+                    }
+                    if (!profile.isBuiltIn && profile.canEdit) {
+                        ProfileDialogAction(R.string.edit, onDismiss, onEdit)
+                    }
+                    if (!profile.isBuiltIn) {
+                        ProfileDialogAction(R.string.action_context_rename, onDismiss, onRename)
+                        ProfileDialogAction(R.string.action_context_delete, onDismiss, onDelete)
+                    }
                 }
-                if (!profile.isBuiltIn && profile.canEdit) {
-                    ProfileDialogAction(R.string.edit, onDismiss, onEdit)
-                }
-                if (!profile.isBuiltIn) {
-                    ProfileDialogAction(R.string.action_context_rename, onDismiss, onRename)
-                    ProfileDialogAction(R.string.action_context_delete, onDismiss, onDelete)
-                }
+                ScrollableContentHint(
+                    visible = canScrollForward,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
             }
         },
         confirmButton = {},

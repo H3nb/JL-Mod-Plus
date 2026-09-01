@@ -26,8 +26,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Environment;
+import android.util.Log;
 
 import androidx.annotation.Keep;
+import androidx.fragment.app.FragmentActivity;
 import androidx.preference.PreferenceManager;
 
 import java.io.File;
@@ -36,7 +38,7 @@ import javax.microedition.shell.MicroActivity;
 import javax.microedition.util.ContextHolder;
 
 import ru.playsoftware.j2meloader.R;
-import ru.woesss.j2me.installer.AutoReconversionActivity;
+import ru.woesss.j2me.installer.AutoReconversionDialog;
 import ru.woesss.j2me.installer.AppReconverter;
 
 public class Config {
@@ -114,7 +116,7 @@ public class Config {
 		context.startActivity(intent);
 	}
 
-	public static void startApp(Context context, String name, String path) {
+	public static boolean startApp(Context context, String name, String path) {
 		int end = path.lastIndexOf(File.separatorChar);
 		int start = path.lastIndexOf(File.separatorChar, end - 1);
 		if (start > 0) {
@@ -125,7 +127,7 @@ public class Config {
 			File configFile = new File(configPath);
 			if (!configFile.exists()) {
 				openSettings(context, name, path);
-				return;
+				return false;
 			}
 		}
 
@@ -134,28 +136,33 @@ public class Config {
 				&& (appDir == null
 				|| AppReconverter.hasRetainedSource(appDir)
 				|| !AppReconverter.hasUsableConvertedPayload(appDir))) {
-			AutoReconversionActivity.start(context, name, path);
-			return;
+			if (context instanceof FragmentActivity) {
+				return AutoReconversionDialog.show((FragmentActivity) context, name, path);
+			}
+			Log.e(Config.class.getSimpleName(),
+					"Compatibility reconversion requires a FragmentActivity host");
+			return false;
 		}
 
 		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(path), context, MicroActivity.class);
 		intent.putExtra(KEY_MIDLET_NAME, name);
 		context.startActivity(intent);
+		return false;
 	}
 
-	public static void startApp(Context context, String name, Uri appUri) {
+	public static boolean startApp(Context context, String name, Uri appUri) {
 		if (appUri == null) {
 			// A malformed shortcut/configuration intent must not open a configuration screen for the
 			// process working directory. The caller can surface its own navigation error or simply
 			// finish, but no MIDlet launch is safe without an app URI.
-			return;
+			return false;
 		}
 		String path = appUri.getScheme() == null
 				? appUri.toString()
 				: "file".equals(appUri.getScheme()) && appUri.getPath() != null
 						? appUri.getPath()
 						: appUri.toString();
-		startApp(context, name, path);
+		return startApp(context, name, path);
 	}
 
 	private static File localAppDirectory(String path) {

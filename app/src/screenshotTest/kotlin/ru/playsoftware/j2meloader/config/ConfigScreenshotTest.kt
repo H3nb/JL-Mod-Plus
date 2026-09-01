@@ -209,6 +209,24 @@ fun ConfigLandscapeScreenshot() {
 }
 
 @PreviewTest
+@Preview(name = "Config compact landscape", widthDp = 500, heightDp = 360, showBackground = true)
+@Composable
+fun ConfigCompactLandscapeScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Display)
+    }
+}
+
+@PreviewTest
+@Preview(name = "Config medium portrait", widthDp = 700, heightDp = 1_000, showBackground = true)
+@Composable
+fun ConfigMediumPortraitScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        ConfigScreen(PreviewConfigState, NoOpConfigEvents, initialDestination = ConfigDestination.Display)
+    }
+}
+
+@PreviewTest
 @Preview(name = "Config color picker landscape", widthDp = 640, heightDp = 360, showBackground = true)
 @Composable
 fun ConfigColorPickerLandscapeScreenshot() {

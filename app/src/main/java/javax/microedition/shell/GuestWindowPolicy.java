@@ -19,8 +19,8 @@ final class GuestWindowPolicy {
 	}
 
 	static boolean canUseDisplayCutout(boolean canvas,
-			boolean statusBarEnabled, boolean actionBarEnabled, boolean userAllowsCutout) {
-		// The Compose ActionBar is part of the host content and may occupy the cutout area. The
+			boolean statusBarEnabled, boolean runtimeToolbarEnabled, boolean userAllowsCutout) {
+		// The Compose runtime toolbar is part of the host content and may occupy the cutout area. The
 		// system status bar cannot be combined with a cutout-enabled MIDlet because both reserve
 		// the same top inset.
 		return userAllowsCutout && canvas && !statusBarEnabled;
@@ -35,20 +35,20 @@ final class GuestWindowPolicy {
 	 * Android window.</p>
 	 */
 	static Chrome resolve(boolean canvas, boolean statusBarEnabled,
-			boolean actionBarEnabled, boolean userAllowsCutout) {
+			boolean runtimeToolbarEnabled, boolean userAllowsCutout) {
 		return new Chrome(
 				canvas,
-				!canvas || actionBarEnabled,
+				!canvas || runtimeToolbarEnabled,
 				!canvas || statusBarEnabled,
 				!canvas,
-				canUseDisplayCutout(canvas, statusBarEnabled, actionBarEnabled, userAllowsCutout));
+				canUseDisplayCutout(canvas, statusBarEnabled, runtimeToolbarEnabled, userAllowsCutout));
 	}
 
 	static Padding calculate(boolean canvas, boolean statusBarEnabled,
-			boolean actionBarEnabled, boolean userAllowsCutout,
+			boolean runtimeToolbarEnabled, boolean userAllowsCutout,
 			int systemLeft, int statusTop, int systemRight, int navigationBottom,
 			int cutoutLeft, int cutoutTop, int cutoutRight, int cutoutBottom, int imeBottom) {
-		return calculate(resolve(canvas, statusBarEnabled, actionBarEnabled, userAllowsCutout),
+		return calculate(resolve(canvas, statusBarEnabled, runtimeToolbarEnabled, userAllowsCutout),
 				systemLeft, statusTop, systemRight, navigationBottom,
 				cutoutLeft, cutoutTop, cutoutRight, cutoutBottom, imeBottom);
 	}

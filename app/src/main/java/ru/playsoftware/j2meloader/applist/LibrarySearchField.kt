@@ -14,7 +14,6 @@
 
 package ru.playsoftware.j2meloader.applist
 
-import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -26,7 +25,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextOverflow
 import ru.playsoftware.j2meloader.R
 
 /** Shared search field used by the Apps and Collections surfaces. */
@@ -42,16 +41,22 @@ internal fun LibrarySearchField(
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
-        modifier = modifier.height(54.dp),
+        modifier = modifier,
         enabled = enabled,
         singleLine = true,
         shape = MaterialTheme.shapes.large,
-        placeholder = { Text(stringResource(R.string.library_search_placeholder)) },
+        placeholder = {
+            Text(
+                text = stringResource(R.string.library_search_placeholder),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
         leadingIcon = {
             if (query.isEmpty()) {
                 Icon(
                     painter = painterResource(R.drawable.ic_search),
-                    contentDescription = stringResource(R.string.search),
+                    contentDescription = null,
                 )
             } else {
                 IconButton(

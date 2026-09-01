@@ -89,17 +89,12 @@ public class SettingsActivity extends AppCompatActivity {
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		EdgeToEdgeCompat.enableIfSupported(this);
+		EdgeToEdgeCompat.enableForComposeSurface(this);
 		preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		normalizeChromePreferences();
 
 		ComposeView composeView = new ComposeView(this);
 		setContentView(composeView);
-		if (getSupportActionBar() != null) {
-			// The Material 3 TopAppBar is the single host toolbar for this migrated screen.
-			getSupportActionBar().hide();
-		}
-		EdgeToEdgeCompat.protectHostContent(this);
 		composeController = new SettingsComposeController(
 				composeView,
 				buildState(),

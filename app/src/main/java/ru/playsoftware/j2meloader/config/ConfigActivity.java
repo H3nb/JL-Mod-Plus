@@ -249,9 +249,8 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 					}
 				}
 				ComposeView errorView = new ComposeView(this);
-				EdgeToEdgeCompat.enableIfSupported(this);
+				EdgeToEdgeCompat.enableForComposeSurface(this);
 				setContentView(errorView);
-				EdgeToEdgeCompat.protectHostContent(this);
 				ConfigErrorComposeBridge.install(errorView,
 						getString(R.string.err_missing_app, storageName),
 						new ConfigErrorActions() {
@@ -284,9 +283,6 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		EdgeToEdgeCompat.enableForComposeSurface(this);
 		ComposeView composeView = new ComposeView(this);
 		setContentView(composeView);
-		if (getSupportActionBar() != null) {
-			getSupportActionBar().hide();
-		}
 		display = getWindowManager().getDefaultDisplay();
 
 		fillScreenSizePresets(display.getWidth(), display.getHeight());
@@ -664,11 +660,11 @@ public class ConfigActivity extends AppCompatActivity implements ShaderTuneAlert
 		if (needShow && configDir != null) {
 			saveParams();
 		}
-		Config.startApp(
+		boolean reconversionShown = Config.startApp(
 				this,
 				getIntent().getStringExtra(KEY_MIDLET_NAME),
 				getIntent().getData());
-		finish();
+		if (!reconversionShown) finish();
 	}
 
 	private void openKeyMappings() {

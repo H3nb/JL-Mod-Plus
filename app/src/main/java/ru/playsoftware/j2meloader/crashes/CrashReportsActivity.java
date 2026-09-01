@@ -50,11 +50,10 @@ public class CrashReportsActivity extends AppCompatActivity {
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		EdgeToEdgeCompat.enableIfSupported(this);
+		EdgeToEdgeCompat.enableForComposeSurface(this);
 		composeView = new ComposeView(this);
 		composeView.setId(R.id.crash_reports_compose_root);
 		setContentView(composeView);
-		EdgeToEdgeCompat.protectHostContent(this);
 		composeController = CrashReportsComposeBridge.installList(composeView, createActions());
 	}
 

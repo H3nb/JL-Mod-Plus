@@ -15,16 +15,22 @@
 package ru.playsoftware.j2meloader.config
 
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.DeviceConfigurationOverride
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -36,6 +42,7 @@ import ru.playsoftware.j2meloader.config.model.Size
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 
 @RunWith(AndroidJUnit4::class)
+@OptIn(ExperimentalTestApi::class)
 class ConfigComposeTest {
     @get:Rule
     val composeRule = createComposeRule()
@@ -91,6 +98,38 @@ class ConfigComposeTest {
         composeRule.onRoot().performTouchInput { swipeRight() }
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Screen & Window Basics").assertExists()
+    }
+
+    @Test
+    fun configUsesRailForMediumPortraitWindow() {
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(700.dp, 1_000.dp)),
+            ) {
+                JLModPlusTheme {
+                    ConfigScreen(sampleState(), RecordingConfigEvents())
+                }
+            }
+        }
+
+        composeRule.onNodeWithTag(CONFIG_NAVIGATION_RAIL_TAG).assertExists()
+        composeRule.onNodeWithTag(CONFIG_NAVIGATION_BAR_TAG).assertDoesNotExist()
+    }
+
+    @Test
+    fun configKeepsBottomBarForCompactLandscapeWindow() {
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(500.dp, 360.dp)),
+            ) {
+                JLModPlusTheme {
+                    ConfigScreen(sampleState(), RecordingConfigEvents())
+                }
+            }
+        }
+
+        composeRule.onNodeWithTag(CONFIG_NAVIGATION_BAR_TAG).assertExists()
+        composeRule.onNodeWithTag(CONFIG_NAVIGATION_RAIL_TAG).assertDoesNotExist()
     }
 
     @Test

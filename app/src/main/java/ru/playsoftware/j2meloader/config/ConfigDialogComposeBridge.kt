@@ -15,20 +15,27 @@
 package ru.playsoftware.j2meloader.config
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.verticalScroll
+import ru.playsoftware.j2meloader.ui.AdaptiveAlertDialog as AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -43,17 +50,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import android.content.res.Configuration
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 import ru.playsoftware.j2meloader.ui.ScrollableContentHint
-import ru.playsoftware.j2meloader.ui.availableWindowHeightDp
+import ru.playsoftware.j2meloader.ui.adaptiveDialogLayout
 import ru.playsoftware.j2meloader.ui.rememberLazyListCanScrollForward
 import java.text.DecimalFormat
 import kotlin.math.roundToInt
@@ -119,27 +125,59 @@ object ConfigDialogComposeBridge {
 }
 
 @Composable
-private fun DialogSurface(content: @Composable ColumnScope.() -> Unit) {
-    val configuration = LocalConfiguration.current
-    val landscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-    val maxHeight = (availableWindowHeightDp() * if (landscape) 0.86f else 0.90f)
-        .coerceAtLeast(180.dp)
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth(if (landscape) 0.96f else 1f)
-            .widthIn(min = 280.dp, max = if (landscape) 840.dp else 560.dp)
-            .heightIn(max = maxHeight),
-        shape = MaterialTheme.shapes.extraLarge,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        tonalElevation = 6.dp,
-    ) {
-        Column(
+private fun DialogSurface(
+    onDismissRequest: (() -> Unit)?,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (onDismissRequest != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(onDismissRequest) {
+                        detectTapGestures { onDismissRequest() }
+                    },
+            )
+        }
+        BoxWithConstraints(
             modifier = Modifier
-                .padding(horizontal = 24.dp, vertical = 20.dp)
-                .imePadding(),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            content = content,
-        )
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing),
+            contentAlignment = Alignment.Center,
+        ) {
+            val compactWidth = maxWidth < 360.dp
+            val compactHeight = maxHeight < 480.dp
+            val dialogLayout = adaptiveDialogLayout(maxWidth, maxHeight)
+
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Surface(
+                    modifier = dialogLayout.modifier
+                        // Keep taps inside the surface out of the dismiss layer behind it.
+                        .pointerInput(Unit) {
+                            awaitPointerEventScope {
+                                while (true) {
+                                    awaitPointerEvent()
+                                }
+                            }
+                        },
+                    shape = MaterialTheme.shapes.extraLarge,
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    tonalElevation = 6.dp,
+                ) {
+                    Column(
+                        modifier = Modifier.padding(
+                            horizontal = if (compactWidth) 16.dp else 24.dp,
+                            vertical = if (compactHeight) 12.dp else 20.dp,
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        content = content,
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -148,9 +186,8 @@ private fun LoadProfileContent(
     profiles: List<Profile>,
     callbacks: ConfigDialogComposeBridge.LoadProfileCallbacks,
 ) {
-    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
-    DialogSurface {
-        Text(stringResource(R.string.profile_choose_template), style = MaterialTheme.typography.headlineSmall)
+    DialogSurface(onDismissRequest = callbacks::onDismiss) {
+        Text(stringResource(R.string.profile_choose_template), style = MaterialTheme.typography.titleLarge)
         Text(
             stringResource(R.string.profile_choose_template_summary),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -168,7 +205,7 @@ private fun LoadProfileContent(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = if (landscape) 180.dp else 420.dp),
+                    .weight(1f, fill = false),
             ) {
                 LazyColumn(
                     state = listState,
@@ -220,30 +257,43 @@ private fun SaveProfileContent(
     val trimmed = name.trim()
     val valid = trimmed.isNotEmpty()
 
-    DialogSurface {
-        Text(stringResource(R.string.profile_save_template), style = MaterialTheme.typography.headlineSmall)
-        Text(
-            stringResource(R.string.profile_save_template_summary),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        OutlinedTextField(
-            value = name,
-            onValueChange = {
-                touched = true
-                name = it.filterNot { ch -> ch in "/\\:*?\"<>|" }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(stringResource(R.string.enter_name)) },
-            singleLine = true,
-            isError = touched && !valid,
-            supportingText = if (touched && !valid) {
-                { Text(stringResource(R.string.error_name)) }
-            } else {
-                null
-            },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-        )
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+    DialogSurface(onDismissRequest = callbacks::onDismiss) {
+        Text(stringResource(R.string.profile_save_template), style = MaterialTheme.typography.titleLarge)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f, fill = false)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                stringResource(R.string.profile_save_template_summary),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            OutlinedTextField(
+                value = name,
+                onValueChange = {
+                    touched = true
+                    name = it.filterNot { ch -> ch in "/\\:*?\"<>|" }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(stringResource(R.string.enter_name)) },
+                singleLine = true,
+                isError = touched && !valid,
+                supportingText = if (touched && !valid) {
+                    { Text(stringResource(R.string.error_name)) }
+                } else {
+                    null
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.End,
+        ) {
             TextButton(onClick = callbacks::onDismiss) {
                 Text(stringResource(android.R.string.cancel))
             }
@@ -330,8 +380,6 @@ private fun ShaderContent(
             } ?: format.format(initial[index])
         })
     }
-    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
-
     fun normalizedValue(setting: ShaderSettingUi, raw: Float): Float {
         val progress = ((raw - setting.min) / setting.step).roundToInt()
         return (setting.min + progress * setting.step).coerceIn(setting.min, setting.max)
@@ -345,14 +393,14 @@ private fun ShaderContent(
         }
     }
 
-    DialogSurface {
-        Text(stringResource(R.string.shader_tuning), style = MaterialTheme.typography.headlineSmall)
+    DialogSurface(onDismissRequest = null) {
+        Text(stringResource(R.string.shader_tuning), style = MaterialTheme.typography.titleLarge)
         val listState = androidx.compose.foundation.lazy.rememberLazyListState()
         val canScrollForward = rememberLazyListCanScrollForward(listState)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = if (landscape) 180.dp else 420.dp),
+                .weight(1f, fill = false),
         ) {
             LazyColumn(
                 state = listState,
@@ -398,7 +446,12 @@ private fun ShaderContent(
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
         }
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.End,
+        ) {
             TextButton(onClick = {
                 values = FloatArray(4) { index ->
                     settings.firstOrNull { it.index == index }?.defaultValue ?: 0f

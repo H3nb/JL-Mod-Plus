@@ -57,6 +57,21 @@ Available skill routing:
 - Application-owned UI may migrate to Compose incrementally, but emulator, rendering, input, or Android-platform boundaries may remain native/View when they serve a concrete purpose.
 - For internal app icons, prefer official Material Symbols when suitable; use a repository-provided helper when available before creating a custom icon.
 
+## App-owned UI, adaptation, and navigation
+
+- Build new or materially changed app-owned presentation with Jetpack Compose Material 3 and the project theme/shared components. Keep intentional Android View, renderer, input, emulator, and Java ME API boundaries native when they still own platform or compatibility behavior.
+- Derive layout decisions from the current container constraints, window size, and insets rather than device names or orientation alone. A compact landscape window remains compact; a portrait tablet may already have room for a larger layout.
+- Verify every affected UI path from the supported minimum through target Android behavior, including compact, medium, and expanded widths; short and tall windows; portrait and landscape; light and dark themes; large text; system bars, cutouts, gesture navigation, and the IME where relevant.
+- Use adaptive components or multiple panes only when simultaneous content provides a concrete usability benefit. Preserve a clear single-pane fallback, readable line lengths, and stable selection when the window changes size.
+- Use Navigation 3 only for real destinations with distinct content and meaningful back history, deep links, results, or adaptive scenes. Do not add it for pager tabs, filter/sort state, dialog visibility, or a controller-owned hierarchy whose current state already defines the screen.
+- Give each Navigation 3 route key-specific content and one authoritative owner for navigation state. Route keys must be stable and saveable; avoid parallel mutable back stacks, duplicate destination state, and multiple stacks unless the product flow actually requires them.
+- Use Material 3 adaptive Navigation 3 scenes for verified list-detail or supporting-pane behavior. Test compact back navigation, selection restoration, process recreation, and the transition between single- and multi-pane windows.
+- Use `AdaptiveAlertDialog` for short Material 3 decisions and `adaptiveDialogLayout()` for custom Compose modal surfaces. Keep the shared adaptive width policy, let height wrap content, and bound only overflowing bodies with a lazy container or `verticalScroll` so titles and actions remain reachable.
+- Keep `DropdownMenu` for short anchored choices. Use a custom constrained dialog or a full-screen destination for long forms; do not change presentation type merely because orientation changes. Modal scrims must cover the owning surface, hide underlying semantics, preserve Back/outside-dismiss policy, and remain usable with the IME and 200% text.
+- Keep touch targets at least 48dp where practical, expose labels/state/actions to accessibility services, and avoid duplicate focus targets by putting selection/toggle semantics on the containing row while making its indicator inert.
+- Keep UI work economical on low-end devices: move I/O and expensive transforms off the main thread, use lazy containers and stable keys for long data sets, remember derived work with complete keys, and avoid per-frame persistence, duplicate state, or decorative effects that trigger broad recomposition.
+- Add the narrowest regression coverage for every changed branch. Include screenshots for materially different size/theme layouts and focused interaction tests for navigation Back/restore, modal overflow, dismissal, action reachability, and accessibility semantics. Inspect rendered output before accepting new screenshot references.
+
 ## Library database evolution
 
 For Room Library schema changes, follow `docs/library-schema-evolution.md` and preserve the migration contract:
