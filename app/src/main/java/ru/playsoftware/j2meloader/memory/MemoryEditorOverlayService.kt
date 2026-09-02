@@ -20,6 +20,17 @@ import android.view.View
 import android.view.ViewConfiguration
 import android.view.WindowManager
 import androidx.compose.ui.platform.ComposeView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.setViewTreeLifecycleOwner
+import androidx.lifecycle.setViewTreeViewModelStoreOwner
+import androidx.savedstate.SavedStateRegistry
+import androidx.savedstate.SavedStateRegistryController
+import androidx.savedstate.SavedStateRegistryOwner
+import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import kotlin.math.roundToInt
 
 /**
@@ -35,6 +46,7 @@ class MemoryEditorOverlayService : Service() {
     private lateinit var bubbleView: ComposeView
     private lateinit var editorParams: WindowManager.LayoutParams
     private lateinit var bubbleParams: WindowManager.LayoutParams
+    private lateinit var viewTreeOwner: OverlayViewTreeOwner
     private var controller: MemoryEditorOverlayController? = null
 
     private var bubbleDownX = 0f
@@ -50,6 +62,7 @@ class MemoryEditorOverlayService : Service() {
             stopSelf()
             return
         }
+        viewTreeOwner = OverlayViewTreeOwner().also(OverlayViewTreeOwner::resume)
         windowManager = getSystemService(WindowManager::class.java)
         createOverlayViews()
         controller = MemoryEditorOverlayController(
@@ -101,6 +114,7 @@ class MemoryEditorOverlayService : Service() {
                 runCatching { windowManager.removeViewImmediate(bubbleView) }
             }
         }
+        if (::viewTreeOwner.isInitialized) viewTreeOwner.destroy()
         super.onDestroy()
     }
 
@@ -113,6 +127,9 @@ class MemoryEditorOverlayService : Service() {
         }
 
         editorView = ComposeView(this).apply {
+            setViewTreeLifecycleOwner(viewTreeOwner)
+            setViewTreeSavedStateRegistryOwner(viewTreeOwner)
+            setViewTreeViewModelStoreOwner(viewTreeOwner)
             visibility = View.GONE
             isFocusableInTouchMode = true
             setOnKeyListener { _, keyCode, event ->
@@ -142,6 +159,9 @@ class MemoryEditorOverlayService : Service() {
         }
 
         bubbleView = ComposeView(this).apply {
+            setViewTreeLifecycleOwner(viewTreeOwner)
+            setViewTreeSavedStateRegistryOwner(viewTreeOwner)
+            setViewTreeViewModelStoreOwner(viewTreeOwner)
             visibility = View.GONE
         }
         val bubbleSize = dp(60)
@@ -273,6 +293,34 @@ class MemoryEditorOverlayService : Service() {
 
     private fun dp(value: Int): Int =
         (value * resources.displayMetrics.density).roundToInt()
+
+    private class OverlayViewTreeOwner : SavedStateRegistryOwner, ViewModelStoreOwner {
+        private val lifecycleRegistry = LifecycleRegistry(this)
+        private val savedStateController = SavedStateRegistryController.create(this)
+
+        override val lifecycle: Lifecycle
+            get() = lifecycleRegistry
+
+        override val savedStateRegistry: SavedStateRegistry
+            get() = savedStateController.savedStateRegistry
+
+        override val viewModelStore = ViewModelStore()
+
+        init {
+            savedStateController.performAttach()
+            savedStateController.performRestore(null)
+            lifecycleRegistry.currentState = Lifecycle.State.CREATED
+        }
+
+        fun resume() {
+            lifecycleRegistry.currentState = Lifecycle.State.RESUMED
+        }
+
+        fun destroy() {
+            lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
+            viewModelStore.clear()
+        }
+    }
 
     companion object {
         private const val ACTION_ENABLE =
