@@ -49,7 +49,7 @@ class MemoryEditorComposeController(
     private var destroyed = false
     private var bubbleEnabled = false
     private var activeOperationId = 0L
-    private var connectionGeneration = 0
+    @Volatile private var connectionGeneration = 0
     private var pendingFreezeAfterEdit: PendingFreezeAfterEdit? = null
     private var pendingInspectorRefresh: PendingInspectorRefresh? = null
 
@@ -295,7 +295,7 @@ class MemoryEditorComposeController(
 
     override fun refreshCapabilities() = reloadState()
 
-    private fun reloadState(retry: Int = 0) = runIpc {
+    private fun reloadState(retry: Int = 0): Unit = runIpc {
         val localToken = MemoryRuntimeSession.currentToken()
         if (localToken == 0L || localToken != ownedRuntimeToken) {
             post { destroy() }
