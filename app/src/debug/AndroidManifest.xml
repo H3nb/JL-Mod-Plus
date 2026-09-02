@@ -15,6 +15,10 @@
             android:exported="false"
             android:noHistory="true"
             android:process=":midlet" />
+        <service
+            android:name="ru.playsoftware.j2meloader.memory.MemoryEngineDiagnosticsService"
+            android:exported="false"
+            android:process=":memory_engine" />
     </application>
 
 </manifest>
