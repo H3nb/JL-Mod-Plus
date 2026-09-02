@@ -15,6 +15,7 @@
 package ru.playsoftware.j2meloader.memory
 
 import android.view.KeyEvent as AndroidKeyEvent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,7 +29,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.clickable
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -347,6 +347,7 @@ internal fun MemoryInputArea(
                             MemoryKeypad(
                                 session = session,
                                 spec = displayedSpec,
+                                allowHide = !alwaysShowKeypad,
                                 modifier = Modifier.width(252.dp),
                                 onHide = {
                                     session.hide()
@@ -356,15 +357,32 @@ internal fun MemoryInputArea(
                         }
                     }
                 }
+            } else if (alwaysShowKeypad) {
+                // Dialogs have bounded height. Do not give the field area weight(1f): the keypad's
+                // intrinsic height can otherwise squeeze the actual value field down to zero.
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Box(modifier = Modifier.fillMaxWidth()) { content() }
+                    val displayedSpec = session.activeSpec ?: keypadSpec
+                    if (displayedSpec != null) {
+                        MemoryKeypad(
+                            session = session,
+                            spec = displayedSpec,
+                            allowHide = false,
+                            modifier = Modifier.fillMaxWidth(),
+                            onHide = {},
+                        )
+                    }
+                }
             } else {
                 Column(modifier = Modifier.fillMaxSize()) {
                     Box(modifier = Modifier.weight(1f).fillMaxWidth()) { content() }
-                    if (alwaysShowKeypad || session.active) {
+                    if (session.active) {
                         val displayedSpec = session.activeSpec ?: keypadSpec
                         if (displayedSpec != null) {
                             MemoryKeypad(
                                 session = session,
                                 spec = displayedSpec,
+                                allowHide = true,
                                 modifier = Modifier.fillMaxWidth(),
                                 onHide = {
                                     session.hide()
@@ -540,6 +558,7 @@ internal fun memoryHardwareInputToken(keyCode: Int): String? = when (keyCode) {
 private fun MemoryKeypad(
     session: MemoryInputSession,
     spec: MemoryInputSpec,
+    allowHide: Boolean,
     modifier: Modifier,
     onHide: () -> Unit,
 ) {
@@ -572,19 +591,15 @@ private fun MemoryKeypad(
                 KeypadButton("→") { session.move(1) }
             }
             KeypadRow {
-                KeypadButton(if (spec.signed) "±" else "C") {
-                    if (spec.signed) session.toggleSign() else session.clear()
-                }
+                KeypadButton("±", enabled = spec.signed) { session.toggleSign() }
                 KeypadButton("0") { session.insert("0") }
-                KeypadButton(if (spec.decimal) "." else "C") {
-                    if (spec.decimal) session.insert(".") else session.clear()
-                }
-                KeypadButton(stringResource(R.string.memory_editor_keypad_hide), onHide)
+                KeypadButton(".", enabled = spec.decimal) { session.insert(".") }
+                KeypadButton("E", enabled = spec.exponent) { session.insert("E") }
             }
-            if (spec.exponent) {
-                KeypadRow {
-                    KeypadButton("E") { session.insert("E") }
-                    KeypadButton(stringResource(R.string.memory_editor_keypad_clear)) { session.clear() }
+            KeypadRow {
+                KeypadButton(stringResource(R.string.memory_editor_keypad_clear)) { session.clear() }
+                if (allowHide) {
+                    KeypadButton(stringResource(R.string.memory_editor_keypad_hide), onClick = onHide)
                 }
             }
         }
@@ -601,9 +616,14 @@ private fun KeypadRow(content: @Composable RowScope.() -> Unit) {
 }
 
 @Composable
-private fun RowScope.KeypadButton(label: String, onClick: () -> Unit) {
+private fun RowScope.KeypadButton(
+    label: String,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
     Button(
         onClick = onClick,
+        enabled = enabled,
         modifier = Modifier.weight(1f).sizeIn(minHeight = 48.dp),
         contentPadding = PaddingValues(horizontal = 4.dp),
     ) {
