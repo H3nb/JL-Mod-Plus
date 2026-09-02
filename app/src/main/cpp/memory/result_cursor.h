@@ -45,6 +45,6 @@ struct ResultAddressPage {
 [[nodiscard]] bool readAddressPage(const ResultStore &store,
                                    ResultCursor cursor,
                                    std::size_t limit,
-                                   ResultAddressPage &page) noexcept;
+                                   ResultAddressPage &page);
 
 } // namespace jlmem::v2
