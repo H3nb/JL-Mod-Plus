@@ -597,6 +597,10 @@ private fun MemoryKeypad(
                 KeypadButton("E", enabled = spec.exponent) { session.insert("E") }
             }
             KeypadRow {
+                // These positions stay aligned with the search keypad, but edit/inspector writes
+                // intentionally accept one replacement value, not a group-search expression.
+                KeypadButton(";", enabled = false) {}
+                KeypadButton(":", enabled = false) {}
                 KeypadButton(stringResource(R.string.memory_editor_keypad_clear)) { session.clear() }
                 if (allowHide) {
                     KeypadButton(stringResource(R.string.memory_editor_keypad_hide), onClick = onHide)
