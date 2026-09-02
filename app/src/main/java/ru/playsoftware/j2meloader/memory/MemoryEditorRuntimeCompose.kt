@@ -956,7 +956,7 @@ private fun RuntimeEditDialog(
                     onDismiss()
                 },
             ) {
-                Text(stringResource(R.string.memory_editor_apply))
+                Text(stringResource(R.string.memory_editor_save))
             }
         },
         dismissButton = {
@@ -1157,48 +1157,60 @@ private fun RuntimeSearchKeypad(
     onMove: (Int) -> Unit,
     onClear: () -> Unit,
 ) {
-    val rows = if (allowGroup) {
-        listOf(
-            listOf("7", "8", "9", ";"),
-            listOf("4", "5", "6", ":"),
-            listOf("1", "2", "3", "."),
-            listOf("-", "0", "E", "⌫"),
-        )
-    } else {
-        listOf(
-            listOf("7", "8", "9", "."),
-            listOf("4", "5", "6", "-"),
-            listOf("1", "2", "3", "E"),
-            listOf("0", "←", "→", "⌫"),
-        )
-    }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        rows.forEach { row ->
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                row.forEach { key ->
-                    OutlinedButton(
-                        onClick = {
-                            when (key) {
-                                "⌫" -> onBackspace()
-                                "←" -> onMove(-1)
-                                "→" -> onMove(1)
-                                else -> onToken(key)
-                            }
-                        },
-                        modifier = Modifier.weight(1f).sizeIn(minHeight = 42.dp),
-                    ) {
-                        Text(key, fontFamily = FontFamily.Monospace)
-                    }
-                }
-            }
+        RuntimeKeypadRow {
+            RuntimeKeypadButton("1") { onToken("1") }
+            RuntimeKeypadButton("2") { onToken("2") }
+            RuntimeKeypadButton("3") { onToken("3") }
+            RuntimeKeypadButton("⌫", onClick = onBackspace)
         }
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            TextButton(onClick = { onMove(-1) }, modifier = Modifier.weight(1f)) { Text("←") }
-            TextButton(onClick = onClear, modifier = Modifier.weight(1f)) {
-                Text(stringResource(R.string.memory_editor_keypad_clear))
-            }
-            TextButton(onClick = { onMove(1) }, modifier = Modifier.weight(1f)) { Text("→") }
+        RuntimeKeypadRow {
+            RuntimeKeypadButton("4") { onToken("4") }
+            RuntimeKeypadButton("5") { onToken("5") }
+            RuntimeKeypadButton("6") { onToken("6") }
+            RuntimeKeypadButton("←") { onMove(-1) }
         }
+        RuntimeKeypadRow {
+            RuntimeKeypadButton("7") { onToken("7") }
+            RuntimeKeypadButton("8") { onToken("8") }
+            RuntimeKeypadButton("9") { onToken("9") }
+            RuntimeKeypadButton("→") { onMove(1) }
+        }
+        RuntimeKeypadRow {
+            RuntimeKeypadButton("-") { onToken("-") }
+            RuntimeKeypadButton("0") { onToken("0") }
+            RuntimeKeypadButton(".") { onToken(".") }
+            RuntimeKeypadButton("E") { onToken("E") }
+        }
+        RuntimeKeypadRow {
+            RuntimeKeypadButton(";", enabled = allowGroup) { onToken(";") }
+            RuntimeKeypadButton(":", enabled = allowGroup) { onToken(":") }
+            RuntimeKeypadButton(stringResource(R.string.memory_editor_keypad_clear), onClick = onClear)
+        }
+    }
+}
+
+@Composable
+private fun RuntimeKeypadRow(content: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        content = content,
+    )
+}
+
+@Composable
+private fun androidx.compose.foundation.layout.RowScope.RuntimeKeypadButton(
+    label: String,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
+    OutlinedButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.weight(1f).sizeIn(minHeight = 42.dp),
+    ) {
+        Text(label, fontFamily = FontFamily.Monospace, maxLines = 1)
     }
 }
 
