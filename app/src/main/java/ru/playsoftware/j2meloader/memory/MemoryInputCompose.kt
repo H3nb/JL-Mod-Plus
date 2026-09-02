@@ -341,16 +341,17 @@ internal fun MemoryInputArea(
             val sideDock = sideDockInLandscape && landscape && maxWidth >= 480.dp
             if (sideDock) {
                 val rowModifier = if (alwaysShowKeypad) Modifier.fillMaxWidth() else Modifier.fillMaxSize()
-                val contentModifier = if (alwaysShowKeypad) {
-                    Modifier.weight(1f).fillMaxWidth()
-                } else {
-                    Modifier.weight(1f).fillMaxSize()
-                }
                 Row(
                     modifier = rowModifier,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Box(modifier = contentModifier) { content() }
+                    Box(
+                        modifier = if (alwaysShowKeypad) {
+                            Modifier.weight(1f).fillMaxWidth()
+                        } else {
+                            Modifier.weight(1f).fillMaxSize()
+                        },
+                    ) { content() }
                     if (alwaysShowKeypad || session.active) {
                         val displayedSpec = session.activeSpec ?: keypadSpec
                         if (displayedSpec != null) {
