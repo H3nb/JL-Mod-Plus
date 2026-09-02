@@ -6,6 +6,7 @@
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
 
+#include "result_cursor.h"
 #include "result_store_scan.h"
 
 #include <jni.h>
@@ -130,6 +131,37 @@ ShadowTarget gShadowTarget;
     default:
         return false;
     }
+}
+
+[[nodiscard]] bool validateCursor(const jlmem::v2::ResultStore &store,
+                                  jlmem::v2::ResultPlane plane,
+                                  const jlmem::v2::KnownScanStats &stats) {
+    jlmem::v2::ResultCursor cursor;
+    std::uint64_t fingerprint = 1469598103934665603ULL;
+    std::uint64_t count = 0U;
+    const std::uint8_t expectedMask = jlmem::v2::resultPlaneBit(plane);
+    while (cursor.blockIndex < store.blockCount()) {
+        jlmem::v2::ResultAddressPage page;
+        if (!jlmem::v2::readAddressPage(
+                    store, cursor, jlmem::v2::kResultCursorPageLimit, page)) {
+            return false;
+        }
+        if (page.rows.empty() && page.next.blockIndex == cursor.blockIndex &&
+            page.next.nextByteOffset == cursor.nextByteOffset) {
+            return false;
+        }
+        for (const jlmem::v2::ResultAddressRow &row : page.rows) {
+            if (row.aliasMask != expectedMask) {
+                return false;
+            }
+            fingerprint = jlmem::v2::appendAddressFingerprint(
+                    fingerprint, row.address, plane);
+            ++count;
+        }
+        cursor = page.next;
+    }
+    return count == stats.uniqueAddresses && count == stats.typedMatches &&
+           fingerprint == stats.addressFingerprint;
 }
 
 [[nodiscard]] jlong saturatingJlong(std::uint64_t value) noexcept {
@@ -281,6 +313,9 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_v2ShadowKnownEqual(
                                 error.rfind("Target range", 0U) == 0U
                                         ? kTargetLost
                                         : kInvalidRequest);
+        }
+        if (!validateCursor(store, plane, stats)) {
+            return shadowResult(env, kInvalidRequest);
         }
         {
             std::lock_guard<std::mutex> lock(gShadowMutex);
