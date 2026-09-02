@@ -340,11 +340,17 @@ internal fun MemoryInputArea(
             // not a reliable landscape test.
             val sideDock = sideDockInLandscape && landscape && maxWidth >= 480.dp
             if (sideDock) {
+                val rowModifier = if (alwaysShowKeypad) Modifier.fillMaxWidth() else Modifier.fillMaxSize()
+                val contentModifier = if (alwaysShowKeypad) {
+                    Modifier.weight(1f).fillMaxWidth()
+                } else {
+                    Modifier.weight(1f).fillMaxSize()
+                }
                 Row(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = rowModifier,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Box(modifier = Modifier.weight(1f).fillMaxSize()) { content() }
+                    Box(modifier = contentModifier) { content() }
                     if (alwaysShowKeypad || session.active) {
                         val displayedSpec = session.activeSpec ?: keypadSpec
                         if (displayedSpec != null) {
@@ -352,7 +358,7 @@ internal fun MemoryInputArea(
                                 session = session,
                                 spec = displayedSpec,
                                 allowHide = !alwaysShowKeypad,
-                                modifier = Modifier.width(252.dp),
+                                modifier = Modifier.width(280.dp),
                                 onHide = {
                                     session.hide()
                                     focusManager.clearFocus(force = true)
@@ -566,6 +572,7 @@ private fun MemoryKeypad(
     modifier: Modifier,
     onHide: () -> Unit,
 ) {
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     Surface(
         modifier = modifier.padding(top = 8.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -576,41 +583,77 @@ private fun MemoryKeypad(
             modifier = Modifier.padding(6.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            KeypadRow {
-                KeypadButton("1") { session.insert("1") }
-                KeypadButton("2") { session.insert("2") }
-                KeypadButton("3") { session.insert("3") }
-                KeypadButton("⌫") { session.backspace() }
-            }
-            KeypadRow {
-                KeypadButton("4") { session.insert("4") }
-                KeypadButton("5") { session.insert("5") }
-                KeypadButton("6") { session.insert("6") }
-                KeypadButton("←") { session.move(-1) }
-            }
-            KeypadRow {
-                KeypadButton("7") { session.insert("7") }
-                KeypadButton("8") { session.insert("8") }
-                KeypadButton("9") { session.insert("9") }
-                KeypadButton("→") { session.move(1) }
-            }
-            KeypadRow {
-                KeypadButton("±", enabled = spec.signed) { session.toggleSign() }
-                KeypadButton("0") { session.insert("0") }
-                KeypadButton(".", enabled = spec.decimal) { session.insert(".") }
-                KeypadButton("E", enabled = spec.exponent) { session.insert("E") }
-            }
-            KeypadRow {
-                // These positions stay aligned with the search keypad, but edit/inspector writes
-                // intentionally accept one replacement value, not a group-search expression.
-                KeypadButton(";", enabled = false) {}
-                KeypadButton(":", enabled = false) {}
-                KeypadButton(
-                    stringResource(R.string.memory_editor_keypad_clear),
-                    weight = if (allowHide) 1f else 2f,
-                ) { session.clear() }
-                if (allowHide) {
-                    KeypadButton(stringResource(R.string.memory_editor_keypad_hide), onClick = onHide)
+            if (landscape) {
+                KeypadRow {
+                    KeypadButton("1") { session.insert("1") }
+                    KeypadButton("2") { session.insert("2") }
+                    KeypadButton("3") { session.insert("3") }
+                    KeypadButton("4") { session.insert("4") }
+                    KeypadButton("5") { session.insert("5") }
+                }
+                KeypadRow {
+                    KeypadButton("6") { session.insert("6") }
+                    KeypadButton("7") { session.insert("7") }
+                    KeypadButton("8") { session.insert("8") }
+                    KeypadButton("9") { session.insert("9") }
+                    KeypadButton("0") { session.insert("0") }
+                }
+                KeypadRow {
+                    KeypadButton("±", enabled = spec.signed) { session.toggleSign() }
+                    KeypadButton(".", enabled = spec.decimal) { session.insert(".") }
+                    KeypadButton("E", enabled = spec.exponent) { session.insert("E") }
+                    KeypadButton(";", enabled = false) {}
+                    KeypadButton(":", enabled = false) {}
+                }
+                KeypadRow {
+                    KeypadButton("←") { session.move(-1) }
+                    KeypadButton("→") { session.move(1) }
+                    KeypadButton("⌫") { session.backspace() }
+                    KeypadButton(
+                        stringResource(R.string.memory_editor_keypad_clear),
+                        weight = if (allowHide) 1f else 2f,
+                    ) { session.clear() }
+                    if (allowHide) {
+                        KeypadButton(stringResource(R.string.memory_editor_keypad_hide), onClick = onHide)
+                    }
+                }
+            } else {
+                KeypadRow {
+                    KeypadButton("1") { session.insert("1") }
+                    KeypadButton("2") { session.insert("2") }
+                    KeypadButton("3") { session.insert("3") }
+                    KeypadButton("⌫") { session.backspace() }
+                }
+                KeypadRow {
+                    KeypadButton("4") { session.insert("4") }
+                    KeypadButton("5") { session.insert("5") }
+                    KeypadButton("6") { session.insert("6") }
+                    KeypadButton("←") { session.move(-1) }
+                }
+                KeypadRow {
+                    KeypadButton("7") { session.insert("7") }
+                    KeypadButton("8") { session.insert("8") }
+                    KeypadButton("9") { session.insert("9") }
+                    KeypadButton("→") { session.move(1) }
+                }
+                KeypadRow {
+                    KeypadButton("±", enabled = spec.signed) { session.toggleSign() }
+                    KeypadButton("0") { session.insert("0") }
+                    KeypadButton(".", enabled = spec.decimal) { session.insert(".") }
+                    KeypadButton("E", enabled = spec.exponent) { session.insert("E") }
+                }
+                KeypadRow {
+                    // These positions stay aligned with the search keypad, but edit/inspector writes
+                    // intentionally accept one replacement value, not a group-search expression.
+                    KeypadButton(";", enabled = false) {}
+                    KeypadButton(":", enabled = false) {}
+                    KeypadButton(
+                        stringResource(R.string.memory_editor_keypad_clear),
+                        weight = if (allowHide) 1f else 2f,
+                    ) { session.clear() }
+                    if (allowHide) {
+                        KeypadButton(stringResource(R.string.memory_editor_keypad_hide), onClick = onHide)
+                    }
                 }
             }
         }
