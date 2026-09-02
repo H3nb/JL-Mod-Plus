@@ -15,7 +15,6 @@
 #include <array>
 #include <cerrno>
 #include <cstdint>
-#include <cstring>
 #include <limits>
 #include <mutex>
 #include <new>
@@ -58,76 +57,30 @@ ShadowTarget gShadowTarget;
     return result == static_cast<ssize_t>(size);
 }
 
-[[nodiscard]] bool typeInfo(jint valueType, jlmem::v2::ResultPlane &plane,
-                            std::size_t &width) noexcept {
+[[nodiscard]] bool resultPlane(jint valueType,
+                               jlmem::v2::ResultPlane &plane) noexcept {
     switch (valueType) {
     case kTypeByte:
         plane = jlmem::v2::ResultPlane::Byte;
-        width = 1U;
         return true;
     case kTypeShort:
         plane = jlmem::v2::ResultPlane::Short;
-        width = 2U;
         return true;
     case kTypeChar:
         plane = jlmem::v2::ResultPlane::Char;
-        width = 2U;
         return true;
     case kTypeInt:
         plane = jlmem::v2::ResultPlane::Int;
-        width = 4U;
         return true;
     case kTypeLong:
         plane = jlmem::v2::ResultPlane::Long;
-        width = 8U;
         return true;
     case kTypeFloat:
         plane = jlmem::v2::ResultPlane::Float;
-        width = 4U;
         return true;
     case kTypeDouble:
         plane = jlmem::v2::ResultPlane::Double;
-        width = 8U;
         return true;
-    default:
-        return false;
-    }
-}
-
-[[nodiscard]] bool equalBits(jint valueType, std::uint64_t actual,
-                             std::uint64_t expected) noexcept {
-    switch (valueType) {
-    case kTypeByte:
-        return static_cast<std::int8_t>(actual) ==
-               static_cast<std::int8_t>(expected);
-    case kTypeShort:
-        return static_cast<std::int16_t>(actual) ==
-               static_cast<std::int16_t>(expected);
-    case kTypeChar:
-        return static_cast<std::uint16_t>(actual) ==
-               static_cast<std::uint16_t>(expected);
-    case kTypeInt:
-        return static_cast<std::int32_t>(actual) ==
-               static_cast<std::int32_t>(expected);
-    case kTypeLong:
-        return static_cast<std::int64_t>(actual) ==
-               static_cast<std::int64_t>(expected);
-    case kTypeFloat: {
-        const std::uint32_t actualRaw = static_cast<std::uint32_t>(actual);
-        const std::uint32_t expectedRaw = static_cast<std::uint32_t>(expected);
-        float actualValue = 0.0F;
-        float expectedValue = 0.0F;
-        std::memcpy(&actualValue, &actualRaw, sizeof(actualValue));
-        std::memcpy(&expectedValue, &expectedRaw, sizeof(expectedValue));
-        return actualValue == expectedValue;
-    }
-    case kTypeDouble: {
-        double actualValue = 0.0;
-        double expectedValue = 0.0;
-        std::memcpy(&actualValue, &actual, sizeof(actualValue));
-        std::memcpy(&expectedValue, &expected, sizeof(expectedValue));
-        return actualValue == expectedValue;
-    }
     default:
         return false;
     }
@@ -281,8 +234,7 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_v2ShadowKnownEqual(
             return shadowResult(env, kInvalidRequest);
         }
         jlmem::v2::ResultPlane plane = jlmem::v2::ResultPlane::Int;
-        std::size_t width = 0U;
-        if (!typeInfo(valueType, plane, width)) {
+        if (!resultPlane(valueType, plane)) {
             return shadowResult(env, kInvalidRequest);
         }
 
@@ -298,14 +250,11 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_v2ShadowKnownEqual(
         jlmem::v2::ResultStore store;
         jlmem::v2::KnownScanStats stats;
         std::string error;
-        const std::uint64_t expected = static_cast<std::uint64_t>(expectedBits);
-        const bool ok = jlmem::v2::scanKnownExplicit(
-                target.ranges, {plane, width},
+        const bool ok = jlmem::v2::scanKnownEqualExplicit(
+                target.ranges,
+                {plane, static_cast<std::uint64_t>(expectedBits)},
                 [&](std::uintptr_t address, void *output, std::size_t size) {
                     return readExact(target.pid, address, output, size);
-                },
-                [&](std::uint64_t actual) {
-                    return equalBits(valueType, actual, expected);
                 },
                 {}, store, stats, error);
         if (!ok) {
