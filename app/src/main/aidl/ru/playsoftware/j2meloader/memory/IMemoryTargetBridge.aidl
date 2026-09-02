@@ -17,6 +17,14 @@ interface IMemoryTargetBridge {
     long getRuntimeToken();
     int getTargetPid();
     int getPageSize();
+
+    /**
+     * Returns the current ART garbage-collection count for this runtime, or
+     * MemoryEngineContract.GC_COUNT_UNKNOWN when the runtime statistic is unavailable.
+     * The count is a relocation signal, not proof that any particular object moved.
+     */
+    long getGcCount(long runtimeToken);
+
     /** Returns [address, expectedBits] for a target-owned read-only capability probe. */
     long[] getReadProbe(long runtimeToken);
 
