@@ -31,7 +31,7 @@ import kotlin.math.roundToInt
  */
 class MemoryEditorOverlayService : Service() {
     private lateinit var windowManager: WindowManager
-    private lateinit var editorView: OverlayComposeView
+    private lateinit var editorView: ComposeView
     private lateinit var bubbleView: ComposeView
     private lateinit var editorParams: WindowManager.LayoutParams
     private lateinit var bubbleParams: WindowManager.LayoutParams
@@ -112,11 +112,17 @@ class MemoryEditorOverlayService : Service() {
             WindowManager.LayoutParams.TYPE_PHONE
         }
 
-        editorView = OverlayComposeView(this) {
-            controller?.close()
-        }.apply {
+        editorView = ComposeView(this).apply {
             visibility = View.GONE
             isFocusableInTouchMode = true
+            setOnKeyListener { _, keyCode, event ->
+                if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
+                    controller?.close()
+                    true
+                } else {
+                    false
+                }
+            }
         }
         editorParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
@@ -267,19 +273,6 @@ class MemoryEditorOverlayService : Service() {
 
     private fun dp(value: Int): Int =
         (value * resources.displayMetrics.density).roundToInt()
-
-    private class OverlayComposeView(
-        context: Context,
-        private val onBack: () -> Unit,
-    ) : ComposeView(context) {
-        override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-            if (event.keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
-                onBack()
-                return true
-            }
-            return super.dispatchKeyEvent(event)
-        }
-    }
 
     companion object {
         private const val ACTION_ENABLE =
