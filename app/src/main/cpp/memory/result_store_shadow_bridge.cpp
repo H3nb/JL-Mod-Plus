@@ -86,6 +86,13 @@ ShadowTarget gShadowTarget;
     }
 }
 
+[[nodiscard]] bool shadowTargetMatches(const ShadowTarget &target) noexcept {
+    std::lock_guard<std::mutex> lock(gShadowMutex);
+    return gShadowTarget.generation == target.generation &&
+           gShadowTarget.pid == target.pid &&
+           gShadowTarget.runtimeToken == target.runtimeToken;
+}
+
 [[nodiscard]] bool validateCursor(const jlmem::v2::ResultStore &store,
                                   jlmem::v2::ResultPlane plane,
                                   const jlmem::v2::KnownScanStats &stats) {
@@ -165,46 +172,61 @@ extern "C" JNIEXPORT void JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_configureV2ShadowTarget(
         JNIEnv *env, jclass, jint pid, jlong runtimeToken, jlongArray rawRuns) {
     ShadowTarget next;
-    if (pid > 0 && runtimeToken != 0 && rawRuns != nullptr) {
-        const jsize length = env->GetArrayLength(rawRuns);
-        if (length >= 4 && (length - 2) % 2 == 0) {
-            std::vector<jlong> values(static_cast<std::size_t>(length));
-            env->GetLongArrayRegion(rawRuns, 0, length, values.data());
-            const jlong declaredRuns = values[0];
-            if (!env->ExceptionCheck() && values[1] == 0 && declaredRuns > 0 &&
-                static_cast<std::uint64_t>(declaredRuns) <= kMaxTargetRuns &&
-                declaredRuns == (length - 2) / 2) {
-                next.pid = pid;
-                next.runtimeToken = runtimeToken;
-                next.ranges.reserve(static_cast<std::size_t>(declaredRuns));
-                std::uintptr_t previousEnd = 0U;
-                bool valid = true;
-                for (jsize index = 2; index < length; index += 2) {
-                    if (values[index] <= 0 || values[index + 1] <= values[index] ||
-                        static_cast<std::uint64_t>(values[index]) >
-                                std::numeric_limits<std::uintptr_t>::max() ||
-                        static_cast<std::uint64_t>(values[index + 1]) >
-                                std::numeric_limits<std::uintptr_t>::max()) {
-                        valid = false;
-                        break;
+    try {
+        if (pid > 0 && runtimeToken != 0 && rawRuns != nullptr) {
+            const jsize length = env->GetArrayLength(rawRuns);
+            if (length >= 4 && (length - 2) % 2 == 0) {
+                std::vector<jlong> values(static_cast<std::size_t>(length));
+                env->GetLongArrayRegion(rawRuns, 0, length, values.data());
+                if (env->ExceptionCheck()) {
+                    env->ExceptionClear();
+                } else {
+                    const jlong declaredRuns = values[0];
+                    if (values[1] == 0 && declaredRuns > 0 &&
+                        static_cast<std::uint64_t>(declaredRuns) <= kMaxTargetRuns &&
+                        declaredRuns == (length - 2) / 2) {
+                        next.pid = pid;
+                        next.runtimeToken = runtimeToken;
+                        next.ranges.reserve(static_cast<std::size_t>(declaredRuns));
+                        std::uintptr_t previousEnd = 0U;
+                        bool valid = true;
+                        for (jsize index = 2; index < length; index += 2) {
+                            if (values[index] <= 0 ||
+                                values[index + 1] <= values[index] ||
+                                static_cast<std::uint64_t>(values[index]) >
+                                        std::numeric_limits<std::uintptr_t>::max() ||
+                                static_cast<std::uint64_t>(values[index + 1]) >
+                                        std::numeric_limits<std::uintptr_t>::max()) {
+                                valid = false;
+                                break;
+                            }
+                            const std::uintptr_t start =
+                                    static_cast<std::uintptr_t>(values[index]);
+                            const std::uintptr_t end =
+                                    static_cast<std::uintptr_t>(values[index + 1]);
+                            if (previousEnd != 0U && start < previousEnd) {
+                                valid = false;
+                                break;
+                            }
+                            next.ranges.push_back({start, end});
+                            previousEnd = end;
+                        }
+                        if (!valid) {
+                            next = {};
+                        }
                     }
-                    const std::uintptr_t start =
-                            static_cast<std::uintptr_t>(values[index]);
-                    const std::uintptr_t end =
-                            static_cast<std::uintptr_t>(values[index + 1]);
-                    if (previousEnd != 0U && start < previousEnd) {
-                        valid = false;
-                        break;
-                    }
-                    next.ranges.push_back({start, end});
-                    previousEnd = end;
-                }
-                if (!valid) {
-                    next = {};
                 }
             }
         }
+    } catch (...) {
+        // The v2 mirror is debug diagnostics only. Failure must never destabilize the validated
+        // legacy target configuration or leak a C++ exception across JNI.
+        if (env->ExceptionCheck()) {
+            env->ExceptionClear();
+        }
+        next = {};
     }
+
     std::lock_guard<std::mutex> lock(gShadowMutex);
     next.generation = gShadowTarget.generation + 1U;
     gShadowTarget = std::move(next);
@@ -256,23 +278,20 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_v2ShadowKnownEqual(
                 [&](std::uintptr_t address, void *output, std::size_t size) {
                     return readExact(target.pid, address, output, size);
                 },
-                {}, store, stats, error);
+                [&]() { return !shadowTargetMatches(target); },
+                store, stats, error);
         if (!ok) {
-            return shadowResult(env,
-                                error.rfind("Target range", 0U) == 0U
-                                        ? kTargetLost
-                                        : kInvalidRequest);
+            const bool targetChanged =
+                    error == "V2 shadow scan cancelled" ||
+                    error.rfind("Target range", 0U) == 0U;
+            return shadowResult(env, targetChanged ? kTargetLost
+                                                  : kInvalidRequest);
         }
         if (!validateCursor(store, plane, stats)) {
             return shadowResult(env, kInvalidRequest);
         }
-        {
-            std::lock_guard<std::mutex> lock(gShadowMutex);
-            if (gShadowTarget.generation != target.generation ||
-                gShadowTarget.pid != target.pid ||
-                gShadowTarget.runtimeToken != target.runtimeToken) {
-                return shadowResult(env, kTargetLost);
-            }
+        if (!shadowTargetMatches(target)) {
+            return shadowResult(env, kTargetLost);
         }
         return shadowResult(env, kOk, &stats);
     } catch (const std::bad_alloc &) {
