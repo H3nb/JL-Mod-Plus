@@ -68,6 +68,12 @@ public final class MemoryEngineContract {
 	public static final int RESULT_NO_SESSION = 6;
 	public static final int RESULT_IDENTITY_UNSAFE = 7;
 	public static final int RESULT_SAFETY_LIMIT = 8;
+	/** A GC occurred since the selected result binding was trusted. Recovery completed; retry. */
+	public static final int RESULT_GC_REVALIDATED = 9;
+	/** A GC occurred during a scan/write critical window, so the operation cannot be confirmed. */
+	public static final int RESULT_GC_RACE = 10;
+	/** An Unknown/relative baseline was captured before a moving-GC epoch and is no longer safe. */
+	public static final int RESULT_GC_BASELINE_INVALIDATED = 11;
 
 	public static final int CANDIDATE_STABLE = 0;
 	public static final int CANDIDATE_RELOCATING = 1;
@@ -138,6 +144,14 @@ public final class MemoryEngineContract {
 
 	public static boolean isKnownGcCount(long gcCount) {
 		return gcCount >= 0L;
+	}
+
+	public static boolean didGcCountChange(long before, long after) {
+		return isKnownGcCount(before) && isKnownGcCount(after) && before != after;
+	}
+
+	public static long latestKnownGcCount(long before, long after) {
+		return isKnownGcCount(after) ? after : before;
 	}
 
 	public static boolean isValueType(int type) {
