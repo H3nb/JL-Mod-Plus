@@ -15,6 +15,8 @@
 package ru.playsoftware.j2meloader.memory
 
 import android.view.KeyEvent
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import org.junit.Assert.assertEquals
@@ -86,6 +88,16 @@ class MemoryInputComposeTest {
         value = MemoryInputEditing.toggleSign(value, intSpec)
         assertEquals("-13", value.text)
         assertEquals("-13", MemoryInputEditing.insert(value, ".", intSpec).text)
+    }
+
+    @Test
+    fun cursorIndicatorTracksInsertionPointAndOffsetMapping() {
+        val transformed = MemoryCursorVisualTransformation(1, Color.Red)
+            .filter(AnnotatedString("123"))
+
+        assertEquals("1▏23", transformed.text.text)
+        assertEquals(3, transformed.offsetMapping.originalToTransformed(2))
+        assertEquals(1, transformed.offsetMapping.transformedToOriginal(2))
     }
 
     @Test

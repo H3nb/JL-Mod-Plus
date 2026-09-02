@@ -48,14 +48,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import ru.playsoftware.j2meloader.R
 
@@ -240,6 +249,8 @@ internal class MemoryInputSession {
     val active: Boolean get() = binding != null
     val activeSpec: MemoryInputSpec? get() = binding?.spec
 
+    fun isActive(id: Any): Boolean = binding?.id === id
+
     fun valueFor(id: Any, external: String): TextFieldValue =
         binding?.takeIf { it.id === id }?.value ?: TextFieldValue(external, TextRange(external.length))
 
@@ -307,6 +318,8 @@ internal fun MemoryInputArea(
     modifier: Modifier = Modifier,
     active: Boolean = true,
     sideDockInLandscape: Boolean = true,
+    alwaysShowKeypad: Boolean = false,
+    keypadSpec: MemoryInputSpec? = null,
     content: @Composable () -> Unit,
 ) {
     val session = remember { MemoryInputSession() }
@@ -328,29 +341,37 @@ internal fun MemoryInputArea(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Box(modifier = Modifier.weight(1f).fillMaxSize()) { content() }
-                    if (session.active) {
-                        MemoryKeypad(
-                            session = session,
-                            modifier = Modifier.width(252.dp),
-                            onHide = {
-                                session.hide()
-                                focusManager.clearFocus(force = true)
-                            },
-                        )
+                    if (alwaysShowKeypad || session.active) {
+                        val displayedSpec = session.activeSpec ?: keypadSpec
+                        if (displayedSpec != null) {
+                            MemoryKeypad(
+                                session = session,
+                                spec = displayedSpec,
+                                modifier = Modifier.width(252.dp),
+                                onHide = {
+                                    session.hide()
+                                    focusManager.clearFocus(force = true)
+                                },
+                            )
+                        }
                     }
                 }
             } else {
                 Column(modifier = Modifier.fillMaxSize()) {
                     Box(modifier = Modifier.weight(1f).fillMaxWidth()) { content() }
-                    if (session.active) {
-                        MemoryKeypad(
-                            session = session,
-                            modifier = Modifier.fillMaxWidth(),
-                            onHide = {
-                                session.hide()
-                                focusManager.clearFocus(force = true)
-                            },
-                        )
+                    if (alwaysShowKeypad || session.active) {
+                        val displayedSpec = session.activeSpec ?: keypadSpec
+                        if (displayedSpec != null) {
+                            MemoryKeypad(
+                                session = session,
+                                spec = displayedSpec,
+                                modifier = Modifier.fillMaxWidth(),
+                                onHide = {
+                                    session.hide()
+                                    focusManager.clearFocus(force = true)
+                                },
+                            )
+                        }
                     }
                 }
             }
@@ -365,7 +386,7 @@ internal fun MemoryValueInput(
     spec: MemoryInputSpec,
     label: String,
     modifier: Modifier = Modifier,
-    onClickOverride: (() -> Unit)? = null,
+    activateOnStart: Boolean = false,
 ) {
     val session = requireNotNull(LocalMemoryInputSession.current) {
         "MemoryValueInput must be hosted by MemoryInputArea"
@@ -379,14 +400,27 @@ internal fun MemoryValueInput(
     LaunchedEffect(spec) {
         if (value.isNotEmpty() && !spec.acceptsPartial(value)) onValueChange("")
     }
+    LaunchedEffect(activateOnStart, spec) {
+        if (activateOnStart) {
+            session.activate(id, value, spec, onValueChange)
+            focusRequester.requestFocus()
+        }
+    }
     SideEffect { session.sync(id, value, spec, onValueChange) }
+    val cursorTransformation = if (session.isActive(id)) {
+        MemoryCursorVisualTransformation(
+            cursor = sessionValue.selection.end,
+            cursorColor = MaterialTheme.colorScheme.primary,
+        )
+    } else {
+        VisualTransformation.None
+    }
     Box(
         modifier = modifier
             .semantics { contentDescription = label }
             .focusRequester(focusRequester)
             .focusable()
             .onPreviewKeyEvent { event ->
-                if (onClickOverride != null) return@onPreviewKeyEvent false
                 val nativeEvent = event.nativeKeyEvent
                 if (nativeEvent.action != AndroidKeyEvent.ACTION_DOWN) return@onPreviewKeyEvent false
                 val keyCode = nativeEvent.keyCode
@@ -416,12 +450,8 @@ internal fun MemoryValueInput(
                 }
             }
             .clickable(role = Role.Button) {
-                if (onClickOverride != null) {
-                    onClickOverride()
-                } else {
-                    focusRequester.requestFocus()
-                    session.activate(id, sessionValue.text, spec, onValueChange)
-                }
+                focusRequester.requestFocus()
+                session.activate(id, sessionValue.text, spec, onValueChange)
             },
     ) {
         // A disabled text field has no focus or input connection, so it cannot summon Android's IME.
@@ -432,6 +462,7 @@ internal fun MemoryValueInput(
             enabled = false,
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
+            visualTransformation = cursorTransformation,
             label = { Text(label) },
             colors = OutlinedTextFieldDefaults.colors(
                 disabledTextColor = MaterialTheme.colorScheme.onSurface,
@@ -439,6 +470,37 @@ internal fun MemoryValueInput(
                 disabledBorderColor = MaterialTheme.colorScheme.outline,
                 disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
             ),
+        )
+    }
+}
+
+internal class MemoryCursorVisualTransformation(
+    private val cursor: Int,
+    private val cursorColor: Color,
+) : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val position = cursor.coerceIn(0, text.length)
+        val transformed = buildAnnotatedString {
+            append(text.text.substring(0, position))
+            withStyle(
+                SpanStyle(
+                    color = cursorColor,
+                    fontWeight = FontWeight.Bold,
+                ),
+            ) {
+                append("▏")
+            }
+            append(text.text.substring(position))
+        }
+        return TransformedText(
+            text = transformed,
+            offsetMapping = object : OffsetMapping {
+                override fun originalToTransformed(offset: Int): Int =
+                    if (offset > position) offset + 1 else offset
+
+                override fun transformedToOriginal(offset: Int): Int =
+                    if (offset > position) (offset - 1).coerceAtLeast(0) else offset
+            },
         )
     }
 }
@@ -477,10 +539,10 @@ internal fun memoryHardwareInputToken(keyCode: Int): String? = when (keyCode) {
 @Composable
 private fun MemoryKeypad(
     session: MemoryInputSession,
+    spec: MemoryInputSpec,
     modifier: Modifier,
     onHide: () -> Unit,
 ) {
-    val spec = session.activeSpec ?: return
     Surface(
         modifier = modifier.padding(top = 8.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,

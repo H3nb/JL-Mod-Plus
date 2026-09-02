@@ -318,6 +318,7 @@ internal fun MemoryEditorContent(
                     compare = compare,
                     busy = state.busy,
                     onExpand = { refineDialog = true },
+                    onStartOver = actions::startOver,
                     actions = actions,
                 )
             } else {
@@ -1069,6 +1070,7 @@ private fun CompactRefineStrip(
     compare: Int,
     busy: Boolean,
     onExpand: () -> Unit,
+    onStartOver: () -> Unit,
     actions: MemoryEditorActions,
 ) {
     Surface(
@@ -1125,16 +1127,6 @@ private fun CompactRefineStrip(
                         modifier = Modifier.padding(start = 8.dp),
                     )
                 }
-                val moreDescription = stringResource(R.string.memory_editor_more)
-                IconButton(
-                    onClick = onExpand,
-                    modifier = Modifier.semantics { contentDescription = moreDescription },
-                ) {
-                    Icon(
-                        painterResource(R.drawable.ic_more_vert),
-                        contentDescription = moreDescription,
-                    )
-                }
             }
             if (predicateNeedsSecondValue(predicate)) {
                 MemoryValuePopupInput(
@@ -1153,6 +1145,33 @@ private fun CompactRefineStrip(
                         )
                     },
                 )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                OutlinedButton(
+                    onClick = onExpand,
+                    enabled = !busy,
+                    modifier = Modifier.weight(1f).sizeIn(minHeight = 48.dp),
+                ) {
+                    Icon(
+                        painterResource(R.drawable.ic_options),
+                        contentDescription = null,
+                    )
+                    Text(
+                        stringResource(R.string.memory_editor_more_conditions),
+                        modifier = Modifier.padding(start = 8.dp),
+                    )
+                }
+                TextButton(
+                    onClick = onStartOver,
+                    enabled = !busy,
+                    modifier = Modifier.sizeIn(minHeight = 48.dp),
+                ) {
+                    Text(stringResource(R.string.memory_editor_start_over))
+                }
             }
         }
     }
@@ -1175,11 +1194,18 @@ private fun RefineControlsDialog(
     onStartOver: () -> Unit,
     actions: MemoryEditorActions,
 ) {
+    val hasValueInput = predicateNeedsValue(predicate)
+    val inputSpec = MemoryInputSpec.forType(type)
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.memory_editor_refine_results)) },
         text = {
-            MemoryInputArea(sideDockInLandscape = false) {
+            MemoryInputArea(
+                active = hasValueInput,
+                sideDockInLandscape = false,
+                alwaysShowKeypad = hasValueInput,
+                keypadSpec = inputSpec,
+            ) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     QuickRefinePredicates(predicate, onPredicate)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1188,7 +1214,16 @@ private fun RefineControlsDialog(
                             CompareMenu(compare, onCompare)
                         }
                     }
-                    RefineValueFields(type, predicate, value, onValue, secondValue, onSecondValue)
+                    RefineValueFields(
+                        type = type,
+                        predicate = predicate,
+                        value = value,
+                        onValue = onValue,
+                        secondValue = secondValue,
+                        onSecondValue = onSecondValue,
+                        popup = false,
+                        activateFirst = hasValueInput,
+                    )
                 }
             }
         },
@@ -1327,30 +1362,17 @@ private fun RefineValueFields(
     onValue: (String) -> Unit,
     secondValue: String,
     onSecondValue: (String) -> Unit,
+    popup: Boolean = true,
+    activateFirst: Boolean = false,
 ) {
     if (!predicateNeedsValue(predicate)) return
     val spec = MemoryInputSpec.forType(type)
-    MemoryValuePopupInput(
-        value = value,
-        onValue = onValue,
-        spec = spec,
-        label = stringResource(R.string.memory_editor_search_hint),
-        modifier = Modifier.fillMaxWidth(),
-        dialogIcon = R.drawable.ic_memory_editor_refine,
-        supportingContent = {
-            Text(
-                "${typeName(type)} · ${predicateName(predicate)}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        },
-    )
-    if (predicateNeedsSecondValue(predicate)) {
+    if (popup) {
         MemoryValuePopupInput(
-            value = secondValue,
-            onValue = onSecondValue,
+            value = value,
+            onValue = onValue,
             spec = spec,
-            label = stringResource(R.string.memory_editor_max_value),
+            label = stringResource(R.string.memory_editor_search_hint),
             modifier = Modifier.fillMaxWidth(),
             dialogIcon = R.drawable.ic_memory_editor_refine,
             supportingContent = {
@@ -1361,6 +1383,42 @@ private fun RefineValueFields(
                 )
             },
         )
+    } else {
+        MemoryValueInput(
+            value = value,
+            onValueChange = onValue,
+            spec = spec,
+            label = stringResource(R.string.memory_editor_search_hint),
+            modifier = Modifier.fillMaxWidth(),
+            activateOnStart = activateFirst,
+        )
+    }
+    if (predicateNeedsSecondValue(predicate)) {
+        if (popup) {
+            MemoryValuePopupInput(
+                value = secondValue,
+                onValue = onSecondValue,
+                spec = spec,
+                label = stringResource(R.string.memory_editor_max_value),
+                modifier = Modifier.fillMaxWidth(),
+                dialogIcon = R.drawable.ic_memory_editor_refine,
+                supportingContent = {
+                    Text(
+                        "${typeName(type)} · ${predicateName(predicate)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                },
+            )
+        } else {
+            MemoryValueInput(
+                value = secondValue,
+                onValueChange = onSecondValue,
+                spec = spec,
+                label = stringResource(R.string.memory_editor_max_value),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }
 
@@ -1382,17 +1440,24 @@ private fun MemoryValuePopupInput(
     var dialogOpen by remember { mutableStateOf(false) }
     var draft by remember { mutableStateOf(value) }
 
-    MemoryValueInput(
-        value = value,
-        onValueChange = onValue,
-        spec = spec,
-        label = label,
-        modifier = modifier,
-        onClickOverride = {
+    OutlinedButton(
+        onClick = {
             draft = value
             dialogOpen = true
         },
-    )
+        modifier = modifier.sizeIn(minHeight = 48.dp),
+    ) {
+        Icon(
+            painterResource(dialogIcon),
+            contentDescription = null,
+        )
+        Text(
+            text = if (value.isBlank()) label else "$label: $value",
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(start = 8.dp),
+        )
+    }
 
     if (!dialogOpen) return
 
@@ -1406,7 +1471,11 @@ private fun MemoryValuePopupInput(
         },
         title = { Text(dialogTitle) },
         text = {
-            MemoryInputArea(sideDockInLandscape = true) {
+            MemoryInputArea(
+                sideDockInLandscape = true,
+                alwaysShowKeypad = true,
+                keypadSpec = spec,
+            ) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     supportingContent?.invoke()
                     MemoryValueInput(
@@ -1415,6 +1484,7 @@ private fun MemoryValuePopupInput(
                         spec = spec,
                         label = label,
                         modifier = Modifier.fillMaxWidth(),
+                        activateOnStart = true,
                     )
                 }
             }
@@ -1758,7 +1828,6 @@ private fun SelectionActions(
     onEdit: () -> Unit,
     onFreeze: () -> Unit,
 ) {
-    var more by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainerHigh),
     ) {
@@ -1768,10 +1837,10 @@ private fun SelectionActions(
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
         )
-        Row(
+        FlowRow(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically,
+            verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             ActionIconButton(
                 R.drawable.ic_edit,
@@ -1801,47 +1870,39 @@ private fun SelectionActions(
                     { actions.inspectCandidate(state.selected.single()) },
                 )
             }
-            Box {
-                val moreDescription = stringResource(R.string.memory_editor_more)
-                IconButton(
-                    onClick = { more = true },
-                    modifier = Modifier.semantics { contentDescription = moreDescription },
-                ) {
-                    Icon(
-                        painterResource(R.drawable.ic_more_vert),
-                        contentDescription = moreDescription,
-                    )
-                }
-                DropdownMenu(expanded = more, onDismissRequest = { more = false }) {
-                    if (!state.watchTab) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.memory_editor_keep)) },
-                            onClick = { more = false; actions.removeSelected(true) },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.memory_editor_remove)) },
-                            onClick = { more = false; actions.removeSelected(false) },
-                        )
-                    } else {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.memory_editor_unfreeze)) },
-                            onClick = { more = false; actions.clearFreezeSelected() },
-                        )
-                    }
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.memory_editor_copy_values)) },
-                        onClick = { more = false; actions.copySelected(false) },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.memory_editor_copy_addresses)) },
-                        onClick = { more = false; actions.copySelected(true) },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.memory_editor_clear_selection)) },
-                        onClick = { more = false; actions.clearSelection() },
-                    )
-                }
+            if (!state.watchTab) {
+                ActionIconButton(
+                    icon = R.drawable.ic_check,
+                    description = R.string.memory_editor_keep,
+                    onClick = { actions.removeSelected(true) },
+                )
+                ActionIconButton(
+                    icon = R.drawable.ic_delete,
+                    description = R.string.memory_editor_remove,
+                    onClick = { actions.removeSelected(false) },
+                )
+            } else {
+                ActionIconButton(
+                    icon = R.drawable.ic_screen_lock_rotation,
+                    description = R.string.memory_editor_unfreeze,
+                    onClick = actions::clearFreezeSelected,
+                )
             }
+            ActionIconButton(
+                icon = R.drawable.ic_content_copy,
+                description = R.string.memory_editor_copy_values,
+                onClick = { actions.copySelected(false) },
+            )
+            ActionIconButton(
+                icon = R.drawable.ic_content_copy,
+                description = R.string.memory_editor_copy_addresses,
+                onClick = { actions.copySelected(true) },
+            )
+            ActionIconButton(
+                icon = R.drawable.ic_deselect,
+                description = R.string.memory_editor_clear_selection,
+                onClick = actions::clearSelection,
+            )
         }
     }
 }
@@ -2035,6 +2096,7 @@ private fun EditDialog(
     var addToWatch by remember(showAddToWatch) { mutableStateOf(false) }
     var freezeAfter by remember { mutableStateOf(false) }
     val canFreeze = selectedCount in 1..MemoryEngineContract.MAX_FREEZE_RECORDS
+    val inputSpec = MemoryInputSpec.forType(type)
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = {
@@ -2045,7 +2107,11 @@ private fun EditDialog(
         },
         title = { Text(stringResource(R.string.memory_editor_edit)) },
         text = {
-            MemoryInputArea(sideDockInLandscape = true) {
+            MemoryInputArea(
+                sideDockInLandscape = true,
+                alwaysShowKeypad = true,
+                keypadSpec = inputSpec,
+            ) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (!enabled) {
                         Text(stringResource(R.string.memory_editor_write_unsupported), color = MaterialTheme.colorScheme.error)
@@ -2055,9 +2121,10 @@ private fun EditDialog(
                     MemoryValueInput(
                         value = value,
                         onValueChange = { value = it },
-                        spec = MemoryInputSpec.forType(type),
+                        spec = inputSpec,
                         label = stringResource(R.string.memory_editor_replacement),
                         modifier = Modifier.fillMaxWidth(),
+                        activateOnStart = true,
                     )
                     if (showAddToWatch) {
                         Row(
@@ -2096,7 +2163,7 @@ private fun EditDialog(
         confirmButton = {
             TextButton(
                 onClick = { onApply(value, type, addToWatch, freezeAfter) },
-                enabled = enabled && types.isNotEmpty() && MemoryInputSpec.forType(type).isComplete(value),
+                enabled = enabled && types.isNotEmpty() && inputSpec.isComplete(value),
             ) {
                 Text(stringResource(R.string.memory_editor_apply))
             }
@@ -2126,7 +2193,11 @@ private fun FreezeDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.memory_editor_freeze)) },
         text = {
-            MemoryInputArea(sideDockInLandscape = false) {
+            MemoryInputArea(
+                sideDockInLandscape = false,
+                alwaysShowKeypad = true,
+                keypadSpec = inputSpec,
+            ) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     ChoiceMenu(mode, FREEZE_MODES, { freezeName(it) }) { mode = it }
                     Text(freezeDescription(mode), style = MaterialTheme.typography.bodySmall)
@@ -2139,6 +2210,7 @@ private fun FreezeDialog(
                             else R.string.memory_editor_freeze_target,
                         ),
                         modifier = Modifier.fillMaxWidth(),
+                        activateOnStart = true,
                     )
                     if (mode == MemoryEngineContract.FREEZE_RANGE) {
                         MemoryValueInput(
