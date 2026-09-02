@@ -136,10 +136,6 @@ ShadowTarget gShadowTarget;
                         : static_cast<jlong>(value);
 }
 
-[[nodiscard]] jlong saturatingJlong(std::size_t value) noexcept {
-    return saturatingJlong(static_cast<std::uint64_t>(value));
-}
-
 jlongArray shadowResult(JNIEnv *env, jint status,
                         const jlmem::v2::KnownScanStats *stats = nullptr) {
     std::array<jlong, 7> values{};
@@ -148,8 +144,8 @@ jlongArray shadowResult(JNIEnv *env, jint status,
         values[1] = saturatingJlong(stats->bytesScanned);
         values[2] = saturatingJlong(stats->typedMatches);
         values[3] = saturatingJlong(stats->uniqueAddresses);
-        values[4] = saturatingJlong(stats->blockCount);
-        values[5] = saturatingJlong(stats->retainedBytes);
+        values[4] = saturatingJlong(static_cast<std::uint64_t>(stats->blockCount));
+        values[5] = saturatingJlong(static_cast<std::uint64_t>(stats->retainedBytes));
         values[6] = static_cast<jlong>(stats->addressFingerprint);
     }
     jlongArray result = env->NewLongArray(static_cast<jsize>(values.size()));
