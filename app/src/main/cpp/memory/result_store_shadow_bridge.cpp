@@ -17,12 +17,14 @@
 #include <cstring>
 #include <limits>
 #include <mutex>
+#include <new>
 #include <vector>
 
 namespace {
 
 constexpr jint kOk = 0;
 constexpr jint kInvalidRequest = 2;
+constexpr jint kResourceLimit = 3;
 constexpr jint kTargetLost = 5;
 constexpr jint kTypeAuto = 0;
 constexpr jint kTypeByte = 1;
@@ -37,6 +39,7 @@ constexpr std::size_t kMaxTargetRuns = 4'096U;
 struct ShadowTarget {
     pid_t pid = 0;
     jlong runtimeToken = 0;
+    std::uint64_t generation = 0U;
     std::vector<jlmem::v2::ScanRange> ranges;
 };
 
@@ -218,6 +221,7 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_configureV2ShadowTarge
         }
     }
     std::lock_guard<std::mutex> lock(gShadowMutex);
+    next.generation = gShadowTarget.generation + 1U;
     gShadowTarget = std::move(next);
 }
 
@@ -232,42 +236,64 @@ extern "C" JNIEXPORT void JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearV2ShadowTarget(
         JNIEnv *, jclass) {
     std::lock_guard<std::mutex> lock(gShadowMutex);
+    const std::uint64_t nextGeneration = gShadowTarget.generation + 1U;
     gShadowTarget = {};
+    gShadowTarget.generation = nextGeneration;
 }
 
 extern "C" JNIEXPORT jlongArray JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_v2ShadowKnownEqual(
         JNIEnv *env, jclass, jint valueType, jlong expectedBits) {
-    if (valueType == kTypeAuto) {
+    try {
+        if (valueType == kTypeAuto) {
+            return shadowResult(env, kInvalidRequest);
+        }
+        jlmem::v2::ResultPlane plane = jlmem::v2::ResultPlane::Int;
+        std::size_t width = 0U;
+        if (!typeInfo(valueType, plane, width)) {
+            return shadowResult(env, kInvalidRequest);
+        }
+
+        ShadowTarget target;
+        {
+            std::lock_guard<std::mutex> lock(gShadowMutex);
+            target = gShadowTarget;
+        }
+        if (target.pid <= 0 || target.runtimeToken == 0 || target.ranges.empty()) {
+            return shadowResult(env, kTargetLost);
+        }
+
+        jlmem::v2::ResultStore store;
+        jlmem::v2::KnownScanStats stats;
+        std::string error;
+        const std::uint64_t expected = static_cast<std::uint64_t>(expectedBits);
+        const bool ok = jlmem::v2::scanKnownExplicit(
+                target.ranges, {plane, width},
+                [&](std::uintptr_t address, void *output, std::size_t size) {
+                    return readExact(target.pid, address, output, size);
+                },
+                [&](std::uint64_t actual) {
+                    return equalBits(valueType, actual, expected);
+                },
+                {}, store, stats, error);
+        if (!ok) {
+            return shadowResult(env,
+                                error.rfind("Target range", 0U) == 0U
+                                        ? kTargetLost
+                                        : kInvalidRequest);
+        }
+        {
+            std::lock_guard<std::mutex> lock(gShadowMutex);
+            if (gShadowTarget.generation != target.generation ||
+                gShadowTarget.pid != target.pid ||
+                gShadowTarget.runtimeToken != target.runtimeToken) {
+                return shadowResult(env, kTargetLost);
+            }
+        }
+        return shadowResult(env, kOk, &stats);
+    } catch (const std::bad_alloc &) {
+        return shadowResult(env, kResourceLimit);
+    } catch (...) {
         return shadowResult(env, kInvalidRequest);
     }
-    jlmem::v2::ResultPlane plane = jlmem::v2::ResultPlane::Int;
-    std::size_t width = 0U;
-    if (!typeInfo(valueType, plane, width)) {
-        return shadowResult(env, kInvalidRequest);
-    }
-
-    ShadowTarget target;
-    {
-        std::lock_guard<std::mutex> lock(gShadowMutex);
-        target = gShadowTarget;
-    }
-    if (target.pid <= 0 || target.runtimeToken == 0 || target.ranges.empty()) {
-        return shadowResult(env, kTargetLost);
-    }
-
-    jlmem::v2::ResultStore store;
-    jlmem::v2::KnownScanStats stats;
-    std::string error;
-    const std::uint64_t expected = static_cast<std::uint64_t>(expectedBits);
-    const bool ok = jlmem::v2::scanKnownExplicit(
-            target.ranges, {plane, width},
-            [&](std::uintptr_t address, void *output, std::size_t size) {
-                return readExact(target.pid, address, output, size);
-            },
-            [&](std::uint64_t actual) {
-                return equalBits(valueType, actual, expected);
-            },
-            {}, store, stats, error);
-    return shadowResult(env, ok ? kOk : kTargetLost, ok ? &stats : nullptr);
 }
