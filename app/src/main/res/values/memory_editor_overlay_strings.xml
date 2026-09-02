@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="memory_editor_overlay_permission_title">Allow Memory Editor over the game</string>
+    <string name="memory_editor_overlay_permission_body">Memory Editor is shown over the running MIDlet from a separate process. Keeping its Compose UI outside the MIDlet process avoids editor UI allocations and garbage collections from disturbing memory searches.\n\nOn the next Android screen, allow JL-Mod Plus to display over other apps.</string>
+    <string name="memory_editor_overlay_permission_privacy">This permission is used only while Memory Editor is enabled. Hiding the editor returns you to the game; turning Memory Editor off removes the overlay completely.</string>
+    <string name="memory_editor_overlay_not_now">Not now</string>
+    <string name="memory_editor_overlay_allow">Open permission settings</string>
+    <string name="memory_editor_overlay_hide">Hide</string>
+    <string name="memory_editor_overlay_results_ready">Results are ready. Open Results to refine, edit, watch, or inspect them.</string>
+    <string name="memory_editor_overlay_query_label">Value / group expression</string>
+    <string name="memory_editor_overlay_memory_scope">Memory scope</string>
+    <string name="memory_editor_overlay_single_hint">Enter one value, or use ; to search several nearby values together.</string>
+    <string name="memory_editor_overlay_group_needs_type">Group Search needs an explicit data type. Choose Int32, Float32, or another type instead of Auto.</string>
+    <string name="memory_editor_overlay_group_hint">Group Search · %1$d values · within %2$d bytes</string>
+    <string name="memory_editor_overlay_query_help">Examples: 500 · 500;1000 · 500;1000:128</string>
+    <string name="memory_editor_overlay_ordered_group_unsupported">Ordered group syntax (::) is recognized, but the current engine does not expose ordered-group semantics yet. Use : for an unordered group.</string>
+    <string name="memory_editor_overlay_invalid_group">Check the group expression. Use 2–8 values separated by ; and an optional distance after :.</string>
+    <string name="memory_editor_overlay_invalid_value">The value is not valid for the selected data type.</string>
+    <string name="memory_editor_overlay_more_actions">More actions</string>
+</resources>
