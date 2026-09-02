@@ -44,6 +44,18 @@ public class MemoryGcBindingTrackerTest {
 	}
 
 	@Test
+	public void forgottenTrackedCandidateFallsBackToCurrentSearchEpoch() {
+		MemoryGcBindingTracker tracker = new MemoryGcBindingTracker();
+		tracker.setSearchEpoch(20L);
+		tracker.markCandidatesValidated(new long[]{100L}, 21L);
+		assertEquals(21L, tracker.candidateEpoch(100L));
+
+		tracker.forgetCandidate(100L);
+		assertEquals(20L, tracker.candidateEpoch(100L));
+		assertTrue(tracker.candidatesNeedRevalidation(new long[]{100L}, 21L));
+	}
+
+	@Test
 	public void unavailableGcStatisticDoesNotInventRelocationEvidence() {
 		MemoryGcBindingTracker tracker = new MemoryGcBindingTracker();
 		tracker.setSearchEpoch(MemoryEngineContract.GC_COUNT_UNKNOWN);
