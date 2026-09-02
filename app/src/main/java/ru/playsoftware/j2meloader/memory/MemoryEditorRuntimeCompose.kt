@@ -103,20 +103,20 @@ internal fun MemoryEditorRuntimeRoot(
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.08f)),
+            .background(Color.Black.copy(alpha = 0.04f)),
         contentAlignment = Alignment.Center,
     ) {
         val landscape = maxWidth > maxHeight
         Surface(
             modifier = Modifier
-                .fillMaxWidth(if (landscape) 0.78f else 0.96f)
-                .fillMaxHeight(if (landscape) 0.94f else 0.92f)
-                .widthIn(max = 820.dp),
+                .fillMaxWidth(if (landscape) 0.76f else 0.95f)
+                .fillMaxHeight(if (landscape) 0.92f else 0.90f)
+                .widthIn(max = 800.dp),
             shape = MaterialTheme.shapes.extraLarge,
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.91f),
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
             contentColor = MaterialTheme.colorScheme.onSurface,
-            tonalElevation = 6.dp,
-            shadowElevation = 12.dp,
+            tonalElevation = 3.dp,
+            shadowElevation = 8.dp,
         ) {
             Column(
                 modifier = Modifier
@@ -158,12 +158,12 @@ internal fun MemoryEditorRuntimeRoot(
 @Composable
 private fun RuntimeMemoryHeader(actions: MemoryEditorActions) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(start = 14.dp, end = 2.dp, top = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             stringResource(R.string.memory_editor),
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.weight(1f),
         )
@@ -194,10 +194,11 @@ private fun RuntimeMemoryTabs(
                 Icon(painterResource(R.drawable.ic_memory_editor_search), contentDescription = null)
             },
             label = {
+                val label = "${stringResource(R.string.memory_editor_search_tab)} + ${stringResource(R.string.memory_editor_results_tab)}"
                 Text(
-                    if (results > 0L) "${stringResource(R.string.memory_editor_search_tab)} · ${compactCount(results)}"
-                    else stringResource(R.string.memory_editor_search_tab),
+                    if (results > 0L) "$label · ${compactCount(results)}" else label,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             },
             modifier = Modifier.weight(1f),
@@ -213,6 +214,7 @@ private fun RuntimeMemoryTabs(
                     if (watches > 0) "${stringResource(R.string.memory_editor_watch)} · $watches"
                     else stringResource(R.string.memory_editor_watch),
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             },
             modifier = Modifier.weight(1f),
@@ -223,7 +225,13 @@ private fun RuntimeMemoryTabs(
             leadingIcon = {
                 Icon(painterResource(R.drawable.ic_memory_editor_inspector), contentDescription = null)
             },
-            label = { Text(stringResource(R.string.memory_editor_inspector), maxLines = 1) },
+            label = {
+                Text(
+                    stringResource(R.string.memory_editor_inspector),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            },
             modifier = Modifier.weight(1f),
         )
     }
@@ -235,24 +243,51 @@ private fun RuntimeOperationStrip(state: MemoryEditorUiState, actions: MemoryEdi
         (state.scanBytesScanned.toFloat() / state.scanBytesTotal.toFloat()).coerceIn(0f, 1f)
     } else null
     Surface(color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.72f)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            if (progress == null) {
-                CircularProgressIndicator(modifier = Modifier.sizeIn(maxWidth = 22.dp, maxHeight = 22.dp))
-            } else {
-                LinearProgressIndicator(progress = { progress }, modifier = Modifier.weight(1f))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                if (progress == null) {
+                    CircularProgressIndicator(modifier = Modifier.sizeIn(maxWidth = 20.dp, maxHeight = 20.dp))
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        stringResource(
+                            if (state.searching) R.string.memory_editor_searching else R.string.memory_editor_working,
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    if (progress != null) {
+                        Text(
+                            stringResource(
+                                R.string.memory_editor_search_progress,
+                                state.scanBytesScanned / (1024L * 1024L),
+                                state.scanBytesTotal / (1024L * 1024L),
+                            ),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        )
+                    }
+                }
+                if (progress != null) {
+                    Text(
+                        "${(progress * 100f).toInt()}%",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontFamily = FontFamily.Monospace,
+                    )
+                }
+                TextButton(onClick = actions::cancel) {
+                    Text(stringResource(android.R.string.cancel))
+                }
             }
-            Text(
-                stringResource(
-                    if (state.searching) R.string.memory_editor_searching else R.string.memory_editor_working,
-                ),
-                style = MaterialTheme.typography.bodySmall,
-            )
-            TextButton(onClick = actions::cancel) {
-                Text(stringResource(android.R.string.cancel))
+            if (progress != null) {
+                LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
             }
         }
     }
@@ -366,8 +401,12 @@ private fun RuntimeSearchResultsTab(
                         row = row,
                         selected = row.id in state.selected,
                         onClick = {
-                            if (state.selected.size <= 1) actions.clearSelection()
-                            actions.toggleSelection(row.id)
+                            if (row.id in state.selected && state.selected.size == 1) {
+                                actions.clearSelection()
+                            } else {
+                                if (state.selected.size <= 1) actions.clearSelection()
+                                actions.toggleSelection(row.id)
+                            }
                         },
                         onLongClick = { actions.toggleSelection(row.id) },
                     )
@@ -478,13 +517,24 @@ private fun RuntimeWatchTab(
                 enabled = state.watches.isNotEmpty() && !state.busy,
                 onClick = actions::refresh,
             )
-            if (selectedRow?.freezeMode?.let { it >= 0 } == true) {
-                RuntimeActionIcon(
+            when {
+                selectedRow?.freezeMode?.let { it >= 0 } == true -> RuntimeActionIcon(
                     R.drawable.ic_screen_lock_rotation,
                     R.string.memory_editor_unfreeze,
                     enabled = !state.busy,
                     onClick = actions::clearFreezeSelected,
                 )
+                selectedRow != null -> RuntimeActionIcon(
+                    R.drawable.ic_screen_lock_rotation,
+                    R.string.memory_editor_freeze,
+                    enabled = state.writeSupported && !state.busy,
+                ) {
+                    actions.freezeSelected(
+                        MemoryEngineContract.FREEZE_LOCK,
+                        selectedRow.valueText,
+                        "",
+                    )
+                }
             }
             RuntimeActionIcon(
                 R.drawable.ic_delete,
@@ -508,8 +558,12 @@ private fun RuntimeWatchTab(
                         row = row,
                         selected = row.id in state.selected,
                         onClick = {
-                            if (state.selected.size <= 1) actions.clearSelection()
-                            actions.toggleSelection(row.id)
+                            if (row.id in state.selected && state.selected.size == 1) {
+                                actions.clearSelection()
+                            } else {
+                                if (state.selected.size <= 1) actions.clearSelection()
+                                actions.toggleSelection(row.id)
+                            }
                         },
                         onLongClick = { actions.toggleSelection(row.id) },
                     )
@@ -1140,7 +1194,9 @@ private fun RuntimeSearchKeypad(
         }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             TextButton(onClick = { onMove(-1) }, modifier = Modifier.weight(1f)) { Text("←") }
-            TextButton(onClick = onClear, modifier = Modifier.weight(1f)) { Text("Clear") }
+            TextButton(onClick = onClear, modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.memory_editor_keypad_clear))
+            }
             TextButton(onClick = { onMove(1) }, modifier = Modifier.weight(1f)) { Text("→") }
         }
     }
