@@ -43,6 +43,38 @@ MemoryEngineBenchmarkRunner.Sample sample = MemoryEngineBenchmarkRunner.run(
 
 The diagnostics endpoint is debug-only. Use it for architectural A/B comparisons during v2 development. Before stable release, reproduce final headline numbers with a release-equivalent/profileable build and external process-memory sampling.
 
+## ResultStore shadow parity probe
+
+Before the ResultStore backend is allowed to publish user-visible results, debug builds provide an explicit differential probe:
+
+```java
+Bundle parity = diagnostics.validateKnownEqualShadow(type);
+```
+
+Use this probe only under all of these conditions:
+
+1. the immediately preceding committed search is a **first known `Equal` search**;
+2. exactly one primitive type is selected (`Byte`, `Short`, `Char`, `Int`, `Long`, `Float`, or `Double`), not `Auto`;
+3. the legacy result is non-empty;
+4. no refine/filter/Undo has changed the result revision since that first search;
+5. the MIDlet/game state is held as stable as practical while the parity probe runs.
+
+The probe deliberately performs a second remote read pass only when called. Normal Memory Editor use does not run the shadow scanner.
+
+The legacy backend remains authoritative. The probe pages the legacy result in bounded chunks, fingerprints its ordered `(address, type)` rows, then independently scans the same configured resident target through the ResultStore explicit-type equality kernel. The v2 store is enumerated again through `ResultCursor` in pages of at most 100 unique addresses. A successful parity result requires all of the following:
+
+- v2 shadow scan completed successfully;
+- legacy logical result count equals ResultStore unique-address count;
+- explicit-type ResultStore typed count equals its unique-address count;
+- the ordered legacy address/type fingerprint equals the ResultStore scan fingerprint;
+- re-enumerating the ResultStore through `ResultCursor` reproduces the same count, alias mask, ordering, and fingerprint.
+
+A parity mismatch is a development signal, not a reason to repair or replace the legacy result. Do not publish the shadow store and do not mutate target memory from the shadow path.
+
+GC, target relocation, or game writes between the legacy search and shadow pass may legitimately produce a mismatch. If that happens, discard the sample and repeat from a fresh first `Equal` search rather than weakening the comparison. The shadow target also carries a debug generation; a clear/reconfigure during the scan fails closed instead of publishing diagnostics for a mixed target generation.
+
+For floating-point equality the v2 explicit kernel intentionally uses numeric equality, matching the current known-search contract: `+0.0` and `-0.0` compare equal while `NaN` does not compare equal to itself.
+
 ## Required baseline scenarios
 
 ### First known search
@@ -54,6 +86,8 @@ Run both rare-match and common-match queries for:
 3. Auto
 
 Record elapsed time, scan bytes, logical result count, total PSS/RSS, native heap allocated, and Java/native heap PSS.
+
+For explicit-type `Equal` cases, also run the ResultStore shadow parity probe before accepting the sample as a correctness baseline.
 
 ### Known refine
 
@@ -92,6 +126,8 @@ For each sample retain at least:
 - PSS/RSS and native heap allocated;
 - history depth;
 - any GC/identity/resource-limit message.
+
+For explicit equality shadow samples also retain the legacy count/fingerprint, v2 typed/unique counts, v2 block/retained-byte counts, v2 fingerprint, and the count/address parity booleans.
 
 Performance numbers are not comparable if the two implementations produce different normalized `(address, type, value)` semantics. During ResultStore migration, use differential correctness checks before accepting a speed or RAM improvement.
 
