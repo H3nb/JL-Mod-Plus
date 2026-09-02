@@ -47,6 +47,20 @@ public class MemoryEngineContractTest {
 	}
 
 	@Test
+	public void gcEpochHelpersFailOpenOnlyWhenTheRuntimeStatIsUnknown() {
+		assertFalse(MemoryEngineContract.isKnownGcCount(MemoryEngineContract.GC_COUNT_UNKNOWN));
+		assertTrue(MemoryEngineContract.isKnownGcCount(0L));
+		assertTrue(MemoryEngineContract.isKnownGcCount(42L));
+		assertFalse(MemoryEngineContract.didGcCountChange(42L, 42L));
+		assertTrue(MemoryEngineContract.didGcCountChange(42L, 43L));
+		assertFalse(MemoryEngineContract.didGcCountChange(
+				MemoryEngineContract.GC_COUNT_UNKNOWN, 43L));
+		assertEquals(43L, MemoryEngineContract.latestKnownGcCount(42L, 43L));
+		assertEquals(42L, MemoryEngineContract.latestKnownGcCount(
+				42L, MemoryEngineContract.GC_COUNT_UNKNOWN));
+	}
+
+	@Test
 	public void candidatePagesAndWriteLimitsRemainBounded() {
 		assertEquals(9, MemoryEngineContract.RESULT_PAGE_STRIDE);
 		assertEquals(100, MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
