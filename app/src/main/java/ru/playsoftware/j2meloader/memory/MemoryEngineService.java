@@ -71,6 +71,7 @@ public final class MemoryEngineService extends Service {
 	private final Map<Long, String> watchLabels = new ConcurrentHashMap<>();
 	private final Map<Long, FreezeRecord> freezeRecords = new ConcurrentHashMap<>();
 	private final MemoryGcBindingTracker gcBindings = new MemoryGcBindingTracker();
+	private final MemoryCandidateBindingCache bindingCache = new MemoryCandidateBindingCache();
 	private volatile ScheduledFuture<?> freezeTask;
 	private final Object searchSessionLock = new Object();
 	private final ArrayDeque<Integer> searchStageHistory = new ArrayDeque<>();
@@ -212,10 +213,12 @@ public final class MemoryEngineService extends Service {
 				if (anchorCandidateId <= 0L || !MemoryEngineContract.isNearbyRadius(radius)) {
 					return MemoryEngineContract.RESULT_INVALID_REQUEST;
 				}
-				int ready = refreshWithRecovery(token, new long[]{anchorCandidateId});
+				long[] anchorIds = new long[]{anchorCandidateId};
+				int ready = refreshWithRecovery(token, anchorIds);
 				if (ready != MemoryEngineContract.RESULT_OK) {
 					return ready;
 				}
+				refreshCachedBindings(anchorIds);
 				return runNewSearchWithGcGuard(
 						token,
 						() -> NativeMemoryEngine.startNearby(anchorCandidateId, radius, type, predicate,
@@ -312,7 +315,9 @@ public final class MemoryEngineService extends Service {
 					limit > MemoryEngineContract.MAX_RESULT_PAGE_SIZE) {
 				return emptyResultPage();
 			}
-			return formatResultPage(NativeMemoryEngine.resultPage(offset, limit));
+			long[] rows = NativeMemoryEngine.resultPage(offset, limit);
+			bindingCache.recordPage(rows, false, offset);
+			return formatResultPage(rows);
 		}
 
 		@Override
@@ -409,7 +414,9 @@ public final class MemoryEngineService extends Service {
 			if (!isCurrentToken(token)) {
 				return emptyWatchPage();
 			}
-			return formatWatchPage(NativeMemoryEngine.watchPage());
+			long[] rows = NativeMemoryEngine.watchPage();
+			bindingCache.recordPage(rows, true, 0);
+			return formatWatchPage(rows);
 		}
 
 		@Override
@@ -420,6 +427,7 @@ public final class MemoryEngineService extends Service {
 				}
 				int ready = refreshWithRecovery(token, candidateIds);
 				if (ready != MemoryEngineContract.RESULT_OK) return ready;
+				refreshCachedBindings(candidateIds);
 				int result = NativeMemoryEngine.pin(candidateIds, true);
 				if (result == MemoryEngineContract.RESULT_OK) {
 					gcBindings.markCandidatesValidated(candidateIds, currentGcCount(token));
@@ -550,8 +558,12 @@ public final class MemoryEngineService extends Service {
 		long operationId = nextOperationId.getAndIncrement();
 		long enqueueEpoch = cancelEpoch.get();
 		worker.execute(() -> {
+			// configureTarget() may spend time in target-side mincore() before the next native scan
+			// resets its counters. Keep the previous snapshot as a sentinel so that old progress is
+			// never relabeled with this operationId while target configuration is still running.
+			long[] progressBaseline = NativeMemoryEngine.scanProgress();
 			ScheduledFuture<?> progressUpdates = progressNotifier.scheduleWithFixedDelay(
-					() -> notifyProgress(operationId),
+					() -> notifyProgress(operationId, progressBaseline),
 					PROGRESS_UPDATE_PERIOD_MS,
 					PROGRESS_UPDATE_PERIOD_MS,
 					TimeUnit.MILLISECONDS);
@@ -724,7 +736,9 @@ public final class MemoryEngineService extends Service {
 	private int refreshForRead(long token, long[] candidateIds) {
 		long gcCount = currentGcCount(token);
 		if (gcBindings.candidatesNeedRevalidation(candidateIds, gcCount)) {
-			return refreshWithRecovery(token, candidateIds);
+			int result = refreshWithRecovery(token, candidateIds);
+			if (result == MemoryEngineContract.RESULT_OK) refreshCachedBindings(candidateIds);
+			return result;
 		}
 		return NativeMemoryEngine.refresh(candidateIds, false);
 	}
@@ -746,10 +760,19 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private int prepareExplicitMutation(long token, long[] candidateIds) {
+		Map<Long, MemoryCandidateBindingCache.Binding> before =
+				bindingCache.snapshot(candidateIds);
+		if (before == null) {
+			// A guarded mutation must be tied to a binding the UI actually materialized. Reloading the
+			// page/watch list populates this small cache; never guess an unseen raw address here.
+			return MemoryEngineContract.RESULT_IDENTITY_UNSAFE;
+		}
 		long gcBefore = currentGcCount(token);
 		boolean revalidationRequired = gcBindings.candidatesNeedRevalidation(candidateIds, gcBefore);
 		int result = refreshWithRecovery(token, candidateIds);
 		if (result != MemoryEngineContract.RESULT_OK) return result;
+		int bindingComparison = compareRefreshedBindings(before);
+		if (bindingComparison != MemoryEngineContract.RESULT_OK) return bindingComparison;
 		long gcAfter = currentGcCount(token);
 		if (MemoryEngineContract.didGcCountChange(gcBefore, gcAfter)) {
 			return MemoryEngineContract.RESULT_GC_RACE;
@@ -764,9 +787,45 @@ public final class MemoryEngineService extends Service {
 		if (!gcBindings.candidatesNeedRevalidation(candidateIds, gcCount)) {
 			return MemoryEngineContract.RESULT_OK;
 		}
-		int result = refreshWithRecovery(token, candidateIds);
-		return result == MemoryEngineContract.RESULT_OK
-				? MemoryEngineContract.RESULT_GC_REVALIDATED : result;
+		return prepareExplicitMutation(token, candidateIds);
+	}
+
+	private int compareRefreshedBindings(
+			Map<Long, MemoryCandidateBindingCache.Binding> before) {
+		LinkedHashMap<Long, MemoryCandidateBindingCache.Binding> after = new LinkedHashMap<>();
+		Set<Integer> resultPageOffsets = new HashSet<>();
+		boolean needsWatchPage = false;
+		for (MemoryCandidateBindingCache.Binding binding : before.values()) {
+			if (binding.watch) {
+				needsWatchPage = true;
+			} else {
+				resultPageOffsets.add(binding.resultPageOffset);
+			}
+		}
+		if (needsWatchPage && !MemoryCandidateBindingCache.collectPage(
+				NativeMemoryEngine.watchPage(), true, 0, after)) {
+			return MemoryEngineContract.RESULT_IDENTITY_UNSAFE;
+		}
+		for (int offset : resultPageOffsets) {
+			if (!MemoryCandidateBindingCache.collectPage(
+					NativeMemoryEngine.resultPage(offset,
+							MemoryEngineContract.MAX_RESULT_PAGE_SIZE),
+					false, offset, after)) {
+				return MemoryEngineContract.RESULT_IDENTITY_UNSAFE;
+			}
+		}
+		int comparison = bindingCache.compareAndRecord(before, after);
+		return switch (comparison) {
+			case MemoryCandidateBindingCache.COMPARE_STABLE -> MemoryEngineContract.RESULT_OK;
+			case MemoryCandidateBindingCache.COMPARE_MOVED ->
+					MemoryEngineContract.RESULT_GC_REVALIDATED;
+			default -> MemoryEngineContract.RESULT_IDENTITY_UNSAFE;
+		};
+	}
+
+	private void refreshCachedBindings(long[] candidateIds) {
+		Map<Long, MemoryCandidateBindingCache.Binding> before = bindingCache.snapshot(candidateIds);
+		if (before != null) compareRefreshedBindings(before);
 	}
 
 	private int performGuardedMutation(long token, long[] candidateIds, NativeOperation write) {
@@ -782,11 +841,13 @@ public final class MemoryEngineService extends Service {
 			// Do not attempt a second write. Rebind on a later user action and report the first write
 			// as unconfirmed because a copying GC may have moved the authoritative object meanwhile.
 			refreshWithRecovery(token, candidateIds);
+			refreshCachedBindings(candidateIds);
 			return MemoryEngineContract.RESULT_GC_RACE;
 		}
 		if (result == MemoryEngineContract.RESULT_OK) {
 			gcBindings.markCandidatesValidated(candidateIds,
 					MemoryEngineContract.latestKnownGcCount(gcBeforeWrite, gcAfterWrite));
+			refreshCachedBindings(candidateIds);
 		}
 		return result;
 	}
@@ -796,10 +857,12 @@ public final class MemoryEngineService extends Service {
 			return inspectionFailure(MemoryEngineContract.RESULT_TARGET_LOST,
 					"MIDlet runtime changed or ended");
 		}
-		int ready = refreshWithRecovery(token, new long[]{candidateId});
+		long[] candidateIds = new long[]{candidateId};
+		int ready = refreshWithRecovery(token, candidateIds);
 		if (ready != MemoryEngineContract.RESULT_OK) {
 			return inspectionFailure(ready, gcSafetyMessage(ready));
 		}
+		refreshCachedBindings(candidateIds);
 		long[] raw = NativeMemoryEngine.inspect(candidateId, radius);
 		if (raw == null || raw.length < 4) {
 			return inspectionFailure(MemoryEngineContract.RESULT_INVALID_REQUEST,
@@ -902,6 +965,7 @@ public final class MemoryEngineService extends Service {
 				MemoryEngineContract.didGcCountChange(gcBeforeWrite, gcAfterWrite)) {
 			if (newlyWatched.length > 0) NativeMemoryEngine.pin(newlyWatched, false);
 			refreshWithRecovery(token, candidateIds);
+			refreshCachedBindings(candidateIds);
 			return MemoryEngineContract.RESULT_GC_RACE;
 		}
 		if (result != MemoryEngineContract.RESULT_OK) {
@@ -912,6 +976,7 @@ public final class MemoryEngineService extends Service {
 		}
 		long validatedGc = MemoryEngineContract.latestKnownGcCount(gcBeforeWrite, gcAfterWrite);
 		gcBindings.markCandidatesValidated(candidateIds, validatedGc);
+		refreshCachedBindings(candidateIds);
 		for (long id : candidateIds) {
 			freezeRecords.put(id,
 					new FreezeRecord(mode, firstValue, secondValue, validatedGc));
@@ -1007,6 +1072,7 @@ public final class MemoryEngineService extends Service {
 				}
 				return;
 			}
+			refreshCachedBindings(activeIds);
 			long validated = MemoryEngineContract.latestKnownGcCount(gcStart, gcAfterRecovery);
 			for (Map.Entry<Long, FreezeRecord> entry : active) {
 				entry.getValue().validatedGcCount = validated;
@@ -1035,6 +1101,7 @@ public final class MemoryEngineService extends Service {
 		if (!MemoryEngineContract.didGcCountChange(gcStart, gcEnd)) {
 			long validated = MemoryEngineContract.latestKnownGcCount(gcStart, gcEnd);
 			gcBindings.markCandidatesValidated(activeIds, validated);
+			refreshCachedBindings(activeIds);
 			for (Map.Entry<Long, FreezeRecord> entry : active) {
 				if (!entry.getValue().paused) entry.getValue().validatedGcCount = validated;
 			}
@@ -1183,6 +1250,7 @@ public final class MemoryEngineService extends Service {
 		configuredToken = 0L;
 		clearSearchSession();
 		gcBindings.clearAll();
+		bindingCache.clear();
 		watchLabels.clear();
 		freezeRecords.clear();
 		stopFreezeTaskIfIdle();
@@ -1209,9 +1277,9 @@ public final class MemoryEngineService extends Service {
 	private static String gcSafetyMessage(int result) {
 		return switch (result) {
 			case MemoryEngineContract.RESULT_GC_REVALIDATED ->
-					"Java GC occurred since this result was last trusted. The selected result was " +
-							"revalidated and any moved address was updated. Review the refreshed value/address " +
-							"and retry; no write was performed.";
+					"The selected CandidateId binding was revalidated and its current address was " +
+							"refreshed. The binding may have relocated, including after Java GC. Review the " +
+							"refreshed value/address and retry; no write was performed.";
 			case MemoryEngineContract.RESULT_GC_RACE ->
 					"Java GC occurred during the operation. The result or write could not be safely " +
 							"confirmed, so no automatic retry was attempted.";
@@ -1393,9 +1461,13 @@ public final class MemoryEngineService extends Service {
 		};
 	}
 
-	private void notifyProgress(long operationId) {
+	private void notifyProgress(long operationId, long[] baseline) {
 		long[] progress = NativeMemoryEngine.scanProgress();
 		if (progress == null || progress.length != 2 || progress[1] <= 0L) {
+			return;
+		}
+		if (baseline != null && baseline.length == 2 &&
+				progress[0] == baseline[0] && progress[1] == baseline[1]) {
 			return;
 		}
 		long scannedBytes = Math.min(progress[0], progress[1]);
