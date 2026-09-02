@@ -20,6 +20,7 @@ import android.os.SystemClock;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -79,6 +80,13 @@ public class MemoryTargetProbeTest {
 				assertTrue(runs[index] >= runs[index - 1]);
 			}
 		}
+	}
+
+	@Test
+	public void residentRunRequestIsBoundedAtNativeBoundary() {
+		assertNull(NativeMemoryTarget.collectResidentRuns(
+				MemoryEngineContract.SCOPE_JAVA_THOROUGH,
+				MemoryEngineContract.MAX_RESIDENT_RUNS + 1));
 	}
 
 	@Test
