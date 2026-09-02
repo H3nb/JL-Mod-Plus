@@ -15,6 +15,8 @@
     <string name="memory_editor_no_results">No results yet</string>
     <string name="memory_editor_no_watch">Watch is empty</string>
     <string name="memory_editor_unsupported">Memory Editor is unavailable for this runtime/device.</string>
+    <string name="memory_editor_engine_unavailable">Memory Editor engine is unavailable.</string>
+    <string name="memory_editor_engine_reconnecting">Memory Editor is reconnecting…</string>
     <string name="memory_editor_previous">Previous scan</string>
     <string name="memory_editor_initial">Initial snapshot</string>
     <string name="memory_editor_scope_fast">Java Fast</string>
