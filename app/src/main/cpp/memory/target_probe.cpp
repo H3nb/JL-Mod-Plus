@@ -189,10 +189,12 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryTarget_collectResidentRuns(
             const size_t chunkPages = std::max<size_t>(
                     1U, kMincoreChunkBytes / pageSize);
             std::vector<unsigned char> residency;
+            std::vector<ResidentRun> mapRuns;
             size_t runStartPage = pageCount;
             bool mapReadable = true;
+            bool mapTruncated = false;
             for (size_t chunkStartPage = 0;
-                 chunkStartPage < pageCount && !truncated;) {
+                 chunkStartPage < pageCount && !mapTruncated;) {
                 const size_t pages = std::min(
                         chunkPages, pageCount - chunkStartPage);
                 try {
@@ -204,9 +206,9 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryTarget_collectResidentRuns(
                 const uintptr_t chunkStart = start + chunkStartPage * pageSize;
                 if (mincore(reinterpret_cast<void *>(chunkStart),
                             pages * pageSize, residency.data()) != 0) {
-                    // A map may disappear between maps parsing and mincore. Skip
-                    // that stale map, as the proven PR #109 scanner did. The
-                    // maxRuns cap below still reports true payload truncation.
+                    // A map may disappear between maps parsing and mincore. Discard every run
+                    // accumulated for this map so a partially-observed stale mapping can never
+                    // leak into the scanner's target set.
                     mapReadable = false;
                     break;
                 }
@@ -218,8 +220,8 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryTarget_collectResidentRuns(
                     } else if (!resident && runStartPage != pageCount) {
                         const uintptr_t runStart = start + runStartPage * pageSize;
                         const uintptr_t runEnd = start + page * pageSize;
-                        if (!appendRun(runs, runStart, runEnd,
-                                       static_cast<size_t>(maxRuns), truncated)) {
+                        if (!appendRun(mapRuns, runStart, runEnd,
+                                       static_cast<size_t>(maxRuns), mapTruncated)) {
                             break;
                         }
                         runStartPage = pageCount;
@@ -227,15 +229,31 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryTarget_collectResidentRuns(
                 }
                 chunkStartPage += pages;
             }
-            if (!mapReadable) {
-                continue;
-            }
             if (truncated) {
                 break;
             }
+            if (!mapReadable) {
+                continue;
+            }
+            if (mapTruncated) {
+                truncated = true;
+                break;
+            }
             if (runStartPage != pageCount) {
-                appendRun(runs, start + runStartPage * pageSize, end,
-                          static_cast<size_t>(maxRuns), truncated);
+                appendRun(mapRuns, start + runStartPage * pageSize, end,
+                          static_cast<size_t>(maxRuns), mapTruncated);
+                if (mapTruncated) {
+                    truncated = true;
+                    break;
+                }
+            }
+            // Commit this mapping atomically only after every chunk was read successfully.
+            // Account for a contiguous merge with the previous mapping before enforcing maxRuns.
+            for (const ResidentRun &run : mapRuns) {
+                if (!appendRun(runs, run.start, run.end,
+                               static_cast<size_t>(maxRuns), truncated)) {
+                    break;
+                }
             }
         }
         std::free(line);
