@@ -61,6 +61,15 @@ public class MemoryEngineContractTest {
 	}
 
 	@Test
+	public void mutationOutcomesRemainDistinct() {
+		assertEquals(7, MemoryEngineContract.RESULT_IDENTITY_UNSAFE);
+		assertEquals(9, MemoryEngineContract.RESULT_GC_REVALIDATED);
+		assertEquals(10, MemoryEngineContract.RESULT_GC_RACE);
+		assertEquals(11, MemoryEngineContract.RESULT_GC_BASELINE_INVALIDATED);
+		assertEquals(12, MemoryEngineContract.RESULT_PARTIAL_WRITE);
+	}
+
+	@Test
 	public void candidatePagesAndWriteLimitsRemainBounded() {
 		assertEquals(9, MemoryEngineContract.RESULT_PAGE_STRIDE);
 		assertEquals(100, MemoryEngineContract.MAX_RESULT_PAGE_SIZE);
