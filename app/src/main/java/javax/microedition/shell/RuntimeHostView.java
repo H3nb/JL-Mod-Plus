@@ -35,12 +35,9 @@ public final class RuntimeHostView {
 	public final ComposeView toolbar;
 	public final FrameLayout displayableContainer;
 	public final OverlayView overlay;
-	/**
-	 * Compatibility-only handles retained for MicroActivity's lightweight Memory Editor proxy.
-	 * They are intentionally plain, unattached Views: all Memory Editor UI now lives in the
-	 * :memory_engine overlay service process.
-	 */
-	public final View memoryEditor;
+	/** One persistent, normally-GONE Compose host for the lightweight in-process Memory Editor. */
+	public final ComposeView memoryEditor;
+	/** Compatibility constructor handle; the floating Memory Editor bubble no longer exists. */
 	public final View memoryEditorBubble;
 	public final ComposeView notices;
 
@@ -71,9 +68,14 @@ public final class RuntimeHostView {
 		root.addView(overlay, new FrameLayout.LayoutParams(
 				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-		// Keep constructor compatibility without allocating or attaching Memory Editor ComposeViews
-		// in :midlet. These views are only used to obtain an application Context for the proxy.
-		memoryEditor = new View(context);
+		// Keep exactly one editor host attached to the Activity. It is composed once by the
+		// controller and uses GONE while the user is playing, avoiding overlay permission and
+		// repeated attach/detach allocation churn.
+		memoryEditor = new ComposeView(context);
+		memoryEditor.setVisibility(View.GONE);
+		root.addView(memoryEditor, new FrameLayout.LayoutParams(
+				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
 		memoryEditorBubble = new View(context);
 
 		notices = new ComposeView(context);
