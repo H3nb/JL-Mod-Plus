@@ -64,7 +64,19 @@ jobs:
           cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
 
       - name: Install Android SDK platform 37
-        run: sdkmanager 'platforms;android-37.0'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdkmanager_path="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}/cmdline-tools/latest/bin/sdkmanager"
+          if [[ ! -x "$sdkmanager_path" ]]; then
+            sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+            sdkmanager_path="$(find "$sdk_root/cmdline-tools" -type f -path '*/bin/sdkmanager' -print -quit 2>/dev/null || true)"
+          fi
+          if [[ -z "$sdkmanager_path" || ! -x "$sdkmanager_path" ]]; then
+            echo 'Android SDK manager was not found on the runner.' >&2
+            exit 1
+          fi
+          "$sdkmanager_path" 'platforms;android-37.0'
 
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x gradlew
