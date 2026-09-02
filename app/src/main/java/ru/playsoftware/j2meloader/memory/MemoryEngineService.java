@@ -263,7 +263,7 @@ public final class MemoryEngineService extends Service {
 				int result = NativeMemoryEngine.filter(candidateIds, false);
 				if (result == MemoryEngineContract.RESULT_OK) {
 					advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
-							currentGcCount(token));
+							gcBindings.searchEpoch());
 				}
 				return result;
 			});
@@ -275,7 +275,7 @@ public final class MemoryEngineService extends Service {
 				int result = NativeMemoryEngine.filter(candidateIds, true);
 				if (result == MemoryEngineContract.RESULT_OK) {
 					advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
-							currentGcCount(token));
+							gcBindings.searchEpoch());
 				}
 				return result;
 			});
@@ -326,7 +326,7 @@ public final class MemoryEngineService extends Service {
 				int result = NativeMemoryEngine.filter(candidateIds, keep);
 				if (result == MemoryEngineContract.RESULT_OK) {
 					advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
-							currentGcCount(token));
+							gcBindings.searchEpoch());
 				}
 				return result;
 			});
@@ -759,8 +759,20 @@ public final class MemoryEngineService extends Service {
 				: MemoryEngineContract.RESULT_OK;
 	}
 
+	private int revalidateAgainIfGcMoved(long token, long[] candidateIds) {
+		long gcCount = currentGcCount(token);
+		if (!gcBindings.candidatesNeedRevalidation(candidateIds, gcCount)) {
+			return MemoryEngineContract.RESULT_OK;
+		}
+		int result = refreshWithRecovery(token, candidateIds);
+		return result == MemoryEngineContract.RESULT_OK
+				? MemoryEngineContract.RESULT_GC_REVALIDATED : result;
+	}
+
 	private int performGuardedMutation(long token, long[] candidateIds, NativeOperation write) {
 		int ready = prepareExplicitMutation(token, candidateIds);
+		if (ready != MemoryEngineContract.RESULT_OK) return ready;
+		ready = revalidateAgainIfGcMoved(token, candidateIds);
 		if (ready != MemoryEngineContract.RESULT_OK) return ready;
 		long gcBeforeWrite = currentGcCount(token);
 		int result = write.run();
@@ -859,6 +871,10 @@ public final class MemoryEngineService extends Service {
 		if (ready != MemoryEngineContract.RESULT_OK) {
 			return ready;
 		}
+		ready = revalidateAgainIfGcMoved(token, candidateIds);
+		if (ready != MemoryEngineContract.RESULT_OK) {
+			return ready;
+		}
 		long[] newWatchBuffer = new long[candidateIds.length];
 		int newWatchCount = 0;
 		for (long id : candidateIds) {
@@ -872,6 +888,11 @@ public final class MemoryEngineService extends Service {
 			if (pinResult != MemoryEngineContract.RESULT_OK) {
 				return pinResult;
 			}
+		}
+		ready = revalidateAgainIfGcMoved(token, candidateIds);
+		if (ready != MemoryEngineContract.RESULT_OK) {
+			if (newlyWatched.length > 0) NativeMemoryEngine.pin(newlyWatched, false);
+			return ready;
 		}
 		long gcBeforeWrite = currentGcCount(token);
 		int result = NativeMemoryEngine.freeze(
