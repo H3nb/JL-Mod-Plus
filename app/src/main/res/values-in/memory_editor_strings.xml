@@ -96,7 +96,7 @@
     <string name="memory_editor_identity_unsafe">Nilai telah berpindah atau berubah sebelum dapat diverifikasi. Segarkan hasil atau buka ulang Inspektor, lalu coba lagi.</string>
     <string name="memory_editor_safety_limit">Terlalu banyak kandidat dipilih untuk operasi aman ini.</string>
     <string name="memory_editor_invalid_request">Nilai atau operasi tidak valid.</string>
-    <string name="memory_editor_gc_revalidated">Garbage collection Java terjadi sejak hasil ini terakhir dipercaya. Editor Memori telah memverifikasi ulang hasil dan menyegarkan alamatnya saat ini. Periksa nilai dan alamat tersebut, lalu coba lagi. Tidak ada penulisan yang dilakukan.</string>
+    <string name="memory_editor_gc_revalidated">Editor Memori telah memverifikasi ulang CandidateId ini dan menyegarkan alamatnya saat ini. Binding mungkin telah berpindah, termasuk setelah garbage collection Java. Periksa nilai dan alamat yang sudah disegarkan, lalu coba lagi. Tidak ada penulisan yang dilakukan.</string>
     <string name="memory_editor_gc_race">Garbage collection Java terjadi saat operasi berlangsung. Hasil atau penulisan tidak dapat dipastikan aman, sehingga Editor Memori tidak mencoba menulis ulang secara otomatis.</string>
     <string name="memory_editor_gc_baseline_invalidated">Garbage collection Java terjadi setelah baseline ini dibuat. Karena objek terkelola dapat berpindah, baseline tidak lagi aman dibandingkan berdasarkan alamat. Buat baseline baru atau gunakan pencarian nilai yang diketahui.</string>
     <string name="memory_editor_freeze_paused">Dijeda demi keamanan</string>
