@@ -874,13 +874,16 @@ void advanceScanProgress(size_t bytes) {
     if (total == 0) {
         return;
     }
+    const uint64_t increment = static_cast<uint64_t>(bytes);
     uint64_t current = gScanBytesScanned.load(std::memory_order_relaxed);
-    while (current < total &&
-           !gScanBytesScanned.compare_exchange_weak(
-                   current,
-                   std::min(total, current + static_cast<uint64_t>(bytes)),
-                   std::memory_order_release,
-                   std::memory_order_relaxed)) {
+    while (current < total) {
+        const uint64_t remaining = total - current;
+        const uint64_t next = increment >= remaining ? total : current + increment;
+        if (gScanBytesScanned.compare_exchange_weak(
+                    current, next, std::memory_order_release,
+                    std::memory_order_relaxed)) {
+            break;
+        }
     }
 }
 
