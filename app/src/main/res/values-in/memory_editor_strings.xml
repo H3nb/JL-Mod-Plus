@@ -5,8 +5,8 @@
     <string name="memory_editor">Editor Memori</string>
     <string name="memory_editor_search_hint">Nilai</string>
     <string name="memory_editor_unknown">Nilai awal tidak diketahui</string>
-    <string name="memory_editor_new_search">Pencarian Baru</string>
-    <string name="memory_editor_next_scan">Pindai Berikutnya</string>
+    <string name="memory_editor_new_search">Pencarian baru</string>
+    <string name="memory_editor_next_scan">Pindai berikutnya</string>
     <string name="memory_editor_refine_results">Persempit hasil</string>
     <plurals name="memory_editor_results">
         <item quantity="other">%1$d hasil</item>
@@ -76,8 +76,8 @@
     <string name="memory_editor_searching_detail">Pencarian besar dapat memerlukan waktu lebih lama. Hasil terakhir tetap aman sampai operasi ini selesai.</string>
     <string name="memory_editor_search_progress">Memindai %1$d dari %2$d MiB</string>
     <string name="memory_editor_candidate_stable">Stabil</string>
-    <string name="memory_editor_candidate_moved">Berpindah</string>
-    <string name="memory_editor_candidate_relocating">Mencari ulang</string>
+    <string name="memory_editor_candidate_moved">Alamat diperbarui</string>
+    <string name="memory_editor_candidate_relocating">Memverifikasi ulang</string>
     <string name="memory_editor_candidate_ambiguous">Ambigu — penulisan dijeda</string>
     <string name="memory_editor_candidate_lost">Hilang — penulisan dijeda</string>
     <string name="memory_editor_watch_label">Label pantauan</string>
@@ -120,7 +120,7 @@
     <string name="memory_editor_interpretations">Interpretasi</string>
     <string name="memory_editor_relocations">Relokasi</string>
     <string name="memory_editor_explore">Jelajahi</string>
-    <string name="memory_editor_inspector">Inspektor Memori</string>
+    <string name="memory_editor_inspector">Inspektor</string>
     <string name="memory_editor_inspector_controls">Kontrol inspektor</string>
     <string name="memory_editor_back_to_memory">Kembali ke memori</string>
     <string name="memory_editor_inspect_memory">Periksa memori sekitar</string>
