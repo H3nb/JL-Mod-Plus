@@ -18,6 +18,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -43,7 +44,7 @@ class MemoryInputImeTest {
         composeRule.setContent {
             MaterialTheme {
                 MemoryInputArea {
-                    var value by mutableStateOf("")
+                    var value by remember { mutableStateOf("") }
                     MemoryValueInput(
                         value = value,
                         onValueChange = { value = it },
