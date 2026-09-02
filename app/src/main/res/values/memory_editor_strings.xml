@@ -5,8 +5,8 @@
     <string name="memory_editor">Memory Editor</string>
     <string name="memory_editor_search_hint">Value</string>
     <string name="memory_editor_unknown">Unknown initial value</string>
-    <string name="memory_editor_new_search">New Search</string>
-    <string name="memory_editor_next_scan">Next Scan</string>
+    <string name="memory_editor_new_search">New search</string>
+    <string name="memory_editor_next_scan">Next scan</string>
     <string name="memory_editor_refine_results">Refine results</string>
     <plurals name="memory_editor_results">
         <item quantity="one">%1$d result</item>
@@ -78,8 +78,8 @@
     <string name="memory_editor_searching_detail">Large searches can take longer. The previous completed results remain safe until this operation finishes.</string>
     <string name="memory_editor_search_progress">Scanned %1$d of %2$d MiB</string>
     <string name="memory_editor_candidate_stable">Stable</string>
-    <string name="memory_editor_candidate_moved">Moved</string>
-    <string name="memory_editor_candidate_relocating">Relocating</string>
+    <string name="memory_editor_candidate_moved">Address updated</string>
+    <string name="memory_editor_candidate_relocating">Revalidating</string>
     <string name="memory_editor_candidate_ambiguous">Ambiguous — writes paused</string>
     <string name="memory_editor_candidate_lost">Lost — writes paused</string>
     <string name="memory_editor_watch_label">Watch label</string>
@@ -122,14 +122,13 @@
     <string name="memory_editor_interpretations">Interpretations</string>
     <string name="memory_editor_relocations">Relocations</string>
     <string name="memory_editor_explore">Explore</string>
-    <string name="memory_editor_inspector">Memory Inspector</string>
+    <string name="memory_editor_inspector">Inspector</string>
     <string name="memory_editor_inspector_controls">Inspector controls</string>
     <string name="memory_editor_back_to_memory">Back to memory</string>
     <string name="memory_editor_inspect_memory">Inspect nearby memory</string>
     <string name="memory_editor_inspector_help">Read-only view anchored to the verified candidate. Relative offsets follow the candidate if it relocates.</string>
     <string name="memory_editor_inspector_edit_help">Tap a cell to edit it. Writes verify the live target and read back safely; offsets follow the candidate if it relocates.</string>
-    <string name="memory_editor_inspector_loading">Verifying candidate and reading a bounded snapshot…</string>
-    <string name="memory_editor_inspector_empty">Select a result, then inspect nearby memory to view and edit its bounded snapshot.</string>
+    <string name="memory_editor_inspector_loading">Verifying candidate and reading bounded snapshot…</string>
     <string name="memory_editor_anchor">Anchor</string>
     <string name="memory_editor_view_as">View as</string>
     <string name="memory_editor_inspect_radius">Snapshot</string>
@@ -142,5 +141,5 @@
     <string name="memory_editor_select_result_value">Select this result</string>
     <string name="memory_editor_add_to_watch_after_edit">Add to Watch after applying</string>
     <string name="memory_editor_freeze_after_edit">Freeze after applying</string>
-    <string name="memory_editor_freeze_after_edit_help">Uses the replacement value as a lock and automatically adds the candidates to Watch.</string>
+    <string name="memory_editor_freeze_after_edit_help">Use the replacement value as the lock target and automatically add the candidate to Watch.</string>
 </resources>
