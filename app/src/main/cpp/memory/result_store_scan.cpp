@@ -11,19 +11,14 @@
 #include <algorithm>
 #include <cstring>
 #include <limits>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace jlmem::v2 {
 namespace {
 
 constexpr std::size_t kRemoteReadChunkSize = 256U * 1024U;
-
-[[nodiscard]] std::uint64_t loadBits(const std::uint8_t *data,
-                                     std::size_t width) noexcept {
-    std::uint64_t bits = 0U;
-    std::memcpy(&bits, data, width);
-    return bits;
-}
 
 [[nodiscard]] std::uintptr_t alignUp(std::uintptr_t value,
                                      std::size_t alignment) noexcept {
@@ -37,21 +32,26 @@ constexpr std::size_t kRemoteReadChunkSize = 256U * 1024U;
                    : value + delta;
 }
 
-} // namespace
+template <typename T>
+[[nodiscard]] T valueFromBits(std::uint64_t bits) noexcept {
+    static_assert(std::is_trivially_copyable_v<T>);
+    static_assert(sizeof(T) <= sizeof(bits));
+    T value{};
+    std::memcpy(&value, &bits, sizeof(T));
+    return value;
+}
 
-bool scanKnownExplicit(const std::vector<ScanRange> &ranges,
-                       const KnownExplicitScanRequest &request,
-                       const RemoteReadFn &read,
-                       const MatchFn &matches,
-                       const CancelledFn &cancelled,
-                       ResultStore &out,
-                       KnownScanStats &stats,
-                       std::string &error) {
-    if (request.plane == ResultPlane::Count || request.width == 0U ||
-        request.width != planeAlignment(request.plane) || !read || !matches) {
-        error = "Invalid explicit-type v2 shadow scan request";
-        return false;
-    }
+template <typename T, ResultPlane Plane>
+[[nodiscard]] bool scanEqualTyped(const std::vector<ScanRange> &ranges,
+                                  std::uint64_t expectedBits,
+                                  const RemoteReadFn &read,
+                                  const CancelledFn &cancelled,
+                                  ResultStore &out,
+                                  KnownScanStats &stats,
+                                  std::string &error) {
+    static_assert(sizeof(T) == planeAlignment(Plane));
+    constexpr std::size_t kWidth = sizeof(T);
+    const T expected = valueFromBits<T>(expectedBits);
 
     ResultStore next;
     KnownScanStats nextStats;
@@ -101,11 +101,11 @@ bool scanKnownExplicit(const std::vector<ScanRange> &ranges,
             }
             nextStats.bytesScanned += static_cast<std::uint64_t>(chunkSize);
 
-            std::uintptr_t address = alignUp(chunkStart, request.width);
+            std::uintptr_t address = alignUp(chunkStart, kWidth);
             while (address >= chunkStart) {
                 const std::size_t offset =
                         static_cast<std::size_t>(address - chunkStart);
-                if (offset > chunkSize || request.width > chunkSize - offset) {
+                if (offset > chunkSize || kWidth > chunkSize - offset) {
                     break;
                 }
 
@@ -121,25 +121,25 @@ bool scanKnownExplicit(const std::vector<ScanRange> &ranges,
                     scratchActive = true;
                 }
 
-                const std::uint64_t bits =
-                        loadBits(buffer.data() + offset, request.width);
-                if (matches(bits)) {
+                T actual{};
+                std::memcpy(&actual, buffer.data() + offset, kWidth);
+                if (actual == expected) {
                     const std::size_t byteOffset =
                             static_cast<std::size_t>(address - blockBase);
-                    const std::size_t slot = byteOffset / request.width;
-                    if (!scratch.set(request.plane, slot)) {
+                    const std::size_t slot = byteOffset / kWidth;
+                    if (!scratch.set(Plane, slot)) {
                         error = "ResultStore rejected a v2 shadow result slot";
                         return false;
                     }
                     nextStats.addressFingerprint = appendAddressFingerprint(
-                            nextStats.addressFingerprint, address, request.plane);
+                            nextStats.addressFingerprint, address, Plane);
                 }
 
-                if (address > std::numeric_limits<std::uintptr_t>::max() -
-                                      request.width) {
+                if (address >
+                    std::numeric_limits<std::uintptr_t>::max() - kWidth) {
                     break;
                 }
-                address += request.width;
+                address += kWidth;
             }
 
             chunkStart += chunkSize;
@@ -158,6 +158,48 @@ bool scanKnownExplicit(const std::vector<ScanRange> &ranges,
     stats = nextStats;
     error.clear();
     return true;
+}
+
+} // namespace
+
+bool scanKnownEqualExplicit(const std::vector<ScanRange> &ranges,
+                            const KnownEqualScanRequest &request,
+                            const RemoteReadFn &read,
+                            const CancelledFn &cancelled,
+                            ResultStore &out,
+                            KnownScanStats &stats,
+                            std::string &error) {
+    if (!read || request.plane == ResultPlane::Count) {
+        error = "Invalid explicit-type equality shadow request";
+        return false;
+    }
+    switch (request.plane) {
+    case ResultPlane::Byte:
+        return scanEqualTyped<std::int8_t, ResultPlane::Byte>(
+                ranges, request.expectedBits, read, cancelled, out, stats, error);
+    case ResultPlane::Short:
+        return scanEqualTyped<std::int16_t, ResultPlane::Short>(
+                ranges, request.expectedBits, read, cancelled, out, stats, error);
+    case ResultPlane::Char:
+        return scanEqualTyped<std::uint16_t, ResultPlane::Char>(
+                ranges, request.expectedBits, read, cancelled, out, stats, error);
+    case ResultPlane::Int:
+        return scanEqualTyped<std::int32_t, ResultPlane::Int>(
+                ranges, request.expectedBits, read, cancelled, out, stats, error);
+    case ResultPlane::Float:
+        return scanEqualTyped<float, ResultPlane::Float>(
+                ranges, request.expectedBits, read, cancelled, out, stats, error);
+    case ResultPlane::Long:
+        return scanEqualTyped<std::int64_t, ResultPlane::Long>(
+                ranges, request.expectedBits, read, cancelled, out, stats, error);
+    case ResultPlane::Double:
+        return scanEqualTyped<double, ResultPlane::Double>(
+                ranges, request.expectedBits, read, cancelled, out, stats, error);
+    case ResultPlane::Count:
+        break;
+    }
+    error = "Invalid explicit-type equality shadow request";
+    return false;
 }
 
 } // namespace jlmem::v2
