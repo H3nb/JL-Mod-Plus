@@ -15,13 +15,19 @@
 package javax.microedition.shell;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
+import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.compose.ui.platform.ComposeView;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewGroupCompat;
 
 import javax.microedition.lcdui.overlay.OverlayView;
@@ -37,7 +43,7 @@ public final class RuntimeHostView {
 	public final OverlayView overlay;
 	/** One persistent, normally-GONE Compose host for the lightweight in-process Memory Editor. */
 	public final ComposeView memoryEditor;
-	/** Compatibility constructor handle; the floating Memory Editor bubble no longer exists. */
+	/** Small Activity-owned bubble. It is a normal View in :midlet, not a system overlay. */
 	public final View memoryEditorBubble;
 	public final ComposeView notices;
 
@@ -68,20 +74,58 @@ public final class RuntimeHostView {
 		root.addView(overlay, new FrameLayout.LayoutParams(
 				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-		// Keep exactly one editor host attached to the Activity. It is composed once by the
-		// controller and uses GONE while the user is playing, avoiding overlay permission and
-		// repeated attach/detach allocation churn.
+		// Keep exactly one editor Compose host attached to the Activity. It is composed once by the
+		// controller and uses GONE while the user is playing, avoiding repeated attach/detach churn.
 		memoryEditor = new ComposeView(context);
 		memoryEditor.setVisibility(View.GONE);
 		root.addView(memoryEditor, new FrameLayout.LayoutParams(
 				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-		memoryEditorBubble = new View(context);
+		// The bubble deliberately stays a plain Android View. A second Compose tree would be wasteful
+		// for one icon and would add avoidable allocations in the MIDlet process.
+		AppCompatImageButton bubble = new AppCompatImageButton(context);
+		bubble.setImageResource(R.drawable.ic_memory_editor_search);
+		bubble.setContentDescription(context.getString(R.string.memory_editor_bubble));
+		bubble.setImageTintList(ColorStateList.valueOf(
+				resolveThemeColor(context, android.R.attr.textColorPrimaryInverse, Color.WHITE)));
+		bubble.setPadding(dp(context, 13), dp(context, 13), dp(context, 13), dp(context, 13));
+		bubble.setAlpha(0.90f);
+		bubble.setElevation(dp(context, 6));
+		bubble.setVisibility(View.GONE);
+		GradientDrawable bubbleBackground = new GradientDrawable();
+		bubbleBackground.setShape(GradientDrawable.OVAL);
+		bubbleBackground.setColor(resolveThemeColor(context, android.R.attr.colorAccent, 0xff6750a4));
+		bubble.setBackground(bubbleBackground);
+		FrameLayout.LayoutParams bubbleParams = new FrameLayout.LayoutParams(
+				dp(context, 52), dp(context, 52), Gravity.END | Gravity.CENTER_VERTICAL);
+		bubbleParams.setMarginEnd(dp(context, 12));
+		root.addView(bubble, bubbleParams);
+		memoryEditorBubble = bubble;
 
 		notices = new ComposeView(context);
 		FrameLayout.LayoutParams noticeParams = new FrameLayout.LayoutParams(
 				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM);
 		root.addView(notices, noticeParams);
+	}
+
+	private static int dp(Context context, int value) {
+		return Math.round(TypedValue.applyDimension(
+				TypedValue.COMPLEX_UNIT_DIP, value, context.getResources().getDisplayMetrics()));
+	}
+
+	private static int resolveThemeColor(Context context, int attribute, int fallback) {
+		TypedValue value = new TypedValue();
+		if (!context.getTheme().resolveAttribute(attribute, value, true)) {
+			return fallback;
+		}
+		if (value.resourceId != 0) {
+			try {
+				return ContextCompat.getColor(context, value.resourceId);
+			} catch (RuntimeException ignored) {
+				return fallback;
+			}
+		}
+		return value.data;
 	}
 
 	public FrameLayout getRoot() {
