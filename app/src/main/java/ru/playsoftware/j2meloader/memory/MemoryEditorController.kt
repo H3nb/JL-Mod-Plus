@@ -35,7 +35,7 @@ import java.util.concurrent.RejectedExecutionException
  */
 class MemoryEditorComposeController(
     private val composeView: ComposeView,
-    @Suppress("UNUSED_PARAMETER") bubbleView: View,
+    private val bubbleView: View,
 ) : MemoryEditorActions {
     private val context = composeView.context
     private val ipc: ExecutorService = Executors.newSingleThreadExecutor { runnable ->
@@ -46,6 +46,7 @@ class MemoryEditorComposeController(
     private var service: IMemoryEngineService? = null
     private var bound = false
     private var destroyed = false
+    private var bubbleEnabled = false
     private var activeOperationId = 0L
     private var pendingFreezeAfterEdit: PendingFreezeAfterEdit? = null
     private var pendingInspectorRefresh: PendingInspectorRefresh? = null
@@ -127,6 +128,8 @@ class MemoryEditorComposeController(
     init {
         composeView.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         composeView.visibility = View.GONE
+        bubbleView.visibility = View.GONE
+        bubbleView.setOnClickListener { open() }
         composeView.setContent {
             JLModPlusTheme {
                 MemoryEditorRuntimeRoot(state = state, actions = this)
@@ -134,15 +137,18 @@ class MemoryEditorComposeController(
         }
     }
 
-    /** Runtime-menu compatibility: the former bubble toggle now directly opens/closes the editor. */
+    /** Enables/disables the lightweight Activity-owned bubble without opening a system overlay. */
     fun toggleBubble(): Boolean {
-        if (state.visible) close() else open()
-        return state.visible
+        if (destroyed) return false
+        bubbleEnabled = !bubbleEnabled
+        syncBubbleVisibility()
+        return bubbleEnabled
     }
 
     fun open() {
         if (destroyed) return
         state = state.copy(visible = true, connecting = service == null, message = null)
+        bubbleView.visibility = View.GONE
         composeView.visibility = View.VISIBLE
         composeView.bringToFront()
         composeView.requestFocus()
@@ -153,16 +159,24 @@ class MemoryEditorComposeController(
         if (destroyed) return
         state = state.copy(visible = false, selected = emptySet())
         composeView.visibility = View.GONE
+        syncBubbleVisibility()
     }
 
     fun isVisible(): Boolean = state.visible
 
-    /** Kept for RuntimeMenuComposeController's existing selected-state API. */
-    fun isBubbleEnabled(): Boolean = state.visible
+    fun isBubbleEnabled(): Boolean = bubbleEnabled
+
+    private fun syncBubbleVisibility() {
+        if (destroyed) return
+        bubbleView.visibility = if (bubbleEnabled && !state.visible) View.VISIBLE else View.GONE
+        if (bubbleView.visibility == View.VISIBLE) bubbleView.bringToFront()
+    }
 
     fun destroy() {
         if (destroyed) return
         destroyed = true
+        bubbleView.setOnClickListener(null)
+        bubbleView.visibility = View.GONE
         composeView.visibility = View.GONE
         composeView.disposeComposition()
         disconnectEngine()
