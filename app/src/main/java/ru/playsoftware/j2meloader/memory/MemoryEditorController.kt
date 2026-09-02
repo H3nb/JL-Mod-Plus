@@ -125,6 +125,9 @@ class MemoryEditorComposeController(
                 if (activeOperationId != 0L && operationId != activeOperationId) return@post
 
                 val succeeded = resultCode == MemoryEngineContract.RESULT_OK
+                val gcSafetyFailure = resultCode == MemoryEngineContract.RESULT_GC_REVALIDATED ||
+                    resultCode == MemoryEngineContract.RESULT_GC_RACE ||
+                    resultCode == MemoryEngineContract.RESULT_GC_BASELINE_INVALIDATED
                 val editFollowUp = if (succeeded) pendingEditFollowUp else null
                 pendingEditFollowUp = null
                 if (succeeded) {
@@ -155,6 +158,8 @@ class MemoryEditorComposeController(
                     scanBytesScanned = 0L,
                     scanBytesTotal = 0L,
                     resultCount = resultCount,
+                    inspectorLoading = if (gcSafetyFailure) false else state.inspectorLoading,
+                    inspector = if (gcSafetyFailure) null else state.inspector,
                     message = if (succeeded) {
                         message?.takeIf(String::isNotBlank)
                     } else {
@@ -1022,15 +1027,20 @@ class MemoryEditorComposeController(
         MemoryEngineContract.RESULT_IDENTITY_UNSAFE -> context.getString(R.string.memory_editor_identity_unsafe)
         MemoryEngineContract.RESULT_SAFETY_LIMIT -> context.getString(R.string.memory_editor_safety_limit)
         MemoryEngineContract.RESULT_UNSUPPORTED -> context.getString(R.string.memory_editor_write_unsupported)
+        MemoryEngineContract.RESULT_GC_REVALIDATED -> context.getString(R.string.memory_editor_gc_revalidated)
+        MemoryEngineContract.RESULT_GC_RACE -> context.getString(R.string.memory_editor_gc_race)
+        MemoryEngineContract.RESULT_GC_BASELINE_INVALIDATED ->
+            context.getString(R.string.memory_editor_gc_baseline_invalidated)
         else -> context.getString(R.string.memory_editor_invalid_request)
     }
 
-    private fun operationMessage(resultCode: Int, message: String?): String =
-        if (resultCode == MemoryEngineContract.RESULT_IDENTITY_UNSAFE) {
-            context.getString(R.string.memory_editor_identity_unsafe)
-        } else {
-            message ?: resultMessage(resultCode)
-        }
+    private fun operationMessage(resultCode: Int, message: String?): String = when (resultCode) {
+        MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+        MemoryEngineContract.RESULT_GC_REVALIDATED,
+        MemoryEngineContract.RESULT_GC_RACE,
+        MemoryEngineContract.RESULT_GC_BASELINE_INVALIDATED -> resultMessage(resultCode)
+        else -> message ?: resultMessage(resultCode)
+    }
 
     internal companion object {
         const val PAGE_SIZE = 100
