@@ -111,12 +111,14 @@ public final class MemoryTargetBridgeService extends Service {
 	}
 
 	static long readGcCount() {
-		String value;
 		try {
-			value = Debug.getRuntimeStat(ART_GC_COUNT_STAT);
+			return parseGcCount(Debug.getRuntimeStat(ART_GC_COUNT_STAT));
 		} catch (RuntimeException exception) {
 			return MemoryEngineContract.GC_COUNT_UNKNOWN;
 		}
+	}
+
+	static long parseGcCount(@Nullable String value) {
 		if (value == null || value.isBlank()) {
 			return MemoryEngineContract.GC_COUNT_UNKNOWN;
 		}
