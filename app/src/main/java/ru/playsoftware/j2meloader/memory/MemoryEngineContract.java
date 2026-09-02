@@ -68,12 +68,14 @@ public final class MemoryEngineContract {
 	public static final int RESULT_NO_SESSION = 6;
 	public static final int RESULT_IDENTITY_UNSAFE = 7;
 	public static final int RESULT_SAFETY_LIMIT = 8;
-	/** A GC occurred since the selected result binding was trusted. Recovery completed; retry. */
+	/** Candidate binding was revalidated/refreshed; retry before any explicit write. */
 	public static final int RESULT_GC_REVALIDATED = 9;
 	/** A GC occurred during a scan/write critical window, so the operation cannot be confirmed. */
 	public static final int RESULT_GC_RACE = 10;
 	/** An Unknown/relative baseline was captured before a moving-GC epoch and is no longer safe. */
 	public static final int RESULT_GC_BASELINE_INVALIDATED = 11;
+	/** At least one bounded write succeeded and at least one selected write was skipped safely. */
+	public static final int RESULT_PARTIAL_WRITE = 12;
 
 	public static final int CANDIDATE_STABLE = 0;
 	public static final int CANDIDATE_RELOCATING = 1;
