@@ -11,6 +11,7 @@
 #include <array>
 #include <bit>
 #include <limits>
+#include <utility>
 
 namespace jlmem::v2 {
 namespace {
@@ -82,7 +83,7 @@ void buildAddressUnion(const ResultStore &store, std::size_t blockIndex,
 } // namespace
 
 bool readAddressPage(const ResultStore &store, ResultCursor cursor,
-                     std::size_t limit, ResultAddressPage &page) noexcept {
+                     std::size_t limit, ResultAddressPage &page) {
     if (limit == 0U || limit > kResultCursorPageLimit ||
         cursor.blockIndex > store.blockCount() ||
         cursor.nextByteOffset >= kResultLogicalBlockSize) {
