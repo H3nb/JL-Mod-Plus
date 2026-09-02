@@ -14,6 +14,7 @@
 
 package ru.playsoftware.j2meloader.memory
 
+import android.content.res.Configuration
 import android.view.KeyEvent as AndroidKeyEvent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -50,6 +51,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -324,6 +326,7 @@ internal fun MemoryInputArea(
 ) {
     val session = remember { MemoryInputSession() }
     val focusManager = LocalFocusManager.current
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     LaunchedEffect(active) {
         if (!active) {
             session.hide()
@@ -332,9 +335,10 @@ internal fun MemoryInputArea(
     }
     CompositionLocalProvider(LocalMemoryInputSession provides session) {
         BoxWithConstraints(modifier = modifier) {
-            val sideDock = sideDockInLandscape &&
-                maxWidth >= 600.dp &&
-                maxWidth > maxHeight
+            // Use the actual device orientation here. AlertDialog bodies may be measured inside a
+            // vertical scroll container with an unbounded height, where maxWidth > maxHeight is
+            // not a reliable landscape test.
+            val sideDock = sideDockInLandscape && landscape && maxWidth >= 480.dp
             if (sideDock) {
                 Row(
                     modifier = Modifier.fillMaxSize(),
@@ -601,7 +605,10 @@ private fun MemoryKeypad(
                 // intentionally accept one replacement value, not a group-search expression.
                 KeypadButton(";", enabled = false) {}
                 KeypadButton(":", enabled = false) {}
-                KeypadButton(stringResource(R.string.memory_editor_keypad_clear)) { session.clear() }
+                KeypadButton(
+                    stringResource(R.string.memory_editor_keypad_clear),
+                    weight = if (allowHide) 1f else 2f,
+                ) { session.clear() }
                 if (allowHide) {
                     KeypadButton(stringResource(R.string.memory_editor_keypad_hide), onClick = onHide)
                 }
@@ -623,12 +630,13 @@ private fun KeypadRow(content: @Composable RowScope.() -> Unit) {
 private fun RowScope.KeypadButton(
     label: String,
     enabled: Boolean = true,
+    weight: Float = 1f,
     onClick: () -> Unit,
 ) {
     Button(
         onClick = onClick,
         enabled = enabled,
-        modifier = Modifier.weight(1f).sizeIn(minHeight = 48.dp),
+        modifier = Modifier.weight(weight).sizeIn(minHeight = 48.dp),
         contentPadding = PaddingValues(horizontal = 4.dp),
     ) {
         Text(label, maxLines = 1)
