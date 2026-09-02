@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Memory Editor is an optional in-game tool in the full emulator flavor. Its UI lives in a
-         dedicated process and therefore needs Android's special overlay permission. -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <application>
@@ -10,12 +8,12 @@
             android:excludeFromRecents="true"
             android:exported="false"
             android:launchMode="singleTop"
-            android:process=":memory_editor"
+            android:process=":memory_engine"
             android:theme="@style/AppTheme.NoActionBar" />
         <service
             android:name=".memory.MemoryEditorOverlayService"
             android:exported="false"
-            android:process=":memory_editor"
+            android:process=":memory_engine"
             android:stopWithTask="true" />
     </application>
 </manifest>

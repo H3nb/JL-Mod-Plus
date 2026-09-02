@@ -18,15 +18,10 @@ import android.provider.Settings
 import android.view.View
 
 /**
- * MIDlet-process proxy for the Memory Editor overlay.
+ * Tiny MIDlet-process proxy for the Memory Editor overlay.
  *
- * No Memory Editor Compose content, state polling, engine IPC, or custom keypad is hosted here.
- * Those allocations live in [MemoryEditorOverlayService]'s dedicated :memory_editor process so
- * opening/refining the editor cannot itself create ART GC pressure in the MIDlet process.
- *
- * The two legacy host views remain constructor arguments temporarily so MicroActivity does not
- * need compatibility-sensitive structural changes. RuntimeHostView now supplies unattached plain
- * Views rather than ComposeViews for them.
+ * The MIDlet process owns no Memory Editor Compose tree, result state, keypad, or engine polling.
+ * Overlay presentation and the memory engine share :memory_engine; this proxy only toggles it.
  */
 class MemoryEditorComposeController(
     composeView: View,
@@ -63,7 +58,7 @@ class MemoryEditorComposeController(
     fun destroy() = Unit
 
     internal companion object {
-        // Retained for the legacy screenshot/test composables while the production overlay uses
+        // Retained for legacy screenshot/test composables while the production overlay uses
         // MemoryEditorOverlayController.PAGE_SIZE.
         const val PAGE_SIZE = 100
     }

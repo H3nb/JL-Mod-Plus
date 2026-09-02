@@ -37,20 +37,22 @@ import androidx.compose.ui.unit.dp
 import ru.playsoftware.j2meloader.R
 import ru.playsoftware.j2meloader.ui.JLModPlusTheme
 
-/** Friendly explainer for Android's special "display over other apps" permission. */
+/** Short hand-off to Android's special "display over other apps" permission screen. */
 class MemoryEditorOverlayPermissionActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val composeView = ComposeView(this)
-        setContentView(composeView)
-        composeView.setContent {
-            JLModPlusTheme {
-                MemoryEditorOverlayPermissionScreen(
-                    onAllow = ::openOverlaySettings,
-                    onCancel = ::finish,
-                )
-            }
-        }
+        setContentView(
+            ComposeView(this).apply {
+                setContent {
+                    JLModPlusTheme {
+                        MemoryEditorOverlayPermissionScreen(
+                            onAllow = ::openOverlaySettings,
+                            onCancel = ::finish,
+                        )
+                    }
+                }
+            },
+        )
     }
 
     override fun onResume() {
@@ -62,11 +64,12 @@ class MemoryEditorOverlayPermissionActivity : AppCompatActivity() {
     }
 
     private fun openOverlaySettings() {
-        val intent = Intent(
-            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-            Uri.parse("package:$packageName"),
+        startActivity(
+            Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:$packageName"),
+            ),
         )
-        startActivity(intent)
     }
 
     companion object {
@@ -84,53 +87,48 @@ private fun MemoryEditorOverlayPermissionScreen(
     onAllow: () -> Unit,
     onCancel: () -> Unit,
 ) {
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.surface,
+    ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 32.dp),
+            modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 32.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_memory_editor_search),
+                painterResource(R.drawable.ic_memory_editor_search),
                 contentDescription = null,
-                modifier = Modifier.size(56.dp),
+                modifier = Modifier.size(52.dp),
                 tint = MaterialTheme.colorScheme.primary,
             )
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(18.dp))
             Text(
                 stringResource(R.string.memory_editor_overlay_permission_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold,
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(8.dp))
             Text(
                 stringResource(R.string.memory_editor_overlay_permission_body),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(Modifier.height(12.dp))
-            Surface(
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                shape = MaterialTheme.shapes.large,
-            ) {
-                Text(
-                    stringResource(R.string.memory_editor_overlay_permission_privacy),
-                    modifier = Modifier.padding(16.dp),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                )
-            }
             Spacer(Modifier.height(24.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                OutlinedButton(onClick = onCancel, modifier = Modifier.weight(1f)) {
+                OutlinedButton(
+                    onClick = onCancel,
+                    modifier = Modifier.weight(1f),
+                ) {
                     Text(stringResource(R.string.memory_editor_overlay_not_now))
                 }
-                Button(onClick = onAllow, modifier = Modifier.weight(1f)) {
+                Button(
+                    onClick = onAllow,
+                    modifier = Modifier.weight(1f),
+                ) {
                     Text(stringResource(R.string.memory_editor_overlay_allow))
                 }
             }

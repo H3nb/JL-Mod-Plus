@@ -16,29 +16,32 @@ package javax.microedition.shell;
 
 import android.content.Context;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
 import androidx.compose.ui.platform.ComposeView;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
 import androidx.core.view.ViewGroupCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import javax.microedition.lcdui.overlay.OverlayView;
 
 import ru.playsoftware.j2meloader.R;
 
-/** Structural host for compatibility-sensitive guest Views and Compose-owned host chrome. */
+/** Structural host for compatibility-sensitive guest Views and app-owned runtime chrome. */
 public final class RuntimeHostView {
 	public final FrameLayout root;
 	public final LinearLayout virtualDisplay;
 	public final ComposeView toolbar;
 	public final FrameLayout displayableContainer;
 	public final OverlayView overlay;
-	public final ComposeView memoryEditor;
-	public final ComposeView memoryEditorBubble;
+	/**
+	 * Compatibility-only handles retained for MicroActivity's lightweight Memory Editor proxy.
+	 * They are intentionally plain, unattached Views: all Memory Editor UI now lives in the
+	 * :memory_engine overlay service process.
+	 */
+	public final View memoryEditor;
+	public final View memoryEditorBubble;
 	public final ComposeView notices;
 
 	public RuntimeHostView(Context context) {
@@ -68,30 +71,10 @@ public final class RuntimeHostView {
 		root.addView(overlay, new FrameLayout.LayoutParams(
 				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-		memoryEditor = new ComposeView(context);
-		memoryEditor.setVisibility(android.view.View.GONE);
-		root.addView(memoryEditor, new FrameLayout.LayoutParams(
-				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-
-		memoryEditorBubble = new ComposeView(context);
-		memoryEditorBubble.setVisibility(android.view.View.GONE);
-		int bubbleSize = Math.round(64 * context.getResources().getDisplayMetrics().density);
-		FrameLayout.LayoutParams bubbleParams = new FrameLayout.LayoutParams(
-				bubbleSize, bubbleSize, Gravity.START | Gravity.TOP);
-		root.addView(memoryEditorBubble, bubbleParams);
-		int bubbleMargin = Math.round(8 * context.getResources().getDisplayMetrics().density);
-		ViewCompat.setOnApplyWindowInsetsListener(memoryEditorBubble, (view, windowInsets) -> {
-			Insets bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
-			Insets cutout = windowInsets.getInsets(WindowInsetsCompat.Type.displayCutout());
-			Insets gestures = windowInsets.getInsets(WindowInsetsCompat.Type.mandatorySystemGestures());
-			FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) view.getLayoutParams();
-			params.leftMargin = bubbleMargin + Math.max(bars.left, Math.max(cutout.left, gestures.left));
-			params.topMargin = bubbleMargin + Math.max(bars.top, cutout.top);
-			params.rightMargin = bubbleMargin + Math.max(bars.right, Math.max(cutout.right, gestures.right));
-			params.bottomMargin = bubbleMargin + Math.max(bars.bottom, Math.max(cutout.bottom, gestures.bottom));
-			view.setLayoutParams(params);
-			return windowInsets;
-		});
+		// Keep constructor compatibility without allocating or attaching Memory Editor ComposeViews
+		// in :midlet. These views are only used to obtain an application Context for the proxy.
+		memoryEditor = new View(context);
+		memoryEditorBubble = new View(context);
 
 		notices = new ComposeView(context);
 		FrameLayout.LayoutParams noticeParams = new FrameLayout.LayoutParams(

@@ -1,20 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="memory_editor_overlay_permission_title">Izinkan Memory Editor tampil di atas game</string>
-    <string name="memory_editor_overlay_permission_body">Memory Editor ditampilkan di atas MIDlet yang sedang berjalan dari proses terpisah. Dengan memindahkan UI Compose keluar dari proses MIDlet, alokasi UI dan garbage collection dari editor tidak ikut mengganggu pencarian memori.\n\nPada layar Android berikutnya, izinkan JL-Mod Plus untuk tampil di atas aplikasi lain.</string>
-    <string name="memory_editor_overlay_permission_privacy">Izin ini hanya dipakai saat Memory Editor diaktifkan. Menyembunyikan editor akan mengembalikan Anda ke game; mematikan Memory Editor akan menghapus overlay sepenuhnya.</string>
+    <string name="memory_editor_overlay_permission_body">Memory Editor memerlukan izin ini agar tetap tersedia saat game berjalan.</string>
     <string name="memory_editor_overlay_not_now">Nanti saja</string>
-    <string name="memory_editor_overlay_allow">Buka pengaturan izin</string>
+    <string name="memory_editor_overlay_allow">Lanjutkan</string>
+
     <string name="memory_editor_overlay_hide">Sembunyikan</string>
-    <string name="memory_editor_overlay_results_ready">Hasil sudah siap. Buka Hasil untuk memurnikan, mengedit, memantau, atau memeriksanya.</string>
+    <string name="memory_editor_overlay_results_ready">Hasil sudah siap.</string>
+    <string name="memory_editor_overlay_find_value">Cari memori</string>
     <string name="memory_editor_overlay_query_label">Nilai / ekspresi grup</string>
     <string name="memory_editor_overlay_memory_scope">Cakupan memori</string>
-    <string name="memory_editor_overlay_single_hint">Masukkan satu nilai, atau gunakan ; untuk mencari beberapa nilai yang berdekatan.</string>
-    <string name="memory_editor_overlay_group_needs_type">Pencarian Grup memerlukan jenis data yang eksplisit. Pilih Int32, Float32, atau tipe lain, bukan Auto.</string>
+    <string name="memory_editor_overlay_single_hint">Masukkan satu nilai, atau gunakan ; untuk mencari beberapa nilai berdekatan.</string>
+    <string name="memory_editor_overlay_group_needs_type">Pilih jenis data tertentu untuk Pencarian Grup.</string>
     <string name="memory_editor_overlay_group_hint">Pencarian Grup · %1$d nilai · dalam %2$d byte</string>
     <string name="memory_editor_overlay_query_help">Contoh: 500 · 500;1000 · 500;1000:128</string>
-    <string name="memory_editor_overlay_ordered_group_unsupported">Sintaks grup berurutan (::) dikenali, tetapi engine saat ini belum menyediakan semantik ordered-group. Gunakan : untuk grup tanpa urutan.</string>
-    <string name="memory_editor_overlay_invalid_group">Periksa ekspresi grup. Gunakan 2–8 nilai yang dipisahkan ; dan jarak opsional setelah :.</string>
+    <string name="memory_editor_overlay_ordered_group_unsupported">Sintaks grup berurutan (::) belum didukung engine saat ini. Gunakan : untuk grup biasa.</string>
+    <string name="memory_editor_overlay_invalid_group">Periksa ekspresi. Gunakan 2–8 nilai yang dipisahkan ; dan jarak opsional setelah :.</string>
     <string name="memory_editor_overlay_invalid_value">Nilai tidak valid untuk jenis data yang dipilih.</string>
     <string name="memory_editor_overlay_more_actions">Tindakan lainnya</string>
+    <string name="memory_editor_overlay_less_options">Lebih sedikit opsi</string>
+    <string name="memory_editor_overlay_search_background_hint">Memory Editor dapat disembunyikan sementara pencarian tetap berjalan.</string>
+
+    <string name="memory_editor_overlay_auto_description">Disarankan untuk kebanyakan pencarian satu nilai</string>
+    <string name="memory_editor_overlay_int64_description">Bilangan bulat 64-bit</string>
+    <string name="memory_editor_overlay_float32_description">Desimal 32-bit</string>
+    <string name="memory_editor_overlay_float64_description">Desimal 64-bit</string>
 </resources>

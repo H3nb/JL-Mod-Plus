@@ -23,11 +23,11 @@ import androidx.compose.ui.platform.ComposeView
 import kotlin.math.roundToInt
 
 /**
- * Hosts every Memory Editor composable in :memory_editor rather than :midlet.
+ * Hosts Memory Editor presentation alongside MemoryEngineService in :memory_engine.
  *
- * The engine remains isolated in :memory_engine. This service owns only overlay presentation and
- * the lightweight UI-side controller/IPC client. Closing the editor disposes the full editor
- * composition while leaving the small bubble and an in-flight engine operation alive.
+ * The MIDlet process remains a protected target process: it owns neither the editor Compose tree
+ * nor editor-side polling/state. In compact portrait the editor uses the full screen; on wide
+ * landscape displays it becomes a touch-modal side panel so the game remains visible and usable.
  */
 class MemoryEditorOverlayService : Service() {
     private lateinit var windowManager: WindowManager
@@ -79,6 +79,7 @@ class MemoryEditorOverlayService : Service() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+        updateEditorWindowBounds()
         clampBubblePosition()
     }
 
@@ -93,8 +94,12 @@ class MemoryEditorOverlayService : Service() {
         MemoryEditorOverlayState.markVisible(this, false)
         MemoryEditorOverlayState.markActive(this, false)
         if (::windowManager.isInitialized) {
-            if (::editorView.isInitialized) runCatching { windowManager.removeViewImmediate(editorView) }
-            if (::bubbleView.isInitialized) runCatching { windowManager.removeViewImmediate(bubbleView) }
+            if (::editorView.isInitialized) {
+                runCatching { windowManager.removeViewImmediate(editorView) }
+            }
+            if (::bubbleView.isInitialized) {
+                runCatching { windowManager.removeViewImmediate(bubbleView) }
+            }
         }
         super.onDestroy()
     }
@@ -118,13 +123,15 @@ class MemoryEditorOverlayService : Service() {
             WindowManager.LayoutParams.MATCH_PARENT,
             type,
             WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
             PixelFormat.TRANSLUCENT,
         ).apply {
-            gravity = Gravity.TOP or Gravity.START
+            gravity = Gravity.TOP or Gravity.END
             softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
             }
         }
 
@@ -154,7 +161,31 @@ class MemoryEditorOverlayService : Service() {
 
         windowManager.addView(editorView, editorParams)
         windowManager.addView(bubbleView, bubbleParams)
+        updateEditorWindowBounds()
         clampBubblePosition()
+    }
+
+    /**
+     * Wide landscape gets a right-side tool panel instead of a transparent full-screen window.
+     * Because the window itself is narrower, touches outside the panel reach the running MIDlet.
+     */
+    private fun updateEditorWindowBounds() {
+        if (!::editorParams.isInitialized) return
+        val config = resources.configuration
+        val screenWidthDp = config.screenWidthDp.takeIf { it > 0 }
+            ?: (resources.displayMetrics.widthPixels / resources.displayMetrics.density).roundToInt()
+        val sidePanel = config.orientation == Configuration.ORIENTATION_LANDSCAPE &&
+            screenWidthDp >= 600
+        editorParams.width = if (sidePanel) {
+            dp((screenWidthDp * 0.48f).roundToInt().coerceIn(360, 520))
+        } else {
+            WindowManager.LayoutParams.MATCH_PARENT
+        }
+        editorParams.height = WindowManager.LayoutParams.MATCH_PARENT
+        editorParams.gravity = Gravity.TOP or Gravity.END
+        if (::editorView.isInitialized && editorView.isAttachedToWindow) {
+            runCatching { windowManager.updateViewLayout(editorView, editorParams) }
+        }
     }
 
     private fun handleBubbleTouch(event: MotionEvent): Boolean {
@@ -201,15 +232,27 @@ class MemoryEditorOverlayService : Service() {
     private fun snapBubbleToEdge() {
         val metrics = resources.displayMetrics
         val maxX = (metrics.widthPixels - bubbleParams.width).coerceAtLeast(0)
-        bubbleParams.x = if (bubbleParams.x + bubbleParams.width / 2 < metrics.widthPixels / 2) 0 else maxX
+        bubbleParams.x = if (
+            bubbleParams.x + bubbleParams.width / 2 < metrics.widthPixels / 2
+        ) {
+            0
+        } else {
+            maxX
+        }
         clampBubblePosition(update = true)
     }
 
     private fun clampBubblePosition(update: Boolean = true) {
         if (!::bubbleParams.isInitialized) return
         val metrics = resources.displayMetrics
-        bubbleParams.x = bubbleParams.x.coerceIn(0, (metrics.widthPixels - bubbleParams.width).coerceAtLeast(0))
-        bubbleParams.y = bubbleParams.y.coerceIn(0, (metrics.heightPixels - bubbleParams.height).coerceAtLeast(0))
+        bubbleParams.x = bubbleParams.x.coerceIn(
+            0,
+            (metrics.widthPixels - bubbleParams.width).coerceAtLeast(0),
+        )
+        bubbleParams.y = bubbleParams.y.coerceIn(
+            0,
+            (metrics.heightPixels - bubbleParams.height).coerceAtLeast(0),
+        )
         if (update && ::bubbleView.isInitialized && bubbleView.isAttachedToWindow) {
             runCatching { windowManager.updateViewLayout(bubbleView, bubbleParams) }
         }
@@ -222,7 +265,8 @@ class MemoryEditorOverlayService : Service() {
             .apply()
     }
 
-    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).roundToInt()
+    private fun dp(value: Int): Int =
+        (value * resources.displayMetrics.density).roundToInt()
 
     private class OverlayComposeView(
         context: Context,
@@ -238,10 +282,14 @@ class MemoryEditorOverlayService : Service() {
     }
 
     companion object {
-        private const val ACTION_ENABLE = "ru.playsoftware.j2meloader.memory.ENABLE_OVERLAY"
-        private const val ACTION_DISABLE = "ru.playsoftware.j2meloader.memory.DISABLE_OVERLAY"
-        private const val ACTION_OPEN = "ru.playsoftware.j2meloader.memory.OPEN_OVERLAY"
-        private const val ACTION_HIDE = "ru.playsoftware.j2meloader.memory.HIDE_OVERLAY"
+        private const val ACTION_ENABLE =
+            "ru.playsoftware.j2meloader.memory.ENABLE_OVERLAY"
+        private const val ACTION_DISABLE =
+            "ru.playsoftware.j2meloader.memory.DISABLE_OVERLAY"
+        private const val ACTION_OPEN =
+            "ru.playsoftware.j2meloader.memory.OPEN_OVERLAY"
+        private const val ACTION_HIDE =
+            "ru.playsoftware.j2meloader.memory.HIDE_OVERLAY"
         private const val PREFS = "memory_editor_overlay"
         private const val KEY_X = "bubble_x"
         private const val KEY_Y = "bubble_y"
@@ -249,20 +297,26 @@ class MemoryEditorOverlayService : Service() {
         fun setEnabled(context: Context, enabled: Boolean) {
             val action = if (enabled) ACTION_ENABLE else ACTION_DISABLE
             runCatching {
-                context.startService(Intent(context, MemoryEditorOverlayService::class.java).setAction(action))
+                context.startService(
+                    Intent(context, MemoryEditorOverlayService::class.java).setAction(action),
+                )
             }
         }
 
         fun open(context: Context) {
             runCatching {
-                context.startService(Intent(context, MemoryEditorOverlayService::class.java).setAction(ACTION_OPEN))
+                context.startService(
+                    Intent(context, MemoryEditorOverlayService::class.java).setAction(ACTION_OPEN),
+                )
             }
         }
 
         fun hide(context: Context) {
             if (!MemoryEditorOverlayState.isActive(context)) return
             runCatching {
-                context.startService(Intent(context, MemoryEditorOverlayService::class.java).setAction(ACTION_HIDE))
+                context.startService(
+                    Intent(context, MemoryEditorOverlayService::class.java).setAction(ACTION_HIDE),
+                )
             }
         }
     }
