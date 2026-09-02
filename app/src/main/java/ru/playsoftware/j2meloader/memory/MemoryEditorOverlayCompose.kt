@@ -160,7 +160,7 @@ internal fun MemoryEditorOverlayRoot(
                 },
             )
             if (state.busy) CompactOperationStatus(state, actions)
-            state.message?.takeIf(String::isNotBlank)?.let(::OverlayMessage)
+            state.message?.takeIf(String::isNotBlank)?.let { message -> OverlayMessage(message) }
 
             when (destination) {
                 OverlayDestination.SEARCH -> OverlaySearchWorkspace(
