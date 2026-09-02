@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -109,8 +110,8 @@ internal fun MemoryEditorRuntimeRoot(
         val landscape = maxWidth > maxHeight
         Surface(
             modifier = Modifier
-                .fillMaxWidth(if (landscape) 0.76f else 0.95f)
-                .fillMaxHeight(if (landscape) 0.92f else 0.90f)
+                .fillMaxWidth(if (landscape) 0.72f else 0.94f)
+                .fillMaxHeight(if (landscape) 0.94f else 0.90f)
                 .widthIn(max = 800.dp),
             shape = MaterialTheme.shapes.extraLarge,
             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
@@ -194,9 +195,12 @@ private fun RuntimeMemoryTabs(
                 Icon(painterResource(R.drawable.ic_memory_editor_search), contentDescription = null)
             },
             label = {
-                val label = "${stringResource(R.string.memory_editor_search_tab)} + ${stringResource(R.string.memory_editor_results_tab)}"
                 Text(
-                    if (results > 0L) "$label · ${compactCount(results)}" else label,
+                    if (results > 0L) {
+                        "${stringResource(R.string.memory_editor_search_tab)} · ${compactCount(results)}"
+                    } else {
+                        stringResource(R.string.memory_editor_search_tab)
+                    },
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -476,9 +480,7 @@ private fun RuntimeResultRow(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f),
                     )
-                    runtimeCandidateState(row.state, row.relocations)?.let {
-                        Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
-                    }
+                    RuntimeCandidateStatus(row.state, row.relocations)
                 }
             }
         }
@@ -635,9 +637,7 @@ private fun RuntimeWatchRow(
                             painterResource(R.drawable.ic_screen_lock_rotation),
                             contentDescription = stringResource(R.string.memory_editor_freeze),
                         )
-                        else -> runtimeCandidateState(row.state, row.relocations)?.let {
-                            Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
-                        }
+                        else -> RuntimeCandidateStatus(row.state, row.relocations)
                     }
                 }
             }
@@ -680,10 +680,14 @@ private fun RuntimeKnownSearchDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    RuntimePredicateMenu(predicate, { predicate = it })
+                    RuntimePredicateMenu(
+                        predicate = predicate,
+                        onPredicate = { predicate = it },
+                        modifier = Modifier.widthIn(min = 72.dp, max = 112.dp),
+                    )
                     RuntimeSearchField(
                         label = stringResource(R.string.memory_editor_search_hint),
-                        value = query.text,
+                        value = query,
                         active = activeField == RuntimeInputField.FIRST,
                         onClick = { activeField = RuntimeInputField.FIRST },
                         modifier = Modifier.weight(1f),
@@ -692,7 +696,7 @@ private fun RuntimeKnownSearchDialog(
                 if (needsSecond) {
                     RuntimeSearchField(
                         label = stringResource(R.string.memory_editor_max_value),
-                        value = second.text,
+                        value = second,
                         active = activeField == RuntimeInputField.SECOND,
                         onClick = { activeField = RuntimeInputField.SECOND },
                         modifier = Modifier.fillMaxWidth(),
@@ -726,7 +730,10 @@ private fun RuntimeKnownSearchDialog(
             }
         },
         confirmButton = {
-            Row {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
                 TextButton(
                     enabled = newSearchValid && !state.busy,
                     onClick = {
@@ -820,7 +827,7 @@ private fun RuntimeUnknownSearchDialog(
                     if (needsValue) {
                         RuntimeSearchField(
                             label = stringResource(R.string.memory_editor_search_hint),
-                            value = first.text,
+                            value = first,
                             active = activeField == RuntimeInputField.FIRST,
                             onClick = { activeField = RuntimeInputField.FIRST },
                             modifier = Modifier.fillMaxWidth(),
@@ -828,7 +835,7 @@ private fun RuntimeUnknownSearchDialog(
                         if (needsSecond) {
                             RuntimeSearchField(
                                 label = stringResource(R.string.memory_editor_max_value),
-                                value = second.text,
+                                value = second,
                                 active = activeField == RuntimeInputField.SECOND,
                                 onClick = { activeField = RuntimeInputField.SECOND },
                                 modifier = Modifier.fillMaxWidth(),
@@ -858,7 +865,10 @@ private fun RuntimeUnknownSearchDialog(
             }
         },
         confirmButton = {
-            Row {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
                 TextButton(
                     enabled = !state.busy,
                     onClick = {
@@ -1129,7 +1139,7 @@ private fun RuntimeInspectorEditDialog(
 @Composable
 private fun RuntimeSearchField(
     label: String,
-    value: String,
+    value: TextFieldValue,
     active: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -1137,8 +1147,15 @@ private fun RuntimeSearchField(
     OutlinedButton(onClick = onClick, modifier = modifier.sizeIn(minHeight = 52.dp)) {
         Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
             Text(label, style = MaterialTheme.typography.labelSmall)
+            val cursor = value.selection.end.coerceIn(0, value.text.length)
+            val visibleValue = when {
+                active && value.text.isEmpty() -> "▏"
+                active -> value.text.substring(0, cursor) + "▏" + value.text.substring(cursor)
+                value.text.isEmpty() -> "—"
+                else -> value.text
+            }
             Text(
-                value.ifBlank { "—" },
+                visibleValue,
                 style = MaterialTheme.typography.titleMedium,
                 fontFamily = FontFamily.Monospace,
                 color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
@@ -1185,7 +1202,11 @@ private fun RuntimeSearchKeypad(
         RuntimeKeypadRow {
             RuntimeKeypadButton(";", enabled = allowGroup) { onToken(";") }
             RuntimeKeypadButton(":", enabled = allowGroup) { onToken(":") }
-            RuntimeKeypadButton(stringResource(R.string.memory_editor_keypad_clear), onClick = onClear)
+            RuntimeKeypadButton(
+                stringResource(R.string.memory_editor_keypad_clear),
+                weight = 2f,
+                onClick = onClear,
+            )
         }
     }
 }
@@ -1203,19 +1224,24 @@ private fun RuntimeKeypadRow(content: @Composable androidx.compose.foundation.la
 private fun androidx.compose.foundation.layout.RowScope.RuntimeKeypadButton(
     label: String,
     enabled: Boolean = true,
+    weight: Float = 1f,
     onClick: () -> Unit,
 ) {
     OutlinedButton(
         onClick = onClick,
         enabled = enabled,
-        modifier = Modifier.weight(1f).sizeIn(minHeight = 42.dp),
+        modifier = Modifier.weight(weight).sizeIn(minHeight = 42.dp),
     ) {
         Text(label, fontFamily = FontFamily.Monospace, maxLines = 1)
     }
 }
 
 @Composable
-private fun RuntimePredicateMenu(predicate: Int, onPredicate: (Int) -> Unit) {
+private fun RuntimePredicateMenu(
+    predicate: Int,
+    onPredicate: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     RuntimeChoiceMenu(
         value = predicate,
         values = intArrayOf(
@@ -1229,6 +1255,7 @@ private fun RuntimePredicateMenu(predicate: Int, onPredicate: (Int) -> Unit) {
         ),
         label = { runtimePredicateName(it) },
         onChange = onPredicate,
+        modifier = modifier,
     )
 }
 
@@ -1387,6 +1414,17 @@ private fun RuntimeActionIcon(
     IconButton(onClick = onClick, enabled = enabled) {
         Icon(painterResource(icon), contentDescription = stringResource(description))
     }
+}
+
+@Composable
+private fun RuntimeCandidateStatus(state: Int, relocations: Int) {
+    val text = runtimeCandidateState(state, relocations) ?: return
+    val color = when {
+        state == MemoryEngineContract.CANDIDATE_STABLE && relocations > 0 -> MaterialTheme.colorScheme.primary
+        state == MemoryEngineContract.CANDIDATE_RELOCATING -> MaterialTheme.colorScheme.tertiary
+        else -> MaterialTheme.colorScheme.error
+    }
+    Text(text, style = MaterialTheme.typography.labelSmall, color = color)
 }
 
 private fun runtimeInsert(value: TextFieldValue, token: String): TextFieldValue {
