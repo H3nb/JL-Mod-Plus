@@ -30,11 +30,18 @@ import java.io.IOException;
  */
 public final class MemoryEngineDiagnosticsService extends Service {
 	private static final long UNKNOWN = -1L;
+	private static final long FNV_OFFSET_BASIS = 1469598103934665603L;
+	private static final long FNV_PRIME = 1099511628211L;
 
 	private final IMemoryEngineDiagnostics.Stub binder = new IMemoryEngineDiagnostics.Stub() {
 		@Override
 		public Bundle snapshot() {
 			return collectSnapshot();
+		}
+
+		@Override
+		public Bundle validateKnownEqualShadow(int valueType) {
+			return collectKnownEqualShadow(valueType);
 		}
 	};
 
@@ -85,6 +92,136 @@ public final class MemoryEngineDiagnosticsService extends Service {
 				Math.max(0L, Debug.getNativeHeapAllocatedSize()));
 		result.putLong(MemoryEngineDiagnosticsContract.KEY_RUNTIME_JAVA_USED_BYTES,
 				javaUsedBytes);
+		return result;
+	}
+
+	private static Bundle collectKnownEqualShadow(int valueType) {
+		Bundle result = new Bundle();
+		result.putInt(MemoryEngineDiagnosticsContract.KEY_SHADOW_SCHEMA_VERSION,
+				MemoryEngineDiagnosticsContract.SHADOW_SCHEMA_VERSION);
+		if (!MemoryEngineContract.isCandidateType(valueType)) {
+			return shadowFailure(result, MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Shadow parity requires one explicit primitive type");
+		}
+
+		long legacyCount = NativeMemoryEngine.resultCount();
+		result.putLong(MemoryEngineDiagnosticsContract.KEY_LEGACY_RESULT_COUNT,
+				Math.max(0L, legacyCount));
+		if (legacyCount <= 0L) {
+			return shadowFailure(result, MemoryEngineContract.RESULT_NO_SESSION,
+					"Run a non-empty explicit-type Equal search before the shadow probe");
+		}
+
+		long[] firstPage = NativeMemoryEngine.resultPage(0, 1);
+		if (!validResultPage(firstPage) || firstPage[0] != 1L) {
+			return shadowFailure(result, MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Legacy first result could not be materialized for parity validation");
+		}
+		int firstBase = 1;
+		if (firstPage[firstBase + 3] != valueType) {
+			return shadowFailure(result, MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Current legacy result is not the requested explicit type");
+		}
+		// For a first Equal search initialBits is the parsed matching value captured when the result
+		// was created. Using it avoids a passive live refresh changing the comparison value.
+		long expectedBits = firstPage[firstBase + 6];
+		result.putLong(MemoryEngineDiagnosticsContract.KEY_SHADOW_EXPECTED_BITS, expectedBits);
+
+		long legacyFingerprint = legacyFingerprint(valueType, legacyCount);
+		if (legacyFingerprint == Long.MIN_VALUE) {
+			return shadowFailure(result, MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Legacy result changed while its parity fingerprint was being collected");
+		}
+		result.putLong(MemoryEngineDiagnosticsContract.KEY_LEGACY_ADDRESS_FINGERPRINT,
+				legacyFingerprint);
+
+		long[] shadow = NativeMemoryEngine.v2ShadowKnownEqual(valueType, expectedBits);
+		if (shadow == null || shadow.length != 7) {
+			return shadowFailure(result, MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"V2 shadow scanner did not return a valid diagnostics payload");
+		}
+		int status = shadow[0] < Integer.MIN_VALUE || shadow[0] > Integer.MAX_VALUE
+				? MemoryEngineContract.RESULT_INVALID_REQUEST : (int) shadow[0];
+		result.putInt(MemoryEngineDiagnosticsContract.KEY_SHADOW_STATUS, status);
+		result.putLong(MemoryEngineDiagnosticsContract.KEY_SHADOW_BYTES_SCANNED,
+				Math.max(0L, shadow[1]));
+		result.putLong(MemoryEngineDiagnosticsContract.KEY_SHADOW_TYPED_MATCHES,
+				Math.max(0L, shadow[2]));
+		result.putLong(MemoryEngineDiagnosticsContract.KEY_SHADOW_UNIQUE_ADDRESSES,
+				Math.max(0L, shadow[3]));
+		result.putLong(MemoryEngineDiagnosticsContract.KEY_SHADOW_BLOCK_COUNT,
+				Math.max(0L, shadow[4]));
+		result.putLong(MemoryEngineDiagnosticsContract.KEY_SHADOW_RETAINED_BYTES,
+				Math.max(0L, shadow[5]));
+		result.putLong(MemoryEngineDiagnosticsContract.KEY_SHADOW_ADDRESS_FINGERPRINT,
+				shadow[6]);
+
+		boolean countMatch = status == MemoryEngineContract.RESULT_OK &&
+				legacyCount == shadow[3] && shadow[2] == shadow[3];
+		boolean addressMatch = countMatch && legacyFingerprint == shadow[6];
+		result.putBoolean(MemoryEngineDiagnosticsContract.KEY_SHADOW_COUNT_MATCH, countMatch);
+		result.putBoolean(MemoryEngineDiagnosticsContract.KEY_SHADOW_ADDRESS_MATCH, addressMatch);
+		result.putString(MemoryEngineDiagnosticsContract.KEY_SHADOW_MESSAGE,
+				addressMatch
+						? "Legacy Candidate and v2 ResultStore equality results match"
+						: "Shadow parity mismatch; keep the legacy backend authoritative");
+		return result;
+	}
+
+	private static long legacyFingerprint(int valueType, long expectedCount) {
+		long fingerprint = FNV_OFFSET_BASIS;
+		long offset = 0L;
+		int planeTag = fingerprintPlaneTag(valueType);
+		if (planeTag == 0) return Long.MIN_VALUE;
+		while (offset < expectedCount) {
+			int limit = (int) Math.min(MemoryEngineContract.MAX_RESULT_PAGE_SIZE,
+					expectedCount - offset);
+			if (offset > Integer.MAX_VALUE) return Long.MIN_VALUE;
+			long[] rows = NativeMemoryEngine.resultPage((int) offset, limit);
+			if (!validResultPage(rows)) return Long.MIN_VALUE;
+			int count = (int) rows[0];
+			if (count <= 0) return Long.MIN_VALUE;
+			for (int index = 0; index < count; index++) {
+				int base = 1 + index * MemoryEngineContract.RESULT_PAGE_STRIDE;
+				long address = rows[base + 1];
+				long rawType = rows[base + 3];
+				if (address <= 0L || rawType != valueType) return Long.MIN_VALUE;
+				fingerprint ^= address;
+				fingerprint *= FNV_PRIME;
+				fingerprint ^= planeTag;
+				fingerprint *= FNV_PRIME;
+			}
+			offset += count;
+		}
+		return offset == expectedCount ? fingerprint : Long.MIN_VALUE;
+	}
+
+	private static int fingerprintPlaneTag(int valueType) {
+		return switch (valueType) {
+			case MemoryEngineContract.TYPE_BYTE -> 1;
+			case MemoryEngineContract.TYPE_SHORT -> 2;
+			case MemoryEngineContract.TYPE_CHAR -> 3;
+			case MemoryEngineContract.TYPE_INT -> 4;
+			case MemoryEngineContract.TYPE_FLOAT -> 5;
+			case MemoryEngineContract.TYPE_LONG -> 6;
+			case MemoryEngineContract.TYPE_DOUBLE -> 7;
+			default -> 0;
+		};
+	}
+
+	private static boolean validResultPage(long[] rows) {
+		if (rows == null || rows.length == 0 || rows[0] < 0L ||
+				rows[0] > (rows.length - 1L) / MemoryEngineContract.RESULT_PAGE_STRIDE) {
+			return false;
+		}
+		return 1L + rows[0] * MemoryEngineContract.RESULT_PAGE_STRIDE == rows.length;
+	}
+
+	private static Bundle shadowFailure(Bundle result, int status, String message) {
+		result.putInt(MemoryEngineDiagnosticsContract.KEY_SHADOW_STATUS, status);
+		result.putBoolean(MemoryEngineDiagnosticsContract.KEY_SHADOW_COUNT_MATCH, false);
+		result.putBoolean(MemoryEngineDiagnosticsContract.KEY_SHADOW_ADDRESS_MATCH, false);
+		result.putString(MemoryEngineDiagnosticsContract.KEY_SHADOW_MESSAGE, message);
 		return result;
 	}
 
