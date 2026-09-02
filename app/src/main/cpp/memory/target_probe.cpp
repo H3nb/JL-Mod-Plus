@@ -17,12 +17,12 @@
 #include <unistd.h>
 
 #include <array>
+#include <algorithm>
 #include <cerrno>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <algorithm>
 #include <limits>
 #include <optional>
 #include <string>
@@ -33,6 +33,9 @@ namespace {
 
 constexpr jint kFastScope = 0;
 constexpr jint kThoroughScope = 1;
+// Keep this JNI boundary aligned with MemoryEngineContract.MAX_RESIDENT_RUNS. The target bridge
+// validates the same value, but the native entry point must remain safe for direct callers too.
+constexpr jint kMaxResidentRuns = 4'096;
 // Keep target-side mincore residency storage bounded even when a single ART mapping is large.
 // This is a native temporary buffer; the logical resident-run output remains capped by maxRuns.
 constexpr size_t kMincoreChunkBytes = 4U * 1024U * 1024U;
@@ -128,7 +131,8 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryTarget_collectResidentRuns(
         JNIEnv *env, jclass, jint scope, jint maxRuns) {
     const long pageValue = sysconf(_SC_PAGESIZE);
     const auto selectedScope = scanScopeFromJint(scope);
-    if (!selectedScope.has_value() || maxRuns <= 0 || pageValue <= 0) {
+    if (!selectedScope.has_value() || maxRuns <= 0 ||
+        maxRuns > kMaxResidentRuns || pageValue <= 0) {
         return nullptr;
     }
     const size_t pageSize = static_cast<size_t>(pageValue);
