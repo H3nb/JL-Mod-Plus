@@ -410,36 +410,43 @@ internal fun MemoryEditorContent(
         EditDialog(
             enabled = state.writeSupported,
             types = editableTypes,
+            showAddToWatch = !state.watchTab,
+            selectedCount = state.selected.size,
             onDismiss = { editDialog = false },
-            onApply = { replacement, selectedType ->
+            onApply = { replacement, selectedType, addToWatch, freezeAfter ->
                 editDialog = false
-                actions.editSelected(replacement, selectedType)
+                actions.editSelectedWithOptions(
+                    replacement,
+                    selectedType,
+                    addToWatch,
+                    freezeAfter,
+                )
             },
         )
     }
 
-if (freezeDialog) {
-    val freezeTypes = if (state.watchTab) {
-        selectedRows(state).map { it.type }.distinct()
-    } else {
-        state.results.filter { it.id in state.selected }.map { it.primaryType }.distinct()
+    if (freezeDialog) {
+        val freezeTypes = if (state.watchTab) {
+            selectedRows(state).map { it.type }.distinct()
+        } else {
+            state.results.filter { it.id in state.selected }.map { it.primaryType }.distinct()
+        }
+        val initialValue = if (state.watchTab) {
+            selectedRows(state).firstOrNull()?.valueText.orEmpty()
+        } else {
+            state.results.firstOrNull { it.id in state.selected }?.valueText.orEmpty()
+        }
+        FreezeDialog(
+            enabled = state.writeSupported,
+            types = freezeTypes,
+            initialValue = initialValue,
+            onDismiss = { freezeDialog = false },
+            onApply = { mode, first, second ->
+                freezeDialog = false
+                actions.freezeSelected(mode, first, second)
+            },
+        )
     }
-    val initialValue = if (state.watchTab) {
-        selectedRows(state).firstOrNull()?.valueText.orEmpty()
-    } else {
-        state.results.firstOrNull { it.id in state.selected }?.valueText.orEmpty()
-    }
-    FreezeDialog(
-        enabled = state.writeSupported,
-        types = freezeTypes,
-        initialValue = initialValue,
-        onDismiss = { freezeDialog = false },
-        onApply = { mode, first, second ->
-            freezeDialog = false
-            actions.freezeSelected(mode, first, second)
-        },
-    )
-}
 
     detailRow?.let { row ->
         WatchDetailDialog(
@@ -563,11 +570,23 @@ private fun WorkspaceTabs(state: MemoryEditorUiState, actions: MemoryEditorActio
         FilterChip(
             selected = !state.watchTab,
             onClick = { actions.setWatchTab(false) },
+            leadingIcon = {
+                Icon(
+                    painterResource(R.drawable.ic_memory_editor_search),
+                    contentDescription = null,
+                )
+            },
             label = { Text(stringResource(R.string.memory_editor_search_tab)) },
         )
         FilterChip(
             selected = state.watchTab,
             onClick = { actions.setWatchTab(true) },
+            leadingIcon = {
+                Icon(
+                    painterResource(R.drawable.ic_memory_editor_watch),
+                    contentDescription = null,
+                )
+            },
             label = { Text(stringResource(R.string.memory_editor_watch)) },
         )
     }
@@ -660,16 +679,34 @@ private fun SearchModeSelector(selected: MemorySearchMode, onChange: (MemorySear
         FilterChip(
             selected = selected == MemorySearchMode.KNOWN,
             onClick = { onChange(MemorySearchMode.KNOWN) },
+            leadingIcon = {
+                Icon(
+                    painterResource(R.drawable.ic_memory_editor_search),
+                    contentDescription = null,
+                )
+            },
             label = { Text(stringResource(R.string.memory_editor_known)) },
         )
         FilterChip(
             selected = selected == MemorySearchMode.UNKNOWN,
             onClick = { onChange(MemorySearchMode.UNKNOWN) },
+            leadingIcon = {
+                Icon(
+                    painterResource(R.drawable.ic_memory_editor_search_unknown),
+                    contentDescription = null,
+                )
+            },
             label = { Text(stringResource(R.string.memory_editor_unknown_short)) },
         )
         FilterChip(
             selected = selected == MemorySearchMode.GROUP,
             onClick = { onChange(MemorySearchMode.GROUP) },
+            leadingIcon = {
+                Icon(
+                    painterResource(R.drawable.ic_memory_editor_refine),
+                    contentDescription = null,
+                )
+            },
             label = { Text(stringResource(R.string.memory_editor_group_short)) },
         )
     }
@@ -731,7 +768,14 @@ private fun KnownSearchPane(
             (predicate != MemoryEngineContract.PREDICATE_BETWEEN || spec.isComplete(secondValue)),
         modifier = Modifier.fillMaxWidth().sizeIn(minHeight = 48.dp),
     ) {
-        Text(stringResource(R.string.memory_editor_search_action))
+        Icon(
+            painterResource(R.drawable.ic_memory_editor_search),
+            contentDescription = null,
+        )
+        Text(
+            stringResource(R.string.memory_editor_search_action),
+            modifier = Modifier.padding(start = 8.dp),
+        )
     }
 }
 
@@ -764,7 +808,14 @@ private fun UnknownSearchPane(
         enabled = !busy,
         modifier = Modifier.fillMaxWidth().sizeIn(minHeight = 48.dp),
     ) {
-        Text(stringResource(R.string.memory_editor_capture_baseline))
+        Icon(
+            painterResource(R.drawable.ic_memory_editor_search_unknown),
+            contentDescription = null,
+        )
+        Text(
+            stringResource(R.string.memory_editor_capture_baseline),
+            modifier = Modifier.padding(start = 8.dp),
+        )
     }
 }
 
@@ -849,7 +900,14 @@ private fun GroupSearchPane(
         enabled = !busy && valid,
         modifier = Modifier.fillMaxWidth().sizeIn(minHeight = 48.dp),
     ) {
-        Text(stringResource(R.string.memory_editor_group_search))
+        Icon(
+            painterResource(R.drawable.ic_memory_editor_refine),
+            contentDescription = null,
+        )
+        Text(
+            stringResource(R.string.memory_editor_group_search),
+            modifier = Modifier.padding(start = 8.dp),
+        )
     }
 }
 
@@ -901,7 +959,14 @@ private fun UnknownBaselinePane(
         enabled = !busy && refineInputValid(type, predicate, value, secondValue),
         modifier = Modifier.fillMaxWidth().sizeIn(minHeight = 48.dp),
     ) {
-        Text(stringResource(R.string.memory_editor_next_scan))
+        Icon(
+            painterResource(R.drawable.ic_memory_editor_refine),
+            contentDescription = null,
+        )
+        Text(
+            stringResource(R.string.memory_editor_next_scan),
+            modifier = Modifier.padding(start = 8.dp),
+        )
     }
     TextButton(onClick = actions::startOver) {
         Text(stringResource(R.string.memory_editor_start_over))
@@ -940,7 +1005,14 @@ private fun RefinePane(
             enabled = !busy && resultCount > 0L && refineInputValid(type, predicate, value, secondValue),
             modifier = Modifier.weight(1f).sizeIn(minHeight = 48.dp),
         ) {
-            Text(stringResource(R.string.memory_editor_next_scan))
+            Icon(
+                painterResource(R.drawable.ic_memory_editor_refine),
+                contentDescription = null,
+            )
+            Text(
+                stringResource(R.string.memory_editor_next_scan),
+                modifier = Modifier.padding(start = 8.dp),
+            )
         }
         OutlinedButton(onClick = onAdvanced, modifier = Modifier.sizeIn(minHeight = 48.dp)) {
             Text(stringResource(R.string.memory_editor_more))
@@ -1002,14 +1074,24 @@ private fun CompactRefineStrip(
                         refineInputValid(type, predicate, value, secondValue),
                     modifier = Modifier.sizeIn(minHeight = 48.dp),
                 ) {
-                    Text(stringResource(R.string.memory_editor_next_scan))
+                    Icon(
+                        painterResource(R.drawable.ic_memory_editor_refine),
+                        contentDescription = null,
+                    )
+                    Text(
+                        stringResource(R.string.memory_editor_next_scan),
+                        modifier = Modifier.padding(start = 8.dp),
+                    )
                 }
                 val moreDescription = stringResource(R.string.memory_editor_more)
                 IconButton(
                     onClick = onExpand,
                     modifier = Modifier.semantics { contentDescription = moreDescription },
                 ) {
-                    Text("⋮", style = MaterialTheme.typography.titleLarge)
+                    Icon(
+                        painterResource(R.drawable.ic_more_vert),
+                        contentDescription = moreDescription,
+                    )
                 }
             }
             if (predicateNeedsSecondValue(predicate)) {
@@ -1068,7 +1150,14 @@ private fun RefineControlsDialog(
                 enabled = !busy && resultCount > 0L &&
                     refineInputValid(type, predicate, value, secondValue),
             ) {
-                Text(stringResource(R.string.memory_editor_next_scan))
+                Icon(
+                    painterResource(R.drawable.ic_memory_editor_refine),
+                    contentDescription = null,
+                )
+                Text(
+                    stringResource(R.string.memory_editor_next_scan),
+                    modifier = Modifier.padding(start = 8.dp),
+                )
             }
         },
         dismissButton = {
@@ -1328,6 +1417,7 @@ private fun ResultGroupRow(
     onOpen: () -> Unit,
     onInspect: () -> Unit,
 ) {
+    val selectResultDescription = stringResource(R.string.memory_editor_select_result_value)
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -1343,7 +1433,12 @@ private fun ResultGroupRow(
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable(onClick = onToggle)
+                        .semantics {
+                            contentDescription = selectResultDescription
+                        },
                 )
                 Text(
                     row.aliasTypes.joinToString(" · ") { typeShortName(it) },
@@ -1385,6 +1480,7 @@ private fun WatchRow(
     onInspect: () -> Unit,
     onLabel: (Long, String) -> Unit,
 ) {
+    val selectResultDescription = stringResource(R.string.memory_editor_select_result_value)
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -1408,7 +1504,12 @@ private fun WatchRow(
                     fontFamily = FontFamily.Monospace,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.widthIn(max = 156.dp),
+                    modifier = Modifier
+                        .widthIn(max = 156.dp)
+                        .clickable(onClick = onToggle)
+                        .semantics {
+                            contentDescription = selectResultDescription
+                        },
                 )
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1537,9 +1638,15 @@ private fun SelectionActions(
                 onEdit,
                 enabled = state.writeSupported,
             )
-            TextButton(onClick = { actions.watchSelected(!state.watchTab) }) {
-                Text(stringResource(if (state.watchTab) R.string.memory_editor_remove else R.string.memory_editor_watch))
-            }
+            ActionIconButton(
+                icon = R.drawable.ic_memory_editor_watch,
+                description = if (state.watchTab) {
+                    R.string.memory_editor_remove
+                } else {
+                    R.string.memory_editor_watch
+                },
+                onClick = { actions.watchSelected(!state.watchTab) },
+            )
             ActionIconButton(
                 R.drawable.ic_screen_lock_rotation,
                 R.string.memory_editor_freeze,
@@ -1559,7 +1666,10 @@ private fun SelectionActions(
                     onClick = { more = true },
                     modifier = Modifier.semantics { contentDescription = moreDescription },
                 ) {
-                    Text("⋮", style = MaterialTheme.typography.titleLarge)
+                    Icon(
+                        painterResource(R.drawable.ic_more_vert),
+                        contentDescription = moreDescription,
+                    )
                 }
                 DropdownMenu(expanded = more, onDismissRequest = { more = false }) {
                     if (!state.watchTab) {
@@ -1774,16 +1884,27 @@ private fun ActionIconButton(
 private fun EditDialog(
     enabled: Boolean,
     types: List<Int>,
+    showAddToWatch: Boolean,
+    selectedCount: Int,
     onDismiss: () -> Unit,
-    onApply: (String, Int) -> Unit,
+    onApply: (String, Int, Boolean, Boolean) -> Unit,
 ) {
     var value by remember { mutableStateOf("") }
     var type by remember(types) { mutableIntStateOf(types.firstOrNull() ?: MemoryEngineContract.TYPE_INT) }
+    var addToWatch by remember(showAddToWatch) { mutableStateOf(false) }
+    var freezeAfter by remember { mutableStateOf(false) }
+    val canFreeze = selectedCount in 1..MemoryEngineContract.MAX_FREEZE_RECORDS
     AlertDialog(
         onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                painterResource(R.drawable.ic_edit),
+                contentDescription = null,
+            )
+        },
         title = { Text(stringResource(R.string.memory_editor_edit)) },
         text = {
-            MemoryInputArea(sideDockInLandscape = false) {
+            MemoryInputArea(sideDockInLandscape = true) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (!enabled) {
                         Text(stringResource(R.string.memory_editor_write_unsupported), color = MaterialTheme.colorScheme.error)
@@ -1797,12 +1918,43 @@ private fun EditDialog(
                         label = stringResource(R.string.memory_editor_replacement),
                         modifier = Modifier.fillMaxWidth(),
                     )
+                    if (showAddToWatch) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(
+                                checked = addToWatch,
+                                onCheckedChange = { addToWatch = it },
+                                enabled = !freezeAfter,
+                            )
+                            Text(stringResource(R.string.memory_editor_add_to_watch_after_edit))
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Checkbox(
+                            checked = freezeAfter,
+                            onCheckedChange = { freezeAfter = it },
+                            enabled = canFreeze && enabled,
+                        )
+                        Text(stringResource(R.string.memory_editor_freeze_after_edit))
+                    }
+                    if (freezeAfter) {
+                        Text(
+                            stringResource(R.string.memory_editor_freeze_after_edit_help),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
         },
         confirmButton = {
             TextButton(
-                onClick = { onApply(value, type) },
+                onClick = { onApply(value, type, addToWatch, freezeAfter) },
                 enabled = enabled && types.isNotEmpty() && MemoryInputSpec.forType(type).isComplete(value),
             ) {
                 Text(stringResource(R.string.memory_editor_apply))

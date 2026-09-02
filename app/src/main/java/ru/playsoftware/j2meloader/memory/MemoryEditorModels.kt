@@ -238,6 +238,16 @@ internal interface MemoryEditorActions {
     fun invertVisible()
     fun clearSelection()
     fun editSelected(value: String, type: Int)
+    /**
+     * Applies an edit and optionally performs the common follow-up actions as one user flow.
+     * Implementations that do not support the follow-ups retain the original edit behavior.
+     */
+    fun editSelectedWithOptions(
+        value: String,
+        type: Int,
+        addToWatch: Boolean,
+        freezeAfter: Boolean,
+    ) = editSelected(value, type)
     fun removeSelected(keep: Boolean)
     fun watchSelected(add: Boolean)
     fun labelWatch(id: Long, label: String)

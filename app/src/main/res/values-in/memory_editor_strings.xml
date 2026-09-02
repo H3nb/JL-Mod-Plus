@@ -38,6 +38,9 @@
     <string name="memory_editor_unknown_short">Tidak diketahui</string>
     <string name="memory_editor_group_short">Grup</string>
     <string name="memory_editor_search_action">Cari</string>
+    <string name="memory_editor_search_known_values">Cari nilai yang diketahui</string>
+    <string name="memory_editor_search_unknown_values">Cari nilai yang tidak diketahui</string>
+    <string name="memory_editor_refine_search">Persempit hasil saat ini</string>
     <string name="memory_editor_unknown_explanation">Gunakan ini jika nilai saat ini tidak diketahui. Editor Memori akan menangkap baseline, lalu Anda dapat kembali ke game dan menjelaskan bagaimana nilainya berubah.</string>
     <string name="memory_editor_capture_baseline">Tangkap baseline</string>
     <string name="memory_editor_baseline_captured">Baseline tersimpan</string>
@@ -90,7 +93,7 @@
     <string name="memory_editor_cancelled">Operasi dibatalkan.</string>
     <string name="memory_editor_resource_limit">Hasil lengkap akan melampaui batas sumber daya aman. Pilih tipe atau cakupan yang lebih sempit.</string>
     <string name="memory_editor_target_lost">Runtime MIDlet telah berakhir atau berubah.</string>
-    <string name="memory_editor_identity_unsafe">Identitas kandidat tidak dapat diverifikasi. Penulisan tetap dijeda.</string>
+    <string name="memory_editor_identity_unsafe">Nilai telah berpindah atau berubah sebelum dapat diverifikasi. Segarkan hasil atau buka ulang Inspektor, lalu coba lagi.</string>
     <string name="memory_editor_safety_limit">Terlalu banyak kandidat dipilih untuk operasi aman ini.</string>
     <string name="memory_editor_invalid_request">Nilai atau operasi tidak valid.</string>
     <string name="memory_editor_freeze_paused">Dijeda demi keamanan</string>
@@ -129,4 +132,8 @@
     <string name="memory_editor_nearby_help">Mulai pencarian nilai-diketahui biasa hanya di dalam jendela terbatas di sekitar kandidat terverifikasi ini.</string>
     <string name="memory_editor_nearby_radius">Jarak dari jangkar</string>
     <string name="memory_editor_done">Selesai</string>
+    <string name="memory_editor_select_result_value">Pilih hasil ini</string>
+    <string name="memory_editor_add_to_watch_after_edit">Tambahkan ke Pantauan setelah diterapkan</string>
+    <string name="memory_editor_freeze_after_edit">Bekukan setelah diterapkan</string>
+    <string name="memory_editor_freeze_after_edit_help">Gunakan nilai pengganti sebagai kunci dan otomatis tambahkan kandidat ke Pantauan.</string>
 </resources>

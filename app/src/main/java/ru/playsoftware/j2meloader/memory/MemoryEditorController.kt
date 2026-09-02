@@ -61,7 +61,15 @@ class MemoryEditorComposeController(
     private var pendingPreviousStage: MemorySessionStage? = null
     private var pendingResetHistory = false
     private var pendingInspectorRefresh: MemoryInspectorRefresh? = null
+    private var pendingEditFollowUp: PendingEditFollowUp? = null
     private val stageHistory = ArrayDeque<MemorySessionStage>()
+
+    private data class PendingEditFollowUp(
+        val candidateIds: LongArray,
+        val replacementValue: String,
+        val addToWatch: Boolean,
+        val freezeAfter: Boolean,
+    )
 
     private var bubbleOnRight = true
     private var bubbleVerticalFraction = 0.5f
@@ -106,7 +114,7 @@ class MemoryEditorComposeController(
                             message = if (resultCode == MemoryEngineContract.RESULT_OK) {
                                 state.message
                             } else {
-                                message ?: resultMessage(resultCode)
+                                operationMessage(resultCode, message)
                             },
                         )
                         reload()
@@ -117,6 +125,8 @@ class MemoryEditorComposeController(
                 if (activeOperationId != 0L && operationId != activeOperationId) return@post
 
                 val succeeded = resultCode == MemoryEngineContract.RESULT_OK
+                val editFollowUp = if (succeeded) pendingEditFollowUp else null
+                pendingEditFollowUp = null
                 if (succeeded) {
                     when {
                         pendingUndoStage != null -> {
@@ -148,7 +158,7 @@ class MemoryEditorComposeController(
                     message = if (succeeded) {
                         message?.takeIf(String::isNotBlank)
                     } else {
-                        message ?: resultMessage(resultCode)
+                        operationMessage(resultCode, message)
                     },
                 )
                 activeOperationId = 0L
@@ -156,6 +166,7 @@ class MemoryEditorComposeController(
                 inspectorRefresh?.let { refresh ->
                     inspectCandidate(refresh.candidateId, refresh.radius)
                 }
+                editFollowUp?.let(::scheduleEditFollowUp)
             }
         }
     }
@@ -528,7 +539,7 @@ class MemoryEditorComposeController(
                     state = state.copy(
                         inspectorLoading = false,
                         inspector = null,
-                        message = message ?: resultMessage(result),
+                        message = operationMessage(result, message),
                     )
                 }
             }
@@ -653,6 +664,15 @@ class MemoryEditorComposeController(
         }
 
     override fun editSelected(value: String, type: Int) {
+        editSelectedWithOptions(value, type, addToWatch = false, freezeAfter = false)
+    }
+
+    override fun editSelectedWithOptions(
+        value: String,
+        type: Int,
+        addToWatch: Boolean,
+        freezeAfter: Boolean,
+    ) {
         val ids: LongArray
         if (state.watchTab) {
             val selectedRows = state.watches.filter { it.id in state.selected }
@@ -674,9 +694,34 @@ class MemoryEditorComposeController(
             state = state.copy(message = resultMessage(MemoryEngineContract.RESULT_SAFETY_LIMIT))
             return
         }
+        if (state.busy || state.runtimeToken == 0L) return
+        pendingEditFollowUp = PendingEditFollowUp(
+            candidateIds = ids.copyOf(),
+            replacementValue = value.trim(),
+            addToWatch = addToWatch && !freezeAfter,
+            freezeAfter = freezeAfter,
+        )
         operate {
             if (state.watchTab) editCandidates(state.runtimeToken, ids, value.trim())
             else editResultGroups(state.runtimeToken, ids, type, value.trim())
+        }
+    }
+
+    private fun scheduleEditFollowUp(followUp: PendingEditFollowUp) {
+        if (state.runtimeToken == 0L || followUp.candidateIds.isEmpty()) return
+        when {
+            followUp.freezeAfter -> operate {
+                setFreeze(
+                    state.runtimeToken,
+                    followUp.candidateIds,
+                    MemoryEngineContract.FREEZE_LOCK,
+                    followUp.replacementValue,
+                    "",
+                )
+            }
+            followUp.addToWatch -> operate {
+                addWatch(state.runtimeToken, followUp.candidateIds)
+            }
         }
     }
 
@@ -939,6 +984,7 @@ class MemoryEditorComposeController(
         pendingUndoStage = null
         pendingPreviousStage = null
         pendingResetHistory = false
+        pendingEditFollowUp = null
     }
 
     private fun runIpc(block: () -> Unit) {
@@ -978,6 +1024,13 @@ class MemoryEditorComposeController(
         MemoryEngineContract.RESULT_UNSUPPORTED -> context.getString(R.string.memory_editor_write_unsupported)
         else -> context.getString(R.string.memory_editor_invalid_request)
     }
+
+    private fun operationMessage(resultCode: Int, message: String?): String =
+        if (resultCode == MemoryEngineContract.RESULT_IDENTITY_UNSAFE) {
+            context.getString(R.string.memory_editor_identity_unsafe)
+        } else {
+            message ?: resultMessage(resultCode)
+        }
 
     internal companion object {
         const val PAGE_SIZE = 100

@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -59,6 +60,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -523,6 +525,29 @@ private fun InspectorMainPane(
     onEdit: (MemoryInspectorCell) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val listState = rememberLazyListState()
+    val zeroOffsetIndex = remember(cells) { cells.indexOfFirst { it.offset == 0 } }
+    LaunchedEffect(
+        snapshot.candidateId,
+        snapshot.startAddress,
+        snapshot.anchorAddress,
+        cells,
+    ) {
+        if (zeroOffsetIndex < 0) return@LaunchedEffect
+        // First expose the anchor, then use the measured row and viewport to center it. This
+        // remains correct when row height, font scale, or window size changes.
+        listState.scrollToItem(zeroOffsetIndex)
+        withFrameNanos { }
+        val layoutInfo = listState.layoutInfo
+        val anchorItem = layoutInfo.visibleItemsInfo.firstOrNull { it.index == zeroOffsetIndex }
+            ?: return@LaunchedEffect
+        val viewportCenter =
+            (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2f
+        val itemCenter = anchorItem.offset + anchorItem.size / 2f
+        listState.scroll {
+            scrollBy(itemCenter - viewportCenter)
+        }
+    }
     Column(
         modifier = Modifier.fillMaxSize().padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -570,7 +595,10 @@ private fun InspectorMainPane(
                 modifier = Modifier.weight(0.38f),
             )
         }
-        LazyColumn(modifier = Modifier.weight(1f)) {
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            state = listState,
+        ) {
             items(cells, key = { it.address }) { cell ->
                 InspectorCellRow(cell = cell, onEdit = { onEdit(cell) })
             }
@@ -697,9 +725,15 @@ private fun InspectorEditDialog(
     val spec = MemoryInputSpec.forType(type)
     AlertDialog(
         onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                painterResource(R.drawable.ic_edit),
+                contentDescription = null,
+            )
+        },
         title = { Text(stringResource(R.string.memory_editor_edit)) },
         text = {
-            MemoryInputArea(sideDockInLandscape = false) {
+            MemoryInputArea(sideDockInLandscape = true) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (!writeSupported) {
                         Text(
@@ -710,6 +744,11 @@ private fun InspectorEditDialog(
                     Text(
                         "0x${cell.address.toULong().toString(16).uppercase()} · ${stage3TypeName(type)}",
                         fontFamily = FontFamily.Monospace,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        stringResource(R.string.memory_editor_inspector_edit_help),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

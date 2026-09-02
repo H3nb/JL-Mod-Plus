@@ -39,6 +39,9 @@
     <string name="memory_editor_unknown_short">Unknown</string>
     <string name="memory_editor_group_short">Group</string>
     <string name="memory_editor_search_action">Search</string>
+    <string name="memory_editor_search_known_values">Search known values</string>
+    <string name="memory_editor_search_unknown_values">Search unknown values</string>
+    <string name="memory_editor_refine_search">Refine current results</string>
     <string name="memory_editor_unknown_explanation">Use this when you do not know the current value. Memory Editor will capture a baseline, then you can return to the game and describe how the value changed.</string>
     <string name="memory_editor_capture_baseline">Capture baseline</string>
     <string name="memory_editor_baseline_captured">Baseline captured</string>
@@ -92,7 +95,7 @@
     <string name="memory_editor_cancelled">Operation cancelled.</string>
     <string name="memory_editor_resource_limit">The complete result would exceed the safe resource limit. Choose a narrower type or scope.</string>
     <string name="memory_editor_target_lost">The MIDlet runtime ended or changed.</string>
-    <string name="memory_editor_identity_unsafe">Candidate identity could not be verified. Writes remain paused.</string>
+    <string name="memory_editor_identity_unsafe">The value moved or changed before it could be verified. Refresh the results or reopen Inspector, then try again.</string>
     <string name="memory_editor_safety_limit">Too many candidates were selected for this guarded operation.</string>
     <string name="memory_editor_invalid_request">The value or operation is invalid.</string>
     <string name="memory_editor_freeze_paused">Paused for safety</string>
@@ -132,4 +135,8 @@
     <string name="memory_editor_nearby_help">Start a normal known-value search only inside a bounded window around this verified candidate.</string>
     <string name="memory_editor_nearby_radius">Distance from anchor</string>
     <string name="memory_editor_done">Done</string>
+    <string name="memory_editor_select_result_value">Select this result</string>
+    <string name="memory_editor_add_to_watch_after_edit">Add to Watch after applying</string>
+    <string name="memory_editor_freeze_after_edit">Freeze after applying</string>
+    <string name="memory_editor_freeze_after_edit_help">Uses the replacement value as a lock and automatically adds the candidates to Watch.</string>
 </resources>
