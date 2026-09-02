@@ -70,9 +70,11 @@ public final class MemoryEngineService extends Service {
 	private volatile int configuredScope = MemoryEngineContract.SCOPE_JAVA_FAST;
 	private final Map<Long, String> watchLabels = new ConcurrentHashMap<>();
 	private final Map<Long, FreezeRecord> freezeRecords = new ConcurrentHashMap<>();
+	private final MemoryGcBindingTracker gcBindings = new MemoryGcBindingTracker();
 	private volatile ScheduledFuture<?> freezeTask;
 	private final Object searchSessionLock = new Object();
 	private final ArrayDeque<Integer> searchStageHistory = new ArrayDeque<>();
+	private final ArrayDeque<Long> searchGcHistory = new ArrayDeque<>();
 	private int searchSessionStage = MemoryEngineContract.SEARCH_SESSION_EMPTY;
 	private int searchSessionMode = MemoryEngineContract.SEARCH_MODE_KNOWN;
 	private int searchRequestedType = MemoryEngineContract.TYPE_AUTO;
@@ -119,6 +121,8 @@ public final class MemoryEngineService extends Service {
 			IMemoryTargetBridge bridge = target;
 			if (bridge == null) {
 				result.putBoolean(MemoryEngineContract.KEY_SUPPORTED, false);
+				result.putLong(MemoryEngineContract.KEY_GC_COUNT,
+						MemoryEngineContract.GC_COUNT_UNKNOWN);
 				result.putString(MemoryEngineContract.KEY_MESSAGE, "MIDlet runtime is not connected");
 				return result;
 			}
@@ -126,6 +130,8 @@ public final class MemoryEngineService extends Service {
 				long token = bridge.getRuntimeToken();
 				int pid = bridge.getTargetPid();
 				int pageSize = bridge.getPageSize();
+				long gcCount = token == 0L
+						? MemoryEngineContract.GC_COUNT_UNKNOWN : bridge.getGcCount(token);
 				long[] probe = token == 0L ? null : bridge.getReadProbe(token);
 				boolean supported = token != 0L && pid > 0 && pageSize > 0 &&
 						canReadProbe(pid, probe);
@@ -135,6 +141,7 @@ public final class MemoryEngineService extends Service {
 				result.putLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, token);
 				result.putInt(MemoryEngineContract.KEY_TARGET_PID, pid);
 				result.putInt(MemoryEngineContract.KEY_PAGE_SIZE, pageSize);
+				result.putLong(MemoryEngineContract.KEY_GC_COUNT, gcCount);
 				if (!supported) {
 					result.putString(MemoryEngineContract.KEY_MESSAGE, token == 0L
 							? "No active MIDlet runtime"
@@ -142,6 +149,8 @@ public final class MemoryEngineService extends Service {
 				}
 			} catch (RemoteException exception) {
 				result.putBoolean(MemoryEngineContract.KEY_SUPPORTED, false);
+				result.putLong(MemoryEngineContract.KEY_GC_COUNT,
+						MemoryEngineContract.GC_COUNT_UNKNOWN);
 				result.putString(MemoryEngineContract.KEY_MESSAGE, "MIDlet runtime connection was lost");
 			}
 			return result;
@@ -164,40 +173,36 @@ public final class MemoryEngineService extends Service {
 		@Override
 		public long startKnownSearch(long token, int scope, int type, int predicate,
 		                             String first, String second) {
-			return enqueue(token, true, scope, () -> {
-				int result = NativeMemoryEngine.startKnown(type, predicate, first, second);
-				if (result == MemoryEngineContract.RESULT_OK) {
-					resetSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
-							MemoryEngineContract.SEARCH_MODE_KNOWN, type, scope);
-				}
-				return result;
-			});
+			return enqueue(token, true, scope, () -> runNewSearchWithGcGuard(
+					token,
+					() -> NativeMemoryEngine.startKnown(type, predicate, first, second),
+					MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
+					MemoryEngineContract.SEARCH_MODE_KNOWN,
+					type,
+					scope));
 		}
 
 		@Override
 		public long startUnknownSearch(long token, int scope, int type) {
-			return enqueue(token, true, scope, () -> {
-				int result = NativeMemoryEngine.startUnknown(type);
-				if (result == MemoryEngineContract.RESULT_OK) {
-					resetSearchSession(MemoryEngineContract.SEARCH_SESSION_UNKNOWN_BASELINE,
-							MemoryEngineContract.SEARCH_MODE_UNKNOWN, type, scope);
-				}
-				return result;
-			});
+			return enqueue(token, true, scope, () -> runNewSearchWithGcGuard(
+					token,
+					() -> NativeMemoryEngine.startUnknown(type),
+					MemoryEngineContract.SEARCH_SESSION_UNKNOWN_BASELINE,
+					MemoryEngineContract.SEARCH_MODE_UNKNOWN,
+					type,
+					scope));
 		}
 
 		@Override
 		public long startGroupSearch(long token, int scope, int[] types,
 		                             String[] values, int maxDistance) {
-			return enqueue(token, true, scope, () -> {
-				int result = NativeMemoryEngine.startGroup(types, values, maxDistance);
-				if (result == MemoryEngineContract.RESULT_OK) {
-					resetSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
-							MemoryEngineContract.SEARCH_MODE_GROUP,
-							MemoryEngineContract.TYPE_AUTO, scope);
-				}
-				return result;
-			});
+			return enqueue(token, true, scope, () -> runNewSearchWithGcGuard(
+					token,
+					() -> NativeMemoryEngine.startGroup(types, values, maxDistance),
+					MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
+					MemoryEngineContract.SEARCH_MODE_GROUP,
+					MemoryEngineContract.TYPE_AUTO,
+					scope));
 		}
 
 		@Override
@@ -211,47 +216,28 @@ public final class MemoryEngineService extends Service {
 				if (ready != MemoryEngineContract.RESULT_OK) {
 					return ready;
 				}
-				int result = NativeMemoryEngine.startNearby(anchorCandidateId, radius, type, predicate,
-						first, second);
-				if (result == MemoryEngineContract.RESULT_OK) {
-					resetSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
-							MemoryEngineContract.SEARCH_MODE_KNOWN, type, configuredScope);
-				}
-				return result;
+				return runNewSearchWithGcGuard(
+						token,
+						() -> NativeMemoryEngine.startNearby(anchorCandidateId, radius, type, predicate,
+								first, second),
+						MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
+						MemoryEngineContract.SEARCH_MODE_KNOWN,
+						type,
+						configuredScope);
 			});
 		}
 
 		@Override
 		public long refineKnown(long token, int predicate, String first, String second) {
-			return enqueue(token, false, 0, () -> {
-				int result = NativeMemoryEngine.refineKnown(predicate, first, second);
-				if (result != MemoryEngineContract.RESULT_IDENTITY_UNSAFE) {
-					if (result == MemoryEngineContract.RESULT_OK) {
-						advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES);
-					}
-					return result;
-				}
-				result = configureTarget(token, configuredScope);
-				if (result == MemoryEngineContract.RESULT_OK) {
-					result = NativeMemoryEngine.recoverKnown(predicate, first, second);
-				}
-				if (result == MemoryEngineContract.RESULT_OK) {
-					advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES);
-				}
-				return result;
-			});
+			return enqueue(token, false, 0,
+					() -> refineKnownGcAware(token, predicate, first, second));
 		}
 
 		@Override
 		public long refineRelative(long token, int predicate, int compareTarget,
 		                           String first, String second) {
-			return enqueue(token, false, 0, () -> {
-				int result = NativeMemoryEngine.refineRelative(predicate, compareTarget, first, second);
-				if (result == MemoryEngineContract.RESULT_OK) {
-					advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES);
-				}
-				return result;
-			});
+			return enqueue(token, false, 0,
+					() -> refineRelativeGcAware(token, predicate, compareTarget, first, second));
 		}
 
 		@Override
@@ -267,8 +253,8 @@ public final class MemoryEngineService extends Service {
 		@Override
 		public long refreshCandidates(long token, long[] candidateIds) {
 			return enqueue(token, false, 0, true,
-					() -> NativeMemoryEngine.refresh(
-							candidateIds == null ? new long[0] : candidateIds, false));
+					() -> refreshForRead(token,
+							candidateIds == null ? new long[0] : candidateIds));
 		}
 
 		@Override
@@ -276,7 +262,8 @@ public final class MemoryEngineService extends Service {
 			return enqueue(token, false, 0, () -> {
 				int result = NativeMemoryEngine.filter(candidateIds, false);
 				if (result == MemoryEngineContract.RESULT_OK) {
-					advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES);
+					advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
+							currentGcCount(token));
 				}
 				return result;
 			});
@@ -287,7 +274,8 @@ public final class MemoryEngineService extends Service {
 			return enqueue(token, false, 0, () -> {
 				int result = NativeMemoryEngine.filter(candidateIds, true);
 				if (result == MemoryEngineContract.RESULT_OK) {
-					advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES);
+					advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
+							currentGcCount(token));
 				}
 				return result;
 			});
@@ -303,9 +291,8 @@ public final class MemoryEngineService extends Service {
 				if (!isWriteSupported(token)) {
 					return MemoryEngineContract.RESULT_UNSUPPORTED;
 				}
-				int ready = refreshWithRecovery(token, candidateIds);
-				return ready == MemoryEngineContract.RESULT_OK
-						? NativeMemoryEngine.edit(candidateIds, replacementValue) : ready;
+				return performGuardedMutation(token, candidateIds,
+						() -> NativeMemoryEngine.edit(candidateIds, replacementValue));
 			});
 		}
 
@@ -338,7 +325,8 @@ public final class MemoryEngineService extends Service {
 				}
 				int result = NativeMemoryEngine.filter(candidateIds, keep);
 				if (result == MemoryEngineContract.RESULT_OK) {
-					advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES);
+					advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
+							currentGcCount(token));
 				}
 				return result;
 			});
@@ -359,9 +347,8 @@ public final class MemoryEngineService extends Service {
 				if (!isWriteSupported(token)) {
 					return MemoryEngineContract.RESULT_UNSUPPORTED;
 				}
-				int ready = refreshWithRecovery(token, candidateIds);
-				return ready == MemoryEngineContract.RESULT_OK
-						? NativeMemoryEngine.edit(candidateIds, replacementValue) : ready;
+				return performGuardedMutation(token, candidateIds,
+						() -> NativeMemoryEngine.edit(candidateIds, replacementValue));
 			});
 		}
 
@@ -377,14 +364,13 @@ public final class MemoryEngineService extends Service {
 				if (!isWriteSupported(token)) {
 					return MemoryEngineContract.RESULT_UNSUPPORTED;
 				}
-				int ready = refreshWithRecovery(token, new long[]{anchorCandidateId});
-				if (ready != MemoryEngineContract.RESULT_OK) {
-					return ready;
-				}
-				int result = NativeMemoryEngine.editInspectorValue(
-						anchorCandidateId, relativeOffset, valueType, expectedBits, replacementValue);
+				long[] anchorIds = new long[]{anchorCandidateId};
+				int result = performGuardedMutation(token, anchorIds,
+						() -> NativeMemoryEngine.editInspectorValue(
+								anchorCandidateId, relativeOffset, valueType, expectedBits,
+								replacementValue));
 				if (result == MemoryEngineContract.RESULT_OK) {
-					NativeMemoryEngine.refresh(new long[]{anchorCandidateId}, false);
+					NativeMemoryEngine.refresh(anchorIds, false);
 				}
 				return result;
 			});
@@ -428,8 +414,18 @@ public final class MemoryEngineService extends Service {
 
 		@Override
 		public long addWatch(long token, long[] candidateIds) {
-			return enqueue(token, false, 0,
-					() -> NativeMemoryEngine.pin(candidateIds, true));
+			return enqueue(token, false, 0, () -> {
+				if (candidateIds == null || candidateIds.length == 0) {
+					return MemoryEngineContract.RESULT_INVALID_REQUEST;
+				}
+				int ready = refreshWithRecovery(token, candidateIds);
+				if (ready != MemoryEngineContract.RESULT_OK) return ready;
+				int result = NativeMemoryEngine.pin(candidateIds, true);
+				if (result == MemoryEngineContract.RESULT_OK) {
+					gcBindings.markCandidatesValidated(candidateIds, currentGcCount(token));
+				}
+				return result;
+			});
 		}
 
 		@Override
@@ -440,6 +436,7 @@ public final class MemoryEngineService extends Service {
 					for (long id : candidateIds) {
 						watchLabels.remove(id);
 						freezeRecords.remove(id);
+						gcBindings.forgetCandidate(id);
 					}
 				}
 				stopFreezeTaskIfIdle();
@@ -596,6 +593,9 @@ public final class MemoryEngineService extends Service {
 					result = MemoryEngineContract.RESULT_TARGET_LOST;
 					serviceMessage = "MIDlet runtime changed during the operation";
 				}
+				if (serviceMessage == null) {
+					serviceMessage = gcSafetyMessage(result);
+				}
 			} finally {
 				progressUpdates.cancel(false);
 			}
@@ -642,11 +642,141 @@ public final class MemoryEngineService extends Service {
 		}
 	}
 
+	private int runNewSearchWithGcGuard(long token, NativeOperation operation, int stage,
+	                                    int mode, int requestedType, int scope) {
+		long gcBefore = currentGcCount(token);
+		int result = operation.run();
+		if (result != MemoryEngineContract.RESULT_OK) return result;
+		long gcAfter = currentGcCount(token);
+		if (MemoryEngineContract.didGcCountChange(gcBefore, gcAfter)) {
+			NativeMemoryEngine.clearSearch();
+			clearSearchSession();
+			return MemoryEngineContract.RESULT_GC_RACE;
+		}
+		resetSearchSession(stage, mode, requestedType, scope,
+				MemoryEngineContract.latestKnownGcCount(gcBefore, gcAfter));
+		return MemoryEngineContract.RESULT_OK;
+	}
+
+	private int refineKnownGcAware(long token, int predicate, String first, String second) {
+		long gcBefore = currentGcCount(token);
+		int result;
+		if (gcBindings.searchEpochChanged(gcBefore)) {
+			result = configureTarget(token, configuredScope);
+			if (result == MemoryEngineContract.RESULT_OK) {
+				result = NativeMemoryEngine.recoverKnown(predicate, first, second);
+			}
+		} else {
+			result = NativeMemoryEngine.refineKnown(predicate, first, second);
+			if (result == MemoryEngineContract.RESULT_IDENTITY_UNSAFE) {
+				result = configureTarget(token, configuredScope);
+				if (result == MemoryEngineContract.RESULT_OK) {
+					result = NativeMemoryEngine.recoverKnown(predicate, first, second);
+				}
+			}
+		}
+		if (result != MemoryEngineContract.RESULT_OK) return result;
+		long gcAfter = currentGcCount(token);
+		if (MemoryEngineContract.didGcCountChange(gcBefore, gcAfter)) {
+			return rollbackAfterGcRace();
+		}
+		advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
+				MemoryEngineContract.latestKnownGcCount(gcBefore, gcAfter));
+		return MemoryEngineContract.RESULT_OK;
+	}
+
+	private int refineRelativeGcAware(long token, int predicate, int compareTarget,
+	                                  String first, String second) {
+		long gcBefore = currentGcCount(token);
+		if (gcBindings.searchEpochChanged(gcBefore)) {
+			boolean unknownBaseline;
+			synchronized (searchSessionLock) {
+				unknownBaseline = searchSessionStage ==
+						MemoryEngineContract.SEARCH_SESSION_UNKNOWN_BASELINE;
+			}
+			if (unknownBaseline) {
+				NativeMemoryEngine.clearSearch();
+				clearSearchSession();
+			}
+			return MemoryEngineContract.RESULT_GC_BASELINE_INVALIDATED;
+		}
+		int result = NativeMemoryEngine.refineRelative(predicate, compareTarget, first, second);
+		if (result != MemoryEngineContract.RESULT_OK) return result;
+		long gcAfter = currentGcCount(token);
+		if (MemoryEngineContract.didGcCountChange(gcBefore, gcAfter)) {
+			return rollbackAfterGcRace();
+		}
+		advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
+				MemoryEngineContract.latestKnownGcCount(gcBefore, gcAfter));
+		return MemoryEngineContract.RESULT_OK;
+	}
+
+	private int rollbackAfterGcRace() {
+		int undoResult = NativeMemoryEngine.undo();
+		if (undoResult == MemoryEngineContract.RESULT_OK) {
+			return MemoryEngineContract.RESULT_GC_RACE;
+		}
+		NativeMemoryEngine.clearSearch();
+		clearSearchSession();
+		return MemoryEngineContract.RESULT_GC_RACE;
+	}
+
+	private int refreshForRead(long token, long[] candidateIds) {
+		long gcCount = currentGcCount(token);
+		if (gcBindings.candidatesNeedRevalidation(candidateIds, gcCount)) {
+			return refreshWithRecovery(token, candidateIds);
+		}
+		return NativeMemoryEngine.refresh(candidateIds, false);
+	}
+
 	private int refreshWithRecovery(long token, long[] candidateIds) {
 		long[] ids = candidateIds == null ? new long[0] : candidateIds;
+		long gcBefore = currentGcCount(token);
 		int result = configureTarget(token, configuredScope);
-		return result == MemoryEngineContract.RESULT_OK
-				? NativeMemoryEngine.refresh(ids, true) : result;
+		if (result != MemoryEngineContract.RESULT_OK) return result;
+		result = NativeMemoryEngine.refresh(ids, true);
+		if (result != MemoryEngineContract.RESULT_OK) return result;
+		long gcAfter = currentGcCount(token);
+		if (MemoryEngineContract.didGcCountChange(gcBefore, gcAfter)) {
+			return MemoryEngineContract.RESULT_GC_RACE;
+		}
+		gcBindings.markCandidatesValidated(ids,
+				MemoryEngineContract.latestKnownGcCount(gcBefore, gcAfter));
+		return MemoryEngineContract.RESULT_OK;
+	}
+
+	private int prepareExplicitMutation(long token, long[] candidateIds) {
+		long gcBefore = currentGcCount(token);
+		boolean revalidationRequired = gcBindings.candidatesNeedRevalidation(candidateIds, gcBefore);
+		int result = refreshWithRecovery(token, candidateIds);
+		if (result != MemoryEngineContract.RESULT_OK) return result;
+		long gcAfter = currentGcCount(token);
+		if (MemoryEngineContract.didGcCountChange(gcBefore, gcAfter)) {
+			return MemoryEngineContract.RESULT_GC_RACE;
+		}
+		return revalidationRequired
+				? MemoryEngineContract.RESULT_GC_REVALIDATED
+				: MemoryEngineContract.RESULT_OK;
+	}
+
+	private int performGuardedMutation(long token, long[] candidateIds, NativeOperation write) {
+		int ready = prepareExplicitMutation(token, candidateIds);
+		if (ready != MemoryEngineContract.RESULT_OK) return ready;
+		long gcBeforeWrite = currentGcCount(token);
+		int result = write.run();
+		long gcAfterWrite = currentGcCount(token);
+		if (result == MemoryEngineContract.RESULT_OK &&
+				MemoryEngineContract.didGcCountChange(gcBeforeWrite, gcAfterWrite)) {
+			// Do not attempt a second write. Rebind on a later user action and report the first write
+			// as unconfirmed because a copying GC may have moved the authoritative object meanwhile.
+			refreshWithRecovery(token, candidateIds);
+			return MemoryEngineContract.RESULT_GC_RACE;
+		}
+		if (result == MemoryEngineContract.RESULT_OK) {
+			gcBindings.markCandidatesValidated(candidateIds,
+					MemoryEngineContract.latestKnownGcCount(gcBeforeWrite, gcAfterWrite));
+		}
+		return result;
 	}
 
 	private Bundle inspectCandidateOnWorker(long token, long candidateId, int radius) {
@@ -656,7 +786,7 @@ public final class MemoryEngineService extends Service {
 		}
 		int ready = refreshWithRecovery(token, new long[]{candidateId});
 		if (ready != MemoryEngineContract.RESULT_OK) {
-			return inspectionFailure(ready, NativeMemoryEngine.lastMessage());
+			return inspectionFailure(ready, gcSafetyMessage(ready));
 		}
 		long[] raw = NativeMemoryEngine.inspect(candidateId, radius);
 		if (raw == null || raw.length < 4) {
@@ -725,7 +855,7 @@ public final class MemoryEngineService extends Service {
 		if (!isWriteSupported(token)) {
 			return MemoryEngineContract.RESULT_UNSUPPORTED;
 		}
-		int ready = refreshWithRecovery(token, candidateIds);
+		int ready = prepareExplicitMutation(token, candidateIds);
 		if (ready != MemoryEngineContract.RESULT_OK) {
 			return ready;
 		}
@@ -743,17 +873,27 @@ public final class MemoryEngineService extends Service {
 				return pinResult;
 			}
 		}
+		long gcBeforeWrite = currentGcCount(token);
 		int result = NativeMemoryEngine.freeze(
 				candidateIds, mode, firstValue, secondValue);
+		long gcAfterWrite = currentGcCount(token);
+		if (result == MemoryEngineContract.RESULT_OK &&
+				MemoryEngineContract.didGcCountChange(gcBeforeWrite, gcAfterWrite)) {
+			if (newlyWatched.length > 0) NativeMemoryEngine.pin(newlyWatched, false);
+			refreshWithRecovery(token, candidateIds);
+			return MemoryEngineContract.RESULT_GC_RACE;
+		}
 		if (result != MemoryEngineContract.RESULT_OK) {
 			if (newlyWatched.length > 0) {
 				NativeMemoryEngine.pin(newlyWatched, false);
 			}
 			return result;
 		}
+		long validatedGc = MemoryEngineContract.latestKnownGcCount(gcBeforeWrite, gcAfterWrite);
+		gcBindings.markCandidatesValidated(candidateIds, validatedGc);
 		for (long id : candidateIds) {
 			freezeRecords.put(id,
-					new FreezeRecord(mode, firstValue, secondValue));
+					new FreezeRecord(mode, firstValue, secondValue, validatedGc));
 		}
 		startFreezeTaskIfNeeded();
 		return MemoryEngineContract.RESULT_OK;
@@ -825,6 +965,33 @@ public final class MemoryEngineService extends Service {
 		for (int index = 0; index < active.size(); index++) {
 			activeIds[index] = active.get(index).getKey();
 		}
+		long gcStart = currentGcCount(token);
+		boolean epochChanged = false;
+		if (MemoryEngineContract.isKnownGcCount(gcStart)) {
+			for (Map.Entry<Long, FreezeRecord> entry : active) {
+				if (MemoryEngineContract.didGcCountChange(
+						entry.getValue().validatedGcCount, gcStart)) {
+					epochChanged = true;
+					break;
+				}
+			}
+		}
+		if (epochChanged) {
+			int recovery = refreshWithRecovery(token, activeIds);
+			long gcAfterRecovery = currentGcCount(token);
+			if (recovery != MemoryEngineContract.RESULT_OK ||
+					MemoryEngineContract.didGcCountChange(gcStart, gcAfterRecovery)) {
+				for (Map.Entry<Long, FreezeRecord> entry : active) {
+					entry.getValue().paused = true;
+				}
+				return;
+			}
+			long validated = MemoryEngineContract.latestKnownGcCount(gcStart, gcAfterRecovery);
+			for (Map.Entry<Long, FreezeRecord> entry : active) {
+				entry.getValue().validatedGcCount = validated;
+			}
+			gcStart = validated;
+		}
 		int batchRefresh = NativeMemoryEngine.refresh(activeIds, false);
 		for (Map.Entry<Long, FreezeRecord> entry : active) {
 			if (cancelEpoch.get() != operationEpoch) {
@@ -843,6 +1010,17 @@ public final class MemoryEngineService extends Service {
 				record.paused = true;
 			}
 		}
+		long gcEnd = currentGcCount(token);
+		if (!MemoryEngineContract.didGcCountChange(gcStart, gcEnd)) {
+			long validated = MemoryEngineContract.latestKnownGcCount(gcStart, gcEnd);
+			gcBindings.markCandidatesValidated(activeIds, validated);
+			for (Map.Entry<Long, FreezeRecord> entry : active) {
+				if (!entry.getValue().paused) entry.getValue().validatedGcCount = validated;
+			}
+		}
+		// If GC changed during this tick, keep the older epoch. The next tick detects the mismatch
+		// before another write and performs recovery first. Native identity checks remain the
+		// immediate per-write safety net for the tick that raced the collector.
 	}
 
 	private Bundle searchSessionInfo(long token) {
@@ -861,26 +1039,33 @@ public final class MemoryEngineService extends Service {
 					current ? searchSessionScope : MemoryEngineContract.SCOPE_JAVA_FAST);
 			bundle.putInt(MemoryEngineContract.KEY_SEARCH_HISTORY_DEPTH,
 					current ? Math.min(nativeHistoryDepth, searchStageHistory.size()) : 0);
+			bundle.putLong(MemoryEngineContract.KEY_GC_COUNT,
+					current ? gcBindings.searchEpoch() : MemoryEngineContract.GC_COUNT_UNKNOWN);
 		}
 		return bundle;
 	}
 
-	private void resetSearchSession(int stage, int mode, int requestedType, int scope) {
+	private void resetSearchSession(int stage, int mode, int requestedType, int scope,
+	                                long gcCount) {
 		synchronized (searchSessionLock) {
 			searchStageHistory.clear();
+			searchGcHistory.clear();
 			searchSessionStage = stage;
 			searchSessionMode = mode;
 			searchRequestedType = requestedType;
 			searchSessionScope = scope;
+			gcBindings.setSearchEpoch(gcCount);
 		}
 	}
 
-	private void advanceSearchSession(int nextStage) {
+	private void advanceSearchSession(int nextStage, long gcCount) {
 		int nativeHistoryDepth = NativeMemoryEngine.historyDepth();
 		synchronized (searchSessionLock) {
 			searchStageHistory.addLast(searchSessionStage);
+			searchGcHistory.addLast(gcBindings.searchEpoch());
 			trimSearchHistoryLocked(nativeHistoryDepth);
 			searchSessionStage = nextStage;
+			gcBindings.setSearchEpoch(gcCount);
 		}
 	}
 
@@ -896,21 +1081,27 @@ public final class MemoryEngineService extends Service {
 		while (searchStageHistory.size() > boundedDepth) {
 			searchStageHistory.removeFirst();
 		}
+		while (searchGcHistory.size() > boundedDepth) {
+			searchGcHistory.removeFirst();
+		}
 	}
 
 	private void undoSearchSession() {
 		synchronized (searchSessionLock) {
 			if (!searchStageHistory.isEmpty()) searchSessionStage = searchStageHistory.removeLast();
+			if (!searchGcHistory.isEmpty()) gcBindings.setSearchEpoch(searchGcHistory.removeLast());
 		}
 	}
 
 	private void clearSearchSession() {
 		synchronized (searchSessionLock) {
 			searchStageHistory.clear();
+			searchGcHistory.clear();
 			searchSessionStage = MemoryEngineContract.SEARCH_SESSION_EMPTY;
 			searchSessionMode = MemoryEngineContract.SEARCH_MODE_KNOWN;
 			searchRequestedType = MemoryEngineContract.TYPE_AUTO;
 			searchSessionScope = MemoryEngineContract.SCOPE_JAVA_FAST;
+			gcBindings.clearSearchEpoch();
 		}
 	}
 
@@ -930,6 +1121,17 @@ public final class MemoryEngineService extends Service {
 			return bridge.getRuntimeToken() == token;
 		} catch (RemoteException exception) {
 			return false;
+		}
+	}
+
+	private long currentGcCount(long token) {
+		IMemoryTargetBridge bridge = target;
+		if (token == 0L || bridge == null) return MemoryEngineContract.GC_COUNT_UNKNOWN;
+		try {
+			if (bridge.getRuntimeToken() != token) return MemoryEngineContract.GC_COUNT_UNKNOWN;
+			return bridge.getGcCount(token);
+		} catch (RemoteException exception) {
+			return MemoryEngineContract.GC_COUNT_UNKNOWN;
 		}
 	}
 
@@ -959,6 +1161,7 @@ public final class MemoryEngineService extends Service {
 	private void invalidateTarget() {
 		configuredToken = 0L;
 		clearSearchSession();
+		gcBindings.clearAll();
 		watchLabels.clear();
 		freezeRecords.clear();
 		stopFreezeTaskIfIdle();
@@ -978,6 +1181,24 @@ public final class MemoryEngineService extends Service {
 			case MemoryEngineContract.RESULT_RESOURCE_LIMIT ->
 					"The complete resident range set exceeds the engine resource limit";
 			default -> "Invalid memory engine target configuration";
+		};
+	}
+
+	@Nullable
+	private static String gcSafetyMessage(int result) {
+		return switch (result) {
+			case MemoryEngineContract.RESULT_GC_REVALIDATED ->
+					"Java GC occurred since this result was last trusted. The selected result was " +
+							"revalidated and any moved address was updated. Review the refreshed value/address " +
+							"and retry; no write was performed.";
+			case MemoryEngineContract.RESULT_GC_RACE ->
+					"Java GC occurred during the operation. The result or write could not be safely " +
+							"confirmed, so no automatic retry was attempted.";
+			case MemoryEngineContract.RESULT_GC_BASELINE_INVALIDATED ->
+					"Java GC occurred after this baseline/revision was captured. Moving objects make " +
+							"address-based relative comparison unsafe; capture a new baseline or use a " +
+							"known-value search.";
+			default -> null;
 		};
 	}
 
@@ -1181,11 +1402,13 @@ public final class MemoryEngineService extends Service {
 		final String firstValue;
 		final String secondValue;
 		volatile boolean paused;
+		volatile long validatedGcCount;
 
-		FreezeRecord(int mode, String firstValue, String secondValue) {
+		FreezeRecord(int mode, String firstValue, String secondValue, long validatedGcCount) {
 			this.mode = mode;
 			this.firstValue = firstValue == null ? "" : firstValue;
 			this.secondValue = secondValue == null ? "" : secondValue;
+			this.validatedGcCount = validatedGcCount;
 		}
 	}
 }
