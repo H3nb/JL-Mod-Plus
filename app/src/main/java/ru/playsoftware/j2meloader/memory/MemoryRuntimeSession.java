@@ -14,6 +14,11 @@
 
 package ru.playsoftware.j2meloader.memory;
 
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.IBinder;
 import android.os.Process;
 import android.os.SystemClock;
 
@@ -21,21 +26,52 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.microedition.util.ContextHolder;
+
 /** Process-local identity for one live MIDlet runtime, independent from Activity visibility. */
 public final class MemoryRuntimeSession {
 	private static final SecureRandom RANDOM = new SecureRandom();
 	private static final List<Listener> LISTENERS = new ArrayList<>();
 	private static long activeToken;
+	private static boolean engineBound;
 
 	interface Listener {
 		void onRuntimeEnded(long token);
 	}
+
+	/**
+	 * Keeps :memory_engine alive for exactly the lifetime of the MIDlet runtime. UI visibility is
+	 * deliberately not part of this ownership: hiding the editor must not tear down scan state, while
+	 * ending the MIDlet must release the engine even if the editor panel is still visible for a frame.
+	 */
+	private static final ServiceConnection ENGINE_LIFECYCLE_CONNECTION = new ServiceConnection() {
+		@Override
+		public void onServiceConnected(ComponentName name, IBinder service) {
+			// Lifetime ownership only. MemoryEditorComposeController owns the interactive Binder.
+		}
+
+		@Override
+		public void onServiceDisconnected(ComponentName name) {
+			// Android keeps the binding and normally reconnects the crashed remote service.
+		}
+
+		@Override
+		public void onBindingDied(ComponentName name) {
+			rebindEngineIfRuntimeActive();
+		}
+
+		@Override
+		public void onNullBinding(ComponentName name) {
+			rebindEngineIfRuntimeActive();
+		}
+	};
 
 	private MemoryRuntimeSession() {
 	}
 
 	public static synchronized long start() {
 		if (activeToken != 0L) {
+			ensureEngineBoundLocked();
 			return activeToken;
 		}
 		long token;
@@ -45,6 +81,7 @@ public final class MemoryRuntimeSession {
 					^ ((long) Process.myPid() << 32);
 		} while (token == 0L);
 		activeToken = token;
+		ensureEngineBoundLocked();
 		return token;
 	}
 
@@ -72,6 +109,7 @@ public final class MemoryRuntimeSession {
 				// Runtime teardown must not be interrupted by an observer.
 			}
 		}
+		releaseEngineBinding();
 	}
 
 	static synchronized void addListener(Listener listener) {
@@ -82,5 +120,65 @@ public final class MemoryRuntimeSession {
 
 	static synchronized void removeListener(Listener listener) {
 		LISTENERS.remove(listener);
+	}
+
+	private static void ensureEngineBoundLocked() {
+		if (engineBound || activeToken == 0L) {
+			return;
+		}
+		Context context = ContextHolder.getAppContext();
+		try {
+			engineBound = context.bindService(
+					new Intent(context, MemoryEngineService.class),
+					ENGINE_LIFECYCLE_CONNECTION,
+					Context.BIND_AUTO_CREATE);
+		} catch (RuntimeException ignored) {
+			engineBound = false;
+		}
+	}
+
+	private static void rebindEngineIfRuntimeActive() {
+		Context context = ContextHolder.getAppContext();
+		boolean shouldRebind;
+		synchronized (MemoryRuntimeSession.class) {
+			shouldRebind = activeToken != 0L;
+			engineBound = false;
+		}
+		try {
+			context.unbindService(ENGINE_LIFECYCLE_CONNECTION);
+		} catch (IllegalArgumentException ignored) {
+			// The dead binding may already have been removed by the framework.
+		}
+		if (!shouldRebind) {
+			return;
+		}
+		synchronized (MemoryRuntimeSession.class) {
+			if (activeToken != 0L) {
+				ensureEngineBoundLocked();
+			}
+		}
+	}
+
+	private static void releaseEngineBinding() {
+		Context context = ContextHolder.getAppContext();
+		boolean shouldUnbind;
+		synchronized (MemoryRuntimeSession.class) {
+			shouldUnbind = engineBound;
+			engineBound = false;
+		}
+		if (shouldUnbind) {
+			try {
+				context.unbindService(ENGINE_LIFECYCLE_CONNECTION);
+			} catch (IllegalArgumentException ignored) {
+				// A process/service death may have already removed the binding.
+			}
+		}
+		// Harmless for a purely bound service, and guarantees an accidentally-started engine cannot
+		// survive the MIDlet session after the last binding disappears.
+		try {
+			context.stopService(new Intent(context, MemoryEngineService.class));
+		} catch (RuntimeException ignored) {
+			// Process teardown is already authoritative.
+		}
 	}
 }
