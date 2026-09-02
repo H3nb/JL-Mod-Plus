@@ -1,18 +1,16 @@
 /*
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND.
+ * See the License for the specific language governing permissions and limitations under the
+ * License.
  */
 
 package ru.playsoftware.j2meloader.memory;
+
+import ru.playsoftware.j2meloader.BuildConfig;
 
 final class NativeMemoryEngine {
 	static {
@@ -22,7 +20,22 @@ final class NativeMemoryEngine {
 	private NativeMemoryEngine() {
 	}
 
-	static native int configureTarget(int pid, int pageSize, long runtimeToken, long[] runs);
+	static int configureTarget(int pid, int pageSize, long runtimeToken, long[] runs) {
+		int result = configureTargetUnchecked(pid, pageSize, runtimeToken, runs);
+		if (BuildConfig.DEBUG) {
+			if (result == MemoryEngineContract.RESULT_OK) {
+				configureV2ShadowTarget(pid, runtimeToken, runs);
+			} else {
+				clearV2ShadowTarget();
+			}
+		}
+		return result;
+	}
+
+	private static native int configureTargetUnchecked(int pid, int pageSize, long runtimeToken,
+	                                                   long[] runs);
+
+	private static native void configureV2ShadowTarget(int pid, long runtimeToken, long[] runs);
 
 	static native boolean prepareOperation(long cancellationEpoch);
 
@@ -80,9 +93,20 @@ final class NativeMemoryEngine {
 
 	static native long[] inspect(long candidateId, int radius);
 
+	static native long[] v2ShadowKnownEqual(int valueType, long expectedBits);
+
 	static native void clearSearch();
 
-	static native void clearTarget();
+	static void clearTarget() {
+		clearTargetUnchecked();
+		if (BuildConfig.DEBUG) {
+			clearV2ShadowTarget();
+		}
+	}
+
+	private static native void clearTargetUnchecked();
+
+	private static native void clearV2ShadowTarget();
 
 	static native void cancel(long cancellationEpoch);
 
