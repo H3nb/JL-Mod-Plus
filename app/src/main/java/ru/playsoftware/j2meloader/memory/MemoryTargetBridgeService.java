@@ -16,6 +16,7 @@ package ru.playsoftware.j2meloader.memory;
 
 import android.app.Service;
 import android.content.Intent;
+import android.os.Debug;
 import android.os.IBinder;
 import android.os.Process;
 import android.os.RemoteCallbackList;
@@ -25,6 +26,7 @@ import androidx.annotation.Nullable;
 
 /** Minimal :midlet bridge for runtime identity and target-local mincore collection. */
 public final class MemoryTargetBridgeService extends Service {
+	private static final String ART_GC_COUNT_STAT = "art.gc.gc-count";
 	private static final long[] EMPTY_RUNS = new long[]{0L, 0L};
 	private final Object rangeLock = new Object();
 	private final RemoteCallbackList<IMemoryTargetCallback> callbacks = new RemoteCallbackList<>();
@@ -58,6 +60,12 @@ public final class MemoryTargetBridgeService extends Service {
 		@Override
 		public int getPageSize() {
 			return NativeMemoryTarget.pageSize();
+		}
+
+		@Override
+		public long getGcCount(long runtimeToken) {
+			return MemoryRuntimeSession.isActive(runtimeToken)
+					? readGcCount() : MemoryEngineContract.GC_COUNT_UNKNOWN;
 		}
 
 		@Override
@@ -100,6 +108,24 @@ public final class MemoryTargetBridgeService extends Service {
 		MemoryRuntimeSession.removeListener(runtimeListener);
 		callbacks.kill();
 		super.onDestroy();
+	}
+
+	static long readGcCount() {
+		String value;
+		try {
+			value = Debug.getRuntimeStat(ART_GC_COUNT_STAT);
+		} catch (RuntimeException exception) {
+			return MemoryEngineContract.GC_COUNT_UNKNOWN;
+		}
+		if (value == null || value.isBlank()) {
+			return MemoryEngineContract.GC_COUNT_UNKNOWN;
+		}
+		try {
+			long count = Long.parseLong(value);
+			return count >= 0L ? count : MemoryEngineContract.GC_COUNT_UNKNOWN;
+		} catch (NumberFormatException exception) {
+			return MemoryEngineContract.GC_COUNT_UNKNOWN;
+		}
 	}
 
 	private void notifyRuntimeEnded(long token) {
