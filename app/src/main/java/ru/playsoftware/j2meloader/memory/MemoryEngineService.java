@@ -702,11 +702,15 @@ public final class MemoryEngineService extends Service {
 
 	private int setFreezeRecords(long token, long[] candidateIds, int mode,
 	                             String firstValue, String secondValue) {
+		if (candidateIds == null || candidateIds.length == 0 ||
+				candidateIds.length > MemoryEngineContract.MAX_FREEZE_RECORDS ||
+				mode < MemoryEngineContract.FREEZE_LOCK ||
+				mode > MemoryEngineContract.FREEZE_RANGE) {
+			return MemoryEngineContract.RESULT_SAFETY_LIMIT;
+		}
 		Set<Long> uniqueIds = new HashSet<>();
-		if (candidateIds != null) {
-			for (long id : candidateIds) {
-				uniqueIds.add(id);
-			}
+		for (long id : candidateIds) {
+			uniqueIds.add(id);
 		}
 		int additionalRecords = 0;
 		for (long id : uniqueIds) {
@@ -714,12 +718,8 @@ public final class MemoryEngineService extends Service {
 				additionalRecords++;
 			}
 		}
-		if (candidateIds == null || candidateIds.length == 0 ||
-				candidateIds.length > MemoryEngineContract.MAX_FREEZE_RECORDS ||
-				mode < MemoryEngineContract.FREEZE_LOCK ||
-				mode > MemoryEngineContract.FREEZE_RANGE ||
-				freezeRecords.size() + additionalRecords >
-						MemoryEngineContract.MAX_FREEZE_RECORDS) {
+		if (freezeRecords.size() + additionalRecords >
+					MemoryEngineContract.MAX_FREEZE_RECORDS) {
 			return MemoryEngineContract.RESULT_SAFETY_LIMIT;
 		}
 		if (!isWriteSupported(token)) {
