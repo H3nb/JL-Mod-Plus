@@ -101,6 +101,9 @@ public final class MemoryRuntimeSession {
 			}
 			activeToken = 0L;
 			listeners = LISTENERS.toArray(new Listener[0]);
+			// Keep token and engine ownership transitions atomic. A new runtime cannot observe the
+			// old lifecycle binding and then have this close tear it down underneath the new token.
+			releaseEngineBindingLocked();
 		}
 		for (Listener listener : listeners) {
 			try {
@@ -109,7 +112,6 @@ public final class MemoryRuntimeSession {
 				// Runtime teardown must not be interrupted by an observer.
 			}
 		}
-		releaseEngineBinding();
 	}
 
 	static synchronized void addListener(Listener listener) {
@@ -138,40 +140,32 @@ public final class MemoryRuntimeSession {
 	}
 
 	private static void rebindEngineIfRuntimeActive() {
-		Context context = ContextHolder.getAppContext();
-		boolean shouldRebind;
 		synchronized (MemoryRuntimeSession.class) {
-			shouldRebind = activeToken != 0L;
+			Context context = ContextHolder.getAppContext();
+			if (engineBound) {
+				try {
+					context.unbindService(ENGINE_LIFECYCLE_CONNECTION);
+				} catch (IllegalArgumentException ignored) {
+					// The dead binding may already have been removed by the framework.
+				}
+			}
 			engineBound = false;
-		}
-		try {
-			context.unbindService(ENGINE_LIFECYCLE_CONNECTION);
-		} catch (IllegalArgumentException ignored) {
-			// The dead binding may already have been removed by the framework.
-		}
-		if (!shouldRebind) {
-			return;
-		}
-		synchronized (MemoryRuntimeSession.class) {
 			if (activeToken != 0L) {
 				ensureEngineBoundLocked();
 			}
 		}
 	}
 
-	private static void releaseEngineBinding() {
+	/** Must be called while holding MemoryRuntimeSession.class. */
+	private static void releaseEngineBindingLocked() {
 		Context context = ContextHolder.getAppContext();
-		boolean shouldUnbind;
-		synchronized (MemoryRuntimeSession.class) {
-			shouldUnbind = engineBound;
-			engineBound = false;
-		}
-		if (shouldUnbind) {
+		if (engineBound) {
 			try {
 				context.unbindService(ENGINE_LIFECYCLE_CONNECTION);
 			} catch (IllegalArgumentException ignored) {
 				// A process/service death may have already removed the binding.
 			}
+			engineBound = false;
 		}
 		// Harmless for a purely bound service, and guarantees an accidentally-started engine cannot
 		// survive the MIDlet session after the last binding disappears.
