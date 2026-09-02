@@ -23,9 +23,9 @@ struct ScanRange {
     std::uintptr_t end = 0U;
 };
 
-struct KnownExplicitScanRequest {
+struct KnownEqualScanRequest {
     ResultPlane plane = ResultPlane::Int;
-    std::size_t width = 4U;
+    std::uint64_t expectedBits = 0U;
 };
 
 struct KnownScanStats {
@@ -38,7 +38,6 @@ struct KnownScanStats {
 };
 
 using RemoteReadFn = std::function<bool(std::uintptr_t, void *, std::size_t)>;
-using MatchFn = std::function<bool(std::uint64_t)>;
 using CancelledFn = std::function<bool()>;
 
 [[nodiscard]] constexpr std::uint64_t appendAddressFingerprint(
@@ -52,15 +51,13 @@ using CancelledFn = std::function<bool()>;
     return fingerprint;
 }
 
-// Shadow scanner used for differential validation against the published Candidate backend.
-// Parsing and predicate semantics deliberately remain owned by memory_engine.cpp: the caller
-// supplies a compiled match function so the shadow path cannot drift on signedness, hex parsing,
-// floating-point, NaN, or range behavior. This function never publishes engine state.
-[[nodiscard]] bool scanKnownExplicit(
+// Explicit-type equality kernel used by the debug shadow path before ResultStore becomes
+// authoritative. Type dispatch occurs once before scanning; the hot slot loop is specialized for
+// one primitive representation and never calls a per-candidate predicate/type dispatcher.
+[[nodiscard]] bool scanKnownEqualExplicit(
         const std::vector<ScanRange> &ranges,
-        const KnownExplicitScanRequest &request,
+        const KnownEqualScanRequest &request,
         const RemoteReadFn &read,
-        const MatchFn &matches,
         const CancelledFn &cancelled,
         ResultStore &out,
         KnownScanStats &stats,
