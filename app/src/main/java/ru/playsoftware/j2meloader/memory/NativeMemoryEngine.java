@@ -51,7 +51,12 @@ final class NativeMemoryEngine {
 
 	static native int filter(long[] candidateIds, boolean keep);
 
-	static native int edit(long[] candidateIds, String replacementValue);
+	static int edit(long[] candidateIds, String replacementValue) {
+		int result = editUnchecked(candidateIds, replacementValue);
+		return MemoryMutationOutcome.classifyEditResult(result, lastMessage());
+	}
+
+	private static native int editUnchecked(long[] candidateIds, String replacementValue);
 
 	static native long[] expandResultGroups(long[] resultIds, int valueType);
 
