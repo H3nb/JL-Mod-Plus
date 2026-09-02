@@ -34,15 +34,28 @@ public final class MemoryEngineBenchmarkRunner {
 		long start() throws RemoteException;
 	}
 
-	public record Sample(
-			long operationId,
-			int resultCode,
-			long resultCount,
-			String message,
-			long elapsedNs,
-			long maxProgressScannedBytes,
-			long maxProgressTotalBytes,
-			Bundle diagnostics) {
+	public static final class Sample {
+		public final long operationId;
+		public final int resultCode;
+		public final long resultCount;
+		public final String message;
+		public final long elapsedNs;
+		public final long maxProgressScannedBytes;
+		public final long maxProgressTotalBytes;
+		public final Bundle diagnostics;
+
+		Sample(long operationId, int resultCode, long resultCount, String message,
+		       long elapsedNs, long maxProgressScannedBytes, long maxProgressTotalBytes,
+		       Bundle diagnostics) {
+			this.operationId = operationId;
+			this.resultCode = resultCode;
+			this.resultCount = resultCount;
+			this.message = message;
+			this.elapsedNs = elapsedNs;
+			this.maxProgressScannedBytes = maxProgressScannedBytes;
+			this.maxProgressTotalBytes = maxProgressTotalBytes;
+			this.diagnostics = diagnostics;
+		}
 	}
 
 	public static Sample run(IMemoryEngineService engine,
