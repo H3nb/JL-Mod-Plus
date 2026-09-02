@@ -427,7 +427,7 @@ class MemoryEditorComposeController(
         val watch = state.watchTab
         launchOperation { engine, token ->
             if (watch) {
-                if (keep) MemoryEngineContract.RESULT_INVALID_REQUEST
+                if (keep) MemoryEngineContract.RESULT_INVALID_REQUEST.toLong()
                 else engine.removeWatch(token, ids)
             } else {
                 engine.filterResultGroups(token, ids, keep)
