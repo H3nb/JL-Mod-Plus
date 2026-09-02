@@ -80,8 +80,8 @@ public final class MemoryEngineBenchmarkRunner {
 			public void onOperationProgress(long operationId, long scannedBytes, long totalBytes) {
 				long expected = expectedOperationId.get();
 				if (expected != 0L && operationId != expected) return;
-				maxScanned.accumulateAndGet(Math.max(0L, scannedBytes), Math::max);
-				maxTotal.accumulateAndGet(Math.max(0L, totalBytes), Math::max);
+				updateMax(maxScanned, scannedBytes);
+				updateMax(maxTotal, totalBytes);
 			}
 
 			@Override
@@ -132,5 +132,15 @@ public final class MemoryEngineBenchmarkRunner {
 				maxScanned.get(),
 				maxTotal.get(),
 				snapshot == null ? Bundle.EMPTY : snapshot);
+	}
+
+	private static void updateMax(AtomicLong target, long value) {
+		long bounded = Math.max(0L, value);
+		while (true) {
+			long current = target.get();
+			if (bounded <= current || target.compareAndSet(current, bounded)) {
+				return;
+			}
+		}
 	}
 }
