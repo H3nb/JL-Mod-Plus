@@ -59,7 +59,7 @@ Use this probe only under all of these conditions:
 4. no refine/filter/Undo has changed the result revision since that first search;
 5. the MIDlet/game state is held as stable as practical while the parity probe runs.
 
-The probe deliberately performs a second remote read pass only when called. Normal Memory Editor use does not run the shadow scanner.
+The probe deliberately performs a second remote read pass only when called. Normal Memory Editor use does not run the shadow scanner. If the debug-only shadow target mirror cannot be prepared, the probe fails closed as unavailable/target-lost while the validated legacy target and user-visible result remain untouched.
 
 The legacy backend remains authoritative. The probe pages the legacy result in bounded chunks, fingerprints its ordered `(address, type)` rows, then independently scans the same configured resident target through the ResultStore explicit-type equality kernel. The v2 store is enumerated again through `ResultCursor` in pages of at most 100 unique addresses. A successful parity result requires all of the following:
 
@@ -71,7 +71,7 @@ The legacy backend remains authoritative. The probe pages the legacy result in b
 
 A parity mismatch is a development signal, not a reason to repair or replace the legacy result. Do not publish the shadow store and do not mutate target memory from the shadow path.
 
-GC, target relocation, or game writes between the legacy search and shadow pass may legitimately produce a mismatch. If that happens, discard the sample and repeat from a fresh first `Equal` search rather than weakening the comparison. The shadow target also carries a debug generation; a clear/reconfigure during the scan fails closed instead of publishing diagnostics for a mixed target generation.
+GC, target relocation, or game writes between the legacy search and shadow pass may legitimately produce a mismatch. If that happens, discard the sample and repeat from a fresh first `Equal` search rather than weakening the comparison. The shadow target also carries a debug generation; a clear/reconfigure during the scan is checked at bounded scan intervals and fails closed instead of publishing diagnostics for a mixed target generation.
 
 For floating-point equality the v2 explicit kernel intentionally uses numeric equality, matching the current known-search contract: `+0.0` and `-0.0` compare equal while `NaN` does not compare equal to itself.
 
