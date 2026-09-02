@@ -38,6 +38,7 @@ class MemoryEditorComposeController(
     private val bubbleView: View,
 ) : MemoryEditorActions {
     private val context = composeView.context
+    private val ownedRuntimeToken = MemoryRuntimeSession.currentToken()
     private val ipc: ExecutorService = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "MemoryEditorUiIpc").apply { priority = Thread.NORM_PRIORITY - 1 }
     }
@@ -48,11 +49,20 @@ class MemoryEditorComposeController(
     private var destroyed = false
     private var bubbleEnabled = false
     private var activeOperationId = 0L
+    private var connectionGeneration = 0
     private var pendingFreezeAfterEdit: PendingFreezeAfterEdit? = null
     private var pendingInspectorRefresh: PendingInspectorRefresh? = null
 
     private data class PendingFreezeAfterEdit(val candidateId: Long, val value: String)
     private data class PendingInspectorRefresh(val candidateId: Long, val radius: Int)
+
+    private val runtimeListener = MemoryRuntimeSession.Listener { endedToken ->
+        if (endedToken == ownedRuntimeToken) {
+            composeView.post {
+                if (!destroyed) destroy()
+            }
+        }
+    }
 
     private val callback = object : IMemoryEngineCallback.Stub() {
         override fun onOperationProgress(operationId: Long, scannedBytes: Long, totalBytes: Long) {
@@ -77,6 +87,28 @@ class MemoryEditorComposeController(
         ) {
             post {
                 if (activeOperationId != 0L && operationId != activeOperationId) return@post
+
+                if (resultCode == MemoryEngineContract.RESULT_TARGET_LOST ||
+                    resultCode == MemoryEngineContract.RESULT_NO_SESSION
+                ) {
+                    pendingFreezeAfterEdit = null
+                    pendingInspectorRefresh = null
+                    activeOperationId = 0L
+                    if (!runtimeStillActive()) {
+                        destroy()
+                        return@post
+                    }
+                    state = state.copy(
+                        busy = false,
+                        searching = false,
+                        scanBytesScanned = 0L,
+                        scanBytesTotal = 0L,
+                        connecting = true,
+                        message = null,
+                    )
+                    reloadState()
+                    return@post
+                }
 
                 val succeeded = resultCode == MemoryEngineContract.RESULT_OK
                 val freezeFollowUp = if (succeeded) pendingFreezeAfterEdit else null
@@ -111,11 +143,12 @@ class MemoryEditorComposeController(
 
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, binder: IBinder) {
+            connectionGeneration++
             service = IMemoryEngineService.Stub.asInterface(binder)
             runIpc {
                 val engine = service ?: return@runIpc
                 engine.registerCallback(callback)
-                post { state = state.copy(connected = true, connecting = false) }
+                post { state = state.copy(connected = true, connecting = true, message = null) }
                 reloadState()
             }
         }
@@ -135,18 +168,21 @@ class MemoryEditorComposeController(
                 MemoryEditorRuntimeRoot(state = state, actions = this)
             }
         }
+        if (ownedRuntimeToken != 0L) {
+            MemoryRuntimeSession.addListener(runtimeListener)
+        }
     }
 
     /** Enables/disables the lightweight Activity-owned bubble without opening a system overlay. */
     fun toggleBubble(): Boolean {
-        if (destroyed) return false
+        if (destroyed || !runtimeStillActive()) return false
         bubbleEnabled = !bubbleEnabled
         syncBubbleVisibility()
         return bubbleEnabled
     }
 
     fun open() {
-        if (destroyed) return
+        if (destroyed || !runtimeStillActive()) return
         state = state.copy(visible = true, connecting = service == null, message = null)
         bubbleView.visibility = View.GONE
         composeView.visibility = View.VISIBLE
@@ -168,13 +204,21 @@ class MemoryEditorComposeController(
 
     private fun syncBubbleVisibility() {
         if (destroyed) return
-        bubbleView.visibility = if (bubbleEnabled && !state.visible) View.VISIBLE else View.GONE
+        bubbleView.visibility = if (bubbleEnabled && !state.visible && runtimeStillActive()) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
         if (bubbleView.visibility == View.VISIBLE) bubbleView.bringToFront()
     }
 
     fun destroy() {
         if (destroyed) return
         destroyed = true
+        connectionGeneration++
+        if (ownedRuntimeToken != 0L) {
+            MemoryRuntimeSession.removeListener(runtimeListener)
+        }
         bubbleView.setOnClickListener(null)
         bubbleView.visibility = View.GONE
         composeView.visibility = View.GONE
@@ -183,8 +227,12 @@ class MemoryEditorComposeController(
         ipc.shutdownNow()
     }
 
+    private fun runtimeStillActive(): Boolean =
+        ownedRuntimeToken != 0L && MemoryRuntimeSession.isActive(ownedRuntimeToken)
+
     private fun connectEngine() {
-        if (bound || destroyed) return
+        if (bound || destroyed || !runtimeStillActive()) return
+        state = state.copy(connecting = true, message = null)
         bound = context.bindService(
             Intent(context, MemoryEngineService::class.java),
             connection,
@@ -195,12 +243,13 @@ class MemoryEditorComposeController(
                 connecting = false,
                 connected = false,
                 supported = false,
-                message = context.getString(R.string.memory_editor_unsupported),
+                message = context.getString(R.string.memory_editor_engine_unavailable),
             )
         }
     }
 
     private fun disconnectEngine() {
+        connectionGeneration++
         runCatching { service?.unregisterCallback(callback) }
         service = null
         if (bound) {
@@ -215,28 +264,85 @@ class MemoryEditorComposeController(
             activeOperationId = 0L
             pendingFreezeAfterEdit = null
             pendingInspectorRefresh = null
+            if (!runtimeStillActive()) {
+                destroy()
+                return@post
+            }
             state = state.copy(
-                connecting = false,
+                connecting = true,
                 connected = false,
-                supported = false,
                 busy = false,
                 searching = false,
-                message = context.getString(R.string.memory_editor_target_lost),
+                scanBytesScanned = 0L,
+                scanBytesTotal = 0L,
+                message = null,
             )
+            scheduleReconnect()
         }
+    }
+
+    private fun scheduleReconnect() {
+        if (destroyed || !runtimeStillActive()) return
+        val generation = ++connectionGeneration
+        composeView.postDelayed({
+            if (destroyed || generation != connectionGeneration || !runtimeStillActive()) {
+                return@postDelayed
+            }
+            disconnectEngine()
+            connectEngine()
+        }, ENGINE_RECONNECT_DELAY_MS)
     }
 
     override fun refreshCapabilities() = reloadState()
 
-    private fun reloadState() = runIpc {
-        val engine = service ?: return@runIpc
+    private fun reloadState(retry: Int = 0) = runIpc {
+        val localToken = MemoryRuntimeSession.currentToken()
+        if (localToken == 0L || localToken != ownedRuntimeToken) {
+            post { destroy() }
+            return@runIpc
+        }
+
+        val engine = service ?: run {
+            post { scheduleReconnect() }
+            return@runIpc
+        }
         val capabilities = engine.capabilities
         val supported = capabilities.getBoolean(MemoryEngineContract.KEY_SUPPORTED, false)
         val writeSupported = capabilities.getBoolean(MemoryEngineContract.KEY_WRITE_SUPPORTED, false)
         val token = capabilities.getLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, 0L)
         val capabilityMessage = capabilities.getString(MemoryEngineContract.KEY_MESSAGE)
 
-        if (!supported || token == 0L) {
+        // :memory_engine -> :midlet target binding is asynchronous. Because the UI itself is already
+        // inside the live :midlet process, token==0/mismatch here is a connection handshake, not a
+        // user-facing "MIDlet is gone" condition.
+        if (token != localToken) {
+            if (retry < CAPABILITY_RETRY_DELAYS_MS.size) {
+                val delay = CAPABILITY_RETRY_DELAYS_MS[retry]
+                val generation = connectionGeneration
+                post {
+                    state = state.copy(connecting = true, connected = true, message = null)
+                    composeView.postDelayed({
+                        if (!destroyed && generation == connectionGeneration && runtimeStillActive()) {
+                            reloadState(retry + 1)
+                        }
+                    }, delay)
+                }
+            } else {
+                post {
+                    state = state.copy(
+                        connecting = true,
+                        connected = false,
+                        busy = false,
+                        searching = false,
+                        message = null,
+                    )
+                    scheduleReconnect()
+                }
+            }
+            return@runIpc
+        }
+
+        if (!supported) {
             post {
                 state = state.copy(
                     connecting = false,
@@ -552,7 +658,17 @@ class MemoryEditorComposeController(
             val anchor = bundle.getLong(MemoryEngineContract.KEY_INSPECT_ANCHOR, 0L)
             val bytes = bundle.getByteArray(MemoryEngineContract.KEY_INSPECT_BYTES)
             post {
-                if (result == MemoryEngineContract.RESULT_OK && start > 0L && anchor > 0L &&
+                if (result == MemoryEngineContract.RESULT_TARGET_LOST ||
+                    result == MemoryEngineContract.RESULT_NO_SESSION
+                ) {
+                    state = state.copy(
+                        inspectorLoading = false,
+                        inspector = null,
+                        connecting = runtimeStillActive(),
+                        message = null,
+                    )
+                    if (runtimeStillActive()) reloadState() else destroy()
+                } else if (result == MemoryEngineContract.RESULT_OK && start > 0L && anchor > 0L &&
                     bytes != null && bytes.size <= MemoryEngineContract.MAX_INSPECT_BYTES
                 ) {
                     state = state.copy(
@@ -633,7 +749,7 @@ class MemoryEditorComposeController(
         searching: Boolean = false,
         operation: (IMemoryEngineService, Long) -> Long,
     ) {
-        if (state.busy || destroyed) return
+        if (state.busy || destroyed || !runtimeStillActive()) return
         val token = state.runtimeToken
         val engine = service
         if (token == 0L || engine == null) {
@@ -657,7 +773,7 @@ class MemoryEditorComposeController(
         MemoryEngineContract.RESULT_CANCELLED -> context.getString(R.string.memory_editor_cancelled)
         MemoryEngineContract.RESULT_RESOURCE_LIMIT -> context.getString(R.string.memory_editor_resource_limit)
         MemoryEngineContract.RESULT_TARGET_LOST,
-        MemoryEngineContract.RESULT_NO_SESSION -> context.getString(R.string.memory_editor_target_lost)
+        MemoryEngineContract.RESULT_NO_SESSION -> context.getString(R.string.memory_editor_engine_reconnecting)
         MemoryEngineContract.RESULT_IDENTITY_UNSAFE -> context.getString(R.string.memory_editor_identity_unsafe)
         MemoryEngineContract.RESULT_SAFETY_LIMIT -> context.getString(R.string.memory_editor_safety_limit)
         MemoryEngineContract.RESULT_GC_REVALIDATED -> context.getString(R.string.memory_editor_gc_revalidated)
@@ -684,7 +800,7 @@ class MemoryEditorComposeController(
                 }
             }
         } catch (_: RejectedExecutionException) {
-            // Activity teardown won the race.
+            // Activity/runtime teardown won the race.
         }
     }
 
@@ -694,5 +810,7 @@ class MemoryEditorComposeController(
 
     internal companion object {
         const val PAGE_SIZE = MemoryEngineContract.MAX_RESULT_PAGE_SIZE
+        private const val ENGINE_RECONNECT_DELAY_MS = 250L
+        private val CAPABILITY_RETRY_DELAYS_MS = longArrayOf(80L, 160L, 320L, 640L)
     }
 }
