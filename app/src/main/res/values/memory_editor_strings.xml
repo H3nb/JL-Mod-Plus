@@ -98,7 +98,7 @@
     <string name="memory_editor_identity_unsafe">The value moved or changed before it could be verified. Refresh the results or reopen Inspector, then try again.</string>
     <string name="memory_editor_safety_limit">Too many candidates were selected for this guarded operation.</string>
     <string name="memory_editor_invalid_request">The value or operation is invalid.</string>
-    <string name="memory_editor_gc_revalidated">Java garbage collection occurred since this result was last trusted. Memory Editor revalidated the result and refreshed its current address. Review the value and address, then retry. No write was performed.</string>
+    <string name="memory_editor_gc_revalidated">Memory Editor revalidated this CandidateId and refreshed its current address. The binding may have relocated, including after Java garbage collection. Review the refreshed value and address, then retry. No write was performed.</string>
     <string name="memory_editor_gc_race">Java garbage collection occurred during the operation. The result or write could not be safely confirmed, so Memory Editor did not retry the write automatically.</string>
     <string name="memory_editor_gc_baseline_invalidated">Java garbage collection occurred after this baseline was captured. Because managed objects may have moved, the baseline can no longer be compared safely by address. Capture a new baseline or use a known-value search.</string>
     <string name="memory_editor_freeze_paused">Paused for safety</string>
