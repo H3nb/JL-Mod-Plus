@@ -117,7 +117,8 @@
     <string name="memory_editor_inspector_controls">Kontrol inspektor</string>
     <string name="memory_editor_back_to_memory">Kembali ke memori</string>
     <string name="memory_editor_inspect_memory">Periksa memori sekitar</string>
-    <string name="memory_editor_inspector_help">Tampilan hanya-baca yang terikat ke kandidat terverifikasi. Offset relatif mengikuti kandidat jika alamatnya berpindah.</string>
+	<string name="memory_editor_inspector_help">Tampilan hanya-baca yang terikat ke kandidat terverifikasi. Offset relatif mengikuti kandidat jika alamatnya berpindah.</string>
+	<string name="memory_editor_inspector_edit_help">Ketuk sel untuk mengeditnya. Penulisan memverifikasi target aktif dan membaca kembali hasilnya dengan aman; offset mengikuti kandidat jika alamatnya berpindah.</string>
     <string name="memory_editor_inspector_loading">Memverifikasi kandidat dan membaca snapshot terbatas…</string>
     <string name="memory_editor_anchor">Jangkar</string>
     <string name="memory_editor_view_as">Tampilkan sebagai</string>
