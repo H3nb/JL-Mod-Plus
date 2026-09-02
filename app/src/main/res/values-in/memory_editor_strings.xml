@@ -49,6 +49,7 @@
     <string name="memory_editor_what_changed">Apa yang terjadi pada nilainya?</string>
     <string name="memory_editor_start_over">Mulai ulang pencarian</string>
     <string name="memory_editor_edit">Ubah</string>
+    <string name="memory_editor_save">Simpan</string>
     <string name="memory_editor_replacement">Nilai pengganti</string>
     <string name="memory_editor_freeze">Bekukan</string>
     <string name="memory_editor_freeze_lock">Kunci nilai</string>
