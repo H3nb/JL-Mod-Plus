@@ -14,6 +14,8 @@
     <string name="memory_editor_no_results">Belum ada hasil</string>
     <string name="memory_editor_no_watch">Pantauan masih kosong</string>
     <string name="memory_editor_unsupported">Editor Memori tidak tersedia untuk runtime/perangkat ini.</string>
+    <string name="memory_editor_engine_unavailable">Mesin Editor Memori tidak tersedia.</string>
+    <string name="memory_editor_engine_reconnecting">Editor Memori sedang menyambung ulang…</string>
     <string name="memory_editor_previous">Pemindaian sebelumnya</string>
     <string name="memory_editor_initial">Snapshot awal</string>
     <string name="memory_editor_scope_fast">Java Cepat</string>
