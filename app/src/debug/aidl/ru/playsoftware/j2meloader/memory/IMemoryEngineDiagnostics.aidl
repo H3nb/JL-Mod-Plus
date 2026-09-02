@@ -13,4 +13,10 @@ import android.os.Bundle;
 /** Debug-only, pull-based diagnostics for release-comparison Memory Editor benchmarks. */
 interface IMemoryEngineDiagnostics {
     Bundle snapshot();
+
+    /**
+     * Re-scan the configured target through the v2 ResultStore equality kernel and compare it
+     * with the currently published legacy explicit-type equality result. Debug builds only.
+     */
+    Bundle validateKnownEqualShadow(int valueType);
 }
