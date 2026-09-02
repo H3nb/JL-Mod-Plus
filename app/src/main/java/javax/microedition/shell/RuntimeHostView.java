@@ -33,6 +33,7 @@ import androidx.core.view.ViewGroupCompat;
 import javax.microedition.lcdui.overlay.OverlayView;
 
 import ru.playsoftware.j2meloader.R;
+import ru.playsoftware.j2meloader.ui.LegacyThemeColors;
 
 /** Structural host for compatibility-sensitive guest Views and app-owned runtime chrome. */
 public final class RuntimeHostView {
@@ -94,7 +95,7 @@ public final class RuntimeHostView {
 		bubble.setVisibility(View.GONE);
 		GradientDrawable bubbleBackground = new GradientDrawable();
 		bubbleBackground.setShape(GradientDrawable.OVAL);
-		bubbleBackground.setColor(resolveThemeColor(context, android.R.attr.colorAccent, 0xff6750a4));
+		bubbleBackground.setColor(LegacyThemeColors.accent(context));
 		bubble.setBackground(bubbleBackground);
 		FrameLayout.LayoutParams bubbleParams = new FrameLayout.LayoutParams(
 				dp(context, 52), dp(context, 52), Gravity.END | Gravity.CENTER_VERTICAL);
