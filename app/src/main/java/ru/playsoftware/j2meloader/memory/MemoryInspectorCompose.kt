@@ -18,6 +18,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -525,29 +526,7 @@ private fun InspectorMainPane(
     onEdit: (MemoryInspectorCell) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val listState = rememberLazyListState()
     val zeroOffsetIndex = remember(cells) { cells.indexOfFirst { it.offset == 0 } }
-    LaunchedEffect(
-        snapshot.candidateId,
-        snapshot.startAddress,
-        snapshot.anchorAddress,
-        cells,
-    ) {
-        if (zeroOffsetIndex < 0) return@LaunchedEffect
-        // First expose the anchor, then use the measured row and viewport to center it. This
-        // remains correct when row height, font scale, or window size changes.
-        listState.scrollToItem(zeroOffsetIndex)
-        withFrameNanos { }
-        val layoutInfo = listState.layoutInfo
-        val anchorItem = layoutInfo.visibleItemsInfo.firstOrNull { it.index == zeroOffsetIndex }
-            ?: return@LaunchedEffect
-        val viewportCenter =
-            (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2f
-        val itemCenter = anchorItem.offset + anchorItem.size / 2f
-        listState.scroll {
-            scrollBy(itemCenter - viewportCenter)
-        }
-    }
     Column(
         modifier = Modifier.fillMaxSize().padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -595,12 +574,46 @@ private fun InspectorMainPane(
                 modifier = Modifier.weight(0.38f),
             )
         }
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            state = listState,
-        ) {
-            items(cells, key = { it.address }) { cell ->
-                InspectorCellRow(cell = cell, onEdit = { onEdit(cell) })
+        BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            // Start close to the anchor even on hosts that capture a preview before coroutines
+            // get their first frame. The measured follow-up below then centers the row exactly at
+            // runtime. Inspector rows are normally about 36dp tall; using the actual pane height
+            // keeps the fallback centered across compact and expanded previews.
+            val estimatedVisibleRows = (maxHeight / 36.dp).toInt().coerceAtLeast(1)
+            val initialFirstVisibleItem =
+                (zeroOffsetIndex - estimatedVisibleRows / 2).coerceAtLeast(0)
+            val listState = rememberLazyListState(
+                initialFirstVisibleItemIndex = initialFirstVisibleItem,
+            )
+            LaunchedEffect(
+                snapshot.candidateId,
+                snapshot.startAddress,
+                snapshot.anchorAddress,
+                cells,
+                maxHeight,
+            ) {
+                if (zeroOffsetIndex < 0) return@LaunchedEffect
+                // First expose the anchor, then use the measured row and viewport to center it.
+                // This remains correct when row height, font scale, or window size changes.
+                listState.scrollToItem(zeroOffsetIndex)
+                withFrameNanos { }
+                val layoutInfo = listState.layoutInfo
+                val anchorItem = layoutInfo.visibleItemsInfo.firstOrNull { it.index == zeroOffsetIndex }
+                    ?: return@LaunchedEffect
+                val viewportCenter =
+                    (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2f
+                val itemCenter = anchorItem.offset + anchorItem.size / 2f
+                listState.scroll {
+                    scrollBy(itemCenter - viewportCenter)
+                }
+            }
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                state = listState,
+            ) {
+                items(cells, key = { it.address }) { cell ->
+                    InspectorCellRow(cell = cell, onEdit = { onEdit(cell) })
+                }
             }
         }
     }

@@ -732,12 +732,20 @@ private fun KnownSearchPane(
 ) {
     val spec = MemoryInputSpec.forType(type)
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-        MemoryValueInput(
+        MemoryValuePopupInput(
             value = value,
-            onValueChange = onValue,
+            onValue = onValue,
             spec = spec,
             label = stringResource(R.string.memory_editor_search_hint),
             modifier = Modifier.weight(1f),
+            dialogTitle = stringResource(R.string.memory_editor_search_known_values),
+            supportingContent = {
+                Text(
+                    typeName(type),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            },
         )
         ChoiceMenu(type, VALUE_TYPES, { typeName(it) }, onType)
     }
@@ -749,12 +757,20 @@ private fun KnownSearchPane(
         }
     }
     if (predicate == MemoryEngineContract.PREDICATE_BETWEEN) {
-        MemoryValueInput(
+        MemoryValuePopupInput(
             value = secondValue,
-            onValueChange = onSecondValue,
+            onValue = onSecondValue,
             spec = spec,
             label = stringResource(R.string.memory_editor_max_value),
             modifier = Modifier.fillMaxWidth(),
+            dialogTitle = stringResource(R.string.memory_editor_search_known_values),
+            supportingContent = {
+                Text(
+                    "${typeName(type)} · ${predicateName(predicate)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            },
         )
     }
     TextButton(onClick = onAdvanced) {
@@ -839,14 +855,22 @@ private fun GroupSearchPane(
     )
     drafts.forEachIndexed { index, draft ->
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            MemoryValueInput(
+            MemoryValuePopupInput(
                 value = draft.value,
-                onValueChange = { updated ->
+                onValue = { updated ->
                     drafts = drafts.toMutableList().also { it[index] = draft.copy(value = updated) }
                 },
                 spec = MemoryInputSpec.forType(draft.type),
                 label = stringResource(R.string.memory_editor_search_hint),
                 modifier = Modifier.weight(1f),
+                dialogTitle = stringResource(R.string.memory_editor_group_search),
+                supportingContent = {
+                    Text(
+                        typeName(draft.type),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                },
             )
             ChoiceMenu(
                 value = draft.type,
@@ -875,12 +899,21 @@ private fun GroupSearchPane(
         ) {
             Text(stringResource(R.string.memory_editor_add_group_value))
         }
-        MemoryValueInput(
+        MemoryValuePopupInput(
             value = distance,
-            onValueChange = { distance = it },
+            onValue = { distance = it },
             spec = MemoryInputSpec.positiveInteger(1, 4096),
             label = stringResource(R.string.memory_editor_group_distance),
             modifier = Modifier.weight(1f),
+            dialogTitle = stringResource(R.string.memory_editor_group_distance),
+            dialogIcon = R.drawable.ic_memory_editor_refine,
+            supportingContent = {
+                Text(
+                    stringResource(R.string.memory_editor_group_search),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            },
         )
     }
     ScopeMenu(scope, onScope)
@@ -1053,12 +1086,21 @@ private fun CompactRefineStrip(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (predicateNeedsValue(predicate)) {
-                    MemoryValueInput(
+                    MemoryValuePopupInput(
                         value = value,
-                        onValueChange = onValue,
+                        onValue = onValue,
                         spec = MemoryInputSpec.forType(type),
                         label = stringResource(R.string.memory_editor_search_hint),
                         modifier = Modifier.weight(1f),
+                        dialogTitle = stringResource(R.string.memory_editor_refine_results),
+                        dialogIcon = R.drawable.ic_memory_editor_refine,
+                        supportingContent = {
+                            Text(
+                                "${typeName(type)} · ${predicateName(predicate)}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        },
                     )
                 } else {
                     Text(
@@ -1095,12 +1137,21 @@ private fun CompactRefineStrip(
                 }
             }
             if (predicateNeedsSecondValue(predicate)) {
-                MemoryValueInput(
+                MemoryValuePopupInput(
                     value = secondValue,
-                    onValueChange = onSecondValue,
+                    onValue = onSecondValue,
                     spec = MemoryInputSpec.forType(type),
                     label = stringResource(R.string.memory_editor_max_value),
                     modifier = Modifier.fillMaxWidth(),
+                    dialogTitle = stringResource(R.string.memory_editor_refine_results),
+                    dialogIcon = R.drawable.ic_memory_editor_refine,
+                    supportingContent = {
+                        Text(
+                            "${typeName(type)} · ${predicateName(predicate)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    },
                 )
             }
         }
@@ -1279,22 +1330,112 @@ private fun RefineValueFields(
 ) {
     if (!predicateNeedsValue(predicate)) return
     val spec = MemoryInputSpec.forType(type)
+    MemoryValuePopupInput(
+        value = value,
+        onValue = onValue,
+        spec = spec,
+        label = stringResource(R.string.memory_editor_search_hint),
+        modifier = Modifier.fillMaxWidth(),
+        dialogIcon = R.drawable.ic_memory_editor_refine,
+        supportingContent = {
+            Text(
+                "${typeName(type)} · ${predicateName(predicate)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
+    )
+    if (predicateNeedsSecondValue(predicate)) {
+        MemoryValuePopupInput(
+            value = secondValue,
+            onValue = onSecondValue,
+            spec = spec,
+            label = stringResource(R.string.memory_editor_max_value),
+            modifier = Modifier.fillMaxWidth(),
+            dialogIcon = R.drawable.ic_memory_editor_refine,
+            supportingContent = {
+                Text(
+                    "${typeName(type)} · ${predicateName(predicate)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            },
+        )
+    }
+}
+
+/**
+ * Compact, IME-safe launcher for numeric input. The field stays lightweight in the main screen;
+ * the actual draft and custom keypad live only while the adaptive dialog is visible.
+ */
+@Composable
+private fun MemoryValuePopupInput(
+    value: String,
+    onValue: (String) -> Unit,
+    spec: MemoryInputSpec,
+    label: String,
+    modifier: Modifier = Modifier,
+    dialogTitle: String = label,
+    dialogIcon: Int = R.drawable.ic_memory_editor_search,
+    supportingContent: (@Composable () -> Unit)? = null,
+) {
+    var dialogOpen by remember { mutableStateOf(false) }
+    var draft by remember { mutableStateOf(value) }
+
     MemoryValueInput(
         value = value,
         onValueChange = onValue,
         spec = spec,
-        label = stringResource(R.string.memory_editor_search_hint),
-        modifier = Modifier.fillMaxWidth(),
+        label = label,
+        modifier = modifier,
+        onClickOverride = {
+            draft = value
+            dialogOpen = true
+        },
     )
-    if (predicateNeedsSecondValue(predicate)) {
-        MemoryValueInput(
-            value = secondValue,
-            onValueChange = onSecondValue,
-            spec = spec,
-            label = stringResource(R.string.memory_editor_max_value),
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
+
+    if (!dialogOpen) return
+
+    AlertDialog(
+        onDismissRequest = { dialogOpen = false },
+        icon = {
+            Icon(
+                painterResource(dialogIcon),
+                contentDescription = null,
+            )
+        },
+        title = { Text(dialogTitle) },
+        text = {
+            MemoryInputArea(sideDockInLandscape = true) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    supportingContent?.invoke()
+                    MemoryValueInput(
+                        value = draft,
+                        onValueChange = { draft = it },
+                        spec = spec,
+                        label = label,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    dialogOpen = false
+                    onValue(draft)
+                },
+                enabled = spec.isComplete(draft),
+            ) {
+                Text(stringResource(R.string.memory_editor_apply))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = { dialogOpen = false }) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        },
+    )
 }
 
 private fun predicateNeedsValue(predicate: Int): Boolean = when (predicate) {

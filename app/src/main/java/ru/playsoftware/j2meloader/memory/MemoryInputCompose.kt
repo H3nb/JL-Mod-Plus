@@ -365,6 +365,7 @@ internal fun MemoryValueInput(
     spec: MemoryInputSpec,
     label: String,
     modifier: Modifier = Modifier,
+    onClickOverride: (() -> Unit)? = null,
 ) {
     val session = requireNotNull(LocalMemoryInputSession.current) {
         "MemoryValueInput must be hosted by MemoryInputArea"
@@ -385,6 +386,7 @@ internal fun MemoryValueInput(
             .focusRequester(focusRequester)
             .focusable()
             .onPreviewKeyEvent { event ->
+                if (onClickOverride != null) return@onPreviewKeyEvent false
                 val nativeEvent = event.nativeKeyEvent
                 if (nativeEvent.action != AndroidKeyEvent.ACTION_DOWN) return@onPreviewKeyEvent false
                 val keyCode = nativeEvent.keyCode
@@ -414,8 +416,12 @@ internal fun MemoryValueInput(
                 }
             }
             .clickable(role = Role.Button) {
-                focusRequester.requestFocus()
-                session.activate(id, sessionValue.text, spec, onValueChange)
+                if (onClickOverride != null) {
+                    onClickOverride()
+                } else {
+                    focusRequester.requestFocus()
+                    session.activate(id, sessionValue.text, spec, onValueChange)
+                }
             },
     ) {
         // A disabled text field has no focus or input connection, so it cannot summon Android's IME.
