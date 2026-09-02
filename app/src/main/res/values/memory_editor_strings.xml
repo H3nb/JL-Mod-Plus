@@ -128,7 +128,8 @@
     <string name="memory_editor_inspect_memory">Inspect nearby memory</string>
     <string name="memory_editor_inspector_help">Read-only view anchored to the verified candidate. Relative offsets follow the candidate if it relocates.</string>
     <string name="memory_editor_inspector_edit_help">Tap a cell to edit it. Writes verify the live target and read back safely; offsets follow the candidate if it relocates.</string>
-    <string name="memory_editor_inspector_loading">Verifying candidate and reading bounded snapshot…</string>
+    <string name="memory_editor_inspector_loading">Verifying candidate and reading a bounded snapshot…</string>
+    <string name="memory_editor_inspector_empty">Select a result, then inspect nearby memory to view and edit its bounded snapshot.</string>
     <string name="memory_editor_anchor">Anchor</string>
     <string name="memory_editor_view_as">View as</string>
     <string name="memory_editor_inspect_radius">Snapshot</string>
@@ -141,5 +142,5 @@
     <string name="memory_editor_select_result_value">Select this result</string>
     <string name="memory_editor_add_to_watch_after_edit">Add to Watch after applying</string>
     <string name="memory_editor_freeze_after_edit">Freeze after applying</string>
-    <string name="memory_editor_freeze_after_edit_help">Use the replacement value as the lock target and automatically add the candidate to Watch.</string>
+    <string name="memory_editor_freeze_after_edit_help">Uses the replacement value as a lock and automatically adds the candidates to Watch.</string>
 </resources>
