@@ -19,6 +19,9 @@ public final class MemoryEngineContract {
 	public static final int SCOPE_JAVA_FAST = 0;
 	public static final int SCOPE_JAVA_THOROUGH = 1;
 
+	/** Runtime GC statistic is unavailable or cannot be parsed safely. */
+	public static final long GC_COUNT_UNKNOWN = -1L;
+
 	public static final int TYPE_AUTO = 0;
 	public static final int TYPE_BYTE = 1;
 	public static final int TYPE_SHORT = 2;
@@ -96,6 +99,7 @@ public final class MemoryEngineContract {
 	public static final String KEY_RUNTIME_TOKEN = "runtimeToken";
 	public static final String KEY_TARGET_PID = "targetPid";
 	public static final String KEY_PAGE_SIZE = "pageSize";
+	public static final String KEY_GC_COUNT = "gcCount";
 	public static final String KEY_MESSAGE = "message";
 	public static final String KEY_SEARCH_SESSION_STAGE = "searchSessionStage";
 	public static final String KEY_SEARCH_MODE = "searchMode";
@@ -130,6 +134,10 @@ public final class MemoryEngineContract {
 
 	public static boolean isScope(int scope) {
 		return scope == SCOPE_JAVA_FAST || scope == SCOPE_JAVA_THOROUGH;
+	}
+
+	public static boolean isKnownGcCount(long gcCount) {
+		return gcCount >= 0L;
 	}
 
 	public static boolean isValueType(int type) {
