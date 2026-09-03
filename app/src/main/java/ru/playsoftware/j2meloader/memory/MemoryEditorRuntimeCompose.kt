@@ -81,7 +81,12 @@ internal fun MemoryEditorRuntimeRoot(
 ) {
     if (!state.visible) return
 
-    var tab by remember(state.runtimeToken) { mutableStateOf(RuntimeMemoryTab.SEARCH_RESULTS) }
+    val initialTab = when {
+        state.inspector != null -> RuntimeMemoryTab.INSPECTOR
+        state.watchTab -> RuntimeMemoryTab.WATCH
+        else -> RuntimeMemoryTab.SEARCH_RESULTS
+    }
+    var tab by remember(state.runtimeToken) { mutableStateOf(initialTab) }
     val selectedId = state.selected.singleOrNull()
 
     LaunchedEffect(tab) {

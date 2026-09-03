@@ -46,6 +46,12 @@ import java.util.Locale;
 
 /** Owns all scan state in a dedicated app process and exposes only logical candidate IDs. */
 public final class MemoryEngineService extends Service {
+	public interface LocalRuntimeListener {
+		void onTargetUnavailable();
+	}
+
+	private static final Set<LocalRuntimeListener> LOCAL_RUNTIME_LISTENERS =
+			ConcurrentHashMap.newKeySet();
 	private static final long PROGRESS_UPDATE_PERIOD_MS = 200L;
 	// Native cancellation uses this generation to distinguish a newly started operation from a
 	// cancellation delivered by Binder immediately before its native entry point.
@@ -67,6 +73,7 @@ public final class MemoryEngineService extends Service {
 	private volatile IMemoryTargetBridge target;
 	private volatile boolean targetBound;
 	private volatile long configuredToken;
+	private volatile long observedRuntimeToken;
 	private volatile int configuredScope = MemoryEngineContract.SCOPE_JAVA_FAST;
 	private final Map<Long, String> watchLabels = new ConcurrentHashMap<>();
 	private final Map<Long, FreezeRecord> freezeRecords = new ConcurrentHashMap<>();
@@ -83,7 +90,8 @@ public final class MemoryEngineService extends Service {
 	private final IMemoryTargetCallback targetCallback = new IMemoryTargetCallback.Stub() {
 		@Override
 		public void onRuntimeEnded(long runtimeToken) {
-			if (runtimeToken == configuredToken) {
+			if (runtimeToken != 0L &&
+					(runtimeToken == configuredToken || runtimeToken == observedRuntimeToken)) {
 				invalidateTarget();
 			}
 		}
@@ -129,6 +137,7 @@ public final class MemoryEngineService extends Service {
 			}
 			try {
 				long token = bridge.getRuntimeToken();
+				observedRuntimeToken = token;
 				int pid = bridge.getTargetPid();
 				int pageSize = bridge.getPageSize();
 				long gcCount = token == 0L
@@ -546,6 +555,24 @@ public final class MemoryEngineService extends Service {
 		}
 	};
 
+	static void addLocalRuntimeListener(LocalRuntimeListener listener) {
+		if (listener != null) LOCAL_RUNTIME_LISTENERS.add(listener);
+	}
+
+	static void removeLocalRuntimeListener(LocalRuntimeListener listener) {
+		if (listener != null) LOCAL_RUNTIME_LISTENERS.remove(listener);
+	}
+
+	private static void notifyLocalRuntimeUnavailable() {
+		for (LocalRuntimeListener listener : LOCAL_RUNTIME_LISTENERS) {
+			try {
+				listener.onTargetUnavailable();
+			} catch (RuntimeException ignored) {
+				// Activity teardown must not interrupt engine cleanup.
+			}
+		}
+	}
+
 	@Override
 	public void onCreate() {
 		super.onCreate();
@@ -577,6 +604,7 @@ public final class MemoryEngineService extends Service {
 		worker.shutdownNow();
 		progressNotifier.shutdownNow();
 		callbacks.kill();
+		LOCAL_RUNTIME_LISTENERS.clear();
 		if (targetBound) {
 			unbindService(targetConnection);
 			targetBound = false;
@@ -1283,6 +1311,7 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private void invalidateTarget() {
+		observedRuntimeToken = 0L;
 		configuredToken = 0L;
 		clearSearchSession();
 		gcBindings.clearAll();
@@ -1296,6 +1325,7 @@ public final class MemoryEngineService extends Service {
 		} catch (RejectedExecutionException ignored) {
 			// Service teardown already clears native state directly.
 		}
+		notifyLocalRuntimeUnavailable();
 	}
 
 	private static String configurationFailureMessage(int result) {

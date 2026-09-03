@@ -225,6 +225,15 @@
             android:name=".memory.MemoryEngineService"
             android:exported="false"
             android:process=":memory_engine" />
+        <activity
+            android:name=".memory.MemoryEditorActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:process=":memory_engine"
+            android:theme="@style/AppTheme.MemoryEditorTranslucent"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity android:name=".settings.SettingsActivity"
             android:exported="true"
             android:theme="@style/AppTheme.NoActionBar">

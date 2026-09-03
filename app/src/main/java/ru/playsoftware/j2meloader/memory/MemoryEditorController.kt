@@ -29,16 +29,15 @@ import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
 
 /**
- * Small MIDlet-process presentation controller. Heavy scanning, relocation recovery, writes and
- * Freeze remain in :memory_engine. The Compose tree is installed once and only shown/hidden so
- * opening Memory Editor does not repeatedly rebuild its UI heap.
+ * Presentation controller hosted in :memory_engine. The MIDlet process owns only the small bubble;
+ * all Compose state and interaction allocations stay beside the engine rather than the target heap.
  */
 class MemoryEditorComposeController(
     private val composeView: ComposeView,
-    private val bubbleView: View,
+    private val ownedRuntimeToken: Long,
+    private val closeHost: () -> Unit,
 ) : MemoryEditorActions {
     private val context = composeView.context
-    private val ownedRuntimeToken = MemoryRuntimeSession.currentToken()
     private val ipc: ExecutorService = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "MemoryEditorUiIpc").apply { priority = Thread.NORM_PRIORITY - 1 }
     }
@@ -47,7 +46,6 @@ class MemoryEditorComposeController(
     private var service: IMemoryEngineService? = null
     private var bound = false
     private var destroyed = false
-    private var bubbleEnabled = false
     private var activeOperationId = 0L
     @Volatile private var connectionGeneration = 0
     private var pendingEditFollowUp: PendingEditFollowUp? = null
@@ -62,14 +60,6 @@ class MemoryEditorComposeController(
         val resultGroup: Boolean,
     )
     private data class PendingInspectorRefresh(val candidateId: Long, val radius: Int)
-
-    private val runtimeListener = MemoryRuntimeSession.Listener { endedToken ->
-        if (endedToken == ownedRuntimeToken) {
-            composeView.post {
-                if (!destroyed) destroy()
-            }
-        }
-    }
 
     private val callback = object : IMemoryEngineCallback.Stub() {
         override fun onOperationProgress(operationId: Long, scannedBytes: Long, totalBytes: Long) {
@@ -101,19 +91,14 @@ class MemoryEditorComposeController(
                     pendingEditFollowUp = null
                     pendingInspectorRefresh = null
                     activeOperationId = 0L
-                    if (!runtimeStillActive()) {
-                        destroy()
-                        return@post
-                    }
                     state = state.copy(
                         busy = false,
                         searching = false,
                         scanBytesScanned = 0L,
                         scanBytesTotal = 0L,
-                        connecting = true,
                         message = null,
                     )
-                    reloadState()
+                    close()
                     return@post
                 }
 
@@ -168,32 +153,17 @@ class MemoryEditorComposeController(
     init {
         composeView.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         composeView.visibility = View.GONE
-        bubbleView.visibility = View.GONE
-        bubbleView.setOnClickListener { open() }
         composeView.setContent {
             JLModPlusTheme {
                 MemoryEditorRuntimeRoot(state = state, actions = this)
             }
         }
-        if (ownedRuntimeToken != 0L) {
-            MemoryRuntimeSession.addListener(runtimeListener)
-        }
-    }
-
-    /** Enables/disables the lightweight Activity-owned bubble without opening a system overlay. */
-    fun toggleBubble(): Boolean {
-        if (destroyed || !runtimeStillActive()) return false
-        bubbleEnabled = !bubbleEnabled
-        syncBubbleVisibility()
-        return bubbleEnabled
     }
 
     fun open() {
-        if (destroyed || !runtimeStillActive()) return
+        if (destroyed || ownedRuntimeToken == 0L) return
         state = state.copy(visible = true, connecting = service == null, message = null)
-        bubbleView.visibility = View.GONE
         composeView.visibility = View.VISIBLE
-        composeView.bringToFront()
         composeView.requestFocus()
         if (service == null) connectEngine() else reloadState()
     }
@@ -202,40 +172,20 @@ class MemoryEditorComposeController(
         if (destroyed) return
         state = state.copy(visible = false, selected = emptySet())
         composeView.visibility = View.GONE
-        syncBubbleVisibility()
-    }
-
-    fun isVisible(): Boolean = state.visible
-
-    fun isBubbleEnabled(): Boolean = bubbleEnabled
-
-    private fun syncBubbleVisibility() {
-        if (destroyed) return
-        bubbleView.visibility = if (bubbleEnabled && !state.visible && runtimeStillActive()) {
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
-        if (bubbleView.visibility == View.VISIBLE) bubbleView.bringToFront()
+        closeHost()
     }
 
     fun destroy() {
         if (destroyed) return
         destroyed = true
         connectionGeneration++
-        if (ownedRuntimeToken != 0L) {
-            MemoryRuntimeSession.removeListener(runtimeListener)
-        }
-        bubbleView.setOnClickListener(null)
-        bubbleView.visibility = View.GONE
         composeView.visibility = View.GONE
         composeView.disposeComposition()
         disconnectEngine()
         ipc.shutdownNow()
     }
 
-    private fun runtimeStillActive(): Boolean =
-        ownedRuntimeToken != 0L && MemoryRuntimeSession.isActive(ownedRuntimeToken)
+    private fun runtimeStillActive(): Boolean = ownedRuntimeToken != 0L && !destroyed
 
     private fun connectEngine() {
         if (bound || destroyed || !runtimeStillActive()) return
@@ -303,9 +253,9 @@ class MemoryEditorComposeController(
     override fun refreshCapabilities() = reloadState()
 
     private fun reloadState(retry: Int = 0): Unit = runIpc {
-        val localToken = MemoryRuntimeSession.currentToken()
-        if (localToken == 0L || localToken != ownedRuntimeToken) {
-            post { destroy() }
+        val localToken = ownedRuntimeToken
+        if (localToken == 0L) {
+            post { close() }
             return@runIpc
         }
 
@@ -319,32 +269,22 @@ class MemoryEditorComposeController(
         val token = capabilities.getLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, 0L)
         val capabilityMessage = capabilities.getString(MemoryEngineContract.KEY_MESSAGE)
 
-        // :memory_engine -> :midlet target binding is asynchronous. Because the UI itself is already
-        // inside the live :midlet process, token==0/mismatch here is a connection handshake, not a
-        // user-facing "MIDlet is gone" condition.
+        // The target bridge binds asynchronously. A zero token gets a short bounded handshake
+        // window; a different nonzero token is a different MIDlet generation and closes this UI.
         if (token != localToken) {
-            if (retry < CAPABILITY_RETRY_DELAYS_MS.size) {
+            if (token == 0L && retry < CAPABILITY_RETRY_DELAYS_MS.size) {
                 val delay = CAPABILITY_RETRY_DELAYS_MS[retry]
                 val generation = connectionGeneration
                 post {
                     state = state.copy(connecting = true, connected = true, message = null)
                     composeView.postDelayed({
-                        if (!destroyed && generation == connectionGeneration && runtimeStillActive()) {
+                        if (!destroyed && generation == connectionGeneration) {
                             reloadState(retry + 1)
                         }
                     }, delay)
                 }
             } else {
-                post {
-                    state = state.copy(
-                        connecting = true,
-                        connected = false,
-                        busy = false,
-                        searching = false,
-                        message = null,
-                    )
-                    scheduleReconnect()
-                }
+                post { close() }
             }
             return@runIpc
         }
@@ -706,10 +646,9 @@ class MemoryEditorComposeController(
                     state = state.copy(
                         inspectorLoading = false,
                         inspector = null,
-                        connecting = runtimeStillActive(),
                         message = null,
                     )
-                    if (runtimeStillActive()) reloadState() else destroy()
+                    close()
                 } else if (result == MemoryEngineContract.RESULT_OK && start > 0L && anchor > 0L &&
                     bytes != null && bytes.size <= MemoryEngineContract.MAX_INSPECT_BYTES
                 ) {

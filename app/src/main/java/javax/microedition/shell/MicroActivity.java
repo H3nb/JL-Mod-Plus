@@ -79,7 +79,7 @@ import ru.playsoftware.j2meloader.BuildConfig;
 import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.crashes.MidletSessionStore;
-import ru.playsoftware.j2meloader.memory.MemoryEditorComposeController;
+import ru.playsoftware.j2meloader.memory.MemoryEditorBubbleController;
 import ru.playsoftware.j2meloader.runtime.MidletKeepAliveService;
 import ru.playsoftware.j2meloader.util.EdgeToEdgeCompat;
 import ru.playsoftware.j2meloader.util.LogUtils;
@@ -105,7 +105,7 @@ public class MicroActivity extends AppCompatActivity {
 	private String appPath;
 	private RuntimeHostView binding;
 	private RuntimeMenuComposeController runtimeMenuController;
-	private MemoryEditorComposeController memoryEditorController;
+	private MemoryEditorBubbleController memoryEditorController;
 	private TransientNoticeComposeController runtimeNoticeController;
 	private WindowInsetsCompat lastWindowInsets;
 	private boolean skinLayerAvailable;
@@ -214,9 +214,7 @@ public class MicroActivity extends AppCompatActivity {
 			public void handleOnBackPressed() {
 				// Android system Back is distinct from physical/remapped key events. Keep the
 				// established short-Back action without synthesizing a KEYCODE_BACK event.
-				if (memoryEditorController != null && memoryEditorController.isVisible()) {
-					memoryEditorController.close();
-				} else if (isRuntimeMenuVisible()) {
+				if (isRuntimeMenuVisible()) {
 					closeOptionsMenu();
 				} else {
 					openOptionsMenu();
@@ -419,10 +417,10 @@ public class MicroActivity extends AppCompatActivity {
 				memoryEditorController != null && memoryEditorController.isBubbleEnabled());
 	}
 
-	private MemoryEditorComposeController memoryEditorController() {
+	private MemoryEditorBubbleController memoryEditorController() {
 		if (memoryEditorController == null) {
-			memoryEditorController = new MemoryEditorComposeController(
-					binding.memoryEditor, binding.memoryEditorBubble);
+			memoryEditorController = new MemoryEditorBubbleController(
+					this, binding.memoryEditorBubble);
 		}
 		return memoryEditorController;
 	}
@@ -461,7 +459,18 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	@Override
+	protected void onResume() {
+		super.onResume();
+		if (memoryEditorController != null) {
+			memoryEditorController.onHostResumed();
+		}
+	}
+
+	@Override
 	public void onPause() {
+		if (memoryEditorController != null) {
+			memoryEditorController.onHostPaused();
+		}
 		hideSoftInput();
 		super.onPause();
 	}

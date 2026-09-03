@@ -42,8 +42,6 @@ public final class RuntimeHostView {
 	public final ComposeView toolbar;
 	public final FrameLayout displayableContainer;
 	public final OverlayView overlay;
-	/** One persistent, normally-GONE Compose host for the lightweight in-process Memory Editor. */
-	public final ComposeView memoryEditor;
 	/** Small Activity-owned bubble. It is a normal View in :midlet, not a system overlay. */
 	public final View memoryEditorBubble;
 	public final ComposeView notices;
@@ -73,13 +71,6 @@ public final class RuntimeHostView {
 		overlay = new OverlayView(context, null);
 		overlay.setId(R.id.overlay);
 		root.addView(overlay, new FrameLayout.LayoutParams(
-				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-
-		// Keep exactly one editor Compose host attached to the Activity. It is composed once by the
-		// controller and uses GONE while the user is playing, avoiding repeated attach/detach churn.
-		memoryEditor = new ComposeView(context);
-		memoryEditor.setVisibility(View.GONE);
-		root.addView(memoryEditor, new FrameLayout.LayoutParams(
 				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
 		// The bubble deliberately stays a plain Android View. A second Compose tree would be wasteful

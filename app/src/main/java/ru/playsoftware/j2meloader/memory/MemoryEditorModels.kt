@@ -38,7 +38,7 @@ internal fun memorySearchModeFromEngine(value: Int): MemorySearchMode = when (va
     else -> MemorySearchMode.KNOWN
 }
 
-/** One engine-formatted Watch row. Raw target addresses and numeric bits stay in :memory_engine. */
+/** One engine-formatted Watch row used by the :memory_engine presentation. */
 internal data class MemoryWatchRow(
     val id: Long,
     val type: Int,
@@ -53,7 +53,7 @@ internal data class MemoryWatchRow(
     val freezePaused: Boolean = false,
 )
 
-/** One engine-formatted logical address result. No raw address or numeric bits cross into :midlet. */
+/** One engine-formatted logical address result used by the :memory_engine presentation. */
 internal data class MemoryResultRow(
     val id: Long,
     val valueText: String,

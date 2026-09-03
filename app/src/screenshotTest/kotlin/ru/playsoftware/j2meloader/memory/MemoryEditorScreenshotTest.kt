@@ -93,7 +93,7 @@ private val previewWatch = MemoryWatchRow(
 @Composable
 fun MemoryEditorPortraitScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        MemoryEditorStage3Root(
+        MemoryEditorRuntimeRoot(
             state = MemoryEditorUiState(
                 bubbleEnabled = true,
                 visible = true,
@@ -115,7 +115,7 @@ fun MemoryEditorPortraitScreenshot() {
 @Composable
 fun MemoryEditorLandscapeWatchScreenshot() {
     JLModPlusTheme(darkTheme = true) {
-        MemoryEditorStage3Root(
+        MemoryEditorRuntimeRoot(
             state = MemoryEditorUiState(
                 bubbleEnabled = true,
                 visible = true,
@@ -136,7 +136,7 @@ fun MemoryEditorLandscapeWatchScreenshot() {
 @Composable
 fun MemoryEditorLandscapeResultsScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        MemoryEditorStage3Root(
+        MemoryEditorRuntimeRoot(
             state = MemoryEditorUiState(
                 bubbleEnabled = true,
                 visible = true,
@@ -158,7 +158,7 @@ fun MemoryEditorLandscapeResultsScreenshot() {
 @Composable
 fun MemoryEditorShortLandscapeSearchScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        MemoryEditorStage3Root(
+        MemoryEditorRuntimeRoot(
             state = MemoryEditorUiState(
                 bubbleEnabled = true,
                 visible = true,
@@ -187,7 +187,7 @@ private val previewInspectorSnapshot = MemoryInspectorSnapshot(
 @Composable
 fun MemoryInspectorCompactScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        MemoryEditorStage3Root(
+        MemoryEditorRuntimeRoot(
             state = MemoryEditorUiState(
                 bubbleEnabled = true,
                 visible = true,
@@ -207,7 +207,7 @@ fun MemoryInspectorCompactScreenshot() {
 @Composable
 fun MemoryInspectorWideScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        MemoryEditorStage3Root(
+        MemoryEditorRuntimeRoot(
             state = MemoryEditorUiState(
                 bubbleEnabled = true,
                 visible = true,
