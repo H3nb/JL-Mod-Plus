@@ -93,6 +93,15 @@ final class NativeMemoryEngine {
 
 	static native long[] v2ShadowKnownEqual(int valueType, long initialBits, long currentBits);
 
+	/**
+	 * Debug/shadow boundary for an already parsed explicit-type Known query. Thresholds are raw
+	 * primitive bits from the authoritative legacy parser; this method intentionally accepts no
+	 * query strings so the v2 validation path can never grow a second parser with subtly different
+	 * signedness, Float rounding, range, or hex semantics.
+	 */
+	static native long[] v2ShadowKnown(int valueType, int predicate,
+	                                  long firstBits, long secondBits);
+
 	static native void clearSearch();
 
 	static void clearTarget() {
