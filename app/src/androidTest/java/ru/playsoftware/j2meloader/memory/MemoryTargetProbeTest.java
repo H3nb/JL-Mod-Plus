@@ -311,7 +311,7 @@ public class MemoryTargetProbeTest {
 	}
 
 	@Test
-	public void wideAutoAliasEditRefreshesNarrowSiblingBinding() {
+	public void wideAutoAliasSelfWritesRefreshNarrowSiblingBinding() {
 		int pageSize = NativeMemoryTarget.pageSize();
 		long[] probe = NativeMemoryTarget.readProbe();
 		assertNotNull(probe);
@@ -354,6 +354,24 @@ public class MemoryTargetProbeTest {
 			assertEquals("self-write invalidated the sibling identity fingerprint",
 					MemoryEngineContract.RESULT_OK,
 					NativeMemoryEngine.refresh(new long[]{intAfter[0]}, true));
+
+			long freezeReplacement = (2L << 32) | 502L;
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.pin(new long[]{longAlias[0]}, true));
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.freeze(new long[]{longAlias[0]},
+							MemoryEngineContract.FREEZE_LOCK,
+							Long.toString(freezeReplacement), ""));
+			expectedCurrent = freezeReplacement;
+
+			long[] intAfterFreeze = findCandidateAt(address, MemoryEngineContract.TYPE_INT);
+			assertNotNull(intAfterFreeze);
+			assertEquals("Freeze left the overlapping Int alias stale", 502L,
+					intAfterFreeze[1]);
+			assertEquals(MemoryEngineContract.CANDIDATE_STABLE, (int) intAfterFreeze[2]);
+			assertEquals("Freeze invalidated the sibling identity fingerprint",
+					MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.refresh(new long[]{intAfterFreeze[0]}, true));
 		} finally {
 			try {
 				if (expectedCurrent != original) {

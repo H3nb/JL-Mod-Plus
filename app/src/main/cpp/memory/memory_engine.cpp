@@ -2528,6 +2528,33 @@ std::vector<Candidate> reconcileLiveCandidatesAfterWrites(
     return reconciled;
 }
 
+std::vector<Candidate> reconcileTrackedLiveCandidatesAfterWrites(
+        const OperationContext &context, const std::vector<WrittenSpan> &writes,
+        const std::vector<Candidate> &seeds) {
+    std::vector<Candidate> reconciled;
+    std::unordered_set<uint64_t> seen;
+    const auto collect = [&](Candidate candidate, bool alwaysPublish) {
+        if (!seen.insert(candidate.id).second) {
+            return;
+        }
+        const bool touched =
+                reconcileCandidateAfterWrites(context.target, candidate, writes);
+        if (alwaysPublish || touched) {
+            reconciled.push_back(candidate);
+        }
+    };
+    for (const Candidate &seed : seeds) {
+        collect(seed, true);
+    }
+    for (const auto &entry : context.liveCandidates) {
+        collect(entry.second, false);
+    }
+    for (const Candidate &watch : context.state->watches) {
+        collect(liveCandidate(watch, context.liveCandidates), false);
+    }
+    return reconciled;
+}
+
 int editOneCandidate(const Target &target, Candidate &candidate,
                      const std::string &replacement,
                      WrittenSpan *written = nullptr) {
@@ -2739,6 +2766,8 @@ jint freezeCandidates(const OperationContext &context,
 
     size_t corrected = 0;
     size_t unsafe = 0;
+    std::vector<WrittenSpan> writes;
+    writes.reserve(selected.size());
     for (Candidate &watch : selected) {
         Query query;
         parseQuery(watch.type, mode == 3 ? kBetween : kEqual, first, second,
@@ -2782,15 +2811,19 @@ jint freezeCandidates(const OperationContext &context,
         if (correct) {
             continue;
         }
+        WrittenSpan written{};
         const int outcome =
-                editOneCandidate(context.target, watch, replacement);
+                editOneCandidate(context.target, watch, replacement, &written);
         if (outcome > 0) {
             ++corrected;
+            writes.push_back(written);
         } else {
             ++unsafe;
         }
     }
-    const jint committed = publishLiveCandidates(context, selected);
+    std::vector<Candidate> reconciled =
+            reconcileTrackedLiveCandidatesAfterWrites(context, writes, selected);
+    const jint committed = publishLiveCandidates(context, reconciled);
     if (committed != kOk) {
         return committed;
     }
