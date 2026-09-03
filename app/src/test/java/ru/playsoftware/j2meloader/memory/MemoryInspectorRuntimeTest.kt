@@ -29,7 +29,7 @@ class MemoryInspectorRuntimeTest {
         assertEquals(0xfffffff9L, cells.first { it.offset == 4 }.bits)
     }
 
-    @Test fun inspectorUsesExactPrimitiveWidthsAndRejectsInvalidAnchor() {
+    @Test fun inspectorUsesExactPrimitiveWidthsAndRejectsInvalidSnapshots() {
         assertEquals(1, inspectorTypeWidth(MemoryEngineContract.TYPE_BYTE))
         assertEquals(2, inspectorTypeWidth(MemoryEngineContract.TYPE_SHORT))
         assertEquals(2, inspectorTypeWidth(MemoryEngineContract.TYPE_CHAR))
@@ -38,11 +38,18 @@ class MemoryInspectorRuntimeTest {
         assertEquals(8, inspectorTypeWidth(MemoryEngineContract.TYPE_LONG))
         assertEquals(8, inspectorTypeWidth(MemoryEngineContract.TYPE_DOUBLE))
         assertEquals(0, inspectorTypeWidth(MemoryEngineContract.TYPE_AUTO))
-        val invalid = MemoryInspectorSnapshot(
+
+        val invalidAnchor = MemoryInspectorSnapshot(
             candidateId = 1, type = MemoryEngineContract.TYPE_INT, label = "",
             startAddress = 0x2000, anchorAddress = 0x1fff, bytes = ByteArray(8),
         )
-        assertTrue(buildInspectorCells(invalid).isEmpty())
+        assertTrue(buildInspectorCells(invalidAnchor).isEmpty())
+
+        val unsupportedType = MemoryInspectorSnapshot(
+            candidateId = 2, type = MemoryEngineContract.TYPE_AUTO, label = "",
+            startAddress = 0x3000, anchorAddress = 0x3000, bytes = ByteArray(8),
+        )
+        assertTrue(buildInspectorCells(unsupportedType).isEmpty())
     }
 
     @Test fun inspectorFloatViewUsesLittleEndianSnapshotBytes() {
