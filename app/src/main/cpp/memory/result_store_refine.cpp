@@ -8,6 +8,7 @@
 
 #include "result_store_refine.h"
 
+#include <array>
 #include <bit>
 #include <cstring>
 #include <utility>
@@ -27,6 +28,7 @@ template <typename T, ResultPlane Plane, KnownPredicate Predicate>
                                     std::string &error) {
     static_assert(sizeof(T) == planeAlignment(Plane));
     constexpr std::size_t kWidth = sizeof(T);
+    constexpr std::size_t kWordCount = planeWordCount(Plane);
 
     ResultStore next = source;
     KnownScanStats nextStats;
@@ -50,14 +52,17 @@ template <typename T, ResultPlane Plane, KnownPredicate Predicate>
         }
         nextStats.bytesScanned += static_cast<std::uint64_t>(blockBuffer.size());
 
-        auto words = next.planeWords(blockIndex, Plane);
-        if (words.size() != planeWordCount(Plane)) {
+        const ResultStore &readOnly = next;
+        const auto currentWords = readOnly.planeWords(blockIndex, Plane);
+        if (currentWords.size() != kWordCount) {
             error = "ResultStore returned an invalid v2 refine bitmap";
             return false;
         }
 
-        for (std::size_t wordIndex = 0U; wordIndex < words.size(); ++wordIndex) {
-            const std::uint64_t original = words[wordIndex];
+        std::array<std::uint64_t, kWordCount> survivorsByWord{};
+        bool changed = false;
+        for (std::size_t wordIndex = 0U; wordIndex < currentWords.size(); ++wordIndex) {
+            const std::uint64_t original = currentWords[wordIndex];
             std::uint64_t active = original;
             std::uint64_t survivors = original;
             while (active != 0U) {
@@ -76,9 +81,21 @@ template <typename T, ResultPlane Plane, KnownPredicate Predicate>
                 }
                 active &= active - std::uint64_t{1U};
             }
-            words[wordIndex] = survivors;
+            survivorsByWord[wordIndex] = survivors;
+            changed = changed || survivors != original;
         }
 
+        if (!changed) {
+            // Keep the shared COW slab untouched when every candidate survives this block.
+            continue;
+        }
+        auto mutableWords = next.planeWords(blockIndex, Plane);
+        if (mutableWords.size() != kWordCount) {
+            error = "ResultStore could not detach a v2 refine bitmap";
+            return false;
+        }
+        std::copy(survivorsByWord.begin(), survivorsByWord.end(),
+                  mutableWords.begin());
         if (!next.recountBlock(blockIndex)) {
             error = "ResultStore could not recount a v2 refine block";
             return false;
