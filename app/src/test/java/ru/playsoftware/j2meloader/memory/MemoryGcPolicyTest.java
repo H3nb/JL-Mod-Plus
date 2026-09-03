@@ -73,4 +73,28 @@ public class MemoryGcPolicyTest {
 				MemoryEngineContract.RESULT_OK,
 				false));
 	}
+
+	@Test
+	public void partialMutationIsStillAWriteForGcRacePurposes() {
+		assertTrue(MemoryGcPolicy.mutationMayHaveWritten(MemoryEngineContract.RESULT_OK));
+		assertTrue(MemoryGcPolicy.mutationMayHaveWritten(
+				MemoryEngineContract.RESULT_PARTIAL_WRITE));
+		assertFalse(MemoryGcPolicy.mutationMayHaveWritten(
+				MemoryEngineContract.RESULT_IDENTITY_UNSAFE));
+
+		assertTrue(MemoryGcPolicy.shouldReportGcRaceAfterMutation(
+				MemoryEngineContract.RESULT_PARTIAL_WRITE, 20L, 21L));
+		assertFalse(MemoryGcPolicy.shouldReportGcRaceAfterMutation(
+				MemoryEngineContract.RESULT_PARTIAL_WRITE, 20L, 20L));
+		assertFalse(MemoryGcPolicy.shouldReportGcRaceAfterMutation(
+				MemoryEngineContract.RESULT_IDENTITY_UNSAFE, 20L, 21L));
+	}
+
+	@Test
+	public void freezeRecoveryIsPerRecordEpoch() {
+		assertFalse(MemoryGcPolicy.freezeRecordNeedsRecovery(30L, 30L));
+		assertTrue(MemoryGcPolicy.freezeRecordNeedsRecovery(30L, 31L));
+		assertFalse(MemoryGcPolicy.freezeRecordNeedsRecovery(
+				MemoryEngineContract.GC_COUNT_UNKNOWN, 31L));
+	}
 }
