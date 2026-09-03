@@ -43,6 +43,12 @@ public final class MemoryEngineDiagnosticsService extends Service {
 		public Bundle validateKnownEqualShadow(int valueType) {
 			return collectKnownEqualShadow(valueType);
 		}
+
+		@Override
+		public Bundle validateKnownShadowPlan(int valueType, int predicate,
+		                                     long firstBits, long secondBits) {
+			return collectKnownShadowPlan(valueType, predicate, firstBits, secondBits);
+		}
 	};
 
 	@Nullable
@@ -95,10 +101,21 @@ public final class MemoryEngineDiagnosticsService extends Service {
 		return result;
 	}
 
-	private static Bundle collectKnownEqualShadow(int valueType) {
+	private static Bundle newShadowBundle(int valueType, int predicate,
+	                                     long firstBits, long secondBits) {
 		Bundle result = new Bundle();
 		result.putInt(MemoryEngineDiagnosticsContract.KEY_SHADOW_SCHEMA_VERSION,
 				MemoryEngineDiagnosticsContract.SHADOW_SCHEMA_VERSION);
+		result.putInt(MemoryEngineDiagnosticsContract.KEY_SHADOW_VALUE_TYPE, valueType);
+		result.putInt(MemoryEngineDiagnosticsContract.KEY_SHADOW_PREDICATE, predicate);
+		result.putLong(MemoryEngineDiagnosticsContract.KEY_SHADOW_FIRST_BITS, firstBits);
+		result.putLong(MemoryEngineDiagnosticsContract.KEY_SHADOW_SECOND_BITS, secondBits);
+		return result;
+	}
+
+	private static Bundle collectKnownEqualShadow(int valueType) {
+		Bundle result = newShadowBundle(
+				valueType, MemoryEngineContract.PREDICATE_EQUAL, 0L, 0L);
 		if (!MemoryEngineContract.isCandidateType(valueType)) {
 			return shadowFailure(result, MemoryEngineContract.RESULT_INVALID_REQUEST,
 					"Shadow parity requires one explicit primitive type");
@@ -122,9 +139,9 @@ public final class MemoryEngineDiagnosticsService extends Service {
 			return shadowFailure(result, MemoryEngineContract.RESULT_INVALID_REQUEST,
 					"Current legacy result is not the requested explicit type");
 		}
-		// The first shadow probe uses initialBits so passive presentation refresh cannot change the
-		// original Equal predicate. Once a shadow revision exists, native uses currentBits so the
-		// same probe can validate a subsequent legacy Next Scan Equal refinement.
+		// The first compatibility probe uses initialBits so passive presentation refresh cannot
+		// change the original Equal predicate. Once a shadow revision exists, native selects
+		// currentBits so this method can validate a subsequent legacy Equal Next Scan as well.
 		long initialBits = firstPage[firstBase + 6];
 		long currentBits = firstPage[firstBase + 8];
 
@@ -138,6 +155,53 @@ public final class MemoryEngineDiagnosticsService extends Service {
 
 		long[] shadow = NativeMemoryEngine.v2ShadowKnownEqual(
 				valueType, initialBits, currentBits);
+		return finishShadowComparison(
+				result, legacyCount, legacyFingerprint, shadow, 0L,
+				"explicit-type Equal");
+	}
+
+	private static Bundle collectKnownShadowPlan(int valueType, int predicate,
+	                                            long firstBits, long secondBits) {
+		Bundle result = newShadowBundle(valueType, predicate, firstBits, secondBits);
+		if (!MemoryEngineContract.isCandidateType(valueType) ||
+				predicate < MemoryEngineContract.PREDICATE_EQUAL ||
+				predicate > MemoryEngineContract.PREDICATE_BETWEEN) {
+			return shadowFailure(result, MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Raw shadow parity requires one explicit type and a Known predicate");
+		}
+
+		long legacyCount = NativeMemoryEngine.resultCount();
+		result.putLong(MemoryEngineDiagnosticsContract.KEY_LEGACY_RESULT_COUNT,
+				Math.max(0L, legacyCount));
+		if (legacyCount <= 0L) {
+			return shadowFailure(result, MemoryEngineContract.RESULT_NO_SESSION,
+					"Run the matching non-empty legacy Known search/refine before this raw plan probe");
+		}
+		long[] firstPage = NativeMemoryEngine.resultPage(0, 1);
+		if (!validResultPage(firstPage) || firstPage[0] != 1L ||
+				firstPage[1 + 3] != valueType) {
+			return shadowFailure(result, MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Current legacy result is not the requested explicit type");
+		}
+
+		long legacyFingerprint = legacyFingerprint(valueType, legacyCount);
+		if (legacyFingerprint == Long.MIN_VALUE) {
+			return shadowFailure(result, MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"Legacy result changed while its parity fingerprint was being collected");
+		}
+		result.putLong(MemoryEngineDiagnosticsContract.KEY_LEGACY_ADDRESS_FINGERPRINT,
+				legacyFingerprint);
+
+		long[] shadow = NativeMemoryEngine.v2ShadowKnown(
+				valueType, predicate, firstBits, secondBits);
+		return finishShadowComparison(
+				result, legacyCount, legacyFingerprint, shadow, secondBits,
+				"explicit-type Known predicate");
+	}
+
+	private static Bundle finishShadowComparison(Bundle result, long legacyCount,
+	                                             long legacyFingerprint, long[] shadow,
+	                                             long secondBits, String label) {
 		if (shadow == null || shadow.length != 9) {
 			return shadowFailure(result, MemoryEngineContract.RESULT_INVALID_REQUEST,
 					"V2 shadow scanner did not return a valid diagnostics payload");
@@ -153,6 +217,8 @@ public final class MemoryEngineDiagnosticsService extends Service {
 		}
 		result.putInt(MemoryEngineDiagnosticsContract.KEY_SHADOW_STATUS, status);
 		result.putInt(MemoryEngineDiagnosticsContract.KEY_SHADOW_OPERATION, operation);
+		result.putLong(MemoryEngineDiagnosticsContract.KEY_SHADOW_FIRST_BITS, shadow[8]);
+		result.putLong(MemoryEngineDiagnosticsContract.KEY_SHADOW_SECOND_BITS, secondBits);
 		result.putLong(MemoryEngineDiagnosticsContract.KEY_SHADOW_EXPECTED_BITS, shadow[8]);
 		result.putLong(MemoryEngineDiagnosticsContract.KEY_SHADOW_BYTES_SCANNED,
 				Math.max(0L, shadow[1]));
@@ -176,8 +242,8 @@ public final class MemoryEngineDiagnosticsService extends Service {
 				? "bitmap refine" : "first scan";
 		result.putString(MemoryEngineDiagnosticsContract.KEY_SHADOW_MESSAGE,
 				addressMatch
-						? "Legacy Candidate and v2 ResultStore " + operationName + " results match"
-						: "Shadow parity mismatch after " + operationName +
+						? "Legacy Candidate and v2 ResultStore " + label + " " + operationName + " results match"
+						: "Shadow parity mismatch for " + label + " after " + operationName +
 								"; keep the legacy backend authoritative");
 		return result;
 	}
