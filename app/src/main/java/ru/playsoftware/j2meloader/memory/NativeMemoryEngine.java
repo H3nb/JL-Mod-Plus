@@ -43,17 +43,31 @@ final class NativeMemoryEngine {
 
 	static int startKnown(int valueType, int predicate, String first, String second) {
 		int result = startKnownUnchecked(valueType, predicate, first, second);
-		if (BuildConfig.DEBUG && result == MemoryEngineContract.RESULT_OK) {
-			// A fresh production Known search starts a new semantic revision even when the target and
-			// primitive type are unchanged. Drop the retained debug shadow revision so the next parity
-			// probe performs an independent first scan rather than accidentally refining stale bits.
-			resetV2ShadowSession();
+		if (result == MemoryEngineContract.RESULT_OK) {
+			// Production v2 staging is deliberately opportunistic. The native adapter only publishes
+			// an explicit-type ResultStore after proving exact address/type parity against the immutable
+			// legacy revision and enforcing a conservative size cap. Failure leaves legacy paging intact.
+			if (valueType != MemoryEngineContract.TYPE_AUTO) {
+				stageV2KnownResultStore();
+			} else {
+				clearV2KnownResultStore();
+			}
+			if (BuildConfig.DEBUG) {
+				// A fresh production Known search starts a new semantic revision even when the target and
+				// primitive type are unchanged. Drop the retained debug shadow revision so the next parity
+				// probe performs an independent first scan rather than accidentally refining stale bits.
+				resetV2ShadowSession();
+			}
 		}
 		return result;
 	}
 
 	private static native int startKnownUnchecked(int valueType, int predicate,
 	                                             String first, String second);
+
+	private static native boolean stageV2KnownResultStore();
+
+	private static native void clearV2KnownResultStore();
 
 	static native int startUnknown(int valueType);
 
@@ -99,7 +113,17 @@ final class NativeMemoryEngine {
 
 	static native int historyDepth();
 
-	static native long[] resultPage(int offset, int limit);
+	static long[] resultPage(int offset, int limit) {
+		// Only a ResultStore revision that was built from and verified against the exact current
+		// immutable legacy SearchState can answer here. Any state change/invariant mismatch returns
+		// null and falls back to the validated Candidate paging implementation.
+		long[] staged = resultPageV2Known(offset, limit);
+		return staged != null ? staged : resultPageUnchecked(offset, limit);
+	}
+
+	private static native long[] resultPageV2Known(int offset, int limit);
+
+	private static native long[] resultPageUnchecked(int offset, int limit);
 
 	static native long[] inspect(long candidateId, int radius);
 
@@ -124,6 +148,7 @@ final class NativeMemoryEngine {
 
 	static void clearSearch() {
 		clearSearchUnchecked();
+		clearV2KnownResultStore();
 		if (BuildConfig.DEBUG) {
 			resetV2ShadowSession();
 		}
@@ -133,6 +158,7 @@ final class NativeMemoryEngine {
 
 	static void clearTarget() {
 		clearTargetUnchecked();
+		clearV2KnownResultStore();
 		if (BuildConfig.DEBUG) {
 			clearV2ShadowTarget();
 		}
