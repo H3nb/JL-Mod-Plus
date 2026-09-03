@@ -70,7 +70,9 @@ final class MemoryCandidateBindingCache {
 		boolean moved = false;
 		for (Map.Entry<Long, Binding> entry : before.entrySet()) {
 			Binding current = after.get(entry.getKey());
-			if (current == null) return COMPARE_UNKNOWN;
+			if (current == null || current.state != MemoryEngineContract.CANDIDATE_STABLE) {
+				return COMPARE_UNKNOWN;
+			}
 			Binding previous = entry.getValue();
 			if (current.address != previous.address ||
 					current.relocationCount > previous.relocationCount) {
@@ -105,13 +107,16 @@ final class MemoryCandidateBindingCache {
 			int base = 1 + index * MemoryEngineContract.RESULT_PAGE_STRIDE;
 			long id = rows[base];
 			long address = rows[base + 1];
+			long rawState = rows[base + 4];
 			long rawRelocations = rows[base + 5];
-			if (id <= 0L || address <= 0L || rawRelocations < 0L ||
-					rawRelocations > Integer.MAX_VALUE) {
+			if (id <= 0L || address <= 0L ||
+					rawState < MemoryEngineContract.CANDIDATE_STABLE ||
+					rawState > MemoryEngineContract.CANDIDATE_LOST ||
+					rawRelocations < 0L || rawRelocations > Integer.MAX_VALUE) {
 				return false;
 			}
 			output.put(id, new Binding(
-					address, (int) rawRelocations, watch, resultPageOffset));
+					address, (int) rawRelocations, (int) rawState, watch, resultPageOffset));
 		}
 		return true;
 	}
@@ -128,12 +133,15 @@ final class MemoryCandidateBindingCache {
 	static final class Binding {
 		final long address;
 		final int relocationCount;
+		final int state;
 		final boolean watch;
 		final int resultPageOffset;
 
-		Binding(long address, int relocationCount, boolean watch, int resultPageOffset) {
+		Binding(long address, int relocationCount, int state, boolean watch,
+		        int resultPageOffset) {
 			this.address = address;
 			this.relocationCount = relocationCount;
+			this.state = state;
 			this.watch = watch;
 			this.resultPageOffset = resultPageOffset;
 		}
