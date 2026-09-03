@@ -403,6 +403,7 @@ bool ResultStore::recountBlock(std::size_t blockIndex) noexcept {
         return false;
     }
     const ResultBlockHeader &header = headers_[blockIndex];
+    const ResultStore &self = *this;
     std::uint64_t oldTyped = 0U;
     std::uint64_t newTyped = 0U;
     std::array<std::uint16_t, kResultPlaneCount> newCounts{};
@@ -414,7 +415,7 @@ bool ResultStore::recountBlock(std::size_t blockIndex) noexcept {
         if ((header.activeMask & planeBit(plane)) == 0U) {
             continue;
         }
-        const auto words = planeWords(blockIndex, plane);
+        const auto words = self.planeWords(blockIndex, plane);
         if (words.size() != planeWordCount(plane)) {
             return false;
         }
@@ -423,7 +424,7 @@ bool ResultStore::recountBlock(std::size_t blockIndex) noexcept {
     }
 
     const std::uint16_t oldUnique = header.uniqueAddressCount;
-    const std::uint16_t newUnique = blockUniqueAddressCount(blockIndex);
+    const std::uint16_t newUnique = self.blockUniqueAddressCount(blockIndex);
     if ((newTyped != 0U && newUnique == 0U) || typedCount_ < oldTyped ||
         uniqueAddressCount_ < oldUnique) {
         return false;
