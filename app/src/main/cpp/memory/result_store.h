@@ -11,12 +11,17 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <span>
 #include <vector>
 
 namespace jlmem::v2 {
 
 constexpr std::size_t kResultLogicalBlockSize = 4096U;
+// Payload is split into fixed virtual slabs so immutable revisions can share untouched bitmap
+// storage. A refine clones only the slab containing a mutated block instead of copying the full
+// ResultStore payload. 4096 words = 32 KiB, while one full Auto block needs only 176 words.
+constexpr std::size_t kResultPayloadSlabWords = 4096U;
 
 enum class ResultPlane : std::uint8_t {
     Byte,
@@ -77,6 +82,7 @@ constexpr std::size_t kResultScratchWordCount = scratchWordCount();
 
 struct ResultBlockHeader {
     std::uintptr_t baseAddress = 0U;
+    // Virtual word offset. Blocks never cross a payload slab boundary.
     std::uint32_t payloadWordOffset = 0U;
     std::array<std::uint16_t, kResultPlaneCount> counts{};
     std::uint16_t uniqueAddressCount = 0U;
@@ -124,14 +130,15 @@ class ResultStore final {
             std::uintptr_t baseAddress, const ResultBlockScratch &scratch);
 
     [[nodiscard]] bool clearSlot(std::size_t blockIndex, ResultPlane plane,
-                                 std::size_t slot) noexcept;
+                                 std::size_t slot);
     // Recompute one header after a specialized refine kernel edits bitmap words directly.
     [[nodiscard]] bool recountBlock(std::size_t blockIndex) noexcept;
 
     [[nodiscard]] std::span<const std::uint64_t> planeWords(
             std::size_t blockIndex, ResultPlane plane) const noexcept;
+    // May clone one shared 32 KiB payload slab on first mutation of this revision.
     [[nodiscard]] std::span<std::uint64_t> planeWords(
-            std::size_t blockIndex, ResultPlane plane) noexcept;
+            std::size_t blockIndex, ResultPlane plane);
     [[nodiscard]] std::span<const ResultBlockHeader> headers() const noexcept {
         return headers_;
     }
@@ -146,19 +153,31 @@ class ResultStore final {
         return uniqueAddressCount_;
     }
     [[nodiscard]] std::size_t retainedBytes() const noexcept;
+    [[nodiscard]] std::size_t payloadSlabCount() const noexcept {
+        return payloadSlabs_.size();
+    }
 
     void clear() noexcept;
 
   private:
+    struct PayloadSlab final {
+        std::array<std::uint64_t, kResultPayloadSlabWords> words{};
+    };
+
     [[nodiscard]] std::size_t payloadOffset(
             const ResultBlockHeader &header, ResultPlane plane) const noexcept;
+    [[nodiscard]] bool locatePayload(std::size_t offset, std::size_t count,
+                                     std::size_t &slabIndex,
+                                     std::size_t &slabOffset) const noexcept;
     [[nodiscard]] bool anyAliasAtAddress(std::size_t blockIndex,
                                          std::size_t byteOffset) const noexcept;
     [[nodiscard]] std::uint16_t blockUniqueAddressCount(
             std::size_t blockIndex) const noexcept;
 
     std::vector<ResultBlockHeader> headers_;
-    std::vector<std::uint64_t> payload_;
+    std::vector<std::shared_ptr<PayloadSlab>> payloadSlabs_;
+    // Virtual word position following the last allocated block. Padding at slab tails is included.
+    std::size_t payloadWordsUsed_ = 0U;
     std::uint64_t typedCount_ = 0U;
     std::uint64_t uniqueAddressCount_ = 0U;
 };
@@ -171,5 +190,6 @@ static_assert(planeWordCount(ResultPlane::Float) == 16U);
 static_assert(planeWordCount(ResultPlane::Long) == 8U);
 static_assert(planeWordCount(ResultPlane::Double) == 8U);
 static_assert(kResultScratchWordCount == 176U);
+static_assert(kResultScratchWordCount < kResultPayloadSlabWords);
 
 } // namespace jlmem::v2
