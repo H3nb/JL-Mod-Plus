@@ -42,7 +42,20 @@ final class MemoryGcPolicy {
 		return MemoryEngineContract.latestKnownGcCount(gcBefore, gcAfter);
 	}
 
-	static boolean shouldRecoverRead(int fastRefreshResult, boolean epochStale) {
-		return fastRefreshResult != MemoryEngineContract.RESULT_OK && epochStale;
+	/**
+	 * A fresh target-range snapshot is a fallback, not the first response to a GC-count change.
+	 * Retry when the identity-aware attempt proves the old binding/ranges unsafe, or when GC moves
+	 * again during that verification window. This remains valid when ART GC statistics are absent.
+	 */
+	static boolean shouldRetryReadWithFreshRanges(int fastRefreshResult,
+	                                             int bindingResult,
+	                                             boolean gcChangedDuringFastRefresh) {
+		if (gcChangedDuringFastRefresh) return true;
+		if (fastRefreshResult == MemoryEngineContract.RESULT_IDENTITY_UNSAFE ||
+				fastRefreshResult == MemoryEngineContract.RESULT_TARGET_LOST) {
+			return true;
+		}
+		return fastRefreshResult == MemoryEngineContract.RESULT_OK &&
+				bindingResult == MemoryEngineContract.RESULT_IDENTITY_UNSAFE;
 	}
 }
