@@ -173,6 +173,29 @@ fun MemoryEditorShortLandscapeSearchScreenshot() {
     }
 }
 
+@PreviewTest
+@Preview(name = "Memory Editor landscape known search dialog", widthDp = 720, heightDp = 360, showBackground = true)
+@Composable
+fun MemoryEditorLandscapeKnownSearchDialogScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        RuntimeKnownSearchDialog(
+            state = MemoryEditorUiState(
+                bubbleEnabled = true,
+                visible = true,
+                connected = true,
+                supported = true,
+                writeSupported = true,
+                runtimeToken = 1,
+                resultCount = 2,
+                results = previewRows,
+                sessionStage = MemorySessionStage.CANDIDATES,
+            ),
+            actions = NoOpMemoryEditorActions,
+            onDismiss = {},
+        )
+    }
+}
+
 private val previewInspectorSnapshot = MemoryInspectorSnapshot(
     candidateId = 1,
     type = MemoryEngineContract.TYPE_INT,

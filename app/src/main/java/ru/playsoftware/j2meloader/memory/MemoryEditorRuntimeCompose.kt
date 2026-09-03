@@ -701,7 +701,7 @@ private fun RuntimeSearchDialogBody(
 }
 
 @Composable
-private fun RuntimeKnownSearchDialog(
+internal fun RuntimeKnownSearchDialog(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
     onDismiss: () -> Unit,
