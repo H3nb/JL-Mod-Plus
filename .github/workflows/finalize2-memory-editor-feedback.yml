@@ -1,0 +1,339 @@
+name: Finalize Memory Editor feedback v2
+
+on:
+  push:
+    branches:
+      - ci/memory-editor-stack-f914594
+    paths:
+      - .github/workflows/finalize2-memory-editor-feedback.yml
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: ci/memory-editor-stack-f914594
+          persist-credentials: true
+          submodules: recursive
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+        with:
+          java-version: '21'
+          distribution: temurin
+      - uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545
+      - name: Install Android SDK platform 37
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          sdkmanager_path="$sdk_root/cmdline-tools/latest/bin/sdkmanager"
+          if [[ ! -x "$sdkmanager_path" ]]; then
+            sdkmanager_path="$(find "$sdk_root/cmdline-tools" -type f -path '*/bin/sdkmanager' -print -quit 2>/dev/null || true)"
+          fi
+          "$sdkmanager_path" 'platforms;android-37.0'
+      - name: Restore shared debug keystore
+        shell: bash
+        env:
+          ANDROID_DEBUG_KEYSTORE_BASE64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$ANDROID_DEBUG_KEYSTORE_BASE64" | base64 --decode > debug.keystore
+          chmod 600 debug.keystore
+      - name: Apply reviewed cleanup plus interaction fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          # Reapply the first finalizer's reviewed source cleanup in this fresh checkout.
+          workflow = Path('.github/workflows/finalize-memory-editor-feedback.yml').read_text()
+          begin = "          python3 - <<'PY'\n"
+          start = workflow.index(begin) + len(begin)
+          end = workflow.index("\n          PY", start)
+          embedded = workflow[start:end]
+          script = '\n'.join(
+              line[10:] if line.startswith('          ') else line
+              for line in embedded.splitlines()
+          )
+          exec(compile(script, '<finalizer-v1>', 'exec'), {})
+
+          runtime_path = Path('app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryEditorRuntimeCompose.kt')
+          runtime = runtime_path.read_text()
+
+          # Unify Edit and Inspector on the same production keypad as Search. This removes the
+          # last dependency on the deleted legacy MemoryInput Compose tree.
+          edit_start = runtime.index('@Composable\nprivate fun RuntimeEditDialog(')
+          edit_end = runtime.index('\n@Composable\nprivate fun RuntimeInspectorTab(', edit_start)
+          runtime_edit = '''@Composable
+          private fun RuntimeEditDialog(
+              value: String,
+              initialType: Int,
+              types: List<Int>,
+              writeSupported: Boolean,
+              actions: MemoryEditorActions,
+              onDismiss: () -> Unit,
+          ) {
+              val editableTypes = remember(types, initialType) {
+                  types.filter { MemoryEngineContract.isCandidateType(it) }
+                      .distinct()
+                      .ifEmpty { listOf(initialType) }
+              }
+              var type by remember(value, initialType, editableTypes) {
+                  mutableIntStateOf(initialType.takeIf { it in editableTypes } ?: editableTypes.first())
+              }
+              var replacement by remember(value, initialType, editableTypes) {
+                  mutableStateOf(TextFieldValue(value, TextRange(value.length)))
+              }
+              var freeze by remember { mutableStateOf(false) }
+              val spec = MemoryInputSpec.forType(type)
+
+              AlertDialog(
+                  onDismissRequest = onDismiss,
+                  title = { Text(stringResource(R.string.memory_editor_edit)) },
+                  text = {
+                      RuntimeSearchDialogBody(
+                          showKeypad = true,
+                          controls = {
+                              RuntimeEditTypeMenu(
+                                  type = type,
+                                  types = editableTypes,
+                                  onType = { selectedType ->
+                                      if (selectedType != type) {
+                                          type = selectedType
+                                          val next = if (selectedType == initialType) value else ""
+                                          replacement = TextFieldValue(next, TextRange(next.length))
+                                      }
+                                  },
+                              )
+                              RuntimeSearchField(
+                                  label = stringResource(
+                                      if (type == initialType) R.string.memory_editor_current_value
+                                      else R.string.memory_editor_replacement,
+                                  ),
+                                  value = replacement,
+                                  active = true,
+                                  onClick = {},
+                                  modifier = Modifier.fillMaxWidth(),
+                              )
+                              Row(verticalAlignment = Alignment.CenterVertically) {
+                                  Checkbox(checked = freeze, onCheckedChange = { freeze = it })
+                                  Text(stringResource(R.string.memory_editor_freeze))
+                              }
+                              if (freeze) {
+                                  Text(
+                                      stringResource(R.string.memory_editor_freeze_after_edit_help),
+                                      style = MaterialTheme.typography.bodySmall,
+                                      color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                  )
+                              }
+                          },
+                          keypad = {
+                              RuntimeSearchKeypad(
+                                  allowGroup = false,
+                                  valueSpec = spec,
+                                  onToken = { replacement = runtimeInsertValidated(replacement, it, spec) },
+                                  onBackspace = { replacement = runtimeBackspace(replacement) },
+                                  onMove = { replacement = runtimeMove(replacement, it) },
+                                  onClear = { replacement = TextFieldValue("", TextRange(0)) },
+                              )
+                          },
+                      )
+                  },
+                  textScrollable = false,
+                  confirmButton = {
+                      Button(
+                          enabled = writeSupported && spec.isComplete(replacement.text),
+                          onClick = {
+                              actions.editSelectedWithOptions(
+                                  replacement.text,
+                                  type,
+                                  addToWatch = false,
+                                  freezeAfter = freeze,
+                              )
+                              onDismiss()
+                          },
+                      ) { Text(stringResource(R.string.memory_editor_save)) }
+                  },
+                  dismissButton = {
+                      TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+                  },
+              )
+          }
+          '''
+          # Remove indentation introduced by this workflow's YAML-friendly literal.
+          runtime_edit = '\n'.join(line[10:] if line.startswith('          ') else line for line in runtime_edit.splitlines())
+          runtime = runtime[:edit_start] + runtime_edit.rstrip() + runtime[edit_end:]
+
+          inspector_edit_start = runtime.index('@Composable\nprivate fun RuntimeInspectorEditDialog(')
+          inspector_edit_end = runtime.index('\n@Composable\nprivate fun RuntimeSearchField(', inspector_edit_start)
+          inspector_edit = '''@Composable
+          private fun RuntimeInspectorEditDialog(
+              snapshot: MemoryInspectorSnapshot,
+              cell: MemoryInspectorCell,
+              actions: MemoryEditorActions,
+              onDismiss: () -> Unit,
+          ) {
+              val spec = MemoryInputSpec.forType(snapshot.type)
+              var value by remember(cell) {
+                  mutableStateOf(TextFieldValue(cell.value, TextRange(cell.value.length)))
+              }
+              AlertDialog(
+                  onDismissRequest = onDismiss,
+                  title = { Text("0x${cell.address.toString(16).uppercase(Locale.ROOT)}") },
+                  text = {
+                      RuntimeSearchDialogBody(
+                          showKeypad = true,
+                          controls = {
+                              RuntimeSearchField(
+                                  label = stringResource(R.string.memory_editor_current_value),
+                                  value = value,
+                                  active = true,
+                                  onClick = {},
+                                  modifier = Modifier.fillMaxWidth(),
+                              )
+                          },
+                          keypad = {
+                              RuntimeSearchKeypad(
+                                  allowGroup = false,
+                                  valueSpec = spec,
+                                  onToken = { value = runtimeInsertValidated(value, it, spec) },
+                                  onBackspace = { value = runtimeBackspace(value) },
+                                  onMove = { value = runtimeMove(value, it) },
+                                  onClear = { value = TextFieldValue("", TextRange(0)) },
+                              )
+                          },
+                      )
+                  },
+                  textScrollable = false,
+                  confirmButton = {
+                      Button(
+                          enabled = spec.isComplete(value.text),
+                          onClick = {
+                              actions.editInspectorValue(
+                                  snapshot.candidateId,
+                                  cell.offset,
+                                  snapshot.type,
+                                  cell.bits,
+                                  value.text,
+                              )
+                              onDismiss()
+                          },
+                      ) { Text(stringResource(R.string.memory_editor_apply)) }
+                  },
+                  dismissButton = {
+                      TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+                  },
+              )
+          }
+          '''
+          inspector_edit = '\n'.join(line[10:] if line.startswith('          ') else line for line in inspector_edit.splitlines())
+          runtime = runtime[:inspector_edit_start] + inspector_edit.rstrip() + runtime[inspector_edit_end:]
+
+          # Make the shared runtime keypad type-aware for edit paths while keeping Search/group
+          # behavior unchanged when no valueSpec is supplied.
+          runtime = runtime.replace(
+              '''private fun RuntimeSearchKeypad(\n    allowGroup: Boolean,\n    onToken: (String) -> Unit,''',
+              '''private fun RuntimeSearchKeypad(\n    allowGroup: Boolean,\n    valueSpec: MemoryInputSpec? = null,\n    onToken: (String) -> Unit,''',
+              1,
+          )
+          runtime = runtime.replace('RuntimeKeypadButton("-") { onToken("-") }',
+                                    'RuntimeKeypadButton("-", enabled = valueSpec?.signed ?: true) { onToken("-") }')
+          runtime = runtime.replace('RuntimeKeypadButton(".") { onToken(".") }',
+                                    'RuntimeKeypadButton(".", enabled = valueSpec?.decimal ?: true) { onToken(".") }')
+          runtime = runtime.replace('RuntimeKeypadButton("E") { onToken("E") }',
+                                    'RuntimeKeypadButton("E", enabled = valueSpec?.exponent ?: true) { onToken("E") }')
+
+          insert_anchor = '''private fun runtimeBackspace(value: TextFieldValue): TextFieldValue {'''
+          validated_helper = '''private fun runtimeInsertValidated(\n    value: TextFieldValue,\n    token: String,\n    spec: MemoryInputSpec,\n): TextFieldValue {\n    val updated = runtimeInsert(value, token)\n    return if (spec.acceptsPartial(updated.text)) updated else value\n}\n\n'''
+          if validated_helper not in runtime:
+              runtime = runtime.replace(insert_anchor, validated_helper + insert_anchor, 1)
+          runtime_path.write_text(runtime)
+
+          # Periodic refresh and explicit Refresh share the same engine primitive, but they must
+          # not share completion semantics. Make passive/foreground intent explicit at the AIDL
+          # boundary so a live-refresh callback cannot accidentally finish a concurrent edit/search.
+          aidl_path = Path('app/src/main/aidl/ru/playsoftware/j2meloader/memory/IMemoryEngineService.aidl')
+          aidl = aidl_path.read_text()
+          aidl = aidl.replace(
+              'long refreshCandidates(long runtimeToken, in long[] candidateIds);',
+              'long refreshCandidates(long runtimeToken, in long[] candidateIds, boolean passiveRefresh);',
+              1,
+          )
+          aidl_path.write_text(aidl)
+
+          service_path = Path('app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryEngineService.java')
+          service = service_path.read_text()
+          service = service.replace(
+              '''public long refreshCandidates(long token, long[] candidateIds) {\n\t\t\treturn enqueue(token, false, 0, true,''',
+              '''public long refreshCandidates(long token, long[] candidateIds, boolean passiveRefresh) {\n\t\t\treturn enqueue(token, false, 0, passiveRefresh,''',
+              1,
+          )
+          service_path.write_text(service)
+
+          controller_path = Path('app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryEditorController.kt')
+          controller = controller_path.read_text()
+          controller = controller.replace('engine.refreshCandidates(token, ids) }', 'engine.refreshCandidates(token, ids, false) }', 1)
+          controller = controller.replace('val operationId = engine.refreshCandidates(token, ids)',
+                                          'val operationId = engine.refreshCandidates(token, ids, true)', 1)
+          old_passive = '''                if (passiveRefresh && liveRefreshPending && !state.busy) {\n                    liveRefreshPending = false\n                    if (resultCode == MemoryEngineContract.RESULT_TARGET_LOST ||\n                        resultCode == MemoryEngineContract.RESULT_NO_SESSION\n                    ) {\n                        close()\n                    } else if (resultCode == MemoryEngineContract.RESULT_OK && state.visible) {\n                        reloadState()\n                    }\n                    return@post\n                }'''
+          new_passive = '''                if (passiveRefresh) {\n                    liveRefreshPending = false\n                    if (resultCode == MemoryEngineContract.RESULT_TARGET_LOST ||\n                        resultCode == MemoryEngineContract.RESULT_NO_SESSION\n                    ) {\n                        close()\n                    } else if (resultCode == MemoryEngineContract.RESULT_OK && state.visible && !state.busy) {\n                        reloadState()\n                    }\n                    return@post\n                }'''
+          if old_passive not in controller:
+              raise SystemExit('passive refresh callback block not found')
+          controller = controller.replace(old_passive, new_passive, 1)
+          controller_path.write_text(controller)
+
+          print('Unified runtime input and fixed live/manual refresh completion race.')
+          PY
+
+          echo '--- stale UI symbol audit ---'
+          stale='MemoryEditorScreen\|MemoryEditorSurface\|MemoryEditorBubble(\|MemoryEditorStage3Root\|MemoryInputArea\|MemoryValueInput\|MemoryInputSession\|MemoryInputEditing\|MemoryCursorVisualTransformation\|memoryHardwareInputToken\|parseGroup('
+          if grep -R -n -E "$stale" app/src/main app/src/test app/src/androidTest app/src/screenshotTest 2>/dev/null; then
+            echo 'Found stale UI symbol(s) after cleanup.' >&2
+            exit 1
+          fi
+          if grep -R -n -E 'memory_editor_overlay_|memory_editor_keypad_hide' app/src/main 2>/dev/null; then
+            echo 'Found stale overlay/input-only resource reference.' >&2
+            exit 1
+          fi
+          if grep -R -n -F 'refreshCandidates(token, ids)' app/src 2>/dev/null; then
+            echo 'Found refreshCandidates call without passive/foreground classification.' >&2
+            exit 1
+          fi
+      - name: Validate production UI and regenerate Memory Editor references
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace \
+            :app:testEmulatorDebugUnitTest \
+            :app:updateEmulatorDebugScreenshotTest \
+            :app:validateEmulatorDebugScreenshotTest \
+            :app:assembleEmulatorDebug
+
+          unexpected="$(git diff --name-only -- 'app/src/screenshotTestEmulatorDebug/reference/**' | grep -v '^app/src/screenshotTestEmulatorDebug/reference/ru/playsoftware/j2meloader/memory/MemoryEditorScreenshotTestKt/' || true)"
+          if [[ -n "$unexpected" ]]; then
+            echo 'Unexpected non-Memory-Editor screenshot baseline changes:' >&2
+            printf '%s\n' "$unexpected" >&2
+            exit 1
+          fi
+      - name: Commit final source and remove temporary workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f \
+            .github/workflows/patch-memory-editor-device-feedback.yml \
+            .github/workflows/retry-memory-editor-device-feedback.yml \
+            .github/workflows/retry2-memory-editor-device-feedback.yml \
+            .github/workflows/finalize-memory-editor-feedback.yml \
+            .github/workflows/finalize2-memory-editor-feedback.yml
+          git config user.name 'Hendra Bara'"'"'langi'
+          git config user.email '93023716+H3nb@users.noreply.github.com'
+          git add -A
+          git status --short
+          git commit -m 'Polish Memory Editor runtime feedback and remove legacy UI'
+          git push origin HEAD:ci/memory-editor-stack-f914594
