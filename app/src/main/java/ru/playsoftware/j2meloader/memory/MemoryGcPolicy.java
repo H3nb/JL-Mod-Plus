@@ -58,4 +58,24 @@ final class MemoryGcPolicy {
 		return fastRefreshResult == MemoryEngineContract.RESULT_OK &&
 				bindingResult == MemoryEngineContract.RESULT_IDENTITY_UNSAFE;
 	}
+
+	/** A successful or partial mutation may already have changed target memory. */
+	static boolean mutationMayHaveWritten(int result) {
+		return result == MemoryEngineContract.RESULT_OK ||
+				result == MemoryEngineContract.RESULT_PARTIAL_WRITE;
+	}
+
+	/**
+	 * If GC moves during any mutation that may have written bytes, the final binding cannot be
+	 * confirmed safely. Never auto-retry the write; report a GC race instead.
+	 */
+	static boolean shouldReportGcRaceAfterMutation(int result, long gcBefore, long gcAfter) {
+		return mutationMayHaveWritten(result) &&
+				MemoryEngineContract.didGcCountChange(gcBefore, gcAfter);
+	}
+
+	/** Freeze records recover independently when their last validated epoch becomes stale. */
+	static boolean freezeRecordNeedsRecovery(long validatedGcCount, long currentGcCount) {
+		return MemoryEngineContract.didGcCountChange(validatedGcCount, currentGcCount);
+	}
 }
