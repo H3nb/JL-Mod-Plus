@@ -141,7 +141,10 @@ template <typename T>
     return first <= second;
 }
 
-[[nodiscard]] bool validKnownQueryPlan(const KnownQueryPlan &plan) noexcept {
+// Header-defined because every specialized scan/refine translation unit validates at its own
+// entry boundary. Keep it inline so the ODR remains valid when the same guard is emitted in all
+// native objects.
+[[nodiscard]] inline bool validKnownQueryPlan(const KnownQueryPlan &plan) noexcept {
     if (plan.plane == ResultPlane::Count ||
         !hasCanonicalKnownWidth(plan.plane, plan.firstBits) ||
         !hasCanonicalKnownWidth(plan.plane, plan.secondBits)) {
