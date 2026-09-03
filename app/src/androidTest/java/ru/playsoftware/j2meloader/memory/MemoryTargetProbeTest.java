@@ -39,6 +39,22 @@ public class MemoryTargetProbeTest {
 	private static volatile int managedProbe13, managedProbe14, managedProbe15, managedProbe16;
 	private static volatile int managedProbe17, managedProbe18, managedProbe19, managedProbe20;
 
+	private static long[] findCandidateAt(long address, int type) {
+		long addressCount = NativeMemoryEngine.resultCount();
+		for (int offset = 0; offset < addressCount; offset += 100) {
+			long[] page = NativeMemoryEngine.resultPage(offset, 100);
+			if (page == null || page.length == 0) continue;
+			int count = Math.toIntExact(page[0]);
+			for (int index = 0; index < count; index++) {
+				int base = 1 + index * MemoryEngineContract.RESULT_PAGE_STRIDE;
+				if (page[base + 1] == address && page[base + 3] == type) {
+					return new long[]{page[base], page[base + 8], page[base + 4]};
+				}
+			}
+		}
+		return null;
+	}
+
 	private static void setManagedProbeSet(int value) {
 		managedProbe01 = value;
 		managedProbe02 = value;
@@ -291,6 +307,72 @@ public class MemoryTargetProbeTest {
 		} finally {
 			setManagedProbeSet(0);
 			NativeMemoryEngine.clearTarget();
+		}
+	}
+
+	@Test
+	public void wideAutoAliasEditRefreshesNarrowSiblingBinding() {
+		int pageSize = NativeMemoryTarget.pageSize();
+		long[] probe = NativeMemoryTarget.readProbe();
+		assertNotNull(probe);
+		assertEquals(2, probe.length);
+		long address = probe[0];
+		long original = probe[1];
+		long expectedCurrent = original;
+		long pageStart = address - Math.floorMod(address, (long) pageSize);
+		long[] runs = {1L, 0L, pageStart, pageStart + pageSize};
+		long token = 0x4A4C414C49415345L;
+		long replacement = (1L << 32) | 501L;
+		try {
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.configureTarget(Process.myPid(), pageSize, token, runs));
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.startKnown(MemoryEngineContract.TYPE_LONG,
+							MemoryEngineContract.PREDICATE_EQUAL, Long.toString(original), ""));
+			long[] initialLong = findCandidateAt(address, MemoryEngineContract.TYPE_LONG);
+			assertNotNull("native read probe was not found in its configured page", initialLong);
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.edit(new long[]{initialLong[0]}, "500"));
+			expectedCurrent = 500L;
+
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.startKnown(MemoryEngineContract.TYPE_AUTO,
+							MemoryEngineContract.PREDICATE_EQUAL, "500", ""));
+			long[] longAlias = findCandidateAt(address, MemoryEngineContract.TYPE_LONG);
+			long[] intAlias = findCandidateAt(address, MemoryEngineContract.TYPE_INT);
+			assertNotNull("Long alias was not materialized", longAlias);
+			assertNotNull("Int alias was not materialized", intAlias);
+
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.edit(new long[]{longAlias[0]}, Long.toString(replacement)));
+			expectedCurrent = replacement;
+
+			long[] intAfter = findCandidateAt(address, MemoryEngineContract.TYPE_INT);
+			assertNotNull(intAfter);
+			assertEquals("overlapping Int alias kept stale bits", 501L, intAfter[1]);
+			assertEquals(MemoryEngineContract.CANDIDATE_STABLE, (int) intAfter[2]);
+			assertEquals("self-write invalidated the sibling identity fingerprint",
+					MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.refresh(new long[]{intAfter[0]}, true));
+		} finally {
+			try {
+				if (expectedCurrent != original) {
+					NativeMemoryEngine.clearTarget();
+					long cleanupToken = token ^ 0x55L;
+					if (NativeMemoryEngine.configureTarget(Process.myPid(), pageSize,
+							cleanupToken, runs) == MemoryEngineContract.RESULT_OK &&
+						NativeMemoryEngine.startKnown(MemoryEngineContract.TYPE_LONG,
+								MemoryEngineContract.PREDICATE_EQUAL,
+								Long.toString(expectedCurrent), "") == MemoryEngineContract.RESULT_OK) {
+						long[] cleanup = findCandidateAt(address, MemoryEngineContract.TYPE_LONG);
+						if (cleanup != null) {
+							NativeMemoryEngine.edit(new long[]{cleanup[0]}, Long.toString(original));
+						}
+					}
+				}
+			} finally {
+				NativeMemoryEngine.clearTarget();
+			}
 		}
 	}
 

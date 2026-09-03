@@ -2405,8 +2405,132 @@ bool replacementBitsFor(const Candidate &candidate,
     return true;
 }
 
+struct WrittenSpan {
+    uint64_t candidateId = 0;
+    uintptr_t address = 0;
+    size_t width = 0;
+};
+
+[[nodiscard]] bool spansOverlap(uintptr_t first, size_t firstWidth,
+                                uintptr_t second, size_t secondWidth) noexcept {
+    if (firstWidth == 0 || secondWidth == 0) {
+        return false;
+    }
+    uintptr_t firstLast = 0;
+    uintptr_t secondLast = 0;
+    if (!checkedAddressAdd(first, firstWidth - 1U, firstLast) ||
+        !checkedAddressAdd(second, secondWidth - 1U, secondLast)) {
+        return false;
+    }
+    return first <= secondLast && second <= firstLast;
+}
+
+[[nodiscard]] bool writeTouchesCandidateIdentity(const Candidate &candidate,
+                                                 const WrittenSpan &write) noexcept {
+    const size_t width = widthOf(candidate.type);
+    if (width == 0 || write.width == 0) {
+        return false;
+    }
+    if (candidate.address >= kIdentityRadius &&
+        spansOverlap(write.address, write.width,
+                     candidate.address - kIdentityRadius, kIdentityRadius)) {
+        return true;
+    }
+    uintptr_t rightContext = 0;
+    return checkedAddressAdd(candidate.address, width, rightContext) &&
+           spansOverlap(write.address, write.width, rightContext, kIdentityRadius);
+}
+
+bool reconcileCandidateAfterWrites(const Target &target, Candidate &candidate,
+                                   const std::vector<WrittenSpan> &writes) {
+    const size_t width = widthOf(candidate.type);
+    if (width == 0) {
+        return false;
+    }
+    bool valueTouched = false;
+    bool identityTouched = false;
+    bool directlyWritten = false;
+    for (const WrittenSpan &write : writes) {
+        directlyWritten = directlyWritten || write.candidateId == candidate.id;
+        valueTouched = valueTouched ||
+                spansOverlap(write.address, write.width, candidate.address, width);
+        identityTouched = identityTouched ||
+                writeTouchesCandidateIdentity(candidate, write);
+    }
+    if (!valueTouched && !identityTouched) {
+        return false;
+    }
+    if (candidate.state != kStable && !directlyWritten) {
+        return false;
+    }
+
+    if (valueTouched) {
+        uint64_t current = 0;
+        if (!readCandidate(target, candidate, current)) {
+            candidate.state = kRelocating;
+            return true;
+        }
+        if (!directlyWritten) {
+            candidate.previousBits = candidate.currentBits;
+        }
+        candidate.currentBits = current;
+    }
+
+    if (candidate.identityValid) {
+        uint64_t refreshedHash = 0;
+        if (!readIdentity(target, candidate.address, candidate.type, refreshedHash)) {
+            candidate.state = kRelocating;
+            return true;
+        }
+        if (!identityTouched && refreshedHash != candidate.identityHash) {
+            // The successful self-write cannot explain this fingerprint change.
+            candidate.state = kRelocating;
+            return true;
+        }
+        candidate.identityHash = refreshedHash;
+    }
+    candidate.state = kStable;
+    return true;
+}
+
+void reconcileStateAfterWrites(const Target &target, SearchState &state,
+                               const std::vector<WrittenSpan> &writes) {
+    if (writes.empty()) {
+        return;
+    }
+    for (Candidate &candidate : state.candidates) {
+        reconcileCandidateAfterWrites(target, candidate, writes);
+    }
+    for (Candidate &watch : state.watches) {
+        reconcileCandidateAfterWrites(target, watch, writes);
+    }
+}
+
+std::vector<Candidate> reconcileLiveCandidatesAfterWrites(
+        const OperationContext &context, const std::vector<WrittenSpan> &writes) {
+    std::vector<Candidate> reconciled;
+    std::unordered_set<uint64_t> seen;
+    const auto collect = [&](const Candidate &stored) {
+        if (!seen.insert(stored.id).second) {
+            return;
+        }
+        Candidate candidate = liveCandidate(stored, context.liveCandidates);
+        if (reconcileCandidateAfterWrites(context.target, candidate, writes)) {
+            reconciled.push_back(candidate);
+        }
+    };
+    for (const Candidate &candidate : context.state->candidates) {
+        collect(candidate);
+    }
+    for (const Candidate &watch : context.state->watches) {
+        collect(watch);
+    }
+    return reconciled;
+}
+
 int editOneCandidate(const Target &target, Candidate &candidate,
-                     const std::string &replacement) {
+                     const std::string &replacement,
+                     WrittenSpan *written = nullptr) {
     if (candidate.state != kStable || !candidate.identityValid) {
         return 0;
     }
@@ -2441,6 +2565,9 @@ int editOneCandidate(const Target &target, Candidate &candidate,
     }
     candidate.previousBits = candidate.currentBits;
     candidate.currentBits = replacementBits;
+    if (written != nullptr) {
+        *written = {candidate.id, candidate.address, width};
+    }
     return 1;
 }
 
@@ -2477,6 +2604,8 @@ jint editCandidates(const OperationContext &context,
         }
     }
     auto next = std::make_shared<SearchState>(*context.state);
+    std::vector<WrittenSpan> writes;
+    writes.reserve(ids.size());
     size_t edited = 0;
     size_t skipped = 0;
     for (Candidate &candidate : next->candidates) {
@@ -2484,14 +2613,16 @@ jint editCandidates(const OperationContext &context,
             continue;
         }
         candidate = liveCandidate(candidate, context.liveCandidates);
+        WrittenSpan written{};
         const int outcome =
-                editOneCandidate(context.target, candidate, replacement);
+                editOneCandidate(context.target, candidate, replacement, &written);
         if (outcome < 0) {
             setMessage("Replacement value does not fit every selected type");
             return kInvalidRequest;
         }
         if (outcome > 0) {
             ++edited;
+            writes.push_back(written);
         } else {
             ++skipped;
         }
@@ -2510,17 +2641,22 @@ jint editCandidates(const OperationContext &context,
             continue;
         }
         watch = liveCandidate(watch, context.liveCandidates);
+        WrittenSpan written{};
         const int outcome =
-                editOneCandidate(context.target, watch, replacement);
+                editOneCandidate(context.target, watch, replacement, &written);
         if (outcome < 0) {
             setMessage("Replacement value does not fit every selected type");
             return kInvalidRequest;
         }
         if (outcome > 0) {
             ++edited;
+            writes.push_back(written);
         } else {
             ++skipped;
         }
+    }
+    if (!writes.empty()) {
+        reconcileStateAfterWrites(context.target, *next, writes);
     }
     const jint result = commitOperation(context, std::move(next), 0);
     if (result == kOk) {
@@ -3239,9 +3375,20 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_editInspectorValue(
             setMessage("Inspector cell could not be identity-validated");
             return kIdentityUnsafe;
         }
+        WrittenSpan written{};
         const int outcome = editOneCandidate(
-                context.target, editable, fromJString(env, replacement));
+                context.target, editable, fromJString(env, replacement), &written);
         if (outcome > 0) {
+            written.candidateId =
+                    editable.address == anchor.address && editable.type == anchor.type
+                            ? anchor.id : 0;
+            std::vector<WrittenSpan> writes{written};
+            std::vector<Candidate> reconciled =
+                    reconcileLiveCandidatesAfterWrites(context, writes);
+            const jint published = publishLiveCandidates(context, reconciled);
+            if (published != kOk) {
+                return published;
+            }
             setMessage("Inspector value updated");
             return kOk;
         }
