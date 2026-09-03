@@ -1,0 +1,96 @@
+name: Run reviewed Memory Editor landscape polish
+
+on:
+  push:
+    branches:
+      - ci/memory-editor-stack-f914594
+    paths:
+      - .github/workflows/polish-memory-editor-runner.yml
+
+permissions:
+  contents: write
+
+jobs:
+  polish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: ci/memory-editor-stack-f914594
+          persist-credentials: true
+          submodules: recursive
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+        with:
+          java-version: '21'
+          distribution: temurin
+      - uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545
+      - name: Install Android SDK platform 37
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          sdkmanager_path="$sdk_root/cmdline-tools/latest/bin/sdkmanager"
+          if [[ ! -x "$sdkmanager_path" ]]; then
+            sdkmanager_path="$(find "$sdk_root/cmdline-tools" -type f -path '*/bin/sdkmanager' -print -quit 2>/dev/null || true)"
+          fi
+          "$sdkmanager_path" 'platforms;android-37.0'
+      - name: Restore shared debug keystore
+        shell: bash
+        env:
+          ANDROID_DEBUG_KEYSTORE_BASE64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$ANDROID_DEBUG_KEYSTORE_BASE64" | base64 --decode > debug.keystore
+          chmod 600 debug.keystore
+      - name: Execute reviewed structural patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          workflow = Path('.github/workflows/polish-memory-editor-landscape-v2.yml').read_text()
+          marker = "          python3 - <<'PY'\n"
+          start = workflow.index(marker) + len(marker)
+          end = workflow.index("\n          PY", start)
+          embedded = workflow[start:end]
+          script = '\n'.join(
+              line[10:] if line.startswith('          ') else line
+              for line in embedded.splitlines()
+          )
+          exec(compile(script, '<memory-editor-landscape-polish>', 'exec'), {})
+          PY
+
+          if grep -R -n -E 'MemoryGroupDraft|commonTypesForSelection|newSearchPredicate' app/src/main app/src/test app/src/screenshotTest 2>/dev/null; then
+            echo 'Dead Memory Editor helper survived cleanup.' >&2
+            exit 1
+          fi
+      - name: Validate and regenerate Memory Editor screenshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace \
+            :app:testEmulatorDebugUnitTest \
+            :app:updateEmulatorDebugScreenshotTest \
+            :app:validateEmulatorDebugScreenshotTest \
+            :app:assembleEmulatorDebug
+          unexpected="$(git diff --name-only -- 'app/src/screenshotTestEmulatorDebug/reference/**' | grep -v '^app/src/screenshotTestEmulatorDebug/reference/ru/playsoftware/j2meloader/memory/MemoryEditorScreenshotTestKt/' || true)"
+          if [[ -n "$unexpected" ]]; then
+            echo 'Unexpected screenshot baseline changes:' >&2
+            printf '%s\n' "$unexpected" >&2
+            exit 1
+          fi
+      - name: Commit source and remove temporary runners
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f \
+            .github/workflows/polish-memory-editor-landscape.yml \
+            .github/workflows/polish-memory-editor-landscape-v2.yml \
+            .github/workflows/polish-memory-editor-runner.yml
+          git config user.name "Hendra Bara'langi"
+          git config user.email '93023716+H3nb@users.noreply.github.com'
+          git add -A
+          git commit -m 'Polish Memory Editor landscape and Inspector UX'
+          git push origin HEAD:ci/memory-editor-stack-f914594
