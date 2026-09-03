@@ -11,6 +11,7 @@
 #include "result_store.h"
 #include "result_store_predicate.h"
 
+#include <cmath>
 #include <cstdint>
 #include <optional>
 
@@ -60,11 +61,90 @@ struct KnownQueryPlan {
     }
 }
 
-[[nodiscard]] constexpr bool validKnownQueryPlan(const KnownQueryPlan &plan) noexcept {
-    return plan.plane != ResultPlane::Count;
+// The production parser emits zero-extended raw primitive bits. Reject non-canonical debug/JNI
+// inputs rather than silently ignoring high bits in a narrow value and accidentally validating a
+// query representation production could never produce.
+[[nodiscard]] constexpr bool hasCanonicalKnownWidth(ResultPlane plane,
+                                                     std::uint64_t bits) noexcept {
+    switch (plane) {
+    case ResultPlane::Byte:
+        return bits <= UINT8_MAX;
+    case ResultPlane::Short:
+    case ResultPlane::Char:
+        return bits <= UINT16_MAX;
+    case ResultPlane::Int:
+    case ResultPlane::Float:
+        return bits <= UINT32_MAX;
+    case ResultPlane::Long:
+    case ResultPlane::Double:
+        return true;
+    case ResultPlane::Count:
+        return false;
+    }
+    return false;
 }
 
-[[nodiscard]] constexpr std::optional<KnownQueryPlan> knownQueryPlanFromStableValues(
+template <typename T>
+[[nodiscard]] bool validKnownBounds(const KnownQueryPlan &plan) noexcept {
+    const T first = knownValueFromBits<T>(plan.firstBits);
+    if constexpr (std::is_floating_point_v<T>) {
+        if (!std::isfinite(first)) {
+            return false;
+        }
+    }
+    if (plan.predicate != KnownPredicate::Between) {
+        // A single-threshold canonical plan has no hidden second operand.
+        return plan.secondBits == 0U;
+    }
+    const T second = knownValueFromBits<T>(plan.secondBits);
+    if constexpr (std::is_floating_point_v<T>) {
+        if (!std::isfinite(second)) {
+            return false;
+        }
+    }
+    return first <= second;
+}
+
+[[nodiscard]] bool validKnownQueryPlan(const KnownQueryPlan &plan) noexcept {
+    if (plan.plane == ResultPlane::Count ||
+        !hasCanonicalKnownWidth(plan.plane, plan.firstBits) ||
+        !hasCanonicalKnownWidth(plan.plane, plan.secondBits)) {
+        return false;
+    }
+    switch (plan.predicate) {
+    case KnownPredicate::Equal:
+    case KnownPredicate::NotEqual:
+    case KnownPredicate::Greater:
+    case KnownPredicate::Less:
+    case KnownPredicate::GreaterOrEqual:
+    case KnownPredicate::LessOrEqual:
+    case KnownPredicate::Between:
+        break;
+    default:
+        return false;
+    }
+    switch (plan.plane) {
+    case ResultPlane::Byte:
+        return validKnownBounds<std::int8_t>(plan);
+    case ResultPlane::Short:
+        return validKnownBounds<std::int16_t>(plan);
+    case ResultPlane::Char:
+        return validKnownBounds<std::uint16_t>(plan);
+    case ResultPlane::Int:
+        return validKnownBounds<std::int32_t>(plan);
+    case ResultPlane::Float:
+        return validKnownBounds<float>(plan);
+    case ResultPlane::Long:
+        return validKnownBounds<std::int64_t>(plan);
+    case ResultPlane::Double:
+        return validKnownBounds<double>(plan);
+    case ResultPlane::Count:
+        return false;
+    }
+    return false;
+}
+
+[[nodiscard]] inline std::optional<KnownQueryPlan> knownQueryPlanFromStableValues(
         int valueType, int predicate, std::uint64_t firstBits,
         std::uint64_t secondBits) noexcept {
     const auto plane = resultPlaneFromStableValueType(valueType);
@@ -72,7 +152,9 @@ struct KnownQueryPlan {
     if (!plane.has_value() || !knownPredicate.has_value()) {
         return std::nullopt;
     }
-    return KnownQueryPlan{*plane, *knownPredicate, firstBits, secondBits};
+    const KnownQueryPlan plan{*plane, *knownPredicate, firstBits, secondBits};
+    return validKnownQueryPlan(plan) ? std::optional<KnownQueryPlan>{plan}
+                                     : std::nullopt;
 }
 
 static_assert(resultPlaneFromStableValueType(1) == ResultPlane::Byte);
@@ -84,5 +166,9 @@ static_assert(!resultPlaneFromStableValueType(0).has_value());
 static_assert(knownPredicateFromStableValue(0) == KnownPredicate::Equal);
 static_assert(knownPredicateFromStableValue(6) == KnownPredicate::Between);
 static_assert(!knownPredicateFromStableValue(7).has_value());
+static_assert(hasCanonicalKnownWidth(ResultPlane::Byte, 0xffU));
+static_assert(!hasCanonicalKnownWidth(ResultPlane::Byte, 0x100U));
+static_assert(hasCanonicalKnownWidth(ResultPlane::Float, 0xffffffffU));
+static_assert(!hasCanonicalKnownWidth(ResultPlane::Float, UINT64_C(0x100000000)));
 
 } // namespace jlmem::v2
