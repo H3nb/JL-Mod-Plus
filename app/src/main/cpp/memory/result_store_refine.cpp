@@ -8,6 +8,7 @@
 
 #include "result_store_refine.h"
 
+#include <algorithm>
 #include <array>
 #include <bit>
 #include <cstring>
@@ -41,13 +42,13 @@ template <typename T, ResultPlane Plane, KnownPredicate Predicate>
             continue;
         }
         if (cancelled && cancelled()) {
-            error = "V2 shadow refine cancelled";
+            error = "V2 known refine cancelled";
             return false;
         }
 
         const std::uintptr_t blockBase = headers[blockIndex].baseAddress;
         if (!read(blockBase, blockBuffer.data(), blockBuffer.size())) {
-            error = "Target block changed during v2 shadow refine";
+            error = "Target block changed during v2 known refine";
             return false;
         }
         nextStats.bytesScanned += static_cast<std::uint64_t>(blockBuffer.size());
@@ -163,7 +164,10 @@ bool refineKnownExplicit(const ResultStore &source,
                          ResultStore &out,
                          KnownScanStats &stats,
                          std::string &error) {
-    if (!read || request.plane == ResultPlane::Count) {
+    // Defense in depth: callers inside the native engine must obey the exact same canonical plan
+    // contract as the JNI diagnostics boundary. This prevents a future production integration from
+    // accidentally bypassing width, finite-floating, or ordered-Between validation.
+    if (!read || !validKnownQueryPlan(request)) {
         error = "Invalid explicit-type known refine request";
         return false;
     }
