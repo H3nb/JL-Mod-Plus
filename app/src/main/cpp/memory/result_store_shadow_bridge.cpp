@@ -29,16 +29,7 @@ constexpr jint kOk = 0;
 constexpr jint kInvalidRequest = 2;
 constexpr jint kResourceLimit = 3;
 constexpr jint kTargetLost = 5;
-constexpr jint kTypeAuto = 0;
-constexpr jint kTypeByte = 1;
-constexpr jint kTypeShort = 2;
-constexpr jint kTypeChar = 3;
-constexpr jint kTypeInt = 4;
-constexpr jint kTypeLong = 5;
-constexpr jint kTypeFloat = 6;
-constexpr jint kTypeDouble = 7;
 constexpr jint kPredicateEqual = 0;
-constexpr jint kPredicateBetween = 6;
 constexpr jlong kShadowOperationScan = 0;
 constexpr jlong kShadowOperationRefine = 1;
 constexpr std::size_t kMaxTargetRuns = 4'096U;
@@ -69,46 +60,6 @@ ShadowSession gShadowSession;
         result = process_vm_readv(pid, &local, 1, &remote, 1, 0);
     } while (result < 0 && errno == EINTR);
     return result == static_cast<ssize_t>(size);
-}
-
-[[nodiscard]] bool resultPlane(jint valueType,
-                               jlmem::v2::ResultPlane &plane) noexcept {
-    switch (valueType) {
-    case kTypeByte:
-        plane = jlmem::v2::ResultPlane::Byte;
-        return true;
-    case kTypeShort:
-        plane = jlmem::v2::ResultPlane::Short;
-        return true;
-    case kTypeChar:
-        plane = jlmem::v2::ResultPlane::Char;
-        return true;
-    case kTypeInt:
-        plane = jlmem::v2::ResultPlane::Int;
-        return true;
-    case kTypeLong:
-        plane = jlmem::v2::ResultPlane::Long;
-        return true;
-    case kTypeFloat:
-        plane = jlmem::v2::ResultPlane::Float;
-        return true;
-    case kTypeDouble:
-        plane = jlmem::v2::ResultPlane::Double;
-        return true;
-    default:
-        return false;
-    }
-}
-
-[[nodiscard]] bool knownPredicate(
-        jint predicate,
-        jlmem::v2::KnownPredicate &known) noexcept {
-    if (predicate < kPredicateEqual || predicate > kPredicateBetween) {
-        return false;
-    }
-    known = static_cast<jlmem::v2::KnownPredicate>(
-            static_cast<std::uint8_t>(predicate));
-    return true;
 }
 
 [[nodiscard]] bool shadowTargetMatches(const ShadowTarget &target) noexcept {
@@ -205,17 +156,14 @@ jlongArray shadowResult(JNIEnv *env, jint status, jlong operation,
 jlongArray runShadowKnown(JNIEnv *env, jint valueType, jint rawPredicate,
                           jlong scanFirstBits, jlong scanSecondBits,
                           jlong refineFirstBits, jlong refineSecondBits) {
-    if (valueType == kTypeAuto) {
+    const auto requestedPlane =
+            jlmem::v2::resultPlaneFromStableValueType(valueType);
+    if (!requestedPlane.has_value() ||
+        !jlmem::v2::knownPredicateFromStableValue(rawPredicate).has_value()) {
         return shadowResult(env, kInvalidRequest, kShadowOperationScan,
                             scanFirstBits);
     }
-    jlmem::v2::ResultPlane plane = jlmem::v2::ResultPlane::Int;
-    jlmem::v2::KnownPredicate predicate = jlmem::v2::KnownPredicate::Equal;
-    if (!resultPlane(valueType, plane) ||
-        !knownPredicate(rawPredicate, predicate)) {
-        return shadowResult(env, kInvalidRequest, kShadowOperationScan,
-                            scanFirstBits);
-    }
+    const jlmem::v2::ResultPlane plane = *requestedPlane;
 
     ShadowTarget target;
     std::shared_ptr<const jlmem::v2::ResultStore> priorStore;
@@ -236,6 +184,16 @@ jlongArray runShadowKnown(JNIEnv *env, jint valueType, jint rawPredicate,
     const bool refining = priorStore != nullptr;
     const jlong firstBits = refining ? refineFirstBits : scanFirstBits;
     const jlong secondBits = refining ? refineSecondBits : scanSecondBits;
+    const auto canonicalPlan = jlmem::v2::knownQueryPlanFromStableValues(
+            valueType, rawPredicate, static_cast<std::uint64_t>(firstBits),
+            static_cast<std::uint64_t>(secondBits));
+    if (!canonicalPlan.has_value() ||
+        canonicalPlan->plane != plane ||
+        !jlmem::v2::validKnownQueryPlan(*canonicalPlan)) {
+        return shadowResult(env, kInvalidRequest, kShadowOperationScan,
+                            firstBits);
+    }
+
     const jlong operation =
             refining ? kShadowOperationRefine : kShadowOperationScan;
     jlmem::v2::ResultStore store;
@@ -245,8 +203,7 @@ jlongArray runShadowKnown(JNIEnv *env, jint valueType, jint rawPredicate,
     if (refining) {
         ok = jlmem::v2::refineKnownExplicit(
                 *priorStore,
-                {plane, predicate, static_cast<std::uint64_t>(firstBits),
-                 static_cast<std::uint64_t>(secondBits)},
+                *canonicalPlan,
                 [&](std::uintptr_t address, void *output, std::size_t size) {
                     return readExact(target.pid, address, output, size);
                 },
@@ -258,8 +215,7 @@ jlongArray runShadowKnown(JNIEnv *env, jint valueType, jint rawPredicate,
     } else {
         ok = jlmem::v2::scanKnownExplicit(
                 target.ranges,
-                {plane, predicate, static_cast<std::uint64_t>(firstBits),
-                 static_cast<std::uint64_t>(secondBits)},
+                *canonicalPlan,
                 [&](std::uintptr_t address, void *output, std::size_t size) {
                     return readExact(target.pid, address, output, size);
                 },

@@ -15,12 +15,10 @@
 
 namespace jlmem::v2 {
 
-struct KnownRefineRequest {
-    ResultPlane plane = ResultPlane::Int;
-    KnownPredicate predicate = KnownPredicate::Equal;
-    std::uint64_t firstBits = 0U;
-    std::uint64_t secondBits = 0U;
-};
+// Scan and refine intentionally share one canonical parsed Known-query representation. This keeps
+// type/predicate/threshold semantics identical across revisions and gives the production legacy
+// parser one eventual hand-off contract into v2.
+using KnownRefineRequest = KnownQueryPlan;
 
 struct KnownEqualRefineRequest {
     ResultPlane plane = ResultPlane::Int;

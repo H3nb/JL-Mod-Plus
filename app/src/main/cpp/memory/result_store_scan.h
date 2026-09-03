@@ -8,8 +8,8 @@
 
 #pragma once
 
+#include "known_query_plan.h"
 #include "result_store.h"
-#include "result_store_predicate.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -24,12 +24,10 @@ struct ScanRange {
     std::uintptr_t end = 0U;
 };
 
-struct KnownScanRequest {
-    ResultPlane plane = ResultPlane::Int;
-    KnownPredicate predicate = KnownPredicate::Equal;
-    std::uint64_t firstBits = 0U;
-    std::uint64_t secondBits = 0U;
-};
+// Transitional source alias: scan and refine now consume the same canonical parsed plan. Keep the
+// old name while the legacy engine is still the production owner so this refactor does not create
+// unrelated call-site churn.
+using KnownScanRequest = KnownQueryPlan;
 
 // Compatibility request retained while the existing equality-only diagnostics remain the first
 // production caller of the generic known-predicate kernel.
