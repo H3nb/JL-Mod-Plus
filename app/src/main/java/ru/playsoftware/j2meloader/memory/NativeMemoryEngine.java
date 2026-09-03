@@ -41,7 +41,19 @@ final class NativeMemoryEngine {
 
 	static native boolean canWriteTarget(int pid, long address, long expectedBits);
 
-	static native int startKnown(int valueType, int predicate, String first, String second);
+	static int startKnown(int valueType, int predicate, String first, String second) {
+		int result = startKnownUnchecked(valueType, predicate, first, second);
+		if (BuildConfig.DEBUG && result == MemoryEngineContract.RESULT_OK) {
+			// A fresh production Known search starts a new semantic revision even when the target and
+			// primitive type are unchanged. Drop the retained debug shadow revision so the next parity
+			// probe performs an independent first scan rather than accidentally refining stale bits.
+			resetV2ShadowSession();
+		}
+		return result;
+	}
+
+	private static native int startKnownUnchecked(int valueType, int predicate,
+	                                             String first, String second);
 
 	static native int startUnknown(int valueType);
 
@@ -110,7 +122,14 @@ final class NativeMemoryEngine {
 	static native long[] v2ShadowKnown(int valueType, int predicate,
 	                                  long firstBits, long secondBits);
 
-	static native void clearSearch();
+	static void clearSearch() {
+		clearSearchUnchecked();
+		if (BuildConfig.DEBUG) {
+			resetV2ShadowSession();
+		}
+	}
+
+	private static native void clearSearchUnchecked();
 
 	static void clearTarget() {
 		clearTargetUnchecked();
@@ -122,6 +141,8 @@ final class NativeMemoryEngine {
 	private static native void clearTargetUnchecked();
 
 	private static native void clearV2ShadowTarget();
+
+	private static native void resetV2ShadowSession();
 
 	static native void cancel(long cancellationEpoch);
 
