@@ -16,6 +16,9 @@
 namespace jlmem::v2 {
 namespace {
 
+using AddressUnion =
+        std::array<std::uint64_t, kResultLogicalBlockSize / 64U>;
+
 [[nodiscard]] std::uint8_t aliasMaskAt(const ResultStore &store,
                                        std::size_t blockIndex,
                                        std::size_t byteOffset) noexcept {
@@ -48,8 +51,7 @@ namespace {
 }
 
 void buildAddressUnion(const ResultStore &store, std::size_t blockIndex,
-                       std::array<std::uint64_t,
-                                  kResultLogicalBlockSize / 64U> &addresses) noexcept {
+                       AddressUnion &addresses) noexcept {
     addresses.fill(0U);
     if (blockIndex >= store.blockCount()) {
         return;
@@ -80,6 +82,36 @@ void buildAddressUnion(const ResultStore &store, std::size_t blockIndex,
     }
 }
 
+[[nodiscard]] bool nthAddressOffset(const AddressUnion &addresses,
+                                    std::uint64_t ordinal,
+                                    std::uint16_t &byteOffset) noexcept {
+    for (std::size_t wordIndex = 0U; wordIndex < addresses.size(); ++wordIndex) {
+        std::uint64_t word = addresses[wordIndex];
+        const std::uint64_t wordCount =
+                static_cast<std::uint64_t>(std::popcount(word));
+        if (ordinal >= wordCount) {
+            ordinal -= wordCount;
+            continue;
+        }
+        while (word != 0U) {
+            const std::size_t bit =
+                    static_cast<std::size_t>(std::countr_zero(word));
+            if (ordinal == 0U) {
+                const std::size_t offset = wordIndex * 64U + bit;
+                if (offset >= kResultLogicalBlockSize) {
+                    return false;
+                }
+                byteOffset = static_cast<std::uint16_t>(offset);
+                return true;
+            }
+            --ordinal;
+            word &= word - std::uint64_t{1U};
+        }
+        return false;
+    }
+    return false;
+}
+
 } // namespace
 
 bool readAddressPage(const ResultStore &store, ResultCursor cursor,
@@ -99,7 +131,7 @@ bool readAddressPage(const ResultStore &store, ResultCursor cursor,
         return true;
     }
 
-    std::array<std::uint64_t, kResultLogicalBlockSize / 64U> addresses{};
+    AddressUnion addresses{};
     for (std::size_t blockIndex = cursor.blockIndex;
          blockIndex < store.blockCount(); ++blockIndex) {
         buildAddressUnion(store, blockIndex, addresses);
@@ -154,6 +186,46 @@ bool readAddressPage(const ResultStore &store, ResultCursor cursor,
     next.next = {store.blockCount(), 0U};
     page = std::move(next);
     return true;
+}
+
+bool seekAddressOffset(const ResultStore &store, std::uint64_t addressOffset,
+                       ResultCursor &cursor) {
+    if (addressOffset > store.uniqueAddressCount()) {
+        return false;
+    }
+    if (addressOffset == store.uniqueAddressCount()) {
+        cursor = {store.blockCount(), 0U};
+        return true;
+    }
+
+    std::uint64_t remaining = addressOffset;
+    const auto headers = store.headers();
+    for (std::size_t blockIndex = 0U; blockIndex < headers.size(); ++blockIndex) {
+        const std::uint64_t blockCount = headers[blockIndex].uniqueAddressCount;
+        if (remaining >= blockCount) {
+            remaining -= blockCount;
+            continue;
+        }
+        AddressUnion addresses{};
+        buildAddressUnion(store, blockIndex, addresses);
+        std::uint16_t byteOffset = 0U;
+        if (!nthAddressOffset(addresses, remaining, byteOffset) ||
+            aliasMaskAt(store, blockIndex, byteOffset) == 0U) {
+            return false;
+        }
+        cursor = {blockIndex, byteOffset};
+        return true;
+    }
+    return false;
+}
+
+bool readAddressPageAtOffset(const ResultStore &store,
+                             std::uint64_t addressOffset,
+                             std::size_t limit,
+                             ResultAddressPage &page) {
+    ResultCursor cursor;
+    return seekAddressOffset(store, addressOffset, cursor) &&
+           readAddressPage(store, cursor, limit, page);
 }
 
 } // namespace jlmem::v2
