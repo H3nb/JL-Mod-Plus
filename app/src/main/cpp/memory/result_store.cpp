@@ -42,6 +42,22 @@ namespace {
     return true;
 }
 
+template <typename T>
+void reserveGeometrically(std::vector<T> &values, std::size_t required) {
+    if (required <= values.capacity()) {
+        return;
+    }
+    std::size_t capacity = std::max<std::size_t>(8U, values.capacity());
+    while (capacity < required) {
+        if (capacity > std::numeric_limits<std::size_t>::max() / 2U) {
+            capacity = required;
+            break;
+        }
+        capacity *= 2U;
+    }
+    values.reserve(capacity);
+}
+
 } // namespace
 
 bool ResultBlockScratch::set(ResultPlane plane, std::size_t slot) noexcept {
@@ -113,7 +129,9 @@ std::uint8_t ResultBlockScratch::activeMask() const noexcept {
     std::uint8_t mask = 0U;
     for (std::size_t index = 0U; index < kResultPlaneCount; ++index) {
         const ResultPlane plane = planeFromIndex(index);
-        if (count(plane) != 0U) {
+        const auto words = planeWords(plane);
+        if (std::any_of(words.begin(), words.end(),
+                        [](std::uint64_t word) { return word != 0U; })) {
             mask = static_cast<std::uint8_t>(mask | planeBit(plane));
         }
     }
@@ -131,31 +149,28 @@ void ResultBlockScratch::reset() noexcept {
 
 bool ResultStore::appendNonEmptyBlock(
         std::uintptr_t baseAddress, const ResultBlockScratch &scratch) {
-    if (baseAddress == 0U || baseAddress % kResultLogicalBlockSize != 0U ||
-        scratch.empty()) {
+    if (baseAddress == 0U || baseAddress % kResultLogicalBlockSize != 0U) {
         return false;
     }
     if (!headers_.empty() && baseAddress <= headers_.back().baseAddress) {
         return false;
     }
 
-    const std::uint8_t activeMask = scratch.activeMask();
-    if (activeMask == 0U) {
-        return false;
-    }
-
     std::array<std::uint16_t, kResultPlaneCount> counts{};
     std::size_t appendWords = 0U;
     std::uint64_t typed = 0U;
+    std::uint8_t activeMask = 0U;
     for (std::size_t index = 0U; index < kResultPlaneCount; ++index) {
         const ResultPlane plane = planeFromIndex(index);
         counts[index] = scratch.count(plane);
         if (counts[index] != 0U) {
+            activeMask = static_cast<std::uint8_t>(activeMask | planeBit(plane));
             appendWords += planeWordCount(plane);
             typed += counts[index];
         }
     }
-    if (appendWords == 0U || appendWords > kResultPayloadSlabWords) {
+    if (activeMask == 0U || appendWords == 0U ||
+        appendWords > kResultPayloadSlabWords) {
         return false;
     }
 
@@ -186,15 +201,15 @@ bool ResultStore::appendNonEmptyBlock(
         return false;
     }
 
-    // Reserve and allocate before semantic publication. A failed allocation never publishes a
-    // partial block/result count. If this store was copied, appending into a shared tail slab first
-    // detaches that slab so the older immutable revision remains untouched.
-    headers_.reserve(headers_.size() + 1U);
-    payloadSlabs_.reserve(slabIndex + 1U);
+    // Prepare capacity/allocations before semantic publication. Geometric growth avoids turning a
+    // dense scan into O(blocks^2) vector reallocations. If this store was copied, appending into a
+    // shared tail slab first detaches that slab so the older immutable revision remains untouched.
+    reserveGeometrically(headers_, headers_.size() + 1U);
+    reserveGeometrically(payloadSlabs_, slabIndex + 1U);
     while (payloadSlabs_.size() <= slabIndex) {
         payloadSlabs_.push_back(std::make_shared<PayloadSlab>());
     }
-    if (!payloadSlabs_[slabIndex].unique()) {
+    if (payloadSlabs_[slabIndex].use_count() != 1L) {
         payloadSlabs_[slabIndex] =
                 std::make_shared<PayloadSlab>(*payloadSlabs_[slabIndex]);
     }
@@ -288,7 +303,7 @@ std::span<std::uint64_t> ResultStore::planeWords(
                        slabIndex, slabOffset)) {
         return {};
     }
-    if (!payloadSlabs_[slabIndex].unique()) {
+    if (payloadSlabs_[slabIndex].use_count() != 1L) {
         payloadSlabs_[slabIndex] =
                 std::make_shared<PayloadSlab>(*payloadSlabs_[slabIndex]);
     }
