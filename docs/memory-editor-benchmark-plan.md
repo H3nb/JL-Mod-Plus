@@ -45,33 +45,39 @@ The diagnostics endpoint is debug-only. Use it for architectural A/B comparisons
 
 ## ResultStore shadow parity probe
 
-Before the ResultStore backend is allowed to publish user-visible results, debug builds provide an explicit differential probe:
+Before the ResultStore backend is allowed to publish user-visible results, debug builds provide a stateful differential probe:
 
 ```java
 Bundle parity = diagnostics.validateKnownEqualShadow(type);
 ```
 
-Use this probe only under all of these conditions:
+The first probe after target configuration validates a **first known `Equal` search**. When that succeeds, the debug shadow path retains the immutable ResultStore revision. If the legacy engine then performs a non-empty explicit-type **Next Scan `Equal`** without target reconfiguration, calling the same probe again validates a transactional bitmap refine of that retained revision. The diagnostics payload reports `shadowOperation=SCAN` or `shadowOperation=REFINE`; never treat a fresh `SCAN` as evidence for refine parity.
 
-1. the immediately preceding committed search is a **first known `Equal` search**;
+Use the first-scan probe only under all of these conditions:
+
+1. the immediately preceding committed search is a first known `Equal` search;
 2. exactly one primitive type is selected (`Byte`, `Short`, `Char`, `Int`, `Long`, `Float`, or `Double`), not `Auto`;
 3. the legacy result is non-empty;
 4. no refine/filter/Undo has changed the result revision since that first search;
 5. the MIDlet/game state is held as stable as practical while the parity probe runs.
 
-The probe deliberately performs a second remote read pass only when called. Normal Memory Editor use does not run the shadow scanner. If the debug-only shadow target mirror cannot be prepared, the probe fails closed as unavailable/target-lost while the validated legacy target and user-visible result remain untouched.
+For refine parity, first obtain a successful `SCAN` parity result, then perform exactly one non-empty legacy `Next Scan Equal` using the same explicit primitive type, hold the game state stable, and call the probe again. A successful refine sample must report `shadowOperation=REFINE`. Repeat this sequence for additional Equal refinements; a target reconfigure/clear intentionally discards the shadow revision and requires a new first-scan parity seed.
 
-The legacy backend remains authoritative. The probe pages the legacy result in bounded chunks, fingerprints its ordered `(address, type)` rows, then independently scans the same configured resident target through the ResultStore explicit-type equality kernel. The v2 store is enumerated again through `ResultCursor` in pages of at most 100 unique addresses. A successful parity result requires all of the following:
+The probe deliberately performs remote reads only when called. Normal Memory Editor use does not run the shadow scanner/refiner. If the debug-only shadow target mirror cannot be prepared, the probe fails closed as unavailable/target-lost while the validated legacy target and user-visible result remain untouched.
 
-- v2 shadow scan completed successfully;
+The legacy backend remains authoritative. For a first probe, the shadow path independently scans the same configured resident target through the ResultStore explicit-type equality kernel. For a refine probe, it copies the previously published shadow ResultStore, reads only blocks that still contain active bits for the selected type, clears failed bits, recounts the affected blocks, and publishes the working revision only after every required read succeeds. Cancellation or target loss therefore leaves the prior shadow revision intact.
+
+The v2 store is enumerated through `ResultCursor` in pages of at most 100 unique addresses. A successful parity result requires all of the following:
+
+- v2 shadow scan/refine completed successfully;
 - legacy logical result count equals ResultStore unique-address count;
 - explicit-type ResultStore typed count equals its unique-address count;
-- the ordered legacy address/type fingerprint equals the ResultStore scan fingerprint;
+- the ordered legacy address/type fingerprint equals the ResultStore fingerprint;
 - re-enumerating the ResultStore through `ResultCursor` reproduces the same count, alias mask, ordering, and fingerprint.
 
-A parity mismatch is a development signal, not a reason to repair or replace the legacy result. Do not publish the shadow store and do not mutate target memory from the shadow path.
+A parity mismatch is a development signal, not a reason to repair or replace the legacy result. Do not publish the shadow store to the production result API and do not mutate target memory from the shadow path.
 
-GC, target relocation, or game writes between the legacy search and shadow pass may legitimately produce a mismatch. If that happens, discard the sample and repeat from a fresh first `Equal` search rather than weakening the comparison. The shadow target also carries a debug generation; a clear/reconfigure during the scan is checked at bounded scan intervals and fails closed instead of publishing diagnostics for a mixed target generation.
+GC, target relocation, or game writes between the legacy operation and shadow probe may legitimately produce a mismatch. If that happens, discard the sample and repeat from a fresh first `Equal` search rather than weakening the comparison. Target configure/clear also increments a debug generation and drops the retained shadow revision; an in-flight generation change fails closed instead of publishing diagnostics for a mixed target generation.
 
 For floating-point equality the v2 explicit kernel intentionally uses numeric equality, matching the current known-search contract: `+0.0` and `-0.0` compare equal while `NaN` does not compare equal to itself.
 
@@ -97,7 +103,7 @@ Use representative retained sets close to:
 2. 100,000 → 10,000 results
 3. 10,000 → small/manual result set when available
 
-The exact counts do not need to be synthetic; record the actual before/after counts and query.
+The exact counts do not need to be synthetic; record the actual before/after counts and query. For explicit-type `Equal` refinements, seed the shadow revision with a successful first-scan parity probe and run the stateful probe after each legacy refine. Accept a v2 refine correctness sample only when it reports `shadowOperation=REFINE` and both count/address parity booleans are true.
 
 ### Unknown workflow
 
@@ -127,7 +133,7 @@ For each sample retain at least:
 - history depth;
 - any GC/identity/resource-limit message.
 
-For explicit equality shadow samples also retain the legacy count/fingerprint, v2 typed/unique counts, v2 block/retained-byte counts, v2 fingerprint, and the count/address parity booleans.
+For explicit equality shadow samples also retain the shadow operation kind, expected bits, legacy count/fingerprint, v2 typed/unique counts, v2 block/retained-byte counts, v2 fingerprint, and the count/address parity booleans.
 
 Performance numbers are not comparable if the two implementations produce different normalized `(address, type, value)` semantics. During ResultStore migration, use differential correctness checks before accepting a speed or RAM improvement.
 
