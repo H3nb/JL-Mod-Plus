@@ -12,6 +12,9 @@ import android.os.Bundle;
 import android.os.RemoteException;
 import android.os.SystemClock;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -58,6 +61,60 @@ public final class MemoryEngineBenchmarkRunner {
 		}
 	}
 
+	/** One explicit-type Known first-search case for physical v2 parity validation. */
+	public static final class KnownParityCase {
+		public final int valueType;
+		public final int predicate;
+		public final String first;
+		public final String second;
+
+		public KnownParityCase(int valueType, int predicate, String first, String second) {
+			if (!MemoryEngineContract.isCandidateType(valueType) ||
+					predicate < MemoryEngineContract.PREDICATE_EQUAL ||
+					predicate > MemoryEngineContract.PREDICATE_BETWEEN || first == null ||
+					second == null) {
+				throw new IllegalArgumentException("Invalid explicit-type Known parity case");
+			}
+			this.valueType = valueType;
+			this.predicate = predicate;
+			this.first = first;
+			this.second = second;
+		}
+	}
+
+	/**
+	 * One complete physical parity sample. A GC count change is reported separately from an actual
+	 * shadow mismatch because target mutation/relocation during the two sequential scans makes the
+	 * sample inconclusive rather than proving a scanner defect.
+	 */
+	public static final class KnownParityResult {
+		public final KnownParityCase testCase;
+		public final Sample production;
+		public final Bundle shadow;
+		public final long gcCountBefore;
+		public final long gcCountAfter;
+		public final boolean gcRaceObserved;
+		public final boolean shadowParity;
+
+		KnownParityResult(KnownParityCase testCase, Sample production, Bundle shadow,
+		                  long gcCountBefore, long gcCountAfter, boolean gcRaceObserved,
+		                  boolean shadowParity) {
+			this.testCase = testCase;
+			this.production = production;
+			this.shadow = shadow;
+			this.gcCountBefore = gcCountBefore;
+			this.gcCountAfter = gcCountAfter;
+			this.gcRaceObserved = gcRaceObserved;
+			this.shadowParity = shadowParity;
+		}
+
+		/** True only when production succeeded, parity matched, and no known moving-GC race occurred. */
+		public boolean passed() {
+			return production.resultCode == MemoryEngineContract.RESULT_OK &&
+					shadowParity && !gcRaceObserved;
+		}
+	}
+
 	public static Sample run(IMemoryEngineService engine,
 	                         IMemoryEngineDiagnostics diagnostics,
 	                         Operation operation,
@@ -87,7 +144,8 @@ public final class MemoryEngineBenchmarkRunner {
 
 			@Override
 			public void onOperationFinished(long operationId, int code, long count,
-			                                String nativeMessage, boolean passiveRefresh, boolean searchOperation) {
+			                                String nativeMessage, boolean passiveRefresh,
+			                                boolean searchOperation) {
 				if (passiveRefresh) return;
 				long expected = expectedOperationId.get();
 				if (expected == 0L) {
@@ -156,8 +214,91 @@ public final class MemoryEngineBenchmarkRunner {
 			throw new IllegalArgumentException(
 					"Known query could not be canonicalized by the production native parser");
 		}
-		return diagnostics.validateKnownShadowPlan(
+		Bundle result = diagnostics.validateKnownShadowPlan(
 				(int) plan[0], (int) plan[1], plan[2], plan[3]);
+		return result == null ? Bundle.EMPTY : result;
+	}
+
+	/**
+	 * Run one fresh production Known search followed by its v2 shadow first-scan parity check.
+	 * Fresh-search semantics are important: NativeMemoryEngine.startKnown() resets the retained
+	 * shadow revision, so two adjacent matrix cases can never accidentally become a bitmap refine.
+	 */
+	public static KnownParityResult runKnownParityCase(IMemoryEngineService engine,
+	                                                   IMemoryEngineDiagnostics diagnostics,
+	                                                   long token,
+	                                                   int scope,
+	                                                   KnownParityCase testCase,
+	                                                   long timeoutMs)
+			throws RemoteException, InterruptedException {
+		if (engine == null || diagnostics == null || testCase == null || token == 0L ||
+				!MemoryEngineContract.isScope(scope)) {
+			throw new IllegalArgumentException("Known parity case requires a live explicit target");
+		}
+
+		long gcBefore = gcCount(engine.getCapabilities());
+		Sample production = run(
+				engine,
+				diagnostics,
+				() -> engine.startKnownSearch(
+						token, scope, testCase.valueType, testCase.predicate,
+						testCase.first, testCase.second),
+				timeoutMs);
+		Bundle shadow = Bundle.EMPTY;
+		if (production.resultCode == MemoryEngineContract.RESULT_OK) {
+			shadow = validateKnownShadowQuery(
+					diagnostics, testCase.valueType, testCase.predicate,
+					testCase.first, testCase.second);
+		}
+		long gcAfter = gcCount(engine.getCapabilities());
+		boolean gcRace = MemoryEngineContract.didGcCountChange(gcBefore, gcAfter);
+		boolean parity = production.resultCode == MemoryEngineContract.RESULT_OK &&
+				shadow.getInt(
+						MemoryEngineDiagnosticsContract.KEY_SHADOW_STATUS,
+						MemoryEngineContract.RESULT_INVALID_REQUEST) ==
+						MemoryEngineContract.RESULT_OK &&
+				shadow.getInt(
+						MemoryEngineDiagnosticsContract.KEY_SHADOW_OPERATION,
+						-1) == MemoryEngineDiagnosticsContract.SHADOW_OPERATION_SCAN &&
+				shadow.getBoolean(MemoryEngineDiagnosticsContract.KEY_SHADOW_COUNT_MATCH, false) &&
+				shadow.getBoolean(MemoryEngineDiagnosticsContract.KEY_SHADOW_ADDRESS_MATCH, false);
+		return new KnownParityResult(
+				testCase, production, shadow, gcBefore, gcAfter, gcRace, parity);
+	}
+
+	/**
+	 * Sequentially run a caller-supplied all-predicate matrix. Cases stop only for thrown transport/
+	 * timeout errors; a semantic mismatch is retained in the returned list so the full matrix can
+	 * reveal whether a defect is type- or predicate-specific.
+	 */
+	public static List<KnownParityResult> runKnownParityMatrix(
+			IMemoryEngineService engine,
+			IMemoryEngineDiagnostics diagnostics,
+			long token,
+			int scope,
+			List<KnownParityCase> cases,
+			long timeoutMs) throws RemoteException, InterruptedException {
+		if (cases == null || cases.isEmpty()) {
+			throw new IllegalArgumentException("Known parity matrix requires at least one case");
+		}
+		ArrayList<KnownParityResult> results = new ArrayList<>(cases.size());
+		for (KnownParityCase testCase : cases) {
+			if (testCase == null) {
+				throw new IllegalArgumentException("Known parity matrix contains a null case");
+			}
+			results.add(runKnownParityCase(
+					engine, diagnostics, token, scope, testCase, timeoutMs));
+		}
+		return Collections.unmodifiableList(results);
+	}
+
+	private static long gcCount(Bundle capabilities) {
+		if (capabilities == null) {
+			return MemoryEngineContract.GC_COUNT_UNKNOWN;
+		}
+		return capabilities.getLong(
+				MemoryEngineContract.KEY_GC_COUNT,
+				MemoryEngineContract.GC_COUNT_UNKNOWN);
 	}
 
 	private static void updateMax(AtomicLong target, long value) {
