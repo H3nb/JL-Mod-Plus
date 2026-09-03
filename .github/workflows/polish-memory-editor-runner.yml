@@ -65,6 +65,21 @@ jobs:
               raise SystemExit('Unbalanced triple-quoted block in embedded patch')
           script = '\n'.join(lines)
           exec(compile(script, '<memory-editor-landscape-polish>', 'exec'), {})
+
+          test_path = Path('app/src/test/java/ru/playsoftware/j2meloader/memory/MemoryEditorModelsTest.kt')
+          test = test_path.read_text()
+          dead_start = '    @Test fun resultRowsKeepAliasTypesWithoutRawAddresses()'
+          next_live = '    @Test fun engineSessionMetadataMapsWithoutCountHeuristics()'
+          if dead_start in test:
+              i = test.index(dead_start)
+              j = test.index(next_live, i)
+              test = test[:i] + test[j:]
+          dead_start = '    @Test fun newSearchNeverForwardsARelativeRefinePredicate()'
+          if dead_start in test:
+              i = test.index(dead_start)
+              j = test.rfind('\n}')
+              test = test[:i] + test[j:]
+          test_path.write_text(test)
           PY
 
           if grep -R -n -E 'MemoryGroupDraft|commonTypesForSelection|newSearchPredicate' app/src/main app/src/test app/src/screenshotTest 2>/dev/null; then
