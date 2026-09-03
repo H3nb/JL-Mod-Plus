@@ -11,7 +11,7 @@ package ru.playsoftware.j2meloader.memory;
 /** Stable keys for debug-only Memory Editor benchmark snapshots. */
 public final class MemoryEngineDiagnosticsContract {
 	public static final int SCHEMA_VERSION = 1;
-	public static final int SHADOW_SCHEMA_VERSION = 2;
+	public static final int SHADOW_SCHEMA_VERSION = 3;
 	public static final int SHADOW_OPERATION_SCAN = 0;
 	public static final int SHADOW_OPERATION_REFINE = 1;
 
@@ -34,6 +34,11 @@ public final class MemoryEngineDiagnosticsContract {
 	public static final String KEY_SHADOW_SCHEMA_VERSION = "shadowSchemaVersion";
 	public static final String KEY_SHADOW_STATUS = "shadowStatus";
 	public static final String KEY_SHADOW_OPERATION = "shadowOperation";
+	public static final String KEY_SHADOW_VALUE_TYPE = "shadowValueType";
+	public static final String KEY_SHADOW_PREDICATE = "shadowPredicate";
+	public static final String KEY_SHADOW_FIRST_BITS = "shadowFirstBits";
+	public static final String KEY_SHADOW_SECOND_BITS = "shadowSecondBits";
+	/** Compatibility alias for older equality-only diagnostics; equals shadowFirstBits. */
 	public static final String KEY_SHADOW_EXPECTED_BITS = "shadowExpectedBits";
 	public static final String KEY_SHADOW_BYTES_SCANNED = "shadowBytesScanned";
 	public static final String KEY_SHADOW_TYPED_MATCHES = "shadowTypedMatches";
