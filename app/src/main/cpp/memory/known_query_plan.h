@@ -14,6 +14,7 @@
 #include <cmath>
 #include <cstdint>
 #include <optional>
+#include <type_traits>
 
 namespace jlmem::v2 {
 
@@ -45,6 +46,41 @@ struct KnownQueryPlan {
     case 7: return ResultPlane::Double;
     default: return std::nullopt;
     }
+}
+
+[[nodiscard]] constexpr int stableValueTypeFromResultPlane(
+        ResultPlane plane) noexcept {
+    switch (plane) {
+    case ResultPlane::Byte: return 1;
+    case ResultPlane::Short: return 2;
+    case ResultPlane::Char: return 3;
+    case ResultPlane::Int: return 4;
+    case ResultPlane::Long: return 5;
+    case ResultPlane::Float: return 6;
+    case ResultPlane::Double: return 7;
+    case ResultPlane::Count: return 0;
+    }
+    return 0;
+}
+
+// ResultCursor aliases use compact internal plane bits (0..6), while Binder/UI aliases use
+// `1 << stableValueType` (1..7). Never expose the internal mask directly across IPC.
+[[nodiscard]] constexpr std::uint32_t stableAliasMaskFromResultPlaneMask(
+        std::uint8_t planeMask) noexcept {
+    std::uint32_t stableMask = 0U;
+    for (std::size_t index = 0U; index < kResultPlaneCount; ++index) {
+        const std::uint8_t internalBit =
+                static_cast<std::uint8_t>(1U << index);
+        if ((planeMask & internalBit) == 0U) {
+            continue;
+        }
+        const int stableType =
+                stableValueTypeFromResultPlane(static_cast<ResultPlane>(index));
+        if (stableType > 0) {
+            stableMask |= std::uint32_t{1U} << stableType;
+        }
+    }
+    return stableMask;
 }
 
 [[nodiscard]] constexpr std::optional<KnownPredicate> knownPredicateFromStableValue(
@@ -163,6 +199,16 @@ static_assert(resultPlaneFromStableValueType(5) == ResultPlane::Long);
 static_assert(resultPlaneFromStableValueType(6) == ResultPlane::Float);
 static_assert(resultPlaneFromStableValueType(7) == ResultPlane::Double);
 static_assert(!resultPlaneFromStableValueType(0).has_value());
+static_assert(stableValueTypeFromResultPlane(ResultPlane::Int) == 4);
+static_assert(stableValueTypeFromResultPlane(ResultPlane::Long) == 5);
+static_assert(stableValueTypeFromResultPlane(ResultPlane::Float) == 6);
+static_assert(stableAliasMaskFromResultPlaneMask(
+                      static_cast<std::uint8_t>(1U << planeIndex(ResultPlane::Int))) ==
+              (std::uint32_t{1U} << 4));
+static_assert(stableAliasMaskFromResultPlaneMask(
+                      static_cast<std::uint8_t>(1U << planeIndex(ResultPlane::Float))) ==
+              (std::uint32_t{1U} << 6));
+static_assert(stableAliasMaskFromResultPlaneMask(0x7fU) == 0xfeU);
 static_assert(knownPredicateFromStableValue(0) == KnownPredicate::Equal);
 static_assert(knownPredicateFromStableValue(6) == KnownPredicate::Between);
 static_assert(!knownPredicateFromStableValue(7).has_value());
