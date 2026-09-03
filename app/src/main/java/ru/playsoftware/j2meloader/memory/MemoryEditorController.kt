@@ -47,9 +47,11 @@ class MemoryEditorComposeController(
     private var bound = false
     private var destroyed = false
     private var activeOperationId = 0L
+    private var operationGeneration = 0L
     @Volatile private var connectionGeneration = 0
     private var pendingEditFollowUp: PendingEditFollowUp? = null
     private var pendingInspectorRefresh: PendingInspectorRefresh? = null
+    private var pendingOperationFeedback: PendingOperationFeedback? = null
 
     private data class PendingEditFollowUp(
         val id: Long,
@@ -60,6 +62,11 @@ class MemoryEditorComposeController(
         val resultGroup: Boolean,
     )
     private data class PendingInspectorRefresh(val candidateId: Long, val radius: Int)
+    private data class PendingOperationFeedback(
+        val kind: OperationFeedbackKind,
+        val resultCountBefore: Long,
+    )
+    private enum class OperationFeedbackKind { NEXT_SCAN }
 
     private val callback = object : IMemoryEngineCallback.Stub() {
         override fun onOperationProgress(operationId: Long, scannedBytes: Long, totalBytes: Long) {
@@ -83,7 +90,14 @@ class MemoryEditorComposeController(
             passiveRefresh: Boolean,
         ) {
             post {
+                // Binder can finish a tiny refine before the main-thread operation-id post.
+                // Accept that first completion while busy, then invalidate the delayed id post.
+                if (!state.busy && activeOperationId == 0L) return@post
                 if (activeOperationId != 0L && operationId != activeOperationId) return@post
+
+                val feedback = pendingOperationFeedback
+                pendingOperationFeedback = null
+                operationGeneration++
 
                 if (resultCode == MemoryEngineContract.RESULT_TARGET_LOST ||
                     resultCode == MemoryEngineContract.RESULT_NO_SESSION
@@ -108,6 +122,10 @@ class MemoryEditorComposeController(
                 pendingEditFollowUp = null
                 pendingInspectorRefresh = null
                 activeOperationId = 0L
+                val engineSuccessMessage = message?.takeIf(String::isNotBlank)
+                val uiSuccessMessage = if (succeeded && feedback?.kind == OperationFeedbackKind.NEXT_SCAN) {
+                    "${context.getString(R.string.memory_editor_next_scan)}: ${feedback.resultCountBefore} → $resultCount"
+                } else null
                 state = state.copy(
                     busy = false,
                     searching = false,
@@ -115,7 +133,10 @@ class MemoryEditorComposeController(
                     scanBytesTotal = 0L,
                     resultCount = resultCount,
                     message = if (succeeded) {
-                        message?.takeIf(String::isNotBlank)
+                        listOfNotNull(uiSuccessMessage, engineSuccessMessage)
+                            .distinct()
+                            .joinToString(" · ")
+                            .takeIf(String::isNotBlank)
                     } else {
                         operationMessage(resultCode, message)
                     },
@@ -154,7 +175,7 @@ class MemoryEditorComposeController(
         composeView.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         composeView.visibility = View.GONE
         composeView.setContent {
-            JLModPlusTheme {
+            JLModPlusTheme(paintWindowBackground = false) {
                 MemoryEditorRuntimeRoot(state = state, actions = this)
             }
         }
@@ -402,7 +423,10 @@ class MemoryEditorComposeController(
 
     override fun nextScan(value: String, secondValue: String, predicate: Int, compare: Int) {
         state = state.copy(pageOffset = 0, selected = emptySet(), inspector = null)
-        launchOperation(searching = true) { engine, token ->
+        launchOperation(
+            searching = true,
+            feedback = PendingOperationFeedback(OperationFeedbackKind.NEXT_SCAN, state.resultCount),
+        ) { engine, token ->
             if (predicate >= MemoryEngineContract.PREDICATE_CHANGED) {
                 engine.refineRelative(token, predicate, compare, value.trim(), secondValue.trim())
             } else {
@@ -738,6 +762,7 @@ class MemoryEditorComposeController(
 
     private fun launchOperation(
         searching: Boolean = false,
+        feedback: PendingOperationFeedback? = null,
         operation: (IMemoryEngineService, Long) -> Long,
     ) {
         if (state.busy || destroyed || !runtimeStillActive()) return
@@ -747,6 +772,9 @@ class MemoryEditorComposeController(
             refreshCapabilities()
             return
         }
+        val generation = ++operationGeneration
+        pendingOperationFeedback = feedback
+        activeOperationId = 0L
         state = state.copy(
             busy = true,
             searching = searching,
@@ -756,7 +784,12 @@ class MemoryEditorComposeController(
         )
         runIpc {
             val operationId = operation(engine, token)
-            post { activeOperationId = operationId }
+            post {
+                // If completion won the race, it already advanced operationGeneration.
+                if (generation == operationGeneration && state.busy && activeOperationId == 0L) {
+                    activeOperationId = operationId
+                }
+            }
         }
     }
 

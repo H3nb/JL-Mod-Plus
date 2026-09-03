@@ -29,6 +29,7 @@ import androidx.annotation.Nullable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.LinkedHashMap;
@@ -51,7 +52,7 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private static final Set<LocalRuntimeListener> LOCAL_RUNTIME_LISTENERS =
-			ConcurrentHashMap.newKeySet();
+			Collections.newSetFromMap(new ConcurrentHashMap<LocalRuntimeListener, Boolean>());
 	private static final long PROGRESS_UPDATE_PERIOD_MS = 200L;
 	// Native cancellation uses this generation to distinguish a newly started operation from a
 	// cancellation delivered by Binder immediately before its native entry point.

@@ -5,6 +5,7 @@
 
 package ru.playsoftware.j2meloader.memory
 
+import android.content.res.Configuration
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -52,6 +54,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -113,11 +116,18 @@ internal fun MemoryEditorRuntimeRoot(
         contentAlignment = Alignment.Center,
     ) {
         val landscape = maxWidth > maxHeight
+        val panelModifier = if (landscape) {
+            Modifier
+                .fillMaxSize()
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+        } else {
+            Modifier
+                .fillMaxWidth(0.94f)
+                .fillMaxHeight(0.90f)
+                .widthIn(max = 720.dp)
+        }
         Surface(
-            modifier = Modifier
-                .fillMaxWidth(if (landscape) 0.72f else 0.94f)
-                .fillMaxHeight(if (landscape) 0.94f else 0.90f)
-                .widthIn(max = 800.dp),
+            modifier = panelModifier,
             shape = MaterialTheme.shapes.extraLarge,
             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
             contentColor = MaterialTheme.colorScheme.onSurface,
@@ -655,6 +665,41 @@ private fun RuntimeWatchRow(
     HorizontalDivider()
 }
 
+
+@Composable
+private fun RuntimeSearchDialogBody(
+    showKeypad: Boolean,
+    controls: @Composable () -> Unit,
+    keypad: @Composable () -> Unit,
+) {
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val sideDock = landscape && showKeypad && maxWidth >= 480.dp
+        if (sideDock) {
+            val keypadWidth = (maxWidth * 0.42f).coerceIn(220.dp, 280.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) { controls() }
+                Box(modifier = Modifier.width(keypadWidth)) { keypad() }
+            }
+        } else {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                controls()
+                if (showKeypad) keypad()
+            }
+        }
+    }
+}
+
 @Composable
 private fun RuntimeKnownSearchDialog(
     state: MemoryEditorUiState,
@@ -687,57 +732,63 @@ private fun RuntimeKnownSearchDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.memory_editor_search_known_values)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    RuntimePredicateMenu(
-                        predicate = predicate,
-                        onPredicate = { predicate = it },
-                        modifier = Modifier.widthIn(min = 72.dp, max = 112.dp),
+            RuntimeSearchDialogBody(
+                showKeypad = true,
+                controls = {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RuntimePredicateMenu(
+                            predicate = predicate,
+                            onPredicate = { predicate = it },
+                            modifier = Modifier.widthIn(min = 72.dp, max = 112.dp),
+                        )
+                        RuntimeSearchField(
+                            label = stringResource(R.string.memory_editor_search_hint),
+                            value = query,
+                            active = activeField == RuntimeInputField.FIRST,
+                            onClick = { activeField = RuntimeInputField.FIRST },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    if (needsSecond) {
+                        RuntimeSearchField(
+                            label = stringResource(R.string.memory_editor_max_value),
+                            value = second,
+                            active = activeField == RuntimeInputField.SECOND,
+                            onClick = { activeField = RuntimeInputField.SECOND },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                    RuntimeTypeMenu(type = type, onType = { type = it }, modifier = Modifier.fillMaxWidth())
+                    RuntimeScopeMenu(scope = scope, onScope = { scope = it }, modifier = Modifier.fillMaxWidth())
+                    RuntimeExpressionHint(expression = expression, type = type)
+                },
+                keypad = {
+                    RuntimeSearchKeypad(
+                        allowGroup = activeField == RuntimeInputField.FIRST,
+                        onToken = { token ->
+                            if (activeField == RuntimeInputField.FIRST) query = runtimeInsert(query, token)
+                            else second = runtimeInsert(second, token)
+                        },
+                        onBackspace = {
+                            if (activeField == RuntimeInputField.FIRST) query = runtimeBackspace(query)
+                            else second = runtimeBackspace(second)
+                        },
+                        onMove = { delta ->
+                            if (activeField == RuntimeInputField.FIRST) query = runtimeMove(query, delta)
+                            else second = runtimeMove(second, delta)
+                        },
+                        onClear = {
+                            if (activeField == RuntimeInputField.FIRST) query = TextFieldValue("", TextRange(0))
+                            else second = TextFieldValue("", TextRange(0))
+                        },
                     )
-                    RuntimeSearchField(
-                        label = stringResource(R.string.memory_editor_search_hint),
-                        value = query,
-                        active = activeField == RuntimeInputField.FIRST,
-                        onClick = { activeField = RuntimeInputField.FIRST },
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-                if (needsSecond) {
-                    RuntimeSearchField(
-                        label = stringResource(R.string.memory_editor_max_value),
-                        value = second,
-                        active = activeField == RuntimeInputField.SECOND,
-                        onClick = { activeField = RuntimeInputField.SECOND },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                RuntimeTypeMenu(type = type, onType = { type = it }, modifier = Modifier.fillMaxWidth())
-                RuntimeScopeMenu(scope = scope, onScope = { scope = it }, modifier = Modifier.fillMaxWidth())
-                RuntimeExpressionHint(expression = expression, type = type)
-                RuntimeSearchKeypad(
-                    allowGroup = activeField == RuntimeInputField.FIRST,
-                    onToken = { token ->
-                        if (activeField == RuntimeInputField.FIRST) {
-                            query = runtimeInsert(query, token)
-                        } else {
-                            second = runtimeInsert(second, token)
-                        }
-                    },
-                    onBackspace = {
-                        if (activeField == RuntimeInputField.FIRST) query = runtimeBackspace(query)
-                        else second = runtimeBackspace(second)
-                    },
-                    onMove = { delta ->
-                        if (activeField == RuntimeInputField.FIRST) query = runtimeMove(query, delta)
-                        else second = runtimeMove(second, delta)
-                    },
-                    onClear = {
-                        if (activeField == RuntimeInputField.FIRST) query = TextFieldValue("", TextRange(0))
-                        else second = TextFieldValue("", TextRange(0))
-                    },
-                )
-            }
+                },
+            )
         },
+        textScrollable = false,
         confirmButton = {
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -821,58 +872,64 @@ private fun RuntimeUnknownSearchDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.memory_editor_search_unknown_values)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (!hasUnknownSession) {
-                    RuntimeTypeMenu(type = type, onType = { type = it }, modifier = Modifier.fillMaxWidth())
-                    RuntimeScopeMenu(scope = scope, onScope = { scope = it }, modifier = Modifier.fillMaxWidth())
-                } else {
-                    RuntimeRelativeMenu(predicate = predicate, onPredicate = { predicate = it })
-                    RuntimeTypeMenu(
-                        type = state.requestedType,
-                        onType = {},
-                        enabled = false,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    if (needsValue) {
-                        RuntimeSearchField(
-                            label = stringResource(R.string.memory_editor_search_hint),
-                            value = first,
-                            active = activeField == RuntimeInputField.FIRST,
-                            onClick = { activeField = RuntimeInputField.FIRST },
+            RuntimeSearchDialogBody(
+                showKeypad = hasUnknownSession && needsValue,
+                controls = {
+                    if (!hasUnknownSession) {
+                        RuntimeTypeMenu(type = type, onType = { type = it }, modifier = Modifier.fillMaxWidth())
+                        RuntimeScopeMenu(scope = scope, onScope = { scope = it }, modifier = Modifier.fillMaxWidth())
+                    } else {
+                        RuntimeRelativeMenu(predicate = predicate, onPredicate = { predicate = it })
+                        RuntimeTypeMenu(
+                            type = state.requestedType,
+                            onType = {},
+                            enabled = false,
                             modifier = Modifier.fillMaxWidth(),
                         )
-                        if (needsSecond) {
+                        if (needsValue) {
                             RuntimeSearchField(
-                                label = stringResource(R.string.memory_editor_max_value),
-                                value = second,
-                                active = activeField == RuntimeInputField.SECOND,
-                                onClick = { activeField = RuntimeInputField.SECOND },
+                                label = stringResource(R.string.memory_editor_search_hint),
+                                value = first,
+                                active = activeField == RuntimeInputField.FIRST,
+                                onClick = { activeField = RuntimeInputField.FIRST },
                                 modifier = Modifier.fillMaxWidth(),
                             )
+                            if (needsSecond) {
+                                RuntimeSearchField(
+                                    label = stringResource(R.string.memory_editor_max_value),
+                                    value = second,
+                                    active = activeField == RuntimeInputField.SECOND,
+                                    onClick = { activeField = RuntimeInputField.SECOND },
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
                         }
-                        RuntimeSearchKeypad(
-                            allowGroup = false,
-                            onToken = { token ->
-                                if (activeField == RuntimeInputField.FIRST) first = runtimeInsert(first, token)
-                                else second = runtimeInsert(second, token)
-                            },
-                            onBackspace = {
-                                if (activeField == RuntimeInputField.FIRST) first = runtimeBackspace(first)
-                                else second = runtimeBackspace(second)
-                            },
-                            onMove = { delta ->
-                                if (activeField == RuntimeInputField.FIRST) first = runtimeMove(first, delta)
-                                else second = runtimeMove(second, delta)
-                            },
-                            onClear = {
-                                if (activeField == RuntimeInputField.FIRST) first = TextFieldValue("", TextRange(0))
-                                else second = TextFieldValue("", TextRange(0))
-                            },
-                        )
                     }
-                }
-            }
+                },
+                keypad = {
+                    RuntimeSearchKeypad(
+                        allowGroup = false,
+                        onToken = { token ->
+                            if (activeField == RuntimeInputField.FIRST) first = runtimeInsert(first, token)
+                            else second = runtimeInsert(second, token)
+                        },
+                        onBackspace = {
+                            if (activeField == RuntimeInputField.FIRST) first = runtimeBackspace(first)
+                            else second = runtimeBackspace(second)
+                        },
+                        onMove = { delta ->
+                            if (activeField == RuntimeInputField.FIRST) first = runtimeMove(first, delta)
+                            else second = runtimeMove(second, delta)
+                        },
+                        onClear = {
+                            if (activeField == RuntimeInputField.FIRST) first = TextFieldValue("", TextRange(0))
+                            else second = TextFieldValue("", TextRange(0))
+                        },
+                    )
+                },
+            )
         },
+        textScrollable = false,
         confirmButton = {
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -1205,7 +1262,8 @@ private fun RuntimeSearchKeypad(
     onMove: (Int) -> Unit,
     onClear: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    Column(verticalArrangement = Arrangement.spacedBy(if (landscape) 2.dp else 4.dp)) {
         RuntimeKeypadRow {
             RuntimeKeypadButton("1") { onToken("1") }
             RuntimeKeypadButton("2") { onToken("2") }
@@ -1258,10 +1316,11 @@ private fun androidx.compose.foundation.layout.RowScope.RuntimeKeypadButton(
     weight: Float = 1f,
     onClick: () -> Unit,
 ) {
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     OutlinedButton(
         onClick = onClick,
         enabled = enabled,
-        modifier = Modifier.weight(weight).sizeIn(minHeight = 42.dp),
+        modifier = Modifier.weight(weight).sizeIn(minHeight = if (landscape) 34.dp else 42.dp),
     ) {
         Text(label, fontFamily = FontFamily.Monospace, maxLines = 1)
     }
