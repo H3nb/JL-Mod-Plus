@@ -47,4 +47,16 @@ struct ResultAddressPage {
                                    std::size_t limit,
                                    ResultAddressPage &page);
 
+// Translate the legacy offset-style page contract to a ResultCursor without walking every prior
+// result. Whole blocks are skipped using their unique-address counts; only the containing 4 KiB
+// block needs bitmap enumeration. This is the transitional bridge for production Known paging.
+[[nodiscard]] bool seekAddressOffset(const ResultStore &store,
+                                     std::uint64_t addressOffset,
+                                     ResultCursor &cursor);
+
+[[nodiscard]] bool readAddressPageAtOffset(const ResultStore &store,
+                                           std::uint64_t addressOffset,
+                                           std::size_t limit,
+                                           ResultAddressPage &page);
+
 } // namespace jlmem::v2
