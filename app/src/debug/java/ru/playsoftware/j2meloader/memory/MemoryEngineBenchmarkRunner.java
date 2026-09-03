@@ -135,6 +135,31 @@ public final class MemoryEngineBenchmarkRunner {
 				snapshot == null ? Bundle.EMPTY : snapshot);
 	}
 
+	/**
+	 * Validate the current legacy explicit-type Known result using the exact native parser that the
+	 * production engine uses. Query strings stop here: the diagnostics AIDL and v2 shadow receive
+	 * only canonical primitive bits, so there is no second Java/shadow parser to drift over time.
+	 */
+	public static Bundle validateKnownShadowQuery(IMemoryEngineDiagnostics diagnostics,
+	                                              int valueType,
+	                                              int predicate,
+	                                              String first,
+	                                              String second) throws RemoteException {
+		if (diagnostics == null) {
+			throw new IllegalArgumentException("Diagnostics service is required");
+		}
+		long[] plan = NativeMemoryEngine.canonicalKnownPlan(
+				valueType, predicate, first, second);
+		if (plan == null || plan.length != 4 ||
+				plan[0] < Integer.MIN_VALUE || plan[0] > Integer.MAX_VALUE ||
+				plan[1] < Integer.MIN_VALUE || plan[1] > Integer.MAX_VALUE) {
+			throw new IllegalArgumentException(
+					"Known query could not be canonicalized by the production native parser");
+		}
+		return diagnostics.validateKnownShadowPlan(
+				(int) plan[0], (int) plan[1], plan[2], plan[3]);
+	}
+
 	private static void updateMax(AtomicLong target, long value) {
 		long bounded = Math.max(0L, value);
 		while (true) {

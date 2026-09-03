@@ -91,6 +91,14 @@ final class NativeMemoryEngine {
 
 	static native long[] inspect(long candidateId, int radius);
 
+	/**
+	 * Returns [valueType, predicate, firstBits, secondBits] using the exact native parser that owns
+	 * the production legacy Known search. This is migration/diagnostics metadata only: v2 never
+	 * reparses query strings independently.
+	 */
+	static native long[] canonicalKnownPlan(int valueType, int predicate,
+	                                       String first, String second);
+
 	static native long[] v2ShadowKnownEqual(int valueType, long initialBits, long currentBits);
 
 	/**
