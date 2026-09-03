@@ -1,0 +1,102 @@
+name: Retry Memory Editor device feedback
+
+on:
+  push:
+    branches:
+      - ci/memory-editor-stack-f914594
+    paths:
+      - .github/workflows/retry-memory-editor-device-feedback.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: ci/memory-editor-stack-f914594
+          persist-credentials: true
+          submodules: recursive
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+        with:
+          java-version: '21'
+          distribution: temurin
+      - uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545
+      - name: Install Android SDK platform 37
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          sdkmanager_path="$sdk_root/cmdline-tools/latest/bin/sdkmanager"
+          if [[ ! -x "$sdkmanager_path" ]]; then
+            sdkmanager_path="$(find "$sdk_root/cmdline-tools" -type f -path '*/bin/sdkmanager' -print -quit 2>/dev/null || true)"
+          fi
+          "$sdkmanager_path" 'platforms;android-37.0'
+      - name: Restore shared debug keystore
+        shell: bash
+        env:
+          ANDROID_DEBUG_KEYSTORE_BASE64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$ANDROID_DEBUG_KEYSTORE_BASE64" | base64 --decode > debug.keystore
+          chmod 600 debug.keystore
+      - name: Reapply device feedback patch and fix root call site
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          workflow = Path('.github/workflows/patch-memory-editor-device-feedback.yml').read_text()
+          begin = "          python3 - <<'PY'\n"
+          start = workflow.index(begin) + len(begin)
+          end = workflow.index("\n          PY", start)
+          embedded = workflow[start:end]
+          script = '\n'.join(
+              line[10:] if line.startswith('          ') else line
+              for line in embedded.splitlines()
+          )
+          exec(compile(script, '<device-feedback-patch>', 'exec'), {})
+
+          path = Path('app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryEditorRuntimeCompose.kt')
+          text = path.read_text()
+          old = '''                    RuntimeMemoryTab.SEARCH_RESULTS -> RuntimeSearchResultsTab(
+                        state = state.copy(watchTab = false),
+                        actions = actions,
+                        modifier = Modifier.weight(1f),
+                    )'''
+          new = '''                    RuntimeMemoryTab.SEARCH_RESULTS -> RuntimeSearchResultsTab(
+                        state = state.copy(watchTab = false),
+                        actions = actions,
+                        onInspectSelected = { tab = RuntimeMemoryTab.INSPECTOR },
+                        modifier = Modifier.weight(1f),
+                    )'''
+          if old in text:
+              text = text.replace(old, new, 1)
+          elif new not in text:
+              raise SystemExit('RuntimeSearchResultsTab root call site could not be repaired')
+          path.write_text(text)
+          print('Reapplied device patch with root inspect callback.')
+          PY
+      - name: Validate and regenerate Memory Editor screenshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace :app:testEmulatorDebugUnitTest :app:updateEmulatorDebugScreenshotTest :app:assembleEmulatorDebug
+      - name: Commit source and screenshot references
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main app/src/screenshotTestEmulatorDebug/reference
+          if git diff --cached --quiet; then
+            echo 'No source changes generated.'
+            exit 1
+          fi
+          git commit -m "Polish Memory Editor device interaction"
+          git push origin HEAD:ci/memory-editor-stack-f914594
