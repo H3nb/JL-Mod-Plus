@@ -50,10 +50,17 @@ class MemoryEditorComposeController(
     private var bubbleEnabled = false
     private var activeOperationId = 0L
     @Volatile private var connectionGeneration = 0
-    private var pendingFreezeAfterEdit: PendingFreezeAfterEdit? = null
+    private var pendingEditFollowUp: PendingEditFollowUp? = null
     private var pendingInspectorRefresh: PendingInspectorRefresh? = null
 
-    private data class PendingFreezeAfterEdit(val candidateId: Long, val value: String)
+    private data class PendingEditFollowUp(
+        val id: Long,
+        val type: Int,
+        val value: String,
+        val addToWatch: Boolean,
+        val freezeAfter: Boolean,
+        val resultGroup: Boolean,
+    )
     private data class PendingInspectorRefresh(val candidateId: Long, val radius: Int)
 
     private val runtimeListener = MemoryRuntimeSession.Listener { endedToken ->
@@ -91,7 +98,7 @@ class MemoryEditorComposeController(
                 if (resultCode == MemoryEngineContract.RESULT_TARGET_LOST ||
                     resultCode == MemoryEngineContract.RESULT_NO_SESSION
                 ) {
-                    pendingFreezeAfterEdit = null
+                    pendingEditFollowUp = null
                     pendingInspectorRefresh = null
                     activeOperationId = 0L
                     if (!runtimeStillActive()) {
@@ -111,9 +118,9 @@ class MemoryEditorComposeController(
                 }
 
                 val succeeded = resultCode == MemoryEngineContract.RESULT_OK
-                val freezeFollowUp = if (succeeded) pendingFreezeAfterEdit else null
+                val editFollowUp = if (succeeded) pendingEditFollowUp else null
                 val inspectorFollowUp = if (succeeded) pendingInspectorRefresh else null
-                pendingFreezeAfterEdit = null
+                pendingEditFollowUp = null
                 pendingInspectorRefresh = null
                 activeOperationId = 0L
                 state = state.copy(
@@ -130,7 +137,7 @@ class MemoryEditorComposeController(
                 )
 
                 when {
-                    freezeFollowUp != null -> freezeAfterEdit(freezeFollowUp)
+                    editFollowUp != null -> completeEditFlow(editFollowUp)
                     inspectorFollowUp != null -> {
                         reloadState()
                         inspectCandidate(inspectorFollowUp.candidateId, inspectorFollowUp.radius)
@@ -262,7 +269,7 @@ class MemoryEditorComposeController(
         post {
             service = null
             activeOperationId = 0L
-            pendingFreezeAfterEdit = null
+            pendingEditFollowUp = null
             pendingInspectorRefresh = null
             if (!runtimeStillActive()) {
                 destroy()
@@ -514,7 +521,14 @@ class MemoryEditorComposeController(
 
     override fun editSelected(value: String, type: Int) {
         val id = state.selected.singleOrNull() ?: return
-        launchOperation { engine, token -> engine.editCandidates(token, longArrayOf(id), value.trim()) }
+        val resultGroup = !state.watchTab
+        launchOperation { engine, token ->
+            if (resultGroup) {
+                engine.editResultGroups(token, longArrayOf(id), type, value.trim())
+            } else {
+                engine.editCandidates(token, longArrayOf(id), value.trim())
+            }
+        }
     }
 
     override fun editSelectedWithOptions(
@@ -524,20 +538,47 @@ class MemoryEditorComposeController(
         freezeAfter: Boolean,
     ) {
         val id = state.selected.singleOrNull() ?: return
-        pendingFreezeAfterEdit = if (freezeAfter) PendingFreezeAfterEdit(id, value.trim()) else null
-        launchOperation { engine, token -> engine.editCandidates(token, longArrayOf(id), value.trim()) }
+        val resultGroup = !state.watchTab
+        val replacement = value.trim()
+        pendingEditFollowUp = if (addToWatch || freezeAfter) {
+            PendingEditFollowUp(id, type, replacement, addToWatch, freezeAfter, resultGroup)
+        } else {
+            null
+        }
+        launchOperation { engine, token ->
+            if (resultGroup) {
+                engine.editResultGroups(token, longArrayOf(id), type, replacement)
+            } else {
+                engine.editCandidates(token, longArrayOf(id), replacement)
+            }
+        }
     }
 
-    private fun freezeAfterEdit(followUp: PendingFreezeAfterEdit) {
-        launchOperation { engine, token ->
-            // setFreeze() also promotes an unwatched CandidateId into Watch inside the engine.
-            engine.setFreeze(
-                token,
-                longArrayOf(followUp.candidateId),
-                MemoryEngineContract.FREEZE_LOCK,
-                followUp.value,
-                "",
-            )
+    private fun completeEditFlow(followUp: PendingEditFollowUp) {
+        when {
+            followUp.freezeAfter && followUp.resultGroup -> launchOperation { engine, token ->
+                engine.setFreezeResultGroups(
+                    token,
+                    longArrayOf(followUp.id),
+                    followUp.type,
+                    MemoryEngineContract.FREEZE_LOCK,
+                    followUp.value,
+                    "",
+                )
+            }
+            followUp.freezeAfter -> launchOperation { engine, token ->
+                engine.setFreeze(
+                    token,
+                    longArrayOf(followUp.id),
+                    MemoryEngineContract.FREEZE_LOCK,
+                    followUp.value,
+                    "",
+                )
+            }
+            followUp.addToWatch && followUp.resultGroup -> launchOperation { engine, token ->
+                engine.addWatchResultGroups(token, longArrayOf(followUp.id), followUp.type)
+            }
+            else -> reloadState()
         }
     }
 

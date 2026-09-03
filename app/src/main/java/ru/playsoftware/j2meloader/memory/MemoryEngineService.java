@@ -358,6 +358,42 @@ public final class MemoryEngineService extends Service {
 		}
 
 		@Override
+		public long addWatchResultGroups(long token, long[] resultIds, int valueType) {
+			return enqueue(token, false, 0, () -> {
+				if (!MemoryEngineContract.isCandidateType(valueType)) {
+					return MemoryEngineContract.RESULT_INVALID_REQUEST;
+				}
+				long[] candidateIds = NativeMemoryEngine.expandResultGroups(resultIds, valueType);
+				if (candidateIds == null || candidateIds.length == 0) {
+					return MemoryEngineContract.RESULT_INVALID_REQUEST;
+				}
+				int ready = refreshWithRecovery(token, candidateIds);
+				if (ready != MemoryEngineContract.RESULT_OK) return ready;
+				refreshCachedBindings(candidateIds);
+				int result = NativeMemoryEngine.pin(candidateIds, true);
+				if (result == MemoryEngineContract.RESULT_OK) {
+					gcBindings.markCandidatesValidated(candidateIds, currentGcCount(token));
+				}
+				return result;
+			});
+		}
+
+		@Override
+		public long setFreezeResultGroups(long token, long[] resultIds, int valueType, int mode,
+		                                  String firstValue, String secondValue) {
+			return enqueue(token, false, 0, () -> {
+				if (!MemoryEngineContract.isCandidateType(valueType)) {
+					return MemoryEngineContract.RESULT_INVALID_REQUEST;
+				}
+				long[] candidateIds = NativeMemoryEngine.expandResultGroups(resultIds, valueType);
+				if (candidateIds == null || candidateIds.length == 0) {
+					return MemoryEngineContract.RESULT_INVALID_REQUEST;
+				}
+				return setFreezeRecords(token, candidateIds, mode, firstValue, secondValue);
+			});
+		}
+
+		@Override
 		public long editInspectorValue(long token, long anchorCandidateId, int relativeOffset,
 		                               int valueType, long expectedBits,
 		                               String replacementValue) {

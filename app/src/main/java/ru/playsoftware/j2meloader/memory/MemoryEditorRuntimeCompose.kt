@@ -429,7 +429,8 @@ private fun RuntimeSearchResultsTab(
     if (editDialog && selectedRow != null) {
         RuntimeEditDialog(
             value = selectedRow.valueText,
-            type = selectedRow.primaryType,
+            initialType = selectedRow.primaryType,
+            types = selectedRow.aliasTypes,
             writeSupported = state.writeSupported,
             actions = actions,
             onDismiss = { editDialog = false },
@@ -466,8 +467,10 @@ private fun RuntimeResultRow(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
+                    val aliasCount = row.aliasTypes.size
                     Text(
-                        runtimeTypeShort(row.primaryType),
+                        if (aliasCount > 1) "${runtimeTypeShort(row.primaryType)} +${aliasCount - 1}"
+                        else runtimeTypeShort(row.primaryType),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                     )
@@ -577,7 +580,8 @@ private fun RuntimeWatchTab(
     if (editDialog && selectedRow != null) {
         RuntimeEditDialog(
             value = selectedRow.valueText,
-            type = selectedRow.type,
+            initialType = selectedRow.type,
+            types = listOf(selectedRow.type),
             writeSupported = state.writeSupported,
             actions = actions,
             onDismiss = { editDialog = false },
@@ -912,12 +916,21 @@ private fun RuntimeUnknownSearchDialog(
 @Composable
 private fun RuntimeEditDialog(
     value: String,
-    type: Int,
+    initialType: Int,
+    types: List<Int>,
     writeSupported: Boolean,
     actions: MemoryEditorActions,
     onDismiss: () -> Unit,
 ) {
-    var replacement by remember(value, type) { mutableStateOf(value) }
+    val editableTypes = remember(types, initialType) {
+        types.filter { MemoryEngineContract.isCandidateType(it) }
+            .distinct()
+            .ifEmpty { listOf(initialType) }
+    }
+    var type by remember(value, initialType, editableTypes) {
+        mutableIntStateOf(initialType.takeIf { it in editableTypes } ?: editableTypes.first())
+    }
+    var replacement by remember(value, initialType, editableTypes) { mutableStateOf(value) }
     var freeze by remember { mutableStateOf(false) }
     val spec = MemoryInputSpec.forType(type)
 
@@ -931,11 +944,24 @@ private fun RuntimeEditDialog(
                 sideDockInLandscape = true,
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    RuntimeEditTypeMenu(
+                        type = type,
+                        types = editableTypes,
+                        onType = { selectedType ->
+                            if (selectedType != type) {
+                                type = selectedType
+                                replacement = if (selectedType == initialType) value else ""
+                            }
+                        },
+                    )
                     MemoryValueInput(
                         value = replacement,
                         onValueChange = { replacement = it },
                         spec = spec,
-                        label = stringResource(R.string.memory_editor_current_value),
+                        label = stringResource(
+                            if (type == initialType) R.string.memory_editor_current_value
+                            else R.string.memory_editor_replacement,
+                        ),
                         modifier = Modifier.fillMaxWidth(),
                         activateOnStart = true,
                     )
@@ -1303,6 +1329,22 @@ private fun RuntimeTypeMenu(
         onChange = onType,
         modifier = modifier,
         enabled = enabled,
+    )
+}
+
+@Composable
+private fun RuntimeEditTypeMenu(
+    type: Int,
+    types: List<Int>,
+    onType: (Int) -> Unit,
+) {
+    RuntimeChoiceMenu(
+        value = type,
+        values = types.toIntArray(),
+        label = { runtimeTypeName(it) },
+        onChange = onType,
+        modifier = Modifier.fillMaxWidth(),
+        enabled = types.size > 1,
     )
 }
 
