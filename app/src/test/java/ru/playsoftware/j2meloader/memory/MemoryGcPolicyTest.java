@@ -31,11 +31,46 @@ public class MemoryGcPolicyTest {
 	}
 
 	@Test
-	public void passiveReadRecoversOnlyAfterFastPathFailsAndEpochIsStale() {
-		assertFalse(MemoryGcPolicy.shouldRecoverRead(MemoryEngineContract.RESULT_OK, true));
-		assertFalse(MemoryGcPolicy.shouldRecoverRead(
-				MemoryEngineContract.RESULT_IDENTITY_UNSAFE, false));
-		assertTrue(MemoryGcPolicy.shouldRecoverRead(
-				MemoryEngineContract.RESULT_IDENTITY_UNSAFE, true));
+	public void successfulIdentityAwareRefreshDoesNotNeedFreshRangesForOldGcAlone() {
+		assertFalse(MemoryGcPolicy.shouldRetryReadWithFreshRanges(
+				MemoryEngineContract.RESULT_OK,
+				MemoryEngineContract.RESULT_OK,
+				false));
+	}
+
+	@Test
+	public void identityOrRangeFailureRetriesEvenWithoutGcStatistics() {
+		assertTrue(MemoryGcPolicy.shouldRetryReadWithFreshRanges(
+				MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+				MemoryEngineContract.RESULT_OK,
+				false));
+		assertTrue(MemoryGcPolicy.shouldRetryReadWithFreshRanges(
+				MemoryEngineContract.RESULT_TARGET_LOST,
+				MemoryEngineContract.RESULT_OK,
+				false));
+		assertTrue(MemoryGcPolicy.shouldRetryReadWithFreshRanges(
+				MemoryEngineContract.RESULT_OK,
+				MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+				false));
+	}
+
+	@Test
+	public void gcMovingDuringFastVerificationForcesFreshRangeRetry() {
+		assertTrue(MemoryGcPolicy.shouldRetryReadWithFreshRanges(
+				MemoryEngineContract.RESULT_OK,
+				MemoryEngineContract.RESULT_OK,
+				true));
+	}
+
+	@Test
+	public void unrelatedErrorsDoNotTriggerExpensiveRangeRetry() {
+		assertFalse(MemoryGcPolicy.shouldRetryReadWithFreshRanges(
+				MemoryEngineContract.RESULT_INVALID_REQUEST,
+				MemoryEngineContract.RESULT_OK,
+				false));
+		assertFalse(MemoryGcPolicy.shouldRetryReadWithFreshRanges(
+				MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+				MemoryEngineContract.RESULT_OK,
+				false));
 	}
 }
