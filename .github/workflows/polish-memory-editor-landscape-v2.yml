@@ -1,0 +1,603 @@
+name: Polish Memory Editor landscape and Inspector v2
+
+on:
+  push:
+    branches:
+      - ci/memory-editor-stack-f914594
+    paths:
+      - .github/workflows/polish-memory-editor-landscape-v2.yml
+
+permissions:
+  contents: write
+
+jobs:
+  polish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: ci/memory-editor-stack-f914594
+          persist-credentials: true
+          submodules: recursive
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
+        with:
+          java-version: '21'
+          distribution: temurin
+      - uses: gradle/actions/setup-gradle@0f4528296b4bc09e8ae0fc7be30185a4ab435545
+      - name: Install Android SDK platform 37
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          sdkmanager_path="$sdk_root/cmdline-tools/latest/bin/sdkmanager"
+          if [[ ! -x "$sdkmanager_path" ]]; then
+            sdkmanager_path="$(find "$sdk_root/cmdline-tools" -type f -path '*/bin/sdkmanager' -print -quit 2>/dev/null || true)"
+          fi
+          "$sdkmanager_path" 'platforms;android-37.0'
+      - name: Restore shared debug keystore
+        shell: bash
+        env:
+          ANDROID_DEBUG_KEYSTORE_BASE64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$ANDROID_DEBUG_KEYSTORE_BASE64" | base64 --decode > debug.keystore
+          chmod 600 debug.keystore
+      - name: Apply structural UI fixes and cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_between(text: str, start: str, end: str, replacement: str) -> str:
+              i = text.index(start)
+              j = text.index(end, i)
+              return text[:i] + replacement.rstrip() + "\n\n" + text[j:]
+
+          runtime_path = Path('app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryEditorRuntimeCompose.kt')
+          runtime = runtime_path.read_text()
+          runtime = runtime.replace('import androidx.compose.foundation.layout.PaddingValues\n', '')
+          if 'import androidx.compose.material3.VerticalDivider\n' not in runtime:
+              runtime = runtime.replace(
+                  'import androidx.compose.material3.TextButton\n',
+                  'import androidx.compose.material3.TextButton\nimport androidx.compose.material3.VerticalDivider\n',
+                  1,
+              )
+
+          root = '''@Composable
+internal fun MemoryEditorRuntimeRoot(
+    state: MemoryEditorUiState,
+    actions: MemoryEditorActions,
+) {
+    if (!state.visible) return
+
+    val initialTab = when {
+        state.inspector != null -> RuntimeMemoryTab.INSPECTOR
+        state.watchTab -> RuntimeMemoryTab.WATCH
+        else -> RuntimeMemoryTab.SEARCH_RESULTS
+    }
+    var tab by remember(state.runtimeToken) { mutableStateOf(initialTab) }
+    val selectedId = state.selected.singleOrNull()
+
+    LaunchedEffect(tab) {
+        when (tab) {
+            RuntimeMemoryTab.SEARCH_RESULTS -> actions.setWatchTab(false)
+            RuntimeMemoryTab.WATCH -> actions.setWatchTab(true)
+            RuntimeMemoryTab.INSPECTOR -> Unit
+        }
+    }
+    LaunchedEffect(tab, selectedId, state.inspector?.candidateId, state.inspectorLoading) {
+        if (tab != RuntimeMemoryTab.INSPECTOR || selectedId == null || state.inspectorLoading) {
+            return@LaunchedEffect
+        }
+        if (state.inspector?.candidateId != selectedId) {
+            actions.closeInspector()
+            actions.inspectCandidate(selectedId)
+        }
+    }
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.04f)),
+        contentAlignment = Alignment.Center,
+    ) {
+        val landscape = maxWidth > maxHeight
+        val panelModifier = if (landscape) {
+            Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 6.dp)
+        } else {
+            Modifier
+                .fillMaxWidth(0.94f)
+                .fillMaxHeight(0.90f)
+                .widthIn(max = 720.dp)
+        }
+        Surface(
+            modifier = panelModifier,
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            tonalElevation = 3.dp,
+            shadowElevation = 8.dp,
+        ) {
+            if (landscape) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    RuntimeMemoryHeader(actions)
+                    Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                        RuntimeMemoryTabRail(
+                            tab = tab,
+                            results = state.resultCount,
+                            watches = state.watches.size,
+                            onTab = { tab = it },
+                            modifier = Modifier.width(176.dp).fillMaxHeight(),
+                        )
+                        VerticalDivider()
+                        Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                            if (state.busy) RuntimeOperationStrip(state, actions)
+                            state.message?.takeIf(String::isNotBlank)?.let {
+                                RuntimeMessage(it, state.messageIsError)
+                            }
+                            RuntimeMemoryTabContent(
+                                tab = tab,
+                                state = state,
+                                actions = actions,
+                                onInspectSelected = { tab = RuntimeMemoryTab.INSPECTOR },
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                    }
+                }
+            } else {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    RuntimeMemoryHeader(actions)
+                    RuntimeMemoryTabs(
+                        tab = tab,
+                        results = state.resultCount,
+                        watches = state.watches.size,
+                        onTab = { tab = it },
+                    )
+                    if (state.busy) RuntimeOperationStrip(state, actions)
+                    state.message?.takeIf(String::isNotBlank)?.let {
+                        RuntimeMessage(it, state.messageIsError)
+                    }
+                    RuntimeMemoryTabContent(
+                        tab = tab,
+                        state = state,
+                        actions = actions,
+                        onInspectSelected = { tab = RuntimeMemoryTab.INSPECTOR },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RuntimeMemoryTabContent(
+    tab: RuntimeMemoryTab,
+    state: MemoryEditorUiState,
+    actions: MemoryEditorActions,
+    onInspectSelected: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    when (tab) {
+        RuntimeMemoryTab.SEARCH_RESULTS -> RuntimeSearchResultsTab(
+            state = state.copy(watchTab = false),
+            actions = actions,
+            onInspectSelected = onInspectSelected,
+            modifier = modifier,
+        )
+        RuntimeMemoryTab.WATCH -> RuntimeWatchTab(
+            state = state.copy(watchTab = true),
+            actions = actions,
+            modifier = modifier,
+        )
+        RuntimeMemoryTab.INSPECTOR -> RuntimeInspectorTab(
+            state = state,
+            actions = actions,
+            modifier = modifier,
+        )
+    }
+}
+
+@Composable
+private fun RuntimeMemoryTabRail(
+    tab: RuntimeMemoryTab,
+    results: Long,
+    watches: Int,
+    onTab: (RuntimeMemoryTab) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        FilterChip(
+            selected = tab == RuntimeMemoryTab.SEARCH_RESULTS,
+            onClick = { onTab(RuntimeMemoryTab.SEARCH_RESULTS) },
+            leadingIcon = { Icon(painterResource(R.drawable.ic_memory_editor_search), null) },
+            label = {
+                Text(
+                    if (results > 0L) "${stringResource(R.string.memory_editor_search_tab)} · ${compactCount(results)}"
+                    else stringResource(R.string.memory_editor_search_tab),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        FilterChip(
+            selected = tab == RuntimeMemoryTab.WATCH,
+            onClick = { onTab(RuntimeMemoryTab.WATCH) },
+            leadingIcon = { Icon(painterResource(R.drawable.ic_memory_editor_watch), null) },
+            label = {
+                Text(
+                    if (watches > 0) "${stringResource(R.string.memory_editor_watch)} · $watches"
+                    else stringResource(R.string.memory_editor_watch),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        FilterChip(
+            selected = tab == RuntimeMemoryTab.INSPECTOR,
+            onClick = { onTab(RuntimeMemoryTab.INSPECTOR) },
+            leadingIcon = { Icon(painterResource(R.drawable.ic_memory_editor_inspector), null) },
+            label = {
+                Text(
+                    stringResource(R.string.memory_editor_inspector),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}'''
+          runtime = replace_between(
+              runtime,
+              '@Composable\ninternal fun MemoryEditorRuntimeRoot(',
+              '@Composable\nprivate fun RuntimeMemoryHeader(',
+              root,
+          )
+
+          message_block = '''@Composable
+private fun RuntimeMessage(message: String, isError: Boolean) {
+    val container = if (isError) MaterialTheme.colorScheme.errorContainer
+    else MaterialTheme.colorScheme.secondaryContainer
+    val content = if (isError) MaterialTheme.colorScheme.onErrorContainer
+    else MaterialTheme.colorScheme.onSecondaryContainer
+    Surface(color = container.copy(alpha = 0.82f)) {
+        Text(
+            message,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = content,
+        )
+    }
+}'''
+          runtime = replace_between(
+              runtime,
+              '@Composable\nprivate fun RuntimeMessage(',
+              '@Composable\nprivate fun RuntimeSearchResultsTab(',
+              message_block,
+          )
+
+          # Replace only the first child toolbar inside Search/Results with a wrapping deterministic
+          # FlowRow. No weighted spacer means optional Undo can never create a giant gap.
+          tab_start = runtime.index('private fun RuntimeSearchResultsTab(')
+          col_start = runtime.index('    Column(modifier = modifier.fillMaxWidth()) {', tab_start)
+          toolbar_start = runtime.index('        Row(', col_start)
+          toolbar_end = runtime.index('        HorizontalDivider()', toolbar_start)
+          toolbar = runtime[toolbar_start:toolbar_end]
+          toolbar = toolbar.replace(
+              '''        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {''',
+              '''        FlowRow(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {''',
+              1,
+          )
+          if toolbar.startswith('        Row('):
+              raise SystemExit('Search toolbar Row replacement failed')
+          toolbar = toolbar.replace('            Spacer(Modifier.weight(1f))\n', '')
+          runtime = runtime[:toolbar_start] + toolbar + runtime[toolbar_end:]
+
+          inspector = '''@Composable
+private fun RuntimeInspectorTab(
+    state: MemoryEditorUiState,
+    actions: MemoryEditorActions,
+    modifier: Modifier = Modifier,
+) {
+    var editCell by remember { mutableStateOf<MemoryInspectorCell?>(null) }
+    when {
+        state.inspectorLoading -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator()
+                Spacer(Modifier.height(12.dp))
+                Text(stringResource(R.string.memory_editor_inspector_loading))
+            }
+        }
+        state.inspector == null -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(
+                stringResource(R.string.memory_editor_inspector_empty),
+                modifier = Modifier.padding(24.dp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        else -> {
+            val snapshot = state.inspector
+            val cells = remember(snapshot) { buildInspectorCells(snapshot) }
+            Column(modifier = modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            snapshot.label.ifBlank { runtimeTypeShort(snapshot.type) },
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            "${stringResource(R.string.memory_editor_anchor)} 0x${snapshot.anchorAddress.toString(16).uppercase(Locale.ROOT)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = FontFamily.Monospace,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    RuntimeActionIcon(
+                        R.drawable.ic_restart_alt,
+                        R.string.memory_editor_refresh_snapshot,
+                        enabled = !state.busy,
+                    ) { actions.inspectCandidate(snapshot.candidateId) }
+                }
+                HorizontalDivider()
+                if (cells.isEmpty()) {
+                    Box(
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            stringResource(R.string.memory_editor_inspector_empty),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                } else {
+                    BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                        val anchorIndex = cells.indexOfFirst { it.offset == 0 }.coerceAtLeast(0)
+                        val visibleRows = (maxHeight.value / 49f).toInt().coerceAtLeast(1)
+                        val firstIndex = inspectorCenteredFirstIndex(
+                            cellCount = cells.size,
+                            anchorIndex = anchorIndex,
+                            visibleRows = visibleRows,
+                        )
+                        val listState = rememberLazyListState()
+                        LaunchedEffect(snapshot.candidateId, snapshot.anchorAddress, firstIndex) {
+                            listState.scrollToItem(firstIndex)
+                        }
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.fillMaxSize(),
+                            userScrollEnabled = cells.size > visibleRows,
+                        ) {
+                            items(cells, key = { it.offset }) { cell ->
+                                Surface(
+                                    color = if (cell.offset == 0) {
+                                        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.58f)
+                                    } else Color.Transparent,
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .combinedClickable(
+                                                enabled = state.writeSupported && !state.busy,
+                                                onClick = { editCell = cell },
+                                                onLongClick = { editCell = cell },
+                                            )
+                                            .heightIn(min = 48.dp)
+                                            .padding(horizontal = 12.dp, vertical = 7.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Text(
+                                            if (cell.offset >= 0) "+${cell.offset}" else cell.offset.toString(),
+                                            modifier = Modifier.widthIn(min = 48.dp),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontFamily = FontFamily.Monospace,
+                                        )
+                                        Text(
+                                            "0x${cell.address.toString(16).uppercase(Locale.ROOT)}",
+                                            modifier = Modifier.weight(1f),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontFamily = FontFamily.Monospace,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                        Text(
+                                            cell.value,
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontFamily = FontFamily.Monospace,
+                                        )
+                                    }
+                                }
+                                HorizontalDivider()
+                            }
+                        }
+                    }
+                }
+            }
+
+            editCell?.let { cell ->
+                RuntimeInspectorEditDialog(
+                    snapshot = snapshot,
+                    cell = cell,
+                    actions = actions,
+                    onDismiss = { editCell = null },
+                )
+            }
+        }
+    }
+}
+
+internal fun inspectorCenteredFirstIndex(
+    cellCount: Int,
+    anchorIndex: Int,
+    visibleRows: Int,
+): Int {
+    if (cellCount <= 0) return 0
+    val rows = visibleRows.coerceAtLeast(1)
+    val safeAnchor = anchorIndex.coerceIn(0, cellCount - 1)
+    val maxFirst = (cellCount - rows).coerceAtLeast(0)
+    return (safeAnchor - rows / 2).coerceIn(0, maxFirst)
+}'''
+          runtime = replace_between(
+              runtime,
+              '@Composable\nprivate fun RuntimeInspectorTab(',
+              'internal data class MemoryInspectorCell(',
+              inspector,
+          )
+          runtime_path.write_text(runtime)
+
+          models_path = Path('app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryEditorModels.kt')
+          models = models_path.read_text()
+          if 'val messageIsError:' not in models:
+              models = models.replace(
+                  '    val message: String? = null,\n',
+                  '    val message: String? = null,\n    val messageIsError: Boolean = false,\n',
+                  1,
+              )
+          for start, end in [
+              ('internal data class MemoryGroupDraft(', '/** Bounded read-only snapshot'),
+              ('internal fun commonTypesForSelection(', 'internal object MemoryResultPageParser'),
+              ('internal fun newSearchPredicate(', 'internal data class MemoryEditorUiState('),
+          ]:
+              if start in models:
+                  i = models.index(start)
+                  j = models.index(end, i)
+                  models = models[:i] + models[j:]
+          models_path.write_text(models)
+
+          controller_path = Path('app/src/main/java/ru/playsoftware/j2meloader/memory/MemoryEditorController.kt')
+          controller = controller_path.read_text()
+          start = controller.index('                val engineSuccessMessage = message?.takeIf(String::isNotBlank)')
+          end = controller.index('\n\n                when {', start)
+          completion = '''                val engineSuccessMessage = message?.takeIf(String::isNotBlank)
+                val uiSuccessMessage = if (succeeded && feedback?.kind == OperationFeedbackKind.NEXT_SCAN) {
+                    "${context.getString(R.string.memory_editor_next_scan)}: ${feedback.resultCountBefore} → $resultCount"
+                } else null
+                val displayMessage = when {
+                    !succeeded -> operationMessage(resultCode, message)
+                    uiSuccessMessage != null -> uiSuccessMessage
+                    searchOperation -> null
+                    else -> engineSuccessMessage
+                }
+                state = state.copy(
+                    busy = false,
+                    searching = false,
+                    scanBytesScanned = 0L,
+                    scanBytesTotal = 0L,
+                    resultCount = resultCount,
+                    message = displayMessage,
+                    messageIsError = !succeeded && displayMessage != null,
+                )'''
+          controller = controller[:start] + completion + controller[end:]
+          controller = controller.replace(
+              '        state = state.copy(inspectorLoading = true, inspector = null, message = null)\n',
+              '        state = state.copy(inspectorLoading = true, inspector = null, message = null, messageIsError = false)\n',
+              1,
+          )
+          controller = controller.replace(
+              '                        message = operationMessage(result, bundle.getString(MemoryEngineContract.KEY_MESSAGE)),\n',
+              '                        message = operationMessage(result, bundle.getString(MemoryEngineContract.KEY_MESSAGE)),\n                        messageIsError = true,\n',
+              1,
+          )
+          controller_path.write_text(controller)
+
+          test_path = Path('app/src/test/java/ru/playsoftware/j2meloader/memory/MemoryInspectorRuntimeTest.kt')
+          test = test_path.read_text()
+          if 'inspectorCenteringClampsWithoutSyntheticBlankSpace' not in test:
+              addition = '''
+    @Test fun inspectorCenteringClampsWithoutSyntheticBlankSpace() {
+        assertEquals(0, inspectorCenteredFirstIndex(cellCount = 0, anchorIndex = 0, visibleRows = 8))
+        assertEquals(0, inspectorCenteredFirstIndex(cellCount = 5, anchorIndex = 2, visibleRows = 8))
+        assertEquals(6, inspectorCenteredFirstIndex(cellCount = 20, anchorIndex = 10, visibleRows = 8))
+        assertEquals(12, inspectorCenteredFirstIndex(cellCount = 20, anchorIndex = 19, visibleRows = 8))
+    }
+'''
+              marker = '\n    @Test fun inspectorFloatViewUsesLittleEndianSnapshotBytes()'
+              test = test.replace(marker, addition + marker, 1)
+          test_path.write_text(test)
+
+          screenshot_path = Path('app/src/screenshotTest/kotlin/ru/playsoftware/j2meloader/memory/MemoryEditorScreenshotTest.kt')
+          screenshot = screenshot_path.read_text()
+          if 'MemoryEditorLandscapeMessageToolbarScreenshot' not in screenshot:
+              screenshot += '''
+
+@PreviewTest
+@Preview(name = "Memory Editor landscape message toolbar", widthDp = 720, heightDp = 360, showBackground = true)
+@Composable
+fun MemoryEditorLandscapeMessageToolbarScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        MemoryEditorRuntimeRoot(
+            state = MemoryEditorUiState(
+                visible = true,
+                connected = true,
+                supported = true,
+                writeSupported = true,
+                runtimeToken = 1,
+                resultCount = 7,
+                results = previewRows,
+                selected = setOf(3),
+                sessionStage = MemorySessionStage.CANDIDATES,
+                canUndo = true,
+                message = "Pindai berikutnya: 9 → 7",
+                messageIsError = false,
+            ),
+            actions = NoOpMemoryEditorActions,
+        )
+    }
+}
+'''
+          screenshot_path.write_text(screenshot)
+
+          print('Applied structural landscape/Inspector/UI-state polish.')
+          PY
+
+          if grep -R -n -E 'MemoryGroupDraft|commonTypesForSelection|newSearchPredicate' app/src/main app/src/test app/src/screenshotTest 2>/dev/null; then
+            echo 'Dead Memory Editor helper survived cleanup.' >&2
+            exit 1
+          fi
+      - name: Validate and regenerate Memory Editor screenshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace \
+            :app:testEmulatorDebugUnitTest \
+            :app:updateEmulatorDebugScreenshotTest \
+            :app:validateEmulatorDebugScreenshotTest \
+            :app:assembleEmulatorDebug
+          unexpected="$(git diff --name-only -- 'app/src/screenshotTestEmulatorDebug/reference/**' | grep -v '^app/src/screenshotTestEmulatorDebug/reference/ru/playsoftware/j2meloader/memory/MemoryEditorScreenshotTestKt/' || true)"
+          if [[ -n "$unexpected" ]]; then
+            echo 'Unexpected screenshot baseline changes:' >&2
+            printf '%s\n' "$unexpected" >&2
+            exit 1
+          fi
+      - name: Commit polished source and remove temporary workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f \
+            .github/workflows/polish-memory-editor-landscape.yml \
+            .github/workflows/polish-memory-editor-landscape-v2.yml
+          git config user.name "Hendra Bara'langi"
+          git config user.email '93023716+H3nb@users.noreply.github.com'
+          git add -A
+          git commit -m 'Polish Memory Editor landscape and Inspector UX'
+          git push origin HEAD:ci/memory-editor-stack-f914594
