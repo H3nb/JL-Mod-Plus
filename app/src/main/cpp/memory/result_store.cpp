@@ -333,16 +333,18 @@ bool ResultStore::clearSlot(std::size_t blockIndex, ResultPlane plane,
     if (header.counts[index] == 0U || typedCount_ == 0U) {
         return false;
     }
-    auto words = planeWords(blockIndex, plane);
-    if (words.empty()) {
-        return false;
-    }
+    const ResultStore &self = *this;
+    const auto currentWords = self.planeWords(blockIndex, plane);
     const std::size_t wordIndex = slot / 64U;
     const std::uint64_t mask = std::uint64_t{1U} << (slot % 64U);
-    if ((words[wordIndex] & mask) == 0U) {
+    if (wordIndex >= currentWords.size() || (currentWords[wordIndex] & mask) == 0U) {
         return false;
     }
 
+    auto words = planeWords(blockIndex, plane);
+    if (wordIndex >= words.size()) {
+        return false;
+    }
     words[wordIndex] &= ~mask;
     --header.counts[index];
     --typedCount_;
@@ -400,25 +402,24 @@ bool ResultStore::recountBlock(std::size_t blockIndex) noexcept {
     if (blockIndex >= headers_.size()) {
         return false;
     }
-    ResultBlockHeader &header = headers_[blockIndex];
+    const ResultBlockHeader &header = headers_[blockIndex];
     std::uint64_t oldTyped = 0U;
     std::uint64_t newTyped = 0U;
-    const ResultStore &self = *this;
+    std::array<std::uint16_t, kResultPlaneCount> newCounts{};
     for (const std::uint16_t count : header.counts) {
         oldTyped += count;
     }
     for (std::size_t index = 0U; index < kResultPlaneCount; ++index) {
         const ResultPlane plane = planeFromIndex(index);
         if ((header.activeMask & planeBit(plane)) == 0U) {
-            header.counts[index] = 0U;
             continue;
         }
-        const auto words = self.planeWords(blockIndex, plane);
+        const auto words = planeWords(blockIndex, plane);
         if (words.size() != planeWordCount(plane)) {
             return false;
         }
-        header.counts[index] = popcountWords(words);
-        newTyped += header.counts[index];
+        newCounts[index] = popcountWords(words);
+        newTyped += newCounts[index];
     }
 
     const std::uint16_t oldUnique = header.uniqueAddressCount;
@@ -427,7 +428,10 @@ bool ResultStore::recountBlock(std::size_t blockIndex) noexcept {
         uniqueAddressCount_ < oldUnique) {
         return false;
     }
-    header.uniqueAddressCount = newUnique;
+
+    ResultBlockHeader &mutableHeader = headers_[blockIndex];
+    mutableHeader.counts = newCounts;
+    mutableHeader.uniqueAddressCount = newUnique;
     typedCount_ = typedCount_ - oldTyped + newTyped;
     uniqueAddressCount_ = uniqueAddressCount_ - oldUnique + newUnique;
     return true;
