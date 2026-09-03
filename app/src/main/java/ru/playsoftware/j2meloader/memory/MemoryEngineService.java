@@ -734,13 +734,17 @@ public final class MemoryEngineService extends Service {
 		int result = operation.run();
 		if (result != MemoryEngineContract.RESULT_OK) return result;
 		long gcAfter = currentGcCount(token);
-		if (MemoryEngineContract.didGcCountChange(gcBefore, gcAfter)) {
+		boolean addressSnapshotBaseline =
+				stage == MemoryEngineContract.SEARCH_SESSION_UNKNOWN_BASELINE;
+		if (MemoryGcPolicy.firstSearchRequiresStableEpoch(
+				addressSnapshotBaseline, gcBefore, gcAfter)) {
 			NativeMemoryEngine.clearSearch();
 			clearSearchSession();
-			return MemoryEngineContract.RESULT_GC_RACE;
+			return MemoryEngineContract.RESULT_GC_BASELINE_INVALIDATED;
 		}
 		resetSearchSession(stage, mode, requestedType, scope,
-				MemoryEngineContract.latestKnownGcCount(gcBefore, gcAfter));
+				MemoryGcPolicy.publishedSearchEpoch(
+						addressSnapshotBaseline, gcBefore, gcAfter));
 		return MemoryEngineContract.RESULT_OK;
 	}
 
@@ -842,7 +846,6 @@ public final class MemoryEngineService extends Service {
 			return MemoryEngineContract.RESULT_IDENTITY_UNSAFE;
 		}
 		long gcBefore = currentGcCount(token);
-		boolean revalidationRequired = gcBindings.candidatesNeedRevalidation(candidateIds, gcBefore);
 		int result = refreshWithRecovery(token, candidateIds);
 		if (result != MemoryEngineContract.RESULT_OK) return result;
 		int bindingComparison = compareRefreshedBindings(before);
@@ -851,9 +854,7 @@ public final class MemoryEngineService extends Service {
 		if (MemoryEngineContract.didGcCountChange(gcBefore, gcAfter)) {
 			return MemoryEngineContract.RESULT_GC_RACE;
 		}
-		return revalidationRequired
-				? MemoryEngineContract.RESULT_GC_REVALIDATED
-				: MemoryEngineContract.RESULT_OK;
+		return MemoryEngineContract.RESULT_OK;
 	}
 
 	private int revalidateAgainIfGcMoved(long token, long[] candidateIds) {
@@ -1134,7 +1135,6 @@ public final class MemoryEngineService extends Service {
 					epochChanged = true;
 					break;
 				}
-			}
 		}
 		if (epochChanged) {
 			int recovery = refreshWithRecovery(token, activeIds);
@@ -1353,16 +1353,15 @@ public final class MemoryEngineService extends Service {
 	private static String gcSafetyMessage(int result) {
 		return switch (result) {
 			case MemoryEngineContract.RESULT_GC_REVALIDATED ->
-					"The selected CandidateId binding was revalidated and its current address was " +
-							"refreshed. The binding may have relocated, including after Java GC. Review the " +
-							"refreshed value/address and retry; no write was performed.";
+					"The selected value moved to a new verified address. Memory Editor updated the " +
+							"CandidateId binding. Review the refreshed value/address and retry; no write " +
+							"was performed.";
 			case MemoryEngineContract.RESULT_GC_RACE ->
 					"Java GC occurred during the operation. The result or write could not be safely " +
 							"confirmed, so no automatic retry was attempted.";
 			case MemoryEngineContract.RESULT_GC_BASELINE_INVALIDATED ->
-					"Java GC occurred after this baseline/revision was captured. Moving objects make " +
-							"address-based relative comparison unsafe; capture a new baseline or use a " +
-							"known-value search.";
+					"The address-based baseline is no longer safe to compare because managed memory " +
+							"moved during or after capture. Capture a new baseline to continue.";
 			default -> null;
 		};
 	}
