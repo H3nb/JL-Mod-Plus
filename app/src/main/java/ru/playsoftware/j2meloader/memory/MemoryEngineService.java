@@ -1383,6 +1383,7 @@ public final class MemoryEngineService extends Service {
 				} catch (RemoteException ignored) {
 					// RemoteCallbackList removes dead clients.
 				}
+			}
 		} finally {
 			callbacks.finishBroadcast();
 		}
@@ -1555,6 +1556,7 @@ public final class MemoryEngineService extends Service {
 				} catch (RemoteException ignored) {
 					// RemoteCallbackList removes dead clients.
 				}
+			}
 		} finally {
 			callbacks.finishBroadcast();
 		}
