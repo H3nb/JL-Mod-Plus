@@ -77,7 +77,9 @@ template <typename T, ResultPlane Plane, KnownPredicate Predicate>
 
         for (std::uintptr_t chunkStart = range.start; chunkStart < range.end;) {
             if (cancelled && cancelled()) {
-                error = "V2 known scan cancelled";
+                // Keep the established shadow diagnostic token while this kernel is shared by
+                // shadow and staged-production callers; the caller decides whether it is visible.
+                error = "V2 shadow scan cancelled";
                 return false;
             }
             const std::size_t remaining =
