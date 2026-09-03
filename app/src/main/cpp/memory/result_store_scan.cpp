@@ -56,7 +56,7 @@ template <typename T, ResultPlane Plane, KnownPredicate Predicate>
             return true;
         }
         if (!scratch.empty() && !next.appendNonEmptyBlock(scratchBase, scratch)) {
-            error = "ResultStore rejected an ordered v2 shadow block";
+            error = "ResultStore rejected an ordered v2 result block";
             return false;
         }
         scratch.reset();
@@ -70,14 +70,14 @@ template <typename T, ResultPlane Plane, KnownPredicate Predicate>
             continue;
         }
         if (previousRangeEnd != 0U && range.start < previousRangeEnd) {
-            error = "V2 shadow scan ranges are not address ordered";
+            error = "V2 scan ranges are not address ordered";
             return false;
         }
         previousRangeEnd = range.end;
 
         for (std::uintptr_t chunkStart = range.start; chunkStart < range.end;) {
             if (cancelled && cancelled()) {
-                error = "V2 shadow scan cancelled";
+                error = "V2 known scan cancelled";
                 return false;
             }
             const std::size_t remaining =
@@ -86,7 +86,7 @@ template <typename T, ResultPlane Plane, KnownPredicate Predicate>
                     std::min(remaining, kRemoteReadChunkSize);
             buffer.resize(chunkSize);
             if (!read(chunkStart, buffer.data(), chunkSize)) {
-                error = "Target range changed during v2 shadow scan";
+                error = "Target range changed during v2 known scan";
                 return false;
             }
             nextStats.bytesScanned += static_cast<std::uint64_t>(chunkSize);
@@ -118,7 +118,7 @@ template <typename T, ResultPlane Plane, KnownPredicate Predicate>
                             static_cast<std::size_t>(address - blockBase);
                     const std::size_t slot = byteOffset / kWidth;
                     if (!scratch.set(Plane, slot)) {
-                        error = "ResultStore rejected a v2 shadow result slot";
+                        error = "ResultStore rejected a v2 result slot";
                         return false;
                     }
                     nextStats.addressFingerprint = appendAddressFingerprint(
@@ -201,8 +201,11 @@ bool scanKnownExplicit(const std::vector<ScanRange> &ranges,
                        ResultStore &out,
                        KnownScanStats &stats,
                        std::string &error) {
-    if (!read || request.plane == ResultPlane::Count) {
-        error = "Invalid explicit-type known shadow request";
+    // Validate at the kernel boundary as well as at JNI/service call sites. ResultStore is moving
+    // toward production ownership, so future internal callers must not be able to bypass canonical
+    // primitive-width, finite-floating, or ordered-Between invariants.
+    if (!read || !validKnownQueryPlan(request)) {
+        error = "Invalid explicit-type known scan request";
         return false;
     }
     switch (request.plane) {
@@ -230,7 +233,7 @@ bool scanKnownExplicit(const std::vector<ScanRange> &ranges,
     case ResultPlane::Count:
         break;
     }
-    error = "Invalid explicit-type known shadow request";
+    error = "Invalid explicit-type known scan request";
     return false;
 }
 
