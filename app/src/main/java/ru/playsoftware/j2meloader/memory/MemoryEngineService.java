@@ -1135,6 +1135,7 @@ public final class MemoryEngineService extends Service {
 					epochChanged = true;
 					break;
 				}
+			}
 		}
 		if (epochChanged) {
 			int recovery = refreshWithRecovery(token, activeIds);
@@ -1382,7 +1383,6 @@ public final class MemoryEngineService extends Service {
 				} catch (RemoteException ignored) {
 					// RemoteCallbackList removes dead clients.
 				}
-			}
 		} finally {
 			callbacks.finishBroadcast();
 		}
@@ -1555,7 +1555,6 @@ public final class MemoryEngineService extends Service {
 				} catch (RemoteException ignored) {
 					// RemoteCallbackList removes dead clients.
 				}
-			}
 		} finally {
 			callbacks.finishBroadcast();
 		}
