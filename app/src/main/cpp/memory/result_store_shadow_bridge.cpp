@@ -20,6 +20,7 @@
 #include <memory>
 #include <mutex>
 #include <new>
+#include <string>
 #include <vector>
 
 namespace {
@@ -36,6 +37,8 @@ constexpr jint kTypeInt = 4;
 constexpr jint kTypeLong = 5;
 constexpr jint kTypeFloat = 6;
 constexpr jint kTypeDouble = 7;
+constexpr jint kPredicateEqual = 0;
+constexpr jint kPredicateBetween = 6;
 constexpr jlong kShadowOperationScan = 0;
 constexpr jlong kShadowOperationRefine = 1;
 constexpr std::size_t kMaxTargetRuns = 4'096U;
@@ -95,6 +98,17 @@ ShadowSession gShadowSession;
     default:
         return false;
     }
+}
+
+[[nodiscard]] bool knownPredicate(
+        jint predicate,
+        jlmem::v2::KnownPredicate &known) noexcept {
+    if (predicate < kPredicateEqual || predicate > kPredicateBetween) {
+        return false;
+    }
+    known = static_cast<jlmem::v2::KnownPredicate>(
+            static_cast<std::uint8_t>(predicate));
+    return true;
 }
 
 [[nodiscard]] bool shadowTargetMatches(const ShadowTarget &target) noexcept {
@@ -186,6 +200,104 @@ jlongArray shadowResult(JNIEnv *env, jint status, jlong operation,
                                 values.data());
     }
     return result;
+}
+
+jlongArray runShadowKnown(JNIEnv *env, jint valueType, jint rawPredicate,
+                          jlong scanFirstBits, jlong scanSecondBits,
+                          jlong refineFirstBits, jlong refineSecondBits) {
+    if (valueType == kTypeAuto) {
+        return shadowResult(env, kInvalidRequest, kShadowOperationScan,
+                            scanFirstBits);
+    }
+    jlmem::v2::ResultPlane plane = jlmem::v2::ResultPlane::Int;
+    jlmem::v2::KnownPredicate predicate = jlmem::v2::KnownPredicate::Equal;
+    if (!resultPlane(valueType, plane) ||
+        !knownPredicate(rawPredicate, predicate)) {
+        return shadowResult(env, kInvalidRequest, kShadowOperationScan,
+                            scanFirstBits);
+    }
+
+    ShadowTarget target;
+    std::shared_ptr<const jlmem::v2::ResultStore> priorStore;
+    {
+        std::lock_guard<std::mutex> lock(gShadowMutex);
+        target = gShadowTarget;
+        if (gShadowSession.store != nullptr &&
+            gShadowSession.targetGeneration == target.generation &&
+            gShadowSession.plane == plane) {
+            priorStore = gShadowSession.store;
+        }
+    }
+    if (target.pid <= 0 || target.runtimeToken == 0 || target.ranges.empty()) {
+        return shadowResult(env, kTargetLost, kShadowOperationScan,
+                            scanFirstBits);
+    }
+
+    const bool refining = priorStore != nullptr;
+    const jlong firstBits = refining ? refineFirstBits : scanFirstBits;
+    const jlong secondBits = refining ? refineSecondBits : scanSecondBits;
+    const jlong operation =
+            refining ? kShadowOperationRefine : kShadowOperationScan;
+    jlmem::v2::ResultStore store;
+    jlmem::v2::KnownScanStats stats;
+    std::string error;
+    bool ok;
+    if (refining) {
+        ok = jlmem::v2::refineKnownExplicit(
+                *priorStore,
+                {plane, predicate, static_cast<std::uint64_t>(firstBits),
+                 static_cast<std::uint64_t>(secondBits)},
+                [&](std::uintptr_t address, void *output, std::size_t size) {
+                    return readExact(target.pid, address, output, size);
+                },
+                [&]() { return !shadowTargetMatches(target); },
+                store, stats, error);
+        if (ok && !finishRefineStats(store, plane, stats)) {
+            return shadowResult(env, kInvalidRequest, operation, firstBits);
+        }
+    } else {
+        ok = jlmem::v2::scanKnownExplicit(
+                target.ranges,
+                {plane, predicate, static_cast<std::uint64_t>(firstBits),
+                 static_cast<std::uint64_t>(secondBits)},
+                [&](std::uintptr_t address, void *output, std::size_t size) {
+                    return readExact(target.pid, address, output, size);
+                },
+                [&]() { return !shadowTargetMatches(target); },
+                store, stats, error);
+        if (ok && !validateCursor(store, plane, stats)) {
+            return shadowResult(env, kInvalidRequest, operation, firstBits);
+        }
+    }
+    if (!ok) {
+        const bool targetChanged =
+                error == "V2 shadow scan cancelled" ||
+                error == "V2 shadow refine cancelled" ||
+                error.rfind("Target range", 0U) == 0U ||
+                error.rfind("Target block", 0U) == 0U;
+        return shadowResult(env, targetChanged ? kTargetLost
+                                              : kInvalidRequest,
+                            operation, firstBits);
+    }
+    if (!shadowTargetMatches(target)) {
+        return shadowResult(env, kTargetLost, operation, firstBits);
+    }
+
+    auto published =
+            std::make_shared<jlmem::v2::ResultStore>(std::move(store));
+    {
+        std::lock_guard<std::mutex> lock(gShadowMutex);
+        if (gShadowTarget.generation != target.generation ||
+            gShadowTarget.pid != target.pid ||
+            gShadowTarget.runtimeToken != target.runtimeToken ||
+            (refining && gShadowSession.store != priorStore)) {
+            return shadowResult(env, kTargetLost, operation, firstBits);
+        }
+        gShadowSession.targetGeneration = target.generation;
+        gShadowSession.plane = plane;
+        gShadowSession.store = std::move(published);
+    }
+    return shadowResult(env, kOk, operation, firstBits, &stats);
 }
 
 } // namespace
@@ -288,97 +400,30 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearV2ShadowTarget(
 }
 
 extern "C" JNIEXPORT jlongArray JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_v2ShadowKnown(
+        JNIEnv *env, jclass, jint valueType, jint predicate,
+        jlong firstBits, jlong secondBits) {
+    try {
+        // Inputs are already canonical typed bits from the authoritative parser. Never parse query
+        // strings in this shadow path.
+        return runShadowKnown(env, valueType, predicate,
+                              firstBits, secondBits, firstBits, secondBits);
+    } catch (const std::bad_alloc &) {
+        return shadowResult(env, kResourceLimit, kShadowOperationScan, firstBits);
+    } catch (...) {
+        return shadowResult(env, kInvalidRequest, kShadowOperationScan, firstBits);
+    }
+}
+
+extern "C" JNIEXPORT jlongArray JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_v2ShadowKnownEqual(
         JNIEnv *env, jclass, jint valueType, jlong initialBits, jlong currentBits) {
     try {
-        if (valueType == kTypeAuto) {
-            return shadowResult(env, kInvalidRequest, kShadowOperationScan,
-                                initialBits);
-        }
-        jlmem::v2::ResultPlane plane = jlmem::v2::ResultPlane::Int;
-        if (!resultPlane(valueType, plane)) {
-            return shadowResult(env, kInvalidRequest, kShadowOperationScan,
-                                initialBits);
-        }
-
-        ShadowTarget target;
-        std::shared_ptr<const jlmem::v2::ResultStore> priorStore;
-        {
-            std::lock_guard<std::mutex> lock(gShadowMutex);
-            target = gShadowTarget;
-            if (gShadowSession.store != nullptr &&
-                gShadowSession.targetGeneration == target.generation &&
-                gShadowSession.plane == plane) {
-                priorStore = gShadowSession.store;
-            }
-        }
-        if (target.pid <= 0 || target.runtimeToken == 0 || target.ranges.empty()) {
-            return shadowResult(env, kTargetLost, kShadowOperationScan,
-                                initialBits);
-        }
-
-        const bool refining = priorStore != nullptr;
-        const jlong expectedBits = refining ? currentBits : initialBits;
-        const jlong operation =
-                refining ? kShadowOperationRefine : kShadowOperationScan;
-        jlmem::v2::ResultStore store;
-        jlmem::v2::KnownScanStats stats;
-        std::string error;
-        bool ok;
-        if (refining) {
-            ok = jlmem::v2::refineKnownEqualExplicit(
-                    *priorStore,
-                    {plane, static_cast<std::uint64_t>(expectedBits)},
-                    [&](std::uintptr_t address, void *output, std::size_t size) {
-                        return readExact(target.pid, address, output, size);
-                    },
-                    [&]() { return !shadowTargetMatches(target); },
-                    store, stats, error);
-            if (ok && !finishRefineStats(store, plane, stats)) {
-                return shadowResult(env, kInvalidRequest, operation, expectedBits);
-            }
-        } else {
-            ok = jlmem::v2::scanKnownEqualExplicit(
-                    target.ranges,
-                    {plane, static_cast<std::uint64_t>(expectedBits)},
-                    [&](std::uintptr_t address, void *output, std::size_t size) {
-                        return readExact(target.pid, address, output, size);
-                    },
-                    [&]() { return !shadowTargetMatches(target); },
-                    store, stats, error);
-            if (ok && !validateCursor(store, plane, stats)) {
-                return shadowResult(env, kInvalidRequest, operation, expectedBits);
-            }
-        }
-        if (!ok) {
-            const bool targetChanged =
-                    error == "V2 shadow scan cancelled" ||
-                    error == "V2 shadow refine cancelled" ||
-                    error.rfind("Target range", 0U) == 0U ||
-                    error.rfind("Target block", 0U) == 0U;
-            return shadowResult(env, targetChanged ? kTargetLost
-                                                  : kInvalidRequest,
-                                operation, expectedBits);
-        }
-        if (!shadowTargetMatches(target)) {
-            return shadowResult(env, kTargetLost, operation, expectedBits);
-        }
-
-        auto published =
-                std::make_shared<jlmem::v2::ResultStore>(std::move(store));
-        {
-            std::lock_guard<std::mutex> lock(gShadowMutex);
-            if (gShadowTarget.generation != target.generation ||
-                gShadowTarget.pid != target.pid ||
-                gShadowTarget.runtimeToken != target.runtimeToken ||
-                (refining && gShadowSession.store != priorStore)) {
-                return shadowResult(env, kTargetLost, operation, expectedBits);
-            }
-            gShadowSession.targetGeneration = target.generation;
-            gShadowSession.plane = plane;
-            gShadowSession.store = std::move(published);
-        }
-        return shadowResult(env, kOk, operation, expectedBits, &stats);
+        // Compatibility diagnostics infer the first Equal threshold from the legacy first result
+        // and the later threshold from the refined result. Both routes still exercise the generic
+        // canonical-plan kernel used by v2ShadowKnown().
+        return runShadowKnown(env, valueType, kPredicateEqual,
+                              initialBits, 0, currentBits, 0);
     } catch (const std::bad_alloc &) {
         return shadowResult(env, kResourceLimit, kShadowOperationScan, 0);
     } catch (...) {
