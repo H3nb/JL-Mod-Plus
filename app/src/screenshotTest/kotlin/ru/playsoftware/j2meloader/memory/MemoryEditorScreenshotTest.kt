@@ -95,7 +95,6 @@ fun MemoryEditorPortraitScreenshot() {
     JLModPlusTheme(darkTheme = false) {
         MemoryEditorRuntimeRoot(
             state = MemoryEditorUiState(
-                bubbleEnabled = true,
                 visible = true,
                 connected = true,
                 supported = true,
@@ -117,7 +116,6 @@ fun MemoryEditorLandscapeWatchScreenshot() {
     JLModPlusTheme(darkTheme = true) {
         MemoryEditorRuntimeRoot(
             state = MemoryEditorUiState(
-                bubbleEnabled = true,
                 visible = true,
                 connected = true,
                 supported = true,
@@ -138,7 +136,6 @@ fun MemoryEditorLandscapeResultsScreenshot() {
     JLModPlusTheme(darkTheme = false) {
         MemoryEditorRuntimeRoot(
             state = MemoryEditorUiState(
-                bubbleEnabled = true,
                 visible = true,
                 connected = true,
                 supported = true,
@@ -160,7 +157,6 @@ fun MemoryEditorShortLandscapeSearchScreenshot() {
     JLModPlusTheme(darkTheme = false) {
         MemoryEditorRuntimeRoot(
             state = MemoryEditorUiState(
-                bubbleEnabled = true,
                 visible = true,
                 connected = true,
                 supported = true,
@@ -180,7 +176,6 @@ fun MemoryEditorLandscapeKnownSearchDialogScreenshot() {
     JLModPlusTheme(darkTheme = false) {
         RuntimeKnownSearchDialog(
             state = MemoryEditorUiState(
-                bubbleEnabled = true,
                 visible = true,
                 connected = true,
                 supported = true,
@@ -212,7 +207,6 @@ fun MemoryInspectorCompactScreenshot() {
     JLModPlusTheme(darkTheme = false) {
         MemoryEditorRuntimeRoot(
             state = MemoryEditorUiState(
-                bubbleEnabled = true,
                 visible = true,
                 connected = true,
                 supported = true,
@@ -232,7 +226,6 @@ fun MemoryInspectorWideScreenshot() {
     JLModPlusTheme(darkTheme = false) {
         MemoryEditorRuntimeRoot(
             state = MemoryEditorUiState(
-                bubbleEnabled = true,
                 visible = true,
                 connected = true,
                 supported = true,

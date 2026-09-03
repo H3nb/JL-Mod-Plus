@@ -77,7 +77,8 @@ public final class MemoryEngineBenchmarkRunner {
 
 		IMemoryEngineCallback callback = new IMemoryEngineCallback.Stub() {
 			@Override
-			public void onOperationProgress(long operationId, long scannedBytes, long totalBytes) {
+			public void onOperationProgress(long operationId, long scannedBytes, long totalBytes,
+			                                boolean searchOperation) {
 				long expected = expectedOperationId.get();
 				if (expected != 0L && operationId != expected) return;
 				updateMax(maxScanned, scannedBytes);
@@ -86,7 +87,7 @@ public final class MemoryEngineBenchmarkRunner {
 
 			@Override
 			public void onOperationFinished(long operationId, int code, long count,
-			                                String nativeMessage, boolean passiveRefresh) {
+			                                String nativeMessage, boolean passiveRefresh, boolean searchOperation) {
 				if (passiveRefresh) return;
 				long expected = expectedOperationId.get();
 				if (expected == 0L) {

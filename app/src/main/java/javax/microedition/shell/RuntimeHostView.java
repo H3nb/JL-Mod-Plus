@@ -24,8 +24,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
-import androidx.appcompat.widget.AppCompatImageButton;
+import androidx.appcompat.widget.AppCompatImageView;
 import androidx.compose.ui.platform.ComposeView;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewGroupCompat;
@@ -44,6 +45,8 @@ public final class RuntimeHostView {
 	public final OverlayView overlay;
 	/** Small Activity-owned bubble. It is a normal View in :midlet, not a system overlay. */
 	public final View memoryEditorBubble;
+	public final View memoryEditorBubbleIcon;
+	public final TextView memoryEditorBubbleProgress;
 	public final ComposeView notices;
 
 	public RuntimeHostView(Context context) {
@@ -75,12 +78,8 @@ public final class RuntimeHostView {
 
 		// The bubble deliberately stays a plain Android View. A second Compose tree would be wasteful
 		// for one icon and would add avoidable allocations in the MIDlet process.
-		AppCompatImageButton bubble = new AppCompatImageButton(context);
-		bubble.setImageResource(R.drawable.ic_memory_editor_search);
+		FrameLayout bubble = new FrameLayout(context);
 		bubble.setContentDescription(context.getString(R.string.memory_editor_bubble));
-		bubble.setImageTintList(ColorStateList.valueOf(
-				resolveThemeColor(context, android.R.attr.textColorPrimaryInverse, Color.WHITE)));
-		bubble.setPadding(dp(context, 13), dp(context, 13), dp(context, 13), dp(context, 13));
 		bubble.setAlpha(0.90f);
 		bubble.setElevation(dp(context, 6));
 		bubble.setVisibility(View.GONE);
@@ -88,11 +87,33 @@ public final class RuntimeHostView {
 		bubbleBackground.setShape(GradientDrawable.OVAL);
 		bubbleBackground.setColor(LegacyThemeColors.accent(context));
 		bubble.setBackground(bubbleBackground);
+
+		AppCompatImageView bubbleIcon = new AppCompatImageView(context);
+		bubbleIcon.setImageResource(R.drawable.ic_memory_editor_search);
+		bubbleIcon.setImageTintList(ColorStateList.valueOf(
+				resolveThemeColor(context, android.R.attr.textColorPrimaryInverse, Color.WHITE)));
+		bubbleIcon.setPadding(dp(context, 14), dp(context, 14), dp(context, 14), dp(context, 14));
+		bubble.addView(bubbleIcon, new FrameLayout.LayoutParams(
+				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+		TextView bubbleProgress = new TextView(context);
+		bubbleProgress.setGravity(Gravity.CENTER);
+		bubbleProgress.setTextColor(resolveThemeColor(
+				context, android.R.attr.textColorPrimaryInverse, Color.WHITE));
+		bubbleProgress.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
+		bubbleProgress.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+		bubbleProgress.setIncludeFontPadding(false);
+		bubbleProgress.setVisibility(View.GONE);
+		bubble.addView(bubbleProgress, new FrameLayout.LayoutParams(
+				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
 		FrameLayout.LayoutParams bubbleParams = new FrameLayout.LayoutParams(
-				dp(context, 52), dp(context, 52), Gravity.END | Gravity.CENTER_VERTICAL);
+				dp(context, 56), dp(context, 56), Gravity.END | Gravity.CENTER_VERTICAL);
 		bubbleParams.setMarginEnd(dp(context, 12));
 		root.addView(bubble, bubbleParams);
 		memoryEditorBubble = bubble;
+		memoryEditorBubbleIcon = bubbleIcon;
+		memoryEditorBubbleProgress = bubbleProgress;
 
 		notices = new ComposeView(context);
 		FrameLayout.LayoutParams noticeParams = new FrameLayout.LayoutParams(

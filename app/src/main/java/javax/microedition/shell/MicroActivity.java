@@ -420,7 +420,8 @@ public class MicroActivity extends AppCompatActivity {
 	private MemoryEditorBubbleController memoryEditorController() {
 		if (memoryEditorController == null) {
 			memoryEditorController = new MemoryEditorBubbleController(
-					this, binding.memoryEditorBubble);
+					this, binding.memoryEditorBubble, binding.memoryEditorBubbleIcon,
+					binding.memoryEditorBubbleProgress);
 		}
 		return memoryEditorController;
 	}

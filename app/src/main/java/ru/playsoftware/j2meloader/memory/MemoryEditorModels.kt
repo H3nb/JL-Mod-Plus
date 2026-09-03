@@ -195,7 +195,6 @@ internal fun newSearchPredicate(selectedPredicate: Int): Int =
         ?: MemoryEngineContract.PREDICATE_EQUAL
 
 internal data class MemoryEditorUiState(
-    val bubbleEnabled: Boolean = false,
     val visible: Boolean = false,
     val connecting: Boolean = false,
     val connected: Boolean = false,
@@ -273,31 +272,4 @@ internal interface MemoryEditorActions {
         value: String,
         secondValue: String,
     ) = Unit
-}
-
-/**
- * Legacy typed group parser retained for unit tests and compatibility with saved/debug input.
- * The production UI now uses a visual group builder instead of requiring this mini-language.
- */
-internal fun parseGroup(input: String): Pair<IntArray, Array<String>>? {
-    val parts = input.split(',').map(String::trim).filter(String::isNotEmpty)
-    if (parts.size !in 2..MemoryEngineContract.MAX_GROUP_VALUES) return null
-    val types = IntArray(parts.size)
-    val values = Array(parts.size) { "" }
-    for ((index, part) in parts.withIndex()) {
-        val separator = part.indexOf(':')
-        if (separator <= 0 || separator == part.lastIndex) return null
-        types[index] = when (part.substring(0, separator).trim().lowercase()) {
-            "byte", "i8" -> MemoryEngineContract.TYPE_BYTE
-            "short", "i16", "word" -> MemoryEngineContract.TYPE_SHORT
-            "char", "u16", "uword", "word unsigned" -> MemoryEngineContract.TYPE_CHAR
-            "int", "i32", "dword" -> MemoryEngineContract.TYPE_INT
-            "long", "i64", "qword" -> MemoryEngineContract.TYPE_LONG
-            "float", "f32" -> MemoryEngineContract.TYPE_FLOAT
-            "double", "f64" -> MemoryEngineContract.TYPE_DOUBLE
-            else -> return null
-        }
-        values[index] = part.substring(separator + 1).trim()
-    }
-    return types to values
 }

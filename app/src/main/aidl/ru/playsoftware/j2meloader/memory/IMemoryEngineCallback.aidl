@@ -10,8 +10,9 @@ package ru.playsoftware.j2meloader.memory;
 
 /** Publishes completion of an asynchronous Memory Editor engine operation. */
 oneway interface IMemoryEngineCallback {
-    void onOperationProgress(long operationId, long scannedBytes, long totalBytes);
+    void onOperationProgress(long operationId, long scannedBytes, long totalBytes,
+            boolean searchOperation);
 
     void onOperationFinished(long operationId, int resultCode, long resultCount, String message,
-            boolean passiveRefresh);
+            boolean passiveRefresh, boolean searchOperation);
 }

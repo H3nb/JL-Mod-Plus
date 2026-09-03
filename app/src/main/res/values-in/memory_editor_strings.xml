@@ -11,6 +11,9 @@
     <plurals name="memory_editor_results">
         <item quantity="other">%1$d hasil</item>
     </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="other">Pencarian selesai · %1$d kandidat</item>
+    </plurals>
     <string name="memory_editor_no_results">Belum ada hasil</string>
     <string name="memory_editor_no_watch">Pantauan masih kosong</string>
     <string name="memory_editor_unsupported">Editor Memori tidak tersedia untuk runtime/perangkat ini.</string>
@@ -143,4 +146,11 @@
     <string name="memory_editor_add_to_watch_after_edit">Tambahkan ke Pantauan setelah diterapkan</string>
     <string name="memory_editor_freeze_after_edit">Bekukan setelah diterapkan</string>
     <string name="memory_editor_freeze_after_edit_help">Gunakan nilai pengganti sebagai kunci dan otomatis tambahkan kandidat ke Pantauan.</string>
+
+    <string name="memory_editor_expression_single_hint">Masukkan satu nilai, atau gunakan ; untuk mencari beberapa nilai berdekatan.</string>
+    <string name="memory_editor_expression_group_needs_type">Pilih jenis data tertentu untuk Pencarian Grup.</string>
+    <string name="memory_editor_expression_group_hint">Pencarian Grup · %1$d nilai · dalam %2$d byte</string>
+    <string name="memory_editor_expression_query_help">Contoh: 500 · 500;1000 · 500;1000:128</string>
+    <string name="memory_editor_expression_ordered_group_unsupported">Sintaks grup berurutan (::) belum didukung engine saat ini. Gunakan : untuk grup biasa.</string>
+    <string name="memory_editor_keypad_clear">Bersihkan</string>
 </resources>

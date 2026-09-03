@@ -12,6 +12,10 @@
         <item quantity="one">%1$d result</item>
         <item quantity="other">%1$d results</item>
     </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="one">Search finished · %1$d candidate</item>
+        <item quantity="other">Search finished · %1$d candidates</item>
+    </plurals>
     <string name="memory_editor_no_results">No results yet</string>
     <string name="memory_editor_no_watch">Watch is empty</string>
     <string name="memory_editor_unsupported">Memory Editor is unavailable for this runtime/device.</string>
@@ -145,4 +149,11 @@
     <string name="memory_editor_add_to_watch_after_edit">Add to Watch after applying</string>
     <string name="memory_editor_freeze_after_edit">Freeze after applying</string>
     <string name="memory_editor_freeze_after_edit_help">Uses the replacement value as a lock and automatically adds the candidates to Watch.</string>
+
+    <string name="memory_editor_expression_single_hint">Enter one value, or use ; to search nearby values together.</string>
+    <string name="memory_editor_expression_group_needs_type">Choose a specific data type for Group Search.</string>
+    <string name="memory_editor_expression_group_hint">Group Search · %1$d values · within %2$d bytes</string>
+    <string name="memory_editor_expression_query_help">Examples: 500 · 500;1000 · 500;1000:128</string>
+    <string name="memory_editor_expression_ordered_group_unsupported">Ordered group syntax (::) is not supported by the current engine yet. Use : for a normal group.</string>
+    <string name="memory_editor_keypad_clear">Clear</string>
 </resources>

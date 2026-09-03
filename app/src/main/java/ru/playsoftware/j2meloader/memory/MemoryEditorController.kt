@@ -17,6 +17,7 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import android.os.RemoteException
 import android.view.View
+import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -52,6 +53,8 @@ class MemoryEditorComposeController(
     private var pendingEditFollowUp: PendingEditFollowUp? = null
     private var pendingInspectorRefresh: PendingInspectorRefresh? = null
     private var pendingOperationFeedback: PendingOperationFeedback? = null
+    private var liveRefreshPending = false
+    private val liveRefreshRunnable = Runnable(::runLiveRefreshTick)
 
     private data class PendingEditFollowUp(
         val id: Long,
@@ -69,7 +72,12 @@ class MemoryEditorComposeController(
     private enum class OperationFeedbackKind { NEXT_SCAN }
 
     private val callback = object : IMemoryEngineCallback.Stub() {
-        override fun onOperationProgress(operationId: Long, scannedBytes: Long, totalBytes: Long) {
+        override fun onOperationProgress(
+            operationId: Long,
+            scannedBytes: Long,
+            totalBytes: Long,
+            searchOperation: Boolean,
+        ) {
             post {
                 if (state.busy && (activeOperationId == 0L || operationId == activeOperationId) &&
                     totalBytes > 0L
@@ -88,8 +96,21 @@ class MemoryEditorComposeController(
             resultCount: Long,
             message: String?,
             passiveRefresh: Boolean,
+            searchOperation: Boolean,
         ) {
             post {
+                if (passiveRefresh) {
+                    liveRefreshPending = false
+                    if (resultCode == MemoryEngineContract.RESULT_TARGET_LOST ||
+                        resultCode == MemoryEngineContract.RESULT_NO_SESSION
+                    ) {
+                        close()
+                    } else if (resultCode == MemoryEngineContract.RESULT_OK && state.visible && !state.busy) {
+                        reloadState()
+                    }
+                    return@post
+                }
+
                 // Binder can finish a tiny refine before the main-thread operation-id post.
                 // Accept that first completion while busy, then invalidate the delayed id post.
                 if (!state.busy && activeOperationId == 0L) return@post
@@ -117,6 +138,7 @@ class MemoryEditorComposeController(
                 }
 
                 val succeeded = resultCode == MemoryEngineContract.RESULT_OK
+                if (succeeded && searchOperation) showSearchCompleteToast(resultCount)
                 val editFollowUp = if (succeeded) pendingEditFollowUp else null
                 val inspectorFollowUp = if (succeeded) pendingInspectorRefresh else null
                 pendingEditFollowUp = null
@@ -187,10 +209,14 @@ class MemoryEditorComposeController(
         composeView.visibility = View.VISIBLE
         composeView.requestFocus()
         if (service == null) connectEngine() else reloadState()
+        composeView.removeCallbacks(liveRefreshRunnable)
+        composeView.postDelayed(liveRefreshRunnable, LIVE_REFRESH_INITIAL_DELAY_MS)
     }
 
     override fun close() {
         if (destroyed) return
+        composeView.removeCallbacks(liveRefreshRunnable)
+        liveRefreshPending = false
         state = state.copy(visible = false, selected = emptySet())
         composeView.visibility = View.GONE
         closeHost()
@@ -200,6 +226,8 @@ class MemoryEditorComposeController(
         if (destroyed) return
         destroyed = true
         connectionGeneration++
+        composeView.removeCallbacks(liveRefreshRunnable)
+        liveRefreshPending = false
         composeView.visibility = View.GONE
         composeView.disposeComposition()
         disconnectEngine()
@@ -242,6 +270,7 @@ class MemoryEditorComposeController(
             activeOperationId = 0L
             pendingEditFollowUp = null
             pendingInspectorRefresh = null
+            liveRefreshPending = false
             if (!runtimeStillActive()) {
                 destroy()
                 return@post
@@ -451,7 +480,7 @@ class MemoryEditorComposeController(
             reloadState()
             return
         }
-        launchOperation { engine, token -> engine.refreshCandidates(token, ids) }
+        launchOperation { engine, token -> engine.refreshCandidates(token, ids, false) }
     }
 
     override fun setWatchTab(watch: Boolean) {
@@ -793,6 +822,42 @@ class MemoryEditorComposeController(
         }
     }
 
+    private fun runLiveRefreshTick() {
+        if (destroyed || !state.visible) return
+        if (!state.busy && !liveRefreshPending && state.inspector == null) {
+            val ids = if (state.watchTab) {
+                state.watches.map(MemoryWatchRow::id)
+            } else {
+                state.results.map(MemoryResultRow::id)
+            }.toLongArray()
+            val token = state.runtimeToken
+            val engine = service
+            if (ids.isNotEmpty() && token != 0L && engine != null) {
+                liveRefreshPending = true
+                runIpc {
+                    val operationId = engine.refreshCandidates(token, ids, true)
+                    if (operationId <= 0L) post { liveRefreshPending = false }
+                }
+            }
+        }
+        if (!destroyed && state.visible) {
+            composeView.postDelayed(liveRefreshRunnable, LIVE_REFRESH_INTERVAL_MS)
+        }
+    }
+
+    private fun showSearchCompleteToast(resultCount: Long) {
+        val count = resultCount.coerceIn(0L, Int.MAX_VALUE.toLong()).toInt()
+        Toast.makeText(
+            context,
+            context.resources.getQuantityString(
+                R.plurals.memory_editor_search_complete,
+                count,
+                resultCount,
+            ),
+            Toast.LENGTH_SHORT,
+        ).show()
+    }
+
     private fun operationMessage(result: Int, engineMessage: String?): String = when (result) {
         MemoryEngineContract.RESULT_CANCELLED -> context.getString(R.string.memory_editor_cancelled)
         MemoryEngineContract.RESULT_RESOURCE_LIMIT -> context.getString(R.string.memory_editor_resource_limit)
@@ -835,6 +900,8 @@ class MemoryEditorComposeController(
     internal companion object {
         const val PAGE_SIZE = MemoryEngineContract.MAX_RESULT_PAGE_SIZE
         private const val ENGINE_RECONNECT_DELAY_MS = 250L
+        private const val LIVE_REFRESH_INITIAL_DELAY_MS = 250L
+        private const val LIVE_REFRESH_INTERVAL_MS = 1_000L
         private val CAPABILITY_RETRY_DELAYS_MS = longArrayOf(80L, 160L, 320L, 640L)
     }
 }

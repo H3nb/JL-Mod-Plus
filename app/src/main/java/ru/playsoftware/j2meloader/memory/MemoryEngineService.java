@@ -184,7 +184,7 @@ public final class MemoryEngineService extends Service {
 		@Override
 		public long startKnownSearch(long token, int scope, int type, int predicate,
 		                             String first, String second) {
-			return enqueue(token, true, scope, () -> runNewSearchWithGcGuard(
+			return enqueueSearch(token, true, scope, () -> runNewSearchWithGcGuard(
 					token,
 					() -> NativeMemoryEngine.startKnown(type, predicate, first, second),
 					MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
@@ -195,7 +195,7 @@ public final class MemoryEngineService extends Service {
 
 		@Override
 		public long startUnknownSearch(long token, int scope, int type) {
-			return enqueue(token, true, scope, () -> runNewSearchWithGcGuard(
+			return enqueueSearch(token, true, scope, () -> runNewSearchWithGcGuard(
 					token,
 					() -> NativeMemoryEngine.startUnknown(type),
 					MemoryEngineContract.SEARCH_SESSION_UNKNOWN_BASELINE,
@@ -207,7 +207,7 @@ public final class MemoryEngineService extends Service {
 		@Override
 		public long startGroupSearch(long token, int scope, int[] types,
 		                             String[] values, int maxDistance) {
-			return enqueue(token, true, scope, () -> runNewSearchWithGcGuard(
+			return enqueueSearch(token, true, scope, () -> runNewSearchWithGcGuard(
 					token,
 					() -> NativeMemoryEngine.startGroup(types, values, maxDistance),
 					MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
@@ -219,7 +219,7 @@ public final class MemoryEngineService extends Service {
 		@Override
 		public long startNearbySearch(long token, long anchorCandidateId, int radius,
 		                              int type, int predicate, String first, String second) {
-			return enqueue(token, false, 0, () -> {
+			return enqueueSearch(token, false, 0, () -> {
 				if (anchorCandidateId <= 0L || !MemoryEngineContract.isNearbyRadius(radius)) {
 					return MemoryEngineContract.RESULT_INVALID_REQUEST;
 				}
@@ -242,14 +242,14 @@ public final class MemoryEngineService extends Service {
 
 		@Override
 		public long refineKnown(long token, int predicate, String first, String second) {
-			return enqueue(token, false, 0,
+			return enqueueSearch(token, false, 0,
 					() -> refineKnownGcAware(token, predicate, first, second));
 		}
 
 		@Override
 		public long refineRelative(long token, int predicate, int compareTarget,
 		                           String first, String second) {
-			return enqueue(token, false, 0,
+			return enqueueSearch(token, false, 0,
 					() -> refineRelativeGcAware(token, predicate, compareTarget, first, second));
 		}
 
@@ -264,8 +264,8 @@ public final class MemoryEngineService extends Service {
 		}
 
 		@Override
-		public long refreshCandidates(long token, long[] candidateIds) {
-			return enqueue(token, false, 0, true,
+		public long refreshCandidates(long token, long[] candidateIds, boolean passiveRefresh) {
+			return enqueue(token, false, 0, passiveRefresh,
 					() -> refreshForRead(token,
 							candidateIds == null ? new long[0] : candidateIds));
 		}
@@ -615,11 +615,20 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private long enqueue(long token, boolean configure, int scope, NativeOperation operation) {
-		return enqueue(token, configure, scope, false, operation);
+		return enqueue(token, configure, scope, false, false, operation);
 	}
 
 	private long enqueue(long token, boolean configure, int scope, boolean passiveRefresh,
 	                     NativeOperation operation) {
+		return enqueue(token, configure, scope, passiveRefresh, false, operation);
+	}
+
+	private long enqueueSearch(long token, boolean configure, int scope, NativeOperation operation) {
+		return enqueue(token, configure, scope, false, true, operation);
+	}
+
+	private long enqueue(long token, boolean configure, int scope, boolean passiveRefresh,
+	                     boolean searchOperation, NativeOperation operation) {
 		long operationId = nextOperationId.getAndIncrement();
 		long enqueueEpoch = cancelEpoch.get();
 		worker.execute(() -> {
@@ -628,7 +637,7 @@ public final class MemoryEngineService extends Service {
 			// never relabeled with this operationId while target configuration is still running.
 			long[] progressBaseline = NativeMemoryEngine.scanProgress();
 			ScheduledFuture<?> progressUpdates = progressNotifier.scheduleWithFixedDelay(
-					() -> notifyProgress(operationId, progressBaseline),
+					() -> notifyProgress(operationId, progressBaseline, searchOperation),
 					PROGRESS_UPDATE_PERIOD_MS,
 					PROGRESS_UPDATE_PERIOD_MS,
 					TimeUnit.MILLISECONDS);
@@ -676,7 +685,7 @@ public final class MemoryEngineService extends Service {
 			} finally {
 				progressUpdates.cancel(false);
 			}
-			notifyFinished(operationId, result, serviceMessage, passiveRefresh);
+			notifyFinished(operationId, result, serviceMessage, passiveRefresh, searchOperation);
 		});
 		return operationId;
 	}
@@ -1359,7 +1368,7 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private void notifyFinished(long operationId, int result, @Nullable String serviceMessage,
-	                            boolean passiveRefresh) {
+	                            boolean passiveRefresh, boolean searchOperation) {
 		// Native operations are transactional. Cancellation or failure may leave
 		// a valid previous result set, so do not present it as zero.
 		long count = NativeMemoryEngine.resultCount();
@@ -1370,7 +1379,7 @@ public final class MemoryEngineService extends Service {
 				try {
 					callbacks.getBroadcastItem(index)
 							.onOperationFinished(operationId, result, count, message,
-									passiveRefresh);
+									passiveRefresh, searchOperation);
 				} catch (RemoteException ignored) {
 					// RemoteCallbackList removes dead clients.
 				}
@@ -1528,7 +1537,7 @@ public final class MemoryEngineService extends Service {
 		};
 	}
 
-	private void notifyProgress(long operationId, long[] baseline) {
+	private void notifyProgress(long operationId, long[] baseline, boolean searchOperation) {
 		long[] progress = NativeMemoryEngine.scanProgress();
 		if (progress == null || progress.length != 2 || progress[1] <= 0L) {
 			return;
@@ -1543,7 +1552,7 @@ public final class MemoryEngineService extends Service {
 			for (int index = 0; index < callbackCount; index++) {
 				try {
 					callbacks.getBroadcastItem(index)
-							.onOperationProgress(operationId, scannedBytes, progress[1]);
+							.onOperationProgress(operationId, scannedBytes, progress[1], searchOperation);
 				} catch (RemoteException ignored) {
 					// RemoteCallbackList removes dead clients.
 				}
