@@ -24,19 +24,6 @@ class MemoryEditorModelsTest {
         assertEquals("HP", parsed.single().label)
     }
 
-    @Test fun resultRowsKeepAliasTypesWithoutRawAddresses() {
-        fun row(id: Long, types: IntArray) = MemoryResultRow(
-            id = id, valueText = "7", addressText = "0x1000",
-            aliasMask = types.fold(0) { mask, type -> mask or (1 shl type) },
-            primaryType = types.first(), state = MemoryEngineContract.CANDIDATE_STABLE, relocations = 0,
-        )
-        val rows = listOf(
-            row(1, intArrayOf(MemoryEngineContract.TYPE_INT, MemoryEngineContract.TYPE_FLOAT)),
-            row(3, intArrayOf(MemoryEngineContract.TYPE_INT, MemoryEngineContract.TYPE_LONG)),
-        )
-        assertEquals(listOf(MemoryEngineContract.TYPE_INT), commonTypesForSelection(rows, setOf(1, 3)))
-    }
-
     @Test fun engineSessionMetadataMapsWithoutCountHeuristics() {
         assertEquals(MemorySessionStage.CANDIDATES, memorySessionStageFromEngine(MemoryEngineContract.SEARCH_SESSION_CANDIDATES))
         assertEquals(MemorySessionStage.UNKNOWN_BASELINE, memorySessionStageFromEngine(MemoryEngineContract.SEARCH_SESSION_UNKNOWN_BASELINE))
@@ -45,9 +32,5 @@ class MemoryEditorModelsTest {
         assertEquals(MemorySearchMode.KNOWN, memorySearchModeFromEngine(-1))
     }
 
-    @Test fun newSearchNeverForwardsARelativeRefinePredicate() {
-        assertEquals(MemoryEngineContract.PREDICATE_BETWEEN, newSearchPredicate(MemoryEngineContract.PREDICATE_BETWEEN))
-        assertEquals(MemoryEngineContract.PREDICATE_EQUAL, newSearchPredicate(MemoryEngineContract.PREDICATE_CHANGED))
-        assertEquals(MemoryEngineContract.PREDICATE_EQUAL, newSearchPredicate(MemoryEngineContract.PREDICATE_DECREASED_BY_RANGE))
-    }
+
 }

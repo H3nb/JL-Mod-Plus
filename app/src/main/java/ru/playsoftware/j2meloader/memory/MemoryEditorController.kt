@@ -148,20 +148,20 @@ class MemoryEditorComposeController(
                 val uiSuccessMessage = if (succeeded && feedback?.kind == OperationFeedbackKind.NEXT_SCAN) {
                     "${context.getString(R.string.memory_editor_next_scan)}: ${feedback.resultCountBefore} → $resultCount"
                 } else null
+                val displayMessage = when {
+                    !succeeded -> operationMessage(resultCode, message)
+                    uiSuccessMessage != null -> uiSuccessMessage
+                    searchOperation -> null
+                    else -> engineSuccessMessage
+                }
                 state = state.copy(
                     busy = false,
                     searching = false,
                     scanBytesScanned = 0L,
                     scanBytesTotal = 0L,
                     resultCount = resultCount,
-                    message = if (succeeded) {
-                        listOfNotNull(uiSuccessMessage, engineSuccessMessage)
-                            .distinct()
-                            .joinToString(" · ")
-                            .takeIf(String::isNotBlank)
-                    } else {
-                        operationMessage(resultCode, message)
-                    },
+                    message = displayMessage,
+                    messageIsError = !succeeded && displayMessage != null,
                 )
 
                 when {
@@ -682,7 +682,7 @@ class MemoryEditorComposeController(
         val token = state.runtimeToken
         val engine = service ?: return
         if (token == 0L) return
-        state = state.copy(inspectorLoading = true, inspector = null, message = null)
+        state = state.copy(inspectorLoading = true, inspector = null, message = null, messageIsError = false)
         runIpc {
             val bundle = engine.inspectCandidate(token, candidateId, radius)
             val result = bundle.getInt(
@@ -721,6 +721,7 @@ class MemoryEditorComposeController(
                         inspectorLoading = false,
                         inspector = null,
                         message = operationMessage(result, bundle.getString(MemoryEngineContract.KEY_MESSAGE)),
+                        messageIsError = true,
                     )
                 }
             }

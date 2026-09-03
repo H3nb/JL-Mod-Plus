@@ -68,11 +68,6 @@ internal data class MemoryResultRow(
             .filter { aliasMask and (1 shl it) != 0 }
 }
 
-internal data class MemoryGroupDraft(
-    val value: String = "",
-    val type: Int = MemoryEngineContract.TYPE_INT,
-)
-
 /** Bounded read-only snapshot whose address is resolved from a verified CandidateId. */
 internal data class MemoryInspectorSnapshot(
     val candidateId: Long,
@@ -82,17 +77,6 @@ internal data class MemoryInspectorSnapshot(
     val anchorAddress: Long,
     val bytes: ByteArray,
 )
-
-internal fun commonTypesForSelection(
-    rows: List<MemoryResultRow>,
-    selected: Set<Long>,
-): List<Int> {
-    return rows.filter { it.id in selected }
-        .map { it.aliasTypes.toMutableSet() }
-        .reduceOrNull { common, types -> common.apply { retainAll(types) } }
-        ?.toList()
-        .orEmpty()
-}
 
 internal object MemoryResultPageParser {
     fun parse(bundle: android.os.Bundle?): List<MemoryResultRow> {
@@ -190,10 +174,6 @@ internal object MemoryWatchPageParser {
     }
 }
 
-internal fun newSearchPredicate(selectedPredicate: Int): Int =
-    selectedPredicate.takeIf { it <= MemoryEngineContract.PREDICATE_BETWEEN }
-        ?: MemoryEngineContract.PREDICATE_EQUAL
-
 internal data class MemoryEditorUiState(
     val visible: Boolean = false,
     val connecting: Boolean = false,
@@ -212,6 +192,7 @@ internal data class MemoryEditorUiState(
     val selected: Set<Long> = emptySet(),
     val watchTab: Boolean = false,
     val message: String? = null,
+    val messageIsError: Boolean = false,
     val searchMode: MemorySearchMode = MemorySearchMode.KNOWN,
     val sessionStage: MemorySessionStage = MemorySessionStage.EMPTY,
     val requestedType: Int = MemoryEngineContract.TYPE_AUTO,

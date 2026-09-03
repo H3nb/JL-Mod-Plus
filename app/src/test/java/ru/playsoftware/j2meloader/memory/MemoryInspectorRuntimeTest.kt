@@ -52,6 +52,13 @@ class MemoryInspectorRuntimeTest {
         assertTrue(buildInspectorCells(unsupportedType).isEmpty())
     }
 
+    @Test fun inspectorCenteringClampsWithoutSyntheticBlankSpace() {
+        assertEquals(0, inspectorCenteredFirstIndex(cellCount = 0, anchorIndex = 0, visibleRows = 8))
+        assertEquals(0, inspectorCenteredFirstIndex(cellCount = 5, anchorIndex = 2, visibleRows = 8))
+        assertEquals(6, inspectorCenteredFirstIndex(cellCount = 20, anchorIndex = 10, visibleRows = 8))
+        assertEquals(12, inspectorCenteredFirstIndex(cellCount = 20, anchorIndex = 19, visibleRows = 8))
+    }
+
     @Test fun inspectorFloatViewUsesLittleEndianSnapshotBytes() {
         val bits = 1.5f.toBits()
         val bytes = byteArrayOf(bits.toByte(), (bits ushr 8).toByte(), (bits ushr 16).toByte(), (bits ushr 24).toByte())

@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -45,6 +44,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -117,9 +117,7 @@ internal fun MemoryEditorRuntimeRoot(
     ) {
         val landscape = maxWidth > maxHeight
         val panelModifier = if (landscape) {
-            Modifier
-                .fillMaxSize()
-                .padding(horizontal = 12.dp, vertical = 8.dp)
+            Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 6.dp)
         } else {
             Modifier
                 .fillMaxWidth(0.94f)
@@ -134,37 +132,140 @@ internal fun MemoryEditorRuntimeRoot(
             tonalElevation = 3.dp,
             shadowElevation = 8.dp,
         ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                RuntimeMemoryHeader(actions)
-                RuntimeMemoryTabs(
-                    tab = tab,
-                    results = state.resultCount,
-                    watches = state.watches.size,
-                    onTab = { tab = it },
-                )
-                if (state.busy) RuntimeOperationStrip(state, actions)
-                state.message?.takeIf(String::isNotBlank)?.let { RuntimeMessage(it) }
-
-                when (tab) {
-                    RuntimeMemoryTab.SEARCH_RESULTS -> RuntimeSearchResultsTab(
-                        state = state.copy(watchTab = false),
-                        actions = actions,
-                        onInspectSelected = { tab = RuntimeMemoryTab.INSPECTOR },
-                        modifier = Modifier.weight(1f),
+            if (landscape) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    RuntimeMemoryHeader(actions)
+                    Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                        RuntimeMemoryTabRail(
+                            tab = tab,
+                            results = state.resultCount,
+                            watches = state.watches.size,
+                            onTab = { tab = it },
+                            modifier = Modifier.width(176.dp).fillMaxHeight(),
+                        )
+                        VerticalDivider()
+                        Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                            if (state.busy) RuntimeOperationStrip(state, actions)
+                            state.message?.takeIf(String::isNotBlank)?.let {
+                                RuntimeMessage(it, state.messageIsError)
+                            }
+                            RuntimeMemoryTabContent(
+                                tab = tab,
+                                state = state,
+                                actions = actions,
+                                onInspectSelected = { tab = RuntimeMemoryTab.INSPECTOR },
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                    }
+                }
+            } else {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    RuntimeMemoryHeader(actions)
+                    RuntimeMemoryTabs(
+                        tab = tab,
+                        results = state.resultCount,
+                        watches = state.watches.size,
+                        onTab = { tab = it },
                     )
-                    RuntimeMemoryTab.WATCH -> RuntimeWatchTab(
-                        state = state.copy(watchTab = true),
-                        actions = actions,
-                        modifier = Modifier.weight(1f),
-                    )
-                    RuntimeMemoryTab.INSPECTOR -> RuntimeInspectorTab(
+                    if (state.busy) RuntimeOperationStrip(state, actions)
+                    state.message?.takeIf(String::isNotBlank)?.let {
+                        RuntimeMessage(it, state.messageIsError)
+                    }
+                    RuntimeMemoryTabContent(
+                        tab = tab,
                         state = state,
                         actions = actions,
+                        onInspectSelected = { tab = RuntimeMemoryTab.INSPECTOR },
                         modifier = Modifier.weight(1f),
                     )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun RuntimeMemoryTabContent(
+    tab: RuntimeMemoryTab,
+    state: MemoryEditorUiState,
+    actions: MemoryEditorActions,
+    onInspectSelected: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    when (tab) {
+        RuntimeMemoryTab.SEARCH_RESULTS -> RuntimeSearchResultsTab(
+            state = state.copy(watchTab = false),
+            actions = actions,
+            onInspectSelected = onInspectSelected,
+            modifier = modifier,
+        )
+        RuntimeMemoryTab.WATCH -> RuntimeWatchTab(
+            state = state.copy(watchTab = true),
+            actions = actions,
+            modifier = modifier,
+        )
+        RuntimeMemoryTab.INSPECTOR -> RuntimeInspectorTab(
+            state = state,
+            actions = actions,
+            modifier = modifier,
+        )
+    }
+}
+
+@Composable
+private fun RuntimeMemoryTabRail(
+    tab: RuntimeMemoryTab,
+    results: Long,
+    watches: Int,
+    onTab: (RuntimeMemoryTab) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        FilterChip(
+            selected = tab == RuntimeMemoryTab.SEARCH_RESULTS,
+            onClick = { onTab(RuntimeMemoryTab.SEARCH_RESULTS) },
+            leadingIcon = { Icon(painterResource(R.drawable.ic_memory_editor_search), null) },
+            label = {
+                Text(
+                    if (results > 0L) "${stringResource(R.string.memory_editor_search_tab)} · ${compactCount(results)}"
+                    else stringResource(R.string.memory_editor_search_tab),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        FilterChip(
+            selected = tab == RuntimeMemoryTab.WATCH,
+            onClick = { onTab(RuntimeMemoryTab.WATCH) },
+            leadingIcon = { Icon(painterResource(R.drawable.ic_memory_editor_watch), null) },
+            label = {
+                Text(
+                    if (watches > 0) "${stringResource(R.string.memory_editor_watch)} · $watches"
+                    else stringResource(R.string.memory_editor_watch),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        FilterChip(
+            selected = tab == RuntimeMemoryTab.INSPECTOR,
+            onClick = { onTab(RuntimeMemoryTab.INSPECTOR) },
+            leadingIcon = { Icon(painterResource(R.drawable.ic_memory_editor_inspector), null) },
+            label = {
+                Text(
+                    stringResource(R.string.memory_editor_inspector),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
@@ -310,13 +411,17 @@ private fun RuntimeOperationStrip(state: MemoryEditorUiState, actions: MemoryEdi
 }
 
 @Composable
-private fun RuntimeMessage(message: String) {
-    Surface(color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.82f)) {
+private fun RuntimeMessage(message: String, isError: Boolean) {
+    val container = if (isError) MaterialTheme.colorScheme.errorContainer
+    else MaterialTheme.colorScheme.secondaryContainer
+    val content = if (isError) MaterialTheme.colorScheme.onErrorContainer
+    else MaterialTheme.colorScheme.onSecondaryContainer
+    Surface(color = container.copy(alpha = 0.82f)) {
         Text(
             message,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onErrorContainer,
+            color = content,
         )
     }
 }
@@ -336,10 +441,10 @@ private fun RuntimeSearchResultsTab(
         state.results.all { it.id in state.selected }
 
     Column(modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+        FlowRow(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
             horizontalArrangement = Arrangement.spacedBy(2.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             RuntimeActionIcon(
                 icon = R.drawable.ic_memory_editor_search,
@@ -391,7 +496,6 @@ private fun RuntimeSearchResultsTab(
                     contentDescription = visibleSelectionDescription
                 },
             )
-            Spacer(Modifier.weight(1f))
             if (state.canUndo) {
                 TextButton(onClick = actions::undo, enabled = !state.busy) {
                     Text(stringResource(R.string.memory_editor_undo))
@@ -1144,62 +1248,77 @@ private fun RuntimeInspectorTab(
                         R.drawable.ic_restart_alt,
                         R.string.memory_editor_refresh_snapshot,
                         enabled = !state.busy,
-                    ) {
-                        actions.inspectCandidate(snapshot.candidateId)
-                    }
+                    ) { actions.inspectCandidate(snapshot.candidateId) }
                 }
                 HorizontalDivider()
-                BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                    val anchorIndex = cells.indexOfFirst { it.offset == 0 }.coerceAtLeast(0)
-                    val listState = rememberLazyListState()
-                    LaunchedEffect(snapshot.anchorAddress, anchorIndex) {
-                        listState.scrollToItem(anchorIndex)
-                    }
-                    val verticalPadding = (maxHeight / 2 - 24.dp).coerceAtLeast(0.dp)
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(vertical = verticalPadding),
+                if (cells.isEmpty()) {
+                    Box(
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        items(cells, key = { it.offset }) { cell ->
-                        Surface(
-                            color = if (cell.offset == 0) {
-                                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.58f)
-                            } else Color.Transparent,
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .combinedClickable(
-                                        enabled = state.writeSupported && !state.busy,
-                                        onClick = { editCell = cell },
-                                        onLongClick = { editCell = cell },
-                                    )
-                                    .heightIn(min = 48.dp)
-                                    .padding(horizontal = 12.dp, vertical = 7.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    if (cell.offset >= 0) "+${cell.offset}" else cell.offset.toString(),
-                                    modifier = Modifier.widthIn(min = 48.dp),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontFamily = FontFamily.Monospace,
-                                )
-                                Text(
-                                    "0x${cell.address.toString(16).uppercase(Locale.ROOT)}",
-                                    modifier = Modifier.weight(1f),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontFamily = FontFamily.Monospace,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                                Text(
-                                    cell.value,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontFamily = FontFamily.Monospace,
-                                )
-                            }
+                        Text(
+                            stringResource(R.string.memory_editor_inspector_empty),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                } else {
+                    BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                        val anchorIndex = cells.indexOfFirst { it.offset == 0 }.coerceAtLeast(0)
+                        val visibleRows = (maxHeight.value / 49f).toInt().coerceAtLeast(1)
+                        val firstIndex = inspectorCenteredFirstIndex(
+                            cellCount = cells.size,
+                            anchorIndex = anchorIndex,
+                            visibleRows = visibleRows,
+                        )
+                        val listState = rememberLazyListState()
+                        LaunchedEffect(snapshot.candidateId, snapshot.anchorAddress, firstIndex) {
+                            listState.scrollToItem(firstIndex)
                         }
-                            HorizontalDivider()
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.fillMaxSize(),
+                            userScrollEnabled = cells.size > visibleRows,
+                        ) {
+                            items(cells, key = { it.offset }) { cell ->
+                                Surface(
+                                    color = if (cell.offset == 0) {
+                                        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.58f)
+                                    } else Color.Transparent,
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .combinedClickable(
+                                                enabled = state.writeSupported && !state.busy,
+                                                onClick = { editCell = cell },
+                                                onLongClick = { editCell = cell },
+                                            )
+                                            .heightIn(min = 48.dp)
+                                            .padding(horizontal = 12.dp, vertical = 7.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Text(
+                                            if (cell.offset >= 0) "+${cell.offset}" else cell.offset.toString(),
+                                            modifier = Modifier.widthIn(min = 48.dp),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontFamily = FontFamily.Monospace,
+                                        )
+                                        Text(
+                                            "0x${cell.address.toString(16).uppercase(Locale.ROOT)}",
+                                            modifier = Modifier.weight(1f),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontFamily = FontFamily.Monospace,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                        Text(
+                                            cell.value,
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontFamily = FontFamily.Monospace,
+                                        )
+                                    }
+                                }
+                                HorizontalDivider()
+                            }
                         }
                     }
                 }
@@ -1215,6 +1334,18 @@ private fun RuntimeInspectorTab(
             }
         }
     }
+}
+
+internal fun inspectorCenteredFirstIndex(
+    cellCount: Int,
+    anchorIndex: Int,
+    visibleRows: Int,
+): Int {
+    if (cellCount <= 0) return 0
+    val rows = visibleRows.coerceAtLeast(1)
+    val safeAnchor = anchorIndex.coerceIn(0, cellCount - 1)
+    val maxFirst = (cellCount - rows).coerceAtLeast(0)
+    return (safeAnchor - rows / 2).coerceIn(0, maxFirst)
 }
 
 internal data class MemoryInspectorCell(

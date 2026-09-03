@@ -237,3 +237,29 @@ fun MemoryInspectorWideScreenshot() {
         )
     }
 }
+
+
+@PreviewTest
+@Preview(name = "Memory Editor landscape message toolbar", widthDp = 720, heightDp = 360, showBackground = true)
+@Composable
+fun MemoryEditorLandscapeMessageToolbarScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        MemoryEditorRuntimeRoot(
+            state = MemoryEditorUiState(
+                visible = true,
+                connected = true,
+                supported = true,
+                writeSupported = true,
+                runtimeToken = 1,
+                resultCount = 7,
+                results = previewRows,
+                selected = setOf(3),
+                sessionStage = MemorySessionStage.CANDIDATES,
+                canUndo = true,
+                message = "Pindai berikutnya: 9 → 7",
+                messageIsError = false,
+            ),
+            actions = NoOpMemoryEditorActions,
+        )
+    }
+}
