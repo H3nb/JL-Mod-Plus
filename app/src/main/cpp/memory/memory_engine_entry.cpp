@@ -20,16 +20,22 @@
 #include <algorithm>
 #include <memory>
 #include <mutex>
+#include <vector>
 
 namespace {
 
 constexpr std::size_t kStagedKnownCandidateLimit = 250'000U;
 constexpr std::size_t kStagedKnownStoreByteLimit = 32U * 1024U * 1024U;
+constexpr std::size_t kStagedKnownCursorCheckpointStride = 256U;
 
 struct StagedKnownResultStore {
     std::uint64_t revision = 0U;
     std::weak_ptr<const SearchState> legacyState;
     std::shared_ptr<const jlmem::v2::ResultStore> store;
+    // Cursor checkpoints are revision-local and map implicit logical offsets
+    // 0, 256, 512, ... to exact bitmap positions. Keeping them behind one shared object avoids
+    // copying an index on every Binder page request.
+    std::shared_ptr<const std::vector<jlmem::v2::ResultCursor>> checkpoints;
     jlmem::v2::ResultPlane plane = jlmem::v2::ResultPlane::Count;
 };
 
@@ -114,10 +120,75 @@ void clearStagedKnownRevision(std::uint64_t revision) noexcept {
             valueType, predicate, firstBits, secondBits);
 }
 
+[[nodiscard]] bool verifyAndIndexStagedKnownStore(
+        const SearchState &state, const jlmem::v2::ResultStore &store,
+        jlmem::v2::ResultPlane plane,
+        std::shared_ptr<const std::vector<jlmem::v2::ResultCursor>> &published) {
+    const std::uint8_t expectedAlias = jlmem::v2::resultPlaneBit(plane);
+    auto checkpoints =
+            std::make_shared<std::vector<jlmem::v2::ResultCursor>>();
+    const std::size_t checkpointCount =
+            state.candidates.empty()
+                    ? 0U
+                    : (state.candidates.size() - 1U) /
+                                      kStagedKnownCursorCheckpointStride +
+                              1U;
+    checkpoints->reserve(checkpointCount);
+
+    jlmem::v2::ResultCursor cursor;
+    std::size_t verified = 0U;
+    while (verified < state.candidates.size()) {
+        if (verified % kStagedKnownCursorCheckpointStride == 0U) {
+            checkpoints->push_back(cursor);
+        }
+        const std::size_t untilCheckpoint =
+                kStagedKnownCursorCheckpointStride -
+                verified % kStagedKnownCursorCheckpointStride;
+        const std::size_t limit = std::min(
+                {jlmem::v2::kResultCursorPageLimit,
+                 state.candidates.size() - verified, untilCheckpoint});
+        if (limit == 0U) {
+            return false;
+        }
+
+        jlmem::v2::ResultAddressPage page;
+        if (!jlmem::v2::readAddressPage(store, cursor, limit, page) ||
+            page.rows.size() != limit) {
+            return false;
+        }
+        for (std::size_t index = 0U; index < page.rows.size(); ++index) {
+            const Candidate &candidate = state.candidates[verified + index];
+            if (page.rows[index].address != candidate.address ||
+                page.rows[index].aliasMask != expectedAlias) {
+                return false;
+            }
+        }
+        cursor = page.next;
+        verified += page.rows.size();
+    }
+
+    // Sequential verification must finish at the canonical end cursor. This catches a bitmap that
+    // contains hidden extra addresses even if the prefix happened to match every legacy candidate.
+    jlmem::v2::ResultAddressPage endPage;
+    if (!jlmem::v2::readAddressPage(store, cursor, 1U, endPage) ||
+        !endPage.rows.empty() ||
+        endPage.next.blockIndex != store.blockCount() ||
+        endPage.next.nextByteOffset != 0U) {
+        return false;
+    }
+    if (checkpoints->size() != checkpointCount) {
+        return false;
+    }
+    published = std::move(checkpoints);
+    return true;
+}
+
 [[nodiscard]] bool buildStagedKnownStore(
         const std::shared_ptr<const SearchState> &state,
         jlmem::v2::ResultPlane plane,
-        std::shared_ptr<const jlmem::v2::ResultStore> &published) {
+        std::shared_ptr<const jlmem::v2::ResultStore> &publishedStore,
+        std::shared_ptr<const std::vector<jlmem::v2::ResultCursor>>
+                &publishedCheckpoints) {
     if (state == nullptr || state->mode != StateMode::Candidates ||
         state->candidateOrderDirty || state->requestedType == kTypeAuto ||
         state->candidates.size() > kStagedKnownCandidateLimit ||
@@ -194,40 +265,14 @@ void clearStagedKnownRevision(std::uint64_t revision) noexcept {
 
     if (store.typedCount() != state->candidates.size() ||
         store.uniqueAddressCount() != state->logicalCount ||
-        store.retainedBytes() > kStagedKnownStoreByteLimit) {
+        store.retainedBytes() > kStagedKnownStoreByteLimit ||
+        !verifyAndIndexStagedKnownStore(
+                *state, store, plane, publishedCheckpoints)) {
         return false;
     }
 
-    // Verify both sequential bitmap enumeration and the offset->cursor bridge against the exact
-    // immutable legacy revision before allowing this store to participate in production paging.
-    const std::uint8_t expectedAlias = jlmem::v2::resultPlaneBit(plane);
-    std::size_t verified = 0U;
-    while (verified < state->candidates.size()) {
-        jlmem::v2::ResultAddressPage page;
-        const std::size_t limit = std::min(
-                jlmem::v2::kResultCursorPageLimit,
-                state->candidates.size() - verified);
-        if (!jlmem::v2::readAddressPageAtOffset(store, verified, limit, page) ||
-            page.rows.size() != limit) {
-            return false;
-        }
-        for (std::size_t index = 0U; index < page.rows.size(); ++index) {
-            const Candidate &candidate = state->candidates[verified + index];
-            if (page.rows[index].address != candidate.address ||
-                page.rows[index].aliasMask != expectedAlias) {
-                return false;
-            }
-        }
-        verified += page.rows.size();
-    }
-    jlmem::v2::ResultAddressPage endPage;
-    if (!jlmem::v2::readAddressPageAtOffset(
-                store, state->logicalCount, 1U, endPage) ||
-        !endPage.rows.empty()) {
-        return false;
-    }
-
-    published = std::make_shared<jlmem::v2::ResultStore>(std::move(store));
+    publishedStore =
+            std::make_shared<jlmem::v2::ResultStore>(std::move(store));
     return true;
 }
 
@@ -249,25 +294,54 @@ void clearStagedKnownRevision(std::uint64_t revision) noexcept {
     }
 
     std::shared_ptr<const jlmem::v2::ResultStore> store;
-    if (!buildStagedKnownStore(state, *plane, store)) {
+    std::shared_ptr<const std::vector<jlmem::v2::ResultCursor>> checkpoints;
+    if (!buildStagedKnownStore(state, *plane, store, checkpoints)) {
         clearStagedKnownResultStore();
         return false;
     }
 
-    // Re-check publication ownership after the potentially expensive adapter build. A concurrent
-    // search/undo never gets paired with the wrong bitmap revision.
-    {
-        std::lock_guard<std::mutex> lock(gMutex);
-        if (gState != state) {
-            return false;
-        }
+    // Publish under the same gMutex->staging-lock order used by stale-state invalidation so a
+    // concurrent search/undo cannot slip between the ownership recheck and staged publication.
+    std::lock_guard<std::mutex> stateLock(gMutex);
+    if (gState != state) {
+        return false;
     }
-    std::lock_guard<std::mutex> lock(gStagedKnownMutex);
+    std::lock_guard<std::mutex> stagedLock(gStagedKnownMutex);
     const std::uint64_t revision = nextStagedRevision(gStagedKnown.revision);
     gStagedKnown.revision = revision;
     gStagedKnown.legacyState = state;
     gStagedKnown.store = std::move(store);
+    gStagedKnown.checkpoints = std::move(checkpoints);
     gStagedKnown.plane = *plane;
+    return true;
+}
+
+[[nodiscard]] bool cursorForStagedOffset(
+        const StagedKnownResultStore &staged, std::size_t offset,
+        jlmem::v2::ResultCursor &cursor) {
+    if (staged.store == nullptr || staged.checkpoints == nullptr ||
+        offset >= staged.store->uniqueAddressCount()) {
+        return false;
+    }
+    const std::size_t checkpointIndex =
+            offset / kStagedKnownCursorCheckpointStride;
+    if (checkpointIndex >= staged.checkpoints->size()) {
+        return false;
+    }
+    cursor = (*staged.checkpoints)[checkpointIndex];
+    std::size_t remaining =
+            offset - checkpointIndex * kStagedKnownCursorCheckpointStride;
+    while (remaining != 0U) {
+        const std::size_t step =
+                std::min(remaining, jlmem::v2::kResultCursorPageLimit);
+        jlmem::v2::ResultAddressPage skipped;
+        if (!jlmem::v2::readAddressPage(*staged.store, cursor, step, skipped) ||
+            skipped.rows.size() != step) {
+            return false;
+        }
+        cursor = skipped.next;
+        remaining -= step;
+    }
     return true;
 }
 
@@ -283,7 +357,8 @@ void clearStagedKnownRevision(std::uint64_t revision) noexcept {
         std::lock_guard<std::mutex> lock(gStagedKnownMutex);
         staged = gStagedKnown;
     }
-    if (staged.store == nullptr || staged.plane == jlmem::v2::ResultPlane::Count) {
+    if (staged.store == nullptr || staged.checkpoints == nullptr ||
+        staged.plane == jlmem::v2::ResultPlane::Count) {
         return nullptr;
     }
     const auto state = staged.legacyState.lock();
@@ -299,23 +374,27 @@ void clearStagedKnownRevision(std::uint64_t revision) noexcept {
         }
     }
     if (state->mode != StateMode::Candidates || state->candidateOrderDirty ||
-        state->logicalCount != state->candidates.size()) {
+        state->logicalCount != state->candidates.size() ||
+        staged.store->uniqueAddressCount() != state->logicalCount) {
         clearStagedKnownRevision(staged.revision);
         return nullptr;
     }
 
-    jlmem::v2::ResultAddressPage page;
-    if (!jlmem::v2::readAddressPageAtOffset(
-                *staged.store, static_cast<std::uint64_t>(offset),
-                static_cast<std::size_t>(limit), page)) {
-        clearStagedKnownRevision(staged.revision);
-        return nullptr;
-    }
     const std::size_t start = std::min<std::size_t>(
             static_cast<std::size_t>(offset), state->candidates.size());
     const std::size_t expectedCount = std::min<std::size_t>(
             static_cast<std::size_t>(limit), state->candidates.size() - start);
-    if (page.rows.size() != expectedCount) {
+    if (expectedCount == 0U) {
+        std::unordered_map<uint64_t, Candidate> liveCandidates;
+        return candidatePage(env, state->candidates, liveCandidates, start, 0U);
+    }
+
+    jlmem::v2::ResultCursor cursor;
+    jlmem::v2::ResultAddressPage page;
+    if (!cursorForStagedOffset(staged, start, cursor) ||
+        !jlmem::v2::readAddressPage(
+                *staged.store, cursor, expectedCount, page) ||
+        page.rows.size() != expectedCount) {
         clearStagedKnownRevision(staged.revision);
         return nullptr;
     }
@@ -337,6 +416,7 @@ void clearStagedKnownRevision(std::uint64_t revision) noexcept {
     {
         std::lock_guard<std::mutex> lock(gMutex);
         if (gState != state) {
+            clearStagedKnownRevision(staged.revision);
             return nullptr;
         }
         if (gLiveCandidates.size() + expectedCount > kLiveOverlayLimit) {
