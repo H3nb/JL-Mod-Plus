@@ -76,7 +76,18 @@ final class NativeMemoryEngine {
 	static native int startNearby(long anchorCandidateId, int radius, int valueType,
 	                              int predicate, String first, String second);
 
-	static native int refineKnown(int predicate, String first, String second);
+	static int refineKnown(int predicate, String first, String second) {
+		int result = refineKnownUnchecked(predicate, first, second);
+		if (result == MemoryEngineContract.RESULT_OK) {
+			// Rebuild only from the newly committed immutable legacy revision. This keeps ResultStore
+			// production paging active after Next Scan without performing a second live-memory refine;
+			// the real bitmap-refine cutover remains gated by physical all-predicate parity.
+			stageV2KnownResultStore();
+		}
+		return result;
+	}
+
+	private static native int refineKnownUnchecked(int predicate, String first, String second);
 
 	static native int recoverKnown(int predicate, String first, String second);
 
