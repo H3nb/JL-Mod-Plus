@@ -41,6 +41,7 @@ public class MemoryCandidateBindingCacheTest {
 		assertEquals(3, snapshot.size());
 		assertEquals(300, snapshot.get(12L).resultPageOffset);
 		assertEquals(0x1000L, snapshot.get(12L).address);
+		assertEquals(MemoryEngineContract.CANDIDATE_STABLE, snapshot.get(12L).state);
 	}
 
 	@Test
@@ -73,6 +74,23 @@ public class MemoryCandidateBindingCacheTest {
 	}
 
 	@Test
+	public void ambiguousOrLostBindingFailsClosed() {
+		MemoryCandidateBindingCache cache = new MemoryCandidateBindingCache();
+		cache.recordPage(page(row(35L, 0x3000L, 4, 0)), false, 0);
+		Map<Long, MemoryCandidateBindingCache.Binding> before =
+				cache.snapshot(new long[]{35L});
+		LinkedHashMap<Long, MemoryCandidateBindingCache.Binding> after = new LinkedHashMap<>();
+		MemoryCandidateBindingCache.collectPage(
+				page(rowWithState(35L, 0x3000L, 4,
+						MemoryEngineContract.CANDIDATE_AMBIGUOUS, 0)), false, 0, after);
+
+		assertEquals(MemoryCandidateBindingCache.COMPARE_UNKNOWN,
+				cache.compareAndRecord(before, after));
+		assertEquals(MemoryEngineContract.CANDIDATE_STABLE,
+				cache.snapshot(new long[]{35L}).get(35L).state);
+	}
+
+	@Test
 	public void missingBeforeOrAfterBindingFailsClosed() {
 		MemoryCandidateBindingCache cache = new MemoryCandidateBindingCache(1);
 		cache.recordPage(page(row(41L, 0x4000L, 4, 0)), false, 0);
@@ -86,7 +104,13 @@ public class MemoryCandidateBindingCacheTest {
 	}
 
 	private static long[] row(long id, long address, int type, int relocations) {
-		return new long[]{id, address, address, type, 0, relocations, 1, 1, 1};
+		return rowWithState(id, address, type, MemoryEngineContract.CANDIDATE_STABLE,
+				relocations);
+	}
+
+	private static long[] rowWithState(long id, long address, int type, int state,
+	                                  int relocations) {
+		return new long[]{id, address, address, type, state, relocations, 1, 1, 1};
 	}
 
 	private static long[] page(long[]... rows) {
