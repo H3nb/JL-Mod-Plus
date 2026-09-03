@@ -51,6 +51,12 @@ std::mutex gShadowMutex;
 ShadowTarget gShadowTarget;
 ShadowSession gShadowSession;
 
+[[nodiscard]] std::uint64_t nextGeneration(std::uint64_t current) noexcept {
+    return current == std::numeric_limits<std::uint64_t>::max()
+                   ? 1U
+                   : current + 1U;
+}
+
 [[nodiscard]] bool readExact(pid_t pid, std::uintptr_t address, void *output,
                              std::size_t size) noexcept {
     iovec local{output, size};
@@ -187,10 +193,10 @@ jlongArray runShadowKnown(JNIEnv *env, jint valueType, jint rawPredicate,
     const auto canonicalPlan = jlmem::v2::knownQueryPlanFromStableValues(
             valueType, rawPredicate, static_cast<std::uint64_t>(firstBits),
             static_cast<std::uint64_t>(secondBits));
-    if (!canonicalPlan.has_value() ||
-        canonicalPlan->plane != plane ||
-        !jlmem::v2::validKnownQueryPlan(*canonicalPlan)) {
-        return shadowResult(env, kInvalidRequest, kShadowOperationScan,
+    if (!canonicalPlan.has_value() || canonicalPlan->plane != plane) {
+        return shadowResult(env, kInvalidRequest,
+                            refining ? kShadowOperationRefine
+                                     : kShadowOperationScan,
                             firstBits);
     }
 
@@ -261,6 +267,12 @@ jlongArray runShadowKnown(JNIEnv *env, jint valueType, jint rawPredicate,
 extern "C" jint
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_configureTarget(
         JNIEnv *, jclass, jint, jint, jlong, jlongArray);
+extern "C" jint
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_startKnown(
+        JNIEnv *, jclass, jint, jint, jstring, jstring);
+extern "C" void
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearSearch(
+        JNIEnv *, jclass);
 extern "C" void
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearTarget(
         JNIEnv *, jclass);
@@ -271,6 +283,14 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_configureTargetUncheck
         jlongArray rawRuns) {
     return Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_configureTarget(
             env, clazz, pid, pageSize, runtimeToken, rawRuns);
+}
+
+extern "C" JNIEXPORT jint JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_startKnownUnchecked(
+        JNIEnv *env, jclass clazz, jint valueType, jint predicate,
+        jstring first, jstring second) {
+    return Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_startKnown(
+            env, clazz, valueType, predicate, first, second);
 }
 
 extern "C" JNIEXPORT void JNICALL
@@ -333,9 +353,23 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_configureV2ShadowTarge
     }
 
     std::lock_guard<std::mutex> lock(gShadowMutex);
-    next.generation = gShadowTarget.generation + 1U;
+    next.generation = nextGeneration(gShadowTarget.generation);
     gShadowTarget = std::move(next);
     gShadowSession = {};
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_resetV2ShadowSession(
+        JNIEnv *, jclass) {
+    std::lock_guard<std::mutex> lock(gShadowMutex);
+    gShadowSession = {};
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearSearchUnchecked(
+        JNIEnv *env, jclass clazz) {
+    Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearSearch(env,
+                                                                          clazz);
 }
 
 extern "C" JNIEXPORT void JNICALL
@@ -349,9 +383,9 @@ extern "C" JNIEXPORT void JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearV2ShadowTarget(
         JNIEnv *, jclass) {
     std::lock_guard<std::mutex> lock(gShadowMutex);
-    const std::uint64_t nextGeneration = gShadowTarget.generation + 1U;
+    const std::uint64_t generation = nextGeneration(gShadowTarget.generation);
     gShadowTarget = {};
-    gShadowTarget.generation = nextGeneration;
+    gShadowTarget.generation = generation;
     gShadowSession = {};
 }
 
