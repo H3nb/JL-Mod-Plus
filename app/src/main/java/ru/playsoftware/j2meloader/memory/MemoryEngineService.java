@@ -879,15 +879,35 @@ public final class MemoryEngineService extends Service {
 			// page/watch list populates this small cache; never guess an unseen raw address here.
 			return MemoryEngineContract.RESULT_IDENTITY_UNSAFE;
 		}
+
 		long gcBefore = currentGcCount(token);
-		int result = refreshWithRecovery(token, candidateIds);
-		if (result != MemoryEngineContract.RESULT_OK) return result;
-		int bindingComparison = compareRefreshedBindings(before);
-		if (bindingComparison != MemoryEngineContract.RESULT_OK) return bindingComparison;
+		// First verify the displayed binding against the already-configured ranges. A GC-count change
+		// alone is only a stale-address hint and must not force target-side mincore() on every Edit or
+		// Freeze setup.
+		int fastResult = NativeMemoryEngine.refresh(candidateIds, true);
+		int bindingResult = fastResult == MemoryEngineContract.RESULT_OK
+				? compareRefreshedBindings(before)
+				: MemoryEngineContract.RESULT_OK;
 		long gcAfter = currentGcCount(token);
-		if (MemoryEngineContract.didGcCountChange(gcBefore, gcAfter)) {
-			return MemoryEngineContract.RESULT_GC_RACE;
+		boolean gcChangedDuringFastRefresh =
+				MemoryEngineContract.didGcCountChange(gcBefore, gcAfter);
+
+		if (MemoryGcPolicy.shouldRetryReadWithFreshRanges(
+				fastResult, bindingResult, gcChangedDuringFastRefresh)) {
+			int result = refreshWithRecovery(token, candidateIds);
+			if (result != MemoryEngineContract.RESULT_OK) return result;
+			int refreshedBindingResult = compareRefreshedBindings(before);
+			// Actual relocation requires one explicit user retry. Ambiguous/lost identity fails closed.
+			if (refreshedBindingResult != MemoryEngineContract.RESULT_OK) {
+				return refreshedBindingResult;
+			}
+			return MemoryEngineContract.RESULT_OK;
 		}
+
+		if (fastResult != MemoryEngineContract.RESULT_OK) return fastResult;
+		if (bindingResult != MemoryEngineContract.RESULT_OK) return bindingResult;
+		gcBindings.markCandidatesValidated(candidateIds,
+				MemoryEngineContract.latestKnownGcCount(gcBefore, gcAfter));
 		return MemoryEngineContract.RESULT_OK;
 	}
 
@@ -945,10 +965,10 @@ public final class MemoryEngineService extends Service {
 		long gcBeforeWrite = currentGcCount(token);
 		int result = write.run();
 		long gcAfterWrite = currentGcCount(token);
-		if (result == MemoryEngineContract.RESULT_OK &&
-				MemoryEngineContract.didGcCountChange(gcBeforeWrite, gcAfterWrite)) {
-			// Do not attempt a second write. Rebind on a later user action and report the first write
-			// as unconfirmed because a copying GC may have moved the authoritative object meanwhile.
+		if (MemoryGcPolicy.shouldReportGcRaceAfterMutation(
+				result, gcBeforeWrite, gcAfterWrite)) {
+			// Do not attempt a second write. Full or partial success means target bytes may already have
+			// changed; a copying GC makes the final binding unconfirmable until a later user action.
 			refreshWithRecovery(token, candidateIds);
 			refreshCachedBindings(candidateIds);
 			return MemoryEngineContract.RESULT_GC_RACE;
@@ -1070,8 +1090,8 @@ public final class MemoryEngineService extends Service {
 		int result = NativeMemoryEngine.freeze(
 				candidateIds, mode, firstValue, secondValue);
 		long gcAfterWrite = currentGcCount(token);
-		if (result == MemoryEngineContract.RESULT_OK &&
-				MemoryEngineContract.didGcCountChange(gcBeforeWrite, gcAfterWrite)) {
+		if (MemoryGcPolicy.shouldReportGcRaceAfterMutation(
+				result, gcBeforeWrite, gcAfterWrite)) {
 			if (newlyWatched.length > 0) NativeMemoryEngine.pin(newlyWatched, false);
 			refreshWithRecovery(token, candidateIds);
 			refreshCachedBindings(candidateIds);
@@ -1156,41 +1176,72 @@ public final class MemoryEngineService extends Service {
 		if (!NativeMemoryEngine.prepareOperation(operationEpoch)) {
 			return;
 		}
-		long[] activeIds = new long[active.size()];
-		for (int index = 0; index < active.size(); index++) {
-			activeIds[index] = active.get(index).getKey();
-		}
+
 		long gcStart = currentGcCount(token);
-		boolean epochChanged = false;
-		if (MemoryEngineContract.isKnownGcCount(gcStart)) {
-			for (Map.Entry<Long, FreezeRecord> entry : active) {
-				if (MemoryEngineContract.didGcCountChange(
-						entry.getValue().validatedGcCount, gcStart)) {
-					epochChanged = true;
-					break;
-				}
+		boolean anyRecordNeedsRecovery = false;
+		for (Map.Entry<Long, FreezeRecord> entry : active) {
+			if (MemoryGcPolicy.freezeRecordNeedsRecovery(
+					entry.getValue().validatedGcCount, gcStart)) {
+				anyRecordNeedsRecovery = true;
+				break;
 			}
 		}
-		if (epochChanged) {
-			int recovery = refreshWithRecovery(token, activeIds);
-			long gcAfterRecovery = currentGcCount(token);
-			if (recovery != MemoryEngineContract.RESULT_OK ||
-					MemoryEngineContract.didGcCountChange(gcStart, gcAfterRecovery)) {
+		if (anyRecordNeedsRecovery) {
+			// Refresh the resident-range view once, then recover each stale CandidateId independently.
+			// One ambiguous/lost value must not pause unrelated freezes.
+			int configureResult = configureTarget(token, configuredScope);
+			if (configureResult != MemoryEngineContract.RESULT_OK) {
 				for (Map.Entry<Long, FreezeRecord> entry : active) {
 					entry.getValue().paused = true;
 				}
 				return;
 			}
-			refreshCachedBindings(activeIds);
-			long validated = MemoryEngineContract.latestKnownGcCount(gcStart, gcAfterRecovery);
-			for (Map.Entry<Long, FreezeRecord> entry : active) {
-				entry.getValue().validatedGcCount = validated;
+			long gcAfterConfigure = currentGcCount(token);
+			if (MemoryEngineContract.didGcCountChange(gcStart, gcAfterConfigure)) {
+				// The collector moved again while ranges were captured. Defer this tick rather than
+				// converting a transient global race into permanently paused Freeze records.
+				return;
 			}
-			gcStart = validated;
+			gcStart = MemoryEngineContract.latestKnownGcCount(gcStart, gcAfterConfigure);
+			for (Map.Entry<Long, FreezeRecord> entry : active) {
+				if (cancelEpoch.get() != operationEpoch) return;
+				FreezeRecord record = entry.getValue();
+				if (!MemoryGcPolicy.freezeRecordNeedsRecovery(record.validatedGcCount, gcStart)) {
+					continue;
+				}
+				long[] ids = new long[]{entry.getKey()};
+				int recovery = NativeMemoryEngine.refresh(ids, true);
+				if (recovery != MemoryEngineContract.RESULT_OK) {
+					record.paused = true;
+					continue;
+				}
+				long gcAfterRecovery = currentGcCount(token);
+				if (MemoryEngineContract.didGcCountChange(gcStart, gcAfterRecovery)) {
+					return;
+				}
+				refreshCachedBindings(ids);
+				gcBindings.markCandidatesValidated(ids, gcStart);
+				record.validatedGcCount = gcStart;
+			}
 		}
-		int batchRefresh = NativeMemoryEngine.refresh(activeIds, false);
+
+		List<Map.Entry<Long, FreezeRecord>> eligible = new ArrayList<>();
 		for (Map.Entry<Long, FreezeRecord> entry : active) {
+			if (!entry.getValue().paused) eligible.add(entry);
+		}
+		if (eligible.isEmpty()) return;
+		long[] eligibleIds = new long[eligible.size()];
+		for (int index = 0; index < eligible.size(); index++) {
+			eligibleIds[index] = eligible.get(index).getKey();
+		}
+
+		int batchRefresh = NativeMemoryEngine.refresh(eligibleIds, false);
+		for (Map.Entry<Long, FreezeRecord> entry : eligible) {
 			if (cancelEpoch.get() != operationEpoch) {
+				return;
+			}
+			if (MemoryEngineContract.didGcCountChange(gcStart, currentGcCount(token))) {
+				// Stop before another write. The next tick will recover only records whose epoch is stale.
 				return;
 			}
 			FreezeRecord record = entry.getValue();
@@ -1209,10 +1260,18 @@ public final class MemoryEngineService extends Service {
 		long gcEnd = currentGcCount(token);
 		if (!MemoryEngineContract.didGcCountChange(gcStart, gcEnd)) {
 			long validated = MemoryEngineContract.latestKnownGcCount(gcStart, gcEnd);
-			gcBindings.markCandidatesValidated(activeIds, validated);
-			refreshCachedBindings(activeIds);
-			for (Map.Entry<Long, FreezeRecord> entry : active) {
-				if (!entry.getValue().paused) entry.getValue().validatedGcCount = validated;
+			long[] validatedBuffer = new long[eligible.size()];
+			int validatedCount = 0;
+			for (Map.Entry<Long, FreezeRecord> entry : eligible) {
+				if (!entry.getValue().paused) {
+					validatedBuffer[validatedCount++] = entry.getKey();
+					entry.getValue().validatedGcCount = validated;
+				}
+			}
+			if (validatedCount > 0) {
+				long[] validatedIds = Arrays.copyOf(validatedBuffer, validatedCount);
+				gcBindings.markCandidatesValidated(validatedIds, validated);
+				refreshCachedBindings(validatedIds);
 			}
 		}
 		// If GC changed during this tick, keep the older epoch. The next tick detects the mismatch
