@@ -169,9 +169,7 @@ internal object MemoryWatchPageParser {
         }
         return ids.indices.mapNotNull { index ->
             val type = types[index]
-            if (ids[index] <= 0L || values[index] == null || initialValues[index] == null ||
-                previousValues[index] == null || addresses[index] == null || labels[index] == null ||
-                !MemoryEngineContract.isCandidateType(type)) {
+            if (ids[index] <= 0L || !MemoryEngineContract.isCandidateType(type)) {
                 null
             } else {
                 MemoryWatchRow(

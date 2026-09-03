@@ -112,7 +112,9 @@ internal fun MemoryEditorSurface(
     ) {
         if (!state.visible || state.connecting || !state.supported) return@LaunchedEffect
         while (state.visible) {
-            if (!state.busy && (state.watchTab || state.sessionStage == MemorySessionStage.CANDIDATES)) {
+            // Results already have an explicit Refresh action. Only Watch needs a live
+            // cadence; avoiding result polling reduces needless IPC/state churn in :midlet.
+            if (!state.busy && state.watchTab) {
                 actions.refresh()
             }
             delay(1_000)
