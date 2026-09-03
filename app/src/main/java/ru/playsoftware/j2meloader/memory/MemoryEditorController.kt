@@ -538,6 +538,7 @@ class MemoryEditorComposeController(
         freezeAfter: Boolean,
     ) {
         val id = state.selected.singleOrNull() ?: return
+        if (!canLaunchOperation()) return
         val resultGroup = !state.watchTab
         val replacement = value.trim()
         pendingEditFollowUp = if (addToWatch || freezeAfter) {
@@ -751,6 +752,7 @@ class MemoryEditorComposeController(
             snapshot.anchorAddress - snapshot.startAddress,
             snapshot.startAddress + snapshot.bytes.size - snapshot.anchorAddress,
         ).toInt().coerceIn(1, MemoryEngineContract.MAX_INSPECT_RADIUS)
+        if (!canLaunchOperation()) return
         pendingInspectorRefresh = PendingInspectorRefresh(anchorCandidateId, radius)
         launchOperation { engine, token ->
             engine.editInspectorValue(
@@ -784,6 +786,15 @@ class MemoryEditorComposeController(
                 secondValue.trim(),
             )
         }
+    }
+
+    private fun canLaunchOperation(): Boolean {
+        if (state.busy || destroyed || !runtimeStillActive()) return false
+        if (state.runtimeToken == 0L || service == null) {
+            refreshCapabilities()
+            return false
+        }
+        return true
     }
 
     private fun launchOperation(
