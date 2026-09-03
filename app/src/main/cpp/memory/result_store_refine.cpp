@@ -42,7 +42,9 @@ template <typename T, ResultPlane Plane, KnownPredicate Predicate>
             continue;
         }
         if (cancelled && cancelled()) {
-            error = "V2 known refine cancelled";
+            // Keep the established shadow diagnostic token while this implementation is shared by
+            // shadow and future production callers; the caller decides whether it is user-visible.
+            error = "V2 shadow refine cancelled";
             return false;
         }
 
