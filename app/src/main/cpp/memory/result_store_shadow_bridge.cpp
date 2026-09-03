@@ -28,7 +28,6 @@ constexpr jint kOk = 0;
 constexpr jint kInvalidRequest = 2;
 constexpr jint kResourceLimit = 3;
 constexpr jint kTargetLost = 5;
-constexpr jint kNoSession = 6;
 constexpr jint kTypeAuto = 0;
 constexpr jint kTypeByte = 1;
 constexpr jint kTypeShort = 2;
