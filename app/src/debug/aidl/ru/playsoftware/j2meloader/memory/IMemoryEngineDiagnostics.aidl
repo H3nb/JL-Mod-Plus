@@ -19,4 +19,11 @@ interface IMemoryEngineDiagnostics {
      * with the currently published legacy explicit-type equality result. Debug builds only.
      */
     Bundle validateKnownEqualShadow(int valueType);
+
+    /**
+     * Validate an explicit-type Known search/refine using an already parsed canonical query plan.
+     * firstBits/secondBits are raw primitive bits produced by the authoritative legacy parser;
+     * this diagnostics boundary deliberately accepts no query strings and performs no parsing.
+     */
+    Bundle validateKnownShadowPlan(int valueType, int predicate, long firstBits, long secondBits);
 }
