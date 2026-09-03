@@ -15,6 +15,13 @@
 
 namespace jlmem::v2 {
 
+struct KnownRefineRequest {
+    ResultPlane plane = ResultPlane::Int;
+    KnownPredicate predicate = KnownPredicate::Equal;
+    std::uint64_t firstBits = 0U;
+    std::uint64_t secondBits = 0U;
+};
+
 struct KnownEqualRefineRequest {
     ResultPlane plane = ResultPlane::Int;
     std::uint64_t expectedBits = 0U;
@@ -24,6 +31,17 @@ struct KnownEqualRefineRequest {
 // mutated: a working ResultStore copy is edited by clearing failed membership bits and is only
 // moved to `out` after every required target read succeeds. Empty blocks and allocated plane
 // payloads remain in place so revision-local block/payload indices stay stable.
+[[nodiscard]] bool refineKnownExplicit(
+        const ResultStore &source,
+        const KnownRefineRequest &request,
+        const RemoteReadFn &read,
+        const CancelledFn &cancelled,
+        ResultStore &out,
+        KnownScanStats &stats,
+        std::string &error);
+
+// Compatibility wrapper used by the current equality shadow diagnostics. It routes through the
+// generic predicate kernel so equality parity continuously exercises the new implementation.
 [[nodiscard]] bool refineKnownEqualExplicit(
         const ResultStore &source,
         const KnownEqualRefineRequest &request,
