@@ -9,6 +9,7 @@
 #pragma once
 
 #include "result_store.h"
+#include "result_store_predicate.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -23,6 +24,15 @@ struct ScanRange {
     std::uintptr_t end = 0U;
 };
 
+struct KnownScanRequest {
+    ResultPlane plane = ResultPlane::Int;
+    KnownPredicate predicate = KnownPredicate::Equal;
+    std::uint64_t firstBits = 0U;
+    std::uint64_t secondBits = 0U;
+};
+
+// Compatibility request retained while the existing equality-only diagnostics remain the first
+// production caller of the generic known-predicate kernel.
 struct KnownEqualScanRequest {
     ResultPlane plane = ResultPlane::Int;
     std::uint64_t expectedBits = 0U;
@@ -51,9 +61,20 @@ using CancelledFn = std::function<bool()>;
     return fingerprint;
 }
 
-// Explicit-type equality kernel used by the debug shadow path before ResultStore becomes
-// authoritative. Type dispatch occurs once before scanning; the hot slot loop is specialized for
-// one primitive representation and never calls a per-candidate predicate/type dispatcher.
+// Explicit-type known-value kernel used by the debug shadow path before ResultStore becomes
+// authoritative. Type and predicate dispatch both occur once before scanning; the hot slot loop is
+// specialized for one primitive representation and one known predicate.
+[[nodiscard]] bool scanKnownExplicit(
+        const std::vector<ScanRange> &ranges,
+        const KnownScanRequest &request,
+        const RemoteReadFn &read,
+        const CancelledFn &cancelled,
+        ResultStore &out,
+        KnownScanStats &stats,
+        std::string &error);
+
+// Existing equality diagnostics call this wrapper; it deliberately routes through the generic
+// kernel so every current parity run also exercises the shared predicate implementation.
 [[nodiscard]] bool scanKnownEqualExplicit(
         const std::vector<ScanRange> &ranges,
         const KnownEqualScanRequest &request,
