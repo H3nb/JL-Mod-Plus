@@ -812,13 +812,47 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private int refreshForRead(long token, long[] candidateIds) {
-		long gcCount = currentGcCount(token);
-		if (gcBindings.candidatesNeedRevalidation(candidateIds, gcCount)) {
+		if (candidateIds == null || candidateIds.length == 0) {
+			return MemoryEngineContract.RESULT_INVALID_REQUEST;
+		}
+		Map<Long, MemoryCandidateBindingCache.Binding> before =
+				bindingCache.snapshot(candidateIds);
+		if (before == null) {
 			int result = refreshWithRecovery(token, candidateIds);
 			if (result == MemoryEngineContract.RESULT_OK) refreshCachedBindings(candidateIds);
 			return result;
 		}
-		return NativeMemoryEngine.refresh(candidateIds, false);
+
+		long gcBefore = currentGcCount(token);
+		// Verify the existing CandidateId bindings against their fingerprints first. Native recovery
+		// here is bounded to the already-configured resident ranges, so an ordinary GC does not
+		// immediately force target-side mincore() and a full range refresh.
+		int fastResult = NativeMemoryEngine.refresh(candidateIds, true);
+		int bindingResult = fastResult == MemoryEngineContract.RESULT_OK
+				? compareRefreshedBindings(before)
+				: MemoryEngineContract.RESULT_OK;
+		long gcAfter = currentGcCount(token);
+		boolean gcChangedDuringFastRefresh =
+				MemoryEngineContract.didGcCountChange(gcBefore, gcAfter);
+
+		if (MemoryGcPolicy.shouldRetryReadWithFreshRanges(
+				fastResult, bindingResult, gcChangedDuringFastRefresh)) {
+			int result = refreshWithRecovery(token, candidateIds);
+			if (result != MemoryEngineContract.RESULT_OK) return result;
+			int refreshedBindingResult = compareRefreshedBindings(before);
+			if (refreshedBindingResult == MemoryEngineContract.RESULT_IDENTITY_UNSAFE) {
+				return refreshedBindingResult;
+			}
+			// A uniquely recovered move is normal for read-only presentation; explicit mutation still
+			// performs its own binding comparison and requires a retry before writing.
+			return MemoryEngineContract.RESULT_OK;
+		}
+
+		if (fastResult != MemoryEngineContract.RESULT_OK) return fastResult;
+		if (bindingResult == MemoryEngineContract.RESULT_IDENTITY_UNSAFE) return bindingResult;
+		gcBindings.markCandidatesValidated(candidateIds,
+				MemoryEngineContract.latestKnownGcCount(gcBefore, gcAfter));
+		return MemoryEngineContract.RESULT_OK;
 	}
 
 	private int refreshWithRecovery(long token, long[] candidateIds) {
