@@ -10,25 +10,16 @@
 
 #include <bit>
 #include <cstring>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
 namespace jlmem::v2 {
 namespace {
 
-template <typename T>
-[[nodiscard]] T valueFromBits(std::uint64_t bits) noexcept {
-    static_assert(std::is_trivially_copyable_v<T>);
-    static_assert(sizeof(T) <= sizeof(bits));
-    T value{};
-    std::memcpy(&value, &bits, sizeof(T));
-    return value;
-}
-
-template <typename T, ResultPlane Plane>
-[[nodiscard]] bool refineEqualTyped(const ResultStore &source,
-                                    std::uint64_t expectedBits,
+template <typename T, ResultPlane Plane, KnownPredicate Predicate>
+[[nodiscard]] bool refineKnownTyped(const ResultStore &source,
+                                    std::uint64_t firstBits,
+                                    std::uint64_t secondBits,
                                     const RemoteReadFn &read,
                                     const CancelledFn &cancelled,
                                     ResultStore &out,
@@ -36,7 +27,6 @@ template <typename T, ResultPlane Plane>
                                     std::string &error) {
     static_assert(sizeof(T) == planeAlignment(Plane));
     constexpr std::size_t kWidth = sizeof(T);
-    const T expected = valueFromBits<T>(expectedBits);
 
     ResultStore next = source;
     KnownScanStats nextStats;
@@ -81,7 +71,7 @@ template <typename T, ResultPlane Plane>
                 const std::size_t byteOffset = slot * kWidth;
                 T actual{};
                 std::memcpy(&actual, blockBuffer.data() + byteOffset, kWidth);
-                if (!(actual == expected)) {
+                if (!matchesKnownValue<T, Predicate>(actual, firstBits, secondBits)) {
                     survivors &= ~(std::uint64_t{1U} << bit);
                 }
                 active &= active - std::uint64_t{1U};
@@ -105,7 +95,89 @@ template <typename T, ResultPlane Plane>
     return true;
 }
 
+template <typename T, ResultPlane Plane>
+[[nodiscard]] bool dispatchKnownPredicate(const ResultStore &source,
+                                          const KnownRefineRequest &request,
+                                          const RemoteReadFn &read,
+                                          const CancelledFn &cancelled,
+                                          ResultStore &out,
+                                          KnownScanStats &stats,
+                                          std::string &error) {
+    switch (request.predicate) {
+    case KnownPredicate::Equal:
+        return refineKnownTyped<T, Plane, KnownPredicate::Equal>(
+                source, request.firstBits, request.secondBits, read, cancelled,
+                out, stats, error);
+    case KnownPredicate::NotEqual:
+        return refineKnownTyped<T, Plane, KnownPredicate::NotEqual>(
+                source, request.firstBits, request.secondBits, read, cancelled,
+                out, stats, error);
+    case KnownPredicate::Greater:
+        return refineKnownTyped<T, Plane, KnownPredicate::Greater>(
+                source, request.firstBits, request.secondBits, read, cancelled,
+                out, stats, error);
+    case KnownPredicate::Less:
+        return refineKnownTyped<T, Plane, KnownPredicate::Less>(
+                source, request.firstBits, request.secondBits, read, cancelled,
+                out, stats, error);
+    case KnownPredicate::GreaterOrEqual:
+        return refineKnownTyped<T, Plane, KnownPredicate::GreaterOrEqual>(
+                source, request.firstBits, request.secondBits, read, cancelled,
+                out, stats, error);
+    case KnownPredicate::LessOrEqual:
+        return refineKnownTyped<T, Plane, KnownPredicate::LessOrEqual>(
+                source, request.firstBits, request.secondBits, read, cancelled,
+                out, stats, error);
+    case KnownPredicate::Between:
+        return refineKnownTyped<T, Plane, KnownPredicate::Between>(
+                source, request.firstBits, request.secondBits, read, cancelled,
+                out, stats, error);
+    }
+    error = "Invalid explicit-type known refine predicate";
+    return false;
+}
+
 } // namespace
+
+bool refineKnownExplicit(const ResultStore &source,
+                         const KnownRefineRequest &request,
+                         const RemoteReadFn &read,
+                         const CancelledFn &cancelled,
+                         ResultStore &out,
+                         KnownScanStats &stats,
+                         std::string &error) {
+    if (!read || request.plane == ResultPlane::Count) {
+        error = "Invalid explicit-type known refine request";
+        return false;
+    }
+    switch (request.plane) {
+    case ResultPlane::Byte:
+        return dispatchKnownPredicate<std::int8_t, ResultPlane::Byte>(
+                source, request, read, cancelled, out, stats, error);
+    case ResultPlane::Short:
+        return dispatchKnownPredicate<std::int16_t, ResultPlane::Short>(
+                source, request, read, cancelled, out, stats, error);
+    case ResultPlane::Char:
+        return dispatchKnownPredicate<std::uint16_t, ResultPlane::Char>(
+                source, request, read, cancelled, out, stats, error);
+    case ResultPlane::Int:
+        return dispatchKnownPredicate<std::int32_t, ResultPlane::Int>(
+                source, request, read, cancelled, out, stats, error);
+    case ResultPlane::Float:
+        return dispatchKnownPredicate<float, ResultPlane::Float>(
+                source, request, read, cancelled, out, stats, error);
+    case ResultPlane::Long:
+        return dispatchKnownPredicate<std::int64_t, ResultPlane::Long>(
+                source, request, read, cancelled, out, stats, error);
+    case ResultPlane::Double:
+        return dispatchKnownPredicate<double, ResultPlane::Double>(
+                source, request, read, cancelled, out, stats, error);
+    case ResultPlane::Count:
+        break;
+    }
+    error = "Invalid explicit-type known refine request";
+    return false;
+}
 
 bool refineKnownEqualExplicit(const ResultStore &source,
                               const KnownEqualRefineRequest &request,
@@ -114,37 +186,10 @@ bool refineKnownEqualExplicit(const ResultStore &source,
                               ResultStore &out,
                               KnownScanStats &stats,
                               std::string &error) {
-    if (!read || request.plane == ResultPlane::Count) {
-        error = "Invalid explicit-type equality refine request";
-        return false;
-    }
-    switch (request.plane) {
-    case ResultPlane::Byte:
-        return refineEqualTyped<std::int8_t, ResultPlane::Byte>(
-                source, request.expectedBits, read, cancelled, out, stats, error);
-    case ResultPlane::Short:
-        return refineEqualTyped<std::int16_t, ResultPlane::Short>(
-                source, request.expectedBits, read, cancelled, out, stats, error);
-    case ResultPlane::Char:
-        return refineEqualTyped<std::uint16_t, ResultPlane::Char>(
-                source, request.expectedBits, read, cancelled, out, stats, error);
-    case ResultPlane::Int:
-        return refineEqualTyped<std::int32_t, ResultPlane::Int>(
-                source, request.expectedBits, read, cancelled, out, stats, error);
-    case ResultPlane::Float:
-        return refineEqualTyped<float, ResultPlane::Float>(
-                source, request.expectedBits, read, cancelled, out, stats, error);
-    case ResultPlane::Long:
-        return refineEqualTyped<std::int64_t, ResultPlane::Long>(
-                source, request.expectedBits, read, cancelled, out, stats, error);
-    case ResultPlane::Double:
-        return refineEqualTyped<double, ResultPlane::Double>(
-                source, request.expectedBits, read, cancelled, out, stats, error);
-    case ResultPlane::Count:
-        break;
-    }
-    error = "Invalid explicit-type equality refine request";
-    return false;
+    return refineKnownExplicit(
+            source,
+            {request.plane, KnownPredicate::Equal, request.expectedBits, 0U},
+            read, cancelled, out, stats, error);
 }
 
 } // namespace jlmem::v2
