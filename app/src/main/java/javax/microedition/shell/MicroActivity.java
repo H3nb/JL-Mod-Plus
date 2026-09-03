@@ -876,9 +876,7 @@ public class MicroActivity extends AppCompatActivity {
 	}
 
 	private void toggleRuntimeMenuFromInput() {
-		if (memoryEditorController != null && memoryEditorController.isVisible()) {
-			memoryEditorController.close();
-		} else if (isRuntimeMenuVisible()) {
+		if (isRuntimeMenuVisible()) {
 			closeOptionsMenu();
 		} else {
 			openOptionsMenu();
