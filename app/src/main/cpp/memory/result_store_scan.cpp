@@ -11,7 +11,6 @@
 #include <algorithm>
 #include <cstring>
 #include <limits>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -32,18 +31,10 @@ constexpr std::size_t kRemoteReadChunkSize = 256U * 1024U;
                    : value + delta;
 }
 
-template <typename T>
-[[nodiscard]] T valueFromBits(std::uint64_t bits) noexcept {
-    static_assert(std::is_trivially_copyable_v<T>);
-    static_assert(sizeof(T) <= sizeof(bits));
-    T value{};
-    std::memcpy(&value, &bits, sizeof(T));
-    return value;
-}
-
-template <typename T, ResultPlane Plane>
-[[nodiscard]] bool scanEqualTyped(const std::vector<ScanRange> &ranges,
-                                  std::uint64_t expectedBits,
+template <typename T, ResultPlane Plane, KnownPredicate Predicate>
+[[nodiscard]] bool scanKnownTyped(const std::vector<ScanRange> &ranges,
+                                  std::uint64_t firstBits,
+                                  std::uint64_t secondBits,
                                   const RemoteReadFn &read,
                                   const CancelledFn &cancelled,
                                   ResultStore &out,
@@ -51,7 +42,6 @@ template <typename T, ResultPlane Plane>
                                   std::string &error) {
     static_assert(sizeof(T) == planeAlignment(Plane));
     constexpr std::size_t kWidth = sizeof(T);
-    const T expected = valueFromBits<T>(expectedBits);
 
     ResultStore next;
     KnownScanStats nextStats;
@@ -123,7 +113,7 @@ template <typename T, ResultPlane Plane>
 
                 T actual{};
                 std::memcpy(&actual, buffer.data() + offset, kWidth);
-                if (actual == expected) {
+                if (matchesKnownValue<T, Predicate>(actual, firstBits, secondBits)) {
                     const std::size_t byteOffset =
                             static_cast<std::size_t>(address - blockBase);
                     const std::size_t slot = byteOffset / kWidth;
@@ -160,7 +150,89 @@ template <typename T, ResultPlane Plane>
     return true;
 }
 
+template <typename T, ResultPlane Plane>
+[[nodiscard]] bool dispatchKnownPredicate(const std::vector<ScanRange> &ranges,
+                                          const KnownScanRequest &request,
+                                          const RemoteReadFn &read,
+                                          const CancelledFn &cancelled,
+                                          ResultStore &out,
+                                          KnownScanStats &stats,
+                                          std::string &error) {
+    switch (request.predicate) {
+    case KnownPredicate::Equal:
+        return scanKnownTyped<T, Plane, KnownPredicate::Equal>(
+                ranges, request.firstBits, request.secondBits, read, cancelled,
+                out, stats, error);
+    case KnownPredicate::NotEqual:
+        return scanKnownTyped<T, Plane, KnownPredicate::NotEqual>(
+                ranges, request.firstBits, request.secondBits, read, cancelled,
+                out, stats, error);
+    case KnownPredicate::Greater:
+        return scanKnownTyped<T, Plane, KnownPredicate::Greater>(
+                ranges, request.firstBits, request.secondBits, read, cancelled,
+                out, stats, error);
+    case KnownPredicate::Less:
+        return scanKnownTyped<T, Plane, KnownPredicate::Less>(
+                ranges, request.firstBits, request.secondBits, read, cancelled,
+                out, stats, error);
+    case KnownPredicate::GreaterOrEqual:
+        return scanKnownTyped<T, Plane, KnownPredicate::GreaterOrEqual>(
+                ranges, request.firstBits, request.secondBits, read, cancelled,
+                out, stats, error);
+    case KnownPredicate::LessOrEqual:
+        return scanKnownTyped<T, Plane, KnownPredicate::LessOrEqual>(
+                ranges, request.firstBits, request.secondBits, read, cancelled,
+                out, stats, error);
+    case KnownPredicate::Between:
+        return scanKnownTyped<T, Plane, KnownPredicate::Between>(
+                ranges, request.firstBits, request.secondBits, read, cancelled,
+                out, stats, error);
+    }
+    error = "Invalid explicit-type known predicate";
+    return false;
+}
+
 } // namespace
+
+bool scanKnownExplicit(const std::vector<ScanRange> &ranges,
+                       const KnownScanRequest &request,
+                       const RemoteReadFn &read,
+                       const CancelledFn &cancelled,
+                       ResultStore &out,
+                       KnownScanStats &stats,
+                       std::string &error) {
+    if (!read || request.plane == ResultPlane::Count) {
+        error = "Invalid explicit-type known shadow request";
+        return false;
+    }
+    switch (request.plane) {
+    case ResultPlane::Byte:
+        return dispatchKnownPredicate<std::int8_t, ResultPlane::Byte>(
+                ranges, request, read, cancelled, out, stats, error);
+    case ResultPlane::Short:
+        return dispatchKnownPredicate<std::int16_t, ResultPlane::Short>(
+                ranges, request, read, cancelled, out, stats, error);
+    case ResultPlane::Char:
+        return dispatchKnownPredicate<std::uint16_t, ResultPlane::Char>(
+                ranges, request, read, cancelled, out, stats, error);
+    case ResultPlane::Int:
+        return dispatchKnownPredicate<std::int32_t, ResultPlane::Int>(
+                ranges, request, read, cancelled, out, stats, error);
+    case ResultPlane::Float:
+        return dispatchKnownPredicate<float, ResultPlane::Float>(
+                ranges, request, read, cancelled, out, stats, error);
+    case ResultPlane::Long:
+        return dispatchKnownPredicate<std::int64_t, ResultPlane::Long>(
+                ranges, request, read, cancelled, out, stats, error);
+    case ResultPlane::Double:
+        return dispatchKnownPredicate<double, ResultPlane::Double>(
+                ranges, request, read, cancelled, out, stats, error);
+    case ResultPlane::Count:
+        break;
+    }
+    error = "Invalid explicit-type known shadow request";
+    return false;
+}
 
 bool scanKnownEqualExplicit(const std::vector<ScanRange> &ranges,
                             const KnownEqualScanRequest &request,
@@ -169,37 +241,10 @@ bool scanKnownEqualExplicit(const std::vector<ScanRange> &ranges,
                             ResultStore &out,
                             KnownScanStats &stats,
                             std::string &error) {
-    if (!read || request.plane == ResultPlane::Count) {
-        error = "Invalid explicit-type equality shadow request";
-        return false;
-    }
-    switch (request.plane) {
-    case ResultPlane::Byte:
-        return scanEqualTyped<std::int8_t, ResultPlane::Byte>(
-                ranges, request.expectedBits, read, cancelled, out, stats, error);
-    case ResultPlane::Short:
-        return scanEqualTyped<std::int16_t, ResultPlane::Short>(
-                ranges, request.expectedBits, read, cancelled, out, stats, error);
-    case ResultPlane::Char:
-        return scanEqualTyped<std::uint16_t, ResultPlane::Char>(
-                ranges, request.expectedBits, read, cancelled, out, stats, error);
-    case ResultPlane::Int:
-        return scanEqualTyped<std::int32_t, ResultPlane::Int>(
-                ranges, request.expectedBits, read, cancelled, out, stats, error);
-    case ResultPlane::Float:
-        return scanEqualTyped<float, ResultPlane::Float>(
-                ranges, request.expectedBits, read, cancelled, out, stats, error);
-    case ResultPlane::Long:
-        return scanEqualTyped<std::int64_t, ResultPlane::Long>(
-                ranges, request.expectedBits, read, cancelled, out, stats, error);
-    case ResultPlane::Double:
-        return scanEqualTyped<double, ResultPlane::Double>(
-                ranges, request.expectedBits, read, cancelled, out, stats, error);
-    case ResultPlane::Count:
-        break;
-    }
-    error = "Invalid explicit-type equality shadow request";
-    return false;
+    return scanKnownExplicit(
+            ranges,
+            {request.plane, KnownPredicate::Equal, request.expectedBits, 0U},
+            read, cancelled, out, stats, error);
 }
 
 } // namespace jlmem::v2
