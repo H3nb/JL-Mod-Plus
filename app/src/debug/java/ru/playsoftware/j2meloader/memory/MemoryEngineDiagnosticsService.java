@@ -109,7 +109,7 @@ public final class MemoryEngineDiagnosticsService extends Service {
 				Math.max(0L, legacyCount));
 		if (legacyCount <= 0L) {
 			return shadowFailure(result, MemoryEngineContract.RESULT_NO_SESSION,
-					"Run a non-empty explicit-type Equal search before the shadow probe");
+					"Run a non-empty explicit-type Equal search or Equal refine before the shadow probe");
 		}
 
 		long[] firstPage = NativeMemoryEngine.resultPage(0, 1);
@@ -122,10 +122,11 @@ public final class MemoryEngineDiagnosticsService extends Service {
 			return shadowFailure(result, MemoryEngineContract.RESULT_INVALID_REQUEST,
 					"Current legacy result is not the requested explicit type");
 		}
-		// For a first Equal search initialBits is the parsed matching value captured when the result
-		// was created. Using it avoids a passive live refresh changing the comparison value.
-		long expectedBits = firstPage[firstBase + 6];
-		result.putLong(MemoryEngineDiagnosticsContract.KEY_SHADOW_EXPECTED_BITS, expectedBits);
+		// The first shadow probe uses initialBits so passive presentation refresh cannot change the
+		// original Equal predicate. Once a shadow revision exists, native uses currentBits so the
+		// same probe can validate a subsequent legacy Next Scan Equal refinement.
+		long initialBits = firstPage[firstBase + 6];
+		long currentBits = firstPage[firstBase + 8];
 
 		long legacyFingerprint = legacyFingerprint(valueType, legacyCount);
 		if (legacyFingerprint == Long.MIN_VALUE) {
@@ -135,14 +136,24 @@ public final class MemoryEngineDiagnosticsService extends Service {
 		result.putLong(MemoryEngineDiagnosticsContract.KEY_LEGACY_ADDRESS_FINGERPRINT,
 				legacyFingerprint);
 
-		long[] shadow = NativeMemoryEngine.v2ShadowKnownEqual(valueType, expectedBits);
-		if (shadow == null || shadow.length != 7) {
+		long[] shadow = NativeMemoryEngine.v2ShadowKnownEqual(
+				valueType, initialBits, currentBits);
+		if (shadow == null || shadow.length != 9) {
 			return shadowFailure(result, MemoryEngineContract.RESULT_INVALID_REQUEST,
 					"V2 shadow scanner did not return a valid diagnostics payload");
 		}
 		int status = shadow[0] < Integer.MIN_VALUE || shadow[0] > Integer.MAX_VALUE
 				? MemoryEngineContract.RESULT_INVALID_REQUEST : (int) shadow[0];
+		int operation = shadow[7] < Integer.MIN_VALUE || shadow[7] > Integer.MAX_VALUE
+				? -1 : (int) shadow[7];
+		if (operation != MemoryEngineDiagnosticsContract.SHADOW_OPERATION_SCAN &&
+				operation != MemoryEngineDiagnosticsContract.SHADOW_OPERATION_REFINE) {
+			return shadowFailure(result, MemoryEngineContract.RESULT_INVALID_REQUEST,
+					"V2 shadow scanner returned an invalid operation kind");
+		}
 		result.putInt(MemoryEngineDiagnosticsContract.KEY_SHADOW_STATUS, status);
+		result.putInt(MemoryEngineDiagnosticsContract.KEY_SHADOW_OPERATION, operation);
+		result.putLong(MemoryEngineDiagnosticsContract.KEY_SHADOW_EXPECTED_BITS, shadow[8]);
 		result.putLong(MemoryEngineDiagnosticsContract.KEY_SHADOW_BYTES_SCANNED,
 				Math.max(0L, shadow[1]));
 		result.putLong(MemoryEngineDiagnosticsContract.KEY_SHADOW_TYPED_MATCHES,
@@ -161,10 +172,13 @@ public final class MemoryEngineDiagnosticsService extends Service {
 		boolean addressMatch = countMatch && legacyFingerprint == shadow[6];
 		result.putBoolean(MemoryEngineDiagnosticsContract.KEY_SHADOW_COUNT_MATCH, countMatch);
 		result.putBoolean(MemoryEngineDiagnosticsContract.KEY_SHADOW_ADDRESS_MATCH, addressMatch);
+		String operationName = operation == MemoryEngineDiagnosticsContract.SHADOW_OPERATION_REFINE
+				? "bitmap refine" : "first scan";
 		result.putString(MemoryEngineDiagnosticsContract.KEY_SHADOW_MESSAGE,
 				addressMatch
-						? "Legacy Candidate and v2 ResultStore equality results match"
-						: "Shadow parity mismatch; keep the legacy backend authoritative");
+						? "Legacy Candidate and v2 ResultStore " + operationName + " results match"
+						: "Shadow parity mismatch after " + operationName +
+								"; keep the legacy backend authoritative");
 		return result;
 	}
 
