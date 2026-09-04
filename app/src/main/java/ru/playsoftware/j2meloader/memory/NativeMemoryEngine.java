@@ -11,6 +11,12 @@ package ru.playsoftware.j2meloader.memory;
 import ru.playsoftware.j2meloader.BuildConfig;
 
 final class NativeMemoryEngine {
+	private static final Object V2_KNOWN_PAGING_LOCK = new Object();
+	private static long v2KnownStageGeneration;
+	private static boolean v2KnownStaged;
+	private static long v2KnownPageHits;
+	private static long v2KnownPageFallbacks;
+
 	static {
 		System.loadLibrary("jlmem");
 	}
@@ -51,9 +57,9 @@ final class NativeMemoryEngine {
 			// an explicit-type ResultStore after proving exact address/type parity against the immutable
 			// legacy revision and enforcing a conservative size cap. Failure leaves legacy paging intact.
 			if (valueType != MemoryEngineContract.TYPE_AUTO) {
-				stageV2KnownResultStore();
+				publishV2KnownPagingStage(stageV2KnownResultStore());
 			} else {
-				clearV2KnownResultStore();
+				clearV2KnownPagingStage();
 			}
 			if (BuildConfig.DEBUG) {
 				// A fresh production Known search starts a new semantic revision even when the target and
@@ -96,11 +102,11 @@ final class NativeMemoryEngine {
 				predicate, first, second, allowRelocationReconcile);
 		if (result == MemoryEngineContract.RESULT_OK) {
 			// Keep the verified ResultStore read path opportunistically staged for explicit types.
-			stageV2KnownResultStore();
+			publishV2KnownPagingStage(stageV2KnownResultStore());
 		} else {
 			// A failed/cancelled refine leaves the legacy revision transactional and authoritative.
 			// Drop any staged mirror rather than letting presentation depend on stale migration state.
-			clearV2KnownResultStore();
+			clearV2KnownPagingStage();
 		}
 		return result;
 	}
@@ -145,13 +151,66 @@ final class NativeMemoryEngine {
 		// Only a ResultStore revision that was built from and verified against the exact current
 		// immutable legacy SearchState can answer here. Any state change/invariant mismatch returns
 		// null and falls back to the validated Candidate paging implementation.
-		long[] staged = resultPageV2Known(offset, limit);
-		return staged != null ? staged : resultPageUnchecked(offset, limit);
+		long stagedGeneration;
+		synchronized (V2_KNOWN_PAGING_LOCK) {
+			stagedGeneration = v2KnownStaged ? v2KnownStageGeneration : 0L;
+		}
+		if (stagedGeneration != 0L) {
+			long[] staged = resultPageV2Known(offset, limit);
+			if (staged != null) {
+				synchronized (V2_KNOWN_PAGING_LOCK) {
+					if (v2KnownStaged && v2KnownStageGeneration == stagedGeneration) {
+						v2KnownPageHits++;
+					}
+				}
+				return staged;
+			}
+			synchronized (V2_KNOWN_PAGING_LOCK) {
+				v2KnownPageFallbacks++;
+				// Do not let an old page request demote a newer staged revision that was published while
+				// the native call was in flight.
+				if (v2KnownStaged && v2KnownStageGeneration == stagedGeneration) {
+					v2KnownStaged = false;
+				}
+			}
+		} else {
+			synchronized (V2_KNOWN_PAGING_LOCK) {
+				v2KnownPageFallbacks++;
+			}
+		}
+		return resultPageUnchecked(offset, limit);
 	}
 
 	private static native long[] resultPageV2Known(int offset, int limit);
 
 	private static native long[] resultPageUnchecked(int offset, int limit);
+
+	/** [staged(0/1), stageGeneration, v2PageHits, legacyFallbackPages]. */
+	static long[] v2KnownPagingStats() {
+		synchronized (V2_KNOWN_PAGING_LOCK) {
+			return new long[]{
+					v2KnownStaged ? 1L : 0L,
+					v2KnownStageGeneration,
+					v2KnownPageHits,
+					v2KnownPageFallbacks
+			};
+		}
+	}
+
+	private static void publishV2KnownPagingStage(boolean staged) {
+		synchronized (V2_KNOWN_PAGING_LOCK) {
+			v2KnownStageGeneration = v2KnownStageGeneration == Long.MAX_VALUE
+					? 1L : v2KnownStageGeneration + 1L;
+			v2KnownStaged = staged;
+			v2KnownPageHits = 0L;
+			v2KnownPageFallbacks = 0L;
+		}
+	}
+
+	private static void clearV2KnownPagingStage() {
+		clearV2KnownResultStore();
+		publishV2KnownPagingStage(false);
+	}
 
 	static native long[] inspect(long candidateId, int radius);
 
@@ -176,7 +235,7 @@ final class NativeMemoryEngine {
 
 	static void clearSearch() {
 		clearSearchUnchecked();
-		clearV2KnownResultStore();
+		clearV2KnownPagingStage();
 		if (BuildConfig.DEBUG) {
 			resetV2ShadowSession();
 		}
@@ -186,7 +245,7 @@ final class NativeMemoryEngine {
 
 	static void clearTarget() {
 		clearTargetUnchecked();
-		clearV2KnownResultStore();
+		clearV2KnownPagingStage();
 		if (BuildConfig.DEBUG) {
 			clearV2ShadowTarget();
 		}
