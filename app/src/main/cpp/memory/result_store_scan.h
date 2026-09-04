@@ -48,6 +48,28 @@ struct KnownScanStats {
 using RemoteReadFn = std::function<bool(std::uintptr_t, void *, std::size_t)>;
 using CancelledFn = std::function<bool()>;
 
+// Optional production observer. The ResultStore kernel remains the only component deciding
+// membership; the observer merely materializes compatibility metadata from each accepted slot and
+// receives chunk-level progress. Raw chunk context lets the legacy Candidate mirror snapshot its
+// passive identity fingerprint without issuing one remote read per result.
+struct KnownScanMatchView {
+    std::uintptr_t address = 0U;
+    std::uint64_t bits = 0U;
+    const std::uint8_t *chunkBytes = nullptr;
+    std::size_t chunkSize = 0U;
+    std::size_t chunkOffset = 0U;
+    std::size_t width = 0U;
+};
+
+using KnownMatchObserverFn = bool (*)(void *, const KnownScanMatchView &);
+using KnownProgressObserverFn = void (*)(void *, std::size_t);
+
+struct KnownScanObserver {
+    void *opaque = nullptr;
+    KnownMatchObserverFn onMatch = nullptr;
+    KnownProgressObserverFn onProgress = nullptr;
+};
+
 [[nodiscard]] constexpr std::uint64_t appendAddressFingerprint(
         std::uint64_t fingerprint, std::uintptr_t address,
         ResultPlane plane) noexcept {
@@ -59,9 +81,9 @@ using CancelledFn = std::function<bool()>;
     return fingerprint;
 }
 
-// Explicit-type known-value kernel used by the debug shadow path before ResultStore becomes
-// authoritative. Type and predicate dispatch both occur once before scanning; the hot slot loop is
-// specialized for one primitive representation and one known predicate.
+// Explicit-type known-value kernel used by debug shadow and production ownership paths. Type and
+// predicate dispatch both occur once before scanning; the hot slot loop is specialized for one
+// primitive representation and one known predicate.
 [[nodiscard]] bool scanKnownExplicit(
         const std::vector<ScanRange> &ranges,
         const KnownScanRequest &request,
@@ -69,7 +91,8 @@ using CancelledFn = std::function<bool()>;
         const CancelledFn &cancelled,
         ResultStore &out,
         KnownScanStats &stats,
-        std::string &error);
+        std::string &error,
+        const KnownScanObserver *observer = nullptr);
 
 // Existing equality diagnostics call this wrapper; it deliberately routes through the generic
 // kernel so every current parity run also exercises the shared predicate implementation.
