@@ -15,6 +15,7 @@
 // memory_engine.cpp can become a normal implementation unit again.
 #include "known_query_plan.h"
 #include "result_cursor.h"
+#include "result_store_scan.h"
 #include "memory_engine.cpp"
 
 #include <algorithm>
@@ -168,7 +169,7 @@ void clearStagedKnownRevision(std::uint64_t revision) noexcept {
     }
 
     // Sequential verification must finish at the canonical end cursor. This catches a bitmap that
-    // contains hidden extra addresses even if the prefix happened to match every legacy candidate.
+    // contains hidden extra addresses even if the prefix happened to match every compatibility row.
     jlmem::v2::ResultAddressPage endPage;
     if (!jlmem::v2::readAddressPage(store, cursor, 1U, endPage) ||
         !endPage.rows.empty() ||
@@ -432,6 +433,156 @@ void clearStagedKnownRevision(std::uint64_t revision) noexcept {
                          expectedCount);
 }
 
+struct AuthoritativeKnownBuildContext {
+    const OperationContext *operation = nullptr;
+    std::shared_ptr<SearchState> next;
+    ValueType type = ValueType::Invalid;
+    bool candidateLimitReached = false;
+};
+
+[[nodiscard]] bool materializeAuthoritativeKnownMatch(
+        void *opaque, const jlmem::v2::KnownScanMatchView &match) {
+    auto *build = static_cast<AuthoritativeKnownBuildContext *>(opaque);
+    if (build == nullptr || build->operation == nullptr || build->next == nullptr ||
+        build->type == ValueType::Invalid || match.address == 0U ||
+        match.chunkBytes == nullptr || match.width != widthOf(build->type) ||
+        match.chunkOffset > match.chunkSize ||
+        match.width > match.chunkSize - match.chunkOffset) {
+        return false;
+    }
+    if (build->next->candidates.size() >= kCandidateLimit) {
+        build->candidateLimitReached = true;
+        return false;
+    }
+    Candidate candidate = makeCandidate(
+            build->operation->nextId + build->next->candidates.size(),
+            match.address, build->type, match.bits, match.bits);
+    candidate.identityValid = snapshotIdentity(
+            match.chunkBytes, match.chunkSize, match.chunkOffset, match.width,
+            candidate.identityHash);
+    build->next->candidates.push_back(candidate);
+    return true;
+}
+
+void advanceAuthoritativeKnownProgress(void *, std::size_t bytes) {
+    advanceScanProgress(bytes);
+}
+
+[[nodiscard]] jint scanKnownV2Authoritative(
+        const OperationContext &context, jint valueType, jint predicate,
+        const std::string &first, const std::string &second) {
+    if (valueType == kTypeAuto ||
+        context.nextId > std::numeric_limits<std::uint64_t>::max() -
+                                 kCandidateLimit) {
+        setMessage(valueType == kTypeAuto
+                           ? "Authoritative ResultStore first scan requires an explicit type"
+                           : "Candidate identifier space is exhausted for this runtime");
+        return valueType == kTypeAuto ? kInvalidRequest : kResourceLimit;
+    }
+    const auto type = valueTypeFromJint(valueType);
+    const auto plan = parseCanonicalKnownPlan(valueType, predicate, first, second);
+    if (!type.has_value() || !plan.has_value()) {
+        setMessage("Invalid value, type, or predicate");
+        return kInvalidRequest;
+    }
+
+    auto next = std::make_shared<SearchState>();
+    next->mode = StateMode::Candidates;
+    next->requestedType = valueType;
+    next->watches = context.state->watches;
+
+    AuthoritativeKnownBuildContext build{&context, next, *type, false};
+    const jlmem::v2::KnownScanObserver observer{
+            &build,
+            materializeAuthoritativeKnownMatch,
+            advanceAuthoritativeKnownProgress,
+    };
+    std::vector<jlmem::v2::ScanRange> ranges;
+    ranges.reserve(context.target.ranges.size());
+    for (const Range &range : context.target.ranges) {
+        ranges.push_back({range.start, range.end});
+    }
+
+    jlmem::v2::ResultStore store;
+    jlmem::v2::KnownScanStats stats;
+    std::string error;
+    beginScanProgress(context.target);
+    const bool scanned = jlmem::v2::scanKnownExplicit(
+            ranges, *plan,
+            [&](std::uintptr_t address, void *buffer, std::size_t size) {
+                return readExact(context.target.pid, address, buffer, size);
+            },
+            [&] { return isCancelled(context); }, store, stats, error, &observer);
+    if (!scanned) {
+        if (build.candidateLimitReached) {
+            setMessage("Complete ResultStore search exceeds the candidate compatibility limit");
+            return kResourceLimit;
+        }
+        if (isCancelled(context)) {
+            setMessage("Operation cancelled; previous results were preserved");
+            return kCancelled;
+        }
+        if (error.find("Target range changed") != std::string::npos) {
+            setMessage("A target range changed while it was being scanned");
+            return kTargetLost;
+        }
+        setMessage(error.empty()
+                           ? "ResultStore first scan could not be completed safely"
+                           : error.c_str());
+        return kResourceLimit;
+    }
+
+    // The v2 bitmap is the membership owner. Candidate rows are only a compatibility mirror for
+    // existing mutation/Watch/Inspector code until TrackedCandidate promotion is complete.
+    if (store.typedCount() != build.next->candidates.size() ||
+        store.uniqueAddressCount() != build.next->candidates.size() ||
+        store.retainedBytes() > kStagedKnownStoreByteLimit) {
+        setMessage("Authoritative ResultStore revision exceeds migration invariants or budget");
+        return kResourceLimit;
+    }
+    fillMissingIdentities(context.target, build.next->candidates);
+    build.next->logicalCount = build.next->candidates.size();
+    build.next->candidateOrderDirty = true;
+    normalizeCandidateResults(*build.next);
+
+    std::shared_ptr<const std::vector<jlmem::v2::ResultCursor>> checkpoints;
+    if (!verifyAndIndexStagedKnownStore(
+                *build.next, store, plan->plane, checkpoints)) {
+        setMessage("ResultStore and compatibility Candidate mirror diverged before publication");
+        return kResourceLimit;
+    }
+
+    auto publishedStore =
+            std::make_shared<jlmem::v2::ResultStore>(std::move(store));
+    std::shared_ptr<const SearchState> publishedState = build.next;
+    OperationContext committed = context;
+    committed.nextId += build.next->candidates.size();
+    const jint result = commitOperation(committed, std::move(build.next), -1);
+    if (result != kOk) {
+        return result;
+    }
+
+    // Java does not enable v2 paging until this JNI call returns, so publication here can safely
+    // follow the SearchState commit while still presenting one externally atomic operation.
+    std::lock_guard<std::mutex> stateLock(gMutex);
+    if (gState != publishedState ||
+        gTarget.generation != context.target.generation ||
+        gTarget.token != context.target.token) {
+        clearStagedKnownResultStore();
+        gLastMessage = "MIDlet runtime or search changed before ResultStore publication";
+        return kTargetLost;
+    }
+    std::lock_guard<std::mutex> stagedLock(gStagedKnownMutex);
+    const std::uint64_t revision = nextStagedRevision(gStagedKnown.revision);
+    gStagedKnown.revision = revision;
+    gStagedKnown.legacyState = publishedState;
+    gStagedKnown.store = std::move(publishedStore);
+    gStagedKnown.checkpoints = std::move(checkpoints);
+    gStagedKnown.plane = plan->plane;
+    gLastMessage.clear();
+    return kOk;
+}
+
 } // namespace
 
 extern "C" JNIEXPORT jlongArray JNICALL
@@ -467,6 +618,21 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_canonicalKnownPlan(
     }
 }
 
+extern "C" JNIEXPORT jint JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_startKnownV2Authoritative(
+        JNIEnv *env, jclass, jint valueType, jint predicate, jstring first,
+        jstring second) {
+    return guardedOperation([&] {
+        OperationContext context;
+        if (!beginOperation(context)) {
+            return kNoSession;
+        }
+        return scanKnownV2Authoritative(
+                context, valueType, predicate, fromJString(env, first),
+                fromJString(env, second));
+    });
+}
+
 extern "C" JNIEXPORT jboolean JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_stageV2KnownResultStore(
         JNIEnv *env, jclass) {
@@ -474,7 +640,7 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_stageV2KnownResultStor
         return stageCurrentKnownResultStore() ? JNI_TRUE : JNI_FALSE;
     } catch (...) {
         // Production staging is opportunistic. Allocation/invariant failure must never turn a
-        // successful legacy search into a user-visible failure.
+        // successful Candidate-owned refine into a user-visible failure.
         if (env->ExceptionCheck()) {
             env->ExceptionClear();
         }
