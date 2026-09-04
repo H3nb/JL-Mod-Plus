@@ -12,6 +12,7 @@
 #include <bit>
 #include <cstring>
 #include <limits>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
