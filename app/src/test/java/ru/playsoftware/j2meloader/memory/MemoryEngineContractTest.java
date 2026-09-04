@@ -37,6 +37,18 @@ public class MemoryEngineContractTest {
 	}
 
 	@Test
+	public void completeRunListAcceptsTheExactConfiguredMaximum() {
+		long[] runs = new long[2 + MemoryEngineContract.MAX_RESIDENT_RUNS * 2];
+		runs[0] = MemoryEngineContract.MAX_RESIDENT_RUNS;
+		for (int index = 0; index < MemoryEngineContract.MAX_RESIDENT_RUNS; index++) {
+			long start = 0x1000L + index * 0x2000L;
+			runs[2 + index * 2] = start;
+			runs[3 + index * 2] = start + 0x1000L;
+		}
+		assertTrue(MemoryEngineContract.isCompleteRunList(runs));
+	}
+
+	@Test
 	public void contractRejectsUnknownEnums() {
 		assertTrue(MemoryEngineContract.isScope(MemoryEngineContract.SCOPE_JAVA_FAST));
 		assertTrue(MemoryEngineContract.isValueType(MemoryEngineContract.TYPE_AUTO));
