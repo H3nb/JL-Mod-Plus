@@ -15,6 +15,7 @@
 // memory_engine.cpp can become a normal implementation unit again.
 #include "known_query_plan.h"
 #include "result_cursor.h"
+#include "result_store_refine.h"
 #include "result_store_scan.h"
 #include "memory_engine.cpp"
 
@@ -25,9 +26,18 @@
 
 namespace {
 
-constexpr std::size_t kStagedKnownCandidateLimit = 250'000U;
+constexpr std::size_t kStagedKnownCandidateLimit = kCandidateLimit;
 constexpr std::size_t kStagedKnownStoreByteLimit = 32U * 1024U * 1024U;
 constexpr std::size_t kStagedKnownCursorCheckpointStride = 256U;
+
+// These adaptive Candidate helpers are defined later by memory_engine_compilation_unit.cpp in the
+// same translation unit. ResultStore owns ordinary explicit membership, but strong GC movement can
+// still delegate one revision to the proven relocation reconciler before importing it back.
+[[nodiscard]] bool shouldAttemptRelocation(const OperationContext &context,
+                                           bool gcEpochChanged);
+[[nodiscard]] jint refineKnownAddressSet(JNIEnv *env, jint predicate,
+                                         jstring first, jstring second,
+                                         bool allowRelocationReconcile);
 
 struct StagedKnownResultStore {
     std::uint64_t revision = 0U;
@@ -277,6 +287,25 @@ void clearStagedKnownRevision(std::uint64_t revision) noexcept {
     return true;
 }
 
+[[nodiscard]] bool stagedKnownMatchesState(
+        const StagedKnownResultStore &staged,
+        const std::shared_ptr<const SearchState> &state) {
+    if (state == nullptr || staged.store == nullptr || staged.checkpoints == nullptr ||
+        staged.plane == jlmem::v2::ResultPlane::Count ||
+        state->mode != StateMode::Candidates || state->candidateOrderDirty ||
+        state->requestedType == kTypeAuto ||
+        state->logicalCount != state->candidates.size() ||
+        staged.store->typedCount() != state->candidates.size() ||
+        staged.store->uniqueAddressCount() != state->logicalCount) {
+        return false;
+    }
+    const auto expectedPlane =
+            jlmem::v2::resultPlaneFromStableValueType(state->requestedType);
+    const auto linkedState = staged.legacyState.lock();
+    return expectedPlane.has_value() && *expectedPlane == staged.plane &&
+           linkedState == state;
+}
+
 [[nodiscard]] bool stageCurrentKnownResultStore() {
     std::shared_ptr<const SearchState> state;
     {
@@ -301,8 +330,8 @@ void clearStagedKnownRevision(std::uint64_t revision) noexcept {
         return false;
     }
 
-    // Publish under the same gMutex->staging-lock order used by stale-state invalidation so a
-    // concurrent search/undo cannot slip between the ownership recheck and staged publication.
+    // Publish under the same gMutex->staging-lock order used by authoritative commits so a
+    // concurrent search/undo cannot slip between the ownership recheck and publication.
     std::lock_guard<std::mutex> stateLock(gMutex);
     if (gState != state) {
         return false;
@@ -315,6 +344,29 @@ void clearStagedKnownRevision(std::uint64_t revision) noexcept {
     gStagedKnown.checkpoints = std::move(checkpoints);
     gStagedKnown.plane = *plane;
     return true;
+}
+
+[[nodiscard]] bool snapshotCurrentKnownResultStore(
+        const OperationContext &context, StagedKnownResultStore &staged) {
+    {
+        std::lock_guard<std::mutex> lock(gStagedKnownMutex);
+        staged = gStagedKnown;
+    }
+    return stagedKnownMatchesState(staged, context.state);
+}
+
+[[nodiscard]] bool hasCurrentKnownResultStore() {
+    std::shared_ptr<const SearchState> state;
+    {
+        std::lock_guard<std::mutex> lock(gMutex);
+        state = gState;
+    }
+    StagedKnownResultStore staged;
+    {
+        std::lock_guard<std::mutex> lock(gStagedKnownMutex);
+        staged = gStagedKnown;
+    }
+    return stagedKnownMatchesState(staged, state);
 }
 
 [[nodiscard]] bool cursorForStagedOffset(
@@ -431,6 +483,63 @@ void clearStagedKnownRevision(std::uint64_t revision) noexcept {
     }
     return candidatePage(env, state->candidates, liveCandidates, start,
                          expectedCount);
+}
+
+[[nodiscard]] jint commitAuthoritativeKnownRevision(
+        const OperationContext &context, std::shared_ptr<SearchState> next,
+        std::shared_ptr<const jlmem::v2::ResultStore> store,
+        std::shared_ptr<const std::vector<jlmem::v2::ResultCursor>> checkpoints,
+        jlmem::v2::ResultPlane plane, jint historyMode) {
+    if (next == nullptr || store == nullptr || checkpoints == nullptr ||
+        plane == jlmem::v2::ResultPlane::Count) {
+        setMessage("ResultStore publication metadata is incomplete");
+        return kResourceLimit;
+    }
+    if (isCancelled(context)) {
+        setMessage("Operation cancelled; previous results were preserved");
+        return kCancelled;
+    }
+    normalizeCandidateResults(*next);
+    const std::size_t nextBytes = next->retainedBytes();
+    if (nextBytes > kRetainedStateByteLimit ||
+        store->retainedBytes() > kStagedKnownStoreByteLimit ||
+        store->typedCount() != next->candidates.size() ||
+        store->uniqueAddressCount() != next->logicalCount) {
+        setMessage("Completed ResultStore revision exceeds the safe migration budget");
+        return kResourceLimit;
+    }
+
+    std::lock_guard<std::mutex> stateLock(gMutex);
+    if (gTarget.generation != context.target.generation ||
+        gTarget.token != context.target.token) {
+        gLastMessage = "MIDlet runtime changed during the operation";
+        return kTargetLost;
+    }
+    if (gState != context.state) {
+        gLastMessage = "Search revision changed during the ResultStore operation";
+        return kInvalidRequest;
+    }
+    if (historyMode > 0 && gState->mode != StateMode::Empty) {
+        gHistory.push_back(gState);
+    } else if (historyMode < 0) {
+        gHistory.clear();
+    }
+    trimHistoryLocked(nextBytes);
+
+    std::shared_ptr<const SearchState> publishedState = next;
+    gState = std::move(next);
+    gLiveCandidates.clear();
+    gNextCandidateId = context.nextId;
+
+    std::lock_guard<std::mutex> stagedLock(gStagedKnownMutex);
+    const std::uint64_t revision = nextStagedRevision(gStagedKnown.revision);
+    gStagedKnown.revision = revision;
+    gStagedKnown.legacyState = publishedState;
+    gStagedKnown.store = std::move(store);
+    gStagedKnown.checkpoints = std::move(checkpoints);
+    gStagedKnown.plane = plane;
+    gLastMessage.clear();
+    return kOk;
 }
 
 struct AuthoritativeKnownBuildContext {
@@ -554,33 +663,196 @@ void advanceAuthoritativeKnownProgress(void *, std::size_t bytes) {
 
     auto publishedStore =
             std::make_shared<jlmem::v2::ResultStore>(std::move(store));
-    std::shared_ptr<const SearchState> publishedState = build.next;
     OperationContext committed = context;
     committed.nextId += build.next->candidates.size();
-    const jint result = commitOperation(committed, std::move(build.next), -1);
-    if (result != kOk) {
-        return result;
+    return commitAuthoritativeKnownRevision(
+            committed, std::move(build.next), std::move(publishedStore),
+            std::move(checkpoints), plan->plane, -1);
+}
+
+struct AuthoritativeKnownRefineBuildContext {
+    const SearchState *source = nullptr;
+    std::shared_ptr<SearchState> next;
+    ValueType type = ValueType::Invalid;
+    std::size_t sourceIndex = 0U;
+};
+
+[[nodiscard]] bool materializeAuthoritativeKnownRefineSurvivor(
+        void *opaque, const jlmem::v2::KnownRefineMatchView &match) {
+    auto *build = static_cast<AuthoritativeKnownRefineBuildContext *>(opaque);
+    if (build == nullptr || build->source == nullptr || build->next == nullptr ||
+        build->type == ValueType::Invalid || match.address == 0U ||
+        match.width != widthOf(build->type)) {
+        return false;
+    }
+    while (build->sourceIndex < build->source->candidates.size() &&
+           build->source->candidates[build->sourceIndex].address < match.address) {
+        ++build->sourceIndex;
+    }
+    if (build->sourceIndex >= build->source->candidates.size()) {
+        return false;
+    }
+    const Candidate &stored = build->source->candidates[build->sourceIndex];
+    if (stored.address != match.address || stored.type != build->type) {
+        return false;
+    }
+    Candidate updated = stored;
+    updated.previousBits = stored.currentBits;
+    updated.currentBits = match.bits;
+    updated.state = kStable;
+    build->next->candidates.push_back(updated);
+    ++build->sourceIndex;
+    return true;
+}
+
+[[nodiscard]] std::uint64_t authoritativeRefineWorkBytes(
+        const jlmem::v2::ResultStore &store,
+        jlmem::v2::ResultPlane plane) noexcept {
+    const std::size_t planeSlot = jlmem::v2::planeIndex(plane);
+    std::uint64_t total = 0U;
+    for (const jlmem::v2::ResultBlockHeader &header : store.headers()) {
+        if (header.counts[planeSlot] == 0U) {
+            continue;
+        }
+        if (total > std::numeric_limits<std::uint64_t>::max() -
+                            jlmem::v2::kResultLogicalBlockSize) {
+            return std::numeric_limits<std::uint64_t>::max();
+        }
+        total += jlmem::v2::kResultLogicalBlockSize;
+    }
+    return total;
+}
+
+[[nodiscard]] jint refineKnownV2Authoritative(
+        JNIEnv *env, jint predicate, jstring first, jstring second,
+        bool allowRelocationReconcile) {
+    OperationContext context;
+    if (!beginOperation(context)) {
+        return kNoSession;
     }
 
-    // Java does not enable v2 paging until this JNI call returns, so publication here can safely
-    // follow the SearchState commit while still presenting one externally atomic operation.
-    std::lock_guard<std::mutex> stateLock(gMutex);
-    if (gState != publishedState ||
-        gTarget.generation != context.target.generation ||
-        gTarget.token != context.target.token) {
-        clearStagedKnownResultStore();
-        gLastMessage = "MIDlet runtime or search changed before ResultStore publication";
-        return kTargetLost;
+    const auto fallback = [&]() -> jint {
+        const jint result = refineKnownAddressSet(
+                env, predicate, first, second, allowRelocationReconcile);
+        if (result == kOk) {
+            // A relocation/legacy compatibility revision can become a ResultStore source again as
+            // soon as exact address/type parity is proven. Failure only leaves Candidate ownership.
+            stageCurrentKnownResultStore();
+        }
+        return result;
+    };
+
+    if (context.state == nullptr || context.state->mode != StateMode::Candidates ||
+        context.state->requestedType == kTypeAuto) {
+        return fallback();
     }
-    std::lock_guard<std::mutex> stagedLock(gStagedKnownMutex);
-    const std::uint64_t revision = nextStagedRevision(gStagedKnown.revision);
-    gStagedKnown.revision = revision;
-    gStagedKnown.legacyState = publishedState;
-    gStagedKnown.store = std::move(publishedStore);
-    gStagedKnown.checkpoints = std::move(checkpoints);
-    gStagedKnown.plane = plan->plane;
-    gLastMessage.clear();
-    return kOk;
+
+    StagedKnownResultStore staged;
+    if (!snapshotCurrentKnownResultStore(context, staged)) {
+        return fallback();
+    }
+    if (allowRelocationReconcile && shouldAttemptRelocation(context, true)) {
+        return fallback();
+    }
+
+    const auto type = valueTypeFromJint(context.state->requestedType);
+    const auto plan = parseCanonicalKnownPlan(
+            context.state->requestedType, predicate,
+            fromJString(env, first), fromJString(env, second));
+    if (!type.has_value() || !plan.has_value() || plan->plane != staged.plane) {
+        setMessage("Invalid value, type, or predicate");
+        return kInvalidRequest;
+    }
+
+    auto next = std::make_shared<SearchState>();
+    next->mode = StateMode::Candidates;
+    next->requestedType = context.state->requestedType;
+    next->watches = context.state->watches;
+    next->candidates.reserve(std::min(
+            context.state->candidates.size(), kStagedKnownCandidateLimit));
+
+    AuthoritativeKnownRefineBuildContext build{
+            context.state.get(), next, *type, 0U};
+    const jlmem::v2::KnownRefineObserver observer{
+            &build,
+            materializeAuthoritativeKnownRefineSurvivor,
+    };
+
+    const std::uint64_t totalWork =
+            authoritativeRefineWorkBytes(*staged.store, staged.plane);
+    gScanBytesScanned.store(0U, std::memory_order_release);
+    gScanBytesTotal.store(totalWork, std::memory_order_release);
+    std::uint64_t completedWork = 0U;
+
+    jlmem::v2::ResultStore refinedStore;
+    jlmem::v2::KnownScanStats stats;
+    std::string error;
+    const bool refined = jlmem::v2::refineKnownExplicit(
+            *staged.store, *plan,
+            [&](std::uintptr_t address, void *buffer, std::size_t size) {
+                if (!readExact(context.target.pid, address, buffer, size)) {
+                    return false;
+                }
+                if (completedWork <=
+                    std::numeric_limits<std::uint64_t>::max() - size) {
+                    completedWork += static_cast<std::uint64_t>(size);
+                } else {
+                    completedWork = std::numeric_limits<std::uint64_t>::max();
+                }
+                gScanBytesScanned.store(
+                        std::min(completedWork, totalWork),
+                        std::memory_order_release);
+                return true;
+            },
+            [&] { return isCancelled(context); },
+            refinedStore, stats, error, &observer);
+    if (!refined) {
+        if (isCancelled(context)) {
+            setMessage("Operation cancelled; previous results were preserved");
+            return kCancelled;
+        }
+        if (error.rfind("Target block", 0U) == 0U) {
+            setMessage("A ResultStore block became unreadable; previous results were preserved");
+            return kInvalidRequest;
+        }
+        setMessage(error.empty()
+                           ? "ResultStore Next Scan could not be completed safely"
+                           : error.c_str());
+        return kResourceLimit;
+    }
+
+    if (stats.typedMatches != next->candidates.size() ||
+        stats.uniqueAddresses != next->candidates.size() ||
+        refinedStore.typedCount() != next->candidates.size() ||
+        refinedStore.uniqueAddressCount() != next->candidates.size() ||
+        refinedStore.retainedBytes() > kStagedKnownStoreByteLimit) {
+        setMessage("ResultStore refine and compatibility Candidate mirror diverged");
+        return kResourceLimit;
+    }
+
+    next->logicalCount = next->candidates.size();
+    next->candidateOrderDirty = true;
+    normalizeCandidateResults(*next);
+    std::shared_ptr<const std::vector<jlmem::v2::ResultCursor>> checkpoints;
+    if (!verifyAndIndexStagedKnownStore(
+                *next, refinedStore, staged.plane, checkpoints)) {
+        setMessage("Refined ResultStore failed compatibility mirror verification");
+        return kResourceLimit;
+    }
+
+    auto publishedStore =
+            std::make_shared<jlmem::v2::ResultStore>(std::move(refinedStore));
+    const std::size_t survivorCount = next->candidates.size();
+    const jint result = commitAuthoritativeKnownRevision(
+            context, std::move(next), std::move(publishedStore),
+            std::move(checkpoints), staged.plane, 1);
+    if (result == kOk) {
+        gScanBytesScanned.store(totalWork, std::memory_order_release);
+        if (survivorCount == 0U) {
+            setMessage("Next Scan found no matching values");
+        }
+    }
+    return result;
 }
 
 } // namespace
@@ -633,18 +905,42 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_startKnownV2Authoritat
     });
 }
 
+extern "C" JNIEXPORT jint JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_refineKnownV2Authoritative(
+        JNIEnv *env, jclass, jint predicate, jstring first, jstring second,
+        jboolean allowRelocationReconcile) {
+    return guardedOperation([&] {
+        return refineKnownV2Authoritative(
+                env, predicate, first, second,
+                allowRelocationReconcile == JNI_TRUE);
+    });
+}
+
 extern "C" JNIEXPORT jboolean JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_stageV2KnownResultStore(
         JNIEnv *env, jclass) {
     try {
         return stageCurrentKnownResultStore() ? JNI_TRUE : JNI_FALSE;
     } catch (...) {
-        // Production staging is opportunistic. Allocation/invariant failure must never turn a
-        // successful Candidate-owned refine into a user-visible failure.
+        // Compatibility staging is opportunistic. Allocation/invariant failure must never turn a
+        // successful Candidate-owned operation into a user-visible failure.
         if (env->ExceptionCheck()) {
             env->ExceptionClear();
         }
         clearStagedKnownResultStore();
+        return JNI_FALSE;
+    }
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_hasCurrentV2KnownResultStore(
+        JNIEnv *env, jclass) {
+    try {
+        return hasCurrentKnownResultStore() ? JNI_TRUE : JNI_FALSE;
+    } catch (...) {
+        if (env->ExceptionCheck()) {
+            env->ExceptionClear();
+        }
         return JNI_FALSE;
     }
 }

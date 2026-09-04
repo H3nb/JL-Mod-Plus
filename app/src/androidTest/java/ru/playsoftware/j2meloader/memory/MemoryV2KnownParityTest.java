@@ -31,10 +31,10 @@ import org.junit.runner.RunWith;
  *
  * <p>The test deliberately confines both engines to one stable resident page in this process.
  * This keeps every predicate bounded (including Byte/NotEqual) while still exercising the real
- * process_vm_readv path, authoritative production ResultStore scan, Candidate compatibility
- * materialization, cursor paging, and an independent v2 shadow scan on the device ABI. Full
- * Java-heap/GC movement remains covered separately by the managed ART tests and the PR physical
- * workload gate.</p>
+ * process_vm_readv path, authoritative production ResultStore scan/refine, Candidate compatibility
+ * materialization, cursor paging, and an independent v2 shadow revision on the device ABI. Full
+ * Java-heap/GC movement remains covered separately by the managed ART tests and physical workload
+ * gate.</p>
  */
 @RunWith(AndroidJUnit4.class)
 public class MemoryV2KnownParityTest {
@@ -88,7 +88,7 @@ public class MemoryV2KnownParityTest {
 					assertEquals("clearSearch retained a production v2 paging revision",
 							0L, cleared[0]);
 					assertFalse("clearSearch retained authoritative ownership",
-							NativeMemoryEngine.v2KnownAuthoritativeFirstScan());
+							NativeMemoryEngine.v2KnownAuthoritativeRevision());
 				}
 			}
 		} finally {
@@ -97,7 +97,7 @@ public class MemoryV2KnownParityTest {
 	}
 
 	@Test
-	public void successfulRefineDemotesFirstScanOwnershipButFailurePreservesCurrentRevision() {
+	public void successfulRefineRetainsAuthoritativeStoreAndFailurePreservesRevision() {
 		int pageSize = NativeMemoryTarget.pageSize();
 		long[] probe = NativeMemoryTarget.readProbe();
 		assertNotNull(probe);
@@ -117,17 +117,19 @@ public class MemoryV2KnownParityTest {
 			assertEquals(4, first.length);
 			assertEquals(1L, first[0]);
 			assertTrue("explicit Known first scan was not ResultStore-authoritative",
-					NativeMemoryEngine.v2KnownAuthoritativeFirstScan());
+					NativeMemoryEngine.v2KnownAuthoritativeRevision());
 
 			assertEquals(MemoryEngineContract.RESULT_OK,
 					NativeMemoryEngine.refineKnown(
 							MemoryEngineContract.PREDICATE_EQUAL, value, ""));
 			long[] refined = NativeMemoryEngine.v2KnownPagingStats();
 			assertEquals(4, refined.length);
-			assertEquals("successful Candidate refine did not publish a verified ResultStore mirror",
+			assertEquals("successful bitmap refine did not retain ResultStore paging",
 					1L, refined[0]);
-			assertFalse("bitmap refine is not authoritative yet",
-					NativeMemoryEngine.v2KnownAuthoritativeFirstScan());
+			assertTrue("successful explicit Known refine lost ResultStore ownership",
+					NativeMemoryEngine.v2KnownAuthoritativeRevision());
+			assertTrue("successful refine did not publish a new Java revision generation",
+					refined[1] != first[1]);
 
 			long generation = refined[1];
 			long hits = refined[2];
@@ -140,7 +142,31 @@ public class MemoryV2KnownParityTest {
 			assertEquals(refined[0], afterFailure[0]);
 			assertEquals(hits, afterFailure[2]);
 			assertEquals(fallbacks, afterFailure[3]);
-			assertFalse(NativeMemoryEngine.v2KnownAuthoritativeFirstScan());
+			assertTrue(NativeMemoryEngine.v2KnownAuthoritativeRevision());
+		} finally {
+			NativeMemoryEngine.clearTarget();
+		}
+	}
+
+	@Test
+	public void explicitKnownBitmapRefineAllPredicatesMatchShadow() {
+		int pageSize = NativeMemoryTarget.pageSize();
+		assertTrue(pageSize > 0);
+		long[] probe = NativeMemoryTarget.readProbe();
+		assertNotNull(probe);
+		assertEquals(2, probe.length);
+		long pageStart = probe[0] - Math.floorMod(probe[0], (long) pageSize);
+		long[] runs = {1L, 0L, pageStart, pageStart + pageSize};
+		long token = 0x4A4C563252454649L;
+		try {
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.configureTarget(Process.myPid(), pageSize, token, runs));
+			for (int valueType : EXPLICIT_TYPES) {
+				for (int predicate : KNOWN_PREDICATES) {
+					assertRefineParity(valueType, predicate);
+					NativeMemoryEngine.clearSearch();
+				}
+			}
 		} finally {
 			NativeMemoryEngine.clearTarget();
 		}
@@ -169,7 +195,7 @@ public class MemoryV2KnownParityTest {
 		assertEquals(0L, stageBeforePaging[2]);
 		assertEquals(0L, stageBeforePaging[3]);
 		assertTrue("explicit Known first scan was not marked ResultStore-authoritative",
-				NativeMemoryEngine.v2KnownAuthoritativeFirstScan());
+				NativeMemoryEngine.v2KnownAuthoritativeRevision());
 
 		long productionCount = NativeMemoryEngine.resultCount();
 		assertTrue(productionCount >= 0L);
@@ -181,7 +207,7 @@ public class MemoryV2KnownParityTest {
 				0L, stageAfterPaging[3]);
 		assertTrue("authoritative ResultStore was never used to serve a result page",
 				stageAfterPaging[2] > 0L);
-		assertTrue(NativeMemoryEngine.v2KnownAuthoritativeFirstScan());
+		assertTrue(NativeMemoryEngine.v2KnownAuthoritativeRevision());
 
 		long[] shadow = NativeMemoryEngine.v2ShadowKnown(
 				valueType, predicate, plan[2], plan[3]);
@@ -197,6 +223,55 @@ public class MemoryV2KnownParityTest {
 				+ " predicate=" + predicate, productionCount, shadow[3]);
 		assertEquals("ordered address fingerprint mismatch for type=" + valueType
 				+ " predicate=" + predicate, productionFingerprint, shadow[6]);
+	}
+
+	private static void assertRefineParity(int valueType, int predicate) {
+		final int sourcePredicate = MemoryEngineContract.PREDICATE_NOT_EQUAL;
+		long[] sourcePlan = NativeMemoryEngine.canonicalKnownPlan(
+				valueType, sourcePredicate, "123", "");
+		assertNotNull(sourcePlan);
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				NativeMemoryEngine.startKnown(valueType, sourcePredicate, "123", ""));
+		assertTrue(NativeMemoryEngine.v2KnownAuthoritativeRevision());
+
+		long[] shadowSource = NativeMemoryEngine.v2ShadowKnown(
+				valueType, sourcePredicate, sourcePlan[2], sourcePlan[3]);
+		assertNotNull(shadowSource);
+		assertEquals(9, shadowSource.length);
+		assertEquals(MemoryEngineContract.RESULT_OK, (int) shadowSource[0]);
+		assertEquals("shadow source unexpectedly refined instead of starting a new revision",
+				0L, shadowSource[7]);
+
+		String first = "0";
+		String second = predicate == MemoryEngineContract.PREDICATE_BETWEEN ? "1" : "";
+		long[] refinePlan = NativeMemoryEngine.canonicalKnownPlan(
+				valueType, predicate, first, second);
+		assertNotNull(refinePlan);
+		assertEquals(MemoryEngineContract.RESULT_OK,
+				NativeMemoryEngine.refineKnown(predicate, first, second));
+		assertTrue("production bitmap refine lost authoritative ownership for type=" + valueType
+				+ " predicate=" + predicate,
+				NativeMemoryEngine.v2KnownAuthoritativeRevision());
+
+		long productionCount = NativeMemoryEngine.resultCount();
+		long productionFingerprint = productionFingerprint(valueType, productionCount);
+		long[] paging = NativeMemoryEngine.v2KnownPagingStats();
+		assertEquals(4, paging.length);
+		assertEquals(1L, paging[0]);
+		assertEquals("production bitmap refine fell back during paging", 0L, paging[3]);
+
+		long[] shadowRefine = NativeMemoryEngine.v2ShadowKnown(
+				valueType, predicate, refinePlan[2], refinePlan[3]);
+		assertNotNull(shadowRefine);
+		assertEquals(9, shadowRefine.length);
+		assertEquals(MemoryEngineContract.RESULT_OK, (int) shadowRefine[0]);
+		assertEquals("shadow did not execute the bitmap refine kernel", 1L, shadowRefine[7]);
+		assertEquals("bitmap refine typed count mismatch for type=" + valueType
+				+ " predicate=" + predicate, productionCount, shadowRefine[2]);
+		assertEquals("bitmap refine unique count mismatch for type=" + valueType
+				+ " predicate=" + predicate, productionCount, shadowRefine[3]);
+		assertEquals("bitmap refine ordered address mismatch for type=" + valueType
+				+ " predicate=" + predicate, productionFingerprint, shadowRefine[6]);
 	}
 
 	private static long productionFingerprint(int valueType, long expectedCount) {

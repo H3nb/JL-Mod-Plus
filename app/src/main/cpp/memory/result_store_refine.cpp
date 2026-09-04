@@ -12,11 +12,27 @@
 #include <array>
 #include <bit>
 #include <cstring>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
 namespace jlmem::v2 {
 namespace {
+
+template <typename T>
+[[nodiscard]] std::uint64_t rawBits(T value) noexcept {
+    if constexpr (std::is_floating_point_v<T>) {
+        if constexpr (sizeof(T) == sizeof(std::uint32_t)) {
+            return static_cast<std::uint64_t>(
+                    std::bit_cast<std::uint32_t>(value));
+        } else {
+            return std::bit_cast<std::uint64_t>(value);
+        }
+    } else {
+        using Unsigned = std::make_unsigned_t<T>;
+        return static_cast<std::uint64_t>(static_cast<Unsigned>(value));
+    }
+}
 
 template <typename T, ResultPlane Plane, KnownPredicate Predicate>
 [[nodiscard]] bool refineKnownTyped(const ResultStore &source,
@@ -26,7 +42,8 @@ template <typename T, ResultPlane Plane, KnownPredicate Predicate>
                                     const CancelledFn &cancelled,
                                     ResultStore &out,
                                     KnownScanStats &stats,
-                                    std::string &error) {
+                                    std::string &error,
+                                    const KnownRefineObserver *observer) {
     static_assert(sizeof(T) == planeAlignment(Plane));
     constexpr std::size_t kWidth = sizeof(T);
     constexpr std::size_t kWordCount = planeWordCount(Plane);
@@ -43,7 +60,7 @@ template <typename T, ResultPlane Plane, KnownPredicate Predicate>
         }
         if (cancelled && cancelled()) {
             // Keep the established shadow diagnostic token while this implementation is shared by
-            // shadow and future production callers; the caller decides whether it is user-visible.
+            // shadow and production callers; the caller decides whether it is user-visible.
             error = "V2 shadow refine cancelled";
             return false;
         }
@@ -79,8 +96,20 @@ template <typename T, ResultPlane Plane, KnownPredicate Predicate>
                 const std::size_t byteOffset = slot * kWidth;
                 T actual{};
                 std::memcpy(&actual, blockBuffer.data() + byteOffset, kWidth);
-                if (!matchesKnownValue<T, Predicate>(actual, firstBits, secondBits)) {
+                const bool survives =
+                        matchesKnownValue<T, Predicate>(actual, firstBits, secondBits);
+                if (!survives) {
                     survivors &= ~(std::uint64_t{1U} << bit);
+                } else if (observer != nullptr && observer->onMatch != nullptr) {
+                    const KnownRefineMatchView match{
+                            blockBase + byteOffset,
+                            rawBits(actual),
+                            kWidth,
+                    };
+                    if (!observer->onMatch(observer->opaque, match)) {
+                        error = "ResultStore compatibility mirror rejected a v2 refine survivor";
+                        return false;
+                    }
                 }
                 active &= active - std::uint64_t{1U};
             }
@@ -122,36 +151,37 @@ template <typename T, ResultPlane Plane>
                                           const CancelledFn &cancelled,
                                           ResultStore &out,
                                           KnownScanStats &stats,
-                                          std::string &error) {
+                                          std::string &error,
+                                          const KnownRefineObserver *observer) {
     switch (request.predicate) {
     case KnownPredicate::Equal:
         return refineKnownTyped<T, Plane, KnownPredicate::Equal>(
                 source, request.firstBits, request.secondBits, read, cancelled,
-                out, stats, error);
+                out, stats, error, observer);
     case KnownPredicate::NotEqual:
         return refineKnownTyped<T, Plane, KnownPredicate::NotEqual>(
                 source, request.firstBits, request.secondBits, read, cancelled,
-                out, stats, error);
+                out, stats, error, observer);
     case KnownPredicate::Greater:
         return refineKnownTyped<T, Plane, KnownPredicate::Greater>(
                 source, request.firstBits, request.secondBits, read, cancelled,
-                out, stats, error);
+                out, stats, error, observer);
     case KnownPredicate::Less:
         return refineKnownTyped<T, Plane, KnownPredicate::Less>(
                 source, request.firstBits, request.secondBits, read, cancelled,
-                out, stats, error);
+                out, stats, error, observer);
     case KnownPredicate::GreaterOrEqual:
         return refineKnownTyped<T, Plane, KnownPredicate::GreaterOrEqual>(
                 source, request.firstBits, request.secondBits, read, cancelled,
-                out, stats, error);
+                out, stats, error, observer);
     case KnownPredicate::LessOrEqual:
         return refineKnownTyped<T, Plane, KnownPredicate::LessOrEqual>(
                 source, request.firstBits, request.secondBits, read, cancelled,
-                out, stats, error);
+                out, stats, error, observer);
     case KnownPredicate::Between:
         return refineKnownTyped<T, Plane, KnownPredicate::Between>(
                 source, request.firstBits, request.secondBits, read, cancelled,
-                out, stats, error);
+                out, stats, error, observer);
     }
     error = "Invalid explicit-type known refine predicate";
     return false;
@@ -165,9 +195,10 @@ bool refineKnownExplicit(const ResultStore &source,
                          const CancelledFn &cancelled,
                          ResultStore &out,
                          KnownScanStats &stats,
-                         std::string &error) {
+                         std::string &error,
+                         const KnownRefineObserver *observer) {
     // Defense in depth: callers inside the native engine must obey the exact same canonical plan
-    // contract as the JNI diagnostics boundary. This prevents a future production integration from
+    // contract as the JNI diagnostics boundary. This prevents a production integration from
     // accidentally bypassing width, finite-floating, or ordered-Between validation.
     if (!read || !validKnownQueryPlan(request)) {
         error = "Invalid explicit-type known refine request";
@@ -176,25 +207,25 @@ bool refineKnownExplicit(const ResultStore &source,
     switch (request.plane) {
     case ResultPlane::Byte:
         return dispatchKnownPredicate<std::int8_t, ResultPlane::Byte>(
-                source, request, read, cancelled, out, stats, error);
+                source, request, read, cancelled, out, stats, error, observer);
     case ResultPlane::Short:
         return dispatchKnownPredicate<std::int16_t, ResultPlane::Short>(
-                source, request, read, cancelled, out, stats, error);
+                source, request, read, cancelled, out, stats, error, observer);
     case ResultPlane::Char:
         return dispatchKnownPredicate<std::uint16_t, ResultPlane::Char>(
-                source, request, read, cancelled, out, stats, error);
+                source, request, read, cancelled, out, stats, error, observer);
     case ResultPlane::Int:
         return dispatchKnownPredicate<std::int32_t, ResultPlane::Int>(
-                source, request, read, cancelled, out, stats, error);
+                source, request, read, cancelled, out, stats, error, observer);
     case ResultPlane::Float:
         return dispatchKnownPredicate<float, ResultPlane::Float>(
-                source, request, read, cancelled, out, stats, error);
+                source, request, read, cancelled, out, stats, error, observer);
     case ResultPlane::Long:
         return dispatchKnownPredicate<std::int64_t, ResultPlane::Long>(
-                source, request, read, cancelled, out, stats, error);
+                source, request, read, cancelled, out, stats, error, observer);
     case ResultPlane::Double:
         return dispatchKnownPredicate<double, ResultPlane::Double>(
-                source, request, read, cancelled, out, stats, error);
+                source, request, read, cancelled, out, stats, error, observer);
     case ResultPlane::Count:
         break;
     }
@@ -212,7 +243,7 @@ bool refineKnownEqualExplicit(const ResultStore &source,
     return refineKnownExplicit(
             source,
             {request.plane, KnownPredicate::Equal, request.expectedBits, 0U},
-            read, cancelled, out, stats, error);
+            read, cancelled, out, stats, error, nullptr);
 }
 
 } // namespace jlmem::v2

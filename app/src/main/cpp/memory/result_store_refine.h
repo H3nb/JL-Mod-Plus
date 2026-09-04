@@ -10,6 +10,7 @@
 
 #include "result_store_scan.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 
@@ -25,6 +26,22 @@ struct KnownEqualRefineRequest {
     std::uint64_t expectedBits = 0U;
 };
 
+// Optional production observer. The bitmap kernel remains the only component deciding membership;
+// the observer only receives surviving slots so the transitional Candidate mirror can preserve its
+// stable IDs/current values without issuing a second target read pass.
+struct KnownRefineMatchView {
+    std::uintptr_t address = 0U;
+    std::uint64_t bits = 0U;
+    std::size_t width = 0U;
+};
+
+using KnownRefineMatchObserverFn = bool (*)(void *, const KnownRefineMatchView &);
+
+struct KnownRefineObserver {
+    void *opaque = nullptr;
+    KnownRefineMatchObserverFn onMatch = nullptr;
+};
+
 // Transactionally refines one explicit primitive plane. The published source revision is never
 // mutated: a working ResultStore copy is edited by clearing failed membership bits and is only
 // moved to `out` after every required target read succeeds. Empty blocks and allocated plane
@@ -36,7 +53,8 @@ struct KnownEqualRefineRequest {
         const CancelledFn &cancelled,
         ResultStore &out,
         KnownScanStats &stats,
-        std::string &error);
+        std::string &error,
+        const KnownRefineObserver *observer = nullptr);
 
 // Compatibility wrapper used by the current equality shadow diagnostics. It routes through the
 // generic predicate kernel so equality parity continuously exercises the new implementation.

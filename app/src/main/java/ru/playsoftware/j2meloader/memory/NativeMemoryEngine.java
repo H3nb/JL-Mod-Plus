@@ -14,7 +14,7 @@ final class NativeMemoryEngine {
 	private static final Object V2_KNOWN_PAGING_LOCK = new Object();
 	private static long v2KnownStageGeneration;
 	private static boolean v2KnownStaged;
-	private static boolean v2KnownAuthoritativeFirstScan;
+	private static boolean v2KnownAuthoritativeRevision;
 	private static long v2KnownPageHits;
 	private static long v2KnownPageFallbacks;
 
@@ -53,9 +53,9 @@ final class NativeMemoryEngine {
 
 	static int startKnown(int valueType, int predicate, String first, String second) {
 		final boolean explicit = valueType != MemoryEngineContract.TYPE_AUTO;
-		// Explicit Known first scans are now owned by the compact ResultStore kernel. Native builds
-		// the Candidate vector only as a compatibility mirror from the same accepted bitmap matches,
-		// so there is no second target scan and no legacy predicate deciding membership.
+		// Explicit Known first scans are owned by the compact ResultStore kernel. Native builds the
+		// Candidate vector only as a compatibility mirror from the same accepted bitmap matches, so
+		// there is no second target scan and no legacy predicate deciding membership.
 		int result = explicit
 				? startKnownV2Authoritative(valueType, predicate, first, second)
 				: startKnownUnchecked(valueType, predicate, first, second);
@@ -84,6 +84,8 @@ final class NativeMemoryEngine {
 
 	private static native boolean stageV2KnownResultStore();
 
+	private static native boolean hasCurrentV2KnownResultStore();
+
 	private static native void clearV2KnownResultStore();
 
 	static native int startUnknown(int valueType);
@@ -102,17 +104,23 @@ final class NativeMemoryEngine {
 
 	static int refineKnown(int predicate, String first, String second,
 	                      boolean allowRelocationReconcile) {
-		// Bitmap/COW refine is the next migration milestone. Until then, ordinary Next Scan keeps the
-		// proven adaptive Candidate path and publishes a verified ResultStore mirror afterwards.
-		int result = refineKnownAddressSet(
+		// Exact explicit-type revisions stay ResultStore-authoritative across ordinary Next Scan.
+		// Native falls back to the proven Candidate relocation path only when the current revision has
+		// no usable ResultStore or strong GC-movement evidence requires address reconciliation; a
+		// successful fallback is immediately imported back into a verified ResultStore when possible.
+		int result = refineKnownV2Authoritative(
 				predicate, first, second, allowRelocationReconcile);
 		if (result == MemoryEngineContract.RESULT_OK) {
-			publishV2KnownPagingStage(stageV2KnownResultStore(), false);
+			boolean authoritative = hasCurrentV2KnownResultStore();
+			publishV2KnownPagingStage(authoritative, authoritative);
 		}
-		// Failure/cancellation is transactional in native and does not touch staging. Preserve the
-		// previously committed ResultStore revision and Java generation exactly as-is.
+		// Failure/cancellation is transactional in native and leaves both the Candidate revision and
+		// its ResultStore owner untouched, so Java deliberately preserves the existing generation.
 		return result;
 	}
+
+	private static native int refineKnownV2Authoritative(int predicate, String first, String second,
+	                                                    boolean allowRelocationReconcile);
 
 	private static native int refineKnownAddressSet(int predicate, String first, String second,
 	                                                boolean allowRelocationReconcile);
@@ -173,7 +181,7 @@ final class NativeMemoryEngine {
 				// the native call was in flight.
 				if (v2KnownStaged && v2KnownStageGeneration == stagedGeneration) {
 					v2KnownStaged = false;
-					v2KnownAuthoritativeFirstScan = false;
+					v2KnownAuthoritativeRevision = false;
 				}
 			}
 		} else {
@@ -200,18 +208,23 @@ final class NativeMemoryEngine {
 		}
 	}
 
-	static boolean v2KnownAuthoritativeFirstScan() {
+	static boolean v2KnownAuthoritativeRevision() {
 		synchronized (V2_KNOWN_PAGING_LOCK) {
-			return v2KnownStaged && v2KnownAuthoritativeFirstScan;
+			return v2KnownStaged && v2KnownAuthoritativeRevision;
 		}
 	}
 
-	private static void publishV2KnownPagingStage(boolean staged, boolean authoritativeFirstScan) {
+	/** Compatibility alias for physical scripts/tests written during the first-scan cutover. */
+	static boolean v2KnownAuthoritativeFirstScan() {
+		return v2KnownAuthoritativeRevision();
+	}
+
+	private static void publishV2KnownPagingStage(boolean staged, boolean authoritativeRevision) {
 		synchronized (V2_KNOWN_PAGING_LOCK) {
 			v2KnownStageGeneration = v2KnownStageGeneration == Long.MAX_VALUE
 					? 1L : v2KnownStageGeneration + 1L;
 			v2KnownStaged = staged;
-			v2KnownAuthoritativeFirstScan = staged && authoritativeFirstScan;
+			v2KnownAuthoritativeRevision = staged && authoritativeRevision;
 			v2KnownPageHits = 0L;
 			v2KnownPageFallbacks = 0L;
 		}
