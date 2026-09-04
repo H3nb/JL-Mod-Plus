@@ -16,61 +16,133 @@
 
 namespace {
 
-constexpr char kLegacyZeroRefineRecoveryMessage[] =
-        "Direct Next Scan found no candidates; refreshing resident ranges for relocation recovery";
+[[nodiscard]] std::uint64_t knownRefineWorkBytes(
+        const SearchState &state) noexcept {
+    std::uint64_t total = 0U;
+    for (const Candidate &candidate : state.candidates) {
+        const std::size_t width = widthOf(candidate.type);
+        if (width == 0U ||
+            total > std::numeric_limits<std::uint64_t>::max() - width) {
+            return 0U;
+        }
+        total += static_cast<std::uint64_t>(width);
+    }
+    return total;
+}
 
-[[nodiscard]] jint finalizeEmptyKnownRefineIfSafe() {
+[[nodiscard]] jint refineKnownProduction(JNIEnv *env, jint predicate,
+                                         jstring first, jstring second,
+                                         bool revalidateIdentity) {
     OperationContext context;
     if (!beginOperation(context)) {
         return kNoSession;
     }
-    if (context.state == nullptr || context.state->mode != StateMode::Candidates ||
-        context.state->candidates.empty() ||
-        context.state->candidates.size() > kRelocationTrackLimit) {
-        return kIdentityUnsafe;
+    if (context.state == nullptr || context.state->mode != StateMode::Candidates) {
+        setMessage("No Known search session is available for Next Scan");
+        return kNoSession;
     }
 
-    std::string message;
-    {
-        std::lock_guard<std::mutex> lock(gMutex);
-        message = gLastMessage;
+    std::vector<Query> queries;
+    if (!buildQueries(context.state->requestedType, predicate,
+                      fromJString(env, first), fromJString(env, second), false,
+                      queries)) {
+        setMessage("Invalid value, type, or predicate");
+        return kInvalidRequest;
     }
-    if (message != kLegacyZeroRefineRecoveryMessage) {
-        return kIdentityUnsafe;
+    std::array<const Query *, kTypeSlotCount> queriesByType{};
+    for (const Query &query : queries) {
+        queriesByType[typeIndex(query.type)] = &query;
     }
 
-    // The legacy refine reached zero matches, but historically treated that as proof of
-    // relocation. Zero matches is a valid result. Before publishing it, independently verify every
-    // bounded CandidateId fingerprint at its current live binding. If even one binding cannot be
-    // proven, preserve the previous revision and let the service report identity uncertainty.
+    const std::uint64_t totalWork = knownRefineWorkBytes(*context.state);
+    if (!context.state->candidates.empty() && totalWork == 0U) {
+        setMessage("Known Next Scan work size could not be represented safely");
+        return kResourceLimit;
+    }
+    gScanBytesScanned.store(0U, std::memory_order_release);
+    gScanBytesTotal.store(totalWork, std::memory_order_release);
+
+    auto next = std::make_shared<SearchState>();
+    next->mode = StateMode::Candidates;
+    next->requestedType = context.state->requestedType;
+    next->watches = context.state->watches;
+    next->candidates.reserve(context.state->candidates.size());
+
+    CandidateValueReader reader(context.target,
+                                context.state->candidates.size());
+    std::uint64_t completedWork = 0U;
     for (const Candidate &stored : context.state->candidates) {
         if (isCancelled(context)) {
             setMessage("Operation cancelled; previous results were preserved");
             return kCancelled;
         }
-        const Candidate &candidate = liveCandidate(stored, context.liveCandidates);
-        if (!candidate.identityValid || candidate.address == 0U) {
-            setMessage("Next Scan reached zero matches but candidate identity could not be verified; previous results were preserved");
+
+        const Candidate &live = liveCandidate(stored, context.liveCandidates);
+        Candidate bound = stored;
+        bound.address = live.address;
+        bound.relocationCount = live.relocationCount;
+        bound.state = live.state;
+        bound.identityHash = live.identityHash;
+        bound.identityValid = live.identityValid;
+
+        const std::size_t width = widthOf(bound.type);
+        if (width == 0U) {
+            setMessage("Known Next Scan encountered an invalid candidate type");
+            return kInvalidRequest;
+        }
+
+        if (revalidateIdentity) {
+            if (!bound.identityValid || bound.address == 0U) {
+                setMessage("Java GC changed candidate identity; previous results were preserved");
+                return kIdentityUnsafe;
+            }
+            std::uint64_t identityHash = 0U;
+            if (!readIdentity(context.target, bound.address, bound.type,
+                              identityHash) || identityHash != bound.identityHash) {
+                setMessage("Java GC moved or replaced a candidate; previous results were preserved");
+                return kIdentityUnsafe;
+            }
+        }
+
+        std::uint64_t current = 0U;
+        if (!reader.read(bound, current)) {
+            setMessage("A candidate binding became unreadable during Next Scan; previous results were preserved");
             return kIdentityUnsafe;
         }
-        std::uint64_t identityHash = 0U;
-        if (!readIdentity(context.target, candidate.address, candidate.type,
-                          identityHash) || identityHash != candidate.identityHash) {
-            setMessage("Next Scan reached zero matches but candidate identity changed; previous results were preserved");
-            return kIdentityUnsafe;
+
+        Candidate updated = bound;
+        updated.previousBits = stored.currentBits;
+        updated.currentBits = current;
+        updated.state = kStable;
+
+        const Query *query = queriesByType[typeIndex(stored.type)];
+        if (query == nullptr) {
+            setMessage("Known Next Scan could not resolve a candidate query type");
+            return kInvalidRequest;
         }
+        if (matchesKnown(current, *query, predicate)) {
+            next->candidates.push_back(updated);
+        }
+
+        completedWork += static_cast<std::uint64_t>(width);
+        gScanBytesScanned.store(completedWork, std::memory_order_release);
     }
 
-    auto next = std::make_shared<SearchState>();
-    next->mode = StateMode::Candidates;
-    next->requestedType = context.state->requestedType;
-    next->logicalCount = 0U;
-    next->candidateOrderDirty = false;
-    next->watches = context.state->watches;
+    // A zero-survivor refine is a valid transactional result. Do not reinterpret it as proof of
+    // relocation. When GC changed before this pass, every old binding was already fingerprint-
+    // checked above; when GC changes during the pass, the service's post-operation epoch guard
+    // rolls this revision back.
+    captureIdentities(context.target, next->candidates);
+    next->logicalCount = next->candidates.size();
+    next->candidateOrderDirty = true;
 
+    const std::size_t survivorCount = next->candidates.size();
     const jint result = commitOperation(context, std::move(next), 1U);
     if (result == kOk) {
-        setMessage("Next Scan found no matching values");
+        gScanBytesScanned.store(totalWork, std::memory_order_release);
+        if (survivorCount == 0U) {
+            setMessage("Next Scan found no matching values");
+        }
     }
     return result;
 }
@@ -78,7 +150,11 @@ constexpr char kLegacyZeroRefineRecoveryMessage[] =
 } // namespace
 
 extern "C" JNIEXPORT jint JNICALL
-Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_finalizeEmptyKnownRefineIfSafe(
-        JNIEnv *, jclass) {
-    return guardedOperation([] { return finalizeEmptyKnownRefineIfSafe(); });
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_refineKnownProduction(
+        JNIEnv *env, jclass, jint predicate, jstring first, jstring second,
+        jboolean revalidateIdentity) {
+    return guardedOperation([&] {
+        return refineKnownProduction(env, predicate, first, second,
+                                     revalidateIdentity == JNI_TRUE);
+    });
 }
