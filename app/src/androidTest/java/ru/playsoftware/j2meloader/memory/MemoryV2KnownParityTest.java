@@ -109,6 +109,8 @@ public class MemoryV2KnownParityTest {
 		assertEquals(4, stageBeforePaging.length);
 		assertEquals("bounded explicit Known result did not stage verified ResultStore paging",
 				1L, stageBeforePaging[0]);
+		assertTrue("staged ResultStore revision did not publish a positive generation",
+				stageBeforePaging[1] > 0L);
 		assertEquals(0L, stageBeforePaging[2]);
 		assertEquals(0L, stageBeforePaging[3]);
 
@@ -116,6 +118,8 @@ public class MemoryV2KnownParityTest {
 		assertTrue(legacyCount >= 0L);
 		long legacyFingerprint = legacyFingerprint(valueType, legacyCount);
 		long[] stageAfterPaging = NativeMemoryEngine.v2KnownPagingStats();
+		assertEquals("pagination unexpectedly replaced the staged ResultStore revision",
+				stageBeforePaging[1], stageAfterPaging[1]);
 		assertEquals("legacy fingerprint unexpectedly fell back from verified ResultStore paging",
 				0L, stageAfterPaging[3]);
 		assertTrue("verified ResultStore paging was staged but never served a page",
