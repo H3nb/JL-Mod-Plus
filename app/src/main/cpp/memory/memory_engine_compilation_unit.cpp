@@ -9,12 +9,12 @@
 // Transitional production compilation unit.
 //
 // Search membership and tracked identity are deliberately separate here. Known/Auto Next Scan is
-// address-first while the previous context fingerprints remain stable. A bounded fingerprint probe
-// detects address-space movement without attaching identity checks to millions of hot-loop reads.
-// Once movement is observed, fingerprinted rows are rebuilt by one streaming pass so a stale but
-// still-readable raw address cannot survive merely because another object now stores the requested
-// value there. Strict write safety remains in the bounded Watch/Edit/Freeze/Inspector path. Delete
-// this seam when ResultStore becomes the production search-state owner.
+// address-first. The service only permits relocation probing when the published search GC epoch is
+// stale; native then requires a large result set plus substantial fingerprint movement before a
+// full target reconciliation is allowed. Small/sparse result sets always stay candidate-only so
+// refine cost falls with the remaining result count. Strict write safety remains in the bounded
+// Watch/Edit/Freeze/Inspector path. Delete this seam when ResultStore becomes the production
+// search-state owner.
 #include "memory_engine_entry.cpp"
 
 namespace {
@@ -24,6 +24,12 @@ constexpr std::size_t kInitialKnownRefineReserve = 16U * 1024U;
 constexpr std::size_t kInitialRecoveryIndexReserve = 16U * 1024U;
 constexpr std::size_t kCandidateCompactionSlack = 4U * 1024U;
 constexpr std::size_t kRelocationProbeSamples = 64U;
+constexpr std::size_t kRelocationProbeMinChecked = 8U;
+// CandidateValueReader already reuses 256 KiB chunks for large sorted sets. Below this threshold a
+// direct candidate refine is materially cheaper than scanning the whole target, even if a GC may
+// have moved some ordinary search results. Identity-sensitive actions still revalidate strictly.
+constexpr std::size_t kRelocationReconcileMinCandidates = 64U * 1024U;
+constexpr std::size_t kRelocationMismatchDenominator = 4U; // 25%
 
 struct RecoveryKey {
     ValueType type = ValueType::Invalid;
@@ -170,9 +176,11 @@ void compactKnownRefineCandidates(std::vector<Candidate> &candidates) {
            candidate.identityHash == key.identityHash;
 }
 
-[[nodiscard]] bool shouldAttemptRelocation(const OperationContext &context) {
+[[nodiscard]] bool shouldAttemptRelocation(const OperationContext &context,
+                                           bool gcEpochChanged) {
     const auto &candidates = context.state->candidates;
-    if (candidates.empty()) {
+    if (!gcEpochChanged ||
+        candidates.size() < kRelocationReconcileMinCandidates) {
         return false;
     }
     const std::size_t requestedSamples =
@@ -196,10 +204,12 @@ void compactKnownRefineCandidates(std::vector<Candidate> &candidates) {
         }
         ++checked;
     }
-    // The fingerprint excludes the value bytes themselves. A normal 3 -> 4 gameplay change does
-    // not alter it. Therefore even one sampled context mismatch is meaningful enough to prefer the
-    // streaming reconciliation path; ambiguity remains fail-closed later rather than guessed here.
-    return checked > 0U && mismatches > 0U;
+    // A context fingerprint can change because neighboring gameplay state changes even when the
+    // result itself never moved. Require enough valid evidence and at least a quarter of sampled
+    // contexts to disagree before paying for a full target reconciliation. One noisy fingerprint
+    // must never turn every Next Scan into a New Search-sized operation.
+    return checked >= kRelocationProbeMinChecked &&
+           mismatches * kRelocationMismatchDenominator >= checked;
 }
 
 [[nodiscard]] std::optional<std::size_t> findUniqueRecoveryPosition(
@@ -423,7 +433,8 @@ void compactKnownRefineCandidates(std::vector<Candidate> &candidates) {
 }
 
 [[nodiscard]] jint refineKnownAddressSet(JNIEnv *env, jint predicate,
-                                         jstring first, jstring second) {
+                                         jstring first, jstring second,
+                                         bool allowRelocationReconcile) {
     OperationContext context;
     if (!beginOperation(context)) {
         return kNoSession;
@@ -465,7 +476,8 @@ void compactKnownRefineCandidates(std::vector<Candidate> &candidates) {
     next->candidates.reserve(std::min(
             context.state->candidates.size(), kInitialKnownRefineReserve));
 
-    const bool relocationLikely = shouldAttemptRelocation(context);
+    const bool relocationLikely =
+            shouldAttemptRelocation(context, allowRelocationReconcile);
     std::vector<std::uint32_t> recoveryIndices;
     if (relocationLikely) {
         recoveryIndices.reserve(std::min(context.state->candidates.size(),
@@ -494,9 +506,9 @@ void compactKnownRefineCandidates(std::vector<Candidate> &candidates) {
         const Query *query = queriesByType[typeIndex(stored.type)];
 
         if (query != nullptr && relocationLikely && stored.identityValid) {
-            // Once movement is observed, a readable old address is not proof of identity. Rebuild
-            // every fingerprinted row from the streaming pass instead of retaining stale-address
-            // false positives. This vector stores only compact indices, not duplicate Candidates.
+            // Once strong movement evidence exists, a readable old address is not proof of
+            // identity. Rebuild fingerprinted rows from one streaming pass instead of retaining
+            // stale-address false positives. This vector stores compact indices only.
             recoveryIndices.push_back(
                     static_cast<std::uint32_t>(candidateIndex));
         } else if (query != nullptr) {
@@ -575,8 +587,10 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_configureTargetExpande
 
 extern "C" JNIEXPORT jint JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_refineKnownAddressSet(
-        JNIEnv *env, jclass, jint predicate, jstring first, jstring second) {
+        JNIEnv *env, jclass, jint predicate, jstring first, jstring second,
+        jboolean allowRelocationReconcile) {
     return guardedOperation([&] {
-        return refineKnownAddressSet(env, predicate, first, second);
+        return refineKnownAddressSet(env, predicate, first, second,
+                                     allowRelocationReconcile == JNI_TRUE);
     });
 }
