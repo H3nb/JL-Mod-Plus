@@ -77,39 +77,36 @@ final class NativeMemoryEngine {
 	                              int predicate, String first, String second);
 
 	static int refineKnown(int predicate, String first, String second) {
-		int result = refineKnownUnchecked(predicate, first, second);
-		if (result == MemoryEngineContract.RESULT_IDENTITY_UNSAFE) {
-			// The legacy backend historically interpreted a legitimate zero-survivor refine as proof
-			// of relocation and forced a whole-memory recovery scan. The native safety seam recognizes
-			// only that exact legacy condition and publishes an empty revision only after revalidating
-			// every bounded CandidateId fingerprint. Any real identity uncertainty remains fail-closed.
-			result = finalizeEmptyKnownRefineIfSafe();
-		}
+		return runKnownRefine(predicate, first, second, false);
+	}
+
+	static int recoverKnown(int predicate, String first, String second) {
+		// A GC epoch change no longer turns Next Scan into a second whole-memory search. The service
+		// refreshes the resident-range view first, then this path proves the existing CandidateId
+		// fingerprints at their current bindings and refines only those candidates. A real move or
+		// identity mismatch fails closed and leaves the previously committed result revision intact.
+		return runKnownRefine(predicate, first, second, true);
+	}
+
+	private static int runKnownRefine(int predicate, String first, String second,
+	                                 boolean revalidateIdentity) {
+		int result = refineKnownProduction(
+				predicate, first, second, revalidateIdentity);
 		if (result == MemoryEngineContract.RESULT_OK) {
 			// Rebuild only from the newly committed immutable legacy revision. This keeps ResultStore
 			// production paging active after Next Scan without performing a second live-memory refine;
-			// the real bitmap-refine cutover remains gated by physical all-predicate parity.
+			// the authoritative bitmap-refine cutover remains gated by physical parity.
 			stageV2KnownResultStore();
+		} else if (result == MemoryEngineContract.RESULT_IDENTITY_UNSAFE) {
+			// Never let a stale staged revision answer pages after the search state could no longer be
+			// safely advanced. Legacy state itself remains transactional and authoritative.
+			clearV2KnownResultStore();
 		}
 		return result;
 	}
 
-	private static native int refineKnownUnchecked(int predicate, String first, String second);
-
-	private static native int finalizeEmptyKnownRefineIfSafe();
-
-	static int recoverKnown(int predicate, String first, String second) {
-		// Do not silently turn Next Scan into a second whole-memory Known scan. The old recovery path
-		// rescanned every resident range and then attempted to correlate the fresh hits back to the
-		// previous CandidateIds. Besides being unexpectedly expensive, it returned NO_SESSION for
-		// large Auto result sets; the UI interpreted that as a dead MIDlet and closed the editor.
-		//
-		// Until relocation recovery is rewritten as a bounded, identity-aware operation, preserve the
-		// previous committed result and fail closed. This is intentionally a temporary safety gate:
-		// GC/identity uncertainty is visible to the user instead of changing Next Scan semantics.
-		clearV2KnownResultStore();
-		return MemoryEngineContract.RESULT_IDENTITY_UNSAFE;
-	}
+	private static native int refineKnownProduction(int predicate, String first, String second,
+	                                               boolean revalidateIdentity);
 
 	static native int refineRelative(int predicate, int compareTarget, String first, String second);
 
