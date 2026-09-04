@@ -9,11 +9,12 @@
 // Transitional production compilation unit.
 //
 // Search membership and tracked identity are deliberately separate here. Known/Auto Next Scan is
-// address-first: ordinary survivors are decided only by the value currently stored at the committed
-// address. Fingerprints are passive relocation hints. When a bounded sample proves that failed
-// addresses no longer carry their old context, one streaming pass may recover uniquely matching
-// moved aliases without rebuilding a fresh million-Candidate search. Delete this seam when
-// ResultStore becomes the production search-state owner.
+// address-first while the previous context fingerprints remain stable. A bounded fingerprint probe
+// detects address-space movement without attaching identity checks to millions of hot-loop reads.
+// Once movement is observed, fingerprinted rows are rebuilt by one streaming pass so a stale but
+// still-readable raw address cannot survive merely because another object now stores the requested
+// value there. Strict write safety remains in the bounded Watch/Edit/Freeze/Inspector path. Delete
+// this seam when ResultStore becomes the production search-state owner.
 #include "memory_engine_entry.cpp"
 
 namespace {
@@ -169,23 +170,24 @@ void compactKnownRefineCandidates(std::vector<Candidate> &candidates) {
            candidate.identityHash == key.identityHash;
 }
 
-[[nodiscard]] bool shouldAttemptRelocation(
-        const OperationContext &context,
-        const std::vector<std::uint32_t> &recoveryIndices) {
-    if (recoveryIndices.empty()) {
+[[nodiscard]] bool shouldAttemptRelocation(const OperationContext &context) {
+    const auto &candidates = context.state->candidates;
+    if (candidates.empty()) {
         return false;
     }
-    const std::size_t sampleCount =
-            std::min(kRelocationProbeSamples, recoveryIndices.size());
-    std::size_t mismatches = 0U;
+    const std::size_t requestedSamples =
+            std::min(kRelocationProbeSamples, candidates.size());
     std::size_t checked = 0U;
-    for (std::size_t sample = 0U; sample < sampleCount; ++sample) {
-        const std::size_t position = sampleCount == 1U
+    std::size_t mismatches = 0U;
+    for (std::size_t sample = 0U; sample < requestedSamples; ++sample) {
+        const std::size_t position = requestedSamples == 1U
                                              ? 0U
-                                             : sample * (recoveryIndices.size() - 1U) /
-                                                       (sampleCount - 1U);
-        const Candidate &candidate =
-                context.state->candidates[recoveryIndices[position]];
+                                             : sample * (candidates.size() - 1U) /
+                                                       (requestedSamples - 1U);
+        const Candidate &candidate = candidates[position];
+        if (!candidate.identityValid) {
+            continue;
+        }
         std::uint64_t liveHash = 0U;
         if (!readIdentity(context.target, candidate.address, candidate.type,
                           liveHash) ||
@@ -194,13 +196,10 @@ void compactKnownRefineCandidates(std::vector<Candidate> &candidates) {
         }
         ++checked;
     }
-    if (checked == 0U || mismatches == 0U) {
-        return false;
-    }
-    // Small result sets should not lose the only moved value merely because the sample is tiny.
-    // Large sets require broad evidence before paying for a heap streaming pass; ordinary gameplay
-    // changes around a few results therefore do not turn every Next Scan back into a full scan.
-    return checked <= 8U || mismatches * 4U >= checked;
+    // The fingerprint excludes the value bytes themselves. A normal 3 -> 4 gameplay change does
+    // not alter it. Therefore even one sampled context mismatch is meaningful enough to prefer the
+    // streaming reconciliation path; ambiguity remains fail-closed later rather than guessed here.
+    return checked > 0U && mismatches > 0U;
 }
 
 [[nodiscard]] std::optional<std::size_t> findUniqueRecoveryPosition(
@@ -239,8 +238,8 @@ void compactKnownRefineCandidates(std::vector<Candidate> &candidates) {
         std::vector<std::uint32_t> recoveryIndices,
         std::uint64_t completedCandidateWork,
         std::vector<Candidate> &survivors,
-        std::size_t &recoveredCount) {
-    recoveredCount = 0U;
+        std::size_t &relocatedCount) {
+    relocatedCount = 0U;
     if (recoveryIndices.empty()) {
         return kOk;
     }
@@ -398,8 +397,6 @@ void compactKnownRefineCandidates(std::vector<Candidate> &candidates) {
             continue;
         }
         const Candidate &stored = state.candidates[recoveryIndices[position]];
-        // A duplicate old key is intentionally unrecoverable. findUniqueRecoveryPosition() never
-        // records a match for it, but keep this final invariant explicit in case the lookup changes.
         const RecoveryKey key{stored.type, stored.identityHash};
         if ((position > 0U && candidateMatchesRecoveryKey(
                                     state.candidates[recoveryIndices[position - 1U]], key)) ||
@@ -413,13 +410,14 @@ void compactKnownRefineCandidates(std::vector<Candidate> &candidates) {
         recovered.previousBits = stored.currentBits;
         recovered.currentBits = foundBits[position];
         recovered.state = kStable;
-        if (recovered.address != stored.address &&
-            recovered.relocationCount !=
-                    std::numeric_limits<std::uint32_t>::max()) {
-            ++recovered.relocationCount;
+        if (recovered.address != stored.address) {
+            if (recovered.relocationCount !=
+                std::numeric_limits<std::uint32_t>::max()) {
+                ++recovered.relocationCount;
+            }
+            ++relocatedCount;
         }
         survivors.push_back(recovered);
-        ++recoveredCount;
     }
     return kOk;
 }
@@ -467,13 +465,13 @@ void compactKnownRefineCandidates(std::vector<Candidate> &candidates) {
     next->candidates.reserve(std::min(
             context.state->candidates.size(), kInitialKnownRefineReserve));
 
+    const bool relocationLikely = shouldAttemptRelocation(context);
     std::vector<std::uint32_t> recoveryIndices;
-    recoveryIndices.reserve(std::min(context.state->candidates.size(),
-                                     kInitialRecoveryIndexReserve));
+    if (relocationLikely) {
+        recoveryIndices.reserve(std::min(context.state->candidates.size(),
+                                         kInitialRecoveryIndexReserve));
+    }
 
-    // Direct reads remain proportional for small result sets while the existing reader reuses a
-    // 256 KiB cache for large sorted sets. Only committed SearchState addresses are consulted;
-    // the bounded live overlay used by Watch/Edit/Freeze/Inspector never alters bulk membership.
     CandidateValueReader reader(context.target,
                                 context.state->candidates.size());
     std::uint64_t completedWork = 0U;
@@ -493,50 +491,48 @@ void compactKnownRefineCandidates(std::vector<Candidate> &candidates) {
             setMessage("Known Next Scan encountered an invalid candidate type");
             return kInvalidRequest;
         }
-
         const Query *query = queriesByType[typeIndex(stored.type)];
-        std::uint64_t current = 0U;
-        const bool readable = reader.read(stored, current);
-        if (readable) {
-            ++readableCount;
-        } else {
-            ++unreadableCount;
-        }
 
-        if (query != nullptr && readable &&
-            matchesKnown(current, *query, predicate)) {
-            Candidate updated = stored;
-            updated.previousBits = stored.currentBits;
-            updated.currentBits = current;
-            updated.state = kStable;
-            // Fingerprints remain passive metadata. We intentionally do not recapture one for each
-            // million-scale survivor: mutation/tracked paths perform strict validation later.
-            next->candidates.push_back(updated);
-        } else if (query != nullptr && stored.identityValid) {
+        if (query != nullptr && relocationLikely && stored.identityValid) {
+            // Once movement is observed, a readable old address is not proof of identity. Rebuild
+            // every fingerprinted row from the streaming pass instead of retaining stale-address
+            // false positives. This vector stores only compact indices, not duplicate Candidates.
             recoveryIndices.push_back(
                     static_cast<std::uint32_t>(candidateIndex));
+        } else if (query != nullptr) {
+            std::uint64_t current = 0U;
+            const bool readable = reader.read(stored, current);
+            if (readable) {
+                ++readableCount;
+                if (matchesKnown(current, *query, predicate)) {
+                    Candidate updated = stored;
+                    updated.previousBits = stored.currentBits;
+                    updated.currentBits = current;
+                    updated.state = kStable;
+                    next->candidates.push_back(updated);
+                }
+            } else {
+                ++unreadableCount;
+            }
         }
 
         completedWork += static_cast<std::uint64_t>(width);
         gScanBytesScanned.store(completedWork, std::memory_order_release);
     }
 
-    std::size_t recoveredCount = 0U;
-    const bool relocationLikely =
-            shouldAttemptRelocation(context, recoveryIndices);
+    std::size_t relocatedCount = 0U;
     if (relocationLikely) {
         const jint recoveryResult = recoverRelocatedKnownCandidates(
                 context, predicate, queriesByType, std::move(recoveryIndices),
-                completedWork, next->candidates, recoveredCount);
+                completedWork, next->candidates, relocatedCount);
         if (recoveryResult != kOk) {
             return recoveryResult;
         }
     }
 
-    // If every old address became unreadable and there was no usable identity evidence, preserve
-    // the old revision rather than silently publishing an empty result because target mappings
-    // disappeared for reasons unrelated to the user's predicate. A relocation pass, by contrast,
-    // makes zero survivors a valid completed search result.
+    // With no movement evidence, an entirely unreadable raw set indicates stale target ranges or
+    // runtime loss rather than a trustworthy zero-result refine, so preserve the prior revision.
+    // Once streaming reconciliation ran, zero matches is an ordinary transactional result.
     if (!context.state->candidates.empty() && readableCount == 0U &&
         !relocationLikely) {
         setMessage("The previous search address set is no longer readable; previous results were preserved");
@@ -553,8 +549,8 @@ void compactKnownRefineCandidates(std::vector<Candidate> &candidates) {
         const std::uint64_t finalTotal =
                 gScanBytesTotal.load(std::memory_order_acquire);
         gScanBytesScanned.store(finalTotal, std::memory_order_release);
-        if (recoveredCount > 0U) {
-            setMessage(("Next Scan recovered " + std::to_string(recoveredCount) +
+        if (relocatedCount > 0U) {
+            setMessage(("Next Scan recovered " + std::to_string(relocatedCount) +
                         " uniquely relocated address aliases")
                                .c_str());
         } else if (survivorCount == 0U) {
