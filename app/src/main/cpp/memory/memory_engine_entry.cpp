@@ -737,7 +737,7 @@ struct AuthoritativeKnownRefineBuildContext {
         if (result == kOk) {
             // A relocation/legacy compatibility revision can become a ResultStore source again as
             // soon as exact address/type parity is proven. Failure only leaves Candidate ownership.
-            stageCurrentKnownResultStore();
+            (void) stageCurrentKnownResultStore();
         }
         return result;
     };
