@@ -125,11 +125,10 @@ namespace {
         updated.state = kStable;
 
         const Query *query = queriesByType[typeIndex(stored.type)];
-        if (query == nullptr) {
-            setMessage("Known Next Scan could not resolve a candidate query type");
-            return kInvalidRequest;
-        }
-        if (matchesKnown(current, *query, predicate)) {
+        // Auto intentionally permits a threshold to be representable by only a subset of its
+        // primitive aliases (for example 200 cannot be a signed Byte). Legacy Next Scan filters
+        // those non-representable aliases out; it does not reject the entire Auto operation.
+        if (query != nullptr && matchesKnown(current, *query, predicate)) {
             next->candidates.push_back(updated);
         }
 
