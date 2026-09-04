@@ -398,6 +398,56 @@ void clearStagedKnownRevision(std::uint64_t revision) noexcept {
     return true;
 }
 
+[[nodiscard]] jlongArray materializeStagedKnownCursorPage(
+        JNIEnv *env, const jlmem::v2::ResultAddressPage &page,
+        const std::vector<Candidate> &candidates,
+        const std::unordered_map<uint64_t, Candidate> &liveCandidates,
+        std::size_t candidateStart, jint expectedType,
+        std::uint8_t expectedAlias) {
+    if (candidateStart > candidates.size() ||
+        page.rows.size() > candidates.size() - candidateStart ||
+        expectedType < kTypeByte || expectedType > kTypeDouble ||
+        expectedAlias == 0U) {
+        return nullptr;
+    }
+    const std::size_t count = page.rows.size();
+    const std::size_t outputSize = 1U + count * kResultStride;
+    std::vector<jlong> output(outputSize);
+    output[0] = static_cast<jlong>(count);
+    for (std::size_t index = 0U; index < count; ++index) {
+        const Candidate &stored = candidates[candidateStart + index];
+        const jlmem::v2::ResultAddressRow &row = page.rows[index];
+        if (row.address != stored.address || row.aliasMask != expectedAlias ||
+            toJint(stored.type) != expectedType) {
+            return nullptr;
+        }
+        const Candidate &candidate = liveCandidate(stored, liveCandidates);
+        if (candidate.id != stored.id || candidate.type != stored.type ||
+            candidate.address == 0U) {
+            return nullptr;
+        }
+        const std::size_t base = 1U + index * kResultStride;
+        output[base] = static_cast<jlong>(candidate.id);
+        // Current binding stays live so a verified tracked relocation remains visible to UI and
+        // mutation safety. The reserved slot records the ResultStore membership/source address;
+        // ResultCursor, not Candidate ordering, therefore owns the visible window membership.
+        output[base + 1U] = static_cast<jlong>(candidate.address);
+        output[base + 2U] = static_cast<jlong>(row.address);
+        output[base + 3U] = expectedType;
+        output[base + 4U] = candidate.state;
+        output[base + 5U] = candidate.relocationCount;
+        output[base + 6U] = static_cast<jlong>(candidate.initialBits);
+        output[base + 7U] = static_cast<jlong>(candidate.previousBits);
+        output[base + 8U] = static_cast<jlong>(candidate.currentBits);
+    }
+    jlongArray result = env->NewLongArray(static_cast<jsize>(outputSize));
+    if (result != nullptr) {
+        env->SetLongArrayRegion(result, 0, static_cast<jsize>(outputSize),
+                                output.data());
+    }
+    return result;
+}
+
 [[nodiscard]] jlongArray stagedKnownResultPage(JNIEnv *env, jint offset,
                                                jint limit) {
     if (offset < 0 || limit <= 0 ||
@@ -438,8 +488,12 @@ void clearStagedKnownRevision(std::uint64_t revision) noexcept {
     const std::size_t expectedCount = std::min<std::size_t>(
             static_cast<std::size_t>(limit), state->candidates.size() - start);
     if (expectedCount == 0U) {
+        jlmem::v2::ResultAddressPage emptyPage;
         std::unordered_map<uint64_t, Candidate> liveCandidates;
-        return candidatePage(env, state->candidates, liveCandidates, start, 0U);
+        return materializeStagedKnownCursorPage(
+                env, emptyPage, state->candidates, liveCandidates, start,
+                jlmem::v2::stableValueTypeFromResultPlane(staged.plane),
+                jlmem::v2::resultPlaneBit(staged.plane));
     }
 
     jlmem::v2::ResultCursor cursor;
@@ -455,15 +509,6 @@ void clearStagedKnownRevision(std::uint64_t revision) noexcept {
     const std::uint8_t expectedAlias = jlmem::v2::resultPlaneBit(staged.plane);
     const jint expectedType =
             jlmem::v2::stableValueTypeFromResultPlane(staged.plane);
-    for (std::size_t index = 0U; index < page.rows.size(); ++index) {
-        const Candidate &candidate = state->candidates[start + index];
-        if (page.rows[index].address != candidate.address ||
-            page.rows[index].aliasMask != expectedAlias ||
-            toJint(candidate.type) != expectedType) {
-            clearStagedKnownRevision(staged.revision);
-            return nullptr;
-        }
-    }
 
     std::unordered_map<uint64_t, Candidate> liveCandidates;
     {
@@ -481,8 +526,13 @@ void clearStagedKnownRevision(std::uint64_t revision) noexcept {
         }
         liveCandidates = gLiveCandidates;
     }
-    return candidatePage(env, state->candidates, liveCandidates, start,
-                         expectedCount);
+    jlongArray result = materializeStagedKnownCursorPage(
+            env, page, state->candidates, liveCandidates, start,
+            expectedType, expectedAlias);
+    if (result == nullptr) {
+        clearStagedKnownRevision(staged.revision);
+    }
+    return result;
 }
 
 [[nodiscard]] jint commitAuthoritativeKnownRevision(
