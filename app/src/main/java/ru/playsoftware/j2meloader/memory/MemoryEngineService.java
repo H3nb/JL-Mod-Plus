@@ -243,7 +243,7 @@ public final class MemoryEngineService extends Service {
 		@Override
 		public long refineKnown(long token, int predicate, String first, String second) {
 			return enqueueSearch(token, false, 0,
-					() -> refineKnownGcAware(token, predicate, first, second));
+					() -> refineKnownAddressSet(token, predicate, first, second));
 		}
 
 		@Override
@@ -748,30 +748,18 @@ public final class MemoryEngineService extends Service {
 		return MemoryEngineContract.RESULT_OK;
 	}
 
-	private int refineKnownGcAware(long token, int predicate, String first, String second) {
+	private int refineKnownAddressSet(long token, int predicate, String first, String second) {
+		// Known/Auto search results are raw address membership. A GC epoch change may make some old
+		// addresses disappear, but it must not reinterpret Next Scan as object-identity recovery,
+		// trigger a fresh mincore range capture, or rescan the whole Java heap. The native refine
+		// filters only the committed addresses. GC remains relevant later when a bounded row is
+		// promoted for Watch/Edit/Freeze/Inspector.
 		long gcBefore = currentGcCount(token);
-		int result;
-		if (gcBindings.searchEpochChanged(gcBefore)) {
-			result = configureTarget(token, configuredScope);
-			if (result == MemoryEngineContract.RESULT_OK) {
-				result = NativeMemoryEngine.recoverKnown(predicate, first, second);
-			}
-		} else {
-			result = NativeMemoryEngine.refineKnown(predicate, first, second);
-			if (result == MemoryEngineContract.RESULT_IDENTITY_UNSAFE) {
-				result = configureTarget(token, configuredScope);
-				if (result == MemoryEngineContract.RESULT_OK) {
-					result = NativeMemoryEngine.recoverKnown(predicate, first, second);
-				}
-			}
-		}
+		int result = NativeMemoryEngine.refineKnown(predicate, first, second);
 		if (result != MemoryEngineContract.RESULT_OK) return result;
 		long gcAfter = currentGcCount(token);
-		if (MemoryEngineContract.didGcCountChange(gcBefore, gcAfter)) {
-			return rollbackAfterGcRace();
-		}
 		advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
-				MemoryEngineContract.latestKnownGcCount(gcBefore, gcAfter));
+				MemoryGcPolicy.publishedSearchEpoch(false, gcBefore, gcAfter));
 		return MemoryEngineContract.RESULT_OK;
 	}
 
