@@ -101,11 +101,12 @@ class MemoryEditorComposeController(
             post {
                 if (passiveRefresh) {
                     liveRefreshPending = false
-                    if (resultCode == MemoryEngineContract.RESULT_TARGET_LOST ||
-                        resultCode == MemoryEngineContract.RESULT_NO_SESSION
-                    ) {
+                    if (resultCode == MemoryEngineContract.RESULT_TARGET_LOST) {
                         close()
-                    } else if (resultCode == MemoryEngineContract.RESULT_OK && state.visible && !state.busy) {
+                    } else if (state.visible && !state.busy) {
+                        // NO_SESSION is a search/materialization state error, not proof that the
+                        // MIDlet runtime died. Keep the editor open and let reloadState reconcile
+                        // the visible page/session instead of collapsing the whole Activity.
                         reloadState()
                     }
                     return@post
@@ -120,9 +121,7 @@ class MemoryEditorComposeController(
                 pendingOperationFeedback = null
                 operationGeneration++
 
-                if (resultCode == MemoryEngineContract.RESULT_TARGET_LOST ||
-                    resultCode == MemoryEngineContract.RESULT_NO_SESSION
-                ) {
+                if (resultCode == MemoryEngineContract.RESULT_TARGET_LOST) {
                     pendingEditFollowUp = null
                     pendingInspectorRefresh = null
                     activeOperationId = 0L
@@ -319,17 +318,27 @@ class MemoryEditorComposeController(
         val token = capabilities.getLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, 0L)
         val capabilityMessage = capabilities.getString(MemoryEngineContract.KEY_MESSAGE)
 
-        // The target bridge binds asynchronously. A zero token gets a short bounded handshake
-        // window; a different nonzero token is a different MIDlet generation and closes this UI.
+        // The target bridge binds asynchronously. Token 0 is transient/unknown here; runtime
+        // teardown has a dedicated lifecycle callback and is the authoritative close signal.
+        // A different nonzero token, however, is a genuinely different MIDlet generation.
         if (token != localToken) {
-            if (token == 0L && retry < CAPABILITY_RETRY_DELAYS_MS.size) {
-                val delay = CAPABILITY_RETRY_DELAYS_MS[retry]
+            if (token == 0L) {
+                val delay = if (retry < CAPABILITY_RETRY_DELAYS_MS.size) {
+                    CAPABILITY_RETRY_DELAYS_MS[retry]
+                } else {
+                    CAPABILITY_RETRY_IDLE_MS
+                }
                 val generation = connectionGeneration
                 post {
-                    state = state.copy(connecting = true, connected = true, message = null)
+                    state = state.copy(
+                        connecting = true,
+                        connected = true,
+                        message = capabilityMessage?.takeIf(String::isNotBlank)
+                            ?: context.getString(R.string.memory_editor_engine_reconnecting),
+                    )
                     composeView.postDelayed({
-                        if (!destroyed && generation == connectionGeneration) {
-                            reloadState(retry + 1)
+                        if (!destroyed && state.visible && generation == connectionGeneration) {
+                            reloadState((retry + 1).coerceAtMost(CAPABILITY_RETRY_DELAYS_MS.size))
                         }
                     }, delay)
                 }
@@ -693,9 +702,7 @@ class MemoryEditorComposeController(
             val anchor = bundle.getLong(MemoryEngineContract.KEY_INSPECT_ANCHOR, 0L)
             val bytes = bundle.getByteArray(MemoryEngineContract.KEY_INSPECT_BYTES)
             post {
-                if (result == MemoryEngineContract.RESULT_TARGET_LOST ||
-                    result == MemoryEngineContract.RESULT_NO_SESSION
-                ) {
+                if (result == MemoryEngineContract.RESULT_TARGET_LOST) {
                     state = state.copy(
                         inspectorLoading = false,
                         inspector = null,
@@ -862,8 +869,9 @@ class MemoryEditorComposeController(
     private fun operationMessage(result: Int, engineMessage: String?): String = when (result) {
         MemoryEngineContract.RESULT_CANCELLED -> context.getString(R.string.memory_editor_cancelled)
         MemoryEngineContract.RESULT_RESOURCE_LIMIT -> context.getString(R.string.memory_editor_resource_limit)
-        MemoryEngineContract.RESULT_TARGET_LOST,
-        MemoryEngineContract.RESULT_NO_SESSION -> context.getString(R.string.memory_editor_engine_reconnecting)
+        MemoryEngineContract.RESULT_TARGET_LOST -> context.getString(R.string.memory_editor_engine_reconnecting)
+        MemoryEngineContract.RESULT_NO_SESSION -> engineMessage?.takeIf(String::isNotBlank)
+            ?: context.getString(R.string.memory_editor_invalid_request)
         MemoryEngineContract.RESULT_IDENTITY_UNSAFE -> context.getString(R.string.memory_editor_identity_unsafe)
         MemoryEngineContract.RESULT_SAFETY_LIMIT -> context.getString(R.string.memory_editor_safety_limit)
         MemoryEngineContract.RESULT_GC_REVALIDATED -> context.getString(R.string.memory_editor_gc_revalidated)
@@ -903,6 +911,7 @@ class MemoryEditorComposeController(
         private const val ENGINE_RECONNECT_DELAY_MS = 250L
         private const val LIVE_REFRESH_INITIAL_DELAY_MS = 250L
         private const val LIVE_REFRESH_INTERVAL_MS = 1_000L
+        private const val CAPABILITY_RETRY_IDLE_MS = 1_000L
         private val CAPABILITY_RETRY_DELAYS_MS = longArrayOf(80L, 160L, 320L, 640L)
     }
 }
