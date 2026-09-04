@@ -80,11 +80,20 @@ final class NativeMemoryEngine {
 	                              int predicate, String first, String second);
 
 	static int refineKnown(int predicate, String first, String second) {
+		// Compatibility/internal callers that have no target-GC evidence must never request an
+		// expensive relocation reconciliation. The service uses the overload below after comparing
+		// the published search epoch with the current target GC epoch.
+		return refineKnown(predicate, first, second, false);
+	}
+
+	static int refineKnown(int predicate, String first, String second,
+	                      boolean allowRelocationReconcile) {
 		// Ordinary search results remain address membership, not millions of permanently tracked
-		// objects. Native refine first evaluates the committed addresses directly. Only when a small
-		// fingerprint sample shows broad movement may it run one streaming relocation pass, and only
-		// unique fingerprint matches are rebound. Strict identity is still mandatory before writes.
-		int result = refineKnownAddressSet(predicate, first, second);
+		// objects. Native first evaluates only the committed addresses. A full streaming relocation
+		// pass is merely permitted here; native still requires >=64K typed candidates and strong
+		// fingerprint evidence before paying that cost. Strict identity remains mandatory on writes.
+		int result = refineKnownAddressSet(
+				predicate, first, second, allowRelocationReconcile);
 		if (result == MemoryEngineContract.RESULT_OK) {
 			// Keep the verified ResultStore read path opportunistically staged for explicit types.
 			stageV2KnownResultStore();
@@ -96,7 +105,8 @@ final class NativeMemoryEngine {
 		return result;
 	}
 
-	private static native int refineKnownAddressSet(int predicate, String first, String second);
+	private static native int refineKnownAddressSet(int predicate, String first, String second,
+	                                                boolean allowRelocationReconcile);
 
 	static native int refineRelative(int predicate, int compareTarget, String first, String second);
 
