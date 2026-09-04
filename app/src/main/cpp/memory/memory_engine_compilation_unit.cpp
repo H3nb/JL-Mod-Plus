@@ -41,6 +41,15 @@ namespace {
         setMessage("No Known search session is available for Next Scan");
         return kNoSession;
     }
+    if (revalidateIdentity &&
+        context.state->candidates.size() > kRelocationTrackLimit) {
+        // Identity revalidation deliberately remains bounded. A large Auto result can contain
+        // hundreds of thousands or millions of typed aliases; issuing one identity syscall per
+        // candidate after GC would recreate the long, surprising recovery behavior this path is
+        // replacing. Preserve the previous revision and ask for a new search instead.
+        setMessage("Java GC changed during a large result set; bounded identity revalidation is unavailable, so previous results were preserved");
+        return kIdentityUnsafe;
+    }
 
     std::vector<Query> queries;
     if (!buildQueries(context.state->requestedType, predicate,
