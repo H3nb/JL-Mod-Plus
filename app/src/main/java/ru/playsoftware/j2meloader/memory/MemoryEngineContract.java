@@ -89,8 +89,13 @@ public final class MemoryEngineContract {
 	public static final int MAX_MULTI_WRITE = 32;
 	public static final int MAX_FREEZE_RECORDS = 32;
 	public static final int MAX_GROUP_VALUES = 8;
-	/** Maximum resident address runs accepted from the target process. */
-	public static final int MAX_RESIDENT_RUNS = 4096;
+	/**
+	 * Maximum resident address runs accepted from the target process. 4,096 was too tight for
+	 * fragmented ART heaps on 16 KiB-page devices and could turn an otherwise valid post-GC range
+	 * refresh into a false resource-limit failure. 16,384 remains bounded and serializes to roughly
+	 * 256 KiB of longs at the worst case, comfortably below Binder's transaction envelope.
+	 */
+	public static final int MAX_RESIDENT_RUNS = 16_384;
 	public static final int DEFAULT_INSPECT_RADIUS = 128;
 	public static final int MAX_INSPECT_RADIUS = 256;
 	public static final int DEFAULT_NEARBY_RADIUS = 256;
