@@ -77,44 +77,22 @@ final class NativeMemoryEngine {
 	                              int predicate, String first, String second);
 
 	static int refineKnown(int predicate, String first, String second) {
-		return runKnownRefine(predicate, first, second, false);
-	}
-
-	static int recoverKnown(int predicate, String first, String second) {
-		// A GC epoch change no longer turns Next Scan into a second whole-memory search. The service
-		// refreshes the resident-range view first, then this path proves the existing CandidateId
-		// fingerprints at their current bindings and refines only those candidates. A real move or
-		// identity mismatch fails closed and leaves the previously committed result revision intact.
-		return runKnownRefine(predicate, first, second, true);
-	}
-
-	private static int runKnownRefine(int predicate, String first, String second,
-	                                 boolean revalidateIdentity) {
-		int result = refineKnownProduction(
-				predicate, first, second, revalidateIdentity);
-		if (result == MemoryEngineContract.RESULT_NO_SESSION) {
-			// NO_SESSION here means the search revision is missing, not that the MIDlet runtime died.
-			// The legacy controller closes the editor for NO_SESSION, so normalize this operation-local
-			// state error to INVALID_REQUEST and keep the Memory Editor visible. TARGET_LOST remains the
-			// only runtime-loss result emitted by a configured Next Scan path.
-			clearV2KnownResultStore();
-			return MemoryEngineContract.RESULT_INVALID_REQUEST;
-		}
+		// Known/Auto search results are an address-membership set, not millions of tracked logical
+		// objects. Next Scan therefore refines exactly the committed raw addresses. GC-aware identity
+		// recovery belongs only to the bounded Watch/Edit/Freeze/Inspector promotion boundary.
+		int result = refineKnownAddressSet(predicate, first, second);
 		if (result == MemoryEngineContract.RESULT_OK) {
-			// Rebuild only from the newly committed immutable legacy revision. This keeps ResultStore
-			// production paging active after Next Scan without performing a second live-memory refine;
-			// the authoritative bitmap-refine cutover remains gated by physical parity.
+			// Keep the verified ResultStore read path opportunistically staged for explicit types.
 			stageV2KnownResultStore();
-		} else if (result == MemoryEngineContract.RESULT_IDENTITY_UNSAFE) {
-			// Never let a stale staged revision answer pages after the search state could no longer be
-			// safely advanced. Legacy state itself remains transactional and authoritative.
+		} else {
+			// A failed/cancelled refine leaves the legacy revision transactional and authoritative.
+			// Drop any staged mirror rather than letting presentation depend on stale migration state.
 			clearV2KnownResultStore();
 		}
 		return result;
 	}
 
-	private static native int refineKnownProduction(int predicate, String first, String second,
-	                                               boolean revalidateIdentity);
+	private static native int refineKnownAddressSet(int predicate, String first, String second);
 
 	static native int refineRelative(int predicate, int compareTarget, String first, String second);
 
