@@ -78,6 +78,13 @@ final class NativeMemoryEngine {
 
 	static int refineKnown(int predicate, String first, String second) {
 		int result = refineKnownUnchecked(predicate, first, second);
+		if (result == MemoryEngineContract.RESULT_IDENTITY_UNSAFE) {
+			// The legacy backend historically interpreted a legitimate zero-survivor refine as proof
+			// of relocation and forced a whole-memory recovery scan. The native safety seam recognizes
+			// only that exact legacy condition and publishes an empty revision only after revalidating
+			// every bounded CandidateId fingerprint. Any real identity uncertainty remains fail-closed.
+			result = finalizeEmptyKnownRefineIfSafe();
+		}
 		if (result == MemoryEngineContract.RESULT_OK) {
 			// Rebuild only from the newly committed immutable legacy revision. This keeps ResultStore
 			// production paging active after Next Scan without performing a second live-memory refine;
@@ -88,6 +95,8 @@ final class NativeMemoryEngine {
 	}
 
 	private static native int refineKnownUnchecked(int predicate, String first, String second);
+
+	private static native int finalizeEmptyKnownRefineIfSafe();
 
 	static int recoverKnown(int predicate, String first, String second) {
 		// Do not silently turn Next Scan into a second whole-memory Known scan. The old recovery path
