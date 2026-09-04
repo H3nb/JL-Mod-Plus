@@ -30,9 +30,10 @@ import org.junit.runner.RunWith;
  *
  * <p>The test deliberately confines both engines to one stable resident page in this process.
  * This keeps every predicate bounded (including Byte/NotEqual) while still exercising the real
- * process_vm_readv path, native parser, specialized v2 kernels, ResultStore bitmaps, and cursor
- * fingerprinting on the device ABI. Full Java-heap/GC movement remains covered separately by the
- * managed ART tests and the PR physical workload gate.</p>
+ * process_vm_readv path, native parser, specialized v2 kernels, ResultStore bitmaps, cursor
+ * fingerprinting, and the verified production ResultStore paging seam on the device ABI. Full
+ * Java-heap/GC movement remains covered separately by the managed ART tests and the PR physical
+ * workload gate.</p>
  */
 @RunWith(AndroidJUnit4.class)
 public class MemoryV2KnownParityTest {
@@ -81,6 +82,8 @@ public class MemoryV2KnownParityTest {
 							? "1" : "";
 					assertPredicateParity(valueType, predicate, first, second);
 					NativeMemoryEngine.clearSearch();
+					assertEquals("clearSearch retained a production v2 paging revision",
+							0L, NativeMemoryEngine.v2KnownPagingStats()[0]);
 				}
 			}
 		} finally {
@@ -102,9 +105,21 @@ public class MemoryV2KnownParityTest {
 				+ " predicate=" + predicate,
 				MemoryEngineContract.RESULT_OK,
 				NativeMemoryEngine.startKnown(valueType, predicate, first, second));
+		long[] stageBeforePaging = NativeMemoryEngine.v2KnownPagingStats();
+		assertEquals(4, stageBeforePaging.length);
+		assertEquals("bounded explicit Known result did not stage verified ResultStore paging",
+				1L, stageBeforePaging[0]);
+		assertEquals(0L, stageBeforePaging[2]);
+		assertEquals(0L, stageBeforePaging[3]);
+
 		long legacyCount = NativeMemoryEngine.resultCount();
 		assertTrue(legacyCount >= 0L);
 		long legacyFingerprint = legacyFingerprint(valueType, legacyCount);
+		long[] stageAfterPaging = NativeMemoryEngine.v2KnownPagingStats();
+		assertEquals("legacy fingerprint unexpectedly fell back from verified ResultStore paging",
+				0L, stageAfterPaging[3]);
+		assertTrue("verified ResultStore paging was staged but never served a page",
+				stageAfterPaging[2] > 0L);
 
 		long[] shadow = NativeMemoryEngine.v2ShadowKnown(
 				valueType, predicate, plan[2], plan[3]);
@@ -127,6 +142,13 @@ public class MemoryV2KnownParityTest {
 		long offset = 0L;
 		int planeTag = fingerprintPlaneTag(valueType);
 		assertTrue(planeTag != 0);
+		if (expectedCount == 0L) {
+			long[] empty = NativeMemoryEngine.resultPage(0, 1);
+			assertNotNull(empty);
+			assertEquals(1, empty.length);
+			assertEquals(0L, empty[0]);
+			return fingerprint;
+		}
 		while (offset < expectedCount) {
 			assertTrue("legacy parity result exceeds offset IPC range",
 					offset <= Integer.MAX_VALUE);
