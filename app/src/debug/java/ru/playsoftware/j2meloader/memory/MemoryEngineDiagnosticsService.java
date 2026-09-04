@@ -64,6 +64,14 @@ public final class MemoryEngineDiagnosticsService extends Service {
 		long[] progress = NativeMemoryEngine.scanProgress();
 		long scanned = progress != null && progress.length == 2 ? progress[0] : 0L;
 		long total = progress != null && progress.length == 2 ? progress[1] : 0L;
+		long[] v2Paging = NativeMemoryEngine.v2KnownPagingStats();
+		boolean v2Staged = v2Paging != null && v2Paging.length == 4 && v2Paging[0] == 1L;
+		long v2Generation = v2Paging != null && v2Paging.length == 4
+				? Math.max(0L, v2Paging[1]) : 0L;
+		long v2Hits = v2Paging != null && v2Paging.length == 4
+				? Math.max(0L, v2Paging[2]) : 0L;
+		long legacyFallbacks = v2Paging != null && v2Paging.length == 4
+				? Math.max(0L, v2Paging[3]) : 0L;
 
 		Runtime runtime = Runtime.getRuntime();
 		long javaUsedBytes = Math.max(0L, runtime.totalMemory() - runtime.freeMemory());
@@ -81,6 +89,14 @@ public final class MemoryEngineDiagnosticsService extends Service {
 				Math.max(0L, NativeMemoryEngine.resultCount()));
 		result.putInt(MemoryEngineDiagnosticsContract.KEY_HISTORY_DEPTH,
 				Math.max(0, NativeMemoryEngine.historyDepth()));
+		result.putBoolean(MemoryEngineDiagnosticsContract.KEY_V2_KNOWN_PAGING_STAGED,
+				v2Staged);
+		result.putLong(MemoryEngineDiagnosticsContract.KEY_V2_KNOWN_STAGE_GENERATION,
+				v2Generation);
+		result.putLong(MemoryEngineDiagnosticsContract.KEY_V2_KNOWN_PAGE_HITS,
+				v2Hits);
+		result.putLong(MemoryEngineDiagnosticsContract.KEY_LEGACY_RESULT_PAGE_FALLBACKS,
+				legacyFallbacks);
 		result.putLong(MemoryEngineDiagnosticsContract.KEY_TOTAL_PSS_KB,
 				Math.max(0L, memory.getTotalPss()));
 		result.putLong(MemoryEngineDiagnosticsContract.KEY_RSS_KB, readVmRssKb());
