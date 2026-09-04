@@ -92,6 +92,14 @@ final class NativeMemoryEngine {
 	                                 boolean revalidateIdentity) {
 		int result = refineKnownProduction(
 				predicate, first, second, revalidateIdentity);
+		if (result == MemoryEngineContract.RESULT_NO_SESSION) {
+			// NO_SESSION here means the search revision is missing, not that the MIDlet runtime died.
+			// The legacy controller closes the editor for NO_SESSION, so normalize this operation-local
+			// state error to INVALID_REQUEST and keep the Memory Editor visible. TARGET_LOST remains the
+			// only runtime-loss result emitted by a configured Next Scan path.
+			clearV2KnownResultStore();
+			return MemoryEngineContract.RESULT_INVALID_REQUEST;
+		}
 		if (result == MemoryEngineContract.RESULT_OK) {
 			// Rebuild only from the newly committed immutable legacy revision. This keeps ResultStore
 			// production paging active after Next Scan without performing a second live-memory refine;
