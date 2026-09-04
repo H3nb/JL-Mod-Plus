@@ -19,7 +19,10 @@ final class NativeMemoryEngine {
 	}
 
 	static int configureTarget(int pid, int pageSize, long runtimeToken, long[] runs) {
-		int result = configureTargetUnchecked(pid, pageSize, runtimeToken, runs);
+		// One production validator owns the resident-run contract. The old 4,096-run forwarding
+		// wrapper is intentionally bypassed so a fragmented ART heap cannot be accepted by the
+		// target bridge and then rejected by a second, stale native limit.
+		int result = configureTargetExpanded(pid, pageSize, runtimeToken, runs);
 		if (BuildConfig.DEBUG) {
 			if (result == MemoryEngineContract.RESULT_OK) {
 				configureV2ShadowTarget(pid, runtimeToken, runs);
@@ -30,8 +33,8 @@ final class NativeMemoryEngine {
 		return result;
 	}
 
-	private static native int configureTargetUnchecked(int pid, int pageSize, long runtimeToken,
-	                                                   long[] runs);
+	private static native int configureTargetExpanded(int pid, int pageSize, long runtimeToken,
+	                                                  long[] runs);
 
 	private static native void configureV2ShadowTarget(int pid, long runtimeToken, long[] runs);
 
@@ -77,9 +80,10 @@ final class NativeMemoryEngine {
 	                              int predicate, String first, String second);
 
 	static int refineKnown(int predicate, String first, String second) {
-		// Known/Auto search results are an address-membership set, not millions of tracked logical
-		// objects. Next Scan therefore refines exactly the committed raw addresses. GC-aware identity
-		// recovery belongs only to the bounded Watch/Edit/Freeze/Inspector promotion boundary.
+		// Ordinary search results remain address membership, not millions of permanently tracked
+		// objects. Native refine first evaluates the committed addresses directly. Only when a small
+		// fingerprint sample shows broad movement may it run one streaming relocation pass, and only
+		// unique fingerprint matches are rebound. Strict identity is still mandatory before writes.
 		int result = refineKnownAddressSet(predicate, first, second);
 		if (result == MemoryEngineContract.RESULT_OK) {
 			// Keep the verified ResultStore read path opportunistically staged for explicit types.
