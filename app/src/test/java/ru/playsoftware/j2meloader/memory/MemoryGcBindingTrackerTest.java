@@ -67,4 +67,30 @@ public class MemoryGcBindingTrackerTest {
 		assertFalse(tracker.candidatesNeedRevalidation(
 				new long[]{100L}, MemoryEngineContract.GC_COUNT_UNKNOWN));
 	}
+
+	@Test
+	public void successfulRefinePublishesEpochAndPreventsSameGcReconciliationLoop() {
+		MemoryGcBindingTracker tracker = new MemoryGcBindingTracker();
+		tracker.setSearchEpoch(40L);
+
+		assertTrue(tracker.searchEpochChanged(41L));
+		long published = MemoryGcPolicy.publishedSearchEpoch(false, 41L, 41L);
+		tracker.setSearchEpoch(published);
+
+		assertEquals(41L, tracker.searchEpoch());
+		assertFalse(tracker.searchEpochChanged(41L));
+	}
+
+	@Test
+	public void gcDuringRefineKeepsPublishedEpochStaleForOneLaterReconsideration() {
+		MemoryGcBindingTracker tracker = new MemoryGcBindingTracker();
+		tracker.setSearchEpoch(40L);
+
+		assertTrue(tracker.searchEpochChanged(41L));
+		long published = MemoryGcPolicy.publishedSearchEpoch(false, 41L, 42L);
+		tracker.setSearchEpoch(published);
+
+		assertEquals(41L, tracker.searchEpoch());
+		assertTrue(tracker.searchEpochChanged(42L));
+	}
 }
