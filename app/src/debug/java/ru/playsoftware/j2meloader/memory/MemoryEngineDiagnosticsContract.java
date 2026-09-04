@@ -10,7 +10,7 @@ package ru.playsoftware.j2meloader.memory;
 
 /** Stable keys for debug-only Memory Editor benchmark snapshots. */
 public final class MemoryEngineDiagnosticsContract {
-	public static final int SCHEMA_VERSION = 1;
+	public static final int SCHEMA_VERSION = 2;
 	public static final int SHADOW_SCHEMA_VERSION = 3;
 	public static final int SHADOW_OPERATION_SCAN = 0;
 	public static final int SHADOW_OPERATION_REFINE = 1;
@@ -30,6 +30,14 @@ public final class MemoryEngineDiagnosticsContract {
 	public static final String KEY_TOTAL_SWAP_KB = "totalSwapKb";
 	public static final String KEY_NATIVE_HEAP_ALLOCATED_BYTES = "nativeHeapAllocatedBytes";
 	public static final String KEY_RUNTIME_JAVA_USED_BYTES = "runtimeJavaUsedBytes";
+	/** True only while the exact current explicit-Known revision has a verified ResultStore mirror. */
+	public static final String KEY_V2_KNOWN_PAGING_STAGED = "v2KnownPagingStaged";
+	/** Monotonic process-local publication serial; changes whenever staging is replaced/cleared. */
+	public static final String KEY_V2_KNOWN_STAGE_GENERATION = "v2KnownStageGeneration";
+	/** Result pages served by the verified staged ResultStore in the current staging generation. */
+	public static final String KEY_V2_KNOWN_PAGE_HITS = "v2KnownPageHits";
+	/** Result pages served by the authoritative Candidate fallback in the current generation. */
+	public static final String KEY_LEGACY_RESULT_PAGE_FALLBACKS = "legacyResultPageFallbacks";
 
 	public static final String KEY_SHADOW_SCHEMA_VERSION = "shadowSchemaVersion";
 	public static final String KEY_SHADOW_STATUS = "shadowStatus";
