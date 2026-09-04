@@ -16,8 +16,94 @@
 
 namespace {
 
+constexpr std::size_t kExpandedMaxTargetRuns = 16'384U;
 constexpr std::size_t kInitialKnownRefineReserve = 16U * 1024U;
 constexpr std::size_t kCandidateCompactionSlack = 4U * 1024U;
+
+[[nodiscard]] jint configureTargetExpanded(JNIEnv *env, jint pid, jint pageSize,
+                                           jlong token, jlongArray rawRuns) {
+    try {
+        if (pid <= 0 || pageSize <= 0 || (pageSize & (pageSize - 1)) != 0 ||
+            token == 0 || rawRuns == nullptr) {
+            setMessage("Invalid target configuration");
+            return kInvalidRequest;
+        }
+        const jsize length = env->GetArrayLength(rawRuns);
+        const std::size_t rawLength =
+                length < 0 ? 0U : static_cast<std::size_t>(length);
+        if (length < 4 || (length - 2) % 2 != 0 ||
+            rawLength > 2U + kExpandedMaxTargetRuns * 2U) {
+            setMessage("Invalid target range list");
+            return kInvalidRequest;
+        }
+
+        std::array<jlong, 2> header{};
+        env->GetLongArrayRegion(rawRuns, 0, 2, header.data());
+        if (env->ExceptionCheck()) {
+            return kInvalidRequest;
+        }
+        const jlong declaredRuns = header[0];
+        if (header[1] != 0 || declaredRuns <= 0 ||
+            static_cast<std::uint64_t>(declaredRuns) > kExpandedMaxTargetRuns ||
+            declaredRuns != (length - 2) / 2) {
+            setMessage("Incomplete target range list");
+            return kResourceLimit;
+        }
+
+        std::vector<jlong> values(rawLength);
+        env->GetLongArrayRegion(rawRuns, 0, length, values.data());
+        if (env->ExceptionCheck() || values[1] != 0 || values[0] != declaredRuns) {
+            setMessage("Incomplete target range list");
+            return kResourceLimit;
+        }
+
+        Target target;
+        target.pid = pid;
+        target.pageSize = static_cast<std::size_t>(pageSize);
+        target.token = token;
+        target.ranges.reserve(static_cast<std::size_t>(declaredRuns));
+        uintptr_t previousEnd = 0U;
+        for (jsize index = 2; index < length; index += 2) {
+            if (values[index] <= 0 || values[index + 1] <= values[index] ||
+                static_cast<std::uint64_t>(values[index]) >
+                        std::numeric_limits<uintptr_t>::max() ||
+                static_cast<std::uint64_t>(values[index + 1]) >
+                        std::numeric_limits<uintptr_t>::max()) {
+                setMessage("Invalid target range bounds");
+                return kInvalidRequest;
+            }
+            const uintptr_t start = static_cast<uintptr_t>(values[index]);
+            const uintptr_t end = static_cast<uintptr_t>(values[index + 1]);
+            if (start % target.pageSize != 0 || end % target.pageSize != 0 ||
+                (!target.ranges.empty() && start < previousEnd)) {
+                setMessage("Target ranges are unaligned or overlap");
+                return kInvalidRequest;
+            }
+            target.ranges.push_back({start, end});
+            previousEnd = end;
+        }
+
+        std::lock_guard<std::mutex> lock(gMutex);
+        target.generation = gTarget.generation + 1U;
+        const bool sameRuntime =
+                gTarget.pid == target.pid && gTarget.token == target.token;
+        gTarget = std::move(target);
+        if (!sameRuntime) {
+            gState = gEmptyState;
+            gHistory.clear();
+            gLiveCandidates.clear();
+            gNextCandidateId = 1U;
+        }
+        gLastMessage.clear();
+        return kOk;
+    } catch (const std::bad_alloc &) {
+        setMessage("Target configuration exceeds the engine memory budget");
+        return kResourceLimit;
+    } catch (...) {
+        setMessage("Invalid target configuration");
+        return kInvalidRequest;
+    }
+}
 
 [[nodiscard]] std::uint64_t knownRefineWorkBytes(
         const SearchState &state) noexcept {
@@ -170,6 +256,13 @@ void compactKnownRefineCandidates(std::vector<Candidate> &candidates) {
 }
 
 } // namespace
+
+extern "C" JNIEXPORT jint JNICALL
+Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_configureTargetExpanded(
+        JNIEnv *env, jclass, jint pid, jint pageSize, jlong token,
+        jlongArray rawRuns) {
+    return configureTargetExpanded(env, pid, pageSize, token, rawRuns);
+}
 
 extern "C" JNIEXPORT jint JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_refineKnownAddressSet(
