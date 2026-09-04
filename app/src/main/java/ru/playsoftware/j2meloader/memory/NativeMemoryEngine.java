@@ -108,11 +108,9 @@ final class NativeMemoryEngine {
 				predicate, first, second, allowRelocationReconcile);
 		if (result == MemoryEngineContract.RESULT_OK) {
 			publishV2KnownPagingStage(stageV2KnownResultStore(), false);
-		} else {
-			// A failed/cancelled refine leaves the previous native revision transactional and intact.
-			// Java keeps presentation conservative by dropping its paging capability flag.
-			clearV2KnownPagingStage();
 		}
+		// Failure/cancellation is transactional in native and does not touch staging. Preserve the
+		// previously committed ResultStore revision and Java generation exactly as-is.
 		return result;
 	}
 
@@ -190,16 +188,21 @@ final class NativeMemoryEngine {
 
 	private static native long[] resultPageUnchecked(int offset, int limit);
 
-	/** [staged(0/1), stageGeneration, v2PageHits, legacyFallbackPages, authoritativeFirstScan(0/1)]. */
+	/** [staged(0/1), stageGeneration, v2PageHits, legacyFallbackPages]. */
 	static long[] v2KnownPagingStats() {
 		synchronized (V2_KNOWN_PAGING_LOCK) {
 			return new long[]{
 					v2KnownStaged ? 1L : 0L,
 					v2KnownStageGeneration,
 					v2KnownPageHits,
-					v2KnownPageFallbacks,
-					v2KnownAuthoritativeFirstScan ? 1L : 0L
+					v2KnownPageFallbacks
 			};
+		}
+	}
+
+	static boolean v2KnownAuthoritativeFirstScan() {
+		synchronized (V2_KNOWN_PAGING_LOCK) {
+			return v2KnownStaged && v2KnownAuthoritativeFirstScan;
 		}
 	}
 
