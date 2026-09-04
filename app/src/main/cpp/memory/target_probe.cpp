@@ -4,12 +4,6 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 #include <jni.h>
@@ -33,9 +27,10 @@ namespace {
 
 constexpr jint kFastScope = 0;
 constexpr jint kThoroughScope = 1;
-// Keep this JNI boundary aligned with MemoryEngineContract.MAX_RESIDENT_RUNS. The target bridge
-// validates the same value, but the native entry point must remain safe for direct callers too.
-constexpr jint kMaxResidentRuns = 4'096;
+// Keep this JNI boundary aligned with MemoryEngineContract.MAX_RESIDENT_RUNS. The expanded bound
+// still keeps Binder payloads deterministic while avoiding false truncation on fragmented ART
+// heaps, especially on 16 KiB-page devices.
+constexpr jint kMaxResidentRuns = 16'384;
 // Keep target-side mincore residency storage bounded even when a single ART mapping is large.
 // This is a native temporary buffer; the logical resident-run output remains capped by maxRuns.
 constexpr size_t kMincoreChunkBytes = 4U * 1024U * 1024U;
