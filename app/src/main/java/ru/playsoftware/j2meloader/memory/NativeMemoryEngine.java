@@ -89,7 +89,18 @@ final class NativeMemoryEngine {
 
 	private static native int refineKnownUnchecked(int predicate, String first, String second);
 
-	static native int recoverKnown(int predicate, String first, String second);
+	static int recoverKnown(int predicate, String first, String second) {
+		// Do not silently turn Next Scan into a second whole-memory Known scan. The old recovery path
+		// rescanned every resident range and then attempted to correlate the fresh hits back to the
+		// previous CandidateIds. Besides being unexpectedly expensive, it returned NO_SESSION for
+		// large Auto result sets; the UI interpreted that as a dead MIDlet and closed the editor.
+		//
+		// Until relocation recovery is rewritten as a bounded, identity-aware operation, preserve the
+		// previous committed result and fail closed. This is intentionally a temporary safety gate:
+		// GC/identity uncertainty is visible to the user instead of changing Next Scan semantics.
+		clearV2KnownResultStore();
+		return MemoryEngineContract.RESULT_IDENTITY_UNSAFE;
+	}
 
 	static native int refineRelative(int predicate, int compareTarget, String first, String second);
 
