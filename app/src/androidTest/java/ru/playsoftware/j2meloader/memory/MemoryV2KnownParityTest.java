@@ -17,6 +17,7 @@ package ru.playsoftware.j2meloader.memory;
 import android.os.Process;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -83,11 +84,11 @@ public class MemoryV2KnownParityTest {
 					assertPredicateParity(valueType, predicate, first, second);
 					NativeMemoryEngine.clearSearch();
 					long[] cleared = NativeMemoryEngine.v2KnownPagingStats();
-					assertEquals(5, cleared.length);
+					assertEquals(4, cleared.length);
 					assertEquals("clearSearch retained a production v2 paging revision",
 							0L, cleared[0]);
-					assertEquals("clearSearch retained authoritative ownership",
-							0L, cleared[4]);
+					assertFalse("clearSearch retained authoritative ownership",
+							NativeMemoryEngine.v2KnownAuthoritativeFirstScan());
 				}
 			}
 		} finally {
@@ -113,28 +114,33 @@ public class MemoryV2KnownParityTest {
 							MemoryEngineContract.TYPE_LONG,
 							MemoryEngineContract.PREDICATE_EQUAL, value, ""));
 			long[] first = NativeMemoryEngine.v2KnownPagingStats();
-			assertEquals(5, first.length);
+			assertEquals(4, first.length);
 			assertEquals(1L, first[0]);
-			assertEquals(1L, first[4]);
+			assertTrue("explicit Known first scan was not ResultStore-authoritative",
+					NativeMemoryEngine.v2KnownAuthoritativeFirstScan());
 
 			assertEquals(MemoryEngineContract.RESULT_OK,
 					NativeMemoryEngine.refineKnown(
 							MemoryEngineContract.PREDICATE_EQUAL, value, ""));
 			long[] refined = NativeMemoryEngine.v2KnownPagingStats();
-			assertEquals(5, refined.length);
+			assertEquals(4, refined.length);
 			assertEquals("successful Candidate refine did not publish a verified ResultStore mirror",
 					1L, refined[0]);
-			assertEquals("bitmap refine is not authoritative yet",
-					0L, refined[4]);
+			assertFalse("bitmap refine is not authoritative yet",
+					NativeMemoryEngine.v2KnownAuthoritativeFirstScan());
 
 			long generation = refined[1];
+			long hits = refined[2];
+			long fallbacks = refined[3];
 			assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
 					NativeMemoryEngine.refineKnown(999, value, ""));
 			long[] afterFailure = NativeMemoryEngine.v2KnownPagingStats();
 			assertEquals("failed refine discarded the previously committed paging revision",
 					generation, afterFailure[1]);
 			assertEquals(refined[0], afterFailure[0]);
-			assertEquals(refined[4], afterFailure[4]);
+			assertEquals(hits, afterFailure[2]);
+			assertEquals(fallbacks, afterFailure[3]);
+			assertFalse(NativeMemoryEngine.v2KnownAuthoritativeFirstScan());
 		} finally {
 			NativeMemoryEngine.clearTarget();
 		}
@@ -155,15 +161,15 @@ public class MemoryV2KnownParityTest {
 				MemoryEngineContract.RESULT_OK,
 				NativeMemoryEngine.startKnown(valueType, predicate, first, second));
 		long[] stageBeforePaging = NativeMemoryEngine.v2KnownPagingStats();
-		assertEquals(5, stageBeforePaging.length);
+		assertEquals(4, stageBeforePaging.length);
 		assertEquals("bounded explicit Known result did not publish ResultStore paging",
 				1L, stageBeforePaging[0]);
 		assertTrue("ResultStore revision did not publish a positive generation",
 				stageBeforePaging[1] > 0L);
 		assertEquals(0L, stageBeforePaging[2]);
 		assertEquals(0L, stageBeforePaging[3]);
-		assertEquals("explicit Known first scan was not marked ResultStore-authoritative",
-				1L, stageBeforePaging[4]);
+		assertTrue("explicit Known first scan was not marked ResultStore-authoritative",
+				NativeMemoryEngine.v2KnownAuthoritativeFirstScan());
 
 		long productionCount = NativeMemoryEngine.resultCount();
 		assertTrue(productionCount >= 0L);
@@ -175,7 +181,7 @@ public class MemoryV2KnownParityTest {
 				0L, stageAfterPaging[3]);
 		assertTrue("authoritative ResultStore was never used to serve a result page",
 				stageAfterPaging[2] > 0L);
-		assertEquals(1L, stageAfterPaging[4]);
+		assertTrue(NativeMemoryEngine.v2KnownAuthoritativeFirstScan());
 
 		long[] shadow = NativeMemoryEngine.v2ShadowKnown(
 				valueType, predicate, plan[2], plan[3]);
