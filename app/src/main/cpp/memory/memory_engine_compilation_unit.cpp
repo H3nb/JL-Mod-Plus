@@ -134,12 +134,10 @@ void compactKnownRefineCandidates(std::vector<Candidate> &candidates) {
             updated.currentBits = current;
             updated.state = kStable;
 
-            // A search revision is not an identity database. Any fingerprint from an older scan
-            // is stale metadata after a live-memory refine. The bounded refresh/mutation path will
-            // establish a fresh fingerprint only for rows the user actually materializes/tracks.
-            updated.identityHash = 0U;
-            updated.identityValid = false;
-            updated.relocationCount = 0U;
+            // Search membership never consults identity metadata, but a fingerprint already
+            // captured cheaply during the first chunk scan is still valuable later. Preserve it
+            // passively so bounded Watch/Edit/Freeze/Inspector promotion can prove or relocate the
+            // selected logical value after GC. We deliberately do not recapture fingerprints here.
             next->candidates.push_back(updated);
         }
 
