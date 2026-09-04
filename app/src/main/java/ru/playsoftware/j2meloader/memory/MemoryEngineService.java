@@ -749,13 +749,15 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private int refineKnownAddressSet(long token, int predicate, String first, String second) {
-		// Known/Auto search results are raw address membership. A GC epoch change may make some old
-		// addresses disappear, but it must not reinterpret Next Scan as object-identity recovery,
-		// trigger a fresh mincore range capture, or rescan the whole Java heap. The native refine
-		// filters only the committed addresses. GC remains relevant later when a bounded row is
-		// promoted for Watch/Edit/Freeze/Inspector.
+		// Bulk Known/Auto results are address membership. A stale GC epoch merely permits native
+		// to probe for broad relocation; it does not itself request a full target scan. Native
+		// additionally requires a large result set and strong sampled fingerprint evidence.
+		// After a successful refine the published revision epoch advances, so the same GC epoch
+		// cannot repeatedly trigger reconciliation. Small result sets always stay candidate-only.
 		long gcBefore = currentGcCount(token);
-		int result = NativeMemoryEngine.refineKnown(predicate, first, second);
+		boolean allowRelocationReconcile = gcBindings.searchEpochChanged(gcBefore);
+		int result = NativeMemoryEngine.refineKnown(
+				predicate, first, second, allowRelocationReconcile);
 		if (result != MemoryEngineContract.RESULT_OK) return result;
 		long gcAfter = currentGcCount(token);
 		advanceSearchSession(MemoryEngineContract.SEARCH_SESSION_CANDIDATES,
