@@ -31,6 +31,26 @@ constexpr std::size_t kRelocationProbeMinChecked = 8U;
 constexpr std::size_t kRelocationReconcileMinCandidates = 64U * 1024U;
 constexpr std::size_t kRelocationMismatchDenominator = 4U; // 25%
 
+[[nodiscard]] constexpr bool relocationEvidenceIsStrong(
+        std::size_t candidateCount, bool gcEpochChanged,
+        std::size_t checked, std::size_t mismatches) noexcept {
+    if (!gcEpochChanged || candidateCount < kRelocationReconcileMinCandidates ||
+        checked < kRelocationProbeMinChecked || mismatches > checked) {
+        return false;
+    }
+    // Ceiling division avoids multiplication overflow and means exactly 16/64 is sufficient.
+    const std::size_t required =
+            checked / kRelocationMismatchDenominator +
+            (checked % kRelocationMismatchDenominator == 0U ? 0U : 1U);
+    return mismatches >= required;
+}
+
+static_assert(!relocationEvidenceIsStrong(65'535U, true, 64U, 64U));
+static_assert(!relocationEvidenceIsStrong(65'536U, false, 64U, 64U));
+static_assert(!relocationEvidenceIsStrong(65'536U, true, 7U, 7U));
+static_assert(!relocationEvidenceIsStrong(65'536U, true, 64U, 15U));
+static_assert(relocationEvidenceIsStrong(65'536U, true, 64U, 16U));
+
 struct RecoveryKey {
     ValueType type = ValueType::Invalid;
     std::uint64_t identityHash = 0U;
@@ -208,8 +228,8 @@ void compactKnownRefineCandidates(std::vector<Candidate> &candidates) {
     // result itself never moved. Require enough valid evidence and at least a quarter of sampled
     // contexts to disagree before paying for a full target reconciliation. One noisy fingerprint
     // must never turn every Next Scan into a New Search-sized operation.
-    return checked >= kRelocationProbeMinChecked &&
-           mismatches * kRelocationMismatchDenominator >= checked;
+    return relocationEvidenceIsStrong(candidates.size(), gcEpochChanged,
+                                      checked, mismatches);
 }
 
 [[nodiscard]] std::optional<std::size_t> findUniqueRecoveryPosition(
