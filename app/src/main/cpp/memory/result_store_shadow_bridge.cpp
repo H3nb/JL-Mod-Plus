@@ -32,7 +32,9 @@ constexpr jint kTargetLost = 5;
 constexpr jint kPredicateEqual = 0;
 constexpr jlong kShadowOperationScan = 0;
 constexpr jlong kShadowOperationRefine = 1;
-constexpr std::size_t kMaxTargetRuns = 4'096U;
+// Keep diagnostics on the same bounded target-range contract as production. A shadow-only 4,096
+// ceiling used to make parity disappear exactly on fragmented ART heaps where it is most useful.
+constexpr std::size_t kMaxTargetRuns = 16'384U;
 
 struct ShadowTarget {
     pid_t pid = 0;
@@ -265,9 +267,6 @@ jlongArray runShadowKnown(JNIEnv *env, jint valueType, jint rawPredicate,
 } // namespace
 
 extern "C" jint
-Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_configureTarget(
-        JNIEnv *, jclass, jint, jint, jlong, jlongArray);
-extern "C" jint
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_startKnown(
         JNIEnv *, jclass, jint, jint, jstring, jstring);
 extern "C" void
@@ -276,14 +275,6 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearSearch(
 extern "C" void
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearTarget(
         JNIEnv *, jclass);
-
-extern "C" JNIEXPORT jint JNICALL
-Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_configureTargetUnchecked(
-        JNIEnv *env, jclass clazz, jint pid, jint pageSize, jlong runtimeToken,
-        jlongArray rawRuns) {
-    return Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_configureTarget(
-            env, clazz, pid, pageSize, runtimeToken, rawRuns);
-}
 
 extern "C" JNIEXPORT jint JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_startKnownUnchecked(
@@ -345,7 +336,7 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_configureV2ShadowTarge
         }
     } catch (...) {
         // The v2 mirror is debug diagnostics only. Failure must never destabilize the validated
-        // legacy target configuration or leak a C++ exception across JNI.
+        // production target configuration or leak a C++ exception across JNI.
         if (env->ExceptionCheck()) {
             env->ExceptionClear();
         }
