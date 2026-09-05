@@ -101,13 +101,15 @@ class MemoryEditorComposeController(
             post {
                 if (passiveRefresh) {
                     liveRefreshPending = false
-                    if (resultCode == MemoryEngineContract.RESULT_TARGET_LOST) {
-                        close()
-                    } else if (state.visible && !state.busy) {
-                        // NO_SESSION is a search/materialization state error, not proof that the
-                        // MIDlet runtime died. Keep the editor open and let reloadState reconcile
-                        // the visible page/session instead of collapsing the whole Activity.
-                        reloadState()
+                    when {
+                        resultCode == MemoryEngineContract.RESULT_TARGET_LOST -> close()
+                        resultCode == MemoryEngineContract.RESULT_OK && state.visible && !state.busy ->
+                            reloadVisibleRows()
+                        state.visible && !state.busy ->
+                            // A stale page/session can race navigation or search teardown. Reconcile
+                            // metadata only on this exceptional path; normal live ticks never pay for
+                            // capabilities, session info, result count, and both page fetches.
+                            reloadState()
                     }
                     return@post
                 }
@@ -424,6 +426,45 @@ class MemoryEditorComposeController(
                 canUndo = canUndo,
                 message = capabilityMessage?.takeIf(String::isNotBlank) ?: state.message,
             )
+        }
+    }
+
+    /** Refresh only the page currently presented by Compose; search/session metadata is immutable. */
+    private fun reloadVisibleRows(): Unit = runIpc {
+        val token = state.runtimeToken
+        val engine = service ?: return@runIpc
+        if (token == 0L) return@runIpc
+        val watchTab = state.watchTab
+        val pageOffset = state.pageOffset
+        val results = if (!watchTab && state.sessionStage == MemorySessionStage.CANDIDATES) {
+            MemoryResultPageParser.parse(engine.getResultPage(token, pageOffset, PAGE_SIZE))
+        } else {
+            emptyList()
+        }
+        val watches = if (watchTab) {
+            MemoryWatchPageParser.parse(engine.getWatchPage(token))
+        } else {
+            emptyList()
+        }
+        post {
+            if (!state.visible || state.busy || state.runtimeToken != token ||
+                state.watchTab != watchTab || state.pageOffset != pageOffset
+            ) {
+                return@post
+            }
+            if (watchTab) {
+                val validIds = watches.mapTo(mutableSetOf(), MemoryWatchRow::id)
+                state = state.copy(
+                    watches = watches,
+                    selected = state.selected.filterTo(mutableSetOf()) { it in validIds },
+                )
+            } else {
+                val validIds = results.mapTo(mutableSetOf(), MemoryResultRow::id)
+                state = state.copy(
+                    results = results,
+                    selected = state.selected.filterTo(mutableSetOf()) { it in validIds },
+                )
+            }
         }
     }
 
@@ -909,8 +950,8 @@ class MemoryEditorComposeController(
     internal companion object {
         const val PAGE_SIZE = MemoryEngineContract.MAX_RESULT_PAGE_SIZE
         private const val ENGINE_RECONNECT_DELAY_MS = 250L
-        private const val LIVE_REFRESH_INITIAL_DELAY_MS = 250L
-        private const val LIVE_REFRESH_INTERVAL_MS = 1_000L
+        private const val LIVE_REFRESH_INITIAL_DELAY_MS = 100L
+        private const val LIVE_REFRESH_INTERVAL_MS = 250L
         private const val CAPABILITY_RETRY_IDLE_MS = 1_000L
         private val CAPABILITY_RETRY_DELAYS_MS = longArrayOf(80L, 160L, 320L, 640L)
     }
