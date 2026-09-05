@@ -64,4 +64,12 @@ struct ResultAliasPage {
                                  std::size_t limit,
                                  ResultAliasPage &page);
 
+// Translate the public unique-address offset into both a typed cursor and the compact sidecar
+// ordinal of its first alias. Whole blocks use header counts; only the target block needs bitmap
+// prefix popcounts. This replaces Auto's transitional Candidate-vector checkpoint offsets.
+[[nodiscard]] bool seekAliasAddressOffset(const ResultStore &store,
+                                          std::uint64_t addressOffset,
+                                          ResultAliasCursor &cursor,
+                                          std::uint64_t &typedOffset);
+
 } // namespace jlmem::v2
