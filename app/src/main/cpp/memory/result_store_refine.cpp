@@ -12,12 +12,44 @@
 #include <array>
 #include <bit>
 #include <cstring>
+#include <limits>
 #include <type_traits>
 #include <utility>
 #include <vector>
 
 namespace jlmem::v2 {
 namespace {
+
+constexpr std::uint64_t kDirectRefineMatchLimit = 4096U;
+constexpr std::size_t kRefineReadChunkSize = 256U * 1024U;
+
+[[nodiscard]] std::uint64_t activePlaneCount(const ResultStore &source,
+                                             ResultPlane plane) noexcept {
+    if (plane == ResultPlane::Count) {
+        return 0U;
+    }
+    const std::size_t planeSlot = planeIndex(plane);
+    std::uint64_t count = 0U;
+    for (const ResultBlockHeader &header : source.headers()) {
+        count += header.counts[planeSlot];
+    }
+    return count;
+}
+
+[[nodiscard]] std::uint64_t activePlaneBlockCount(
+        const ResultStore &source, ResultPlane plane) noexcept {
+    if (plane == ResultPlane::Count) {
+        return 0U;
+    }
+    const std::size_t planeSlot = planeIndex(plane);
+    std::uint64_t count = 0U;
+    for (const ResultBlockHeader &header : source.headers()) {
+        if (header.counts[planeSlot] != 0U) {
+            ++count;
+        }
+    }
+    return count;
+}
 
 template <typename T>
 [[nodiscard]] std::uint64_t rawBits(T value) noexcept {
@@ -50,30 +82,26 @@ template <typename T, ResultPlane Plane, KnownPredicate Predicate>
 
     ResultStore next = source;
     KnownScanStats nextStats;
-    std::vector<std::uint8_t> blockBuffer(kResultLogicalBlockSize);
-    const auto headers = next.headers();
-    const std::size_t plane = planeIndex(Plane);
+    const auto headers = source.headers();
+    constexpr std::size_t kPlaneSlot = planeIndex(Plane);
+    const std::uint64_t activeMatches = activePlaneCount(source, Plane);
+    const bool directReads = activeMatches <= kDirectRefineMatchLimit;
 
-    for (std::size_t blockIndex = 0U; blockIndex < headers.size(); ++blockIndex) {
-        if (headers[blockIndex].counts[plane] == 0U) {
-            continue;
-        }
+    const auto processBlock = [&](std::size_t blockIndex,
+                                  const auto &loadValue) -> bool {
         if (cancelled && cancelled()) {
             // Keep the established shadow diagnostic token while this implementation is shared by
             // shadow and production callers; the caller decides whether it is user-visible.
             error = "V2 shadow refine cancelled";
             return false;
         }
+        if (blockIndex >= headers.size() ||
+            headers[blockIndex].counts[kPlaneSlot] == 0U) {
+            return true;
+        }
 
         const std::uintptr_t blockBase = headers[blockIndex].baseAddress;
-        if (!read(blockBase, blockBuffer.data(), blockBuffer.size())) {
-            error = "Target block changed during v2 known refine";
-            return false;
-        }
-        nextStats.bytesScanned += static_cast<std::uint64_t>(blockBuffer.size());
-
-        const ResultStore &readOnly = next;
-        const auto currentWords = readOnly.planeWords(blockIndex, Plane);
+        const auto currentWords = source.planeWords(blockIndex, Plane);
         if (currentWords.size() != kWordCount) {
             error = "ResultStore returned an invalid v2 refine bitmap";
             return false;
@@ -95,7 +123,9 @@ template <typename T, ResultPlane Plane, KnownPredicate Predicate>
                 }
                 const std::size_t byteOffset = slot * kWidth;
                 T actual{};
-                std::memcpy(&actual, blockBuffer.data() + byteOffset, kWidth);
+                if (!loadValue(blockBase, byteOffset, actual)) {
+                    return false;
+                }
                 const bool survives =
                         matchesKnownValue<T, Predicate>(actual, firstBits, secondBits);
                 if (!survives) {
@@ -119,7 +149,7 @@ template <typename T, ResultPlane Plane, KnownPredicate Predicate>
 
         if (!changed) {
             // Keep the shared COW slab untouched when every candidate survives this block.
-            continue;
+            return true;
         }
         auto mutableWords = next.planeWords(blockIndex, Plane);
         if (mutableWords.size() != kWordCount) {
@@ -131,6 +161,97 @@ template <typename T, ResultPlane Plane, KnownPredicate Predicate>
         if (!next.recountBlock(blockIndex)) {
             error = "ResultStore could not recount a v2 refine block";
             return false;
+        }
+        return true;
+    };
+
+    if (directReads) {
+        // Once the result set is sparse, reading a whole 4 KiB logical block per survivor wastes
+        // memory bandwidth and can make later scans slower than the compatibility Candidate path.
+        // Keep bitmap membership authoritative, but fetch only the exact typed values still set.
+        for (std::size_t blockIndex = 0U; blockIndex < headers.size(); ++blockIndex) {
+            if (headers[blockIndex].counts[kPlaneSlot] == 0U) {
+                continue;
+            }
+            const auto directLoader = [&](std::uintptr_t blockBase,
+                                          std::size_t byteOffset,
+                                          T &actual) -> bool {
+                if (blockBase > std::numeric_limits<std::uintptr_t>::max() - byteOffset ||
+                    !read(blockBase + byteOffset, &actual, kWidth)) {
+                    error = "Target block changed during v2 known refine";
+                    return false;
+                }
+                nextStats.bytesScanned += static_cast<std::uint64_t>(kWidth);
+                return true;
+            };
+            if (!processBlock(blockIndex, directLoader)) {
+                return false;
+            }
+        }
+    } else {
+        // Dense revisions amortize process_vm_readv overhead by coalescing only adjacent active
+        // 4 KiB ResultStore blocks. Empty refined blocks break a run and are never reread.
+        std::vector<std::uint8_t> chunkBuffer;
+        chunkBuffer.reserve(kRefineReadChunkSize);
+        std::size_t blockIndex = 0U;
+        while (blockIndex < headers.size()) {
+            while (blockIndex < headers.size() &&
+                   headers[blockIndex].counts[kPlaneSlot] == 0U) {
+                ++blockIndex;
+            }
+            if (blockIndex >= headers.size()) {
+                break;
+            }
+            if (cancelled && cancelled()) {
+                error = "V2 shadow refine cancelled";
+                return false;
+            }
+
+            const std::size_t runFirst = blockIndex;
+            std::size_t runEnd = runFirst + 1U;
+            while (runEnd < headers.size() &&
+                   headers[runEnd].counts[kPlaneSlot] != 0U &&
+                   runEnd - runFirst < kRefineReadChunkSize / kResultLogicalBlockSize) {
+                const std::uintptr_t previous = headers[runEnd - 1U].baseAddress;
+                if (previous > std::numeric_limits<std::uintptr_t>::max() -
+                                       kResultLogicalBlockSize ||
+                    headers[runEnd].baseAddress != previous + kResultLogicalBlockSize) {
+                    break;
+                }
+                ++runEnd;
+            }
+
+            const std::size_t runBytes =
+                    (runEnd - runFirst) * kResultLogicalBlockSize;
+            chunkBuffer.resize(runBytes);
+            const std::uintptr_t runBase = headers[runFirst].baseAddress;
+            if (!read(runBase, chunkBuffer.data(), runBytes)) {
+                error = "Target block changed during v2 known refine";
+                return false;
+            }
+            nextStats.bytesScanned += static_cast<std::uint64_t>(runBytes);
+
+            for (std::size_t current = runFirst; current < runEnd; ++current) {
+                const std::size_t blockOffset =
+                        (current - runFirst) * kResultLogicalBlockSize;
+                const auto chunkLoader = [&](std::uintptr_t,
+                                             std::size_t byteOffset,
+                                             T &actual) -> bool {
+                    if (byteOffset > kResultLogicalBlockSize - kWidth ||
+                        blockOffset > chunkBuffer.size() - kResultLogicalBlockSize) {
+                        error = "ResultStore produced an invalid v2 refine read offset";
+                        return false;
+                    }
+                    std::memcpy(&actual,
+                                chunkBuffer.data() + blockOffset + byteOffset,
+                                kWidth);
+                    return true;
+                };
+                if (!processBlock(current, chunkLoader)) {
+                    return false;
+                }
+            }
+            blockIndex = runEnd;
         }
     }
 
@@ -188,6 +309,31 @@ template <typename T, ResultPlane Plane>
 }
 
 } // namespace
+
+std::uint64_t estimateKnownRefineReadBytes(const ResultStore &source,
+                                           ResultPlane plane) noexcept {
+    if (plane == ResultPlane::Count) {
+        return 0U;
+    }
+    const std::uint64_t matches = activePlaneCount(source, plane);
+    if (matches == 0U) {
+        return 0U;
+    }
+    const std::size_t width = planeAlignment(plane);
+    if (matches <= kDirectRefineMatchLimit) {
+        if (width == 0U ||
+            matches > std::numeric_limits<std::uint64_t>::max() / width) {
+            return std::numeric_limits<std::uint64_t>::max();
+        }
+        return matches * static_cast<std::uint64_t>(width);
+    }
+    const std::uint64_t blocks = activePlaneBlockCount(source, plane);
+    if (blocks > std::numeric_limits<std::uint64_t>::max() /
+                         kResultLogicalBlockSize) {
+        return std::numeric_limits<std::uint64_t>::max();
+    }
+    return blocks * static_cast<std::uint64_t>(kResultLogicalBlockSize);
+}
 
 bool refineKnownExplicit(const ResultStore &source,
                          const KnownRefineRequest &request,
