@@ -26,9 +26,6 @@ final class NativeMemoryEngine {
 	}
 
 	static int configureTarget(int pid, int pageSize, long runtimeToken, long[] runs) {
-		// One production validator owns the resident-run contract. The old 4,096-run forwarding
-		// wrapper is intentionally bypassed so a fragmented ART heap cannot be accepted by the
-		// target bridge and then rejected by a second, stale native limit.
 		int result = configureTargetExpanded(pid, pageSize, runtimeToken, runs);
 		if (BuildConfig.DEBUG) {
 			if (result == MemoryEngineContract.RESULT_OK) {
@@ -52,20 +49,13 @@ final class NativeMemoryEngine {
 	static native boolean canWriteTarget(int pid, long address, long expectedBits);
 
 	static int startKnown(int valueType, int predicate, String first, String second) {
-		// Both explicit and Auto first scans are ResultStore-authoritative. Auto uses the fused
-		// multi-plane kernel, while the Candidate vector is only a temporary compatibility mirror for
-		// tracked mutation/Watch/Inspector code. Neither route performs a second target scan.
 		int result = valueType == MemoryEngineContract.TYPE_AUTO
 				? startKnownAutoV2Authoritative(predicate, first, second)
 				: startKnownV2Authoritative(valueType, predicate, first, second);
 		if (result == MemoryEngineContract.RESULT_OK) {
 			publishV2KnownPagingStage(true, true);
-			if (BuildConfig.DEBUG) {
-				// A fresh production Known search starts a new semantic revision even when the target and
-				// primitive type are unchanged. Drop retained debug shadow state so parity never refines a
-				// stale independent diagnostic revision by accident.
-				resetV2ShadowSession();
-			}
+			rememberCurrentV2Revision();
+			if (BuildConfig.DEBUG) resetV2ShadowSession();
 		}
 		return result;
 	}
@@ -88,6 +78,12 @@ final class NativeMemoryEngine {
 
 	private static native void clearV2AutoResultStore();
 
+	private static native boolean rememberCurrentV2Revision();
+
+	private static native void clearV2RevisionCatalog();
+
+	static native long[] v2RevisionCatalogStats();
+
 	static native int startUnknown(int valueType);
 
 	static native int startGroup(int[] valueTypes, String[] values, int maxDistance);
@@ -101,14 +97,10 @@ final class NativeMemoryEngine {
 
 	static int refineKnown(int predicate, String first, String second,
 	                      boolean allowRelocationReconcile) {
-		// Recover a missing stage from the immutable Candidate compatibility mirror after Undo or a
-		// verified relocation fallback. This rebuild touches no target memory. A live Auto stage then
-		// uses multi-plane COW bit clearing; explicit Known uses its specialized single-plane kernel.
+		rememberAuthoritativeCurrentRevision();
 		boolean autoRevision = hasCurrentV2AutoResultStore();
 		boolean explicitRevision = hasCurrentV2KnownResultStore();
-		if (!autoRevision && !explicitRevision) {
-			autoRevision = stageV2AutoResultStore();
-		}
+		if (!autoRevision && !explicitRevision) autoRevision = stageV2AutoResultStore();
 		int result = autoRevision
 				? refineKnownAutoV2Authoritative(
 						predicate, first, second, allowRelocationReconcile)
@@ -116,10 +108,9 @@ final class NativeMemoryEngine {
 						predicate, first, second, allowRelocationReconcile);
 		if (result == MemoryEngineContract.RESULT_OK) {
 			boolean authoritative = hasCurrentV2KnownResultStore() || hasCurrentV2AutoResultStore();
-			if (!authoritative) {
-				authoritative = stageV2KnownResultStore() || stageV2AutoResultStore();
-			}
+			if (!authoritative) authoritative = stageV2KnownResultStore() || stageV2AutoResultStore();
 			publishV2KnownPagingStage(authoritative, authoritative);
+			if (authoritative) rememberCurrentV2Revision();
 		}
 		return result;
 	}
@@ -131,16 +122,13 @@ final class NativeMemoryEngine {
 			int predicate, String first, String second, boolean allowRelocationReconcile);
 
 	static int refineRelative(int predicate, int compareTarget, String first, String second) {
-		// Unknown materialization and subsequent relative scans are ResultStore-authoritative. The
-		// service still owns the GC-epoch gate/rollback around this call, so a copying GC during a
-		// relative operation cannot publish a stale-address revision.
+		rememberAuthoritativeCurrentRevision();
 		int result = refineRelativeV2Authoritative(predicate, compareTarget, first, second);
 		if (result == MemoryEngineContract.RESULT_OK) {
 			boolean authoritative = hasCurrentV2KnownResultStore() || hasCurrentV2AutoResultStore();
-			if (!authoritative) {
-				authoritative = stageV2KnownResultStore() || stageV2AutoResultStore();
-			}
+			if (!authoritative) authoritative = stageV2KnownResultStore() || stageV2AutoResultStore();
 			publishV2KnownPagingStage(authoritative, authoritative);
+			if (authoritative) rememberCurrentV2Revision();
 		}
 		return result;
 	}
@@ -148,12 +136,22 @@ final class NativeMemoryEngine {
 	private static native int refineRelativeV2Authoritative(
 			int predicate, int compareTarget, String first, String second);
 
-	static native int undo();
+	static int undo() {
+		int result = undoV2Aware();
+		if (result != MemoryEngineContract.RESULT_OK) return result;
+		boolean remembered = hasCurrentV2KnownResultStore() || hasCurrentV2AutoResultStore();
+		if (remembered) {
+			publishV2KnownPagingStage(true, true);
+			return result;
+		}
+		boolean restaged = stageV2KnownResultStore() || stageV2AutoResultStore();
+		publishV2KnownPagingStage(restaged, false);
+		return result;
+	}
+
+	private static native int undoV2Aware();
 
 	static int refresh(long[] candidateIds, boolean allowRecovery) {
-		// Presentation/Freeze polling only needs current values at an already-bound address. The
-		// lightweight primitive skips repeat fingerprint reads for candidates that already have an
-		// identity. Explicit Refresh/Edit/Inspector still use the full recovery-capable native path.
 		return allowRecovery
 				? refreshUnchecked(candidateIds, true)
 				: refreshPresentation(candidateIds);
@@ -163,7 +161,17 @@ final class NativeMemoryEngine {
 
 	private static native int refreshPresentation(long[] candidateIds);
 
-	static native int filter(long[] candidateIds, boolean keep);
+	static int filter(long[] candidateIds, boolean keep) {
+		rememberAuthoritativeCurrentRevision();
+		int result = filterUnchecked(candidateIds, keep);
+		if (result == MemoryEngineContract.RESULT_OK) {
+			boolean staged = stageV2KnownResultStore() || stageV2AutoResultStore();
+			publishV2KnownPagingStage(staged, false);
+		}
+		return result;
+	}
+
+	private static native int filterUnchecked(long[] candidateIds, boolean keep);
 
 	static int edit(long[] candidateIds, String replacementValue) {
 		int result = editUnchecked(candidateIds, replacementValue);
@@ -190,14 +198,25 @@ final class NativeMemoryEngine {
 
 	static native int historyDepth();
 
+	private static void rememberAuthoritativeCurrentRevision() {
+		boolean authoritative;
+		synchronized (V2_KNOWN_PAGING_LOCK) {
+			authoritative = v2KnownStaged && v2KnownAuthoritativeRevision;
+		}
+		if (!authoritative || rememberCurrentV2Revision()) return;
+		// Watch/presentation operations can replace SearchState while leaving membership unchanged.
+		// Rebuild only bitmap metadata from the current Candidate mirror, never target memory, then
+		// bind the authoritative revision to the new immutable SearchState pointer.
+		boolean staged = stageV2KnownResultStore() || stageV2AutoResultStore();
+		if (staged) rememberCurrentV2Revision();
+	}
+
 	private static long[] stagedResultPage(int offset, int limit) {
 		long[] page = resultPageV2Auto(offset, limit);
 		return page != null ? page : resultPageV2Known(offset, limit);
 	}
 
 	private static boolean restageCurrentResultStoreForPaging() {
-		// Rebuilding from an already committed Candidate revision performs no target read and lets
-		// Group/Nearby/relative/filter/Undo state changes return to ResultCursor on their next page.
 		boolean staged = stageV2KnownResultStore();
 		if (!staged) staged = stageV2AutoResultStore();
 		if (staged) publishV2KnownPagingStage(true, false);
@@ -217,9 +236,6 @@ final class NativeMemoryEngine {
 			}
 		}
 
-		// A native state-changing operation may intentionally invalidate the weak staged revision.
-		// Try one bounded metadata rebuild before falling back to Candidate paging. If the current
-		// state is Unknown/Empty or fails parity verification, both stage calls simply return false.
 		if (restageCurrentResultStoreForPaging()) {
 			synchronized (V2_KNOWN_PAGING_LOCK) {
 				stagedGeneration = v2KnownStageGeneration;
@@ -233,7 +249,6 @@ final class NativeMemoryEngine {
 
 		synchronized (V2_KNOWN_PAGING_LOCK) {
 			v2KnownPageFallbacks++;
-			// Do not let an old request demote a newer stage published by another operation.
 			if (stagedGeneration != 0L && v2KnownStageGeneration == stagedGeneration) {
 				v2KnownStaged = false;
 				v2KnownAuthoritativeRevision = false;
@@ -244,9 +259,7 @@ final class NativeMemoryEngine {
 
 	private static void recordV2PageHit(long stagedGeneration) {
 		synchronized (V2_KNOWN_PAGING_LOCK) {
-			if (v2KnownStaged && v2KnownStageGeneration == stagedGeneration) {
-				v2KnownPageHits++;
-			}
+			if (v2KnownStaged && v2KnownStageGeneration == stagedGeneration) v2KnownPageHits++;
 		}
 	}
 
@@ -256,7 +269,6 @@ final class NativeMemoryEngine {
 
 	private static native long[] resultPageUnchecked(int offset, int limit);
 
-	/** [staged(0/1), stageGeneration, v2PageHits, legacyFallbackPages]. */
 	static long[] v2KnownPagingStats() {
 		synchronized (V2_KNOWN_PAGING_LOCK) {
 			return new long[]{
@@ -274,7 +286,6 @@ final class NativeMemoryEngine {
 		}
 	}
 
-	/** Compatibility alias for physical scripts/tests written during the first-scan cutover. */
 	static boolean v2KnownAuthoritativeFirstScan() {
 		return v2KnownAuthoritativeRevision();
 	}
@@ -293,6 +304,7 @@ final class NativeMemoryEngine {
 	private static void clearV2KnownPagingStage() {
 		clearV2AutoResultStore();
 		clearV2KnownResultStore();
+		clearV2RevisionCatalog();
 		publishV2KnownPagingStage(false, false);
 	}
 
