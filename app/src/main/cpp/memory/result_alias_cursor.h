@@ -64,12 +64,22 @@ struct ResultAliasPage {
                                  std::size_t limit,
                                  ResultAliasPage &page);
 
-// Translate the public unique-address offset into both a typed cursor and the compact sidecar
-// ordinal of its first alias. Whole blocks use header counts; only the target block needs bitmap
-// prefix popcounts. This replaces Auto's transitional Candidate-vector checkpoint offsets.
+// Seek by the UI's unique-address offset and also return the compact ordinary typed ordinal at that
+// address. Whole blocks are skipped by header counts; no Candidate checkpoint/index is consulted.
 [[nodiscard]] bool seekAliasAddressOffset(const ResultStore &store,
                                           std::uint64_t addressOffset,
                                           ResultAliasCursor &cursor,
                                           std::uint64_t &typedOffset);
+
+// Resolve a compact OrdinaryResultStore ordinal back to ResultStore membership. This is the common
+// primitive for ResultId promotion, refresh, edit, Watch, Inspector, filter and Nearby.
+[[nodiscard]] bool seekAliasTypedOffset(const ResultStore &store,
+                                        std::uint64_t typedOffset,
+                                        ResultAliasCursor &cursor);
+
+[[nodiscard]] bool readAliasPageAtTypedOffset(const ResultStore &store,
+                                              std::uint64_t typedOffset,
+                                              std::size_t limit,
+                                              ResultAliasPage &page);
 
 } // namespace jlmem::v2
