@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <numeric>
 #include <utility>
 
 namespace jlmem::v2 {
@@ -28,14 +29,21 @@ bool OrdinaryResultStore::reserve(std::size_t count) noexcept {
 bool OrdinaryResultStore::append(const OrdinaryResultRecord &record,
                                  bool identityValid) noexcept {
     if (record.id == 0U || records_.size() == std::numeric_limits<std::size_t>::max() ||
-        (!records_.empty() && record.id <= records_.back().id)) {
+        records_.size() >= static_cast<std::size_t>(
+                                   std::numeric_limits<std::uint32_t>::max())) {
         return false;
     }
+    if (!records_.empty() && record.id <= records_.back().id) {
+        idsStrictlyIncreasing_ = false;
+    }
+    // Appending after a finalized non-monotonic index would make that immutable lookup stale.
+    if (!idOrder_.empty()) {
+        return false;
+    }
+
     const std::size_t index = records_.size();
     const std::size_t wordIndex = identityWordIndex(index);
     try {
-        // Grow the validity vector first. If record insertion later fails, roll this newly-created
-        // word back so the two containers remain transactionally aligned.
         const bool addedWord = wordIndex == identityValidBits_.size();
         if (addedWord) {
             identityValidBits_.push_back(0U);
@@ -53,6 +61,34 @@ bool OrdinaryResultStore::append(const OrdinaryResultRecord &record,
         if (identityValid) {
             identityValidBits_[wordIndex] |= identityBit(index);
         }
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+bool OrdinaryResultStore::finalizeIdIndex() noexcept {
+    if (idsStrictlyIncreasing_) {
+        std::vector<std::uint32_t>().swap(idOrder_);
+        return true;
+    }
+    if (records_.size() > static_cast<std::size_t>(
+                                  std::numeric_limits<std::uint32_t>::max())) {
+        return false;
+    }
+    try {
+        std::vector<std::uint32_t> order(records_.size());
+        std::iota(order.begin(), order.end(), std::uint32_t{0U});
+        std::sort(order.begin(), order.end(), [&](std::uint32_t left,
+                                                  std::uint32_t right) {
+            return records_[left].id < records_[right].id;
+        });
+        for (std::size_t index = 1U; index < order.size(); ++index) {
+            if (records_[order[index - 1U]].id == records_[order[index]].id) {
+                return false;
+            }
+        }
+        idOrder_ = std::move(order);
         return true;
     } catch (...) {
         return false;
@@ -84,15 +120,29 @@ std::optional<std::size_t> OrdinaryResultStore::findIndexById(
     if (id == 0U || records_.empty()) {
         return std::nullopt;
     }
-    const auto found = std::lower_bound(
-            records_.begin(), records_.end(), id,
-            [](const OrdinaryResultRecord &record, std::uint64_t wanted) {
-                return record.id < wanted;
-            });
-    if (found == records_.end() || found->id != id) {
+    if (idsStrictlyIncreasing_) {
+        const auto found = std::lower_bound(
+                records_.begin(), records_.end(), id,
+                [](const OrdinaryResultRecord &record, std::uint64_t wanted) {
+                    return record.id < wanted;
+                });
+        if (found == records_.end() || found->id != id) {
+            return std::nullopt;
+        }
+        return static_cast<std::size_t>(std::distance(records_.begin(), found));
+    }
+    if (idOrder_.size() != records_.size()) {
         return std::nullopt;
     }
-    return static_cast<std::size_t>(std::distance(records_.begin(), found));
+    const auto found = std::lower_bound(
+            idOrder_.begin(), idOrder_.end(), id,
+            [&](std::uint32_t ordinal, std::uint64_t wanted) {
+                return records_[ordinal].id < wanted;
+            });
+    if (found == idOrder_.end() || records_[*found].id != id) {
+        return std::nullopt;
+    }
+    return static_cast<std::size_t>(*found);
 }
 
 const OrdinaryResultRecord *OrdinaryResultStore::record(
@@ -123,7 +173,8 @@ std::size_t OrdinaryResultStore::retainedBytes() const noexcept {
         return true;
     };
     if (!addCapacity(records_.capacity(), sizeof(OrdinaryResultRecord)) ||
-        !addCapacity(identityValidBits_.capacity(), sizeof(std::uint64_t))) {
+        !addCapacity(identityValidBits_.capacity(), sizeof(std::uint64_t)) ||
+        !addCapacity(idOrder_.capacity(), sizeof(std::uint32_t))) {
         return std::numeric_limits<std::size_t>::max();
     }
     return result;
@@ -132,6 +183,8 @@ std::size_t OrdinaryResultStore::retainedBytes() const noexcept {
 void OrdinaryResultStore::clear() noexcept {
     std::vector<OrdinaryResultRecord>().swap(records_);
     std::vector<std::uint64_t>().swap(identityValidBits_);
+    std::vector<std::uint32_t>().swap(idOrder_);
+    idsStrictlyIncreasing_ = true;
 }
 
 } // namespace jlmem::v2
