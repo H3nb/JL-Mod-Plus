@@ -9,6 +9,8 @@
 #include "result_alias_cursor.h"
 
 #include <array>
+#include <bit>
+#include <limits>
 #include <utility>
 
 namespace jlmem::v2 {
@@ -38,6 +40,33 @@ constexpr std::array<ResultPlane, kResultPlaneCount> kDisplayOrder{
         return plane;
     }
     return ResultPlane::Count;
+}
+
+[[nodiscard]] std::uint64_t setBitsBeforeSlot(
+        std::span<const std::uint64_t> words, std::size_t slotLimit) noexcept {
+    const std::size_t maximumSlots = words.size() * 64U;
+    slotLimit = std::min(slotLimit, maximumSlots);
+    const std::size_t fullWords = slotLimit / 64U;
+    const std::size_t tailBits = slotLimit % 64U;
+    std::uint64_t count = 0U;
+    for (std::size_t index = 0U; index < fullWords; ++index) {
+        count += static_cast<std::uint64_t>(std::popcount(words[index]));
+    }
+    if (tailBits != 0U && fullWords < words.size()) {
+        const std::uint64_t mask =
+                (std::uint64_t{1U} << tailBits) - std::uint64_t{1U};
+        count += static_cast<std::uint64_t>(std::popcount(words[fullWords] & mask));
+    }
+    return count;
+}
+
+[[nodiscard]] bool addChecked(std::uint64_t &total,
+                              std::uint64_t addition) noexcept {
+    if (total > std::numeric_limits<std::uint64_t>::max() - addition) {
+        return false;
+    }
+    total += addition;
+    return true;
 }
 
 static_assert(resultAliasDisplayPriority(ResultPlane::Int) == 0U);
@@ -94,6 +123,61 @@ bool readAliasPage(const ResultStore &store, ResultAliasCursor cursor,
     }
 
     page = std::move(next);
+    return true;
+}
+
+bool seekAliasAddressOffset(const ResultStore &store,
+                            std::uint64_t addressOffset,
+                            ResultAliasCursor &cursor,
+                            std::uint64_t &typedOffset) {
+    if (addressOffset > store.uniqueAddressCount()) {
+        return false;
+    }
+    if (addressOffset == store.uniqueAddressCount()) {
+        cursor = {{store.blockCount(), 0U}, 0U, 0U};
+        typedOffset = store.typedCount();
+        return true;
+    }
+
+    ResultCursor addressCursor;
+    if (!seekAddressOffset(store, addressOffset, addressCursor) ||
+        addressCursor.blockIndex >= store.blockCount()) {
+        return false;
+    }
+
+    std::uint64_t prefix = 0U;
+    const auto headers = store.headers();
+    for (std::size_t block = 0U; block < addressCursor.blockIndex; ++block) {
+        for (const std::uint16_t count : headers[block].counts) {
+            if (!addChecked(prefix, count)) {
+                return false;
+            }
+        }
+    }
+
+    const std::size_t byteOffset = addressCursor.nextByteOffset;
+    for (std::size_t index = 0U; index < kResultPlaneCount; ++index) {
+        const ResultPlane plane = static_cast<ResultPlane>(index);
+        const std::size_t alignment = planeAlignment(plane);
+        if (alignment == 0U) {
+            return false;
+        }
+        // Number of aligned plane slots whose byte address is strictly before byteOffset.
+        const std::size_t slotLimit =
+                (byteOffset + alignment - 1U) / alignment;
+        const std::uint64_t count =
+                setBitsBeforeSlot(store.planeWords(addressCursor.blockIndex, plane),
+                                  slotLimit);
+        if (!addChecked(prefix, count)) {
+            return false;
+        }
+    }
+    if (prefix > store.typedCount()) {
+        return false;
+    }
+
+    cursor = {addressCursor, 0U, 0U};
+    typedOffset = prefix;
     return true;
 }
 
