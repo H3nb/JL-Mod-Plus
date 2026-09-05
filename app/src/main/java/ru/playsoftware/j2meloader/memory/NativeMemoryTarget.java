@@ -26,5 +26,12 @@ final class NativeMemoryTarget {
 
 	static native long[] readProbe();
 
+	/**
+	 * Writes the bounded native probe used by device instrumentation. Production code never calls
+	 * this helper; keeping the fixture in native memory lets scanner tests change bytes without
+	 * allocating Java objects or relying on ART object addresses.
+	 */
+	static native void writeProbe(long value);
+
 	static native long[] collectResidentRuns(int scope, int maxRuns);
 }
