@@ -8,12 +8,9 @@
 
 #include <jni.h>
 
-// These three wrappers are the only legacy JNI aliases still required by production Java while
-// Auto search and clear-session call sites are migrated. Shadow/parity diagnostics live in the
-// debug-only result_store_shadow_bridge.cpp and must not enlarge the release JNI surface.
-extern "C" jint
-Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_startKnown(
-        JNIEnv *, jclass, jint, jint, jstring, jstring);
+// Clear-session aliases remain while Java owns the v2 staging lifecycle around the legacy native
+// clear entry points. Auto first search no longer needs a release compatibility alias: production
+// now enters the fused ResultStore kernel directly.
 extern "C" void
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearSearch(
         JNIEnv *, jclass);
@@ -21,24 +18,14 @@ extern "C" void
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearTarget(
         JNIEnv *, jclass);
 
-extern "C" JNIEXPORT jint JNICALL
-Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_startKnownUnchecked(
-        JNIEnv *env, jclass clazz, jint valueType, jint predicate,
-        jstring first, jstring second) {
-    return Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_startKnown(
-            env, clazz, valueType, predicate, first, second);
-}
-
 extern "C" JNIEXPORT void JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearSearchUnchecked(
         JNIEnv *env, jclass clazz) {
-    Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearSearch(env,
-                                                                          clazz);
+    Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearSearch(env, clazz);
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearTargetUnchecked(
         JNIEnv *env, jclass clazz) {
-    Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearTarget(env,
-                                                                          clazz);
+    Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_clearTarget(env, clazz);
 }
