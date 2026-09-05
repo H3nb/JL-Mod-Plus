@@ -22,7 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-/** Device gate for Unknown-baseline materialization and later relative ResultStore COW refine. */
+/** Device gate for Unknown materialization, relative COW refine, and retained-revision Undo. */
 @RunWith(AndroidJUnit4.class)
 public class MemoryV2RelativeAuthoritativeTest {
 	private static final int[] EXPECTED_ALIASES = {
@@ -84,13 +84,26 @@ public class MemoryV2RelativeAuthoritativeTest {
 					NativeMemoryEngine.historyDepth() > 0);
 			assertResultCursorOnly();
 
+			long[] catalogBefore = NativeMemoryEngine.v2RevisionCatalogStats();
+			assertNotNull(catalogBefore);
+			assertEquals(4, catalogBefore.length);
+			assertTrue("relative ResultStore revision was not retained", catalogBefore[0] > 0L);
+			long hitsBefore = catalogBefore[2];
+			long missesBefore = catalogBefore[3];
+
 			assertEquals(MemoryEngineContract.RESULT_OK, NativeMemoryEngine.undo());
-			// Physical memory remains 3. Undo restores the immutable revision whose current value was 2;
-			// paging must rebuild ResultStore metadata from that revision without a target reread.
+			long[] catalogAfter = NativeMemoryEngine.v2RevisionCatalogStats();
+			assertNotNull(catalogAfter);
+			assertEquals(hitsBefore + 1L, catalogAfter[2]);
+			assertEquals("relative Undo unexpectedly rebuilt from Candidate compatibility state",
+					missesBefore, catalogAfter[3]);
+			assertTrue("remembered relative revision was not restored as authoritative",
+					NativeMemoryEngine.v2KnownAuthoritativeRevision());
+
 			Map<Integer, Long> undoneIds = aliasesAt(probeAddress);
 			assertExpectedAliases(undoneIds);
 			for (int type : EXPECTED_ALIASES) {
-				assertEquals("CandidateId changed after relative Undo restage for type=" + type,
+				assertEquals("CandidateId changed after O(1) relative revision Undo for type=" + type,
 						firstIds.get(type), undoneIds.get(type));
 			}
 			assertResultCursorOnly();
@@ -142,9 +155,7 @@ public class MemoryV2RelativeAuthoritativeTest {
 					previousAddress = address;
 					uniqueInPage++;
 				}
-				if (address == wantedAddress) {
-					result.put(type, id);
-				}
+				if (address == wantedAddress) result.put(type, id);
 			}
 			assertTrue(uniqueInPage > 0L && uniqueInPage <= limit);
 			offset += uniqueInPage;
