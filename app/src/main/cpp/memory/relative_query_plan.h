@@ -56,6 +56,23 @@ relativePredicateFromStableValue(int predicate) noexcept {
     }
 }
 
+[[nodiscard]] constexpr bool validRelativePredicate(
+        RelativePredicate predicate) noexcept {
+    switch (predicate) {
+    case RelativePredicate::Changed:
+    case RelativePredicate::Unchanged:
+    case RelativePredicate::Increased:
+    case RelativePredicate::Decreased:
+    case RelativePredicate::IncreasedBy:
+    case RelativePredicate::DecreasedBy:
+    case RelativePredicate::ChangedBy:
+    case RelativePredicate::IncreasedByRange:
+    case RelativePredicate::DecreasedByRange:
+        return true;
+    }
+    return false;
+}
+
 [[nodiscard]] constexpr bool relativePredicateNeedsMagnitude(
         RelativePredicate predicate) noexcept {
     return predicate == RelativePredicate::IncreasedBy ||
@@ -97,7 +114,8 @@ template <typename T>
 
 [[nodiscard]] inline bool validRelativeQueryPlan(
         const RelativeQueryPlan &plan) noexcept {
-    if (plan.plane == ResultPlane::Count ||
+    if (!validRelativePredicate(plan.predicate) ||
+        plan.plane == ResultPlane::Count ||
         !hasCanonicalKnownWidth(plan.plane, plan.firstBits) ||
         !hasCanonicalKnownWidth(plan.plane, plan.secondBits)) {
         return false;
@@ -215,10 +233,87 @@ template <typename T, RelativePredicate Predicate>
     return false;
 }
 
+template <typename T>
+[[nodiscard]] bool dispatchRelativePredicateBits(
+        const RelativeQueryPlan &plan, T current, T reference) noexcept {
+    switch (plan.predicate) {
+    case RelativePredicate::Changed:
+        return matchesRelativeValue<T, RelativePredicate::Changed>(
+                current, reference, plan.firstBits, plan.secondBits);
+    case RelativePredicate::Unchanged:
+        return matchesRelativeValue<T, RelativePredicate::Unchanged>(
+                current, reference, plan.firstBits, plan.secondBits);
+    case RelativePredicate::Increased:
+        return matchesRelativeValue<T, RelativePredicate::Increased>(
+                current, reference, plan.firstBits, plan.secondBits);
+    case RelativePredicate::Decreased:
+        return matchesRelativeValue<T, RelativePredicate::Decreased>(
+                current, reference, plan.firstBits, plan.secondBits);
+    case RelativePredicate::IncreasedBy:
+        return matchesRelativeValue<T, RelativePredicate::IncreasedBy>(
+                current, reference, plan.firstBits, plan.secondBits);
+    case RelativePredicate::DecreasedBy:
+        return matchesRelativeValue<T, RelativePredicate::DecreasedBy>(
+                current, reference, plan.firstBits, plan.secondBits);
+    case RelativePredicate::ChangedBy:
+        return matchesRelativeValue<T, RelativePredicate::ChangedBy>(
+                current, reference, plan.firstBits, plan.secondBits);
+    case RelativePredicate::IncreasedByRange:
+        return matchesRelativeValue<T, RelativePredicate::IncreasedByRange>(
+                current, reference, plan.firstBits, plan.secondBits);
+    case RelativePredicate::DecreasedByRange:
+        return matchesRelativeValue<T, RelativePredicate::DecreasedByRange>(
+                current, reference, plan.firstBits, plan.secondBits);
+    }
+    return false;
+}
+
+[[nodiscard]] inline bool matchesRelativePlanBits(
+        const RelativeQueryPlan &plan, std::uint64_t currentBits,
+        std::uint64_t referenceBits) noexcept {
+    if (!validRelativeQueryPlan(plan)) {
+        return false;
+    }
+    switch (plan.plane) {
+    case ResultPlane::Byte:
+        return dispatchRelativePredicateBits<std::int8_t>(
+                plan, knownValueFromBits<std::int8_t>(currentBits),
+                knownValueFromBits<std::int8_t>(referenceBits));
+    case ResultPlane::Short:
+        return dispatchRelativePredicateBits<std::int16_t>(
+                plan, knownValueFromBits<std::int16_t>(currentBits),
+                knownValueFromBits<std::int16_t>(referenceBits));
+    case ResultPlane::Char:
+        return dispatchRelativePredicateBits<std::uint16_t>(
+                plan, knownValueFromBits<std::uint16_t>(currentBits),
+                knownValueFromBits<std::uint16_t>(referenceBits));
+    case ResultPlane::Int:
+        return dispatchRelativePredicateBits<std::int32_t>(
+                plan, knownValueFromBits<std::int32_t>(currentBits),
+                knownValueFromBits<std::int32_t>(referenceBits));
+    case ResultPlane::Float:
+        return dispatchRelativePredicateBits<float>(
+                plan, knownValueFromBits<float>(currentBits),
+                knownValueFromBits<float>(referenceBits));
+    case ResultPlane::Long:
+        return dispatchRelativePredicateBits<std::int64_t>(
+                plan, knownValueFromBits<std::int64_t>(currentBits),
+                knownValueFromBits<std::int64_t>(referenceBits));
+    case ResultPlane::Double:
+        return dispatchRelativePredicateBits<double>(
+                plan, knownValueFromBits<double>(currentBits),
+                knownValueFromBits<double>(referenceBits));
+    case ResultPlane::Count:
+        return false;
+    }
+    return false;
+}
+
 static_assert(relativePredicateFromStableValue(7) == RelativePredicate::Changed);
 static_assert(relativePredicateFromStableValue(15) ==
               RelativePredicate::DecreasedByRange);
 static_assert(!relativePredicateFromStableValue(6).has_value());
+static_assert(!validRelativePredicate(static_cast<RelativePredicate>(6U)));
 static_assert(unsignedMagnitude<std::int8_t>(127, -128).second == UINT8_MAX);
 static_assert(unsignedMagnitude<std::int32_t>(
                       std::numeric_limits<std::int32_t>::max(),
