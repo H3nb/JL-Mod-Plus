@@ -60,6 +60,12 @@ adaptive maximum; overflowing content scrolls with the shared scroll hint. Short
 keeps actions reachable at large font sizes. Cancellation is cooperative; batch cancellation
 finishes the current item, and published files are not undone by closing a dialog.
 
+Shared dialogs measure their title and actions before allocating body space; they no longer
+subtract guessed fixed header/footer heights. An absent action footer consumes no space.
+Installer, configuration and Library popups share the Material type scale and themed surfaces.
+Descriptions use start alignment, while compact progress statuses may be centered. See
+[UI copy and interaction style](ui-copy-style.md) for capitalization, spacing and overflow rules.
+
 ## Focused verification
 
 - Unit tests: missing-workdir catalog preservation, staging parent creation, cancellation
@@ -69,5 +75,8 @@ finishes the current item, and published files are not undone by closing a dialo
 - `InstallerComposeTest`: cancellation, retry/close reachability, adaptive content height and
   visible scroll hints in a short window at 200% font scale.
 - Installer and bulk-result preview screenshot tests cover normal and short/large-text layouts.
+- `AdaptiveDialogComposeTest`: content-wrapped action menus, measured body overflow, visible
+  hints, and reaching the last font-size field and confirmation at 200% text.
+- Shared popup previews cover short/portrait/expanded windows and light/dark non-default accents.
 
 No Room schema, transformer version, dependency, or toolchain migration is needed for these fixes.
