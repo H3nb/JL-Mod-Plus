@@ -6,7 +6,6 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.File;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -61,5 +60,33 @@ public class InstallerDownloadTest {
                 URI.create("http://127.0.0.1/unused"), target, () -> true, (bytes, total) -> {}));
         assertFalse(target.exists());
         assertFalse(new File(target + ".part").exists());
+    }
+
+    @Test public void truncatedResponseAndRedirectLoopNeverPublishSources() throws Exception {
+        assertRejectedResponse("HTTP/1.1 200 OK\r\nContent-Length: 200\r\nConnection: close\r\n\r\nshort");
+        assertRejectedResponse("HTTP/1.1 302 Found\r\nLocation: /start\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+    }
+
+    private void assertRejectedResponse(String response) throws Exception {
+        try (ServerSocket server = new ServerSocket(0, 1, java.net.InetAddress.getLoopbackAddress())) {
+            server.setSoTimeout(5000);
+            Thread responder = new Thread(() -> {
+                try (Socket socket = server.accept()) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                    while (!reader.readLine().isEmpty()) { }
+                    socket.getOutputStream().write(response.getBytes(StandardCharsets.UTF_8));
+                } catch (IOException error) { throw new RuntimeException(error); }
+            });
+            responder.setDaemon(true);
+            responder.start();
+            File target = new File(temporary.getRoot(), "rejected.jar");
+            assertThrows(IOException.class, () -> InstallerDownload.download(
+                    URI.create("http://localhost:" + server.getLocalPort() + "/start"),
+                    target, () -> false, (bytes, total) -> {}));
+            assertFalse(target.exists());
+            assertFalse(new File(target + ".part").exists());
+            responder.join(5000);
+            assertFalse(responder.isAlive());
+        }
     }
 }
