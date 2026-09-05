@@ -20,6 +20,7 @@
 #include "memory_engine_compact_extension.inc"
 #include "memory_engine_compact_owner_extension.inc"
 #include "memory_engine_group_extension.inc"
+#include "memory_engine_compact_relative_safety.inc"
 #include "memory_engine_compact_cutover_bridge.inc"
 #include "memory_engine_ordinary_debug_bridge.inc"
 #include "memory_engine_filter_compat_extension.inc"
