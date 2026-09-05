@@ -37,10 +37,6 @@ final class InstallerScratch {
         directory = new File(root, UUID.randomUUID().toString());
     }
 
-    File directory() {
-        return directory;
-    }
-
     File file(String name) throws IOException {
         ensureDirectory();
         return safeChild(name);
@@ -96,6 +92,7 @@ final class InstallerScratch {
         }
         ensureDirectory();
         File target = safeChild(name);
+        if (source.getCanonicalFile().equals(target)) return target;
         byte[] buffer = new byte[16 * 1024];
         try (InputStream input = new FileInputStream(source);
                 OutputStream output = new FileOutputStream(target, false)) {

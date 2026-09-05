@@ -30,6 +30,34 @@ public class AppReconverterTest {
 	@Rule
 	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+	@Test public void missingInstalledDescriptorCanBeRebuiltFromRetainedManifest() throws Exception {
+		Descriptor source = new Descriptor("MIDlet-Name: Game\nMIDlet-Vendor: Vendor\nMIDlet-Version: 1.0\n", false);
+		assertEquals(source, AppReconverter.mergeInstalledDescriptor(source,
+				new File(temporaryFolder.getRoot(), "missing.conf")));
+	}
+
+	@Test public void jadPropertiesSurviveReconversion() throws Exception {
+		Descriptor source = new Descriptor("MIDlet-Name: Game\nMIDlet-Vendor: Vendor\nMIDlet-Version: 1.0\n", false);
+		File installed = temporaryFolder.newFile("jad.conf");
+		Files.writeString(installed.toPath(), "MIDlet-Name: Game\nMIDlet-Vendor: Vendor\nMIDlet-Version: 1.0\n"
+				+ "MIDlet-Jar-URL: ../game.jar?token=keep\nNokia-MIDlet-On-Screen-Keypad: no\n");
+		Descriptor result = AppReconverter.mergeInstalledDescriptor(source, installed);
+		assertEquals("../game.jar?token=keep", result.getJarUrl());
+		assertEquals("no", result.getAttrs().get("Nokia-MIDlet-On-Screen-Keypad"));
+	}
+
+	@Test public void originalJadRecoversPropertiesWhenMergedDescriptorIsMissing() throws Exception {
+		Descriptor source = new Descriptor("MIDlet-Name: Game\nMIDlet-Vendor: Vendor\nMIDlet-Version: 1.0\n", false);
+		File jad = temporaryFolder.newFile(AppReconverter.RETAINED_JAD);
+		Files.writeString(jad.toPath(), "MIDlet-Name: Game\r\nMIDlet-Vendor: Vendor\r\nMIDlet-Version: 1.0\r\n"
+				+ "MIDlet-Jar-URL: game.jar\r\nMIDlet-Jar-Size: 100\r\nVendor-Option: preserve\r\n");
+		byte[] original = Files.readAllBytes(jad.toPath());
+		Descriptor merged = AppReconverter.mergeInstalledDescriptor(source,
+				new File(temporaryFolder.getRoot(), "converted.dex.conf"));
+		assertEquals("preserve", merged.getAttrs().get("Vendor-Option"));
+		org.junit.Assert.assertArrayEquals(original, Files.readAllBytes(jad.toPath()));
+	}
+
 	@Test
 	public void installedDescriptorOverridesSourceManifestWithoutDroppingManifestOnlyFields()
 			throws Exception {

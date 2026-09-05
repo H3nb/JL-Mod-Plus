@@ -48,6 +48,7 @@ import ru.woesss.util.zip.ZipFile;
  * used by {@link AppInstaller} keep this path serialized and crash-recoverable.</p>
  */
 public final class AppReconverter {
+    public static final String RETAINED_JAD = "source.jad";
     private static final String TAG = AppReconverter.class.getSimpleName();
 
     private AppReconverter() {
@@ -96,6 +97,11 @@ public final class AppReconverter {
         }
 
         try (InstallerExecutionCoordinator.Permit ignored = InstallerExecutionCoordinator.acquire()) {
+            // The workdir or target may have changed while this launch waited for another operation.
+            requireInstalledAppDirectory(appDir);
+            if (!Config.isUsableFile(retainedJar)) {
+                throw new IOException("Retained MIDlet JAR is unavailable: " + storageKey);
+            }
             // Another launch or an explicit reinstall may have repaired this app while this
             // request was waiting for the converter permit.
             if (!needsReconversion(appDir)) return;
@@ -131,10 +137,16 @@ public final class AppReconverter {
                 }
                 MidletTransformMetadata.mark(descriptor.getAttrs());
                 FileUtils.copyFileUsingChannel(retainedJar, fileWithSuffix(staging, Config.MIDLET_RES_FILE));
+                File retainedJad = new File(appDir, RETAINED_JAD);
+                if (retainedJad.isFile()) FileUtils.copyFileUsingChannel(retainedJad, new File(staging, RETAINED_JAD));
                 extractIcon(descriptor, retainedJar, staging);
                 descriptor.writeTo(fileWithSuffix(staging, Config.MIDLET_MANIFEST_FILE));
                 LibraryIconOverride.applyPersistedOverride(workdir, storageKey, staging);
 
+                if (Thread.currentThread().isInterrupted()) {
+                    throw new java.io.InterruptedIOException("Reconversion cancelled before publish");
+                }
+                requireInstalledAppDirectory(appDir);
                 replacementBackup = LibraryInstallRecovery.createBackup(workdir, storageKey, appDir);
                 if (!staging.renameTo(appDir)) {
                     if (!LibraryInstallRecovery.restoreBackup(appDir, replacementBackup)) {
@@ -203,7 +215,14 @@ public final class AppReconverter {
     /** Applies the descriptor persisted for the installed MIDlet over the source JAR manifest. */
     static Descriptor mergeInstalledDescriptor(Descriptor sourceManifest, File installedDescriptor)
             throws IOException {
-        sourceManifest.merge(new Descriptor(installedDescriptor, false));
+        // A missing descriptor is itself a reconversion trigger. A malformed existing descriptor
+        // still fails closed: silently dropping its JAD/vendor attributes would change the game.
+        if (installedDescriptor.exists()) {
+            sourceManifest.merge(new Descriptor(installedDescriptor, false));
+        } else {
+            File retainedJad = new File(installedDescriptor.getParentFile(), RETAINED_JAD);
+            if (retainedJad.exists()) sourceManifest.merge(new Descriptor(retainedJad, true));
+        }
         return sourceManifest;
     }
 
