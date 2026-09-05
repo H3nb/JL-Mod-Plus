@@ -8,6 +8,7 @@
 
 #include "ordinary_result_store.h"
 
+#include <algorithm>
 #include <limits>
 #include <utility>
 
@@ -26,7 +27,8 @@ bool OrdinaryResultStore::reserve(std::size_t count) noexcept {
 
 bool OrdinaryResultStore::append(const OrdinaryResultRecord &record,
                                  bool identityValid) noexcept {
-    if (record.id == 0U || records_.size() == std::numeric_limits<std::size_t>::max()) {
+    if (record.id == 0U || records_.size() == std::numeric_limits<std::size_t>::max() ||
+        (!records_.empty() && record.id <= records_.back().id)) {
         return false;
     }
     const std::size_t index = records_.size();
@@ -55,6 +57,42 @@ bool OrdinaryResultStore::append(const OrdinaryResultRecord &record,
     } catch (...) {
         return false;
     }
+}
+
+bool OrdinaryResultStore::updateIdentity(std::size_t index,
+                                         std::uint64_t identityHash,
+                                         bool identityValid) noexcept {
+    if (index >= records_.size()) {
+        return false;
+    }
+    const std::size_t wordIndex = identityWordIndex(index);
+    if (wordIndex >= identityValidBits_.size()) {
+        return false;
+    }
+    records_[index].identityHash = identityHash;
+    const std::uint64_t bit = identityBit(index);
+    if (identityValid) {
+        identityValidBits_[wordIndex] |= bit;
+    } else {
+        identityValidBits_[wordIndex] &= ~bit;
+    }
+    return true;
+}
+
+std::optional<std::size_t> OrdinaryResultStore::findIndexById(
+        std::uint64_t id) const noexcept {
+    if (id == 0U || records_.empty()) {
+        return std::nullopt;
+    }
+    const auto found = std::lower_bound(
+            records_.begin(), records_.end(), id,
+            [](const OrdinaryResultRecord &record, std::uint64_t wanted) {
+                return record.id < wanted;
+            });
+    if (found == records_.end() || found->id != id) {
+        return std::nullopt;
+    }
+    return static_cast<std::size_t>(std::distance(records_.begin(), found));
 }
 
 const OrdinaryResultRecord *OrdinaryResultStore::record(
