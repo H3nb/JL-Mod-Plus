@@ -53,6 +53,9 @@ final class NativeMemoryEngine {
 				? startKnownAutoV2Authoritative(predicate, first, second)
 				: startKnownV2Authoritative(valueType, predicate, first, second);
 		if (result == MemoryEngineContract.RESULT_OK) {
+			// A successful New Search owns a fresh history root. Only now discard acceleration entries
+			// for the previous root; failed/cancelled searches must leave the old revision recoverable.
+			clearV2RevisionCatalog();
 			publishV2KnownPagingStage(true, true);
 			rememberCurrentV2Revision();
 			if (BuildConfig.DEBUG) resetV2ShadowSession();
@@ -84,12 +87,32 @@ final class NativeMemoryEngine {
 
 	static native long[] v2RevisionCatalogStats();
 
-	static native int startUnknown(int valueType);
+	static int startUnknown(int valueType) {
+		int result = startUnknownUnchecked(valueType);
+		if (result == MemoryEngineContract.RESULT_OK) resetV2ForLegacyNewSearch();
+		return result;
+	}
 
-	static native int startGroup(int[] valueTypes, String[] values, int maxDistance);
+	private static native int startUnknownUnchecked(int valueType);
 
-	static native int startNearby(long anchorCandidateId, int radius, int valueType,
-	                              int predicate, String first, String second);
+	static int startGroup(int[] valueTypes, String[] values, int maxDistance) {
+		int result = startGroupUnchecked(valueTypes, values, maxDistance);
+		if (result == MemoryEngineContract.RESULT_OK) resetV2ForLegacyNewSearch();
+		return result;
+	}
+
+	private static native int startGroupUnchecked(int[] valueTypes, String[] values, int maxDistance);
+
+	static int startNearby(long anchorCandidateId, int radius, int valueType,
+	                       int predicate, String first, String second) {
+		int result = startNearbyUnchecked(
+				anchorCandidateId, radius, valueType, predicate, first, second);
+		if (result == MemoryEngineContract.RESULT_OK) resetV2ForLegacyNewSearch();
+		return result;
+	}
+
+	private static native int startNearbyUnchecked(long anchorCandidateId, int radius, int valueType,
+	                                               int predicate, String first, String second);
 
 	static int refineKnown(int predicate, String first, String second) {
 		return refineKnown(predicate, first, second, false);
@@ -198,15 +221,20 @@ final class NativeMemoryEngine {
 
 	static native int historyDepth();
 
+	private static void resetV2ForLegacyNewSearch() {
+		clearV2KnownPagingStage();
+		if (BuildConfig.DEBUG) resetV2ShadowSession();
+	}
+
 	private static void rememberAuthoritativeCurrentRevision() {
 		boolean authoritative;
 		synchronized (V2_KNOWN_PAGING_LOCK) {
 			authoritative = v2KnownStaged && v2KnownAuthoritativeRevision;
 		}
 		if (!authoritative || rememberCurrentV2Revision()) return;
-		// Watch/presentation operations can replace SearchState while leaving membership unchanged.
-		// Rebuild only bitmap metadata from the current Candidate mirror, never target memory, then
-		// bind the authoritative revision to the new immutable SearchState pointer.
+		// Watch-only SearchState replacement preserves membership. Reconstruct bitmap metadata from
+		// the already committed Candidate mirror, never target memory, and attach the same logical
+		// authoritative membership to that new immutable state pointer.
 		boolean staged = stageV2KnownResultStore() || stageV2AutoResultStore();
 		if (staged) rememberCurrentV2Revision();
 	}
