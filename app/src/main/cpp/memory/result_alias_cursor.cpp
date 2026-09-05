@@ -8,6 +8,7 @@
 
 #include "result_alias_cursor.h"
 
+#include <algorithm>
 #include <array>
 #include <bit>
 #include <limits>
