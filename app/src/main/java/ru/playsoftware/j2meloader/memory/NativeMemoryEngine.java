@@ -164,20 +164,12 @@ final class NativeMemoryEngine {
 
 	static int startNearby(long anchorCandidateId, int radius, int valueType,
 	                       int predicate, String first, String second) {
-		boolean compact = hasCurrentV2CompactRevision();
-		int result = compact
-				? startNearbyV2CompactOwner(
-						anchorCandidateId, radius, valueType, predicate, first, second)
-				: startNearbyUnchecked(
-						anchorCandidateId, radius, valueType, predicate, first, second);
+		int result = startNearbyV2CompactOwner(
+				anchorCandidateId, radius, valueType, predicate, first, second);
 		if (result == MemoryEngineContract.RESULT_OK) {
-			if (compact) {
-				clearV2RevisionCatalog();
-				publishV2KnownPagingStage(true, true);
-				if (BuildConfig.DEBUG) resetV2ShadowSession();
-			} else {
-				resetV2ForLegacyNewSearch();
-			}
+			clearV2RevisionCatalog();
+			publishV2KnownPagingStage(true, true);
+			if (BuildConfig.DEBUG) resetV2ShadowSession();
 		}
 		return result;
 	}

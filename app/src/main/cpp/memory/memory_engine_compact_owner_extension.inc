@@ -278,7 +278,8 @@ compactOwnerMakeRevision(
 }
 
 [[nodiscard]] jint compactOwnerScanKnown(
-        const OperationContext &context, jint requestedType, jint predicate,
+        const OperationContext &context, const Target &identityTarget,
+        jint requestedType, jint predicate,
         const std::string &first, const std::string &second) {
     if (context.nextId == 0U ||
         context.nextId > std::numeric_limits<std::uint64_t>::max() -
@@ -375,7 +376,7 @@ compactOwnerMakeRevision(
         return kResourceLimit;
     }
 
-    compactOwnerFillMissingIdentities(context.target, build);
+    compactOwnerFillMissingIdentities(identityTarget, build);
     auto revision = compactOwnerMakeRevision(
             requestedType, explicitPlane, std::move(store),
             std::move(build.ordinary));
@@ -1959,7 +1960,7 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_startKnownV2CompactOwn
         OperationContext context;
         if (!beginOperation(context)) return kNoSession;
         return compactOwnerScanKnown(
-                context, valueType, predicate,
+                context, context.target, valueType, predicate,
                 fromJString(env, first), fromJString(env, second));
     });
 }
@@ -2125,12 +2126,15 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_startNearbyV2CompactOw
         }
         OperationContext context;
         if (!beginOperation(context)) return kNoSession;
-        std::shared_ptr<const jlmem::v2::ResultRevision> revision;
-        if (!compactRevisionForContext(context, revision)) return kNoSession;
+        const auto revision = lookupCompactRevision(context.state);
         Candidate anchor{};
-        if (!compactOwnerCandidateForId(
-                    context, revision, static_cast<std::uint64_t>(rawAnchorId),
-                    anchor) || !verifyCandidateBinding(context.target, anchor)) {
+        const bool resolved = revision != nullptr
+                ? compactOwnerCandidateForId(
+                          context, revision,
+                          static_cast<std::uint64_t>(rawAnchorId), anchor)
+                : resolveCandidateById(
+                          context, static_cast<std::uint64_t>(rawAnchorId), anchor);
+        if (!resolved || !verifyCandidateBinding(context.target, anchor)) {
             return kIdentityUnsafe;
         }
         Range window{};
@@ -2141,7 +2145,7 @@ Java_ru_playsoftware_j2meloader_memory_NativeMemoryEngine_startNearbyV2CompactOw
         nearby.target.ranges.clear();
         nearby.target.ranges.push_back(window);
         return compactOwnerScanKnown(
-                nearby, valueType, predicate,
+                nearby, context.target, valueType, predicate,
                 fromJString(env, first), fromJString(env, second));
     });
 }

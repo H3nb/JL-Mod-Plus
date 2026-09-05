@@ -107,6 +107,60 @@ public class MemoryV2CompactPromotionTest {
 		}
 	}
 
+	@Test
+	public void watchNearbyUsesCompactOwnerWithoutCurrentRevision() {
+		int pageSize = NativeMemoryTarget.pageSize();
+		assertTrue(pageSize > 0);
+		long[] originalProbe = NativeMemoryTarget.readProbe();
+		assertNotNull(originalProbe);
+		assertEquals(2, originalProbe.length);
+		long probeAddress = originalProbe[0];
+		long pageStart = probeAddress - Math.floorMod(probeAddress, (long) pageSize);
+		long[] runs = {1L, 0L, pageStart, pageStart + pageSize};
+		long token = 0x4A4C4E4541524259L;
+
+		try {
+			NativeMemoryTarget.writeProbe(41L);
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.configureTarget(Process.myPid(), pageSize, token, runs));
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.startKnown(
+							MemoryEngineContract.TYPE_INT,
+							MemoryEngineContract.PREDICATE_EQUAL, "41", ""));
+			long[] page = NativeMemoryEngine.resultPage(0, 100);
+			assertNotNull(page);
+			long watchId = findIdAt(page, probeAddress, MemoryEngineContract.TYPE_INT);
+			assertTrue("probe Int alias missing", watchId > 0L);
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.pin(new long[]{watchId}, true));
+			assertTrue("Watch List did not retain the anchor",
+					containsPageId(NativeMemoryEngine.watchPage(), watchId));
+
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.startUnknown(MemoryEngineContract.TYPE_INT));
+			assertTrue("Unknown reset unexpectedly kept a compact search revision",
+					!NativeMemoryEngine.hasCurrentV2CompactRevision());
+			assertTrue("Unknown reset lost the Watch anchor",
+					containsPageId(NativeMemoryEngine.watchPage(), watchId));
+
+			assertEquals(MemoryEngineContract.RESULT_OK,
+					NativeMemoryEngine.startNearby(
+							watchId, 64, MemoryEngineContract.TYPE_INT,
+							MemoryEngineContract.PREDICATE_EQUAL, "41", ""));
+			assertTrue(NativeMemoryEngine.hasCurrentV2CompactRevision());
+			assertCandidateFreeOwner("Watch Nearby");
+			page = NativeMemoryEngine.resultPage(0, 100);
+			assertNotNull(page);
+			assertTrue("Watch Nearby lost the probe Int result",
+					findIdAt(page, probeAddress, MemoryEngineContract.TYPE_INT) > 0L);
+			assertTrue("Watch Nearby lost the Watch anchor",
+					containsPageId(NativeMemoryEngine.watchPage(), watchId));
+		} finally {
+			NativeMemoryTarget.writeProbe(originalProbe[1]);
+			NativeMemoryEngine.clearTarget();
+		}
+	}
+
 	private static void assertCandidateFreeOwner(String stage) {
 		long[] stats = NativeMemoryEngine.v2CompactOwnerStats();
 		assertNotNull(stage, stats);
