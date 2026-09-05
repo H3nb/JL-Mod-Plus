@@ -61,21 +61,21 @@ public class MemoryV2OrdinaryProductionParityTest {
 	}
 
 	private static void assertOrdinaryParity(String label) {
+		assertTrue(label + " revision must remain ResultStore-authoritative",
+				NativeMemoryEngine.v2KnownAuthoritativeRevision());
 		long[] stats = MemoryV2OrdinaryDiagnostics.parityStats();
 		assertNotNull(label, stats);
 		assertEquals(label + " stats length", 8, stats.length);
 		assertEquals(label + " parity status",
 				MemoryEngineContract.RESULT_OK, (int) stats[0]);
-		assertEquals(label + " typed count",
-				NativeMemoryEngine.resultPage(0, MemoryEngineContract.MAX_RESULT_PAGE_SIZE)[0] > 0L
-						? NativeMemoryEngine.v2KnownAuthoritativeRevision() : true,
-						true);
 		assertTrue(label + " should produce at least one typed result", stats[1] > 0L);
 		assertEquals(label + " compact record size", 40L, stats[2]);
 		assertTrue(label + " Candidate record should be larger than compact ordinary metadata",
 				stats[3] > stats[2]);
 		assertTrue(label + " ordinary retained accounting is invalid", stats[4] >= stats[1] * 40L);
 		assertTrue(label + " Candidate retained accounting is invalid", stats[5] >= stats[1] * stats[3]);
+		assertTrue(label + " identity count cannot exceed typed count",
+				stats[6] >= 0L && stats[6] <= stats[1]);
 		assertTrue(label + " ordered address/type fingerprint should be non-zero", stats[7] != 0L);
 	}
 }
