@@ -85,6 +85,26 @@ final class NativeMemoryEngine {
 
 	static native long[] v2RevisionCatalogStats();
 
+	// Compact migration gates are package-private on purpose. Production routing remains on the
+	// proven Candidate-compatible path until instrumentation validates page/action parity.
+	static native boolean stageV2CompactRevision();
+
+	static native boolean hasCurrentV2CompactRevision();
+
+	static native long[] resultPageV2Compact(int offset, int limit);
+
+	static native int refreshV2Compact(long[] candidateIds, boolean allowRecovery);
+
+	static native int editV2Compact(long[] candidateIds, String replacementValue);
+
+	static native int pinV2Compact(long[] candidateIds, boolean add);
+
+	static native long[] inspectV2Compact(long candidateId, int radius);
+
+	static native long[] expandResultGroupsV2Compact(long[] resultIds, int valueType);
+
+	private static native void clearV2CompactRevisions();
+
 	static int startUnknown(int valueType) {
 		int result = startUnknownUnchecked(valueType);
 		if (result == MemoryEngineContract.RESULT_OK) resetV2ForLegacyNewSearch();
@@ -212,8 +232,6 @@ final class NativeMemoryEngine {
 		if (authoritative) rememberAuthoritativeCurrentRevision();
 		int result = pinUnchecked(candidateIds, add);
 		if (result == MemoryEngineContract.RESULT_OK && authoritative) {
-			// pin() copies SearchState only to update the Watch List. Membership, CandidateIds and value
-			// history are unchanged, so a verified metadata rebind preserves ResultStore authority.
 			boolean staged = stageV2KnownResultStore() || stageV2AutoResultStore();
 			publishV2KnownPagingStage(staged, staged);
 			if (staged) rememberCurrentV2Revision();
@@ -342,6 +360,7 @@ final class NativeMemoryEngine {
 		clearV2AutoResultStore();
 		clearV2KnownResultStore();
 		clearV2RevisionCatalog();
+		clearV2CompactRevisions();
 		publishV2KnownPagingStage(false, false);
 	}
 
