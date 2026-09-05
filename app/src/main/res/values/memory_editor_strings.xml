@@ -152,8 +152,8 @@
 
     <string name="memory_editor_expression_single_hint">Enter one value, or use ; to search nearby values together.</string>
     <string name="memory_editor_expression_group_needs_type">Choose a specific data type for Group Search.</string>
-    <string name="memory_editor_expression_group_hint">Group Search · %1$d values · within %2$d bytes</string>
-    <string name="memory_editor_expression_query_help">Examples: 500 · 500;1000 · 500;1000:128</string>
-    <string name="memory_editor_expression_ordered_group_unsupported">Ordered group syntax (::) is not supported by the current engine yet. Use : for a normal group.</string>
+    <string name="memory_editor_expression_group_hint">Group Search · %1$d values · use : for any order or :: for in order</string>
+    <string name="memory_editor_expression_query_help">Examples: 500 · 500;1000 · 500;1000:128 · 500;1000::128 (in order)</string>
+    <string name="memory_editor_expression_ordered_group_unsupported">Use ::distance when Group Search must follow increasing address order.</string>
     <string name="memory_editor_keypad_clear">Clear</string>
 </resources>
