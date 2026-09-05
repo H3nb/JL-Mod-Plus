@@ -42,6 +42,12 @@ struct KnownRefineObserver {
     KnownRefineMatchObserverFn onMatch = nullptr;
 };
 
+// Reports the exact target bytes the adaptive kernel intends to read for one explicit plane.
+// Sparse revisions use exact-width reads; denser revisions read adjacent active 4 KiB blocks in
+// batches. Production progress uses this instead of assuming every retained block is reread.
+[[nodiscard]] std::uint64_t estimateKnownRefineReadBytes(
+        const ResultStore &source, ResultPlane plane) noexcept;
+
 // Transactionally refines one explicit primitive plane. The published source revision is never
 // mutated: a working ResultStore copy is edited by clearing failed membership bits and is only
 // moved to `out` after every required target read succeeds. Empty blocks and allocated plane
