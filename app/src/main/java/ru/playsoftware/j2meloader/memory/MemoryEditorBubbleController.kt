@@ -9,12 +9,20 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.graphics.RectF
 import android.os.IBinder
 import android.os.RemoteException
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
+import android.view.animation.DecelerateInterpolator
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.graphics.Insets
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import ru.playsoftware.j2meloader.R
+import kotlin.math.abs
 
 /**
  * MIDlet-process owner of the tiny in-game bubble only. The editor Activity and Compose tree live
@@ -32,6 +40,21 @@ class MemoryEditorBubbleController(
     private var destroyed = false
     private var bound = false
     private var service: IMemoryEngineService? = null
+
+    private val touchSlop = ViewConfiguration.get(activity).scaledTouchSlop.toFloat()
+    private val edgeMarginPx = 12f * activity.resources.displayMetrics.density
+    private var pointerId = MotionEvent.INVALID_POINTER_ID
+    private var downRawX = 0f
+    private var downRawY = 0f
+    private var downViewX = 0f
+    private var downViewY = 0f
+    private var dragging = false
+
+    private val bubbleLayoutListener = View.OnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+        if (!destroyed && !dragging && bubbleView.visibility == View.VISIBLE) {
+            settleToNearestEdge(animated = false)
+        }
+    }
 
     private val callback = object : IMemoryEngineCallback.Stub() {
         override fun onOperationProgress(
@@ -102,8 +125,11 @@ class MemoryEditorBubbleController(
 
     init {
         bubbleView.visibility = View.GONE
+        bubbleView.isFocusable = true
         progressView.visibility = View.GONE
         bubbleView.setOnClickListener { openEditor() }
+        bubbleView.setOnTouchListener(::onBubbleTouch)
+        bubbleView.addOnLayoutChangeListener(bubbleLayoutListener)
         MemoryRuntimeSession.addListener(runtimeListener)
     }
 
@@ -128,6 +154,7 @@ class MemoryEditorBubbleController(
 
     fun onHostPaused() {
         hostResumed = false
+        cancelDrag()
         bubbleView.visibility = View.GONE
     }
 
@@ -135,10 +162,121 @@ class MemoryEditorBubbleController(
         if (destroyed) return
         destroyed = true
         MemoryRuntimeSession.removeListener(runtimeListener)
+        cancelDrag()
+        bubbleView.animate().cancel()
+        bubbleView.removeOnLayoutChangeListener(bubbleLayoutListener)
+        bubbleView.setOnTouchListener(null)
         bubbleView.setOnClickListener(null)
         setProgress(null)
         disconnectEngine()
         bubbleView.visibility = View.GONE
+    }
+
+    private fun onBubbleTouch(view: View, event: MotionEvent): Boolean {
+        if (destroyed || !enabled || view.visibility != View.VISIBLE) return false
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                bubbleView.animate().cancel()
+                pointerId = event.getPointerId(0)
+                downRawX = event.rawX
+                downRawY = event.rawY
+                downViewX = bubbleView.x
+                downViewY = bubbleView.y
+                dragging = false
+                bubbleView.isPressed = true
+                bubbleView.parent?.requestDisallowInterceptTouchEvent(true)
+                return true
+            }
+
+            MotionEvent.ACTION_MOVE -> {
+                val index = event.findPointerIndex(pointerId)
+                if (index < 0) return true
+                // rawX/rawY track the active pointer in screen coordinates and are not affected by
+                // moving the View itself, which prevents the drag from feeding back into its delta.
+                val deltaX = event.rawX - downRawX
+                val deltaY = event.rawY - downRawY
+                if (!dragging && (abs(deltaX) > touchSlop || abs(deltaY) > touchSlop)) {
+                    dragging = true
+                    bubbleView.isPressed = false
+                }
+                if (dragging) {
+                    val bounds = movementBounds() ?: return true
+                    bubbleView.x = (downViewX + deltaX).coerceIn(bounds.left, bounds.right)
+                    bubbleView.y = (downViewY + deltaY).coerceIn(bounds.top, bounds.bottom)
+                }
+                return true
+            }
+
+            MotionEvent.ACTION_UP -> {
+                bubbleView.isPressed = false
+                bubbleView.parent?.requestDisallowInterceptTouchEvent(false)
+                val wasDragging = dragging
+                pointerId = MotionEvent.INVALID_POINTER_ID
+                dragging = false
+                if (wasDragging) {
+                    settleToNearestEdge(animated = true)
+                } else {
+                    bubbleView.performClick()
+                }
+                return true
+            }
+
+            MotionEvent.ACTION_CANCEL -> {
+                bubbleView.isPressed = false
+                bubbleView.parent?.requestDisallowInterceptTouchEvent(false)
+                val shouldSettle = dragging
+                pointerId = MotionEvent.INVALID_POINTER_ID
+                dragging = false
+                if (shouldSettle) settleToNearestEdge(animated = true)
+                return true
+            }
+        }
+        return true
+    }
+
+    private fun movementBounds(): RectF? {
+        val parent = bubbleView.parent as? View ?: return null
+        if (parent.width <= 0 || parent.height <= 0 ||
+            bubbleView.width <= 0 || bubbleView.height <= 0) {
+            return null
+        }
+        val insets = ViewCompat.getRootWindowInsets(parent)?.getInsets(
+            WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout(),
+        ) ?: Insets.NONE
+
+        val minX = insets.left + edgeMarginPx
+        val maxX = (parent.width - insets.right - bubbleView.width - edgeMarginPx)
+            .coerceAtLeast(minX)
+        val minY = insets.top + edgeMarginPx
+        val maxY = (parent.height - insets.bottom - bubbleView.height - edgeMarginPx)
+            .coerceAtLeast(minY)
+        return RectF(minX, minY, maxX, maxY)
+    }
+
+    private fun settleToNearestEdge(animated: Boolean) {
+        val bounds = movementBounds() ?: return
+        val clampedY = bubbleView.y.coerceIn(bounds.top, bounds.bottom)
+        val center = (bounds.left + bounds.right) * 0.5f
+        val targetX = if (bubbleView.x <= center) bounds.left else bounds.right
+        if (!animated) {
+            bubbleView.animate().cancel()
+            bubbleView.x = targetX
+            bubbleView.y = clampedY
+            return
+        }
+        bubbleView.animate()
+            .x(targetX)
+            .y(clampedY)
+            .setDuration(190L)
+            .setInterpolator(DecelerateInterpolator(1.8f))
+            .start()
+    }
+
+    private fun cancelDrag() {
+        pointerId = MotionEvent.INVALID_POINTER_ID
+        dragging = false
+        bubbleView.isPressed = false
+        bubbleView.parent?.requestDisallowInterceptTouchEvent(false)
     }
 
     private fun openEditor() {
@@ -211,6 +349,11 @@ class MemoryEditorBubbleController(
         bubbleView.visibility = if (
             enabled && hostResumed && MemoryRuntimeSession.currentToken() != 0L
         ) View.VISIBLE else View.GONE
-        if (bubbleView.visibility == View.VISIBLE) bubbleView.bringToFront()
+        if (bubbleView.visibility == View.VISIBLE) {
+            bubbleView.bringToFront()
+            // Re-clamp after rotation, split-screen resizing, or inset changes. Posting waits until
+            // the host has a valid size and preserves the last vertical position within the session.
+            bubbleView.post { if (!destroyed && !dragging) settleToNearestEdge(animated = false) }
+        }
     }
 }
