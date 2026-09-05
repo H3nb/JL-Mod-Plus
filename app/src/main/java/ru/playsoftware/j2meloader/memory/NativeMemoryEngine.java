@@ -52,24 +52,18 @@ final class NativeMemoryEngine {
 	static native boolean canWriteTarget(int pid, long address, long expectedBits);
 
 	static int startKnown(int valueType, int predicate, String first, String second) {
-		final boolean explicit = valueType != MemoryEngineContract.TYPE_AUTO;
-		// Explicit Known first scans are owned by the compact ResultStore kernel. Native builds the
-		// Candidate vector only as a compatibility mirror from the same accepted bitmap matches, so
-		// there is no second target scan and no legacy predicate deciding membership.
-		int result = explicit
-				? startKnownV2Authoritative(valueType, predicate, first, second)
-				: startKnownUnchecked(valueType, predicate, first, second);
+		// Both explicit and Auto first scans are ResultStore-authoritative. Auto uses the fused
+		// multi-plane kernel, while the Candidate vector is only a temporary compatibility mirror for
+		// tracked mutation/Watch/Inspector code. Neither route performs a second target scan.
+		int result = valueType == MemoryEngineContract.TYPE_AUTO
+				? startKnownAutoV2Authoritative(predicate, first, second)
+				: startKnownV2Authoritative(valueType, predicate, first, second);
 		if (result == MemoryEngineContract.RESULT_OK) {
-			if (explicit) {
-				// The authoritative native call publishes the exact ResultStore revision before returning.
-				publishV2KnownPagingStage(true, true);
-			} else {
-				clearV2KnownPagingStage();
-			}
+			publishV2KnownPagingStage(true, true);
 			if (BuildConfig.DEBUG) {
 				// A fresh production Known search starts a new semantic revision even when the target and
-				// primitive type are unchanged. Drop the retained debug shadow revision so the next parity
-				// probe performs an independent first scan rather than accidentally refining stale bits.
+				// primitive type are unchanged. Drop retained debug shadow state so parity never refines a
+				// stale independent diagnostic revision by accident.
 				resetV2ShadowSession();
 			}
 		}
@@ -79,14 +73,20 @@ final class NativeMemoryEngine {
 	private static native int startKnownV2Authoritative(int valueType, int predicate,
 	                                                    String first, String second);
 
-	private static native int startKnownUnchecked(int valueType, int predicate,
-	                                             String first, String second);
+	private static native int startKnownAutoV2Authoritative(int predicate, String first,
+	                                                        String second);
 
 	private static native boolean stageV2KnownResultStore();
 
 	private static native boolean hasCurrentV2KnownResultStore();
 
 	private static native void clearV2KnownResultStore();
+
+	private static native boolean stageV2AutoResultStore();
+
+	private static native boolean hasCurrentV2AutoResultStore();
+
+	private static native void clearV2AutoResultStore();
 
 	static native int startUnknown(int valueType);
 
@@ -104,26 +104,26 @@ final class NativeMemoryEngine {
 
 	static int refineKnown(int predicate, String first, String second,
 	                      boolean allowRelocationReconcile) {
-		// Exact explicit-type revisions stay ResultStore-authoritative across ordinary Next Scan.
-		// Native falls back to the proven Candidate relocation path only when the current revision has
-		// no usable ResultStore or strong GC-movement evidence requires address reconciliation; a
-		// successful fallback is immediately imported back into a verified ResultStore when possible.
+		// Explicit revisions refine their bitmap directly. Auto currently uses the proven adaptive
+		// Candidate address-set refine, then reconstructs a verified multi-plane ResultStore from that
+		// exact committed revision without rereading the target. This keeps paging/membership staging
+		// compact while the multi-plane bitmap-refine kernel is completed.
 		int result = refineKnownV2Authoritative(
 				predicate, first, second, allowRelocationReconcile);
 		if (result == MemoryEngineContract.RESULT_OK) {
-			boolean authoritative = hasCurrentV2KnownResultStore();
+			boolean authoritative = hasCurrentV2KnownResultStore() || hasCurrentV2AutoResultStore();
+			if (!authoritative) {
+				authoritative = stageV2KnownResultStore() || stageV2AutoResultStore();
+			}
 			publishV2KnownPagingStage(authoritative, authoritative);
 		}
-		// Failure/cancellation is transactional in native and leaves both the Candidate revision and
-		// its ResultStore owner untouched, so Java deliberately preserves the existing generation.
+		// Failure/cancellation is transactional in native and leaves the prior Candidate revision and
+		// ResultStore owner untouched, so Java deliberately preserves the existing generation.
 		return result;
 	}
 
 	private static native int refineKnownV2Authoritative(int predicate, String first, String second,
 	                                                    boolean allowRelocationReconcile);
-
-	private static native int refineKnownAddressSet(int predicate, String first, String second,
-	                                                boolean allowRelocationReconcile);
 
 	static native int refineRelative(int predicate, int compareTarget, String first, String second);
 
@@ -159,14 +159,18 @@ final class NativeMemoryEngine {
 	static native int historyDepth();
 
 	static long[] resultPage(int offset, int limit) {
-		// Only a ResultStore revision tied to the exact current immutable compatibility SearchState can
-		// answer here. Any state change/invariant mismatch returns null and falls back safely.
+		// A staged ResultStore is tied to the exact immutable compatibility SearchState. Auto is tried
+		// first because it owns multi-plane alias masks; explicit Known then handles its single plane.
+		// Only if neither stage matches the current revision do we use the legacy page materializer.
 		long stagedGeneration;
 		synchronized (V2_KNOWN_PAGING_LOCK) {
 			stagedGeneration = v2KnownStaged ? v2KnownStageGeneration : 0L;
 		}
 		if (stagedGeneration != 0L) {
-			long[] staged = resultPageV2Known(offset, limit);
+			long[] staged = resultPageV2Auto(offset, limit);
+			if (staged == null) {
+				staged = resultPageV2Known(offset, limit);
+			}
 			if (staged != null) {
 				synchronized (V2_KNOWN_PAGING_LOCK) {
 					if (v2KnownStaged && v2KnownStageGeneration == stagedGeneration) {
@@ -178,7 +182,7 @@ final class NativeMemoryEngine {
 			synchronized (V2_KNOWN_PAGING_LOCK) {
 				v2KnownPageFallbacks++;
 				// Do not let an old page request demote a newer staged revision that was published while
-				// the native call was in flight.
+				// either native ResultCursor call was in flight.
 				if (v2KnownStaged && v2KnownStageGeneration == stagedGeneration) {
 					v2KnownStaged = false;
 					v2KnownAuthoritativeRevision = false;
@@ -191,6 +195,8 @@ final class NativeMemoryEngine {
 		}
 		return resultPageUnchecked(offset, limit);
 	}
+
+	private static native long[] resultPageV2Auto(int offset, int limit);
 
 	private static native long[] resultPageV2Known(int offset, int limit);
 
@@ -231,6 +237,7 @@ final class NativeMemoryEngine {
 	}
 
 	private static void clearV2KnownPagingStage() {
+		clearV2AutoResultStore();
 		clearV2KnownResultStore();
 		publishV2KnownPagingStage(false, false);
 	}
@@ -242,8 +249,7 @@ final class NativeMemoryEngine {
 	 * production Known canonicalization. V2 consumes these stable bits and never reparses query
 	 * strings independently.
 	 */
-	static native long[] canonicalKnownPlan(int valueType, int predicate,
-	                                       String first, String second);
+	static native long[] canonicalKnownPlan(int valueType, int predicate, String first, String second);
 
 	static native long[] v2ShadowKnownEqual(int valueType, long initialBits, long currentBits);
 
