@@ -340,7 +340,7 @@ static_assert(sizeof(CompactLinearRecoveryEntry) <= 32U,
             (havePrevious && address == previousAddress && plane == previousPlane)) {
             return false;
         }
-        const jlmem::v2::ResultAliasRow sourceRow{oldAddress, jlmem::v2::resultPlaneBit(plane)};
+        const jlmem::v2::ResultAliasRow sourceRow{oldAddress, plane};
         const CompactOwnerSourceMeta meta = compactOwnerSourceMeta(
                 context, *source->ordinaryValues, sourceOrdinal,
                 // compactOwnerSourceMeta needs only address + plane; aliasMask is irrelevant.
