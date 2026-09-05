@@ -129,7 +129,18 @@ final class NativeMemoryEngine {
 
 	static native int undo();
 
-	static native int refresh(long[] candidateIds, boolean allowRecovery);
+	static int refresh(long[] candidateIds, boolean allowRecovery) {
+		// Presentation/Freeze polling only needs current values at an already-bound address. The
+		// lightweight primitive skips repeat fingerprint reads for candidates that already have an
+		// identity. Explicit Refresh/Edit/Inspector still use the full recovery-capable native path.
+		return allowRecovery
+				? refreshUnchecked(candidateIds, true)
+				: refreshPresentation(candidateIds);
+	}
+
+	private static native int refreshUnchecked(long[] candidateIds, boolean allowRecovery);
+
+	private static native int refreshPresentation(long[] candidateIds);
 
 	static native int filter(long[] candidateIds, boolean keep);
 
