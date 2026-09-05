@@ -35,7 +35,7 @@ fun InstallerRecoveryScreenshot() {
     JLModPlusTheme(darkTheme = true) {
         InstallerScreen(
             InstallerUiState.Error(
-                "Installation incomplete",
+                "Installation Incomplete",
                 "Application files were saved, but the Library could not finish updating. Refresh the Library before trying again.",
                 "Close", "Refresh Library", "Stage: SAVING",
             ), NoOpInstallerActions,
@@ -90,12 +90,12 @@ fun InstallerCompactLandscapeLargeTextScreenshot() {
     JLModPlusTheme(darkTheme = false) {
         InstallerScreen(
             state = InstallerUiState.Confirmation(
-                title = "Install application",
+                title = "Install Application",
                 message = "This confirmation contains enough information to require scrolling " +
                     "when the available landscape height is very small.",
                 installLabel = "Install",
                 closeLabel = "Cancel",
-                runLabel = "Run existing",
+                runLabel = "Run Existing",
                 iconPath = null,
             ),
             actions = NoOpInstallerActions,

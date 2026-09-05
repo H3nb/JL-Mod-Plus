@@ -14,10 +14,16 @@
 
 package ru.playsoftware.j2meloader.config
 
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -56,29 +62,29 @@ class ConfigComposeTest {
         }
 
         composeRule.onNodeWithText("Custom").assertExists()
-        composeRule.onNodeWithText("Screen size").assertExists()
-        composeRule.onNodeWithText("Screen orientation").assertExists()
-        composeRule.onNodeWithText("Scale type").assertExists()
+        composeRule.onNodeWithText("Screen Size").assertExists()
+        composeRule.onNodeWithText("Screen Orientation").assertExists()
+        composeRule.onNodeWithText("Scale Type").assertExists()
         composeRule.onNodeWithText("Scale (%)").assertExists()
         composeRule.onNodeWithContentDescription("Start").assertExists()
 
         composeRule.onNodeWithContentDescription("Display").performClick()
         composeRule.onNodeWithText("Screen Appearance").assertExists()
-        composeRule.onNodeWithText("Font").assertExists()
-        composeRule.onNodeWithText("Screen size").assertDoesNotExist()
-        composeRule.onNodeWithText("Screen orientation").assertDoesNotExist()
-        composeRule.onNodeWithText("Scale type").assertDoesNotExist()
+        composeRule.onNodeWithText("Text Rendering").assertExists()
+        composeRule.onNodeWithText("Screen Size").assertDoesNotExist()
+        composeRule.onNodeWithText("Screen Orientation").assertDoesNotExist()
+        composeRule.onNodeWithText("Scale Type").assertDoesNotExist()
         composeRule.onNodeWithText("Scale (%)").assertDoesNotExist()
 
         composeRule.onNodeWithContentDescription("Controls").performClick()
         composeRule.onNodeWithText("Key Input").assertExists()
-        composeRule.onNodeWithText("Audio").assertDoesNotExist()
+        composeRule.onNodeWithText("Controls").assertIsSelected()
 
         composeRule.onNodeWithContentDescription("Audio").performClick()
 
         composeRule.onNodeWithContentDescription("System").performClick()
-        composeRule.onNodeWithText("System properties").assertExists()
-        composeRule.onNodeWithText("Reset & data").assertExists()
+        composeRule.onNodeWithText("System Properties").assertExists()
+        composeRule.onNodeWithText("Reset & Data").assertExists()
         composeRule.onNodeWithText("Advanced settings").assertDoesNotExist()
     }
 
@@ -140,27 +146,40 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("Basic").assertExists()
-        composeRule.onNodeWithText("Screen size").assertExists()
-        composeRule.onNodeWithText("Touch input").assertExists()
+        composeRule.onNodeWithContentDescription("Basic", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithText("Screen Size").assertExists()
+        composeRule.onNodeWithText("Touch Input").assertExists()
         composeRule.onNodeWithContentDescription("Start").assertDoesNotExist()
         composeRule.onNodeWithText("Use profile").assertDoesNotExist()
-        composeRule.onNodeWithText("Save as new template").assertDoesNotExist()
+        composeRule.onNodeWithText("Save As New Template").assertDoesNotExist()
     }
 
     @Test
     fun configDraftChangesStayInStateAndEmitEvents() {
         val events = RecordingConfigEvents()
+        val snapshot = androidx.compose.runtime.mutableStateOf(sampleState())
+        // The activity owns the draft; feed emitted snapshots back just as the host does.
+        val hostEvents = object : ConfigFormEvents by events {
+            override fun onFormChanged(form: ConfigFormState) {
+                events.onFormChanged(form)
+                val previous = snapshot.value
+                snapshot.value = ConfigUiState(
+                    form, previous.screenPresets, previous.fontPresets, previous.skins,
+                    previous.soundBanks, previous.shaders, previous.removableScreenPresets,
+                    previous.profileStatus, previous.profileTemplates, previous.timingControlsEnabled,
+                )
+            }
+        }
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.Display)
+                ConfigScreen(snapshot.value, hostEvents, initialDestination = ConfigDestination.Display)
             }
         }
 
         composeRule.onNodeWithText("Filter").performClick()
         composeRule.onNodeWithContentDescription("Controls").performClick()
         composeRule.onNodeWithContentDescription("Basic").performClick()
-        composeRule.onNodeWithText("Touch input").performClick()
+        composeRule.onNodeWithText("Touch Input").performScrollTo().performClick()
 
         assertTrue(events.lastForm?.screenFilter == true)
         assertFalse(events.lastForm?.touchInput == true)
@@ -189,8 +208,8 @@ class ConfigComposeTest {
         }
 
         composeRule.onNodeWithText("Choose or manage templates").performClick()
-        composeRule.onNodeWithText("Configuration templates").assertExists()
-        composeRule.onNodeWithText("Built-in settings").performClick()
+        composeRule.onNodeWithText("Configuration Templates").assertExists()
+        composeRule.onNodeWithText("Built-In Settings").performClick()
         assertEquals(1, events.applyBuiltInCalls)
     }
 
@@ -213,8 +232,8 @@ class ConfigComposeTest {
         }
         composeRule.onNodeWithText("Nokia Classic").assertExists()
         composeRule.onNodeWithText("Choose or manage templates").performClick()
-        composeRule.onNodeWithText("Configuration templates").assertExists()
-        composeRule.onNodeWithText("Default").assertExists()
+        composeRule.onNodeWithText("Configuration Templates").assertExists()
+        composeRule.onNode(hasText("Default") and hasText("Nokia Classic")).assertExists()
     }
 
     @Test
@@ -236,10 +255,10 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Built-in settings").assertExists()
+        composeRule.onNodeWithText("Built-In Settings").assertExists()
         composeRule.onNodeWithText("JL-Mod Plus factory configuration · Default for new apps").assertExists()
         composeRule.onNodeWithText("Custom").assertDoesNotExist()
-        composeRule.onNodeWithText("Save as new template").assertDoesNotExist()
+        composeRule.onNodeWithText("Save As New Template").assertDoesNotExist()
         composeRule.onNodeWithText("Choose or manage templates").assertExists()
     }
 
@@ -252,25 +271,25 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Reset all settings").assertDoesNotExist()
+        composeRule.onNodeWithText("Reset All Settings").assertDoesNotExist()
         composeRule.onNodeWithContentDescription("System").performClick()
 
-        composeRule.onNodeWithText("Reset all settings").performClick()
+        composeRule.onNodeWithText("Reset All Settings").performClick()
         composeRule.onNodeWithText(
             "Reset all emulator settings for this app to their defaults? App data and the custom button layout will not be deleted.",
         ).assertExists()
-        composeRule.onNodeWithText("Reset all settings", useUnmergedTree = true).performClick()
+        composeRule.onNode(hasText("Reset All Settings") and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
         assertEquals(1, menuActions.resetSettingsCalls)
 
-        composeRule.onNodeWithText("Delete app data").performClick()
+        composeRule.onNodeWithText("Delete App Data").performClick()
         composeRule.onNodeWithText(
             "Permanently delete all saves and data created by this app? Emulator settings will not be deleted.",
         ).assertExists()
-        composeRule.onNodeWithText("Delete app data", useUnmergedTree = true).performClick()
+        composeRule.onNode(hasText("Delete App Data") and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
         assertEquals(1, menuActions.clearDataCalls)
 
         composeRule.onNodeWithContentDescription("Controls").performClick()
-        composeRule.onNodeWithText("Reset key layout").performClick()
+        composeRule.onNodeWithText("Reset Key Layout").performScrollTo().performClick()
         composeRule.onNodeWithText("Reset the button layout to its default?").assertExists()
     }
 
@@ -288,8 +307,8 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Delete app data").assertDoesNotExist()
-        composeRule.onNodeWithText("Reset all settings").performClick()
+        composeRule.onNodeWithText("Delete App Data").assertDoesNotExist()
+        composeRule.onNodeWithText("Reset All Settings").performClick()
         composeRule.onNodeWithText(
             "Reset all settings in this profile to their defaults? The profile can be edited again before leaving this page.",
         ).assertExists()
@@ -304,13 +323,13 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Screen size").performClick()
+        composeRule.onNodeWithText("Screen Size").performClick()
         composeRule.onNodeWithText("360 x 640").performClick()
         assertEquals("360", events.lastForm?.screenWidth)
         assertEquals("640", events.lastForm?.screenHeight)
         composeRule.onNodeWithText("Select").assertDoesNotExist()
 
-        composeRule.onNodeWithText("Screen size").performClick()
+        composeRule.onNodeWithText("Screen Size").performClick()
         composeRule.onNodeWithText("Swap width and height").performClick()
         assertEquals("320", events.lastForm?.screenWidth)
         assertEquals("240", events.lastForm?.screenHeight)
@@ -325,7 +344,7 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Screen orientation").performClick()
+        composeRule.onNodeWithText("Screen Orientation").performClick()
         composeRule.onNodeWithText("Landscape").performClick()
 
         assertEquals(3, events.lastForm?.orientation)
@@ -340,9 +359,9 @@ class ConfigComposeTest {
         }
 
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Foreground").assertExists()
-        composeRule.onNodeWithText("#000080").assertExists()
-        composeRule.onNodeWithText("Background").assertExists()
+        composeRule.onNodeWithText("Labels").assertExists()
+        composeRule.onNode(hasText("Labels") and hasText("#000080")).assertExists()
+        composeRule.onNodeWithText("Buttons").assertExists()
         composeRule.onNodeWithText("Outline").assertExists()
     }
 
@@ -356,7 +375,7 @@ class ConfigComposeTest {
         }
 
         composeRule.onNodeWithText("64").performClick()
-        composeRule.onNodeWithText("Opacity").assertExists()
+        composeRule.onNode(hasText("Opacity") and hasAnyAncestor(isDialog())).assertExists()
         composeRule.onNode(hasSetTextAction()).performTextReplacement("128")
         composeRule.onNodeWithText("OK").performClick()
         assertEquals(128, events.lastForm?.vkAlpha)
@@ -426,7 +445,7 @@ class ConfigComposeTest {
             }
         }
 
-        composeRule.onNodeWithText("Screen size").performClick()
+        composeRule.onNodeWithText("Screen Size").performClick()
         composeRule.onNodeWithContentDescription("Remove Screen Preset").performClick()
 
         assertEquals(Size(360, 640), events.removed)
@@ -448,10 +467,10 @@ class ConfigComposeTest {
         composeRule.setContent {
   JLModPlusTheme { ConfigScreen(state, events, initialDestination = ConfigDestination.Controls) }
         }
-        composeRule.onNodeWithText("ms").assertExists()
+        composeRule.onNodeWithText("250 ms").assertExists()
         composeRule.onNodeWithContentDescription("System").performClick()
-        composeRule.onNodeWithText("Edit system properties").performClick()
-        composeRule.onNodeWithText("System properties").assertExists()
+        composeRule.onNodeWithText("Edit System Properties").performClick()
+        composeRule.onNodeWithText("System Properties").assertExists()
         composeRule.onNode(hasSetTextAction()).performTextReplacement("microedition.platform: updated\n")
         composeRule.onNodeWithText("Save").performClick()
         assertEquals("microedition.platform: updated\n", events.lastForm?.systemProperties)

@@ -276,7 +276,7 @@ fun ConfigSliderDialogScreenshot() {
 fun ConfigChoiceDialogScreenshot() {
     JLModPlusTheme {
         ConfigChoiceDialog(
-            title = "Screen orientation",
+            title = "Screen Orientation",
             selected = "Automatic",
             options = listOf(
                 "Automatic",

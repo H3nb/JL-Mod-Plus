@@ -112,4 +112,6 @@
     <string name="config_help_reset_layout">Restore the virtual keypad layout without resetting the app’s other emulator settings.</string>
     <string name="config_help_skip_resume">Skip the Java ME resume callback when returning to the app. Use this only for compatibility with apps that misbehave after resume.</string>
     <string name="config_help_soundbank">Select the instrument soundbank used for MIDI playback.</string>
+    <string name="profile_create_title">Create Profile</string>
+    <string name="profile_rename_title">Rename Profile</string>
 </resources>

@@ -240,7 +240,7 @@ fun InstallerScreen(
             Surface(
                 modifier = dialogLayout.modifier.clip(dialogShape).testTag("installer-popup"),
                 shape = dialogShape,
-                color = MaterialTheme.colorScheme.surface,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
             ) {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
@@ -253,8 +253,8 @@ fun InstallerScreen(
                                 else Modifier,
                             )
                             .padding(
-                                horizontal = if (compactWidth) 16.dp else 24.dp,
-                                vertical = if (compactHeight) 8.dp else 20.dp,
+                                horizontal = if (compactWidth) 16.dp else 20.dp,
+                                vertical = if (compactHeight) 12.dp else 16.dp,
                             ),
                         verticalArrangement = Arrangement.spacedBy(if (compactHeight) 4.dp else 12.dp),
                     ) {
@@ -274,11 +274,7 @@ fun InstallerScreen(
                             Text(
                                 text = state.title,
                                 modifier = Modifier.weight(1f),
-                                style = if (compactHeight) {
-                                    MaterialTheme.typography.titleSmall
-                                } else {
-                                    MaterialTheme.typography.titleLarge
-                                },
+                                style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Medium,
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
@@ -287,7 +283,7 @@ fun InstallerScreen(
 
                         when (state) {
                             is InstallerUiState.Loading -> {
-                                InstallerProgress(state.status, compactHeight)
+                                InstallerProgress(state.status)
                                 TextButton(onClick = actions::onClose) {
                                     Text(stringResource(android.R.string.cancel))
                                 }
@@ -300,10 +296,9 @@ fun InstallerScreen(
                                     } else {
                                         Modifier.weight(1f, fill = false)
                                     },
-                                    compact = compactHeight,
                                     scrollable = !compactHeight,
                                 )
-                                InstallerProgress(state.status, compactHeight)
+                                InstallerProgress(state.status)
                                 TextButton(onClick = actions::onClose) {
                                     Text(stringResource(android.R.string.cancel))
                                 }
@@ -317,7 +312,6 @@ fun InstallerScreen(
                                     } else {
                                         Modifier.weight(1f, fill = false)
                                     },
-                                    compact = compactHeight,
                                     scrollable = !compactHeight,
                                 )
                                 InstallerButtons(
@@ -327,12 +321,11 @@ fun InstallerScreen(
                                     onClose = actions::onClose,
                                     onPrimary = actions::onInstall,
                                     onRun = actions::onRunExisting,
-                                    compact = compactHeight,
                                 )
                             }
 
                             is InstallerUiState.Success -> {
-                                InstallerProgressMessage(state.status, compactHeight)
+                                InstallerProgressMessage(state.status)
                                 InstallerButtons(
                                     closeLabel = state.closeLabel,
                                     primaryLabel = state.startLabel,
@@ -340,7 +333,6 @@ fun InstallerScreen(
                                     onClose = actions::onClose,
                                     onPrimary = actions::onLaunchInstalled,
                                     onRun = actions::onRunExisting,
-                                    compact = compactHeight,
                                 )
                             }
 
@@ -354,7 +346,6 @@ fun InstallerScreen(
                                     } else {
                                         Modifier.weight(1f, fill = false)
                                     },
-                                    compact = compactHeight,
                                     scrollable = !compactHeight,
                                 )
                                 FlowRow(
@@ -372,11 +363,7 @@ fun InstallerScreen(
                                     TextButton(onClick = actions::onClose) {
                                         Text(
                                             state.closeLabel,
-                                            style = if (compactHeight) {
-                                                MaterialTheme.typography.labelMedium
-                                            } else {
-                                                MaterialTheme.typography.labelLarge
-                                            },
+                                            style = MaterialTheme.typography.labelLarge,
                                         )
                                     }
                                 }
@@ -394,23 +381,23 @@ fun InstallerScreen(
 }
 
 @Composable
-private fun InstallerProgress(status: String, compact: Boolean) {
+private fun InstallerProgress(status: String) {
     LinearProgressIndicator(
         modifier = Modifier
             .fillMaxWidth()
             .semantics { contentDescription = status },
     )
-    InstallerProgressMessage(status, compact)
+    InstallerProgressMessage(status)
 }
 
 @Composable
-private fun InstallerProgressMessage(status: String, compact: Boolean) {
+private fun InstallerProgressMessage(status: String) {
     Text(
         text = status,
         modifier = Modifier.fillMaxWidth(),
         textAlign = TextAlign.Center,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        style = if (compact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
+        style = MaterialTheme.typography.bodyMedium,
     )
 }
 
@@ -419,7 +406,6 @@ private fun InstallerMessage(
     message: String,
     modifier: Modifier = Modifier,
     isError: Boolean = false,
-    compact: Boolean = false,
     scrollable: Boolean = true,
 ) {
     val scrollState = rememberScrollState()
@@ -437,7 +423,8 @@ private fun InstallerMessage(
             } else {
                 MaterialTheme.colorScheme.onSurfaceVariant
             },
-            style = if (compact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Start,
         )
         ScrollableContentHint(
             visible = canScrollForward,
@@ -455,9 +442,8 @@ private fun InstallerButtons(
     onClose: () -> Unit,
     onPrimary: () -> Unit,
     onRun: () -> Unit,
-    compact: Boolean,
 ) {
-    val labelStyle = if (compact) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge
+    val labelStyle = MaterialTheme.typography.labelLarge
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.End,

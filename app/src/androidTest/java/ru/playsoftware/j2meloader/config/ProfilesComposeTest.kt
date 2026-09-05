@@ -72,11 +72,11 @@ class ProfilesComposeTest {
         val actions = RecordingProfilesActions()
         setProfilesContent(actions)
 
-        composeRule.onNodeWithText("Built-in settings").performClick()
+        composeRule.onNodeWithText("Built-In Settings").performClick()
         composeRule.onNodeWithText("Set As Default").performClick()
         assertEquals(1, actions.builtInDefaultCalls)
 
-        composeRule.onNodeWithText("Built-in settings").performClick()
+        composeRule.onNodeWithText("Built-In Settings").performClick()
         composeRule.onNodeWithText("Rename").assertDoesNotExist()
         composeRule.onNodeWithText("Delete").assertDoesNotExist()
     }

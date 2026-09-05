@@ -69,7 +69,7 @@ class InstallerComposeTest {
                             }.joinToString("\n"),
                             installLabel = "Install",
                             closeLabel = "Cancel",
-                            runLabel = "Run existing",
+                            runLabel = "Run Existing",
                             iconPath = null,
                         ),
                         actions = actions,
@@ -202,7 +202,7 @@ class InstallerComposeTest {
             DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp))) {
                 CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, 2f)) {
                     JLModPlusTheme {
-                        InstallerScreen(InstallerUiState.Error("Installation incomplete",
+                        InstallerScreen(InstallerUiState.Error("Installation Incomplete",
                             "Application files were saved, but the Library could not finish updating. Refresh the Library before trying again.",
                             "Close", "Refresh Library", "Storage error"), actions)
                     }
@@ -211,7 +211,7 @@ class InstallerComposeTest {
         }
         composeRule.onNodeWithContentDescription("Swipe to continue").assertIsDisplayed()
         capturePopup("recovery-short.png")
-        composeRule.onNodeWithText("Copy details").performScrollTo().assertIsDisplayed().performClick()
+        composeRule.onNodeWithText("Copy Details").performScrollTo().assertIsDisplayed().performClick()
         composeRule.onNodeWithText("Refresh Library").performScrollTo().assertIsDisplayed().performClick()
         composeRule.onNodeWithText("Close").performScrollTo().assertIsDisplayed().performClick()
         assertEquals(1, actions.installCount)
@@ -236,7 +236,7 @@ class InstallerComposeTest {
         composeRule.onNodeWithContentDescription("Swipe to continue").assertIsDisplayed()
         capturePopup("bulk-short.png")
         composeRule.onNodeWithTag("bulk-results").performScrollToIndex(1)
-        composeRule.onNodeWithText("Review unfinished items").assertIsDisplayed().performClick()
+        composeRule.onNodeWithText("Review Unfinished Items").assertIsDisplayed().performClick()
         assertEquals(1, retries)
     }
 

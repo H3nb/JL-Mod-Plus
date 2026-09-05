@@ -247,18 +247,14 @@ internal fun BulkInstallSurface(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(
-                            horizontal = if (compactWidth) 16.dp else 24.dp,
-                            vertical = if (compactHeight) 12.dp else 20.dp,
+                            horizontal = if (compactWidth) 16.dp else 20.dp,
+                            vertical = if (compactHeight) 12.dp else 16.dp,
                         ),
                     verticalArrangement = Arrangement.spacedBy(if (compactHeader) 8.dp else 12.dp),
                 ) {
                     Text(
                         text = stringResource(R.string.bulk_install_title),
-                        style = if (compactHeader) {
-                            MaterialTheme.typography.titleMedium
-                        } else {
-                            MaterialTheme.typography.titleLarge
-                        },
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Medium,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,

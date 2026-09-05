@@ -233,9 +233,7 @@ private fun ConfigTemplateManagerDialog(
     }
 
     actionTarget?.let { template ->
-        val maxActionHeight = adaptiveDialogLayout().maxContentHeight(
-            reservedHeight = 120.dp,
-        )
+        val maxActionHeight = adaptiveDialogLayout().maxHeight
         val scrollState = rememberScrollState()
         val canScrollForward = rememberScrollCanScrollForward(scrollState)
         AlertDialog(
@@ -299,7 +297,7 @@ private fun ConfigTemplateManagerDialog(
                     )
                 }
             },
-            confirmButton = {},
+            confirmButton = null,
         )
     }
 

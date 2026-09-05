@@ -158,6 +158,8 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -2476,7 +2478,7 @@ internal fun LibraryDescription(descriptionValue: String, appId: Long) {
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
-                textAlign = TextAlign.Justify,
+                textAlign = TextAlign.Start,
                 maxLines = if (expanded) Int.MAX_VALUE else 2,
                 overflow = if (expanded) TextOverflow.Clip else TextOverflow.Ellipsis,
                 onTextLayout = { result ->
@@ -3600,11 +3602,7 @@ private fun libraryDialogLayout(): LibraryDialogLayout {
 }
 
 @Composable
-private fun libraryDialogListHeight(
-    reservedHeight: Int = 184,
-) = adaptiveDialogLayout().maxContentHeight(
-    reservedHeight = reservedHeight.dp,
-)
+private fun libraryDialogListHeight() = adaptiveDialogLayout().maxHeight
 
 @Composable
 internal fun AppActionsDialog(
@@ -3659,7 +3657,7 @@ internal fun AppActionsDialog(
         },
         text = {
             val listState = rememberLazyListState()
-            val maxListHeight = libraryDialogListHeight(reservedHeight = 156)
+            val maxListHeight = libraryDialogListHeight()
             val canScrollForward = rememberLazyListCanScrollForward(listState)
             Box(
                 modifier = Modifier
@@ -3784,7 +3782,7 @@ internal fun AppActionsDialog(
                 )
             }
         },
-        confirmButton = {},
+        confirmButton = null,
     )
 }
 
@@ -3886,7 +3884,7 @@ internal fun LibraryInformationDialog(
     val title = when (dialog) {
         LibraryInfoDialog.About -> stringResource(R.string.about)
         LibraryInfoDialog.Help -> stringResource(R.string.help)
-        LibraryInfoDialog.Licenses -> stringResource(R.string.licenses).uppercase()
+        LibraryInfoDialog.Licenses -> stringResource(R.string.licenses)
     }
     val icon = when (dialog) {
         LibraryInfoDialog.About -> R.drawable.ic_info
@@ -3895,12 +3893,15 @@ internal fun LibraryInformationDialog(
     }
     val layout = libraryDialogLayout()
     val maxMessageHeight = libraryDialogListHeight()
+    val linkStyles = TextLinkStyles(SpanStyle(color = MaterialTheme.colorScheme.primary))
     val message = when (dialog) {
         LibraryInfoDialog.About -> AnnotatedString(stringResource(R.string.about_message))
-        LibraryInfoDialog.Help -> AnnotatedString.fromHtml(stringResource(R.string.help_message))
+        LibraryInfoDialog.Help -> AnnotatedString.fromHtml(stringResource(R.string.help_message),
+            linkStyles = linkStyles)
         LibraryInfoDialog.Licenses -> try {
             AnnotatedString.fromHtml(
                 context.assets.open("licenses.html").bufferedReader().use { it.readText() },
+                linkStyles = linkStyles,
             )
         } catch (_: Exception) {
             AnnotatedString(stringResource(R.string.licenses_unavailable))
@@ -4007,7 +4008,8 @@ private fun LibraryAboutBody(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                text = AnnotatedString.fromHtml(stringResource(R.string.about_github)),
+                text = AnnotatedString.fromHtml(stringResource(R.string.about_github),
+                    linkStyles = TextLinkStyles(SpanStyle(color = MaterialTheme.colorScheme.primary))),
                 style = MaterialTheme.typography.bodyMedium,
             )
             Text(

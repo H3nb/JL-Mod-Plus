@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -51,21 +53,27 @@ internal fun ScrollableContentHint(
             .height(28.dp),
         contentAlignment = Alignment.BottomCenter,
     ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_arrow_downward),
-            contentDescription = stringResource(R.string.dialog_scroll_hint),
-            modifier = Modifier
-                .padding(bottom = 6.dp)
-                .size(20.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.68f),
-        )
+        Surface(
+            modifier = Modifier.padding(bottom = 4.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_arrow_downward),
+                contentDescription = stringResource(R.string.dialog_scroll_hint),
+                modifier = Modifier
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                    .size(20.dp),
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
     }
 }
 
 /**
  * Bridges LazyListState's layout-backed scrollability to a stable Compose value. Some bounded
- * dialogs are captured immediately after their first layout, so observing the state through a
- * snapshot flow avoids a stale one-frame false result for the scroll affordance.
+ * dialogs are captured before layout-backed state settles. Runtime interaction tests must also
+ * verify the hint after layout; an initial preview frame alone cannot establish scrollability.
  */
 @Composable
 internal fun rememberLazyListCanScrollForward(state: LazyListState): Boolean {

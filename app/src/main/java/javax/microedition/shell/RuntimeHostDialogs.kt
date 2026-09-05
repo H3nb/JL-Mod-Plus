@@ -142,9 +142,7 @@ private fun runtimeDialogLayout(): RuntimeDialogLayout {
 
 @Composable
 private fun runtimeDialogListHeight() =
-    adaptiveDialogLayout().maxContentHeight(
-        reservedHeight = 184.dp,
-    )
+    adaptiveDialogLayout().maxHeight
 
 @Composable
 private fun MidletSelectionDialog(
@@ -203,7 +201,7 @@ private fun MidletSelectionDialog(
                 )
             }
         },
-        confirmButton = {},
+        confirmButton = null,
     )
 }
 

@@ -123,4 +123,6 @@
     <string name="config_help_reset_layout">Pulihkan tata letak keypad virtual tanpa mengatur ulang pengaturan emulator aplikasi lainnya.</string>
     <string name="config_help_skip_resume">Lewati callback resume Java ME saat kembali ke aplikasi. Gunakan hanya untuk kompatibilitas aplikasi yang bermasalah setelah resume.</string>
     <string name="config_help_soundbank">Pilih soundbank instrumen yang digunakan untuk pemutaran MIDI.</string>
+    <string name="profile_create_title">Buat Profil</string>
+    <string name="profile_rename_title">Ganti Nama Profil</string>
 </resources>

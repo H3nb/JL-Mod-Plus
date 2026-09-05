@@ -126,7 +126,7 @@ private fun mainHostDialogLayout(): MainHostDialogLayout {
 
 @Composable
 private fun MainHostDialogText(message: String) {
-    val maxHeight = adaptiveDialogLayout().maxContentHeight(reservedHeight = 184.dp)
+    val maxHeight = adaptiveDialogLayout().maxHeight
     val scrollState = rememberScrollState()
     val canScrollForward = rememberScrollCanScrollForward(scrollState)
     Box(

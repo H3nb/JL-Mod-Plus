@@ -22,7 +22,6 @@ class AdaptiveDialogLayoutTest {
 
         assertEquals(608.dp, layout.width)
         assertEquals(328.dp, layout.maxHeight)
-        assertEquals(128.dp, layout.maxContentHeight())
     }
 
     @Test
@@ -34,9 +33,10 @@ class AdaptiveDialogLayoutTest {
     }
 
     @Test
-    fun contentHeightNeverBecomesNegative() {
-        val layout = AdaptiveDialogLayout(width = 200.dp, maxHeight = 120.dp)
+    fun tinyWindowBoundsNeverBecomeNegative() {
+        val layout = adaptiveDialogLayout(availableWidth = 20.dp, availableHeight = 20.dp)
 
-        assertEquals(0.dp, layout.maxContentHeight())
+        assertEquals(0.dp, layout.width)
+        assertEquals(0.dp, layout.maxHeight)
     }
 }
