@@ -51,7 +51,8 @@ using CancelledFn = std::function<bool()>;
 // Optional production observer. The ResultStore kernel remains the only component deciding
 // membership; the observer merely materializes compatibility metadata from each accepted slot and
 // receives chunk-level progress. Raw chunk context lets the legacy Candidate mirror snapshot its
-// passive identity fingerprint without issuing one remote read per result.
+// passive identity fingerprint without issuing one remote read per result. `plane` is required for
+// fused Auto because several typed aliases can share one raw address and one physical load.
 struct KnownScanMatchView {
     std::uintptr_t address = 0U;
     std::uint64_t bits = 0U;
@@ -59,6 +60,7 @@ struct KnownScanMatchView {
     std::size_t chunkSize = 0U;
     std::size_t chunkOffset = 0U;
     std::size_t width = 0U;
+    ResultPlane plane = ResultPlane::Count;
 };
 
 using KnownMatchObserverFn = bool (*)(void *, const KnownScanMatchView &);
@@ -87,6 +89,21 @@ struct KnownScanObserver {
 [[nodiscard]] bool scanKnownExplicit(
         const std::vector<ScanRange> &ranges,
         const KnownScanRequest &request,
+        const RemoteReadFn &read,
+        const CancelledFn &cancelled,
+        ResultStore &out,
+        KnownScanStats &stats,
+        std::string &error,
+        const KnownScanObserver *observer = nullptr);
+
+// Fused Auto first-scan kernel. Requests are canonical plans produced by the established parser,
+// contain at most one plan per primitive ResultPlane, and must all use the same Known predicate.
+// One 256 KiB target read is traversed once: Int/Float share a 32-bit load, Long/Double a 64-bit
+// load, Short/Char a 16-bit load, and Byte is checked last. Multiple matching interpretations are
+// stored as plane aliases on one logical ResultStore address rather than causing another scan.
+[[nodiscard]] bool scanKnownAuto(
+        const std::vector<ScanRange> &ranges,
+        const std::vector<KnownScanRequest> &requests,
         const RemoteReadFn &read,
         const CancelledFn &cancelled,
         ResultStore &out,
